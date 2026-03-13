@@ -1,0 +1,28 @@
+# ── Deep Learning ────────────────────────────────────────────────────────────
+torch>=2.2.0
+torchvision>=0.17.0
+timm>=0.9.16
+
+# ── Datenverarbeitung ─────────────────────────────────────────────────────────
+Pillow>=10.0.0
+numpy>=1.26.0
+scipy>=1.12.0
+pandas>=2.2.0
+
+# ── 3D Mesh Verarbeitung (für Foot3D OBJ-Meshes) ─────────────────────────────
+trimesh>=4.3.0
+# Optional: bessere OBJ-Unterstützung (automatisch durch trimesh[easy])
+# pip install trimesh[easy]
+
+# ── ML Tools ─────────────────────────────────────────────────────────────────
+scikit-learn>=1.4.0
+matplotlib>=3.8.0
+tqdm>=4.66.0
+
+# ── ONNX Export ───────────────────────────────────────────────────────────────
+onnx>=1.16.0
+onnxruntime>=1.18.0
+
+# ── Download Tools ────────────────────────────────────────────────────────────
+kaggle>=1.6.0     # Für Foot3D-Download von Kaggle
+requests>=2.31.0

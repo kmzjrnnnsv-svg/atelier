@@ -1,0 +1,51 @@
+# ─── Node / Frontend ──────────────────────────────────────────────
+node_modules/
+dist/
+.cache/
+*.local
+
+# ─── iOS (Capacitor) ──────────────────────────────────────────────
+atelier-app/ios/App/Pods/
+atelier-app/ios/App/build/
+atelier-app/ios/App/DerivedData/
+atelier-app/ios/*.xcarchive
+
+# ─── Datenbank ────────────────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# ─── ML – Checkpoints (281 MB Modell-Gewichte) ────────────────────
+atelier-ml/checkpoints/
+*.pt
+*.pth
+*.onnx
+
+# ─── ML – Trainingsdaten (1.8 GB) ─────────────────────────────────
+atelier-ml/data/
+
+# ─── Python Cache ─────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ─── Umgebungsvariablen & Secrets ─────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets.json
+
+# ─── macOS ────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ─── Editor ───────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

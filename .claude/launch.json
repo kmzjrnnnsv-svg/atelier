@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "atelier-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "atelier-app", "run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "atelier-backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "atelier-backend", "run", "dev"],
+      "port": 3001
+    }
+  ]
+}
