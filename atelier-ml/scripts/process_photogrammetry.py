@@ -574,6 +574,96 @@ def alpha_hull_perimeter(pts_2d: np.ndarray, alpha_mm: float = 10.0) -> float | 
             return None
 
 
+# ─── Cross-section extraction (same levels as process_lidar.py) ───────────
+
+CROSS_SECTION_LEVELS = [
+    ("Ferse",   0.15),
+    ("Gewölbe", 0.30),
+    ("Ballen",  0.40),
+    ("Taille",  0.45),
+    ("Rist",    0.60),
+    ("Knöchel", 0.88),
+]
+
+
+def _order_boundary_pts(pts_2d, alpha_mm=10.0):
+    """Extract ordered alpha-hull boundary from 2D points (mm)."""
+    if len(pts_2d) < 6:
+        return None
+    try:
+        tri = Delaunay(pts_2d)
+        edge_count = {}
+        for simplex in tri.simplices:
+            ax, ay = pts_2d[simplex[0]]
+            bx, by = pts_2d[simplex[1]]
+            cx, cy = pts_2d[simplex[2]]
+            D = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
+            if abs(D) < 1e-10:
+                continue
+            ux = ((ax**2+ay**2)*(by-cy) + (bx**2+by**2)*(cy-ay) + (cx**2+cy**2)*(ay-by)) / D
+            uy = ((ax**2+ay**2)*(cx-bx) + (bx**2+by**2)*(ax-cx) + (cx**2+cy**2)*(bx-ax)) / D
+            R = math.hypot(ax - ux, ay - uy)
+            if R > alpha_mm:
+                continue
+            for i in range(3):
+                e = tuple(sorted([simplex[i], simplex[(i+1) % 3]]))
+                edge_count[e] = edge_count.get(e, 0) + 1
+        boundary = [e for e, c in edge_count.items() if c == 1]
+        if len(boundary) < 3:
+            return None
+        adj = {}
+        for a, b in boundary:
+            adj.setdefault(a, []).append(b)
+            adj.setdefault(b, []).append(a)
+        ordered = [boundary[0][0]]
+        visited = {ordered[0]}
+        current = ordered[0]
+        for _ in range(len(boundary)):
+            nxt = None
+            for n in adj.get(current, []):
+                if n not in visited:
+                    nxt = n
+                    break
+            if nxt is None:
+                break
+            ordered.append(nxt)
+            visited.add(nxt)
+            current = nxt
+        return [[round(float(pts_2d[i][0]), 1), round(float(pts_2d[i][1]), 1)] for i in ordered]
+    except Exception:
+        return None
+
+
+def extract_cross_sections_pg(aligned, n_slices=60):
+    """Extract cross-section contour geometries at 6 standardized levels."""
+    x_min, x_max = aligned[:, 0].min(), aligned[:, 0].max()
+    foot_len = x_max - x_min
+    GIRTH_BAND = 0.012
+
+    sections = {}
+    for name, frac in CROSS_SECTION_LEVELS:
+        xp = x_min + frac * foot_len
+        half = GIRTH_BAND * foot_len
+        band = np.abs(aligned[:, 0] - xp) < half
+        if band.sum() < 8:
+            continue
+        pts_slice = aligned[band][:, 1:]  # YZ plane (mm)
+        girth = alpha_hull_perimeter(pts_slice, alpha_mm=10)
+        contour = _order_boundary_pts(pts_slice)
+        if contour is None:
+            contour = [[round(float(p[0]), 1), round(float(p[1]), 1)] for p in pts_slice]
+        width = float(pts_slice[:, 0].max() - pts_slice[:, 0].min())
+        height = float(pts_slice[:, 1].max() - pts_slice[:, 1].min())
+        sections[name] = {
+            "level_frac": frac,
+            "contour": contour,
+            "girth_mm": round(girth, 1) if girth else None,
+            "width_mm": round(width, 1),
+            "height_mm": round(height, 1),
+        }
+    return sections
+
+
 def measure_from_pointcloud(pts_mm: np.ndarray) -> dict:
     """
     Berechnet alle Fußmaße aus einer 3D-Punktwolke in mm.
@@ -670,6 +760,12 @@ def measure_from_pointcloud(pts_mm: np.ndarray) -> dict:
     heel_g   = girth_at(0.85)         or ellipse_g(width_mm*0.70/2, height_mm*0.65/2)
     ankle_g  = girth_at(0.88)         or ellipse_g(width_mm*0.60/2, height_mm*0.72/2)
 
+    # Extract cross-section contour geometries at 6 levels
+    cross_sections = extract_cross_sections_pg(aligned)
+
+    # Store aligned point cloud (rounded to 0.1mm)
+    aligned_rounded = np.round(aligned, 1)
+
     return {
         'length':       length_mm,
         'width':        width_mm,
@@ -682,6 +778,8 @@ def measure_from_pointcloud(pts_mm: np.ndarray) -> dict:
         'ankle_girth':  round(ankle_g, 1),
         'point_count':  len(pts_mm),
         'source':       'photogrammetry',
+        'cross_sections': cross_sections,
+        'point_cloud_mm': aligned_rounded.tolist(),
     }
 
 

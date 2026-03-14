@@ -7,6 +7,7 @@ import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
 import { buildFootGeoAsync, downloadSTL } from '../utils/footSTL'
+import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
 
 // ─── Size lookup ───────────────────────────────────────────────────────────────
@@ -524,6 +525,10 @@ export default function FootScan() {
   const [pgImgs,     setPgImgs]    = useState({ right: [], left: [] })
   const [walkPoints,   setWalkPoints]   = useState(0)
 
+  // ── Shoe last export state ──
+  const [lastShoeType, setLastShoeType] = useState('oxford')
+  const [lastFormat,   setLastFormat]   = useState('stl')
+
   // ── Camera ──
   const startCam = useCallback(async () => {
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { setCamStatus('insecure'); return }
@@ -715,6 +720,7 @@ export default function FootScan() {
             heel_girth:   data.right_heel_girth   != null ? r1(data.right_heel_girth)   : null,
             waist_girth:  data.right_waist_girth  != null ? r1(data.right_waist_girth)  : null,
             ankle_girth:  data.right_ankle_girth  != null ? r1(data.right_ankle_girth)  : null,
+            crossSections: data.right_cross_sections ?? {},
           }
           const left = {
             length:       r1(data.left_length       ?? 253),
@@ -726,6 +732,7 @@ export default function FootScan() {
             heel_girth:   data.left_heel_girth   != null ? r1(data.left_heel_girth)   : null,
             waist_girth:  data.left_waist_girth  != null ? r1(data.left_waist_girth)  : null,
             ankle_girth:  data.left_ankle_girth  != null ? r1(data.left_ankle_girth)  : null,
+            crossSections: data.left_cross_sections ?? {},
           }
           const avgLen = (right.length + left.length) / 2
           const cvSuccess = data._cv_right || data._cv_left
@@ -770,6 +777,8 @@ export default function FootScan() {
           heel_girth:   R.right_heel_girth   ?? null,
           waist_girth:  R.right_waist_girth  ?? null,
           ankle_girth:  R.right_ankle_girth  ?? null,
+          crossSections: R.cross_sections ?? {},
+          pointCloud:    R.raw?.point_cloud_mm ?? null,
         }
         const left = {
           length:       r1(L.left_length ?? L.raw?.length ?? 253),
@@ -781,6 +790,8 @@ export default function FootScan() {
           heel_girth:   L.left_heel_girth   ?? null,
           waist_girth:  L.left_waist_girth  ?? null,
           ankle_girth:  L.left_ankle_girth  ?? null,
+          crossSections: L.cross_sections ?? {},
+          pointCloud:    L.raw?.point_cloud_mm ?? null,
         }
         setProgress(100)
         setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI: true, source: 'lidar' })
@@ -920,6 +931,27 @@ export default function FootScan() {
             method: 'POST',
             body: JSON.stringify({ rightTopImg: rT, rightSideImg: rS, leftTopImg: lT, leftSideImg: lS }),
           }).catch(e => console.warn('[FootScan] Training-Upload fehlgeschlagen:', e.message))
+        }
+
+        // Phase 5: Store point clouds + cross-sections (fire-and-forget)
+        if (saved_scan?.id) {
+          for (const sd of ['right', 'left']) {
+            const sideData = result[sd]
+            // Store cross-sections if available
+            if (sideData?.crossSections && Object.keys(sideData.crossSections).length > 0) {
+              apiFetch(`/api/scans/${saved_scan.id}/cross-sections`, {
+                method: 'POST',
+                body: JSON.stringify({ side: sd, cross_sections: sideData.crossSections }),
+              }).catch(e => console.warn(`[FootScan] Cross-section upload (${sd}) fehlgeschlagen:`, e.message))
+            }
+            // Store point cloud if available
+            if (sideData?.pointCloud && sideData.pointCloud.length > 50) {
+              apiFetch(`/api/scans/${saved_scan.id}/point-cloud`, {
+                method: 'POST',
+                body: JSON.stringify({ side: sd, point_cloud_mm: sideData.pointCloud }),
+              }).catch(e => console.warn(`[FootScan] Point-cloud upload (${sd}) fehlgeschlagen:`, e.message))
+            }
+          }
         }
       } catch { setSaveErr('Verbindungsfehler — Scan nicht gespeichert.') }
     }
@@ -1338,20 +1370,112 @@ export default function FootScan() {
                       </div>
                     </div>
 
-                    {/* STL Download — admin/curator only */}
+                    {/* Shoe Last / STL / OBJ Export — admin/curator only */}
                     {(user?.role === 'admin' || user?.role === 'curator') && (
-                      <div className="grid grid-cols-2 gap-2 p-3 border-t border-white/5">
-                        {[
-                          { side: 'right', label: 'STL Rechts', m: result.right },
-                          { side: 'left',  label: 'STL Links',  m: result.left  },
-                        ].map(({ side, label, m }) => (
-                          <button key={side}
-                            onClick={async () => { const geo = await buildFootGeoAsync(m.length, m.width, m.arch, side); downloadSTL(geo, result.sizes.eu, side) }}
-                            className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5">
-                            <span className="text-xs font-semibold text-gray-300">{label}</span>
-                            <Download size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
-                          </button>
-                        ))}
+                      <div className="p-3 border-t border-white/5 space-y-2">
+                        {/* Shoe type selector */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <label className="text-[10px] text-gray-500 uppercase tracking-wider">Schuhtyp:</label>
+                          <select
+                            value={lastShoeType}
+                            onChange={e => setLastShoeType(e.target.value)}
+                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-300">
+                            {Object.entries(SHOE_TYPES).map(([key, { name }]) => (
+                              <option key={key} value={key}>{name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Export format selector */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <label className="text-[10px] text-gray-500 uppercase tracking-wider">Format:</label>
+                          <div className="flex gap-1">
+                            {['stl', 'obj'].map(fmt => (
+                              <button key={fmt}
+                                onClick={() => setLastFormat(fmt)}
+                                className={`px-3 py-1 rounded-lg text-xs font-semibold border ${
+                                  lastFormat === fmt
+                                    ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
+                                    : 'bg-white/5 border-white/10 text-gray-400'
+                                }`}>
+                                .{fmt.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Export buttons */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { side: 'right', label: 'Leisten Rechts', m: result.right },
+                            { side: 'left',  label: 'Leisten Links',  m: result.left  },
+                          ].map(({ side, label, m }) => (
+                            <button key={side}
+                              onClick={() => {
+                                const scanData = {
+                                  length: m.length, width: m.width, arch: m.arch,
+                                  foot_height: m.foot_height, ball_girth: m.ball_girth,
+                                  instep_girth: m.instep_girth, waist_girth: m.waist_girth,
+                                  heel_girth: m.heel_girth, ankle_girth: m.ankle_girth,
+                                  crossSections: m.crossSections ?? null,
+                                }
+                                const geo = buildShoeLastGeo(scanData, { shoeType: lastShoeType, side })
+                                if (lastFormat === 'obj') {
+                                  downloadOBJ(geo, result.sizes.eu, side)
+                                } else {
+                                  downloadLastSTL(geo, result.sizes.eu, side)
+                                }
+                              }}
+                              className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5">
+                              <span className="text-xs font-semibold text-gray-300">{label}</span>
+                              <Download size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Fuss-STL (raw foot, not last) */}
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                          {[
+                            { side: 'right', label: 'Fuß-STL Rechts', m: result.right },
+                            { side: 'left',  label: 'Fuß-STL Links',  m: result.left  },
+                          ].map(({ side, label, m }) => (
+                            <button key={`foot-${side}`}
+                              onClick={async () => { const geo = await buildFootGeoAsync(m.length, m.width, m.arch, side); downloadSTL(geo, result.sizes.eu, side) }}
+                              className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2">
+                              <span className="text-[10px] text-gray-400">{label}</span>
+                              <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Maßblatt download */}
+                        <button
+                          onClick={() => {
+                            const blattR = generateMassblatt(
+                              { length: result.right.length, width: result.right.width, arch: result.right.arch,
+                                foot_height: result.right.foot_height, ball_girth: result.right.ball_girth,
+                                instep_girth: result.right.instep_girth, waist_girth: result.right.waist_girth,
+                                heel_girth: result.right.heel_girth, ankle_girth: result.right.ankle_girth },
+                              { shoeType: lastShoeType, side: 'right' }
+                            )
+                            const blattL = generateMassblatt(
+                              { length: result.left.length, width: result.left.width, arch: result.left.arch,
+                                foot_height: result.left.foot_height, ball_girth: result.left.ball_girth,
+                                instep_girth: result.left.instep_girth, waist_girth: result.left.waist_girth,
+                                heel_girth: result.left.heel_girth, ankle_girth: result.left.ankle_girth },
+                              { shoeType: lastShoeType, side: 'left' }
+                            )
+                            const text = JSON.stringify({ rechts: blattR, links: blattL }, null, 2)
+                            const blob = new Blob([text], { type: 'application/json' })
+                            const url = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = url; a.download = `massblatt_EU${result.sizes.eu}_${Date.now()}.json`
+                            a.click(); URL.revokeObjectURL(url)
+                          }}
+                          className="w-full flex items-center justify-between bg-white/5 border border-white/8 rounded-xl px-3 py-2.5">
+                          <span className="text-xs font-semibold text-gray-300">Maßblatt herunterladen</span>
+                          <Download size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
+                        </button>
                       </div>
                     )}
                   </div>

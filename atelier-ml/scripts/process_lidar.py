@@ -370,6 +370,156 @@ def girth_perpendicular(pts_aligned, frac, centers, x_positions, band_m=0.005):
     return alpha_hull_perimeter_mm(pts_2d, alpha_m=0.010)
 
 
+# ─── 8b. Cross-section contour extraction at 6 standardized levels ───────
+
+# The 6 Leisten-relevant measurement levels
+CROSS_SECTION_LEVELS = [
+    ("Ferse",   0.15),   # heel
+    ("Gewölbe", 0.30),   # arch / vault
+    ("Ballen",  0.40),   # ball / metatarsal
+    ("Taille",  0.45),   # waist
+    ("Rist",    0.60),   # instep
+    ("Knöchel", 0.88),   # ankle
+]
+
+
+def extract_cross_section_contour(pts_aligned, frac, centers, x_positions, band_m=0.005):
+    """
+    Extract the 2D contour points at a given fraction along the foot.
+    Returns dict with contour (list of [y,z] in mm), girth_mm, width_mm, height_mm.
+    """
+    x_min, x_max = pts_aligned[:, 0].min(), pts_aligned[:, 0].max()
+    target_x = x_min + frac * (x_max - x_min)
+
+    idx = np.searchsorted(x_positions, target_x)
+    idx = int(np.clip(idx, 1, len(centers) - 1))
+    tangent = centers[idx] - centers[idx - 1]
+    t_norm = np.linalg.norm(tangent)
+    if t_norm < 1e-8:
+        tangent = np.array([1., 0., 0.])
+    else:
+        tangent = tangent / t_norm
+
+    denom = (x_positions[idx] - x_positions[idx - 1] + 1e-10)
+    alpha = (target_x - x_positions[idx - 1]) / denom
+    origin = centers[idx - 1] + alpha * (centers[idx] - centers[idx - 1])
+
+    vecs = pts_aligned - origin
+    proj = vecs @ tangent
+    mask = np.abs(proj) < band_m
+    slice_pts = pts_aligned[mask]
+
+    if len(slice_pts) < 8:
+        return None
+
+    up = np.array([0., 0., 1.])
+    right = np.cross(tangent, up)
+    rn = np.linalg.norm(right)
+    if rn < 1e-6:
+        right = np.array([0., 1., 0.])
+    else:
+        right = right / rn
+    up_perp = np.cross(right, tangent)
+
+    # Project to 2D (Y=right, Z=up) in metres
+    pts_2d = np.column_stack([slice_pts @ right, slice_pts @ up_perp])
+
+    # Compute girth via alpha hull
+    girth = alpha_hull_perimeter_mm(pts_2d, alpha_m=0.010)
+
+    # Convert 2D points to mm for storage
+    pts_2d_mm = pts_2d * 1000
+
+    # Compute contour boundary (alpha hull boundary edges → ordered contour)
+    contour_pts = _order_boundary_points(pts_2d_mm)
+    if contour_pts is None:
+        # Fallback: store all slice points as contour
+        contour_pts = pts_2d_mm.tolist()
+
+    width = float(pts_2d_mm[:, 0].max() - pts_2d_mm[:, 0].min())
+    height = float(pts_2d_mm[:, 1].max() - pts_2d_mm[:, 1].min())
+
+    return {
+        "contour": contour_pts if isinstance(contour_pts, list) else contour_pts.tolist(),
+        "girth_mm": girth,
+        "width_mm": round(width, 1),
+        "height_mm": round(height, 1),
+    }
+
+
+def _order_boundary_points(pts_2d_mm):
+    """Extract ordered boundary points from a 2D point set using alpha hull."""
+    if len(pts_2d_mm) < 6:
+        return None
+    try:
+        pts_m = pts_2d_mm / 1000  # back to metres for Delaunay
+        tri = Delaunay(pts_m)
+        edge_count = {}
+        for simplex in tri.simplices:
+            p = pts_m[simplex]
+            ax, ay = p[0]; bx, by = p[1]; cx, cy = p[2]
+            D = 2.0 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
+            if abs(D) < 1e-14:
+                continue
+            ux = ((ax**2 + ay**2) * (by - cy) +
+                  (bx**2 + by**2) * (cy - ay) +
+                  (cx**2 + cy**2) * (ay - by)) / D
+            uy = ((ax**2 + ay**2) * (cx - bx) +
+                  (bx**2 + by**2) * (ax - cx) +
+                  (cx**2 + cy**2) * (bx - ax)) / D
+            R = np.sqrt((ax - ux) ** 2 + (ay - uy) ** 2)
+            if R > 0.010:
+                continue
+            for i, j in [(0, 1), (1, 2), (2, 0)]:
+                edge = (min(simplex[i], simplex[j]), max(simplex[i], simplex[j]))
+                edge_count[edge] = edge_count.get(edge, 0) + 1
+
+        boundary_edges = [e for e, c in edge_count.items() if c == 1]
+        if len(boundary_edges) < 3:
+            return None
+
+        # Order boundary edges into a connected loop
+        adj = {}
+        for a, b in boundary_edges:
+            adj.setdefault(a, []).append(b)
+            adj.setdefault(b, []).append(a)
+
+        ordered = [boundary_edges[0][0]]
+        visited = {ordered[0]}
+        current = ordered[0]
+        for _ in range(len(boundary_edges)):
+            neighbors = adj.get(current, [])
+            next_pt = None
+            for n in neighbors:
+                if n not in visited:
+                    next_pt = n
+                    break
+            if next_pt is None:
+                break
+            ordered.append(next_pt)
+            visited.add(next_pt)
+            current = next_pt
+
+        # Return ordered contour points in mm, rounded to 0.1mm
+        return [[round(float(pts_2d_mm[i][0]), 1), round(float(pts_2d_mm[i][1]), 1)]
+                for i in ordered]
+    except Exception:
+        return None
+
+
+def extract_cross_sections(aligned, centers, x_positions):
+    """Extract cross-section contours at all 6 standardized measurement levels."""
+    sections = {}
+    for name, frac in CROSS_SECTION_LEVELS:
+        cs = extract_cross_section_contour(aligned, frac, centers, x_positions)
+        if cs is not None:
+            sections[name] = {
+                "level_frac": frac,
+                **cs,
+            }
+    return sections
+
+
 # ─── 9. Ramanujan ellipse fallback ────────────────────────────────────────────
 
 def ellipse_girth_mm(a_mm, b_mm):
@@ -486,16 +636,21 @@ def measure_foot(point_cloud: list[dict]) -> dict:
 
     # Step 9: Alpha-hull cross-section girths (5 mm band) -- IMPROVED
     #   Fractions along foot length (0 = toe, 1 = heel):
-    #     ball    ~40%  -- widest metatarsal region
-    #     waist   ~45%  -- narrowing just behind the ball
-    #     instep  ~60%  -- arch / instep
-    #     heel    ~85%  -- heel cup
-    #     ankle   ~88%  -- just above the heel / lower ankle
+    #     Ferse   ~15%  -- heel region
+    #     Gewölbe ~30%  -- arch / vault
+    #     Ballen  ~40%  -- widest metatarsal region
+    #     Taille  ~45%  -- narrowing just behind the ball
+    #     Rist    ~60%  -- instep
+    #     Knöchel ~88%  -- just above the heel / lower ankle
+    #     heel    ~85%  -- heel cup (legacy)
     ball_girth   = girth_perpendicular(aligned, 0.40, centers, x_positions, band_m=0.005)
     waist_girth  = girth_perpendicular(aligned, 0.45, centers, x_positions, band_m=0.005)
     instep_girth = girth_perpendicular(aligned, 0.60, centers, x_positions, band_m=0.005)
     heel_girth   = girth_perpendicular(aligned, 0.85, centers, x_positions, band_m=0.005)
     ankle_girth  = girth_perpendicular(aligned, 0.88, centers, x_positions, band_m=0.005)
+
+    # Step 9c: Extract cross-section contour geometries at 6 standardized levels
+    cross_sections = extract_cross_sections(aligned, centers, x_positions)
 
     # Step 9b: Arch height — minimum Z in medial arch region (30-65% of length)
     x_min, x_max = np.percentile(aligned[:, 0], [0.5, 99.5])
@@ -520,6 +675,9 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     if ankle_girth  is None: ankle_girth  = ellipse_girth_mm(width_mm * 0.35,     height_mm * 0.45)
 
     # Step 10: Assemble raw result
+    # Convert aligned point cloud to mm for storage (rounded to 0.1mm)
+    aligned_mm = (aligned * 1000).round(1)
+
     result = {
         "length":          length_mm,
         "width":           width_mm,
@@ -533,6 +691,8 @@ def measure_foot(point_cloud: list[dict]) -> dict:
         "point_count":     len(foot_pts),
         "source":          "lidar",
         "pca_regularized": False,
+        "cross_sections":  cross_sections,
+        "point_cloud_mm":  aligned_mm.tolist(),
     }
 
     # Step 11: Optional PCA shape-model regularization
