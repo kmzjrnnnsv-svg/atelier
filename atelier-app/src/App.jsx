@@ -43,6 +43,7 @@ import MFASetup      from './screens/cms/MFASetup'
 import BankSettings  from './screens/cms/BankSettings'
 import EmailSettings from './screens/cms/EmailSettings'
 import EmailTemplatesPanel from './screens/cms/EmailTemplatesPanel'
+import LastSettings from './screens/cms/LastSettings'
 
 // Routes where the global bottom nav should NOT appear
 const NO_NAV_PATHS = ['/login', '/register', '/scan', '/customize', '/settings']
@@ -79,6 +80,7 @@ function AppRoutes() {
             <Route path="bank"     element={<AdminRoute><BankSettings /></AdminRoute>} />
             <Route path="email"    element={<AdminRoute><EmailSettings /></AdminRoute>} />
             <Route path="email-templates" element={<EmailTemplatesPanel />} />
+            <Route path="leisten"       element={<LastSettings />} />
           </Route>
         </Routes>
       </div>
