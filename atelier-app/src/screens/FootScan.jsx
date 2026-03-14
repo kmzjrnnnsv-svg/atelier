@@ -528,6 +528,17 @@ export default function FootScan() {
   // ── Shoe last export state ──
   const [lastShoeType, setLastShoeType] = useState('oxford')
   const [lastFormat,   setLastFormat]   = useState('stl')
+  const [shoeTypeSettings, setShoeTypeSettings] = useState(null)  // CMS-configured presets
+
+  // Load shoe type settings from CMS when result screen shows
+  useEffect(() => {
+    if (phase !== 'result' || shoeTypeSettings) return
+    apiFetch('/api/scans/shoe-types').then(data => {
+      const map = {}
+      for (const t of data) map[t.shoe_type] = t
+      setShoeTypeSettings(map)
+    }).catch(() => {})
+  }, [phase]) // eslint-disable-line
 
   // ── Camera ──
   const startCam = useCallback(async () => {
@@ -1419,7 +1430,8 @@ export default function FootScan() {
                                   heel_girth: m.heel_girth, ankle_girth: m.ankle_girth,
                                   crossSections: m.crossSections ?? null,
                                 }
-                                const geo = buildShoeLastGeo(scanData, { shoeType: lastShoeType, side })
+                                const customPreset = shoeTypeSettings?.[lastShoeType] ?? null
+                                const geo = buildShoeLastGeo(scanData, { shoeType: lastShoeType, side, customPreset })
                                 if (lastFormat === 'obj') {
                                   downloadOBJ(geo, result.sizes.eu, side)
                                 } else {
@@ -1456,14 +1468,14 @@ export default function FootScan() {
                                 foot_height: result.right.foot_height, ball_girth: result.right.ball_girth,
                                 instep_girth: result.right.instep_girth, waist_girth: result.right.waist_girth,
                                 heel_girth: result.right.heel_girth, ankle_girth: result.right.ankle_girth },
-                              { shoeType: lastShoeType, side: 'right' }
+                              { shoeType: lastShoeType, side: 'right', customPreset: shoeTypeSettings?.[lastShoeType] ?? null }
                             )
                             const blattL = generateMassblatt(
                               { length: result.left.length, width: result.left.width, arch: result.left.arch,
                                 foot_height: result.left.foot_height, ball_girth: result.left.ball_girth,
                                 instep_girth: result.left.instep_girth, waist_girth: result.left.waist_girth,
                                 heel_girth: result.left.heel_girth, ankle_girth: result.left.ankle_girth },
-                              { shoeType: lastShoeType, side: 'left' }
+                              { shoeType: lastShoeType, side: 'left', customPreset: shoeTypeSettings?.[lastShoeType] ?? null }
                             )
                             const text = JSON.stringify({ rechts: blattR, links: blattL }, null, 2)
                             const blob = new Blob([text], { type: 'application/json' })

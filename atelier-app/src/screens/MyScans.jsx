@@ -249,7 +249,8 @@ function ScanCard({ scan, canDownload }) {
                     key={side}
                     onClick={() => {
                       const scanData = { length: Number(l), width: Number(w), arch: Number(a), foot_height: fh ? Number(fh) : undefined, ball_girth: bg ? Number(bg) : undefined, instep_girth: ig ? Number(ig) : undefined, waist_girth: wg ? Number(wg) : undefined, heel_girth: hg ? Number(hg) : undefined, ankle_girth: ag ? Number(ag) : undefined }
-                      const geo = buildShoeLastGeo(scanData, { shoeType: scan._shoeType ?? 'oxford', side })
+                      const st = scan._shoeType ?? 'oxford'
+                      const geo = buildShoeLastGeo(scanData, { shoeType: st, side, customPreset: shoeTypeSettings?.[st] ?? null })
                       const format = scan._fmt ?? 'stl'
                       if (format === 'obj') downloadOBJ(geo, scan.eu_size, side)
                       else downloadLastSTL(geo, scan.eu_size, side)
@@ -294,6 +295,17 @@ export default function MyScans() {
   const [error,   setError]   = useState(null)
 
   const canDownload = user?.role === 'admin' || user?.role === 'curator'
+  const [shoeTypeSettings, setShoeTypeSettings] = useState(null)
+
+  // Load CMS shoe type settings for export
+  useEffect(() => {
+    if (!canDownload) return
+    apiFetch('/api/scans/shoe-types').then(data => {
+      const map = {}
+      for (const t of data) map[t.shoe_type] = t
+      setShoeTypeSettings(map)
+    }).catch(() => {})
+  }, [canDownload])
 
   const load = () => {
     setLoading(true); setError(null)

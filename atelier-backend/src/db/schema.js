@@ -304,6 +304,27 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_pc_scan ON scan_point_clouds(scan_id);
 
+    CREATE TABLE IF NOT EXISTS shoe_type_settings (
+      shoe_type        TEXT PRIMARY KEY,
+      name             TEXT    NOT NULL,
+      zugabe_mm        REAL    NOT NULL DEFAULT 0,
+      toe_extension_mm REAL    NOT NULL DEFAULT 0,
+      heel_pitch_mm    REAL    NOT NULL DEFAULT 0,
+      instep_raise_mm  REAL    NOT NULL DEFAULT 0,
+      shank_spring_mm  REAL    NOT NULL DEFAULT 0,
+      width_ease_mm    REAL    NOT NULL DEFAULT 0,
+      girth_ease_mm    REAL    NOT NULL DEFAULT 0,
+      updated_by       INTEGER REFERENCES users(id),
+      updated_at       TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT OR IGNORE INTO shoe_type_settings (shoe_type, name) VALUES
+      ('oxford',  'Oxford / Halbschuh'),
+      ('derby',   'Derby / Blücher'),
+      ('stiefel', 'Stiefel / Boot'),
+      ('sneaker', 'Sneaker / Sportschuh'),
+      ('pumps',   'Pumps / Damenschuh'),
+      ('sandale', 'Sandale / Pantolette');
+
     CREATE TABLE IF NOT EXISTS scan_cross_sections (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       scan_id     INTEGER NOT NULL REFERENCES foot_scans(id) ON DELETE CASCADE,

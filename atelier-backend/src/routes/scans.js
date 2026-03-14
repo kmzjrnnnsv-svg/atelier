@@ -712,6 +712,66 @@ router.post('/photogrammetry', authenticate, async (req, res) => {
   }
 })
 
+// ─── Phase 5: Shoe Type Settings (Leisten-Parameter) ─────────────────────
+// GET /api/scans/shoe-types — list all shoe type settings (any authenticated user)
+router.get('/shoe-types', authenticate, (req, res) => {
+  const rows = getDb().prepare('SELECT * FROM shoe_type_settings ORDER BY shoe_type').all()
+  res.json(rows)
+})
+
+// PUT /api/scans/shoe-types/:type — update shoe type settings (admin/curator only)
+router.put('/shoe-types/:type', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const { type } = req.params
+  const { name, zugabe_mm, toe_extension_mm, heel_pitch_mm,
+          instep_raise_mm, shank_spring_mm, width_ease_mm, girth_ease_mm } = req.body
+
+  const db = getDb()
+  const existing = db.prepare('SELECT shoe_type FROM shoe_type_settings WHERE shoe_type = ?').get(type)
+
+  if (existing) {
+    db.prepare(`
+      UPDATE shoe_type_settings SET
+        name = COALESCE(?, name),
+        zugabe_mm = COALESCE(?, zugabe_mm),
+        toe_extension_mm = COALESCE(?, toe_extension_mm),
+        heel_pitch_mm = COALESCE(?, heel_pitch_mm),
+        instep_raise_mm = COALESCE(?, instep_raise_mm),
+        shank_spring_mm = COALESCE(?, shank_spring_mm),
+        width_ease_mm = COALESCE(?, width_ease_mm),
+        girth_ease_mm = COALESCE(?, girth_ease_mm),
+        updated_by = ?,
+        updated_at = datetime('now')
+      WHERE shoe_type = ?
+    `).run(
+      name ?? null, zugabe_mm ?? null, toe_extension_mm ?? null,
+      heel_pitch_mm ?? null, instep_raise_mm ?? null,
+      shank_spring_mm ?? null, width_ease_mm ?? null,
+      girth_ease_mm ?? null, req.user.id, type
+    )
+  } else {
+    db.prepare(`
+      INSERT INTO shoe_type_settings (shoe_type, name, zugabe_mm, toe_extension_mm,
+        heel_pitch_mm, instep_raise_mm, shank_spring_mm, width_ease_mm, girth_ease_mm, updated_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      type, name ?? type, zugabe_mm ?? 0, toe_extension_mm ?? 0,
+      heel_pitch_mm ?? 0, instep_raise_mm ?? 0,
+      shank_spring_mm ?? 0, width_ease_mm ?? 0, girth_ease_mm ?? 0, req.user.id
+    )
+  }
+
+  const row = db.prepare('SELECT * FROM shoe_type_settings WHERE shoe_type = ?').get(type)
+  res.json(row)
+})
+
+// DELETE /api/scans/shoe-types/:type — delete custom shoe type (admin only)
+router.delete('/shoe-types/:type', authenticate, requireRole('admin'), (req, res) => {
+  const db = getDb()
+  const result = db.prepare('DELETE FROM shoe_type_settings WHERE shoe_type = ?').run(req.params.type)
+  if (result.changes === 0) return res.status(404).json({ error: 'Schuhtyp nicht gefunden' })
+  res.json({ ok: true })
+})
+
 // ─── Phase 5: Store point cloud + cross-sections ─────────────────────────
 // POST /api/scans/:id/point-cloud
 // Stores the PCA-aligned point cloud from LiDAR or photogrammetry.
