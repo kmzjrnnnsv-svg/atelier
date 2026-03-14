@@ -143,8 +143,8 @@ function ScanCard({ scan, canDownload }) {
       {/* Expanded detail */}
       {expanded && (
         <div className="px-4 pb-4 border-t border-white/5">
-          {/* Measurements table */}
-          <div className="bg-black/30 rounded-xl overflow-hidden mt-3 mb-3">
+          {/* Measurements table — basic dimensions */}
+          <div className="bg-black/30 rounded-xl overflow-hidden mt-3 mb-1">
             <div className="grid grid-cols-4 px-3 py-2 border-b border-white/5">
               {['', 'Länge', 'Breite', 'Gewölbe'].map(h => (
                 <span key={h} className="text-[8px] uppercase tracking-widest text-gray-600 text-center first:text-left">
@@ -164,6 +164,37 @@ function ScanCard({ scan, canDownload }) {
               </div>
             ))}
           </div>
+
+          {/* Girth measurements (if available) */}
+          {(scan.right_ball_girth || scan.left_ball_girth) && (
+            <div className="bg-black/30 rounded-xl overflow-hidden mb-3">
+              <div className="px-3 py-2 border-b border-white/5">
+                <span className="text-[8px] uppercase tracking-widest text-gray-600">Umfänge (mm)</span>
+              </div>
+              {[
+                { label: 'Rechts', ball: scan.right_ball_girth, instep: scan.right_instep_girth, heel: scan.right_heel_girth, waist: scan.right_waist_girth, ankle: scan.right_ankle_girth },
+                { label: 'Links',  ball: scan.left_ball_girth,  instep: scan.left_instep_girth,  heel: scan.left_heel_girth,  waist: scan.left_waist_girth,  ankle: scan.left_ankle_girth  },
+              ].map(({ label, ball, instep, heel, waist, ankle }) => (
+                <div key={label} className="px-3 py-2 border-b border-white/5 last:border-0">
+                  <span className="text-[10px] font-semibold text-white block mb-1">{label}</span>
+                  <div className="grid grid-cols-5 gap-1">
+                    {[
+                      { name: 'Ballen', v: ball },
+                      { name: 'Taille', v: waist },
+                      { name: 'Rist',   v: instep },
+                      { name: 'Ferse',  v: heel },
+                      { name: 'Knöchel', v: ankle },
+                    ].map(({ name, v }) => (
+                      <div key={name} className="text-center">
+                        <span className="text-[7px] uppercase tracking-widest text-gray-600 block">{name}</span>
+                        <span className="text-[10px] text-gray-400">{v != null ? Number(v).toFixed(1) : '—'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* 3D previews */}
           <div className="grid grid-cols-2 gap-2 mb-3">
