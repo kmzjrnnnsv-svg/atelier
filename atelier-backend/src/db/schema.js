@@ -76,7 +76,7 @@ export function runMigrations(db) {
     CREATE TABLE IF NOT EXISTS foot_scans (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      reference_type  TEXT    NOT NULL DEFAULT 'card',   -- 'card' | 'a4'
+      reference_type  TEXT    NOT NULL DEFAULT 'card',   -- 'card' | 'a4' | 'lidar'
       ppm             REAL,                               -- pixels per mm from calibration
       right_length    REAL    NOT NULL,
       right_width     REAL    NOT NULL,
@@ -214,6 +214,9 @@ export function runMigrations(db) {
     `ALTER TABLE foot_scans ADD COLUMN left_heel_girth    REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_waist_girth   REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_ankle_girth   REAL`,
+    // foot_scans — foot height (needed for accurate girth recomputation)
+    `ALTER TABLE foot_scans ADD COLUMN right_foot_height  REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_foot_height   REAL`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
