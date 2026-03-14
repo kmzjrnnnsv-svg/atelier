@@ -27,67 +27,75 @@ import * as THREE from 'three'
 
 // ─── Shoe Type Presets ──────────────────────────────────────────────────────
 
+// Default presets: all values 0mm — Admin/Curator configures via CMS
 export const SHOE_TYPES = {
   oxford: {
     name: 'Oxford / Halbschuh',
-    zugabe_mm: 10,           // total length allowance
-    toe_extension_mm: 8,     // beyond longest toe
-    heel_pitch_mm: 15,       // heel elevation
-    instep_raise_mm: 3,      // instep height addition
-    shank_spring_mm: 5,      // bottom curvature at midfoot
-    width_ease_mm: 3,        // width comfort allowance
-    girth_ease_mm: 8,        // girth comfort allowance
+    zugabe_mm: 0,
+    toe_extension_mm: 0,
+    heel_pitch_mm: 0,
+    instep_raise_mm: 0,
+    shank_spring_mm: 0,
+    width_ease_mm: 0,
+    girth_ease_mm: 0,
   },
   derby: {
     name: 'Derby / Blücher',
-    zugabe_mm: 12,
-    toe_extension_mm: 10,
-    heel_pitch_mm: 15,
-    instep_raise_mm: 4,
-    shank_spring_mm: 5,
-    width_ease_mm: 4,
-    girth_ease_mm: 10,
+    zugabe_mm: 0,
+    toe_extension_mm: 0,
+    heel_pitch_mm: 0,
+    instep_raise_mm: 0,
+    shank_spring_mm: 0,
+    width_ease_mm: 0,
+    girth_ease_mm: 0,
   },
   stiefel: {
     name: 'Stiefel / Boot',
-    zugabe_mm: 12,
-    toe_extension_mm: 10,
-    heel_pitch_mm: 20,
-    instep_raise_mm: 5,
-    shank_spring_mm: 6,
-    width_ease_mm: 5,
-    girth_ease_mm: 12,
+    zugabe_mm: 0,
+    toe_extension_mm: 0,
+    heel_pitch_mm: 0,
+    instep_raise_mm: 0,
+    shank_spring_mm: 0,
+    width_ease_mm: 0,
+    girth_ease_mm: 0,
   },
   sneaker: {
     name: 'Sneaker / Sportschuh',
-    zugabe_mm: 15,
-    toe_extension_mm: 12,
-    heel_pitch_mm: 10,
-    instep_raise_mm: 5,
-    shank_spring_mm: 3,
-    width_ease_mm: 5,
-    girth_ease_mm: 15,
+    zugabe_mm: 0,
+    toe_extension_mm: 0,
+    heel_pitch_mm: 0,
+    instep_raise_mm: 0,
+    shank_spring_mm: 0,
+    width_ease_mm: 0,
+    girth_ease_mm: 0,
   },
   pumps: {
     name: 'Pumps / Damenschuh',
-    zugabe_mm: 5,
-    toe_extension_mm: 5,
-    heel_pitch_mm: 45,       // high heel
-    instep_raise_mm: 2,
-    shank_spring_mm: 8,
-    width_ease_mm: 2,
-    girth_ease_mm: 5,
+    zugabe_mm: 0,
+    toe_extension_mm: 0,
+    heel_pitch_mm: 0,
+    instep_raise_mm: 0,
+    shank_spring_mm: 0,
+    width_ease_mm: 0,
+    girth_ease_mm: 0,
   },
   sandale: {
     name: 'Sandale / Pantolette',
-    zugabe_mm: 5,
-    toe_extension_mm: 3,
-    heel_pitch_mm: 8,
-    instep_raise_mm: 2,
-    shank_spring_mm: 2,
-    width_ease_mm: 2,
-    girth_ease_mm: 5,
+    zugabe_mm: 0,
+    toe_extension_mm: 0,
+    heel_pitch_mm: 0,
+    instep_raise_mm: 0,
+    shank_spring_mm: 0,
+    width_ease_mm: 0,
+    girth_ease_mm: 0,
   },
+}
+
+// Merge CMS-configured values over defaults
+export function mergePreset(shoeType, cmsValues) {
+  const base = SHOE_TYPES[shoeType] ?? SHOE_TYPES.oxford
+  if (!cmsValues) return base
+  return { ...base, ...cmsValues }
 }
 
 // ─── Smooth-step helpers ────────────────────────────────────────────────────
@@ -139,6 +147,7 @@ function crossSectionFromContour(contourPts, easeWidth, easeHeight) {
  * @param {object} options
  * @param {string} [options.shoeType='oxford'] - Key from SHOE_TYPES
  * @param {string} [options.side='right'] - 'right' or 'left'
+ * @param {object} [options.customPreset] - CMS-configured values (overrides defaults)
  * @returns {THREE.BufferGeometry}
  */
 export function buildShoeLastGeo(scanData, options = {}) {
@@ -152,7 +161,7 @@ export function buildShoeLastGeo(scanData, options = {}) {
 
   const shoeType = options.shoeType ?? 'oxford'
   const side = options.side ?? 'right'
-  const preset = SHOE_TYPES[shoeType] ?? SHOE_TYPES.oxford
+  const preset = mergePreset(shoeType, options.customPreset)
 
   // Last dimensions with Zugabe
   const lastLen = footLen + preset.zugabe_mm + preset.toe_extension_mm
@@ -465,7 +474,7 @@ export function downloadOBJ(geo, euSize, side, prefix = 'leisten') {
 export function generateMassblatt(scanData, options = {}) {
   const shoeType = options.shoeType ?? 'oxford'
   const side = options.side ?? 'right'
-  const preset = SHOE_TYPES[shoeType] ?? SHOE_TYPES.oxford
+  const preset = mergePreset(shoeType, options.customPreset)
 
   const {
     length = 265, width = 95,
