@@ -26,6 +26,7 @@ import Checkout    from './screens/Checkout'
 import HelpSupport from './screens/HelpSupport'
 import LegalDoc    from './screens/LegalDoc'
 import MyScans     from './screens/MyScans'
+import TestDie     from './screens/TestDie'
 
 import CMSLayout from './screens/cms/CMSLayout'
 import CMSDashboard from './screens/cms/CMSDashboard'
@@ -108,6 +109,7 @@ function AppRoutes() {
           <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
           <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
           <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
+          <Route path="/test-die"    element={<TestDie />} />
           <Route path="*"            element={<NotFound />} />
         </Routes>
       </div>
