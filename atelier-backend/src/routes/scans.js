@@ -587,7 +587,8 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     // Scan-ready fields:
     [`${side ?? 'right'}_length`]:       measurements.length,
     [`${side ?? 'right'}_width`]:        measurements.width,
-    [`${side ?? 'right'}_arch`]:         measurements.height,
+    [`${side ?? 'right'}_arch`]:         measurements.arch_height ?? null,
+    [`${side ?? 'right'}_foot_height`]:  measurements.height,
     [`${side ?? 'right'}_ball_girth`]:   measurements.ball_girth,
     [`${side ?? 'right'}_instep_girth`]: measurements.instep_girth,
     [`${side ?? 'right'}_waist_girth`]:  measurements.waist_girth,
