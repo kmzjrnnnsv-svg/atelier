@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 
 const DOT_POSITIONS = {
   1: [[50, 50]],
-  2: [[25, 25], [75, 75]],
+  2: [[75, 25], [25, 75]],
   3: [[25, 25], [50, 50], [75, 75]],
   4: [[25, 25], [75, 25], [25, 75], [75, 75]],
   5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
@@ -11,7 +11,7 @@ const DOT_POSITIONS = {
 
 function DieFace({ value, size = 120, color = '#1a1a2e' }) {
   const dots = DOT_POSITIONS[value] || []
-  const r = size * 0.08
+  const r = 8
 
   return (
     <svg width={size} height={size} viewBox="0 0 100 100">
@@ -34,12 +34,12 @@ export default function TestDie() {
     // Animate through random values
     let count = 0
     const interval = setInterval(() => {
-      setDice(prev => prev.map(() => Math.ceil(Math.random() * 6)))
+      setDice(prev => prev.map(() => Math.floor(Math.random() * 6) + 1))
       count++
       if (count >= 8) {
         clearInterval(interval)
         setDice(prev => {
-          const final = prev.map(() => Math.ceil(Math.random() * 6))
+          const final = prev.map(() => Math.floor(Math.random() * 6) + 1)
           setHistory(h => [{ values: final, total: final.reduce((a, b) => a + b, 0), time: new Date() }, ...h].slice(0, 20))
           return final
         })
