@@ -618,7 +618,11 @@ export default function FootScan() {
   const startDemo = useCallback(() => {
     stopCam(); setCamStatus('idle')
     setFrames({ rightTop: null, rightSide: null, leftTop: null, leftSide: null })
-    setPhase('processing')
+    // Demo mode: generate sample values but mark as demo so they won't be saved
+    const demoRight = { length: 260.0, width: 95.0, arch: 15.0, foot_height: 65.0, ball_girth: null, instep_girth: null, heel_girth: null, waist_girth: null, ankle_girth: null }
+    const demoLeft  = { length: 258.0, width: 94.0, arch: 14.5, foot_height: 64.0, ball_girth: null, instep_girth: null, heel_girth: null, waist_girth: null, ankle_girth: null }
+    setResult({ right: demoRight, left: demoLeft, sizes: sizeFromLength(259), usedAI: false, isDemo: true, accuracy: 0 })
+    setProgress(100)
   }, [stopCam])
 
   // ── Capture handlers ──
@@ -704,7 +708,8 @@ export default function FootScan() {
           const right = {
             length:       r1(data.right_length      ?? 255),
             width:        r1(data.right_width        ?? 92),
-            arch:         r1(data.right_arch_height  ?? data.right_foot_height ?? 14),
+            arch:         data.right_arch_height != null ? r1(data.right_arch_height) : null,
+            foot_height:  data.right_foot_height != null ? r1(data.right_foot_height) : null,
             ball_girth:   data.right_ball_girth   != null ? r1(data.right_ball_girth)   : null,
             instep_girth: data.right_instep_girth != null ? r1(data.right_instep_girth) : null,
             heel_girth:   data.right_heel_girth   != null ? r1(data.right_heel_girth)   : null,
@@ -714,7 +719,8 @@ export default function FootScan() {
           const left = {
             length:       r1(data.left_length       ?? 253),
             width:        r1(data.left_width         ?? 91),
-            arch:         r1(data.left_arch_height   ?? data.left_foot_height ?? 13),
+            arch:         data.left_arch_height  != null ? r1(data.left_arch_height)  : null,
+            foot_height:  data.left_foot_height  != null ? r1(data.left_foot_height)  : null,
             ball_girth:   data.left_ball_girth   != null ? r1(data.left_ball_girth)   : null,
             instep_girth: data.left_instep_girth != null ? r1(data.left_instep_girth) : null,
             heel_girth:   data.left_heel_girth   != null ? r1(data.left_heel_girth)   : null,
@@ -722,8 +728,9 @@ export default function FootScan() {
             ankle_girth:  data.left_ankle_girth  != null ? r1(data.left_ankle_girth)  : null,
           }
           const avgLen = (right.length + left.length) / 2
+          const cvSuccess = data._cv_right || data._cv_left
           setResult({ right, left, sizes: sizeFromLength(avgLen), usedAI: true,
-                      accuracy: 99.2, source: 'photogrammetry' })
+                      accuracy: cvSuccess ? 98.5 : 96.0, source: 'photogrammetry' })
           setProgress(100)
         }
       } catch (err) {
@@ -746,16 +753,18 @@ export default function FootScan() {
     let cancelled = false, ambientTimer = null
 
     async function process() {
-      let rightM, leftM, archRight = 14, archLeft = 13, usedAI = false
+      let rightM, leftM, archRight = null, archLeft = null, usedAI = false
+      let footHeightRight = null, footHeightLeft = null
       let girthRight = {}, girthLeft = {}
 
       // ── LiDAR fast path ──────────────────────────────────────────────────────
       if (lidarData.right && lidarData.left) {
         const R = lidarData.right, L = lidarData.left
         const right = {
-          length: r1(R.right_length ?? R.raw?.length ?? 255),
-          width:  r1(R.right_width  ?? R.raw?.width  ?? 92),
-          arch:   r1(R.right_arch   ?? R.raw?.height ?? 14),
+          length:       r1(R.right_length ?? R.raw?.length ?? 255),
+          width:        r1(R.right_width  ?? R.raw?.width  ?? 92),
+          arch:         R.right_arch != null ? r1(R.right_arch) : null,
+          foot_height:  R.right_foot_height != null ? r1(R.right_foot_height) : (R.raw?.height != null ? r1(R.raw.height) : null),
           ball_girth:   R.right_ball_girth   ?? null,
           instep_girth: R.right_instep_girth ?? null,
           heel_girth:   R.right_heel_girth   ?? null,
@@ -763,9 +772,10 @@ export default function FootScan() {
           ankle_girth:  R.right_ankle_girth  ?? null,
         }
         const left = {
-          length: r1(L.left_length ?? L.raw?.length ?? 253),
-          width:  r1(L.left_width  ?? L.raw?.width  ?? 91),
-          arch:   r1(L.left_arch   ?? L.raw?.height ?? 13),
+          length:       r1(L.left_length ?? L.raw?.length ?? 253),
+          width:        r1(L.left_width  ?? L.raw?.width  ?? 91),
+          arch:         L.left_arch != null ? r1(L.left_arch) : null,
+          foot_height:  L.left_foot_height != null ? r1(L.left_foot_height) : (L.raw?.height != null ? r1(L.raw.height) : null),
           ball_girth:   L.left_ball_girth   ?? null,
           instep_girth: L.left_instep_girth ?? null,
           heel_girth:   L.left_heel_girth   ?? null,
@@ -803,8 +813,10 @@ export default function FootScan() {
           clearInterval(ambientTimer); setProgress(82); setAiStatus('Schuhgröße wird berechnet…')
           rightM     = { length: ai.right_length, width: ai.right_width }
           leftM      = { length: ai.left_length,  width: ai.left_width  }
-          archRight  = ai.right_arch_height ?? 14
-          archLeft   = ai.left_arch_height  ?? 13
+          archRight       = ai.right_arch_height ?? null
+          archLeft        = ai.left_arch_height  ?? null
+          footHeightRight = ai.right_foot_height ?? null
+          footHeightLeft  = ai.left_foot_height  ?? null
           girthRight = {
             ball:   ai.right_ball_girth   ?? null,
             instep: ai.right_instep_girth ?? null,
@@ -838,7 +850,9 @@ export default function FootScan() {
 
       if (cancelled) return
       const right = {
-        length: r1(rightM.length), width: r1(rightM.width), arch: r1(archRight),
+        length:       r1(rightM.length), width: r1(rightM.width),
+        arch:         archRight != null ? r1(archRight) : null,
+        foot_height:  footHeightRight != null ? r1(footHeightRight) : null,
         ball_girth:   girthRight.ball   ? r1(girthRight.ball)   : null,
         instep_girth: girthRight.instep ? r1(girthRight.instep) : null,
         heel_girth:   girthRight.heel   ? r1(girthRight.heel)   : null,
@@ -846,7 +860,9 @@ export default function FootScan() {
         ankle_girth:  girthRight.ankle  ? r1(girthRight.ankle)  : null,
       }
       const left = {
-        length: r1(leftM.length), width: r1(leftM.width), arch: r1(archLeft),
+        length:       r1(leftM.length), width: r1(leftM.width),
+        arch:         archLeft != null ? r1(archLeft) : null,
+        foot_height:  footHeightLeft != null ? r1(footHeightLeft) : null,
         ball_girth:   girthLeft.ball   ? r1(girthLeft.ball)   : null,
         instep_girth: girthLeft.instep ? r1(girthLeft.instep) : null,
         heel_girth:   girthLeft.heel   ? r1(girthLeft.heel)   : null,
@@ -854,7 +870,9 @@ export default function FootScan() {
         ankle_girth:  girthLeft.ankle  ? r1(girthLeft.ankle)  : null,
       }
       setProgress(100)
-      setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI })
+      const cvSuccess = usedAI
+      setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI,
+                  accuracy: cvSuccess ? 97.5 : 85.0 })
     }
 
     process()
@@ -865,13 +883,17 @@ export default function FootScan() {
 
   // ── Auto-save + Training-Images Upload ──
   useEffect(() => {
-    if (phase !== 'result' || !result || saved) return
+    if (phase !== 'result' || !result || saved || result.isDemo) return
     async function save() {
       try {
         const payload = {
           reference_type: result.source === 'lidar' ? 'lidar' : 'a4',
-          right_length: result.right.length, right_width: result.right.width, right_arch: result.right.arch,
-          left_length:  result.left.length,  left_width:  result.left.width,  left_arch:  result.left.arch,
+          right_length: result.right.length, right_width: result.right.width,
+          right_arch: result.right.arch ?? 14,
+          left_length:  result.left.length,  left_width:  result.left.width,
+          left_arch:  result.left.arch ?? 13,
+          ...(result.right.foot_height  != null && { right_foot_height:  result.right.foot_height }),
+          ...(result.left.foot_height   != null && { left_foot_height:   result.left.foot_height }),
           ...(result.right.ball_girth   != null && { right_ball_girth:   result.right.ball_girth }),
           ...(result.right.instep_girth != null && { right_instep_girth: result.right.instep_girth }),
           ...(result.right.heel_girth   != null && { right_heel_girth:   result.right.heel_girth }),
@@ -883,7 +905,7 @@ export default function FootScan() {
           ...(result.left.waist_girth   != null && { left_waist_girth:   result.left.waist_girth }),
           ...(result.left.ankle_girth   != null && { left_ankle_girth:   result.left.ankle_girth }),
           eu_size: result.sizes.eu, uk_size: String(result.sizes.uk), us_size: String(result.sizes.us),
-          accuracy: result.source === 'lidar' ? 99.9 : result.usedAI ? 99.5 : 85.0,
+          accuracy: result.accuracy ?? (result.source === 'lidar' ? 99.5 : result.usedAI ? 97.5 : 85.0),
         }
         const saved_scan = await apiFetch('/api/scans', { method: 'POST', body: JSON.stringify(payload) })
         setSaved(true); refreshScan()
@@ -1241,7 +1263,12 @@ export default function FootScan() {
                 <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Deine Schuhgröße</p>
                 <p className="text-8xl font-bold text-white leading-none mb-1">{result.sizes.eu}</p>
                 <p className="text-sm text-gray-400 mb-4">EU · UK {result.sizes.uk} · US {result.sizes.us}</p>
-                {result.usedAI && (
+                {result.isDemo ? (
+                  <div className="inline-flex items-center gap-1.5 bg-amber-500/20 border border-amber-500/30 px-3 py-1.5 rounded-full">
+                    <span className="text-sm">⚠️</span>
+                    <span className="text-xs text-amber-300 font-medium">Demo-Modus · Beispielwerte · wird nicht gespeichert</span>
+                  </div>
+                ) : result.usedAI && (
                   <div className="inline-flex items-center gap-1.5 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full">
                     <span className="text-sm">✨</span>
                     <span className="text-xs text-gray-300 font-medium">Claude KI · 4-Foto A4-Scan</span>
@@ -1289,7 +1316,7 @@ export default function FootScan() {
                           } ${i >= 2 ? 'border-t border-gray-100' : ''}`}>
                             <span className="text-xs text-gray-400">{lbl}</span>
                             <span className="text-sm font-bold text-gray-900">
-                              {value != null ? `${Number(value).toFixed(0)} mm` : '—'}
+                              {value != null ? `${Number(value).toFixed(1)} mm` : '—'}
                             </span>
                           </div>
                         ))}
@@ -1304,11 +1331,11 @@ export default function FootScan() {
                   <div className="rounded-2xl overflow-hidden" style={{ background: '#111111' }}>
                     <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
                       <div>
-                        <FootMini3D length={result.right.length} width={result.right.width} arch={result.right.arch} label="Right" />
+                        <FootMini3D length={result.right.length} width={result.right.width} arch={result.right.arch ?? 14} label="Right" />
                         <p className="text-center text-[10px] text-gray-500 py-2">Rechts</p>
                       </div>
                       <div>
-                        <FootMini3D length={result.left.length} width={result.left.width} arch={result.left.arch} label="Left" />
+                        <FootMini3D length={result.left.length} width={result.left.width} arch={result.left.arch ?? 13} label="Left" />
                         <p className="text-center text-[10px] text-gray-500 py-2">Links</p>
                       </div>
                     </div>
