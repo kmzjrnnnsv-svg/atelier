@@ -175,19 +175,38 @@ def detect_a4(arr: np.ndarray) -> dict | None:
 
     mask = labeled_arr == best_label
 
+    # Bounding box for exclusion mask (used by foot detection)
     rows_any = mask.any(axis=1)
     cols_any = mask.any(axis=0)
     y0, y1 = int(np.where(rows_any)[0][0]), int(np.where(rows_any)[0][-1])
     x0, x1 = int(np.where(cols_any)[0][0]), int(np.where(cols_any)[0][-1])
 
-    w_px = x1 - x0
-    h_px = y1 - y0
-    if w_px < 10 or h_px < 10:
+    # Use minAreaRect to handle rotated A4 paper correctly.
+    # Bounding box overestimates dimensions when A4 is rotated, causing
+    # px_per_mm to be too low → all measurements too large.
+    contour_pts = np.argwhere(mask)  # (row, col) pairs
+    if len(contour_pts) < 10:
+        return None
+    # minAreaRect expects (x, y) = (col, row) as float32
+    rect_pts = contour_pts[:, ::-1].astype(np.float32)  # swap to (col, row)
+    # Compute minimum-area bounding rectangle
+    # Using PCA-based approach since cv2 may not be available
+    mean = rect_pts.mean(axis=0)
+    centered = rect_pts - mean
+    cov = np.cov(centered.T)
+    eigvals, eigvecs = np.linalg.eigh(cov)
+    # Project onto principal axes
+    projected = centered @ eigvecs
+    extent_0 = projected[:, 0].max() - projected[:, 0].min()
+    extent_1 = projected[:, 1].max() - projected[:, 1].min()
+
+    long_px  = max(extent_0, extent_1)
+    short_px = min(extent_0, extent_1)
+
+    if long_px < 10 or short_px < 10:
         return None
 
-    long_px  = max(w_px, h_px)
-    short_px = min(w_px, h_px)
-    ratio    = long_px / short_px
+    ratio = long_px / short_px
 
     # A4 aspect ratio = 297/210 = 1.414  — accept ±25%
     if not (1.414 * 0.75 < ratio < 1.414 * 1.25):
@@ -196,7 +215,10 @@ def detect_a4(arr: np.ndarray) -> dict | None:
     px_per_mm_long  = long_px  / A4_LONG_MM
     px_per_mm_short = short_px / A4_SHORT_MM
     px_per_mm       = (px_per_mm_long + px_per_mm_short) / 2.0
-    is_portrait     = h_px >= w_px   # portrait = long axis is vertical
+
+    w_px = x1 - x0
+    h_px = y1 - y0
+    is_portrait = h_px >= w_px
 
     return {
         'x0': x0, 'y0': y0, 'x1': x1, 'y1': y1,
@@ -272,12 +294,18 @@ def detect_foot_top(arr: np.ndarray, a4: dict) -> dict | None:
     widths = {}
     for frac, name in [(0.40, 'ball'), (0.45, 'waist'), (0.60, 'instep'),
                        (0.85, 'heel'), (0.88, 'ankle')]:
-        row = y0 + int(frac * length_px)
-        row = max(0, min(h - 1, row))
-        row_mask = mask[row, :]
-        cols_on = np.where(row_mask)[0]
-        if len(cols_on) >= 2:
-            widths[name] = int(cols_on[-1] - cols_on[0])
+        # Average width over 5 neighbouring rows for noise robustness
+        # (single-row measurement can be off by several mm due to pixel noise)
+        center_row = y0 + int(frac * length_px)
+        row_widths = []
+        for dr in range(-2, 3):
+            row = max(0, min(h - 1, center_row + dr))
+            row_mask = mask[row, :]
+            cols_on = np.where(row_mask)[0]
+            if len(cols_on) >= 2:
+                row_widths.append(int(cols_on[-1] - cols_on[0]))
+        if row_widths:
+            widths[name] = int(np.median(row_widths))
         else:
             widths[name] = int(x1 - x0)  # fallback: full width
 
@@ -466,6 +494,7 @@ def measure_side(top_b64: str, side_b64: str) -> dict | None:
         'heel_girth':   clamp_girth(heel_girth),
         'ankle_girth':  clamp_girth(ankle_girth),
         'cv_success':   True,
+        'px_per_mm':    pxmm_top,
     }
 
 
@@ -484,12 +513,12 @@ def process_photos(right_top: str, right_side: str,
     right = measure_side(right_top, right_side)
     left  = measure_side(left_top,  left_side)
 
-    # Extract px_per_mm from CV results for ONNX hint
+    # Pass A4 calibration to ONNX model for scale-aware inference
     px_per_mm = 0.0
-    if right and right.get('cv_success'):
-        # Approximate from length: if A4 was detected we can back-calculate
-        # (stored internally, use 0 as safe default for ONNX scale embedding)
-        px_per_mm = 0.0
+    if right and right.get('cv_success') and right.get('px_per_mm'):
+        px_per_mm = right['px_per_mm']
+    elif left and left.get('cv_success') and left.get('px_per_mm'):
+        px_per_mm = left['px_per_mm']
 
     # Phase 3: ONNX model inference (if model available)
     ml = run_onnx_model(right_top, right_side, left_top, left_side, px_per_mm)

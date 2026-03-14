@@ -178,8 +178,8 @@ function mergeResults(cv, cl, side) {
   return {
     length:       okLen(length)  ? rnd(length)  : null,
     width:        okWid(width)   ? rnd(width)   : null,
-    foot_height:  okH(footH)     ? rnd(footH)   : 60,
-    arch_height:  okArch(archHt) ? rnd(archHt)  : 14,
+    foot_height:  okH(height)    ? rnd(height)  : (okH(footH) ? rnd(footH) : null),
+    arch_height:  okArch(archHt) ? rnd(archHt)  : null,
     ball_girth:   computeGirth('ball',   0.85, cl[`${side}_ball_girth`]),
     waist_girth:  computeGirth('waist',  0.80, cl[`${side}_waist_girth`]),
     instep_girth: computeGirth('instep', 0.70, cl[`${side}_instep_girth`]),
@@ -360,7 +360,7 @@ router.get('/training-export', authenticate, requireRole('admin'), (req, res) =>
 })
 
 const saveValidators = [
-  body('reference_type').isIn(['card', 'a4']),
+  body('reference_type').isIn(['card', 'a4', 'lidar']),
   body('ppm').optional().isFloat({ min: 0 }),
   body('right_length').isFloat({ min: 100, max: 400 }),
   body('right_width').isFloat({ min: 50, max: 200 }),
@@ -378,6 +378,8 @@ const saveValidators = [
   body('left_heel_girth').optional().isFloat({ min: 150, max: 500 }),
   body('left_waist_girth').optional().isFloat({ min: 100, max: 450 }),
   body('left_ankle_girth').optional().isFloat({ min: 100, max: 450 }),
+  body('right_foot_height').optional().isFloat({ min: 30, max: 120 }),
+  body('left_foot_height').optional().isFloat({ min: 30, max: 120 }),
   body('eu_size').trim().notEmpty(),
   body('uk_size').trim().notEmpty(),
   body('us_size').trim().notEmpty(),
@@ -394,6 +396,7 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
           left_length, left_width, left_arch,
           right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
           left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+          right_foot_height, left_foot_height,
           eu_size, uk_size, us_size, accuracy, notes } = req.body
 
   const result = getDb().prepare(`
@@ -402,8 +405,9 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
        left_length, left_width, left_arch,
        right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
        left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+       right_foot_height, left_foot_height,
        eu_size, uk_size, us_size, accuracy, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     req.user.id, reference_type, ppm ?? null,
     right_length, right_width, right_arch,
@@ -412,6 +416,7 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
     right_waist_girth ?? null, right_ankle_girth ?? null,
     left_ball_girth  ?? null,  left_instep_girth ?? null,  left_heel_girth ?? null,
     left_waist_girth ?? null,  left_ankle_girth ?? null,
+    right_foot_height ?? null, left_foot_height ?? null,
     eu_size, uk_size, us_size, accuracy, notes ?? null
   )
 
@@ -477,6 +482,8 @@ router.patch(
     body('left_heel_girth').optional().isFloat({ min: 150, max: 500 }),
     body('left_waist_girth').optional().isFloat({ min: 100, max: 450 }),
     body('left_ankle_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('right_foot_height').optional().isFloat({ min: 30, max: 120 }),
+    body('left_foot_height').optional().isFloat({ min: 30, max: 120 }),
     body('validated').optional().isInt({ min: 0, max: 1 }),
   ],
   (req, res) => {
@@ -491,8 +498,10 @@ router.patch(
     const {
       right_length, right_width, right_arch,
       right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+      right_foot_height,
       left_length,  left_width,  left_arch,
       left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+      left_foot_height,
       validated,
     } = req.body
 
@@ -502,8 +511,10 @@ router.patch(
     const fieldMap = {
       right_length, right_width, right_arch,
       right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+      right_foot_height,
       left_length,  left_width,  left_arch,
       left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+      left_foot_height,
     }
     for (const [key, val] of Object.entries(fieldMap)) {
       if (val !== undefined) { updates.push(`${key} = ?`); params.push(val) }
@@ -576,7 +587,8 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     // Scan-ready fields:
     [`${side ?? 'right'}_length`]:       measurements.length,
     [`${side ?? 'right'}_width`]:        measurements.width,
-    [`${side ?? 'right'}_arch`]:         measurements.height,
+    [`${side ?? 'right'}_arch`]:         measurements.arch_height ?? null,
+    [`${side ?? 'right'}_foot_height`]:  measurements.height,
     [`${side ?? 'right'}_ball_girth`]:   measurements.ball_girth,
     [`${side ?? 'right'}_instep_girth`]: measurements.instep_girth,
     [`${side ?? 'right'}_waist_girth`]:  measurements.waist_girth,
