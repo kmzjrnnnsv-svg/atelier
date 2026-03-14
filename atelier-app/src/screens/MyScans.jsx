@@ -19,6 +19,7 @@ import * as THREE from 'three'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import { buildFootGeoAsync, estimateSTLSizeKB, downloadSTL } from '../utils/footSTL'
+import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ } from '../utils/footLast'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(dateStr) {
@@ -216,28 +217,66 @@ function ScanCard({ scan, canDownload }) {
             </div>
           </div>
 
-          {/* STL Download — nur Admin/Curator */}
+          {/* Shoe Last Export — nur Admin/Curator */}
           {canDownload && (
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { side: 'right', label: 'Rechts', l: scan.right_length, w: scan.right_width, a: scan.right_arch },
-                { side: 'left',  label: 'Links',  l: scan.left_length,  w: scan.left_width,  a: scan.left_arch  },
-              ].map(({ side, label, l, w, a }) => (
-                <button
-                  key={side}
-                  onClick={async () => {
-                    const geo = await buildFootGeoAsync(Number(l), Number(w), Number(a), side)
-                    downloadSTL(geo, scan.eu_size, side)
-                  }}
-                  className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5 active:bg-white/10 transition-colors"
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <select
+                  defaultValue="oxford"
+                  onChange={e => { scan._shoeType = e.target.value }}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] text-gray-300"
                 >
-                  <div className="text-left">
-                    <p className="text-[10px] font-bold text-white">{label}</p>
-                    <p className="text-[8px] text-gray-600 mt-0.5">STL · OBJ-Modell</p>
-                  </div>
-                  <Download size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
-                </button>
-              ))}
+                  {Object.entries(SHOE_TYPES).map(([key, { name }]) => (
+                    <option key={key} value={key}>{name}</option>
+                  ))}
+                </select>
+                <div className="flex gap-1">
+                  {['stl', 'obj'].map(fmt => (
+                    <button key={fmt}
+                      onClick={() => { scan._fmt = fmt }}
+                      className="px-2 py-1 rounded text-[9px] font-semibold bg-white/5 border border-white/10 text-gray-400 hover:bg-teal-500/20 hover:text-teal-300">
+                      .{fmt.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { side: 'right', label: 'Leisten Rechts', l: scan.right_length, w: scan.right_width, a: scan.right_arch, fh: scan.right_foot_height, bg: scan.right_ball_girth, ig: scan.right_instep_girth, wg: scan.right_waist_girth, hg: scan.right_heel_girth, ag: scan.right_ankle_girth },
+                  { side: 'left',  label: 'Leisten Links',  l: scan.left_length,  w: scan.left_width,  a: scan.left_arch,  fh: scan.left_foot_height,  bg: scan.left_ball_girth,  ig: scan.left_instep_girth,  wg: scan.left_waist_girth,  hg: scan.left_heel_girth,  ag: scan.left_ankle_girth },
+                ].map(({ side, label, l, w, a, fh, bg, ig, wg, hg, ag }) => (
+                  <button
+                    key={side}
+                    onClick={() => {
+                      const scanData = { length: Number(l), width: Number(w), arch: Number(a), foot_height: fh ? Number(fh) : undefined, ball_girth: bg ? Number(bg) : undefined, instep_girth: ig ? Number(ig) : undefined, waist_girth: wg ? Number(wg) : undefined, heel_girth: hg ? Number(hg) : undefined, ankle_girth: ag ? Number(ag) : undefined }
+                      const geo = buildShoeLastGeo(scanData, { shoeType: scan._shoeType ?? 'oxford', side })
+                      const format = scan._fmt ?? 'stl'
+                      if (format === 'obj') downloadOBJ(geo, scan.eu_size, side)
+                      else downloadLastSTL(geo, scan.eu_size, side)
+                    }}
+                    className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5 active:bg-white/10 transition-colors"
+                  >
+                    <div className="text-left">
+                      <p className="text-[10px] font-bold text-white">{label}</p>
+                      <p className="text-[8px] text-gray-600 mt-0.5">Schuhleisten</p>
+                    </div>
+                    <Download size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { side: 'right', label: 'Fuß-STL R', l: scan.right_length, w: scan.right_width, a: scan.right_arch },
+                  { side: 'left',  label: 'Fuß-STL L', l: scan.left_length,  w: scan.left_width,  a: scan.left_arch  },
+                ].map(({ side, label, l, w, a }) => (
+                  <button key={`foot-${side}`}
+                    onClick={async () => { const geo = await buildFootGeoAsync(Number(l), Number(w), Number(a), side); downloadSTL(geo, scan.eu_size, side) }}
+                    className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-2 py-2 active:bg-white/10 transition-colors">
+                    <p className="text-[9px] text-gray-400">{label}</p>
+                    <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
