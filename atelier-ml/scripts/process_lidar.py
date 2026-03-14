@@ -497,6 +497,21 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     heel_girth   = girth_perpendicular(aligned, 0.85, centers, x_positions, band_m=0.005)
     ankle_girth  = girth_perpendicular(aligned, 0.88, centers, x_positions, band_m=0.005)
 
+    # Step 9b: Arch height — minimum Z in medial arch region (30-65% of length)
+    x_min, x_max = np.percentile(aligned[:, 0], [0.5, 99.5])
+    foot_len = x_max - x_min
+    arch_region = aligned[
+        (aligned[:, 0] > x_min + 0.30 * foot_len) &
+        (aligned[:, 0] < x_min + 0.65 * foot_len) &
+        (aligned[:, 1] > np.median(aligned[:, 1]))  # medial half only
+    ]
+    if len(arch_region) > 5:
+        # Arch height = minimum Z value in the medial midfoot region
+        arch_height_mm = round(float(np.percentile(arch_region[:, 2], 2.0)) * 1000, 1)
+        arch_height_mm = max(2.0, arch_height_mm)  # clamp to physiological minimum
+    else:
+        arch_height_mm = None
+
     # Ellipse fallback for any missing girths
     if ball_girth   is None: ball_girth   = ellipse_girth_mm(width_mm / 2,        height_mm / 2)
     if instep_girth is None: instep_girth = ellipse_girth_mm(width_mm * 0.45,     height_mm * 0.55)
@@ -509,6 +524,7 @@ def measure_foot(point_cloud: list[dict]) -> dict:
         "length":          length_mm,
         "width":           width_mm,
         "height":          height_mm,
+        "arch_height":     arch_height_mm,
         "ball_girth":      ball_girth,
         "instep_girth":    instep_girth,
         "waist_girth":     waist_girth,

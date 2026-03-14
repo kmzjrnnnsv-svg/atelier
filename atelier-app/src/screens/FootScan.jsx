@@ -79,7 +79,7 @@ function compressImage(dataUrl, maxWidth = 1200) {
 }
 async function measureTop(dataUrl, ppm) {
   if (!dataUrl || !ppm) {
-    return { length: r1(255 + (Math.random() - 0.5) * 20), width: r1(92 + (Math.random() - 0.5) * 10) }
+    return null  // No image or calibration → cannot measure
   }
   return new Promise(resolve => {
     const img = new Image()
@@ -92,7 +92,7 @@ async function measureTop(dataUrl, ppm) {
       const luma = buildLuma(data)
       const threshold = adaptiveThreshold(luma)
       const W = c.width, H = c.height
-      let minRow = H, maxRow = 0, footCols = 0
+      let minRow = H, maxRow = 0, footRows = 0
       const colMin = new Array(W).fill(H), colMax = new Array(W).fill(0)
       for (let y = 0; y < H; y++) {
         let rowHasFoot = false
@@ -103,10 +103,10 @@ async function measureTop(dataUrl, ppm) {
             rowHasFoot = true
           }
         }
-        if (rowHasFoot) footCols++
+        if (rowHasFoot) footRows++
       }
-      if (footCols < 30) {
-        return resolve({ length: r1(255 + (Math.random() - 0.5) * 20), width: r1(92 + (Math.random() - 0.5) * 10) })
+      if (footRows < 30) {
+        return resolve(null)  // Too few foot pixels detected
       }
       const lengthPx = maxRow - minRow
       let minCol = W, maxCol = 0
@@ -840,12 +840,11 @@ export default function FootScan() {
 
       if (!usedAI) {
         clearInterval(ambientTimer)
-        // Fallback: use top-view frames with basic CV (no A4 PPM available without calibrate step)
-        ;[rightM, leftM] = await Promise.all([
-          measureTop(frames.rightTop, null),
-          measureTop(frames.leftTop,  null),
-        ])
-        setProgress(82); setAiStatus('Schuhgröße wird berechnet…')
+        // No AI/CV measurement succeeded — report error instead of random values
+        setAiStatus('Messung fehlgeschlagen')
+        setResult({ error: 'Fußmaße konnten nicht bestimmt werden. Bitte erneut scannen mit A4-Papier als Referenz.' })
+        setProgress(100)
+        return
       }
 
       if (cancelled) return
@@ -870,9 +869,8 @@ export default function FootScan() {
         ankle_girth:  girthLeft.ankle  ? r1(girthLeft.ankle)  : null,
       }
       setProgress(100)
-      const cvSuccess = usedAI
       setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI,
-                  accuracy: cvSuccess ? 97.5 : 85.0 })
+                  accuracy: 97.5 })
     }
 
     process()
