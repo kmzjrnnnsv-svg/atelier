@@ -595,6 +595,11 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     [`${side ?? 'right'}_heel_girth`]:   measurements.heel_girth,
     [`${side ?? 'right'}_ankle_girth`]:  measurements.ankle_girth,
     point_count: measurements.point_count,
+    // Phase 5: cross-section geometries for shoe last production
+    cross_sections: measurements.cross_sections ?? {},
+    // Point cloud included for client-side storage after scan save
+    _has_point_cloud: !!measurements.point_cloud_mm,
+    _point_cloud_count: measurements.point_cloud_mm?.length ?? 0,
   })
 })
 
@@ -695,11 +700,197 @@ router.post('/photogrammetry', authenticate, async (req, res) => {
       _point_count_right: R.right_point_count ?? 0,
       _point_count_left:  R.left_point_count  ?? 0,
       source: 'photogrammetry',
+      // Phase 5: cross-section geometries
+      right_cross_sections: R.right_cross_sections ?? {},
+      left_cross_sections:  R.left_cross_sections  ?? {},
+      _has_point_cloud_right: !!R.right_point_cloud_mm,
+      _has_point_cloud_left:  !!R.left_point_cloud_mm,
     })
   } catch (err) {
     console.error('[photogrammetry]', err.message)
     res.status(500).json({ error: 'Photogrammetrie-Fehler', detail: err.message })
   }
+})
+
+// ─── Phase 5: Store point cloud + cross-sections ─────────────────────────
+// POST /api/scans/:id/point-cloud
+// Stores the PCA-aligned point cloud from LiDAR or photogrammetry.
+router.post('/:id/point-cloud', authenticate, (req, res) => {
+  const scanId = Number(req.params.id)
+  const { side, point_cloud_mm } = req.body
+
+  if (!['right', 'left'].includes(side)) {
+    return res.status(400).json({ error: 'side must be "right" or "left"' })
+  }
+  if (!Array.isArray(point_cloud_mm) || point_cloud_mm.length < 50) {
+    return res.status(400).json({ error: 'point_cloud_mm must have ≥50 points' })
+  }
+
+  const db = getDb()
+  const scan = db.prepare('SELECT id, user_id FROM foot_scans WHERE id = ?').get(scanId)
+  if (!scan) return res.status(404).json({ error: 'Scan nicht gefunden' })
+  if (scan.user_id !== req.user.id && !['admin','curator'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Zugriff verweigert' })
+  }
+
+  // Upsert (replace existing for same scan+side)
+  db.prepare('DELETE FROM scan_point_clouds WHERE scan_id = ? AND side = ?').run(scanId, side)
+  db.prepare(`
+    INSERT INTO scan_point_clouds (scan_id, side, format, point_count, data)
+    VALUES (?, ?, 'xyz_mm', ?, ?)
+  `).run(scanId, side, point_cloud_mm.length, JSON.stringify(point_cloud_mm))
+
+  res.json({ ok: true, scan_id: scanId, side, point_count: point_cloud_mm.length })
+})
+
+// GET /api/scans/:id/point-cloud?side=right
+router.get('/:id/point-cloud', authenticate, (req, res) => {
+  const scanId = Number(req.params.id)
+  const side = req.query.side ?? 'right'
+
+  const db = getDb()
+  const scan = db.prepare('SELECT id, user_id FROM foot_scans WHERE id = ?').get(scanId)
+  if (!scan) return res.status(404).json({ error: 'Scan nicht gefunden' })
+  if (scan.user_id !== req.user.id && !['admin','curator'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Zugriff verweigert' })
+  }
+
+  const row = db.prepare(
+    'SELECT * FROM scan_point_clouds WHERE scan_id = ? AND side = ?'
+  ).get(scanId, side)
+  if (!row) return res.status(404).json({ error: 'Keine Punktwolke vorhanden' })
+
+  res.json({ ...row, data: JSON.parse(row.data) })
+})
+
+// POST /api/scans/:id/cross-sections
+// Stores cross-section contour geometries at the 6 measurement levels.
+router.post('/:id/cross-sections', authenticate, (req, res) => {
+  const scanId = Number(req.params.id)
+  const { side, cross_sections } = req.body
+
+  if (!['right', 'left'].includes(side)) {
+    return res.status(400).json({ error: 'side must be "right" or "left"' })
+  }
+  if (!cross_sections || typeof cross_sections !== 'object') {
+    return res.status(400).json({ error: 'cross_sections object required' })
+  }
+
+  const db = getDb()
+  const scan = db.prepare('SELECT id, user_id FROM foot_scans WHERE id = ?').get(scanId)
+  if (!scan) return res.status(404).json({ error: 'Scan nicht gefunden' })
+  if (scan.user_id !== req.user.id && !['admin','curator'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Zugriff verweigert' })
+  }
+
+  // Delete existing cross-sections for this scan+side
+  db.prepare('DELETE FROM scan_cross_sections WHERE scan_id = ? AND side = ?').run(scanId, side)
+
+  const insert = db.prepare(`
+    INSERT INTO scan_cross_sections (scan_id, side, level_name, level_frac, girth_mm, width_mm, height_mm, contour)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+
+  let count = 0
+  for (const [name, cs] of Object.entries(cross_sections)) {
+    insert.run(
+      scanId, side, name,
+      cs.level_frac ?? 0,
+      cs.girth_mm ?? null,
+      cs.width_mm ?? null,
+      cs.height_mm ?? null,
+      JSON.stringify(cs.contour ?? [])
+    )
+    count++
+  }
+
+  res.json({ ok: true, scan_id: scanId, side, sections_stored: count })
+})
+
+// GET /api/scans/:id/cross-sections?side=right
+router.get('/:id/cross-sections', authenticate, (req, res) => {
+  const scanId = Number(req.params.id)
+  const side = req.query.side ?? 'right'
+
+  const db = getDb()
+  const scan = db.prepare('SELECT id, user_id FROM foot_scans WHERE id = ?').get(scanId)
+  if (!scan) return res.status(404).json({ error: 'Scan nicht gefunden' })
+  if (scan.user_id !== req.user.id && !['admin','curator'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Zugriff verweigert' })
+  }
+
+  const rows = db.prepare(
+    'SELECT * FROM scan_cross_sections WHERE scan_id = ? AND side = ? ORDER BY level_frac ASC'
+  ).all(scanId, side)
+
+  const sections = rows.map(r => ({
+    ...r,
+    contour: JSON.parse(r.contour),
+  }))
+  res.json({ scan_id: scanId, side, sections })
+})
+
+// ─── Phase 5: Shoe Last Export ───────────────────────────────────────────
+// GET /api/scans/:id/shoe-last?side=right&format=stl&shoe_type=oxford
+// Generates a shoe last (Schuhleisten) from scan data and exports as STL or OBJ.
+router.get('/:id/shoe-last', authenticate, (req, res) => {
+  const scanId = Number(req.params.id)
+  const side = req.query.side ?? 'right'
+  const format = req.query.format ?? 'stl'   // 'stl' or 'obj'
+  const shoeType = req.query.shoe_type ?? 'oxford'
+
+  if (!['stl', 'obj'].includes(format)) {
+    return res.status(400).json({ error: 'format must be "stl" or "obj"' })
+  }
+
+  const db = getDb()
+  const scan = db.prepare('SELECT * FROM foot_scans WHERE id = ?').get(scanId)
+  if (!scan) return res.status(404).json({ error: 'Scan nicht gefunden' })
+  if (scan.user_id !== req.user.id && !['admin','curator'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Zugriff verweigert' })
+  }
+
+  // Retrieve cross-sections if available
+  const csRows = db.prepare(
+    'SELECT * FROM scan_cross_sections WHERE scan_id = ? AND side = ? ORDER BY level_frac ASC'
+  ).all(scanId, side)
+
+  const crossSections = csRows.map(r => ({
+    ...r,
+    contour: JSON.parse(r.contour),
+  }))
+
+  // Retrieve point cloud if available
+  const pcRow = db.prepare(
+    'SELECT data, point_count FROM scan_point_clouds WHERE scan_id = ? AND side = ?'
+  ).get(scanId, side)
+
+  const prefix = side === 'left' ? 'left' : 'right'
+  const scanData = {
+    length: scan[`${prefix}_length`],
+    width: scan[`${prefix}_width`],
+    arch: scan[`${prefix}_arch`],
+    foot_height: scan[`${prefix}_foot_height`],
+    ball_girth: scan[`${prefix}_ball_girth`],
+    instep_girth: scan[`${prefix}_instep_girth`],
+    waist_girth: scan[`${prefix}_waist_girth`],
+    heel_girth: scan[`${prefix}_heel_girth`],
+    ankle_girth: scan[`${prefix}_ankle_girth`],
+  }
+
+  res.json({
+    scan_id: scanId,
+    side,
+    format,
+    shoe_type: shoeType,
+    scan_data: scanData,
+    cross_sections: crossSections,
+    has_point_cloud: !!pcRow,
+    point_count: pcRow?.point_count ?? 0,
+    // The actual 3D shoe last generation is done client-side in footLast.js
+    // This endpoint provides all data needed for the transformation
+    message: 'Daten für Leistenberechnung bereitgestellt. 3D-Generierung erfolgt client-seitig.',
+  })
 })
 
 export default router

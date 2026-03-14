@@ -289,4 +289,34 @@ export function runMigrations(db) {
       updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `)
+
+  // ── Phase 5: Point clouds + cross-section geometries for shoe last production ─
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scan_point_clouds (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      scan_id     INTEGER NOT NULL REFERENCES foot_scans(id) ON DELETE CASCADE,
+      side        TEXT    NOT NULL CHECK(side IN ('right','left')),
+      format      TEXT    NOT NULL DEFAULT 'xyz_mm',
+      point_count INTEGER NOT NULL DEFAULT 0,
+      data        TEXT    NOT NULL,   -- JSON array of [x,y,z] triplets (mm, PCA-aligned)
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(scan_id, side)
+    );
+    CREATE INDEX IF NOT EXISTS idx_pc_scan ON scan_point_clouds(scan_id);
+
+    CREATE TABLE IF NOT EXISTS scan_cross_sections (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      scan_id     INTEGER NOT NULL REFERENCES foot_scans(id) ON DELETE CASCADE,
+      side        TEXT    NOT NULL CHECK(side IN ('right','left')),
+      level_name  TEXT    NOT NULL,   -- 'Ferse','Taille','Gewölbe','Ballen','Rist','Knöchel'
+      level_frac  REAL    NOT NULL,   -- fraction along foot length (0=heel, 1=toe)
+      girth_mm    REAL,               -- perimeter in mm
+      width_mm    REAL,               -- cross-section width
+      height_mm   REAL,               -- cross-section height
+      contour     TEXT    NOT NULL,   -- JSON array of [y,z] 2D contour points (mm)
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(scan_id, side, level_name)
+    );
+    CREATE INDEX IF NOT EXISTS idx_cs_scan ON scan_cross_sections(scan_id);
+  `)
 }
