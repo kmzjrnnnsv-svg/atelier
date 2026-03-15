@@ -29,13 +29,23 @@ export function AuthProvider({ children }) {
     refreshInFlight.current = true
     try {
       const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
-      if (!res.ok) { logout(); return }
+      if (!res.ok) {
+        // Don't call logout() here — it would POST to /api/auth/logout and
+        // permanently destroy the refresh token in the DB. Just clear local state.
+        setAccessToken(null)
+        setUser(null)
+        if (refreshTimer.current) clearTimeout(refreshTimer.current)
+        return
+      }
       const data = await res.json()
       setAccessToken(data.accessToken)
       setUser(data.user)
       scheduleRefresh()
     } catch {
-      logout()
+      // Network error — don't destroy session, just clear local state
+      setAccessToken(null)
+      setUser(null)
+      if (refreshTimer.current) clearTimeout(refreshTimer.current)
     } finally {
       refreshInFlight.current = false
     }
@@ -48,13 +58,23 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function register(name, email, password) {
-    const res = await fetch(`${API_BASE}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name, email, password }),
-    })
-    const data = await res.json()
+    let res
+    try {
+      res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name, email, password }),
+      })
+    } catch (networkErr) {
+      throw { error: 'Server nicht erreichbar. Prüfe deine Verbindung.' }
+    }
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      throw { error: `Server-Fehler (${res.status})` }
+    }
     if (!res.ok) throw data
     setAccessToken(data.accessToken)
     setUser(data.user)
@@ -63,13 +83,23 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    const res = await fetch(`${API_BASE}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
+    let res
+    try {
+      res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      })
+    } catch (networkErr) {
+      throw { error: 'Server nicht erreichbar. Prüfe deine Verbindung.' }
+    }
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      throw { error: `Server-Fehler (${res.status})` }
+    }
     if (!res.ok) throw data
     setAccessToken(data.accessToken)
     setUser(data.user)

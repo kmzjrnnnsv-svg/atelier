@@ -21,10 +21,14 @@ import emailTemplatesRouter from './routes/emailTemplates.js'
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Trust the Vite dev proxy so rate limiters see the real client IP
+app.set('trust proxy', 1)
+
 // Security headers
 app.use(helmet())
 
 // CORS — allow Vite dev server + Capacitor iOS WKWebView
+const isDev = process.env.NODE_ENV !== 'production'
 const allowedOrigins = [
   'http://localhost:5173',
   'https://localhost:5173',  // Vite with basicSsl()
@@ -38,7 +42,12 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, cb) => {
     // Allow requests with no origin (native mobile, curl, Postman)
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true)
+    if (!origin) return cb(null, true)
+    if (allowedOrigins.includes(origin)) return cb(null, true)
+    // In dev, allow any localhost/IP origin (iPhone Simulator, LAN access)
+    if (isDev && (origin.includes('localhost') || /^https?:\/\/(\d+\.){3}\d+/.test(origin))) {
+      return cb(null, true)
+    }
     cb(new Error(`CORS: origin ${origin} not allowed`))
   },
   credentials: true,
