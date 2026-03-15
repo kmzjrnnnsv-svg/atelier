@@ -64,20 +64,6 @@ export default function Registration() {
         <div className="w-8" />
       </div>
 
-      {/* Hero Image */}
-      <div className="mx-4 mt-3 rounded-2xl overflow-hidden bg-gray-100 aspect-video relative">
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-          <svg viewBox="0 0 220 120" className="w-56 opacity-70">
-            <ellipse cx="110" cy="100" rx="95" ry="12" fill="#d1d5db" />
-            <path d="M20 90 Q15 95 30 100 L185 100 Q200 100 200 90 L195 75 Q190 60 175 58 L60 58 Q40 58 35 65 Z" fill="#374151" />
-            <path d="M35 65 Q30 45 55 35 L110 30 Q140 28 165 40 Q185 50 195 75 L175 58 Q150 50 120 50 L75 52 Q50 54 35 65 Z" fill="#1f2937" />
-            <path d="M60 40 Q85 32 115 33 Q140 33 160 42" stroke="#6b7280" strokeWidth="1.5" fill="none" opacity="0.5" />
-            <path d="M35 65 Q30 55 45 45 Q60 36 80 36 L80 52 Q60 54 35 65 Z" fill="#111827" />
-            <path d="M80 36 L80 52 L160 50 L165 40 Q140 28 110 30 Z" fill="#374151" />
-          </svg>
-        </div>
-      </div>
-
       {/* Headline */}
       <div className="text-center mt-5 px-6">
         <h1 className="font-playfair text-2xl italic text-black leading-tight">Step into Perfection</h1>
