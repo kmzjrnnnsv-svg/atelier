@@ -1,5 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTransition } from 'react'
 import { Home, Compass, BookOpen, User } from 'lucide-react'
+import { prefetchRoute } from '../App'
 
 const NAV_ITEMS = [
   { id: 'shop',    icon: Home,     label: 'SOLE',    path: '/collection' },
@@ -11,6 +13,7 @@ const NAV_ITEMS = [
 export default function BottomNav() {
   const navigate        = useNavigate()
   const { pathname }    = useLocation()
+  const [isPending, startTransition] = useTransition()
 
   const activeId = NAV_ITEMS.find(item =>
     pathname === item.path || pathname.startsWith(item.path + '/')
@@ -22,10 +25,12 @@ export default function BottomNav() {
       {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => (
         <button
           key={id}
-          onClick={() => navigate(path)}
+          onClick={() => startTransition(() => navigate(path))}
+          onPointerEnter={() => prefetchRoute(path)}
+          onTouchStart={() => prefetchRoute(path)}
           className={`flex flex-col items-center gap-0.5 bg-transparent border-0 p-2 transition-colors ${
             activeId === id ? 'text-black' : 'text-gray-400'
-          }`}
+          } ${isPending ? 'opacity-70' : ''}`}
         >
           <Icon size={22} strokeWidth={activeId === id ? 2 : 1.5} />
           <span className="text-[7px] uppercase tracking-widest font-bold">{label}</span>
