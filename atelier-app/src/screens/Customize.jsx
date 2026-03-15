@@ -348,28 +348,34 @@ export default function Customize() {
             <p className="text-[10px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe</p>
             {col && <span className="text-[10px] text-black/50">{col.name}</span>}
           </div>
-          <div className="flex gap-3 overflow-x-auto flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex gap-2 overflow-x-auto flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
             {colList.map((c, i) => {
               const id = c.key || String(c.id)
               const avail = c.available !== 0 && c.available !== false
               const reminded = hasReminder('color', id)
+              const sel = avail && selCol === id
               return (
-                <button key={id}
-                  onClick={() => {
-                    if (avail) setSelCol(id)
-                    else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
-                    else removeReminder('color', id)
-                  }}
-                  className={`w-9 h-9 flex-shrink-0 rounded-full transition-all flex items-center justify-center ${
-                    !avail ? 'opacity-30' :
-                    selCol === id ? 'ring-1 ring-black ring-offset-2' : ''
+                <div key={id}
+                  className={`flex-shrink-0 w-12 h-12 flex items-center justify-center border-2 transition-all ${
+                    sel ? 'border-black' : 'border-transparent'
                   }${i === 0 ? ' ml-5' : ''}${i === colList.length - 1 ? ' mr-5' : ''}`}
-                  style={{ backgroundColor: c.hex }}
-                  title={c.name}
                 >
-                  {avail && selCol === id && <Check size={14} className="text-white drop-shadow" strokeWidth={2.5} />}
-                  {!avail && <Lock size={10} className="text-white/60" />}
-                </button>
+                  <button
+                    onClick={() => {
+                      if (avail) setSelCol(id)
+                      else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
+                      else removeReminder('color', id)
+                    }}
+                    className={`w-9 h-9 rounded-full transition-all flex items-center justify-center border-0 ${
+                      !avail ? 'opacity-30' : ''
+                    }`}
+                    style={{ backgroundColor: c.hex }}
+                    title={c.name}
+                  >
+                    {sel && <Check size={14} className="text-white drop-shadow" strokeWidth={2.5} />}
+                    {!avail && <Lock size={10} className="text-white/60" />}
+                  </button>
+                </div>
               )
             })}
           </div>
