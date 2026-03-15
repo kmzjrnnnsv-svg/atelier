@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -96,7 +96,10 @@ export default function Customize() {
   // 3D Viewer
   const [is3D, setIs3D] = useState(false)
   const [rotY, setRotY] = useState(0)
+  const [zoomed, setZoomed] = useState(false)
+  const [imgIdx, setImgIdx] = useState(0)
   const drag = useRef({ on: false, x0: 0, a0: 0 })
+  const imgCount = 3 // Platzhalter für Produktbilder-Galerie
 
   // Reviews
   const [reviews, setReviews]       = useState([])
@@ -176,31 +179,34 @@ export default function Customize() {
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
 
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-2">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border-0">
-          <ArrowLeft size={20} className="text-gray-700" />
+      {/* ── Header (LV-Style) ────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-1">
+        <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
+          <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
         </button>
-        <div className="text-center flex-1 px-3">
-          <p className="text-sm font-bold text-black">{product.name}</p>
-          <p className="text-xs text-gray-400">{product.price}</p>
+        <div className="text-center flex-1 px-2">
+          <p className="text-[11px] font-normal text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>{product.name}</p>
         </div>
-        <button
-          onClick={() => toggleFavorite(product.id)}
-          className="w-10 h-10 rounded-full flex items-center justify-center border-0"
-          style={{ background: isFav ? '#fee2e2' : '#f3f4f6' }}
-        >
-          <Heart size={18} className={isFav ? 'text-red-500 fill-red-500' : 'text-gray-500'} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
+            <Share2 size={17} className="text-black" strokeWidth={1.5} />
+          </button>
+          <button
+            onClick={() => toggleFavorite(product.id)}
+            className="w-10 h-10 flex items-center justify-center border-0 bg-transparent"
+          >
+            <Heart size={17} className={isFav ? 'text-black fill-black' : 'text-black'} strokeWidth={1.5} />
+          </button>
+        </div>
       </div>
 
-      {/* ── 3D Viewer ──────────────────────────────────────────── */}
+      {/* ── Produkt-Viewer (LV-Style) ────────────────────────────── */}
       <div
-        className="relative mx-4 mt-1 rounded-3xl overflow-hidden select-none"
+        className="relative overflow-hidden select-none"
         style={{
-          height: 'clamp(160px, 25dvh, 220px)',
+          height: 'clamp(200px, 34dvh, 300px)',
           cursor: is3D ? 'grab' : 'default',
-          background: 'linear-gradient(145deg, #f8f9fa 0%, #eef0f2 50%, #e8eaed 100%)',
+          background: '#f6f5f3',
         }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -208,82 +214,102 @@ export default function Customize() {
         onPointerLeave={onPointerUp}
       >
         <div
-          className="absolute inset-0 flex items-center justify-center p-6"
+          className="absolute inset-0 flex items-center justify-center"
           style={{
-            transform: is3D ? `perspective(800px) rotateY(${rotY}deg)` : 'none',
-            transition: drag.current.on ? 'none' : 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+            transform: is3D
+              ? `perspective(800px) rotateY(${rotY}deg)`
+              : zoomed ? 'scale(1.6)' : 'none',
+            transition: drag.current.on ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
           }}
         >
           {product.image ? (
-            <img src={product.image} alt={product.name} className="w-full h-full object-contain drop-shadow-lg" />
+            <img src={product.image} alt={product.name} className="w-full h-full object-contain p-8" />
           ) : (
-            <svg viewBox="0 0 260 130" className="w-60 drop-shadow-lg">
-              <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000010" />
+            <svg viewBox="0 0 260 130" className="w-64">
+              <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
               <path d="M20 100 Q17 108 38 112 L222 112 Q238 112 238 100 L232 80 Q226 62 210 60 L72 60 Q47 60 42 68 Z" fill={color} />
               <path d="M42 68 Q37 48 62 36 L120 30 Q155 27 178 42 Q198 54 232 80 L210 60 Q180 50 148 52 L90 53 Q60 55 42 68 Z" fill={color} opacity="0.88" />
               <path d="M42 68 Q36 55 53 44 Q68 34 87 34 L87 53 Q63 55 42 68 Z" fill={color} />
-              <path d="M87 53 L210 60 Q210 50 178 42 Q155 27 120 30 L87 34 Z" fill="white" opacity="0.12" />
-              <path d="M90 38 Q115 30 148 31 Q175 31 198 44" stroke="white" strokeWidth="1.2" fill="none" opacity="0.15" />
+              <path d="M87 53 L210 60 Q210 50 178 42 Q155 27 120 30 L87 34 Z" fill="white" opacity="0.1" />
+              <path d="M90 38 Q115 30 148 31 Q175 31 198 44" stroke="white" strokeWidth="1" fill="none" opacity="0.12" />
             </svg>
           )}
         </div>
 
-        {/* 3D-Modus Hinweis */}
-        {is3D && (
-          <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
-            <div className="bg-black/50 backdrop-blur-sm text-white text-[10px] px-3 py-1 rounded-full">
-              Ziehen zum Drehen
-            </div>
-          </div>
-        )}
-
-        {/* Buttons rechts */}
-        <div className="absolute right-3 top-3 flex flex-col gap-1.5">
+        {/* Steuerungs-Icons links unten */}
+        <div className="absolute left-4 bottom-4 flex items-center gap-2">
           <button
-            onClick={() => { setIs3D(v => !v); setRotY(0) }}
-            className={`w-9 h-9 rounded-xl shadow-sm flex items-center justify-center border-0 transition-all ${
-              is3D ? 'bg-black text-white' : 'bg-white/80 backdrop-blur-sm text-gray-600 hover:bg-white'
+            onClick={() => { setIs3D(v => !v); setRotY(0); setZoomed(false) }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+              is3D ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
             }`}
           >
-            <Box size={16} strokeWidth={1.5} />
+            <Box size={14} strokeWidth={1.5} />
           </button>
-          <button className="w-9 h-9 rounded-xl bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center border-0 text-gray-600 hover:bg-white transition-all">
-            <ZoomIn size={16} strokeWidth={1.5} />
+          <button
+            onClick={() => { setZoomed(v => !v); setIs3D(false) }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+              zoomed ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
+            }`}
+          >
+            {zoomed ? <ZoomOut size={14} strokeWidth={1.5} /> : <ZoomIn size={14} strokeWidth={1.5} />}
+          </button>
+          <button className="w-8 h-8 rounded-full bg-white/90 text-black border border-black/10 flex items-center justify-center transition-all">
+            <Eye size={14} strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Status-Pill unten */}
-        <div className="absolute bottom-2.5 left-0 right-0 flex justify-center pointer-events-none">
-          <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1 shadow-sm">
-            <RotateCcw size={9} className="text-gray-500" />
-            <span className="text-[9px] text-gray-500 font-medium">
-              {is3D ? '3D aktiv' : '360° Ansicht'}
+        {/* 3D-Hinweis */}
+        {is3D && (
+          <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
+            <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              Ziehen zum Drehen
             </span>
           </div>
+        )}
+
+        {/* Pagination Dots */}
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+          {Array.from({ length: imgCount }).map((_, i) => (
+            <div key={i} className={`rounded-full transition-all ${i === imgIdx ? 'w-5 h-1.5 bg-black' : 'w-1.5 h-1.5 bg-black/20'}`} />
+          ))}
+        </div>
+
+        {/* Swipe-Hinweis */}
+        <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none">
+          <span className="text-[9px] text-black/25" style={{ letterSpacing: '0.2em' }}>
+            ← WISCHEN ZUM WECHSELN →
+          </span>
         </div>
       </div>
 
-      {/* ── Passgenauigkeit ────────────────────────────────────── */}
-      <div className="mx-4 mt-3 bg-black rounded-2xl px-4 py-3 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-gray-400">Passgenauigkeit</p>
-          <p className="text-lg font-bold text-white">{product.match || '98.4%'}</p>
-        </div>
-        {latestScan && (
-          <div className="text-right">
-            <p className="text-xs text-gray-400">Deine Größe</p>
-            <p className="text-sm font-bold text-white">EU {latestScan.eu_size}</p>
+      {/* ── Produkt-Info (LV-Style) ─────────────────────────────── */}
+      <div className="px-5 pt-4 pb-2">
+        <p className="text-[13px] font-light text-black leading-tight">{product.name}</p>
+        <p className="text-[13px] text-black mt-0.5" style={{ letterSpacing: '0.04em' }}>{product.price}</p>
+        <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
+            <span className="text-[11px] font-medium text-black">{product.match || '98.4%'}</span>
           </div>
-        )}
+          {latestScan && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Größe</span>
+              <span className="text-[11px] font-medium text-black">EU {latestScan.eu_size}</span>
+            </div>
+          )}
+        </div>
       </div>
+
+      <div className="mx-5 h-px bg-black/8" />
 
       {/* ── Auswahl ────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-4 mt-4 pb-4 space-y-6">
+      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-4 space-y-5">
 
         {/* 1. Leder */}
         <div {...matSwipe}>
-          <p className="text-xs font-semibold text-gray-500 mb-2">Leder wählen</p>
-          <div className="flex gap-2">
+          <p className="text-[10px] text-black/40 mb-3" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder</p>
+          <div className="flex gap-2.5">
             {matList.map(m => {
               const id = m.key || String(m.id)
               const avail = m.available !== 0 && m.available !== false
@@ -295,30 +321,33 @@ export default function Customize() {
                     else if (!reminded) addReminder({ type: 'material', itemId: id, label: m.label })
                     else removeReminder('material', id)
                   }}
-                  className={`flex-1 py-3 rounded-2xl border-2 transition-all bg-transparent flex flex-col items-center gap-2 ${
-                    !avail ? 'border-gray-100 opacity-50' : selMat === id ? 'border-black' : 'border-gray-100'
+                  className={`flex-1 py-3 transition-all bg-transparent flex flex-col items-center gap-2 border ${
+                    !avail ? 'border-black/5 opacity-40' : selMat === id ? 'border-black' : 'border-black/8'
                   }`}
                 >
                   <div className="relative">
-                    <div className="w-12 h-12 rounded-full shadow-sm"
-                      style={{ background: `radial-gradient(circle at 35% 35%, ${m.color}cc, ${m.color})` }} />
-                    {!avail && <Lock size={12} className="absolute inset-0 m-auto text-white/80" />}
-                    {!avail && reminded && <BellRing size={12} className="absolute inset-0 m-auto text-teal-400" />}
+                    <div className="w-10 h-10 rounded-full"
+                      style={{ background: m.color }} />
+                    {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/80" />}
+                    {!avail && reminded && <BellRing size={10} className="absolute inset-0 m-auto text-teal-500" />}
                   </div>
-                  <span className="text-[11px] font-semibold text-gray-700">{m.label}</span>
-                  {!avail && <span className="text-[10px] text-gray-400">{reminded ? 'Erinnert' : 'Bald da'}</span>}
+                  <span className="text-[10px] text-black/70" style={{ letterSpacing: '0.05em' }}>{m.label}</span>
+                  {!avail && <span className="text-[9px] text-black/30">{reminded ? 'Erinnert' : 'Bald da'}</span>}
                 </button>
               )
             })}
           </div>
           {mat?.tip && (
-            <p className="text-[11px] text-gray-400 mt-2 leading-relaxed px-1">{mat.tip}</p>
+            <p className="text-[10px] text-black/35 mt-2 leading-relaxed">{mat.tip}</p>
           )}
         </div>
 
         {/* 2. Farbe */}
         <div {...colSwipe}>
-          <p className="text-xs font-semibold text-gray-500 mb-2">Farbe wählen</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe</p>
+            {col && <span className="text-[10px] text-black/50">{col.name}</span>}
+          </div>
           <div className="flex gap-3 flex-wrap">
             {colList.map(c => {
               const id = c.key || String(c.id)
@@ -331,29 +360,28 @@ export default function Customize() {
                     else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
                     else removeReminder('color', id)
                   }}
-                  className={`w-12 h-12 rounded-full border-3 transition-all flex items-center justify-center ${
-                    !avail ? 'border-dashed border-gray-300 opacity-40' :
-                    selCol === id ? 'border-black scale-110 shadow-lg' : 'border-transparent'
+                  className={`w-9 h-9 rounded-full transition-all flex items-center justify-center ${
+                    !avail ? 'opacity-30' :
+                    selCol === id ? 'ring-1 ring-black ring-offset-2' : ''
                   }`}
                   style={{ backgroundColor: c.hex }}
                   title={c.name}
                 >
-                  {avail && selCol === id && <Check size={18} className="text-white drop-shadow" strokeWidth={3} />}
-                  {!avail && <Lock size={12} className="text-white/60" />}
+                  {avail && selCol === id && <Check size={14} className="text-white drop-shadow" strokeWidth={2.5} />}
+                  {!avail && <Lock size={10} className="text-white/60" />}
                 </button>
               )
             })}
           </div>
-          {col && <p className="text-[11px] text-gray-500 mt-2 px-1 font-medium">{col.name}</p>}
-          {col?.pairs_with && <p className="text-[11px] text-gray-400 px-1">Passt zu: {col.pairs_with}</p>}
+          {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2">Passt zu: {col.pairs_with}</p>}
         </div>
 
         {/* 3. Sohle */}
         <div {...soleSwipe}>
-          <p className="text-xs font-semibold text-gray-500 mb-2">Sohle wählen</p>
+          <p className="text-[10px] text-black/40 mb-3" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sohle</p>
 
           {soleList.length === 1 && (category === 'BOOT' || category === 'SNEAKER') && (
-            <p className="text-[11px] text-gray-400 mb-2">
+            <p className="text-[10px] text-black/35 mb-2">
               {category === 'BOOT' ? 'Boots haben immer die Gummi-Profilsohle.' : 'Sneaker haben immer ihre eigene Sohle.'}
             </p>
           )}
@@ -365,25 +393,25 @@ export default function Customize() {
               return (
                 <button key={id}
                   onClick={() => soleList.length > 1 && setSelSole(id)}
-                  className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all bg-transparent text-left ${
-                    sel ? 'border-black' : 'border-gray-100'
+                  className={`w-full flex items-center gap-3 p-3.5 transition-all bg-transparent text-left border ${
+                    sel ? 'border-black' : 'border-black/8'
                   }`}
                 >
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${sel ? 'bg-black' : 'bg-gray-100'}`}>
-                    <ShieldCheck size={20} className={sel ? 'text-white' : 'text-gray-400'} />
+                  <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${sel ? 'bg-black' : 'bg-black/5'}`}>
+                    <ShieldCheck size={18} className={sel ? 'text-white' : 'text-black/30'} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-gray-800">{s.label}</span>
+                      <span className="text-[11px] text-black" style={{ letterSpacing: '0.03em' }}>{s.label}</span>
                       {s.rating && <Dot rating={s.rating} />}
                       {(s.recommended === 1 || s.recommended === true) && soleList.length > 1 && (
-                        <span className="text-[10px] font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">Empfohlen</span>
+                        <span className="text-[9px] text-black/40 border border-black/15 px-1.5 py-0.5" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Empfohlen</span>
                       )}
                     </div>
-                    {s.description && <p className="text-[11px] text-gray-400 mt-0.5">{s.description}</p>}
+                    {s.description && <p className="text-[10px] text-black/35 mt-0.5">{s.description}</p>}
                   </div>
-                  {s.price_extra > 0 && <span className="text-xs font-semibold text-teal-600">+€{s.price_extra}</span>}
-                  {sel && <Check size={16} className="text-black" strokeWidth={2.5} />}
+                  {s.price_extra > 0 && <span className="text-[10px] text-black/50">+€{s.price_extra}</span>}
+                  {sel && <Check size={14} className="text-black" strokeWidth={2} />}
                 </button>
               )
             })}
@@ -394,7 +422,8 @@ export default function Customize() {
             return (
               <button
                 onClick={() => setSelSole(rec.key || String(rec.id))}
-                className="mt-2 w-full text-center text-xs font-semibold text-orange-600 bg-orange-50 rounded-xl py-2.5 border-0"
+                className="mt-2 w-full text-center text-[10px] text-black/50 border border-black/10 py-2 bg-transparent"
+                style={{ letterSpacing: '0.05em' }}
               >
                 Lieber die {rec.label}? Besser bei Regen und Schnee.
               </button>
@@ -406,15 +435,14 @@ export default function Customize() {
         {!latestScan && (
           <button
             onClick={() => navigate('/scan')}
-            className="w-full rounded-2xl p-4 border-2 border-dashed border-teal-200 bg-teal-50/50 flex items-center gap-3 text-left border-0-override"
-            style={{ borderStyle: 'dashed' }}
+            className="w-full p-4 border border-dashed border-black/15 bg-transparent flex items-center gap-3 text-left"
           >
-            <div className="w-11 h-11 rounded-xl bg-teal-500 flex items-center justify-center flex-shrink-0">
-              <ScanLine size={22} className="text-white" />
+            <div className="w-10 h-10 bg-black flex items-center justify-center flex-shrink-0">
+              <ScanLine size={18} className="text-white" strokeWidth={1.5} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-teal-800">Fuß scannen</p>
-              <p className="text-xs text-teal-600">Für die perfekte Größe →</p>
+              <p className="text-[11px] text-black" style={{ letterSpacing: '0.05em' }}>Fuß scannen</p>
+              <p className="text-[10px] text-black/35">Für die perfekte Größe</p>
             </div>
           </button>
         )}
@@ -423,54 +451,55 @@ export default function Customize() {
         <div>
           <button
             onClick={() => setShowReview(v => !v)}
-            className="w-full flex items-center justify-between bg-transparent border-0 p-0 mb-2"
+            className="w-full flex items-center justify-between bg-transparent border-0 p-0 pb-2 border-b border-black/8"
           >
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500">Bewertungen</span>
+              <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Bewertungen</span>
               {reviews.length > 0 && (
                 <>
-                  <Stars value={avg} size={12} />
-                  <span className="text-xs text-gray-400">({reviews.length})</span>
+                  <Stars value={avg} size={10} />
+                  <span className="text-[10px] text-black/30">({reviews.length})</span>
                 </>
               )}
             </div>
-            {showReview ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+            {showReview ? <ChevronUp size={14} className="text-black/30" /> : <ChevronDown size={14} className="text-black/30" />}
           </button>
 
           {showReview && (
-            <div className="space-y-2">
+            <div className="space-y-2 mt-3">
               {reviews.length === 0 && (
-                <p className="text-xs text-gray-400 text-center py-3">Noch keine Bewertungen.</p>
+                <p className="text-[10px] text-black/30 text-center py-3">Noch keine Bewertungen.</p>
               )}
               {reviews.slice(0, 3).map(rev => (
-                <div key={rev.id} className="bg-gray-50 rounded-xl p-3">
+                <div key={rev.id} className="border-b border-black/5 pb-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-700">{rev.user_name}</span>
-                    <Stars value={rev.rating} size={10} />
+                    <span className="text-[10px] text-black/60">{rev.user_name}</span>
+                    <Stars value={rev.rating} size={9} />
                   </div>
-                  {rev.comment && <p className="text-xs text-gray-500 mt-1">{rev.comment}</p>}
+                  {rev.comment && <p className="text-[10px] text-black/40 mt-1">{rev.comment}</p>}
                 </div>
               ))}
 
               {!myRev && product.id && (
-                <div className="bg-gray-50 rounded-xl p-3 space-y-2">
-                  <p className="text-xs font-medium text-gray-500">Deine Bewertung</p>
+                <div className="pt-2 space-y-2">
+                  <p className="text-[10px] text-black/40" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Deine Bewertung</p>
                   <div className="flex gap-1">
                     {[1,2,3,4,5].map(n => (
                       <button key={n} onClick={() => setMyRating(n)} className="bg-transparent border-0 p-0">
-                        <Star size={26} className={n <= myRating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'} strokeWidth={1.5} />
+                        <Star size={22} className={n <= myRating ? 'text-black fill-black' : 'text-black/15'} strokeWidth={1} />
                       </button>
                     ))}
                   </div>
                   <textarea
                     value={myComment} onChange={e => setMyComment(e.target.value)}
                     placeholder="Kommentar (optional)"
-                    className="w-full text-xs bg-white border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-gray-400 resize-none"
+                    className="w-full text-[11px] bg-transparent border border-black/10 px-3 py-2 outline-none focus:border-black/30 resize-none"
                     rows={2} style={{ fontFamily: 'inherit' }}
                   />
                   <button onClick={handleReview} disabled={submitting || !myRating}
-                    className="w-full h-9 rounded-lg bg-black text-white text-xs font-semibold border-0 disabled:opacity-30 flex items-center justify-center gap-1.5">
-                    <Send size={12} /> Absenden
+                    className="w-full h-9 bg-black text-white text-[10px] border-0 disabled:opacity-20 flex items-center justify-center gap-1.5"
+                    style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                    <Send size={11} /> Absenden
                   </button>
                 </div>
               )}
@@ -479,22 +508,23 @@ export default function Customize() {
         </div>
       </div>
 
-      {/* ── Kaufen ─────────────────────────────────────────────── */}
-      <div className="bg-white border-t border-gray-100 px-4 pt-3 flex-shrink-0"
+      {/* ── Kaufen (LV-Style) ──────────────────────────────────── */}
+      <div className="bg-white border-t border-black/5 px-5 pt-3 flex-shrink-0"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
         <button
           onClick={handleBuy}
           disabled={added}
-          className={`w-full h-14 rounded-2xl flex items-center justify-center gap-2 text-base font-bold transition-all border-0 ${
-            added ? 'bg-green-500 text-white' : 'bg-black text-white active:bg-gray-800'
+          className={`w-full h-12 flex items-center justify-center gap-2.5 transition-all border-0 ${
+            added ? 'bg-black/80 text-white' : 'bg-black text-white active:bg-black/85'
           }`}
+          style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '11px' }}
         >
           {added
-            ? <><Check size={20} /> Bestellt!</>
-            : <><ShoppingBag size={20} /> In den Warenkorb</>
+            ? <><Check size={16} strokeWidth={1.5} /> Bestellt</>
+            : <><ShoppingBag size={16} strokeWidth={1.5} /> In den Warenkorb</>
           }
         </button>
-        <p className="text-center text-[10px] text-gray-300 mt-2">Handgefertigt · Lieferung in 4 Wochen</p>
+        <p className="text-center text-[9px] text-black/25 mt-2.5" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
       </div>
     </div>
   )
