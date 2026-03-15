@@ -31,7 +31,7 @@ export default function Registration() {
     setApiError(null)
     try {
       await register(form.name, form.email, form.password)
-      navigate('/scan', { replace: true })
+      navigate('/welcome', { replace: true })
     } catch (err) {
       if (err?.error === 'Email already registered') {
         setErrors(e => ({ ...e, email: 'Diese E-Mail ist bereits registriert.' }))
