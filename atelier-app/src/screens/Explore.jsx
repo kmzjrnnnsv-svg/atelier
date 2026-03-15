@@ -4,7 +4,8 @@
  * Platzhalter-Screen mit beschriebenen Sektionen für zukünftige Inhalte.
  */
 
-import { Compass, Lock, BookOpen, Film, Layers, Sparkles, Users, TrendingUp } from 'lucide-react'
+import { useState } from 'react'
+import { Compass, Lock, BookOpen, Film, Layers, Sparkles, Users, TrendingUp, Bell, BellRing } from 'lucide-react'
 
 // ── Placeholder-Sektionen ─────────────────────────────────────────────────────
 
@@ -93,6 +94,7 @@ const TAG_STYLES = {
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 export default function Explore() {
+  const [notifyOn, setNotifyOn] = useState(false)
 
   return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
@@ -106,12 +108,20 @@ export default function Explore() {
             </p>
             <h1 className="text-2xl font-bold text-black leading-tight">Explore</h1>
           </div>
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5">
-            <Compass size={12} className="text-gray-400" />
-            <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-wide">
-              Coming Soon
+          <button
+            onClick={() => setNotifyOn(v => !v)}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 border-0 transition-colors ${
+              notifyOn ? 'bg-black text-white' : 'bg-gray-50 border border-gray-100 text-gray-400'
+            }`}
+          >
+            {notifyOn
+              ? <BellRing size={12} className="text-white" />
+              : <Bell size={12} className="text-gray-400" />
+            }
+            <span className="text-[9px] font-semibold uppercase tracking-wide">
+              {notifyOn ? 'Benachrichtigt' : 'Erinnere mich'}
             </span>
-          </div>
+          </button>
         </div>
         <p className="text-sm text-gray-400 mt-2 leading-relaxed">
           Editorials, Handwerksgeschichten und Style-Inspiration — alles was über den Schuh hinausgeht.
@@ -190,11 +200,12 @@ export default function Explore() {
           )
         })}
 
-        {/* Bottom note */}
+        {/* Bottom note — user-friendly, no CMS reference */}
         <div className="mx-1 mt-2 bg-gray-50 rounded-2xl px-5 py-4 text-center">
-          <p className="text-[10px] text-gray-400 leading-relaxed">
-            Diese Sektionen befinden sich in aktiver Entwicklung.<br />
-            Inhalte werden schrittweise über das CMS befüllt.
+          <p className="text-[10px] text-gray-500 font-semibold mb-1">Wir arbeiten daran</p>
+          <p className="text-[9px] text-gray-400 leading-relaxed">
+            Neue Inhalte werden regelmäßig freigeschaltet.<br />
+            Du wirst benachrichtigt, sobald eine Sektion verfügbar ist.
           </p>
         </div>
 

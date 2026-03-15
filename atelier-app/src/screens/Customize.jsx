@@ -247,22 +247,27 @@ export default function Customize() {
       </div>
 
       {/* ── AI Precision Profile ─────────────────────────────────────────── */}
-      <div className="mx-4 mt-3 flex items-center justify-between bg-black rounded-2xl px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="#f59e0b" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
-            </svg>
+      <div className="mx-4 mt-3 bg-black rounded-2xl px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="#f59e0b" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-[8px] uppercase tracking-[0.16em] text-gray-400 font-semibold">AI Precision Profile</p>
+              <p className="text-sm font-bold text-white leading-tight">
+                {matchPct} <span className="text-[10px] font-normal text-gray-300">Passgenauigkeit</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-[8px] uppercase tracking-[0.16em] text-gray-400 font-semibold">AI Precision Profile</p>
-            <p className="text-sm font-bold text-white leading-tight">
-              {matchPct} <span className="text-[10px] font-normal text-gray-300">Accuracy Match</span>
-            </p>
-          </div>
+          <BadgeCheck size={22} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
         </div>
-        <BadgeCheck size={22} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
+        <p className="text-[9px] text-gray-500 mt-2 leading-relaxed pl-12">
+          Basierend auf deinem 3D-Scan und der Schuhgeometrie — je höher, desto besser der Sitz.
+        </p>
       </div>
 
       {/* ── Scrollable Config ─────────────────────────────────────────────── */}
