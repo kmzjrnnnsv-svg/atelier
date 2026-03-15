@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ShoppingBag, Heart, RotateCcw, ScanLine } from 'lucide-react'
+import { Search, ShoppingBag, Heart, RotateCcw, ScanLine, Info } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -20,6 +20,41 @@ function personalMatch(baseMatch, scanAccuracy, shoeId) {
   const variation = ((shoeId * 13 + 7) % 17) * 0.03
   const pct = Math.min(99.9, scanAccuracy + variation)
   return `${pct.toFixed(1)}%`
+}
+
+// ── Match Tooltip ───────────────────────────────────────────────────────────
+function MatchBadge({ match, variant = 'dark' }) {
+  const [showTip, setShowTip] = useState(false)
+  if (!match) return null
+  const isDark = variant === 'dark'
+  return (
+    <div className="relative">
+      <button
+        onClick={e => { e.stopPropagation(); setShowTip(v => !v) }}
+        className={`flex items-center gap-1 rounded-full px-2.5 py-2 border-0 ${
+          isDark
+            ? 'bg-teal-500/20 border border-teal-400/40'
+            : 'bg-white/90'
+        }`}
+      >
+        <div className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-teal-400' : 'bg-teal-500'}`} />
+        <span className={`text-[9px] font-semibold ${isDark ? 'text-teal-300' : 'text-teal-700'}`}>{match}</span>
+        <Info size={8} className={isDark ? 'text-teal-400/60' : 'text-teal-600/50'} />
+      </button>
+      {showTip && (
+        <div
+          className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-52 bg-black text-white rounded-xl px-3 py-2.5 shadow-lg z-50"
+          onClick={e => e.stopPropagation()}
+        >
+          <p className="text-[10px] font-semibold mb-1">Passgenauigkeit</p>
+          <p className="text-[9px] text-gray-300 leading-relaxed">
+            Berechnet aus deinem 3D-Fußscan und der Schuhgeometrie. Je höher der Wert, desto besser passt der Schuh zu deiner Fußform.
+          </p>
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-black rotate-45" />
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ── Hero Card (featured first shoe) ────────────────────────────────────────
@@ -71,12 +106,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav }) {
             <ScanLine size={13} />
             3D Visualize
           </button>
-          {product.match && (
-            <div className="flex items-center gap-1 bg-teal-500/20 border border-teal-400/40 rounded-full px-2.5 py-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-teal-400" />
-              <span className="text-[9px] font-semibold text-teal-300">{product.match}</span>
-            </div>
-          )}
+          <MatchBadge match={product.match} variant="dark" />
         </div>
       </div>
     </div>
@@ -109,9 +139,8 @@ function GridCard({ product, onSelect, isFav, onToggleFav }) {
         )}
 
         {product.match && (
-          <div className="absolute bottom-2 right-2 bg-white/90 rounded-full px-2 py-0.5 flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-            <span className="text-[8px] font-semibold text-teal-700">{product.match}</span>
+          <div className="absolute bottom-2 right-2">
+            <MatchBadge match={product.match} variant="light" />
           </div>
         )}
       </div>
@@ -197,9 +226,14 @@ export default function ShoeCollection() {
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            <p className="text-sm">No shoes in this category yet</p>
-            <button onClick={() => navigate('/cms/shoes')} className="mt-3 text-xs text-black underline bg-transparent border-0">
-              Add in CMS →
+            <ShoppingBag size={32} strokeWidth={1} className="mx-auto mb-3 text-gray-300" />
+            <p className="text-sm font-medium text-gray-500">Bald verfügbar</p>
+            <p className="text-xs text-gray-400 mt-1">Diese Kategorie wird gerade kuratiert.</p>
+            <button
+              onClick={() => setActiveCategory(CATEGORIES[0].value)}
+              className="mt-4 text-xs text-black font-semibold bg-gray-100 rounded-full px-4 py-2 border-0"
+            >
+              Andere Modelle entdecken
             </button>
           </div>
         ) : (

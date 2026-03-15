@@ -4,7 +4,12 @@ import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints } from 
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
 
-const tabs = ['SIZE', 'CATALOG', 'GENERAL', 'MYSELF']
+const tabs = [
+  { id: 'SIZE',    label: 'SIZE',    sub: 'Maße' },
+  { id: 'CATALOG', label: 'CATALOG', sub: 'Modelle' },
+  { id: 'GENERAL', label: 'GENERAL', sub: 'Fußform' },
+  { id: 'MYSELF',  label: 'MYSELF',  sub: 'Notizen' },
+]
 
 const styleCards = [
   {
@@ -149,13 +154,14 @@ export default function Profile() {
           <div className="flex border-b border-gray-100 mt-2">
             {tabs.map(tab => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2.5 text-[8px] uppercase tracking-widest font-bold border-b-2 transition-all bg-transparent border-l-0 border-r-0 border-t-0 ${
-                  activeTab === tab ? 'text-black border-black' : 'text-gray-400 border-transparent'
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-2 text-center border-b-2 transition-all bg-transparent border-l-0 border-r-0 border-t-0 ${
+                  activeTab === tab.id ? 'text-black border-black' : 'text-gray-400 border-transparent'
                 }`}
               >
-                {tab}
+                <span className="text-[8px] uppercase tracking-widest font-bold block">{tab.label}</span>
+                <span className="text-[7px] text-gray-400 block mt-0.5">{tab.sub}</span>
               </button>
             ))}
           </div>

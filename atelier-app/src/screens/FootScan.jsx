@@ -1493,9 +1493,9 @@ export default function FootScan() {
                   </div>
                 </div>
 
-                <button onClick={() => navigate(-1)}
+                <button onClick={() => navigate('/collection', { replace: true })}
                   className="w-full py-4 rounded-2xl bg-black text-white font-bold text-base border-0">
-                  Fertig ✓
+                  Kollektion entdecken →
                 </button>
               </div>
             </div>
