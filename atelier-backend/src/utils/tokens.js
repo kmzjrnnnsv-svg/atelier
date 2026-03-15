@@ -34,7 +34,9 @@ const isProduction = process.env.NODE_ENV === 'production'
 
 export const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: isProduction,
+  // Always secure: Vite dev server uses HTTPS (basicSsl), production also HTTPS
+  secure: true,
+  // 'lax' for same-origin (Vite proxy), 'none' for cross-origin (Capacitor native)
   sameSite: isProduction ? 'none' : 'lax',
   path: '/api/auth/refresh',
   maxAge: REFRESH_EXPIRY,
