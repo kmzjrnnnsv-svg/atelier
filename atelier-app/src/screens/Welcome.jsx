@@ -45,18 +45,19 @@ export default function Welcome() {
     <div className="flex flex-col h-full bg-white">
       {/* Skip */}
       <div className="flex justify-end px-5 pt-4 pb-2 flex-shrink-0">
-        <button onClick={skip} className={`text-xs bg-transparent border-0 font-medium ${!isLast ? 'text-gray-400' : 'text-transparent pointer-events-none'}`}>
+        <button onClick={skip} className={`text-[10px] bg-transparent border-0 ${!isLast ? 'text-black/35' : 'text-transparent pointer-events-none'}`}
+          style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
           Überspringen
         </button>
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-        <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-6">
-          <step.icon size={32} strokeWidth={1.5} className="text-gray-800" />
+        <div className="w-20 h-20 bg-[#f6f5f3] flex items-center justify-center mb-6">
+          <step.icon size={32} strokeWidth={1.5} className="text-black" />
         </div>
-        <h1 className="font-playfair text-2xl text-black leading-tight mb-3">{step.title}</h1>
-        <p className="text-sm text-gray-500 leading-relaxed max-w-xs">{step.desc}</p>
+        <h1 className="text-[13px] text-black leading-tight mb-3" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>{step.title}</h1>
+        <p className="text-[11px] text-black/40 leading-relaxed max-w-xs">{step.desc}</p>
       </div>
 
       {/* Dots + Button */}
@@ -66,8 +67,8 @@ export default function Welcome() {
           {STEPS.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 rounded-full transition-all ${
-                i === current ? 'w-6 bg-black' : 'w-1.5 bg-gray-200'
+              className={`h-1 transition-all ${
+                i === current ? 'w-6 bg-black' : 'w-1.5 bg-black/15'
               }`}
             />
           ))}
@@ -75,11 +76,11 @@ export default function Welcome() {
 
         <button
           onClick={next}
-          className="w-full rounded-lg bg-black text-white font-semibold text-sm uppercase tracking-widest border-0 flex items-center justify-center gap-2"
-          style={{ height: '52px' }}
+          className="w-full bg-black text-white text-[10px] border-0 flex items-center justify-center gap-2"
+          style={{ height: '48px', letterSpacing: '0.18em', textTransform: 'uppercase' }}
         >
           {isLast ? 'Scan starten' : 'Weiter'}
-          <ArrowRight size={16} />
+          <ArrowRight size={16} strokeWidth={1.5} />
         </button>
       </div>
     </div>
