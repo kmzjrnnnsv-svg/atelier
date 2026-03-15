@@ -27,7 +27,9 @@ app.use(helmet())
 // CORS — allow Vite dev server + Capacitor iOS WKWebView
 const allowedOrigins = [
   'http://localhost:5173',
+  'https://localhost:5173',  // Vite with basicSsl()
   'http://127.0.0.1:5173',
+  'https://127.0.0.1:5173',
   'capacitor://localhost',   // Capacitor iOS
   'ionic://localhost',       // Capacitor iOS (legacy)
   'https://localhost',       // Capacitor iOS (HTTPS mode)
