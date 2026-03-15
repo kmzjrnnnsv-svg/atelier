@@ -8,6 +8,9 @@ let _accessToken = null
 export function getAccessToken() { return _accessToken }
 export function setAccessToken(t) { _accessToken = t }
 
+// In Capacitor iOS builds, relative URLs don't reach the backend.
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)        // { id, name, email, role }
   const [loading, setLoading] = useState(true)  // true while checking existing session
@@ -21,7 +24,7 @@ export function AuthProvider({ children }) {
 
   const silentRefresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
+      const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
       if (!res.ok) { logout(); return }
       const data = await res.json()
       setAccessToken(data.accessToken)
@@ -39,7 +42,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function register(name, email, password) {
-    const res = await fetch('/api/auth/register', {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -54,7 +57,7 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -72,7 +75,7 @@ export function AuthProvider({ children }) {
     setAccessToken(null)
     setUser(null)
     if (refreshTimer.current) clearTimeout(refreshTimer.current)
-    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {})
+    fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {})
   }
 
   return (
