@@ -1,0 +1,2 @@
+Sync-Test: Diese Datei wurde am 15.03.2026 erstellt.
+Wenn du diese Datei auf deinem Mac siehst, funktioniert der Cron-Job!
