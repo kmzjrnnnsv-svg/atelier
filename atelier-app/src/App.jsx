@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
@@ -11,26 +11,55 @@ import Login from './screens/Login'
 import Registration from './screens/Registration'
 import NotFound from './screens/NotFound'
 
-// Lazy: loaded on demand per route
-const ShoeCollection    = lazy(() => import('./screens/ShoeCollection'))
-const Customize         = lazy(() => import('./screens/Customize'))
-const Profile           = lazy(() => import('./screens/Profile'))
-const FootScan          = lazy(() => import('./screens/FootScan'))
-const OutfitVisualizer  = lazy(() => import('./screens/OutfitVisualizer'))
-const Mirror            = lazy(() => import('./screens/Mirror'))
-const Explore           = lazy(() => import('./screens/Explore'))
-const HealthInfo        = lazy(() => import('./screens/HealthInfo'))
-const Learn             = lazy(() => import('./screens/Learn'))
-const Settings          = lazy(() => import('./screens/Settings'))
-const Wishlist          = lazy(() => import('./screens/Wishlist'))
-const Orders            = lazy(() => import('./screens/Orders'))
-const Checkout          = lazy(() => import('./screens/Checkout'))
-const HelpSupport       = lazy(() => import('./screens/HelpSupport'))
-const LegalDoc          = lazy(() => import('./screens/LegalDoc'))
-const MyScans           = lazy(() => import('./screens/MyScans'))
-const Welcome           = lazy(() => import('./screens/Welcome'))
+// Lazy import factories — used both by lazy() and prefetchRoute()
+const lazyImports = {
+  '/collection': () => import('./screens/ShoeCollection'),
+  '/customize':  () => import('./screens/Customize'),
+  '/profile':    () => import('./screens/Profile'),
+  '/scan':       () => import('./screens/FootScan'),
+  '/visualizer': () => import('./screens/OutfitVisualizer'),
+  '/mirror':     () => import('./screens/Mirror'),
+  '/explore':    () => import('./screens/Explore'),
+  '/health':     () => import('./screens/HealthInfo'),
+  '/learn':      () => import('./screens/Learn'),
+  '/settings':   () => import('./screens/Settings'),
+  '/wishlist':   () => import('./screens/Wishlist'),
+  '/orders':     () => import('./screens/Orders'),
+  '/checkout':   () => import('./screens/Checkout'),
+  '/help':       () => import('./screens/HelpSupport'),
+  '/legal':      () => import('./screens/LegalDoc'),
+  '/my-scans':   () => import('./screens/MyScans'),
+  '/welcome':    () => import('./screens/Welcome'),
+}
 
-// CMS — single chunk via webpackChunkName-style magic comment
+// Prefetch a route's chunk on hover/touch — safe to call multiple times
+const prefetched = new Set()
+export function prefetchRoute(path) {
+  if (prefetched.has(path) || !lazyImports[path]) return
+  prefetched.add(path)
+  lazyImports[path]()
+}
+
+// Lazy: loaded on demand per route
+const ShoeCollection    = lazy(lazyImports['/collection'])
+const Customize         = lazy(lazyImports['/customize'])
+const Profile           = lazy(lazyImports['/profile'])
+const FootScan          = lazy(lazyImports['/scan'])
+const OutfitVisualizer  = lazy(lazyImports['/visualizer'])
+const Mirror            = lazy(lazyImports['/mirror'])
+const Explore           = lazy(lazyImports['/explore'])
+const HealthInfo        = lazy(lazyImports['/health'])
+const Learn             = lazy(lazyImports['/learn'])
+const Settings          = lazy(lazyImports['/settings'])
+const Wishlist          = lazy(lazyImports['/wishlist'])
+const Orders            = lazy(lazyImports['/orders'])
+const Checkout          = lazy(lazyImports['/checkout'])
+const HelpSupport       = lazy(lazyImports['/help'])
+const LegalDoc          = lazy(lazyImports['/legal'])
+const MyScans           = lazy(lazyImports['/my-scans'])
+const Welcome           = lazy(lazyImports['/welcome'])
+
+// CMS
 const CMSLayout            = lazy(() => import('./screens/cms/CMSLayout'))
 const CMSDashboard         = lazy(() => import('./screens/cms/CMSDashboard'))
 const ShoeEditor           = lazy(() => import('./screens/cms/ShoeEditor'))
@@ -49,7 +78,14 @@ const EmailSettings        = lazy(() => import('./screens/cms/EmailSettings'))
 const EmailTemplatesPanel  = lazy(() => import('./screens/cms/EmailTemplatesPanel'))
 const LastSettings         = lazy(() => import('./screens/cms/LastSettings'))
 
-function LazySpinner() {
+// Only show spinner after 300ms to avoid flicker on fast connections
+function DelayedSpinner() {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setShow(true), 300)
+    return () => clearTimeout(t)
+  }, [])
+  if (!show) return null
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin-custom" />
@@ -75,7 +111,7 @@ function AppRoutes() {
   if (isCMS) {
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 50, paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
-        <Suspense fallback={<LazySpinner />}>
+        <Suspense fallback={<DelayedSpinner />}>
           <Routes>
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
               <Route index        element={<CMSDashboard />} />
@@ -104,7 +140,7 @@ function AppRoutes() {
   return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       <div className="flex-1 overflow-hidden">
-        <Suspense fallback={<LazySpinner />}>
+        <Suspense fallback={<DelayedSpinner />}>
           <Routes>
             <Route path="/"           element={<Navigate to="/login" replace />} />
             <Route path="/login"      element={<Login />} />
