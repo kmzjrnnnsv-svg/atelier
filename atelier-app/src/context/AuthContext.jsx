@@ -15,6 +15,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)        // { id, name, email, role }
   const [loading, setLoading] = useState(true)  // true while checking existing session
   const refreshTimer = useRef(null)
+  const refreshInFlight = useRef(false)
 
   // Schedule access token refresh 1 minute before expiry (14 min cycle)
   function scheduleRefresh() {
@@ -23,6 +24,9 @@ export function AuthProvider({ children }) {
   }
 
   const silentRefresh = useCallback(async () => {
+    // Guard against StrictMode double-mount racing with token rotation
+    if (refreshInFlight.current) return
+    refreshInFlight.current = true
     try {
       const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
       if (!res.ok) { logout(); return }
@@ -32,6 +36,8 @@ export function AuthProvider({ children }) {
       scheduleRefresh()
     } catch {
       logout()
+    } finally {
+      refreshInFlight.current = false
     }
   }, [])
 
