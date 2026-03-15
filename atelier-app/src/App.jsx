@@ -26,6 +26,7 @@ import Checkout    from './screens/Checkout'
 import HelpSupport from './screens/HelpSupport'
 import LegalDoc    from './screens/LegalDoc'
 import MyScans     from './screens/MyScans'
+import Welcome     from './screens/Welcome'
 
 import CMSLayout from './screens/cms/CMSLayout'
 import CMSDashboard from './screens/cms/CMSDashboard'
@@ -46,7 +47,7 @@ import EmailTemplatesPanel from './screens/cms/EmailTemplatesPanel'
 import LastSettings from './screens/cms/LastSettings'
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/scan', '/customize', '/settings']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/settings']
 
 function AppRoutes() {
   const location = useLocation()
@@ -97,6 +98,7 @@ function AppRoutes() {
           <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
           <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
           <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
           <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
           <Route path="/visualizer" element={<ProtectedRoute><OutfitVisualizer /></ProtectedRoute>} />
           <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />

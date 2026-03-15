@@ -1201,11 +1201,11 @@ export default function FootScan() {
                   setPgImgs({ right: [], left: [] })
                   setPhase('pg-0')
                 }}
-                  className="w-full py-4 rounded-2xl font-bold text-base border-0 bg-gradient-to-r from-indigo-600 to-violet-600 text-white flex items-center justify-center gap-2">
-                  <span>📸</span> 8-Ansichten-Scan (±0,1 mm) →
+                  className="w-full py-4 rounded-2xl font-bold text-base border-0 bg-gray-100 text-gray-700 flex items-center justify-center gap-2">
+                  8-Ansichten-Scan (±0,1 mm) →
                 </button>
                 <button onClick={startDemo}
-                  className="w-full py-3.5 rounded-2xl bg-gray-100 text-gray-600 font-semibold text-sm border-0">
+                  className="w-full py-3.5 rounded-2xl bg-gray-50 text-gray-500 font-semibold text-sm border border-gray-200">
                   Demo-Modus (ohne Kamera)
                 </button>
               </div>
