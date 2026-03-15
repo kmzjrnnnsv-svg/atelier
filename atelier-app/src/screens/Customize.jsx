@@ -1,43 +1,135 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, Heart, Share2, ShoppingBag, Check, ZoomIn, Box, BadgeCheck, RotateCcw, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Bell, Lock } from 'lucide-react'
+import { ArrowLeft, Heart, Share2, ShoppingBag, Check, ZoomIn, Box, BadgeCheck, RotateCcw, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Bell, Lock, Lightbulb, CloudRain, Sun, Snowflake, ShieldCheck } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 
 const materials = [
-  { id: 'calfskin', label: 'CALFSKIN',  sub: 'Full-Grain', color: '#b45309', available: true  },
-  { id: 'suede',    label: 'SUEDE',     sub: 'Nubuck',     color: '#78716c', available: true  },
-  { id: 'patent',   label: 'PATENT',    sub: 'High-Gloss', color: '#111827', available: false },
+  {
+    id: 'calfskin', label: 'CALFSKIN', sub: 'Full-Grain', color: '#b45309', available: true,
+    tip: 'Robust und langlebig — entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.',
+    season: 'Ganzjährig',
+  },
+  {
+    id: 'suede', label: 'SUEDE', sub: 'Nubuck', color: '#78716c', available: true,
+    tip: 'Samtig-weiche Oberfläche für lässig-elegante Looks. Empfindlich bei Nässe — am besten für trockene Tage und Indoor-Anlässe.',
+    season: 'Frühling / Sommer',
+  },
+  {
+    id: 'patent', label: 'PATENT', sub: 'High-Gloss', color: '#111827', available: false,
+    tip: 'Hochglanz-Finish für formelle Anlässe, Galas und Abendveranstaltungen. Pflegeleicht, aber empfindlich gegen Kratzer.',
+    season: 'Events',
+  },
 ]
 
 const colors = [
-  { id: 'black',   hex: '#111827', name: 'Midnight Black', available: true  },
-  { id: 'cognac',  hex: '#92400e', name: 'Cognac',         available: true  },
-  { id: 'oxblood', hex: '#7b1e1e', name: 'Oxblood',        available: true  },
-  { id: 'tan',     hex: '#b45309', name: 'Tan',            available: true  },
-  { id: 'navy',    hex: '#1e3a5f', name: 'Navy',           available: false },
-  { id: 'forest',  hex: '#14532d', name: 'Forest',         available: false },
+  {
+    id: 'schwarz', hex: '#000000', name: 'Schwarz', available: true,
+    tip: 'Der Klassiker — passt zu jedem Outfit und jedem Anlass. Business, Formal, Casual — Schwarz geht immer.',
+    pairsWith: 'Grau, Navy, alle dunklen Anzüge',
+  },
+  {
+    id: 'black', hex: '#111827', name: 'Midnight Black', available: true,
+    tip: 'Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz — perfekt für Smart Casual und kreative Berufe.',
+    pairsWith: 'Dunkle Jeans, Navy Blazer, Charcoal Suits',
+  },
+  {
+    id: 'cognac', hex: '#92400e', name: 'Cognac', available: true,
+    tip: 'Warmes Braun mit Tiefe — der ideale Business-Casual-Begleiter. Passt hervorragend zu Beige, Navy und Erdtönen.',
+    pairsWith: 'Beige Chinos, Navy Blazer, Jeans',
+  },
+  {
+    id: 'oxblood', hex: '#7b1e1e', name: 'Oxblood', available: true,
+    tip: 'Sattes Bordeaux-Rot — ein Herbst- und Winter-Statement. Elegant zum dunklen Anzug, lässig zur Jeans.',
+    pairsWith: 'Charcoal, Navy, Dunkelgrün, Tweed',
+  },
+  {
+    id: 'tan', hex: '#b45309', name: 'Tan', available: true,
+    tip: 'Helles Karamell-Braun — die perfekte Sommerfarbe. Strahlt bei Sonnenlicht und passt zu hellen, leichten Outfits.',
+    pairsWith: 'Weiß, Hellblau, Leinen, Beige',
+  },
+  {
+    id: 'navy', hex: '#1e3a5f', name: 'Navy', available: false,
+    tip: 'Der moderne Gentleman-Ton — elegant und unkonventionell zugleich. Perfekt zu grauen und hellbraunen Outfits.',
+    pairsWith: 'Grau, Beige, helle Jeans, Tweed',
+  },
+  {
+    id: 'forest', hex: '#14532d', name: 'Forest', available: false,
+    tip: 'Tiefes Waldgrün — für den mutigen Stilbewussten. Ein Herbst-Highlight zu Cord, Tweed und Erdtönen.',
+    pairsWith: 'Braun, Beige, Senfgelb, Cord',
+  },
 ]
 
-const soles = [
-  {
+// ── Sole definitions ────────────────────────────────────────────────────────
+const ALL_SOLES = {
+  leather: {
     id: 'leather',
     label: 'LEDERSOHLE',
     sub: 'Klassisch',
-    desc: 'Handgenähte Ledersohle — elegant und atmungsaktiv',
-    available: true,
+    desc: 'Handgenähte Ledersohle — elegant und atmungsaktiv.',
+    tip: 'Nur für trockene Bedingungen empfohlen. Ideal im Sommer und für Indoor-Anlässe. Bei Nässe wird es rutschig.',
+    icon: Sun,
     price: null,
   },
-  {
+  'rubber-grip': {
     id: 'rubber-grip',
     label: 'ANTI-RUTSCH',
-    sub: 'Gummi-Grip',
-    desc: 'Gummibeschichtete Sohle — maximale Rutschfestigkeit auf allen Oberflächen',
-    available: true,
+    sub: 'Gummi-Profil',
+    desc: 'Gummibeschichtete Profilsohle — maximale Rutschfestigkeit auf allen Oberflächen.',
+    tip: 'Unsere Empfehlung für den Alltag. Sicherer Halt bei Regen, Schnee und nassen Böden. Ganzjährig einsetzbar.',
+    icon: ShieldCheck,
+    recommended: true,
     price: '+ € 35',
   },
-]
+  sneaker: {
+    id: 'sneaker',
+    label: 'SNEAKER-SOHLE',
+    sub: 'EVA-Komfort',
+    desc: 'Leichte EVA-Komfortsohle mit Dämpfung — für maximalen Gehkomfort den ganzen Tag.',
+    tip: 'Speziell für Sneaker entwickelt. Stoßdämpfend, flexibel und ultraleicht.',
+    icon: ShieldCheck,
+    fixed: true,
+    price: null,
+  },
+}
+
+// Category → which soles are available
+// BOOT: only rubber (winter shoe, must have grip)
+// SNEAKER: only sneaker sole (fixed)
+// Others: leather + rubber (both available)
+function getSolesForCategory(category) {
+  switch (category) {
+    case 'BOOT':    return [ALL_SOLES['rubber-grip']]
+    case 'SNEAKER': return [ALL_SOLES.sneaker]
+    default:        return [ALL_SOLES.leather, ALL_SOLES['rubber-grip']]
+  }
+}
+
+function getDefaultSole(category) {
+  switch (category) {
+    case 'BOOT':    return 'rubber-grip'
+    case 'SNEAKER': return 'sneaker'
+    default:        return 'rubber-grip' // recommend rubber by default
+  }
+}
+
+// ── Hint component ──────────────────────────────────────────────────────────
+function Hint({ text, icon: Icon, variant = 'default' }) {
+  if (!text) return null
+  const styles = {
+    default: 'bg-amber-50 border-amber-100 text-amber-800',
+    recommend: 'bg-teal-50 border-teal-100 text-teal-800',
+    warn: 'bg-orange-50 border-orange-100 text-orange-700',
+    info: 'bg-blue-50 border-blue-100 text-blue-700',
+  }
+  return (
+    <div className={`flex items-start gap-2 rounded-xl border px-3 py-2.5 mt-2 ${styles[variant]}`}>
+      {Icon ? <Icon size={12} className="flex-shrink-0 mt-0.5 opacity-70" /> : <Lightbulb size={12} className="flex-shrink-0 mt-0.5 opacity-70" />}
+      <p className="text-[9px] leading-relaxed">{text}</p>
+    </div>
+  )
+}
 
 // ── Star Picker ──────────────────────────────────────────────────────────────
 function StarPicker({ value, onChange }) {
@@ -90,9 +182,12 @@ export default function Customize() {
     image:    null,
   }
 
+  const category = product.category || 'OXFORD'
+  const availableSoles = getSolesForCategory(category)
+
   const [selectedMaterial, setSelectedMaterial] = useState('calfskin')
-  const [selectedColor,    setSelectedColor]    = useState('black')
-  const [selectedSole,     setSelectedSole]     = useState('leather')
+  const [selectedColor,    setSelectedColor]    = useState('schwarz')
+  const [selectedSole,     setSelectedSole]     = useState(() => getDefaultSole(category))
   const [added,            setAdded]            = useState(false)
   const [addError,         setAddError]         = useState('')
 
@@ -144,7 +239,8 @@ export default function Customize() {
     setRotY(0)
   }
 
-  const selectedSoleObj = soles.find(s => s.id === selectedSole)
+  const selectedSoleObj = ALL_SOLES[selectedSole]
+  const selectedColorObj = colors.find(c => c.id === selectedColor)
 
   const handleAddToBag = () => {
     navigate('/checkout', {
@@ -300,7 +396,7 @@ export default function Customize() {
         <div className="mb-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Lederart</span>
-            <span className="text-[10px] italic text-gray-500">{selectedMat?.label}</span>
+            <span className="text-[10px] italic text-gray-500">{selectedMat?.label} · {selectedMat?.season}</span>
           </div>
           <div className="flex gap-3">
             {materials.map((mat) => {
@@ -345,13 +441,20 @@ export default function Customize() {
               )
             })}
           </div>
+          {selectedMat?.tip && (
+            <Hint
+              text={selectedMat.tip}
+              variant={selectedMaterial === 'suede' ? 'warn' : 'default'}
+              icon={selectedMaterial === 'suede' ? Sun : Lightbulb}
+            />
+          )}
         </div>
 
         {/* Color Palette */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Farbpalette</span>
-            <span className="text-[10px] italic text-gray-500">{colors.find(c => c.id === selectedColor)?.name}</span>
+            <span className="text-[10px] italic text-gray-500">{selectedColorObj?.name}</span>
           </div>
           <div className="flex gap-3 flex-wrap">
             {colors.map((col) => {
@@ -383,6 +486,15 @@ export default function Customize() {
               )
             })}
           </div>
+          {selectedColorObj && (
+            <Hint text={selectedColorObj.tip} variant="info" icon={Lightbulb} />
+          )}
+          {selectedColorObj?.pairsWith && (
+            <div className="flex items-center gap-2 mt-1.5 px-1">
+              <span className="text-[8px] text-gray-400 font-semibold uppercase tracking-wide">Passt zu:</span>
+              <span className="text-[8px] text-gray-500 italic">{selectedColorObj.pairsWith}</span>
+            </div>
+          )}
         </div>
 
         {/* Sole Selection */}
@@ -391,49 +503,94 @@ export default function Customize() {
             <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Sohle</span>
             <span className="text-[10px] italic text-gray-500">{selectedSoleObj?.label}</span>
           </div>
+
+          {/* Category-specific sole notice */}
+          {category === 'BOOT' && (
+            <div className="flex items-start gap-2 bg-gray-900 text-white rounded-xl px-3 py-2.5 mb-2">
+              <Snowflake size={12} className="flex-shrink-0 mt-0.5 text-blue-300" />
+              <p className="text-[9px] leading-relaxed">
+                <span className="font-semibold">Wintermodell:</span> Chelsea-Boots werden ausschließlich mit der Anti-Rutsch Gummiprofilsohle gefertigt — für sicheren Halt auf Eis, Schnee und nassen Böden.
+              </p>
+            </div>
+          )}
+          {category === 'SNEAKER' && (
+            <div className="flex items-start gap-2 bg-gray-900 text-white rounded-xl px-3 py-2.5 mb-2">
+              <ShieldCheck size={12} className="flex-shrink-0 mt-0.5 text-teal-300" />
+              <p className="text-[9px] leading-relaxed">
+                <span className="font-semibold">Sneaker-Sohle:</span> Dieses Modell wird mit der speziell entwickelten EVA-Komfortsohle gefertigt — ultraleicht, stoßdämpfend und perfekt auf den Sneaker-Leisten abgestimmt.
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
-            {soles.map(sole => (
-              <button
-                key={sole.id}
-                onClick={() => sole.available && setSelectedSole(sole.id)}
-                className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all bg-transparent text-left ${
-                  selectedSole === sole.id ? 'border-black' : 'border-gray-100'
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  selectedSole === sole.id ? 'bg-black' : 'bg-gray-100'
-                }`}>
-                  {sole.id === 'leather' ? (
-                    <svg viewBox="0 0 24 24" className={`w-5 h-5 ${selectedSole === sole.id ? 'text-white' : 'text-gray-500'}`} fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <ellipse cx="12" cy="16" rx="9" ry="4" />
-                      <path d="M3 16V12c0-4.97 4.03-9 9-9s9 4.03 9 9v4" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" className={`w-5 h-5 ${selectedSole === sole.id ? 'text-white' : 'text-gray-500'}`} fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <ellipse cx="12" cy="16" rx="9" ry="4" />
-                      <path d="M3 16V12c0-4.97 4.03-9 9-9s9 4.03 9 9v4" />
-                      <path d="M6 18l2-1.5M10 18l2-1.5M14 18l2-1.5M18 18l-1-0.8" strokeWidth="1" opacity="0.6" />
-                    </svg>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className={`text-[9px] uppercase tracking-widest font-bold ${selectedSole === sole.id ? 'text-black' : 'text-gray-500'}`}>
-                      {sole.label}
-                    </p>
-                    <span className="text-[7px] text-gray-400 italic">{sole.sub}</span>
+            {availableSoles.map(sole => {
+              const SoleIcon = sole.icon || ShieldCheck
+              const isSelected = selectedSole === sole.id
+              const isFixed = sole.fixed || availableSoles.length === 1
+              return (
+                <button
+                  key={sole.id}
+                  onClick={() => !isFixed && setSelectedSole(sole.id)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all bg-transparent text-left ${
+                    isSelected ? 'border-black' : 'border-gray-100'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    isSelected ? 'bg-black' : 'bg-gray-100'
+                  }`}>
+                    <SoleIcon size={18} className={isSelected ? 'text-white' : 'text-gray-500'} strokeWidth={1.5} />
                   </div>
-                  <p className="text-[9px] text-gray-400 mt-0.5 leading-relaxed">{sole.desc}</p>
-                </div>
-                {sole.price && (
-                  <span className="text-[9px] font-semibold text-teal-600 flex-shrink-0">{sole.price}</span>
-                )}
-                {selectedSole === sole.id && (
-                  <Check size={14} className="text-black flex-shrink-0" strokeWidth={2.5} />
-                )}
-              </button>
-            ))}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className={`text-[9px] uppercase tracking-widest font-bold ${isSelected ? 'text-black' : 'text-gray-500'}`}>
+                        {sole.label}
+                      </p>
+                      <span className="text-[7px] text-gray-400 italic">{sole.sub}</span>
+                      {sole.recommended && !isFixed && (
+                        <span className="text-[6px] uppercase tracking-wide font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-full">Empfohlen</span>
+                      )}
+                    </div>
+                    <p className="text-[9px] text-gray-400 mt-0.5 leading-relaxed">{sole.desc}</p>
+                  </div>
+                  {sole.price && (
+                    <span className="text-[9px] font-semibold text-teal-600 flex-shrink-0">{sole.price}</span>
+                  )}
+                  {isSelected && (
+                    <Check size={14} className="text-black flex-shrink-0" strokeWidth={2.5} />
+                  )}
+                </button>
+              )
+            })}
           </div>
+
+          {/* Sole recommendation hint */}
+          {selectedSoleObj && (
+            <Hint
+              text={selectedSoleObj.tip}
+              variant={selectedSole === 'leather' ? 'warn' : 'recommend'}
+              icon={selectedSole === 'leather' ? Sun : CloudRain}
+            />
+          )}
+
+          {/* Extra warning if user picks leather sole */}
+          {selectedSole === 'leather' && availableSoles.length > 1 && (
+            <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2.5 mt-2">
+              <CloudRain size={12} className="flex-shrink-0 mt-0.5 text-orange-500" />
+              <div>
+                <p className="text-[9px] text-orange-800 leading-relaxed font-semibold">Achtung bei Nässe</p>
+                <p className="text-[9px] text-orange-700 leading-relaxed mt-0.5">
+                  Die Ledersohle ist nur bei trockenem Wetter empfehlenswert — ideal im Sommer oder für Indoor-Anlässe.
+                  Für den Alltag und bei wechselhaftem Wetter empfehlen wir die Anti-Rutsch Gummiprofilsohle.
+                </p>
+                <button
+                  onClick={() => setSelectedSole('rubber-grip')}
+                  className="mt-2 text-[9px] font-bold text-orange-800 underline bg-transparent border-0 p-0"
+                >
+                  Zur Gummiprofilsohle wechseln →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Size from scan */}
