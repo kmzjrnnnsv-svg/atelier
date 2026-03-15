@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, RotateCcw } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -93,6 +93,11 @@ export default function Customize() {
   const [selSole, setSelSole] = useState(() => getDefaultSole(soleList))
   const [added,   setAdded]   = useState(false)
 
+  // 3D Viewer
+  const [is3D, setIs3D] = useState(false)
+  const [rotY, setRotY] = useState(0)
+  const drag = useRef({ on: false, x0: 0, a0: 0 })
+
   // Reviews
   const [reviews, setReviews]       = useState([])
   const [showReview, setShowReview] = useState(false)
@@ -129,6 +134,18 @@ export default function Customize() {
     if (!product.id) return
     apiFetch(`/api/reviews/shoe/${product.id}`).then(setReviews).catch(() => {})
   }, [product.id])
+
+  // 3D drag
+  const onPointerDown = (e) => {
+    if (!is3D) return
+    drag.current = { on: true, x0: e.clientX, a0: rotY }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const onPointerMove = (e) => {
+    if (!drag.current.on) return
+    setRotY(drag.current.a0 + (e.clientX - drag.current.x0) * 0.5)
+  }
+  const onPointerUp = () => { drag.current.on = false }
 
   const handleBuy = () => {
     navigate('/checkout', {
@@ -177,20 +194,73 @@ export default function Customize() {
         </button>
       </div>
 
-      {/* ── Schuh-Bild ─────────────────────────────────────────── */}
-      <div className="mx-4 mt-1 bg-gray-50 rounded-3xl overflow-hidden flex items-center justify-center"
-        style={{ height: 'clamp(140px, 22dvh, 200px)' }}>
-        {product.image ? (
-          <img src={product.image} alt={product.name} className="w-full h-full object-contain p-4" />
-        ) : (
-          <svg viewBox="0 0 260 130" className="w-56">
-            <ellipse cx="130" cy="118" rx="112" ry="10" fill="#e5e7eb" />
-            <path d="M20 100 Q17 108 38 112 L222 112 Q238 112 238 100 L232 80 Q226 62 210 60 L72 60 Q47 60 42 68 Z" fill={color} />
-            <path d="M42 68 Q37 48 62 36 L120 30 Q155 27 178 42 Q198 54 232 80 L210 60 Q180 50 148 52 L90 53 Q60 55 42 68 Z" fill={color} opacity="0.85" />
-            <path d="M42 68 Q36 55 53 44 Q68 34 87 34 L87 53 Q63 55 42 68 Z" fill={color} />
-            <path d="M87 53 L210 60 Q210 50 178 42 Q155 27 120 30 L87 34 Z" fill="white" opacity="0.1" />
-          </svg>
+      {/* ── 3D Viewer ──────────────────────────────────────────── */}
+      <div
+        className="relative mx-4 mt-1 rounded-3xl overflow-hidden select-none"
+        style={{
+          height: 'clamp(160px, 25dvh, 220px)',
+          cursor: is3D ? 'grab' : 'default',
+          background: 'linear-gradient(145deg, #f8f9fa 0%, #eef0f2 50%, #e8eaed 100%)',
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+      >
+        <div
+          className="absolute inset-0 flex items-center justify-center p-6"
+          style={{
+            transform: is3D ? `perspective(800px) rotateY(${rotY}deg)` : 'none',
+            transition: drag.current.on ? 'none' : 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+          }}
+        >
+          {product.image ? (
+            <img src={product.image} alt={product.name} className="w-full h-full object-contain drop-shadow-lg" />
+          ) : (
+            <svg viewBox="0 0 260 130" className="w-60 drop-shadow-lg">
+              <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000010" />
+              <path d="M20 100 Q17 108 38 112 L222 112 Q238 112 238 100 L232 80 Q226 62 210 60 L72 60 Q47 60 42 68 Z" fill={color} />
+              <path d="M42 68 Q37 48 62 36 L120 30 Q155 27 178 42 Q198 54 232 80 L210 60 Q180 50 148 52 L90 53 Q60 55 42 68 Z" fill={color} opacity="0.88" />
+              <path d="M42 68 Q36 55 53 44 Q68 34 87 34 L87 53 Q63 55 42 68 Z" fill={color} />
+              <path d="M87 53 L210 60 Q210 50 178 42 Q155 27 120 30 L87 34 Z" fill="white" opacity="0.12" />
+              <path d="M90 38 Q115 30 148 31 Q175 31 198 44" stroke="white" strokeWidth="1.2" fill="none" opacity="0.15" />
+            </svg>
+          )}
+        </div>
+
+        {/* 3D-Modus Hinweis */}
+        {is3D && (
+          <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
+            <div className="bg-black/50 backdrop-blur-sm text-white text-[10px] px-3 py-1 rounded-full">
+              Ziehen zum Drehen
+            </div>
+          </div>
         )}
+
+        {/* Buttons rechts */}
+        <div className="absolute right-3 top-3 flex flex-col gap-1.5">
+          <button
+            onClick={() => { setIs3D(v => !v); setRotY(0) }}
+            className={`w-9 h-9 rounded-xl shadow-sm flex items-center justify-center border-0 transition-all ${
+              is3D ? 'bg-black text-white' : 'bg-white/80 backdrop-blur-sm text-gray-600 hover:bg-white'
+            }`}
+          >
+            <Box size={16} strokeWidth={1.5} />
+          </button>
+          <button className="w-9 h-9 rounded-xl bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center border-0 text-gray-600 hover:bg-white transition-all">
+            <ZoomIn size={16} strokeWidth={1.5} />
+          </button>
+        </div>
+
+        {/* Status-Pill unten */}
+        <div className="absolute bottom-2.5 left-0 right-0 flex justify-center pointer-events-none">
+          <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1 shadow-sm">
+            <RotateCcw size={9} className="text-gray-500" />
+            <span className="text-[9px] text-gray-500 font-medium">
+              {is3D ? '3D aktiv' : '360° Ansicht'}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* ── Passgenauigkeit ────────────────────────────────────── */}
