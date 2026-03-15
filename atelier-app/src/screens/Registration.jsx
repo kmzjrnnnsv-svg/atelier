@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { X, Eye, EyeOff, ArrowRight, Box, AlertCircle } from 'lucide-react'
+import { X, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Registration() {
@@ -54,9 +54,9 @@ export default function Registration() {
   const strength = pwStrength()
 
   return (
-    <div className="flex flex-col min-h-full bg-white relative overflow-y-auto">
+    <div className="flex flex-col h-full bg-white relative">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-14 pb-3">
+      <div className="flex items-center justify-between px-5 pt-14 pb-3 flex-shrink-0">
         <button className="w-8 h-8 flex items-center justify-center bg-transparent border-0" onClick={() => navigate('/login')}>
           <X size={20} strokeWidth={1.5} className="text-gray-700" />
         </button>
@@ -64,16 +64,19 @@ export default function Registration() {
         <div className="w-8" />
       </div>
 
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+
       {/* Headline */}
-      <div className="text-center mt-5 px-6">
+      <div className="text-center mt-3 px-6">
         <h1 className="font-playfair text-2xl italic text-black leading-tight">Step into Perfection</h1>
-        <p className="text-xs text-gray-500 mt-2 leading-relaxed max-w-xs mx-auto">
+        <p className="text-xs text-gray-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
           Crafting your digital silhouette for bespoke luxury footwear.
         </p>
       </div>
 
       {/* Form */}
-      <div className="px-5 mt-6 space-y-4">
+      <div className="px-5 mt-4 space-y-3.5">
         {apiError && (
           <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
             <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
@@ -86,7 +89,7 @@ export default function Registration() {
           <input type="text" value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="James Sterling"
-            className="w-full h-12 border border-gray-200 rounded-lg px-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-900 transition-colors" />
+            className="w-full h-11 border border-gray-200 rounded-lg px-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-900 transition-colors" />
         </div>
 
         <div>
@@ -95,7 +98,7 @@ export default function Registration() {
             onChange={(e) => { setForm({ ...form, email: e.target.value }); setErrors(er => ({ ...er, email: null })) }}
             onBlur={() => { if (form.email && !isEmailValid(form.email)) setErrors(er => ({ ...er, email: 'Ungültige E-Mail' })) }}
             placeholder="examplename@pinstripe.com"
-            className={`w-full h-12 border rounded-lg px-3 text-sm text-gray-900 placeholder-gray-300 italic focus:outline-none transition-colors ${errors.email ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'}`} />
+            className={`w-full h-11 border rounded-lg px-3 text-sm text-gray-900 placeholder-gray-300 italic focus:outline-none transition-colors ${errors.email ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'}`} />
           {errors.email && (
             <p className="text-[10px] text-red-500 mt-1">{errors.email}{' '}
               {errors.email?.includes('bereits') && <Link to="/login" className="underline font-semibold text-red-600">Jetzt einloggen →</Link>}
@@ -109,7 +112,7 @@ export default function Registration() {
             <input type={showPw ? 'text' : 'password'} value={form.password}
               onChange={(e) => { setForm({ ...form, password: e.target.value }); setErrors(er => ({ ...er, password: null })) }}
               placeholder="Min. 8 Zeichen"
-              className={`w-full h-12 border rounded-lg px-3 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${errors.password ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'}`} />
+              className={`w-full h-11 border rounded-lg px-3 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${errors.password ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'}`} />
             <button type="button" onClick={() => setShowPw(!showPw)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 bg-transparent border-0 p-0">
               {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -131,7 +134,7 @@ export default function Registration() {
             <input type={showPwConfirm ? 'text' : 'password'} value={form.passwordConfirm}
               onChange={(e) => setForm({ ...form, passwordConfirm: e.target.value })}
               placeholder="Passwort wiederholen"
-              className={`w-full h-12 border rounded-lg px-3 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${
+              className={`w-full h-11 border rounded-lg px-3 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${
                 form.passwordConfirm && !passwordsMatch ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'
               }`} />
             <button type="button" onClick={() => setShowPwConfirm(!showPwConfirm)}
@@ -163,7 +166,7 @@ export default function Registration() {
         <button
           onClick={handleSubmit}
           disabled={!isFormValid || loading}
-          style={{ height: '52px' }}
+          style={{ height: '48px' }}
           className={`w-full rounded-lg flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest transition-all mt-2 ${
             isFormValid && !loading ? 'bg-black text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
@@ -176,16 +179,14 @@ export default function Registration() {
       </div>
 
       {/* Footer */}
-      <div className="text-center mt-5 pb-6 px-5 space-y-3">
+      <div className="text-center mt-4 pb-6 px-5 space-y-3">
         <p className="text-xs text-gray-500">
           Already have an account?{' '}
           <Link to="/login" className="text-black font-semibold no-underline">Log In</Link>
         </p>
-        <div className="flex items-center justify-center gap-2 py-2 px-4 bg-gray-50 rounded-xl">
-          <Box size={14} className="text-gray-500" />
-          <span className="text-[10px] uppercase tracking-[0.12em] text-gray-500">Next: AI 3D Scanning</span>
-        </div>
       </div>
+
+      </div>{/* end scrollable */}
     </div>
   )
 }
