@@ -98,7 +98,7 @@ export default function Learn() {
   return (
     <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
       {/* Header */}
-      <div className="bg-white flex items-center justify-between px-5 pt-14 pb-4 border-b border-gray-100 flex-shrink-0">
+      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
         <button
           onClick={() => selected ? setSelected(null) : navigate(-1)}
           className="bg-transparent border-0 p-0"

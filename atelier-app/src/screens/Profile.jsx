@@ -42,7 +42,7 @@ export default function Profile() {
     <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="bg-white flex items-center justify-between px-5 pt-14 pb-4">
+      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4">
         <button onClick={() => navigate('/settings')} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
           <Settings size={17} strokeWidth={1.5} className="text-gray-700" />
         </button>

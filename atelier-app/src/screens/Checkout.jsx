@@ -243,7 +243,7 @@ export default function Checkout() {
     <div className="flex flex-col h-full bg-white overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-14 pb-2 border-b border-gray-100 flex-shrink-0">
+      <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-gray-100 flex-shrink-0">
         <button
           onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)}
           className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0"
@@ -367,7 +367,7 @@ export default function Checkout() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="px-5 pb-10 pt-3 border-t border-gray-100 flex-shrink-0">
+      <div className="px-5 pt-3 border-t border-gray-100 flex-shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)' }}>
         {step < 3 ? (
           <button
             onClick={handleNext}

@@ -320,7 +320,7 @@ export default function MyScans() {
     <div className="flex flex-col h-full bg-gray-950 text-white overflow-hidden">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 pt-14 pb-4 flex-shrink-0">
+      <div className="flex items-center justify-between px-5 pt-4 pb-4 flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
           className="w-11 h-11 rounded-full bg-white/5 border border-white/8 flex items-center justify-center"

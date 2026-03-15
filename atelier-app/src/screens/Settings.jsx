@@ -191,7 +191,7 @@ export default function Settings() {
       <Toast message={toast.message} type={toast.type} />
 
       {/* Header */}
-      <div className="bg-white flex items-center justify-between px-5 pt-14 pb-4 border-b border-gray-100 flex-shrink-0">
+      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
         <button onClick={() => navigate(-1)} className="bg-transparent border-0 p-0">
           <ArrowLeft size={22} strokeWidth={1.5} className="text-gray-800" />
         </button>
