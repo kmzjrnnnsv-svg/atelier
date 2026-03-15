@@ -58,7 +58,7 @@ export default function Registration() {
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 flex-shrink-0">
         <button className="w-8 h-8 flex items-center justify-center bg-transparent border-0" onClick={() => navigate('/login')}>
-          <X size={20} strokeWidth={1.5} className="text-gray-700" />
+          <X size={20} strokeWidth={1.5} className="text-black/70" />
         </button>
         <span className="font-playfair text-lg font-semibold tracking-[0.25em] uppercase text-black">ATELIER</span>
         <div className="w-8" />
@@ -69,8 +69,8 @@ export default function Registration() {
 
       {/* Headline */}
       <div className="text-center mt-3 px-6">
-        <h1 className="font-playfair text-2xl italic text-black leading-tight">Step into Perfection</h1>
-        <p className="text-xs text-gray-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
+        <h1 className="text-2xl text-black leading-tight uppercase tracking-[0.15em] font-semibold">Step into Perfection</h1>
+        <p className="text-xs text-black/50 mt-1.5 leading-relaxed max-w-xs mx-auto" style={{ letterSpacing: '0.15em' }}>
           Crafting your digital silhouette for bespoke luxury footwear.
         </p>
       </div>
@@ -78,27 +78,27 @@ export default function Registration() {
       {/* Form */}
       <div className="px-5 mt-4 space-y-3.5">
         {apiError && (
-          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-2.5">
             <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
             <p className="text-xs text-red-600">{apiError}</p>
           </div>
         )}
 
         <div>
-          <label className="text-[9px] uppercase tracking-[0.15em] text-gray-400 font-medium mb-1 block">Full Name</label>
+          <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1 block" style={{ letterSpacing: '0.15em' }}>Full Name</label>
           <input type="text" value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="James Sterling"
-            className="w-full h-11 border border-gray-200 rounded-lg px-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-900 transition-colors" />
+            className="w-full h-11 border border-black/10 px-3 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black transition-colors" />
         </div>
 
         <div>
-          <label className="text-[9px] uppercase tracking-[0.15em] text-gray-400 font-medium mb-1 block">Email Address</label>
+          <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1 block" style={{ letterSpacing: '0.15em' }}>Email Address</label>
           <input type="email" value={form.email}
             onChange={(e) => { setForm({ ...form, email: e.target.value }); setErrors(er => ({ ...er, email: null })) }}
             onBlur={() => { if (form.email && !isEmailValid(form.email)) setErrors(er => ({ ...er, email: 'Ungültige E-Mail' })) }}
             placeholder="examplename@pinstripe.com"
-            className={`w-full h-11 border rounded-lg px-3 text-sm text-gray-900 placeholder-gray-300 italic focus:outline-none transition-colors ${errors.email ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'}`} />
+            className={`w-full h-11 border px-3 text-sm text-black/90 placeholder-black/20 focus:outline-none transition-colors ${errors.email ? 'border-red-400' : 'border-black/10 focus:border-black'}`} />
           {errors.email && (
             <p className="text-[10px] text-red-500 mt-1">{errors.email}{' '}
               {errors.email?.includes('bereits') && <Link to="/login" className="underline font-semibold text-red-600">Jetzt einloggen →</Link>}
@@ -107,21 +107,21 @@ export default function Registration() {
         </div>
 
         <div>
-          <label className="text-[9px] uppercase tracking-[0.15em] text-gray-400 font-medium mb-1 block">Password</label>
+          <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1 block" style={{ letterSpacing: '0.15em' }}>Password</label>
           <div className="relative">
             <input type={showPw ? 'text' : 'password'} value={form.password}
               onChange={(e) => { setForm({ ...form, password: e.target.value }); setErrors(er => ({ ...er, password: null })) }}
               placeholder="Min. 8 Zeichen"
-              className={`w-full h-11 border rounded-lg px-3 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${errors.password ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'}`} />
+              className={`w-full h-11 border px-3 pr-10 text-sm text-black/90 placeholder-black/20 focus:outline-none transition-colors ${errors.password ? 'border-red-400' : 'border-black/10 focus:border-black'}`} />
             <button type="button" onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 bg-transparent border-0 p-0">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-black/40 bg-transparent border-0 p-0">
               {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           {form.password.length > 0 && (
             <div className="flex gap-1 mt-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className={`h-1 flex-1 rounded-full transition-all ${strength >= i ? strColors[strength] : 'bg-gray-200'}`} />
+                <div key={i} className={`h-1 flex-1 transition-all ${strength >= i ? strColors[strength] : 'bg-black/10'}`} />
               ))}
             </div>
           )}
@@ -129,16 +129,16 @@ export default function Registration() {
         </div>
 
         <div>
-          <label className="text-[9px] uppercase tracking-[0.15em] text-gray-400 font-medium mb-1 block">Passwort bestätigen</label>
+          <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1 block" style={{ letterSpacing: '0.15em' }}>Passwort bestätigen</label>
           <div className="relative">
             <input type={showPwConfirm ? 'text' : 'password'} value={form.passwordConfirm}
               onChange={(e) => setForm({ ...form, passwordConfirm: e.target.value })}
               placeholder="Passwort wiederholen"
-              className={`w-full h-11 border rounded-lg px-3 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${
-                form.passwordConfirm && !passwordsMatch ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'
+              className={`w-full h-11 border px-3 pr-10 text-sm text-black/90 placeholder-black/20 focus:outline-none transition-colors ${
+                form.passwordConfirm && !passwordsMatch ? 'border-red-400' : 'border-black/10 focus:border-black'
               }`} />
             <button type="button" onClick={() => setShowPwConfirm(!showPwConfirm)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 bg-transparent border-0 p-0">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-black/40 bg-transparent border-0 p-0">
               {showPwConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -154,7 +154,7 @@ export default function Registration() {
             onChange={e => setAgreeTerms(e.target.checked)}
             className="mt-0.5 w-4 h-4 accent-black flex-shrink-0"
           />
-          <span className="text-[10px] text-gray-500 leading-relaxed">
+          <span className="text-[10px] text-black/50 leading-relaxed">
             Ich stimme den{' '}
             <Link to="/legal/agb" className="text-black underline font-semibold">AGB</Link>
             {' '}und der{' '}
@@ -166,13 +166,13 @@ export default function Registration() {
         <button
           onClick={handleSubmit}
           disabled={!isFormValid || loading}
-          style={{ height: '48px' }}
-          className={`w-full rounded-lg flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest transition-all mt-2 ${
-            isFormValid && !loading ? 'bg-black text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          style={{ height: '48px', letterSpacing: '0.18em' }}
+          className={`w-full flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest transition-all mt-2 ${
+            isFormValid && !loading ? 'bg-black text-white' : 'bg-black/10 text-black/40 cursor-not-allowed'
           }`}
         >
           {loading
-            ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin-custom" />
+            ? <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin-custom" />
             : <><span>CREATE ACCOUNT</span><ArrowRight size={16} /></>
           }
         </button>
@@ -180,7 +180,7 @@ export default function Registration() {
 
       {/* Footer */}
       <div className="text-center mt-4 pb-6 px-5 space-y-3">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-black/50">
           Already have an account?{' '}
           <Link to="/login" className="text-black font-semibold no-underline">Log In</Link>
         </p>
