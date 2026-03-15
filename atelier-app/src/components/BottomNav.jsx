@@ -17,7 +17,8 @@ export default function BottomNav() {
   )?.id
 
   return (
-    <div className="bg-white border-t border-gray-100 flex items-center justify-around px-2 pb-7 pt-2 flex-shrink-0">
+    <div className="bg-white border-t border-gray-100 flex items-center justify-around px-2 pt-2 flex-shrink-0"
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}>
       {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => (
         <button
           key={id}

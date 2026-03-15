@@ -20,7 +20,7 @@ export default function HelpSupport() {
     <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
 
       {/* Header */}
-      <div className="bg-white flex items-center justify-between px-5 pt-14 pb-4 border-b border-gray-100 flex-shrink-0">
+      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
           <ArrowLeft size={18} strokeWidth={1.8} className="text-gray-800" />
         </button>

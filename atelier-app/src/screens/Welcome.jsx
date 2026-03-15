@@ -44,7 +44,7 @@ export default function Welcome() {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Skip */}
-      <div className="flex justify-end px-5 pt-14 pb-2 flex-shrink-0">
+      <div className="flex justify-end px-5 pt-4 pb-2 flex-shrink-0">
         <button onClick={skip} className={`text-xs bg-transparent border-0 font-medium ${!isLast ? 'text-gray-400' : 'text-transparent pointer-events-none'}`}>
           Überspringen
         </button>
@@ -60,7 +60,7 @@ export default function Welcome() {
       </div>
 
       {/* Dots + Button */}
-      <div className="px-5 pb-10 space-y-5 flex-shrink-0">
+      <div className="px-5 space-y-5 flex-shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 24px)' }}>
         {/* Dots */}
         <div className="flex justify-center gap-2">
           {STEPS.map((_, i) => (

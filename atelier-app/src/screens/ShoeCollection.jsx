@@ -27,7 +27,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav }) {
   return (
     <div
       className="relative rounded-3xl overflow-hidden mb-5 cursor-pointer active:scale-[0.98] transition-transform"
-      style={{ height: 260 }}
+      style={{ height: 'clamp(180px, 30dvh, 280px)' }}
       onClick={() => onSelect(product)}
     >
       {product.image ? (
@@ -153,7 +153,7 @@ export default function ShoeCollection() {
     <div className="flex flex-col h-full bg-white overflow-hidden">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="px-5 pt-14 pb-3 flex items-center justify-between bg-white">
+      <div className="px-5 pt-4 pb-2 flex items-center justify-between bg-white">
         <div>
           <p className="text-[9px] uppercase tracking-widest text-gray-400 font-medium">Personal Studio</p>
           <p className="text-[17px] font-bold text-black leading-tight">{user?.name || 'My Studio'}</p>
