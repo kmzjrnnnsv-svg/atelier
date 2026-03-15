@@ -30,10 +30,12 @@ export function refreshExpiresAt() {
 
 export const REFRESH_MAX_AGE = REFRESH_EXPIRY
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 export const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
   path: '/api/auth/refresh',
   maxAge: REFRESH_EXPIRY,
 }
