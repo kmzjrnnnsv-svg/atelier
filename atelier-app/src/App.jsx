@@ -140,7 +140,8 @@ function AppRoutes() {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', justifyContent: 'center', background: '#e8e6e3' }}>
+      <div style={{ width: '100%', maxWidth: 430, display: 'flex', flexDirection: 'column', background: '#fff', boxShadow: '0 0 40px rgba(0,0,0,0.08)', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       <div className="flex-1 overflow-hidden">
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
@@ -169,6 +170,7 @@ function AppRoutes() {
         </Suspense>
       </div>
       {showNav && <BottomNav />}
+      </div>
     </div>
   )
 }
