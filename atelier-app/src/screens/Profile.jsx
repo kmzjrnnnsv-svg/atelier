@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints } from 'lucide-react'
+import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
 
@@ -38,8 +38,10 @@ const styleCards = [
 export default function Profile() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
-  const { favorites, orders } = useAtelierStore()
+  const { favorites, orders, notifications, markAllNotificationsRead } = useAtelierStore()
   const [activeTab, setActiveTab] = useState('SIZE')
+  const [showNotifs, setShowNotifs] = useState(false)
+  const unreadCount = notifications.filter(n => !n.read).length
 
   const initials = (user?.name || 'A').charAt(0).toUpperCase()
 
@@ -52,11 +54,51 @@ export default function Profile() {
           <Settings size={17} strokeWidth={1.5} className="text-gray-700" />
         </button>
         <span className="text-sm font-bold tracking-wide text-black">My Profile</span>
-        <button className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0 relative">
+        <button
+          onClick={() => { setShowNotifs(v => !v); if (!showNotifs && unreadCount) markAllNotificationsRead() }}
+          className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0 relative"
+        >
           <Bell size={17} strokeWidth={1.5} className="text-gray-700" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
+              <span className="text-[8px] font-bold text-white">{unreadCount}</span>
+            </span>
+          )}
         </button>
       </div>
+
+      {/* ── Notification Panel ──────────────────────────────────────────── */}
+      {showNotifs && (
+        <div className="bg-white border-b border-gray-100 px-4 py-3 max-h-56 overflow-y-auto">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">Benachrichtigungen</p>
+            <button onClick={() => setShowNotifs(false)} className="bg-transparent border-0 p-0">
+              <X size={14} className="text-gray-400" />
+            </button>
+          </div>
+          {notifications.length === 0 ? (
+            <div className="text-center py-4">
+              <BellRing size={20} className="mx-auto text-gray-300 mb-1.5" />
+              <p className="text-[10px] text-gray-400">Keine Benachrichtigungen</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {notifications.slice(0, 10).map(n => (
+                <div key={n.id} className={`rounded-xl p-3 ${n.read ? 'bg-gray-50' : 'bg-teal-50 border border-teal-100'}`}>
+                  <div className="flex items-start gap-2">
+                    <BellRing size={12} className={n.read ? 'text-gray-400 mt-0.5' : 'text-teal-500 mt-0.5'} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold text-black">{n.title}</p>
+                      <p className="text-[9px] text-gray-500 mt-0.5 leading-relaxed">{n.message}</p>
+                      <p className="text-[8px] text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Content ────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">

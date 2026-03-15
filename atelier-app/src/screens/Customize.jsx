@@ -1,23 +1,42 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, Heart, Share2, ShoppingBag, Check, ZoomIn, Box, BadgeCheck, RotateCcw, Star, ChevronDown, ChevronUp, Send, ScanLine } from 'lucide-react'
+import { ArrowLeft, Heart, Share2, ShoppingBag, Check, ZoomIn, Box, BadgeCheck, RotateCcw, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Bell, Lock } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 
 const materials = [
-  { id: 'calfskin', label: 'CALFSKIN',  sub: 'Full-Grain', color: '#b45309' },
-  { id: 'suede',    label: 'SUEDE',     sub: 'Nubuck',     color: '#78716c' },
-  { id: 'patent',   label: 'PATENT',    sub: 'High-Gloss', color: '#111827' },
+  { id: 'calfskin', label: 'CALFSKIN',  sub: 'Full-Grain', color: '#b45309', available: true  },
+  { id: 'suede',    label: 'SUEDE',     sub: 'Nubuck',     color: '#78716c', available: true  },
+  { id: 'patent',   label: 'PATENT',    sub: 'High-Gloss', color: '#111827', available: false },
 ]
 
 const colors = [
-  { id: 'black',   hex: '#111827', name: 'Midnight Black' },
-  { id: 'cognac',  hex: '#92400e', name: 'Cognac'         },
-  { id: 'oxblood', hex: '#7b1e1e', name: 'Oxblood'        },
-  { id: 'tan',     hex: '#b45309', name: 'Tan'            },
-  { id: 'navy',    hex: '#1e3a5f', name: 'Navy'           },
-  { id: 'forest',  hex: '#14532d', name: 'Forest'         },
+  { id: 'black',   hex: '#111827', name: 'Midnight Black', available: true  },
+  { id: 'cognac',  hex: '#92400e', name: 'Cognac',         available: true  },
+  { id: 'oxblood', hex: '#7b1e1e', name: 'Oxblood',        available: true  },
+  { id: 'tan',     hex: '#b45309', name: 'Tan',            available: true  },
+  { id: 'navy',    hex: '#1e3a5f', name: 'Navy',           available: false },
+  { id: 'forest',  hex: '#14532d', name: 'Forest',         available: false },
+]
+
+const soles = [
+  {
+    id: 'leather',
+    label: 'LEDERSOHLE',
+    sub: 'Klassisch',
+    desc: 'Handgenähte Ledersohle — elegant und atmungsaktiv',
+    available: true,
+    price: null,
+  },
+  {
+    id: 'rubber-grip',
+    label: 'ANTI-RUTSCH',
+    sub: 'Gummi-Grip',
+    desc: 'Gummibeschichtete Sohle — maximale Rutschfestigkeit auf allen Oberflächen',
+    available: true,
+    price: '+ € 35',
+  },
 ]
 
 // ── Star Picker ──────────────────────────────────────────────────────────────
@@ -60,7 +79,7 @@ function StarDisplay({ value, size = 12 }) {
 export default function Customize() {
   const navigate   = useNavigate()
   const location   = useLocation()
-  const { favorites, toggleFavorite, placeOrder, latestScan } = useAtelierStore()
+  const { favorites, toggleFavorite, placeOrder, latestScan, addReminder, hasReminder, removeReminder } = useAtelierStore()
   const { user }   = useAuth()
   const product    = location.state?.product || {
     name:     'The Heritage Oxford',
@@ -73,6 +92,7 @@ export default function Customize() {
 
   const [selectedMaterial, setSelectedMaterial] = useState('calfskin')
   const [selectedColor,    setSelectedColor]    = useState('black')
+  const [selectedSole,     setSelectedSole]     = useState('leather')
   const [added,            setAdded]            = useState(false)
   const [addError,         setAddError]         = useState('')
 
@@ -124,6 +144,8 @@ export default function Customize() {
     setRotY(0)
   }
 
+  const selectedSoleObj = soles.find(s => s.id === selectedSole)
+
   const handleAddToBag = () => {
     navigate('/checkout', {
       state: {
@@ -133,6 +155,7 @@ export default function Customize() {
           material: selectedMat?.label || product.material || 'Calfskin',
           color:    shoeColor,
           price:    product.price,
+          sole:     selectedSoleObj?.label || 'Ledersohle',
         },
       },
     })
@@ -276,50 +299,138 @@ export default function Customize() {
         {/* Material Selection */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Material Selection</span>
-            <span className="text-[10px] italic text-gray-500">{selectedMat?.label} Selected</span>
+            <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Lederart</span>
+            <span className="text-[10px] italic text-gray-500">{selectedMat?.label}</span>
           </div>
           <div className="flex gap-3">
-            {materials.map((mat) => (
-              <button
-                key={mat.id}
-                onClick={() => setSelectedMaterial(mat.id)}
-                className={`flex-1 flex flex-col items-center gap-2 py-3 rounded-2xl border-2 transition-all bg-transparent ${
-                  selectedMaterial === mat.id ? 'border-black' : 'border-gray-100 bg-gray-50'
-                }`}
-              >
-                <div
-                  className="w-11 h-11 rounded-full shadow-sm"
-                  style={{ background: `radial-gradient(circle at 35% 35%, ${mat.color}bb, ${mat.color})` }}
-                />
-                <div className="text-center">
-                  <p className={`text-[8px] uppercase tracking-widest font-bold ${selectedMaterial === mat.id ? 'text-black' : 'text-gray-400'}`}>
-                    {mat.label}
-                  </p>
-                  <p className="text-[7px] text-gray-400 italic mt-0.5">{mat.sub}</p>
-                </div>
-              </button>
-            ))}
+            {materials.map((mat) => {
+              const reminded = hasReminder('material', mat.id)
+              return (
+                <button
+                  key={mat.id}
+                  onClick={() => {
+                    if (mat.available) setSelectedMaterial(mat.id)
+                    else if (!reminded) addReminder({ type: 'material', itemId: mat.id, label: mat.label })
+                    else removeReminder('material', mat.id)
+                  }}
+                  className={`flex-1 flex flex-col items-center gap-2 py-3 rounded-2xl border-2 transition-all bg-transparent relative ${
+                    !mat.available ? 'border-gray-100 opacity-60' :
+                    selectedMaterial === mat.id ? 'border-black' : 'border-gray-100 bg-gray-50'
+                  }`}
+                >
+                  {!mat.available && (
+                    <div className="absolute top-1.5 right-1.5">
+                      {reminded
+                        ? <BellRing size={10} className="text-teal-500" />
+                        : <Lock size={9} className="text-gray-400" />
+                      }
+                    </div>
+                  )}
+                  <div
+                    className="w-11 h-11 rounded-full shadow-sm"
+                    style={{ background: `radial-gradient(circle at 35% 35%, ${mat.color}bb, ${mat.color})` }}
+                  />
+                  <div className="text-center">
+                    <p className={`text-[8px] uppercase tracking-widest font-bold ${
+                      !mat.available ? 'text-gray-400' :
+                      selectedMaterial === mat.id ? 'text-black' : 'text-gray-400'
+                    }`}>
+                      {mat.label}
+                    </p>
+                    <p className="text-[7px] text-gray-400 italic mt-0.5">
+                      {!mat.available ? (reminded ? 'Erinnerung aktiv' : 'Bald verfügbar') : mat.sub}
+                    </p>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
 
         {/* Color Palette */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Color Palette</span>
+            <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Farbpalette</span>
             <span className="text-[10px] italic text-gray-500">{colors.find(c => c.id === selectedColor)?.name}</span>
           </div>
           <div className="flex gap-3 flex-wrap">
-            {colors.map((col) => (
+            {colors.map((col) => {
+              const reminded = hasReminder('color', col.id)
+              return (
+                <div key={col.id} className="relative">
+                  <button
+                    onClick={() => {
+                      if (col.available) setSelectedColor(col.id)
+                      else if (!reminded) addReminder({ type: 'color', itemId: col.id, label: col.name })
+                      else removeReminder('color', col.id)
+                    }}
+                    className={`w-10 h-10 rounded-full border-2 transition-all bg-transparent flex items-center justify-center ${
+                      !col.available ? 'border-dashed border-gray-300 opacity-50' :
+                      selectedColor === col.id ? 'border-gray-800 scale-110' : 'border-transparent'
+                    }`}
+                    style={{ backgroundColor: col.hex }}
+                  >
+                    {col.available && selectedColor === col.id && <Check size={14} className="text-white" strokeWidth={2.5} />}
+                    {!col.available && !reminded && <Lock size={10} className="text-white/70" />}
+                    {!col.available && reminded && <BellRing size={10} className="text-white" />}
+                  </button>
+                  {!col.available && (
+                    <p className="text-[6px] text-gray-400 text-center mt-0.5 leading-tight">
+                      {reminded ? 'Erinnert' : 'Bald'}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Sole Selection */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Sohle</span>
+            <span className="text-[10px] italic text-gray-500">{selectedSoleObj?.label}</span>
+          </div>
+          <div className="space-y-2">
+            {soles.map(sole => (
               <button
-                key={col.id}
-                onClick={() => setSelectedColor(col.id)}
-                className={`w-10 h-10 rounded-full border-2 transition-all bg-transparent flex items-center justify-center ${
-                  selectedColor === col.id ? 'border-gray-800 scale-110' : 'border-transparent'
+                key={sole.id}
+                onClick={() => sole.available && setSelectedSole(sole.id)}
+                className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all bg-transparent text-left ${
+                  selectedSole === sole.id ? 'border-black' : 'border-gray-100'
                 }`}
-                style={{ backgroundColor: col.hex }}
               >
-                {selectedColor === col.id && <Check size={14} className="text-white" strokeWidth={2.5} />}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  selectedSole === sole.id ? 'bg-black' : 'bg-gray-100'
+                }`}>
+                  {sole.id === 'leather' ? (
+                    <svg viewBox="0 0 24 24" className={`w-5 h-5 ${selectedSole === sole.id ? 'text-white' : 'text-gray-500'}`} fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <ellipse cx="12" cy="16" rx="9" ry="4" />
+                      <path d="M3 16V12c0-4.97 4.03-9 9-9s9 4.03 9 9v4" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" className={`w-5 h-5 ${selectedSole === sole.id ? 'text-white' : 'text-gray-500'}`} fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <ellipse cx="12" cy="16" rx="9" ry="4" />
+                      <path d="M3 16V12c0-4.97 4.03-9 9-9s9 4.03 9 9v4" />
+                      <path d="M6 18l2-1.5M10 18l2-1.5M14 18l2-1.5M18 18l-1-0.8" strokeWidth="1" opacity="0.6" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className={`text-[9px] uppercase tracking-widest font-bold ${selectedSole === sole.id ? 'text-black' : 'text-gray-500'}`}>
+                      {sole.label}
+                    </p>
+                    <span className="text-[7px] text-gray-400 italic">{sole.sub}</span>
+                  </div>
+                  <p className="text-[9px] text-gray-400 mt-0.5 leading-relaxed">{sole.desc}</p>
+                </div>
+                {sole.price && (
+                  <span className="text-[9px] font-semibold text-teal-600 flex-shrink-0">{sole.price}</span>
+                )}
+                {selectedSole === sole.id && (
+                  <Check size={14} className="text-black flex-shrink-0" strokeWidth={2.5} />
+                )}
               </button>
             ))}
           </div>
