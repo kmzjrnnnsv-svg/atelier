@@ -12,8 +12,42 @@ const useAtelierStore = create((set, get) => ({
   orders:     [],
   faqs:       [],
   latestScan: null, // most recent foot scan for this user
+  notifications: [], // in-app notifications
+  reminders:  [],    // items user wants to be reminded about
   loading:    false,
   error:      null,
+
+  // --- NOTIFICATIONS ---
+  addNotification(notification) {
+    const n = { id: Date.now(), read: false, createdAt: new Date().toISOString(), ...notification }
+    set(s => ({ notifications: [n, ...s.notifications] }))
+  },
+  markNotificationRead(id) {
+    set(s => ({ notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n) }))
+  },
+  markAllNotificationsRead() {
+    set(s => ({ notifications: s.notifications.map(n => ({ ...n, read: true })) }))
+  },
+
+  // --- REMINDERS ---
+  addReminder(item) {
+    const existing = get().reminders
+    if (existing.some(r => r.type === item.type && r.itemId === item.itemId)) return
+    const r = { id: Date.now(), createdAt: new Date().toISOString(), ...item }
+    set(s => ({ reminders: [r, ...s.reminders] }))
+    get().addNotification({
+      type: 'reminder_set',
+      title: 'Erinnerung gesetzt',
+      message: `Du wirst benachrichtigt, sobald "${item.label}" verfügbar ist.`,
+      icon: 'bell',
+    })
+  },
+  removeReminder(type, itemId) {
+    set(s => ({ reminders: s.reminders.filter(r => !(r.type === type && r.itemId === itemId)) }))
+  },
+  hasReminder(type, itemId) {
+    return get().reminders.some(r => r.type === type && r.itemId === itemId)
+  },
 
   async initStore() {
     set({ loading: true, error: null })

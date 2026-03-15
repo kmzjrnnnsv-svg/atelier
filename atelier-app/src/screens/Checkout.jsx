@@ -323,7 +323,7 @@ export default function Checkout() {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-bold text-black">{product.name || product.shoe_name}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{product.material}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{product.material}{product.sole ? ` · ${product.sole}` : ''}</p>
                   {latestScan && (
                     <p className="text-[10px] text-teal-600 mt-0.5">EU {latestScan.eu_size} — aus 3D-Scan</p>
                   )}
