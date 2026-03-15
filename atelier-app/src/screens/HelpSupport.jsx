@@ -17,32 +17,33 @@ export default function HelpSupport() {
   const filtered = activeFilter === 'Alle' ? faqs : faqs.filter(f => f.category === activeFilter)
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-full bg-white overflow-hidden">
 
       {/* Header */}
-      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
-          <ArrowLeft size={18} strokeWidth={1.8} className="text-gray-800" />
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/5 flex-shrink-0">
+        <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
+          <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
         </button>
         <div className="text-center">
-          <p className="text-sm font-bold tracking-wide text-black">Help & Support</p>
-          <p className="text-[9px] text-gray-400 uppercase tracking-widest">FAQ</p>
+          <p className="text-[11px] text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Hilfe</p>
+          <p className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>FAQ</p>
         </div>
-        <div className="w-9" />
+        <div className="w-10" />
       </div>
 
       <div className="flex-1 overflow-y-auto">
 
         {/* Category Filters */}
         {categories.length > 1 && (
-          <div className="flex gap-2 px-4 pt-4 pb-2 overflow-x-auto">
+          <div className="flex gap-2 px-5 pt-4 pb-2 overflow-x-auto">
             {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveFilter(cat)}
-                className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest whitespace-nowrap border-0 transition-all ${
-                  activeFilter === cat ? 'bg-black text-white' : 'bg-white text-gray-500 border border-gray-200'
+                className={`px-3 py-1.5 text-[9px] whitespace-nowrap border transition-all ${
+                  activeFilter === cat ? 'bg-black text-white border-black' : 'bg-transparent text-black/40 border-black/10'
                 }`}
+                style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}
               >
                 {cat}
               </button>
@@ -50,32 +51,32 @@ export default function HelpSupport() {
           </div>
         )}
 
-        <div className="px-4 pt-3 pb-4 space-y-2">
+        <div className="pt-2 pb-4">
           {filtered.length === 0 ? (
             <div className="text-center py-16">
-              <HelpCircle size={36} className="text-gray-200 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-black">No FAQs yet</p>
-              <p className="text-[11px] text-gray-400 mt-1">Check back soon for helpful answers</p>
+              <HelpCircle size={36} className="text-black/15 mx-auto mb-3" />
+              <p className="text-[12px] text-black">Noch keine FAQs</p>
+              <p className="text-[10px] text-black/35 mt-1">Bald verfügbar</p>
             </div>
           ) : (
             filtered.map(faq => (
-              <div key={faq.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div key={faq.id} className="border-b border-black/5">
                 <button
                   onClick={() => setExpanded(expanded === faq.id ? null : faq.id)}
-                  className="w-full flex items-center justify-between p-4 bg-transparent border-0 text-left"
+                  className="w-full flex items-center justify-between px-5 py-4 bg-transparent border-0 text-left"
                 >
-                  <p className="text-sm font-semibold text-black leading-tight pr-3 flex-1">{faq.question}</p>
+                  <p className="text-[12px] text-black leading-tight pr-3 flex-1">{faq.question}</p>
                   {expanded === faq.id
-                    ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" />
-                    : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
+                    ? <ChevronUp size={14} className="text-black/30 flex-shrink-0" strokeWidth={1.5} />
+                    : <ChevronDown size={14} className="text-black/30 flex-shrink-0" strokeWidth={1.5} />
                   }
                 </button>
                 {expanded === faq.id && (
-                  <div className="px-4 pb-4 border-t border-gray-50">
-                    <p className="text-[11px] text-gray-600 leading-relaxed mt-3">{faq.answer}</p>
+                  <div className="px-5 pb-4">
+                    <p className="text-[10px] text-black/50 leading-relaxed">{faq.answer}</p>
                     <div className="mt-2 flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                      <span className="text-[8px] uppercase tracking-widest text-gray-400">{faq.category}</span>
+                      <div className="w-1.5 h-1.5 rounded-full bg-black/20" />
+                      <span className="text-[8px] text-black/30" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>{faq.category}</span>
                     </div>
                   </div>
                 )}
@@ -85,17 +86,14 @@ export default function HelpSupport() {
         </div>
 
         {/* Contact CTA */}
-        <div
-          className="mx-4 mb-6 rounded-2xl p-4 flex items-center gap-4"
-          style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)' }}
-        >
-          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+        <div className="mx-0 mb-0 p-5 flex items-center gap-4 bg-black">
+          <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0">
             <Mail size={18} className="text-white" strokeWidth={1.5} />
           </div>
           <div className="flex-1">
-            <p className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">Still need help?</p>
-            <p className="text-sm font-bold text-white leading-tight mt-0.5">Contact our team</p>
-            <p className="text-[9px] text-gray-400 mt-0.5">support@atelier.com</p>
+            <p className="text-[9px] text-white/40" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Noch Fragen?</p>
+            <p className="text-[12px] text-white leading-tight mt-0.5">Unser Team kontaktieren</p>
+            <p className="text-[9px] text-white/40 mt-0.5">support@atelier.com</p>
           </div>
         </div>
       </div>

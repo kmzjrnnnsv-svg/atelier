@@ -240,7 +240,7 @@ export default function Customize() {
         <div className="absolute left-4 bottom-4 flex items-center gap-2">
           <button
             onClick={() => { setIs3D(v => !v); setRotY(0); setZoomed(false) }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+            className={`w-8 h-8 flex items-center justify-center border transition-all ${
               is3D ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
             }`}
           >
@@ -248,13 +248,13 @@ export default function Customize() {
           </button>
           <button
             onClick={() => { setZoomed(v => !v); setIs3D(false) }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+            className={`w-8 h-8 flex items-center justify-center border transition-all ${
               zoomed ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
             }`}
           >
             {zoomed ? <ZoomOut size={14} strokeWidth={1.5} /> : <ZoomIn size={14} strokeWidth={1.5} />}
           </button>
-          <button className="w-8 h-8 rounded-full bg-white/90 text-black border border-black/10 flex items-center justify-center transition-all">
+          <button className="w-8 h-8 bg-white/90 text-black border border-black/10 flex items-center justify-center transition-all">
             <Eye size={14} strokeWidth={1.5} />
           </button>
         </div>
@@ -301,16 +301,16 @@ export default function Customize() {
         </div>
       </div>
 
-      <div className="mx-5 h-px bg-black/8" />
+      <div className="h-px bg-black/8" />
 
       {/* ── Auswahl ────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-4 space-y-5">
+      <div className="flex-1 overflow-y-auto pt-4 pb-4 space-y-5">
 
         {/* 1. Leder */}
         <div {...matSwipe}>
-          <p className="text-[10px] text-black/40 mb-3" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder</p>
-          <div className="flex gap-2.5">
-            {matList.map(m => {
+          <p className="text-[10px] text-black/40 mb-3 px-5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder</p>
+          <div className="flex gap-2 overflow-x-auto flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+            {matList.map((m, i) => {
               const id = m.key || String(m.id)
               const avail = m.available !== 0 && m.available !== false
               const reminded = hasReminder('material', id)
@@ -321,9 +321,9 @@ export default function Customize() {
                     else if (!reminded) addReminder({ type: 'material', itemId: id, label: m.label })
                     else removeReminder('material', id)
                   }}
-                  className={`flex-1 py-3 transition-all bg-transparent flex flex-col items-center gap-2 border ${
+                  className={`w-20 flex-shrink-0 py-2 transition-all bg-transparent flex flex-col items-center gap-1.5 border ${
                     !avail ? 'border-black/5 opacity-40' : selMat === id ? 'border-black' : 'border-black/8'
-                  }`}
+                  }${i === 0 ? ' ml-5' : ''}${i === matList.length - 1 ? ' mr-5' : ''}`}
                 >
                   <div className="relative">
                     <div className="w-10 h-10 rounded-full"
@@ -338,18 +338,18 @@ export default function Customize() {
             })}
           </div>
           {mat?.tip && (
-            <p className="text-[10px] text-black/35 mt-2 leading-relaxed">{mat.tip}</p>
+            <p className="text-[10px] text-black/35 mt-2 leading-relaxed px-5">{mat.tip}</p>
           )}
         </div>
 
         {/* 2. Farbe */}
         <div {...colSwipe}>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3 px-5">
             <p className="text-[10px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe</p>
             {col && <span className="text-[10px] text-black/50">{col.name}</span>}
           </div>
-          <div className="flex gap-3 flex-wrap">
-            {colList.map(c => {
+          <div className="flex gap-3 overflow-x-auto flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+            {colList.map((c, i) => {
               const id = c.key || String(c.id)
               const avail = c.available !== 0 && c.available !== false
               const reminded = hasReminder('color', id)
@@ -360,10 +360,10 @@ export default function Customize() {
                     else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
                     else removeReminder('color', id)
                   }}
-                  className={`w-9 h-9 rounded-full transition-all flex items-center justify-center ${
+                  className={`w-9 h-9 flex-shrink-0 rounded-full transition-all flex items-center justify-center ${
                     !avail ? 'opacity-30' :
                     selCol === id ? 'ring-1 ring-black ring-offset-2' : ''
-                  }`}
+                  }${i === 0 ? ' ml-5' : ''}${i === colList.length - 1 ? ' mr-5' : ''}`}
                   style={{ backgroundColor: c.hex }}
                   title={c.name}
                 >
@@ -373,15 +373,15 @@ export default function Customize() {
               )
             })}
           </div>
-          {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2">Passt zu: {col.pairs_with}</p>}
+          {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2 px-5">Passt zu: {col.pairs_with}</p>}
         </div>
 
         {/* 3. Sohle */}
         <div {...soleSwipe}>
-          <p className="text-[10px] text-black/40 mb-3" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sohle</p>
+          <p className="text-[10px] text-black/40 mb-3 px-5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sohle</p>
 
           {soleList.length === 1 && (category === 'BOOT' || category === 'SNEAKER') && (
-            <p className="text-[10px] text-black/35 mb-2">
+            <p className="text-[10px] text-black/35 mb-2 px-5">
               {category === 'BOOT' ? 'Boots haben immer die Gummi-Profilsohle.' : 'Sneaker haben immer ihre eigene Sohle.'}
             </p>
           )}
@@ -393,7 +393,7 @@ export default function Customize() {
               return (
                 <button key={id}
                   onClick={() => soleList.length > 1 && setSelSole(id)}
-                  className={`w-full flex items-center gap-3 p-3.5 transition-all bg-transparent text-left border ${
+                  className={`w-full flex items-center gap-3 p-3.5 transition-all bg-transparent text-left border-y ${
                     sel ? 'border-black' : 'border-black/8'
                   }`}
                 >
@@ -435,7 +435,7 @@ export default function Customize() {
         {!latestScan && (
           <button
             onClick={() => navigate('/scan')}
-            className="w-full p-4 border border-dashed border-black/15 bg-transparent flex items-center gap-3 text-left"
+            className="w-full p-4 border-y border-dashed border-black/15 bg-transparent flex items-center gap-3 text-left"
           >
             <div className="w-10 h-10 bg-black flex items-center justify-center flex-shrink-0">
               <ScanLine size={18} className="text-white" strokeWidth={1.5} />
@@ -448,7 +448,7 @@ export default function Customize() {
         )}
 
         {/* Reviews (kompakt) */}
-        <div>
+        <div className="px-5">
           <button
             onClick={() => setShowReview(v => !v)}
             className="w-full flex items-center justify-between bg-transparent border-0 p-0 pb-2 border-b border-black/8"
@@ -509,22 +509,22 @@ export default function Customize() {
       </div>
 
       {/* ── Kaufen (LV-Style) ──────────────────────────────────── */}
-      <div className="bg-white border-t border-black/5 px-5 pt-3 flex-shrink-0"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
+      <div className="bg-white border-t border-black/5 flex-shrink-0"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0px)' }}>
         <button
           onClick={handleBuy}
           disabled={added}
           className={`w-full h-12 flex items-center justify-center gap-2.5 transition-all border-0 ${
             added ? 'bg-black/80 text-white' : 'bg-black text-white active:bg-black/85'
           }`}
-          style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '11px' }}
+          style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '11px', borderRadius: 0 }}
         >
           {added
             ? <><Check size={16} strokeWidth={1.5} /> Bestellt</>
             : <><ShoppingBag size={16} strokeWidth={1.5} /> In den Warenkorb</>
           }
         </button>
-        <p className="text-center text-[9px] text-black/25 mt-2.5" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
+        <p className="text-center text-[9px] text-black/25 mt-2.5 pb-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
       </div>
     </div>
   )
