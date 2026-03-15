@@ -1,117 +1,21 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, Heart, Share2, ShoppingBag, Check, ZoomIn, Box, BadgeCheck, RotateCcw, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Bell, Lock, Lightbulb, CloudRain, Sun, Snowflake, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Heart, Share2, ShoppingBag, Check, ZoomIn, Box, BadgeCheck, RotateCcw, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Bell, Lock, Lightbulb, CloudRain, Sun, Snowflake, ShieldCheck, CheckCircle2, Circle, AlertTriangle } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 
-const materials = [
-  {
-    id: 'calfskin', label: 'CALFSKIN', sub: 'Full-Grain', color: '#b45309', available: true,
-    tip: 'Robust und langlebig — entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.',
-    season: 'Ganzjährig',
-  },
-  {
-    id: 'suede', label: 'SUEDE', sub: 'Nubuck', color: '#78716c', available: true,
-    tip: 'Samtig-weiche Oberfläche für lässig-elegante Looks. Empfindlich bei Nässe — am besten für trockene Tage und Indoor-Anlässe.',
-    season: 'Frühling / Sommer',
-  },
-  {
-    id: 'patent', label: 'PATENT', sub: 'High-Gloss', color: '#111827', available: false,
-    tip: 'Hochglanz-Finish für formelle Anlässe, Galas und Abendveranstaltungen. Pflegeleicht, aber empfindlich gegen Kratzer.',
-    season: 'Events',
-  },
-]
-
-const colors = [
-  {
-    id: 'schwarz', hex: '#000000', name: 'Schwarz', available: true,
-    tip: 'Der Klassiker — passt zu jedem Outfit und jedem Anlass. Business, Formal, Casual — Schwarz geht immer.',
-    pairsWith: 'Grau, Navy, alle dunklen Anzüge',
-  },
-  {
-    id: 'black', hex: '#111827', name: 'Midnight Black', available: true,
-    tip: 'Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz — perfekt für Smart Casual und kreative Berufe.',
-    pairsWith: 'Dunkle Jeans, Navy Blazer, Charcoal Suits',
-  },
-  {
-    id: 'cognac', hex: '#92400e', name: 'Cognac', available: true,
-    tip: 'Warmes Braun mit Tiefe — der ideale Business-Casual-Begleiter. Passt hervorragend zu Beige, Navy und Erdtönen.',
-    pairsWith: 'Beige Chinos, Navy Blazer, Jeans',
-  },
-  {
-    id: 'oxblood', hex: '#7b1e1e', name: 'Oxblood', available: true,
-    tip: 'Sattes Bordeaux-Rot — ein Herbst- und Winter-Statement. Elegant zum dunklen Anzug, lässig zur Jeans.',
-    pairsWith: 'Charcoal, Navy, Dunkelgrün, Tweed',
-  },
-  {
-    id: 'tan', hex: '#b45309', name: 'Tan', available: true,
-    tip: 'Helles Karamell-Braun — die perfekte Sommerfarbe. Strahlt bei Sonnenlicht und passt zu hellen, leichten Outfits.',
-    pairsWith: 'Weiß, Hellblau, Leinen, Beige',
-  },
-  {
-    id: 'navy', hex: '#1e3a5f', name: 'Navy', available: false,
-    tip: 'Der moderne Gentleman-Ton — elegant und unkonventionell zugleich. Perfekt zu grauen und hellbraunen Outfits.',
-    pairsWith: 'Grau, Beige, helle Jeans, Tweed',
-  },
-  {
-    id: 'forest', hex: '#14532d', name: 'Forest', available: false,
-    tip: 'Tiefes Waldgrün — für den mutigen Stilbewussten. Ein Herbst-Highlight zu Cord, Tweed und Erdtönen.',
-    pairsWith: 'Braun, Beige, Senfgelb, Cord',
-  },
-]
-
-// ── Sole definitions ────────────────────────────────────────────────────────
-const ALL_SOLES = {
-  leather: {
-    id: 'leather',
-    label: 'LEDERSOHLE',
-    sub: 'Klassisch',
-    desc: 'Handgenähte Ledersohle — elegant und atmungsaktiv.',
-    tip: 'Nur für trockene Bedingungen empfohlen. Ideal im Sommer und für Indoor-Anlässe. Bei Nässe wird es rutschig.',
-    icon: Sun,
-    price: null,
-  },
-  'rubber-grip': {
-    id: 'rubber-grip',
-    label: 'ANTI-RUTSCH',
-    sub: 'Gummi-Profil',
-    desc: 'Gummibeschichtete Profilsohle — maximale Rutschfestigkeit auf allen Oberflächen.',
-    tip: 'Unsere Empfehlung für den Alltag. Sicherer Halt bei Regen, Schnee und nassen Böden. Ganzjährig einsetzbar.',
-    icon: ShieldCheck,
-    recommended: true,
-    price: '+ € 35',
-  },
-  sneaker: {
-    id: 'sneaker',
-    label: 'SNEAKER-SOHLE',
-    sub: 'EVA-Komfort',
-    desc: 'Leichte EVA-Komfortsohle mit Dämpfung — für maximalen Gehkomfort den ganzen Tag.',
-    tip: 'Speziell für Sneaker entwickelt. Stoßdämpfend, flexibel und ultraleicht.',
-    icon: ShieldCheck,
-    fixed: true,
-    price: null,
-  },
+// ── Ampel Rating Badge (inline) ────────────────────────────────────────────
+const ratingStyles = {
+  good:    { bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500',  label: 'Empfohlen' },
+  neutral: { bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-400',  label: 'Neutral' },
+  warn:    { bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500',    label: 'Achtung' },
 }
 
-// Category → which soles are available
-// BOOT: only rubber (winter shoe, must have grip)
-// SNEAKER: only sneaker sole (fixed)
-// Others: leather + rubber (both available)
-function getSolesForCategory(category) {
-  switch (category) {
-    case 'BOOT':    return [ALL_SOLES['rubber-grip']]
-    case 'SNEAKER': return [ALL_SOLES.sneaker]
-    default:        return [ALL_SOLES.leather, ALL_SOLES['rubber-grip']]
-  }
-}
-
-function getDefaultSole(category) {
-  switch (category) {
-    case 'BOOT':    return 'rubber-grip'
-    case 'SNEAKER': return 'sneaker'
-    default:        return 'rubber-grip' // recommend rubber by default
-  }
+function AmpelDot({ rating, size = 8 }) {
+  const s = ratingStyles[rating]
+  if (!s) return null
+  return <div className={`rounded-full ${s.dot} flex-shrink-0`} style={{ width: size, height: size }} title={s.label} />
 }
 
 // ── Hint component ──────────────────────────────────────────────────────────
@@ -129,6 +33,46 @@ function Hint({ text, icon: Icon, variant = 'default' }) {
       <p className="text-[9px] leading-relaxed">{text}</p>
     </div>
   )
+}
+
+// ── Swipe Hook ──────────────────────────────────────────────────────────────
+function useSwipe(items, selectedId, onSelect, { enabled = true } = {}) {
+  const ref = useRef(null)
+  const touchRef = useRef({ x0: 0, y0: 0, swiping: false })
+
+  const currentIndex = items.findIndex(i => (i.id || i.key) === selectedId)
+
+  const onTouchStart = useCallback((e) => {
+    if (!enabled) return
+    const t = e.touches[0]
+    touchRef.current = { x0: t.clientX, y0: t.clientY, swiping: false }
+  }, [enabled])
+
+  const onTouchMove = useCallback((e) => {
+    if (!enabled) return
+    const t = e.touches[0]
+    const dx = t.clientX - touchRef.current.x0
+    const dy = t.clientY - touchRef.current.y0
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      touchRef.current.swiping = true
+    }
+  }, [enabled])
+
+  const onTouchEnd = useCallback((e) => {
+    if (!enabled || !touchRef.current.swiping) return
+    const dx = e.changedTouches[0].clientX - touchRef.current.x0
+    if (Math.abs(dx) < 40) return
+    const available = items.filter(i => i.available !== 0 && i.available !== false)
+    if (available.length < 2) return
+    const curIdx = available.findIndex(i => (i.id || i.key) === selectedId)
+    if (curIdx < 0) return
+    const nextIdx = dx < 0
+      ? (curIdx + 1) % available.length
+      : (curIdx - 1 + available.length) % available.length
+    onSelect(available[nextIdx].id || available[nextIdx].key)
+  }, [enabled, items, selectedId, onSelect])
+
+  return { ref, onTouchStart, onTouchMove, onTouchEnd }
 }
 
 // ── Star Picker ──────────────────────────────────────────────────────────────
@@ -152,7 +96,6 @@ function StarPicker({ value, onChange }) {
   )
 }
 
-// ── Star Display (read-only) ──────────────────────────────────────────────────
 function StarDisplay({ value, size = 12 }) {
   return (
     <span className="flex items-center gap-0.5">
@@ -168,10 +111,25 @@ function StarDisplay({ value, size = 12 }) {
   )
 }
 
+// ── Sole helpers ─────────────────────────────────────────────────────────────
+function getSolesForCategory(allSoles, category) {
+  if (!allSoles.length) return []
+  return allSoles.filter(sole => {
+    if (!sole.categories || sole.categories === '*') return true
+    const cats = sole.categories.split(',').map(c => c.trim().toUpperCase())
+    return cats.includes(category)
+  })
+}
+
+function getDefaultSole(soles) {
+  const recommended = soles.find(s => s.recommended === 1 || s.recommended === true)
+  return recommended ? (recommended.key || recommended.id) : (soles[0]?.key || soles[0]?.id || '')
+}
+
 export default function Customize() {
   const navigate   = useNavigate()
   const location   = useLocation()
-  const { favorites, toggleFavorite, placeOrder, latestScan, addReminder, hasReminder, removeReminder } = useAtelierStore()
+  const { favorites, toggleFavorite, placeOrder, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles } = useAtelierStore()
   const { user }   = useAuth()
   const product    = location.state?.product || {
     name:     'The Heritage Oxford',
@@ -183,13 +141,42 @@ export default function Customize() {
   }
 
   const category = product.category || 'OXFORD'
-  const availableSoles = getSolesForCategory(category)
+  const availableSoles = getSolesForCategory(shoeSoles, category)
 
-  const [selectedMaterial, setSelectedMaterial] = useState('calfskin')
-  const [selectedColor,    setSelectedColor]    = useState('schwarz')
-  const [selectedSole,     setSelectedSole]     = useState(() => getDefaultSole(category))
+  // Fallback to hardcoded data if store is empty (first load)
+  const matList = shoeMaterials.length ? shoeMaterials : [
+    { id: 1, key: 'calfskin', label: 'CALFSKIN', sub: 'Full-Grain', color: '#b45309', available: 1, tip: 'Robust und langlebig.', season: 'Ganzjährig', rating: 'good' },
+  ]
+  const colList = shoeColors.length ? shoeColors : [
+    { id: 1, key: 'schwarz', hex: '#000000', name: 'Schwarz', available: 1, tip: 'Der Klassiker.', pairs_with: 'Alles', rating: 'good' },
+  ]
+  const soleList = availableSoles.length ? availableSoles : [
+    { id: 1, key: 'rubber-grip', label: 'ANTI-RUTSCH', sub: 'Gummi-Profil', description: 'Gummibeschichtete Profilsohle.', tip: 'Empfohlen für den Alltag.', price_extra: 35, rating: 'good', recommended: 1 },
+  ]
+
+  const [selectedMaterial, setSelectedMaterial] = useState(() => matList[0]?.key || '')
+  const [selectedColor,    setSelectedColor]    = useState(() => colList[0]?.key || '')
+  const [selectedSole,     setSelectedSole]     = useState(() => getDefaultSole(soleList))
   const [added,            setAdded]            = useState(false)
   const [addError,         setAddError]         = useState('')
+
+  // Update defaults when store loads
+  useEffect(() => {
+    if (shoeMaterials.length && !shoeMaterials.find(m => m.key === selectedMaterial)) {
+      setSelectedMaterial(shoeMaterials[0]?.key || '')
+    }
+  }, [shoeMaterials])
+  useEffect(() => {
+    if (shoeColors.length && !shoeColors.find(c => c.key === selectedColor)) {
+      setSelectedColor(shoeColors[0]?.key || '')
+    }
+  }, [shoeColors])
+  useEffect(() => {
+    if (availableSoles.length) {
+      const current = availableSoles.find(s => s.key === selectedSole)
+      if (!current) setSelectedSole(getDefaultSole(availableSoles))
+    }
+  }, [shoeSoles, category])
 
   // 3D viewer state
   const [is3D,  setIs3D]  = useState(false)
@@ -205,12 +192,19 @@ export default function Customize() {
   const [submitting,     setSubmitting]     = useState(false)
   const [reviewError,    setReviewError]    = useState('')
 
-  const shoeColor    = colors.find(c => c.id === selectedColor)?.hex || product.color
+  const selectedMat  = matList.find(m => m.key === selectedMaterial) || matList[0]
+  const selectedColorObj = colList.find(c => c.key === selectedColor) || colList[0]
+  const selectedSoleObj  = soleList.find(s => s.key === selectedSole) || soleList[0]
+  const shoeColor    = selectedColorObj?.hex || product.color
   const matchPct     = product.match || '98.4%'
-  const selectedMat  = materials.find(m => m.id === selectedMaterial)
   const isFav        = favorites.includes(String(product.id))
   const avgRating    = reviews.length ? (reviews.reduce((s,r) => s + r.rating, 0) / reviews.length) : 0
   const myReview     = reviews.find(r => r.user_id === user?.id)
+
+  // Swipe gestures
+  const matSwipe  = useSwipe(matList, selectedMaterial, setSelectedMaterial)
+  const colSwipe  = useSwipe(colList, selectedColor, setSelectedColor)
+  const soleSwipe = useSwipe(soleList, selectedSole, setSelectedSole)
 
   // Load reviews
   useEffect(() => {
@@ -238,9 +232,6 @@ export default function Customize() {
     setIs3D(v => !v)
     setRotY(0)
   }
-
-  const selectedSoleObj = ALL_SOLES[selectedSole]
-  const selectedColorObj = colors.find(c => c.id === selectedColor)
 
   const handleAddToBag = () => {
     navigate('/checkout', {
@@ -275,6 +266,18 @@ export default function Customize() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Hint variant from rating
+  const hintVariant = (rating) => {
+    if (rating === 'good') return 'recommend'
+    if (rating === 'warn') return 'warn'
+    return 'default'
+  }
+  const hintIcon = (rating) => {
+    if (rating === 'good') return ShieldCheck
+    if (rating === 'warn') return CloudRain
+    return Lightbulb
   }
 
   return (
@@ -332,7 +335,6 @@ export default function Customize() {
           )}
         </div>
 
-        {/* 3D mode indicator */}
         {is3D && (
           <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
             <div className="bg-black/60 text-white text-[8px] uppercase tracking-widest px-3 py-1 rounded-full">
@@ -341,7 +343,6 @@ export default function Customize() {
           </div>
         )}
 
-        {/* 360° badge */}
         <div className="absolute bottom-3 left-0 right-0 flex justify-center pointer-events-none">
           <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm">
             <RotateCcw size={10} className="text-gray-600" />
@@ -351,7 +352,6 @@ export default function Customize() {
           </div>
         </div>
 
-        {/* Right-side icon buttons */}
         <div className="absolute right-3 top-3 flex flex-col gap-2">
           <button
             onClick={toggle3D}
@@ -392,29 +392,38 @@ export default function Customize() {
       {/* ── Scrollable Config ─────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 mt-4 pb-4">
 
-        {/* Material Selection */}
-        <div className="mb-5">
+        {/* Material Selection — swipeable */}
+        <div className="mb-5"
+          onTouchStart={matSwipe.onTouchStart}
+          onTouchMove={matSwipe.onTouchMove}
+          onTouchEnd={matSwipe.onTouchEnd}
+        >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Lederart</span>
-            <span className="text-[10px] italic text-gray-500">{selectedMat?.label} · {selectedMat?.season}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Lederart</span>
+              {selectedMat?.rating && <AmpelDot rating={selectedMat.rating} />}
+            </div>
+            <span className="text-[10px] italic text-gray-500">{selectedMat?.label} · {selectedMat?.season || 'Ganzjährig'}</span>
           </div>
           <div className="flex gap-3">
-            {materials.map((mat) => {
-              const reminded = hasReminder('material', mat.id)
+            {matList.map((mat) => {
+              const id = mat.key || String(mat.id)
+              const isAvailable = mat.available !== 0 && mat.available !== false
+              const reminded = hasReminder('material', id)
               return (
                 <button
-                  key={mat.id}
+                  key={id}
                   onClick={() => {
-                    if (mat.available) setSelectedMaterial(mat.id)
-                    else if (!reminded) addReminder({ type: 'material', itemId: mat.id, label: mat.label })
-                    else removeReminder('material', mat.id)
+                    if (isAvailable) setSelectedMaterial(id)
+                    else if (!reminded) addReminder({ type: 'material', itemId: id, label: mat.label })
+                    else removeReminder('material', id)
                   }}
                   className={`flex-1 flex flex-col items-center gap-2 py-3 rounded-2xl border-2 transition-all bg-transparent relative ${
-                    !mat.available ? 'border-gray-100 opacity-60' :
-                    selectedMaterial === mat.id ? 'border-black' : 'border-gray-100 bg-gray-50'
+                    !isAvailable ? 'border-gray-100 opacity-60' :
+                    selectedMaterial === id ? 'border-black' : 'border-gray-100 bg-gray-50'
                   }`}
                 >
-                  {!mat.available && (
+                  {!isAvailable && (
                     <div className="absolute top-1.5 right-1.5">
                       {reminded
                         ? <BellRing size={10} className="text-teal-500" />
@@ -422,19 +431,26 @@ export default function Customize() {
                       }
                     </div>
                   )}
-                  <div
-                    className="w-11 h-11 rounded-full shadow-sm"
-                    style={{ background: `radial-gradient(circle at 35% 35%, ${mat.color}bb, ${mat.color})` }}
-                  />
+                  <div className="relative">
+                    <div
+                      className="w-11 h-11 rounded-full shadow-sm"
+                      style={{ background: `radial-gradient(circle at 35% 35%, ${mat.color}bb, ${mat.color})` }}
+                    />
+                    {isAvailable && mat.rating && (
+                      <div className="absolute -bottom-0.5 -right-0.5">
+                        <AmpelDot rating={mat.rating} size={6} />
+                      </div>
+                    )}
+                  </div>
                   <div className="text-center">
                     <p className={`text-[8px] uppercase tracking-widest font-bold ${
-                      !mat.available ? 'text-gray-400' :
-                      selectedMaterial === mat.id ? 'text-black' : 'text-gray-400'
+                      !isAvailable ? 'text-gray-400' :
+                      selectedMaterial === id ? 'text-black' : 'text-gray-400'
                     }`}>
                       {mat.label}
                     </p>
                     <p className="text-[7px] text-gray-400 italic mt-0.5">
-                      {!mat.available ? (reminded ? 'Erinnerung aktiv' : 'Bald verfügbar') : mat.sub}
+                      {!isAvailable ? (reminded ? 'Erinnerung aktiv' : 'Bald verfügbar') : mat.sub}
                     </p>
                   </div>
                 </button>
@@ -444,40 +460,55 @@ export default function Customize() {
           {selectedMat?.tip && (
             <Hint
               text={selectedMat.tip}
-              variant={selectedMaterial === 'suede' ? 'warn' : 'default'}
-              icon={selectedMaterial === 'suede' ? Sun : Lightbulb}
+              variant={hintVariant(selectedMat.rating)}
+              icon={hintIcon(selectedMat.rating)}
             />
           )}
+          <p className="text-[7px] text-gray-300 text-center mt-1.5 italic">← Wischen zum Wechseln →</p>
         </div>
 
-        {/* Color Palette */}
-        <div className="mb-5">
+        {/* Color Palette — swipeable */}
+        <div className="mb-5"
+          onTouchStart={colSwipe.onTouchStart}
+          onTouchMove={colSwipe.onTouchMove}
+          onTouchEnd={colSwipe.onTouchEnd}
+        >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Farbpalette</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Farbpalette</span>
+              {selectedColorObj?.rating && <AmpelDot rating={selectedColorObj.rating} />}
+            </div>
             <span className="text-[10px] italic text-gray-500">{selectedColorObj?.name}</span>
           </div>
           <div className="flex gap-3 flex-wrap">
-            {colors.map((col) => {
-              const reminded = hasReminder('color', col.id)
+            {colList.map((col) => {
+              const id = col.key || String(col.id)
+              const isAvailable = col.available !== 0 && col.available !== false
+              const reminded = hasReminder('color', id)
               return (
-                <div key={col.id} className="relative">
+                <div key={id} className="relative">
                   <button
                     onClick={() => {
-                      if (col.available) setSelectedColor(col.id)
-                      else if (!reminded) addReminder({ type: 'color', itemId: col.id, label: col.name })
-                      else removeReminder('color', col.id)
+                      if (isAvailable) setSelectedColor(id)
+                      else if (!reminded) addReminder({ type: 'color', itemId: id, label: col.name })
+                      else removeReminder('color', id)
                     }}
                     className={`w-10 h-10 rounded-full border-2 transition-all bg-transparent flex items-center justify-center ${
-                      !col.available ? 'border-dashed border-gray-300 opacity-50' :
-                      selectedColor === col.id ? 'border-gray-800 scale-110' : 'border-transparent'
+                      !isAvailable ? 'border-dashed border-gray-300 opacity-50' :
+                      selectedColor === id ? 'border-gray-800 scale-110' : 'border-transparent'
                     }`}
                     style={{ backgroundColor: col.hex }}
                   >
-                    {col.available && selectedColor === col.id && <Check size={14} className="text-white" strokeWidth={2.5} />}
-                    {!col.available && !reminded && <Lock size={10} className="text-white/70" />}
-                    {!col.available && reminded && <BellRing size={10} className="text-white" />}
+                    {isAvailable && selectedColor === id && <Check size={14} className="text-white" strokeWidth={2.5} />}
+                    {!isAvailable && !reminded && <Lock size={10} className="text-white/70" />}
+                    {!isAvailable && reminded && <BellRing size={10} className="text-white" />}
                   </button>
-                  {!col.available && (
+                  {isAvailable && col.rating && (
+                    <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2">
+                      <AmpelDot rating={col.rating} size={5} />
+                    </div>
+                  )}
+                  {!isAvailable && (
                     <p className="text-[6px] text-gray-400 text-center mt-0.5 leading-tight">
                       {reminded ? 'Erinnert' : 'Bald'}
                     </p>
@@ -486,21 +517,29 @@ export default function Customize() {
               )
             })}
           </div>
-          {selectedColorObj && (
-            <Hint text={selectedColorObj.tip} variant="info" icon={Lightbulb} />
+          {selectedColorObj?.tip && (
+            <Hint text={selectedColorObj.tip} variant={hintVariant(selectedColorObj.rating)} icon={hintIcon(selectedColorObj.rating)} />
           )}
-          {selectedColorObj?.pairsWith && (
+          {selectedColorObj?.pairs_with && (
             <div className="flex items-center gap-2 mt-1.5 px-1">
               <span className="text-[8px] text-gray-400 font-semibold uppercase tracking-wide">Passt zu:</span>
-              <span className="text-[8px] text-gray-500 italic">{selectedColorObj.pairsWith}</span>
+              <span className="text-[8px] text-gray-500 italic">{selectedColorObj.pairs_with}</span>
             </div>
           )}
+          <p className="text-[7px] text-gray-300 text-center mt-1.5 italic">← Wischen zum Wechseln →</p>
         </div>
 
-        {/* Sole Selection */}
-        <div className="mb-5">
+        {/* Sole Selection — swipeable */}
+        <div className="mb-5"
+          onTouchStart={soleSwipe.onTouchStart}
+          onTouchMove={soleSwipe.onTouchMove}
+          onTouchEnd={soleSwipe.onTouchEnd}
+        >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Sohle</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] uppercase tracking-[0.18em] text-gray-400 font-semibold">Sohle</span>
+              {selectedSoleObj?.rating && <AmpelDot rating={selectedSoleObj.rating} />}
+            </div>
             <span className="text-[10px] italic text-gray-500">{selectedSoleObj?.label}</span>
           </div>
 
@@ -523,14 +562,14 @@ export default function Customize() {
           )}
 
           <div className="space-y-2">
-            {availableSoles.map(sole => {
-              const SoleIcon = sole.icon || ShieldCheck
-              const isSelected = selectedSole === sole.id
-              const isFixed = sole.fixed || availableSoles.length === 1
+            {soleList.map(sole => {
+              const id = sole.key || String(sole.id)
+              const isSelected = selectedSole === id
+              const isFixed = soleList.length === 1
               return (
                 <button
-                  key={sole.id}
-                  onClick={() => !isFixed && setSelectedSole(sole.id)}
+                  key={id}
+                  onClick={() => !isFixed && setSelectedSole(id)}
                   className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all bg-transparent text-left ${
                     isSelected ? 'border-black' : 'border-gray-100'
                   }`}
@@ -538,7 +577,7 @@ export default function Customize() {
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                     isSelected ? 'bg-black' : 'bg-gray-100'
                   }`}>
-                    <SoleIcon size={18} className={isSelected ? 'text-white' : 'text-gray-500'} strokeWidth={1.5} />
+                    <ShieldCheck size={18} className={isSelected ? 'text-white' : 'text-gray-500'} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -546,14 +585,15 @@ export default function Customize() {
                         {sole.label}
                       </p>
                       <span className="text-[7px] text-gray-400 italic">{sole.sub}</span>
-                      {sole.recommended && !isFixed && (
+                      {sole.rating && <AmpelDot rating={sole.rating} />}
+                      {(sole.recommended === 1 || sole.recommended === true) && !isFixed && (
                         <span className="text-[6px] uppercase tracking-wide font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-full">Empfohlen</span>
                       )}
                     </div>
-                    <p className="text-[9px] text-gray-400 mt-0.5 leading-relaxed">{sole.desc}</p>
+                    <p className="text-[9px] text-gray-400 mt-0.5 leading-relaxed">{sole.description}</p>
                   </div>
-                  {sole.price && (
-                    <span className="text-[9px] font-semibold text-teal-600 flex-shrink-0">{sole.price}</span>
+                  {sole.price_extra > 0 && (
+                    <span className="text-[9px] font-semibold text-teal-600 flex-shrink-0">+ € {sole.price_extra}</span>
                   )}
                   {isSelected && (
                     <Check size={14} className="text-black flex-shrink-0" strokeWidth={2.5} />
@@ -564,16 +604,16 @@ export default function Customize() {
           </div>
 
           {/* Sole recommendation hint */}
-          {selectedSoleObj && (
+          {selectedSoleObj?.tip && (
             <Hint
               text={selectedSoleObj.tip}
-              variant={selectedSole === 'leather' ? 'warn' : 'recommend'}
-              icon={selectedSole === 'leather' ? Sun : CloudRain}
+              variant={hintVariant(selectedSoleObj.rating)}
+              icon={hintIcon(selectedSoleObj.rating)}
             />
           )}
 
-          {/* Extra warning if user picks leather sole */}
-          {selectedSole === 'leather' && availableSoles.length > 1 && (
+          {/* Extra warning if user picks a warn-rated sole */}
+          {selectedSoleObj?.rating === 'warn' && soleList.length > 1 && (
             <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2.5 mt-2">
               <CloudRain size={12} className="flex-shrink-0 mt-0.5 text-orange-500" />
               <div>
@@ -582,15 +622,22 @@ export default function Customize() {
                   Die Ledersohle ist nur bei trockenem Wetter empfehlenswert — ideal im Sommer oder für Indoor-Anlässe.
                   Für den Alltag und bei wechselhaftem Wetter empfehlen wir die Anti-Rutsch Gummiprofilsohle.
                 </p>
-                <button
-                  onClick={() => setSelectedSole('rubber-grip')}
-                  className="mt-2 text-[9px] font-bold text-orange-800 underline bg-transparent border-0 p-0"
-                >
-                  Zur Gummiprofilsohle wechseln →
-                </button>
+                {(() => {
+                  const recommended = soleList.find(s => s.recommended === 1 || s.recommended === true)
+                  if (!recommended || (recommended.key || String(recommended.id)) === selectedSole) return null
+                  return (
+                    <button
+                      onClick={() => setSelectedSole(recommended.key || String(recommended.id))}
+                      className="mt-2 text-[9px] font-bold text-orange-800 underline bg-transparent border-0 p-0"
+                    >
+                      Zur {recommended.label} wechseln →
+                    </button>
+                  )
+                })()}
               </div>
             </div>
           )}
+          <p className="text-[7px] text-gray-300 text-center mt-1.5 italic">← Wischen zum Wechseln →</p>
         </div>
 
         {/* Size from scan */}
@@ -648,7 +695,6 @@ export default function Customize() {
             )}
           </div>
 
-          {/* Write Review Form */}
           {showReviewForm && !myReview && (
             <div className="bg-gray-50 rounded-2xl p-4 mb-3">
               <p className="text-[9px] uppercase tracking-widest text-gray-400 mb-2">Your Rating</p>
@@ -673,7 +719,6 @@ export default function Customize() {
             </div>
           )}
 
-          {/* Reviews list */}
           {reviewsLoading ? (
             <p className="text-[10px] text-gray-400 text-center py-3">Loading reviews…</p>
           ) : reviews.length === 0 ? (
