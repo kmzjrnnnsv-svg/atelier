@@ -8,7 +8,7 @@ import { seedDatabase } from './db/seed.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
 import authRouter from './routes/auth.js'
 import usersRouter from './routes/users.js'
-import { shoesRouter, curatedRouter, wardrobeRouter, outfitsRouter, articlesRouter } from './routes/content.js'
+import { shoesRouter, curatedRouter, wardrobeRouter, outfitsRouter, articlesRouter, materialsRouter, colorsRouter, solesRouter } from './routes/content.js'
 import scansRouter      from './routes/scans.js'
 import favoritesRouter  from './routes/favorites.js'
 import ordersRouter     from './routes/orders.js'
@@ -69,7 +69,10 @@ app.use('/api/curated',  curatedRouter)
 app.use('/api/wardrobe', wardrobeRouter)
 app.use('/api/outfits',  outfitsRouter)
 app.use('/api/scans',     scansRouter)
-app.use('/api/articles',  articlesRouter)
+app.use('/api/articles',   articlesRouter)
+app.use('/api/materials',  materialsRouter)
+app.use('/api/colors',     colorsRouter)
+app.use('/api/soles',      solesRouter)
 app.use('/api/favorites', favoritesRouter)
 app.use('/api/orders',    ordersRouter)
 app.use('/api/reviews',   reviewsRouter)

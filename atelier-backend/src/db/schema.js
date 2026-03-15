@@ -339,5 +339,73 @@ export function runMigrations(db) {
       UNIQUE(scan_id, side, level_name)
     );
     CREATE INDEX IF NOT EXISTS idx_cs_scan ON scan_cross_sections(scan_id);
+
+    -- ── Product configuration (CMS-editable) ─────────────────────────────
+    CREATE TABLE IF NOT EXISTS shoe_materials (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      key           TEXT    NOT NULL UNIQUE,
+      label         TEXT    NOT NULL,
+      sub           TEXT,
+      color         TEXT    NOT NULL DEFAULT '#374151',
+      available     INTEGER NOT NULL DEFAULT 1,
+      tip           TEXT,
+      season        TEXT,
+      rating        TEXT    NOT NULL DEFAULT 'neutral'
+                    CHECK(rating IN ('good','neutral','warn')),
+      sort_order    INTEGER NOT NULL DEFAULT 0,
+      created_by    INTEGER REFERENCES users(id),
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, season, rating, sort_order) VALUES
+      ('calfskin', 'CALFSKIN', 'Full-Grain', '#b45309', 1, 'Robust und langlebig — entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.', 'Ganzjährig', 'good', 0),
+      ('suede', 'SUEDE', 'Nubuck', '#78716c', 1, 'Samtig-weiche Oberfläche für lässig-elegante Looks. Empfindlich bei Nässe — am besten für trockene Tage und Indoor-Anlässe.', 'Frühling / Sommer', 'warn', 1),
+      ('patent', 'PATENT', 'High-Gloss', '#111827', 0, 'Hochglanz-Finish für formelle Anlässe, Galas und Abendveranstaltungen. Pflegeleicht, aber empfindlich gegen Kratzer.', 'Events', 'neutral', 2);
+
+    CREATE TABLE IF NOT EXISTS shoe_colors (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      key           TEXT    NOT NULL UNIQUE,
+      hex           TEXT    NOT NULL DEFAULT '#000000',
+      name          TEXT    NOT NULL,
+      available     INTEGER NOT NULL DEFAULT 1,
+      tip           TEXT,
+      pairs_with    TEXT,
+      rating        TEXT    NOT NULL DEFAULT 'neutral'
+                    CHECK(rating IN ('good','neutral','warn')),
+      sort_order    INTEGER NOT NULL DEFAULT 0,
+      created_by    INTEGER REFERENCES users(id),
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT OR IGNORE INTO shoe_colors (key, hex, name, available, tip, pairs_with, rating, sort_order) VALUES
+      ('schwarz',  '#000000', 'Schwarz',        1, 'Der Klassiker — passt zu jedem Outfit und jedem Anlass. Business, Formal, Casual — Schwarz geht immer.', 'Grau, Navy, alle dunklen Anzüge', 'good', 0),
+      ('black',    '#111827', 'Midnight Black',  1, 'Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz — perfekt für Smart Casual und kreative Berufe.', 'Dunkle Jeans, Navy Blazer, Charcoal Suits', 'good', 1),
+      ('cognac',   '#92400e', 'Cognac',          1, 'Warmes Braun mit Tiefe — der ideale Business-Casual-Begleiter. Passt hervorragend zu Beige, Navy und Erdtönen.', 'Beige Chinos, Navy Blazer, Jeans', 'good', 2),
+      ('oxblood',  '#7b1e1e', 'Oxblood',         1, 'Sattes Bordeaux-Rot — ein Herbst- und Winter-Statement. Elegant zum dunklen Anzug, lässig zur Jeans.', 'Charcoal, Navy, Dunkelgrün, Tweed', 'neutral', 3),
+      ('tan',      '#b45309', 'Tan',             1, 'Helles Karamell-Braun — die perfekte Sommerfarbe. Strahlt bei Sonnenlicht und passt zu hellen, leichten Outfits.', 'Weiß, Hellblau, Leinen, Beige', 'neutral', 4),
+      ('navy',     '#1e3a5f', 'Navy',            0, 'Der moderne Gentleman-Ton — elegant und unkonventionell zugleich. Perfekt zu grauen und hellbraunen Outfits.', 'Grau, Beige, helle Jeans, Tweed', 'good', 5),
+      ('forest',   '#14532d', 'Forest',          0, 'Tiefes Waldgrün — für den mutigen Stilbewussten. Ein Herbst-Highlight zu Cord, Tweed und Erdtönen.', 'Braun, Beige, Senfgelb, Cord', 'neutral', 6);
+
+    CREATE TABLE IF NOT EXISTS shoe_soles (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      key           TEXT    NOT NULL UNIQUE,
+      label         TEXT    NOT NULL,
+      sub           TEXT,
+      description   TEXT,
+      tip           TEXT,
+      price_extra   INTEGER NOT NULL DEFAULT 0,
+      rating        TEXT    NOT NULL DEFAULT 'good'
+                    CHECK(rating IN ('good','neutral','warn')),
+      recommended   INTEGER NOT NULL DEFAULT 0,
+      categories    TEXT    NOT NULL DEFAULT '*',
+      sort_order    INTEGER NOT NULL DEFAULT 0,
+      created_by    INTEGER REFERENCES users(id),
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT OR IGNORE INTO shoe_soles (key, label, sub, description, tip, price_extra, rating, recommended, categories, sort_order) VALUES
+      ('leather',     'LEDERSOHLE',    'Klassisch',    'Handgenähte Ledersohle — elegant und atmungsaktiv.', 'Nur für trockene Bedingungen empfohlen. Ideal im Sommer und für Indoor-Anlässe. Bei Nässe wird es rutschig.', 0, 'warn', 0, 'OXFORD,LOAFER,DERBY,MONK', 0),
+      ('rubber-grip', 'ANTI-RUTSCH',   'Gummi-Profil', 'Gummibeschichtete Profilsohle — maximale Rutschfestigkeit auf allen Oberflächen.', 'Unsere Empfehlung für den Alltag. Sicherer Halt bei Regen, Schnee und nassen Böden. Ganzjährig einsetzbar.', 35, 'good', 1, 'OXFORD,LOAFER,DERBY,MONK,BOOT', 1),
+      ('sneaker',     'SNEAKER-SOHLE', 'EVA-Komfort',  'Leichte EVA-Komfortsohle mit Dämpfung — für maximalen Gehkomfort den ganzen Tag.', 'Speziell für Sneaker entwickelt. Stoßdämpfend, flexibel und ultraleicht.', 0, 'good', 0, 'SNEAKER', 2);
   `)
 }

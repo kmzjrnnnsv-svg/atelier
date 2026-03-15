@@ -116,10 +116,13 @@ const articleValidators = [
   }),
 ]
 
-export const shoesRouter    = makeContentRouter('shoes', shoeValidators)
-export const curatedRouter  = makeContentRouter('curated_items')
-export const wardrobeRouter = makeContentRouter('wardrobe_items')
-export const outfitsRouter  = makeContentRouter('outfits', outfitValidators)
-export const articlesRouter = makeContentRouter('articles', articleValidators)
+export const shoesRouter      = makeContentRouter('shoes', shoeValidators)
+export const curatedRouter    = makeContentRouter('curated_items')
+export const wardrobeRouter   = makeContentRouter('wardrobe_items')
+export const outfitsRouter    = makeContentRouter('outfits', outfitValidators)
+export const articlesRouter   = makeContentRouter('articles', articleValidators)
+export const materialsRouter  = makeContentRouter('shoe_materials')
+export const colorsRouter     = makeContentRouter('shoe_colors')
+export const solesRouter      = makeContentRouter('shoe_soles')
 
 export default router

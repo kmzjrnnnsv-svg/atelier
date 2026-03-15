@@ -11,7 +11,10 @@ const useAtelierStore = create((set, get) => ({
   favorites:  [],   // string shoe IDs
   orders:     [],
   faqs:       [],
-  latestScan: null, // most recent foot scan for this user
+  latestScan:  null, // most recent foot scan for this user
+  shoeMaterials: [],
+  shoeColors:   [],
+  shoeSoles:    [],
   notifications: [], // in-app notifications
   reminders:  [],    // items user wants to be reminded about
   loading:    false,
@@ -52,7 +55,7 @@ const useAtelierStore = create((set, get) => ({
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans] = await Promise.all([
+      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles] = await Promise.all([
         apiFetch('/api/shoes'),
         apiFetch('/api/curated'),
         apiFetch('/api/wardrobe'),
@@ -62,6 +65,9 @@ const useAtelierStore = create((set, get) => ({
         apiFetch('/api/orders/mine').catch(() => []),
         apiFetch('/api/faqs').catch(() => []),
         apiFetch('/api/scans/mine').catch(() => []),
+        apiFetch('/api/materials').catch(() => []),
+        apiFetch('/api/colors').catch(() => []),
+        apiFetch('/api/soles').catch(() => []),
       ])
       set({
         shoes:      shoes.map(normalizeShoe),
@@ -73,6 +79,9 @@ const useAtelierStore = create((set, get) => ({
         orders,
         faqs,
         latestScan: Array.isArray(scans) && scans.length > 0 ? scans[0] : null,
+        shoeMaterials: Array.isArray(mats) ? mats : [],
+        shoeColors:    Array.isArray(cols) ? cols : [],
+        shoeSoles:     Array.isArray(soles) ? soles : [],
         loading:    false,
       })
     } catch (e) {
@@ -182,6 +191,48 @@ const useAtelierStore = create((set, get) => ({
   async deleteOutfit(id) {
     await apiFetch(`/api/outfits/${id}`, { method: 'DELETE' })
     set(s => ({ outfits: s.outfits.filter(o => o.id != id) }))
+  },
+
+  // --- SHOE MATERIALS ---
+  async addMaterial(m) {
+    const row = await apiFetch('/api/materials', { method: 'POST', body: JSON.stringify(m) })
+    set(s => ({ shoeMaterials: [...s.shoeMaterials, row] }))
+  },
+  async updateMaterial(id, u) {
+    const row = await apiFetch(`/api/materials/${id}`, { method: 'PUT', body: JSON.stringify(u) })
+    set(s => ({ shoeMaterials: s.shoeMaterials.map(m => m.id == id ? row : m) }))
+  },
+  async deleteMaterial(id) {
+    await apiFetch(`/api/materials/${id}`, { method: 'DELETE' })
+    set(s => ({ shoeMaterials: s.shoeMaterials.filter(m => m.id != id) }))
+  },
+
+  // --- SHOE COLORS ---
+  async addColor(c) {
+    const row = await apiFetch('/api/colors', { method: 'POST', body: JSON.stringify(c) })
+    set(s => ({ shoeColors: [...s.shoeColors, row] }))
+  },
+  async updateColor(id, u) {
+    const row = await apiFetch(`/api/colors/${id}`, { method: 'PUT', body: JSON.stringify(u) })
+    set(s => ({ shoeColors: s.shoeColors.map(c => c.id == id ? row : c) }))
+  },
+  async deleteColor(id) {
+    await apiFetch(`/api/colors/${id}`, { method: 'DELETE' })
+    set(s => ({ shoeColors: s.shoeColors.filter(c => c.id != id) }))
+  },
+
+  // --- SHOE SOLES ---
+  async addSole(s2) {
+    const row = await apiFetch('/api/soles', { method: 'POST', body: JSON.stringify(s2) })
+    set(s => ({ shoeSoles: [...s.shoeSoles, row] }))
+  },
+  async updateSole(id, u) {
+    const row = await apiFetch(`/api/soles/${id}`, { method: 'PUT', body: JSON.stringify(u) })
+    set(s => ({ shoeSoles: s.shoeSoles.map(s2 => s2.id == id ? row : s2) }))
+  },
+  async deleteSole(id) {
+    await apiFetch(`/api/soles/${id}`, { method: 'DELETE' })
+    set(s => ({ shoeSoles: s.shoeSoles.filter(s2 => s2.id != id) }))
   },
 
   // --- ARTICLES ---
