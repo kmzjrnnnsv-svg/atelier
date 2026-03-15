@@ -162,7 +162,7 @@ export default function Customize() {
     <div className="flex flex-col h-full bg-white overflow-hidden">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 pt-14 pb-2">
+      <div className="flex items-center justify-between px-5 pt-4 pb-2">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
           <ArrowLeft size={18} strokeWidth={1.8} className="text-gray-800" />
         </button>
@@ -186,7 +186,7 @@ export default function Customize() {
       {/* ── Hero Viewer ─────────────────────────────────────────────────── */}
       <div
         className="relative mx-4 mt-2 bg-gradient-to-b from-gray-50 to-gray-100 rounded-3xl overflow-hidden select-none"
-        style={{ height: 220, cursor: is3D ? 'grab' : 'default' }}
+        style={{ height: 'clamp(160px, 25dvh, 240px)', cursor: is3D ? 'grab' : 'default' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -266,7 +266,7 @@ export default function Customize() {
       </div>
 
       {/* ── Scrollable Config ─────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-4 mt-4 pb-36">
+      <div className="flex-1 overflow-y-auto px-4 mt-4 pb-4">
 
         {/* Material Selection */}
         <div className="mb-5">
@@ -433,7 +433,8 @@ export default function Customize() {
       </div>
 
       {/* ── Bottom Actions ───────────────────────────────────────────────── */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 pt-4 pb-6">
+      <div className="bg-white border-t border-gray-100 px-4 pt-3 flex-shrink-0"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}>
         {addError && <p className="text-[10px] text-red-500 text-center mb-2">{addError}</p>}
         <div className="flex items-center gap-3">
           <button

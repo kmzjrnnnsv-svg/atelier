@@ -315,7 +315,7 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       <GuideOverlay phase={phase} />
 
       {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-14 pb-3 flex items-center justify-between">
+      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-3 flex items-center justify-between">
         <button onClick={onBack}
           className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10">
           <X size={18} className="text-white" strokeWidth={1.8} />
@@ -403,7 +403,7 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
       {flash && <div className="absolute inset-0 bg-white z-50 pointer-events-none" />}
 
       {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-14 pb-3 flex items-center justify-between">
+      <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-3 flex items-center justify-between">
         <button onClick={onBack}
           className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10">
           <X size={18} className="text-white" strokeWidth={1.8} />
@@ -470,7 +470,7 @@ function CamError({ status, onRetry, onDemo, onBack }) {
   const err = CAM_ERRORS[status] || CAM_ERRORS.error
   return (
     <div className="absolute inset-0 flex flex-col bg-white">
-      <div className="px-5 pt-14 pb-2 flex-shrink-0">
+      <div className="px-5 pt-4 pb-2 flex-shrink-0">
         <button onClick={onBack} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border-0">
           <X size={17} className="text-gray-800" strokeWidth={1.8} />
         </button>
@@ -1020,7 +1020,7 @@ export default function FootScan() {
       {LIDAR_PHASES.includes(phase) && (
         <div className="absolute inset-0 flex flex-col bg-black">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 pt-14 pb-4 flex-shrink-0">
+          <div className="flex items-center justify-between px-5 pt-4 pb-4 flex-shrink-0">
             <button onClick={() => { setPhase('start'); setWalkProgress(0) }}
               className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center border-0">
               <X size={17} className="text-white" strokeWidth={1.8} />
@@ -1118,7 +1118,7 @@ export default function FootScan() {
         <div className="absolute inset-0 flex flex-col bg-white overflow-hidden">
 
           {/* Shared header */}
-          <div className="flex items-center justify-between px-5 pt-14 pb-4 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
             <button onClick={() => { stopCam(); navigate(-1) }}
               className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
               <X size={17} className="text-gray-700" strokeWidth={1.8} />

@@ -600,7 +600,7 @@ export default function Mirror() {
   if (phase === 'intro') return (
     <div className="flex flex-col h-full overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 60%, #0f172a 100%)' }}>
-      <div className="flex items-center justify-between px-5 pt-14 pb-4">
+      <div className="flex items-center justify-between px-5 pt-4 pb-4">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-white" />
         </button>
@@ -670,7 +670,7 @@ export default function Mirror() {
 
   if (phase === 'scan') return (
     <div className="flex flex-col h-full overflow-hidden bg-black">
-      <div className="flex items-center justify-between px-5 pt-14 pb-4 z-10">
+      <div className="flex items-center justify-between px-5 pt-4 pb-4 z-10">
         <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center border-0">
           <X size={18} className="text-white" />
         </button>
@@ -782,7 +782,7 @@ export default function Mirror() {
 
   if (phase === 'editor') return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
-      <div className="flex items-center justify-between px-5 pt-14 pb-4 border-b border-gray-100">
+      <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
         <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-gray-800" />
         </button>
@@ -884,7 +884,7 @@ export default function Mirror() {
       />
 
       {/* Header */}
-      <div className="bg-white flex items-center justify-between px-5 pt-14 pb-3 border-b border-gray-100">
+      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-gray-800" />
         </button>

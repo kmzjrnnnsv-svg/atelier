@@ -65,7 +65,7 @@ export default function OutfitVisualizer() {
     <div className="flex flex-col h-full bg-white overflow-hidden">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 pt-14 pb-3 bg-white border-b border-gray-100">
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 bg-white border-b border-gray-100">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
           <ArrowLeft size={18} strokeWidth={1.8} className="text-gray-800" />
         </button>
@@ -83,7 +83,7 @@ export default function OutfitVisualizer() {
         {/* ── 3D Visualizer Canvas ───────────────────────────────────── */}
         <div
           className="relative mx-4 mt-4 rounded-3xl overflow-hidden"
-          style={{ background: 'linear-gradient(180deg, #111827 0%, #1f2937 100%)', minHeight: 310 }}
+          style={{ background: 'linear-gradient(180deg, #111827 0%, #1f2937 100%)', minHeight: 'clamp(220px, 36dvh, 340px)' }}
         >
           {/* AI Confidence badge */}
           <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-md">
@@ -111,7 +111,7 @@ export default function OutfitVisualizer() {
 
           {/* Mannequin SVG */}
           <div className={`flex items-center justify-center pt-4 pb-4 transition-opacity duration-300 ${hideModel ? 'opacity-0' : 'opacity-100'}`}
-            style={{ minHeight: 270 }}>
+            style={{ minHeight: 'clamp(180px, 30dvh, 290px)' }}>
             <svg viewBox="0 0 140 270" className={`w-40 drop-shadow-lg transition-transform duration-500 ${spinning ? 'scale-90' : 'scale-100'}`}>
               {/* Head */}
               <circle cx="70" cy="24" r="16" fill="#d4a88a" />

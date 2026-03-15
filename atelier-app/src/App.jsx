@@ -63,7 +63,7 @@ function AppRoutes() {
 
   if (isCMS) {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 50, paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
         <Routes>
           <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
             <Route index        element={<CMSDashboard />} />
@@ -89,7 +89,7 @@ function AppRoutes() {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       <div className="flex-1 overflow-hidden">
         <Routes>
           <Route path="/"           element={<Navigate to="/login" replace />} />

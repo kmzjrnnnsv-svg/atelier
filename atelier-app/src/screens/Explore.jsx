@@ -98,7 +98,7 @@ export default function Explore() {
     <div className="flex flex-col h-full bg-white overflow-hidden">
 
       {/* Header */}
-      <div className="px-5 pt-14 pb-5 border-b border-gray-100">
+      <div className="px-5 pt-4 pb-5 border-b border-gray-100">
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[9px] uppercase tracking-[0.22em] font-bold text-gray-400 mb-1">

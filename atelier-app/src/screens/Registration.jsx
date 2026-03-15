@@ -56,7 +56,7 @@ export default function Registration() {
   return (
     <div className="flex flex-col h-full bg-white relative">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-14 pb-3 flex-shrink-0">
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 flex-shrink-0">
         <button className="w-8 h-8 flex items-center justify-center bg-transparent border-0" onClick={() => navigate('/login')}>
           <X size={20} strokeWidth={1.5} className="text-gray-700" />
         </button>
