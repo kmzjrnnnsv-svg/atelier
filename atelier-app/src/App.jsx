@@ -77,6 +77,7 @@ const BankSettings         = lazy(() => import('./screens/cms/BankSettings'))
 const EmailSettings        = lazy(() => import('./screens/cms/EmailSettings'))
 const EmailTemplatesPanel  = lazy(() => import('./screens/cms/EmailTemplatesPanel'))
 const LastSettings         = lazy(() => import('./screens/cms/LastSettings'))
+const ProductConfigEditor  = lazy(() => import('./screens/cms/ProductConfigEditor'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -130,6 +131,7 @@ function AppRoutes() {
               <Route path="email"    element={<AdminRoute><EmailSettings /></AdminRoute>} />
               <Route path="email-templates" element={<EmailTemplatesPanel />} />
               <Route path="leisten"       element={<LastSettings />} />
+              <Route path="product-config" element={<ProductConfigEditor />} />
             </Route>
           </Routes>
         </Suspense>
