@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)        // { id, name, email, role }
   const [loading, setLoading] = useState(true)  // true while checking existing session
   const refreshTimer = useRef(null)
-  const refreshInFlight = useRef(false)
+  const refreshPromise = useRef(null)
 
   // Schedule access token refresh 1 minute before expiry (14 min cycle)
   function scheduleRefresh() {
@@ -23,32 +23,36 @@ export function AuthProvider({ children }) {
     refreshTimer.current = setTimeout(() => silentRefresh(), 14 * 60 * 1000)
   }
 
-  const silentRefresh = useCallback(async () => {
-    // Guard against StrictMode double-mount racing with token rotation
-    if (refreshInFlight.current) return
-    refreshInFlight.current = true
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
-      if (!res.ok) {
-        // Don't call logout() here — it would POST to /api/auth/logout and
-        // permanently destroy the refresh token in the DB. Just clear local state.
+  const silentRefresh = useCallback(() => {
+    // If a refresh is already in flight, return the SAME promise so all
+    // callers (including StrictMode double-mount) wait for the real result.
+    if (refreshPromise.current) return refreshPromise.current
+
+    refreshPromise.current = (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
+        if (!res.ok) {
+          // Don't call logout() — it would destroy the DB token permanently.
+          setAccessToken(null)
+          setUser(null)
+          if (refreshTimer.current) clearTimeout(refreshTimer.current)
+          return
+        }
+        const data = await res.json()
+        setAccessToken(data.accessToken)
+        setUser(data.user)
+        scheduleRefresh()
+      } catch {
+        // Network error — just clear local state, keep the cookie
         setAccessToken(null)
         setUser(null)
         if (refreshTimer.current) clearTimeout(refreshTimer.current)
-        return
+      } finally {
+        refreshPromise.current = null
       }
-      const data = await res.json()
-      setAccessToken(data.accessToken)
-      setUser(data.user)
-      scheduleRefresh()
-    } catch {
-      // Network error — don't destroy session, just clear local state
-      setAccessToken(null)
-      setUser(null)
-      if (refreshTimer.current) clearTimeout(refreshTimer.current)
-    } finally {
-      refreshInFlight.current = false
-    }
+    })()
+
+    return refreshPromise.current
   }, [])
 
   // On mount: try to restore session via httpOnly refresh cookie
