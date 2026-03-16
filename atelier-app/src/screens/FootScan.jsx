@@ -881,6 +881,9 @@ export default function FootScan() {
           }
           usedAI     = true
           aiConfidence = ai._confidence ?? null
+          if (ai._calibration_applied && Object.keys(ai._calibration_applied).length > 0) {
+            console.info('[FootScan] Kalibrierung angewendet:', Object.keys(ai._calibration_applied).length, 'Felder korrigiert')
+          }
         } catch (e) {
           console.warn('[FootScan] KI fehlgeschlagen, CV-Fallback:', e.message)
           setAiStatus('Lokale Analyse…')
