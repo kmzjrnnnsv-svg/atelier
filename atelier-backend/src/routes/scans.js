@@ -176,11 +176,36 @@ function applyCalibration(db, results, source) {
   const cal = getCalibration(db)
   const applied = {}
   for (const field of CALIBRATED_FIELDS) {
-    const key = `${source}:${field}`
-    if (results[field] != null && cal[key] && cal[key].n >= 5) {
-      // Subtract learned bias (bias = predicted - actual, so corrected = predicted - bias)
-      const corrected = rnd(results[field] - cal[key].bias)
-      applied[field] = { original: results[field], corrected, bias: cal[key].bias, confidence_mm: cal[key].stdDev }
+    if (results[field] == null) continue
+
+    // Try admin calibration first (higher confidence), then user calibration
+    const adminKey = `${source}:${field}`
+    const userKey = `${source}_user:${field}`
+    const adminCal = cal[adminKey]
+    const userCal = cal[userKey]
+
+    let bias = null, confidence = null, calSource = null
+    if (adminCal && adminCal.n >= 5) {
+      bias = adminCal.bias
+      confidence = adminCal.stdDev
+      calSource = 'admin'
+    } else if (userCal && userCal.n >= 8) {
+      // User corrections need more samples (8 vs 5) for reliability
+      // and apply at 70% weight (more conservative)
+      bias = userCal.bias * 0.7
+      confidence = userCal.stdDev
+      calSource = 'user'
+    } else if (adminCal && adminCal.n >= 3 && userCal && userCal.n >= 3) {
+      // Blend admin + user when both have some data
+      const totalN = adminCal.n + userCal.n
+      bias = (adminCal.bias * adminCal.n * 1.5 + userCal.bias * userCal.n) / (adminCal.n * 1.5 + userCal.n)
+      confidence = Math.min(adminCal.stdDev, userCal.stdDev)
+      calSource = 'blended'
+    }
+
+    if (bias != null) {
+      const corrected = rnd(results[field] - bias)
+      applied[field] = { original: results[field], corrected, bias: rnd(bias), confidence_mm: confidence, source: calSource }
       results[field] = corrected
     }
   }
@@ -515,18 +540,108 @@ function mergeResults(cv, cl, side) {
   }
 }
 
+// ─── Depth data processing (WebXR/ARCore point clouds) ────────────────────────
+// Processes point cloud data from WebXR Depth Sensing API or similar.
+// Uses the process_lidar.py pipeline when point cloud is substantial enough.
+function processDepthData(depthData) {
+  const results = { right: {}, left: {} }
+
+  for (const [key, data] of Object.entries(depthData)) {
+    if (!data?.pointCloud || data.pointCloud.length < 200) continue
+
+    const side = key.includes('right') || key.includes('Right') ? 'right' : 'left'
+
+    try {
+      // Write point cloud to temp file and run process_lidar.py
+      const tmpFile = join(tmpdir(), `depth_${key}_${Date.now()}.json`)
+      writeFileSync(tmpFile, JSON.stringify(data.pointCloud))
+
+      const PROCESS_LIDAR_PY = join(ML_SCRIPTS, 'process_lidar.py')
+      const pyResult = spawnSync('python3', [PROCESS_LIDAR_PY, '--cloud', tmpFile], {
+        timeout: 30_000, encoding: 'utf8',
+      })
+
+      try { unlinkSync(tmpFile) } catch {}
+
+      if (pyResult.status === 0 && pyResult.stdout) {
+        const measurements = JSON.parse(pyResult.stdout)
+        results[side] = {
+          length: measurements.length,
+          width: measurements.width,
+          foot_height: measurements.height,
+          arch: measurements.arch_height,
+          ball_girth: measurements.ball_girth,
+          instep_girth: measurements.instep_girth,
+          heel_girth: measurements.heel_girth,
+          waist_girth: measurements.waist_girth,
+          ankle_girth: measurements.ankle_girth,
+          _source: 'depth-' + data.source,
+          _point_count: data.pointCloud.length,
+        }
+      }
+    } catch (e) {
+      console.warn(`[depth] ${key} processing failed:`, e.message)
+    }
+  }
+
+  return results
+}
+
+// ─── PCA Shape Model fitting from measurements ──────────────────────────────
+// Uses the trained PCA model to regularize/validate measurements.
+// Returns PCA-corrected values blended with raw measurements.
+function pcaRegularize(measurements) {
+  const SHAPE_MODEL_DIR = join(ML_SCRIPTS, '..', 'data', 'shape_model')
+  const metaPath = join(SHAPE_MODEL_DIR, 'meta.json')
+
+  try {
+    const { existsSync, readFileSync } = require('fs')
+    if (!existsSync(metaPath)) return null
+
+    // Run PCA regularization via process_lidar.py's pca_regularize function
+    const tmpFile = join(tmpdir(), `pca_input_${Date.now()}.json`)
+    writeFileSync(tmpFile, JSON.stringify(measurements))
+
+    const pyCode = `
+import json, sys, os
+sys.path.insert(0, '${ML_SCRIPTS}')
+from process_lidar import pca_regularize
+with open('${tmpFile}') as f:
+    meas = json.load(f)
+result = pca_regularize(meas)
+print(json.dumps(result))
+`
+    const pyResult = spawnSync('python3', ['-c', pyCode], {
+      timeout: 10_000, encoding: 'utf8',
+    })
+
+    try { unlinkSync(tmpFile) } catch {}
+
+    if (pyResult.status === 0 && pyResult.stdout) {
+      return JSON.parse(pyResult.stdout)
+    }
+  } catch (e) {
+    console.warn('[pca] regularization failed:', e.message)
+  }
+  return null
+}
+
 // ─── AI Vision Analyze ────────────────────────────────────────────────────────
 // POST /api/scans/analyze
-// 4 Bilder: rightTopImg, rightSideImg, leftTopImg, leftSideImg
+// 4-6 Bilder + optional depth data
 // A4-Papier (297×210mm) als Maßstab-Referenz in jedem Bild
 //
 // Pipeline:
 //   1. CV (process_photos.py): A4 detection → precise pixel measurement
 //   2. Claude Vision: cross-section widths → Ramanujan girth computation
-//   3. Merge: CV length/width + Claude-driven girths
+//   2b. Depth processing (WebXR/ARCore) if available
+//   3. Merge: CV + Claude + Depth
+//   4. PCA regularization (shape model constraint)
+//   5. Calibration correction (learned bias)
 router.post('/analyze', authenticate, async (req, res) => {
-  const { rightTopImg, rightSideImg, leftTopImg, leftSideImg, rightLateralImg, leftLateralImg } = req.body
+  const { rightTopImg, rightSideImg, leftTopImg, leftSideImg, rightLateralImg, leftLateralImg, depthData } = req.body
   const hasLateral = !!rightLateralImg && !!leftLateralImg // IBV-style 6-image mode
+  const hasDepth = depthData && Object.keys(depthData).length > 0
 
   if (!rightTopImg || !rightSideImg || !leftTopImg || !leftSideImg) {
     return res.status(400).json({ error: 'Mindestens 4 Bilder erforderlich (top + medial/side für jeden Fuß)' })
@@ -551,9 +666,32 @@ router.post('/analyze', authenticate, async (req, res) => {
     // Pass lateral images to Claude for IBV-style 3-angle reconstruction
     const cl = await runClaudeFallback(client, toB64, rightTopImg, rightSideImg, leftTopImg, leftSideImg, cv, rightLateralImg, leftLateralImg)
 
+    // ── Phase 2b: Depth data processing (WebXR/ARCore point clouds) ─────
+    let depthMeasurements = null
+    if (hasDepth) {
+      try {
+        depthMeasurements = processDepthData(depthData)
+      } catch (e) {
+        console.warn('[scan/analyze] depth processing failed:', e.message)
+      }
+    }
+
     // ── Phase 3: Merge ─────────────────────────────────────────────────────
     const R = mergeResults(cv, cl, 'right')
     const L = mergeResults(cv, cl, 'left')
+
+    // Merge depth data if available (depth measurements get high priority for girths)
+    if (depthMeasurements) {
+      for (const [key, val] of Object.entries(depthMeasurements.right || {})) {
+        if (val != null && R[key] == null) R[key] = val
+        // Weighted merge: 40% depth + 60% photo when both exist
+        if (val != null && R[key] != null) R[key] = rnd(R[key] * 0.6 + val * 0.4)
+      }
+      for (const [key, val] of Object.entries(depthMeasurements.left || {})) {
+        if (val != null && L[key] == null) L[key] = val
+        if (val != null && L[key] != null) L[key] = rnd(L[key] * 0.6 + val * 0.4)
+      }
+    }
 
     // Final sanity: length must be present
     if (!R.length || !L.length)
@@ -568,7 +706,27 @@ router.post('/analyze', authenticate, async (req, res) => {
     // Compute realistic confidence score
     const confidence = computeConfidence(cv, cl, 'photo')
 
-    // ── Apply learned calibration corrections ────────────────────────────
+    // ── Phase 4: PCA shape model regularization ─────────────────────────
+    // Blend raw measurements with PCA-reconstructed values (80/20) for consistency
+    let pcaApplied = false
+    for (const [side, M] of [['right', R], ['left', L]]) {
+      const pcaInput = {
+        length: M.length, width: M.width, height: M.foot_height,
+        ball_girth: M.ball_girth, instep_girth: M.instep_girth,
+        waist_girth: M.waist_girth, heel_girth: M.heel_girth,
+        ankle_girth: M.ankle_girth,
+      }
+      const regularized = pcaRegularize(pcaInput)
+      if (regularized) {
+        pcaApplied = true
+        // PCA blend: 80% raw + 20% PCA-reconstructed (done inside pcaRegularize)
+        for (const [k, v] of Object.entries(regularized)) {
+          if (v != null && M[k] != null) M[k] = rnd(v)
+        }
+      }
+    }
+
+    // ── Phase 5: Apply learned calibration corrections ────────────────────
     const db = getDb()
     const rawResults = {
       right_length: R.length, right_width: R.width,
@@ -619,6 +777,9 @@ router.post('/analyze', authenticate, async (req, res) => {
       _cv_left:  cv?.left_cv_success  ?? false,
       _confidence: confidence,
       _calibration_applied: calibrationApplied,
+      _pca_regularized: pcaApplied,
+      _depth_used: hasDepth && depthMeasurements != null,
+      _depth_mode: hasDepth ? Object.values(depthData)[0]?.source : null,
       _measurement_passes: cl._measurement_passes ?? 1,
       _pass_deviations: cl._pass_deviations ?? {},
       _a4_validation: cl.a4_validation ?? null,
@@ -799,7 +960,31 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
     eu_size, uk_size, us_size, accuracy, notes ?? null
   )
 
-  const row = getDb().prepare('SELECT * FROM foot_scans WHERE id = ?').get(result.lastInsertRowid)
+  const scanId = result.lastInsertRowid
+  const row = getDb().prepare('SELECT * FROM foot_scans WHERE id = ?').get(scanId)
+
+  // ── Store raw predictions for retrospective learning ────────────────
+  // Every saved scan gets its predictions recorded so we can learn from
+  // future corrections (admin or user).
+  try {
+    const predictions = {
+      right_length, right_width, right_arch,
+      right_ball_girth, right_instep_girth, right_heel_girth,
+      right_waist_girth, right_ankle_girth,
+      right_long_heel_girth, right_short_heel_girth, right_foot_height,
+      left_length, left_width, left_arch,
+      left_ball_girth, left_instep_girth, left_heel_girth,
+      left_waist_girth, left_ankle_girth,
+      left_long_heel_girth, left_short_heel_girth, left_foot_height,
+    }
+    getDb().prepare(`
+      INSERT OR REPLACE INTO scan_predictions (scan_id, source, predictions, confidence)
+      VALUES (?, ?, ?, ?)
+    `).run(scanId, reference_type || 'photo', JSON.stringify(predictions), accuracy)
+  } catch (e) {
+    console.warn('[learning] prediction storage failed:', e.message)
+  }
+
   res.status(201).json(row)
 })
 
@@ -1022,6 +1207,39 @@ router.patch(
     params.push(id)
     db.prepare(`UPDATE foot_scans SET ${updates.join(', ')} WHERE id = ?`).run(...params)
 
+    // ── Learning: store user corrections as soft comparison pairs ────────
+    // User corrections have lower weight than admin validations but still
+    // contribute to the calibration system over time.
+    const source = scan.reference_type === 'lidar' ? 'lidar' : 'photo'
+    try {
+      const compStmt = db.prepare(`
+        INSERT INTO scan_comparison_pairs (scan_id, measurement, source, predicted_mm, actual_mm, error_mm)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(scan_id, measurement) DO UPDATE SET
+          actual_mm = excluded.actual_mm, error_mm = excluded.error_mm
+      `)
+      let pairsStored = 0
+      for (const [key, newVal] of Object.entries(fieldMap)) {
+        if (newVal === undefined || scan[key] == null) continue
+        const oldVal = scan[key]
+        if (Math.abs(oldVal - newVal) > 0.1) {
+          compStmt.run(id, key, source + '_user', oldVal, newVal, rnd(oldVal - newVal))
+          pairsStored++
+        }
+      }
+      // Recalculate calibration when enough user corrections accumulate
+      if (pairsStored > 0) {
+        const userPairCount = db.prepare(
+          "SELECT COUNT(*) AS n FROM scan_comparison_pairs WHERE source LIKE '%_user'"
+        ).get().n
+        if (userPairCount >= 10 && userPairCount % 5 === 0) {
+          recalculateCalibration(db, source + '_user')
+        }
+      }
+    } catch (e) {
+      console.warn('[learning] user correction storage failed:', e.message)
+    }
+
     const updated = db.prepare('SELECT * FROM foot_scans WHERE id = ?').get(id)
     res.json({ ok: true, scan: updated })
   }
@@ -1061,6 +1279,73 @@ router.get('/calibration-stats', authenticate, requireRole('admin'), (req, res) 
     field_stats: fieldStats,
     training_ready: validatedScans.n >= 20,
     training_recommended: validatedScans.n >= 20 && validatedScans.n % 10 === 0,
+  })
+})
+
+// ─── GET /api/scans/learning-stats — Full learning pipeline status (admin) ────
+router.get('/learning-stats', authenticate, requireRole('admin'), (req, res) => {
+  const db = getDb()
+
+  // Count all data sources
+  const totalScans = db.prepare('SELECT COUNT(*) AS n FROM foot_scans').get().n
+  const totalPredictions = db.prepare('SELECT COUNT(*) AS n FROM scan_predictions').get().n
+  const totalPairs = db.prepare('SELECT COUNT(*) AS n FROM scan_comparison_pairs').get().n
+  const adminPairs = db.prepare("SELECT COUNT(*) AS n FROM scan_comparison_pairs WHERE source NOT LIKE '%_user'").get().n
+  const userPairs = db.prepare("SELECT COUNT(*) AS n FROM scan_comparison_pairs WHERE source LIKE '%_user'").get().n
+  const validatedScans = db.prepare('SELECT COUNT(*) AS n FROM scan_training_data WHERE validated = 1').get().n
+
+  // Per-field accuracy from all comparison pairs
+  const fieldAccuracy = db.prepare(`
+    SELECT measurement, source,
+      COUNT(*) AS n,
+      ROUND(AVG(ABS(error_mm)), 2) AS mean_abs_error_mm,
+      ROUND(MAX(ABS(error_mm)), 2) AS max_abs_error_mm,
+      ROUND(AVG(error_mm), 2) AS mean_bias_mm,
+      ROUND(MIN(ABS(error_mm)), 2) AS min_abs_error_mm
+    FROM scan_comparison_pairs
+    GROUP BY measurement, source
+    ORDER BY mean_abs_error_mm DESC
+  `).all()
+
+  // Overall accuracy trend (last 20 corrections)
+  const recentPairs = db.prepare(`
+    SELECT error_mm, created_at FROM scan_comparison_pairs
+    ORDER BY created_at DESC LIMIT 20
+  `).all()
+  const recentMeanError = recentPairs.length > 0
+    ? Math.round(recentPairs.reduce((s, p) => s + Math.abs(p.error_mm), 0) / recentPairs.length * 100) / 100
+    : null
+
+  // Calibration corrections
+  const calibrations = db.prepare('SELECT * FROM measurement_calibration ORDER BY measurement').all()
+
+  res.json({
+    total_scans: totalScans,
+    total_predictions: totalPredictions,
+    learning_data: {
+      total_comparison_pairs: totalPairs,
+      admin_corrections: adminPairs,
+      user_corrections: userPairs,
+      validated_training_scans: validatedScans,
+    },
+    accuracy: {
+      per_field: fieldAccuracy,
+      recent_mean_abs_error_mm: recentMeanError,
+      recent_trend: recentPairs.map(p => ({ error: p.error_mm, date: p.created_at })),
+    },
+    calibrations,
+    pca_model_available: (() => {
+      try {
+        const { existsSync } = require('fs')
+        return existsSync(join(ML_SCRIPTS, '..', 'data', 'shape_model', 'meta.json'))
+      } catch { return false }
+    })(),
+    recommendations: [
+      totalPairs < 10 ? 'Mehr Korrekturen sammeln (min. 10 für Kalibrierung)' : null,
+      validatedScans < 20 ? `Noch ${20 - validatedScans} Scans validieren für ML-Training` : null,
+      adminPairs === 0 && userPairs > 5 ? 'Admin-Validierungen haben mehr Gewicht als User-Korrekturen' : null,
+      recentMeanError && recentMeanError > 3 ? 'Hoher Fehler — mehr Trainingsdaten oder Kalibrierung nötig' : null,
+    ].filter(Boolean),
   })
 })
 
