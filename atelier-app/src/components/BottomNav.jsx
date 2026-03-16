@@ -1,12 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTransition } from 'react'
-import { Home, Compass, BookOpen, User } from 'lucide-react'
+import { Home, Compass, User } from 'lucide-react'
 import { prefetchRoute } from '../App'
 
 const NAV_ITEMS = [
   { id: 'shop',    icon: Home,     label: 'SOLE',    path: '/collection' },
   { id: 'explore', icon: Compass,  label: 'EXPLORE', path: '/explore'    },
-  { id: 'learn',   icon: BookOpen, label: 'LEARN',   path: '/learn'      },
   { id: 'profile', icon: User,     label: 'PROFILE', path: '/profile'    },
 ]
 

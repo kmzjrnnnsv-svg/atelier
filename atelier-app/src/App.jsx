@@ -21,7 +21,7 @@ const lazyImports = {
   '/mirror':     () => import('./screens/Mirror'),
   '/explore':    () => import('./screens/Explore'),
   '/health':     () => import('./screens/HealthInfo'),
-  '/learn':      () => import('./screens/Learn'),
+  '/learn':      () => import('./screens/Explore'),
   '/settings':   () => import('./screens/Settings'),
   '/wishlist':   () => import('./screens/Wishlist'),
   '/orders':     () => import('./screens/Orders'),
@@ -49,7 +49,6 @@ const OutfitVisualizer  = lazy(lazyImports['/visualizer'])
 const Mirror            = lazy(lazyImports['/mirror'])
 const Explore           = lazy(lazyImports['/explore'])
 const HealthInfo        = lazy(lazyImports['/health'])
-const Learn             = lazy(lazyImports['/learn'])
 const Settings          = lazy(lazyImports['/settings'])
 const Wishlist          = lazy(lazyImports['/wishlist'])
 const Orders            = lazy(lazyImports['/orders'])
@@ -161,7 +160,7 @@ function AppRoutes() {
             <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
             <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
             <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
-            <Route path="/learn"      element={<ProtectedRoute><Learn /></ProtectedRoute>} />
+            <Route path="/learn"      element={<Navigate to="/explore" replace />} />
             <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
             <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
