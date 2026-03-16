@@ -35,7 +35,7 @@ function SectionForm({ initial = emptyForm, onSave, onCancel, isNew }) {
   const removePreview = (i) => setForm(f => ({ ...f, previewItems: f.previewItems.filter((_, j) => j !== i) }))
 
   return (
-    <div className="bg-white border border-black/8 p-5 space-y-4">
+    <div className="bg-white border border-black/6 p-5 space-y-4">
       <h3 className="text-sm font-semibold text-black/65">{isNew ? 'Neue Section' : 'Bearbeiten'}</h3>
 
       <div className="grid grid-cols-2 gap-3">
@@ -136,8 +136,8 @@ function SectionForm({ initial = emptyForm, onSave, onCancel, isNew }) {
               <input value={item} onChange={e => updatePreview(i, e.target.value)} placeholder={`Item ${i + 1}`}
                 className="flex-1 bg-white border border-black/10 px-3.5 py-2 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
               {form.previewItems.length > 1 && (
-                <button onClick={() => removePreview(i)} className="w-8 h-8 bg-red-500/10 flex items-center justify-center border-0 flex-shrink-0 mt-0.5">
-                  <X size={12} className="text-red-400" />
+                <button onClick={() => removePreview(i)} className="w-8 h-8 bg-black/4 flex items-center justify-center border-0 flex-shrink-0 mt-0.5">
+                  <X size={12} className="text-black/35" />
                 </button>
               )}
             </div>
@@ -187,7 +187,7 @@ function HeroEditor({ hero, onSave }) {
   }
 
   return (
-    <div className="bg-white border border-black/8 p-5 space-y-4 mb-6">
+    <div className="bg-white border border-black/6 p-5 space-y-4 mb-6">
       <h3 className="text-sm font-semibold text-black/65">Hero-Bereich</h3>
 
       <div className="grid grid-cols-2 gap-3">
@@ -252,10 +252,10 @@ export default function ExploreEditor() {
   const sorted = [...exploreSections].sort((a, b) => a.sortOrder - b.sortOrder)
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Explore</h1>
+          <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Explore</h1>
           <p className="text-black/45 text-sm mt-1">Hero-Bild & Sektionen der Explore-Seite</p>
         </div>
         {!mode && (
@@ -284,7 +284,7 @@ export default function ExploreEditor() {
               onSave={f => { updateExploreSection(section.id, f); setMode(null) }}
               onCancel={() => setMode(null)} />
           ) : (
-            <div key={section.id} className="bg-white border border-black/8 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
+            <div key={section.id} className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
               <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: section.color }}>
                 <span className="text-white text-[10px] font-medium" style={{ letterSpacing: '0.1em' }}>
                   {section.label?.slice(0, 3).toUpperCase()}
@@ -306,8 +306,8 @@ export default function ExploreEditor() {
                   <Pencil size={13} className="text-black/65" />
                 </button>
                 <button onClick={() => { if (confirm(`"${section.title}" löschen?`)) deleteExploreSection(section.id) }}
-                  className="w-8 h-8 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 border-0">
-                  <Trash2 size={13} className="text-red-400" />
+                  className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
+                  <Trash2 size={13} className="text-black/35" />
                 </button>
               </div>
             </div>

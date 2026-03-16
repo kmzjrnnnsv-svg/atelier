@@ -18,7 +18,7 @@ function OutfitForm({ initial = emptyForm, onSave, onCancel }) {
  const valid = form.style && form.description && form.top && form.bottom && form.shoe
 
  return (
- <div className="bg-white border border-black/8 p-5 space-y-4">
+ <div className="bg-white border border-black/6 p-5 space-y-4">
  <h3 className="text-sm font-semibold text-black/65">{initial.id ? 'Outfit bearbeiten' : 'Neues Outfit'}</h3>
 
  <div className="grid grid-cols-2 gap-3">
@@ -111,10 +111,10 @@ export default function OutfitEditor() {
  const [mode, setMode] = useState(null)
 
  return (
- <div className="p-8 max-w-3xl">
+ <div className="p-8">
  <div className="flex items-center justify-between mb-6">
  <div>
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Outfits</h1>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Outfits</h1>
  <p className="text-black/45 text-sm mt-1">{outfits.length} Outfit-Kombinationen</p>
  </div>
  {!mode && (
@@ -138,7 +138,7 @@ export default function OutfitEditor() {
  onSave={(f) => { updateOutfit(outfit.id, f); setMode(null) }}
  onCancel={() => setMode(null)} />
  ) : (
- <div key={outfit.id} className="bg-white border border-black/8 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
+ <div key={outfit.id} className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
  {/* Mini preview */}
  <div className="w-14 h-14 overflow-hidden flex-shrink-0 flex items-center justify-center"
  style={{ backgroundColor: outfit.bgColor }}>
@@ -169,8 +169,8 @@ export default function OutfitEditor() {
  <Pencil size={13} className="text-black/65" />
  </button>
  <button onClick={() => { if (confirm(`"${outfit.style}" löschen?`)) deleteOutfit(outfit.id) }}
- className="w-8 h-8 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 border-0">
- <Trash2 size={13} className="text-red-400" />
+ className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
+ <Trash2 size={13} className="text-black/35" />
  </button>
  </div>
  </div>

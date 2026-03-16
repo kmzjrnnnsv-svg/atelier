@@ -3,11 +3,11 @@ import { Mail, Save, CheckCircle2, AlertCircle, Loader, Info, ChevronDown, Chevr
 import { apiFetch } from '../../hooks/useApi'
 
 const TEMPLATE_TYPES = [
- { type: 'order_confirmation', label: 'Bestellbestätigung', color: 'text-emerald-600', bg: 'bg-emerald-50' },
- { type: 'payment', label: 'Zahlungsanweisung', color: 'text-blue-600', bg: 'bg-blue-50' },
- { type: 'order_confirmed', label: 'Zahlung bestätigt', color: 'text-teal-600', bg: 'bg-teal-50' },
- { type: 'shipping', label: 'Versandbestätigung', color: 'text-purple-600', bg: 'bg-purple-50' },
- { type: 'manufacturer', label: 'Hersteller-Benachrichtigung', color: 'text-amber-600', bg: 'bg-amber-50' },
+ { type: 'order_confirmation', label: 'Bestellbestätigung', color: 'text-black/40', bg: 'bg-black/5' },
+ { type: 'payment', label: 'Zahlungsanweisung', color: 'text-black/40', bg: 'bg-black/5' },
+ { type: 'order_confirmed', label: 'Zahlung bestätigt', color: 'text-black/40', bg: 'bg-black/5' },
+ { type: 'shipping', label: 'Versandbestätigung', color: 'text-black/40', bg: 'bg-black/5' },
+ { type: 'manufacturer', label: 'Hersteller-Benachrichtigung', color: 'text-black/40', bg: 'bg-black/5' },
 ]
 
 const VARIABLES = [
@@ -28,12 +28,12 @@ const VARIABLES = [
 ]
 
 const STATUS_LABELS = {
- pending_payment: { label: 'Zahlung ausstehend', color: 'text-amber-600', bg: 'bg-amber-50' },
- pending: { label: 'Ausstehend', color: 'text-yellow-600', bg: 'bg-yellow-50' },
- processing: { label: 'In Fertigung', color: 'text-blue-600', bg: 'bg-blue-50' },
- shipped: { label: 'Versandt', color: 'text-purple-600', bg: 'bg-purple-50' },
- delivered: { label: 'Geliefert', color: 'text-emerald-600',bg: 'bg-emerald-50'},
- cancelled: { label: 'Storniert', color: 'text-red-500', bg: 'bg-red-50' },
+ pending_payment: { label: 'Zahlung ausstehend', color: 'text-black/40', bg: 'bg-black/5' },
+ pending: { label: 'Ausstehend', color: 'text-black/40', bg: 'bg-black/5' },
+ processing: { label: 'In Fertigung', color: 'text-black/40', bg: 'bg-black/5' },
+ shipped: { label: 'Versandt', color: 'text-black/40', bg: 'bg-black/5' },
+ delivered: { label: 'Geliefert', color: 'text-black/40',bg: 'bg-black/5'},
+ cancelled: { label: 'Storniert', color: 'text-black/40', bg: 'bg-black/5' },
 }
 
 export default function EmailTemplatesPanel() {
@@ -113,11 +113,11 @@ export default function EmailTemplatesPanel() {
  }
 
  return (
- <div className="p-8 max-w-3xl">
+ <div className="p-8">
  {/* Header */}
  <div className="flex items-center gap-3 mb-2">
  <Mail size={18} className="text-black/35" />
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>E-Mail Vorlagen</h1>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>E-Mail Vorlagen</h1>
  </div>
  <p className="text-sm text-black/35 mb-8 ml-7 leading-relaxed">
  Bearbeiten Sie die Texte aller automatischen Kunden-E-Mails. Änderungen sind sofort aktiv —
@@ -142,7 +142,7 @@ export default function EmailTemplatesPanel() {
  </div>
 
  {/* Editor card */}
- <div className="border border-black/8 p-6 mb-6">
+ <div className="border border-black/6 p-6 mb-6">
  <div className="flex items-center justify-between mb-5">
  <div>
  <h2 className="text-sm font-semibold text-black/80">{activeTpl?.label}</h2>
@@ -184,13 +184,13 @@ export default function EmailTemplatesPanel() {
  {/* Status message */}
  {msg && (
  <div className={`flex items-start gap-2 px-4 py-3 mb-5 ${
- msg.type === 'ok' ? 'bg-teal-50 border border-teal-100' : 'bg-red-50 border border-red-100'
+ msg.type === 'ok' ? 'bg-black/5 border border-black/10' : 'bg-black/5 border border-black/10'
  }`}>
  {msg.type === 'ok'
- ? <CheckCircle2 size={14} className="text-teal-500 flex-shrink-0 mt-0.5" />
- : <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+ ? <CheckCircle2 size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
+ : <AlertCircle size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
  }
- <p className={`text-xs leading-relaxed ${msg.type === 'ok' ? 'text-teal-700' : 'text-red-600'}`}>
+ <p className={`text-xs leading-relaxed ${msg.type === 'ok' ? 'text-black/50' : 'text-black/40'}`}>
  {msg.text}
  </p>
  </div>
@@ -249,7 +249,7 @@ export default function EmailTemplatesPanel() {
  </div>
 
  {/* Orders reference section */}
- <div className="border border-black/8 overflow-hidden">
+ <div className="border border-black/6 overflow-hidden">
  <button
  onClick={() => setShowOrders(v => !v)}
  className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-black/5 transition-colors border-0 text-left"
@@ -263,7 +263,7 @@ export default function EmailTemplatesPanel() {
  </button>
 
  {showOrders && (
- <div className="border-t border-black/8">
+ <div className="border-t border-black/6">
  {ordersLoading ? (
  <div className="p-6 flex items-center gap-3 text-black/35">
  <Loader size={14} className="animate-spin" /> Laden…
@@ -274,7 +274,7 @@ export default function EmailTemplatesPanel() {
  <div className="overflow-x-auto">
  <table className="w-full text-xs">
  <thead>
- <tr className="border-b border-black/8">
+ <tr className="border-b border-black/6">
  <th className="text-left px-5 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">#</th>
  <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">Kunde</th>
  <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">Schuh</th>

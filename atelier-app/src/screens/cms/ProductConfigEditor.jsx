@@ -4,9 +4,9 @@ import useAtelierStore from '../../store/atelierStore'
 
 // ── Ampel-Rating Badge ──────────────────────────────────────────────────────
 const ratingConfig = {
- good: { label: 'Empfohlen', color: 'bg-green-500', textColor: 'text-green-700', bgColor: 'bg-green-50', icon: CheckCircle2 },
- neutral: { label: 'Neutral', color: 'bg-amber-400', textColor: 'text-amber-700', bgColor: 'bg-amber-50', icon: Circle },
- warn: { label: 'Achtung', color: 'bg-red-500', textColor: 'text-red-700', bgColor: 'bg-red-50', icon: AlertTriangle },
+ good: { label: 'Empfohlen', color: 'bg-black/50', textColor: 'text-black/50', bgColor: 'bg-black/5', icon: CheckCircle2 },
+ neutral: { label: 'Neutral', color: 'bg-black/40', textColor: 'text-black/40', bgColor: 'bg-black/5', icon: Circle },
+ warn: { label: 'Achtung', color: 'bg-black/35', textColor: 'text-black/40', bgColor: 'bg-black/5', icon: AlertTriangle },
 }
 
 function RatingBadge({ rating }) {
@@ -30,7 +30,7 @@ function RatingPicker({ value, onChange }) {
  key={key}
  onClick={() => onChange(key)}
  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-2 transition-all bg-transparent ${
- value === key ? `${cfg.bgColor} ${cfg.textColor} border-current` : 'border-black/8 text-black/35'
+ value === key ? `${cfg.bgColor} ${cfg.textColor} border-current` : 'border-black/6 text-black/35'
  }`}
  >
  <Icon size={12} />
@@ -57,7 +57,7 @@ function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
  const valid = f.key.trim() && f.label.trim()
 
  return (
- <div className="bg-white border border-black/8 p-5 space-y-4">
+ <div className="bg-white border border-black/6 p-5 space-y-4">
  <h3 className="text-sm font-semibold text-black/65">{initial.id ? 'Material bearbeiten' : 'Neues Material'}</h3>
  <div className="grid grid-cols-3 gap-3">
  <div>
@@ -88,7 +88,7 @@ function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
  <div>
  <label className={labelCls}>Verfügbar</label>
  <button onClick={() => s('available', f.available ? 0 : 1)}
- className={`w-full py-2.5 text-xs font-medium border-0 ${f.available ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+ className={`w-full py-2.5 text-xs font-medium border-0 ${f.available ? 'bg-black/5 text-black/50' : 'bg-black/5 text-black/40'}`}>
  {f.available ? 'Verfügbar' : 'Nicht verfügbar'}
  </button>
  </div>
@@ -123,7 +123,7 @@ function ColorForm({ initial = emptyCol, onSave, onCancel }) {
  const valid = f.key.trim() && f.name.trim()
 
  return (
- <div className="bg-white border border-black/8 p-5 space-y-4">
+ <div className="bg-white border border-black/6 p-5 space-y-4">
  <h3 className="text-sm font-semibold text-black/65">{initial.id ? 'Farbe bearbeiten' : 'Neue Farbe'}</h3>
  <div className="grid grid-cols-3 gap-3">
  <div>
@@ -146,7 +146,7 @@ function ColorForm({ initial = emptyCol, onSave, onCancel }) {
  <div>
  <label className={labelCls}>Verfügbar</label>
  <button onClick={() => s('available', f.available ? 0 : 1)}
- className={`w-full py-2.5 text-xs font-medium border-0 ${f.available ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
+ className={`w-full py-2.5 text-xs font-medium border-0 ${f.available ? 'bg-black/5 text-black/50' : 'bg-black/5 text-black/40'}`}>
  {f.available ? 'Verfügbar' : 'Nicht verfügbar'}
  </button>
  </div>
@@ -185,7 +185,7 @@ function SoleForm({ initial = emptySole, onSave, onCancel }) {
  const valid = f.key.trim() && f.label.trim()
 
  return (
- <div className="bg-white border border-black/8 p-5 space-y-4">
+ <div className="bg-white border border-black/6 p-5 space-y-4">
  <h3 className="text-sm font-semibold text-black/65">{initial.id ? 'Sohle bearbeiten' : 'Neue Sohle'}</h3>
  <div className="grid grid-cols-3 gap-3">
  <div>
@@ -209,7 +209,7 @@ function SoleForm({ initial = emptySole, onSave, onCancel }) {
  <div>
  <label className={labelCls}>Empfohlen?</label>
  <button onClick={() => s('recommended', f.recommended ? 0 : 1)}
- className={`w-full py-2.5 text-xs font-medium border-0 ${f.recommended ? 'bg-teal-50 text-teal-700' : 'bg-black/5 text-black/35'}`}>
+ className={`w-full py-2.5 text-xs font-medium border-0 ${f.recommended ? 'bg-black/5 text-black/50' : 'bg-black/5 text-black/35'}`}>
  {f.recommended ? 'Ja — Empfohlen' : 'Nein'}
  </button>
  </div>
@@ -276,7 +276,7 @@ function Section({ title, subtitle, items, Form, emptyForm, onAdd, onUpdate, onD
  onSave={f => { onUpdate(item.id, f); setMode(null) }}
  onCancel={() => setMode(null)} />
  ) : (
- <div key={item.id} className="bg-white border border-black/8 flex items-center gap-4 px-5 py-3.5 group hover:border-black/10 transition-all">
+ <div key={item.id} className="bg-white border border-black/6 flex items-center gap-4 px-5 py-3.5 group hover:border-black/10 transition-all">
  {renderItem(item)}
  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
  <button onClick={() => setMode({ editing: item })}
@@ -284,8 +284,8 @@ function Section({ title, subtitle, items, Form, emptyForm, onAdd, onUpdate, onD
  <Pencil size={13} className="text-black/65" />
  </button>
  <button onClick={() => { if (confirm(`"${item.label || item.name}" löschen?`)) onDelete(item.id) }}
- className="w-8 h-8 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 border-0">
- <Trash2 size={13} className="text-red-400" />
+ className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
+ <Trash2 size={13} className="text-black/35" />
  </button>
  </div>
  </div>
@@ -308,9 +308,9 @@ export default function ProductConfigEditor() {
  } = useAtelierStore()
 
  return (
- <div className="p-8 max-w-4xl">
+ <div className="p-8">
  <div className="mb-8">
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Produkt-Konfiguration</h1>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Produkt-Konfiguration</h1>
  <p className="text-black/45 text-sm mt-1">
  Materialien, Farben und Sohlen verwalten — inkl. Ampelbewertung und Empfehlungstexte für die App.
  </p>
@@ -341,7 +341,7 @@ export default function ProductConfigEditor() {
  <div className="flex items-center gap-2">
  <p className="text-sm font-semibold text-black/90">{item.label}</p>
  <RatingBadge rating={item.rating} />
- {!item.available && <span className="text-[10px] text-red-500 font-medium">Nicht verfügbar</span>}
+ {!item.available && <span className="text-[10px] text-black/40 font-medium">Nicht verfügbar</span>}
  </div>
  <p className="text-[10px] text-black/45 mt-0.5">{item.sub} · {item.season || '–'}</p>
  {item.tip && <p className="text-[10px] text-black/35 mt-1 line-clamp-1">{item.tip}</p>}
@@ -362,13 +362,13 @@ export default function ProductConfigEditor() {
  onDelete={deleteColor}
  renderItem={item => (
  <>
- <div className="w-12 h-12 flex-shrink-0 border border-black/8" style={{ backgroundColor: item.hex }} />
+ <div className="w-12 h-12 flex-shrink-0 border border-black/6" style={{ backgroundColor: item.hex }} />
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2">
  <p className="text-sm font-semibold text-black/90">{item.name}</p>
  <span className="text-[10px] text-black/35 font-mono">{item.hex}</span>
  <RatingBadge rating={item.rating} />
- {!item.available && <span className="text-[10px] text-red-500 font-medium">Nicht verfügbar</span>}
+ {!item.available && <span className="text-[10px] text-black/40 font-medium">Nicht verfügbar</span>}
  </div>
  {item.pairs_with && <p className="text-[10px] text-black/45 mt-0.5">Passt zu: {item.pairs_with}</p>}
  {item.tip && <p className="text-[10px] text-black/35 mt-1 line-clamp-1">{item.tip}</p>}
@@ -389,7 +389,7 @@ export default function ProductConfigEditor() {
  onDelete={deleteSole}
  renderItem={item => (
  <>
- <div className={`w-12 h-12 flex-shrink-0 flex items-center justify-center ${item.recommended ? 'bg-teal-50' : 'bg-black/5'}`}>
+ <div className={`w-12 h-12 flex-shrink-0 flex items-center justify-center ${item.recommended ? 'bg-black/5' : 'bg-black/5'}`}>
  <span className="text-lg">{item.recommended ? '⭐' : '👟'}</span>
  </div>
  <div className="flex-1 min-w-0">
@@ -397,7 +397,7 @@ export default function ProductConfigEditor() {
  <p className="text-sm font-semibold text-black/90">{item.label}</p>
  <span className="text-[10px] text-black/35">{item.sub}</span>
  <RatingBadge rating={item.rating} />
- {item.recommended === 1 && <span className="text-[10px] text-teal-600 font-semibold">Empfohlen</span>}
+ {item.recommended === 1 && <span className="text-[10px] text-black/40 font-semibold">Empfohlen</span>}
  </div>
  <p className="text-[10px] text-black/45 mt-0.5">
  Kategorien: {item.categories} · {item.price_extra > 0 ? `+ € ${item.price_extra}` : 'Inklusive'}

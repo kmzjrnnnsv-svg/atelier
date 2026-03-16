@@ -30,12 +30,12 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  }
 
  return (
- <div className="bg-white border border-black/8 p-6 space-y-4">
- <h3 className="text-sm font-semibold text-black/65">{initial.id ? 'Schuh bearbeiten' : 'Neuer Schuh'}</h3>
+ <div className="bg-white border border-black/6 p-6 space-y-4">
+ <h3 className="text-[11px] font-semibold text-black/50 uppercase tracking-wider">{initial.id ? 'Schuh bearbeiten' : 'Neuer Schuh'}</h3>
 
  {/* Image Upload */}
  <div>
- <label className="block text-xs font-medium text-black/35 mb-2">Produktbild</label>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Produktbild</label>
  <div className="flex gap-3 items-start">
  <div
  className="w-20 h-20 flex items-center justify-center flex-shrink-0 overflow-hidden"
@@ -50,9 +50,9 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </svg>
  )}
  </div>
- <label className="flex-1 flex items-center gap-2 bg-white border border-black/10 px-3.5 py-3 cursor-pointer hover:bg-black/5 transition-colors">
- <Upload size={14} className="text-black/45" />
- <span className="text-xs text-black/45">Bild hochladen</span>
+ <label className="flex-1 flex items-center gap-2 bg-white border border-black/8 px-3.5 py-3 cursor-pointer hover:bg-black/3 transition-colors">
+ <Upload size={14} className="text-black/35" strokeWidth={1.5} />
+ <span className="text-[11px] text-black/40">Bild hochladen</span>
  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
  </label>
  </div>
@@ -60,33 +60,33 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
 
  {/* Name */}
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Name *</label>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Name *</label>
  <input
  value={form.name}
  onChange={(e) => set('name', e.target.value)}
  placeholder="The Heritage Oxford"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+ className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
  />
  </div>
 
  {/* Category + Tag row */}
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Kategorie *</label>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Kategorie *</label>
  <select
  value={form.category}
  onChange={(e) => set('category', e.target.value)}
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none focus:border-black/20"
+ className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 focus:outline-none focus:border-black/20"
  >
  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
  </select>
  </div>
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Badge</label>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Badge</label>
  <select
  value={form.tag ?? ''}
  onChange={(e) => set('tag', e.target.value || null)}
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none focus:border-black/20"
+ className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 focus:outline-none focus:border-black/20"
  >
  <option value="">Kein Badge</option>
  {TAGS.filter(Boolean).map((t) => <option key={t} value={t}>{t}</option>)}
@@ -97,50 +97,50 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  {/* Price + Match row */}
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Preis *</label>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Preis *</label>
  <input
  value={form.price}
  onChange={(e) => set('price', e.target.value)}
  placeholder="€ 1.450"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+ className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
  />
  </div>
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Biometric Match</label>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Biometric Match</label>
  <input
  value={form.match}
  onChange={(e) => set('match', e.target.value)}
  placeholder="99.4%"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+ className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
  />
  </div>
  </div>
 
  {/* Material */}
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Material *</label>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Material *</label>
  <input
  value={form.material}
  onChange={(e) => set('material', e.target.value)}
  placeholder="Full-Grain Calfskin"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+ className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
  />
  </div>
 
  {/* Color */}
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Schuh-Farbe</label>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Schuh-Farbe</label>
  <div className="flex items-center gap-3">
  <input
  type="color"
  value={form.color}
  onChange={(e) => set('color', e.target.value)}
- className="w-10 h-10 border border-black/15 bg-transparent cursor-pointer"
+ className="w-10 h-10 border border-black/10 bg-transparent cursor-pointer"
  />
  <input
  value={form.color}
  onChange={(e) => set('color', e.target.value)}
- className="flex-1 bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 font-mono focus:outline-none focus:border-black/20"
+ className="flex-1 bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 font-mono focus:outline-none focus:border-black/20"
  />
  <div className="w-10 h-10 flex-shrink-0" style={{ backgroundColor: form.color }} />
  </div>
@@ -151,15 +151,15 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  <button
  onClick={() => valid && onSave(form)}
  disabled={!valid}
- className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium transition-all border-0 ${
- valid ? 'bg-black text-white hover:bg-black' : 'bg-black/5 text-black/35 cursor-not-allowed'
+ className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-semibold transition-all border-0 uppercase tracking-wider ${
+ valid ? 'bg-black text-white' : 'bg-black/5 text-black/25 cursor-not-allowed'
  }`}
  >
- <Check size={14} /> Speichern
+ <Check size={14} strokeWidth={1.5} /> Speichern
  </button>
  <button
  onClick={onCancel}
- className="px-4 py-2.5 text-xs font-medium text-black/45 hover:text-black/90 bg-black/5 hover:bg-black/10 transition-all border-0"
+ className="px-5 py-2.5 text-[11px] font-medium text-black/40 hover:text-black/70 bg-black/4 hover:bg-black/8 transition-all border-0"
  >
  Abbrechen
  </button>
@@ -170,24 +170,24 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
 
 export default function ShoeEditor() {
  const { shoes, addShoe, updateShoe, deleteShoe } = useAtelierStore()
- const [mode, setMode] = useState(null) // null | 'add' | { editing: shoe }
+ const [mode, setMode] = useState(null)
  const [filterCat, setFilterCat] = useState('ALL')
 
  const filtered = filterCat === 'ALL' ? shoes : shoes.filter((s) => s.category === filterCat)
 
  return (
- <div className="p-8 max-w-4xl">
+ <div className="p-8">
  <div className="flex items-center justify-between mb-6">
  <div>
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Schuhe</h1>
- <p className="text-black/45 text-sm mt-1">{shoes.length} Produkte verwalten</p>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Schuhe</h1>
+ <p className="text-black/35 text-sm mt-1">{shoes.length} Produkte verwalten</p>
  </div>
  {!mode && (
  <button
  onClick={() => setMode('add')}
- className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2 transition-colors border-0"
+ className="flex items-center gap-2 bg-black text-white text-[11px] font-semibold px-5 py-2.5 transition-colors border-0 uppercase tracking-wider hover:bg-black/85"
  >
- <Plus size={14} /> Neuer Schuh
+ <Plus size={14} strokeWidth={1.5} /> Neuer Schuh
  </button>
  )}
  </div>
@@ -203,22 +203,22 @@ export default function ShoeEditor() {
  )}
 
  {/* Category filter */}
- <div className="flex gap-2 mb-4 flex-wrap">
+ <div className="flex gap-1.5 mb-5 flex-wrap">
  {['ALL', ...CATEGORIES].map((c) => (
  <button
  key={c}
  onClick={() => setFilterCat(c)}
- className={`px-3 py-1.5 text-xs font-medium transition-all border-0 ${
- filterCat === c ? 'bg-black text-white' : 'bg-black/5 text-black/45 hover:text-black/90'
+ className={`px-3 py-1.5 text-[10px] font-semibold transition-all border-0 uppercase tracking-wider ${
+ filterCat === c ? 'bg-black text-white' : 'bg-black/4 text-black/35 hover:text-black/60 hover:bg-black/8'
  }`}
  >
- {c}
+ {c === 'ALL' ? 'Alle' : c}
  </button>
  ))}
  </div>
 
  {/* Shoe List */}
- <div className="space-y-2">
+ <div className="space-y-1.5">
  {filtered.map((shoe) => (
  mode?.editing?.id === shoe.id ? (
  <ShoeForm
@@ -230,7 +230,7 @@ export default function ShoeEditor() {
  ) : (
  <div
  key={shoe.id}
- className="bg-white border border-black/8 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all"
+ className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/12 transition-all"
  >
  {/* Preview */}
  <div className="w-14 h-14 flex-shrink-0 overflow-hidden flex items-center justify-center" style={{ backgroundColor: shoe.color }}>
@@ -247,35 +247,35 @@ export default function ShoeEditor() {
  {/* Info */}
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2 flex-wrap">
- <p className="text-sm font-semibold text-black/90">{shoe.name}</p>
+ <p className="text-[13px] font-semibold text-black/80">{shoe.name}</p>
  {shoe.tag && (
- <span className="text-[10px] font-medium bg-black/5 text-black/45 px-2 py-0.5 border border-black/10">
+ <span className="text-[9px] font-semibold bg-black/5 text-black/40 px-2 py-0.5 uppercase tracking-wider">
  {shoe.tag}
  </span>
  )}
  </div>
- <p className="text-[10px] text-black/45 mt-0.5">{shoe.category} · {shoe.material}</p>
+ <p className="text-[10px] text-black/35 mt-0.5">{shoe.category} · {shoe.material}</p>
  {shoe.match && (
- <p className="text-[9px] text-teal-500 mt-0.5">{shoe.match} Biometric Match</p>
+ <p className="text-[9px] text-black/30 mt-0.5">{shoe.match} Biometric Match</p>
  )}
  </div>
 
  {/* Price */}
- <p className="text-base font-bold text-black/90 flex-shrink-0">{shoe.price}</p>
+ <p className="text-sm font-bold text-black/70 flex-shrink-0">{shoe.price}</p>
 
  {/* Actions */}
- <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+ <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
  <button
  onClick={() => setMode({ editing: shoe })}
- className="w-8 h-8 bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors border-0"
+ className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/10 transition-colors border-0"
  >
- <Pencil size={13} className="text-black/65" />
+ <Pencil size={13} className="text-black/45" strokeWidth={1.5} />
  </button>
  <button
  onClick={() => { if (confirm(`"${shoe.name}" löschen?`)) deleteShoe(shoe.id) }}
- className="w-8 h-8 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 transition-colors border-0"
+ className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/10 transition-colors border-0"
  >
- <Trash2 size={13} className="text-red-400" />
+ <Trash2 size={13} className="text-black/35" strokeWidth={1.5} />
  </button>
  </div>
  </div>
@@ -283,7 +283,7 @@ export default function ShoeEditor() {
  ))}
 
  {filtered.length === 0 && (
- <div className="text-center py-16 text-black/35">
+ <div className="text-center py-16 text-black/30">
  <p className="text-sm">Keine Schuhe in dieser Kategorie</p>
  </div>
  )}

@@ -10,7 +10,7 @@ function CuratedForm({ initial = emptyForm, onSave, onCancel }) {
  const valid = form.name.trim().length > 0
 
  return (
- <div className="bg-white border border-black/8 p-5 space-y-4">
+ <div className="bg-white border border-black/6 p-5 space-y-4">
  <h3 className="text-sm font-semibold text-black/65">{initial.id ? 'Bearbeiten' : 'Neues Curated Item'}</h3>
 
  <div className="grid grid-cols-2 gap-3">
@@ -64,10 +64,10 @@ export default function CuratedEditor() {
  const [mode, setMode] = useState(null)
 
  return (
- <div className="p-8 max-w-3xl">
+ <div className="p-8">
  <div className="flex items-center justify-between mb-6">
  <div>
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Curated Sections</h1>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Curated Sections</h1>
  <p className="text-black/45 text-sm mt-1">Farb-Kollektionen für „Curated for You"</p>
  </div>
  {!mode && (
@@ -85,7 +85,7 @@ export default function CuratedEditor() {
  )}
 
  {/* Preview of how it looks in the app */}
- <div className="bg-white border border-black/8 p-4 mb-6">
+ <div className="bg-white border border-black/6 p-4 mb-6">
  <p className="text-xs font-medium text-black/35 mb-3">Vorschau (App)</p>
  <div className="flex gap-3 overflow-x-auto pb-1">
  {curated.map((item) => (
@@ -106,7 +106,7 @@ export default function CuratedEditor() {
  onSave={(f) => { updateCurated(item.id, f); setMode(null) }}
  onCancel={() => setMode(null)} />
  ) : (
- <div key={item.id} className="bg-white border border-black/8 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
+ <div key={item.id} className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
  <div className="w-12 h-12 flex-shrink-0" style={{ backgroundColor: item.color }} />
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-black/90">{item.name}</p>
@@ -118,8 +118,8 @@ export default function CuratedEditor() {
  <Pencil size={13} className="text-black/65" />
  </button>
  <button onClick={() => { if (confirm(`"${item.name}" löschen?`)) deleteCurated(item.id) }}
- className="w-8 h-8 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 border-0">
- <Trash2 size={13} className="text-red-400" />
+ className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
+ <Trash2 size={13} className="text-black/35" />
  </button>
  </div>
  </div>

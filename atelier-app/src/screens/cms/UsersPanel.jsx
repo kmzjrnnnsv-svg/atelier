@@ -6,9 +6,9 @@ import { useAuth } from '../../context/AuthContext'
 const ROLES = ['user', 'curator', 'admin']
 
 const roleBadge = {
- admin: 'bg-red-100 text-red-600 border-red-200',
- curator: 'bg-purple-100 text-purple-700 border-purple-200',
- user: 'bg-black/10 text-black/45 border-black/15',
+ admin: 'bg-black text-white',
+ curator: 'bg-black/15 text-black/60',
+ user: 'bg-black/5 text-black/35',
 }
 
 export default function UsersPanel() {
@@ -65,11 +65,11 @@ export default function UsersPanel() {
  }
 
  return (
- <div className="p-8 max-w-4xl">
+ <div className="p-8">
  <div className="mb-6">
  <div className="flex items-center gap-2 mb-1">
- <Shield size={18} className="text-red-400" />
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Benutzerverwaltung</h1>
+ <Shield size={18} strokeWidth={1.5} className="text-black/35" />
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Benutzerverwaltung</h1>
  </div>
  <p className="text-black/45 text-sm">Rollen, Status und Zugriff für alle Accounts verwalten</p>
  </div>
@@ -81,8 +81,8 @@ export default function UsersPanel() {
  { role: 'curator', desc: 'CMS-Inhalte verwalten' },
  { role: 'user', desc: 'Nur App-Zugriff' },
  ].map(({ role, desc }) => (
- <div key={role} className="flex items-center gap-2 bg-white px-3 py-2 border border-black/8">
- <span className={`text-[10px] font-medium px-2 py-0.5 border ${roleBadge[role]}`}>{role}</span>
+ <div key={role} className="flex items-center gap-2 bg-white px-3 py-2 border border-black/6">
+ <span className={`text-[10px] font-medium px-2 py-0.5 ${roleBadge[role]}`}>{role}</span>
  <span className="text-xs text-black/35">{desc}</span>
  </div>
  ))}
@@ -95,18 +95,18 @@ export default function UsersPanel() {
  )}
 
  {error && (
- <div className="bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-400">{error}</div>
+ <div className="bg-black/5 border border-black/10 px-4 py-3 text-sm text-black/50">{error}</div>
  )}
 
  {!loading && !error && (
- <div className="bg-white border border-black/8 overflow-hidden">
- <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 py-3 border-b border-black/8">
+ <div className="bg-white border border-black/6 overflow-hidden">
+ <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 py-3 bg-[#f6f5f3] border-b border-black/6">
  {['Benutzer', 'Rolle', 'Status', 'Erstellt', 'Aktionen'].map(h => (
- <p key={h} className="text-xs font-medium text-black/35">{h}</p>
+ <p key={h} className="text-[10px] font-medium text-black/30 uppercase tracking-wider">{h}</p>
  ))}
  </div>
 
- <div className="divide-y divide-black/8">
+ <div className="divide-y divide-black/6">
  {users.map(u => (
  <div key={u.id} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 py-4 items-center hover:bg-black/5 transition-colors">
  {/* User info */}
@@ -128,7 +128,7 @@ export default function UsersPanel() {
  {/* Role selector */}
  <div className="relative">
  {u.id === me.id ? (
- <span className={`text-[10px] font-medium px-2 py-0.5 border ${roleBadge[u.role]}`}>
+ <span className={`text-[10px] font-medium px-2 py-0.5 ${roleBadge[u.role]}`}>
  {u.role}
  </span>
  ) : (
@@ -136,19 +136,19 @@ export default function UsersPanel() {
  <select
  value={u.role}
  onChange={(e) => changeRole(u.id, e.target.value)}
- className={`appearance-none text-[10px] font-medium px-2 py-0.5 pr-5 border cursor-pointer bg-transparent focus:outline-none ${roleBadge[u.role]}`}
+ className={`appearance-none text-[10px] font-medium px-2 py-0.5 pr-5 cursor-pointer bg-transparent focus:outline-none ${roleBadge[u.role]}`}
  >
  {ROLES.map(r => <option key={r} value={r} className="bg-white text-black/90 normal-case text-sm">{r}</option>)}
  </select>
- <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-current" />
+ <ChevronDown size={9} strokeWidth={1.5} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-current" />
  </div>
  )}
  </div>
 
  {/* Status badge */}
  <div>
- <span className={`text-[10px] font-medium px-2 py-0.5 border ${
- u.is_active ? 'bg-emerald-100 text-emerald-600 border-emerald-200' : 'bg-black/10 text-black/45 border-black/15'
+ <span className={`text-[10px] font-medium px-2 py-0.5 ${
+ u.is_active ? 'bg-black/8 text-black/50' : 'bg-black/4 text-black/25'
  }`}>
  {u.is_active ? 'Aktiv' : 'Inaktiv'}
  </span>
@@ -166,23 +166,19 @@ export default function UsersPanel() {
  <button
  onClick={() => toggleStatus(u.id, u.is_active)}
  title={u.is_active ? 'Deaktivieren' : 'Aktivieren'}
- className={`w-7 h-7 flex items-center justify-center border-0 transition-colors ${
- u.is_active
- ? 'bg-orange-500/10 hover:bg-orange-500/20'
- : 'bg-emerald-500/10 hover:bg-emerald-500/20'
- }`}
+ className="w-7 h-7 flex items-center justify-center border-0 transition-colors bg-black/4 hover:bg-black/8"
  >
  {u.is_active
- ? <UserX size={12} className="text-orange-400" />
- : <UserCheck size={12} className="text-emerald-400" />
+ ? <UserX size={12} strokeWidth={1.5} className="text-black/40" />
+ : <UserCheck size={12} strokeWidth={1.5} className="text-black/40" />
  }
  </button>
  <button
  onClick={() => deleteUser(u.id, u.name)}
  title="Löschen"
- className="w-7 h-7 bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center border-0 transition-colors"
+ className="w-7 h-7 bg-black/4 hover:bg-black/8 flex items-center justify-center border-0 transition-colors"
  >
- <Trash2 size={12} className="text-red-400" />
+ <Trash2 size={12} strokeWidth={1.5} className="text-black/30" />
  </button>
  </>
  )}

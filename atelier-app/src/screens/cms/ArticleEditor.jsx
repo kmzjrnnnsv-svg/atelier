@@ -39,7 +39,7 @@ function ArticleForm({ initial = emptyForm, onSave, onCancel, saving }) {
  const isValid = form.title.trim() && form.content.trim()
 
  return (
- <div className="bg-white border border-black/8 p-6 space-y-4">
+ <div className="bg-white border border-black/6 p-6 space-y-4">
  <div className="flex items-center justify-between mb-1">
  <h3 className="text-sm font-semibold text-black/65">
  {initial.id ? 'Artikel bearbeiten' : 'Neuer Artikel'}
@@ -99,12 +99,12 @@ function ArticleForm({ initial = emptyForm, onSave, onCancel, saving }) {
  <label className="flex items-center gap-3 cursor-pointer select-none">
  <div
  onClick={() => setField('featured', !form.featured)}
- className={`w-10 h-5 transition-colors relative flex-shrink-0 ${form.featured ? 'bg-amber-500' : 'bg-black/20'}`}
+ className={`w-10 h-5 transition-colors relative flex-shrink-0 ${form.featured ? 'bg-black/50' : 'bg-black/20'}`}
  >
  <div className={`absolute top-0.5 w-4 h-4 bg-white transition-transform shadow-sm ${form.featured ? 'translate-x-5' : 'translate-x-0.5'}`} />
  </div>
  <div className="flex items-center gap-1.5">
- <Star size={12} className={form.featured ? 'text-amber-400 fill-amber-400' : 'text-black/45'} />
+ <Star size={12} className={form.featured ? 'text-black/40 fill-black/40' : 'text-black/45'} />
  <span className="text-sm text-black/90">Featured (wird oben im Learn-Tab angezeigt)</span>
  </div>
  </label>
@@ -167,14 +167,14 @@ function ArticleForm({ initial = emptyForm, onSave, onCancel, saving }) {
 function ArticleRow({ article, onEdit, onDelete }) {
  const [expanded, setExpanded] = useState(false)
  const catColor = {
- 'Gesundheit': 'text-red-600 bg-red-100',
- 'Tipps': 'text-amber-700 bg-amber-100',
- 'Wissen': 'text-blue-700 bg-blue-100',
+ 'Gesundheit': 'text-black/40 bg-black/5',
+ 'Tipps': 'text-black/40 bg-black/5',
+ 'Wissen': 'text-black/40 bg-black/5',
  'Allgemein': 'text-black/45 bg-black/10',
  }[article.category] || 'text-black/45 bg-black/10'
 
  return (
- <div className="bg-white border border-black/8 overflow-hidden hover:border-black/10 transition-all">
+ <div className="bg-white border border-black/6 overflow-hidden hover:border-black/10 transition-all">
  <div className="flex items-center gap-3 px-5 py-4">
  {/* Icon */}
  <div className="w-9 h-9 bg-black/5 flex items-center justify-center flex-shrink-0">
@@ -186,8 +186,8 @@ function ArticleRow({ article, onEdit, onDelete }) {
  <div className="flex items-center gap-2 flex-wrap">
  <p className="text-sm font-semibold text-black/90 truncate">{article.title}</p>
  {article.featured && (
- <span className="flex items-center gap-0.5 text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 font-medium flex-shrink-0">
- <Star size={7} className="fill-amber-400 text-amber-400" /> Featured
+ <span className="flex items-center gap-0.5 text-[10px] bg-black/4 text-black/40 px-2 py-0.5 font-medium flex-shrink-0">
+ <Star size={7} className="fill-black/40 text-black/40" /> Featured
  </span>
  )}
  </div>
@@ -217,9 +217,9 @@ function ArticleRow({ article, onEdit, onDelete }) {
  </button>
  <button
  onClick={onDelete}
- className="w-8 h-8 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 border-0 transition-all"
+ className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0 transition-all"
  >
- <Trash2 size={13} className="text-red-400" />
+ <Trash2 size={13} className="text-black/35" />
  </button>
  </div>
  </div>
@@ -280,11 +280,11 @@ export default function ArticleEditor() {
  const cats = ['Alle', ...CATEGORIES]
 
  return (
- <div className="p-8 max-w-4xl">
+ <div className="p-8">
  {/* Header */}
  <div className="flex items-center justify-between mb-6">
  <div>
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Artikel</h1>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Artikel</h1>
  <p className="text-black/45 text-sm mt-1">
  {articles.length} Artikel · sichtbar im Learn-Tab der App
  </p>
