@@ -61,20 +61,11 @@ def eval_pca_reconstruction():
                 print(f"    {col:<22} {vals.mean():8.1f} ± {vals.std():6.1f} mm  "
                       f"[{vals.min():6.1f} — {vals.max():6.1f}]")
 
-    # Check if model is size-normalized (new rebuild_shape_model.py format)
-    meta_path = shape_dir / "meta.json"
-    is_size_normalized = False
-    if meta_path.exists():
-        import json
-        with open(meta_path) as f:
-            meta = json.load(f)
-        is_size_normalized = meta.get("size_normalized", False)
-        if "reconstruction_error_mm" in meta:
-            print(f"\n  Rekonstruktionsfehler (aus meta.json): {meta['reconstruction_error_mm']:.2f} mm")
-
-    # Rekonstruktions-Test: projiziere Meshes und messe Fehler
+    # Rekonstruktions-Test: projiziere Mean-Shape und messe Fehler
+    # mean_shape ist (N, 3), components ist (k, N*3)
     flat_mean = mean_shape.flatten()
 
+    # Lade alle Meshes und berechne Rekonstruktionsfehler
     measurements_path = DATA / "measurements.csv"
     if not measurements_path.exists():
         print("  [SKIP] measurements.csv nicht gefunden")
@@ -85,52 +76,28 @@ def eval_pca_reconstruction():
 
     if not obj_files:
         print("  [SKIP] Keine OBJ-Meshes gefunden für Rekonstruktionstest")
+        # Aber zeige trotzdem die theoretische Fehlergrenze
+        residual_var = 1.0 - variance.sum()
+        print(f"\n  Theoretischer Restfehler (nicht-erklärte Varianz): {residual_var*100:.1f}%")
+        print(f"  → Bei 2 Komponenten geht {residual_var*100:.1f}% der Formvarianz verloren")
+        print(f"  → Empfehlung: ≥5 Komponenten für <5% Restfehler")
         return
 
     print(f"\n  Teste Rekonstruktion auf {len(obj_files)} Meshes...")
-    print(f"  Size-normalized PCA: {is_size_normalized}")
 
     from trimesh import load as load_mesh
     recon_errors = []
-    for obj in obj_files[:100]:
+    for obj in obj_files[:100]:  # max 100 Meshes
         try:
             mesh = load_mesh(str(obj), force='mesh')
             verts = np.array(mesh.vertices, dtype=np.float64)
             if verts.shape[0] != n_verts:
                 continue
-
-            if is_size_normalized:
-                # Orient vertices like rebuild_shape_model.py
-                centered = verts - verts.mean(axis=0)
-                cov = np.cov(centered.T)
-                eigvals, eigvecs = np.linalg.eigh(cov)
-                order = np.argsort(eigvals)[::-1]
-                v_rot = centered @ eigvecs[:, order]
-                extents = v_rot.max(axis=0) - v_rot.min(axis=0)
-                if extents[2] < extents[0]:
-                    v_rot = v_rot[:, [2, 1, 0]]
-                if extents[2] < extents[1]:
-                    v_rot = v_rot[:, [0, 2, 1]]
-                v_rot[:, 1] -= v_rot[:, 1].min()
-                v_rot[:, 2] -= v_rot[:, 2].min()
-
-                foot_len = float(v_rot[:, 2].max() - v_rot[:, 2].min())
-                center_orig = v_rot.mean(axis=0)
-                v_norm = (v_rot - center_orig) / foot_len if foot_len > 0 else v_rot
-
-                flat = v_norm.flatten()
-                diff = flat - flat_mean
-                coeffs = diff @ components.T
-                recon_norm = flat_mean + coeffs @ components
-                recon_mm = recon_norm.reshape(-1, 3) * foot_len + center_orig
-                err = np.sqrt(((v_rot - recon_mm) ** 2).sum(axis=1))
-            else:
-                flat = verts.flatten()
-                diff = flat - flat_mean
-                coeffs = diff @ components.T
-                recon = flat_mean + coeffs @ components
-                err = np.sqrt(((flat - recon.flatten()) ** 2).reshape(-1, 3).sum(axis=1))
-
+            flat = verts.flatten()
+            diff = flat - flat_mean
+            coeffs = diff @ components.T  # project
+            recon = flat_mean + coeffs @ components  # reconstruct
+            err = np.sqrt(((flat - recon) ** 2).reshape(-1, 3).sum(axis=1))  # per-vertex L2
             recon_errors.append(err.mean())
         except Exception:
             continue
@@ -143,6 +110,8 @@ def eval_pca_reconstruction():
         print(f"  Max Vertex-Fehler:       {errs.max():.2f} mm")
         print(f"  Std Vertex-Fehler:       {errs.std():.2f} mm")
 
+        # Wie wirkt sich das auf Messungen aus?
+        # Faustregel: Messfehler ≈ 2× Vertexfehler (Girth entlang Kontur)
         print(f"\n  → Geschätzter Messfehler aus PCA-Rekonstruktion:")
         print(f"    Länge/Breite: ~{errs.mean():.1f} mm (direkte Vertex-Distanz)")
         print(f"    Girths:       ~{errs.mean()*2:.1f} mm (Kontur-basiert, ~2× Vertex)")
