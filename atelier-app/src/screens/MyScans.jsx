@@ -105,8 +105,10 @@ function FootMiniPreview({ length, width, arch, side }) {
 }
 
 // ─── Single Scan Card ─────────────────────────────────────────────────────────
-function ScanCard({ scan, canDownload }) {
+function ScanCard({ scan, canDownload, onNotesUpdate }) {
   const [expanded, setExpanded] = useState(false)
+  const [editingNotes, setEditingNotes] = useState(false)
+  const [noteText, setNoteText] = useState(scan.notes || '')
 
   return (
     <div className="bg-[#f6f5f3] border border-black/5 overflow-hidden">
@@ -196,6 +198,49 @@ function ScanCard({ scan, canDownload }) {
               ))}
             </div>
           )}
+
+          {/* Notes */}
+          <div className="mb-3">
+            {editingNotes ? (
+              <div className="space-y-2">
+                <textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  maxLength={500}
+                  className="w-full border border-black/10 bg-white p-3 text-[10px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/30"
+                  rows={3}
+                  placeholder="Persönliche Notizen..."
+                  autoFocus
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-[8px] text-black/30">{noteText.length}/500</span>
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditingNotes(false)} className="px-2.5 py-1 text-[9px] text-black/40 bg-transparent border border-black/10">Abbrechen</button>
+                    <button
+                      onClick={async () => {
+                        await apiFetch(`/api/scans/${scan.id}/notes`, { method: 'PUT', body: JSON.stringify({ notes: noteText }) })
+                        scan.notes = noteText
+                        if (onNotesUpdate) onNotesUpdate()
+                        setEditingNotes(false)
+                      }}
+                      className="px-2.5 py-1 text-[9px] text-white bg-black border-0 font-semibold"
+                    >Speichern</button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setNoteText(scan.notes || ''); setEditingNotes(true) }}
+                className="w-full text-left bg-white border border-black/5 p-3 group"
+              >
+                {scan.notes ? (
+                  <p className="text-[9px] text-black/50 italic leading-relaxed">"{scan.notes}"</p>
+                ) : (
+                  <p className="text-[9px] text-black/25">Tippe, um Notizen hinzuzufügen…</p>
+                )}
+              </button>
+            )}
+          </div>
 
           {/* 3D previews */}
           <div className="grid grid-cols-2 gap-2 mb-3">
@@ -406,7 +451,7 @@ export default function MyScans() {
             </div>
 
             {scans.map(scan => (
-              <ScanCard key={scan.id} scan={scan} canDownload={canDownload} />
+              <ScanCard key={scan.id} scan={scan} canDownload={canDownload} onNotesUpdate={load} />
             ))}
 
             {/* New scan CTA */}

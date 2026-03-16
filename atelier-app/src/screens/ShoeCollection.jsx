@@ -7,6 +7,7 @@ import { apiFetch } from '../hooks/useApi'
 
 // Category display labels → backend filter values
 const CATEGORIES = [
+  { label: 'ALLE',       value: 'ALL'     },
   { label: 'LOAFERS',    value: 'LOAFER'  },
   { label: 'OXFORDS',    value: 'OXFORD'  },
   { label: 'DERBY',      value: 'DERBY'   },
@@ -161,7 +162,7 @@ export default function ShoeCollection() {
   const navigate     = useNavigate()
   const { shoes, favorites, toggleFavorite } = useAtelierStore()
   const { user }     = useAuth()
-  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].value)
+  const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy,   setScanAccuracy]   = useState(null)
 
   useEffect(() => {
@@ -175,7 +176,7 @@ export default function ShoeCollection() {
     match: personalMatch(s.match, scanAccuracy, Number(s.id)),
   }))
 
-  const filtered = enriched.filter(p => p.category === activeCategory)
+  const filtered = activeCategory === 'ALL' ? enriched : enriched.filter(p => p.category === activeCategory)
   const [hero, ...rest] = filtered
 
   return (
@@ -192,10 +193,20 @@ export default function ShoeCollection() {
           </button>
           <button
             className="relative bg-transparent border-0 p-0"
+            onClick={() => navigate('/wishlist')}
+          >
+            <Heart size={20} strokeWidth={1.5} className={favorites.length > 0 ? 'text-red-400 fill-red-400' : 'text-black/60'} />
+            {favorites.length > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 bg-black flex items-center justify-center">
+                <span className="text-[7px] font-bold text-white">{favorites.length}</span>
+              </span>
+            )}
+          </button>
+          <button
+            className="relative bg-transparent border-0 p-0"
             onClick={() => navigate('/orders')}
           >
             <ShoppingBag size={20} strokeWidth={1.5} className="text-black/60" />
-            {/* Order count badge */}
           </button>
         </div>
       </div>
