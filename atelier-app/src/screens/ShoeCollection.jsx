@@ -227,8 +227,8 @@ export default function ShoeCollection() {
         style={{ width: 'min(340px, 85vw)', transform: cartOpen ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/5">
           <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Bestellungen</h3>
-          <button onClick={() => setCartOpen(false)} className="w-8 h-8 flex items-center justify-center bg-transparent border-0">
-            <X size={18} strokeWidth={1.5} className="text-black/60" />
+          <button onClick={() => setCartOpen(false)} className="w-9 h-9 flex items-center justify-center border border-black/10 bg-transparent">
+            <X size={17} strokeWidth={1.5} className="text-black/60" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">
