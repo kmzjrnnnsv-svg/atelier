@@ -607,7 +607,7 @@ export default function Profile() {
           ))}
         </div>
 
-        <div className="h-24" />
+        <div className="h-4" />
       </div>
 
     </div>

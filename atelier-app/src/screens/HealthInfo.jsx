@@ -176,7 +176,7 @@ export default function HealthInfo() {
           </div>
         </button>
 
-        <div className="h-20" />
+        <div className="h-4" />
       </div>
     </div>
   )

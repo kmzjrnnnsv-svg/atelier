@@ -467,7 +467,7 @@ export default function Explore() {
           <p className="text-[9px] text-black/30 leading-relaxed mt-1">Neue Inhalte werden regelmäßig freigeschaltet.</p>
         </div>
 
-        <div className="h-20" />
+        <div className="h-4" />
       </div>
     </div>
   )
