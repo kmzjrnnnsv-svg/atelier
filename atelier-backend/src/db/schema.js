@@ -340,6 +340,29 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_cs_scan ON scan_cross_sections(scan_id);
 
+    -- ── Explore sections (CMS-editable) ───────────────────────────────────
+    CREATE TABLE IF NOT EXISTS explore_sections (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      key           TEXT    NOT NULL UNIQUE,
+      label         TEXT    NOT NULL,
+      title         TEXT    NOT NULL,
+      description   TEXT,
+      tag           TEXT    NOT NULL DEFAULT 'Demnächst',
+      color         TEXT    NOT NULL DEFAULT '#1a1a1a',
+      accent        TEXT    NOT NULL DEFAULT '#ffffff',
+      icon          TEXT    NOT NULL DEFAULT 'BookOpen',
+      image_data    TEXT,
+      preview_items TEXT    NOT NULL DEFAULT '[]',
+      visible       INTEGER NOT NULL DEFAULT 1,
+      sort_order    INTEGER NOT NULL DEFAULT 0,
+      created_by    INTEGER REFERENCES users(id),
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    -- Hero settings for explore page stored in settings table
+    -- (hero_image, hero_title, hero_subtitle)
+
     -- ── Product configuration (CMS-editable) ─────────────────────────────
     CREATE TABLE IF NOT EXISTS shoe_materials (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,

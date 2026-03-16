@@ -8,7 +8,7 @@ import { seedDatabase } from './db/seed.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
 import authRouter from './routes/auth.js'
 import usersRouter from './routes/users.js'
-import { shoesRouter, curatedRouter, wardrobeRouter, outfitsRouter, articlesRouter, materialsRouter, colorsRouter, solesRouter } from './routes/content.js'
+import { shoesRouter, curatedRouter, wardrobeRouter, outfitsRouter, articlesRouter, materialsRouter, colorsRouter, solesRouter, exploreSectionsRouter } from './routes/content.js'
 import scansRouter      from './routes/scans.js'
 import favoritesRouter  from './routes/favorites.js'
 import ordersRouter     from './routes/orders.js'
@@ -80,6 +80,7 @@ app.use('/api/faqs',      faqsRouter)
 app.use('/api/legal',     legalRouter)
 app.use('/api/settings',  settingsRouter)
 app.use('/api/email-templates', emailTemplatesRouter)
+app.use('/api/explore-sections', exploreSectionsRouter)
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))

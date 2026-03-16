@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette } from 'lucide-react'
+import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Compass } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useAtelierStore from '../../store/atelierStore'
 
@@ -25,6 +25,7 @@ export default function CMSLayout() {
     { to: '/cms/scans',    label: 'Foot Scans',   icon: ScanLine   },
     { to: '/cms/leisten',  label: 'Leisten-Parameter', icon: Ruler   },
     { to: '/cms/product-config', label: 'Produkt-Konfig', icon: Palette },
+    { to: '/cms/explore',  label: 'Explore',        icon: Compass    },
     { to: '/cms/articles', label: 'Artikel',      icon: BookOpen   },
     { to: '/cms/orders',          label: 'Bestellungen',  icon: ShoppingBag },
     { to: '/cms/email-templates', label: 'E-Mail Vorlagen', icon: Mail       },

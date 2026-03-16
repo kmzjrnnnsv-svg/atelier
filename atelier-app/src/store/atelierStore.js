@@ -15,6 +15,8 @@ const useAtelierStore = create((set, get) => ({
   shoeMaterials: [],
   shoeColors:   [],
   shoeSoles:    [],
+  exploreSections: [],
+  exploreHero: { image: null, title: '', subtitle: '' },
   notifications: [], // in-app notifications
   reminders:  [],    // items user wants to be reminded about
   loading:    false,
@@ -55,7 +57,7 @@ const useAtelierStore = create((set, get) => ({
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles] = await Promise.all([
+      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings] = await Promise.all([
         apiFetch('/api/shoes'),
         apiFetch('/api/curated'),
         apiFetch('/api/wardrobe'),
@@ -68,7 +70,10 @@ const useAtelierStore = create((set, get) => ({
         apiFetch('/api/materials').catch(() => []),
         apiFetch('/api/colors').catch(() => []),
         apiFetch('/api/soles').catch(() => []),
+        apiFetch('/api/explore-sections').catch(() => []),
+        apiFetch('/api/settings/explore').catch(() => ({})),
       ])
+      const settingsMap = settings || {}
       set({
         shoes:      shoes.map(normalizeShoe),
         curated:    curated.map(normalizeCurated),
@@ -82,6 +87,12 @@ const useAtelierStore = create((set, get) => ({
         shoeMaterials: Array.isArray(mats) ? mats : [],
         shoeColors:    Array.isArray(cols) ? cols : [],
         shoeSoles:     Array.isArray(soles) ? soles : [],
+        exploreSections: Array.isArray(expSections) ? expSections.map(normalizeExploreSection) : [],
+        exploreHero: {
+          image: settingsMap['explore_hero_image'] || null,
+          title: settingsMap['explore_hero_title'] || '',
+          subtitle: settingsMap['explore_hero_subtitle'] || '',
+        },
         loading:    false,
       })
     } catch (e) {
@@ -235,6 +246,36 @@ const useAtelierStore = create((set, get) => ({
     set(s => ({ shoeSoles: s.shoeSoles.filter(s2 => s2.id != id) }))
   },
 
+  // --- EXPLORE SECTIONS ---
+  async fetchExploreSections() {
+    const rows = await apiFetch('/api/explore-sections')
+    set({ exploreSections: rows.map(normalizeExploreSection) })
+  },
+  async addExploreSection(item) {
+    const row = await apiFetch('/api/explore-sections', { method: 'POST', body: JSON.stringify(exploreSectionToApi(item)) })
+    set(s => ({ exploreSections: [...s.exploreSections, normalizeExploreSection(row)] }))
+  },
+  async updateExploreSection(id, updates) {
+    const existing = get().exploreSections.find(s => s.id == id)
+    const row = await apiFetch(`/api/explore-sections/${id}`, { method: 'PUT', body: JSON.stringify(exploreSectionToApi({ ...existing, ...updates })) })
+    set(s => ({ exploreSections: s.exploreSections.map(es => es.id == id ? normalizeExploreSection(row) : es) }))
+  },
+  async deleteExploreSection(id) {
+    await apiFetch(`/api/explore-sections/${id}`, { method: 'DELETE' })
+    set(s => ({ exploreSections: s.exploreSections.filter(es => es.id != id) }))
+  },
+  async updateExploreHero(hero) {
+    await apiFetch('/api/settings/explore', {
+      method: 'PUT',
+      body: JSON.stringify({
+        explore_hero_image: hero.image || '',
+        explore_hero_title: hero.title || '',
+        explore_hero_subtitle: hero.subtitle || '',
+      }),
+    })
+    set({ exploreHero: hero })
+  },
+
   // --- ARTICLES ---
   async addArticle(article) {
     const row = await apiFetch('/api/articles', { method: 'POST', body: JSON.stringify(articleToApi(article)) })
@@ -276,6 +317,40 @@ function normalizeArticle(r) {
     image: r.image_data || null,
     sortOrder: r.sort_order || 0,
     createdAt: r.created_at || '',
+  }
+}
+
+function normalizeExploreSection(r) {
+  return {
+    id: String(r.id),
+    key: r.key,
+    label: r.label,
+    title: r.title,
+    description: r.description || '',
+    tag: r.tag || 'Demnächst',
+    color: r.color || '#1a1a1a',
+    accent: r.accent || '#ffffff',
+    icon: r.icon || 'BookOpen',
+    image: r.image_data || null,
+    previewItems: (() => { try { return JSON.parse(r.preview_items || '[]') } catch { return [] } })(),
+    visible: r.visible === 1 || r.visible === true,
+    sortOrder: r.sort_order || 0,
+  }
+}
+function exploreSectionToApi(s) {
+  return {
+    key: s.key,
+    label: s.label,
+    title: s.title,
+    description: s.description || '',
+    tag: s.tag || 'Demnächst',
+    color: s.color || '#1a1a1a',
+    accent: s.accent || '#ffffff',
+    icon: s.icon || 'BookOpen',
+    image_data: s.image || null,
+    preview_items: JSON.stringify(s.previewItems || []),
+    visible: s.visible ? 1 : 0,
+    sort_order: s.sortOrder || 0,
   }
 }
 
