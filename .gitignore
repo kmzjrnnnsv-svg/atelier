@@ -25,6 +25,10 @@ atelier-ml/checkpoints/
 # ─── ML – Trainingsdaten (1.8 GB) ─────────────────────────────────
 atelier-ml/data/
 !atelier-ml/data/shape_model/
+!atelier-ml/data/dryad_foot/
+!atelier-ml/data/dryad_foot_measurements.csv
+!atelier-ml/data/girths.csv
+!atelier-ml/data/improved_girth_models.json
 
 # ─── Python Cache ─────────────────────────────────────────────────
 __pycache__/
