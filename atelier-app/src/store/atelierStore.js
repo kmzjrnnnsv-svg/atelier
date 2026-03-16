@@ -17,6 +17,8 @@ const useAtelierStore = create((set, get) => ({
   shoeSoles:    [],
   exploreSections: [],
   exploreHero: { image: null, title: '', subtitle: '' },
+  loyaltyTiers: [],
+  loyaltyStatus: { points: 0, tier: 'bronze' },
   notifications: [], // in-app notifications
   reminders:  [],    // items user wants to be reminded about
   loading:    false,
@@ -57,7 +59,7 @@ const useAtelierStore = create((set, get) => ({
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings] = await Promise.all([
+      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings, loyaltyTiers, loyaltyStatus] = await Promise.all([
         apiFetch('/api/shoes'),
         apiFetch('/api/curated'),
         apiFetch('/api/wardrobe'),
@@ -72,6 +74,8 @@ const useAtelierStore = create((set, get) => ({
         apiFetch('/api/soles').catch(() => []),
         apiFetch('/api/explore-sections').catch(() => []),
         apiFetch('/api/settings/explore').catch(() => ({})),
+        apiFetch('/api/loyalty/tiers').catch(() => []),
+        apiFetch('/api/loyalty/my-status').catch(() => ({ points: 0, tier: 'bronze' })),
       ])
       const settingsMap = settings || {}
       set({
@@ -93,6 +97,8 @@ const useAtelierStore = create((set, get) => ({
           title: settingsMap['explore_hero_title'] || '',
           subtitle: settingsMap['explore_hero_subtitle'] || '',
         },
+        loyaltyTiers: Array.isArray(loyaltyTiers) ? loyaltyTiers.map(normalizeLoyaltyTier) : [],
+        loyaltyStatus: loyaltyStatus || { points: 0, tier: 'bronze' },
         loading:    false,
       })
     } catch (e) {
@@ -276,6 +282,25 @@ const useAtelierStore = create((set, get) => ({
     set({ exploreHero: hero })
   },
 
+  // --- LOYALTY TIERS ---
+  async fetchLoyaltyTiers() {
+    const rows = await apiFetch('/api/loyalty/tiers')
+    set({ loyaltyTiers: rows.map(normalizeLoyaltyTier) })
+  },
+  async addLoyaltyTier(tier) {
+    const row = await apiFetch('/api/loyalty/tiers', { method: 'POST', body: JSON.stringify(loyaltyTierToApi(tier)) })
+    set(s => ({ loyaltyTiers: [...s.loyaltyTiers, normalizeLoyaltyTier(row)] }))
+  },
+  async updateLoyaltyTier(id, updates) {
+    const existing = get().loyaltyTiers.find(t => t.id == id)
+    const row = await apiFetch(`/api/loyalty/tiers/${id}`, { method: 'PUT', body: JSON.stringify(loyaltyTierToApi({ ...existing, ...updates })) })
+    set(s => ({ loyaltyTiers: s.loyaltyTiers.map(t => t.id == id ? normalizeLoyaltyTier(row) : t) }))
+  },
+  async deleteLoyaltyTier(id) {
+    await apiFetch(`/api/loyalty/tiers/${id}`, { method: 'DELETE' })
+    set(s => ({ loyaltyTiers: s.loyaltyTiers.filter(t => t.id != id) }))
+  },
+
   // --- ARTICLES ---
   async addArticle(article) {
     const row = await apiFetch('/api/articles', { method: 'POST', body: JSON.stringify(articleToApi(article)) })
@@ -317,6 +342,34 @@ function normalizeArticle(r) {
     image: r.image_data || null,
     sortOrder: r.sort_order || 0,
     createdAt: r.created_at || '',
+  }
+}
+
+function normalizeLoyaltyTier(r) {
+  return {
+    id: String(r.id),
+    key: r.key,
+    label: r.label,
+    minPoints: r.min_points || 0,
+    color: r.color || '#000000',
+    icon: r.icon || 'Award',
+    description: r.description || null,
+    benefits: (() => { try { return JSON.parse(r.benefits || '[]') } catch { return [] } })(),
+    visible: r.visible === 1 || r.visible === true,
+    sortOrder: r.sort_order || 0,
+  }
+}
+function loyaltyTierToApi(t) {
+  return {
+    key: t.key,
+    label: t.label,
+    min_points: t.minPoints || 0,
+    color: t.color || '#000000',
+    icon: t.icon || 'Award',
+    description: t.description || null,
+    benefits: JSON.stringify(t.benefits || []),
+    visible: t.visible ? 1 : 0,
+    sort_order: t.sortOrder || 0,
   }
 }
 

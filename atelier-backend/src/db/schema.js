@@ -217,6 +217,9 @@ export function runMigrations(db) {
     // foot_scans — foot height (needed for accurate girth recomputation)
     `ALTER TABLE foot_scans ADD COLUMN right_foot_height  REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_foot_height   REAL`,
+    // users — loyalty points
+    `ALTER TABLE users ADD COLUMN loyalty_points INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE users ADD COLUMN loyalty_tier   TEXT NOT NULL DEFAULT 'bronze'`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
@@ -363,6 +366,23 @@ export function runMigrations(db) {
     -- Hero settings for explore page stored in settings table
     -- (hero_image, hero_title, hero_subtitle)
 
+    -- ── Loyalty / Membership Tiers (CMS-editable) ────────────────────────
+    CREATE TABLE IF NOT EXISTS loyalty_tiers (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      key           TEXT    NOT NULL UNIQUE,
+      label         TEXT    NOT NULL,
+      min_points    INTEGER NOT NULL DEFAULT 0,
+      color         TEXT    NOT NULL DEFAULT '#000000',
+      icon          TEXT    NOT NULL DEFAULT 'Award',
+      description   TEXT,
+      benefits      TEXT    NOT NULL DEFAULT '[]',
+      visible       INTEGER NOT NULL DEFAULT 1,
+      sort_order    INTEGER NOT NULL DEFAULT 0,
+      created_by    INTEGER REFERENCES users(id),
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
     -- ── Product configuration (CMS-editable) ─────────────────────────────
     CREATE TABLE IF NOT EXISTS shoe_materials (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -380,6 +400,13 @@ export function runMigrations(db) {
       created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
     );
+    INSERT OR IGNORE INTO loyalty_tiers (key, label, min_points, color, icon, description, benefits, visible, sort_order) VALUES
+      ('bronze',    'Bronze',    0,     '#cd7f32', 'Award',    'Willkommen bei ATELIER. Als Bronze-Mitglied genießen Sie Zugang zu unserer exklusiven Kollektion maßgefertigter Schuhe.', '["Zugang zur kompletten Kollektion","Persönliches Fußprofil mit 3D-Scan","Newsletter mit Styling-Tipps","Geburtstagsgruß"]', 1, 0),
+      ('silver',    'Silver',    500,   '#c0c0c0', 'Award',    'Ihre Treue wird belohnt. Silver-Mitglieder erhalten bevorzugten Zugang und besondere Aufmerksamkeit.', '["Alle Bronze-Vorteile","Kostenloser Express-Versand","10% auf Pflegeprodukte","Frühzeitiger Zugang zu neuen Modellen","Einladung zu Private Sales"]', 1, 1),
+      ('gold',      'Gold',      1500,  '#ffd700', 'Crown',    'Exzellenz trifft Handwerk. Gold-Mitglieder sind Teil eines ausgewählten Kreises mit Premium-Privilegien.', '["Alle Silver-Vorteile","Persönlicher Style-Berater","15% auf alle Bestellungen","Priority-Kundenservice","Exklusive Einladungen zu Atelier-Events","Kostenlose Lederpflege-Sets"]', 1, 2),
+      ('platinum',  'Platinum',  5000,  '#e5e4e2', 'Gem',      'Die höchste Auszeichnung für wahre Kenner. Platinum-Mitglieder genießen unvergleichliche Privilegien und persönlichen Service.', '["Alle Gold-Vorteile","Dedizierter Concierge-Service","20% auf alle Bestellungen","Kostenlose Reparaturen auf Lebenszeit","Zugang zu Limited Editions","Einladung zur jährlichen Gala","Maßgefertigte Schuhspanner gratis"]', 1, 3),
+      ('executive', 'Executive', 15000, '#1a1a1a', 'Shield',   NULL, '["Alle Platinum-Vorteile","Persönlicher Atelier-Besuch in der Manufaktur","Individuelles Leder-Sourcing","Namentliche Gravur auf jeder Sohle","Exklusiver Zugang zu Archiv-Modellen","Einladung zu Designer-Kollaborationen","VIP-Lounge bei Events","Persönliches Jahresgeschenk"]', 0, 4);
+
     INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, season, rating, sort_order) VALUES
       ('calfskin', 'CALFSKIN', 'Full-Grain', '#b45309', 1, 'Robust und langlebig — entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.', 'Ganzjährig', 'good', 0),
       ('suede', 'SUEDE', 'Nubuck', '#78716c', 1, 'Samtig-weiche Oberfläche für lässig-elegante Looks. Empfindlich bei Nässe — am besten für trockene Tage und Indoor-Anlässe.', 'Frühling / Sommer', 'warn', 1),
