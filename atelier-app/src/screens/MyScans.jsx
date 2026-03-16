@@ -149,21 +149,30 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
           {/* Measurements table — basic dimensions */}
           <div className="bg-white border border-black/5 overflow-hidden mt-3 mb-1">
             <div className="grid grid-cols-4 px-3 py-2 border-b border-black/5 bg-black">
-              {['', 'Länge', 'Breite', 'Gewölbe'].map(h => (
+              {['', 'Breite', 'Gewölbe', 'Fußhöhe'].map(h => (
                 <span key={h} className="text-[8px] uppercase tracking-widest text-white/50 text-center first:text-left" style={{ letterSpacing: '0.15em' }}>
                   {h}
                 </span>
               ))}
             </div>
             {[
-              { label: 'Rechts', l: scan.right_length, w: scan.right_width, a: scan.right_arch },
-              { label: 'Links',  l: scan.left_length,  w: scan.left_width,  a: scan.left_arch  },
-            ].map(({ label, l, w, a }) => (
+              { label: 'Rechts', w: scan.right_width, a: scan.right_arch, fh: scan.right_foot_height },
+              { label: 'Links',  w: scan.left_width,  a: scan.left_arch,  fh: scan.left_foot_height  },
+            ].map(({ label, w, a, fh }) => (
               <div key={label} className="grid grid-cols-4 px-3 py-2.5 border-b border-black/5 last:border-0">
                 <span className="text-[10px] font-semibold text-black">{label}</span>
-                <span className="text-[10px] text-black/45 text-center">{Number(l).toFixed(1)} mm</span>
-                <span className="text-[10px] text-black/45 text-center">{Number(w).toFixed(1)} mm</span>
-                <span className="text-[10px] text-black/45 text-center">{Number(a).toFixed(1)} mm</span>
+                <span className="text-[10px] text-black/45 text-center">
+                  {Number(w).toFixed(1)}
+                  <span className="text-[7px] text-black/20 block">±1.5 mm</span>
+                </span>
+                <span className="text-[10px] text-black/45 text-center">
+                  {Number(a).toFixed(1)}
+                  <span className="text-[7px] text-black/20 block">±4 mm</span>
+                </span>
+                <span className="text-[10px] text-black/45 text-center">
+                  {fh != null ? Number(fh).toFixed(1) : '—'}
+                  {fh != null && <span className="text-[7px] text-black/20 block">±4 mm</span>}
+                </span>
               </div>
             ))}
           </div>
@@ -175,22 +184,21 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
                 <span className="text-[8px] uppercase tracking-widest text-white/50" style={{ letterSpacing: '0.15em' }}>Umfänge (mm)</span>
               </div>
               {[
-                { label: 'Rechts', ball: scan.right_ball_girth, instep: scan.right_instep_girth, heel: scan.right_heel_girth, waist: scan.right_waist_girth, ankle: scan.right_ankle_girth },
-                { label: 'Links',  ball: scan.left_ball_girth,  instep: scan.left_instep_girth,  heel: scan.left_heel_girth,  waist: scan.left_waist_girth,  ankle: scan.left_ankle_girth  },
-              ].map(({ label, ball, instep, heel, waist, ankle }) => (
+                { label: 'Rechts', heel: scan.right_heel_girth, waist: scan.right_waist_girth, ankle: scan.right_ankle_girth },
+                { label: 'Links',  heel: scan.left_heel_girth,  waist: scan.left_waist_girth,  ankle: scan.left_ankle_girth  },
+              ].map(({ label, heel, waist, ankle }) => (
                 <div key={label} className="px-3 py-2 border-b border-black/5 last:border-0">
                   <span className="text-[10px] font-semibold text-black block mb-1">{label}</span>
-                  <div className="grid grid-cols-5 gap-1">
+                  <div className="grid grid-cols-3 gap-1">
                     {[
-                      { name: 'Ballen', v: ball },
-                      { name: 'Taille', v: waist },
-                      { name: 'Rist',   v: instep },
-                      { name: 'Ferse',  v: heel },
-                      { name: 'Knöchel', v: ankle },
-                    ].map(({ name, v }) => (
+                      { name: 'Taille',  v: waist,  acc: '±2.5 mm' },
+                      { name: 'Ferse',   v: heel,   acc: '±7 mm' },
+                      { name: 'Knöchel', v: ankle,  acc: '±10 mm' },
+                    ].map(({ name, v, acc }) => (
                       <div key={name} className="text-center">
                         <span className="text-[7px] uppercase tracking-widest text-black/30 block" style={{ letterSpacing: '0.15em' }}>{name}</span>
                         <span className="text-[10px] text-black/50">{v != null ? Number(v).toFixed(1) : '—'}</span>
+                        {v != null && <span className="text-[7px] text-black/20 block">{acc}</span>}
                       </div>
                     ))}
                   </div>
