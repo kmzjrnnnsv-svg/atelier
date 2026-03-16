@@ -122,7 +122,7 @@ export default function Profile() {
         >
           <Bell size={17} strokeWidth={1.5} className="text-black/60" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 border-2 border-white flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-black border-2 border-white flex items-center justify-center">
               <span className="text-[8px] font-bold text-white">{unreadCount}</span>
             </span>
           )}
@@ -146,9 +146,9 @@ export default function Profile() {
           ) : (
             <div className="space-y-2">
               {notifications.slice(0, 10).map(n => (
-                <div key={n.id} className={`p-3 ${n.read ? 'bg-black/3' : 'bg-teal-50 border border-teal-100'}`}>
+                <div key={n.id} className={`p-3 ${n.read ? 'bg-black/3' : 'bg-black/5 border border-black/10'}`}>
                   <div className="flex items-start gap-2">
-                    <BellRing size={12} className={n.read ? 'text-black/40 mt-0.5' : 'text-teal-500 mt-0.5'} />
+                    <BellRing size={12} className={n.read ? 'text-black/40 mt-0.5' : 'text-black/60 mt-0.5'} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-semibold text-black">{n.title}</p>
                       <p className="text-[9px] text-black/50 mt-0.5 leading-relaxed">{n.message}</p>

@@ -330,9 +330,9 @@ export default function Explore() {
           </button>
           <button onClick={() => { setCartOpen(v => !v); setSearchOpen(false) }} className="relative bg-transparent border-0 p-0">
             <ShoppingBag size={20} strokeWidth={1.5} className="text-black/60" />
-            {orders.length > 0 && (
+            {orders.filter(o => !['delivered','cancelled'].includes(o.status)).length > 0 && (
               <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 bg-black flex items-center justify-center">
-                <span className="text-[7px] font-bold text-white">{orders.length}</span>
+                <span className="text-[7px] font-bold text-white">{orders.filter(o => !['delivered','cancelled'].includes(o.status)).length}</span>
               </span>
             )}
           </button>
