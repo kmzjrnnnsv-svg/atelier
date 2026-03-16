@@ -31,7 +31,7 @@ export default function CMSDashboard() {
  </div>
 
  {/* Stats grid */}
- <div className="grid grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+ <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">
  {stats.map(({ label, value, icon: Icon, to }) => (
  <button
  key={label}
