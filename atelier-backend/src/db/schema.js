@@ -382,6 +382,22 @@ export function runMigrations(db) {
       UNIQUE(scan_id, measurement)
     );
     CREATE INDEX IF NOT EXISTS idx_comp_scan ON scan_comparison_pairs(scan_id);
+    CREATE INDEX IF NOT EXISTS idx_comp_source ON scan_comparison_pairs(source);
+
+    -- ── Raw AI predictions (stored alongside every scan for retrospective learning) ──
+    CREATE TABLE IF NOT EXISTS scan_predictions (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      scan_id         INTEGER NOT NULL REFERENCES foot_scans(id) ON DELETE CASCADE,
+      source          TEXT    NOT NULL DEFAULT 'photo',
+      predictions     TEXT    NOT NULL,      -- JSON of original AI/CV predictions
+      depth_used      INTEGER NOT NULL DEFAULT 0,
+      pca_applied     INTEGER NOT NULL DEFAULT 0,
+      calibration_applied TEXT,              -- JSON of calibration corrections
+      confidence      REAL,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(scan_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_pred_scan ON scan_predictions(scan_id);
 
     -- ── Explore sections (CMS-editable) ───────────────────────────────────
     CREATE TABLE IF NOT EXISTS explore_sections (
