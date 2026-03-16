@@ -21,6 +21,8 @@ Output:
   data/foot3d_find_measurements.csv — measurements extracted from real 3D scans
 """
 
+from __future__ import annotations
+
 import argparse
 import re
 import sys
