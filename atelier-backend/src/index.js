@@ -18,6 +18,7 @@ import legalRouter      from './routes/legal.js'
 import settingsRouter   from './routes/settings.js'
 import emailTemplatesRouter from './routes/emailTemplates.js'
 import loyaltyRouter from './routes/loyalty.js'
+import feedbackRouter from './routes/feedback.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -83,6 +84,7 @@ app.use('/api/settings',  settingsRouter)
 app.use('/api/email-templates', emailTemplatesRouter)
 app.use('/api/explore-sections', exploreSectionsRouter)
 app.use('/api/loyalty', loyaltyRouter)
+app.use('/api/feedback', feedbackRouter)
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))

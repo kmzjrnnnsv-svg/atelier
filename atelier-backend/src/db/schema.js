@@ -186,7 +186,8 @@ export function runMigrations(db) {
       ('bank_iban',   'DE00 0000 0000 0000 0000 00'),
       ('bank_bic',    'XXXXXXXX'),
       ('bank_holder', 'ATELIER GmbH'),
-      ('bank_name',   'Musterbank');
+      ('bank_name',   'Musterbank'),
+      ('loyalty_expiry_days', '365');
   `)
 
   // ── Checkout columns (added after initial schema) ─────────────────────────
@@ -225,6 +226,8 @@ export function runMigrations(db) {
     // orders — translated foot notes included with order
     `ALTER TABLE orders ADD COLUMN foot_notes    TEXT`,
     `ALTER TABLE orders ADD COLUMN foot_notes_en TEXT`,
+    // users — track last order date for loyalty point expiration
+    `ALTER TABLE users ADD COLUMN last_order_at TEXT`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
@@ -411,6 +414,25 @@ export function runMigrations(db) {
       ('gold',      'Gold',      1500,  '#ffd700', 'Crown',    'Exzellenz trifft Handwerk. Gold-Mitglieder sind Teil eines ausgewählten Kreises mit Premium-Privilegien.', '["Alle Silver-Vorteile","Persönlicher Style-Berater","15% auf alle Bestellungen","Priority-Kundenservice","Exklusive Einladungen zu Atelier-Events","Kostenlose Lederpflege-Sets"]', 1, 2),
       ('platinum',  'Platinum',  5000,  '#e5e4e2', 'Gem',      'Die höchste Auszeichnung für wahre Kenner. Platinum-Mitglieder genießen unvergleichliche Privilegien und persönlichen Service.', '["Alle Gold-Vorteile","Dedizierter Concierge-Service","20% auf alle Bestellungen","Kostenlose Reparaturen auf Lebenszeit","Zugang zu Limited Editions","Einladung zur jährlichen Gala","Maßgefertigte Schuhspanner gratis"]', 1, 3),
       ('executive', 'Executive', 15000, '#1a1a1a', 'Shield',   NULL, '["Alle Platinum-Vorteile","Persönlicher Atelier-Besuch in der Manufaktur","Individuelles Leder-Sourcing","Namentliche Gravur auf jeder Sohle","Exklusiver Zugang zu Archiv-Modellen","Einladung zu Designer-Kollaborationen","VIP-Lounge bei Events","Persönliches Jahresgeschenk"]', 0, 4);
+
+    -- ── Feedback / Support Tickets ─────────────────────────────────
+    CREATE TABLE IF NOT EXISTS feedback_tickets (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      order_id      INTEGER REFERENCES orders(id) ON DELETE SET NULL,
+      type          TEXT    NOT NULL DEFAULT 'feedback'
+                    CHECK(type IN ('feedback','complaint','question','return')),
+      subject       TEXT    NOT NULL,
+      message       TEXT    NOT NULL,
+      status        TEXT    NOT NULL DEFAULT 'open'
+                    CHECK(status IN ('open','in_progress','resolved','closed')),
+      admin_notes   TEXT,
+      resolved_by   INTEGER REFERENCES users(id),
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_tickets_user   ON feedback_tickets(user_id);
+    CREATE INDEX IF NOT EXISTS idx_tickets_status ON feedback_tickets(status);
 
     INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, season, rating, sort_order) VALUES
       ('calfskin', 'CALFSKIN', 'Full-Grain', '#b45309', 1, 'Robust und langlebig — entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.', 'Ganzjährig', 'good', 0),
