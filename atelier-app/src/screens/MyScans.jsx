@@ -93,10 +93,10 @@ function FootMiniPreview({ length, width, arch, side }) {
   }, [length, width, arch, side])
 
   return (
-    <div className="relative rounded-xl overflow-hidden" style={{ height: 150 }}>
+    <div className="relative overflow-hidden" style={{ height: 150 }}>
       <div ref={mountRef} className="w-full h-full" />
       <div className="absolute bottom-1.5 left-0 right-0 text-center pointer-events-none">
-        <span className="text-[8px] uppercase tracking-widest text-teal-400 font-semibold">
+        <span className="text-[8px] uppercase tracking-widest text-teal-400 font-semibold" style={{ letterSpacing: '0.18em' }}>
           {side}
         </span>
       </div>
@@ -109,46 +109,46 @@ function ScanCard({ scan, canDownload }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <div className="bg-gray-900 border border-white/8 rounded-2xl overflow-hidden">
+    <div className="bg-[#f6f5f3] border border-black/5 overflow-hidden">
       {/* Collapsed header */}
       <button
         onClick={() => setExpanded(v => !v)}
         className="w-full flex items-center gap-3 px-4 py-3.5 text-left bg-transparent border-0"
       >
         {/* Size badge */}
-        <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex flex-col items-center justify-center flex-shrink-0">
-          <span className="text-[7px] uppercase tracking-widest text-teal-500 font-bold">EU</span>
+        <div className="w-12 h-12 bg-black flex flex-col items-center justify-center flex-shrink-0">
+          <span className="text-[7px] uppercase tracking-widest text-white/50 font-bold" style={{ letterSpacing: '0.15em' }}>EU</span>
           <span className="text-base font-bold text-white leading-tight">{scan.eu_size}</span>
         </div>
 
         {/* Meta */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <Calendar size={9} className="text-gray-600" />
-            <span className="text-[9px] text-gray-500">{fmt(scan.created_at)}</span>
+            <Calendar size={9} className="text-black/30" strokeWidth={1.5} />
+            <span className="text-[9px] text-black/35">{fmt(scan.created_at)}</span>
           </div>
-          <p className="text-[11px] font-semibold text-white">
+          <p className="text-[11px] font-semibold text-black">
             EU {scan.eu_size} · UK {scan.uk_size} · US {scan.us_size}
           </p>
-          <p className="text-[9px] text-gray-500 mt-0.5">
+          <p className="text-[9px] text-black/40 mt-0.5">
             Genauigkeit {Number(scan.accuracy).toFixed(1)}% · {refLabel(scan.reference_type)}
           </p>
         </div>
 
         {expanded
-          ? <ChevronUp size={15} className="text-gray-600 flex-shrink-0" />
-          : <ChevronDown size={15} className="text-gray-600 flex-shrink-0" />
+          ? <ChevronUp size={15} className="text-black/30 flex-shrink-0" strokeWidth={1.5} />
+          : <ChevronDown size={15} className="text-black/30 flex-shrink-0" strokeWidth={1.5} />
         }
       </button>
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-white/5">
+        <div className="px-4 pb-4 border-t border-black/5">
           {/* Measurements table — basic dimensions */}
-          <div className="bg-black/30 rounded-xl overflow-hidden mt-3 mb-1">
-            <div className="grid grid-cols-4 px-3 py-2 border-b border-white/5">
+          <div className="bg-white border border-black/5 overflow-hidden mt-3 mb-1">
+            <div className="grid grid-cols-4 px-3 py-2 border-b border-black/5 bg-black">
               {['', 'Länge', 'Breite', 'Gewölbe'].map(h => (
-                <span key={h} className="text-[8px] uppercase tracking-widest text-gray-600 text-center first:text-left">
+                <span key={h} className="text-[8px] uppercase tracking-widest text-white/50 text-center first:text-left" style={{ letterSpacing: '0.15em' }}>
                   {h}
                 </span>
               ))}
@@ -157,27 +157,27 @@ function ScanCard({ scan, canDownload }) {
               { label: 'Rechts', l: scan.right_length, w: scan.right_width, a: scan.right_arch },
               { label: 'Links',  l: scan.left_length,  w: scan.left_width,  a: scan.left_arch  },
             ].map(({ label, l, w, a }) => (
-              <div key={label} className="grid grid-cols-4 px-3 py-2.5 border-b border-white/5 last:border-0">
-                <span className="text-[10px] font-semibold text-white">{label}</span>
-                <span className="text-[10px] text-gray-400 text-center">{Number(l).toFixed(1)} mm</span>
-                <span className="text-[10px] text-gray-400 text-center">{Number(w).toFixed(1)} mm</span>
-                <span className="text-[10px] text-gray-400 text-center">{Number(a).toFixed(1)} mm</span>
+              <div key={label} className="grid grid-cols-4 px-3 py-2.5 border-b border-black/5 last:border-0">
+                <span className="text-[10px] font-semibold text-black">{label}</span>
+                <span className="text-[10px] text-black/45 text-center">{Number(l).toFixed(1)} mm</span>
+                <span className="text-[10px] text-black/45 text-center">{Number(w).toFixed(1)} mm</span>
+                <span className="text-[10px] text-black/45 text-center">{Number(a).toFixed(1)} mm</span>
               </div>
             ))}
           </div>
 
           {/* Girth measurements (if available) */}
           {(scan.right_ball_girth || scan.left_ball_girth) && (
-            <div className="bg-black/30 rounded-xl overflow-hidden mb-3">
-              <div className="px-3 py-2 border-b border-white/5">
-                <span className="text-[8px] uppercase tracking-widest text-gray-600">Umfänge (mm)</span>
+            <div className="bg-white border border-black/5 overflow-hidden mb-3">
+              <div className="px-3 py-2 border-b border-black/5 bg-black">
+                <span className="text-[8px] uppercase tracking-widest text-white/50" style={{ letterSpacing: '0.15em' }}>Umfänge (mm)</span>
               </div>
               {[
                 { label: 'Rechts', ball: scan.right_ball_girth, instep: scan.right_instep_girth, heel: scan.right_heel_girth, waist: scan.right_waist_girth, ankle: scan.right_ankle_girth },
                 { label: 'Links',  ball: scan.left_ball_girth,  instep: scan.left_instep_girth,  heel: scan.left_heel_girth,  waist: scan.left_waist_girth,  ankle: scan.left_ankle_girth  },
               ].map(({ label, ball, instep, heel, waist, ankle }) => (
-                <div key={label} className="px-3 py-2 border-b border-white/5 last:border-0">
-                  <span className="text-[10px] font-semibold text-white block mb-1">{label}</span>
+                <div key={label} className="px-3 py-2 border-b border-black/5 last:border-0">
+                  <span className="text-[10px] font-semibold text-black block mb-1">{label}</span>
                   <div className="grid grid-cols-5 gap-1">
                     {[
                       { name: 'Ballen', v: ball },
@@ -187,8 +187,8 @@ function ScanCard({ scan, canDownload }) {
                       { name: 'Knöchel', v: ankle },
                     ].map(({ name, v }) => (
                       <div key={name} className="text-center">
-                        <span className="text-[7px] uppercase tracking-widest text-gray-600 block">{name}</span>
-                        <span className="text-[10px] text-gray-400">{v != null ? Number(v).toFixed(1) : '—'}</span>
+                        <span className="text-[7px] uppercase tracking-widest text-black/30 block" style={{ letterSpacing: '0.15em' }}>{name}</span>
+                        <span className="text-[10px] text-black/50">{v != null ? Number(v).toFixed(1) : '—'}</span>
                       </div>
                     ))}
                   </div>
@@ -199,7 +199,7 @@ function ScanCard({ scan, canDownload }) {
 
           {/* 3D previews */}
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <div className="rounded-xl overflow-hidden border border-white/5">
+            <div className="overflow-hidden border border-black/5">
               <FootMiniPreview
                 length={Number(scan.right_length)}
                 width={Number(scan.right_width)}
@@ -207,7 +207,7 @@ function ScanCard({ scan, canDownload }) {
                 side="Rechts"
               />
             </div>
-            <div className="rounded-xl overflow-hidden border border-white/5">
+            <div className="overflow-hidden border border-black/5">
               <FootMiniPreview
                 length={Number(scan.left_length)}
                 width={Number(scan.left_width)}
@@ -224,7 +224,7 @@ function ScanCard({ scan, canDownload }) {
                 <select
                   defaultValue="oxford"
                   onChange={e => { scan._shoeType = e.target.value }}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] text-gray-300"
+                  className="flex-1 bg-[#f6f5f3] border border-black/8 px-2 py-1.5 text-[10px] text-black/60"
                 >
                   {Object.entries(SHOE_TYPES).map(([key, { name }]) => (
                     <option key={key} value={key}>{name}</option>
@@ -234,7 +234,7 @@ function ScanCard({ scan, canDownload }) {
                   {['stl', 'obj'].map(fmt => (
                     <button key={fmt}
                       onClick={() => { scan._fmt = fmt }}
-                      className="px-2 py-1 rounded text-[9px] font-semibold bg-white/5 border border-white/10 text-gray-400 hover:bg-teal-500/20 hover:text-teal-300">
+                      className="px-2 py-1 text-[9px] font-semibold bg-[#f6f5f3] border border-black/8 text-black/50 hover:bg-black hover:text-white transition-colors">
                       .{fmt.toUpperCase()}
                     </button>
                   ))}
@@ -255,13 +255,13 @@ function ScanCard({ scan, canDownload }) {
                       if (format === 'obj') downloadOBJ(geo, scan.eu_size, side)
                       else downloadLastSTL(geo, scan.eu_size, side)
                     }}
-                    className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5 active:bg-white/10 transition-colors"
+                    className="flex items-center justify-between gap-2 bg-white border border-black/8 px-3 py-2.5 active:bg-black/5 transition-colors"
                   >
                     <div className="text-left">
-                      <p className="text-[10px] font-bold text-white">{label}</p>
-                      <p className="text-[8px] text-gray-600 mt-0.5">Schuhleisten</p>
+                      <p className="text-[10px] font-bold text-black">{label}</p>
+                      <p className="text-[8px] text-black/30 mt-0.5" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Schuhleisten</p>
                     </div>
-                    <Download size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
+                    <Download size={13} className="text-black/40 flex-shrink-0" strokeWidth={1.5} />
                   </button>
                 ))}
               </div>
@@ -272,9 +272,9 @@ function ScanCard({ scan, canDownload }) {
                 ].map(({ side, label, l, w, a }) => (
                   <button key={`foot-${side}`}
                     onClick={async () => { const geo = await buildFootGeoAsync(Number(l), Number(w), Number(a), side); downloadSTL(geo, scan.eu_size, side) }}
-                    className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-2 py-2 active:bg-white/10 transition-colors">
-                    <p className="text-[9px] text-gray-400">{label}</p>
-                    <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
+                    className="flex items-center justify-between gap-2 bg-white border border-black/8 px-2 py-2 active:bg-black/5 transition-colors">
+                    <p className="text-[9px] text-black/40">{label}</p>
+                    <Download size={11} className="text-black/30 flex-shrink-0" strokeWidth={1.5} />
                   </button>
                 ))}
               </div>
@@ -317,85 +317,90 @@ export default function MyScans() {
   useEffect(() => { load() }, [])
 
   return (
-    <div className="flex flex-col h-full bg-gray-950 text-white overflow-hidden">
+    <div className="flex flex-col h-full bg-white overflow-hidden">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-4 flex-shrink-0">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-11 h-11 rounded-full bg-white/5 border border-white/8 flex items-center justify-center"
-        >
-          <ArrowLeft size={19} strokeWidth={1.5} className="text-gray-300" />
-        </button>
-        <div className="text-center">
-          <p className="text-[11px] uppercase tracking-[0.22em] font-bold text-white">Meine Scans</p>
-          {!loading && scans.length > 0 && (
-            <p className="text-[9px] text-gray-500 mt-0.5">{scans.length} Scan{scans.length !== 1 ? 's' : ''} gespeichert</p>
-          )}
+      <div className="bg-white px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-transparent border-0 p-0"
+          >
+            <ArrowLeft size={20} strokeWidth={1.5} className="text-black" />
+          </button>
+          <div className="text-center">
+            <p className="text-[8px] uppercase tracking-widest text-black/30" style={{ letterSpacing: '0.2em' }}>Fußscan</p>
+            <h1 className="text-[14px] text-black leading-tight" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Meine Scans</h1>
+          </div>
+          <button
+            onClick={load}
+            className="bg-transparent border-0 p-0"
+          >
+            <RefreshCw size={18} strokeWidth={1.5} className={`text-black/40 ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
-        <button
-          onClick={load}
-          className="w-11 h-11 rounded-full bg-white/5 border border-white/8 flex items-center justify-center"
-        >
-          <RefreshCw size={16} strokeWidth={1.5} className={`text-gray-400 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        {!loading && scans.length > 0 && (
+          <p className="text-[10px] text-black/35 mt-2 text-center">{scans.length} Scan{scans.length !== 1 ? 's' : ''} gespeichert</p>
+        )}
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto px-4 pb-6">
+      <div className="flex-1 overflow-y-auto">
 
         {/* Loading */}
         {loading && (
           <div className="flex flex-col items-center justify-center h-64 gap-3">
-            <Loader size={28} className="text-teal-400 animate-spin" strokeWidth={1.5} />
-            <p className="text-[10px] uppercase tracking-widest text-gray-600">Scans werden geladen…</p>
+            <Loader size={24} className="text-black/40 animate-spin" strokeWidth={1.5} />
+            <p className="text-[10px] uppercase tracking-widest text-black/30" style={{ letterSpacing: '0.15em' }}>Scans werden geladen…</p>
           </div>
         )}
 
         {/* Error */}
         {error && !loading && (
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <AlertCircle size={24} className="text-red-400" strokeWidth={1.5} />
+          <div className="flex flex-col items-center justify-center h-64 gap-4 px-8">
+            <div className="w-14 h-14 bg-[#f6f5f3] flex items-center justify-center">
+              <AlertCircle size={24} className="text-black/30" strokeWidth={1.5} />
             </div>
-            <p className="text-sm text-gray-400 text-center">{error}</p>
+            <p className="text-[11px] text-black/40 text-center">{error}</p>
             <button
               onClick={load}
-              className="px-5 py-2.5 rounded-xl bg-white/8 border border-white/10 text-[11px] font-bold uppercase tracking-widest text-white flex items-center gap-2"
+              className="px-5 py-2.5 bg-black text-white text-[11px] font-bold uppercase tracking-widest border-0 flex items-center gap-2"
+              style={{ letterSpacing: '0.15em' }}
             >
-              <RefreshCw size={13} /> Erneut versuchen
+              <RefreshCw size={13} strokeWidth={1.5} /> Erneut versuchen
             </button>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && !error && scans.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-64 gap-5">
-            <div className="w-20 h-20 rounded-full bg-white/5 border border-white/8 flex items-center justify-center">
-              <Footprints size={32} className="text-gray-600" strokeWidth={1.2} />
+          <div className="flex flex-col items-center justify-center h-64 gap-5 px-8">
+            <div className="w-20 h-20 bg-[#f6f5f3] flex items-center justify-center">
+              <Footprints size={32} className="text-black/20" strokeWidth={1.2} />
             </div>
             <div className="text-center">
-              <p className="text-base font-bold text-white mb-1">Noch keine Scans</p>
-              <p className="text-[11px] text-gray-500 leading-relaxed max-w-xs">
+              <p className="text-[13px] font-semibold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Noch keine Scans</p>
+              <p className="text-[10px] text-black/40 leading-relaxed max-w-xs">
                 Starte deinen ersten 3D Fußscan, um präzise Maße und ein 3D-Modell zu erhalten.
               </p>
             </div>
             <button
               onClick={() => navigate('/scan')}
-              className="px-6 py-3 rounded-2xl bg-white text-black font-bold text-[11px] uppercase tracking-widest flex items-center gap-2"
+              className="px-6 py-3 bg-black text-white font-bold text-[11px] uppercase tracking-widest border-0 flex items-center gap-2"
+              style={{ letterSpacing: '0.15em' }}
             >
-              <Scan size={14} /> Scan starten
+              <Scan size={14} strokeWidth={1.5} /> Scan starten
             </button>
           </div>
         )}
 
         {/* Scan list */}
         {!loading && !error && scans.length > 0 && (
-          <div className="space-y-3">
+          <div className="px-4 pt-3 pb-6 space-y-3">
             {/* Info banner */}
-            <div className="flex items-center gap-2 bg-teal-500/8 border border-teal-500/15 rounded-xl px-3.5 py-2.5 mb-2">
-              <Box size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
-              <p className="text-[9px] text-gray-400 leading-relaxed">
+            <div className="flex items-center gap-2 bg-[#f6f5f3] border border-black/5 px-3.5 py-2.5 mb-2">
+              <Box size={13} className="text-black/30 flex-shrink-0" strokeWidth={1.5} />
+              <p className="text-[9px] text-black/40 leading-relaxed">
                 3D-Modell · Sub-Pixel-Präzision ±0,1 mm · Tippe auf einen Scan für Details &amp; 3D-Vorschau
               </p>
             </div>
@@ -407,9 +412,10 @@ export default function MyScans() {
             {/* New scan CTA */}
             <button
               onClick={() => navigate('/scan')}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/4 border border-dashed border-white/10 text-gray-500 text-[11px] font-semibold"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-white border border-dashed border-black/10 text-black/40 text-[11px] font-semibold uppercase tracking-widest"
+              style={{ letterSpacing: '0.12em' }}
             >
-              <Scan size={14} />
+              <Scan size={14} strokeWidth={1.5} />
               Neuen Scan starten
             </button>
           </div>
