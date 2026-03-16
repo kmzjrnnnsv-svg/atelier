@@ -744,6 +744,8 @@ export default function FootScan() {
             heel_girth:   data.right_heel_girth   != null ? r1(data.right_heel_girth)   : null,
             waist_girth:  data.right_waist_girth  != null ? r1(data.right_waist_girth)  : null,
             ankle_girth:  data.right_ankle_girth  != null ? r1(data.right_ankle_girth)  : null,
+            long_heel_girth:  data.right_long_heel_girth  != null ? r1(data.right_long_heel_girth)  : null,
+            short_heel_girth: data.right_short_heel_girth != null ? r1(data.right_short_heel_girth) : null,
             crossSections: data.right_cross_sections ?? {},
           }
           const left = {
@@ -756,6 +758,8 @@ export default function FootScan() {
             heel_girth:   data.left_heel_girth   != null ? r1(data.left_heel_girth)   : null,
             waist_girth:  data.left_waist_girth  != null ? r1(data.left_waist_girth)  : null,
             ankle_girth:  data.left_ankle_girth  != null ? r1(data.left_ankle_girth)  : null,
+            long_heel_girth:  data.left_long_heel_girth  != null ? r1(data.left_long_heel_girth)  : null,
+            short_heel_girth: data.left_short_heel_girth != null ? r1(data.left_short_heel_girth) : null,
             crossSections: data.left_cross_sections ?? {},
           }
           const avgLen = (right.length + left.length) / 2
@@ -802,6 +806,8 @@ export default function FootScan() {
           heel_girth:   R.right_heel_girth   ?? null,
           waist_girth:  R.right_waist_girth  ?? null,
           ankle_girth:  R.right_ankle_girth  ?? null,
+          long_heel_girth:  R.right_long_heel_girth  ?? null,
+          short_heel_girth: R.right_short_heel_girth ?? null,
           crossSections: R.cross_sections ?? {},
           pointCloud:    R.raw?.point_cloud_mm ?? null,
         }
@@ -815,6 +821,8 @@ export default function FootScan() {
           heel_girth:   L.left_heel_girth   ?? null,
           waist_girth:  L.left_waist_girth  ?? null,
           ankle_girth:  L.left_ankle_girth  ?? null,
+          long_heel_girth:  L.left_long_heel_girth  ?? null,
+          short_heel_girth: L.left_short_heel_girth ?? null,
           crossSections: L.cross_sections ?? {},
           pointCloud:    L.raw?.point_cloud_mm ?? null,
         }
@@ -854,18 +862,22 @@ export default function FootScan() {
           footHeightRight = ai.right_foot_height ?? null
           footHeightLeft  = ai.left_foot_height  ?? null
           girthRight = {
-            ball:   ai.right_ball_girth   ?? null,
-            instep: ai.right_instep_girth ?? null,
-            heel:   ai.right_heel_girth   ?? null,
-            waist:  ai.right_waist_girth  ?? null,
-            ankle:  ai.right_ankle_girth  ?? null,
+            ball:       ai.right_ball_girth       ?? null,
+            instep:     ai.right_instep_girth     ?? null,
+            heel:       ai.right_heel_girth       ?? null,
+            waist:      ai.right_waist_girth      ?? null,
+            ankle:      ai.right_ankle_girth      ?? null,
+            long_heel:  ai.right_long_heel_girth  ?? null,
+            short_heel: ai.right_short_heel_girth ?? null,
           }
           girthLeft = {
-            ball:   ai.left_ball_girth    ?? null,
-            instep: ai.left_instep_girth  ?? null,
-            heel:   ai.left_heel_girth    ?? null,
-            waist:  ai.left_waist_girth   ?? null,
-            ankle:  ai.left_ankle_girth   ?? null,
+            ball:       ai.left_ball_girth        ?? null,
+            instep:     ai.left_instep_girth      ?? null,
+            heel:       ai.left_heel_girth        ?? null,
+            waist:      ai.left_waist_girth       ?? null,
+            ankle:      ai.left_ankle_girth       ?? null,
+            long_heel:  ai.left_long_heel_girth   ?? null,
+            short_heel: ai.left_short_heel_girth  ?? null,
           }
           usedAI     = true
           aiConfidence = ai._confidence ?? null
@@ -894,6 +906,8 @@ export default function FootScan() {
         heel_girth:   girthRight.heel   ? r1(girthRight.heel)   : null,
         waist_girth:  girthRight.waist  ? r1(girthRight.waist)  : null,
         ankle_girth:  girthRight.ankle  ? r1(girthRight.ankle)  : null,
+        long_heel_girth:  girthRight.long_heel  ? r1(girthRight.long_heel)  : null,
+        short_heel_girth: girthRight.short_heel ? r1(girthRight.short_heel) : null,
       }
       const left = {
         length:       r1(leftM.length), width: r1(leftM.width),
@@ -904,6 +918,8 @@ export default function FootScan() {
         heel_girth:   girthLeft.heel   ? r1(girthLeft.heel)   : null,
         waist_girth:  girthLeft.waist  ? r1(girthLeft.waist)  : null,
         ankle_girth:  girthLeft.ankle  ? r1(girthLeft.ankle)  : null,
+        long_heel_girth:  girthLeft.long_heel  ? r1(girthLeft.long_heel)  : null,
+        short_heel_girth: girthLeft.short_heel ? r1(girthLeft.short_heel) : null,
       }
       setProgress(100)
       setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI,
@@ -933,12 +949,16 @@ export default function FootScan() {
           ...(result.right.instep_girth != null && { right_instep_girth: result.right.instep_girth }),
           ...(result.right.heel_girth   != null && { right_heel_girth:   result.right.heel_girth }),
           ...(result.right.waist_girth  != null && { right_waist_girth:  result.right.waist_girth }),
-          ...(result.right.ankle_girth  != null && { right_ankle_girth:  result.right.ankle_girth }),
+          ...(result.right.ankle_girth      != null && { right_ankle_girth:      result.right.ankle_girth }),
+          ...(result.right.long_heel_girth  != null && { right_long_heel_girth:  result.right.long_heel_girth }),
+          ...(result.right.short_heel_girth != null && { right_short_heel_girth: result.right.short_heel_girth }),
           ...(result.left.ball_girth    != null && { left_ball_girth:    result.left.ball_girth }),
           ...(result.left.instep_girth  != null && { left_instep_girth:  result.left.instep_girth }),
           ...(result.left.heel_girth    != null && { left_heel_girth:    result.left.heel_girth }),
           ...(result.left.waist_girth   != null && { left_waist_girth:   result.left.waist_girth }),
-          ...(result.left.ankle_girth   != null && { left_ankle_girth:   result.left.ankle_girth }),
+          ...(result.left.ankle_girth       != null && { left_ankle_girth:       result.left.ankle_girth }),
+          ...(result.left.long_heel_girth  != null && { left_long_heel_girth:  result.left.long_heel_girth }),
+          ...(result.left.short_heel_girth != null && { left_short_heel_girth: result.left.short_heel_girth }),
           eu_size: result.sizes.eu, uk_size: String(result.sizes.uk), us_size: String(result.sizes.us),
           accuracy: result.accuracy ?? (result.source === 'lidar' ? 96.0 : result.source === 'photogrammetry' ? 94.0 : result.usedAI ? 88.0 : 82.0),
         }
