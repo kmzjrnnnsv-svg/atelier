@@ -10,6 +10,7 @@ const useAtelierStore = create((set, get) => ({
   articles:   [],
   favorites:  [],   // string shoe IDs
   orders:     [],
+  cart:       [],   // items in shopping cart (not yet ordered)
   faqs:       [],
   latestScan:  null, // most recent foot scan for this user
   footNotes:   '',   // user-level persistent foot notes
@@ -55,6 +56,26 @@ const useAtelierStore = create((set, get) => ({
   },
   hasReminder(type, itemId) {
     return get().reminders.some(r => r.type === type && r.itemId === itemId)
+  },
+
+  // --- CART ---
+  addToCart(item) {
+    const existing = get().cart.find(c => c.shoeId === item.shoeId && c.material === item.material && c.color === item.color && c.sole === item.sole)
+    if (existing) {
+      set(s => ({ cart: s.cart.map(c => c.id === existing.id ? { ...c, qty: c.qty + 1 } : c) }))
+    } else {
+      set(s => ({ cart: [...s.cart, { id: Date.now(), qty: 1, addedAt: new Date().toISOString(), ...item }] }))
+    }
+  },
+  removeFromCart(id) {
+    set(s => ({ cart: s.cart.filter(c => c.id !== id) }))
+  },
+  updateCartQty(id, qty) {
+    if (qty <= 0) return get().removeFromCart(id)
+    set(s => ({ cart: s.cart.map(c => c.id === id ? { ...c, qty } : c) }))
+  },
+  clearCart() {
+    set({ cart: [] })
   },
 
   async initStore() {
