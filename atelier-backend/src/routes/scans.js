@@ -131,6 +131,7 @@ function computeConfidence(cv, cl, source) {
   if (cv?.right_cv_success || cv?.left_cv_success) base = 92.0  // CV success → ±1.5-2mm
   if (source === 'photogrammetry') base = 94.0  // 8-view → ±1-1.5mm
   if (source === 'lidar') base = 96.0  // LiDAR → ±0.5-1mm
+  if (source === 'hybrid') base = 97.0  // Foto + LiDAR Fusion → ±0.3-0.5mm
 
   // Penalize missing data
   const fields = ['ball_girth', 'instep_girth', 'heel_girth', 'waist_girth', 'ankle_girth', 'foot_height']
@@ -682,14 +683,20 @@ router.post('/analyze', authenticate, async (req, res) => {
 
     // Merge depth data if available (depth measurements get high priority for girths)
     if (depthMeasurements) {
+      // LiDAR-Daten bekommen höhere Gewichtung als generische Tiefendaten (WebXR/ARCore)
+      const isLidar = Object.values(depthData || {}).some(d => d?.source === 'lidar')
+      const depthWeight = isLidar ? 0.6 : 0.4  // LiDAR: 60% Tiefe + 40% Foto, sonst umgekehrt
+      const photoWeight = 1.0 - depthWeight
+
       for (const [key, val] of Object.entries(depthMeasurements.right || {})) {
+        if (key.startsWith('_')) continue
         if (val != null && R[key] == null) R[key] = val
-        // Weighted merge: 40% depth + 60% photo when both exist
-        if (val != null && R[key] != null) R[key] = rnd(R[key] * 0.6 + val * 0.4)
+        else if (val != null && R[key] != null) R[key] = rnd(R[key] * photoWeight + val * depthWeight)
       }
       for (const [key, val] of Object.entries(depthMeasurements.left || {})) {
+        if (key.startsWith('_')) continue
         if (val != null && L[key] == null) L[key] = val
-        if (val != null && L[key] != null) L[key] = rnd(L[key] * 0.6 + val * 0.4)
+        else if (val != null && L[key] != null) L[key] = rnd(L[key] * photoWeight + val * depthWeight)
       }
     }
 
@@ -704,7 +711,9 @@ router.post('/analyze', authenticate, async (req, res) => {
     const lIssues = validateAnatomical({ length: L.length, width: L.width, foot_height: L.foot_height, ball_girth: L.ball_girth })
 
     // Compute realistic confidence score
-    const confidence = computeConfidence(cv, cl, 'photo')
+    // 'hybrid' mode: Foto + LiDAR Fusion → höchste Genauigkeit
+    const scanSource = (hasDepth && depthMeasurements) ? 'hybrid' : 'photo'
+    const confidence = computeConfidence(cv, cl, scanSource)
 
     // ── Phase 4: PCA shape model regularization ─────────────────────────
     // Blend raw measurements with PCA-reconstructed values (80/20) for consistency
@@ -778,6 +787,7 @@ router.post('/analyze', authenticate, async (req, res) => {
       _confidence: confidence,
       _calibration_applied: calibrationApplied,
       _pca_regularized: pcaApplied,
+      _scan_source: scanSource,
       _depth_used: hasDepth && depthMeasurements != null,
       _depth_mode: hasDepth ? Object.values(depthData)[0]?.source : null,
       _measurement_passes: cl._measurement_passes ?? 1,

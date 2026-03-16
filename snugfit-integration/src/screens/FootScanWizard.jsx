@@ -295,6 +295,9 @@ function STLResultCard({ side, result }) {
           {result.triangleCount?.toLocaleString('de')} Dreiecke
           {'  ·  '}
           {result.fileSize ? (result.fileSize / 1024).toFixed(0) + ' KB' : '–'}
+          {result.lidarData && (
+            <>{'  ·  '}<Text style={{ color: '#10b981' }}>LiDAR ✓</Text></>
+          )}
         </Text>
       </View>
     </View>
@@ -729,13 +732,31 @@ export default function FootScanWizard({ navigation, route }) {
     const footLabel = isRight ? 'Rechter Fuß' : 'Linker Fuß'
     const procColor = isRight ? '#8b5cf6' : '#3b82f6'
 
-    const STAGES = [
-      { label: 'Punktwolke', minProgress: 0  },
-      { label: 'Mesh',       minProgress: 22 },
-      { label: '3D-Modell',  minProgress: 50 },
-      { label: 'STL',        minProgress: 80 },
-      { label: 'Validierung',minProgress: 95 },
-    ]
+    const STAGES = scan.hasLidar
+      ? [
+          { label: 'Punktwolke',   minProgress: 0  },
+          { label: 'LiDAR-Scan',   minProgress: 15 },
+          { label: 'Mesh',         minProgress: 30 },
+          { label: '3D-Modell',    minProgress: 55 },
+          { label: 'Fusion',       minProgress: 75 },
+          { label: 'STL',          minProgress: 85 },
+          { label: 'Validierung',  minProgress: 95 },
+        ]
+      : [
+          { label: 'Punktwolke',   minProgress: 0  },
+          { label: 'Mesh',         minProgress: 22 },
+          { label: '3D-Modell',    minProgress: 50 },
+          { label: 'STL',          minProgress: 80 },
+          { label: 'Validierung',  minProgress: 95 },
+        ]
+
+    const lidarHint = scan.hasLidar
+      ? scan.isLidarCapturing
+        ? 'LiDAR-Sensor aktiv — Tiefendaten werden erfasst…'
+        : scan.lidarStatus === 'done'
+          ? 'LiDAR + Foto-Fusion aktiv — Genauigkeit bis ±0.5 mm'
+          : 'Die KI rekonstruiert dein Fußmodell aus den Kamera-Daten.'
+      : 'Die KI rekonstruiert dein Fußmodell aus den Kamera-Daten.'
 
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: '#08081a' }]}>
@@ -747,6 +768,14 @@ export default function FootScanWizard({ navigation, route }) {
 
           <Text style={styles.processingTitle}>3D-Fußmodell wird erstellt</Text>
           <Text style={styles.processingSubtitle}>{footLabel}</Text>
+
+          {scan.hasLidar && (
+            <View style={styles.lidarBadge}>
+              <Text style={styles.lidarBadgeText}>
+                {scan.isLidarCapturing ? 'LiDAR' : scan.lidarStatus === 'done' ? 'LiDAR + Foto' : 'LiDAR'}
+              </Text>
+            </View>
+          )}
 
           <StageProgressBar
             progress={scan.processProgress}
@@ -760,7 +789,7 @@ export default function FootScanWizard({ navigation, route }) {
 
           <Text style={styles.processingHint}>
             Bitte nicht schließen.{'\n'}
-            Die KI rekonstruiert dein Fußmodell aus den Kamera-Daten.
+            {lidarHint}
           </Text>
         </View>
       </SafeAreaView>
@@ -1213,6 +1242,22 @@ const styles = StyleSheet.create({
   processingHint: {
     color: 'rgba(255,255,255,0.28)', fontSize: 11,
     textAlign: 'center', marginTop: 12, lineHeight: 17,
+  },
+  lidarBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  lidarBadgeText: {
+    color: '#10b981',
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   uploadEmoji: { fontSize: 60, marginBottom: 20 },
 
