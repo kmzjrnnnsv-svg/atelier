@@ -127,11 +127,15 @@ function validateAnatomical(m) {
 // ─── Confidence scoring ─────────────────────────────────────────────────────
 // Computes realistic accuracy % based on data source quality.
 function computeConfidence(cv, cl, source) {
-  let base = 88.0  // Claude-only baseline (±2-3mm → ~88%)
-  if (cv?.right_cv_success || cv?.left_cv_success) base = 92.0  // CV success → ±1.5-2mm
-  if (source === 'photogrammetry') base = 94.0  // 8-view → ±1-1.5mm
-  if (source === 'lidar') base = 96.0  // LiDAR → ±0.5-1mm
-  if (source === 'hybrid') base = 97.0  // Foto + LiDAR Fusion → ±0.3-0.5mm
+  // Benchmark-basierte Confidence (eval_hybrid_accuracy.py):
+  //   Photo-only:  MAE 8.96mm → ~88-92%
+  //   WebXR hybrid: MAE ~5mm  → ~94%
+  //   LiDAR-only:  MAE 0.80mm → ~98%
+  let base = 88.0  // Claude-only baseline (MAE ~9mm)
+  if (cv?.right_cv_success || cv?.left_cv_success) base = 92.0  // CV success
+  if (source === 'photogrammetry') base = 94.0  // 8-view photogrammetry
+  if (source === 'hybrid') base = 94.0  // WebXR/ARCore + Photo Fusion
+  if (source === 'lidar') base = 98.0  // LiDAR direkt (MAE 0.8mm)
 
   // Penalize missing data
   const fields = ['ball_girth', 'instep_girth', 'heel_girth', 'waist_girth', 'ankle_girth', 'foot_height']
@@ -681,24 +685,43 @@ router.post('/analyze', authenticate, async (req, res) => {
     const R = mergeResults(cv, cl, 'right')
     const L = mergeResults(cv, cl, 'left')
 
-    // Merge depth data if available (depth measurements get high priority for girths)
+    // Merge depth data if available
+    // Strategie (aus eval_hybrid_accuracy.py Benchmark):
+    //   LiDAR vorhanden → 100% LiDAR für Girths (MAE 0.8mm), Photo nur als Fallback
+    //   WebXR/ARCore    → 40% Tiefe + 60% Photo (Tiefendaten zu ungenau für Alleingang)
+    //   Kein Tiefenscan → 100% Photo-Regression (MAE ~9mm)
     if (depthMeasurements) {
-      // LiDAR-Daten bekommen deutlich höhere Gewichtung (benchmark: 80/20 → MAE 1.93mm)
-      // WebXR/ARCore Tiefendaten sind ungenauer → konservativere Gewichtung
       const isLidar = Object.values(depthData || {}).some(d => d?.source === 'lidar')
-      const depthWeight = isLidar ? 0.8 : 0.4  // LiDAR: 80% Tiefe + 20% Foto, WebXR: 40/60
-      const photoWeight = 1.0 - depthWeight
 
-      for (const [key, val] of Object.entries(depthMeasurements.right || {})) {
-        if (key.startsWith('_')) continue
-        if (val != null && R[key] == null) R[key] = val
-        else if (val != null && R[key] != null) R[key] = rnd(R[key] * photoWeight + val * depthWeight)
+      const mergeSide = (depth, photo) => {
+        for (const [key, val] of Object.entries(depth || {})) {
+          if (key.startsWith('_')) continue
+          if (val == null) continue
+
+          if (photo[key] == null) {
+            // Kein Photo-Wert → Tiefenwert direkt übernehmen
+            photo[key] = val
+          } else if (isLidar) {
+            // LiDAR: direkt übernehmen (MAE 0.8mm vs Photo 9mm)
+            // Photo-Wert nur als Sanity-Check behalten
+            const diff = Math.abs(val - photo[key])
+            const tolerance = photo[key] * 0.25  // 25% Abweichung = Ausreißer
+            if (diff > tolerance) {
+              // Großer Unterschied → gewichteter Kompromiss (80/20)
+              photo[key] = rnd(photo[key] * 0.2 + val * 0.8)
+            } else {
+              // Plausible Übereinstimmung → LiDAR vertrauen
+              photo[key] = val
+            }
+          } else {
+            // WebXR/ARCore: konservative Fusion (40% Tiefe + 60% Photo)
+            photo[key] = rnd(photo[key] * 0.6 + val * 0.4)
+          }
+        }
       }
-      for (const [key, val] of Object.entries(depthMeasurements.left || {})) {
-        if (key.startsWith('_')) continue
-        if (val != null && L[key] == null) L[key] = val
-        else if (val != null && L[key] != null) L[key] = rnd(L[key] * photoWeight + val * depthWeight)
-      }
+
+      mergeSide(depthMeasurements.right, R)
+      mergeSide(depthMeasurements.left, L)
     }
 
     // Final sanity: length must be present
@@ -712,8 +735,11 @@ router.post('/analyze', authenticate, async (req, res) => {
     const lIssues = validateAnatomical({ length: L.length, width: L.width, foot_height: L.foot_height, ball_girth: L.ball_girth })
 
     // Compute realistic confidence score
-    // 'hybrid' mode: Foto + LiDAR Fusion → höchste Genauigkeit
-    const scanSource = (hasDepth && depthMeasurements) ? 'hybrid' : 'photo'
+    // LiDAR-only: höchste Genauigkeit (MAE 0.8mm), hybrid: Fusion, photo: Regression
+    const isLidarScan = Object.values(depthData || {}).some(d => d?.source === 'lidar')
+    const scanSource = (hasDepth && depthMeasurements)
+      ? (isLidarScan ? 'lidar' : 'hybrid')
+      : 'photo'
     const confidence = computeConfidence(cv, cl, scanSource)
 
     // ── Phase 4: PCA shape model regularization ─────────────────────────
