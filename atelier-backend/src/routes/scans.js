@@ -285,7 +285,8 @@ function runCvPipeline(rightTopImg, rightSideImg, leftTopImg, leftSideImg) {
 
 // ─── Phase 2: Claude Vision fallback (improved prompt) ───────────────────────
 
-async function runClaudeFallback(client, toB64, rightTopImg, rightSideImg, leftTopImg, leftSideImg, cvData) {
+async function runClaudeFallback(client, toB64, rightTopImg, rightSideImg, leftTopImg, leftSideImg, cvData, rightLateralImg, leftLateralImg) {
+  const hasLateral = !!rightLateralImg && !!leftLateralImg
   // Build context from CV results if partially available
   const cvHint = cvData
     ? `Computer-Vision hat folgende Rohwerte ermittelt (verwende diese als Ausgangspunkt und validiere):
@@ -303,7 +304,7 @@ Links:  Länge=${cvData.left_length  ?? '?'}mm, Breite=${cvData.left_width  ?? '
       content: [
         {
           type: 'text',
-          text: `Du bist ein präzises Fußvermessungs-System für die Maßschuh-Fertigung. Analysiere diese 4 Bilder.
+          text: `Du bist ein präzises Fußvermessungs-System für die Maßschuh-Fertigung. Analysiere diese ${hasLateral ? '6' : '4'} Bilder.
 
 KALIBRIER-VALIDIERUNG (KRITISCH — mache dies ZUERST):
 Jedes Bild enthält ein A4-Papier (exakt 297.0 × 210.0 mm).
@@ -315,9 +316,17 @@ Jedes Bild enthält ein A4-Papier (exakt 297.0 × 210.0 mm).
 
 BILDER:
 - Bild 1: RECHTER Fuß von OBEN (A4 daneben)
-- Bild 2: RECHTER Fuß von der SEITE (A4 daneben)
+- Bild 2: RECHTER Fuß MEDIAL / Innenseite (A4 daneben)
 - Bild 3: LINKER Fuß von OBEN (A4 daneben)
-- Bild 4: LINKER Fuß von der SEITE (A4 daneben)
+- Bild 4: LINKER Fuß MEDIAL / Innenseite (A4 daneben)${hasLateral ? `
+- Bild 5: RECHTER Fuß LATERAL / Außenseite (A4 daneben) — für Fersen- und Außenrist-Details
+- Bild 6: LINKER Fuß LATERAL / Außenseite (A4 daneben) — für Fersen- und Außenrist-Details
+
+IBV 3-WINKEL-METHODE: Du hast 3 Blickwinkel pro Fuß (oben, innen, außen). Nutze alle 3 für maximale Genauigkeit:
+- Top-Ansicht: Fußlänge, -breite, Kontur-Umriss
+- Mediale Ansicht: Gewölbehöhe, Ristprofil, Innenseite
+- Laterale Ansicht: Fersenprofil, Außenrist, Knöchel-Kontour
+Vergleiche die Messwerte zwischen medial und lateral für Konsistenz.` : ''}
 
 ${cvHint}
 MESSVERFAHREN — TOP-ANSICHT (Bilder 1 + 3):
@@ -351,6 +360,10 @@ Antworte NUR mit diesem JSON (keine Erklärung):
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: toB64(rightSideImg) } },
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: toB64(leftTopImg)   } },
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: toB64(leftSideImg)  } },
+        ...(hasLateral ? [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: toB64(rightLateralImg) } },
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: toB64(leftLateralImg)  } },
+        ] : []),
       ],
     }],
   })
@@ -512,10 +525,11 @@ function mergeResults(cv, cl, side) {
 //   2. Claude Vision: cross-section widths → Ramanujan girth computation
 //   3. Merge: CV length/width + Claude-driven girths
 router.post('/analyze', authenticate, async (req, res) => {
-  const { rightTopImg, rightSideImg, leftTopImg, leftSideImg } = req.body
+  const { rightTopImg, rightSideImg, leftTopImg, leftSideImg, rightLateralImg, leftLateralImg } = req.body
+  const hasLateral = !!rightLateralImg && !!leftLateralImg // IBV-style 6-image mode
 
   if (!rightTopImg || !rightSideImg || !leftTopImg || !leftSideImg) {
-    return res.status(400).json({ error: 'Alle 4 Bilder erforderlich' })
+    return res.status(400).json({ error: 'Mindestens 4 Bilder erforderlich (top + medial/side für jeden Fuß)' })
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -530,8 +544,12 @@ router.post('/analyze', authenticate, async (req, res) => {
     // ── Phase 1: Computer-vision pipeline ──────────────────────────────────
     const cv = runCvPipeline(rightTopImg, rightSideImg, leftTopImg, leftSideImg)
 
-    // ── Phase 2: Claude Vision (improved prompt with Ramanujan formula) ────
-    const cl = await runClaudeFallback(client, toB64, rightTopImg, rightSideImg, leftTopImg, leftSideImg, cv)
+    // ── Phase 1b: If lateral images available (IBV 6-image mode), also run CV on them
+    const cvLateral = hasLateral ? runCvPipeline(rightTopImg, rightLateralImg, leftTopImg, leftLateralImg) : null
+
+    // ── Phase 2: Claude Vision (improved prompt — with lateral views if available) ────
+    // Pass lateral images to Claude for IBV-style 3-angle reconstruction
+    const cl = await runClaudeFallback(client, toB64, rightTopImg, rightSideImg, leftTopImg, leftSideImg, cv, rightLateralImg, leftLateralImg)
 
     // ── Phase 3: Merge ─────────────────────────────────────────────────────
     const R = mergeResults(cv, cl, 'right')
