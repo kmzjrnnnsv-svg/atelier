@@ -90,7 +90,7 @@ const styleCards = [
 export default function Profile() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
-  const { favorites, orders, notifications, markAllNotificationsRead, loyaltyTiers, loyaltyStatus, latestScan, refreshScan, footNotes, saveFootNotes } = useAtelierStore()
+  const { favorites, orders, notifications, markAllNotificationsRead, loyaltyTiers, loyaltyStatus, latestScan, averagedScan, refreshScan, footNotes, saveFootNotes } = useAtelierStore()
   const [activeTab, setActiveTab] = useState('SIZE')
   const [showNotifs, setShowNotifs] = useState(false)
   const [showLoyalty, setShowLoyalty] = useState(false)
@@ -101,9 +101,11 @@ export default function Profile() {
   const tabKeys = tabs.map(t => t.id)
   const swipeHandlers = useSwipeTabs(tabKeys, activeTab, setActiveTab)
 
-  const scanArchtype = determineArchtype(latestScan)
+  // Use Bayesian-averaged scan when available (combines history for better accuracy)
+  const displayScan = (averagedScan?._bayesian?.scans_used > 1) ? averagedScan : latestScan
+  const scanArchtype = determineArchtype(displayScan)
   const scanArchInfo = ARCHETYPES.find(a => a.key === scanArchtype)
-  const scanArchLabel = archLabel(latestScan)
+  const scanArchLabel = archLabel(displayScan)
 
   const initials = (user?.name || 'A').charAt(0).toUpperCase()
 
@@ -381,10 +383,17 @@ export default function Profile() {
         </div>
 
         {/* Saved Dimensions */}
-        {latestScan ? (
+        {displayScan ? (
         <div className="bg-white overflow-hidden border-b border-black/8">
           <div className="flex items-center justify-between px-4 pt-4 pb-1">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-black">Saved Dimensions</p>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-black">Saved Dimensions</p>
+              {averagedScan?._bayesian?.scans_used > 1 && (
+                <p className="text-[8px] text-black/35 mt-0.5">
+                  Gemittelt aus {averagedScan._bayesian.scans_used} Scans
+                </p>
+              )}
+            </div>
             <button
               onClick={() => navigate('/my-scans')}
               className="text-[9px] uppercase tracking-widest text-black/50 font-bold bg-transparent border-0 p-0"
@@ -413,22 +422,22 @@ export default function Profile() {
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center py-1">
                   <span className="text-[9px] uppercase tracking-widest text-black/40">Schuhgröße</span>
-                  <span className="text-sm font-bold text-black">EU {latestScan.eu_size} · UK {latestScan.uk_size} · US {latestScan.us_size}</span>
+                  <span className="text-sm font-bold text-black">EU {displayScan.eu_size} · UK {displayScan.uk_size} · US {displayScan.us_size}</span>
                 </div>
                 <div className="border-t border-black/5 pt-2 mt-2">
                   <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Rechts</p>
                   {[
-                    ['Fußlänge', `${Number(latestScan.right_length).toFixed(1)} mm`, true],
-                    ['Breite', `${Number(latestScan.right_width).toFixed(1)} mm`],
-                    ['Gewölbe', `${Number(latestScan.right_arch).toFixed(1)} mm`],
-                    ...(latestScan.right_ball_girth ? [['Ballenumfang', `${Number(latestScan.right_ball_girth).toFixed(1)} mm`, true]] : []),
-                    ...(latestScan.right_instep_girth ? [['Ristumfang', `${Number(latestScan.right_instep_girth).toFixed(1)} mm`, true]] : []),
-                    ...(latestScan.right_long_heel_girth ? [['Langer Fersenumfang', `${Number(latestScan.right_long_heel_girth).toFixed(1)} mm`, true]] : []),
-                    ...(latestScan.right_short_heel_girth ? [['Kurzer Fersenumfang', `${Number(latestScan.right_short_heel_girth).toFixed(1)} mm`, true]] : []),
-                    ...(latestScan.right_heel_girth ? [['Fersenumfang', `${Number(latestScan.right_heel_girth).toFixed(1)} mm`]] : []),
-                    ...(latestScan.right_waist_girth ? [['Gelenkweite', `${Number(latestScan.right_waist_girth).toFixed(1)} mm`]] : []),
-                    ...(latestScan.right_ankle_girth ? [['Knöchel', `${Number(latestScan.right_ankle_girth).toFixed(1)} mm`]] : []),
-                    ...(latestScan.right_foot_height ? [['Fußhöhe', `${Number(latestScan.right_foot_height).toFixed(1)} mm`]] : []),
+                    ['Fußlänge', `${Number(displayScan.right_length).toFixed(1)} mm`, true],
+                    ['Breite', `${Number(displayScan.right_width).toFixed(1)} mm`],
+                    ['Gewölbe', `${Number(displayScan.right_arch).toFixed(1)} mm`],
+                    ...(displayScan.right_ball_girth ? [['Ballenumfang', `${Number(displayScan.right_ball_girth).toFixed(1)} mm`, true]] : []),
+                    ...(displayScan.right_instep_girth ? [['Ristumfang', `${Number(displayScan.right_instep_girth).toFixed(1)} mm`, true]] : []),
+                    ...(displayScan.right_long_heel_girth ? [['Langer Fersenumfang', `${Number(displayScan.right_long_heel_girth).toFixed(1)} mm`, true]] : []),
+                    ...(displayScan.right_short_heel_girth ? [['Kurzer Fersenumfang', `${Number(displayScan.right_short_heel_girth).toFixed(1)} mm`, true]] : []),
+                    ...(displayScan.right_heel_girth ? [['Fersenumfang', `${Number(displayScan.right_heel_girth).toFixed(1)} mm`]] : []),
+                    ...(displayScan.right_waist_girth ? [['Gelenkweite', `${Number(displayScan.right_waist_girth).toFixed(1)} mm`]] : []),
+                    ...(displayScan.right_ankle_girth ? [['Knöchel', `${Number(displayScan.right_ankle_girth).toFixed(1)} mm`]] : []),
+                    ...(displayScan.right_foot_height ? [['Fußhöhe', `${Number(displayScan.right_foot_height).toFixed(1)} mm`]] : []),
                   ].map(([k, v, mfr]) => (
                     <div key={k} className="flex justify-between items-center py-0.5">
                       <span className={`text-[9px] ${mfr ? 'text-black/60 font-medium' : 'text-black/40'}`}>{k}</span>
@@ -439,17 +448,17 @@ export default function Profile() {
                 <div className="border-t border-black/5 pt-2 mt-2">
                   <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Links</p>
                   {[
-                    ['Fußlänge', `${Number(latestScan.left_length).toFixed(1)} mm`, true],
-                    ['Breite', `${Number(latestScan.left_width).toFixed(1)} mm`],
-                    ['Gewölbe', `${Number(latestScan.left_arch).toFixed(1)} mm`],
-                    ...(latestScan.left_ball_girth ? [['Ballenumfang', `${Number(latestScan.left_ball_girth).toFixed(1)} mm`, true]] : []),
-                    ...(latestScan.left_instep_girth ? [['Ristumfang', `${Number(latestScan.left_instep_girth).toFixed(1)} mm`, true]] : []),
-                    ...(latestScan.left_long_heel_girth ? [['Langer Fersenumfang', `${Number(latestScan.left_long_heel_girth).toFixed(1)} mm`, true]] : []),
-                    ...(latestScan.left_short_heel_girth ? [['Kurzer Fersenumfang', `${Number(latestScan.left_short_heel_girth).toFixed(1)} mm`, true]] : []),
-                    ...(latestScan.left_heel_girth ? [['Fersenumfang', `${Number(latestScan.left_heel_girth).toFixed(1)} mm`]] : []),
-                    ...(latestScan.left_waist_girth ? [['Gelenkweite', `${Number(latestScan.left_waist_girth).toFixed(1)} mm`]] : []),
-                    ...(latestScan.left_ankle_girth ? [['Knöchel', `${Number(latestScan.left_ankle_girth).toFixed(1)} mm`]] : []),
-                    ...(latestScan.left_foot_height ? [['Fußhöhe', `${Number(latestScan.left_foot_height).toFixed(1)} mm`]] : []),
+                    ['Fußlänge', `${Number(displayScan.left_length).toFixed(1)} mm`, true],
+                    ['Breite', `${Number(displayScan.left_width).toFixed(1)} mm`],
+                    ['Gewölbe', `${Number(displayScan.left_arch).toFixed(1)} mm`],
+                    ...(displayScan.left_ball_girth ? [['Ballenumfang', `${Number(displayScan.left_ball_girth).toFixed(1)} mm`, true]] : []),
+                    ...(displayScan.left_instep_girth ? [['Ristumfang', `${Number(displayScan.left_instep_girth).toFixed(1)} mm`, true]] : []),
+                    ...(displayScan.left_long_heel_girth ? [['Langer Fersenumfang', `${Number(displayScan.left_long_heel_girth).toFixed(1)} mm`, true]] : []),
+                    ...(displayScan.left_short_heel_girth ? [['Kurzer Fersenumfang', `${Number(displayScan.left_short_heel_girth).toFixed(1)} mm`, true]] : []),
+                    ...(displayScan.left_heel_girth ? [['Fersenumfang', `${Number(displayScan.left_heel_girth).toFixed(1)} mm`]] : []),
+                    ...(displayScan.left_waist_girth ? [['Gelenkweite', `${Number(displayScan.left_waist_girth).toFixed(1)} mm`]] : []),
+                    ...(displayScan.left_ankle_girth ? [['Knöchel', `${Number(displayScan.left_ankle_girth).toFixed(1)} mm`]] : []),
+                    ...(displayScan.left_foot_height ? [['Fußhöhe', `${Number(displayScan.left_foot_height).toFixed(1)} mm`]] : []),
                   ].map(([k, v, mfr]) => (
                     <div key={k} className="flex justify-between items-center py-0.5">
                       <span className={`text-[9px] ${mfr ? 'text-black/60 font-medium' : 'text-black/40'}`}>{k}</span>
@@ -472,7 +481,7 @@ export default function Profile() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[9px] uppercase tracking-widest text-black/40">Genauigkeit</span>
-                  <span className="text-sm font-semibold text-black">{Number(latestScan.accuracy).toFixed(1)}%</span>
+                  <span className="text-sm font-semibold text-black">{Number(displayScan.accuracy).toFixed(1)}%</span>
                 </div>
                 <div className="border-t border-black/5 pt-3 mt-2">
                   <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Alle Fußtypen</p>

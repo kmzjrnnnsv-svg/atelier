@@ -13,6 +13,7 @@ const useAtelierStore = create((set, get) => ({
   cart:       [],   // items in shopping cart (not yet ordered)
   faqs:       [],
   latestScan:  null, // most recent foot scan for this user
+  averagedScan: null, // Bayesian-weighted average of all user scans
   footNotes:   '',   // user-level persistent foot notes
   shoeMaterials: [],
   shoeColors:   [],
@@ -147,6 +148,9 @@ const useAtelierStore = create((set, get) => ({
   async refreshScan() {
     const scans = await apiFetch('/api/scans/mine').catch(() => [])
     set({ latestScan: Array.isArray(scans) && scans.length > 0 ? scans[0] : null })
+    // Also fetch Bayesian average for returning users
+    const avg = await apiFetch('/api/scans/my-average').catch(() => null)
+    set({ averagedScan: avg })
   },
 
   // --- FOOT NOTES ---

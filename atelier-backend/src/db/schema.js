@@ -356,6 +356,33 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_cs_scan ON scan_cross_sections(scan_id);
 
+    -- ── Measurement calibration (learned from validated scans) ─────────
+    CREATE TABLE IF NOT EXISTS measurement_calibration (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      measurement     TEXT    NOT NULL,     -- 'right_length', 'right_ball_girth', etc.
+      source          TEXT    NOT NULL,     -- 'photo', 'photogrammetry', 'lidar'
+      bias_mm         REAL    NOT NULL DEFAULT 0,  -- systematic offset (predicted - actual)
+      std_dev_mm      REAL    NOT NULL DEFAULT 5,  -- standard deviation of error
+      sample_count    INTEGER NOT NULL DEFAULT 0,  -- number of validated pairs
+      updated_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(measurement, source)
+    );
+    CREATE INDEX IF NOT EXISTS idx_cal_meas ON measurement_calibration(measurement, source);
+
+    -- ── Scan comparison pairs (AI prediction vs admin-corrected ground truth) ──
+    CREATE TABLE IF NOT EXISTS scan_comparison_pairs (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      scan_id         INTEGER NOT NULL REFERENCES foot_scans(id) ON DELETE CASCADE,
+      measurement     TEXT    NOT NULL,     -- 'right_length', 'right_ball_girth', etc.
+      source          TEXT    NOT NULL,     -- 'photo', 'photogrammetry', 'lidar'
+      predicted_mm    REAL    NOT NULL,     -- original AI/CV measurement
+      actual_mm       REAL    NOT NULL,     -- admin-corrected value
+      error_mm        REAL    NOT NULL,     -- predicted - actual
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(scan_id, measurement)
+    );
+    CREATE INDEX IF NOT EXISTS idx_comp_scan ON scan_comparison_pairs(scan_id);
+
     -- ── Explore sections (CMS-editable) ───────────────────────────────────
     CREATE TABLE IF NOT EXISTS explore_sections (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
