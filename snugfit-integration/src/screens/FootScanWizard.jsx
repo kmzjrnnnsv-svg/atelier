@@ -484,7 +484,7 @@ export default function FootScanWizard({ navigation, route }) {
 
           <Text style={styles.introTitle}>Linken Fuß scannen</Text>
           <Text style={styles.introDescription}>
-            Stelle deinen linken Fuß barfuß auf eine helle, ebene Fläche.
+            Stelle deinen linken Fuß mit Socke auf eine helle, ebene Fläche.
             Du wirst durch{' '}
             <Text style={{ color: '#3b82f6', fontWeight: '700' }}>
               {SCAN_ANGLES.filter(a => a.requiredForSTL).length} Aufnahme-Positionen
@@ -501,7 +501,7 @@ export default function FootScanWizard({ navigation, route }) {
           {/* Checkliste */}
           <View style={styles.checkList}>
             {[
-              'Socken ausgezogen',
+              'Dünne Alltagssocken tragen',
               'Helle, ebene Oberfläche',
               'Gute Beleuchtung',
               'Kamera-Berechtigung erteilt',
