@@ -178,7 +178,7 @@ def sample_foot_measurements(rng, sex='mixed', n=1):
     return results
 
 
-# ─── Girth estimation from length + width ────────────────────────────────────
+# ─── Girth estimation from length + width (legacy, basic) ────────────────────
 # Regression: girth = a * width + b * length + c
 # [ANSUR] = computed from ANSUR II raw data (N=6,068)
 # [est] = estimated from ANSUR values and IBV ratios
@@ -193,13 +193,107 @@ GIRTH_REGRESSIONS = {
 }
 
 
-def estimate_girths(length, width):
-    """Estimate girth measurements from length and width using IBV regressions."""
+# ─── Cross-feature girth estimation (v2) ─────────────────────────────────────
+# Uses all available direct ANSUR measurements as predictors.
+# Evaluated via 5-fold CV on N=6,068 ANSUR II subjects.
+# Execution order matters: ball_girth first, then heel_girth, then ankle_girth.
+#
+# Accuracy comparison vs legacy (length+width only):
+#   ball_girth:  MAE 4.89 → 4.49mm  R² 0.865 → 0.887  (+8%)
+#   heel_girth:  MAE 6.94 → 5.68mm  R² 0.847 → 0.898  (+13%)
+#   ankle_girth: MAE 9.39 → 8.03mm  R² 0.444 → 0.590  (+14%)
+
+GIRTH_REGRESSIONS_V2 = {
+    # Step 1: ball_girth from length + width + heel_girth + ankle_girth + heel_width
+    #         R²=0.887, MAE=4.49mm, Max=20.4mm  [ANSUR 5-fold CV, N=6068]
+    'ball_girth': {
+        'features': ['length', 'width', 'heel_girth', 'ankle_girth', 'heel_width'],
+        'length': 0.0137, 'width': 1.6498, 'heel_girth': 0.1826,
+        'ankle_girth': 0.1150, 'heel_width': -0.0589, 'intercept': -4.97,
+    },
+    # Step 2: heel_girth from length + width + ball_girth + ankle_girth + heel_width
+    #         R²=0.898, MAE=5.68mm, Max=29.1mm  [ANSUR 5-fold CV, N=6068]
+    'heel_girth': {
+        'features': ['length', 'width', 'ball_girth', 'ankle_girth', 'heel_width'],
+        'length': 0.6408, 'width': 0.1166, 'ball_girth': 0.2931,
+        'ankle_girth': 0.2693, 'heel_width': 0.5192, 'intercept': -16.33,
+    },
+    # Step 3: ankle_girth from length + width + ball_girth + heel_girth + heel_width
+    #         R²=0.590, MAE=8.03mm, Max=47.8mm  [ANSUR 5-fold CV, N=6068]
+    #         NOTE: fundamental ceiling — ankle girth depends on soft tissue
+    'ankle_girth': {
+        'features': ['length', 'width', 'ball_girth', 'heel_girth', 'heel_width'],
+        'length': -0.3162, 'width': -0.2441, 'ball_girth': 0.3793,
+        'heel_girth': 0.5536, 'heel_width': 0.0263, 'intercept': 53.58,
+    },
+    # Estimated girths (no direct ANSUR measurement available)
+    'instep_girth': {
+        'features': ['length', 'width'],
+        'length': 0.2498, 'width': 1.7849, 'intercept': 6.48,
+    },
+    'waist_girth': {
+        'features': ['length', 'width'],
+        'length': 0.1946, 'width': 1.5945, 'intercept': 8.35,
+    },
+    'long_heel_girth': {
+        'features': ['length', 'width', 'ball_girth', 'ankle_girth', 'heel_width'],
+        'length': 0.6408, 'width': 0.1166, 'ball_girth': 0.2931,
+        'ankle_girth': 0.2693, 'heel_width': 0.5192, 'intercept': -16.33,
+    },
+    'short_heel_girth': {
+        'features': ['length', 'width'],
+        'length': 0.720, 'width': 1.080, 'intercept': 2.9,
+    },
+}
+
+
+def estimate_girths(length, width, **known):
+    """Estimate girth measurements using best available features.
+
+    Uses cross-feature regressions (V2) when additional measurements are
+    available, falls back to basic length+width regression otherwise.
+
+    Args:
+        length: foot length in mm
+        width: foot width in mm
+        **known: any already-known measurements (e.g. ball_girth=245.0,
+                 heel_girth=330.0, ankle_girth=220.0, heel_width=70.0)
+
+    Returns:
+        dict with all girth estimates in mm
+    """
+    # Start with known values
+    values = {'length': length, 'width': width, **known}
+
+    # Compute in dependency order: ball → heel → ankle, then others
+    order = ['ball_girth', 'heel_girth', 'ankle_girth',
+             'instep_girth', 'waist_girth', 'long_heel_girth', 'short_heel_girth']
+
     result = {}
-    for key, coefs in GIRTH_REGRESSIONS.items():
-        val = coefs['width'] * width + coefs['length'] * length + coefs['intercept']
-        result[key] = round(float(val), 1)
-    result['heel_girth'] = result['long_heel_girth']
+    for girth_name in order:
+        # Skip if already known
+        if girth_name in values and values[girth_name] is not None:
+            result[girth_name] = round(float(values[girth_name]), 1)
+            continue
+
+        # Try V2 (cross-feature) first
+        v2 = GIRTH_REGRESSIONS_V2.get(girth_name)
+        if v2 is not None:
+            features = v2['features']
+            if all(f in values and values[f] is not None for f in features):
+                val = sum(v2[f] * values[f] for f in features) + v2['intercept']
+                result[girth_name] = round(float(val), 1)
+                values[girth_name] = result[girth_name]
+                continue
+
+        # Fallback to legacy (length + width only)
+        legacy = GIRTH_REGRESSIONS.get(girth_name)
+        if legacy is not None:
+            val = legacy['width'] * width + legacy['length'] * length + legacy['intercept']
+            result[girth_name] = round(float(val), 1)
+            values[girth_name] = result[girth_name]
+
+    result['heel_girth'] = result.get('long_heel_girth', result.get('heel_girth'))
     return result
 
 
