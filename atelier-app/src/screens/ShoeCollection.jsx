@@ -110,7 +110,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav }) {
         className="absolute top-4 right-4 w-8 h-8 bg-white/20 backdrop-blur-sm flex items-center justify-center border-0"
         onClick={e => { e.stopPropagation(); onToggleFav() }}
       >
-        <Heart size={15} strokeWidth={1.5} className={isFav ? 'text-red-400 fill-red-400' : 'text-white'} />
+        <Heart size={15} strokeWidth={1.5} className={isFav ? 'text-black fill-black' : 'text-white'} />
       </button>
 
       <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -145,7 +145,7 @@ function GridCard({ product, onSelect, isFav, onToggleFav }) {
           className="absolute top-2 right-2 w-7 h-7 bg-white/80 flex items-center justify-center border-0 z-10"
           onClick={e => { e.stopPropagation(); onToggleFav() }}
         >
-          <Heart size={13} strokeWidth={1.5} className={isFav ? 'text-red-500 fill-red-500' : 'text-black/35'} />
+          <Heart size={13} strokeWidth={1.5} className={isFav ? 'text-black fill-black' : 'text-black/35'} />
         </button>
 
         {product.image ? (
@@ -179,7 +179,7 @@ function GridCard({ product, onSelect, isFav, onToggleFav }) {
 
 export default function ShoeCollection() {
   const navigate     = useNavigate()
-  const { shoes, favorites, toggleFavorite } = useAtelierStore()
+  const { shoes, favorites, toggleFavorite, orders } = useAtelierStore()
   const { user }     = useAuth()
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy,   setScanAccuracy]   = useState(null)
@@ -214,20 +214,14 @@ export default function ShoeCollection() {
           </button>
           <button
             className="relative bg-transparent border-0 p-0"
-            onClick={() => navigate('/wishlist')}
-          >
-            <Heart size={20} strokeWidth={1.5} className={favorites.length > 0 ? 'text-red-400 fill-red-400' : 'text-black/60'} />
-            {favorites.length > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[14px] h-3.5 bg-black flex items-center justify-center">
-                <span className="text-[7px] font-bold text-white">{favorites.length}</span>
-              </span>
-            )}
-          </button>
-          <button
-            className="relative bg-transparent border-0 p-0"
             onClick={() => navigate('/orders')}
           >
             <ShoppingBag size={20} strokeWidth={1.5} className="text-black/60" />
+            {orders.filter(o => !['delivered','cancelled'].includes(o.status)).length > 0 && (
+              <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 bg-black flex items-center justify-center">
+                <span className="text-[7px] font-bold text-white">{orders.filter(o => !['delivered','cancelled'].includes(o.status)).length}</span>
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -286,7 +280,7 @@ export default function ShoeCollection() {
                     onClick={() => navigate('/wishlist')}
                     className="text-[9px] uppercase tracking-widest text-black/35 font-normal bg-transparent border-0 p-0 flex items-center gap-1"
                   >
-                    <Heart size={10} strokeWidth={1.5} className={favorites.length > 0 ? 'text-red-400 fill-red-400' : 'text-black/35'} />
+                    <Heart size={10} strokeWidth={1.5} className={favorites.length > 0 ? 'text-black fill-black' : 'text-black/35'} />
                     Wishlist {favorites.length > 0 ? `(${favorites.length})` : ''}
                   </button>
                 </div>
