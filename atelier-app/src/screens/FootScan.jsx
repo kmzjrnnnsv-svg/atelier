@@ -564,6 +564,8 @@ export default function FootScan() {
   const [result,     setResult]    = useState(null)
   const [saved,      setSaved]     = useState(false)
   const [saveErr,    setSaveErr]   = useState(null)
+  const [editedValues, setEditedValues] = useState({})  // user overrides for measurements
+  const [savingEdits, setSavingEdits]   = useState(false)
   const [camStatus,  setCamStatus] = useState('idle')
   const [aiStatus,   setAiStatus]  = useState('')
   // LiDAR
@@ -1454,40 +1456,105 @@ export default function FootScan() {
                   </div>
                 )}
 
-                {/* Measurements */}
+                {/* Measurements — editable by user */}
                 <div>
-                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>Messwerte</p>
-                  {[['Rechts', result.right], ['Links', result.left]].map(([label, m]) => (
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Messwerte</p>
+                    <p className="text-[8px] text-black/25">Tippe auf einen Wert zum Ändern</p>
+                  </div>
+                  {[['Rechts', result.right, 'right'], ['Links', result.left, 'left']].map(([label, m, side]) => (
                     <div key={label} className="border border-black/5 overflow-hidden mb-3">
                       <div className="px-4 py-2.5 bg-black border-b border-black/5">
                         <span className="text-[10px] font-semibold text-white uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>{label}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-0">
                         {[
-                          { label: 'Länge',       value: m.length,       unit: 'mm' },
-                          { label: 'Breite',       value: m.width,        unit: 'mm' },
-                          { label: 'Ballenumfang', value: m.ball_girth,   unit: 'mm' },
-                          { label: 'Ristumfang',   value: m.instep_girth, unit: 'mm' },
-                          { label: 'Fersenumfang', value: m.heel_girth,   unit: 'mm' },
-                          { label: 'Gewölbehöhe',  value: m.arch,         unit: 'mm' },
-                          { label: 'Gelenkweite',  value: m.waist_girth,  unit: 'mm' },
-                          { label: 'Knöchel',      value: m.ankle_girth,  unit: 'mm' },
-                        ].map(({ label: lbl, value, unit }, i) => (
-                          <div key={lbl} className={`px-4 py-3 flex items-center justify-between ${
-                            i % 2 === 0 ? 'border-r border-black/5' : ''
-                          } ${i >= 2 ? 'border-t border-black/5' : ''}`}>
-                            <span className="text-[10px] text-black/35">{lbl}</span>
-                            <span className="text-[11px] font-bold text-black">
-                              {value != null ? `${Number(value).toFixed(1)} mm` : '—'}
-                            </span>
-                          </div>
-                        ))}
+                          { label: 'Länge',              key: 'length',           value: m.length },
+                          { label: 'Breite',              key: 'width',            value: m.width },
+                          { label: 'Ballenumfang',        key: 'ball_girth',       value: m.ball_girth },
+                          { label: 'Ristumfang',          key: 'instep_girth',     value: m.instep_girth },
+                          { label: 'Lg. Fersenumfang',    key: 'long_heel_girth',  value: m.long_heel_girth },
+                          { label: 'Kz. Fersenumfang',    key: 'short_heel_girth', value: m.short_heel_girth },
+                          { label: 'Fersenumfang',        key: 'heel_girth',       value: m.heel_girth },
+                          { label: 'Gewölbehöhe',         key: 'arch',             value: m.arch },
+                          { label: 'Gelenkweite',         key: 'waist_girth',      value: m.waist_girth },
+                          { label: 'Knöchel',             key: 'ankle_girth',      value: m.ankle_girth },
+                          { label: 'Fußhöhe',             key: 'foot_height',      value: m.foot_height },
+                        ].map(({ label: lbl, key, value }, i) => {
+                          const editKey = `${side}_${key}`
+                          const edited = editedValues[editKey]
+                          const displayVal = edited !== undefined ? edited : (value != null ? Number(value).toFixed(1) : '')
+                          return (
+                            <div key={lbl} className={`px-3 py-2.5 flex items-center justify-between ${
+                              i % 2 === 0 ? 'border-r border-black/5' : ''
+                            } ${i >= 2 ? 'border-t border-black/5' : ''}`}>
+                              <span className="text-[9px] text-black/35">{lbl}</span>
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.1"
+                                  value={displayVal}
+                                  onChange={e => setEditedValues(v => ({ ...v, [editKey]: e.target.value }))}
+                                  placeholder="—"
+                                  className={`w-16 text-right text-[11px] font-bold bg-transparent border-0 border-b p-0 py-0.5 focus:outline-none ${
+                                    edited !== undefined ? 'text-teal-600 border-teal-300' : 'text-black border-transparent'
+                                  }`}
+                                />
+                                <span className="text-[9px] text-black/25">mm</span>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   ))}
+                  {Object.keys(editedValues).length > 0 && (
+                    <button
+                      onClick={async () => {
+                        setSavingEdits(true)
+                        try {
+                          // Update result state with edited values
+                          const newResult = { ...result, right: { ...result.right }, left: { ...result.left } }
+                          for (const [editKey, val] of Object.entries(editedValues)) {
+                            const numVal = parseFloat(val)
+                            if (isNaN(numVal)) continue
+                            const [side, ...rest] = editKey.split('_')
+                            const field = rest.join('_')
+                            newResult[side][field] = numVal
+                          }
+                          setResult(newResult)
+
+                          // If scan is saved, update via API
+                          const scans = await apiFetch('/api/scans/mine').catch(() => [])
+                          if (scans?.[0]?.id) {
+                            const body = {}
+                            for (const [editKey, val] of Object.entries(editedValues)) {
+                              const numVal = parseFloat(val)
+                              if (!isNaN(numVal)) body[editKey] = numVal
+                            }
+                            await apiFetch(`/api/scans/${scans[0].id}/my-measurements`, {
+                              method: 'PATCH',
+                              body: JSON.stringify(body),
+                            })
+                            refreshScan()
+                          }
+                          setEditedValues({})
+                        } catch (err) {
+                          setSaveErr('Fehler beim Speichern: ' + (err.message || err))
+                        }
+                        setSavingEdits(false)
+                      }}
+                      disabled={savingEdits}
+                      className="w-full py-3 bg-teal-600 text-white font-bold text-[11px] border-0 uppercase tracking-widest active:opacity-80 disabled:opacity-50"
+                      style={{ letterSpacing: '0.1em' }}>
+                      {savingEdits ? 'Wird gespeichert…' : 'Werte aktualisieren'}
+                    </button>
+                  )}
                 </div>
 
-                {/* 3D Preview */}
+                {/* 3D Preview + Exports — admin/curator only */}
+                {(user?.role === 'admin' || user?.role === 'curator') && (
                 <div>
                   <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>3D-Vorschau</p>
                   <div className="overflow-hidden" style={{ background: '#111111' }}>
@@ -1502,9 +1569,8 @@ export default function FootScan() {
                       </div>
                     </div>
 
-                    {/* Shoe Last / STL / OBJ Export — admin/curator only */}
-                    {(user?.role === 'admin' || user?.role === 'curator') && (
-                      <div className="p-3 border-t border-white/5 space-y-2">
+                    {/* Shoe Last / STL / OBJ Export */}
+                    <div className="p-3 border-t border-white/5 space-y-2">
                         {/* Shoe type selector */}
                         <div className="flex items-center gap-2 mb-2">
                           <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Schuhtyp:</label>
@@ -1610,9 +1676,9 @@ export default function FootScan() {
                           <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
                         </button>
                       </div>
-                    )}
                   </div>
                 </div>
+                )}
 
                 {/* Notes input — saves to user profile */}
                 <div>
