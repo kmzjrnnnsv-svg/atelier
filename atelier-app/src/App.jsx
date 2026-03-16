@@ -27,6 +27,7 @@ const lazyImports = {
   '/orders':     () => import('./screens/Orders'),
   '/checkout':   () => import('./screens/Checkout'),
   '/help':       () => import('./screens/HelpSupport'),
+  '/feedback':   () => import('./screens/Feedback'),
   '/legal':      () => import('./screens/LegalDoc'),
   '/my-scans':   () => import('./screens/MyScans'),
   '/welcome':    () => import('./screens/Welcome'),
@@ -54,6 +55,7 @@ const Wishlist          = lazy(lazyImports['/wishlist'])
 const Orders            = lazy(lazyImports['/orders'])
 const Checkout          = lazy(lazyImports['/checkout'])
 const HelpSupport       = lazy(lazyImports['/help'])
+const Feedback          = lazy(lazyImports['/feedback'])
 const LegalDoc          = lazy(lazyImports['/legal'])
 const MyScans           = lazy(lazyImports['/my-scans'])
 const Welcome           = lazy(lazyImports['/welcome'])
@@ -79,6 +81,7 @@ const LastSettings         = lazy(() => import('./screens/cms/LastSettings'))
 const ProductConfigEditor  = lazy(() => import('./screens/cms/ProductConfigEditor'))
 const ExploreEditor        = lazy(() => import('./screens/cms/ExploreEditor'))
 const LoyaltyEditor        = lazy(() => import('./screens/cms/LoyaltyEditor'))
+const FeedbackPanel        = lazy(() => import('./screens/cms/FeedbackPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -135,6 +138,7 @@ function AppRoutes() {
               <Route path="email-templates" element={<EmailTemplatesPanel />} />
               <Route path="leisten"       element={<LastSettings />} />
               <Route path="product-config" element={<ProductConfigEditor />} />
+              <Route path="feedback" element={<FeedbackPanel />} />
             </Route>
           </Routes>
         </Suspense>
@@ -166,6 +170,7 @@ function AppRoutes() {
             <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
+            <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
             <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
             <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
             <Route path="*"            element={<NotFound />} />

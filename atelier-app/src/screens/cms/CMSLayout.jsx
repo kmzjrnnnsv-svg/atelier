@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Compass, Award } from 'lucide-react'
+import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Compass, Award, MessageSquare } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useAtelierStore from '../../store/atelierStore'
 
@@ -31,11 +31,12 @@ export default function CMSLayout() {
     { to: '/cms/orders',          label: 'Bestellungen',  icon: ShoppingBag },
     { to: '/cms/email-templates', label: 'E-Mail Vorlagen', icon: Mail       },
     { to: '/cms/faq',             label: 'FAQ & Support',  icon: HelpCircle  },
+    { to: '/cms/feedback',         label: 'Feedback & Tickets', icon: MessageSquare },
     { to: '/cms/legal',    label: 'Rechtliches',   icon: FileText    },
   ]
 
   return (
-    <div className="flex h-screen bg-[#f6f5f3] text-black overflow-hidden" style={{ width: '100%' }}>
+    <div className="flex h-screen bg-[#f6f5f3] text-black overflow-hidden" style={{ width: '100vw', maxWidth: '100vw' }}>
       {/* Sidebar */}
       <aside className="w-56 flex-shrink-0 bg-[#0d0d0d] flex flex-col">
 
@@ -141,7 +142,7 @@ export default function CMSLayout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-[#f6f5f3]">
+      <main className="flex-1 min-w-0 overflow-y-auto bg-[#f6f5f3]">
         <Outlet />
       </main>
     </div>

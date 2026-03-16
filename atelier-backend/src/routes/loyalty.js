@@ -91,4 +91,49 @@ router.put('/users/:id/points', ...canWrite, param('id').isInt(),
   }
 )
 
+// GET /api/loyalty/settings — get expiry settings
+router.get('/settings', ...canWrite, (req, res) => {
+  const db = getDb()
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'loyalty_expiry_days'").get()
+  res.json({ expiry_days: row ? parseInt(row.value, 10) : 365 })
+})
+
+// PUT /api/loyalty/settings — update expiry settings
+router.put('/settings', ...canWrite, (req, res) => {
+  const db = getDb()
+  const { expiry_days } = req.body
+  const days = parseInt(expiry_days, 10)
+  if (isNaN(days) || days < 0) return res.status(400).json({ error: 'Ungültige Tage' })
+
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES ('loyalty_expiry_days', ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `).run(String(days), req.user.id)
+
+  res.json({ expiry_days: days })
+})
+
+// POST /api/loyalty/expire — run expiration check (admin/curator trigger)
+router.post('/expire', ...canWrite, (req, res) => {
+  const db = getDb()
+  const expiryRow = db.prepare("SELECT value FROM settings WHERE key = 'loyalty_expiry_days'").get()
+  const expiryDays = expiryRow ? parseInt(expiryRow.value, 10) : 365
+  if (expiryDays <= 0) return res.json({ expired: 0, message: 'Verfall deaktiviert' })
+
+  // Find gold tier threshold to exclude gold+ users
+  const goldTier = db.prepare("SELECT min_points FROM loyalty_tiers WHERE key = 'gold'").get()
+  const goldThreshold = goldTier?.min_points || 1500
+
+  // Users below gold threshold whose last order was > expiryDays ago
+  const expired = db.prepare(`
+    UPDATE users SET loyalty_points = 0, loyalty_tier = 'bronze', updated_at = datetime('now')
+    WHERE loyalty_points > 0
+      AND loyalty_points < ?
+      AND (last_order_at IS NULL OR last_order_at < datetime('now', ?))
+  `).run(goldThreshold, `-${expiryDays} days`)
+
+  res.json({ expired: expired.changes, message: `${expired.changes} Benutzer-Punkte verfallen.` })
+})
+
 export default router
