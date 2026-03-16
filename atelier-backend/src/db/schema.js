@@ -233,6 +233,8 @@ export function runMigrations(db) {
     `ALTER TABLE foot_scans ADD COLUMN left_short_heel_girth  REAL`,
     // users — track last order date for loyalty point expiration
     `ALTER TABLE users ADD COLUMN last_order_at TEXT`,
+    // foot_scans — scan with socks (measurements include sock thickness)
+    `ALTER TABLE foot_scans ADD COLUMN scanned_with_socks INTEGER NOT NULL DEFAULT 1`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
