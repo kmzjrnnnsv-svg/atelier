@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, ShoppingBag, Heart, RotateCcw, ScanLine, Info } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
@@ -15,6 +15,25 @@ const CATEGORIES = [
   { label: 'SNEAKER',    value: 'SNEAKER' },
   { label: 'WHOLECUTS',  value: 'MONK'    },
 ]
+
+// ── Swipe hook ─────────────────────────────────────────────────────────────
+function useSwipeTabs(items, activeKey, setActiveKey) {
+  const startX = useRef(0)
+  const startY = useRef(0)
+  const onTouchStart = useCallback(e => {
+    startX.current = e.touches[0].clientX
+    startY.current = e.touches[0].clientY
+  }, [])
+  const onTouchEnd = useCallback(e => {
+    const dx = e.changedTouches[0].clientX - startX.current
+    const dy = e.changedTouches[0].clientY - startY.current
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return
+    const idx = items.indexOf(activeKey)
+    if (dx < 0 && idx < items.length - 1) setActiveKey(items[idx + 1])
+    if (dx > 0 && idx > 0) setActiveKey(items[idx - 1])
+  }, [items, activeKey, setActiveKey])
+  return { onTouchStart, onTouchEnd }
+}
 
 function personalMatch(baseMatch, scanAccuracy, shoeId) {
   if (!scanAccuracy) return baseMatch
@@ -164,6 +183,8 @@ export default function ShoeCollection() {
   const { user }     = useAuth()
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy,   setScanAccuracy]   = useState(null)
+  const catValues = CATEGORIES.map(c => c.value)
+  const swipeHandlers = useSwipeTabs(catValues, activeCategory, setActiveCategory)
 
   useEffect(() => {
     apiFetch('/api/scans/mine')
@@ -232,7 +253,7 @@ export default function ShoeCollection() {
       </div>
 
       {/* ── Content ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4" {...swipeHandlers}>
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-black/35">
