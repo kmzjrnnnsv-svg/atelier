@@ -683,9 +683,10 @@ router.post('/analyze', authenticate, async (req, res) => {
 
     // Merge depth data if available (depth measurements get high priority for girths)
     if (depthMeasurements) {
-      // LiDAR-Daten bekommen höhere Gewichtung als generische Tiefendaten (WebXR/ARCore)
+      // LiDAR-Daten bekommen deutlich höhere Gewichtung (benchmark: 80/20 → MAE 1.93mm)
+      // WebXR/ARCore Tiefendaten sind ungenauer → konservativere Gewichtung
       const isLidar = Object.values(depthData || {}).some(d => d?.source === 'lidar')
-      const depthWeight = isLidar ? 0.6 : 0.4  // LiDAR: 60% Tiefe + 40% Foto, sonst umgekehrt
+      const depthWeight = isLidar ? 0.8 : 0.4  // LiDAR: 80% Tiefe + 20% Foto, WebXR: 40/60
       const photoWeight = 1.0 - depthWeight
 
       for (const [key, val] of Object.entries(depthMeasurements.right || {})) {
