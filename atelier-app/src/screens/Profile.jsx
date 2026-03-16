@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing } from 'lucide-react'
+import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
+
+const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
 
 const tabs = [
   { id: 'SIZE',    label: 'SIZE',    sub: 'Maße' },
@@ -38,9 +40,10 @@ const styleCards = [
 export default function Profile() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
-  const { favorites, orders, notifications, markAllNotificationsRead } = useAtelierStore()
+  const { favorites, orders, notifications, markAllNotificationsRead, loyaltyTiers, loyaltyStatus } = useAtelierStore()
   const [activeTab, setActiveTab] = useState('SIZE')
   const [showNotifs, setShowNotifs] = useState(false)
+  const [showLoyalty, setShowLoyalty] = useState(false)
   const unreadCount = notifications.filter(n => !n.read).length
 
   const initials = (user?.name || 'A').charAt(0).toUpperCase()
@@ -119,11 +122,26 @@ export default function Profile() {
             </div>
 
             <h2 className="text-xl font-bold text-black font-playfair">{user?.name || 'Alex Sterling'}</h2>
-            <div className="mt-1.5 px-3 py-1 border border-black/15" style={{ background: '#fef9f0' }}>
-              <span className="text-[8px] uppercase tracking-[0.2em] font-bold" style={{ color: '#b45309' }}>
-                Platinum Member
-              </span>
-            </div>
+            {(() => {
+              const sorted = [...loyaltyTiers].sort((a, b) => a.sortOrder - b.sortOrder)
+              const currentTier = sorted.find(t => t.key === loyaltyStatus.tier) || sorted[0]
+              if (!currentTier) return null
+              const TierIcon = TIER_ICONS[currentTier.icon] || Award
+              return (
+                <button
+                  onClick={() => setShowLoyalty(v => !v)}
+                  className="mt-1.5 px-3 py-1.5 border border-black/15 bg-transparent flex items-center gap-1.5"
+                  style={{ background: `${currentTier.color}10` }}
+                >
+                  <TierIcon size={10} style={{ color: currentTier.color }} />
+                  <span className="text-[8px] uppercase tracking-[0.2em] font-bold" style={{ color: currentTier.color }}>
+                    {currentTier.label} Member
+                  </span>
+                  <span className="text-[8px] text-black/30 ml-1">·</span>
+                  <span className="text-[8px] text-black/40 font-mono">{loyaltyStatus.points.toLocaleString()} Pkt.</span>
+                </button>
+              )
+            })()}
           </div>
 
           <div className="flex mt-5 divide-x divide-black/8">
@@ -143,6 +161,121 @@ export default function Profile() {
             ))}
           </div>
         </div>
+
+        {/* Loyalty Tiers Section */}
+        {showLoyalty && (() => {
+          const sorted = [...loyaltyTiers].sort((a, b) => a.sortOrder - b.sortOrder)
+          const currentTier = sorted.find(t => t.key === loyaltyStatus.tier)
+          const currentIdx = sorted.findIndex(t => t.key === loyaltyStatus.tier)
+          const nextTier = sorted[currentIdx + 1]
+          const points = loyaltyStatus.points
+
+          return (
+            <div className="bg-[#f6f5f3] border-b border-black/8">
+              {/* Progress bar */}
+              {nextTier && (
+                <div className="px-5 pt-4 pb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[8px] uppercase tracking-widest text-black/40 font-semibold">Fortschritt</span>
+                    <span className="text-[9px] text-black/50">
+                      {points.toLocaleString()} / {nextTier.minPoints.toLocaleString()} Punkte
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-black/8">
+                    <div
+                      className="h-full transition-all"
+                      style={{
+                        width: `${Math.min(100, (points / nextTier.minPoints) * 100)}%`,
+                        backgroundColor: currentTier?.color || '#000',
+                      }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-black/40 mt-1.5">
+                    Noch {(nextTier.minPoints - points).toLocaleString()} Punkte bis <span className="font-semibold" style={{ color: nextTier.color }}>{nextTier.label}</span>
+                  </p>
+                </div>
+              )}
+
+              {/* Tier cards */}
+              <div className="px-5 pb-4 space-y-2">
+                {sorted.map((tier, idx) => {
+                  const isActive = tier.key === loyaltyStatus.tier
+                  const isReached = points >= tier.minPoints
+                  const isHidden = !tier.visible && !isReached
+                  const TIcon = TIER_ICONS[tier.icon] || Award
+
+                  if (isHidden) {
+                    return (
+                      <div key={tier.id} className="border border-black/5 bg-white/60 p-3 flex items-center gap-3">
+                        <div className="w-9 h-9 flex items-center justify-center bg-black/5">
+                          <Lock size={14} className="text-black/20" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[9px] text-black/25 uppercase tracking-widest font-semibold">Geheimer Status</p>
+                          <p className="text-[9px] text-black/20 mt-0.5">Wird bei Erreichen freigeschaltet</p>
+                        </div>
+                        <span className="text-[8px] text-black/20 font-mono">{tier.minPoints.toLocaleString()} Pkt.</span>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div
+                      key={tier.id}
+                      className={`border p-3 ${isActive ? 'border-black/15 bg-white' : isReached ? 'border-black/8 bg-white/80' : 'border-black/5 bg-white/50'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: isReached ? tier.color : `${tier.color}20` }}>
+                          <TIcon size={16} color={isReached ? 'white' : tier.color} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className={`text-xs font-semibold ${isActive ? 'text-black' : isReached ? 'text-black/70' : 'text-black/35'}`}>
+                              {tier.label}
+                            </p>
+                            {isActive && (
+                              <span className="text-[7px] uppercase tracking-widest font-bold px-1.5 py-0.5" style={{ backgroundColor: `${tier.color}15`, color: tier.color }}>
+                                Aktuell
+                              </span>
+                            )}
+                            {isReached && !isActive && (
+                              <CheckCircle size={11} className="text-green-500" />
+                            )}
+                          </div>
+                          {tier.description && (
+                            <p className="text-[9px] text-black/40 mt-0.5 leading-relaxed line-clamp-2">{tier.description}</p>
+                          )}
+                        </div>
+                        <span className="text-[8px] text-black/30 font-mono flex-shrink-0">{tier.minPoints.toLocaleString()}</span>
+                      </div>
+
+                      {/* Benefits for active tier */}
+                      {isActive && tier.benefits?.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-black/5 space-y-1.5">
+                          <p className="text-[8px] uppercase tracking-widest text-black/30 font-semibold">Ihre Vorteile</p>
+                          {tier.benefits.map((b, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <div className="w-1 h-1 rounded-full mt-1 flex-shrink-0" style={{ backgroundColor: tier.color }} />
+                              <span className="text-[10px] text-black/55 leading-relaxed">{b}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Points info */}
+              <div className="px-5 pb-4">
+                <p className="text-[8px] text-black/25 leading-relaxed">
+                  Punkte werden bei jeder Bestellung automatisch gutgeschrieben. 1€ = 1 Punkt.
+                </p>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* 3D Scan Card */}
         <div
