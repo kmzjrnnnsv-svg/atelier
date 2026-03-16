@@ -376,7 +376,7 @@ export default function Explore() {
 
       {/* ── Cart (slide in from right) ────────────────────────────────────── */}
       <div className="fixed top-0 right-0 bottom-0 bg-white shadow-2xl z-50 flex flex-col"
-        style={{ width: 'min(340px, 85vw)', transform: cartOpen ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
+        style={{ width: 'min(340px, 85vw)', height: '100dvh', transform: cartOpen ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/5">
           <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Bestellungen</h3>
           <button onClick={() => setCartOpen(false)} className="w-8 h-8 flex items-center justify-center bg-transparent border-0">

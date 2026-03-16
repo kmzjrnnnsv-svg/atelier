@@ -143,7 +143,7 @@ export default function CMSLayout() {
 
       {/* Main content */}
       <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-[#f6f5f3]">
-        <div className="w-full max-w-full">
+        <div className="w-full max-w-full overflow-hidden">
           <Outlet />
         </div>
       </main>

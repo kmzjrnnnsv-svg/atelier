@@ -176,8 +176,8 @@ export default function ShoeEditor() {
  const filtered = filterCat === 'ALL' ? shoes : shoes.filter((s) => s.category === filterCat)
 
  return (
- <div className="p-8">
- <div className="flex items-center justify-between mb-6">
+ <div className="p-6 w-full max-w-full overflow-hidden">
+ <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
  <div>
  <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Schuhe</h1>
  <p className="text-black/35 text-sm mt-1">{shoes.length} Produkte verwalten</p>
@@ -230,7 +230,7 @@ export default function ShoeEditor() {
  ) : (
  <div
  key={shoe.id}
- className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/12 transition-all"
+ className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/12 transition-all min-w-0"
  >
  {/* Preview */}
  <div className="w-14 h-14 flex-shrink-0 overflow-hidden flex items-center justify-center" style={{ backgroundColor: shoe.color }}>
