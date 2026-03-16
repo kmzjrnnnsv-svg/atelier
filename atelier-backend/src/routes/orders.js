@@ -168,6 +168,27 @@ router.put('/:id',
     const row  = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
     const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(row.user_id)
 
+    // Track last order date for loyalty expiration
+    db.prepare("UPDATE users SET last_order_at = datetime('now'), updated_at = datetime('now') WHERE id = ?")
+      .run(row.user_id)
+
+    // Award loyalty points when order is delivered (kept) — 1€ = 1 point
+    if (req.body.status === 'delivered' && existing.status !== 'delivered') {
+      const priceNum = parseInt(String(row.price).replace(/[^0-9]/g, ''), 10) || 0
+      if (priceNum > 0) {
+        const userRow = db.prepare('SELECT loyalty_points FROM users WHERE id = ?').get(row.user_id)
+        const newPoints = (userRow?.loyalty_points || 0) + priceNum
+        // Determine new tier
+        const tiers = db.prepare('SELECT key, min_points FROM loyalty_tiers ORDER BY min_points DESC').all()
+        let newTier = 'bronze'
+        for (const t of tiers) {
+          if (newPoints >= t.min_points) { newTier = t.key; break }
+        }
+        db.prepare("UPDATE users SET loyalty_points = ?, loyalty_tier = ?, updated_at = datetime('now') WHERE id = ?")
+          .run(newPoints, newTier, row.user_id)
+      }
+    }
+
     // When admin confirms payment → notify customer + manufacturer
     if (req.body.status === 'processing' && existing.status !== 'processing') {
       const scan = row.scan_id

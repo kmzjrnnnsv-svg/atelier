@@ -86,16 +86,19 @@ export default function HelpSupport() {
         </div>
 
         {/* Contact CTA */}
-        <div className="mx-0 mb-0 p-5 flex items-center gap-4 bg-black">
+        <button
+          onClick={() => navigate('/feedback')}
+          className="mx-0 mb-0 p-5 flex items-center gap-4 bg-black w-full border-0 text-left"
+        >
           <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0">
             <Mail size={18} className="text-white" strokeWidth={1.5} />
           </div>
           <div className="flex-1">
             <p className="text-[9px] text-white/40" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Noch Fragen?</p>
-            <p className="text-[12px] text-white leading-tight mt-0.5">Unser Team kontaktieren</p>
-            <p className="text-[9px] text-white/40 mt-0.5">support@atelier.com</p>
+            <p className="text-[12px] text-white leading-tight mt-0.5">Feedback & Hilfe</p>
+            <p className="text-[9px] text-white/40 mt-0.5">Anfragen, Beschwerden & Retouren</p>
           </div>
-        </div>
+        </button>
       </div>
     </div>
   )

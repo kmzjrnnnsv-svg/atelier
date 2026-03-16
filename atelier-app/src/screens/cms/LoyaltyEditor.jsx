@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Plus, Pencil, Trash2, Check, X, Eye, EyeOff, Award, Crown, Gem, Shield, Star } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Pencil, Trash2, Check, X, Eye, EyeOff, Award, Crown, Gem, Shield, Star, Save, Loader, Timer } from 'lucide-react'
 import useAtelierStore from '../../store/atelierStore'
+import { apiFetch } from '../../hooks/useApi'
 
 const ICON_MAP = { Award, Crown, Gem, Shield, Star }
 const ICON_OPTIONS = Object.keys(ICON_MAP)
@@ -125,6 +126,33 @@ function TierForm({ initial = emptyForm, onSave, onCancel, isNew }) {
 export default function LoyaltyEditor() {
   const { loyaltyTiers, addLoyaltyTier, updateLoyaltyTier, deleteLoyaltyTier } = useAtelierStore()
   const [mode, setMode] = useState(null)
+  const [expiryDays, setExpiryDays] = useState(365)
+  const [expirySaving, setExpirySaving] = useState(false)
+  const [expiryMsg, setExpiryMsg] = useState(null)
+  const [expireResult, setExpireResult] = useState(null)
+
+  useEffect(() => {
+    apiFetch('/api/loyalty/settings').then(d => setExpiryDays(d.expiry_days)).catch(() => {})
+  }, [])
+
+  async function saveExpiry() {
+    setExpirySaving(true)
+    setExpiryMsg(null)
+    try {
+      await apiFetch('/api/loyalty/settings', { method: 'PUT', body: JSON.stringify({ expiry_days: expiryDays }) })
+      setExpiryMsg('Gespeichert')
+      setTimeout(() => setExpiryMsg(null), 2000)
+    } catch { setExpiryMsg('Fehler') }
+    finally { setExpirySaving(false) }
+  }
+
+  async function runExpire() {
+    try {
+      const r = await apiFetch('/api/loyalty/expire', { method: 'POST' })
+      setExpireResult(r.message)
+      setTimeout(() => setExpireResult(null), 4000)
+    } catch { setExpireResult('Fehler beim Ausführen') }
+  }
 
   const sorted = [...loyaltyTiers].sort((a, b) => a.sortOrder - b.sortOrder)
 
@@ -147,9 +175,37 @@ export default function LoyaltyEditor() {
       <div className="bg-[#f6f5f3] border border-black/5 p-4 mb-6">
         <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold mb-2">Punkte-System</p>
         <p className="text-xs text-black/55 leading-relaxed">
-          Kunden sammeln Punkte durch Bestellungen. Die Tier-Stufe wird automatisch basierend auf der Punktzahl aktualisiert.
-          Tiers mit deaktivierter Sichtbarkeit (z.B. Executive) werden erst angezeigt, wenn der Kunde die Stufe erreicht hat.
-          Die Beschreibung für verborgene Tiers bleibt leer, bis der Status erreicht ist.
+          Kunden sammeln Punkte durch Bestellungen (Einkaufswert = Punkte, nur bei gelieferten/behaltenen Bestellungen).
+          Punkte verfallen, wenn innerhalb der eingestellten Frist keine neue Bestellung aufgegeben wird —
+          außer der Kunde hat bereits Gold-Status oder höher erreicht.
+        </p>
+      </div>
+
+      {/* Expiry settings */}
+      <div className="bg-white border border-black/6 p-5 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Timer size={14} className="text-black/35" strokeWidth={1.5} />
+          <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold">Punkteverfall</p>
+        </div>
+        <div className="flex items-end gap-3">
+          <div>
+            <label className="block text-xs font-medium text-black/35 mb-1.5">Verfall-Frist (Tage)</label>
+            <input type="number" value={expiryDays} onChange={e => setExpiryDays(Number(e.target.value))} min={0}
+              className="w-32 bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none" />
+          </div>
+          <button onClick={saveExpiry} disabled={expirySaving}
+            className="flex items-center gap-2 bg-black text-white text-xs font-medium px-4 py-2.5 border-0 disabled:opacity-50">
+            {expirySaving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />} Speichern
+          </button>
+          <button onClick={runExpire}
+            className="flex items-center gap-2 bg-black/5 text-black/50 text-xs font-medium px-4 py-2.5 border border-black/10 hover:bg-black/8">
+            Verfall jetzt prüfen
+          </button>
+          {expiryMsg && <span className="text-xs text-black/40">{expiryMsg}</span>}
+          {expireResult && <span className="text-xs text-black/40">{expireResult}</span>}
+        </div>
+        <p className="text-[9px] text-black/35 mt-2 leading-relaxed">
+          0 = Verfall deaktiviert. Punkte verfallen nur für Mitglieder unterhalb des Gold-Status.
         </p>
       </div>
 
