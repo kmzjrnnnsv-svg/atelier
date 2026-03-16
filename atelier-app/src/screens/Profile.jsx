@@ -129,30 +129,33 @@ export default function Profile() {
         </button>
       </div>
 
-      {/* ── Notification Panel ──────────────────────────────────────────── */}
-      {showNotifs && (
-        <div className="bg-white border-b border-black/5 px-4 py-3 max-h-56 overflow-y-auto">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[9px] uppercase tracking-widest text-black/40 font-semibold">Benachrichtigungen</p>
-            <button onClick={() => setShowNotifs(false)} className="bg-transparent border-0 p-0">
-              <X size={14} className="text-black/40" />
-            </button>
-          </div>
+      {/* ── Notification Panel (slide in from right) ─────────────────── */}
+      <div className="fixed top-0 right-0 bottom-0 bg-white shadow-2xl z-50 flex flex-col"
+        style={{ width: 'min(340px, 85vw)', transform: showNotifs ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/5">
+          <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Benachrichtigungen</h3>
+          <button onClick={() => setShowNotifs(false)} className="w-8 h-8 flex items-center justify-center bg-transparent border-0">
+            <X size={18} strokeWidth={1.5} className="text-black/60" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-4">
           {notifications.length === 0 ? (
-            <div className="text-center py-4">
-              <BellRing size={20} className="mx-auto text-black/20 mb-1.5" />
-              <p className="text-[10px] text-black/40">Keine Benachrichtigungen</p>
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <BellRing size={32} className="text-black/10 mb-3" />
+              <p className="text-[11px] text-black/40">Keine Benachrichtigungen</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {notifications.slice(0, 10).map(n => (
+            <div className="space-y-3">
+              {notifications.slice(0, 20).map(n => (
                 <div key={n.id} className={`p-3 ${n.read ? 'bg-black/3' : 'bg-black/5 border border-black/10'}`}>
                   <div className="flex items-start gap-2">
-                    <BellRing size={12} className={n.read ? 'text-black/40 mt-0.5' : 'text-black/60 mt-0.5'} />
+                    <BellRing size={12} className={n.read ? 'text-black/30 mt-0.5' : 'text-black/60 mt-0.5'} strokeWidth={1.5} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-semibold text-black">{n.title}</p>
+                      <p className="text-[11px] font-medium text-black">{n.title}</p>
                       <p className="text-[9px] text-black/50 mt-0.5 leading-relaxed">{n.message}</p>
-                      <p className="text-[8px] text-black/40 mt-1">{new Date(n.createdAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                      <p className="text-[8px] text-black/30 mt-1">
+                        {new Date(n.createdAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -160,7 +163,8 @@ export default function Profile() {
             </div>
           )}
         </div>
-      )}
+      </div>
+      {showNotifs && <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setShowNotifs(false)} />}
 
       {/* ── Content ────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
