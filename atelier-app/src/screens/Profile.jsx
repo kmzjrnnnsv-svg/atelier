@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
+import { apiFetch } from '../hooks/useApi'
 
 const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
 
@@ -12,6 +13,37 @@ const tabs = [
   { id: 'GENERAL', label: 'GENERAL', sub: 'Fußform' },
   { id: 'MYSELF',  label: 'MYSELF',  sub: 'Notizen' },
 ]
+
+// ── Foot Archetypes ────────────────────────────────────────────────────────
+const ARCHETYPES = [
+  { key: 'egyptian',    label: 'Ägyptischer Fuß',   desc: 'Großer Zeh ist der längste. Häufigster Fußtyp.' },
+  { key: 'roman',       label: 'Römischer Fuß',     desc: 'Die ersten 2–3 Zehen sind gleich lang. Breiter Vorfuß.' },
+  { key: 'greek',       label: 'Griechischer Fuß',  desc: 'Zweiter Zeh ist länger als der große Zeh.' },
+  { key: 'germanic',    label: 'Germanischer Fuß',  desc: 'Alle Zehen ähnlich lang. Sehr breiter Vorfuß.' },
+  { key: 'celtic',      label: 'Keltischer Fuß',    desc: 'Großer Zeh kurz, zweiter lang, restliche absteigend.' },
+]
+
+function determineArchtype(scan) {
+  if (!scan) return null
+  const rw = Number(scan.right_width), rl = Number(scan.right_length)
+  const lw = Number(scan.left_width),  ll = Number(scan.left_length)
+  const avgRatio = ((rw / rl) + (lw / ll)) / 2
+  // Heuristic from width/length ratio
+  if (avgRatio > 0.40) return 'germanic'
+  if (avgRatio > 0.38) return 'roman'
+  if (avgRatio > 0.36) return 'egyptian'
+  if (avgRatio > 0.34) return 'greek'
+  return 'celtic'
+}
+
+function archLabel(scan) {
+  if (!scan) return null
+  const ra = Number(scan.right_arch), la = Number(scan.left_arch)
+  const avg = (ra + la) / 2
+  if (avg > 18) return 'Hohes Gewölbe'
+  if (avg > 12) return 'Normales Gewölbe'
+  return 'Flaches Gewölbe'
+}
 
 const styleCards = [
   {
@@ -40,11 +72,17 @@ const styleCards = [
 export default function Profile() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
-  const { favorites, orders, notifications, markAllNotificationsRead, loyaltyTiers, loyaltyStatus } = useAtelierStore()
+  const { favorites, orders, notifications, markAllNotificationsRead, loyaltyTiers, loyaltyStatus, latestScan, refreshScan } = useAtelierStore()
   const [activeTab, setActiveTab] = useState('SIZE')
   const [showNotifs, setShowNotifs] = useState(false)
   const [showLoyalty, setShowLoyalty] = useState(false)
+  const [editingNotes, setEditingNotes] = useState(false)
+  const [noteText, setNoteText] = useState('')
   const unreadCount = notifications.filter(n => !n.read).length
+
+  const scanArchtype = determineArchtype(latestScan)
+  const scanArchInfo = ARCHETYPES.find(a => a.key === scanArchtype)
+  const scanArchLabel = archLabel(latestScan)
 
   const initials = (user?.name || 'A').charAt(0).toUpperCase()
 
@@ -343,13 +381,55 @@ export default function Profile() {
 
           <div className="p-4">
             {activeTab === 'SIZE' && (
-              <div className="space-y-3">
-                {[['EU Size', '43'], ['US Size', '10.5'], ['UK Size', '9'], ['Foot Width', '97.4 mm'], ['Foot Length', '265.8 mm']].map(([k, v]) => (
-                  <div key={k} className="flex justify-between items-center">
-                    <span className="text-[9px] uppercase tracking-widest text-black/40">{k}</span>
-                    <span className="text-sm font-bold text-black">{v}</span>
-                  </div>
-                ))}
+              <div className="space-y-1.5">
+                {latestScan ? (
+                  <>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-[9px] uppercase tracking-widest text-black/40">Schuhgröße</span>
+                      <span className="text-sm font-bold text-black">EU {latestScan.eu_size} · UK {latestScan.uk_size} · US {latestScan.us_size}</span>
+                    </div>
+                    <div className="border-t border-black/5 pt-2 mt-2">
+                      <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                      {[
+                        ['Länge', `${Number(latestScan.right_length).toFixed(1)} mm`],
+                        ['Breite', `${Number(latestScan.right_width).toFixed(1)} mm`],
+                        ['Gewölbe', `${Number(latestScan.right_arch).toFixed(1)} mm`],
+                        ...(latestScan.right_ball_girth ? [['Ballenumfang', `${Number(latestScan.right_ball_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.right_instep_girth ? [['Ristumfang', `${Number(latestScan.right_instep_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.right_heel_girth ? [['Fersenumfang', `${Number(latestScan.right_heel_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.right_waist_girth ? [['Gelenkweite', `${Number(latestScan.right_waist_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.right_ankle_girth ? [['Knöchel', `${Number(latestScan.right_ankle_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.right_foot_height ? [['Fußhöhe', `${Number(latestScan.right_foot_height).toFixed(1)} mm`]] : []),
+                      ].map(([k, v]) => (
+                        <div key={k} className="flex justify-between items-center py-0.5">
+                          <span className="text-[9px] text-black/40">{k}</span>
+                          <span className="text-[11px] font-semibold text-black">{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t border-black/5 pt-2 mt-2">
+                      <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Links</p>
+                      {[
+                        ['Länge', `${Number(latestScan.left_length).toFixed(1)} mm`],
+                        ['Breite', `${Number(latestScan.left_width).toFixed(1)} mm`],
+                        ['Gewölbe', `${Number(latestScan.left_arch).toFixed(1)} mm`],
+                        ...(latestScan.left_ball_girth ? [['Ballenumfang', `${Number(latestScan.left_ball_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.left_instep_girth ? [['Ristumfang', `${Number(latestScan.left_instep_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.left_heel_girth ? [['Fersenumfang', `${Number(latestScan.left_heel_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.left_waist_girth ? [['Gelenkweite', `${Number(latestScan.left_waist_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.left_ankle_girth ? [['Knöchel', `${Number(latestScan.left_ankle_girth).toFixed(1)} mm`]] : []),
+                        ...(latestScan.left_foot_height ? [['Fußhöhe', `${Number(latestScan.left_foot_height).toFixed(1)} mm`]] : []),
+                      ].map(([k, v]) => (
+                        <div key={k} className="flex justify-between items-center py-0.5">
+                          <span className="text-[9px] text-black/40">{k}</span>
+                          <span className="text-[11px] font-semibold text-black">{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[10px] text-black/40 text-center py-4">Noch kein Scan vorhanden. Starte einen 3D Fußscan.</p>
+                )}
               </div>
             )}
             {activeTab === 'CATALOG' && (
@@ -363,30 +443,101 @@ export default function Profile() {
             )}
             {activeTab === 'GENERAL' && (
               <div className="space-y-3">
-                {[['Arch Type', 'Medium Neutral'], ['Instep', 'Standard'], ['Toe Box', 'Medium Round']].map(([k, v]) => (
-                  <div key={k} className="flex justify-between items-center">
-                    <span className="text-[9px] uppercase tracking-widest text-black/40">{k}</span>
-                    <span className="text-sm font-semibold text-black">{v}</span>
-                  </div>
-                ))}
+                {latestScan ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] uppercase tracking-widest text-black/40">Fußtyp</span>
+                      <span className="text-sm font-semibold text-black">{scanArchInfo?.label || '—'}</span>
+                    </div>
+                    <p className="text-[9px] text-black/40 leading-relaxed -mt-1">{scanArchInfo?.desc}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] uppercase tracking-widest text-black/40">Gewölbe</span>
+                      <span className="text-sm font-semibold text-black">{scanArchLabel || '—'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] uppercase tracking-widest text-black/40">Genauigkeit</span>
+                      <span className="text-sm font-semibold text-black">{Number(latestScan.accuracy).toFixed(1)}%</span>
+                    </div>
+                    <div className="border-t border-black/5 pt-3 mt-2">
+                      <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Alle Fußtypen</p>
+                      {ARCHETYPES.map(a => (
+                        <div key={a.key} className={`flex items-center gap-3 py-2 ${a.key === scanArchtype ? 'bg-[#f6f5f3] px-2 -mx-2' : ''}`}>
+                          <div className={`w-1.5 h-1.5 flex-shrink-0 ${a.key === scanArchtype ? 'bg-black' : 'bg-black/15'}`} />
+                          <div className="flex-1">
+                            <p className={`text-[10px] ${a.key === scanArchtype ? 'font-semibold text-black' : 'text-black/50'}`}>{a.label}</p>
+                            <p className="text-[8px] text-black/30 mt-0.5">{a.desc}</p>
+                          </div>
+                          {a.key === scanArchtype && <span className="text-[8px] uppercase tracking-widest text-black/40 font-bold">Dein Typ</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[10px] text-black/40 text-center py-4">Starte einen Fußscan, um deinen Fußtyp zu ermitteln.</p>
+                )}
               </div>
             )}
             {activeTab === 'MYSELF' && (
-              <p className="text-xs text-black/60 italic leading-relaxed">
-                "Slightly wider in the forefoot. Prefer a snug heel counter. Ideal for dress occasions and business settings."
-              </p>
+              <div>
+                {editingNotes ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={noteText}
+                      onChange={e => setNoteText(e.target.value)}
+                      maxLength={500}
+                      className="w-full border border-black/10 bg-[#f6f5f3] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/30"
+                      rows={4}
+                      placeholder="Persönliche Notizen zu deinen Füßen..."
+                      autoFocus
+                    />
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] text-black/30">{noteText.length}/500</span>
+                      <div className="flex gap-2">
+                        <button onClick={() => setEditingNotes(false)} className="px-3 py-1.5 text-[10px] text-black/40 bg-transparent border border-black/10">Abbrechen</button>
+                        <button
+                          onClick={async () => {
+                            if (latestScan?.id) {
+                              await apiFetch(`/api/scans/${latestScan.id}/notes`, { method: 'PUT', body: JSON.stringify({ notes: noteText }) })
+                              refreshScan()
+                            }
+                            setEditingNotes(false)
+                          }}
+                          className="px-3 py-1.5 text-[10px] text-white bg-black border-0 font-semibold"
+                        >Speichern</button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setNoteText(latestScan?.notes || ''); setEditingNotes(true) }}
+                    className="w-full text-left bg-transparent border-0 p-0 group"
+                  >
+                    {latestScan?.notes ? (
+                      <div className="flex items-start gap-2">
+                        <p className="text-[11px] text-black/60 italic leading-relaxed flex-1">"{latestScan.notes}"</p>
+                        <Edit3 size={12} className="text-black/20 mt-0.5 flex-shrink-0 group-hover:text-black/40" strokeWidth={1.5} />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 py-2 text-black/30">
+                        <Edit3 size={13} strokeWidth={1.5} />
+                        <span className="text-[10px]">Tippe hier, um persönliche Notizen hinzuzufügen…</span>
+                      </div>
+                    )}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
 
-        {/* Arch Type */}
+        {/* Arch Type — from scan data */}
         <div className="bg-white p-4 border-b border-black/8 flex items-center justify-between">
           <div>
-            <p className="text-[8px] uppercase tracking-widest text-black/40 font-semibold">Arch Type</p>
-            <p className="text-base font-bold text-black mt-0.5">Medium Neutral Arch</p>
-            <p className="text-[9px] text-black/40">Balanced · Standard insole</p>
+            <p className="text-[8px] uppercase tracking-widest text-black/40 font-semibold">Fußtyp</p>
+            <p className="text-base font-bold text-black mt-0.5">{scanArchInfo?.label || 'Noch nicht ermittelt'}</p>
+            <p className="text-[9px] text-black/40">{scanArchLabel || 'Starte einen Scan'} {latestScan ? `· ${Number(latestScan.accuracy).toFixed(0)}% Genauigkeit` : ''}</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-black/3 flex items-center justify-center">
+          <div className="w-12 h-12 bg-black/3 flex items-center justify-center">
             <svg viewBox="0 0 40 30" className="w-10">
               <path d="M2 24 Q10 26 20 24 Q30 22 38 24" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" />
               <path d="M2 24 Q6 14 10 11 Q15 8 20 9 Q25 10 30 14 Q34 17 38 24" stroke="#d1d5db" strokeWidth="1.5" fill="none" strokeLinecap="round" />
@@ -397,19 +548,18 @@ export default function Profile() {
         {/* Aesthetic Profile */}
         <div className="bg-white p-4 border-b border-black/8">
           <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-black">Aesthetic Profile</p>
-          <p className="text-[9px] text-black/40 mt-0.5 mb-3">Curating your bespoke collection.</p>
+          <p className="text-[9px] text-black/40 mt-0.5 mb-3">Dein persönlicher Stil für maßgefertigte Schuhe.</p>
           <div className="flex gap-3 overflow-x-auto pb-1">
             {styleCards.map(card => (
               <div
                 key={card.label}
-                className="flex-shrink-0 w-36 h-24 overflow-hidden relative cursor-pointer"
+                className="flex-shrink-0 w-36 h-24 overflow-hidden relative cursor-pointer active:scale-95 transition-transform"
               >
                 {card.image ? (
                   <img src={card.image} alt={card.label} className="absolute inset-0 w-full h-full object-cover" />
                 ) : (
                   <div className="absolute inset-0" style={{ background: card.gradient }} />
                 )}
-                {/* Dark overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                 {card.active && (
                   <div className="absolute top-2 right-2 w-5 h-5 bg-black flex items-center justify-center">
@@ -418,6 +568,7 @@ export default function Profile() {
                 )}
                 <div className="absolute bottom-0 left-0 right-0 p-2">
                   <p className="text-[9px] font-bold text-white leading-tight">{card.label}</p>
+                  <p className="text-[7px] text-white/50 mt-0.5">{card.desc}</p>
                 </div>
               </div>
             ))}
@@ -428,19 +579,19 @@ export default function Profile() {
         <div className="bg-white border-b border-black/8 divide-y divide-black/5 overflow-hidden">
           {[
             {
-              icon: () => <Footprints size={16} className="text-teal-500" />,
+              icon: () => <Footprints size={16} className="text-teal-500" strokeWidth={1.5} />,
               label: 'Meine Scans',
               sub:   'Fußscan-Verlauf · 3D-Modelle',
               path:  '/my-scans',
             },
             {
-              icon: () => <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>,
+              icon: () => <svg viewBox="0 0 24 24" className="w-4 h-4 text-black" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>,
               label: 'Outfit Visualization',
-              sub:   'Preview with your wardrobe',
+              sub:   'Vorschau mit deiner Garderobe',
               path:  '/visualizer',
             },
             {
-              icon: () => <BookOpen size={16} className="text-amber-500" />,
+              icon: () => <BookOpen size={16} className="text-amber-500" strokeWidth={1.5} />,
               label: 'Schuh-Info & Gesundheit',
               sub:   'Folgen von falschem Schuhwerk',
               path:  '/health',
@@ -452,7 +603,7 @@ export default function Profile() {
               className="w-full flex items-center justify-between p-4 bg-transparent border-0 text-left active:bg-black/3"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-black/5 flex items-center justify-center text-black/60">
+                <div className="w-8 h-8 bg-black/5 flex items-center justify-center">
                   <Icon />
                 </div>
                 <div>
@@ -460,7 +611,7 @@ export default function Profile() {
                   <p className="text-sm font-semibold text-black mt-0.5">{label}</p>
                 </div>
               </div>
-              <ChevronRight size={16} className="text-black/20" />
+              <ChevronRight size={16} className="text-black/20" strokeWidth={1.5} />
             </button>
           ))}
         </div>

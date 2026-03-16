@@ -953,4 +953,18 @@ router.get('/:id/shoe-last', authenticate, (req, res) => {
   })
 })
 
+// PUT /api/scans/:id/notes — update notes for a scan (owner only)
+router.put('/:id/notes', authenticate, (req, res) => {
+  const { notes } = req.body
+  if (notes != null && typeof notes !== 'string') return res.status(400).json({ error: 'notes must be a string' })
+  if (notes && notes.length > 500) return res.status(400).json({ error: 'notes max 500 characters' })
+
+  const scan = getDb().prepare('SELECT * FROM foot_scans WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id)
+  if (!scan) return res.status(404).json({ error: 'Scan not found' })
+
+  getDb().prepare('UPDATE foot_scans SET notes = ? WHERE id = ?').run(notes ?? null, scan.id)
+  const updated = getDb().prepare('SELECT * FROM foot_scans WHERE id = ?').get(scan.id)
+  res.json(updated)
+})
+
 export default router

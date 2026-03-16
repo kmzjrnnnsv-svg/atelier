@@ -531,6 +531,7 @@ export default function FootScan() {
   const [lastShoeType, setLastShoeType] = useState('oxford')
   const [lastFormat,   setLastFormat]   = useState('stl')
   const [shoeTypeSettings, setShoeTypeSettings] = useState(null)  // CMS-configured presets
+  const [scanNotes,    setScanNotes]    = useState('')
 
   // Load shoe type settings from CMS when result screen shows
   useEffect(() => {
@@ -1491,6 +1492,31 @@ export default function FootScan() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Notes input */}
+                <div>
+                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>Notizen</p>
+                  <textarea
+                    value={scanNotes}
+                    onChange={e => setScanNotes(e.target.value)}
+                    maxLength={500}
+                    className="w-full border border-black/8 bg-[#f6f5f3] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/20"
+                    rows={3}
+                    placeholder="Persönliche Notizen zu diesem Scan…"
+                  />
+                  {scanNotes.trim() && saved && (
+                    <button
+                      onClick={async () => {
+                        const scans = await apiFetch('/api/scans/mine').catch(() => [])
+                        if (scans?.[0]?.id) {
+                          await apiFetch(`/api/scans/${scans[0].id}/notes`, { method: 'PUT', body: JSON.stringify({ notes: scanNotes }) })
+                          refreshScan()
+                        }
+                      }}
+                      className="mt-1.5 px-3 py-1.5 text-[9px] text-white bg-black border-0 font-semibold"
+                    >Notiz speichern</button>
+                  )}
                 </div>
 
                 <button onClick={() => navigate('/collection', { replace: true })}
