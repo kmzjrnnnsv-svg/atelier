@@ -534,7 +534,7 @@ export default function Profile() {
             )}
           </div>
         </div>
-        )}
+        ) : null}
 
         {/* Aesthetic Profile */}
         <div className="bg-white p-4 border-b border-black/8">
