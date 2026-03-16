@@ -63,12 +63,12 @@ function _authHeaders() {
  * @param {Function}         params.onProgress    – (pct: 0–100) => void
  * @returns {Promise<UploadResult>}
  */
-export async function uploadSTLModel({ filePath, footSide, accuracy, measurements, onProgress }) {
+export async function uploadSTLModel({ filePath, footSide, accuracy, measurements, lidarData, onProgress }) {
   // Datei als Base64 lesen (für JSON-Upload)
   // Alternative: multipart/form-data mit react-native-blob-util
   const base64Data = await RNFS.readFile(filePath, 'base64')
 
-  const body = JSON.stringify({
+  const payload = {
     foot_side:    footSide,
     stl_data:     base64Data,          // Base64-kodiertes Binary STL
     accuracy:     Math.round(accuracy * 10) / 10,
@@ -83,8 +83,21 @@ export async function uploadSTLModel({ filePath, footSide, accuracy, measurement
       generated_at: new Date().toISOString(),
       sdk_version:  '3.0',
       file_format:  STL_CONFIG.format,
+      scan_mode:    lidarData ? 'hybrid' : 'photo',
     },
-  })
+  }
+
+  // LiDAR-Punktwolke mitsenden, wenn verfügbar (Backend führt Fusion durch)
+  if (lidarData?.pointCloud) {
+    payload.lidar_data = {
+      point_cloud:  lidarData.pointCloud,
+      point_count:  lidarData.pointCount,
+      source:       lidarData.source,
+    }
+    console.log(`[Account] ${footSide}: LiDAR-Daten mit ${lidarData.pointCount} Punkten beigelegt`)
+  }
+
+  const body = JSON.stringify(payload)
 
   // Upload mit Fortschritts-Tracking
   // (Für echtes Fortschritts-Tracking: XMLHttpRequest oder react-native-blob-util)
@@ -166,6 +179,7 @@ export async function uploadBothSTLModels(scanResults, onProgress) {
         footSide:     side,
         accuracy:     scan.accuracy,
         measurements: scan.measurements,
+        lidarData:    scan.lidarData ?? null,
         onProgress:   (pct) => onProgress?.({ side, pct, status: 'uploading' }),
       })
 
