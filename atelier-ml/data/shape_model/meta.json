@@ -2,9 +2,9 @@
   "n_meshes": 600,
   "n_vertices": 3436,
   "n_components": 2,
-  "variance_explained": 0.9635255932807922,
-  "mean_foot_length_mm": 211.445068359375,
-  "std_foot_length_mm": 73.41818237304688,
+  "variance_explained": 0.9632304906845093,
+  "mean_foot_length_mm": 208.3916473388672,
+  "std_foot_length_mm": 76.55549621582031,
   "label_columns": [
     "ball_width",
     "length",

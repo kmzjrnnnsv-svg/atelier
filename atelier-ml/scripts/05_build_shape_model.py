@@ -308,6 +308,34 @@ def main():
         labels_df = labels_df.merge(gt_df, on='foot_id', how='left')
         print(f'[ShapeModel] Ground-truth Maße aus measurements.csv gemergt')
 
+    # ── Append ANSUR II real measurements (no PCA coefficients, but adds
+    #    measurement statistics for the regression in fit_pca_from_measurements)
+    ansur_path = DATA_DIR / 'ansur2_measurements.csv'
+    if ansur_path.exists():
+        ansur_df = pd.read_csv(ansur_path)
+        # Create matching rows with NaN PCA coefficients
+        pca_col_names = [f'pca_{j}' for j in range(k)]
+        meas_col_names = [c for c in labels_df.columns
+                          if c != 'foot_id' and not c.startswith('pca_')]
+
+        ansur_rows = []
+        for _, arow in ansur_df.iterrows():
+            row = {'foot_id': arow.get('foot_id', '')}
+            for pc in pca_col_names:
+                row[pc] = np.nan
+            for mc in meas_col_names:
+                row[mc] = arow.get(mc, np.nan)
+            ansur_rows.append(row)
+
+        ansur_labels = pd.DataFrame(ansur_rows)
+        # Only include ANSUR rows that have required measurement columns
+        required = ['length', 'width', 'ball_girth']
+        has_req = ansur_labels[required].notna().all(axis=1)
+        ansur_labels = ansur_labels[has_req]
+
+        labels_df = pd.concat([labels_df, ansur_labels], ignore_index=True)
+        print(f'[ShapeModel] +{len(ansur_labels)} ANSUR II Messungen angehängt → {len(labels_df)} total')
+
     # ── Speichere Outputs ─────────────────────────────────────────────────────
     mean_shape = pca.mean_.reshape(most_common_n, n_dims)
     components = pca.components_[:k]  # (k, 19200)
