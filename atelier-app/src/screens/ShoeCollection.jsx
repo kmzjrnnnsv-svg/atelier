@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShoppingBag, Heart, RotateCcw, ScanLine, Info, X } from 'lucide-react'
+import { ShoppingBag, Heart, RotateCcw, ScanLine, Info, X, Minus, Plus, Trash2 } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -179,7 +179,7 @@ function GridCard({ product, onSelect, isFav, onToggleFav }) {
 
 export default function ShoeCollection() {
   const navigate     = useNavigate()
-  const { shoes, favorites, toggleFavorite, orders } = useAtelierStore()
+  const { shoes, favorites, toggleFavorite, cart, removeFromCart, updateCartQty } = useAtelierStore()
   const { user }     = useAuth()
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy,   setScanAccuracy]   = useState(null)
@@ -214,47 +214,63 @@ export default function ShoeCollection() {
           onClick={() => setCartOpen(v => !v)}
         >
           <ShoppingBag size={17} strokeWidth={1.5} className="text-black/60" />
-          {orders.filter(o => !['delivered','cancelled'].includes(o.status)).length > 0 && (
+          {cart.length > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-black border-2 border-white flex items-center justify-center">
-              <span className="text-[8px] font-bold text-white">{orders.filter(o => !['delivered','cancelled'].includes(o.status)).length}</span>
+              <span className="text-[8px] font-bold text-white">{cart.reduce((s, c) => s + c.qty, 0)}</span>
             </span>
           )}
         </button>
       </div>
 
-      {/* ── Cart (slide in from right) ────────────────────────────────── */}
+      {/* ── Warenkorb (slide in from right) ────────────────────────────── */}
       <div className="absolute top-0 right-0 bottom-0 bg-white shadow-2xl z-50 flex flex-col"
         style={{ width: 'min(340px, 85vw)', transform: cartOpen ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/5">
-          <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Bestellungen</h3>
+          <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Warenkorb</h3>
           <button onClick={() => setCartOpen(false)} className="w-9 h-9 flex items-center justify-center border border-black/10 bg-transparent">
             <X size={17} strokeWidth={1.5} className="text-black/60" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {orders.length === 0 ? (
+          {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <ShoppingBag size={32} className="text-black/10 mb-3" />
-              <p className="text-[11px] text-black/40">Keine Bestellungen</p>
+              <p className="text-[11px] text-black/40">Dein Warenkorb ist leer</p>
+              <p className="text-[9px] text-black/30 mt-1">Konfiguriere einen Schuh und füge ihn hinzu.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {orders.slice(0, 8).map(order => (
-                <div key={order.id} className="border border-black/8 p-3">
+              {cart.map(item => (
+                <div key={item.id} className="border border-black/8 p-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-medium text-black">{order.shoe_name}</p>
-                    <span className="text-[8px] uppercase tracking-wider text-black/30">{order.status}</span>
+                    <p className="text-[11px] font-medium text-black">{item.name}</p>
+                    <button onClick={() => removeFromCart(item.id)} className="bg-transparent border-0 p-0">
+                      <Trash2 size={13} className="text-black/25" strokeWidth={1.5} />
+                    </button>
                   </div>
-                  <p className="text-[9px] text-black/40 mt-0.5">{order.material} · {order.price}</p>
+                  <p className="text-[9px] text-black/40 mt-0.5">{item.material} · {item.color}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-6 h-6 flex items-center justify-center border border-black/10 bg-transparent">
+                        <Minus size={11} className="text-black/50" />
+                      </button>
+                      <span className="text-[10px] font-semibold text-black w-4 text-center">{item.qty}</span>
+                      <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-6 h-6 flex items-center justify-center border border-black/10 bg-transparent">
+                        <Plus size={11} className="text-black/50" />
+                      </button>
+                    </div>
+                    <span className="text-[11px] font-semibold text-black">{item.price}</span>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
         <div className="px-5 pb-5 pt-3 border-t border-black/5">
-          <button onClick={() => { setCartOpen(false); navigate('/orders') }}
-            className="w-full py-3 bg-black text-white text-[10px] uppercase tracking-[0.18em] font-medium border-0">
-            Alle Bestellungen anzeigen
+          <button onClick={() => { setCartOpen(false); navigate('/checkout') }}
+            disabled={cart.length === 0}
+            className={`w-full py-3 text-[10px] uppercase tracking-[0.18em] font-medium border-0 ${cart.length > 0 ? 'bg-black text-white' : 'bg-black/10 text-black/30'}`}>
+            Zur Kasse
           </button>
         </div>
       </div>
