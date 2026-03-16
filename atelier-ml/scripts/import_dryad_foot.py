@@ -17,6 +17,8 @@ Output:
   data/dryad_foot_measurements.csv — ground-truth measurements from PLY scans
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
