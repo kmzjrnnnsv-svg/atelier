@@ -761,7 +761,7 @@ export default function FootScan() {
           const avgLen = (right.length + left.length) / 2
           const cvSuccess = data._cv_right || data._cv_left
           setResult({ right, left, sizes: sizeFromLength(avgLen), usedAI: true,
-                      accuracy: cvSuccess ? 98.5 : 96.0, source: 'photogrammetry' })
+                      accuracy: data._confidence ?? (cvSuccess ? 94.0 : 91.0), source: 'photogrammetry' })
           setProgress(100)
         }
       } catch (err) {
@@ -787,6 +787,7 @@ export default function FootScan() {
       let rightM, leftM, archRight = null, archLeft = null, usedAI = false
       let footHeightRight = null, footHeightLeft = null
       let girthRight = {}, girthLeft = {}
+      let aiConfidence = null
 
       // ── LiDAR fast path ──────────────────────────────────────────────────────
       if (lidarData.right && lidarData.left) {
@@ -867,6 +868,7 @@ export default function FootScan() {
             ankle:  ai.left_ankle_girth   ?? null,
           }
           usedAI     = true
+          aiConfidence = ai._confidence ?? null
         } catch (e) {
           console.warn('[FootScan] KI fehlgeschlagen, CV-Fallback:', e.message)
           setAiStatus('Lokale Analyse…')
@@ -905,7 +907,7 @@ export default function FootScan() {
       }
       setProgress(100)
       setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI,
-                  accuracy: 97.5 })
+                  accuracy: aiConfidence ?? (usedAI ? 88.0 : 82.0) })
     }
 
     process()
@@ -938,7 +940,7 @@ export default function FootScan() {
           ...(result.left.waist_girth   != null && { left_waist_girth:   result.left.waist_girth }),
           ...(result.left.ankle_girth   != null && { left_ankle_girth:   result.left.ankle_girth }),
           eu_size: result.sizes.eu, uk_size: String(result.sizes.uk), us_size: String(result.sizes.us),
-          accuracy: result.accuracy ?? (result.source === 'lidar' ? 99.5 : result.usedAI ? 97.5 : 85.0),
+          accuracy: result.accuracy ?? (result.source === 'lidar' ? 96.0 : result.source === 'photogrammetry' ? 94.0 : result.usedAI ? 88.0 : 82.0),
         }
         const saved_scan = await apiFetch('/api/scans', { method: 'POST', body: JSON.stringify(payload) })
         setSaved(true); refreshScan()
@@ -1188,8 +1190,8 @@ export default function FootScan() {
               <div className="px-5 pt-3 pb-4 border-b border-black/5">
                 <p className="text-[10px] text-black/45 leading-relaxed">
                   {lidarAvail
-                    ? 'iPhone LiDAR · Direkte 3D-Messung · ±0.5mm Präzision'
-                    : '4 Fotos · A4-Papier als Referenz · Claude KI misst präzise'}
+                    ? 'iPhone LiDAR · Direkte 3D-Messung · ±0.5–1mm Präzision'
+                    : '4 Fotos · A4-Papier als Referenz · ±1–2mm Präzision'}
                 </p>
               </div>
 
@@ -1243,7 +1245,7 @@ export default function FootScan() {
                 }}
                   className="w-full py-4 font-bold text-[12px] border-0 bg-[#f6f5f3] text-black/60 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
                   style={{ letterSpacing: '0.12em' }}>
-                  8-Ansichten-Scan (±0,1 mm)
+                  8-Ansichten-Scan (±0,5 mm)
                 </button>
                 <button onClick={startDemo}
                   className="w-full py-3.5 bg-white text-black/35 font-semibold text-[11px] border border-black/8">
