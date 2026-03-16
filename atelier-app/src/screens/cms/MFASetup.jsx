@@ -73,18 +73,18 @@ export default function MFASetup() {
  }
 
  return (
- <div className="p-8 max-w-xl">
+ <div className="p-8" style={{ maxWidth: '640px' }}>
  <div className="flex items-center gap-3 mb-6">
- <ShieldCheck size={18} className="text-teal-400" />
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Zwei-Faktor-Authentifizierung (MFA)</h1>
+ <ShieldCheck size={18} className="text-black/40" />
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Zwei-Faktor-Authentifizierung (MFA)</h1>
  </div>
 
  {/* Current status */}
  <div className={`flex items-center gap-3 px-4 py-3 mb-6 ${
- status.enabled ? 'bg-teal-500/10 border border-teal-500/30' : 'bg-black/5 border border-black/15'
+ status.enabled ? 'bg-black/4 border border-black/10' : 'bg-black/5 border border-black/15'
  }`}>
  {status.enabled
- ? <><ShieldCheck size={16} className="text-teal-400" /><span className="text-sm text-teal-700 font-semibold">MFA ist aktiviert</span></>
+ ? <><ShieldCheck size={16} className="text-black/40" /><span className="text-sm text-black/50 font-semibold">MFA ist aktiviert</span></>
  : <><ShieldOff size={16} className="text-black/45" /><span className="text-sm text-black/45">MFA ist nicht aktiviert</span></>
  }
  </div>
@@ -92,13 +92,13 @@ export default function MFASetup() {
  {/* Feedback message */}
  {msg && (
  <div className={`flex items-start gap-2 px-4 py-3 mb-5 ${
- msg.type === 'ok' ? 'bg-teal-500/10 border border-teal-500/30' : 'bg-red-500/10 border border-red-500/30'
+ msg.type === 'ok' ? 'bg-black/4 border border-black/10' : 'bg-black/4 border border-black/10'
  }`}>
  {msg.type === 'ok'
- ? <CheckCircle2 size={14} className="text-teal-400 flex-shrink-0 mt-0.5" />
- : <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+ ? <CheckCircle2 size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
+ : <AlertCircle size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
  }
- <p className={`text-[11px] leading-relaxed ${msg.type === 'ok' ? 'text-teal-700' : 'text-red-600'}`}>{msg.text}</p>
+ <p className={`text-[11px] leading-relaxed ${msg.type === 'ok' ? 'text-black/50' : 'text-black/40'}`}>{msg.text}</p>
  </div>
  )}
 
@@ -112,7 +112,7 @@ export default function MFASetup() {
  <button
  onClick={handleSetup}
  disabled={loading}
- className="flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-black text-xs font-medium px-4 py-2.5 border-0 transition-colors disabled:opacity-50"
+ className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2.5 border-0 transition-colors disabled:opacity-50"
  >
  {loading ? <Loader size={14} className="animate-spin" /> : <QrCode size={14} />}
  MFA einrichten
@@ -146,7 +146,7 @@ export default function MFASetup() {
  <button
  type="submit"
  disabled={code.length !== 6 || loading}
- className="w-full py-2.5 bg-teal-500 hover:bg-teal-400 text-black text-xs font-medium flex items-center justify-center gap-2 border-0 transition-colors disabled:opacity-40"
+ className="w-full py-2.5 bg-black hover:bg-black text-white text-xs font-medium flex items-center justify-center gap-2 border-0 transition-colors disabled:opacity-40"
  >
  {loading ? <Loader size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
  Aktivieren
@@ -170,7 +170,7 @@ export default function MFASetup() {
  </p>
  <button
  onClick={() => { setMfaModal(true); setMfaErr(null) }}
- className="flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-600 text-xs font-medium px-4 py-2.5 border border-red-200 transition-colors"
+ className="flex items-center gap-2 bg-black/5 hover:bg-black/8 text-black/40 text-xs font-medium px-4 py-2.5 border border-black/10 transition-colors"
  >
  <ShieldOff size={14} />
  MFA deaktivieren

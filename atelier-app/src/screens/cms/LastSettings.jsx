@@ -91,11 +91,11 @@ export default function LastSettings() {
  }
 
  return (
- <div className="max-w-4xl mx-auto p-6">
+ <div className="p-8">
  {/* Header */}
  <div className="flex items-center gap-3 mb-6">
- <div className="w-9 h-9 bg-teal-50 flex items-center justify-center">
- <Footprints size={18} className="text-teal-600" />
+ <div className="w-9 h-9 bg-black/5 flex items-center justify-center">
+ <Footprints size={18} className="text-black/35" />
  </div>
  <div>
  <h2 className="text-lg font-bold text-black/80" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Leisten-Parameter</h2>
@@ -106,7 +106,7 @@ export default function LastSettings() {
  {/* Toast */}
  {toast && (
  <div className={`mb-4 px-4 py-2.5 text-sm font-medium ${
- toast.type === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+ toast.type === 'ok' ? 'bg-black/5 text-black/50' : 'bg-black/5 text-black/40'
  }`}>
  {toast.msg}
  </div>
@@ -123,7 +123,7 @@ export default function LastSettings() {
 
  return (
  <div key={t.shoe_type}
- className="bg-white border border-black/8 overflow-hidden">
+ className="bg-white border border-black/6 overflow-hidden">
 
  {/* Card header */}
  <div className="flex items-center justify-between px-5 py-3 border-b border-black/5">
@@ -136,8 +136,8 @@ export default function LastSettings() {
  disabled={isSaving || !hasChanges}
  className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold border transition-colors ${
  hasChanges
- ? 'bg-teal-500 text-white border-teal-500 hover:bg-teal-600'
- : 'bg-[#f6f5f3] text-black/20 border-black/8 cursor-not-allowed'
+ ? 'bg-black text-white border-black hover:bg-black'
+ : 'bg-black/5 text-black/20 border-black/6 cursor-not-allowed'
  }`}
  >
  {isSaving
@@ -162,7 +162,7 @@ export default function LastSettings() {
  max="100"
  value={vals[key] ?? 0}
  onChange={e => setField(t.shoe_type, key, e.target.value)}
- className="w-full bg-white border border-black/10 px-2.5 py-1.5 text-sm text-black/90 text-right focus:outline-none focus:border-teal-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+ className="w-full bg-white border border-black/10 px-2.5 py-1.5 text-sm text-black/90 text-right focus:outline-none focus:border-black/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
  />
  <span className="text-[10px] text-black/35 w-6">{unit}</span>
  </div>

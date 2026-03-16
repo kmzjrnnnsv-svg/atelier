@@ -10,7 +10,7 @@ function ItemForm({ initial = emptyForm, title, onSave, onCancel }) {
  const valid = form.name.trim().length > 0
 
  return (
- <div className="bg-white border border-black/8 p-5 space-y-4">
+ <div className="bg-white border border-black/6 p-5 space-y-4">
  <h3 className="text-sm font-semibold text-black/65">{title}</h3>
  <div className="grid grid-cols-2 gap-3">
  <div>
@@ -46,8 +46,8 @@ function Section({ title, description, items, onAdd, onUpdate, onDelete, editMod
  const [showAdd, setShowAdd] = useState(false)
 
  return (
- <div className="bg-white border border-black/8 overflow-hidden mb-4">
- <div className="flex items-center justify-between px-5 py-4 border-b border-black/8">
+ <div className="bg-white border border-black/6 overflow-hidden mb-4">
+ <div className="flex items-center justify-between px-5 py-4 border-b border-black/6">
  <div>
  <p className="text-sm font-semibold text-black/65">{title}</p>
  <p className="text-xs text-black/35 mt-0.5">{description}</p>
@@ -87,8 +87,8 @@ function Section({ title, description, items, onAdd, onUpdate, onDelete, editMod
  <Pencil size={11} className="text-black/65" />
  </button>
  <button onClick={() => { if (confirm(`"${item.name}" löschen?`)) onDelete(item.id) }}
- className="w-7 h-7 bg-red-500/10 flex items-center justify-center hover:bg-red-500/20 border-0">
- <Trash2 size={11} className="text-red-400" />
+ className="w-7 h-7 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
+ <Trash2 size={11} className="text-black/35" />
  </button>
  </div>
  </div>
@@ -107,14 +107,14 @@ export default function WardrobeEditor() {
  const [editMode, setEditMode] = useState(null)
 
  return (
- <div className="p-8 max-w-3xl">
+ <div className="p-8">
  <div className="mb-6">
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Garderobe</h1>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Garderobe</h1>
  <p className="text-black/45 text-sm mt-1">Kleidungsstücke für den Outfit Visualizer</p>
  </div>
 
  {/* Live Preview */}
- <div className="bg-white border border-black/8 p-4 mb-6">
+ <div className="bg-white border border-black/6 p-4 mb-6">
  <p className="text-xs font-medium text-black/35 mb-3">Vorschau (App)</p>
  <div className="flex gap-2 overflow-x-auto pb-1">
  {wardrobe.map((item) => (

@@ -9,7 +9,6 @@ const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
 
 const tabs = [
   { id: 'SIZE',    label: 'SIZE',    sub: 'Maße' },
-  { id: 'CATALOG', label: 'CATALOG', sub: 'Modelle' },
   { id: 'GENERAL', label: 'GENERAL', sub: 'Fußform' },
   { id: 'MYSELF',  label: 'MYSELF',  sub: 'Notizen' },
 ]
@@ -452,15 +451,6 @@ export default function Profile() {
                 ) : (
                   <p className="text-[10px] text-black/40 text-center py-4">Noch kein Scan vorhanden. Starte einen 3D Fußscan.</p>
                 )}
-              </div>
-            )}
-            {activeTab === 'CATALOG' && (
-              <div className="grid grid-cols-3 gap-2">
-                {['Oxford', 'Loafer', 'Derby', 'Boot', 'Chelsea', 'Monk'].map(type => (
-                  <div key={type} className="bg-black/3 p-2.5 text-center">
-                    <p className="text-[9px] uppercase tracking-widest text-black/50">{type}</p>
-                  </div>
-                ))}
               </div>
             )}
             {activeTab === 'GENERAL' && (

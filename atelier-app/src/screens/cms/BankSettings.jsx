@@ -64,10 +64,10 @@ export default function BankSettings() {
  }
 
  return (
- <div className="p-8 max-w-xl">
+ <div className="p-8" style={{ maxWidth: '640px' }}>
  <div className="flex items-center gap-3 mb-2">
  <Landmark size={18} className="text-black/35" />
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Bankverbindung</h1>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Bankverbindung</h1>
  </div>
  <p className="text-sm text-black/35 mb-8 ml-7 leading-relaxed">
  Diese Daten werden dem Kunden nach der Bestellung als Überweisungsziel angezeigt.
@@ -76,13 +76,13 @@ export default function BankSettings() {
 
  {msg && (
  <div className={`flex items-start gap-2 px-4 py-3 mb-5 ${
- msg.type === 'ok' ? 'bg-teal-500/10 border border-teal-500/30' : 'bg-red-500/10 border border-red-500/30'
+ msg.type === 'ok' ? 'bg-black/5 border border-black/10' : 'bg-black/5 border border-black/10'
  }`}>
  {msg.type === 'ok'
- ? <CheckCircle2 size={14} className="text-teal-400 flex-shrink-0 mt-0.5" />
- : <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+ ? <CheckCircle2 size={14} className="text-black/50 flex-shrink-0 mt-0.5" />
+ : <AlertCircle size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
  }
- <p className={`text-[11px] leading-relaxed ${msg.type === 'ok' ? 'text-teal-700' : 'text-red-600'}`}>{msg.text}</p>
+ <p className={`text-[11px] leading-relaxed ${msg.type === 'ok' ? 'text-black/60' : 'text-black/60'}`}>{msg.text}</p>
  </div>
  )}
 

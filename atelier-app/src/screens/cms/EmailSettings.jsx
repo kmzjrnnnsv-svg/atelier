@@ -79,11 +79,11 @@ export default function EmailSettings() {
  }
 
  return (
- <div className="p-8 max-w-xl">
+ <div className="p-8" style={{ maxWidth: '640px' }}>
  {/* Header */}
  <div className="flex items-center gap-3 mb-2">
  <Mail size={18} className="text-black/35" />
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>E-Mail / SMTP</h1>
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>E-Mail / SMTP</h1>
  </div>
  <p className="text-sm text-black/35 mb-8 ml-7 leading-relaxed">
  SMTP-Zugangsdaten für den automatischen E-Mail-Versand (Bestellbestätigungen,
@@ -93,13 +93,13 @@ export default function EmailSettings() {
  {/* Status message */}
  {msg && (
  <div className={`flex items-start gap-2 px-4 py-3 mb-5 ${
- msg.type === 'ok' ? 'bg-teal-500/10 border border-teal-500/30' : 'bg-red-500/10 border border-red-500/30'
+ msg.type === 'ok' ? 'bg-black/4 border border-black/10' : 'bg-black/4 border border-black/10'
  }`}>
  {msg.type === 'ok'
- ? <CheckCircle2 size={14} className="text-teal-400 flex-shrink-0 mt-0.5" />
- : <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+ ? <CheckCircle2 size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
+ : <AlertCircle size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
  }
- <p className={`text-[11px] leading-relaxed ${msg.type === 'ok' ? 'text-teal-700' : 'text-red-600'}`}>
+ <p className={`text-[11px] leading-relaxed ${msg.type === 'ok' ? 'text-black/50' : 'text-black/40'}`}>
  {msg.text}
  </p>
  </div>
@@ -146,7 +146,7 @@ export default function EmailSettings() {
  <label className="text-xs font-medium text-black/35 block mb-1.5">
  Passwort
  {passSet && (
- <span className="ml-2 text-teal-400 normal-case tracking-normal">✓ gesetzt</span>
+ <span className="ml-2 text-black/40 normal-case tracking-normal">✓ gesetzt</span>
  )}
  </label>
  <div className="relative">

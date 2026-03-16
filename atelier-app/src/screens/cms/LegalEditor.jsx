@@ -56,20 +56,20 @@ export default function LegalEditor() {
  const isDirty = currentDoc && (form.title !== (currentDoc.title || '') || form.content !== (currentDoc.content || ''))
 
  return (
- <div className="p-8 max-w-4xl mx-auto">
+ <div className="p-8">
  {/* Header */}
  <div className="flex items-center justify-between mb-6">
  <div>
  <div className="flex items-center gap-2 mb-1">
- <FileText size={18} className="text-blue-400" />
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Rechtliches</h1>
+ <FileText size={18} className="text-black/35" />
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Rechtliches</h1>
  </div>
  <p className="text-xs text-black/45">Rechtliche Dokumente verwalten · in der App unter Einstellungen sichtbar</p>
  </div>
  </div>
 
  {/* Tab Bar */}
- <div className="flex gap-1 bg-black/5 p-1 border border-black/8 mb-6 w-fit">
+ <div className="flex gap-1 bg-black/5 p-1 border border-black/6 mb-6 w-fit">
  {LEGAL_TABS.map(tab => (
  <button
  key={tab.key}
@@ -86,7 +86,7 @@ export default function LegalEditor() {
  </div>
 
  {/* Editor Panel */}
- <div className="bg-white border border-black/8 p-6">
+ <div className="bg-white border border-black/6 p-6">
  <div className="flex items-center justify-between mb-4">
  <div>
  <p className="text-sm font-semibold text-black/65">{currentTabInfo?.description}</p>
@@ -97,7 +97,7 @@ export default function LegalEditor() {
  )}
  </div>
  {savedTab === activeTab && (
- <div className="flex items-center gap-1.5 bg-teal-500/20 text-teal-400 px-3 py-1.5">
+ <div className="flex items-center gap-1.5 bg-black/4 text-black/40 px-3 py-1.5">
  <Check size={12} />
  <span className="text-xs font-medium">Gespeichert</span>
  </div>
