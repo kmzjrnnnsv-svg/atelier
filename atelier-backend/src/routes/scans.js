@@ -142,6 +142,131 @@ function computeConfidence(cv, cl, source) {
   return Math.max(70, Math.min(98, rnd(base)))
 }
 
+// ─── Calibration Learning System ──────────────────────────────────────────────
+// Learns systematic bias corrections from admin-validated scans.
+// When an admin corrects measurements via PATCH, the original→corrected pair
+// is stored. Over time, these pairs train per-measurement bias corrections
+// that are applied to future scans automatically.
+
+const CALIBRATED_FIELDS = [
+  'right_length', 'right_width', 'right_ball_girth', 'right_instep_girth',
+  'right_heel_girth', 'right_long_heel_girth', 'right_short_heel_girth',
+  'left_length', 'left_width', 'left_ball_girth', 'left_instep_girth',
+  'left_heel_girth', 'left_long_heel_girth', 'left_short_heel_girth',
+]
+
+// Load current calibration corrections (cached in memory, refreshed on update)
+let _calibrationCache = null
+let _calibrationCacheTime = 0
+
+function getCalibration(db) {
+  const now = Date.now()
+  if (_calibrationCache && now - _calibrationCacheTime < 60_000) return _calibrationCache
+  const rows = db.prepare('SELECT measurement, source, bias_mm, std_dev_mm, sample_count FROM measurement_calibration WHERE sample_count >= 3').all()
+  _calibrationCache = {}
+  for (const r of rows) {
+    _calibrationCache[`${r.source}:${r.measurement}`] = { bias: r.bias_mm, stdDev: r.std_dev_mm, n: r.sample_count }
+  }
+  _calibrationCacheTime = now
+  return _calibrationCache
+}
+
+// Apply calibration correction to a measurement result
+function applyCalibration(db, results, source) {
+  const cal = getCalibration(db)
+  const applied = {}
+  for (const field of CALIBRATED_FIELDS) {
+    const key = `${source}:${field}`
+    if (results[field] != null && cal[key] && cal[key].n >= 5) {
+      // Subtract learned bias (bias = predicted - actual, so corrected = predicted - bias)
+      const corrected = rnd(results[field] - cal[key].bias)
+      applied[field] = { original: results[field], corrected, bias: cal[key].bias, confidence_mm: cal[key].stdDev }
+      results[field] = corrected
+    }
+  }
+  return applied
+}
+
+// Recalculate calibration from all comparison pairs
+function recalculateCalibration(db, source) {
+  const fields = db.prepare(
+    'SELECT DISTINCT measurement FROM scan_comparison_pairs WHERE source = ?'
+  ).all(source)
+
+  for (const { measurement } of fields) {
+    const pairs = db.prepare(
+      'SELECT error_mm FROM scan_comparison_pairs WHERE measurement = ? AND source = ?'
+    ).all(measurement, source)
+
+    if (pairs.length < 3) continue
+
+    const errors = pairs.map(p => p.error_mm)
+    const mean = errors.reduce((s, e) => s + e, 0) / errors.length
+    const variance = errors.reduce((s, e) => s + (e - mean) ** 2, 0) / errors.length
+    const stdDev = Math.sqrt(variance)
+
+    db.prepare(`
+      INSERT INTO measurement_calibration (measurement, source, bias_mm, std_dev_mm, sample_count, updated_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'))
+      ON CONFLICT(measurement, source) DO UPDATE SET
+        bias_mm = excluded.bias_mm, std_dev_mm = excluded.std_dev_mm,
+        sample_count = excluded.sample_count, updated_at = excluded.updated_at
+    `).run(measurement, source, rnd(mean), rnd(stdDev), pairs.length)
+  }
+  _calibrationCache = null // invalidate cache
+}
+
+// Bayesian averaging: combine multiple scans from same user for better estimate
+function bayesianUserAverage(db, userId) {
+  const scans = db.prepare(`
+    SELECT * FROM foot_scans WHERE user_id = ? ORDER BY created_at DESC LIMIT 10
+  `).all(userId)
+
+  if (scans.length < 2) return scans[0] ?? null
+
+  // Weight recent scans more heavily (exponential decay)
+  const now = Date.now()
+  const weighted = {}
+  let totalWeight = 0
+
+  for (let i = 0; i < scans.length; i++) {
+    const scan = scans[i]
+    const ageMs = now - new Date(scan.created_at).getTime()
+    const ageDays = ageMs / (1000 * 60 * 60 * 24)
+    // Half-life: 30 days. Most recent scan gets weight ~1.0, 30-day-old gets 0.5
+    const weight = Math.pow(0.5, ageDays / 30)
+    totalWeight += weight
+
+    for (const field of CALIBRATED_FIELDS) {
+      if (scan[field] != null) {
+        if (!weighted[field]) weighted[field] = { sum: 0, weight: 0 }
+        weighted[field].sum += scan[field] * weight
+        weighted[field].weight += weight
+      }
+    }
+  }
+
+  // Build averaged result
+  const averaged = { ...scans[0] } // start from most recent
+  const adjustments = {}
+  for (const field of CALIBRATED_FIELDS) {
+    if (weighted[field] && weighted[field].weight > 0) {
+      const avg = rnd(weighted[field].sum / weighted[field].weight)
+      if (averaged[field] != null && Math.abs(avg - averaged[field]) > 0.05) {
+        adjustments[field] = { latest: averaged[field], averaged: avg }
+        averaged[field] = avg
+      }
+    }
+  }
+
+  averaged._bayesian = {
+    scans_used: scans.length,
+    adjustments,
+    half_life_days: 30,
+  }
+  return averaged
+}
+
 // ─── Phase 1: Computer-vision pipeline (process_photos.py) ───────────────────
 
 function runCvPipeline(rightTopImg, rightSideImg, leftTopImg, leftSideImg) {
@@ -425,6 +550,28 @@ router.post('/analyze', authenticate, async (req, res) => {
     // Compute realistic confidence score
     const confidence = computeConfidence(cv, cl, 'photo')
 
+    // ── Apply learned calibration corrections ────────────────────────────
+    const db = getDb()
+    const rawResults = {
+      right_length: R.length, right_width: R.width,
+      right_ball_girth: R.ball_girth, right_instep_girth: R.instep_girth,
+      right_heel_girth: R.heel_girth, right_long_heel_girth: R.long_heel_girth,
+      right_short_heel_girth: R.short_heel_girth,
+      left_length: L.length, left_width: L.width,
+      left_ball_girth: L.ball_girth, left_instep_girth: L.instep_girth,
+      left_heel_girth: L.heel_girth, left_long_heel_girth: L.long_heel_girth,
+      left_short_heel_girth: L.short_heel_girth,
+    }
+    const calibrationApplied = applyCalibration(db, rawResults, 'photo')
+    // Write corrected values back
+    if (Object.keys(calibrationApplied).length > 0) {
+      for (const [k, v] of Object.entries(calibrationApplied)) {
+        const side = k.startsWith('right_') ? R : L
+        const field = k.replace(/^(right|left)_/, '')
+        side[field] = v.corrected
+      }
+    }
+
     // Girths: only include actually computed values — NO fallback ratios.
     // Missing girths are returned as null so the client knows they weren't measured.
     res.json({
@@ -453,6 +600,7 @@ router.post('/analyze', authenticate, async (req, res) => {
       _cv_right: cv?.right_cv_success ?? false,
       _cv_left:  cv?.left_cv_success  ?? false,
       _confidence: confidence,
+      _calibration_applied: calibrationApplied,
       _measurement_passes: cl._measurement_passes ?? 1,
       _pass_deviations: cl._pass_deviations ?? {},
       _a4_validation: cl.a4_validation ?? null,
@@ -709,8 +857,8 @@ router.patch(
 
     const db  = getDb()
     const id  = req.params.id
-    const row = db.prepare('SELECT id FROM foot_scans WHERE id = ?').get(id)
-    if (!row) return res.status(404).json({ error: 'Scan nicht gefunden' })
+    const original = db.prepare('SELECT * FROM foot_scans WHERE id = ?').get(id)
+    if (!original) return res.status(404).json({ error: 'Scan nicht gefunden' })
 
     const {
       right_length, right_width, right_arch,
@@ -746,15 +894,118 @@ router.patch(
       db.prepare(`UPDATE foot_scans SET ${updates.join(', ')} WHERE id = ?`).run(...params)
     }
 
+    // ── Learning: Store comparison pairs (original → admin-corrected) ────
+    // This is the core learning mechanism: every admin correction teaches the system.
+    const source = original.reference_type === 'lidar' ? 'lidar' : 'photo'
+    const compStmt = db.prepare(`
+      INSERT INTO scan_comparison_pairs (scan_id, measurement, source, predicted_mm, actual_mm, error_mm)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(scan_id, measurement) DO UPDATE SET
+        actual_mm = excluded.actual_mm, error_mm = excluded.error_mm
+    `)
+    let pairsStored = 0
+    for (const [key, newVal] of Object.entries(fieldMap)) {
+      if (newVal === undefined || original[key] == null) continue
+      const oldVal = original[key]
+      if (Math.abs(oldVal - newVal) > 0.05) { // only store meaningful corrections
+        compStmt.run(id, key, source, oldVal, newVal, rnd(oldVal - newVal))
+        pairsStored++
+      }
+    }
+
+    // Recalculate calibration if new pairs were stored
+    if (pairsStored > 0) {
+      recalculateCalibration(db, source)
+    }
+
     // Update validated flag in scan_training_data
     if (validated !== undefined) {
       db.prepare('UPDATE scan_training_data SET validated = ? WHERE scan_id = ?').run(validated, id)
     }
 
+    // Check if auto-training should be triggered
+    const validatedCount = db.prepare('SELECT COUNT(*) AS n FROM scan_training_data WHERE validated = 1').get().n
+    const shouldTrain = validatedCount >= 20 && validatedCount % 10 === 0 // every 10 validated scans after 20
+
     const updated = db.prepare('SELECT * FROM foot_scans WHERE id = ?').get(id)
-    res.json({ ok: true, scan: updated })
+    res.json({
+      ok: true, scan: updated,
+      _learning: { pairs_stored: pairsStored, calibration_recalculated: pairsStored > 0 },
+      _training: shouldTrain ? { trigger: true, validated_count: validatedCount, message: 'Genügend Daten — ML-Training empfohlen' } : undefined,
+    })
   }
 )
+
+// ─── GET /api/scans/my-average — Bayesian average of user's scan history ─────
+// Returns the best estimate of the user's foot dimensions by combining all their
+// scans with recency-weighted averaging (half-life: 30 days).
+router.get('/my-average', authenticate, (req, res) => {
+  const db = getDb()
+  const averaged = bayesianUserAverage(db, req.user.id)
+  if (!averaged) return res.status(404).json({ error: 'Keine Scans vorhanden' })
+  res.json(averaged)
+})
+
+// ─── GET /api/scans/calibration-stats — Current calibration corrections (admin) ─
+router.get('/calibration-stats', authenticate, requireRole('admin'), (req, res) => {
+  const db = getDb()
+  const calibrations = db.prepare('SELECT * FROM measurement_calibration ORDER BY measurement').all()
+  const pairs = db.prepare('SELECT COUNT(*) AS n FROM scan_comparison_pairs').get()
+  const validatedScans = db.prepare('SELECT COUNT(*) AS n FROM scan_training_data WHERE validated = 1').get()
+
+  // Compute per-field accuracy stats
+  const fieldStats = db.prepare(`
+    SELECT measurement, source,
+      COUNT(*) AS n,
+      ROUND(AVG(ABS(error_mm)), 2) AS mean_abs_error_mm,
+      ROUND(MAX(ABS(error_mm)), 2) AS max_abs_error_mm,
+      ROUND(AVG(error_mm), 2) AS mean_bias_mm
+    FROM scan_comparison_pairs GROUP BY measurement, source ORDER BY measurement
+  `).all()
+
+  res.json({
+    calibrations,
+    total_comparison_pairs: pairs.n,
+    validated_scans: validatedScans.n,
+    field_stats: fieldStats,
+    training_ready: validatedScans.n >= 20,
+    training_recommended: validatedScans.n >= 20 && validatedScans.n % 10 === 0,
+  })
+})
+
+// ─── POST /api/scans/trigger-training — Trigger ML training (admin) ──────────
+router.post('/trigger-training', authenticate, requireRole('admin'), async (req, res) => {
+  const db = getDb()
+  const validatedCount = db.prepare('SELECT COUNT(*) AS n FROM scan_training_data WHERE validated = 1').get().n
+
+  if (validatedCount < 10) {
+    return res.status(400).json({ error: `Mindestens 10 validierte Scans benötigt (aktuell: ${validatedCount})` })
+  }
+
+  try {
+    const TRAIN_SCRIPT = join(ML_SCRIPTS, '..', 'train_photo.py')
+    const proc = spawnSync('python3', [TRAIN_SCRIPT, '--export-first'], {
+      timeout: 300_000, // 5 min max
+      maxBuffer: 10 * 1024 * 1024,
+      cwd: join(ML_SCRIPTS, '..'),
+    })
+    const stdout = proc.stdout?.toString() ?? ''
+    const stderr = proc.stderr?.toString() ?? ''
+
+    if (proc.status !== 0) {
+      console.warn('[trigger-training] Failed:', stderr)
+      return res.json({ ok: false, message: 'Training fehlgeschlagen', stderr: stderr.slice(-500) })
+    }
+
+    res.json({
+      ok: true,
+      message: `Training gestartet mit ${validatedCount} validierten Scans`,
+      output: stdout.slice(-1000),
+    })
+  } catch (e) {
+    res.status(500).json({ error: 'Training konnte nicht gestartet werden', detail: e.message })
+  }
+})
 
 // ─── POST /api/scans/lidar-measurements ──────────────────────────────────────
 // Receives an iPhone LiDAR point cloud, runs process_lidar.py, returns mm measurements.
