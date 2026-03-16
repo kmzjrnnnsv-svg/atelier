@@ -78,6 +78,29 @@ function girthsFromDimensions(widths, footHeight, footWidth) {
   return result
 }
 
+// ─── Long Heel Girth (langer Fersenumfang) ──────────────────────────────────
+// Vertical circumference: back of heel → under sole at heel → over instep → back.
+// This is a sagittal-plane circumference, different from the transverse heel girth.
+// Approximated as: π × (instep_height/2 + heel_depth/2) with superellipse correction.
+// instep_height ≈ foot_height at ~60% length
+// heel_depth ≈ foot_height at ~15% length (calcaneus to dorsum)
+function computeLongHeel(footHeight, heelWidth, instepWidth, footLength) {
+  if (!footHeight || !footLength) return null
+  // Long heel goes vertically: from floor behind heel, under heel cup, up over instep
+  // Semi-axis a = half the height at instep (dorsal clearance)
+  // Semi-axis b = half the depth at heel (posterior-to-anterior at heel level)
+  const instepH = footHeight * 0.85  // instep is ~85% of max foot height
+  const heelDepth = footLength * 0.15  // heel depth is ~15% of foot length
+  const a = instepH / 2
+  const b = heelDepth / 2
+  // Superellipse n=2.2 for the sagittal cross-section (slightly squared off at heel)
+  return rnd(superellipseGirth(a, b, 2.2))
+}
+
+// ─── Short Heel Girth (kurzer Fersenumfang) ─────────────────────────────────
+// Transverse circumference around the heel cup (Calcaneus).
+// Already computed as heel_girth in the main pipeline — this is an alias.
+
 // ─── Cross-validation: anatomical consistency checks ────────────────────────
 // Reject measurements that violate known anatomical constraints.
 function validateAnatomical(m) {
@@ -192,8 +215,12 @@ Runde NICHT auf ganze Zahlen. Genauigkeit auf 0.5mm anstreben.
 
 UMFANGSBERECHNUNG NICHT durchführen — das macht der Server mit Superellipse-Modell.
 
+ZUSÄTZLICHE MESSUNGEN — SEITEN-ANSICHT:
+4. Rist-Höhe (Instep height) = Höhe des Fußrückens bei ~60% Fußlänge
+5. Fersen-Tiefe (Heel depth) = Abstand vom hintersten Fersenpunkt zum Fußrücken vertikal darüber
+
 Antworte NUR mit diesem JSON (keine Erklärung):
-{"a4_validation":{"img1_ppm":<float>,"img2_ppm":<float>,"img3_ppm":<float>,"img4_ppm":<float>,"perspective_error_pct":<float>},"right_length":<mm>,"right_width":<mm>,"right_arch_height":<mm>,"right_foot_height":<mm>,"right_ball_width":<mm>,"right_ball_height":<mm>,"right_waist_width":<mm>,"right_instep_width":<mm>,"right_heel_width":<mm>,"right_ankle_width":<mm>,"left_length":<mm>,"left_width":<mm>,"left_arch_height":<mm>,"left_foot_height":<mm>,"left_ball_width":<mm>,"left_ball_height":<mm>,"left_waist_width":<mm>,"left_instep_width":<mm>,"left_heel_width":<mm>,"left_ankle_width":<mm>}`
+{"a4_validation":{"img1_ppm":<float>,"img2_ppm":<float>,"img3_ppm":<float>,"img4_ppm":<float>,"perspective_error_pct":<float>},"right_length":<mm>,"right_width":<mm>,"right_arch_height":<mm>,"right_foot_height":<mm>,"right_ball_width":<mm>,"right_ball_height":<mm>,"right_waist_width":<mm>,"right_instep_width":<mm>,"right_instep_height":<mm>,"right_heel_width":<mm>,"right_heel_depth":<mm>,"right_ankle_width":<mm>,"left_length":<mm>,"left_width":<mm>,"left_arch_height":<mm>,"left_foot_height":<mm>,"left_ball_width":<mm>,"left_ball_height":<mm>,"left_waist_width":<mm>,"left_instep_width":<mm>,"left_instep_height":<mm>,"left_heel_width":<mm>,"left_heel_depth":<mm>,"left_ankle_width":<mm>}`
         },
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: toB64(rightTopImg)  } },
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: toB64(rightSideImg) } },
@@ -290,6 +317,18 @@ JSON: {"right_length":<mm>,"right_width":<mm>,"right_foot_height":<mm>,"right_ba
       const b = h / 2
       result[`${side}_${k}_girth`] = rnd(superellipseGirth(a, b, EXPO[k]))
     }
+
+    // Compute Long Heel (langer Fersenumfang): sagittal circumference
+    const instepH = result[`${side}_instep_height`] || footH * 0.85
+    const heelDepth = result[`${side}_heel_depth`] || result[`${side}_length`] * 0.15
+    if (instepH && heelDepth) {
+      result[`${side}_long_heel_girth`] = rnd(superellipseGirth(instepH / 2, heelDepth / 2, 2.2))
+    }
+
+    // Short Heel = heel_girth (already computed above)
+    if (result[`${side}_heel_girth`]) {
+      result[`${side}_short_heel_girth`] = result[`${side}_heel_girth`]
+    }
   }
 
   return result
@@ -322,7 +361,7 @@ function mergeResults(cv, cl, side) {
   const footW = okWid(width) ? width : null
 
   // Use server-computed superellipse girths from Claude pass (already in cl object)
-  const girthKeys = ['ball', 'waist', 'instep', 'heel', 'ankle']
+  const girthKeys = ['ball', 'waist', 'instep', 'heel', 'ankle', 'long_heel', 'short_heel']
   const girths = {}
   for (const k of girthKeys) {
     const g = cl[`${side}_${k}_girth`]
@@ -397,16 +436,20 @@ router.post('/analyze', authenticate, async (req, res) => {
       right_instep_girth: R.instep_girth ?? null,
       right_heel_girth:   R.heel_girth   ?? null,
       right_waist_girth:  R.waist_girth  ?? null,
-      right_ankle_girth:  R.ankle_girth  ?? null,
-      left_length:        L.length,
-      left_width:         L.width,
-      left_arch_height:   L.arch_height,
-      left_foot_height:   L.foot_height,
-      left_ball_girth:    L.ball_girth   ?? null,
-      left_instep_girth:  L.instep_girth ?? null,
-      left_heel_girth:    L.heel_girth   ?? null,
-      left_waist_girth:   L.waist_girth  ?? null,
-      left_ankle_girth:   L.ankle_girth  ?? null,
+      right_ankle_girth:      R.ankle_girth      ?? null,
+      right_long_heel_girth:  R.long_heel_girth  ?? null,
+      right_short_heel_girth: R.short_heel_girth ?? null,
+      left_length:            L.length,
+      left_width:             L.width,
+      left_arch_height:       L.arch_height,
+      left_foot_height:       L.foot_height,
+      left_ball_girth:        L.ball_girth       ?? null,
+      left_instep_girth:      L.instep_girth     ?? null,
+      left_heel_girth:        L.heel_girth       ?? null,
+      left_waist_girth:       L.waist_girth      ?? null,
+      left_ankle_girth:       L.ankle_girth      ?? null,
+      left_long_heel_girth:   L.long_heel_girth  ?? null,
+      left_short_heel_girth:  L.short_heel_girth ?? null,
       _cv_right: cv?.right_cv_success ?? false,
       _cv_left:  cv?.left_cv_success  ?? false,
       _confidence: confidence,
@@ -538,6 +581,10 @@ const saveValidators = [
   body('left_heel_girth').optional().isFloat({ min: 150, max: 500 }),
   body('left_waist_girth').optional().isFloat({ min: 100, max: 450 }),
   body('left_ankle_girth').optional().isFloat({ min: 100, max: 450 }),
+  body('right_long_heel_girth').optional().isFloat({ min: 200, max: 500 }),
+  body('right_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
+  body('left_long_heel_girth').optional().isFloat({ min: 200, max: 500 }),
+  body('left_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
   body('right_foot_height').optional().isFloat({ min: 30, max: 120 }),
   body('left_foot_height').optional().isFloat({ min: 30, max: 120 }),
   body('eu_size').trim().notEmpty(),
@@ -555,7 +602,9 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
   const { reference_type, ppm, right_length, right_width, right_arch,
           left_length, left_width, left_arch,
           right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+          right_long_heel_girth, right_short_heel_girth,
           left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+          left_long_heel_girth, left_short_heel_girth,
           right_foot_height, left_foot_height,
           eu_size, uk_size, us_size, accuracy, notes } = req.body
 
@@ -564,18 +613,22 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
       (user_id, reference_type, ppm, right_length, right_width, right_arch,
        left_length, left_width, left_arch,
        right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+       right_long_heel_girth, right_short_heel_girth,
        left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+       left_long_heel_girth, left_short_heel_girth,
        right_foot_height, left_foot_height,
        eu_size, uk_size, us_size, accuracy, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     req.user.id, reference_type, ppm ?? null,
     right_length, right_width, right_arch,
     left_length,  left_width,  left_arch,
     right_ball_girth ?? null, right_instep_girth ?? null, right_heel_girth ?? null,
     right_waist_girth ?? null, right_ankle_girth ?? null,
+    right_long_heel_girth ?? null, right_short_heel_girth ?? null,
     left_ball_girth  ?? null,  left_instep_girth ?? null,  left_heel_girth ?? null,
     left_waist_girth ?? null,  left_ankle_girth ?? null,
+    left_long_heel_girth ?? null, left_short_heel_girth ?? null,
     right_foot_height ?? null, left_foot_height ?? null,
     eu_size, uk_size, us_size, accuracy, notes ?? null
   )
@@ -634,6 +687,8 @@ router.patch(
     body('right_heel_girth').optional().isFloat({ min: 150, max: 500 }),
     body('right_waist_girth').optional().isFloat({ min: 100, max: 450 }),
     body('right_ankle_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('right_long_heel_girth').optional().isFloat({ min: 200, max: 500 }),
+    body('right_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
     body('left_length').optional().isFloat({ min: 100, max: 400 }),
     body('left_width').optional().isFloat({ min: 50, max: 200 }),
     body('left_arch').optional().isFloat({ min: 0, max: 80 }),
@@ -642,6 +697,8 @@ router.patch(
     body('left_heel_girth').optional().isFloat({ min: 150, max: 500 }),
     body('left_waist_girth').optional().isFloat({ min: 100, max: 450 }),
     body('left_ankle_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('left_long_heel_girth').optional().isFloat({ min: 200, max: 500 }),
+    body('left_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
     body('right_foot_height').optional().isFloat({ min: 30, max: 120 }),
     body('left_foot_height').optional().isFloat({ min: 30, max: 120 }),
     body('validated').optional().isInt({ min: 0, max: 1 }),
@@ -658,9 +715,11 @@ router.patch(
     const {
       right_length, right_width, right_arch,
       right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+      right_long_heel_girth, right_short_heel_girth,
       right_foot_height,
       left_length,  left_width,  left_arch,
       left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+      left_long_heel_girth, left_short_heel_girth,
       left_foot_height,
       validated,
     } = req.body
@@ -671,9 +730,11 @@ router.patch(
     const fieldMap = {
       right_length, right_width, right_arch,
       right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+      right_long_heel_girth, right_short_heel_girth,
       right_foot_height,
       left_length,  left_width,  left_arch,
       left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+      left_long_heel_girth, left_short_heel_girth,
       left_foot_height,
     }
     for (const [key, val] of Object.entries(fieldMap)) {
