@@ -6,12 +6,12 @@ import { useAuth } from '../../context/AuthContext'
 import MFAModal from '../../components/MFAModal'
 
 const STATUS_CONFIG = {
- pending_payment: { label: 'Zahlung ausstehend', color: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-400' },
- pending: { label: 'Ausstehend', color: 'bg-black/10 text-black/45', dot: 'bg-black/35' },
- processing: { label: 'In Fertigung', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' },
- shipped: { label: 'Versendet', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-400' },
- delivered: { label: 'Geliefert', color: 'bg-teal-100 text-teal-700', dot: 'bg-teal-400' },
- cancelled: { label: 'Storniert', color: 'bg-red-100 text-red-600', dot: 'bg-red-500' },
+ pending_payment: { label: 'Zahlung ausstehend', color: 'bg-black/15 text-black/70', dot: 'bg-black/15' },
+ pending: { label: 'Ausstehend', color: 'bg-black/8 text-black/50', dot: 'bg-black/15' },
+ processing: { label: 'In Fertigung', color: 'bg-black/8 text-black/50', dot: 'bg-black/25' },
+ shipped: { label: 'Versendet', color: 'bg-black/8 text-black/50', dot: 'bg-black/40' },
+ delivered: { label: 'Geliefert', color: 'bg-black/8 text-black/50', dot: 'bg-black/60' },
+ cancelled: { label: 'Storniert', color: 'bg-black/8 text-black/50', dot: 'bg-black/10' },
 }
 
 const FILTERS = [
@@ -91,7 +91,7 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  }
 
  return (
- <div className="bg-white border border-black/8 overflow-hidden">
+ <div className="bg-white border border-black/6 overflow-hidden hover:bg-black/3 transition-colors">
  {/* Row header */}
  <div className="flex items-center gap-3 px-4 py-3">
  {/* Status dot */}
@@ -103,14 +103,14 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  <span className="text-xs font-bold text-black/90">{order.order_ref || `#${order.id}`}</span>
  <span className="text-[10px] text-black/45 truncate">{order.shoe_name}</span>
  {order.user_order_number > 0 && (
- <span className="text-[9px] bg-black/10 text-black/45 px-1.5 py-0.5">
+ <span className="text-[9px] bg-black/8 text-black/50 px-1.5 py-0.5">
  {order.user_order_number}. Schuh
  </span>
  )}
  </div>
  <div className="flex items-center gap-3 mt-0.5">
  <span className="text-[10px] text-black/45 flex items-center gap-1">
- <User size={9} /> {order.user_name}
+ <User size={9} strokeWidth={1.5} /> {order.user_name}
  </span>
  <span className="text-[10px] text-black/45">{order.price}</span>
  <span className="text-[10px] text-black/35">
@@ -130,18 +130,18 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  className="w-7 h-7 bg-black/5 flex items-center justify-center flex-shrink-0 border-0 hover:bg-black/10 transition-colors"
  >
  {expanded
- ? <ChevronUp size={12} className="text-black/45" />
- : <ChevronDown size={12} className="text-black/45" />}
+ ? <ChevronUp size={12} strokeWidth={1.5} className="text-black/45" />
+ : <ChevronDown size={12} strokeWidth={1.5} className="text-black/45" />}
  </button>
  </div>
 
  {/* Expanded details */}
  {expanded && (
- <div className="border-t border-black/10 px-4 py-4 space-y-4 bg-[#f6f5f3]">
+ <div className="border-t border-black/6 px-4 py-4 space-y-4 bg-[#f6f5f3]">
 
  {/* Customer */}
  <div>
- <p className="text-xs font-medium text-black/35 mb-1.5">Kunde</p>
+ <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Kunde</p>
  <p className="text-xs text-black/65">{order.user_name}</p>
  <p className="text-[10px] text-black/45">{order.user_email}</p>
  <p className="text-[9px] text-black/35 mt-0.5">USER-{String(order.user_id).padStart(5, '0')}</p>
@@ -149,18 +149,18 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
 
  {/* Shoe details */}
  <div>
- <p className="text-xs font-medium text-black/35 mb-1.5">Bestellung</p>
+ <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Bestellung</p>
  <p className="text-xs text-black/65">{order.shoe_name}</p>
  <p className="text-[10px] text-black/45">{order.material} · {order.color}</p>
  {order.eu_size && (
- <p className="text-[10px] text-teal-400 mt-0.5">EU {order.eu_size} · 3D-Scan</p>
+ <p className="text-[10px] text-black/50 mt-0.5">EU {order.eu_size} · 3D-Scan</p>
  )}
  </div>
 
  {/* Accessories */}
  {accessories.length > 0 && (
  <div>
- <p className="text-xs font-medium text-black/35 mb-1.5">Zubehör</p>
+ <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Zubehör</p>
  {accessories.map((a, i) => (
  <div key={i} className="flex justify-between text-[10px]">
  <span className="text-black/45">{a.name}</span>
@@ -173,7 +173,7 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  {/* Delivery address */}
  {delivery && (
  <div>
- <p className="text-xs font-medium text-black/35 mb-1.5">Lieferadresse</p>
+ <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Lieferadresse</p>
  <p className="text-[10px] text-black/45 leading-relaxed">
  {delivery.name}<br />
  {delivery.street}<br />
@@ -186,7 +186,7 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
 
  {/* Actions */}
  {nextOptions.length > 0 && (
- <div className="pt-2 border-t border-black/10 flex flex-wrap gap-2">
+ <div className="pt-2 border-t border-black/6 flex flex-wrap gap-2">
  {nextOptions.map(s => (
  <button
  key={s}
@@ -194,10 +194,10 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  onClick={() => handleStatus(s)}
  className={`text-[10px] font-medium px-3 py-2 border-0 transition-all disabled:opacity-50 ${
  s === 'cancelled'
- ? 'bg-red-100 text-red-600 hover:bg-red-200'
+ ? 'bg-black/8 text-black/40 hover:bg-black/12'
  : s === 'processing'
- ? 'bg-teal-500 text-black hover:bg-teal-400'
- : 'bg-black/10 text-black/65 hover:bg-black/15'
+ ? 'bg-black text-white hover:bg-black/85'
+ : 'bg-black/8 text-black/50 hover:bg-black/12'
  }`}
  >
  {updating ? '…' : STATUS_LABELS[s] || s}
@@ -252,15 +252,15 @@ export default function OrdersPanel() {
  const pendingPaymentCount = counts['pending_payment'] || 0
 
  return (
- <div className="p-6 min-h-full">
+ <div className="p-8 min-h-full">
  {/* Header */}
  <div className="flex items-center justify-between mb-6">
  <div>
  <div className="flex items-center gap-3 mb-1">
- <ShoppingBag size={18} className="text-black/35" />
- <h1 className="text-xl font-semibold text-black/90 tracking-tight" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Bestellungen</h1>
+ <ShoppingBag size={18} strokeWidth={1.5} className="text-black/35" />
+ <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Bestellungen</h1>
  {pendingPaymentCount > 0 && (
- <span className="bg-yellow-500 text-black text-[10px] font-medium px-2 py-0.5">
+ <span className="bg-black/15 text-black/70 text-[10px] font-medium px-2 py-0.5">
  {pendingPaymentCount} Zahlung offen
  </span>
  )}
@@ -272,7 +272,7 @@ export default function OrdersPanel() {
  disabled={loading}
  className="flex items-center gap-2 bg-black/5 hover:bg-black/10 text-black/65 text-xs px-3 py-2 border-0 transition-colors disabled:opacity-50"
  >
- <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+ <RefreshCw size={12} strokeWidth={1.5} className={loading ? 'animate-spin' : ''} />
  Aktualisieren
  </button>
  </div>
@@ -303,7 +303,7 @@ export default function OrdersPanel() {
  </div>
  ) : filtered.length === 0 ? (
  <div className="flex flex-col items-center justify-center py-20 text-center">
- <ShoppingBag size={32} className="text-black/20 mb-3" />
+ <ShoppingBag size={32} strokeWidth={1.5} className="text-black/20 mb-3" />
  <p className="text-sm text-black/45">Keine Bestellungen</p>
  </div>
  ) : (
