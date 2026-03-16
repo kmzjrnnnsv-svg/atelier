@@ -1638,18 +1638,19 @@ export default function FootScan() {
                       </div>
                       <div className="grid grid-cols-2 gap-0">
                         {[
-                          { label: 'Länge',              key: 'length',           value: m.length },
-                          { label: 'Breite',              key: 'width',            value: m.width },
-                          { label: 'Ballenumfang',        key: 'ball_girth',       value: m.ball_girth },
-                          { label: 'Ristumfang',          key: 'instep_girth',     value: m.instep_girth },
-                          { label: 'Lg. Fersenumfang',    key: 'long_heel_girth',  value: m.long_heel_girth },
-                          { label: 'Kz. Fersenumfang',    key: 'short_heel_girth', value: m.short_heel_girth },
-                          { label: 'Fersenumfang',        key: 'heel_girth',       value: m.heel_girth },
-                          { label: 'Gewölbehöhe',         key: 'arch',             value: m.arch },
-                          { label: 'Gelenkweite',         key: 'waist_girth',      value: m.waist_girth },
-                          { label: 'Knöchel',             key: 'ankle_girth',      value: m.ankle_girth },
-                          { label: 'Fußhöhe',             key: 'foot_height',      value: m.foot_height },
-                        ].map(({ label: lbl, key, value }, i) => {
+                          { label: 'Länge',              key: 'length',           value: m.length,           optional: true, accuracy: '±1 mm' },
+                          { label: 'Breite',              key: 'width',            value: m.width,            optional: false, accuracy: '±1.5 mm' },
+                          { label: 'Ballenumfang',        key: 'ball_girth',       value: m.ball_girth,       optional: true, accuracy: '±5 mm' },
+                          { label: 'Ristumfang',          key: 'instep_girth',     value: m.instep_girth,     optional: true, accuracy: '±2.5 mm' },
+                          { label: 'Lg. Fersenumfang',    key: 'long_heel_girth',  value: m.long_heel_girth,  optional: true, accuracy: '±7 mm' },
+                          { label: 'Kz. Fersenumfang',    key: 'short_heel_girth', value: m.short_heel_girth, optional: true, accuracy: '±3 mm' },
+                          { label: 'Fersenumfang',        key: 'heel_girth',       value: m.heel_girth,       optional: false, accuracy: '±7 mm' },
+                          { label: 'Gewölbehöhe',         key: 'arch',             value: m.arch,             optional: false, accuracy: '±4 mm' },
+                          { label: 'Gelenkweite',         key: 'waist_girth',      value: m.waist_girth,      optional: false, accuracy: '±2.5 mm' },
+                          { label: 'Knöchel',             key: 'ankle_girth',      value: m.ankle_girth,      optional: false, accuracy: '±10 mm' },
+                          { label: 'Fußhöhe',             key: 'foot_height',      value: m.foot_height,      optional: false, accuracy: '±4 mm' },
+                        ].filter(({ optional, value }) => !optional || value != null)
+                        .map(({ label: lbl, key, value, accuracy }, i) => {
                           const editKey = `${side}_${key}`
                           const edited = editedValues[editKey]
                           const displayVal = edited !== undefined ? edited : (value != null ? Number(value).toFixed(1) : '')
@@ -1657,7 +1658,10 @@ export default function FootScan() {
                             <div key={lbl} className={`px-3 py-2.5 flex items-center justify-between ${
                               i % 2 === 0 ? 'border-r border-black/5' : ''
                             } ${i >= 2 ? 'border-t border-black/5' : ''}`}>
-                              <span className="text-[9px] text-black/35">{lbl}</span>
+                              <div>
+                                <span className="text-[9px] text-black/35 block">{lbl}</span>
+                                <span className="text-[7px] text-black/20">{accuracy}</span>
+                              </div>
                               <div className="flex items-center gap-1">
                                 <input
                                   type="number"
