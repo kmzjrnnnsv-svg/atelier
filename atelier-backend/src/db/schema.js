@@ -220,6 +220,11 @@ export function runMigrations(db) {
     // users — loyalty points
     `ALTER TABLE users ADD COLUMN loyalty_points INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE users ADD COLUMN loyalty_tier   TEXT NOT NULL DEFAULT 'bronze'`,
+    // users — persistent foot notes (user-level, not per-scan)
+    `ALTER TABLE users ADD COLUMN foot_notes TEXT`,
+    // orders — translated foot notes included with order
+    `ALTER TABLE orders ADD COLUMN foot_notes    TEXT`,
+    `ALTER TABLE orders ADD COLUMN foot_notes_en TEXT`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }

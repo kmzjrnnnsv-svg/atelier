@@ -185,6 +185,26 @@ router.patch('/me', authenticate,
   }
 )
 
+// GET /api/auth/me/foot-notes — get user-level foot notes
+router.get('/me/foot-notes', authenticate, (req, res) => {
+  const row = getDb().prepare('SELECT foot_notes FROM users WHERE id = ?').get(req.user.id)
+  res.json({ foot_notes: row?.foot_notes || '' })
+})
+
+// PUT /api/auth/me/foot-notes — save user-level foot notes
+router.put('/me/foot-notes', authenticate, (req, res) => {
+  const { foot_notes } = req.body
+  if (foot_notes != null && typeof foot_notes !== 'string') {
+    return res.status(400).json({ error: 'foot_notes must be a string' })
+  }
+  if (foot_notes && foot_notes.length > 1000) {
+    return res.status(400).json({ error: 'foot_notes max 1000 characters' })
+  }
+  getDb().prepare("UPDATE users SET foot_notes = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(foot_notes ?? null, req.user.id)
+  res.json({ foot_notes: foot_notes ?? '' })
+})
+
 // ── MFA Routes ────────────────────────────────────────────────────────────────
 
 // GET /api/auth/mfa/status

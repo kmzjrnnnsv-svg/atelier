@@ -95,7 +95,7 @@ function AccessoryCard({ item, selected, onToggle }) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { latestScan, placeOrder } = useAtelierStore()
+  const { latestScan, placeOrder, footNotes } = useAtelierStore()
 
   // Product from navigation state
   const product = location.state?.product || {}
@@ -143,6 +143,7 @@ export default function Checkout() {
         delivery_address: delivery,
         billing_address:  billingAddr,
         accessories:      chosenAccessories.map(a => ({ name: a.name, price: a.price })),
+        foot_notes:       footNotes || null,
       })
       setPlaced(row)
     } catch (e) {

@@ -12,6 +12,7 @@ const useAtelierStore = create((set, get) => ({
   orders:     [],
   faqs:       [],
   latestScan:  null, // most recent foot scan for this user
+  footNotes:   '',   // user-level persistent foot notes
   shoeMaterials: [],
   shoeColors:   [],
   shoeSoles:    [],
@@ -59,7 +60,7 @@ const useAtelierStore = create((set, get) => ({
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings, loyaltyTiers, loyaltyStatus] = await Promise.all([
+      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData] = await Promise.all([
         apiFetch('/api/shoes'),
         apiFetch('/api/curated'),
         apiFetch('/api/wardrobe'),
@@ -76,6 +77,7 @@ const useAtelierStore = create((set, get) => ({
         apiFetch('/api/settings/explore').catch(() => ({})),
         apiFetch('/api/loyalty/tiers').catch(() => []),
         apiFetch('/api/loyalty/my-status').catch(() => ({ points: 0, tier: 'bronze' })),
+        apiFetch('/api/auth/me/foot-notes').catch(() => ({ foot_notes: '' })),
       ])
       const settingsMap = settings || {}
       set({
@@ -99,6 +101,7 @@ const useAtelierStore = create((set, get) => ({
         },
         loyaltyTiers: Array.isArray(loyaltyTiers) ? loyaltyTiers.map(normalizeLoyaltyTier) : [],
         loyaltyStatus: loyaltyStatus || { points: 0, tier: 'bronze' },
+        footNotes: footNotesData?.foot_notes || '',
         loading:    false,
       })
     } catch (e) {
@@ -123,6 +126,15 @@ const useAtelierStore = create((set, get) => ({
   async refreshScan() {
     const scans = await apiFetch('/api/scans/mine').catch(() => [])
     set({ latestScan: Array.isArray(scans) && scans.length > 0 ? scans[0] : null })
+  },
+
+  // --- FOOT NOTES ---
+  async saveFootNotes(notes) {
+    const res = await apiFetch('/api/auth/me/foot-notes', {
+      method: 'PUT',
+      body: JSON.stringify({ foot_notes: notes }),
+    })
+    set({ footNotes: res.foot_notes || '' })
   },
 
   // --- ORDERS ---
