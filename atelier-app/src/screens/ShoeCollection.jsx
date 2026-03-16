@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ShoppingBag, Heart, RotateCcw, ScanLine, Info } from 'lucide-react'
+import { Search, ShoppingBag, Heart, RotateCcw, ScanLine, Info, X } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -183,6 +183,7 @@ export default function ShoeCollection() {
   const { user }     = useAuth()
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy,   setScanAccuracy]   = useState(null)
+  const [cartOpen,       setCartOpen]       = useState(false)
   const catValues = CATEGORIES.map(c => c.value)
   const swipeHandlers = useSwipeTabs(catValues, activeCategory, setActiveCategory)
 
@@ -214,7 +215,7 @@ export default function ShoeCollection() {
           </button>
           <button
             className="relative bg-transparent border-0 p-0"
-            onClick={() => navigate('/orders')}
+            onClick={() => setCartOpen(v => !v)}
           >
             <ShoppingBag size={20} strokeWidth={1.5} className="text-black/60" />
             {orders.filter(o => !['delivered','cancelled'].includes(o.status)).length > 0 && (
@@ -225,6 +226,44 @@ export default function ShoeCollection() {
           </button>
         </div>
       </div>
+
+      {/* ── Cart (slide in from right) ────────────────────────────────── */}
+      <div className="fixed top-0 right-0 bottom-0 bg-white shadow-2xl z-50 flex flex-col"
+        style={{ width: 'min(340px, 85vw)', height: '100dvh', transform: cartOpen ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/5">
+          <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Bestellungen</h3>
+          <button onClick={() => setCartOpen(false)} className="w-8 h-8 flex items-center justify-center bg-transparent border-0">
+            <X size={18} strokeWidth={1.5} className="text-black/60" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {orders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <ShoppingBag size={32} className="text-black/10 mb-3" />
+              <p className="text-[11px] text-black/40">Keine Bestellungen</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {orders.slice(0, 8).map(order => (
+                <div key={order.id} className="border border-black/8 p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium text-black">{order.shoe_name}</p>
+                    <span className="text-[8px] uppercase tracking-wider text-black/30">{order.status}</span>
+                  </div>
+                  <p className="text-[9px] text-black/40 mt-0.5">{order.material} · {order.price}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="px-5 pb-5 pt-3 border-t border-black/5">
+          <button onClick={() => { setCartOpen(false); navigate('/orders') }}
+            className="w-full py-3 bg-black text-white text-[10px] uppercase tracking-[0.18em] font-medium border-0">
+            Alle Bestellungen anzeigen
+          </button>
+        </div>
+      </div>
+      {cartOpen && <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setCartOpen(false)} />}
 
       {/* ── Title + Category Tabs ──────────────────────────────────────── */}
       <div className="px-5 pb-3 bg-white border-b border-black/8">
