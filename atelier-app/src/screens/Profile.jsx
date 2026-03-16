@@ -108,7 +108,7 @@ export default function Profile() {
   const initials = (user?.name || 'A').charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col h-full bg-white overflow-hidden relative">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4">
@@ -130,8 +130,8 @@ export default function Profile() {
       </div>
 
       {/* ── Notification Panel (slide in from right) ─────────────────── */}
-      <div className="fixed top-0 right-0 bottom-0 bg-white shadow-2xl z-50 flex flex-col"
-        style={{ width: 'min(340px, 85vw)', height: '100dvh', transform: showNotifs ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
+      <div className="absolute top-0 right-0 bottom-0 bg-white shadow-2xl z-50 flex flex-col"
+        style={{ width: 'min(340px, 85vw)', transform: showNotifs ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/5">
           <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Benachrichtigungen</h3>
           <button onClick={() => setShowNotifs(false)} className="w-8 h-8 flex items-center justify-center bg-transparent border-0">
@@ -167,7 +167,7 @@ export default function Profile() {
           </button>
         </div>
       </div>
-      {showNotifs && <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setShowNotifs(false)} />}
+      {showNotifs && <div className="absolute inset-0 bg-black/30 z-40" onClick={() => setShowNotifs(false)} />}
 
       {/* ── Content ────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
@@ -381,6 +381,7 @@ export default function Profile() {
         </div>
 
         {/* Saved Dimensions */}
+        {latestScan ? (
         <div className="bg-white overflow-hidden border-b border-black/8">
           <div className="flex items-center justify-between px-4 pt-4 pb-1">
             <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-black">Saved Dimensions</p>
@@ -410,90 +411,78 @@ export default function Profile() {
           <div className="p-4" style={{ minHeight: 220 }} {...swipeHandlers}>
             {activeTab === 'SIZE' && (
               <div className="space-y-1.5">
-                {latestScan ? (
-                  <>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-[9px] uppercase tracking-widest text-black/40">Schuhgröße</span>
-                      <span className="text-sm font-bold text-black">EU {latestScan.eu_size} · UK {latestScan.uk_size} · US {latestScan.us_size}</span>
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-[9px] uppercase tracking-widest text-black/40">Schuhgröße</span>
+                  <span className="text-sm font-bold text-black">EU {latestScan.eu_size} · UK {latestScan.uk_size} · US {latestScan.us_size}</span>
+                </div>
+                <div className="border-t border-black/5 pt-2 mt-2">
+                  <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                  {[
+                    ['Länge', `${Number(latestScan.right_length).toFixed(1)} mm`],
+                    ['Breite', `${Number(latestScan.right_width).toFixed(1)} mm`],
+                    ['Gewölbe', `${Number(latestScan.right_arch).toFixed(1)} mm`],
+                    ...(latestScan.right_ball_girth ? [['Ballenumfang', `${Number(latestScan.right_ball_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.right_instep_girth ? [['Ristumfang', `${Number(latestScan.right_instep_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.right_heel_girth ? [['Fersenumfang', `${Number(latestScan.right_heel_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.right_waist_girth ? [['Gelenkweite', `${Number(latestScan.right_waist_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.right_ankle_girth ? [['Knöchel', `${Number(latestScan.right_ankle_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.right_foot_height ? [['Fußhöhe', `${Number(latestScan.right_foot_height).toFixed(1)} mm`]] : []),
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex justify-between items-center py-0.5">
+                      <span className="text-[9px] text-black/40">{k}</span>
+                      <span className="text-[11px] font-semibold text-black">{v}</span>
                     </div>
-                    <div className="border-t border-black/5 pt-2 mt-2">
-                      <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Rechts</p>
-                      {[
-                        ['Länge', `${Number(latestScan.right_length).toFixed(1)} mm`],
-                        ['Breite', `${Number(latestScan.right_width).toFixed(1)} mm`],
-                        ['Gewölbe', `${Number(latestScan.right_arch).toFixed(1)} mm`],
-                        ...(latestScan.right_ball_girth ? [['Ballenumfang', `${Number(latestScan.right_ball_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.right_instep_girth ? [['Ristumfang', `${Number(latestScan.right_instep_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.right_heel_girth ? [['Fersenumfang', `${Number(latestScan.right_heel_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.right_waist_girth ? [['Gelenkweite', `${Number(latestScan.right_waist_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.right_ankle_girth ? [['Knöchel', `${Number(latestScan.right_ankle_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.right_foot_height ? [['Fußhöhe', `${Number(latestScan.right_foot_height).toFixed(1)} mm`]] : []),
-                      ].map(([k, v]) => (
-                        <div key={k} className="flex justify-between items-center py-0.5">
-                          <span className="text-[9px] text-black/40">{k}</span>
-                          <span className="text-[11px] font-semibold text-black">{v}</span>
-                        </div>
-                      ))}
+                  ))}
+                </div>
+                <div className="border-t border-black/5 pt-2 mt-2">
+                  <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Links</p>
+                  {[
+                    ['Länge', `${Number(latestScan.left_length).toFixed(1)} mm`],
+                    ['Breite', `${Number(latestScan.left_width).toFixed(1)} mm`],
+                    ['Gewölbe', `${Number(latestScan.left_arch).toFixed(1)} mm`],
+                    ...(latestScan.left_ball_girth ? [['Ballenumfang', `${Number(latestScan.left_ball_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.left_instep_girth ? [['Ristumfang', `${Number(latestScan.left_instep_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.left_heel_girth ? [['Fersenumfang', `${Number(latestScan.left_heel_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.left_waist_girth ? [['Gelenkweite', `${Number(latestScan.left_waist_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.left_ankle_girth ? [['Knöchel', `${Number(latestScan.left_ankle_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.left_foot_height ? [['Fußhöhe', `${Number(latestScan.left_foot_height).toFixed(1)} mm`]] : []),
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex justify-between items-center py-0.5">
+                      <span className="text-[9px] text-black/40">{k}</span>
+                      <span className="text-[11px] font-semibold text-black">{v}</span>
                     </div>
-                    <div className="border-t border-black/5 pt-2 mt-2">
-                      <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Links</p>
-                      {[
-                        ['Länge', `${Number(latestScan.left_length).toFixed(1)} mm`],
-                        ['Breite', `${Number(latestScan.left_width).toFixed(1)} mm`],
-                        ['Gewölbe', `${Number(latestScan.left_arch).toFixed(1)} mm`],
-                        ...(latestScan.left_ball_girth ? [['Ballenumfang', `${Number(latestScan.left_ball_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.left_instep_girth ? [['Ristumfang', `${Number(latestScan.left_instep_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.left_heel_girth ? [['Fersenumfang', `${Number(latestScan.left_heel_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.left_waist_girth ? [['Gelenkweite', `${Number(latestScan.left_waist_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.left_ankle_girth ? [['Knöchel', `${Number(latestScan.left_ankle_girth).toFixed(1)} mm`]] : []),
-                        ...(latestScan.left_foot_height ? [['Fußhöhe', `${Number(latestScan.left_foot_height).toFixed(1)} mm`]] : []),
-                      ].map(([k, v]) => (
-                        <div key={k} className="flex justify-between items-center py-0.5">
-                          <span className="text-[9px] text-black/40">{k}</span>
-                          <span className="text-[11px] font-semibold text-black">{v}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-[10px] text-black/40 text-center py-4">Noch kein Scan vorhanden. Starte einen 3D Fußscan.</p>
-                )}
+                  ))}
+                </div>
               </div>
             )}
             {activeTab === 'GENERAL' && (
               <div className="space-y-3">
-                {latestScan ? (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[9px] uppercase tracking-widest text-black/40">Fußtyp</span>
-                      <span className="text-sm font-semibold text-black">{scanArchInfo?.label || '—'}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] uppercase tracking-widest text-black/40">Fußtyp</span>
+                  <span className="text-sm font-semibold text-black">{scanArchInfo?.label || '—'}</span>
+                </div>
+                <p className="text-[9px] text-black/40 leading-relaxed -mt-1">{scanArchInfo?.desc}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] uppercase tracking-widest text-black/40">Gewölbe</span>
+                  <span className="text-sm font-semibold text-black">{scanArchLabel || '—'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] uppercase tracking-widest text-black/40">Genauigkeit</span>
+                  <span className="text-sm font-semibold text-black">{Number(latestScan.accuracy).toFixed(1)}%</span>
+                </div>
+                <div className="border-t border-black/5 pt-3 mt-2">
+                  <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Alle Fußtypen</p>
+                  {ARCHETYPES.map(a => (
+                    <div key={a.key} className={`flex items-center gap-3 py-2 ${a.key === scanArchtype ? 'bg-[#f6f5f3] px-2 -mx-2' : ''}`}>
+                      <div className={`w-1.5 h-1.5 flex-shrink-0 ${a.key === scanArchtype ? 'bg-black' : 'bg-black/15'}`} />
+                      <div className="flex-1">
+                        <p className={`text-[10px] ${a.key === scanArchtype ? 'font-semibold text-black' : 'text-black/50'}`}>{a.label}</p>
+                        <p className="text-[8px] text-black/30 mt-0.5">{a.desc}</p>
+                      </div>
+                      {a.key === scanArchtype && <span className="text-[8px] uppercase tracking-widest text-black/40 font-bold">Dein Typ</span>}
                     </div>
-                    <p className="text-[9px] text-black/40 leading-relaxed -mt-1">{scanArchInfo?.desc}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[9px] uppercase tracking-widest text-black/40">Gewölbe</span>
-                      <span className="text-sm font-semibold text-black">{scanArchLabel || '—'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[9px] uppercase tracking-widest text-black/40">Genauigkeit</span>
-                      <span className="text-sm font-semibold text-black">{Number(latestScan.accuracy).toFixed(1)}%</span>
-                    </div>
-                    <div className="border-t border-black/5 pt-3 mt-2">
-                      <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Alle Fußtypen</p>
-                      {ARCHETYPES.map(a => (
-                        <div key={a.key} className={`flex items-center gap-3 py-2 ${a.key === scanArchtype ? 'bg-[#f6f5f3] px-2 -mx-2' : ''}`}>
-                          <div className={`w-1.5 h-1.5 flex-shrink-0 ${a.key === scanArchtype ? 'bg-black' : 'bg-black/15'}`} />
-                          <div className="flex-1">
-                            <p className={`text-[10px] ${a.key === scanArchtype ? 'font-semibold text-black' : 'text-black/50'}`}>{a.label}</p>
-                            <p className="text-[8px] text-black/30 mt-0.5">{a.desc}</p>
-                          </div>
-                          {a.key === scanArchtype && <span className="text-[8px] uppercase tracking-widest text-black/40 font-bold">Dein Typ</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-[10px] text-black/40 text-center py-4">Starte einen Fußscan, um deinen Fußtyp zu ermitteln.</p>
-                )}
+                  ))}
+                </div>
               </div>
             )}
             {activeTab === 'MYSELF' && (
@@ -545,6 +534,7 @@ export default function Profile() {
             )}
           </div>
         </div>
+        )}
 
         {/* Aesthetic Profile */}
         <div className="bg-white p-4 border-b border-black/8">
