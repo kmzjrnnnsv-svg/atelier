@@ -180,22 +180,19 @@ function FootMini3D({ length, width, arch, label }) {
   return <div ref={mountRef} className="w-full" style={{ height: 160 }} />
 }
 
-// ─── Camera guide overlays ─────────────────────────────────────────────────────
+// ─── Camera guide overlays (IBV-style: 3 angles per foot) ────────────────────
 function GuideOverlay({ phase }) {
-  // ── Top views: A4 + foot ellipse ──
+  // ── Top view (zenithal): A4 + foot from above ──
   if (phase === 'right-top' || phase === 'left-top') {
     const isRight = phase === 'right-top'
-    // A4 portrait: ~85px wide, ~120px tall (ratio 210:297 ≈ 0.71)
     const a4X = isRight ? 18 : 252, a4Y = 330, a4W = 90, a4H = 127
     const footCx = isRight ? 270 : 110, footCy = 400
     return (
       <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
-        {/* A4 guide */}
         <rect x={a4X} y={a4Y} width={a4W} height={a4H} rx="6"
           stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
           <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
         </rect>
-        {/* Corner marks A4 */}
         {[[a4X,a4Y],[a4X+a4W,a4Y],[a4X,a4Y+a4H],[a4X+a4W,a4Y+a4H]].map(([cx,cy],i) => (
           <g key={i} stroke="white" strokeWidth="3" fill="none" strokeLinecap="round">
             <line x1={cx + (i%2===0?6:-6)} y1={cy} x2={cx} y2={cy} />
@@ -206,8 +203,6 @@ function GuideOverlay({ phase }) {
           fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="1.5">A4</text>
         <text x={a4X + a4W/2} y={a4Y + a4H/2 + 10} textAnchor="middle" fill="rgba(255,255,255,0.55)"
           fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="500">297×210mm</text>
-
-        {/* Foot ellipse */}
         <ellipse cx={footCx} cy={footCy} rx="58" ry="138"
           stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.05)" strokeDasharray="12 6">
           <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
@@ -216,8 +211,6 @@ function GuideOverlay({ phase }) {
           fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="2">
           {isRight ? 'RECHTER FUß' : 'LINKER FUß'}
         </text>
-
-        {/* Arrow hinting placement */}
         <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
           fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="500">
           Kamera senkrecht von oben · ca. 35 cm Abstand
@@ -226,39 +219,90 @@ function GuideOverlay({ phase }) {
     )
   }
 
-  // ── Side views: foot silhouette + A4 ──
-  if (phase === 'right-side' || phase === 'left-side') {
-    const isRight = phase === 'right-side'
-    // Simplified side-foot silhouette path (pointing right for right foot)
-    const flip = isRight ? 1 : -1
+  // ── Medial view (inside of foot): IBV-style ──
+  if (phase === 'right-medial' || phase === 'left-medial') {
+    const isRight = phase === 'right-medial'
     const cx = 195
     return (
       <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
-        {/* Foot silhouette side view */}
-        <g transform={`translate(${cx}, 380) scale(${flip}, 1)`}>
-          {/* Ground line */}
+        <g transform={`translate(${cx}, 380)`}>
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
-          {/* Foot outline */}
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
             stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
             <animate attributeName="opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" />
           </path>
-          {/* Arch indicator */}
+          {/* Arch curve — visible from medial side */}
           <path d="M -90 95 C -60 55 -20 50 20 95"
-            stroke="rgba(255,255,255,0.5)" strokeWidth="2" fill="none" strokeDasharray="6 4" />
-          <text x="0" y="-30" textAnchor="middle" fill="rgba(255,255,255,0.85)"
+            stroke="rgba(45,212,191,0.7)" strokeWidth="2.5" fill="none" strokeDasharray="6 4" />
+          <text x="0" y="-35" textAnchor="middle" fill="rgba(255,255,255,0.85)"
             fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="1.5">
-            {isRight ? 'RECHTER FUß' : 'LINKER FUß'}
+            {isRight ? 'RECHTS · INNEN' : 'LINKS · INNEN'}
           </text>
-          {/* A4 reference (small, on far side) */}
+          {/* A4 reference */}
           <rect x="128" y="-60" width="22" height="155" rx="3"
             stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
           <text x="139" y="-68" textAnchor="middle" fill="rgba(255,255,255,0.55)"
             fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="600" letterSpacing="1">A4</text>
         </g>
-        {/* Double arrow for arch */}
+        <text x="195" y="510" textAnchor="middle" fill="rgba(45,212,191,0.7)"
+          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Gewölbe + Rist sichtbar</text>
+        <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
+          fontSize="11" fontFamily="system-ui,sans-serif">
+          Kamera auf Bodenhöhe · Innenseite des Fußes
+        </text>
+      </svg>
+    )
+  }
+
+  // ── Lateral view (outside of foot): IBV-style ──
+  if (phase === 'right-lateral' || phase === 'left-lateral') {
+    const isRight = phase === 'right-lateral'
+    const cx = 195
+    return (
+      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
+        <g transform={`translate(${cx}, 380) scale(-1, 1)`}>
+          <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
+          <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
+            stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
+            <animate attributeName="opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" />
+          </path>
+          <rect x="128" y="-60" width="22" height="155" rx="3"
+            stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
+          <text x="139" y="-68" textAnchor="middle" fill="rgba(255,255,255,0.55)"
+            fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="600" letterSpacing="1" transform="scale(-1,1)" style={{ transformOrigin: '139px 0' }}>A4</text>
+        </g>
+        <text x="195" y="345" textAnchor="middle" fill="rgba(255,255,255,0.85)"
+          fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="1.5">
+          {isRight ? 'RECHTS · AUSSEN' : 'LINKS · AUSSEN'}
+        </text>
         <text x="195" y="510" textAnchor="middle" fill="rgba(255,255,255,0.5)"
-          fontSize="11" fontFamily="system-ui,sans-serif">📐 Gewölbehöhe wird automatisch gemessen</text>
+          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Ferse + Außenrist sichtbar</text>
+        <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
+          fontSize="11" fontFamily="system-ui,sans-serif">
+          Kamera auf Bodenhöhe · Außenseite des Fußes
+        </text>
+      </svg>
+    )
+  }
+
+  // Legacy side view support
+  if (phase === 'right-side' || phase === 'left-side') {
+    const isRight = phase === 'right-side'
+    const flip = isRight ? 1 : -1
+    const cx = 195
+    return (
+      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
+        <g transform={`translate(${cx}, 380) scale(${flip}, 1)`}>
+          <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
+          <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
+            stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
+            <animate attributeName="opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" />
+          </path>
+          <path d="M -90 95 C -60 55 -20 50 20 95"
+            stroke="rgba(255,255,255,0.5)" strokeWidth="2" fill="none" strokeDasharray="6 4" />
+          <rect x="128" y="-60" width="22" height="155" rx="3"
+            stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
+        </g>
         <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
           fontSize="11" fontFamily="system-ui,sans-serif">
           Kamera auf Bodenhöhe seitlich halten
@@ -285,10 +329,14 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
   const handleTap = () => { if (!ready) return; setFlash(true); setTimeout(() => setFlash(false), 160); onCapture() }
 
   const INFO = {
-    'right-top':  { emoji: '📄', title: 'A4-Blatt + rechten Fuß',     sub: 'A4-Papier links neben dem Fuß · Kamera senkrecht von oben ~35 cm' },
-    'right-side': { emoji: '📐', title: 'Rechten Fuß von der Seite',   sub: 'A4-Blatt aufrecht daneben halten · Kamera auf Bodenhöhe' },
-    'left-top':   { emoji: '📄', title: 'A4-Blatt + linken Fuß',      sub: 'A4-Papier rechts neben dem Fuß · Kamera senkrecht von oben ~35 cm' },
-    'left-side':  { emoji: '📐', title: 'Linken Fuß von der Seite',    sub: 'A4-Blatt aufrecht daneben halten · Kamera auf Bodenhöhe' },
+    'right-top':     { emoji: '📄', title: 'Rechter Fuß — Draufsicht',   sub: 'A4-Papier neben dem Fuß · Kamera senkrecht von oben ~35 cm' },
+    'right-medial':  { emoji: '🦶', title: 'Rechter Fuß — Innenseite',   sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Innenseite' },
+    'right-lateral': { emoji: '🦶', title: 'Rechter Fuß — Außenseite',   sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Außenseite' },
+    'right-side':    { emoji: '📐', title: 'Rechten Fuß von der Seite',   sub: 'A4-Blatt aufrecht daneben halten · Kamera auf Bodenhöhe' },
+    'left-top':      { emoji: '📄', title: 'Linker Fuß — Draufsicht',    sub: 'A4-Papier neben dem Fuß · Kamera senkrecht von oben ~35 cm' },
+    'left-medial':   { emoji: '🦶', title: 'Linker Fuß — Innenseite',    sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Innenseite' },
+    'left-lateral':  { emoji: '🦶', title: 'Linker Fuß — Außenseite',    sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Außenseite' },
+    'left-side':     { emoji: '📐', title: 'Linken Fuß von der Seite',    sub: 'A4-Blatt aufrecht daneben halten · Kamera auf Bodenhöhe' },
   }
   const { emoji, title, sub } = INFO[phase] || { emoji: '📷', title: 'Foto aufnehmen', sub: '' }
 
@@ -511,7 +559,7 @@ export default function FootScan() {
   const streamRef = useRef(null)
 
   const [phase,      setPhase]     = useState('start')
-  const [frames,     setFrames]    = useState({ rightTop: null, rightSide: null, leftTop: null, leftSide: null })
+  const [frames,     setFrames]    = useState({ rightTop: null, rightMedial: null, rightLateral: null, rightSide: null, leftTop: null, leftMedial: null, leftLateral: null, leftSide: null })
   const [progress,   setProgress]  = useState(0)
   const [result,     setResult]    = useState(null)
   const [saved,      setSaved]     = useState(false)
@@ -586,7 +634,7 @@ export default function FootScan() {
     return c.toDataURL('image/jpeg', 0.85)
   }, [])
 
-  const CAM_PHASES = ['right-top', 'right-side', 'left-top', 'left-side']
+  const CAM_PHASES = ['right-top', 'right-medial', 'right-lateral', 'right-side', 'left-top', 'left-medial', 'left-lateral', 'left-side']
   const PG_PHASES  = Array.from({ length: 16 }, (_, i) => `pg-${i}`)  // pg-0 … pg-15
   const ALL_CAM_PHASES = [...CAM_PHASES, ...PG_PHASES]
   useEffect(() => {
@@ -646,7 +694,7 @@ export default function FootScan() {
   // ── Demo ──
   const startDemo = useCallback(() => {
     stopCam(); setCamStatus('idle')
-    setFrames({ rightTop: null, rightSide: null, leftTop: null, leftSide: null })
+    setFrames({ rightTop: null, rightMedial: null, rightLateral: null, rightSide: null, leftTop: null, leftMedial: null, leftLateral: null, leftSide: null })
     // Demo mode: generate sample values but mark as demo so they won't be saved
     const demoRight = { length: 260.0, width: 95.0, arch: 15.0, foot_height: 65.0, ball_girth: null, instep_girth: null, heel_girth: null, waist_girth: null, ankle_girth: null }
     const demoLeft  = { length: 258.0, width: 94.0, arch: 14.5, foot_height: 64.0, ball_girth: null, instep_girth: null, heel_girth: null, waist_girth: null, ankle_girth: null }
@@ -654,11 +702,15 @@ export default function FootScan() {
     setProgress(100)
   }, [stopCam])
 
-  // ── Capture handlers ──
-  const handleRightTop  = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightTop: img })); setPhase('right-side') }, [capture])
-  const handleRightSide = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightSide: img })); setPhase('left-top') }, [capture])
-  const handleLeftTop   = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, leftTop: img })); setPhase('left-side') }, [capture])
-  const handleLeftSide  = useCallback(() => { const img = capture(); stopCam(); setFrames(f => ({ ...f, leftSide: img })); setPhase('processing') }, [capture, stopCam])
+  // ── Capture handlers (IBV-style: 3 photos per foot = 6 total) ──
+  const handleRightTop     = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightTop: img }));     setPhase('right-medial') }, [capture])
+  const handleRightMedial  = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightMedial: img }));  setPhase('right-lateral') }, [capture])
+  const handleRightLateral = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightLateral: img })); setPhase('left-top') }, [capture])
+  const handleRightSide    = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightSide: img }));    setPhase('left-top') }, [capture])
+  const handleLeftTop      = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, leftTop: img }));      setPhase('left-medial') }, [capture])
+  const handleLeftMedial   = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, leftMedial: img }));   setPhase('left-lateral') }, [capture])
+  const handleLeftLateral  = useCallback(() => { const img = capture(); stopCam(); setFrames(f => ({ ...f, leftLateral: img })); setPhase('processing') }, [capture, stopCam])
+  const handleLeftSide     = useCallback(() => { const img = capture(); stopCam(); setFrames(f => ({ ...f, leftSide: img })); setPhase('processing') }, [capture, stopCam])
 
   // ── Photogrammetrie: 8 Ansichten je Fuß ──────────────────────────────────────
   // Ansichten: top, front, front_left, left, back_left, back, back_right, right
@@ -834,23 +886,37 @@ export default function FootScan() {
       // Ambient drift to 65% while API call runs
       ambientTimer = setInterval(() => setProgress(p => p < 65 ? +(p + 0.4).toFixed(1) : p), 120)
 
-      const hasAllFrames = frames.rightTop && frames.rightSide && frames.leftTop && frames.leftSide
+      // IBV-style: 3 photos per foot (top + medial + lateral), or legacy 4-shot (top + side)
+      const hasIBVFrames = frames.rightTop && frames.rightMedial && frames.rightLateral && frames.leftTop && frames.leftMedial && frames.leftLateral
+      const hasLegacyFrames = frames.rightTop && frames.rightSide && frames.leftTop && frames.leftSide
+      const hasAllFrames = hasIBVFrames || hasLegacyFrames
 
       if (hasAllFrames) {
         try {
           setAiStatus('Bilder werden komprimiert…'); setProgress(6)
-          const [rT, rS, lT, lS] = await Promise.all([
-            compressImage(frames.rightTop,  1200),
-            compressImage(frames.rightSide, 1000),
-            compressImage(frames.leftTop,   1200),
-            compressImage(frames.leftSide,  1000),
-          ])
+          const compressAll = []
+          compressAll.push(compressImage(frames.rightTop, 1200))
+          compressAll.push(compressImage(hasIBVFrames ? frames.rightMedial : frames.rightSide, 1000))
+          compressAll.push(compressImage(frames.leftTop, 1200))
+          compressAll.push(compressImage(hasIBVFrames ? frames.leftMedial : frames.leftSide, 1000))
+          // IBV: also send lateral views as additional data
+          if (hasIBVFrames) {
+            compressAll.push(compressImage(frames.rightLateral, 1000))
+            compressAll.push(compressImage(frames.leftLateral, 1000))
+          }
+          const compressed = await Promise.all(compressAll)
+          const [rT, rS, lT, lS, rLat, lLat] = compressed
           if (cancelled) return
-          setAiStatus('🤖 Claude KI analysiert 4 Bilder…'); setProgress(18)
+          setAiStatus(`🤖 Claude KI analysiert ${hasIBVFrames ? '6' : '4'} Bilder…`); setProgress(18)
 
+          const analyzeBody = { rightTopImg: rT, rightSideImg: rS, leftTopImg: lT, leftSideImg: lS }
+          if (hasIBVFrames && rLat && lLat) {
+            analyzeBody.rightLateralImg = rLat
+            analyzeBody.leftLateralImg = lLat
+          }
           const ai = await apiFetch('/api/scans/analyze', {
             method: 'POST',
-            body: JSON.stringify({ rightTopImg: rT, rightSideImg: rS, leftTopImg: lT, leftSideImg: lS }),
+            body: JSON.stringify(analyzeBody),
           })
           if (cancelled) return
 
@@ -969,12 +1035,13 @@ export default function FootScan() {
         setSaved(true); refreshScan()
 
         // Upload compressed training images in background (für ML-Modell)
-        if (frames.rightTop && frames.rightSide && frames.leftTop && frames.leftSide && saved_scan?.id) {
+        const hasTrainingImgs = frames.rightTop && (frames.rightMedial || frames.rightSide) && frames.leftTop && (frames.leftMedial || frames.leftSide)
+        if (hasTrainingImgs && saved_scan?.id) {
           const [rT, rS, lT, lS] = await Promise.all([
-            compressImage(frames.rightTop,  800),
-            compressImage(frames.rightSide, 800),
-            compressImage(frames.leftTop,   800),
-            compressImage(frames.leftSide,  800),
+            compressImage(frames.rightTop, 800),
+            compressImage(frames.rightMedial || frames.rightSide, 800),
+            compressImage(frames.leftTop, 800),
+            compressImage(frames.leftMedial || frames.leftSide, 800),
           ])
           apiFetch(`/api/scans/${saved_scan.id}/training-images`, {
             method: 'POST',
@@ -1015,12 +1082,17 @@ export default function FootScan() {
   const isPgCamPhase  = PG_PHASES.includes(phase)
   const isCamError    = ['denied', 'notfound', 'inuse', 'insecure', 'error'].includes(camStatus)
   const showCamError  = isCamPhase && isCamError
-  const camStepNum    = { 'right-top': 1, 'right-side': 2, 'left-top': 3, 'left-side': 4 }[phase] ?? 1
+  const camStepNum    = { 'right-top': 1, 'right-medial': 2, 'right-lateral': 3, 'right-side': 2, 'left-top': 4, 'left-medial': 5, 'left-lateral': 6, 'left-side': 4 }[phase] ?? 1
+  const totalCamSteps = 6 // IBV-style: 3 per foot × 2 feet
   const captureHandler = {
-    'right-top':  handleRightTop,
-    'right-side': handleRightSide,
-    'left-top':   handleLeftTop,
-    'left-side':  handleLeftSide,
+    'right-top':     handleRightTop,
+    'right-medial':  handleRightMedial,
+    'right-lateral': handleRightLateral,
+    'right-side':    handleRightSide,
+    'left-top':      handleLeftTop,
+    'left-medial':   handleLeftMedial,
+    'left-lateral':  handleLeftLateral,
+    'left-side':     handleLeftSide,
   }[phase]
 
   // ── Desktop guard: no scan on laptop/desktop ──
@@ -1055,12 +1127,12 @@ export default function FootScan() {
           onBack={() => { stopCam(); setCamStatus('idle'); setPhase('start') }} />
       )}
 
-      {/* Camera view (standard 4-shot mode) */}
+      {/* Camera view (IBV-style 6-shot mode: 3 per foot) */}
       {isRegCamPhase && !showCamError && (
         <CamStep key={phase} videoRef={videoRef} canvasRef={canvasRef} phase={phase}
           onCapture={captureHandler}
           onBack={() => { stopCam(); navigate(-1) }}
-          stepNum={camStepNum} totalSteps={4} camStatus={camStatus} />
+          stepNum={camStepNum} totalSteps={totalCamSteps} camStatus={camStatus} />
       )}
 
       {/* ── Photogrammetrie camera view (16-shot mode) ── */}
@@ -1214,19 +1286,21 @@ export default function FootScan() {
                 <p className="text-[10px] text-black/45 leading-relaxed">
                   {lidarAvail
                     ? 'iPhone LiDAR · Direkte 3D-Messung · ±0.5–1mm Präzision'
-                    : '4 Fotos · A4-Papier als Referenz · ±1–2mm Präzision'}
+                    : '3 Fotos pro Fuß · A4-Papier als Referenz · 3D-Rekonstruktion'}
                 </p>
               </div>
 
               <div className="px-5 pt-4 pb-3 space-y-0 divide-y divide-black/5">
                 {[
-                  { n: '1', label: 'Rechter Fuß — oben',   desc: 'A4-Blatt links neben dem Fuß, Kamera senkrecht von oben' },
-                  { n: '2', label: 'Rechter Fuß — Seite',  desc: 'A4-Blatt seitlich halten, Kamera auf Bodenhöhe' },
-                  { n: '3', label: 'Linker Fuß — oben',    desc: 'A4-Blatt rechts neben dem Fuß, Kamera senkrecht von oben' },
-                  { n: '4', label: 'Linker Fuß — Seite',   desc: 'A4-Blatt seitlich halten, Kamera auf Bodenhöhe' },
+                  { n: '1', label: 'Rechter Fuß — Draufsicht',  desc: 'A4-Blatt neben dem Fuß, Kamera senkrecht von oben' },
+                  { n: '2', label: 'Rechter Fuß — Innenseite',  desc: 'A4-Blatt hinter dem Fuß, Kamera auf Bodenhöhe (Innenseite)' },
+                  { n: '3', label: 'Rechter Fuß — Außenseite',  desc: 'A4-Blatt hinter dem Fuß, Kamera auf Bodenhöhe (Außenseite)' },
+                  { n: '4', label: 'Linker Fuß — Draufsicht',   desc: 'A4-Blatt neben dem Fuß, Kamera senkrecht von oben' },
+                  { n: '5', label: 'Linker Fuß — Innenseite',   desc: 'A4-Blatt hinter dem Fuß, Kamera auf Bodenhöhe' },
+                  { n: '6', label: 'Linker Fuß — Außenseite',   desc: 'A4-Blatt hinter dem Fuß, Kamera auf Bodenhöhe' },
                 ].map(({ n, label, desc }) => (
-                  <div key={n} className="flex items-center gap-3 py-3">
-                    <span className="w-7 h-7 bg-black text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                  <div key={n} className="flex items-center gap-3 py-2.5">
+                    <span className="w-6 h-6 bg-black text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0">
                       {n}
                     </span>
                     <div className="flex-1 min-w-0">
@@ -1243,7 +1317,7 @@ export default function FootScan() {
                   <AlertCircle size={13} className="text-black/40" strokeWidth={1.5} />
                 </div>
                 <p className="text-[9px] text-black/45 leading-relaxed">
-                  <strong className="text-black/60">Tipp:</strong> Ein normales A4-Druckerpapier reicht aus. Das Papier ist der Maßstab — Claude KI berechnet damit die Millimeter-genauen Maße.
+                  <strong className="text-black/60">IBV-Methode:</strong> 3 Blickwinkel pro Fuß ermöglichen eine vollständige 3D-Rekonstruktion. Ein normales A4-Druckerpapier dient als Maßstab.
                 </p>
               </div>
 
@@ -1259,16 +1333,7 @@ export default function FootScan() {
                 <button onClick={() => setPhase('right-top')}
                   className={`w-full py-4 font-bold text-[12px] border-0 uppercase tracking-widest active:opacity-80 ${lidarAvail ? 'bg-[#f6f5f3] text-black/60' : 'bg-black text-white'}`}
                   style={{ letterSpacing: '0.12em' }}>
-                  {lidarAvail ? 'Foto-Scan (4 Bilder)' : 'Scan starten'}
-                </button>
-                <button onClick={() => {
-                  setPgMode(true); setPgStep(0)
-                  setPgImgs({ right: [], left: [] })
-                  setPhase('pg-0')
-                }}
-                  className="w-full py-4 font-bold text-[12px] border-0 bg-[#f6f5f3] text-black/60 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
-                  style={{ letterSpacing: '0.12em' }}>
-                  8-Ansichten-Scan (±0,5 mm)
+                  {lidarAvail ? 'Foto-Scan (6 Bilder)' : 'Scan starten'}
                 </button>
                 <button onClick={startDemo}
                   className="w-full py-3.5 bg-white text-black/35 font-semibold text-[11px] border border-black/8">
@@ -1289,7 +1354,7 @@ export default function FootScan() {
               </div>
 
               <div className="text-center w-full">
-                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>KI analysiert 4 Bilder</p>
+                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>3D-Rekonstruktion</p>
                 <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
@@ -1301,7 +1366,7 @@ export default function FootScan() {
               </div>
 
               <p className="text-[9px] text-black/25 text-center px-4">
-                Claude KI erkennt das A4-Blatt und misst Länge, Breite und Gewölbe aus 4 Winkeln
+                KI rekonstruiert den Fuß in 3D aus 3 Blickwinkeln — nach dem IBV-Verfahren mit über 20 Maßen
               </p>
             </div>
           )}
