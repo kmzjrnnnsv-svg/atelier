@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ShoppingBag, Heart, RotateCcw, ScanLine, Info, X } from 'lucide-react'
+import { ShoppingBag, Heart, RotateCcw, ScanLine, Info, X } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -209,22 +209,17 @@ export default function ShoeCollection() {
         <div>
           <p className="text-[17px] font-normal text-black leading-tight uppercase tracking-[0.15em]">{user?.name || 'My Studio'}</p>
         </div>
-        <div className="flex items-center gap-3.5">
-          <button className="bg-transparent border-0 p-0">
-            <Search size={20} strokeWidth={1.5} className="text-black/60" />
-          </button>
-          <button
-            className="relative bg-transparent border-0 p-0"
-            onClick={() => setCartOpen(v => !v)}
-          >
-            <ShoppingBag size={20} strokeWidth={1.5} className="text-black/60" />
-            {orders.filter(o => !['delivered','cancelled'].includes(o.status)).length > 0 && (
-              <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 bg-black flex items-center justify-center">
-                <span className="text-[7px] font-bold text-white">{orders.filter(o => !['delivered','cancelled'].includes(o.status)).length}</span>
-              </span>
-            )}
-          </button>
-        </div>
+        <button
+          className="w-9 h-9 flex items-center justify-center border border-black/10 bg-transparent relative"
+          onClick={() => setCartOpen(v => !v)}
+        >
+          <ShoppingBag size={17} strokeWidth={1.5} className="text-black/60" />
+          {orders.filter(o => !['delivered','cancelled'].includes(o.status)).length > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-black border-2 border-white flex items-center justify-center">
+              <span className="text-[8px] font-bold text-white">{orders.filter(o => !['delivered','cancelled'].includes(o.status)).length}</span>
+            </span>
+          )}
+        </button>
       </div>
 
       {/* ── Cart (slide in from right) ────────────────────────────────── */}
