@@ -37,11 +37,6 @@ try:
 except ImportError:
     sys.exit('[ERROR] trimesh nicht installiert: pip install trimesh')
 
-from anthro_stats import MEASUREMENT_KEYS
-
-# Reuse girth computation from 06_compute_girths.py
-from compute_girths_lib import align_mesh_generic, alpha_hull_perimeter, GIRTH_FRACS
-
 
 def extract_measurements_from_mesh(mesh_path: Path) -> dict | None:
     """Extract all measurements from a 3D foot mesh (OBJ or PLY)."""
