@@ -1,0 +1,11 @@
+# Generated 3D mesh data (large, regenerate with 00_generate_feet.py)
+data/foot3d/
+data/measurements.csv
+
+# Keep shape model outputs (small, needed at runtime)
+!data/shape_model/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
