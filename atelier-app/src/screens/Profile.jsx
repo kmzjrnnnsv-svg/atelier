@@ -131,7 +131,7 @@ export default function Profile() {
 
       {/* ── Notification Panel (slide in from right) ─────────────────── */}
       <div className="fixed top-0 right-0 bottom-0 bg-white shadow-2xl z-50 flex flex-col"
-        style={{ width: 'min(340px, 85vw)', transform: showNotifs ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
+        style={{ width: 'min(340px, 85vw)', height: '100dvh', transform: showNotifs ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/5">
           <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Benachrichtigungen</h3>
           <button onClick={() => setShowNotifs(false)} className="w-8 h-8 flex items-center justify-center bg-transparent border-0">
@@ -147,21 +147,24 @@ export default function Profile() {
           ) : (
             <div className="space-y-3">
               {notifications.slice(0, 20).map(n => (
-                <div key={n.id} className={`p-3 ${n.read ? 'bg-black/3' : 'bg-black/5 border border-black/10'}`}>
-                  <div className="flex items-start gap-2">
-                    <BellRing size={12} className={n.read ? 'text-black/30 mt-0.5' : 'text-black/60 mt-0.5'} strokeWidth={1.5} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-medium text-black">{n.title}</p>
-                      <p className="text-[9px] text-black/50 mt-0.5 leading-relaxed">{n.message}</p>
-                      <p className="text-[8px] text-black/30 mt-1">
-                        {new Date(n.createdAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
+                <div key={n.id} className="border border-black/8 p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium text-black">{n.title}</p>
+                    <span className="text-[8px] uppercase tracking-wider text-black/30">
+                      {new Date(n.createdAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
+                    </span>
                   </div>
+                  <p className="text-[9px] text-black/40 mt-0.5">{n.message}</p>
                 </div>
               ))}
             </div>
           )}
+        </div>
+        <div className="px-5 pb-5 pt-3 border-t border-black/5">
+          <button onClick={() => { setShowNotifs(false); if (unreadCount) markAllNotificationsRead() }}
+            className="w-full py-3 bg-black text-white text-[10px] uppercase tracking-[0.18em] font-medium border-0">
+            Alle als gelesen markieren
+          </button>
         </div>
       </div>
       {showNotifs && <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setShowNotifs(false)} />}
@@ -540,21 +543,6 @@ export default function Profile() {
                 )}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Arch Type — from scan data */}
-        <div className="bg-white p-4 border-b border-black/8 flex items-center justify-between">
-          <div>
-            <p className="text-[8px] uppercase tracking-widest text-black/40 font-semibold">Fußtyp</p>
-            <p className="text-base font-bold text-black mt-0.5">{scanArchInfo?.label || 'Noch nicht ermittelt'}</p>
-            <p className="text-[9px] text-black/40">{scanArchLabel || 'Starte einen Scan'} {latestScan ? `· ${Number(latestScan.accuracy).toFixed(0)}% Genauigkeit` : ''}</p>
-          </div>
-          <div className="w-12 h-12 bg-black/3 flex items-center justify-center">
-            <svg viewBox="0 0 40 30" className="w-10">
-              <path d="M2 24 Q10 26 20 24 Q30 22 38 24" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" />
-              <path d="M2 24 Q6 14 10 11 Q15 8 20 9 Q25 10 30 14 Q34 17 38 24" stroke="#d1d5db" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            </svg>
           </div>
         </div>
 
