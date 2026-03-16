@@ -115,7 +115,7 @@ function AppRoutes() {
 
   if (isCMS) {
     return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 50, paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 50, overflow: 'hidden', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
