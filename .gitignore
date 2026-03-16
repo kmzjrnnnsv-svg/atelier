@@ -24,6 +24,7 @@ atelier-ml/checkpoints/
 
 # ─── ML – Trainingsdaten (1.8 GB) ─────────────────────────────────
 atelier-ml/data/
+!atelier-ml/data/shape_model/
 
 # ─── Python Cache ─────────────────────────────────────────────────
 __pycache__/

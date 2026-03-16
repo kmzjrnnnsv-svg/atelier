@@ -288,9 +288,25 @@ def main():
 
     labels_df = pd.DataFrame(records)
 
-    # Merge mit measurements.csv wenn vorhanden
+    # Merge ground-truth measurements from measurements.csv
     if meas_df is not None and 'foot_id' in meas_df.columns:
-        labels_df = labels_df.merge(meas_df[['foot_id']], on='foot_id', how='left')
+        # Columns to merge from ground-truth (rename to avoid collision with extracted)
+        gt_cols = ['foot_id']
+        rename_map = {}
+        for col in ['length', 'width', 'foot_height', 'arch_height',
+                     'ball_girth', 'instep_girth', 'waist_girth',
+                     'heel_girth', 'long_heel_girth', 'short_heel_girth',
+                     'ankle_girth']:
+            if col in meas_df.columns:
+                gt_cols.append(col)
+                # Use ground-truth values (overwrite mesh-extracted)
+        gt_df = meas_df[gt_cols].copy()
+        # Drop mesh-extracted columns that exist in ground truth
+        for col in gt_df.columns:
+            if col != 'foot_id' and col in labels_df.columns:
+                labels_df = labels_df.drop(columns=[col])
+        labels_df = labels_df.merge(gt_df, on='foot_id', how='left')
+        print(f'[ShapeModel] Ground-truth Maße aus measurements.csv gemergt')
 
     # ── Speichere Outputs ─────────────────────────────────────────────────────
     mean_shape = pca.mean_.reshape(most_common_n, n_dims)

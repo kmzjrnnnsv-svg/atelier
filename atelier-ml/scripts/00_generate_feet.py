@@ -2,11 +2,13 @@
 00_generate_feet.py
 Generiert prozedurale 3D-Fußmeshes mit bekannten Maßen.
 
-Jeder generierte Fuß hat exakt definierte Maße:
-  - Länge: 215–295 mm (EU 34 bis EU 48)
-  - Breite:  78–112 mm
-  - Gewölbehöhe: 6–26 mm (Plattfuß bis Hohlfuß)
-  - Fußhöhe: 50–80 mm
+Jeder generierte Fuß hat anatomisch plausible Maße aus korrelierten
+Normalverteilungen (basierend auf ANSUR II, IBV/Mundofoot, ISO 9407):
+  - Länge: 200–320 mm (EU 30 bis EU 48+)
+  - Breite:  70–125 mm
+  - Fußhöhe: 45–90 mm
+  - Gewölbehöhe: 3–35 mm (Plattfuß bis Hohlfuß)
+  - Alle Umfänge: Ballen, Rist, Taille, Ferse (lang/kurz), Knöchel
 
 Output: data/foot3d/*.obj + data/measurements.csv (ground-truth Maße)
 
@@ -199,42 +201,27 @@ def generate_dataset(
     out_dir: Path = Path('data/foot3d'),
     csv_path: Path = Path('data/measurements.csv'),
 ):
-    """Generiert n synthetische Fußmeshes mit variierenden Parametern."""
+    """Generiert n synthetische Fußmeshes mit anatomisch korrelierten Maßen."""
+    from anthro_stats import sample_foot_measurements, length_to_eu, estimate_girths
+
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Parameter-Verteilung (realistisch, basierend auf Bevölkerungsdaten)
     rng = np.random.default_rng(42)
 
-    # EU-Größen 34–48 gleichverteilt (mit Bias zu mittleren Größen)
-    eu_sizes = rng.choice(
-        np.arange(34, 49, 0.5),
-        size=n,
-        p=None,  # gleichverteilt
-    )
+    # Sample correlated measurements from anthropometric distributions
+    all_measurements = sample_foot_measurements(rng, sex='mixed', n=n)
 
     records = []
-    print(f'Generiere {n} synthetische Fußmeshes…')
+    print(f'Generiere {n} synthetische Fußmeshes (anthropometrisch korreliert)…')
 
-    for i, eu in enumerate(tqdm(eu_sizes)):
+    for i, meas in enumerate(tqdm(all_measurements, total=n)):
         seed = i * 31 + 7
 
-        # Maße aus EU-Größe + zufällige Variation
-        base_length = eu_to_length(eu)
-        length     = base_length + rng.normal(0, 3.0)
-        length     = np.clip(length, 215, 295)
-
-        # Breite korreliert mit Länge (r≈0.75)
-        base_width = 0.38 * length - 2.0 + rng.normal(0, 4.0)
-        width      = np.clip(base_width, 78, 112)
-
-        # Gewölbehöhe: Normalverteilung mit 3 Typen
-        arch_type  = rng.choice(['flat', 'normal', 'high'], p=[0.15, 0.65, 0.20])
-        arch_base  = {'flat': 8.0, 'normal': 14.0, 'high': 22.0}[arch_type]
-        arch_h     = np.clip(arch_base + rng.normal(0, 2.5), 4, 28)
-
-        # Fußhöhe korreliert leicht mit Länge
-        foot_h     = np.clip(0.22 * length + rng.normal(0, 4), 50, 80)
+        length = meas['length']
+        width  = meas['width']
+        arch_h = meas['arch_height']
+        foot_h = meas['foot_height']
 
         # Mesh generieren
         mesh = make_foot_mesh(
@@ -248,19 +235,28 @@ def generate_dataset(
         obj_path = out_dir / f'{foot_id}.obj'
         mesh.export(str(obj_path))
 
+        eu_size = round(length_to_eu(length), 1)
+
         records.append({
-            'source':      'synthetic_procedural',
-            'foot_id':     foot_id,
-            'obj_path':    str(obj_path),
-            'side':        'right',
-            'eu_size':     round(eu, 1),
-            'foot_length': round(length, 1),
-            'foot_width':  round(width, 1),
-            'arch_height': round(arch_h, 1),
-            'foot_height': round(foot_h, 1),
-            'ball_width':  round(width * 0.95, 1),
-            'heel_width':  round(width * 0.60, 1),
-            'n_vertices':  len(mesh.vertices),
+            'source':           'synthetic_anthropometric',
+            'foot_id':          foot_id,
+            'obj_path':         str(obj_path),
+            'side':             'right',
+            'eu_size':          eu_size,
+            'length':           round(length, 1),
+            'width':            round(width, 1),
+            'foot_height':      round(foot_h, 1),
+            'arch_height':      round(arch_h, 1),
+            'ball_girth':       meas['ball_girth'],
+            'instep_girth':     meas['instep_girth'],
+            'waist_girth':      meas['waist_girth'],
+            'heel_girth':       meas['heel_girth'],
+            'long_heel_girth':  meas['long_heel_girth'],
+            'short_heel_girth': meas['short_heel_girth'],
+            'ankle_girth':      meas['ankle_girth'],
+            'ball_width':       round(width * 0.95, 1),
+            'heel_width':       round(width * 0.60, 1),
+            'n_vertices':       len(mesh.vertices),
         })
 
     # CSV speichern
@@ -270,13 +266,12 @@ def generate_dataset(
         writer.writerows(records)
 
     # Statistiken
-    lengths = [r['foot_length'] for r in records]
-    widths  = [r['foot_width']  for r in records]
-    archs   = [r['arch_height'] for r in records]
     print(f'\n✓ {n} Meshes generiert in: {out_dir}')
-    print(f'  Länge:   {np.mean(lengths):.1f} ± {np.std(lengths):.1f} mm')
-    print(f'  Breite:  {np.mean(widths):.1f} ± {np.std(widths):.1f} mm')
-    print(f'  Gewölbe: {np.mean(archs):.1f} ± {np.std(archs):.1f} mm')
+    for key in ['length', 'width', 'foot_height', 'arch_height',
+                'ball_girth', 'instep_girth', 'heel_girth',
+                'long_heel_girth', 'short_heel_girth', 'ankle_girth']:
+        vals = [r[key] for r in records]
+        print(f'  {key:<20} {np.mean(vals):7.1f} ± {np.std(vals):5.1f} mm')
     print(f'  CSV:     {csv_path}')
     print(f'\nNächster Schritt: python scripts/03_render_views.py')
 
