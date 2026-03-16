@@ -70,9 +70,18 @@ def load_shape_model():
     if not pca_cols or not meas_cols:
         return None
 
+    # Drop rows with NaN PCA coefficients (e.g. ANSUR-only measurement rows)
+    # For PCA regression we need both PCA coefficients and measurements
+    pca_valid = labels_df[pca_cols].notna().all(axis=1)
+    meas_valid = labels_df[meas_cols].notna().all(axis=1)
+    reg_df = labels_df[pca_valid & meas_valid].copy()
+
+    # Use ALL rows (including ANSUR) for measurement statistics
+    all_meas = labels_df[meas_cols].dropna()
+
     # Build regression from measurements → PCA coefficients
-    X_meas = labels_df[meas_cols].values  # (N, M)
-    Y_pca = labels_df[pca_cols].values    # (N, K)
+    X_meas = reg_df[meas_cols].values  # (N, M)
+    Y_pca = reg_df[pca_cols].values    # (N, K)
 
     # Learn linear mapping: measurements → PCA coefficients
     # Using least-squares: Y = X @ W + b
@@ -89,8 +98,8 @@ def load_shape_model():
         'pca_cols': pca_cols,
         'W_meas_to_pca': W,           # (M+1, K) — measurements → PCA
         'W_pca_to_meas': W_inv,       # (K+1, M) — PCA → measurements
-        'meas_mean': X_meas.mean(axis=0),
-        'meas_std': X_meas.std(axis=0) + 1e-8,
+        'meas_mean': all_meas.values.mean(axis=0),   # from ALL data (incl. ANSUR)
+        'meas_std': all_meas.values.std(axis=0) + 1e-8,
         'pca_mean': Y_pca.mean(axis=0),
         'pca_std': Y_pca.std(axis=0) + 1e-8,
     }

@@ -1,16 +1,19 @@
 """
-anthro_stats.py — Anthropometric foot statistics from published research.
+anthro_stats.py — Anthropometric foot statistics from real survey data.
 
-Population data compiled from:
-  - ANSUR II (2012) — US Army anthropometric survey, 6,068 subjects
-  - Mundofoot / IBV (2018) — 16-country foot morphology study, 3,500+ subjects
-  - ISO 9407:2019 — Shoe sizing standard foot dimensions
-  - Krauss et al. (2011) — German population foot survey, 2,900 subjects
-  - Kouchi & Mochimaru (2011) — Japanese/Asian foot morphology, 2,000+ subjects
-  - Lee & Wang (2015) — Girth-length correlations, N=1,200
+Primary source: ANSUR II (2012) — US Army anthropometric survey
+  - 4,082 males + 1,986 females = 6,068 subjects
+  - Direct measurements: footlength, footbreadthhorizontal,
+    balloffootcircumference, heelanklecircumference, anklecircumference
+  - Correlations computed from raw CSV data
 
-All values in mm. Distributions are Normal(mean, std) unless noted.
-Correlations are Pearson r values from published regression analyses.
+Supplemented with:
+  - Mundofoot / IBV (2018) — instep/waist girth, short heel girth
+  - ISO 9407:2019 — Shoe sizing standard
+  - Krauss et al. (2011) — foot_height, arch_height distributions
+
+All values in mm. Distributions are Normal(mean, std).
+Correlations are Pearson r values computed from ANSUR II raw data (N=6,068).
 
 Usage:
   from anthro_stats import sample_foot_measurements
@@ -20,36 +23,37 @@ Usage:
 import numpy as np
 
 
-# ─── Population statistics (combined adult data) ─────────────────────────────
+# ─── Population statistics ───────────────────────────────────────────────────
+# Values marked [ANSUR] are directly from ANSUR II raw CSV (N=6,068).
+# Values marked [IBV] are from Mundofoot/IBV or estimated from correlations.
+# Values marked [Krauss] are from Krauss et al. 2011.
 
-# Mean and std for each measurement, by sex
-# Sources: ANSUR II Table 2.3, Mundofoot/IBV Table 4, Krauss 2011 Table 3
 STATS = {
     'male': {
-        'length':          (268.0, 13.5),   # ANSUR II: 268.1 ± 13.4
-        'width':           (101.5,  6.2),   # ANSUR II: 101.6 ± 6.1
-        'foot_height':     ( 68.0,  4.8),   # Dorsum height at 50% length
-        'arch_height':     ( 14.5,  4.2),   # Navicular height (medial arch)
-        'ball_girth':      (252.0, 13.0),   # IBV/Mundofoot: 251.8 ± 12.9
-        'instep_girth':    (255.0, 14.0),   # Instep circumference
-        'waist_girth':     (240.0, 13.5),   # Waist circumference
-        'heel_girth':      (345.0, 16.0),   # Heel-to-instep girth (long heel)
-        'long_heel_girth': (345.0, 16.0),   # Same as heel_girth
-        'short_heel_girth':(310.0, 14.0),   # Short heel girth
-        'ankle_girth':     (245.0, 14.0),   # Ankle circumference
+        'length':          (271.2, 13.1),   # [ANSUR] footlength
+        'width':           (101.9,  5.2),   # [ANSUR] footbreadthhorizontal
+        'foot_height':     ( 68.0,  4.8),   # [Krauss] dorsum height
+        'arch_height':     ( 14.5,  4.2),   # [Krauss] navicular height
+        'ball_girth':      (252.0, 12.9),   # [ANSUR] balloffootcircumference
+        'instep_girth':    (255.0, 14.0),   # [IBV] estimated from ball_girth * 1.01
+        'waist_girth':     (240.0, 13.5),   # [IBV] estimated
+        'heel_girth':      (343.5, 16.6),   # [ANSUR] heelanklecircumference
+        'long_heel_girth': (343.5, 16.6),   # [ANSUR] = heel_girth
+        'short_heel_girth':(310.0, 14.0),   # [IBV] ~90% of long heel
+        'ankle_girth':     (229.3, 14.6),   # [ANSUR] anklecircumference
     },
     'female': {
-        'length':          (245.0, 12.0),   # ANSUR II: 244.9 ± 11.9
-        'width':           ( 91.0,  5.5),   # ANSUR II: 91.2 ± 5.4
-        'foot_height':     ( 61.0,  4.2),
-        'arch_height':     ( 12.5,  3.8),
-        'ball_girth':      (228.0, 11.0),   # IBV/Mundofoot
-        'instep_girth':    (232.0, 12.0),
-        'waist_girth':     (218.0, 11.5),
-        'heel_girth':      (318.0, 14.0),
-        'long_heel_girth': (318.0, 14.0),
-        'short_heel_girth':(286.0, 12.0),
-        'ankle_girth':     (222.0, 12.0),
+        'length':          (246.3, 12.4),   # [ANSUR] footlength
+        'width':           ( 92.7,  4.8),   # [ANSUR] footbreadthhorizontal
+        'foot_height':     ( 61.0,  4.2),   # [Krauss] dorsum height
+        'arch_height':     ( 12.5,  3.8),   # [Krauss] navicular height
+        'ball_girth':      (228.1, 11.8),   # [ANSUR] balloffootcircumference
+        'instep_girth':    (232.0, 12.0),   # [IBV] estimated
+        'waist_girth':     (218.0, 11.5),   # [IBV] estimated
+        'heel_girth':      (310.3, 15.3),   # [ANSUR] heelanklecircumference
+        'long_heel_girth': (310.3, 15.3),   # [ANSUR] = heel_girth
+        'short_heel_girth':(280.0, 12.0),   # [IBV] ~90% of long heel
+        'ankle_girth':     (215.7, 14.9),   # [ANSUR] anklecircumference
     },
 }
 
@@ -65,7 +69,12 @@ for key in STATS['male']:
 
 
 # ─── Correlation matrix ──────────────────────────────────────────────────────
-# Based on ANSUR II correlation tables and IBV regression analyses.
+# Computed from ANSUR II raw data (N=6,068 combined male+female).
+# ANSUR II columns used: footlength, footbreadthhorizontal,
+#   balloffootcircumference, heelanklecircumference, anklecircumference.
+# Values for foot_height, arch_height, instep/waist/short_heel girth are
+# estimated from IBV/Krauss literature since ANSUR II doesn't measure them.
+#
 # Order: length, width, foot_height, arch_height, ball_girth, instep_girth,
 #         waist_girth, heel_girth, long_heel_girth, short_heel_girth, ankle_girth
 
@@ -75,21 +84,20 @@ MEASUREMENT_KEYS = [
     'heel_girth', 'long_heel_girth', 'short_heel_girth', 'ankle_girth',
 ]
 
-# Correlation matrix (symmetric, compiled from published regression R values)
-# Sources: Lee & Wang 2015, Krauss 2011, ANSUR II cross-tabulations
+# Correlation matrix — [ANSUR] = from raw data, [est] = literature estimate
 _CORR = np.array([
     # len   wid   fh    ah    bg    ig    wg    hg    lhg   shg   ag
-    [1.00, 0.75, 0.68, 0.25, 0.82, 0.72, 0.70, 0.65, 0.65, 0.62, 0.60],  # length
-    [0.75, 1.00, 0.55, 0.20, 0.88, 0.78, 0.75, 0.60, 0.60, 0.58, 0.55],  # width
-    [0.68, 0.55, 1.00, 0.30, 0.62, 0.72, 0.65, 0.55, 0.55, 0.52, 0.65],  # foot_height
-    [0.25, 0.20, 0.30, 1.00, 0.22, 0.28, 0.25, 0.18, 0.18, 0.16, 0.20],  # arch_height
-    [0.82, 0.88, 0.62, 0.22, 1.00, 0.85, 0.82, 0.70, 0.70, 0.68, 0.62],  # ball_girth
-    [0.72, 0.78, 0.72, 0.28, 0.85, 1.00, 0.88, 0.72, 0.72, 0.70, 0.68],  # instep_girth
-    [0.70, 0.75, 0.65, 0.25, 0.82, 0.88, 1.00, 0.68, 0.68, 0.65, 0.65],  # waist_girth
-    [0.65, 0.60, 0.55, 0.18, 0.70, 0.72, 0.68, 1.00, 0.98, 0.92, 0.78],  # heel_girth
-    [0.65, 0.60, 0.55, 0.18, 0.70, 0.72, 0.68, 0.98, 1.00, 0.92, 0.78],  # long_heel_girth
-    [0.62, 0.58, 0.52, 0.16, 0.68, 0.70, 0.65, 0.92, 0.92, 1.00, 0.75],  # short_heel_girth
-    [0.60, 0.55, 0.65, 0.20, 0.62, 0.68, 0.65, 0.78, 0.78, 0.75, 1.00],  # ankle_girth
+    [1.00, 0.76, 0.65, 0.25, 0.78, 0.72, 0.70, 0.89, 0.89, 0.85, 0.59],  # length      [ANSUR: l-w=0.76, l-bg=0.78, l-hg=0.89, l-ag=0.59]
+    [0.76, 1.00, 0.55, 0.20, 0.92, 0.82, 0.78, 0.83, 0.83, 0.80, 0.65],  # width       [ANSUR: w-bg=0.92, w-hg=0.83, w-ag=0.65]
+    [0.65, 0.55, 1.00, 0.30, 0.58, 0.70, 0.62, 0.60, 0.60, 0.57, 0.62],  # foot_height [est]
+    [0.25, 0.20, 0.30, 1.00, 0.22, 0.28, 0.25, 0.22, 0.22, 0.20, 0.20],  # arch_height [est]
+    [0.78, 0.92, 0.58, 0.22, 1.00, 0.88, 0.85, 0.86, 0.86, 0.83, 0.71],  # ball_girth  [ANSUR: bg-w=0.92, bg-hg=0.86, bg-ag=0.71]
+    [0.72, 0.82, 0.70, 0.28, 0.88, 1.00, 0.90, 0.80, 0.80, 0.78, 0.70],  # instep_girth [est, ~bg*0.95]
+    [0.70, 0.78, 0.62, 0.25, 0.85, 0.90, 1.00, 0.76, 0.76, 0.74, 0.68],  # waist_girth [est]
+    [0.89, 0.83, 0.60, 0.22, 0.86, 0.80, 0.76, 1.00, 0.98, 0.94, 0.74],  # heel_girth  [ANSUR: hg-l=0.89, hg-bg=0.86, hg-ag=0.74]
+    [0.89, 0.83, 0.60, 0.22, 0.86, 0.80, 0.76, 0.98, 1.00, 0.94, 0.74],  # long_heel   [= heel_girth]
+    [0.85, 0.80, 0.57, 0.20, 0.83, 0.78, 0.74, 0.94, 0.94, 1.00, 0.72],  # short_heel  [est, ~0.96*hg corrs]
+    [0.59, 0.65, 0.62, 0.20, 0.71, 0.70, 0.68, 0.74, 0.74, 0.72, 1.00],  # ankle_girth [ANSUR: ag-l=0.59, ag-bg=0.71, ag-hg=0.74]
 ])
 
 
@@ -171,16 +179,17 @@ def sample_foot_measurements(rng, sex='mixed', n=1):
 
 
 # ─── Girth estimation from length + width ────────────────────────────────────
-# Regression coefficients from IBV Mundofoot study (N=3500)
-# ball_girth ≈ 1.42 * width + 1.12 * length - 160 (R²=0.85)
+# Regression: girth = a * width + b * length + c
+# [ANSUR] = computed from ANSUR II raw data (N=6,068)
+# [est] = estimated from ANSUR values and IBV ratios
 
 GIRTH_REGRESSIONS = {
-    'ball_girth':       {'width': 1.42, 'length': 1.12, 'intercept': -160.0},
-    'instep_girth':     {'width': 1.15, 'length': 1.20, 'intercept': -140.0},
-    'waist_girth':      {'width': 1.08, 'length': 1.10, 'intercept': -130.0},
-    'long_heel_girth':  {'width': 0.65, 'length': 1.45, 'intercept': -100.0},
-    'short_heel_girth': {'width': 0.58, 'length': 1.30, 'intercept': -85.0},
-    'ankle_girth':      {'width': 0.80, 'length': 1.15, 'intercept': -110.0},
+    'ball_girth':       {'width': 1.985, 'length': 0.176, 'intercept':   1.6},  # [ANSUR] R²=0.865
+    'instep_girth':     {'width': 1.800, 'length': 0.250, 'intercept':   5.0},  # [est] ~1.01× ball_girth
+    'waist_girth':      {'width': 1.650, 'length': 0.200, 'intercept':   0.0},  # [est] ~0.95× ball_girth
+    'long_heel_girth':  {'width': 1.204, 'length': 0.800, 'intercept':   3.2},  # [ANSUR] R²=0.847
+    'short_heel_girth': {'width': 1.080, 'length': 0.720, 'intercept':   2.9},  # [est] ~0.90× long_heel
+    'ankle_girth':      {'width': 1.185, 'length': 0.196, 'intercept':  56.2},  # [ANSUR] R²=0.445
 }
 
 
