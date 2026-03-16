@@ -226,6 +226,11 @@ export function runMigrations(db) {
     // orders — translated foot notes included with order
     `ALTER TABLE orders ADD COLUMN foot_notes    TEXT`,
     `ALTER TABLE orders ADD COLUMN foot_notes_en TEXT`,
+    // foot_scans — long heel + short heel girth (manufacturer-required measurements)
+    `ALTER TABLE foot_scans ADD COLUMN right_long_heel_girth  REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_short_heel_girth REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_long_heel_girth   REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_short_heel_girth  REAL`,
     // users — track last order date for loyalty point expiration
     `ALTER TABLE users ADD COLUMN last_order_at TEXT`,
   ]

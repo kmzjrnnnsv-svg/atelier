@@ -418,18 +418,20 @@ export default function Profile() {
                 <div className="border-t border-black/5 pt-2 mt-2">
                   <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Rechts</p>
                   {[
-                    ['Länge', `${Number(latestScan.right_length).toFixed(1)} mm`],
+                    ['Fußlänge', `${Number(latestScan.right_length).toFixed(1)} mm`, true],
                     ['Breite', `${Number(latestScan.right_width).toFixed(1)} mm`],
                     ['Gewölbe', `${Number(latestScan.right_arch).toFixed(1)} mm`],
-                    ...(latestScan.right_ball_girth ? [['Ballenumfang', `${Number(latestScan.right_ball_girth).toFixed(1)} mm`]] : []),
-                    ...(latestScan.right_instep_girth ? [['Ristumfang', `${Number(latestScan.right_instep_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.right_ball_girth ? [['Ballenumfang', `${Number(latestScan.right_ball_girth).toFixed(1)} mm`, true]] : []),
+                    ...(latestScan.right_instep_girth ? [['Ristumfang', `${Number(latestScan.right_instep_girth).toFixed(1)} mm`, true]] : []),
+                    ...(latestScan.right_long_heel_girth ? [['Langer Fersenumfang', `${Number(latestScan.right_long_heel_girth).toFixed(1)} mm`, true]] : []),
+                    ...(latestScan.right_short_heel_girth ? [['Kurzer Fersenumfang', `${Number(latestScan.right_short_heel_girth).toFixed(1)} mm`, true]] : []),
                     ...(latestScan.right_heel_girth ? [['Fersenumfang', `${Number(latestScan.right_heel_girth).toFixed(1)} mm`]] : []),
                     ...(latestScan.right_waist_girth ? [['Gelenkweite', `${Number(latestScan.right_waist_girth).toFixed(1)} mm`]] : []),
                     ...(latestScan.right_ankle_girth ? [['Knöchel', `${Number(latestScan.right_ankle_girth).toFixed(1)} mm`]] : []),
                     ...(latestScan.right_foot_height ? [['Fußhöhe', `${Number(latestScan.right_foot_height).toFixed(1)} mm`]] : []),
-                  ].map(([k, v]) => (
+                  ].map(([k, v, mfr]) => (
                     <div key={k} className="flex justify-between items-center py-0.5">
-                      <span className="text-[9px] text-black/40">{k}</span>
+                      <span className={`text-[9px] ${mfr ? 'text-black/60 font-medium' : 'text-black/40'}`}>{k}</span>
                       <span className="text-[11px] font-semibold text-black">{v}</span>
                     </div>
                   ))}
@@ -437,18 +439,20 @@ export default function Profile() {
                 <div className="border-t border-black/5 pt-2 mt-2">
                   <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Links</p>
                   {[
-                    ['Länge', `${Number(latestScan.left_length).toFixed(1)} mm`],
+                    ['Fußlänge', `${Number(latestScan.left_length).toFixed(1)} mm`, true],
                     ['Breite', `${Number(latestScan.left_width).toFixed(1)} mm`],
                     ['Gewölbe', `${Number(latestScan.left_arch).toFixed(1)} mm`],
-                    ...(latestScan.left_ball_girth ? [['Ballenumfang', `${Number(latestScan.left_ball_girth).toFixed(1)} mm`]] : []),
-                    ...(latestScan.left_instep_girth ? [['Ristumfang', `${Number(latestScan.left_instep_girth).toFixed(1)} mm`]] : []),
+                    ...(latestScan.left_ball_girth ? [['Ballenumfang', `${Number(latestScan.left_ball_girth).toFixed(1)} mm`, true]] : []),
+                    ...(latestScan.left_instep_girth ? [['Ristumfang', `${Number(latestScan.left_instep_girth).toFixed(1)} mm`, true]] : []),
+                    ...(latestScan.left_long_heel_girth ? [['Langer Fersenumfang', `${Number(latestScan.left_long_heel_girth).toFixed(1)} mm`, true]] : []),
+                    ...(latestScan.left_short_heel_girth ? [['Kurzer Fersenumfang', `${Number(latestScan.left_short_heel_girth).toFixed(1)} mm`, true]] : []),
                     ...(latestScan.left_heel_girth ? [['Fersenumfang', `${Number(latestScan.left_heel_girth).toFixed(1)} mm`]] : []),
                     ...(latestScan.left_waist_girth ? [['Gelenkweite', `${Number(latestScan.left_waist_girth).toFixed(1)} mm`]] : []),
                     ...(latestScan.left_ankle_girth ? [['Knöchel', `${Number(latestScan.left_ankle_girth).toFixed(1)} mm`]] : []),
                     ...(latestScan.left_foot_height ? [['Fußhöhe', `${Number(latestScan.left_foot_height).toFixed(1)} mm`]] : []),
-                  ].map(([k, v]) => (
+                  ].map(([k, v, mfr]) => (
                     <div key={k} className="flex justify-between items-center py-0.5">
-                      <span className="text-[9px] text-black/40">{k}</span>
+                      <span className={`text-[9px] ${mfr ? 'text-black/60 font-medium' : 'text-black/40'}`}>{k}</span>
                       <span className="text-[11px] font-semibold text-black">{v}</span>
                     </div>
                   ))}
