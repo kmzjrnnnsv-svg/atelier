@@ -9,6 +9,7 @@ import useAtelierStore from '../store/atelierStore'
 import { buildFootGeoAsync, downloadSTL } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
+import DepthSensing, { depthCapabilities } from '../plugins/depthSensing'
 
 // ─── Size lookup ───────────────────────────────────────────────────────────────
 const r1 = x => Math.round(x * 10) / 10
@@ -145,6 +146,66 @@ async function analyzeFrame(dataUrl, refSizeMm) {
     }
     img.src = dataUrl
   })
+}
+
+// ─── Real-time A4 detection (runs on each camera frame) ──────────────────────
+// Detects the white A4 rectangle in the camera feed and returns its bounding box.
+// Uses edge-based detection: find the largest white rectangular region.
+function detectA4InFrame(videoEl, overlayCanvas) {
+  if (!videoEl || !overlayCanvas) return null
+  const vw = videoEl.videoWidth, vh = videoEl.videoHeight
+  if (!vw || !vh) return null
+
+  overlayCanvas.width = vw >> 2   // process at 1/4 resolution for speed
+  overlayCanvas.height = vh >> 2
+  const sw = overlayCanvas.width, sh = overlayCanvas.height
+  const ctx = overlayCanvas.getContext('2d', { willReadFrequently: true })
+  ctx.drawImage(videoEl, 0, 0, sw, sh)
+  const { data } = ctx.getImageData(0, 0, sw, sh)
+
+  // Build brightness map
+  const bright = new Uint8Array(sw * sh)
+  for (let i = 0; i < data.length; i += 4) {
+    bright[i >> 2] = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) > 180 ? 1 : 0
+  }
+
+  // Find largest connected white rectangular region (simplified blob detection)
+  let bestArea = 0, bestRect = null
+  // Scan horizontal runs of white pixels, find the biggest bounding box
+  for (let y = 2; y < sh - 2; y += 3) {
+    let runStart = -1
+    for (let x = 0; x < sw; x++) {
+      if (bright[y * sw + x]) {
+        if (runStart < 0) runStart = x
+      } else {
+        if (runStart >= 0 && (x - runStart) > 15) {
+          // Check vertical extent
+          let yTop = y, yBot = y
+          const midX = (runStart + x) >> 1
+          while (yTop > 0 && bright[(yTop - 1) * sw + midX]) yTop--
+          while (yBot < sh - 1 && bright[(yBot + 1) * sw + midX]) yBot++
+          const w = x - runStart, h = yBot - yTop
+          const area = w * h
+          // A4 aspect ratio check: 210/297 ≈ 0.707 (portrait) or 1.414 (landscape)
+          const aspect = Math.min(w, h) / Math.max(w, h)
+          if (area > bestArea && aspect > 0.55 && aspect < 0.85 && area > 400) {
+            bestArea = area
+            bestRect = {
+              x: (runStart / sw) * 100,
+              y: (yTop / sh) * 100,
+              w: (w / sw) * 100,
+              h: (h / sh) * 100,
+              confidence: Math.min(1, area / 2000),
+              aspect,
+            }
+          }
+        }
+        runStart = -1
+      }
+    }
+  }
+
+  return bestRect
 }
 
 // ─── 3D Preview ────────────────────────────────────────────────────────────────
@@ -315,7 +376,7 @@ function GuideOverlay({ phase }) {
 }
 
 // ─── Camera Step ───────────────────────────────────────────────────────────────
-function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, totalSteps, camStatus }) {
+function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, totalSteps, camStatus, a4Detected, depthMode }) {
   const [ready, setReady] = useState(false)
   const [flash, setFlash] = useState(false)
   const [count, setCount] = useState(3)
@@ -361,6 +422,42 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       {flash && <div className="absolute inset-0 bg-white z-50 pointer-events-none" />}
 
       <GuideOverlay phase={phase} />
+
+      {/* Real-time A4 detection feedback */}
+      {a4Detected && (
+        <div className="absolute z-15 pointer-events-none" style={{
+          left: `${a4Detected.x}%`, top: `${a4Detected.y}%`,
+          width: `${a4Detected.w}%`, height: `${a4Detected.h}%`,
+        }}>
+          <div className={`w-full h-full border-2 ${
+            a4Detected.confidence > 0.7 ? 'border-green-400' : a4Detected.confidence > 0.4 ? 'border-yellow-400' : 'border-red-400'
+          }`} style={{ borderRadius: 4 }} />
+          <span className={`absolute -top-5 left-1 text-[9px] font-bold ${
+            a4Detected.confidence > 0.7 ? 'text-green-400' : 'text-yellow-400'
+          }`}>
+            A4 {a4Detected.confidence > 0.7 ? '✓' : '…'}
+          </span>
+        </div>
+      )}
+      {!a4Detected && camStatus === 'active' && (
+        <div className="absolute top-16 left-0 right-0 z-15 flex justify-center pointer-events-none">
+          <div className="bg-red-500/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            <span className="text-[10px] text-white font-semibold">A4-Blatt nicht erkannt</span>
+          </div>
+        </div>
+      )}
+
+      {/* Depth mode indicator */}
+      {depthMode && depthMode !== 'none' && (
+        <div className="absolute top-16 right-4 z-15 pointer-events-none">
+          <div className="bg-teal-500/70 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <span className="text-[8px] text-white font-bold uppercase tracking-wider">
+              {depthMode === 'webxr' ? '3D Depth' : depthMode === 'lidar' ? 'LiDAR' : 'Depth'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-3 flex items-center justify-between">
@@ -568,11 +665,16 @@ export default function FootScan() {
   const [savingEdits, setSavingEdits]   = useState(false)
   const [camStatus,  setCamStatus] = useState('idle')
   const [aiStatus,   setAiStatus]  = useState('')
-  // LiDAR
+  // LiDAR + Depth sensing
   const [lidarAvail, setLidarAvail] = useState(false)
   const [lidarData,  setLidarData]  = useState({ right: null, left: null })
   const [lidarError, setLidarError] = useState(null)
   const [walkProgress, setWalkProgress] = useState(0)
+  const [depthMode, setDepthMode]     = useState('none') // 'webxr' | 'sfm' | 'none'
+  const [a4Detected, setA4Detected]   = useState(null)   // { x, y, w, h, confidence }
+  const [depthFrames, setDepthFrames] = useState({})      // depth data per capture phase
+  const depthRef = useRef(null)        // DepthSensing instance
+  const a4CanvasRef = useRef(null)     // offscreen canvas for A4 detection
   // Photogrammetrie (8-Ansichten-Modus)
   const [pgMode,     setPgMode]    = useState(false)   // Photogrammetrie aktiv?
   const [pgStep,     setPgStep]    = useState(0)        // 0-15 (8 rechts + 8 links)
@@ -628,11 +730,20 @@ export default function FootScan() {
     streamRef.current?.getTracks().forEach(t => t.stop()); streamRef.current = null
   }, [])
 
-  const capture = useCallback(() => {
+  const capture = useCallback((capturePhase) => {
     const v = videoRef.current, c = canvasRef.current
     if (!v || !c) return null
     c.width = v.videoWidth || 640; c.height = v.videoHeight || 480
     c.getContext('2d').drawImage(v, 0, 0)
+
+    // Capture depth data if available (WebXR or SfM)
+    if (depthRef.current && capturePhase) {
+      const depthData = depthRef.current.captureDepth(c)
+      if (depthData) {
+        setDepthFrames(prev => ({ ...prev, [capturePhase]: depthData }))
+      }
+    }
+
     return c.toDataURL('image/jpeg', 0.85)
   }, [])
 
@@ -645,8 +756,51 @@ export default function FootScan() {
 
   useEffect(() => () => stopCam(), [stopCam])
 
-  // ── LiDAR availability check (runs once on mount) ──
-  useEffect(() => { lidarAvailable().then(setLidarAvail) }, [])
+  // ── LiDAR + Depth availability check (runs once on mount) ──
+  useEffect(() => {
+    lidarAvailable().then(setLidarAvail)
+    depthCapabilities().then(caps => {
+      setDepthMode(caps.best)
+      // Initialize depth sensing for Android devices
+      if (caps.webxr && !caps.lidar) {
+        const ds = new DepthSensing()
+        ds.init().then(mode => setDepthMode(mode))
+        depthRef.current = ds
+      }
+    })
+    return () => { depthRef.current?.destroy() }
+  }, [])
+
+  // ── Real-time A4 detection loop (runs during camera phases) ──
+  useEffect(() => {
+    const CAM = ['right-top', 'right-medial', 'right-lateral', 'left-top', 'left-medial', 'left-lateral']
+    if (!CAM.includes(phase) || camStatus !== 'active') {
+      setA4Detected(null)
+      return
+    }
+
+    // Create offscreen canvas for A4 detection
+    if (!a4CanvasRef.current) {
+      a4CanvasRef.current = document.createElement('canvas')
+    }
+
+    let animId
+    const detect = () => {
+      const rect = detectA4InFrame(videoRef.current, a4CanvasRef.current)
+      setA4Detected(rect)
+      animId = requestAnimationFrame(detect)
+    }
+    // Run at ~8fps (every 125ms) to avoid perf issues
+    let intervalId = setInterval(() => {
+      const rect = detectA4InFrame(videoRef.current, a4CanvasRef.current)
+      setA4Detected(rect)
+    }, 125)
+
+    return () => {
+      clearInterval(intervalId)
+      if (animId) cancelAnimationFrame(animId)
+    }
+  }, [phase, camStatus])
 
   // ── LiDAR walk-around scan (one foot at a time) ──
   // Walk-around duration in ms
@@ -705,14 +859,14 @@ export default function FootScan() {
   }, [stopCam])
 
   // ── Capture handlers (IBV-style: 3 photos per foot = 6 total) ──
-  const handleRightTop     = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightTop: img }));     setPhase('right-medial') }, [capture])
-  const handleRightMedial  = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightMedial: img }));  setPhase('right-lateral') }, [capture])
-  const handleRightLateral = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightLateral: img })); setPhase('left-top') }, [capture])
-  const handleRightSide    = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, rightSide: img }));    setPhase('left-top') }, [capture])
-  const handleLeftTop      = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, leftTop: img }));      setPhase('left-medial') }, [capture])
-  const handleLeftMedial   = useCallback(() => { const img = capture(); setFrames(f => ({ ...f, leftMedial: img }));   setPhase('left-lateral') }, [capture])
-  const handleLeftLateral  = useCallback(() => { const img = capture(); stopCam(); setFrames(f => ({ ...f, leftLateral: img })); setPhase('processing') }, [capture, stopCam])
-  const handleLeftSide     = useCallback(() => { const img = capture(); stopCam(); setFrames(f => ({ ...f, leftSide: img })); setPhase('processing') }, [capture, stopCam])
+  const handleRightTop     = useCallback(() => { const img = capture('rightTop');     setFrames(f => ({ ...f, rightTop: img }));     setPhase('right-medial') }, [capture])
+  const handleRightMedial  = useCallback(() => { const img = capture('rightMedial');  setFrames(f => ({ ...f, rightMedial: img }));  setPhase('right-lateral') }, [capture])
+  const handleRightLateral = useCallback(() => { const img = capture('rightLateral'); setFrames(f => ({ ...f, rightLateral: img })); setPhase('left-top') }, [capture])
+  const handleRightSide    = useCallback(() => { const img = capture('rightSide');    setFrames(f => ({ ...f, rightSide: img }));    setPhase('left-top') }, [capture])
+  const handleLeftTop      = useCallback(() => { const img = capture('leftTop');      setFrames(f => ({ ...f, leftTop: img }));      setPhase('left-medial') }, [capture])
+  const handleLeftMedial   = useCallback(() => { const img = capture('leftMedial');   setFrames(f => ({ ...f, leftMedial: img }));   setPhase('left-lateral') }, [capture])
+  const handleLeftLateral  = useCallback(() => { const img = capture('leftLateral');  stopCam(); setFrames(f => ({ ...f, leftLateral: img })); setPhase('processing') }, [capture, stopCam])
+  const handleLeftSide     = useCallback(() => { const img = capture('leftSide');     stopCam(); setFrames(f => ({ ...f, leftSide: img })); setPhase('processing') }, [capture, stopCam])
 
   // ── Photogrammetrie: 8 Ansichten je Fuß ──────────────────────────────────────
   // Ansichten: top, front, front_left, left, back_left, back, back_right, right
@@ -915,6 +1069,20 @@ export default function FootScan() {
           if (hasIBVFrames && rLat && lLat) {
             analyzeBody.rightLateralImg = rLat
             analyzeBody.leftLateralImg = lLat
+          }
+          // Send depth data if available (WebXR/ARCore point cloud)
+          if (Object.keys(depthFrames).length > 0) {
+            const depthSummary = {}
+            for (const [key, df] of Object.entries(depthFrames)) {
+              if (df.source === 'webxr-arcore') {
+                // Convert to point cloud for backend PCA fitting
+                const pc = depthRef.current?.depthToPointCloud(df)
+                if (pc) depthSummary[key] = { source: df.source, pointCloud: pc }
+              }
+            }
+            if (Object.keys(depthSummary).length > 0) {
+              analyzeBody.depthData = depthSummary
+            }
           }
           const ai = await apiFetch('/api/scans/analyze', {
             method: 'POST',
@@ -1134,7 +1302,8 @@ export default function FootScan() {
         <CamStep key={phase} videoRef={videoRef} canvasRef={canvasRef} phase={phase}
           onCapture={captureHandler}
           onBack={() => { stopCam(); navigate(-1) }}
-          stepNum={camStepNum} totalSteps={totalCamSteps} camStatus={camStatus} />
+          stepNum={camStepNum} totalSteps={totalCamSteps} camStatus={camStatus}
+          a4Detected={a4Detected} depthMode={depthMode} />
       )}
 
       {/* ── Photogrammetrie camera view (16-shot mode) ── */}
