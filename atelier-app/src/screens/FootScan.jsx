@@ -998,6 +998,26 @@ export default function FootScan() {
     'left-side':  handleLeftSide,
   }[phase]
 
+  // ── Desktop guard: no scan on laptop/desktop ──
+  const isDesktop = typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches && !('ontouchstart' in window)
+  if (isDesktop) {
+    return (
+      <div className="relative h-full overflow-hidden bg-black flex flex-col items-center justify-center text-center px-8">
+        <Scan size={48} className="text-white/20 mb-4" />
+        <h2 className="text-lg font-light text-white uppercase tracking-[0.15em] mb-2">3D Foot Scan</h2>
+        <p className="text-[11px] text-white/40 leading-relaxed max-w-xs">
+          Der Fußscan ist nur auf Smartphones und Tablets verfügbar. Bitte öffne die App auf deinem Mobilgerät, um einen Scan durchzuführen.
+        </p>
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-6 px-6 py-2.5 bg-white text-black text-[10px] uppercase tracking-[0.18em] font-medium border-0"
+        >
+          Zurück
+        </button>
+      </div>
+    )
+  }
+
   // ════════════════════════════════════════════════════════════════════════════
   return (
     <div className="relative h-full overflow-hidden bg-black">
