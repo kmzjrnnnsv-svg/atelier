@@ -954,6 +954,79 @@ router.patch(
   }
 )
 
+// ─── PATCH /api/scans/:id/my-measurements — User edits own scan measurements ──
+// Users can adjust/supplement their own measurements (e.g. self-measured values).
+// Unlike admin PATCH, this does NOT store comparison pairs or trigger calibration.
+router.patch(
+  '/:id/my-measurements',
+  authenticate,
+  [
+    body('right_length').optional().isFloat({ min: 100, max: 400 }),
+    body('right_width').optional().isFloat({ min: 50, max: 200 }),
+    body('right_arch').optional().isFloat({ min: 0, max: 80 }),
+    body('right_ball_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('right_instep_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('right_heel_girth').optional().isFloat({ min: 150, max: 500 }),
+    body('right_waist_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('right_ankle_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('right_long_heel_girth').optional().isFloat({ min: 200, max: 500 }),
+    body('right_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
+    body('right_foot_height').optional().isFloat({ min: 30, max: 120 }),
+    body('left_length').optional().isFloat({ min: 100, max: 400 }),
+    body('left_width').optional().isFloat({ min: 50, max: 200 }),
+    body('left_arch').optional().isFloat({ min: 0, max: 80 }),
+    body('left_ball_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('left_instep_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('left_heel_girth').optional().isFloat({ min: 150, max: 500 }),
+    body('left_waist_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('left_ankle_girth').optional().isFloat({ min: 100, max: 450 }),
+    body('left_long_heel_girth').optional().isFloat({ min: 200, max: 500 }),
+    body('left_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
+    body('left_foot_height').optional().isFloat({ min: 30, max: 120 }),
+  ],
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const db = getDb()
+    const id = req.params.id
+    const scan = db.prepare('SELECT * FROM foot_scans WHERE id = ? AND user_id = ?').get(id, req.user.id)
+    if (!scan) return res.status(404).json({ error: 'Scan nicht gefunden oder nicht dein Scan' })
+
+    const {
+      right_length, right_width, right_arch,
+      right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+      right_long_heel_girth, right_short_heel_girth, right_foot_height,
+      left_length, left_width, left_arch,
+      left_ball_girth, left_instep_girth, left_heel_girth, left_waist_girth, left_ankle_girth,
+      left_long_heel_girth, left_short_heel_girth, left_foot_height,
+    } = req.body
+
+    const fieldMap = {
+      right_length, right_width, right_arch,
+      right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+      right_long_heel_girth, right_short_heel_girth, right_foot_height,
+      left_length, left_width, left_arch,
+      left_ball_girth, left_instep_girth, left_heel_girth, left_waist_girth, left_ankle_girth,
+      left_long_heel_girth, left_short_heel_girth, left_foot_height,
+    }
+
+    const updates = []
+    const params = []
+    for (const [key, val] of Object.entries(fieldMap)) {
+      if (val !== undefined) { updates.push(`${key} = ?`); params.push(val) }
+    }
+
+    if (updates.length === 0) return res.status(400).json({ error: 'Keine Werte zum Aktualisieren' })
+
+    params.push(id)
+    db.prepare(`UPDATE foot_scans SET ${updates.join(', ')} WHERE id = ?`).run(...params)
+
+    const updated = db.prepare('SELECT * FROM foot_scans WHERE id = ?').get(id)
+    res.json({ ok: true, scan: updated })
+  }
+)
+
 // ─── GET /api/scans/my-average — Bayesian average of user's scan history ─────
 // Returns the best estimate of the user's foot dimensions by combining all their
 // scans with recency-weighted averaging (half-life: 30 days).

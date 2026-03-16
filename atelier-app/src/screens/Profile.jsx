@@ -96,6 +96,9 @@ export default function Profile() {
   const [showLoyalty, setShowLoyalty] = useState(false)
   const [editingNotes, setEditingNotes] = useState(false)
   const [noteText, setNoteText] = useState('')
+  const [editMode, setEditMode] = useState(false)
+  const [editedValues, setEditedValues] = useState({})
+  const [savingEdits, setSavingEdits] = useState(false)
   const unreadCount = notifications.filter(n => !n.read).length
 
   const tabKeys = tabs.map(t => t.id)
@@ -394,12 +397,20 @@ export default function Profile() {
                 </p>
               )}
             </div>
-            <button
-              onClick={() => navigate('/my-scans')}
-              className="text-[9px] uppercase tracking-widest text-black/50 font-bold bg-transparent border-0 p-0"
-            >
-              HISTORY
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setEditMode(m => !m); setEditedValues({}) }}
+                className={`text-[9px] uppercase tracking-widest font-bold bg-transparent border px-2 py-1 ${editMode ? 'text-teal-600 border-teal-300' : 'text-black/50 border-black/10'}`}
+              >
+                {editMode ? 'Abbrechen' : 'Bearbeiten'}
+              </button>
+              <button
+                onClick={() => navigate('/my-scans')}
+                className="text-[9px] uppercase tracking-widest text-black/50 font-bold bg-transparent border-0 p-0"
+              >
+                HISTORY
+              </button>
+            </div>
           </div>
 
           <div className="flex border-b border-black/8 mt-2">
@@ -424,48 +435,92 @@ export default function Profile() {
                   <span className="text-[9px] uppercase tracking-widest text-black/40">Schuhgröße</span>
                   <span className="text-sm font-bold text-black">EU {displayScan.eu_size} · UK {displayScan.uk_size} · US {displayScan.us_size}</span>
                 </div>
-                <div className="border-t border-black/5 pt-2 mt-2">
-                  <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Rechts</p>
-                  {[
-                    ['Fußlänge', `${Number(displayScan.right_length).toFixed(1)} mm`, true],
-                    ['Breite', `${Number(displayScan.right_width).toFixed(1)} mm`],
-                    ['Gewölbe', `${Number(displayScan.right_arch).toFixed(1)} mm`],
-                    ...(displayScan.right_ball_girth ? [['Ballenumfang', `${Number(displayScan.right_ball_girth).toFixed(1)} mm`, true]] : []),
-                    ...(displayScan.right_instep_girth ? [['Ristumfang', `${Number(displayScan.right_instep_girth).toFixed(1)} mm`, true]] : []),
-                    ...(displayScan.right_long_heel_girth ? [['Langer Fersenumfang', `${Number(displayScan.right_long_heel_girth).toFixed(1)} mm`, true]] : []),
-                    ...(displayScan.right_short_heel_girth ? [['Kurzer Fersenumfang', `${Number(displayScan.right_short_heel_girth).toFixed(1)} mm`, true]] : []),
-                    ...(displayScan.right_heel_girth ? [['Fersenumfang', `${Number(displayScan.right_heel_girth).toFixed(1)} mm`]] : []),
-                    ...(displayScan.right_waist_girth ? [['Gelenkweite', `${Number(displayScan.right_waist_girth).toFixed(1)} mm`]] : []),
-                    ...(displayScan.right_ankle_girth ? [['Knöchel', `${Number(displayScan.right_ankle_girth).toFixed(1)} mm`]] : []),
-                    ...(displayScan.right_foot_height ? [['Fußhöhe', `${Number(displayScan.right_foot_height).toFixed(1)} mm`]] : []),
-                  ].map(([k, v, mfr]) => (
-                    <div key={k} className="flex justify-between items-center py-0.5">
-                      <span className={`text-[9px] ${mfr ? 'text-black/60 font-medium' : 'text-black/40'}`}>{k}</span>
-                      <span className="text-[11px] font-semibold text-black">{v}</span>
+                {['right', 'left'].map(side => {
+                  const sideLabel = side === 'right' ? 'Rechts' : 'Links'
+                  const fields = [
+                    { label: 'Fußlänge',            key: `${side}_length`,           mfr: true },
+                    { label: 'Breite',               key: `${side}_width` },
+                    { label: 'Gewölbe',              key: `${side}_arch` },
+                    { label: 'Ballenumfang',         key: `${side}_ball_girth`,       mfr: true },
+                    { label: 'Ristumfang',           key: `${side}_instep_girth`,     mfr: true },
+                    { label: 'Lg. Fersenumfang',     key: `${side}_long_heel_girth`,  mfr: true },
+                    { label: 'Kz. Fersenumfang',     key: `${side}_short_heel_girth`, mfr: true },
+                    { label: 'Fersenumfang',         key: `${side}_heel_girth` },
+                    { label: 'Gelenkweite',          key: `${side}_waist_girth` },
+                    { label: 'Knöchel',              key: `${side}_ankle_girth` },
+                    { label: 'Fußhöhe',              key: `${side}_foot_height` },
+                  ]
+                  return (
+                    <div key={side} className="border-t border-black/5 pt-2 mt-2">
+                      <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>{sideLabel}</p>
+                      {fields.map(({ label, key, mfr }) => {
+                        const rawVal = displayScan[key]
+                        const edited = editedValues[key]
+                        const hasVal = rawVal != null || edited !== undefined
+                        // In edit mode, show all fields; in view mode, only show fields with values (or mfr fields)
+                        if (!editMode && !hasVal && !mfr) return null
+                        return (
+                          <div key={key} className="flex justify-between items-center py-0.5">
+                            <span className={`text-[9px] ${mfr ? 'text-black/60 font-medium' : 'text-black/40'}`}>{label}</span>
+                            {editMode ? (
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.1"
+                                  value={edited !== undefined ? edited : (rawVal != null ? Number(rawVal).toFixed(1) : '')}
+                                  onChange={e => setEditedValues(v => ({ ...v, [key]: e.target.value }))}
+                                  placeholder="—"
+                                  className={`w-16 text-right text-[11px] font-semibold bg-transparent border-0 border-b p-0 py-0.5 focus:outline-none ${
+                                    edited !== undefined ? 'text-teal-600 border-teal-300' : 'text-black border-black/10'
+                                  }`}
+                                />
+                                <span className="text-[8px] text-black/25">mm</span>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] font-semibold text-black">
+                                {rawVal != null ? `${Number(rawVal).toFixed(1)} mm` : '—'}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
-                  ))}
-                </div>
-                <div className="border-t border-black/5 pt-2 mt-2">
-                  <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Links</p>
-                  {[
-                    ['Fußlänge', `${Number(displayScan.left_length).toFixed(1)} mm`, true],
-                    ['Breite', `${Number(displayScan.left_width).toFixed(1)} mm`],
-                    ['Gewölbe', `${Number(displayScan.left_arch).toFixed(1)} mm`],
-                    ...(displayScan.left_ball_girth ? [['Ballenumfang', `${Number(displayScan.left_ball_girth).toFixed(1)} mm`, true]] : []),
-                    ...(displayScan.left_instep_girth ? [['Ristumfang', `${Number(displayScan.left_instep_girth).toFixed(1)} mm`, true]] : []),
-                    ...(displayScan.left_long_heel_girth ? [['Langer Fersenumfang', `${Number(displayScan.left_long_heel_girth).toFixed(1)} mm`, true]] : []),
-                    ...(displayScan.left_short_heel_girth ? [['Kurzer Fersenumfang', `${Number(displayScan.left_short_heel_girth).toFixed(1)} mm`, true]] : []),
-                    ...(displayScan.left_heel_girth ? [['Fersenumfang', `${Number(displayScan.left_heel_girth).toFixed(1)} mm`]] : []),
-                    ...(displayScan.left_waist_girth ? [['Gelenkweite', `${Number(displayScan.left_waist_girth).toFixed(1)} mm`]] : []),
-                    ...(displayScan.left_ankle_girth ? [['Knöchel', `${Number(displayScan.left_ankle_girth).toFixed(1)} mm`]] : []),
-                    ...(displayScan.left_foot_height ? [['Fußhöhe', `${Number(displayScan.left_foot_height).toFixed(1)} mm`]] : []),
-                  ].map(([k, v, mfr]) => (
-                    <div key={k} className="flex justify-between items-center py-0.5">
-                      <span className={`text-[9px] ${mfr ? 'text-black/60 font-medium' : 'text-black/40'}`}>{k}</span>
-                      <span className="text-[11px] font-semibold text-black">{v}</span>
-                    </div>
-                  ))}
-                </div>
+                  )
+                })}
+                {editMode && Object.keys(editedValues).length > 0 && (
+                  <button
+                    onClick={async () => {
+                      setSavingEdits(true)
+                      try {
+                        const scanId = latestScan?.id
+                        if (!scanId) throw new Error('Kein Scan vorhanden')
+                        const body = {}
+                        for (const [key, val] of Object.entries(editedValues)) {
+                          const numVal = parseFloat(val)
+                          if (!isNaN(numVal)) body[key] = numVal
+                        }
+                        await apiFetch(`/api/scans/${scanId}/my-measurements`, {
+                          method: 'PATCH',
+                          body: JSON.stringify(body),
+                        })
+                        refreshScan()
+                        setEditedValues({})
+                        setEditMode(false)
+                      } catch (err) {
+                        alert('Fehler: ' + (err.message || err))
+                      }
+                      setSavingEdits(false)
+                    }}
+                    disabled={savingEdits}
+                    className="w-full py-2.5 mt-3 bg-teal-600 text-white font-bold text-[10px] border-0 uppercase tracking-widest active:opacity-80 disabled:opacity-50"
+                    style={{ letterSpacing: '0.1em' }}>
+                    {savingEdits ? 'Wird gespeichert…' : 'Werte speichern'}
+                  </button>
+                )}
+                {editMode && Object.keys(editedValues).length === 0 && (
+                  <p className="text-[8px] text-black/25 text-center mt-3">Ändere einen Wert oder ergänze fehlende Maße</p>
+                )}
               </div>
             )}
             {activeTab === 'GENERAL' && (
