@@ -102,4 +102,34 @@ router.put('/email',
   }
 )
 
+// ─── GET /api/settings/explore — curators + admin ───────────────────────────
+const EXPLORE_KEYS = ['explore_hero_image', 'explore_hero_title', 'explore_hero_subtitle']
+
+router.get('/explore', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db   = getDb()
+  const rows = db.prepare(`SELECT key, value FROM settings WHERE key IN (${EXPLORE_KEYS.map(() => '?').join(',')})`)
+    .all(...EXPLORE_KEYS)
+  const result = Object.fromEntries(rows.map(r => [r.key, r.value]))
+  res.json(result)
+})
+
+// ─── PUT /api/settings/explore — curators + admin ───────────────────────────
+router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db  = getDb()
+  const uid = req.user.id
+  const upsert = db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `)
+
+  for (const key of EXPLORE_KEYS) {
+    if (req.body[key] !== undefined) {
+      upsert.run(key, req.body[key] || '', uid)
+    }
+  }
+
+  res.json({ message: 'Explore-Einstellungen gespeichert' })
+})
+
 export default router
