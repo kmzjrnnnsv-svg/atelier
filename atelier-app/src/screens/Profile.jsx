@@ -91,7 +91,7 @@ const styleCards = [
 export default function Profile() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
-  const { favorites, orders, notifications, markAllNotificationsRead, loyaltyTiers, loyaltyStatus, latestScan, refreshScan } = useAtelierStore()
+  const { favorites, orders, notifications, markAllNotificationsRead, loyaltyTiers, loyaltyStatus, latestScan, refreshScan, footNotes, saveFootNotes } = useAtelierStore()
   const [activeTab, setActiveTab] = useState('SIZE')
   const [showNotifs, setShowNotifs] = useState(false)
   const [showLoyalty, setShowLoyalty] = useState(false)
@@ -506,22 +506,19 @@ export default function Profile() {
                     <textarea
                       value={noteText}
                       onChange={e => setNoteText(e.target.value)}
-                      maxLength={500}
+                      maxLength={1000}
                       className="w-full border border-black/10 bg-[#f6f5f3] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/30"
                       rows={4}
                       placeholder="Persönliche Notizen zu deinen Füßen..."
                       autoFocus
                     />
                     <div className="flex items-center justify-between">
-                      <span className="text-[8px] text-black/30">{noteText.length}/500</span>
+                      <span className="text-[8px] text-black/30">{noteText.length}/1000</span>
                       <div className="flex gap-2">
                         <button onClick={() => setEditingNotes(false)} className="px-3 py-1.5 text-[10px] text-black/40 bg-transparent border border-black/10">Abbrechen</button>
                         <button
                           onClick={async () => {
-                            if (latestScan?.id) {
-                              await apiFetch(`/api/scans/${latestScan.id}/notes`, { method: 'PUT', body: JSON.stringify({ notes: noteText }) })
-                              refreshScan()
-                            }
+                            await saveFootNotes(noteText)
                             setEditingNotes(false)
                           }}
                           className="px-3 py-1.5 text-[10px] text-white bg-black border-0 font-semibold"
@@ -531,12 +528,12 @@ export default function Profile() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => { setNoteText(latestScan?.notes || ''); setEditingNotes(true) }}
+                    onClick={() => { setNoteText(footNotes || ''); setEditingNotes(true) }}
                     className="w-full text-left bg-transparent border-0 p-0 group"
                   >
-                    {latestScan?.notes ? (
+                    {footNotes ? (
                       <div className="flex items-start gap-2">
-                        <p className="text-[11px] text-black/60 italic leading-relaxed flex-1">"{latestScan.notes}"</p>
+                        <p className="text-[11px] text-black/60 italic leading-relaxed flex-1">"{footNotes}"</p>
                         <Edit3 size={12} className="text-black/20 mt-0.5 flex-shrink-0 group-hover:text-black/40" strokeWidth={1.5} />
                       </div>
                     ) : (

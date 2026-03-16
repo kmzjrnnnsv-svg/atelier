@@ -503,6 +503,8 @@ export default function FootScan() {
   const navigate    = useNavigate()
   const { user }    = useAuth()
   const refreshScan = useAtelierStore(s => s.refreshScan)
+  const footNotes = useAtelierStore(s => s.footNotes)
+  const saveFootNotes = useAtelierStore(s => s.saveFootNotes)
 
   const videoRef  = useRef(null)
   const canvasRef = useRef(null)
@@ -532,6 +534,7 @@ export default function FootScan() {
   const [lastFormat,   setLastFormat]   = useState('stl')
   const [shoeTypeSettings, setShoeTypeSettings] = useState(null)  // CMS-configured presets
   const [scanNotes,    setScanNotes]    = useState('')
+  const [notesConfirmed, setNotesConfirmed] = useState(false)
 
   // Load shoe type settings from CMS when result screen shows
   useEffect(() => {
@@ -542,6 +545,13 @@ export default function FootScan() {
       setShoeTypeSettings(map)
     }).catch(() => {})
   }, [phase]) // eslint-disable-line
+
+  // Pre-populate notes from user-level foot notes when result screen shows
+  useEffect(() => {
+    if (phase === 'result' && footNotes && !scanNotes && !notesConfirmed) {
+      setScanNotes(footNotes)
+    }
+  }, [phase, footNotes]) // eslint-disable-line
 
   // ── Camera ──
   const startCam = useCallback(async () => {
@@ -1494,20 +1504,25 @@ export default function FootScan() {
                   </div>
                 </div>
 
-                {/* Notes input */}
+                {/* Notes input — saves to user profile */}
                 <div>
-                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>Notizen</p>
+                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>
+                    {footNotes && !notesConfirmed ? 'Deine hinterlegten Notizen — bestätigen oder anpassen' : 'Notizen'}
+                  </p>
                   <textarea
                     value={scanNotes}
                     onChange={e => setScanNotes(e.target.value)}
-                    maxLength={500}
+                    maxLength={1000}
                     className="w-full border border-black/8 bg-[#f6f5f3] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/20"
                     rows={3}
-                    placeholder="Persönliche Notizen zu diesem Scan…"
+                    placeholder="Persönliche Notizen zu deinen Füßen…"
                   />
-                  {scanNotes.trim() && saved && (
+                  {scanNotes.trim() && (
                     <button
                       onClick={async () => {
+                        await saveFootNotes(scanNotes)
+                        setNotesConfirmed(true)
+                        // Also save to scan record
                         const scans = await apiFetch('/api/scans/mine').catch(() => [])
                         if (scans?.[0]?.id) {
                           await apiFetch(`/api/scans/${scans[0].id}/notes`, { method: 'PUT', body: JSON.stringify({ notes: scanNotes }) })
@@ -1515,7 +1530,7 @@ export default function FootScan() {
                         }
                       }}
                       className="mt-1.5 px-3 py-1.5 text-[9px] text-white bg-black border-0 font-semibold"
-                    >Notiz speichern</button>
+                    >{footNotes && !notesConfirmed ? 'Bestätigen & Speichern' : 'Notiz speichern'}</button>
                   )}
                 </div>
 

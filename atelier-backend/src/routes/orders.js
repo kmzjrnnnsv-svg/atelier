@@ -4,6 +4,27 @@ import { getDb } from '../db/database.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification } from '../utils/email.js'
 import { totpVerify } from '../utils/totp.js'
+import Anthropic from '@anthropic-ai/sdk'
+
+async function translateToEnglish(text) {
+  if (!text) return ''
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) return text
+  try {
+    const client = new Anthropic({ apiKey })
+    const resp = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: `Translate the following German foot/shoe notes to English. Return ONLY the translation, nothing else.\n\n${text}`,
+      }],
+    })
+    return resp.content[0]?.text?.trim() || text
+  } catch {
+    return text
+  }
+}
 
 const router = Router()
 const canWrite = [authenticate, requireRole('admin', 'curator')]
@@ -33,14 +54,18 @@ router.post('/',
   body('material').trim().notEmpty().withMessage('Material required'),
   body('color').trim().notEmpty().withMessage('Color required'),
   body('price').trim().notEmpty().withMessage('Price required'),
-  (req, res) => {
+  async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
 
     const {
       shoe_id, shoe_name, material, color, price, eu_size,
       delivery_address, billing_address, accessories, scan_id,
+      foot_notes,
     } = req.body
+
+    // Translate foot notes to English for manufacturer
+    const foot_notes_en = foot_notes ? await translateToEnglish(foot_notes) : null
 
     const db  = getDb()
     const uid = req.user.id
@@ -62,8 +87,9 @@ router.post('/',
     const result = db.prepare(`
       INSERT INTO orders
         (user_id, shoe_id, shoe_name, material, color, price, eu_size,
-         delivery_address, billing_address, accessories, scan_id, user_order_number, status, order_ref)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         delivery_address, billing_address, accessories, scan_id, user_order_number, status, order_ref,
+         foot_notes, foot_notes_en)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).run(
       uid,
       shoe_id    || null,
@@ -79,6 +105,8 @@ router.post('/',
       user_order_number,
       'pending_payment',
       order_ref,
+      foot_notes || null,
+      foot_notes_en || null,
     )
 
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid)
