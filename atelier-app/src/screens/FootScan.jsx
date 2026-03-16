@@ -331,27 +331,28 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       </div>
 
       {/* Bottom sheet */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white px-5 pt-5 pb-10" style={{ borderRadius: '24px 24px 0 0' }}>
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white px-5 pt-5 pb-10">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+          <div className="w-6 h-6 bg-black flex items-center justify-center flex-shrink-0">
             <span className="text-white text-[11px] font-bold">{stepNum}</span>
           </div>
-          <span className="text-xs text-gray-400 font-medium">Schritt {stepNum} von {totalSteps}</span>
+          <span className="text-xs text-black/40 font-medium">Schritt {stepNum} von {totalSteps}</span>
         </div>
-        <p className="text-xl font-bold text-gray-900 leading-snug mb-1">{emoji} {title}</p>
-        <p className="text-sm text-gray-400 leading-relaxed mb-5">{sub}</p>
+        <p className="text-[15px] font-bold text-black leading-snug mb-1" style={{ letterSpacing: '0.03em' }}>{emoji} {title}</p>
+        <p className="text-[11px] text-black/40 leading-relaxed mb-5">{sub}</p>
 
         {ready ? (
           <button onClick={handleTap}
-            className="w-full py-4 rounded-2xl bg-black text-white font-bold text-base border-0 active:scale-[0.98] transition-transform">
-            📸 Foto aufnehmen
+            className="w-full py-4 bg-black text-white font-bold text-[13px] border-0 uppercase tracking-widest active:opacity-80 transition-opacity"
+            style={{ letterSpacing: '0.12em' }}>
+            Foto aufnehmen
           </button>
         ) : (
-          <div className="w-full py-4 rounded-2xl bg-gray-100 flex items-center justify-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center">
-              <span className="text-base font-bold text-gray-500">{count}</span>
+          <div className="w-full py-4 bg-[#f6f5f3] flex items-center justify-center gap-3">
+            <div className="w-8 h-8 bg-black/10 flex items-center justify-center">
+              <span className="text-base font-bold text-black/50">{count}</span>
             </div>
-            <span className="text-sm font-semibold text-gray-400">Positioniere dich…</span>
+            <span className="text-[12px] font-semibold text-black/35">Positioniere dich…</span>
           </div>
         )}
       </div>
@@ -422,34 +423,33 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
       </div>
 
       {/* Bottom sheet */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white px-5 pt-5 pb-10"
-        style={{ borderRadius: '24px 24px 0 0' }}>
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white px-5 pt-5 pb-10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-6 h-6 bg-black flex items-center justify-center flex-shrink-0">
               <span className="text-white text-[11px] font-bold">{pgStep + 1}</span>
             </div>
-            <span className="text-xs text-gray-400 font-medium">Aufnahme {pgStep + 1} von 16</span>
+            <span className="text-xs text-black/40 font-medium">Aufnahme {pgStep + 1} von 16</span>
           </div>
-          <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-            {info.side === 'right' ? '🦶 Rechts' : '🦶 Links'}
+          <span className="text-[10px] font-semibold text-black bg-[#f6f5f3] px-2.5 py-1 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
+            {info.side === 'right' ? 'Rechts' : 'Links'}
           </span>
         </div>
-        <p className="text-xl font-bold text-gray-900 leading-snug mb-1">📸 {info.label}</p>
-        <p className="text-sm text-gray-400 leading-relaxed mb-5">{info.sub}</p>
+        <p className="text-[15px] font-bold text-black leading-snug mb-1" style={{ letterSpacing: '0.03em' }}>{info.label}</p>
+        <p className="text-[11px] text-black/40 leading-relaxed mb-5">{info.sub}</p>
 
         {ready ? (
           <button onClick={handleTap}
-            className="w-full py-4 rounded-2xl font-bold text-base border-0 text-white active:scale-[0.98] transition-transform"
-            style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
-            📸 Foto aufnehmen
+            className="w-full py-4 font-bold text-[13px] border-0 text-white bg-black uppercase tracking-widest active:opacity-80 transition-opacity"
+            style={{ letterSpacing: '0.12em' }}>
+            Foto aufnehmen
           </button>
         ) : (
-          <div className="w-full py-4 rounded-2xl bg-gray-100 flex items-center justify-center gap-3">
-            <div className="w-8 h-8 rounded-full border-2 border-indigo-200 flex items-center justify-center">
-              <span className="text-base font-bold text-indigo-400">{count}</span>
+          <div className="w-full py-4 bg-[#f6f5f3] flex items-center justify-center gap-3">
+            <div className="w-8 h-8 bg-black/10 flex items-center justify-center">
+              <span className="text-base font-bold text-black/50">{count}</span>
             </div>
-            <span className="text-sm font-semibold text-gray-400">Positioniere dich…</span>
+            <span className="text-[12px] font-semibold text-black/35">Positioniere dich…</span>
           </div>
         )}
       </div>
@@ -471,23 +471,25 @@ function CamError({ status, onRetry, onDemo, onBack }) {
   return (
     <div className="absolute inset-0 flex flex-col bg-white">
       <div className="px-5 pt-4 pb-2 flex-shrink-0">
-        <button onClick={onBack} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border-0">
-          <X size={17} className="text-gray-800" strokeWidth={1.8} />
+        <button onClick={onBack} className="bg-transparent border-0 p-0">
+          <X size={20} className="text-black" strokeWidth={1.5} />
         </button>
       </div>
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
-        <span className="text-5xl">{err.emoji}</span>
+        <div className="w-16 h-16 bg-[#f6f5f3] flex items-center justify-center">
+          <span className="text-3xl">{err.emoji}</span>
+        </div>
         <div>
-          <p className="text-xl font-bold text-gray-900 mb-2">{err.title}</p>
-          <p className="text-sm text-gray-500 leading-relaxed whitespace-pre-line">{err.desc}</p>
+          <p className="text-[14px] font-bold text-black mb-2" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>{err.title}</p>
+          <p className="text-[11px] text-black/40 leading-relaxed whitespace-pre-line">{err.desc}</p>
         </div>
         <div className="w-full space-y-3 pt-2">
           {err.retry && (
-            <button onClick={onRetry} className="w-full py-4 rounded-2xl bg-black text-white font-bold text-sm border-0">
+            <button onClick={onRetry} className="w-full py-4 bg-black text-white font-bold text-[12px] border-0 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
               Erneut versuchen
             </button>
           )}
-          <button onClick={onDemo} className="w-full py-4 rounded-2xl bg-gray-100 text-gray-800 font-semibold text-sm border-0">
+          <button onClick={onDemo} className="w-full py-4 bg-[#f6f5f3] text-black/60 font-semibold text-[12px] border-0">
             Demo-Modus (ohne Kamera)
           </button>
         </div>
@@ -1118,94 +1120,102 @@ export default function FootScan() {
         <div className="absolute inset-0 flex flex-col bg-white overflow-hidden">
 
           {/* Shared header */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
             <button onClick={() => { stopCam(); navigate(-1) }}
-              className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
-              <X size={17} className="text-gray-700" strokeWidth={1.8} />
+              className="bg-transparent border-0 p-0">
+              <X size={20} className="text-black" strokeWidth={1.5} />
             </button>
-            <span className="text-sm font-bold text-black tracking-wide">
-              {phase === 'start' ? 'Fußscan' :
-               phase === 'processing' || phase === 'pg-processing' ? 'Auswertung' :
-               'Ergebnis'}
-            </span>
-            <div className="w-9" />
+            <div className="text-center">
+              <p className="text-[8px] uppercase tracking-widest text-black/30" style={{ letterSpacing: '0.2em' }}>3D Scan</p>
+              <span className="text-[13px] font-bold text-black" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                {phase === 'start' ? 'Fußscan' :
+                 phase === 'processing' || phase === 'pg-processing' ? 'Auswertung' :
+                 'Ergebnis'}
+              </span>
+            </div>
+            <div className="w-5" />
           </div>
 
           {/* ── START ── */}
           {phase === 'start' && (
             <div className="flex-1 overflow-y-auto">
-              <div className="bg-black px-5 py-8 text-center">
-                <div className="text-5xl mb-3">👣</div>
-                <p className="text-2xl font-bold text-white mb-1">3D Fußvermessung</p>
-                {lidarAvail ? (
-                  <p className="text-sm text-gray-400 leading-relaxed">iPhone LiDAR · Direkte 3D-Messung · ±0.5mm</p>
-                ) : (
-                  <p className="text-sm text-gray-400 leading-relaxed">4 Fotos · A4-Papier als Referenz · Claude KI misst präzise</p>
-                )}
+              {/* Hero header bar */}
+              <div className="flex items-center gap-3 px-5 py-4" style={{ background: '#0f172a' }}>
+                <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(45,212,191,0.15)' }}>
+                  <Scan size={17} className="text-teal-400" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[8px] text-teal-400" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Vermessung</p>
+                  <p className="text-[13px] text-white leading-tight mt-0.5">3D Fußvermessung</p>
+                </div>
                 {lidarAvail && (
-                  <div className="mt-3 inline-flex items-center gap-1.5 bg-teal-500/20 border border-teal-400/30 px-3 py-1.5 rounded-full">
-                    <Scan size={12} className="text-teal-400" />
-                    <span className="text-xs text-teal-300 font-medium">LiDAR verfügbar</span>
-                  </div>
-                )}
-                {!lidarAvail && (
-                  <div className="mt-3 inline-flex items-center gap-1.5 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full">
-                    <span className="text-sm">📄</span>
-                    <span className="text-xs text-gray-300 font-medium">A4-Blatt bereithalten</span>
+                  <div className="flex items-center gap-1 px-2.5 py-1 bg-white/10">
+                    <span className="text-[7px] text-teal-400 uppercase" style={{ letterSpacing: '0.15em' }}>LiDAR</span>
                   </div>
                 )}
               </div>
+              <div className="px-5 pt-3 pb-4 border-b border-black/5">
+                <p className="text-[10px] text-black/45 leading-relaxed">
+                  {lidarAvail
+                    ? 'iPhone LiDAR · Direkte 3D-Messung · ±0.5mm Präzision'
+                    : '4 Fotos · A4-Papier als Referenz · Claude KI misst präzise'}
+                </p>
+              </div>
 
-              <div className="px-5 pt-5 pb-3 space-y-2">
+              <div className="px-5 pt-4 pb-3 space-y-0 divide-y divide-black/5">
                 {[
-                  { n: '1', emoji: '📄', label: 'Rechter Fuß — oben',   desc: 'A4-Blatt links neben dem Fuß, Kamera senkrecht von oben' },
-                  { n: '2', emoji: '📐', label: 'Rechter Fuß — Seite',  desc: 'A4-Blatt seitlich halten, Kamera auf Bodenhöhe' },
-                  { n: '3', emoji: '📄', label: 'Linker Fuß — oben',    desc: 'A4-Blatt rechts neben dem Fuß, Kamera senkrecht von oben' },
-                  { n: '4', emoji: '📐', label: 'Linker Fuß — Seite',   desc: 'A4-Blatt seitlich halten, Kamera auf Bodenhöhe' },
-                ].map(({ n, emoji, label, desc }) => (
-                  <div key={n} className="flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-gray-100">
-                    <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-sm font-bold">{n}</span>
-                    </div>
+                  { n: '1', label: 'Rechter Fuß — oben',   desc: 'A4-Blatt links neben dem Fuß, Kamera senkrecht von oben' },
+                  { n: '2', label: 'Rechter Fuß — Seite',  desc: 'A4-Blatt seitlich halten, Kamera auf Bodenhöhe' },
+                  { n: '3', label: 'Linker Fuß — oben',    desc: 'A4-Blatt rechts neben dem Fuß, Kamera senkrecht von oben' },
+                  { n: '4', label: 'Linker Fuß — Seite',   desc: 'A4-Blatt seitlich halten, Kamera auf Bodenhöhe' },
+                ].map(({ n, label, desc }) => (
+                  <div key={n} className="flex items-center gap-3 py-3">
+                    <span className="w-7 h-7 bg-black text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                      {n}
+                    </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900">{label}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                      <p className="text-[11px] font-semibold text-black">{label}</p>
+                      <p className="text-[9px] text-black/40 mt-0.5">{desc}</p>
                     </div>
-                    <span className="text-xl flex-shrink-0">{emoji}</span>
                   </div>
                 ))}
               </div>
 
               {/* A4 tip */}
-              <div className="mx-5 mt-3 p-4 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3">
-                <span className="text-xl flex-shrink-0">💡</span>
-                <p className="text-xs text-amber-800 leading-relaxed">
-                  <strong>Tipp:</strong> Ein normales A4-Druckerpapier reicht aus. Das Papier ist der Maßstab — Claude KI berechnet damit die Millimeter-genauen Maße.
+              <div className="mx-5 mt-3 p-3.5 bg-[#f6f5f3] border border-black/5 flex gap-3">
+                <div className="w-7 h-7 bg-black/8 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle size={13} className="text-black/40" strokeWidth={1.5} />
+                </div>
+                <p className="text-[9px] text-black/45 leading-relaxed">
+                  <strong className="text-black/60">Tipp:</strong> Ein normales A4-Druckerpapier reicht aus. Das Papier ist der Maßstab — Claude KI berechnet damit die Millimeter-genauen Maße.
                 </p>
               </div>
 
-              <div className="px-5 pt-4 pb-10 space-y-3">
+              <div className="px-5 pt-4 pb-10 space-y-2.5">
                 {lidarAvail ? (
                   <button onClick={() => { setLidarData({ right: null, left: null }); setLidarError(null); setPhase('lidar-right') }}
-                    className="w-full py-4 rounded-2xl bg-black text-white font-bold text-base border-0 flex items-center justify-center gap-2">
-                    <Scan size={18} />
-                    LiDAR-Scan starten →
+                    className="w-full py-4 bg-black text-white font-bold text-[12px] border-0 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
+                    style={{ letterSpacing: '0.12em' }}>
+                    <Scan size={16} strokeWidth={1.5} />
+                    LiDAR-Scan starten
                   </button>
                 ) : null}
                 <button onClick={() => setPhase('right-top')}
-                  className={`w-full py-4 rounded-2xl font-bold text-base border-0 ${lidarAvail ? 'bg-gray-100 text-gray-700' : 'bg-black text-white'}`}>
-                  {lidarAvail ? 'Foto-Scan (4 Bilder)' : 'Scan starten →'}
+                  className={`w-full py-4 font-bold text-[12px] border-0 uppercase tracking-widest active:opacity-80 ${lidarAvail ? 'bg-[#f6f5f3] text-black/60' : 'bg-black text-white'}`}
+                  style={{ letterSpacing: '0.12em' }}>
+                  {lidarAvail ? 'Foto-Scan (4 Bilder)' : 'Scan starten'}
                 </button>
                 <button onClick={() => {
                   setPgMode(true); setPgStep(0)
                   setPgImgs({ right: [], left: [] })
                   setPhase('pg-0')
                 }}
-                  className="w-full py-4 rounded-2xl font-bold text-base border-0 bg-gray-100 text-gray-700 flex items-center justify-center gap-2">
-                  8-Ansichten-Scan (±0,1 mm) →
+                  className="w-full py-4 font-bold text-[12px] border-0 bg-[#f6f5f3] text-black/60 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
+                  style={{ letterSpacing: '0.12em' }}>
+                  8-Ansichten-Scan (±0,1 mm)
                 </button>
                 <button onClick={startDemo}
-                  className="w-full py-3.5 rounded-2xl bg-gray-50 text-gray-500 font-semibold text-sm border border-gray-200">
+                  className="w-full py-3.5 bg-white text-black/35 font-semibold text-[11px] border border-black/8">
                   Demo-Modus (ohne Kamera)
                 </button>
               </div>
@@ -1216,28 +1226,25 @@ export default function FootScan() {
           {phase === 'processing' && (
             <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
               <div className="relative">
-                <div className="w-28 h-28 rounded-full bg-black flex items-center justify-center">
-                  <span className="text-5xl">{progress < 20 ? '📷' : progress < 75 ? '🤖' : '📐'}</span>
+                <div className="w-24 h-24 bg-black flex items-center justify-center">
+                  <span className="text-4xl">{progress < 20 ? '📷' : progress < 75 ? '🤖' : '📐'}</span>
                 </div>
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="absolute inset-0 rounded-full border border-gray-200 animate-ping"
-                    style={{ animationDuration: `${1.8 + i * 0.5}s`, animationDelay: `${i * 0.25}s` }} />
-                ))}
+                <div className="absolute inset-0 border border-black/20 animate-ping" style={{ animationDuration: '2s' }} />
               </div>
 
               <div className="text-center w-full">
-                <p className="text-xl font-bold text-gray-900 mb-1">KI analysiert 4 Bilder</p>
-                <p className="text-sm text-gray-400 min-h-[20px] mb-6">{aiStatus}</p>
+                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>KI analysiert 4 Bilder</p>
+                <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-gray-400">Fortschritt</span>
-                  <span className="text-xs font-bold text-gray-900">{Math.round(progress)}%</span>
+                  <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
+                  <span className="text-[10px] font-bold text-black">{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-black rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+                <div className="w-full h-1.5 bg-[#f6f5f3] overflow-hidden">
+                  <div className="h-full bg-black transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
               </div>
 
-              <p className="text-xs text-gray-300 text-center px-4">
+              <p className="text-[9px] text-black/25 text-center px-4">
                 Claude KI erkennt das A4-Blatt und misst Länge, Breite und Gewölbe aus 4 Winkeln
               </p>
             </div>
@@ -1247,51 +1254,45 @@ export default function FootScan() {
           {phase === 'pg-processing' && (
             <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
               <div className="relative">
-                <div className="w-28 h-28 rounded-full flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}>
-                  <span className="text-5xl">
+                <div className="w-24 h-24 bg-black flex items-center justify-center">
+                  <span className="text-4xl">
                     {progress < 30 ? '📸' : progress < 60 ? '🔺' : progress < 85 ? '📐' : '✅'}
                   </span>
                 </div>
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="absolute inset-0 rounded-full border border-indigo-200 animate-ping"
-                    style={{ animationDuration: `${1.8 + i * 0.5}s`, animationDelay: `${i * 0.25}s` }} />
-                ))}
+                <div className="absolute inset-0 border border-black/20 animate-ping" style={{ animationDuration: '2s' }} />
               </div>
 
               <div className="text-center w-full">
-                <p className="text-xl font-bold text-gray-900 mb-1">3D-Rekonstruktion läuft</p>
-                <p className="text-sm text-gray-400 min-h-[20px] mb-6">{aiStatus}</p>
+                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>3D-Rekonstruktion</p>
+                <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-gray-400">Fortschritt</span>
-                  <span className="text-xs font-bold text-gray-900">{Math.round(progress)}%</span>
+                  <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
+                  <span className="text-[10px] font-bold text-black">{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #4f46e5, #7c3aed)' }} />
+                <div className="w-full h-1.5 bg-[#f6f5f3] overflow-hidden">
+                  <div className="h-full bg-black transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
               </div>
 
-              <div className="w-full space-y-2">
+              <div className="w-full space-y-1.5">
                 {[
-                  { pct: 15,  icon: '📸', label: '16 Fotos werden vorbereitet' },
-                  { pct: 30,  icon: '🎯', label: 'A4-Kalibrierung & Silhouette-Segmentierung' },
-                  { pct: 65,  icon: '🔺', label: 'Shape-from-Silhouettes 3D-Rekonstruktion' },
-                  { pct: 85,  icon: '📐', label: 'Maße aus 3D-Punktwolke berechnen' },
-                ].map(({ pct, icon, label }) => (
-                  <div key={pct} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all ${
+                  { pct: 15,  label: '16 Fotos werden vorbereitet' },
+                  { pct: 30,  label: 'A4-Kalibrierung & Silhouette-Segmentierung' },
+                  { pct: 65,  label: 'Shape-from-Silhouettes 3D-Rekonstruktion' },
+                  { pct: 85,  label: 'Maße aus 3D-Punktwolke berechnen' },
+                ].map(({ pct, label }) => (
+                  <div key={pct} className={`flex items-center gap-3 px-3.5 py-2.5 border transition-all ${
                     progress >= pct
-                      ? 'bg-indigo-50 border-indigo-100 text-indigo-700'
-                      : 'bg-gray-50 border-gray-100 text-gray-400'
+                      ? 'bg-[#f6f5f3] border-black/8 text-black'
+                      : 'bg-white border-black/5 text-black/30'
                   }`}>
-                    <span className="text-base">{icon}</span>
-                    <span className="text-xs font-medium">{label}</span>
-                    {progress >= pct && <span className="ml-auto text-indigo-400 text-xs">✓</span>}
+                    <span className="text-[10px] font-medium">{label}</span>
+                    {progress >= pct && <span className="ml-auto text-black/40 text-[9px]">✓</span>}
                   </div>
                 ))}
               </div>
 
-              <p className="text-xs text-gray-300 text-center px-4">
+              <p className="text-[9px] text-black/25 text-center px-4">
                 16 Aufnahmen aus 8 Winkeln → visueller Rumpf → sub-mm Maße
               </p>
             </div>
@@ -1300,46 +1301,45 @@ export default function FootScan() {
           {/* ── RESULT ── */}
           {phase === 'result' && result && (
             <div className="flex-1 overflow-y-auto">
-              <div className="bg-black px-6 py-8 text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Deine Schuhgröße</p>
-                <p className="text-8xl font-bold text-white leading-none mb-1">{result.sizes.eu}</p>
-                <p className="text-sm text-gray-400 mb-4">EU · UK {result.sizes.uk} · US {result.sizes.us}</p>
+              {/* Size hero header bar */}
+              <div className="bg-black px-5 py-6 text-center">
+                <p className="text-[8px] text-white/30 uppercase tracking-widest mb-2" style={{ letterSpacing: '0.2em' }}>Deine Schuhgröße</p>
+                <p className="text-6xl font-bold text-white leading-none mb-1">{result.sizes.eu}</p>
+                <p className="text-[11px] text-white/40 mb-3">EU · UK {result.sizes.uk} · US {result.sizes.us}</p>
                 {result.isDemo ? (
-                  <div className="inline-flex items-center gap-1.5 bg-amber-500/20 border border-amber-500/30 px-3 py-1.5 rounded-full">
-                    <span className="text-sm">⚠️</span>
-                    <span className="text-xs text-amber-300 font-medium">Demo-Modus · Beispielwerte · wird nicht gespeichert</span>
+                  <div className="inline-flex items-center gap-1.5 bg-amber-500/15 px-3 py-1.5">
+                    <span className="text-[9px] text-amber-300 font-medium uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Demo · Beispielwerte</span>
                   </div>
                 ) : result.usedAI && (
-                  <div className="inline-flex items-center gap-1.5 bg-white/10 border border-white/10 px-3 py-1.5 rounded-full">
-                    <span className="text-sm">✨</span>
-                    <span className="text-xs text-gray-300 font-medium">Claude KI · 4-Foto A4-Scan</span>
+                  <div className="inline-flex items-center gap-1.5 bg-white/8 px-3 py-1.5">
+                    <span className="text-[9px] text-white/50 font-medium">Claude KI · 4-Foto A4-Scan</span>
                   </div>
                 )}
               </div>
 
-              <div className="px-5 pt-5 pb-10 space-y-4">
+              <div className="px-5 pt-4 pb-10 space-y-4">
                 {/* Save status */}
                 {saved ? (
-                  <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-green-50 border border-green-100 text-green-700 text-sm font-medium">
-                    <CheckCircle2 size={15} /> In deinem Profil gespeichert
+                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/60 text-[11px] font-medium">
+                    <CheckCircle2 size={15} strokeWidth={1.5} /> In deinem Profil gespeichert
                   </div>
                 ) : saveErr ? (
-                  <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
-                    <AlertCircle size={15} /> {saveErr}
+                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-red-600 text-[11px] font-medium">
+                    <AlertCircle size={15} strokeWidth={1.5} /> {saveErr}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-gray-50 border border-gray-100 text-gray-500 text-sm">
-                    <CloudUpload size={15} className="animate-pulse" /> Wird gespeichert…
+                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/40 text-[11px]">
+                    <CloudUpload size={15} className="animate-pulse" strokeWidth={1.5} /> Wird gespeichert…
                   </div>
                 )}
 
                 {/* Measurements */}
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-2 px-1">Messwerte</p>
-                  {[['Rechts 🦶', result.right], ['Links 🦶', result.left]].map(([label, m]) => (
-                    <div key={label} className="border border-gray-100 rounded-2xl overflow-hidden mb-3">
-                      <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                        <span className="text-xs font-semibold text-gray-700">{label}</span>
+                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>Messwerte</p>
+                  {[['Rechts', result.right], ['Links', result.left]].map(([label, m]) => (
+                    <div key={label} className="border border-black/5 overflow-hidden mb-3">
+                      <div className="px-4 py-2.5 bg-black border-b border-black/5">
+                        <span className="text-[10px] font-semibold text-white uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>{label}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-0">
                         {[
@@ -1353,10 +1353,10 @@ export default function FootScan() {
                           { label: 'Knöchel',      value: m.ankle_girth,  unit: 'mm' },
                         ].map(({ label: lbl, value, unit }, i) => (
                           <div key={lbl} className={`px-4 py-3 flex items-center justify-between ${
-                            i % 2 === 0 ? 'border-r border-gray-100' : ''
-                          } ${i >= 2 ? 'border-t border-gray-100' : ''}`}>
-                            <span className="text-xs text-gray-400">{lbl}</span>
-                            <span className="text-sm font-bold text-gray-900">
+                            i % 2 === 0 ? 'border-r border-black/5' : ''
+                          } ${i >= 2 ? 'border-t border-black/5' : ''}`}>
+                            <span className="text-[10px] text-black/35">{lbl}</span>
+                            <span className="text-[11px] font-bold text-black">
                               {value != null ? `${Number(value).toFixed(1)} mm` : '—'}
                             </span>
                           </div>
@@ -1368,16 +1368,16 @@ export default function FootScan() {
 
                 {/* 3D Preview */}
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-2 px-1">3D-Vorschau</p>
-                  <div className="rounded-2xl overflow-hidden" style={{ background: '#111111' }}>
+                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>3D-Vorschau</p>
+                  <div className="overflow-hidden" style={{ background: '#111111' }}>
                     <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
                       <div>
                         <FootMini3D length={result.right.length} width={result.right.width} arch={result.right.arch ?? 14} label="Right" />
-                        <p className="text-center text-[10px] text-gray-500 py-2">Rechts</p>
+                        <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
                       </div>
                       <div>
                         <FootMini3D length={result.left.length} width={result.left.width} arch={result.left.arch ?? 13} label="Left" />
-                        <p className="text-center text-[10px] text-gray-500 py-2">Links</p>
+                        <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
                       </div>
                     </div>
 
@@ -1386,11 +1386,11 @@ export default function FootScan() {
                       <div className="p-3 border-t border-white/5 space-y-2">
                         {/* Shoe type selector */}
                         <div className="flex items-center gap-2 mb-2">
-                          <label className="text-[10px] text-gray-500 uppercase tracking-wider">Schuhtyp:</label>
+                          <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Schuhtyp:</label>
                           <select
                             value={lastShoeType}
                             onChange={e => setLastShoeType(e.target.value)}
-                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-300">
+                            className="flex-1 bg-white/5 border border-white/10 px-2 py-1.5 text-xs text-gray-300">
                             {Object.entries(SHOE_TYPES).map(([key, { name }]) => (
                               <option key={key} value={key}>{name}</option>
                             ))}
@@ -1399,14 +1399,14 @@ export default function FootScan() {
 
                         {/* Export format selector */}
                         <div className="flex items-center gap-2 mb-2">
-                          <label className="text-[10px] text-gray-500 uppercase tracking-wider">Format:</label>
+                          <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Format:</label>
                           <div className="flex gap-1">
                             {['stl', 'obj'].map(fmt => (
                               <button key={fmt}
                                 onClick={() => setLastFormat(fmt)}
-                                className={`px-3 py-1 rounded-lg text-xs font-semibold border ${
+                                className={`px-3 py-1 text-xs font-semibold border ${
                                   lastFormat === fmt
-                                    ? 'bg-teal-500/20 border-teal-500/50 text-teal-300'
+                                    ? 'bg-white/15 border-white/30 text-white'
                                     : 'bg-white/5 border-white/10 text-gray-400'
                                 }`}>
                                 .{fmt.toUpperCase()}
@@ -1438,9 +1438,9 @@ export default function FootScan() {
                                   downloadLastSTL(geo, result.sizes.eu, side)
                                 }
                               }}
-                              className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5">
+                              className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2.5">
                               <span className="text-xs font-semibold text-gray-300">{label}</span>
-                              <Download size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
+                              <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
                             </button>
                           ))}
                         </div>
@@ -1453,7 +1453,7 @@ export default function FootScan() {
                           ].map(({ side, label, m }) => (
                             <button key={`foot-${side}`}
                               onClick={async () => { const geo = await buildFootGeoAsync(m.length, m.width, m.arch, side); downloadSTL(geo, result.sizes.eu, side) }}
-                              className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2">
+                              className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2">
                               <span className="text-[10px] text-gray-400">{label}</span>
                               <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
                             </button>
@@ -1484,9 +1484,9 @@ export default function FootScan() {
                             a.href = url; a.download = `massblatt_EU${result.sizes.eu}_${Date.now()}.json`
                             a.click(); URL.revokeObjectURL(url)
                           }}
-                          className="w-full flex items-center justify-between bg-white/5 border border-white/8 rounded-xl px-3 py-2.5">
+                          className="w-full flex items-center justify-between bg-white/5 border border-white/8 px-3 py-2.5">
                           <span className="text-xs font-semibold text-gray-300">Maßblatt herunterladen</span>
-                          <Download size={13} className="text-teal-400 flex-shrink-0" strokeWidth={1.5} />
+                          <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
                         </button>
                       </div>
                     )}
@@ -1494,8 +1494,9 @@ export default function FootScan() {
                 </div>
 
                 <button onClick={() => navigate('/collection', { replace: true })}
-                  className="w-full py-4 rounded-2xl bg-black text-white font-bold text-base border-0">
-                  Kollektion entdecken →
+                  className="w-full py-4 bg-black text-white font-bold text-[12px] border-0 uppercase tracking-widest active:opacity-80"
+                  style={{ letterSpacing: '0.12em' }}>
+                  Kollektion entdecken
                 </button>
               </div>
             </div>
