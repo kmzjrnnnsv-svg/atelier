@@ -36,7 +36,7 @@ export default function CMSLayout() {
   ]
 
   return (
-    <div className="flex h-screen bg-[#f6f5f3] text-black overflow-hidden" style={{ width: '100vw', maxWidth: '100vw' }}>
+    <div className="flex h-full w-full bg-[#f6f5f3] text-black overflow-hidden">
       {/* Sidebar */}
       <aside className="w-56 flex-shrink-0 bg-[#0d0d0d] flex flex-col">
 
