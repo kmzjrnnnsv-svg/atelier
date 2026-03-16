@@ -4,9 +4,9 @@ import { Home, Compass, User } from 'lucide-react'
 import { prefetchRoute } from '../App'
 
 const NAV_ITEMS = [
-  { id: 'shop',    icon: Home,    label: 'Home',    path: '/collection' },
-  { id: 'explore', icon: Compass, label: 'Explore', path: '/explore'    },
-  { id: 'profile', icon: User,    label: 'Profile', path: '/profile'    },
+  { id: 'shop',    icon: Home,    label: 'SOLE',    path: '/collection' },
+  { id: 'explore', icon: Compass, label: 'EXPLORE', path: '/explore'    },
+  { id: 'profile', icon: User,    label: 'PROFILE', path: '/profile'    },
 ]
 
 export default function BottomNav() {
@@ -19,34 +19,29 @@ export default function BottomNav() {
   )?.id
 
   return (
-    <div className="flex-shrink-0 flex justify-center px-4 pb-3 pt-2"
+    <div className="bg-white border-t border-black/5 flex items-center justify-around px-2 pt-0 flex-shrink-0"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}>
-      <div className="flex items-center justify-around w-full max-w-sm bg-black shadow-lg"
-        style={{ borderRadius: 0 }}>
-        {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
-          const isActive = activeId === id
-          return (
-            <button
-              key={id}
-              onClick={() => startTransition(() => navigate(path))}
-              onPointerEnter={() => prefetchRoute(path)}
-              onTouchStart={() => prefetchRoute(path)}
-              className={`relative flex flex-col items-center gap-1 bg-transparent border-0 py-3 px-5 transition-all ${
-                isPending ? 'opacity-70' : ''
-              }`}
-            >
-              <Icon size={20} strokeWidth={isActive ? 1.8 : 1.3}
-                className={isActive ? 'text-white' : 'text-white/35'} />
-              <span className={`text-[7px] uppercase tracking-[0.15em] ${
-                isActive ? 'text-white font-semibold' : 'text-white/35 font-normal'
-              }`}>{label}</span>
-              {isActive && (
-                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-white" />
-              )}
-            </button>
-          )
-        })}
-      </div>
+      {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
+        const isActive = activeId === id
+        return (
+          <button
+            key={id}
+            onClick={() => startTransition(() => navigate(path))}
+            onPointerEnter={() => prefetchRoute(path)}
+            onTouchStart={() => prefetchRoute(path)}
+            className={`flex flex-col items-center gap-0.5 bg-transparent border-0 pt-2 pb-2 px-2 transition-colors ${
+              isActive ? 'text-black' : 'text-black/30'
+            } ${isPending ? 'opacity-70' : ''}`}
+            style={{ borderTop: isActive ? '2px solid black' : '2px solid transparent' }}
+          >
+            <Icon size={22} strokeWidth={isActive ? 1.8 : 1.5} />
+            <span
+              className="text-[7px] uppercase tracking-[0.18em] font-normal"
+              style={{ letterSpacing: '0.18em' }}
+            >{label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
