@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3 } from 'lucide-react'
+import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3, Package } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
@@ -569,6 +569,12 @@ export default function Profile() {
         {/* Quick links */}
         <div className="bg-white border-b border-black/8 divide-y divide-black/5 overflow-hidden">
           {[
+            {
+              icon: () => <Package size={16} className="text-black/60" strokeWidth={1.5} />,
+              label: 'Meine Bestellungen',
+              sub:   'Bestellungen · Tracking · Status',
+              path:  '/orders',
+            },
             {
               icon: () => <Footprints size={16} className="text-teal-500" strokeWidth={1.5} />,
               label: 'Meine Scans',
