@@ -1,12 +1,13 @@
 {
   "n_meshes": 600,
   "n_vertices": 3436,
-  "n_components": 2,
-  "variance_explained": 0.9632304906845093,
+  "n_components": 10,
+  "variance_explained": 0.9999161958694458,
+  "size_normalized": true,
   "mean_foot_length_mm": 208.3916473388672,
   "std_foot_length_mm": 76.55549621582031,
+  "reconstruction_error_mm": 0.5141880512237549,
   "label_columns": [
-    "ball_width",
     "length",
     "width",
     "foot_height",
@@ -17,6 +18,11 @@
     "heel_girth",
     "long_heel_girth",
     "short_heel_girth",
-    "ankle_girth"
+    "ankle_girth",
+    "ball_width",
+    "source",
+    "sex",
+    "heel_width",
+    "eu_size"
   ]
 }

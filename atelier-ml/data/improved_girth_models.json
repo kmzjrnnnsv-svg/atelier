@@ -1,0 +1,101 @@
+{
+  "ball_girth": {
+    "target": "ball_girth",
+    "features": [
+      "length",
+      "width"
+    ],
+    "n_samples": 6668,
+    "coefficients": {
+      "length": 0.1753,
+      "width": 1.989
+    },
+    "intercept": 1.47,
+    "cv_mae": 4.87,
+    "cv_rmse": 6.16,
+    "cv_r2": 0.868,
+    "cv_max_err": 24.5
+  },
+  "instep_girth": {
+    "target": "instep_girth",
+    "features": [
+      "length",
+      "width"
+    ],
+    "n_samples": 6668,
+    "coefficients": {
+      "length": 0.2498,
+      "width": 1.7849
+    },
+    "intercept": 6.48,
+    "cv_mae": 2.82,
+    "cv_rmse": 3.99,
+    "cv_r2": 0.938,
+    "cv_max_err": 28.4
+  },
+  "waist_girth": {
+    "target": "waist_girth",
+    "features": [
+      "length",
+      "width"
+    ],
+    "n_samples": 6668,
+    "coefficients": {
+      "length": 0.1946,
+      "width": 1.5945
+    },
+    "intercept": 8.35,
+    "cv_mae": 3.91,
+    "cv_rmse": 6.42,
+    "cv_r2": 0.814,
+    "cv_max_err": 44.1
+  },
+  "heel_girth": {
+    "target": "heel_girth",
+    "features": [
+      "length",
+      "width",
+      "foot_height",
+      "arch_height",
+      "ball_girth"
+    ],
+    "n_samples": 6668,
+    "coefficients": {
+      "length": 0.707,
+      "width": 0.2144,
+      "foot_height": 0.023,
+      "arch_height": 0.0044,
+      "ball_girth": 0.501
+    },
+    "intercept": 1.65,
+    "cv_mae": 6.52,
+    "cv_rmse": 8.25,
+    "cv_r2": 0.866,
+    "cv_max_err": 33.4
+  },
+  "ankle_girth": {
+    "target": "ankle_girth",
+    "features": [
+      "length",
+      "width",
+      "foot_height",
+      "arch_height",
+      "ball_girth",
+      "heel_girth"
+    ],
+    "n_samples": 6668,
+    "coefficients": {
+      "length": -0.3553,
+      "width": -0.2474,
+      "foot_height": 0.1697,
+      "arch_height": 0.0367,
+      "ball_girth": 0.38,
+      "heel_girth": 0.5586
+    },
+    "intercept": 53.79,
+    "cv_mae": 8.05,
+    "cv_rmse": 10.3,
+    "cv_r2": 0.591,
+    "cv_max_err": 47.2
+  }
+}
