@@ -39,9 +39,10 @@ from pathlib import Path
 SHAPE_MODEL_DIR = Path(__file__).parent.parent / 'data' / 'shape_model'
 
 MEASUREMENT_KEYS = [
-    'length', 'width', 'height',
+    'length', 'width', 'foot_height',
     'ball_girth', 'instep_girth', 'waist_girth',
-    'heel_girth', 'ankle_girth',
+    'heel_girth', 'long_heel_girth', 'short_heel_girth',
+    'ankle_girth',
 ]
 
 
