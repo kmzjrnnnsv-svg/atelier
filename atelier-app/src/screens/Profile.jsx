@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -45,6 +45,25 @@ function archLabel(scan) {
   return 'Flaches Gewölbe'
 }
 
+// ── Swipe hook ─────────────────────────────────────────────────────────────
+function useSwipeTabs(items, activeKey, setActiveKey) {
+  const startX = useRef(0)
+  const startY = useRef(0)
+  const onTouchStart = useCallback(e => {
+    startX.current = e.touches[0].clientX
+    startY.current = e.touches[0].clientY
+  }, [])
+  const onTouchEnd = useCallback(e => {
+    const dx = e.changedTouches[0].clientX - startX.current
+    const dy = e.changedTouches[0].clientY - startY.current
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return
+    const idx = items.indexOf(activeKey)
+    if (dx < 0 && idx < items.length - 1) setActiveKey(items[idx + 1])
+    if (dx > 0 && idx > 0) setActiveKey(items[idx - 1])
+  }, [items, activeKey, setActiveKey])
+  return { onTouchStart, onTouchEnd }
+}
+
 const styleCards = [
   {
     label: 'Modern Business',
@@ -79,6 +98,9 @@ export default function Profile() {
   const [editingNotes, setEditingNotes] = useState(false)
   const [noteText, setNoteText] = useState('')
   const unreadCount = notifications.filter(n => !n.read).length
+
+  const tabKeys = tabs.map(t => t.id)
+  const swipeHandlers = useSwipeTabs(tabKeys, activeTab, setActiveTab)
 
   const scanArchtype = determineArchtype(latestScan)
   const scanArchInfo = ARCHETYPES.find(a => a.key === scanArchtype)
@@ -379,7 +401,7 @@ export default function Profile() {
             ))}
           </div>
 
-          <div className="p-4">
+          <div className="p-4" style={{ minHeight: 220 }} {...swipeHandlers}>
             {activeTab === 'SIZE' && (
               <div className="space-y-1.5">
                 {latestScan ? (

@@ -3,7 +3,7 @@
  * Tab-based filtering like ShoeCollection. Articles use same card design as sections.
  */
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Compass, Lock, BookOpen, Film, Layers, Sparkles, Users, TrendingUp,
@@ -13,6 +13,25 @@ import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 
 const ICON_MAP = { BookOpen, Film, Layers, Sparkles, Users, TrendingUp, Compass }
+
+// ── Swipe hook ─────────────────────────────────────────────────────────────
+function useSwipeTabs(items, activeKey, setActiveKey) {
+  const startX = useRef(0)
+  const startY = useRef(0)
+  const onTouchStart = useCallback(e => {
+    startX.current = e.touches[0].clientX
+    startY.current = e.touches[0].clientY
+  }, [])
+  const onTouchEnd = useCallback(e => {
+    const dx = e.changedTouches[0].clientX - startX.current
+    const dy = e.changedTouches[0].clientY - startY.current
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return
+    const idx = items.indexOf(activeKey)
+    if (dx < 0 && idx < items.length - 1) setActiveKey(items[idx + 1])
+    if (dx > 0 && idx > 0) setActiveKey(items[idx - 1])
+  }, [items, activeKey, setActiveKey])
+  return { onTouchStart, onTouchEnd }
+}
 
 const DEFAULT_SECTIONS = [
   { id: 'editorial', icon: 'BookOpen', label: 'Editorial', tag: 'Demnächst', color: '#1e3a5f', accent: '#3b82f6', title: 'Saisonale Editorials', description: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Kollektion.', previewItems: ['Herbst / Winter 2025', 'The Riviera Collection', 'Made in Florence'], visible: true },
@@ -253,6 +272,9 @@ export default function Explore() {
     { key: 'SECTIONS', label: 'SECTIONS' },
   ]
 
+  const tabKeys = TABS.map(t => t.key)
+  const swipeHandlers = useSwipeTabs(tabKeys, activeTab, setActiveTab)
+
   // Search
   const q = searchQuery.toLowerCase().trim()
   const searchResults = q ? articles.filter(a =>
@@ -411,7 +433,7 @@ export default function Explore() {
       </div>
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" {...swipeHandlers}>
 
         {/* Hero image (only on ALLE tab, only if CMS provides one) */}
         {heroImage && activeTab === 'ALLE' && (
