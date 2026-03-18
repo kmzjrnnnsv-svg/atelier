@@ -29,6 +29,10 @@ import * as THREE from 'three'
 
 // Industry-standard Leisten presets (values from German Schuhmacher-Handwerk)
 // CMS can override these — these are sensible defaults for production.
+//
+// HINWEIS: Scan erfolgt MIT Socken (dünn, ~2mm Umfang).
+// girth_ease = reine Material-/Bewegungszugabe (Socke bereits im Scanmaß enthalten).
+// width_ease  = dito, Sockendicke (~1mm pro Seite) ist im Scan enthalten.
 export const SHOE_TYPES = {
   oxford: {
     name: 'Oxford / Halbschuh',
@@ -37,8 +41,8 @@ export const SHOE_TYPES = {
     heel_pitch_mm: 18,       // 15–20mm standard heel
     instep_raise_mm: 2,      // slight instep accommodation
     shank_spring_mm: 5,      // moderate shank curvature
-    width_ease_mm: 3,        // 2–4mm ease for leather stretch
-    girth_ease_mm: 5,        // 4–6mm circumference allowance
+    width_ease_mm: 2,        // Lederdehnung (Socke im Scan enthalten)
+    girth_ease_mm: 3,        // Material-/Bewegungszugabe ohne Socke
   },
   derby: {
     name: 'Derby / Blücher',
@@ -47,8 +51,8 @@ export const SHOE_TYPES = {
     heel_pitch_mm: 18,
     instep_raise_mm: 3,      // more instep room (open lacing adjustable)
     shank_spring_mm: 4,
-    width_ease_mm: 4,        // slightly more width ease
-    girth_ease_mm: 6,
+    width_ease_mm: 3,        // slightly more width ease
+    girth_ease_mm: 4,
   },
   stiefel: {
     name: 'Stiefel / Boot',
@@ -57,8 +61,8 @@ export const SHOE_TYPES = {
     heel_pitch_mm: 25,       // higher heel for boots
     instep_raise_mm: 4,      // more vertical room
     shank_spring_mm: 6,
-    width_ease_mm: 4,
-    girth_ease_mm: 8,        // ankle girth needs more ease
+    width_ease_mm: 3,
+    girth_ease_mm: 5,        // dickere Socke beim Tragen → extra Zugabe bleibt
   },
   sneaker: {
     name: 'Sneaker / Sportschuh',
@@ -67,8 +71,8 @@ export const SHOE_TYPES = {
     heel_pitch_mm: 12,       // lower heel drop
     instep_raise_mm: 3,
     shank_spring_mm: 3,
-    width_ease_mm: 5,        // more room for foot splay during movement
-    girth_ease_mm: 6,
+    width_ease_mm: 4,        // more room for foot splay during movement
+    girth_ease_mm: 4,
   },
   pumps: {
     name: 'Pumps / Damenschuh',
@@ -77,8 +81,8 @@ export const SHOE_TYPES = {
     heel_pitch_mm: 55,       // 50–70mm heel height
     instep_raise_mm: 1,      // minimal instep raise
     shank_spring_mm: 8,      // pronounced shank curve for high heel
-    width_ease_mm: 2,        // tighter fit
-    girth_ease_mm: 3,
+    width_ease_mm: 1,        // eng anliegend (dünne Socke/Strumpf im Scan)
+    girth_ease_mm: 1,
   },
   sandale: {
     name: 'Sandale / Pantolette',
@@ -87,8 +91,8 @@ export const SHOE_TYPES = {
     heel_pitch_mm: 10,       // low heel
     instep_raise_mm: 2,
     shank_spring_mm: 2,
-    width_ease_mm: 2,        // foot visible, close fit desired
-    girth_ease_mm: 2,
+    width_ease_mm: 1,        // foot visible, close fit desired
+    girth_ease_mm: 0,        // barfuß getragen — Socke im Scan muss kompensiert werden
   },
 }
 
@@ -518,9 +522,17 @@ export function generateMassblatt(scanData, options = {}) {
     length = 265, width = 95,
     foot_height = 65, arch = 13,
     ball_girth, instep_girth, waist_girth, heel_girth, ankle_girth,
+    scanned_with_socks = true,
   } = scanData
 
   const rnd = v => v != null ? Math.round(v * 10) / 10 : null
+
+  // Scan mit Socken: ~2mm Umfang, ~1mm Breite sind im Messwert enthalten.
+  // Bei Schuhtypen die barfuß getragen werden (Sandalen), Sockendicke abziehen.
+  const SOCK_GIRTH_MM = 2   // dünne Alltagssocke: ~2mm Umfang
+  const SOCK_WIDTH_MM = 1   // ~0.5mm pro Seite
+  const sockCorr = (scanned_with_socks && preset.girth_ease_mm === 0) ? -SOCK_GIRTH_MM : 0
+  const sockWidthCorr = (scanned_with_socks && preset.width_ease_mm <= 1) ? -SOCK_WIDTH_MM : 0
 
   return {
     title: `Maßblatt Schuhleisten — ${side === 'right' ? 'Rechter' : 'Linker'} Fuß`,
@@ -551,12 +563,13 @@ export function generateMassblatt(scanData, options = {}) {
 
     leisten_masse: {
       gesamtlaenge_mm: rnd(length + preset.zugabe_mm + preset.toe_extension_mm),
-      breite_mm: rnd(width + preset.width_ease_mm),
+      breite_mm: rnd(width + preset.width_ease_mm + sockWidthCorr),
       // Only include girth values that were actually measured — no guessing
-      ballen_umfang_mm: ball_girth != null ? rnd(ball_girth + preset.girth_ease_mm) : null,
-      rist_umfang_mm: instep_girth != null ? rnd(instep_girth + preset.girth_ease_mm) : null,
-      taillen_umfang_mm: waist_girth != null ? rnd(waist_girth + preset.girth_ease_mm) : null,
-      fersen_umfang_mm: heel_girth != null ? rnd(heel_girth + preset.girth_ease_mm) : null,
+      ballen_umfang_mm: ball_girth != null ? rnd(ball_girth + preset.girth_ease_mm + sockCorr) : null,
+      rist_umfang_mm: instep_girth != null ? rnd(instep_girth + preset.girth_ease_mm + sockCorr) : null,
+      taillen_umfang_mm: waist_girth != null ? rnd(waist_girth + preset.girth_ease_mm + sockCorr) : null,
+      fersen_umfang_mm: heel_girth != null ? rnd(heel_girth + preset.girth_ease_mm + sockCorr) : null,
     },
+    scan_mit_socken: scanned_with_socks,
   }
 }

@@ -39,7 +39,7 @@ export default function Welcome() {
     }
   }
 
-  const skip = () => navigate('/scan', { replace: true })
+  const skip = () => navigate('/collection', { replace: true })
 
   return (
     <div className="flex flex-col h-full bg-white">

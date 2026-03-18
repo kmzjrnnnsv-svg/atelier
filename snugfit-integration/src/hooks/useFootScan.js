@@ -45,6 +45,7 @@ import {
   SNUGFIT_CONFIG,
   POSITION_FEEDBACK,
 } from '../constants/scanConfig'
+import LidarScanNative, { lidarAvailable } from '../../../atelier-app/src/plugins/lidarScan'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typen-Dokumentation (JSDoc für IDE-Unterstützung)
@@ -89,6 +90,8 @@ const INITIAL_STATE = {
   results:          {},    // { LEFT: {...}, RIGHT: {...} }
   error:            null,
   retryCount:       0,
+  lidarAvailable:   false, // Wird beim Init geprüft
+  lidarStatus:      null,  // null | 'capturing' | 'done' | 'failed'
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,7 +138,11 @@ export function useFootScan({ userId, onComplete } = {}) {
       // SDK initialisieren
       await initializeSnugFit()
 
-      safeSetState({ phase: 'idle' })
+      // LiDAR-Verfügbarkeit prüfen (iPhone 12 Pro+)
+      const hasLidar = await lidarAvailable()
+      console.log(`[useFootScan] LiDAR verfügbar: ${hasLidar}`)
+
+      safeSetState({ phase: 'idle', lidarAvailable: hasLidar })
       console.log('[useFootScan] Initialisierung abgeschlossen')
 
     } catch (error) {
@@ -253,7 +260,45 @@ export function useFootScan({ userId, onComplete } = {}) {
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
+   * Führt einen LiDAR-Scan durch (3s Single-Pass), falls verfügbar.
+   * Gibt die Point Cloud zurück, oder null wenn nicht verfügbar/fehlgeschlagen.
+   *
+   * @param {('LEFT'|'RIGHT')} footSide
+   * @returns {Promise<{pointCloud: Array, pointCount: number, source: string}|null>}
+   */
+  const captureLidarData = useCallback(async (footSide) => {
+    if (!state.lidarAvailable) return null
+
+    safeSetState({ lidarStatus: 'capturing' })
+    console.log(`[useFootScan] LiDAR-Scan für ${footSide} gestartet…`)
+
+    try {
+      const result = await LidarScanNative.captureFootScan()
+
+      if (!result?.points || result.points.length < 200) {
+        console.warn(`[useFootScan] LiDAR: Zu wenige Punkte (${result?.points?.length ?? 0})`)
+        safeSetState({ lidarStatus: 'failed' })
+        return null
+      }
+
+      console.log(`[useFootScan] LiDAR ${footSide}: ${result.pointCount} Punkte in ${result.frameCount} Frames`)
+      safeSetState({ lidarStatus: 'done' })
+
+      return {
+        pointCloud: result.points,
+        pointCount: result.pointCount,
+        source:     'lidar',
+      }
+    } catch (error) {
+      console.warn(`[useFootScan] LiDAR-Scan fehlgeschlagen (nicht kritisch):`, error.message)
+      safeSetState({ lidarStatus: 'failed' })
+      return null
+    }
+  }, [state.lidarAvailable, safeSetState])
+
+  /**
    * Verarbeitet die aufgenommenen Winkel zu einem 3D-Mesh und generiert das STL.
+   * Wenn LiDAR verfügbar: führt parallel einen LiDAR-Scan durch für höhere Genauigkeit.
    * Wird nach Abschluss aller Winkel-Aufnahmen aufgerufen.
    *
    * @param {('LEFT'|'RIGHT')} footSide
@@ -266,21 +311,28 @@ export function useFootScan({ userId, onComplete } = {}) {
     positionUnsubscribeRef.current?.()
     positionUnsubscribeRef.current = null
 
-    safeSetState({ phase: 'processing', processProgress: 0 })
+    safeSetState({ phase: 'processing', processProgress: 0, lidarStatus: null })
 
     try {
-      // ── 1. Mesh aus Kamera-Daten berechnen ─────────────────────────────────
-      const meshResult = await processMesh(sessionId, (pct) => {
-        safeSetState({ processProgress: Math.min(pct, 80) })  // 0–80%
+      // ── 1. Mesh + LiDAR parallel starten ──────────────────────────────────
+      const meshPromise = processMesh(sessionId, (pct) => {
+        safeSetState({ processProgress: Math.min(pct, 70) })  // 0–70%
       })
+      const lidarPromise = captureLidarData(footSide)
+
+      // Beide parallel ausführen
+      const [meshResult, lidarData] = await Promise.all([meshPromise, lidarPromise])
 
       console.log(`[useFootScan] ${footSide} Mesh: Genauigkeit ${meshResult.accuracy}%`)
-      safeSetState({ processProgress: 85 })
+      if (lidarData) {
+        console.log(`[useFootScan] ${footSide} LiDAR: ${lidarData.pointCount} Punkte → Hybrid-Modus`)
+      }
+      safeSetState({ processProgress: 80 })
 
       // ── 2. STL-Datei generieren ─────────────────────────────────────────────
       const tempPath  = getTempSTLPath(footSide, sessionId)
       const stlResult = await generateSTL(sessionId, tempPath)
-      safeSetState({ processProgress: 95 })
+      safeSetState({ processProgress: 90 })
 
       // ── 3. STL validieren ───────────────────────────────────────────────────
       const validation = await validateSTL(stlResult.path)
@@ -289,7 +341,7 @@ export function useFootScan({ userId, onComplete } = {}) {
       }
       safeSetState({ processProgress: 100 })
 
-      // ── 4. Ergebnis speichern ───────────────────────────────────────────────
+      // ── 4. Ergebnis speichern (inkl. LiDAR-Daten) ──────────────────────────
       safeSetState(prev => ({
         results: {
           ...prev.results,
@@ -300,6 +352,7 @@ export function useFootScan({ userId, onComplete } = {}) {
             fileSize:      stlResult.fileSize,
             triangleCount: stlResult.triangleCount,
             isWatertight:  stlResult.isWatertight,
+            lidarData:     lidarData,   // Point Cloud für Backend-Fusion
           },
         },
         phase:          footSide === 'RIGHT' ? 'uploading' : 'idle',
@@ -311,7 +364,7 @@ export function useFootScan({ userId, onComplete } = {}) {
       await endScanSession(sessionId)
       sessionIdRef.current = null
 
-      console.log(`[useFootScan] ${footSide} STL fertig: ${stlResult.path}`)
+      console.log(`[useFootScan] ${footSide} STL fertig: ${stlResult.path}${lidarData ? ' (+ LiDAR)' : ''}`)
       return meshResult.accuracy
 
     } catch (error) {
@@ -320,7 +373,7 @@ export function useFootScan({ userId, onComplete } = {}) {
       await endScanSession(sessionId).catch(() => {})
       sessionIdRef.current = null
     }
-  }, [safeSetState])
+  }, [safeSetState, captureLidarData])
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -423,6 +476,9 @@ export function useFootScan({ userId, onComplete } = {}) {
     hasRightScan:    !!state.results?.RIGHT,
     hasBothScans:    !!(state.results?.LEFT && state.results?.RIGHT),
     isPositionReady: state.positionStatus === 'READY',
+    hasLidar:        state.lidarAvailable,
+    isLidarCapturing: state.lidarStatus === 'capturing',
+    hasLidarData:    (side) => !!state.results?.[side]?.lidarData,
 
     // Aktionen
     initialize,

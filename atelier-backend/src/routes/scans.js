@@ -127,10 +127,15 @@ function validateAnatomical(m) {
 // ─── Confidence scoring ─────────────────────────────────────────────────────
 // Computes realistic accuracy % based on data source quality.
 function computeConfidence(cv, cl, source) {
-  let base = 88.0  // Claude-only baseline (±2-3mm → ~88%)
-  if (cv?.right_cv_success || cv?.left_cv_success) base = 92.0  // CV success → ±1.5-2mm
-  if (source === 'photogrammetry') base = 94.0  // 8-view → ±1-1.5mm
-  if (source === 'lidar') base = 96.0  // LiDAR → ±0.5-1mm
+  // Benchmark-basierte Confidence (eval_hybrid_accuracy.py):
+  //   Photo-only:  MAE 8.96mm → ~88-92%
+  //   WebXR hybrid: MAE ~5mm  → ~94%
+  //   LiDAR-only:  MAE 0.80mm → ~98%
+  let base = 88.0  // Claude-only baseline (MAE ~9mm)
+  if (cv?.right_cv_success || cv?.left_cv_success) base = 92.0  // CV success
+  if (source === 'photogrammetry') base = 94.0  // 8-view photogrammetry
+  if (source === 'hybrid') base = 94.0  // WebXR/ARCore + Photo Fusion
+  if (source === 'lidar') base = 98.0  // LiDAR direkt (MAE 0.8mm)
 
   // Penalize missing data
   const fields = ['ball_girth', 'instep_girth', 'heel_girth', 'waist_girth', 'ankle_girth', 'foot_height']
@@ -680,17 +685,43 @@ router.post('/analyze', authenticate, async (req, res) => {
     const R = mergeResults(cv, cl, 'right')
     const L = mergeResults(cv, cl, 'left')
 
-    // Merge depth data if available (depth measurements get high priority for girths)
+    // Merge depth data if available
+    // Strategie (aus eval_hybrid_accuracy.py Benchmark):
+    //   LiDAR vorhanden → 100% LiDAR für Girths (MAE 0.8mm), Photo nur als Fallback
+    //   WebXR/ARCore    → 40% Tiefe + 60% Photo (Tiefendaten zu ungenau für Alleingang)
+    //   Kein Tiefenscan → 100% Photo-Regression (MAE ~9mm)
     if (depthMeasurements) {
-      for (const [key, val] of Object.entries(depthMeasurements.right || {})) {
-        if (val != null && R[key] == null) R[key] = val
-        // Weighted merge: 40% depth + 60% photo when both exist
-        if (val != null && R[key] != null) R[key] = rnd(R[key] * 0.6 + val * 0.4)
+      const isLidar = Object.values(depthData || {}).some(d => d?.source === 'lidar')
+
+      const mergeSide = (depth, photo) => {
+        for (const [key, val] of Object.entries(depth || {})) {
+          if (key.startsWith('_')) continue
+          if (val == null) continue
+
+          if (photo[key] == null) {
+            // Kein Photo-Wert → Tiefenwert direkt übernehmen
+            photo[key] = val
+          } else if (isLidar) {
+            // LiDAR: direkt übernehmen (MAE 0.8mm vs Photo 9mm)
+            // Photo-Wert nur als Sanity-Check behalten
+            const diff = Math.abs(val - photo[key])
+            const tolerance = photo[key] * 0.25  // 25% Abweichung = Ausreißer
+            if (diff > tolerance) {
+              // Großer Unterschied → gewichteter Kompromiss (80/20)
+              photo[key] = rnd(photo[key] * 0.2 + val * 0.8)
+            } else {
+              // Plausible Übereinstimmung → LiDAR vertrauen
+              photo[key] = val
+            }
+          } else {
+            // WebXR/ARCore: konservative Fusion (40% Tiefe + 60% Photo)
+            photo[key] = rnd(photo[key] * 0.6 + val * 0.4)
+          }
+        }
       }
-      for (const [key, val] of Object.entries(depthMeasurements.left || {})) {
-        if (val != null && L[key] == null) L[key] = val
-        if (val != null && L[key] != null) L[key] = rnd(L[key] * 0.6 + val * 0.4)
-      }
+
+      mergeSide(depthMeasurements.right, R)
+      mergeSide(depthMeasurements.left, L)
     }
 
     // Final sanity: length must be present
@@ -704,7 +735,12 @@ router.post('/analyze', authenticate, async (req, res) => {
     const lIssues = validateAnatomical({ length: L.length, width: L.width, foot_height: L.foot_height, ball_girth: L.ball_girth })
 
     // Compute realistic confidence score
-    const confidence = computeConfidence(cv, cl, 'photo')
+    // LiDAR-only: höchste Genauigkeit (MAE 0.8mm), hybrid: Fusion, photo: Regression
+    const isLidarScan = Object.values(depthData || {}).some(d => d?.source === 'lidar')
+    const scanSource = (hasDepth && depthMeasurements)
+      ? (isLidarScan ? 'lidar' : 'hybrid')
+      : 'photo'
+    const confidence = computeConfidence(cv, cl, scanSource)
 
     // ── Phase 4: PCA shape model regularization ─────────────────────────
     // Blend raw measurements with PCA-reconstructed values (80/20) for consistency
@@ -778,6 +814,7 @@ router.post('/analyze', authenticate, async (req, res) => {
       _confidence: confidence,
       _calibration_applied: calibrationApplied,
       _pca_regularized: pcaApplied,
+      _scan_source: scanSource,
       _depth_used: hasDepth && depthMeasurements != null,
       _depth_mode: hasDepth ? Object.values(depthData)[0]?.source : null,
       _measurement_passes: cl._measurement_passes ?? 1,
@@ -933,7 +970,8 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
           left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
           left_long_heel_girth, left_short_heel_girth,
           right_foot_height, left_foot_height,
-          eu_size, uk_size, us_size, accuracy, notes } = req.body
+          eu_size, uk_size, us_size, accuracy, notes,
+          scanned_with_socks } = req.body
 
   const result = getDb().prepare(`
     INSERT INTO foot_scans
@@ -944,8 +982,8 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
        left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
        left_long_heel_girth, left_short_heel_girth,
        right_foot_height, left_foot_height,
-       eu_size, uk_size, us_size, accuracy, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       eu_size, uk_size, us_size, accuracy, notes, scanned_with_socks)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     req.user.id, reference_type, ppm ?? null,
     right_length, right_width, right_arch,
@@ -957,7 +995,8 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
     left_waist_girth ?? null,  left_ankle_girth ?? null,
     left_long_heel_girth ?? null, left_short_heel_girth ?? null,
     right_foot_height ?? null, left_foot_height ?? null,
-    eu_size, uk_size, us_size, accuracy, notes ?? null
+    eu_size, uk_size, us_size, accuracy, notes ?? null,
+    scanned_with_socks != null ? (scanned_with_socks ? 1 : 0) : 1
   )
 
   const scanId = result.lastInsertRowid
