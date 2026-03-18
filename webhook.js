@@ -4,7 +4,7 @@ const { execSync } = require('child_process')
 
 const PORT = 9000
 const SECRET = process.env.WEBHOOK_SECRET || 'atelier-webhook-secret-change-me'
-const APP_DIR = '/home/nrply/app'
+const APP_DIR = '/home/nrply/app/atelier'
 
 function verifySignature(req, body) {
   const sig = req.headers['x-hub-signature-256']

@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/home/nrply/app
-ExecStart=/opt/node22/bin/node /home/nrply/app/webhook.js
+WorkingDirectory=/home/nrply/app/atelier
+ExecStart=/opt/node22/bin/node /home/nrply/app/atelier/webhook.js
 Environment=WEBHOOK_SECRET=atelier-webhook-secret-change-me
 Restart=always
 RestartSec=5
