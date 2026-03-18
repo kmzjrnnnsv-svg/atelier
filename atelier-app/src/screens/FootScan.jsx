@@ -1298,10 +1298,10 @@ export default function FootScan() {
           Der Fußscan ist nur auf Smartphones und Tablets verfügbar. Bitte öffne die App auf deinem Mobilgerät, um einen Scan durchzuführen.
         </p>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/collection', { replace: true })}
           className="mt-6 px-6 py-2.5 bg-white text-black text-[10px] uppercase tracking-[0.18em] font-medium border-0"
         >
-          Zurück
+          Später scannen
         </button>
       </div>
     )
@@ -1323,7 +1323,7 @@ export default function FootScan() {
       {isRegCamPhase && !showCamError && (
         <CamStep key={phase} videoRef={videoRef} canvasRef={canvasRef} phase={phase}
           onCapture={captureHandler}
-          onBack={() => { stopCam(); navigate(-1) }}
+          onBack={() => { stopCam(); navigate('/collection', { replace: true }) }}
           stepNum={camStepNum} totalSteps={totalCamSteps} camStatus={camStatus}
           a4Detected={a4Detected} depthMode={depthMode} />
       )}
@@ -1506,7 +1506,7 @@ export default function FootScan() {
 
           {/* Shared header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
-            <button onClick={() => { stopCam(); navigate(-1) }}
+            <button onClick={() => { stopCam(); navigate('/collection', { replace: true }) }}
               className="bg-transparent border-0 p-0">
               <X size={20} className="text-black" strokeWidth={1.5} />
             </button>
