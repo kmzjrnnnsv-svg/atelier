@@ -49,6 +49,24 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
     /// True while a walk-around session is active
     private var walkAroundActive = false
 
+    // ── Auto-capture RGB frames for ML training ─────────────────────────────
+    /// Stores camera frames captured during walk-around for later view selection.
+    private struct CapturedFrame {
+        let image: UIImage
+        let cameraTransform: simd_float4x4
+        let timestamp: TimeInterval
+    }
+    private var capturedFrames: [CapturedFrame] = []
+    private let frameCaptureLock = NSLock()
+    /// Max RGB frames to keep in memory during walk-around
+    private let maxCapturedFrames = 20
+    /// Minimum interval between frame captures (seconds)
+    private let frameCaptureInterval: TimeInterval = 1.5
+    /// Timestamp of last captured frame
+    private var lastFrameCaptureTime: TimeInterval = 0
+    /// Track if an ARKit error occurred during session
+    private var sessionError: String? = nil
+
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: – Capability check
     // ─────────────────────────────────────────────────────────────────────────
@@ -101,9 +119,14 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
 
     // ARSessionDelegate – fires for every frame (~60 fps)
     public func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        // Only collect frames for Mode 1 while the capture window is open
-        guard walkAroundActive == false,
-              frameBuffer.count < maxFrames,
+        // ── Walk-around mode: capture RGB frames for ML training ─────────
+        if walkAroundActive {
+            captureRGBFrameIfNeeded(frame)
+            return
+        }
+
+        // ── Mode 1: collect depth frames ─────────────────────────────────
+        guard frameBuffer.count < maxFrames,
               let sceneDepth = frame.smoothedSceneDepth,
               let confidenceMap = sceneDepth.confidenceMap
         else { return }
@@ -115,6 +138,51 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
         guard Int(frame.timestamp * 60) % interval == 0 else { return }
 
         frameBuffer.append((depth: depthMap, confidence: confidenceMap, camera: frame.camera))
+    }
+
+    /// Capture an RGB frame every ~1.5 seconds during walk-around for ML training.
+    private func captureRGBFrameIfNeeded(_ frame: ARFrame) {
+        let now = frame.timestamp
+        guard now - lastFrameCaptureTime >= frameCaptureInterval else { return }
+
+        frameCaptureLock.lock()
+        let count = capturedFrames.count
+        frameCaptureLock.unlock()
+        guard count < maxCapturedFrames else { return }
+
+        // Convert CVPixelBuffer → UIImage on background queue to avoid blocking ARKit
+        let pixelBuffer = frame.capturedImage
+        let transform = frame.camera.transform
+        let ts = frame.timestamp
+
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { return }
+            let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+            let context = CIContext(options: [.useSoftwareRenderer: false])
+            guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return }
+
+            // Downscale to max 800px wide to save memory
+            let original = UIImage(cgImage: cgImage)
+            let maxWidth: CGFloat = 800
+            let scale = min(1.0, maxWidth / original.size.width)
+            let newSize = CGSize(width: original.size.width * scale, height: original.size.height * scale)
+            UIGraphicsBeginImageContextWithOptions(newSize, true, 1.0)
+            original.draw(in: CGRect(origin: .zero, size: newSize))
+            guard let resized = UIGraphicsGetImageFromCurrentImageContext() else {
+                UIGraphicsEndImageContext()
+                return
+            }
+            UIGraphicsEndImageContext()
+
+            let captured = CapturedFrame(image: resized, cameraTransform: transform, timestamp: ts)
+            self.frameCaptureLock.lock()
+            if self.capturedFrames.count < self.maxCapturedFrames {
+                self.capturedFrames.append(captured)
+            }
+            self.frameCaptureLock.unlock()
+        }
+
+        lastFrameCaptureTime = now
     }
 
     // Timer callback: stop session and build point cloud on background queue
@@ -161,13 +229,13 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
             }
         }
 
-        guard allPoints.count > 200 else {
+        guard allPoints.count > 150 else {
             throw NSError(
                 domain: "LidarScan",
                 code:   1,
                 userInfo: [NSLocalizedDescriptionKey:
-                    "Insufficient point cloud density (\(allPoints.count) pts). " +
-                    "Hold the phone 15–80 cm above the foot."]
+                    "Zu wenige Punkte erfasst (\(allPoints.count)). " +
+                    "Halte das Handy 15–80 cm über den Fuß und bewege es langsam."]
             )
         }
 
@@ -265,7 +333,7 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
     @objc func startWalkAround(_ call: CAPPluginCall) {
         guard ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) else {
             call.reject("SCENE_RECONSTRUCTION_NOT_SUPPORTED",
-                        "This device does not support ARKit scene reconstruction")
+                        "Dieses Gerät unterstützt keine ARKit-Szenenrekonstruktion")
             return
         }
 
@@ -275,6 +343,13 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
         meshLock.lock()
         meshAnchors = [:]
         meshLock.unlock()
+
+        // Reset frame capture state
+        frameCaptureLock.lock()
+        capturedFrames = []
+        frameCaptureLock.unlock()
+        lastFrameCaptureTime = 0
+        sessionError = nil
 
         walkAroundCall   = nil
         walkAroundActive = true
@@ -322,10 +397,10 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
     }
 
     /// Stops the session, extracts all mesh vertices in world space, and
-    /// resolves with { pointCloud: [{x,y,z}], pointCount, meshAnchorCount }.
+    /// resolves with { pointCloud, pointCount, meshAnchorCount, capturedImages }.
     @objc func finishWalkAround(_ call: CAPPluginCall) {
         guard walkAroundActive else {
-            call.reject("NOT_ACTIVE", "No walk-around session is running")
+            call.reject("NOT_ACTIVE", "Keine aktive Walk-Around-Session")
             return
         }
 
@@ -336,7 +411,7 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
             guard let self = self else { return }
 
             self.meshLock.lock()
-            let snapshot = self.meshAnchors  // copy reference; dict values are structs
+            let snapshot = self.meshAnchors
             self.meshLock.unlock()
 
             let anchorCount = snapshot.count
@@ -347,12 +422,83 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
                 pointCloud.append(contentsOf: pts)
             }
 
-            call.resolve([
+            // Select best top-down and side-view frames for ML training
+            let bestImages = self.selectBestFrames()
+
+            var result: [String: Any] = [
                 "pointCloud":      pointCloud,
                 "pointCount":      pointCloud.count,
-                "meshAnchorCount": anchorCount
-            ])
+                "meshAnchorCount": anchorCount,
+                "capturedImages":  bestImages
+            ]
+
+            if let error = self.sessionError {
+                result["sessionWarning"] = error
+            }
+
+            // Clean up captured frames to free memory
+            self.frameCaptureLock.lock()
+            self.capturedFrames = []
+            self.frameCaptureLock.unlock()
+            self.sessionError = nil
+
+            call.resolve(result)
         }
+    }
+
+    /// Select the best top-down and side-view frames from captured RGB data.
+    ///
+    /// Uses the camera transform to classify viewing angle:
+    ///   - Top-down: camera forward vector (−Z column) has Y < −0.7 (looking down)
+    ///   - Side view: camera forward Y component near 0 (|Y| < 0.3, looking horizontal)
+    ///
+    /// Returns dict with "top" and/or "side" keys → base64 JPEG strings.
+    private func selectBestFrames() -> [String: String] {
+        frameCaptureLock.lock()
+        let frames = capturedFrames
+        frameCaptureLock.unlock()
+
+        var bestTop: (frame: CapturedFrame, score: Float)? = nil
+        var bestSide: (frame: CapturedFrame, score: Float)? = nil
+
+        for frame in frames {
+            let t = frame.cameraTransform
+            // Forward vector = negative Z-axis of the camera transform
+            let forwardY = -t.columns.2.y
+
+            // Top-down: forwardY strongly negative (camera pointing down)
+            // Score: how close to perfectly down (-1.0)
+            if forwardY < -0.6 {
+                let score = -forwardY  // closer to 1.0 = more directly downward
+                if bestTop == nil || score > bestTop!.score {
+                    bestTop = (frame, score)
+                }
+            }
+
+            // Side view: forwardY near 0 (camera pointing horizontally)
+            // Score: how close to perfectly horizontal (0.0)
+            if abs(forwardY) < 0.35 {
+                let score = 1.0 - abs(forwardY)  // closer to 1.0 = more horizontal
+                if bestSide == nil || score > bestSide!.score {
+                    bestSide = (frame, score)
+                }
+            }
+        }
+
+        var images: [String: String] = [:]
+
+        if let top = bestTop {
+            if let jpeg = top.frame.image.jpegData(compressionQuality: 0.75) {
+                images["top"] = "data:image/jpeg;base64," + jpeg.base64EncodedString()
+            }
+        }
+        if let side = bestSide {
+            if let jpeg = side.frame.image.jpegData(compressionQuality: 0.75) {
+                images["side"] = "data:image/jpeg;base64," + jpeg.base64EncodedString()
+            }
+        }
+
+        return images
     }
 
     // ── ARMeshGeometry vertex extraction ─────────────────────────────────────
@@ -435,6 +581,31 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // MARK: – ARSession error handling
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public func session(_ session: ARSession, didFailWithError error: Error) {
+        let msg = "ARKit-Fehler: \(error.localizedDescription)"
+        sessionError = msg
+
+        // If we're in capture mode, reject the call immediately
+        if let call = captureCall {
+            call.reject("ARKIT_ERROR", msg)
+            captureCall = nil
+            captureTimer?.invalidate()
+            captureTimer = nil
+        }
+    }
+
+    public func sessionWasInterrupted(_ session: ARSession) {
+        sessionError = "AR-Session wurde unterbrochen (z.B. durch eingehenden Anruf)"
+    }
+
+    public func sessionInterruptionEnded(_ session: ARSession) {
+        sessionError = nil
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // MARK: – Helpers
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -448,5 +619,8 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
         meshLock.lock()
         meshAnchors = [:]
         meshLock.unlock()
+        frameCaptureLock.lock()
+        capturedFrames = []
+        frameCaptureLock.unlock()
     }
 }
