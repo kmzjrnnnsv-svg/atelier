@@ -241,6 +241,192 @@ function FootMini3D({ length, width, arch, label }) {
   return <div ref={mountRef} className="w-full" style={{ height: 160 }} />
 }
 
+// ─── FeetID: Foot outline SVG with zone fill (like Face ID) ───────────────────
+function FeetIdOutline({ zoneCoverage, scanStatus, walkProgress, side }) {
+  // Zone indices: 0=top, 1=front, 2=inner, 3=back, 4=outer, 5=bottom
+  const isRight = side === 'right'
+
+  // Status ring color
+  const ringColor = scanStatus === 'green' ? '#34d399'
+    : scanStatus === 'yellow' ? '#fbbf24'
+    : scanStatus === 'red' ? '#f87171'
+    : '#2dd4bf'
+
+  // Pulsing ring for positioning/scanning
+  const ringPulse = scanStatus === 'yellow' || scanStatus === 'red' || scanStatus === 'positioning'
+
+  return (
+    <div className="relative w-64 h-64 flex items-center justify-center">
+      {/* Outer status ring */}
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 260 260">
+        {/* Background ring */}
+        <circle cx="130" cy="130" r="120" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
+        {/* Progress arc */}
+        <circle cx="130" cy="130" r="120" fill="none"
+          stroke={ringColor} strokeWidth="3.5"
+          strokeDasharray={`${walkProgress * 7.54} 754`}
+          strokeLinecap="round"
+          transform="rotate(-90 130 130)"
+          style={{ transition: 'stroke-dasharray 0.5s ease, stroke 0.4s ease' }}
+        />
+        {ringPulse && (
+          <circle cx="130" cy="130" r="124" fill="none" stroke={ringColor} strokeWidth="1" opacity="0.3">
+            <animate attributeName="r" values="122;128;122" dur="2s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.3;0.08;0.3" dur="2s" repeatCount="indefinite" />
+          </circle>
+        )}
+      </svg>
+
+      {/* Foot outline SVG */}
+      <svg className="absolute" width="140" height="200" viewBox="0 0 140 200"
+        style={{ transform: isRight ? 'none' : 'scaleX(-1)', top: '32px' }}>
+        {/* Anatomical foot outline path */}
+        <defs>
+          <clipPath id="foot-clip">
+            <path d="M70 8 C45 8 38 18 35 30 C30 48 28 70 28 90 C26 110 22 130 20 148 C18 162 20 178 28 188 C36 196 50 198 62 196 C74 194 82 192 90 188 C100 182 108 172 112 158 C116 140 114 118 110 96 C108 76 104 56 100 38 C96 22 90 8 70 8Z" />
+          </clipPath>
+        </defs>
+
+        {/* Base foot outline */}
+        <path d="M70 8 C45 8 38 18 35 30 C30 48 28 70 28 90 C26 110 22 130 20 148 C18 162 20 178 28 188 C36 196 50 198 62 196 C74 194 82 192 90 188 C100 182 108 172 112 158 C116 140 114 118 110 96 C108 76 104 56 100 38 C96 22 90 8 70 8Z"
+          fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="2" />
+
+        {/* Zone fills — each zone lights up when covered */}
+        <g clipPath="url(#foot-clip)">
+          {/* Zone 0: Top / Oberseite (upper arch area) */}
+          <rect x="20" y="50" width="100" height="50"
+            fill={zoneCoverage[0] ? '#2dd4bf' : 'transparent'}
+            opacity={zoneCoverage[0] ? 0.25 : 0}
+            style={{ transition: 'opacity 0.6s ease' }} />
+
+          {/* Zone 1: Front / Vorderseite (toe area) */}
+          <rect x="20" y="0" width="100" height="50"
+            fill={zoneCoverage[1] ? '#2dd4bf' : 'transparent'}
+            opacity={zoneCoverage[1] ? 0.25 : 0}
+            style={{ transition: 'opacity 0.6s ease' }} />
+
+          {/* Zone 2: Inner / Innenseite (medial side) */}
+          <rect x="60" y="30" width="60" height="140"
+            fill={zoneCoverage[2] ? '#2dd4bf' : 'transparent'}
+            opacity={zoneCoverage[2] ? 0.2 : 0}
+            style={{ transition: 'opacity 0.6s ease' }} />
+
+          {/* Zone 3: Back / Ferse (heel area) */}
+          <rect x="20" y="145" width="100" height="55"
+            fill={zoneCoverage[3] ? '#2dd4bf' : 'transparent'}
+            opacity={zoneCoverage[3] ? 0.25 : 0}
+            style={{ transition: 'opacity 0.6s ease' }} />
+
+          {/* Zone 4: Outer / Außenseite (lateral side) */}
+          <rect x="10" y="30" width="50" height="140"
+            fill={zoneCoverage[4] ? '#2dd4bf' : 'transparent'}
+            opacity={zoneCoverage[4] ? 0.2 : 0}
+            style={{ transition: 'opacity 0.6s ease' }} />
+        </g>
+
+        {/* Toe details */}
+        <g opacity="0.15" stroke="white" strokeWidth="1" fill="none">
+          <ellipse cx="58" cy="12" rx="8" ry="10" />
+          <ellipse cx="44" cy="16" rx="6" ry="8" />
+          <ellipse cx="72" cy="16" rx="6" ry="8" />
+          <ellipse cx="36" cy="24" rx="5" ry="7" />
+          <ellipse cx="82" cy="24" rx="5" ry="7" />
+        </g>
+
+        {/* Active zone indicator — pulsing outline on the zone to scan next */}
+        {!zoneCoverage[0] && walkProgress > 0 && (
+          <rect x="25" y="55" width="90" height="40" rx="4" fill="none" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.5">
+            <animate attributeName="opacity" values="0.6;0.15;0.6" dur="1.5s" repeatCount="indefinite" />
+          </rect>
+        )}
+        {zoneCoverage[0] && !zoneCoverage[1] && walkProgress > 0 && (
+          <rect x="30" y="5" width="80" height="45" rx="4" fill="none" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.5">
+            <animate attributeName="opacity" values="0.6;0.15;0.6" dur="1.5s" repeatCount="indefinite" />
+          </rect>
+        )}
+        {zoneCoverage[0] && zoneCoverage[1] && !zoneCoverage[2] && walkProgress > 0 && (
+          <rect x="65" y="35" width="48" height="130" rx="4" fill="none" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.5">
+            <animate attributeName="opacity" values="0.6;0.15;0.6" dur="1.5s" repeatCount="indefinite" />
+          </rect>
+        )}
+        {zoneCoverage[0] && zoneCoverage[1] && zoneCoverage[2] && !zoneCoverage[3] && walkProgress > 0 && (
+          <rect x="25" y="150" width="90" height="45" rx="4" fill="none" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.5">
+            <animate attributeName="opacity" values="0.6;0.15;0.6" dur="1.5s" repeatCount="indefinite" />
+          </rect>
+        )}
+        {zoneCoverage[0] && zoneCoverage[1] && zoneCoverage[2] && zoneCoverage[3] && !zoneCoverage[4] && walkProgress > 0 && (
+          <rect x="15" y="35" width="45" height="130" rx="4" fill="none" stroke="#2dd4bf" strokeWidth="1.5" opacity="0.5">
+            <animate attributeName="opacity" values="0.6;0.15;0.6" dur="1.5s" repeatCount="indefinite" />
+          </rect>
+        )}
+      </svg>
+    </div>
+  )
+}
+
+// ─── FeetID: Rotatable 3D Preview after scan ──────────────────────────────────
+function FeetId3DPreview({ lidarData, side }) {
+  const mountRef = useRef(null)
+  const frameRef = useRef(null)
+
+  useEffect(() => {
+    const el = mountRef.current
+    if (!el || !lidarData) return
+    const w = el.clientWidth, h = 280
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x0a0a0a)
+
+    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 2000)
+    camera.position.set(0, 200, 300)
+    camera.lookAt(0, 0, 0)
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setSize(w, h)
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    el.appendChild(renderer.domElement)
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5))
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.8)
+    d1.position.set(200, 300, 200); scene.add(d1)
+    const d2 = new THREE.DirectionalLight(0x2dd4bf, 0.3)
+    d2.position.set(-200, 100, -100); scene.add(d2)
+
+    // Build geometry from measurements
+    const m = lidarData
+    const length = m.footLength || 260, width = m.footWidth || 100, arch = m.archHeight || 30
+
+    let cancelled = false
+    buildFootGeoAsync(length, width, arch, side).then(geo => {
+      if (cancelled) { geo.dispose(); return }
+      const mat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.5, metalness: 0.05 })
+      const wire = new THREE.MeshBasicMaterial({ color: 0x2dd4bf, wireframe: true, transparent: true, opacity: 0.08 })
+      scene.add(new THREE.Mesh(geo, mat))
+      scene.add(new THREE.Mesh(geo, wire))
+
+      // Auto-rotate
+      let angle = 0
+      const animate = () => {
+        angle += 0.008
+        camera.position.x = 300 * Math.sin(angle)
+        camera.position.z = 300 * Math.cos(angle)
+        camera.lookAt(0, 0, 0)
+        renderer.render(scene, camera)
+        frameRef.current = requestAnimationFrame(animate)
+      }
+      animate()
+    })
+
+    return () => {
+      cancelled = true
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+      renderer.dispose()
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
+    }
+  }, [lidarData, side])
+
+  return <div ref={mountRef} className="w-full rounded-2xl overflow-hidden" style={{ height: 280 }} />
+}
+
 // ─── Camera guide overlays (IBV-style: 3 angles per foot) ────────────────────
 function GuideOverlay({ phase }) {
   // ── Top view (zenithal): A4 + foot from above ──
@@ -682,6 +868,8 @@ export default function FootScan() {
   const [walkPoints,   setWalkPoints]   = useState(0)
   const [scanSuccess,  setScanSuccess]  = useState(false)    // true only after successful measurement
   const [zoneCoverage, setZoneCoverage] = useState([false, false, false, false, false, false]) // top, front, inner, back, outer, bottom
+  const [scanStatus,   setScanStatus]   = useState('idle')   // idle | positioning | scanning | green | yellow | red
+  const [lidarSubPhase, setLidarSubPhase] = useState('intro') // intro | position | scan | preview
 
   // ── Shoe last export state ──
   const [lastShoeType, setLastShoeType] = useState('oxford')
@@ -863,15 +1051,17 @@ export default function FootScan() {
     setWalkPoints(0)
     setAiStatus(null)
     setScanSuccess(false)
+    setScanStatus('scanning')
     setZoneCoverage([false, false, false, false, false, false])
+    setLidarSubPhase('scan')
 
     try {
       await LidarScanNative.startWalkAround()
 
       // Poll progress every 500ms — progress based on zone coverage + point count
-      const startTime = Date.now()
       let lastPointCount = 0
       let stalledSince = null
+      let lastPollPts = 0
 
       const pollInterval = setInterval(async () => {
         try {
@@ -886,14 +1076,25 @@ export default function FootScan() {
           // Progress = blend of zone coverage (70%) and point density (30%)
           const coveredCount = ZONE_GUIDANCE.filter(g => zones[g.zone]).length
           const zonePct = (coveredCount / ZONE_GUIDANCE.length) * 70
-          // Point density: 0 → 0%, 5000+ → 30%
           const pointPct = Math.min(30, (pts / 5000) * 30)
           const pct = Math.min(99, Math.round(zonePct + pointPct))
           setWalkProgress(pct)
 
-          // Detect if LiDAR stopped producing points (stalled for 3s)
+          // Color feedback based on point acquisition rate
+          const delta = pts - lastPollPts
+          lastPollPts = pts
+          if (pts === 0) {
+            setScanStatus('red')       // no data yet
+          } else if (delta < 20) {
+            setScanStatus('yellow')    // slow — move closer or adjust angle
+          } else {
+            setScanStatus('green')     // good data flow
+          }
+
+          // Detect stall
           if (pts > 0 && pts === lastPointCount) {
             if (!stalledSince) stalledSince = Date.now()
+            if (Date.now() - stalledSince > 3000) setScanStatus('yellow')
           } else {
             stalledSince = null
           }
@@ -904,13 +1105,15 @@ export default function FootScan() {
       await new Promise(resolve => setTimeout(resolve, WALK_DURATION_MS))
       clearInterval(pollInterval)
 
+      setScanStatus('idle')
       setAiStatus('Punktwolke wird verarbeitet…')
       const raw = await LidarScanNative.finishWalkAround()
 
       // Check if we got enough data
       if ((raw.pointCount ?? 0) < 100) {
-        setLidarError('Zu wenige Punkte erfasst. Der Fuß wurde möglicherweise nicht richtig erkannt. Bitte achte auf gute Beleuchtung und halte 30–50 cm Abstand.')
+        setLidarError('Zu wenige Punkte erfasst. Bitte achte auf gute Beleuchtung und halte 30–50 cm Abstand.')
         setWalkProgress(0)
+        setLidarSubPhase('intro')
         return
       }
 
@@ -921,18 +1124,20 @@ export default function FootScan() {
       })
       setLidarData(d => ({ ...d, [side]: measurements }))
 
-      // Only now mark as successful
+      // Show success + 3D preview
       setWalkProgress(100)
       setScanSuccess(true)
+      setLidarSubPhase('preview')
 
       if (side === 'right') {
-        // Brief success display before moving to next foot
-        await new Promise(r => setTimeout(r, 1200))
+        // Show 3D preview briefly, then move to left foot
+        await new Promise(r => setTimeout(r, 2500))
         setWalkProgress(0); setWalkPoints(0); setAiStatus(null); setScanSuccess(false)
         setZoneCoverage([false, false, false, false, false, false])
+        setLidarSubPhase('intro')
         setPhase('lidar-left')
       } else {
-        await new Promise(r => setTimeout(r, 1200))
+        await new Promise(r => setTimeout(r, 2500))
         setPhase('processing')
       }
     } catch (e) {
@@ -950,6 +1155,8 @@ export default function FootScan() {
       setWalkProgress(0)
       setWalkPoints(0)
       setAiStatus(null)
+      setScanStatus('idle')
+      setLidarSubPhase('intro')
     }
   }, []) // eslint-disable-line
 
@@ -1424,227 +1631,196 @@ export default function FootScan() {
       )}
 
       {/* ── LiDAR scan screens (Face ID-style) ── */}
+      {/* ═══════════════ FeetID: Apple-style LiDAR Scan ═══════════════ */}
       {LIDAR_PHASES.includes(phase) && (
         <div className="absolute inset-0 flex flex-col bg-black">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-4 flex-shrink-0">
-            <button onClick={() => { setPhase('start'); setWalkProgress(0) }}
-              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center border-0">
-              <X size={17} className="text-white" strokeWidth={1.8} />
+          {/* ── FeetID Header ── */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 flex-shrink-0">
+            <button onClick={() => { setPhase('start'); setWalkProgress(0); setLidarSubPhase('intro'); setScanStatus('idle') }}
+              className="w-9 h-9 rounded-full bg-white/8 flex items-center justify-center border-0 active:bg-white/15">
+              <X size={17} className="text-white/70" strokeWidth={1.8} />
             </button>
             <div className="text-center">
-              <p className="text-[8px] text-white/30 uppercase tracking-widest" style={{ letterSpacing: '0.2em' }}>LiDAR 3D</p>
-              <span className="text-[13px] font-bold text-white" style={{ letterSpacing: '0.08em' }}>
+              <p className="text-[9px] font-semibold text-white/25 uppercase tracking-[0.25em]">FeetID</p>
+              <span className="text-[14px] font-semibold text-white tracking-wide">
                 {phase === 'lidar-right' ? 'Rechter Fuß' : 'Linker Fuß'}
               </span>
             </div>
-            <div className="flex gap-1.5">
-              <div className={`h-1.5 w-8 ${phase === 'lidar-right' ? 'bg-teal-400' : 'bg-white'}`} />
-              <div className={`h-1.5 w-8 ${phase === 'lidar-left'  ? 'bg-teal-400' : 'bg-white/25'}`} />
+            {/* Step dots: 1 of 2 */}
+            <div className="flex gap-2 items-center">
+              <div className={`w-2 h-2 rounded-full transition-colors ${phase === 'lidar-right' ? 'bg-white' : 'bg-white/20'}`} />
+              <div className={`w-2 h-2 rounded-full transition-colors ${phase === 'lidar-left'  ? 'bg-white' : 'bg-white/20'}`} />
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
-            {/* Face ID-style segmented circular progress */}
-            <div className="relative w-56 h-56 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-                {/* Background segments */}
-                {Array.from({ length: 60 }).map((_, i) => {
-                  const angle = (i / 60) * 360 - 90
-                  const rad = (angle * Math.PI) / 180
-                  const r = 88
-                  const segLen = 4.8 // arc length per segment (degrees)
-                  const x1 = 100 + r * Math.cos(rad)
-                  const y1 = 100 + r * Math.sin(rad)
-                  const endRad = ((angle + segLen) * Math.PI) / 180
-                  const x2 = 100 + r * Math.cos(endRad)
-                  const y2 = 100 + r * Math.sin(endRad)
-                  const filled = i < Math.floor(walkProgress * 0.6)
-                  return (
-                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
-                      stroke={filled ? '#2dd4bf' : 'rgba(255,255,255,0.08)'}
-                      strokeWidth={filled ? '5' : '3.5'}
-                      strokeLinecap="round"
-                      style={{ transition: 'stroke 0.3s ease, stroke-width 0.3s ease' }}
-                    />
-                  )
-                })}
-                {/* Glow effect on latest filled segment */}
-                {walkProgress > 0 && walkProgress < 100 && (() => {
-                  const idx = Math.floor(walkProgress * 0.6) - 1
-                  if (idx < 0) return null
-                  const angle = (idx / 60) * 360 - 90
-                  const rad = (angle * Math.PI) / 180
-                  const r = 88
-                  const cx = 100 + r * Math.cos(rad)
-                  const cy = 100 + r * Math.sin(rad)
-                  return <circle cx={cx} cy={cy} r="6" fill="#2dd4bf" opacity="0.3">
-                    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.2s" repeatCount="indefinite" />
-                  </circle>
-                })()}
-              </svg>
+          {/* ── Sub-phase: Intro ── */}
+          {lidarSubPhase === 'intro' && !lidarError && (
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-6">
+              <FeetIdOutline zoneCoverage={[false,false,false,false,false,false]} scanStatus="idle" walkProgress={0}
+                side={phase === 'lidar-right' ? 'right' : 'left'} />
 
-              {/* Center content */}
-              <div className="flex flex-col items-center z-10">
-                {walkProgress === 0 && !lidarError ? (
-                  <>
-                    <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-                      <Scan size={28} className="text-teal-400" strokeWidth={1.2} />
-                    </div>
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Bereit</span>
-                  </>
-                ) : scanSuccess ? (
-                  <>
-                    <CheckCircle2 size={36} className="text-teal-400 mb-2" strokeWidth={1.5} />
-                    <span className="text-3xl font-bold text-white">100%</span>
-                    <span className="text-[10px] text-teal-400 mt-1 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Erfasst</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-4xl font-bold text-white">{walkProgress}%</span>
-                    {walkPoints > 0 && (
-                      <span className="text-[10px] text-white/40 mt-1">{(walkPoints/1000).toFixed(1)}k Punkte</span>
-                    )}
-                    {(() => {
-                      const guide = getActiveGuidance(zoneCoverage)
-                      return guide ? (
-                        <span className="text-[9px] text-teal-400/70 mt-0.5">{guide.icon} {guide.label}…</span>
-                      ) : (
-                        <span className="text-[9px] text-teal-400/70 mt-0.5">Scannen…</span>
-                      )
-                    })()}
-                  </>
-                )}
+              <div className="flex flex-col gap-2">
+                <h2 className="text-[20px] font-semibold text-white tracking-tight">
+                  Fuß scannen
+                </h2>
+                <p className="text-[13px] text-white/40 leading-relaxed max-w-[280px] mx-auto">
+                  Bewege das iPhone langsam um deinen Fuß. Halte 30–50 cm Abstand.
+                </p>
               </div>
-            </div>
 
-            {/* Instructions below circle */}
-            {walkProgress === 0 && !lidarError && (
-              <>
-                <div>
-                  <p className="text-[15px] font-bold text-white mb-1.5" style={{ letterSpacing: '0.03em' }}>
-                    Bewege das iPhone langsam um den Fuß
-                  </p>
-                  <p className="text-[11px] text-white/40 leading-relaxed">
-                    Halte 30–50 cm Abstand. Der Scan dauert ca. 25 Sekunden.
-                  </p>
-                </div>
-
-                {/* Checklist: what needs to be scanned */}
-                <div className="w-full flex flex-col gap-1.5 mt-1">
-                  <p className="text-[9px] text-white/30 uppercase tracking-wider mb-0.5" style={{ letterSpacing: '0.1em' }}>Bereiche die erfasst werden:</p>
-                  {ZONE_GUIDANCE.map(({ icon, label }) => (
-                    <div key={label} className="flex items-center gap-2.5 px-3 py-2 bg-white/5 border border-white/8">
-                      <span className="text-sm text-teal-400/60 w-5 text-center">{icon}</span>
-                      <span className="text-[11px] text-white/50">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {walkProgress > 0 && !scanSuccess && !lidarError && (() => {
-              const activeGuide = getActiveGuidance(zoneCoverage)
-              const uncovered = ZONE_GUIDANCE.filter(g => !zoneCoverage[g.zone])
-              const nextGuide = uncovered.length > 1 ? uncovered[1] : null
-              return (
-                <div className="w-full flex flex-col gap-3">
-                  {/* Current direction */}
-                  {activeGuide ? (
-                    <div className="px-4 py-3 bg-teal-500/10 border border-teal-400/20">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-lg">{activeGuide.icon}</span>
-                        <p className="text-[13px] font-semibold text-teal-400">{activeGuide.label} scannen</p>
-                      </div>
-                      <p className="text-[11px] text-white/50 leading-relaxed">{activeGuide.hint}</p>
-                    </div>
-                  ) : (
-                    <div className="px-4 py-3 bg-teal-500/10 border border-teal-400/20">
-                      <p className="text-[13px] font-semibold text-teal-400">Alle Bereiche erfasst</p>
-                      <p className="text-[11px] text-white/50">Scan wird abgeschlossen…</p>
-                    </div>
-                  )}
-
-                  {/* Next zone preview */}
-                  {nextGuide && (
-                    <div className="px-4 py-2 bg-white/3 border border-white/5">
-                      <p className="text-[9px] text-white/25 uppercase tracking-wider mb-0.5">Danach:</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-white/30">{nextGuide.icon}</span>
-                        <p className="text-[11px] text-white/35">{nextGuide.label}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Zone coverage indicators */}
-                  <div className="flex gap-1.5 justify-center">
-                    {ZONE_GUIDANCE.map((g, i) => (
-                      <div key={i}
-                        className={`h-1 flex-1 rounded-full transition-colors duration-500 ${
-                          zoneCoverage[g.zone]
-                            ? 'bg-teal-400'
-                            : (activeGuide && g.zone === activeGuide.zone ? 'bg-teal-400/30 animate-pulse' : 'bg-white/10')
-                        }`}
-                        title={g.label}
-                      />
-                    ))}
+              {/* Zone checklist */}
+              <div className="w-full max-w-[300px] flex flex-col gap-1">
+                {ZONE_GUIDANCE.map(({ icon, label }) => (
+                  <div key={label} className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/[0.03]">
+                    <span className="text-[15px] w-5 text-center opacity-40">{icon}</span>
+                    <span className="text-[12px] text-white/40 font-medium">{label}</span>
                   </div>
-
-                  {/* Zone labels */}
-                  <div className="flex gap-1.5 justify-center">
-                    {ZONE_GUIDANCE.map((g, i) => (
-                      <span key={i} className={`flex-1 text-center text-[8px] ${zoneCoverage[g.zone] ? 'text-teal-400/60' : 'text-white/20'}`}>
-                        {g.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )
-            })()}
-
-            {aiStatus && !lidarError && !scanSuccess && (
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-400 rounded-full animate-spin" />
-                <p className="text-[12px] text-teal-400 font-medium">{aiStatus}</p>
+                ))}
               </div>
-            )}
 
-            {lidarError && (
-              <div className="w-full flex flex-col gap-3">
-                <div className="p-4 bg-red-500/8 border border-red-400/20">
-                  <p className="text-[12px] text-red-400 font-medium leading-relaxed">{lidarError}</p>
-                </div>
-                <button
-                  onClick={() => { setLidarError(null); setWalkProgress(0); setWalkPoints(0); setScanSuccess(false); setZoneCoverage([false,false,false,false,false,false]); runLidarSide(phase === 'lidar-right' ? 'right' : 'left') }}
-                  className="w-full py-3.5 bg-teal-500 text-white font-bold text-[13px] border-0 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
-                  style={{ letterSpacing: '0.12em' }}>
-                  <Scan size={16} strokeWidth={1.5} />
-                  Erneut scannen
-                </button>
-                <button onClick={() => setPhase('start')}
-                  className="text-[10px] text-white/30 underline border-0 bg-transparent p-0">
-                  Zum Foto-Modus wechseln
-                </button>
-              </div>
-            )}
-
-            {!lidarError && walkProgress === 0 && (
               <button
                 onClick={() => runLidarSide(phase === 'lidar-right' ? 'right' : 'left')}
-                className="w-full py-4 bg-teal-500 text-white font-bold text-[13px] border-0 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
-                style={{ letterSpacing: '0.12em' }}>
-                <Scan size={16} strokeWidth={1.5} />
+                className="w-full max-w-[300px] py-4 rounded-2xl bg-white text-black font-semibold text-[15px] border-0 active:opacity-80 transition-opacity"
+              >
                 Scan starten
               </button>
-            )}
 
-            {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-              <div className="w-full py-3 bg-white/5 border border-white/10 flex items-center justify-center gap-3">
-                <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-400 rounded-full animate-spin" />
-                <span className="text-sm text-gray-300 font-medium">Scannen läuft…</span>
+              <button onClick={() => setPhase('start')}
+                className="text-[11px] text-white/25 border-0 bg-transparent p-0 active:text-white/40">
+                Anderen Modus wählen
+              </button>
+            </div>
+          )}
+
+          {/* ── Sub-phase: Scanning ── */}
+          {lidarSubPhase === 'scan' && !lidarError && (
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
+              {/* Foot outline with zone fill + status ring */}
+              <FeetIdOutline zoneCoverage={zoneCoverage} scanStatus={scanStatus} walkProgress={walkProgress}
+                side={phase === 'lidar-right' ? 'right' : 'left'} />
+
+              {/* Status badge */}
+              <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full transition-colors duration-300 ${
+                scanStatus === 'green' ? 'bg-emerald-500/15' :
+                scanStatus === 'yellow' ? 'bg-amber-500/15' :
+                scanStatus === 'red' ? 'bg-red-500/15' : 'bg-white/5'
+              }`}>
+                <div className={`w-2 h-2 rounded-full transition-colors ${
+                  scanStatus === 'green' ? 'bg-emerald-400' :
+                  scanStatus === 'yellow' ? 'bg-amber-400' :
+                  scanStatus === 'red' ? 'bg-red-400' : 'bg-white/30'
+                }`} />
+                <span className={`text-[11px] font-medium transition-colors ${
+                  scanStatus === 'green' ? 'text-emerald-400' :
+                  scanStatus === 'yellow' ? 'text-amber-400' :
+                  scanStatus === 'red' ? 'text-red-400' : 'text-white/40'
+                }`}>
+                  {scanStatus === 'green' ? 'Fuß erkannt' :
+                   scanStatus === 'yellow' ? 'Näher herangehen' :
+                   scanStatus === 'red' ? 'Fuß nicht erkannt' : 'Scannen…'}
+                </span>
               </div>
-            )}
-          </div>
+
+              {/* Progress text */}
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-3xl font-bold text-white tabular-nums">{walkProgress}%</span>
+                {walkPoints > 0 && (
+                  <span className="text-[10px] text-white/30 tabular-nums">{(walkPoints/1000).toFixed(1)}k Punkte</span>
+                )}
+              </div>
+
+              {/* Active zone guidance */}
+              {(() => {
+                const guide = getActiveGuidance(zoneCoverage)
+                return guide ? (
+                  <div className="w-full max-w-[300px] px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <span className="text-[18px]">{guide.icon}</span>
+                      <span className="text-[13px] font-semibold text-white">{guide.label}</span>
+                    </div>
+                    <p className="text-[11px] text-white/35 leading-relaxed">{guide.hint}</p>
+                  </div>
+                ) : (
+                  <div className="w-full max-w-[300px] px-4 py-3 rounded-2xl bg-emerald-500/8 border border-emerald-400/15">
+                    <p className="text-[13px] font-semibold text-emerald-400">Alle Bereiche erfasst</p>
+                    <p className="text-[11px] text-white/35">Scan wird abgeschlossen…</p>
+                  </div>
+                )
+              })()}
+
+              {/* Zone progress dots */}
+              <div className="flex gap-3 items-center">
+                {ZONE_GUIDANCE.map((g, i) => (
+                  <div key={i} className="flex flex-col items-center gap-1">
+                    <div className={`w-3 h-3 rounded-full transition-all duration-500 ${
+                      zoneCoverage[g.zone] ? 'bg-teal-400 scale-100' : 'bg-white/10 scale-90'
+                    }`} />
+                    <span className={`text-[7px] font-medium transition-colors ${
+                      zoneCoverage[g.zone] ? 'text-teal-400/60' : 'text-white/15'
+                    }`}>{g.label.slice(0, 5)}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Processing status */}
+              {aiStatus && (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <span className="text-[11px] text-white/50 font-medium">{aiStatus}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Sub-phase: 3D Preview (after success) ── */}
+          {lidarSubPhase === 'preview' && scanSuccess && (
+            <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-5">
+              <div className="flex flex-col items-center gap-1">
+                <CheckCircle2 size={32} className="text-emerald-400 mb-1" strokeWidth={1.5} />
+                <span className="text-[22px] font-bold text-white">Erfasst</span>
+                <span className="text-[11px] text-white/30">
+                  {phase === 'lidar-right' ? 'Rechter Fuß' : 'Linker Fuß'} — {(walkPoints/1000).toFixed(1)}k Punkte
+                </span>
+              </div>
+
+              {/* 3D foot preview */}
+              <div className="w-full max-w-[340px] rounded-2xl overflow-hidden border border-white/[0.06]">
+                <FeetId3DPreview
+                  lidarData={lidarData[phase === 'lidar-right' ? 'right' : 'left']}
+                  side={phase === 'lidar-right' ? 'right' : 'left'}
+                />
+              </div>
+
+              <p className="text-[11px] text-white/25">
+                {phase === 'lidar-right' ? 'Weiter mit dem linken Fuß…' : 'Auswertung wird vorbereitet…'}
+              </p>
+            </div>
+          )}
+
+          {/* ── Error state ── */}
+          {lidarError && (
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
+                <AlertCircle size={32} className="text-red-400" strokeWidth={1.5} />
+              </div>
+
+              <div>
+                <h3 className="text-[17px] font-semibold text-white mb-2">Scan fehlgeschlagen</h3>
+                <p className="text-[13px] text-white/40 leading-relaxed max-w-[280px] mx-auto">{lidarError}</p>
+              </div>
+
+              <button
+                onClick={() => { setLidarError(null); setWalkProgress(0); setWalkPoints(0); setScanSuccess(false); setScanStatus('idle'); setZoneCoverage([false,false,false,false,false,false]); setLidarSubPhase('intro') }}
+                className="w-full max-w-[300px] py-4 rounded-2xl bg-white text-black font-semibold text-[15px] border-0 active:opacity-80">
+                Erneut versuchen
+              </button>
+
+              <button onClick={() => setPhase('start')}
+                className="text-[11px] text-white/25 border-0 bg-transparent p-0 active:text-white/40">
+                Zum Foto-Modus wechseln
+              </button>
+            </div>
+          )}
         </div>
       )}
 
