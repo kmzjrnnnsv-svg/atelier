@@ -20,7 +20,18 @@ import UIKit
 // ─────────────────────────────────────────────────────────────────────────────
 
 @objc(LidarScanPlugin)
-public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
+public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
+
+    // ── Capacitor 8: define plugin methods in Swift (replaces .m bridge) ─────
+    public let identifier = "LidarScanPlugin"
+    public let jsName = "LidarScan"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "isLidarSupported",      returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "captureFootScan",        returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startWalkAround",        returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getWalkAroundProgress",  returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "finishWalkAround",       returnType: CAPPluginReturnPromise),
+    ]
 
     // ── Shared ARKit session ──────────────────────────────────────────────────
     private var arSession: ARSession?
