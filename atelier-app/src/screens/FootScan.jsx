@@ -766,10 +766,16 @@ export default function FootScan() {
     const isIPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
     async function detect() {
+      // Check LiDAR availability (native plugin + UA fallback)
       const hasLidar = await lidarAvailable()
       const caps = await depthCapabilities()
-      setDepthMode(caps.best)
+
+      // Use LiDAR mode if available, otherwise use best depth capability
+      const bestMode = hasLidar ? 'lidar' : caps.best
+      setDepthMode(bestMode)
       setLidarAvail(hasLidar)
+
+      console.log('[FootScan] Device detection:', { hasLidar, caps, bestMode, isIPhone, isIPad })
 
       // Initialize depth sensing for Android devices
       if (caps.webxr && !hasLidar) {
@@ -864,7 +870,13 @@ export default function FootScan() {
       if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-left') }
       else                  { setPhase('processing') }
     } catch (e) {
-      setLidarError(e.message ?? 'LiDAR-Fehler — bitte erneut versuchen')
+      console.error('[LiDAR] Scan error:', e)
+      const msg = e.message || ''
+      if (msg.includes('NOT_SUPPORTED') || msg.includes('not have a LiDAR')) {
+        setLidarError('LiDAR-Sensor wurde nicht erkannt. Bitte stelle sicher, dass die Kamera-Berechtigung erteilt ist und starte die App neu.')
+      } else {
+        setLidarError(msg || 'LiDAR-Fehler — bitte erneut versuchen')
+      }
       setWalkProgress(0)
     }
   }, []) // eslint-disable-line

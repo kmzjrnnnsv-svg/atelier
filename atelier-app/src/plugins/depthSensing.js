@@ -254,7 +254,7 @@ export default class DepthSensing {
 export async function depthCapabilities() {
   const caps = {
     webxr: false,
-    lidar: false, // checked separately via lidarScan plugin
+    lidar: false,
     sfm: true,    // always available as fallback
     best: 'sfm',
   }
@@ -263,7 +263,15 @@ export async function depthCapabilities() {
     caps.webxr = await checkWebXRDepth()
   } catch {}
 
-  if (caps.webxr) caps.best = 'webxr'
+  // Check LiDAR via native Capacitor plugin
+  try {
+    const { lidarAvailable } = await import('./lidarScan')
+    caps.lidar = await lidarAvailable()
+  } catch {}
+
+  // LiDAR is the best option, then WebXR, then SfM
+  if (caps.lidar) caps.best = 'lidar'
+  else if (caps.webxr) caps.best = 'webxr'
 
   return caps
 }

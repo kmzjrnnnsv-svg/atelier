@@ -47,5 +47,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Atelier benötigt Zugriff auf die Kamera und den LiDAR-Sensor, um deinen Fuß präzise zu vermessen.</string>
 </dict>
 </plist>
