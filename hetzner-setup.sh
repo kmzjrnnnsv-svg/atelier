@@ -123,7 +123,7 @@ JWT_REFRESH_SECRET=$REFRESH_SECRET
 # Anthropic API Key (für Übersetzungen)
 # ANTHROPIC_API_KEY=sk-ant-...
 
-FRONTEND_URL=https://deine-domain.de
+FRONTEND_URL=https://raza.work
 EOF
   echo "  .env erstellt mit generierten Secrets"
   echo "  ⚠️  BITTE ANPASSEN: $ENV_FILE"
