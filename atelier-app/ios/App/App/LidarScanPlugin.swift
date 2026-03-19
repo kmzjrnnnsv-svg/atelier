@@ -36,6 +36,14 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     // ── Shared ARKit session ──────────────────────────────────────────────────
     private var arSession: ARSession?
 
+    // Called by Capacitor after plugin is registered with the bridge
+    override public func load() {
+        print("[LiDAR] ✅ Plugin.load() called – plugin is live on bridge")
+        print("[LiDAR]    pluginId = \(pluginId ?? "nil")")
+        print("[LiDAR]    bridge = \(bridge != nil ? "connected" : "nil")")
+        print("[LiDAR]    webView = \(webView != nil ? "connected" : "nil")")
+    }
+
     // ── Mode 1 state ──────────────────────────────────────────────────────────
     /// The pending Capacitor call for captureFootScan
     private var captureCall: CAPPluginCall?

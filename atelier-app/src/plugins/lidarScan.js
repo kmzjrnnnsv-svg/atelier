@@ -17,15 +17,24 @@ export function isCapacitorNative() {
  * when the native plugin is unavailable (e.g. running in browser).
  */
 export async function lidarAvailable() {
-  // Debug: log all Capacitor state
+  const diag = []
+
+  diag.push(`Capacitor: ${typeof window.Capacitor}`)
+  diag.push(`isNative: ${window.Capacitor?.isNativePlatform?.()}`)
+  diag.push(`platform: ${window.Capacitor?.getPlatform?.()}`)
+  diag.push(`pluginAvail: ${Capacitor.isPluginAvailable?.('LidarScan')}`)
+
+  // Also check raw PluginHeaders to see what native registered
+  const headers = window.Capacitor?.PluginHeaders
+  const lidarHeader = headers?.find?.(h => h.name === 'LidarScan')
+  diag.push(`PluginHeaders count: ${headers?.length ?? 'none'}`)
+  diag.push(`LidarScan header: ${lidarHeader ? JSON.stringify(lidarHeader) : 'NOT FOUND'}`)
+
   console.log('[LiDAR] ── Detection Start ──')
-  console.log('[LiDAR] window.Capacitor:', typeof window.Capacitor)
-  console.log('[LiDAR] isNativePlatform:', window.Capacitor?.isNativePlatform?.())
-  console.log('[LiDAR] getPlatform:', window.Capacitor?.getPlatform?.())
-  console.log('[LiDAR] isPluginAvailable:', Capacitor.isPluginAvailable?.('LidarScan'))
+  diag.forEach(d => console.log(`[LiDAR] ${d}`))
 
   const isNative = isCapacitorNative()
-  console.log('[LiDAR] isCapacitorNative():', isNative)
+  diag.push(`isCapacitorNative(): ${isNative}`)
 
   // Try native plugin first (most reliable)
   if (isNative) {
@@ -33,18 +42,44 @@ export async function lidarAvailable() {
       console.log('[LiDAR] Calling LidarScanNative.isLidarSupported()...')
       const result = await LidarScanNative.isLidarSupported()
       console.log('[LiDAR] Native result:', JSON.stringify(result))
+      diag.push(`native result: ${JSON.stringify(result)}`)
       if (result?.supported) return true
     } catch (e) {
       console.warn('[LiDAR] Native plugin check failed:', e.message, e)
+      diag.push(`native ERROR: ${e.message}`)
     }
   }
 
   // Fallback: detect known LiDAR models via user-agent
   // iPhone 12 Pro+, 13 Pro+, 14 Pro+, 15 Pro+, 16 Pro+, iPad Pro (2020+)
   const uaResult = isLidarDeviceByUA()
-  console.log('[LiDAR] UA fallback result:', uaResult)
+  diag.push(`UA fallback: ${uaResult}`)
   console.log('[LiDAR] ── Detection End ──')
+
+  // Show on-screen diagnostic overlay (temporary – remove after debugging)
+  showDiagOverlay(diag)
+
   return uaResult
+}
+
+// Temporary: shows diagnostic info as a visible overlay on the screen
+function showDiagOverlay(lines) {
+  try {
+    const existing = document.getElementById('lidar-diag')
+    if (existing) existing.remove()
+
+    const el = document.createElement('div')
+    el.id = 'lidar-diag'
+    el.style.cssText = 'position:fixed;top:60px;left:10px;right:10px;z-index:99999;' +
+      'background:rgba(0,0,0,0.85);color:#0f0;font:11px/1.4 monospace;' +
+      'padding:12px;border-radius:8px;pointer-events:auto;max-height:40vh;overflow:auto;'
+    el.innerHTML = '<b>[LiDAR Diagnostic]</b><br>' + lines.join('<br>')
+
+    // Auto-dismiss after 15s on tap
+    el.onclick = () => el.remove()
+    document.body.appendChild(el)
+    setTimeout(() => el.remove(), 15000)
+  } catch (_) { /* ignore DOM errors */ }
 }
 
 /**
