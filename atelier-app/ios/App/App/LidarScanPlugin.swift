@@ -54,7 +54,9 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
     // ─────────────────────────────────────────────────────────────────────────
 
     @objc func isLidarSupported(_ call: CAPPluginCall) {
+        print("[LiDAR] isLidarSupported called")
         let supported = ARWorldTrackingConfiguration.supportsFrameSemantics(.smoothedSceneDepth)
+        print("[LiDAR] ARKit smoothedSceneDepth supported: \(supported)")
         call.resolve(["supported": supported])
     }
 

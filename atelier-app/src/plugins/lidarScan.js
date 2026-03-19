@@ -1,4 +1,4 @@
-import { registerPlugin } from '@capacitor/core'
+import { registerPlugin, Capacitor } from '@capacitor/core'
 
 const LidarScanNative = registerPlugin('LidarScan', {
   web: () => import('./lidarScanWeb').then(m => new m.LidarScanWeb()),
@@ -17,19 +17,34 @@ export function isCapacitorNative() {
  * when the native plugin is unavailable (e.g. running in browser).
  */
 export async function lidarAvailable() {
+  // Debug: log all Capacitor state
+  console.log('[LiDAR] ── Detection Start ──')
+  console.log('[LiDAR] window.Capacitor:', typeof window.Capacitor)
+  console.log('[LiDAR] isNativePlatform:', window.Capacitor?.isNativePlatform?.())
+  console.log('[LiDAR] getPlatform:', window.Capacitor?.getPlatform?.())
+  console.log('[LiDAR] isPluginAvailable:', Capacitor.isPluginAvailable?.('LidarScan'))
+
+  const isNative = isCapacitorNative()
+  console.log('[LiDAR] isCapacitorNative():', isNative)
+
   // Try native plugin first (most reliable)
-  if (isCapacitorNative()) {
+  if (isNative) {
     try {
-      const { supported } = await LidarScanNative.isLidarSupported()
-      if (supported) return true
+      console.log('[LiDAR] Calling LidarScanNative.isLidarSupported()...')
+      const result = await LidarScanNative.isLidarSupported()
+      console.log('[LiDAR] Native result:', JSON.stringify(result))
+      if (result?.supported) return true
     } catch (e) {
-      console.warn('[LiDAR] Native plugin check failed:', e.message)
+      console.warn('[LiDAR] Native plugin check failed:', e.message, e)
     }
   }
 
   // Fallback: detect known LiDAR models via user-agent
   // iPhone 12 Pro+, 13 Pro+, 14 Pro+, 15 Pro+, 16 Pro+, iPad Pro (2020+)
-  return isLidarDeviceByUA()
+  const uaResult = isLidarDeviceByUA()
+  console.log('[LiDAR] UA fallback result:', uaResult)
+  console.log('[LiDAR] ── Detection End ──')
+  return uaResult
 }
 
 /**
