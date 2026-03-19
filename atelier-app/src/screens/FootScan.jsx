@@ -832,52 +832,103 @@ export default function FootScan() {
 
   // ── LiDAR walk-around scan (one foot at a time) ──
   // Walk-around duration in ms
-  const WALK_DURATION_MS = 20_000
+  const WALK_DURATION_MS = 25_000
+
+  // Step-by-step scan guidance with time-based phases
+  const SCAN_STEPS = [
+    { pct: 0,  label: 'Oberseite scannen',    hint: 'Halte das iPhone über den Fuß und bewege es langsam von den Zehen zur Ferse', icon: '↓' },
+    { pct: 20, label: 'Innenseite scannen',    hint: 'Kippe das iPhone zur Innenseite des Fußes (Großzehe-Seite)', icon: '←' },
+    { pct: 40, label: 'Vorderseite scannen',   hint: 'Erfasse die Zehen von vorne — bewege dich langsam um die Zehenspitzen', icon: '↑' },
+    { pct: 55, label: 'Außenseite scannen',    hint: 'Kippe das iPhone zur Außenseite des Fußes (kleine Zehe-Seite)', icon: '→' },
+    { pct: 70, label: 'Ferse scannen',         hint: 'Bewege dich zur Rückseite und erfasse die Ferse rundherum', icon: '↓' },
+    { pct: 85, label: 'Letzte Lücken füllen',  hint: 'Gehe nochmal über Bereiche, die du eventuell verpasst hast', icon: '↻' },
+  ]
+
+  const getCurrentScanStep = (progress) => {
+    let current = SCAN_STEPS[0]
+    for (const step of SCAN_STEPS) {
+      if (progress >= step.pct) current = step
+    }
+    return current
+  }
+
+  const getNextScanStep = (progress) => {
+    for (const step of SCAN_STEPS) {
+      if (step.pct > progress) return step
+    }
+    return null
+  }
 
   const runLidarSide = useCallback(async (side) => {
     setLidarError(null)
     setWalkProgress(0)
     setWalkPoints(0)
-    setAiStatus(`📡 Scan läuft…`)
+    setAiStatus(null)
 
     try {
       await LidarScanNative.startWalkAround()
 
       // Poll progress every 500ms
       const startTime = Date.now()
+      let lastPointCount = 0
+      let stalledSince = null
+
       const pollInterval = setInterval(async () => {
         try {
           const prog = await LidarScanNative.getWalkAroundProgress()
           const elapsed = Date.now() - startTime
-          setWalkProgress(Math.min(100, Math.round((elapsed / WALK_DURATION_MS) * 100)))
-          setWalkPoints(prog.pointCount ?? 0)
-        } catch { /* ignore */ }
+          const pct = Math.min(99, Math.round((elapsed / WALK_DURATION_MS) * 100))
+          setWalkProgress(pct)
+
+          const pts = prog.pointCount ?? 0
+          setWalkPoints(pts)
+
+          // Detect if LiDAR stopped producing points (stalled for 3s)
+          if (pts > 0 && pts === lastPointCount) {
+            if (!stalledSince) stalledSince = Date.now()
+          } else {
+            stalledSince = null
+          }
+          lastPointCount = pts
+        } catch { /* ignore polling errors */ }
       }, 500)
 
       await new Promise(resolve => setTimeout(resolve, WALK_DURATION_MS))
       clearInterval(pollInterval)
       setWalkProgress(100)
 
-      setAiStatus('☁️ Punktwolke wird verarbeitet…')
+      setAiStatus('Punktwolke wird verarbeitet…')
       const raw = await LidarScanNative.finishWalkAround()
 
+      // Check if we got enough data
+      if ((raw.pointCount ?? 0) < 100) {
+        setLidarError('Zu wenige Punkte erfasst. Der Fuß wurde möglicherweise nicht richtig erkannt. Bitte achte auf gute Beleuchtung und halte 30–50 cm Abstand.')
+        setWalkProgress(0)
+        return
+      }
+
+      setAiStatus('Maße werden berechnet…')
       const measurements = await apiFetch('/api/scans/lidar-measurements', {
         method: 'POST',
         body: JSON.stringify({ pointCloud: raw.pointCloud, side }),
       })
       setLidarData(d => ({ ...d, [side]: measurements }))
 
-      if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-left') }
+      if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setAiStatus(null); setPhase('lidar-left') }
       else                  { setPhase('processing') }
     } catch (e) {
       console.error('[LiDAR] Scan error:', e)
       const msg = e.message || ''
       if (msg.includes('NOT_SUPPORTED') || msg.includes('not have a LiDAR')) {
-        setLidarError('LiDAR-Sensor wurde nicht erkannt. Bitte stelle sicher, dass die Kamera-Berechtigung erteilt ist und starte die App neu.')
+        setLidarError('LiDAR-Sensor nicht verfügbar. Stelle sicher, dass die Kamera-Berechtigung erteilt ist und starte die App neu.')
+      } else if (msg.includes('timeout') || msg.includes('Timeout')) {
+        setLidarError('Zeitüberschreitung beim Scannen. Bitte versuche es erneut — halte das iPhone ruhiger und näher am Fuß.')
+      } else if (msg.includes('network') || msg.includes('fetch')) {
+        setLidarError('Verbindungsfehler bei der Auswertung. Bitte prüfe deine Internetverbindung und versuche es erneut.')
       } else {
-        setLidarError(msg || 'LiDAR-Fehler — bitte erneut versuchen')
+        setLidarError('Der Scan konnte nicht abgeschlossen werden. Bitte versuche es erneut.')
       }
-      setWalkProgress(0)
+      // Keep progress visible so user sees where it failed
     }
   }, []) // eslint-disable-line
 
@@ -1447,46 +1498,85 @@ export default function FootScan() {
                     Bewege das iPhone langsam um den Fuß
                   </p>
                   <p className="text-[11px] text-white/40 leading-relaxed">
-                    Halte 30–50 cm Abstand. Erfasse alle Seiten gleichmäßig — wie bei der Face ID-Einrichtung.
+                    Halte 30–50 cm Abstand. Der Scan dauert ca. 25 Sekunden.
                   </p>
                 </div>
-                <div className="w-full grid grid-cols-4 gap-2 mt-1">
-                  {[
-                    { icon: '↑', label: 'Oben' },
-                    { icon: '→', label: 'Außen' },
-                    { icon: '↓', label: 'Vorne' },
-                    { icon: '←', label: 'Innen' },
-                  ].map(({ icon, label }) => (
-                    <div key={label} className="flex flex-col items-center gap-1 py-2.5 bg-white/5 border border-white/8">
-                      <span className="text-base text-white/60">{icon}</span>
-                      <span className="text-[8px] text-white/35 uppercase tracking-wider">{label}</span>
+
+                {/* Checklist: what needs to be scanned */}
+                <div className="w-full flex flex-col gap-1.5 mt-1">
+                  <p className="text-[9px] text-white/30 uppercase tracking-wider mb-0.5" style={{ letterSpacing: '0.1em' }}>Bereiche die erfasst werden:</p>
+                  {SCAN_STEPS.slice(0, 5).map(({ icon, label }) => (
+                    <div key={label} className="flex items-center gap-2.5 px-3 py-2 bg-white/5 border border-white/8">
+                      <span className="text-sm text-teal-400/60 w-5 text-center">{icon}</span>
+                      <span className="text-[11px] text-white/50">{label}</span>
                     </div>
                   ))}
                 </div>
               </>
             )}
 
-            {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-              <div>
-                <p className="text-[13px] font-semibold text-white mb-1">Weiterscannen…</p>
-                <p className="text-[11px] text-white/40">
-                  {walkProgress < 30 ? 'Beginne von oben und bewege dich zur Seite' :
-                   walkProgress < 60 ? 'Gut! Erfasse jetzt die Seitenbereiche' :
-                   walkProgress < 85 ? 'Fast fertig — fehlende Winkel auffüllen' :
-                   'Letzte Details…'}
-                </p>
+            {walkProgress > 0 && walkProgress < 100 && !lidarError && (() => {
+              const current = getCurrentScanStep(walkProgress)
+              const next = getNextScanStep(walkProgress)
+              return (
+                <div className="w-full flex flex-col gap-3">
+                  {/* Current step */}
+                  <div className="px-4 py-3 bg-teal-500/10 border border-teal-400/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-base">{current.icon}</span>
+                      <p className="text-[13px] font-semibold text-teal-400">{current.label}</p>
+                    </div>
+                    <p className="text-[11px] text-white/50 leading-relaxed">{current.hint}</p>
+                  </div>
+
+                  {/* Next step preview */}
+                  {next && (
+                    <div className="px-4 py-2 bg-white/3 border border-white/5">
+                      <p className="text-[9px] text-white/25 uppercase tracking-wider mb-0.5">Als nächstes:</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-white/30">{next.icon}</span>
+                        <p className="text-[11px] text-white/35">{next.label}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step progress indicators */}
+                  <div className="flex gap-1.5 justify-center">
+                    {SCAN_STEPS.map((step, i) => (
+                      <div key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                          walkProgress >= step.pct
+                            ? (step === current ? 'bg-teal-400' : 'bg-teal-400/50')
+                            : 'bg-white/10'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {aiStatus && !lidarError && walkProgress >= 100 && (
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-400 rounded-full animate-spin" />
+                <p className="text-[12px] text-teal-400 font-medium">{aiStatus}</p>
               </div>
             )}
 
-            {aiStatus && !lidarError && walkProgress >= 100 && (
-              <p className="text-[11px] text-teal-400 font-medium">{aiStatus}</p>
-            )}
-
             {lidarError && (
-              <div className="w-full p-4 bg-red-500/8 border border-red-400/20">
-                <p className="text-[12px] text-red-400 font-medium mb-2">{lidarError}</p>
+              <div className="w-full flex flex-col gap-3">
+                <div className="p-4 bg-red-500/8 border border-red-400/20">
+                  <p className="text-[12px] text-red-400 font-medium leading-relaxed">{lidarError}</p>
+                </div>
+                <button
+                  onClick={() => { setLidarError(null); setWalkProgress(0); setWalkPoints(0); runLidarSide(phase === 'lidar-right' ? 'right' : 'left') }}
+                  className="w-full py-3.5 bg-teal-500 text-white font-bold text-[13px] border-0 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
+                  style={{ letterSpacing: '0.12em' }}>
+                  <Scan size={16} strokeWidth={1.5} />
+                  Erneut scannen
+                </button>
                 <button onClick={() => setPhase('start')}
-                  className="text-[10px] text-red-300/70 underline border-0 bg-transparent p-0">
+                  className="text-[10px] text-white/30 underline border-0 bg-transparent p-0">
                   Zum Foto-Modus wechseln
                 </button>
               </div>
@@ -1503,8 +1593,8 @@ export default function FootScan() {
             )}
 
             {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-              <div className="w-full py-4 bg-white/5 border border-white/10 flex items-center justify-center gap-3">
-                <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-400 animate-spin" />
+              <div className="w-full py-3 bg-white/5 border border-white/10 flex items-center justify-center gap-3">
+                <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-400 rounded-full animate-spin" />
                 <span className="text-sm text-gray-300 font-medium">Scannen läuft…</span>
               </div>
             )}
