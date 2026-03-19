@@ -157,9 +157,27 @@ echo "  Firewall aktiv (SSH + HTTP + HTTPS)"
 # ── 12. Nginx Reverse Proxy ───────────────────────────────────────────────
 echo "→ Nginx konfigurieren..."
 cat > /etc/nginx/sites-available/atelier <<'NGINX'
+# HTTP → HTTPS Redirect
 server {
     listen 80;
-    server_name _;
+    server_name raza.work www.raza.work;
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS Server
+server {
+    listen 443 ssl http2;
+    server_name raza.work www.raza.work;
+
+    # SSL-Zertifikate (werden von Certbot verwaltet)
+    ssl_certificate /etc/letsencrypt/live/raza.work/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/raza.work/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Frontend (statische Dateien aus Vite Build)
+    root /home/nrply/atelier/atelier-app/dist;
+    index index.html;
 
     # API Backend
     location /api/ {
@@ -181,6 +199,11 @@ server {
     location /health {
         proxy_pass http://127.0.0.1:3001/api/health;
     }
+
+    # SPA Fallback — alle anderen Routen an index.html
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
 }
 NGINX
 
@@ -188,6 +211,47 @@ ln -sf /etc/nginx/sites-available/atelier /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
 echo "  Nginx Reverse Proxy aktiv"
+
+# ── 12b. Frontend bauen ──────────────────────────────────────────────────
+echo "→ Frontend bauen..."
+sudo -u $APP_USER bash -c "
+  cd $APP_DIR/atelier-app
+  npm install
+  npm run build
+"
+echo "  Frontend gebaut → $APP_DIR/atelier-app/dist"
+
+# ── 12c. SSL-Zertifikat mit Certbot ─────────────────────────────────────
+echo "→ SSL-Zertifikat einrichten..."
+echo "  ⚠️  Certbot benötigt eine konfigurierte Domain."
+echo "  Falls die Domain noch nicht auf diesen Server zeigt,"
+echo "  führe folgenden Befehl manuell aus, sobald DNS konfiguriert ist:"
+echo "    certbot --nginx -d raza.work -d www.raza.work --non-interactive --agree-tos -m admin@raza.work"
+echo ""
+echo "  Versuche Certbot jetzt automatisch..."
+
+# Temporäre HTTP-only Nginx Config für Certbot Challenge
+cat > /etc/nginx/sites-available/atelier-certbot <<'CERTBOT_NGINX'
+server {
+    listen 80;
+    server_name raza.work www.raza.work;
+    root /var/www/html;
+    location /.well-known/acme-challenge/ { allow all; }
+    location / { return 301 https://$host$request_uri; }
+}
+CERTBOT_NGINX
+ln -sf /etc/nginx/sites-available/atelier-certbot /etc/nginx/sites-enabled/atelier
+nginx -t && systemctl reload nginx
+
+certbot --nginx -d raza.work -d www.raza.work --non-interactive --agree-tos -m admin@raza.work || {
+  echo "  ⚠️  Certbot fehlgeschlagen — DNS muss auf $SERVER_IP zeigen."
+  echo "  Manuell nachholen: certbot --nginx -d raza.work -d www.raza.work"
+}
+
+# Richtige Nginx Config wiederherstellen
+ln -sf /etc/nginx/sites-available/atelier /etc/nginx/sites-enabled/atelier
+nginx -t && systemctl reload nginx
+echo "  SSL-Konfiguration abgeschlossen"
 
 # ── 13. Auto-Deploy Webhook ───────────────────────────────────────────────
 echo "→ Auto-Deploy Script erstellen..."
@@ -201,7 +265,10 @@ LOG="$HOME/deploy.log"
 echo "$(date) — Deploy gestartet" >> "$LOG"
 cd "$APP_DIR"
 git pull origin main >> "$LOG" 2>&1
-cd atelier-backend
+cd "$APP_DIR/atelier-app"
+npm install >> "$LOG" 2>&1
+npm run build >> "$LOG" 2>&1
+cd "$APP_DIR/atelier-backend"
 npm install >> "$LOG" 2>&1
 pm2 restart atelier >> "$LOG" 2>&1
 echo "$(date) — Deploy abgeschlossen" >> "$LOG"
@@ -234,7 +301,7 @@ echo ""
 echo "  Nächste Schritte:"
 echo "  1. REPO_URL in diesem Script anpassen und erneut laufen lassen"
 echo "  2. .env anpassen: $ENV_FILE"
-echo "  3. Domain einrichten + SSL:"
-echo "     certbot --nginx -d deine-domain.de"
-echo "  4. GitHub Webhook einrichten für Auto-Deploy"
+echo "  3. DNS A-Record für raza.work → $SERVER_IP setzen"
+echo "  4. Falls Certbot fehlgeschlagen: certbot --nginx -d raza.work -d www.raza.work"
+echo "  5. GitHub Webhook einrichten für Auto-Deploy"
 echo ""
