@@ -680,6 +680,8 @@ export default function FootScan() {
   const [pgStep,     setPgStep]    = useState(0)        // 0-15 (8 rechts + 8 links)
   const [pgImgs,     setPgImgs]    = useState({ right: [], left: [] })
   const [walkPoints,   setWalkPoints]   = useState(0)
+  const [scanSuccess,  setScanSuccess]  = useState(false)    // true only after successful measurement
+  const [zoneCoverage, setZoneCoverage] = useState([false, false, false, false, false, false]) // top, front, inner, back, outer, bottom
 
   // ── Shoe last export state ──
   const [lastShoeType, setLastShoeType] = useState('oxford')
@@ -834,41 +836,39 @@ export default function FootScan() {
   // Walk-around duration in ms
   const WALK_DURATION_MS = 25_000
 
-  // Step-by-step scan guidance with time-based phases
-  const SCAN_STEPS = [
-    { pct: 0,  label: 'Oberseite scannen',    hint: 'Halte das iPhone über den Fuß und bewege es langsam von den Zehen zur Ferse', icon: '↓' },
-    { pct: 20, label: 'Innenseite scannen',    hint: 'Kippe das iPhone zur Innenseite des Fußes (Großzehe-Seite)', icon: '←' },
-    { pct: 40, label: 'Vorderseite scannen',   hint: 'Erfasse die Zehen von vorne — bewege dich langsam um die Zehenspitzen', icon: '↑' },
-    { pct: 55, label: 'Außenseite scannen',    hint: 'Kippe das iPhone zur Außenseite des Fußes (kleine Zehe-Seite)', icon: '→' },
-    { pct: 70, label: 'Ferse scannen',         hint: 'Bewege dich zur Rückseite und erfasse die Ferse rundherum', icon: '↓' },
-    { pct: 85, label: 'Letzte Lücken füllen',  hint: 'Gehe nochmal über Bereiche, die du eventuell verpasst hast', icon: '↻' },
+  // Zone-based scan guidance: each zone maps to a direction instruction
+  // Zones from native: [0=top, 1=front, 2=inner, 3=back, 4=outer, 5=bottom]
+  const ZONE_GUIDANCE = [
+    { zone: 0, label: 'Oberseite',    hint: 'Halte das iPhone über den Fuß und bewege es langsam von den Zehen zur Ferse', icon: '↓', arrow: 'top' },
+    { zone: 1, label: 'Vorderseite',  hint: 'Erfasse die Zehen von vorne — bewege dich langsam um die Zehenspitzen', icon: '↑', arrow: 'front' },
+    { zone: 2, label: 'Innenseite',   hint: 'Kippe das iPhone zur Innenseite des Fußes (Großzehe-Seite)', icon: '←', arrow: 'inner' },
+    { zone: 3, label: 'Ferse',        hint: 'Bewege dich zur Rückseite und erfasse die Ferse rundherum', icon: '↙', arrow: 'back' },
+    { zone: 4, label: 'Außenseite',   hint: 'Kippe das iPhone zur Außenseite des Fußes (kleine Zehe-Seite)', icon: '→', arrow: 'outer' },
   ]
 
-  const getCurrentScanStep = (progress) => {
-    let current = SCAN_STEPS[0]
-    for (const step of SCAN_STEPS) {
-      if (progress >= step.pct) current = step
-    }
-    return current
-  }
-
-  const getNextScanStep = (progress) => {
-    for (const step of SCAN_STEPS) {
-      if (step.pct > progress) return step
+  // Get the first uncovered zone as current guidance, or null if all covered
+  const getActiveGuidance = (zones) => {
+    for (const g of ZONE_GUIDANCE) {
+      if (!zones[g.zone]) return g
     }
     return null
   }
+
+  // Count covered zones (of the 5 main ones, excluding bottom)
+  const coveredZoneCount = (zones) => ZONE_GUIDANCE.filter(g => zones[g.zone]).length
 
   const runLidarSide = useCallback(async (side) => {
     setLidarError(null)
     setWalkProgress(0)
     setWalkPoints(0)
     setAiStatus(null)
+    setScanSuccess(false)
+    setZoneCoverage([false, false, false, false, false, false])
 
     try {
       await LidarScanNative.startWalkAround()
 
-      // Poll progress every 500ms
+      // Poll progress every 500ms — progress based on zone coverage + point count
       const startTime = Date.now()
       let lastPointCount = 0
       let stalledSince = null
@@ -876,12 +876,20 @@ export default function FootScan() {
       const pollInterval = setInterval(async () => {
         try {
           const prog = await LidarScanNative.getWalkAroundProgress()
-          const elapsed = Date.now() - startTime
-          const pct = Math.min(99, Math.round((elapsed / WALK_DURATION_MS) * 100))
-          setWalkProgress(pct)
-
           const pts = prog.pointCount ?? 0
           setWalkPoints(pts)
+
+          // Update zone coverage from native
+          const zones = prog.zones ?? [false, false, false, false, false, false]
+          setZoneCoverage(zones)
+
+          // Progress = blend of zone coverage (70%) and point density (30%)
+          const coveredCount = ZONE_GUIDANCE.filter(g => zones[g.zone]).length
+          const zonePct = (coveredCount / ZONE_GUIDANCE.length) * 70
+          // Point density: 0 → 0%, 5000+ → 30%
+          const pointPct = Math.min(30, (pts / 5000) * 30)
+          const pct = Math.min(99, Math.round(zonePct + pointPct))
+          setWalkProgress(pct)
 
           // Detect if LiDAR stopped producing points (stalled for 3s)
           if (pts > 0 && pts === lastPointCount) {
@@ -895,7 +903,6 @@ export default function FootScan() {
 
       await new Promise(resolve => setTimeout(resolve, WALK_DURATION_MS))
       clearInterval(pollInterval)
-      setWalkProgress(100)
 
       setAiStatus('Punktwolke wird verarbeitet…')
       const raw = await LidarScanNative.finishWalkAround()
@@ -914,8 +921,20 @@ export default function FootScan() {
       })
       setLidarData(d => ({ ...d, [side]: measurements }))
 
-      if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setAiStatus(null); setPhase('lidar-left') }
-      else                  { setPhase('processing') }
+      // Only now mark as successful
+      setWalkProgress(100)
+      setScanSuccess(true)
+
+      if (side === 'right') {
+        // Brief success display before moving to next foot
+        await new Promise(r => setTimeout(r, 1200))
+        setWalkProgress(0); setWalkPoints(0); setAiStatus(null); setScanSuccess(false)
+        setZoneCoverage([false, false, false, false, false, false])
+        setPhase('lidar-left')
+      } else {
+        await new Promise(r => setTimeout(r, 1200))
+        setPhase('processing')
+      }
     } catch (e) {
       console.error('[LiDAR] Scan error:', e)
       const msg = e.message || ''
@@ -1474,7 +1493,7 @@ export default function FootScan() {
                     </div>
                     <span className="text-[10px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Bereit</span>
                   </>
-                ) : walkProgress >= 100 ? (
+                ) : scanSuccess ? (
                   <>
                     <CheckCircle2 size={36} className="text-teal-400 mb-2" strokeWidth={1.5} />
                     <span className="text-3xl font-bold text-white">100%</span>
@@ -1486,7 +1505,14 @@ export default function FootScan() {
                     {walkPoints > 0 && (
                       <span className="text-[10px] text-white/40 mt-1">{(walkPoints/1000).toFixed(1)}k Punkte</span>
                     )}
-                    <span className="text-[9px] text-teal-400/70 mt-0.5">Scannen…</span>
+                    {(() => {
+                      const guide = getActiveGuidance(zoneCoverage)
+                      return guide ? (
+                        <span className="text-[9px] text-teal-400/70 mt-0.5">{guide.icon} {guide.label}…</span>
+                      ) : (
+                        <span className="text-[9px] text-teal-400/70 mt-0.5">Scannen…</span>
+                      )
+                    })()}
                   </>
                 )}
               </div>
@@ -1507,7 +1533,7 @@ export default function FootScan() {
                 {/* Checklist: what needs to be scanned */}
                 <div className="w-full flex flex-col gap-1.5 mt-1">
                   <p className="text-[9px] text-white/30 uppercase tracking-wider mb-0.5" style={{ letterSpacing: '0.1em' }}>Bereiche die erfasst werden:</p>
-                  {SCAN_STEPS.slice(0, 5).map(({ icon, label }) => (
+                  {ZONE_GUIDANCE.map(({ icon, label }) => (
                     <div key={label} className="flex items-center gap-2.5 px-3 py-2 bg-white/5 border border-white/8">
                       <span className="text-sm text-teal-400/60 w-5 text-center">{icon}</span>
                       <span className="text-[11px] text-white/50">{label}</span>
@@ -1517,48 +1543,66 @@ export default function FootScan() {
               </>
             )}
 
-            {walkProgress > 0 && walkProgress < 100 && !lidarError && (() => {
-              const current = getCurrentScanStep(walkProgress)
-              const next = getNextScanStep(walkProgress)
+            {walkProgress > 0 && !scanSuccess && !lidarError && (() => {
+              const activeGuide = getActiveGuidance(zoneCoverage)
+              const uncovered = ZONE_GUIDANCE.filter(g => !zoneCoverage[g.zone])
+              const nextGuide = uncovered.length > 1 ? uncovered[1] : null
               return (
                 <div className="w-full flex flex-col gap-3">
-                  {/* Current step */}
-                  <div className="px-4 py-3 bg-teal-500/10 border border-teal-400/20">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-base">{current.icon}</span>
-                      <p className="text-[13px] font-semibold text-teal-400">{current.label}</p>
+                  {/* Current direction */}
+                  {activeGuide ? (
+                    <div className="px-4 py-3 bg-teal-500/10 border border-teal-400/20">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg">{activeGuide.icon}</span>
+                        <p className="text-[13px] font-semibold text-teal-400">{activeGuide.label} scannen</p>
+                      </div>
+                      <p className="text-[11px] text-white/50 leading-relaxed">{activeGuide.hint}</p>
                     </div>
-                    <p className="text-[11px] text-white/50 leading-relaxed">{current.hint}</p>
-                  </div>
+                  ) : (
+                    <div className="px-4 py-3 bg-teal-500/10 border border-teal-400/20">
+                      <p className="text-[13px] font-semibold text-teal-400">Alle Bereiche erfasst</p>
+                      <p className="text-[11px] text-white/50">Scan wird abgeschlossen…</p>
+                    </div>
+                  )}
 
-                  {/* Next step preview */}
-                  {next && (
+                  {/* Next zone preview */}
+                  {nextGuide && (
                     <div className="px-4 py-2 bg-white/3 border border-white/5">
-                      <p className="text-[9px] text-white/25 uppercase tracking-wider mb-0.5">Als nächstes:</p>
+                      <p className="text-[9px] text-white/25 uppercase tracking-wider mb-0.5">Danach:</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-white/30">{next.icon}</span>
-                        <p className="text-[11px] text-white/35">{next.label}</p>
+                        <span className="text-xs text-white/30">{nextGuide.icon}</span>
+                        <p className="text-[11px] text-white/35">{nextGuide.label}</p>
                       </div>
                     </div>
                   )}
 
-                  {/* Step progress indicators */}
+                  {/* Zone coverage indicators */}
                   <div className="flex gap-1.5 justify-center">
-                    {SCAN_STEPS.map((step, i) => (
+                    {ZONE_GUIDANCE.map((g, i) => (
                       <div key={i}
-                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                          walkProgress >= step.pct
-                            ? (step === current ? 'bg-teal-400' : 'bg-teal-400/50')
-                            : 'bg-white/10'
+                        className={`h-1 flex-1 rounded-full transition-colors duration-500 ${
+                          zoneCoverage[g.zone]
+                            ? 'bg-teal-400'
+                            : (activeGuide && g.zone === activeGuide.zone ? 'bg-teal-400/30 animate-pulse' : 'bg-white/10')
                         }`}
+                        title={g.label}
                       />
+                    ))}
+                  </div>
+
+                  {/* Zone labels */}
+                  <div className="flex gap-1.5 justify-center">
+                    {ZONE_GUIDANCE.map((g, i) => (
+                      <span key={i} className={`flex-1 text-center text-[8px] ${zoneCoverage[g.zone] ? 'text-teal-400/60' : 'text-white/20'}`}>
+                        {g.label}
+                      </span>
                     ))}
                   </div>
                 </div>
               )
             })()}
 
-            {aiStatus && !lidarError && walkProgress >= 100 && (
+            {aiStatus && !lidarError && !scanSuccess && (
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-400 rounded-full animate-spin" />
                 <p className="text-[12px] text-teal-400 font-medium">{aiStatus}</p>
@@ -1571,7 +1615,7 @@ export default function FootScan() {
                   <p className="text-[12px] text-red-400 font-medium leading-relaxed">{lidarError}</p>
                 </div>
                 <button
-                  onClick={() => { setLidarError(null); setWalkProgress(0); setWalkPoints(0); runLidarSide(phase === 'lidar-right' ? 'right' : 'left') }}
+                  onClick={() => { setLidarError(null); setWalkProgress(0); setWalkPoints(0); setScanSuccess(false); setZoneCoverage([false,false,false,false,false,false]); runLidarSide(phase === 'lidar-right' ? 'right' : 'left') }}
                   className="w-full py-3.5 bg-teal-500 text-white font-bold text-[13px] border-0 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
                   style={{ letterSpacing: '0.12em' }}>
                   <Scan size={16} strokeWidth={1.5} />

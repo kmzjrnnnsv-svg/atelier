@@ -321,7 +321,13 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         arSession?.run(config, options: [.resetTracking, .removeExistingAnchors])
     }
 
-    /// Returns live progress: { pointCount: Int, meshAnchorCount: Int }
+    /// Returns live progress including spatial zone coverage.
+    ///
+    /// Zones divide the horizontal plane around the centroid into 6 sectors:
+    ///   0 = top (directly above), 1 = front (toes), 2 = inner,
+    ///   3 = back (heel), 4 = outer, 5 = bottom
+    ///
+    /// Returns: { pointCount, meshAnchorCount, zones: [Bool], boundingBox: {minX,maxX,minY,maxY,minZ,maxZ} }
     @objc func getWalkAroundProgress(_ call: CAPPluginCall) {
         guard walkAroundActive else {
             call.reject("NOT_ACTIVE", "No walk-around session is running")
@@ -331,14 +337,86 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         meshLock.lock()
         let anchorCount = meshAnchors.count
         var totalVertices = 0
+        // Sample vertices to compute spatial coverage (every Nth vertex for speed)
+        var sampledPoints: [SIMD3<Float>] = []
+        sampledPoints.reserveCapacity(2000)
+
         for anchor in meshAnchors.values {
-            totalVertices += anchor.geometry.vertices.count
+            let geo = anchor.geometry
+            let count = geo.vertices.count
+            totalVertices += count
+            let stride = geo.vertices.stride
+            let rawPtr = geo.vertices.buffer.contents()
+            // Sample up to ~300 vertices per anchor
+            let step = max(1, count / 300)
+            for i in Swift.stride(from: 0, to: count, by: step) {
+                let ptr = rawPtr.advanced(by: i * stride)
+                let v = ptr.assumingMemoryBound(to: (Float, Float, Float).self).pointee
+                let local = SIMD4<Float>(v.0, v.1, v.2, 1)
+                let world = anchor.transform * local
+                sampledPoints.append(SIMD3<Float>(world.x, world.y, world.z))
+            }
         }
         meshLock.unlock()
 
+        // Compute bounding box and zone coverage
+        var zones = [false, false, false, false, false, false] // top, front, inner, back, outer, bottom
+        var bbox: [String: Double] = ["minX": 0, "maxX": 0, "minY": 0, "maxY": 0, "minZ": 0, "maxZ": 0]
+
+        if sampledPoints.count > 10 {
+            // Bounding box
+            var minP = sampledPoints[0]
+            var maxP = sampledPoints[0]
+            var centroid = SIMD3<Float>(0, 0, 0)
+            for p in sampledPoints {
+                minP = min(minP, p)
+                maxP = max(maxP, p)
+                centroid += p
+            }
+            centroid /= Float(sampledPoints.count)
+            bbox = [
+                "minX": Double(minP.x), "maxX": Double(maxP.x),
+                "minY": Double(minP.y), "maxY": Double(maxP.y),
+                "minZ": Double(minP.z), "maxZ": Double(maxP.z)
+            ]
+
+            // Zone detection based on vertex distribution relative to centroid
+            // ARKit: Y is up, X is right, Z is towards user
+            let spreadX = maxP.x - minP.x
+            let spreadY = maxP.y - minP.y
+            let spreadZ = maxP.z - minP.z
+            let threshold = 5 // need at least N sampled points in a zone
+
+            var zoneCounts = [0, 0, 0, 0, 0, 0]
+            for p in sampledPoints {
+                let dx = p.x - centroid.x
+                let dy = p.y - centroid.y
+                let dz = p.z - centroid.z
+
+                // Top: points significantly above centroid
+                if dy > spreadY * 0.2 { zoneCounts[0] += 1 }
+                // Bottom: points significantly below centroid
+                if dy < -spreadY * 0.2 { zoneCounts[5] += 1 }
+                // Front (positive Z in many setups, but use the longest horizontal axis)
+                if dz > spreadZ * 0.2 { zoneCounts[1] += 1 }
+                // Back (heel)
+                if dz < -spreadZ * 0.2 { zoneCounts[3] += 1 }
+                // Inner (negative X for right foot convention)
+                if dx < -spreadX * 0.2 { zoneCounts[2] += 1 }
+                // Outer (positive X)
+                if dx > spreadX * 0.2 { zoneCounts[4] += 1 }
+            }
+
+            for i in 0..<6 {
+                zones[i] = zoneCounts[i] >= threshold
+            }
+        }
+
         call.resolve([
             "pointCount":      totalVertices,
-            "meshAnchorCount": anchorCount
+            "meshAnchorCount": anchorCount,
+            "zones":           zones,
+            "boundingBox":     bbox
         ])
     }
 
