@@ -928,7 +928,9 @@ export default function FootScan() {
       } else {
         setLidarError('Der Scan konnte nicht abgeschlossen werden. Bitte versuche es erneut.')
       }
-      // Keep progress visible so user sees where it failed
+      setWalkProgress(0)
+      setWalkPoints(0)
+      setAiStatus(null)
     }
   }, []) // eslint-disable-line
 
