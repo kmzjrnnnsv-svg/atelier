@@ -1426,6 +1426,21 @@ export default function FootScan() {
               from { opacity: 0; transform: translateY(16px) }
               to   { opacity: 1; transform: translateY(0) }
             }
+            @keyframes fadeInSoft {
+              from { opacity: 0; transform: translateY(4px) }
+              to   { opacity: 1; transform: translateY(0) }
+            }
+            @keyframes pulseCount {
+              0%, 100% { opacity: 0.5 }
+              50% { opacity: 1 }
+            }
+            @keyframes shakeError {
+              0%, 100% { transform: translateX(0) }
+              20% { transform: translateX(-6px) }
+              40% { transform: translateX(6px) }
+              60% { transform: translateX(-4px) }
+              80% { transform: translateX(4px) }
+            }
           `}</style>
 
           {/* Minimal header */}
@@ -1528,9 +1543,9 @@ export default function FootScan() {
                 </div>
               </div>
 
-              {/* Instructions */}
+              {/* Instructions — animated transitions */}
               {walkProgress === 0 && !lidarError && (
-                <div className="mt-2">
+                <div className="mt-2" style={{ animation: 'fadeInSoft 0.4s ease' }}>
                   <p className="text-[17px] font-semibold text-white mb-2 leading-snug">
                     Bewege dein iPhone langsam{'\n'}um deinen Fuß herum.
                   </p>
@@ -1541,20 +1556,28 @@ export default function FootScan() {
               )}
 
               {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-                <p className="text-[13px] text-white/45">
-                  {walkProgress < 25 ? 'Beginne von oben und bewege dich zur Seite…'
-                    : walkProgress < 50 ? 'Gut! Bewege dich weiter um den Fuß…'
-                    : walkProgress < 80 ? 'Fast fertig — umrunde den Fuß vollständig…'
-                    : 'Letzte Details werden erfasst…'}
-                </p>
+                <div style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                  <p className="text-[13px] text-white/45 transition-opacity duration-500"
+                    key={walkProgress < 25 ? 'a' : walkProgress < 50 ? 'b' : walkProgress < 80 ? 'c' : 'd'}>
+                    {walkProgress < 25 ? 'Beginne von oben und bewege dich zur Seite…'
+                      : walkProgress < 50 ? 'Gut! Bewege dich weiter um den Fuß…'
+                      : walkProgress < 80 ? 'Fast fertig — umrunde den Fuß vollständig…'
+                      : 'Letzte Details werden erfasst…'}
+                  </p>
+                  {/* Live point counter */}
+                  <p className="text-[10px] text-white/25 mt-1.5 font-mono" style={{ animation: 'pulseCount 2s ease infinite' }}>
+                    {walkPoints.toLocaleString('de-DE')} Punkte erfasst
+                  </p>
+                </div>
               )}
 
               {aiStatus && !lidarError && walkProgress >= 100 && (
-                <p className="text-[13px] text-[#30D158] font-medium">{aiStatus}</p>
+                <p className="text-[13px] text-[#30D158] font-medium" style={{ animation: 'fadeInSoft 0.4s ease' }}>{aiStatus}</p>
               )}
 
               {lidarError && (
-                <div className="w-full p-4 rounded-xl bg-red-500/10 border border-red-400/20">
+                <div className="w-full p-4 rounded-xl bg-red-500/10 border border-red-400/20"
+                  style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease' }}>
                   <p className="text-[13px] text-red-400 font-medium mb-3">{lidarError}</p>
                   <div className="flex gap-3">
                     <button onClick={() => { setLidarError(null); setWalkProgress(0); runLidarSide(phase === 'lidar-right' ? 'right' : 'left') }}
