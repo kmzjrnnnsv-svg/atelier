@@ -1047,7 +1047,7 @@ export default function FootScan() {
         const right = {
           length:       r1(R.right_length ?? R.raw?.length ?? 255),
           width:        r1(R.right_width  ?? R.raw?.width  ?? 92),
-          arch:         R.right_arch != null ? r1(R.right_arch) : null,
+          arch:         R.right_arch_height != null ? r1(R.right_arch_height) : (R.right_arch != null ? r1(R.right_arch) : null),
           foot_height:  R.right_foot_height != null ? r1(R.right_foot_height) : (R.raw?.height != null ? r1(R.raw.height) : null),
           ball_girth:   R.right_ball_girth   ?? null,
           instep_girth: R.right_instep_girth ?? null,
@@ -1062,7 +1062,7 @@ export default function FootScan() {
         const left = {
           length:       r1(L.left_length ?? L.raw?.length ?? 253),
           width:        r1(L.left_width  ?? L.raw?.width  ?? 91),
-          arch:         L.left_arch != null ? r1(L.left_arch) : null,
+          arch:         L.left_arch_height != null ? r1(L.left_arch_height) : (L.left_arch != null ? r1(L.left_arch) : null),
           foot_height:  L.left_foot_height != null ? r1(L.left_foot_height) : (L.raw?.height != null ? r1(L.raw.height) : null),
           ball_girth:   L.left_ball_girth   ?? null,
           instep_girth: L.left_instep_girth ?? null,
