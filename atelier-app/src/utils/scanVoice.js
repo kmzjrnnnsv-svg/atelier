@@ -105,11 +105,13 @@ export const SCAN_MESSAGES = {
 
   // Completion
   sideComplete: (side) => `${side === 'right' ? 'Rechter' : 'Linker'} Fuß erfasst.`,
-  switchFoot: 'Jetzt den linken Fuß aufstellen.',
-  processing: 'Maße werden berechnet. Einen Moment bitte.',
-  done: 'Fertig! Deine Fußmaße wurden gespeichert.',
+  switchFoot: 'Jetzt den linken Fuß aufstellen. Der Scan startet automatisch.',
+  processing: 'Beide Füße erfasst. Maße werden jetzt berechnet. Du kannst dein Handy weglegen.',
+  processingHalf: 'Berechnung läuft noch. Gleich geschafft.',
+  done: 'Fertig! Deine Fußmaße wurden gespeichert. Du kannst das Ergebnis jetzt auf dem Bildschirm sehen.',
 
-  // Errors
-  error: 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.',
-  lowQuality: 'Die Scan-Qualität reicht nicht aus. Bitte erneut scannen mit mehr Licht.',
+  // Errors (reassuring tone — user shouldn't panic)
+  error: 'Das hat leider nicht geklappt. Kein Problem — versuche es einfach nochmal.',
+  lowQuality: 'Nicht genug erfasst. Bitte nochmal mit etwas mehr Licht versuchen.',
+  autoRetry: 'Kleiner Fehler. Neuer Versuch startet gleich automatisch.',
 }

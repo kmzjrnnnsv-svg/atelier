@@ -672,6 +672,8 @@ export default function FootScan() {
   const [lidarError, setLidarError] = useState(null)
   const [walkProgress, setWalkProgress] = useState(0)
   const [voiceOn, setVoiceOn]           = useState(true)
+  const [countdown, setCountdown]       = useState(0)       // 3-2-1 countdown before scan
+  const [autoRetryCount, setAutoRetryCount] = useState(0)   // auto-retry on recoverable errors
   const [depthMode, setDepthMode]     = useState('none') // 'webxr' | 'sfm' | 'none'
   const [a4Detected, setA4Detected]   = useState(null)   // { x, y, w, h, confidence }
   const [depthFrames, setDepthFrames] = useState({})      // depth data per capture phase
@@ -826,6 +828,28 @@ export default function FootScan() {
     }
   }, [phase, camStatus])
 
+  // ── Countdown + auto-start: user doesn't need to look at screen ──
+  const startScanWithCountdown = useCallback((side) => {
+    setLidarError(null)
+    setAutoRetryCount(0)
+    speak(SCAN_MESSAGES.ready(side))
+    hapticMedium()
+    setCountdown(3)
+    let c = 3
+    const iv = setInterval(() => {
+      c -= 1
+      if (c > 0) {
+        setCountdown(c)
+        speak(`${c}`, { force: true })
+        hapticLight()
+      } else {
+        clearInterval(iv)
+        setCountdown(0)
+        runLidarSide(side)
+      }
+    }, 1200)
+  }, []) // eslint-disable-line
+
   // ── LiDAR continuous depth capture (one foot at a time) ──
   const MAX_SCAN_MS = 30_000  // Absolute max: 30s
   const MIN_SCAN_MS = 10_000  // Minimum scan time: 10s
@@ -967,13 +991,31 @@ export default function FootScan() {
         : msg.includes('Python') || msg.includes('ModuleNotFoundError')
         ? 'Server-Fehler bei der Verarbeitung. Bitte kontaktiere den Support.'
         : `Scan-Fehler: ${msg}`
-      // Voice: announce error
+      // Auto-retry for recoverable errors (max 2 times), then show manual UI
+      const isRecoverable = !msg.includes('Python') && !msg.includes('ModuleNotFoundError') && !msg.includes('Server')
+      if (isRecoverable && autoRetryCount < 2) {
+        setAutoRetryCount(prev => prev + 1)
+        // Voice: specific guidance for the problem, then auto-retry
+        const retryMsg = msg.includes('Zu wenige') || msg.includes('too sparse')
+          ? 'Zu wenige Punkte. Bewege das Handy langsamer. Neuer Versuch startet automatisch.'
+          : msg.includes('Winkel') || msg.includes('anglesCovered')
+          ? 'Nicht genug Seiten erfasst. Bewege dich mehr um den Fuß. Neuer Versuch startet automatisch.'
+          : 'Ein kleiner Fehler. Neuer Versuch startet automatisch.'
+        speak(retryMsg, { urgent: true })
+        hapticStrong()
+        setWalkProgress(0)
+        // Wait 3 seconds, then auto-retry with countdown
+        setTimeout(() => startScanWithCountdown(side), 3000)
+        return
+      }
+
+      // Non-recoverable or too many retries: show manual error UI
       speak(SCAN_MESSAGES.error, { urgent: true })
       hapticStrong()
       setLidarError(userMsg)
       setWalkProgress(0)
     }
-  }, []) // eslint-disable-line
+  }, [autoRetryCount]) // eslint-disable-line
 
   // ── Demo ──
   const startDemo = useCallback(() => {
@@ -1382,14 +1424,59 @@ export default function FootScan() {
     save()
   }, [phase, result, saved]) // eslint-disable-line
 
+  // ── Transition screen with auto-continue countdown ──
+  const TransitionScreen = ({ onContinue }) => {
+    const [transCountdown, setTransCountdown] = useState(5)
+    useEffect(() => {
+      const iv = setInterval(() => {
+        setTransCountdown(prev => {
+          if (prev <= 1) { clearInterval(iv); onContinue(); return 0 }
+          return prev - 1
+        })
+      }, 1000)
+      return () => clearInterval(iv)
+    }, []) // eslint-disable-line
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center"
+        style={{ animation: 'faceidFadeInUp 0.5s ease forwards' }}>
+        <svg width="80" height="80" viewBox="0 0 80 80" className="mb-8">
+          <circle cx="40" cy="40" r="38" fill="none" stroke="#30D158" strokeWidth="2.5" opacity="0.25" />
+          <circle cx="40" cy="40" r="38" fill="none" stroke="#30D158" strokeWidth="2.5"
+            strokeDasharray="239" strokeDashoffset="239"
+            style={{ animation: 'checkDraw 0.6s ease forwards 0.1s' }} />
+          <path d="M23 42l12 12 22-22" fill="none" stroke="#30D158" strokeWidth="3"
+            strokeLinecap="round" strokeLinejoin="round"
+            strokeDasharray="55" strokeDashoffset="55"
+            style={{ animation: 'checkDraw 0.5s ease forwards 0.5s' }} />
+        </svg>
+        <h2 className="text-[22px] font-semibold text-white mb-2">
+          Rechter Fuß erfasst ✓
+        </h2>
+        <p className="text-[17px] text-white/70 mb-3 leading-relaxed font-medium">
+          Jetzt den linken Fuß aufstellen.
+        </p>
+        <p className="text-[13px] text-white/40 mb-10 leading-relaxed">
+          Scan startet automatisch in {transCountdown} Sekunden…
+        </p>
+        <button
+          onClick={onContinue}
+          className="w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
+          Jetzt starten
+        </button>
+      </div>
+    )
+  }
+
   const LIDAR_PHASES = ['lidar-right', 'lidar-transition', 'lidar-left']
 
-  // ── Voice: announce ready when entering LiDAR scan phase ──
+  // ── Voice: announce phase changes ──
   useEffect(() => {
     if (phase === 'lidar-right') {
-      speak(SCAN_MESSAGES.ready('right'))
+      // Don't speak ready here — startScanWithCountdown handles it
     } else if (phase === 'lidar-left') {
-      speak(SCAN_MESSAGES.ready('left'))
+      // Don't speak ready here — startScanWithCountdown handles it
+    } else if (phase === 'processing' || phase === 'pg-processing') {
+      speak(SCAN_MESSAGES.processing)
     } else if (phase === 'result') {
       speak(SCAN_MESSAGES.done)
       hapticSuccess()
@@ -1556,34 +1643,8 @@ export default function FootScan() {
           </div>
 
           {phase === 'lidar-transition' ? (
-            /* ── Transition screen: right foot done → left foot next ── */
-            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center"
-              style={{ animation: 'faceidFadeInUp 0.5s ease forwards' }}>
-              <svg width="80" height="80" viewBox="0 0 80 80" className="mb-8">
-                <circle cx="40" cy="40" r="38" fill="none" stroke="#30D158" strokeWidth="2.5" opacity="0.25" />
-                <circle cx="40" cy="40" r="38" fill="none" stroke="#30D158" strokeWidth="2.5"
-                  strokeDasharray="239" strokeDashoffset="239"
-                  style={{ animation: 'checkDraw 0.6s ease forwards 0.1s' }} />
-                <path d="M23 42l12 12 22-22" fill="none" stroke="#30D158" strokeWidth="3"
-                  strokeLinecap="round" strokeLinejoin="round"
-                  strokeDasharray="55" strokeDashoffset="55"
-                  style={{ animation: 'checkDraw 0.5s ease forwards 0.5s' }} />
-              </svg>
-              <h2 className="text-[22px] font-semibold text-white mb-2">
-                Rechter Fuß erfasst
-              </h2>
-              <p className="text-[15px] text-white/50 mb-3 leading-relaxed">
-                Jetzt den linken Fuß scannen.
-              </p>
-              <p className="text-[12px] text-white/30 mb-10 leading-relaxed">
-                Stelle deinen linken Fuß auf den Boden{'\n'}und wiederhole den gleichen Ablauf.
-              </p>
-              <button
-                onClick={() => { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-left') }}
-                className="w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
-                Weiter
-              </button>
-            </div>
+            /* ── Transition screen: right foot done → left foot next (auto-continues after 5s) ── */
+            <TransitionScreen onContinue={() => { setWalkProgress(0); setWalkPoints(0); setAutoRetryCount(0); startScanWithCountdown('left') }} />
           ) : (
             /* ── Scan screen with Face ID ring ── */
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
@@ -1661,24 +1722,24 @@ export default function FootScan() {
                 </div>
               </div>
 
-              {/* Instructions — step-by-step with animated transitions */}
-              {walkProgress === 0 && !lidarError && (
+              {/* Instructions — big, readable, glanceable */}
+              {walkProgress === 0 && !lidarError && countdown === 0 && (
                 <div className="mt-2" style={{ animation: 'fadeInSoft 0.4s ease' }}>
-                  <p className="text-[17px] font-semibold text-white mb-3 leading-snug">
-                    Stelle deinen {phase === 'lidar-right' ? 'rechten' : 'linken'} Fuß{'\n'}auf den Boden
+                  <p className="text-[20px] font-bold text-white mb-4 leading-snug">
+                    {phase === 'lidar-right' ? 'Rechten' : 'Linken'} Fuß auf den Boden stellen
                   </p>
-                  <div className="space-y-1.5 text-left inline-block">
-                    <p className="text-[12px] text-white/50 flex items-center gap-2">
-                      <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-white/60 shrink-0">1</span>
-                      Halte das iPhone 30 cm über dem Fuß
+                  <div className="space-y-3 text-left inline-block">
+                    <p className="text-[15px] text-white/70 flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">1</span>
+                      iPhone 30 cm über den Fuß halten
                     </p>
-                    <p className="text-[12px] text-white/50 flex items-center gap-2">
-                      <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-white/60 shrink-0">2</span>
-                      Bewege es langsam im Kreis herum
+                    <p className="text-[15px] text-white/70 flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">2</span>
+                      Langsam im Kreis herum bewegen
                     </p>
-                    <p className="text-[12px] text-white/50 flex items-center gap-2">
-                      <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-white/60 shrink-0">3</span>
-                      Kippe es leicht zur Seite für die Ferse
+                    <p className="text-[15px] text-white/70 flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">3</span>
+                      Auch die Ferse und Seiten erfassen
                     </p>
                   </div>
                 </div>
@@ -1687,21 +1748,18 @@ export default function FootScan() {
               {walkProgress > 0 && walkProgress < 100 && !lidarError && (
                 <div key={walkProgress < 20 ? 'step1' : walkProgress < 45 ? 'step2' : walkProgress < 70 ? 'step3' : 'step4'}
                   style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                  <p className="text-[15px] font-semibold text-white mb-1">
-                    {walkProgress < 20 ? '↓  Von oben scannen'
-                      : walkProgress < 45 ? '↻  Langsam zur Seite bewegen'
-                      : walkProgress < 70 ? '↻  Ferse und Innenseite erfassen'
-                      : '✓  Letzte Details…'}
+                  {/* Big, readable instruction — user glances at screen briefly */}
+                  <p className="text-[20px] font-bold text-white mb-2 leading-snug">
+                    {walkProgress < 20 ? '↓  Von oben halten'
+                      : walkProgress < 45 ? '↻  Zur Seite bewegen'
+                      : walkProgress < 70 ? '↻  Um die Ferse herum'
+                      : '✓  Fast fertig!'}
                   </p>
-                  <p className="text-[12px] text-white/40">
-                    {walkProgress < 20 ? 'Halte das iPhone ruhig über dem Fuß.'
-                      : walkProgress < 45 ? 'Bewege dich langsam nach rechts, Kamera auf den Fuß gerichtet.'
-                      : walkProgress < 70 ? 'Gehe um die Ferse herum. Kippe leicht für die Seiten.'
-                      : 'Fast geschafft — halte die Position kurz.'}
-                  </p>
-                  {/* Live point counter */}
-                  <p className="text-[10px] text-white/25 mt-2 font-mono" style={{ animation: 'pulseCount 2s ease infinite' }}>
-                    {walkPoints.toLocaleString('de-DE')} Punkte erfasst
+                  <p className="text-[14px] text-white/60">
+                    {walkProgress < 20 ? 'iPhone ruhig über dem Fuß halten'
+                      : walkProgress < 45 ? 'Langsam nach rechts bewegen'
+                      : walkProgress < 70 ? 'Gehe weiter herum, auch die Ferse'
+                      : 'Halte kurz die Position'}
                   </p>
                 </div>
               )}
@@ -1711,28 +1769,40 @@ export default function FootScan() {
               )}
 
               {lidarError && (
-                <div className="w-full p-4 rounded-xl bg-red-500/10 border border-red-400/20"
+                <div className="w-full p-5 rounded-2xl bg-red-500/10 border border-red-400/20"
                   style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease' }}>
-                  <p className="text-[13px] text-red-400 font-medium mb-3">{lidarError}</p>
+                  <p className="text-[15px] text-white font-semibold mb-2">Nicht geklappt — kein Problem!</p>
+                  <p className="text-[13px] text-white/60 mb-4 leading-relaxed">{lidarError}</p>
                   <div className="flex gap-3">
-                    <button onClick={() => { setLidarError(null); setWalkProgress(0); runLidarSide(phase === 'lidar-right' ? 'right' : 'left') }}
-                      className="flex-1 py-2.5 rounded-lg bg-white/10 text-white text-[12px] font-medium border-0 active:opacity-80">
+                    <button onClick={() => { setLidarError(null); setWalkProgress(0); startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left') }}
+                      className="flex-1 py-3.5 rounded-xl bg-[#30D158] text-white text-[14px] font-semibold border-0 active:opacity-80">
                       Nochmal versuchen
                     </button>
                     <button onClick={() => setPhase('start')}
-                      className="flex-1 py-2.5 rounded-lg bg-transparent text-red-300/70 text-[12px] border border-red-400/20 active:opacity-80">
+                      className="flex-1 py-3.5 rounded-xl bg-transparent text-white/40 text-[13px] border border-white/10 active:opacity-80">
                       Andere Methode
                     </button>
                   </div>
                 </div>
               )}
 
-              {!lidarError && walkProgress === 0 && (
+              {!lidarError && walkProgress === 0 && countdown === 0 && (
                 <button
-                  onClick={() => runLidarSide(phase === 'lidar-right' ? 'right' : 'left')}
+                  onClick={() => startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left')}
                   className="mt-8 w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
                   Scan starten
                 </button>
+              )}
+
+              {/* Countdown overlay */}
+              {countdown > 0 && (
+                <div className="mt-8 flex flex-col items-center">
+                  <span className="text-[72px] font-bold text-[#30D158]"
+                    style={{ fontFeatureSettings: '"tnum"', animation: 'faceidFadeInUp 0.3s ease' }}>
+                    {countdown}
+                  </span>
+                  <p className="text-[15px] text-white/60 mt-2">Halte das iPhone ruhig über dem Fuß</p>
+                </div>
               )}
             </div>
           )}
@@ -1813,8 +1883,8 @@ export default function FootScan() {
                           className="w-full py-5 bg-black text-white font-bold text-[13px] border-0 flex flex-col items-center gap-2 active:opacity-80">
                           <Scan size={20} className="text-[#30D158]" strokeWidth={1.5} />
                           <span className="uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>LiDAR 3D-Scan</span>
-                          <span className="text-[9px] text-white/40 font-normal normal-case tracking-normal">
-                            Direkte Punktwolke · 20 Sek. pro Fuß · ±0.5–1mm
+                          <span className="text-[10px] text-white/40 font-normal normal-case tracking-normal">
+                            20 Sek. pro Fuß · Sprachanleitung führt dich durch
                           </span>
                         </button>
                       </div>
