@@ -3,7 +3,7 @@ import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import Anthropic from '@anthropic-ai/sdk'
-import { spawnSync } from 'child_process'
+import { spawn, spawnSync } from 'child_process'
 import { writeFileSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -1512,30 +1512,36 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     return res.status(500).json({ error: 'Python3 nicht gefunden auf dem Server', detail: 'python3 --version failed' })
   }
 
-  const proc = spawnSync('python3', [scriptPath, '--cloud', tmpFile], {
-    encoding: 'utf8',
-    timeout: 60_000,
-  })
-
-  try { unlinkSync(tmpFile) } catch { /* ignore */ }
-
-  if (proc.status !== 0) {
-    const stderr = proc.stderr?.trim() || ''
-    const isModuleError = stderr.includes('ModuleNotFoundError') || stderr.includes('No module named')
-    const isTimeout = proc.signal === 'SIGTERM'
-    const detail = isModuleError
-      ? 'Python-Abhängigkeiten fehlen. Bitte "pip install -r requirements.txt" im atelier-ml Verzeichnis ausführen.'
-      : isTimeout
-      ? 'Verarbeitung hat zu lange gedauert (>60s). Punktwolke möglicherweise zu groß.'
-      : stderr.slice(0, 500) || 'Unknown Python error'
-    return res.status(422).json({ error: 'LiDAR-Verarbeitung fehlgeschlagen', detail })
-  }
-
+  // Async spawn — doesn't block the Node.js event loop
   let measurements
   try {
-    measurements = JSON.parse(proc.stdout)
-  } catch {
-    return res.status(500).json({ error: 'Invalid JSON from process_lidar.py' })
+    measurements = await new Promise((resolve, reject) => {
+      const child = spawn('python3', [scriptPath, '--cloud', tmpFile], { encoding: 'utf8' })
+      let stdout = '', stderr = ''
+      const timeout = setTimeout(() => { child.kill('SIGTERM'); reject(new Error('TIMEOUT')) }, 60_000)
+
+      child.stdout.on('data', (d) => { stdout += d })
+      child.stderr.on('data', (d) => { stderr += d })
+      child.on('close', (code) => {
+        clearTimeout(timeout)
+        try { unlinkSync(tmpFile) } catch { /* ignore */ }
+        if (code !== 0) {
+          const isModuleError = stderr.includes('ModuleNotFoundError') || stderr.includes('No module named')
+          const isTimeout = stderr.includes('TIMEOUT') || code === null
+          const detail = isModuleError
+            ? 'Python-Abhängigkeiten fehlen. Bitte "pip install -r requirements.txt" im atelier-ml Verzeichnis ausführen.'
+            : isTimeout
+            ? 'Verarbeitung hat zu lange gedauert (>60s). Punktwolke möglicherweise zu groß.'
+            : (stderr.trim() || 'Unknown Python error').slice(0, 500)
+          return reject(Object.assign(new Error(detail), { statusCode: 422 }))
+        }
+        try { resolve(JSON.parse(stdout)) } catch { reject(new Error('Invalid JSON from process_lidar.py')) }
+      })
+      child.on('error', (err) => { clearTimeout(timeout); reject(err) })
+    })
+  } catch (err) {
+    try { unlinkSync(tmpFile) } catch { /* ignore */ }
+    return res.status(err.statusCode || 500).json({ error: 'LiDAR-Verarbeitung fehlgeschlagen', detail: err.message })
   }
 
   // Return measurements keyed by side prefix for direct use in  POST /api/scans

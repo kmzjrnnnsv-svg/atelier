@@ -702,9 +702,10 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
         stopWalkAroundSession()
         stopContinuousSession()
 
-        // Reset state
+        // Reset state — pre-allocate for ~20k points to avoid resizes under lock
         continuousLock.lock()
         continuousPoints = []
+        continuousPoints.reserveCapacity(20_000)
         continuousAngles = []
         continuousBinCounts = [:]
         continuousLock.unlock()

@@ -842,39 +842,35 @@ export default function FootScan() {
       const startTime = Date.now()
       let autoFinish = false
 
-      const pollInterval = setInterval(async () => {
-        try {
-          const prog = await LidarScanNative.getContinuousCaptureProgress()
-          const elapsed = Date.now() - startTime
+      // Fast polling (150ms) for responsive progress ring + single Promise
+      await new Promise((resolve) => {
+        let lastCoverage = 0
+        const safetyTimeout = setTimeout(() => { clearInterval(pollInterval); resolve() }, MAX_SCAN_MS + 2000)
 
-          setWalkProgress(prog.estimatedCoverage ?? 0)
-          setWalkPoints(prog.pointCount ?? 0)
+        const pollInterval = setInterval(async () => {
+          try {
+            const prog = await LidarScanNative.getContinuousCaptureProgress()
+            const elapsed = Date.now() - startTime
+            const coverage = prog.estimatedCoverage ?? 0
 
-          // Auto-finish when: coverage ≥ 95% AND at least MIN_SCAN_MS elapsed
-          if (prog.estimatedCoverage >= 95 && elapsed >= MIN_SCAN_MS) {
-            autoFinish = true
-            clearInterval(pollInterval)
-          }
+            // Smooth progress: interpolate toward target to avoid jumpy ring
+            lastCoverage = lastCoverage + (coverage - lastCoverage) * 0.4
+            setWalkProgress(Math.round(lastCoverage))
+            setWalkPoints(prog.pointCount ?? 0)
 
-          // Hard stop after MAX_SCAN_MS
-          if (elapsed >= MAX_SCAN_MS) {
-            autoFinish = true
-            clearInterval(pollInterval)
-          }
-        } catch { /* ignore polling errors */ }
-      }, 400)
-
-      // Wait for auto-finish signal
-      await new Promise(resolve => {
-        const check = setInterval(() => {
-          if (autoFinish) { clearInterval(check); resolve() }
-        }, 200)
-        // Safety: always resolve after MAX_SCAN_MS + 2s
-        setTimeout(() => { clearInterval(check); clearInterval(pollInterval); resolve() }, MAX_SCAN_MS + 2000)
+            // Auto-finish when: coverage ≥ 95% AND at least MIN_SCAN_MS elapsed
+            // OR hard stop after MAX_SCAN_MS
+            if ((coverage >= 95 && elapsed >= MIN_SCAN_MS) || elapsed >= MAX_SCAN_MS) {
+              clearInterval(pollInterval)
+              clearTimeout(safetyTimeout)
+              resolve()
+            }
+          } catch { /* ignore polling errors */ }
+        }, 150)
       })
 
       setWalkProgress(100)
-      setAiStatus('Punktwolke wird verarbeitet…')
+      setAiStatus('Scan wird abgeschlossen…')
 
       const raw = await LidarScanNative.finishContinuousCapture()
 
@@ -885,6 +881,8 @@ export default function FootScan() {
       if ((raw.anglesCovered ?? 0) < 6) {
         throw new Error(`Nur ${raw.anglesCovered ?? 0} von 12 Winkeln erfasst. Bitte den Fuß von allen Seiten scannen.`)
       }
+
+      setAiStatus(`${raw.pointCount.toLocaleString('de-DE')} Punkte · Maße werden berechnet…`)
 
       // Send point cloud + auto-captured training images to backend
       const payload = { pointCloud: raw.pointCloud, side, anglesCovered: raw.anglesCovered }
