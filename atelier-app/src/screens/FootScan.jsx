@@ -1441,6 +1441,14 @@ export default function FootScan() {
               60% { transform: translateX(-4px) }
               80% { transform: translateX(4px) }
             }
+            @keyframes orbitPhone {
+              0%   { transform: rotate(0deg) translateX(38px) rotate(0deg) }
+              100% { transform: rotate(360deg) translateX(38px) rotate(-360deg) }
+            }
+            @keyframes arrowPulse {
+              0%, 100% { opacity: 0.3 }
+              50% { opacity: 0.7 }
+            }
           `}</style>
 
           {/* Minimal header */}
@@ -1473,10 +1481,13 @@ export default function FootScan() {
                   style={{ animation: 'checkDraw 0.5s ease forwards 0.5s' }} />
               </svg>
               <h2 className="text-[22px] font-semibold text-white mb-2">
-                Erster Scan abgeschlossen
+                Rechter Fuß erfasst
               </h2>
-              <p className="text-[15px] text-white/50 mb-12 leading-relaxed">
+              <p className="text-[15px] text-white/50 mb-3 leading-relaxed">
                 Jetzt den linken Fuß scannen.
+              </p>
+              <p className="text-[12px] text-white/30 mb-10 leading-relaxed">
+                Stelle deinen linken Fuß auf den Boden{'\n'}und wiederhole den gleichen Ablauf.
               </p>
               <button
                 onClick={() => { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-left') }}
@@ -1512,16 +1523,34 @@ export default function FootScan() {
                 <div className="flex flex-col items-center z-10">
                   {walkProgress === 0 && !lidarError ? (
                     <>
-                      <svg width="44" height="56" viewBox="0 0 44 56" fill="none" className="mb-3 opacity-50">
-                        <ellipse cx="22" cy="36" rx="14" ry="18" stroke="white" strokeWidth="1.5" />
-                        <ellipse cx="22" cy="36" rx="8" ry="11" stroke="white" strokeWidth="1" opacity="0.4" />
-                        <circle cx="12" cy="16" r="3.5" stroke="white" strokeWidth="1.2" />
-                        <circle cx="18" cy="11" r="4" stroke="white" strokeWidth="1.2" />
-                        <circle cx="26" cy="10" r="4.2" stroke="white" strokeWidth="1.2" />
-                        <circle cx="33" cy="13" r="3.5" stroke="white" strokeWidth="1.2" />
-                        <circle cx="37" cy="19" r="2.8" stroke="white" strokeWidth="1.2" />
-                      </svg>
-                      <span className="text-[11px] text-white/40 font-medium tracking-wide">Bereit</span>
+                      {/* Foot silhouette with orbiting phone icon */}
+                      <div className="relative w-24 h-24 flex items-center justify-center">
+                        <svg width="44" height="56" viewBox="0 0 44 56" fill="none" className="opacity-50">
+                          <ellipse cx="22" cy="36" rx="14" ry="18" stroke="white" strokeWidth="1.5" />
+                          <ellipse cx="22" cy="36" rx="8" ry="11" stroke="white" strokeWidth="1" opacity="0.4" />
+                          <circle cx="12" cy="16" r="3.5" stroke="white" strokeWidth="1.2" />
+                          <circle cx="18" cy="11" r="4" stroke="white" strokeWidth="1.2" />
+                          <circle cx="26" cy="10" r="4.2" stroke="white" strokeWidth="1.2" />
+                          <circle cx="33" cy="13" r="3.5" stroke="white" strokeWidth="1.2" />
+                          <circle cx="37" cy="19" r="2.8" stroke="white" strokeWidth="1.2" />
+                        </svg>
+                        {/* Orbiting phone indicator */}
+                        <div className="absolute inset-0 flex items-center justify-center"
+                          style={{ animation: 'orbitPhone 4s linear infinite' }}>
+                          <svg width="16" height="22" viewBox="0 0 16 22" fill="none">
+                            <rect x="1" y="1" width="14" height="20" rx="2" stroke="#30D158" strokeWidth="1.5" />
+                            <circle cx="8" cy="17" r="1.2" fill="#30D158" opacity="0.6" />
+                            <line x1="5" y1="4" x2="11" y2="4" stroke="#30D158" strokeWidth="0.8" opacity="0.4" />
+                          </svg>
+                        </div>
+                        {/* Circular arrow hint */}
+                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 96 96" style={{ animation: 'arrowPulse 2s ease infinite' }}>
+                          <path d="M 70 20 A 35 35 0 1 1 26 20" fill="none" stroke="white" strokeWidth="0.8" opacity="0.25"
+                            strokeDasharray="3,4" />
+                          <path d="M 26 20 L 30 14 M 26 20 L 32 23" fill="none" stroke="white" strokeWidth="1" opacity="0.35" />
+                        </svg>
+                      </div>
+                      <span className="text-[11px] text-white/40 font-medium tracking-wide mt-1">Bereit</span>
                     </>
                   ) : walkProgress >= 100 ? (
                     <>
@@ -1543,29 +1572,46 @@ export default function FootScan() {
                 </div>
               </div>
 
-              {/* Instructions — animated transitions */}
+              {/* Instructions — step-by-step with animated transitions */}
               {walkProgress === 0 && !lidarError && (
                 <div className="mt-2" style={{ animation: 'fadeInSoft 0.4s ease' }}>
-                  <p className="text-[17px] font-semibold text-white mb-2 leading-snug">
-                    Bewege dein iPhone langsam{'\n'}um deinen Fuß herum.
+                  <p className="text-[17px] font-semibold text-white mb-3 leading-snug">
+                    Stelle deinen {phase === 'lidar-right' ? 'rechten' : 'linken'} Fuß{'\n'}auf den Boden
                   </p>
-                  <p className="text-[13px] text-white/45 leading-relaxed">
-                    Halte 30–50 cm Abstand.
-                  </p>
+                  <div className="space-y-1.5 text-left inline-block">
+                    <p className="text-[12px] text-white/50 flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-white/60 shrink-0">1</span>
+                      Halte das iPhone 30 cm über dem Fuß
+                    </p>
+                    <p className="text-[12px] text-white/50 flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-white/60 shrink-0">2</span>
+                      Bewege es langsam im Kreis herum
+                    </p>
+                    <p className="text-[12px] text-white/50 flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold text-white/60 shrink-0">3</span>
+                      Kippe es leicht zur Seite für die Ferse
+                    </p>
+                  </div>
                 </div>
               )}
 
               {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-                <div style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                  <p className="text-[13px] text-white/45 transition-opacity duration-500"
-                    key={walkProgress < 25 ? 'a' : walkProgress < 50 ? 'b' : walkProgress < 80 ? 'c' : 'd'}>
-                    {walkProgress < 25 ? 'Beginne von oben und bewege dich zur Seite…'
-                      : walkProgress < 50 ? 'Gut! Bewege dich weiter um den Fuß…'
-                      : walkProgress < 80 ? 'Fast fertig — umrunde den Fuß vollständig…'
-                      : 'Letzte Details werden erfasst…'}
+                <div key={walkProgress < 20 ? 'step1' : walkProgress < 45 ? 'step2' : walkProgress < 70 ? 'step3' : 'step4'}
+                  style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                  <p className="text-[15px] font-semibold text-white mb-1">
+                    {walkProgress < 20 ? '↓  Von oben scannen'
+                      : walkProgress < 45 ? '↻  Langsam zur Seite bewegen'
+                      : walkProgress < 70 ? '↻  Ferse und Innenseite erfassen'
+                      : '✓  Letzte Details…'}
+                  </p>
+                  <p className="text-[12px] text-white/40">
+                    {walkProgress < 20 ? 'Halte das iPhone ruhig über dem Fuß.'
+                      : walkProgress < 45 ? 'Bewege dich langsam nach rechts, Kamera auf den Fuß gerichtet.'
+                      : walkProgress < 70 ? 'Gehe um die Ferse herum. Kippe leicht für die Seiten.'
+                      : 'Fast geschafft — halte die Position kurz.'}
                   </p>
                   {/* Live point counter */}
-                  <p className="text-[10px] text-white/25 mt-1.5 font-mono" style={{ animation: 'pulseCount 2s ease infinite' }}>
+                  <p className="text-[10px] text-white/25 mt-2 font-mono" style={{ animation: 'pulseCount 2s ease infinite' }}>
                     {walkPoints.toLocaleString('de-DE')} Punkte erfasst
                   </p>
                 </div>
