@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { X, Eye, EyeOff, ArrowRight, Box, AlertCircle } from 'lucide-react'
+import { X, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Registration() {
@@ -31,7 +31,7 @@ export default function Registration() {
     setApiError(null)
     try {
       await register(form.name, form.email, form.password)
-      navigate('/scan', { replace: true })
+      navigate('/welcome', { replace: true })
     } catch (err) {
       if (err?.error === 'Email already registered') {
         setErrors(e => ({ ...e, email: 'Diese E-Mail ist bereits registriert.' }))
@@ -54,62 +54,51 @@ export default function Registration() {
   const strength = pwStrength()
 
   return (
-    <div className="flex flex-col min-h-full bg-white relative overflow-y-auto">
+    <div className="flex flex-col h-full bg-white relative">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-14 pb-3">
+      <div className="flex items-center justify-between px-5 pt-4 pb-3 flex-shrink-0">
         <button className="w-8 h-8 flex items-center justify-center bg-transparent border-0" onClick={() => navigate('/login')}>
-          <X size={20} strokeWidth={1.5} className="text-gray-700" />
+          <X size={20} strokeWidth={1.5} className="text-black/70" />
         </button>
         <span className="font-playfair text-lg font-semibold tracking-[0.25em] uppercase text-black">ATELIER</span>
         <div className="w-8" />
       </div>
 
-      {/* Hero Image */}
-      <div className="mx-4 mt-3 rounded-2xl overflow-hidden bg-gray-100 aspect-video relative">
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-          <svg viewBox="0 0 220 120" className="w-56 opacity-70">
-            <ellipse cx="110" cy="100" rx="95" ry="12" fill="#d1d5db" />
-            <path d="M20 90 Q15 95 30 100 L185 100 Q200 100 200 90 L195 75 Q190 60 175 58 L60 58 Q40 58 35 65 Z" fill="#374151" />
-            <path d="M35 65 Q30 45 55 35 L110 30 Q140 28 165 40 Q185 50 195 75 L175 58 Q150 50 120 50 L75 52 Q50 54 35 65 Z" fill="#1f2937" />
-            <path d="M60 40 Q85 32 115 33 Q140 33 160 42" stroke="#6b7280" strokeWidth="1.5" fill="none" opacity="0.5" />
-            <path d="M35 65 Q30 55 45 45 Q60 36 80 36 L80 52 Q60 54 35 65 Z" fill="#111827" />
-            <path d="M80 36 L80 52 L160 50 L165 40 Q140 28 110 30 Z" fill="#374151" />
-          </svg>
-        </div>
-      </div>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
 
       {/* Headline */}
-      <div className="text-center mt-5 px-6">
-        <h1 className="font-playfair text-2xl italic text-black leading-tight">Step into Perfection</h1>
-        <p className="text-xs text-gray-500 mt-2 leading-relaxed max-w-xs mx-auto">
+      <div className="text-center mt-3 px-6">
+        <h1 className="text-2xl text-black leading-tight uppercase tracking-[0.15em] font-semibold">Step into Perfection</h1>
+        <p className="text-xs text-black/50 mt-1.5 leading-relaxed max-w-xs mx-auto" style={{ letterSpacing: '0.15em' }}>
           Crafting your digital silhouette for bespoke luxury footwear.
         </p>
       </div>
 
       {/* Form */}
-      <div className="px-5 mt-6 space-y-4">
+      <div className="px-5 mt-4 space-y-3.5">
         {apiError && (
-          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-2.5">
             <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
             <p className="text-xs text-red-600">{apiError}</p>
           </div>
         )}
 
         <div>
-          <label className="text-[9px] uppercase tracking-[0.15em] text-gray-400 font-medium mb-1 block">Full Name</label>
+          <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1 block" style={{ letterSpacing: '0.15em' }}>Full Name</label>
           <input type="text" value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="James Sterling"
-            className="w-full h-12 border border-gray-200 rounded-lg px-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-900 transition-colors" />
+            className="w-full h-11 border border-black/10 px-3 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black transition-colors" />
         </div>
 
         <div>
-          <label className="text-[9px] uppercase tracking-[0.15em] text-gray-400 font-medium mb-1 block">Email Address</label>
+          <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1 block" style={{ letterSpacing: '0.15em' }}>Email Address</label>
           <input type="email" value={form.email}
             onChange={(e) => { setForm({ ...form, email: e.target.value }); setErrors(er => ({ ...er, email: null })) }}
             onBlur={() => { if (form.email && !isEmailValid(form.email)) setErrors(er => ({ ...er, email: 'Ungültige E-Mail' })) }}
             placeholder="examplename@pinstripe.com"
-            className={`w-full h-12 border rounded-lg px-3 text-sm text-gray-900 placeholder-gray-300 italic focus:outline-none transition-colors ${errors.email ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'}`} />
+            className={`w-full h-11 border px-3 text-sm text-black/90 placeholder-black/20 focus:outline-none transition-colors ${errors.email ? 'border-red-400' : 'border-black/10 focus:border-black'}`} />
           {errors.email && (
             <p className="text-[10px] text-red-500 mt-1">{errors.email}{' '}
               {errors.email?.includes('bereits') && <Link to="/login" className="underline font-semibold text-red-600">Jetzt einloggen →</Link>}
@@ -118,21 +107,21 @@ export default function Registration() {
         </div>
 
         <div>
-          <label className="text-[9px] uppercase tracking-[0.15em] text-gray-400 font-medium mb-1 block">Password</label>
+          <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1 block" style={{ letterSpacing: '0.15em' }}>Password</label>
           <div className="relative">
             <input type={showPw ? 'text' : 'password'} value={form.password}
               onChange={(e) => { setForm({ ...form, password: e.target.value }); setErrors(er => ({ ...er, password: null })) }}
               placeholder="Min. 8 Zeichen"
-              className={`w-full h-12 border rounded-lg px-3 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${errors.password ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'}`} />
+              className={`w-full h-11 border px-3 pr-10 text-sm text-black/90 placeholder-black/20 focus:outline-none transition-colors ${errors.password ? 'border-red-400' : 'border-black/10 focus:border-black'}`} />
             <button type="button" onClick={() => setShowPw(!showPw)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 bg-transparent border-0 p-0">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-black/40 bg-transparent border-0 p-0">
               {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           {form.password.length > 0 && (
             <div className="flex gap-1 mt-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className={`h-1 flex-1 rounded-full transition-all ${strength >= i ? strColors[strength] : 'bg-gray-200'}`} />
+                <div key={i} className={`h-1 flex-1 transition-all ${strength >= i ? strColors[strength] : 'bg-black/10'}`} />
               ))}
             </div>
           )}
@@ -140,16 +129,16 @@ export default function Registration() {
         </div>
 
         <div>
-          <label className="text-[9px] uppercase tracking-[0.15em] text-gray-400 font-medium mb-1 block">Passwort bestätigen</label>
+          <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1 block" style={{ letterSpacing: '0.15em' }}>Passwort bestätigen</label>
           <div className="relative">
             <input type={showPwConfirm ? 'text' : 'password'} value={form.passwordConfirm}
               onChange={(e) => setForm({ ...form, passwordConfirm: e.target.value })}
               placeholder="Passwort wiederholen"
-              className={`w-full h-12 border rounded-lg px-3 pr-10 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${
-                form.passwordConfirm && !passwordsMatch ? 'border-red-400' : 'border-gray-200 focus:border-gray-900'
+              className={`w-full h-11 border px-3 pr-10 text-sm text-black/90 placeholder-black/20 focus:outline-none transition-colors ${
+                form.passwordConfirm && !passwordsMatch ? 'border-red-400' : 'border-black/10 focus:border-black'
               }`} />
             <button type="button" onClick={() => setShowPwConfirm(!showPwConfirm)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 bg-transparent border-0 p-0">
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-black/40 bg-transparent border-0 p-0">
               {showPwConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -165,7 +154,7 @@ export default function Registration() {
             onChange={e => setAgreeTerms(e.target.checked)}
             className="mt-0.5 w-4 h-4 accent-black flex-shrink-0"
           />
-          <span className="text-[10px] text-gray-500 leading-relaxed">
+          <span className="text-[10px] text-black/50 leading-relaxed">
             Ich stimme den{' '}
             <Link to="/legal/agb" className="text-black underline font-semibold">AGB</Link>
             {' '}und der{' '}
@@ -177,29 +166,27 @@ export default function Registration() {
         <button
           onClick={handleSubmit}
           disabled={!isFormValid || loading}
-          style={{ height: '52px' }}
-          className={`w-full rounded-lg flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest transition-all mt-2 ${
-            isFormValid && !loading ? 'bg-black text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          style={{ height: '48px', letterSpacing: '0.18em' }}
+          className={`w-full flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest transition-all mt-2 ${
+            isFormValid && !loading ? 'bg-black text-white' : 'bg-black/10 text-black/40 cursor-not-allowed'
           }`}
         >
           {loading
-            ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin-custom" />
+            ? <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin-custom" />
             : <><span>CREATE ACCOUNT</span><ArrowRight size={16} /></>
           }
         </button>
       </div>
 
       {/* Footer */}
-      <div className="text-center mt-5 pb-6 px-5 space-y-3">
-        <p className="text-xs text-gray-500">
+      <div className="text-center mt-4 pb-6 px-5 space-y-3">
+        <p className="text-xs text-black/50">
           Already have an account?{' '}
           <Link to="/login" className="text-black font-semibold no-underline">Log In</Link>
         </p>
-        <div className="flex items-center justify-center gap-2 py-2 px-4 bg-gray-50 rounded-xl">
-          <Box size={14} className="text-gray-500" />
-          <span className="text-[10px] uppercase tracking-[0.12em] text-gray-500">Next: AI 3D Scanning</span>
-        </div>
       </div>
+
+      </div>{/* end scrollable */}
     </div>
   )
 }

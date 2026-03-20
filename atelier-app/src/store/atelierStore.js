@@ -10,15 +10,79 @@ const useAtelierStore = create((set, get) => ({
   articles:   [],
   favorites:  [],   // string shoe IDs
   orders:     [],
+  cart:       [],   // items in shopping cart (not yet ordered)
   faqs:       [],
-  latestScan: null, // most recent foot scan for this user
+  latestScan:  null, // most recent foot scan for this user
+  averagedScan: null, // Bayesian-weighted average of all user scans
+  footNotes:   '',   // user-level persistent foot notes
+  shoeMaterials: [],
+  shoeColors:   [],
+  shoeSoles:    [],
+  exploreSections: [],
+  exploreHero: { image: null, title: '', subtitle: '' },
+  loyaltyTiers: [],
+  loyaltyStatus: { points: 0, tier: 'bronze' },
+  notifications: [], // in-app notifications
+  reminders:  [],    // items user wants to be reminded about
   loading:    false,
   error:      null,
+
+  // --- NOTIFICATIONS ---
+  addNotification(notification) {
+    const n = { id: Date.now(), read: false, createdAt: new Date().toISOString(), ...notification }
+    set(s => ({ notifications: [n, ...s.notifications] }))
+  },
+  markNotificationRead(id) {
+    set(s => ({ notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n) }))
+  },
+  markAllNotificationsRead() {
+    set(s => ({ notifications: s.notifications.map(n => ({ ...n, read: true })) }))
+  },
+
+  // --- REMINDERS ---
+  addReminder(item) {
+    const existing = get().reminders
+    if (existing.some(r => r.type === item.type && r.itemId === item.itemId)) return
+    const r = { id: Date.now(), createdAt: new Date().toISOString(), ...item }
+    set(s => ({ reminders: [r, ...s.reminders] }))
+    get().addNotification({
+      type: 'reminder_set',
+      title: 'Erinnerung gesetzt',
+      message: `Du wirst benachrichtigt, sobald "${item.label}" verfügbar ist.`,
+      icon: 'bell',
+    })
+  },
+  removeReminder(type, itemId) {
+    set(s => ({ reminders: s.reminders.filter(r => !(r.type === type && r.itemId === itemId)) }))
+  },
+  hasReminder(type, itemId) {
+    return get().reminders.some(r => r.type === type && r.itemId === itemId)
+  },
+
+  // --- CART ---
+  addToCart(item) {
+    const existing = get().cart.find(c => c.shoeId === item.shoeId && c.material === item.material && c.color === item.color && c.sole === item.sole)
+    if (existing) {
+      set(s => ({ cart: s.cart.map(c => c.id === existing.id ? { ...c, qty: c.qty + 1 } : c) }))
+    } else {
+      set(s => ({ cart: [...s.cart, { id: Date.now(), qty: 1, addedAt: new Date().toISOString(), ...item }] }))
+    }
+  },
+  removeFromCart(id) {
+    set(s => ({ cart: s.cart.filter(c => c.id !== id) }))
+  },
+  updateCartQty(id, qty) {
+    if (qty <= 0) return get().removeFromCart(id)
+    set(s => ({ cart: s.cart.map(c => c.id === id ? { ...c, qty } : c) }))
+  },
+  clearCart() {
+    set({ cart: [] })
+  },
 
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans] = await Promise.all([
+      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData] = await Promise.all([
         apiFetch('/api/shoes'),
         apiFetch('/api/curated'),
         apiFetch('/api/wardrobe'),
@@ -28,7 +92,16 @@ const useAtelierStore = create((set, get) => ({
         apiFetch('/api/orders/mine').catch(() => []),
         apiFetch('/api/faqs').catch(() => []),
         apiFetch('/api/scans/mine').catch(() => []),
+        apiFetch('/api/materials').catch(() => []),
+        apiFetch('/api/colors').catch(() => []),
+        apiFetch('/api/soles').catch(() => []),
+        apiFetch('/api/explore-sections').catch(() => []),
+        apiFetch('/api/settings/explore').catch(() => ({})),
+        apiFetch('/api/loyalty/tiers').catch(() => []),
+        apiFetch('/api/loyalty/my-status').catch(() => ({ points: 0, tier: 'bronze' })),
+        apiFetch('/api/auth/me/foot-notes').catch(() => ({ foot_notes: '' })),
       ])
+      const settingsMap = settings || {}
       set({
         shoes:      shoes.map(normalizeShoe),
         curated:    curated.map(normalizeCurated),
@@ -39,6 +112,18 @@ const useAtelierStore = create((set, get) => ({
         orders,
         faqs,
         latestScan: Array.isArray(scans) && scans.length > 0 ? scans[0] : null,
+        shoeMaterials: Array.isArray(mats) ? mats : [],
+        shoeColors:    Array.isArray(cols) ? cols : [],
+        shoeSoles:     Array.isArray(soles) ? soles : [],
+        exploreSections: Array.isArray(expSections) ? expSections.map(normalizeExploreSection) : [],
+        exploreHero: {
+          image: settingsMap['explore_hero_image'] || null,
+          title: settingsMap['explore_hero_title'] || '',
+          subtitle: settingsMap['explore_hero_subtitle'] || '',
+        },
+        loyaltyTiers: Array.isArray(loyaltyTiers) ? loyaltyTiers.map(normalizeLoyaltyTier) : [],
+        loyaltyStatus: loyaltyStatus || { points: 0, tier: 'bronze' },
+        footNotes: footNotesData?.foot_notes || '',
         loading:    false,
       })
     } catch (e) {
@@ -63,6 +148,18 @@ const useAtelierStore = create((set, get) => ({
   async refreshScan() {
     const scans = await apiFetch('/api/scans/mine').catch(() => [])
     set({ latestScan: Array.isArray(scans) && scans.length > 0 ? scans[0] : null })
+    // Also fetch Bayesian average for returning users
+    const avg = await apiFetch('/api/scans/my-average').catch(() => null)
+    set({ averagedScan: avg })
+  },
+
+  // --- FOOT NOTES ---
+  async saveFootNotes(notes) {
+    const res = await apiFetch('/api/auth/me/foot-notes', {
+      method: 'PUT',
+      body: JSON.stringify({ foot_notes: notes }),
+    })
+    set({ footNotes: res.foot_notes || '' })
   },
 
   // --- ORDERS ---
@@ -150,6 +247,97 @@ const useAtelierStore = create((set, get) => ({
     set(s => ({ outfits: s.outfits.filter(o => o.id != id) }))
   },
 
+  // --- SHOE MATERIALS ---
+  async addMaterial(m) {
+    const row = await apiFetch('/api/materials', { method: 'POST', body: JSON.stringify(m) })
+    set(s => ({ shoeMaterials: [...s.shoeMaterials, row] }))
+  },
+  async updateMaterial(id, u) {
+    const row = await apiFetch(`/api/materials/${id}`, { method: 'PUT', body: JSON.stringify(u) })
+    set(s => ({ shoeMaterials: s.shoeMaterials.map(m => m.id == id ? row : m) }))
+  },
+  async deleteMaterial(id) {
+    await apiFetch(`/api/materials/${id}`, { method: 'DELETE' })
+    set(s => ({ shoeMaterials: s.shoeMaterials.filter(m => m.id != id) }))
+  },
+
+  // --- SHOE COLORS ---
+  async addColor(c) {
+    const row = await apiFetch('/api/colors', { method: 'POST', body: JSON.stringify(c) })
+    set(s => ({ shoeColors: [...s.shoeColors, row] }))
+  },
+  async updateColor(id, u) {
+    const row = await apiFetch(`/api/colors/${id}`, { method: 'PUT', body: JSON.stringify(u) })
+    set(s => ({ shoeColors: s.shoeColors.map(c => c.id == id ? row : c) }))
+  },
+  async deleteColor(id) {
+    await apiFetch(`/api/colors/${id}`, { method: 'DELETE' })
+    set(s => ({ shoeColors: s.shoeColors.filter(c => c.id != id) }))
+  },
+
+  // --- SHOE SOLES ---
+  async addSole(s2) {
+    const row = await apiFetch('/api/soles', { method: 'POST', body: JSON.stringify(s2) })
+    set(s => ({ shoeSoles: [...s.shoeSoles, row] }))
+  },
+  async updateSole(id, u) {
+    const row = await apiFetch(`/api/soles/${id}`, { method: 'PUT', body: JSON.stringify(u) })
+    set(s => ({ shoeSoles: s.shoeSoles.map(s2 => s2.id == id ? row : s2) }))
+  },
+  async deleteSole(id) {
+    await apiFetch(`/api/soles/${id}`, { method: 'DELETE' })
+    set(s => ({ shoeSoles: s.shoeSoles.filter(s2 => s2.id != id) }))
+  },
+
+  // --- EXPLORE SECTIONS ---
+  async fetchExploreSections() {
+    const rows = await apiFetch('/api/explore-sections')
+    set({ exploreSections: rows.map(normalizeExploreSection) })
+  },
+  async addExploreSection(item) {
+    const row = await apiFetch('/api/explore-sections', { method: 'POST', body: JSON.stringify(exploreSectionToApi(item)) })
+    set(s => ({ exploreSections: [...s.exploreSections, normalizeExploreSection(row)] }))
+  },
+  async updateExploreSection(id, updates) {
+    const existing = get().exploreSections.find(s => s.id == id)
+    const row = await apiFetch(`/api/explore-sections/${id}`, { method: 'PUT', body: JSON.stringify(exploreSectionToApi({ ...existing, ...updates })) })
+    set(s => ({ exploreSections: s.exploreSections.map(es => es.id == id ? normalizeExploreSection(row) : es) }))
+  },
+  async deleteExploreSection(id) {
+    await apiFetch(`/api/explore-sections/${id}`, { method: 'DELETE' })
+    set(s => ({ exploreSections: s.exploreSections.filter(es => es.id != id) }))
+  },
+  async updateExploreHero(hero) {
+    await apiFetch('/api/settings/explore', {
+      method: 'PUT',
+      body: JSON.stringify({
+        explore_hero_image: hero.image || '',
+        explore_hero_title: hero.title || '',
+        explore_hero_subtitle: hero.subtitle || '',
+      }),
+    })
+    set({ exploreHero: hero })
+  },
+
+  // --- LOYALTY TIERS ---
+  async fetchLoyaltyTiers() {
+    const rows = await apiFetch('/api/loyalty/tiers')
+    set({ loyaltyTiers: rows.map(normalizeLoyaltyTier) })
+  },
+  async addLoyaltyTier(tier) {
+    const row = await apiFetch('/api/loyalty/tiers', { method: 'POST', body: JSON.stringify(loyaltyTierToApi(tier)) })
+    set(s => ({ loyaltyTiers: [...s.loyaltyTiers, normalizeLoyaltyTier(row)] }))
+  },
+  async updateLoyaltyTier(id, updates) {
+    const existing = get().loyaltyTiers.find(t => t.id == id)
+    const row = await apiFetch(`/api/loyalty/tiers/${id}`, { method: 'PUT', body: JSON.stringify(loyaltyTierToApi({ ...existing, ...updates })) })
+    set(s => ({ loyaltyTiers: s.loyaltyTiers.map(t => t.id == id ? normalizeLoyaltyTier(row) : t) }))
+  },
+  async deleteLoyaltyTier(id) {
+    await apiFetch(`/api/loyalty/tiers/${id}`, { method: 'DELETE' })
+    set(s => ({ loyaltyTiers: s.loyaltyTiers.filter(t => t.id != id) }))
+  },
+
   // --- ARTICLES ---
   async addArticle(article) {
     const row = await apiFetch('/api/articles', { method: 'POST', body: JSON.stringify(articleToApi(article)) })
@@ -191,6 +379,68 @@ function normalizeArticle(r) {
     image: r.image_data || null,
     sortOrder: r.sort_order || 0,
     createdAt: r.created_at || '',
+  }
+}
+
+function normalizeLoyaltyTier(r) {
+  return {
+    id: String(r.id),
+    key: r.key,
+    label: r.label,
+    minPoints: r.min_points || 0,
+    color: r.color || '#000000',
+    icon: r.icon || 'Award',
+    description: r.description || null,
+    benefits: (() => { try { return JSON.parse(r.benefits || '[]') } catch { return [] } })(),
+    visible: r.visible === 1 || r.visible === true,
+    sortOrder: r.sort_order || 0,
+  }
+}
+function loyaltyTierToApi(t) {
+  return {
+    key: t.key,
+    label: t.label,
+    min_points: t.minPoints || 0,
+    color: t.color || '#000000',
+    icon: t.icon || 'Award',
+    description: t.description || null,
+    benefits: JSON.stringify(t.benefits || []),
+    visible: t.visible ? 1 : 0,
+    sort_order: t.sortOrder || 0,
+  }
+}
+
+function normalizeExploreSection(r) {
+  return {
+    id: String(r.id),
+    key: r.key,
+    label: r.label,
+    title: r.title,
+    description: r.description || '',
+    tag: r.tag || 'Demnächst',
+    color: r.color || '#1a1a1a',
+    accent: r.accent || '#ffffff',
+    icon: r.icon || 'BookOpen',
+    image: r.image_data || null,
+    previewItems: (() => { try { return JSON.parse(r.preview_items || '[]') } catch { return [] } })(),
+    visible: r.visible === 1 || r.visible === true,
+    sortOrder: r.sort_order || 0,
+  }
+}
+function exploreSectionToApi(s) {
+  return {
+    key: s.key,
+    label: s.label,
+    title: s.title,
+    description: s.description || '',
+    tag: s.tag || 'Demnächst',
+    color: s.color || '#1a1a1a',
+    accent: s.accent || '#ffffff',
+    icon: s.icon || 'BookOpen',
+    image_data: s.image || null,
+    preview_items: JSON.stringify(s.previewItems || []),
+    visible: s.visible ? 1 : 0,
+    sort_order: s.sortOrder || 0,
   }
 }
 

@@ -8,10 +8,14 @@ let _accessToken = null
 export function getAccessToken() { return _accessToken }
 export function setAccessToken(t) { _accessToken = t }
 
+// In Capacitor iOS builds, relative URLs don't reach the backend.
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)        // { id, name, email, role }
   const [loading, setLoading] = useState(true)  // true while checking existing session
   const refreshTimer = useRef(null)
+  const refreshPromise = useRef(null)
 
   // Schedule access token refresh 1 minute before expiry (14 min cycle)
   function scheduleRefresh() {
@@ -19,17 +23,36 @@ export function AuthProvider({ children }) {
     refreshTimer.current = setTimeout(() => silentRefresh(), 14 * 60 * 1000)
   }
 
-  const silentRefresh = useCallback(async () => {
-    try {
-      const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' })
-      if (!res.ok) { logout(); return }
-      const data = await res.json()
-      setAccessToken(data.accessToken)
-      setUser(data.user)
-      scheduleRefresh()
-    } catch {
-      logout()
-    }
+  const silentRefresh = useCallback(() => {
+    // If a refresh is already in flight, return the SAME promise so all
+    // callers (including StrictMode double-mount) wait for the real result.
+    if (refreshPromise.current) return refreshPromise.current
+
+    refreshPromise.current = (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
+        if (!res.ok) {
+          // Don't call logout() — it would destroy the DB token permanently.
+          setAccessToken(null)
+          setUser(null)
+          if (refreshTimer.current) clearTimeout(refreshTimer.current)
+          return
+        }
+        const data = await res.json()
+        setAccessToken(data.accessToken)
+        setUser(data.user)
+        scheduleRefresh()
+      } catch {
+        // Network error — just clear local state, keep the cookie
+        setAccessToken(null)
+        setUser(null)
+        if (refreshTimer.current) clearTimeout(refreshTimer.current)
+      } finally {
+        refreshPromise.current = null
+      }
+    })()
+
+    return refreshPromise.current
   }, [])
 
   // On mount: try to restore session via httpOnly refresh cookie
@@ -39,13 +62,23 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function register(name, email, password) {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name, email, password }),
-    })
-    const data = await res.json()
+    let res
+    try {
+      res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name, email, password }),
+      })
+    } catch (networkErr) {
+      throw { error: 'Server nicht erreichbar. Prüfe deine Verbindung.' }
+    }
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      throw { error: `Server-Fehler (${res.status})` }
+    }
     if (!res.ok) throw data
     setAccessToken(data.accessToken)
     setUser(data.user)
@@ -54,13 +87,23 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
+    let res
+    try {
+      res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      })
+    } catch (networkErr) {
+      throw { error: 'Server nicht erreichbar. Prüfe deine Verbindung.' }
+    }
+    let data
+    try {
+      data = await res.json()
+    } catch {
+      throw { error: `Server-Fehler (${res.status})` }
+    }
     if (!res.ok) throw data
     setAccessToken(data.accessToken)
     setUser(data.user)
@@ -72,7 +115,7 @@ export function AuthProvider({ children }) {
     setAccessToken(null)
     setUser(null)
     if (refreshTimer.current) clearTimeout(refreshTimer.current)
-    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {})
+    fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {})
   }
 
   return (

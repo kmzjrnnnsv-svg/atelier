@@ -1,0 +1,15 @@
+[Unit]
+Description=Atelier GitHub Webhook Listener
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/nrply/app/atelier
+ExecStart=/opt/node22/bin/node /home/nrply/app/atelier/webhook.js
+Environment=WEBHOOK_SECRET=atelier-webhook-secret-change-me
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

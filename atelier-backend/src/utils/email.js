@@ -345,6 +345,19 @@ export async function sendShippingNotification(order, user) {
   await send({ to: user.email, subject, html })
 }
 
+// ─── Helper: compute user shoe stats (ordered vs kept) ───────────────────────
+function getUserShoeStats(userId) {
+  const db = getDb()
+  const rows = db.prepare('SELECT shoe_name, status FROM orders WHERE user_id = ?').all(userId)
+  const stats = {}
+  for (const r of rows) {
+    if (!stats[r.shoe_name]) stats[r.shoe_name] = { ordered: 0, kept: 0 }
+    stats[r.shoe_name].ordered++
+    if (r.status !== 'cancelled') stats[r.shoe_name].kept++
+  }
+  return stats
+}
+
 // ─── Manufacturer notification email ──────────────────────────────────────────
 export async function sendManufacturerNotification(order, user, scan) {
   const cfg  = getEmailConfig()
@@ -443,6 +456,35 @@ export async function sendManufacturerNotification(order, user, scan) {
       <p style="font-size:12px;color:#888;margin:0">${closing}</p>
     </div>
     `}
+    ${order.foot_notes_en ? `
+    <div class="section">
+      <div class="section-title">Customer Foot Notes</div>
+      <div class="intro-note">${nl2br(order.foot_notes_en)}</div>
+      ${order.foot_notes ? `<p style="font-size:10px;color:#aaa;margin:4px 0 0">Original (DE): ${order.foot_notes}</p>` : ''}
+    </div>` : ''}
+    ${(() => {
+      const stats = getUserShoeStats(order.user_id)
+      const entries = Object.entries(stats)
+      if (!entries.length) return ''
+      return `
+    <div class="section">
+      <div class="section-title">Kundenhistorie — Bestellte vs. Behaltene Schuhe</div>
+      <table style="width:100%;border-collapse:collapse;margin-top:8px">
+        <thead><tr>
+          <th style="font-size:10px;color:#aaa;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:6px 8px;border-bottom:1px solid #ede9e2">Modell</th>
+          <th style="font-size:10px;color:#aaa;letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:6px 8px;border-bottom:1px solid #ede9e2">Bestellt</th>
+          <th style="font-size:10px;color:#aaa;letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:6px 8px;border-bottom:1px solid #ede9e2">Behalten</th>
+        </tr></thead>
+        <tbody>${entries.map(([name, s]) => `
+          <tr>
+            <td style="font-size:13px;color:#111;padding:6px 8px;border-top:1px solid #f5f3ef">${name}</td>
+            <td style="font-size:13px;color:#555;text-align:center;padding:6px 8px;border-top:1px solid #f5f3ef">${s.ordered}</td>
+            <td style="font-size:13px;color:#111;font-weight:600;text-align:center;padding:6px 8px;border-top:1px solid #f5f3ef">${s.kept}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`
+    })()}
     ${accessories.length ? `
     <div class="section">
       <div class="section-title">Zubehör</div>

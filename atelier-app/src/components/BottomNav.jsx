@@ -1,35 +1,47 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, Compass, BookOpen, User } from 'lucide-react'
+import { useTransition } from 'react'
+import { Home, Compass, User } from 'lucide-react'
+import { prefetchRoute } from '../App'
 
 const NAV_ITEMS = [
-  { id: 'shop',    icon: Home,     label: 'SOLE',    path: '/collection' },
-  { id: 'explore', icon: Compass,  label: 'EXPLORE', path: '/explore'    },
-  { id: 'learn',   icon: BookOpen, label: 'LEARN',   path: '/learn'      },
-  { id: 'profile', icon: User,     label: 'PROFILE', path: '/profile'    },
+  { id: 'shop',    icon: Home,    label: 'SOLE',    path: '/collection' },
+  { id: 'explore', icon: Compass, label: 'EXPLORE', path: '/explore'    },
+  { id: 'profile', icon: User,    label: 'PROFILE', path: '/profile'    },
 ]
 
 export default function BottomNav() {
   const navigate        = useNavigate()
   const { pathname }    = useLocation()
+  const [isPending, startTransition] = useTransition()
 
   const activeId = NAV_ITEMS.find(item =>
     pathname === item.path || pathname.startsWith(item.path + '/')
   )?.id
 
   return (
-    <div className="bg-white border-t border-gray-100 flex items-center justify-around px-2 pb-7 pt-2 flex-shrink-0">
-      {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => (
-        <button
-          key={id}
-          onClick={() => navigate(path)}
-          className={`flex flex-col items-center gap-0.5 bg-transparent border-0 p-2 transition-colors ${
-            activeId === id ? 'text-black' : 'text-gray-400'
-          }`}
-        >
-          <Icon size={22} strokeWidth={activeId === id ? 2 : 1.5} />
-          <span className="text-[7px] uppercase tracking-widest font-bold">{label}</span>
-        </button>
-      ))}
+    <div className="bg-white border-t border-black/5 flex items-center justify-around px-2 pt-0 flex-shrink-0"
+      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}>
+      {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
+        const isActive = activeId === id
+        return (
+          <button
+            key={id}
+            onClick={() => startTransition(() => navigate(path))}
+            onPointerEnter={() => prefetchRoute(path)}
+            onTouchStart={() => prefetchRoute(path)}
+            className={`flex flex-col items-center gap-0.5 bg-transparent border-0 pt-2 pb-2 px-2 transition-colors ${
+              isActive ? 'text-black' : 'text-black/30'
+            } ${isPending ? 'opacity-70' : ''}`}
+            style={{ borderTop: isActive ? '2px solid black' : '2px solid transparent' }}
+          >
+            <Icon size={22} strokeWidth={isActive ? 1.8 : 1.5} />
+            <span
+              className="text-[7px] uppercase tracking-[0.18em] font-normal"
+              style={{ letterSpacing: '0.18em' }}
+            >{label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

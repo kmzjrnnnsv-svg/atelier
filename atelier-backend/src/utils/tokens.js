@@ -30,10 +30,14 @@ export function refreshExpiresAt() {
 
 export const REFRESH_MAX_AGE = REFRESH_EXPIRY
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 export const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  // Always secure: Vite dev server uses HTTPS (basicSsl), production also HTTPS
+  secure: true,
+  // 'lax' for same-origin (Vite proxy), 'none' for cross-origin (Capacitor native)
+  sameSite: isProduction ? 'none' : 'lax',
   path: '/api/auth/refresh',
   maxAge: REFRESH_EXPIRY,
 }

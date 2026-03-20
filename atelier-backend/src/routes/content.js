@@ -116,10 +116,34 @@ const articleValidators = [
   }),
 ]
 
-export const shoesRouter    = makeContentRouter('shoes', shoeValidators)
-export const curatedRouter  = makeContentRouter('curated_items')
-export const wardrobeRouter = makeContentRouter('wardrobe_items')
-export const outfitsRouter  = makeContentRouter('outfits', outfitValidators)
-export const articlesRouter = makeContentRouter('articles', articleValidators)
+// Explore section validators
+const exploreValidators = [
+  body('key').trim().notEmpty().withMessage('Key required'),
+  body('label').trim().notEmpty().withMessage('Label required'),
+  body('title').trim().notEmpty().withMessage('Title required'),
+  body('description').optional().trim(),
+  body('tag').optional().trim(),
+  body('color').optional().trim(),
+  body('accent').optional().trim(),
+  body('icon').optional().trim(),
+  body('image_data').optional().custom(v => {
+    if (v && Buffer.byteLength(v, 'base64') > 3 * 1024 * 1024)
+      throw new Error('Image too large (max 3MB)')
+    return true
+  }),
+  body('preview_items').optional().trim(),
+  body('visible').optional().isInt({ min: 0, max: 1 }),
+  body('sort_order').optional().isInt({ min: 0 }),
+]
+
+export const shoesRouter      = makeContentRouter('shoes', shoeValidators)
+export const curatedRouter    = makeContentRouter('curated_items')
+export const wardrobeRouter   = makeContentRouter('wardrobe_items')
+export const outfitsRouter    = makeContentRouter('outfits', outfitValidators)
+export const articlesRouter   = makeContentRouter('articles', articleValidators)
+export const materialsRouter  = makeContentRouter('shoe_materials')
+export const colorsRouter     = makeContentRouter('shoe_colors')
+export const solesRouter      = makeContentRouter('shoe_soles')
+export const exploreSectionsRouter = makeContentRouter('explore_sections', exploreValidators)
 
 export default router

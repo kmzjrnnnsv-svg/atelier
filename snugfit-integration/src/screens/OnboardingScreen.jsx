@@ -34,7 +34,7 @@ const SLIDES = [
     id:          '2',
     emoji:       '📋',
     title:       'Vorbereitung',
-    description: 'Du brauchst:\n\n✓  Helle, ebene Oberfläche\n✓  Gute Beleuchtung\n✓  Socken ausziehen\n✓  Ca. 5 Minuten Zeit',
+    description: 'Du brauchst:\n\n✓  Helle, ebene Oberfläche\n✓  Gute Beleuchtung\n✓  Dünne Alltagssocken tragen\n✓  Ca. 5 Minuten Zeit',
     color:       '#1e3a5f',
     accent:      '#3b82f6',
   },
