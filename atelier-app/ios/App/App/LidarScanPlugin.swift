@@ -82,6 +82,10 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
     private let continuousLock = NSLock()
     /// Tracked angle bins (0–11, each covering 30°) for coverage estimation
     private var continuousAngles: Set<Int> = []
+    /// Per-bin point counts – bin only counts as "covered" when >= minBinPoints
+    private var continuousBinCounts: [Int: Int] = [:]
+    /// Minimum points per bin before it's considered covered (for ±1mm accuracy)
+    private let minBinPoints: Int = 200
     /// Timestamp of last depth frame capture in continuous mode
     private var lastContinuousDepthTime: TimeInterval = 0
     /// Minimum interval between depth captures in continuous mode (seconds)
@@ -205,7 +209,12 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
 
         continuousLock.lock()
         continuousPoints.append(contentsOf: worldPts)
-        continuousAngles.insert(bin)
+        // Track per-bin point density; only mark as covered when >= minBinPoints
+        let newCount = (continuousBinCounts[bin] ?? 0) + worldPts.count
+        continuousBinCounts[bin] = newCount
+        if newCount >= minBinPoints {
+            continuousAngles.insert(bin)
+        }
         continuousLock.unlock()
     }
 
@@ -697,6 +706,7 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
         continuousLock.lock()
         continuousPoints = []
         continuousAngles = []
+        continuousBinCounts = [:]
         continuousLock.unlock()
 
         frameCaptureLock.lock()
@@ -791,6 +801,7 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
             self.continuousLock.lock()
             self.continuousPoints = []
             self.continuousAngles = []
+            self.continuousBinCounts = [:]
             self.continuousLock.unlock()
             self.frameCaptureLock.lock()
             self.capturedFrames = []
@@ -815,6 +826,7 @@ public class LidarScanPlugin: CAPPlugin, ARSessionDelegate {
         continuousLock.lock()
         continuousPoints = []
         continuousAngles = []
+        continuousBinCounts = [:]
         continuousLock.unlock()
     }
 

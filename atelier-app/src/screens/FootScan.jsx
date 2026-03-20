@@ -878,9 +878,12 @@ export default function FootScan() {
 
       const raw = await LidarScanNative.finishContinuousCapture()
 
-      // Quality check: ensure enough data was captured
-      if (raw.pointCount < 500) {
-        throw new Error(`Zu wenige Punkte erfasst (${raw.pointCount}). Bewege das Handy langsamer und näher am Fuß.`)
+      // Quality check: ensure enough data for ±1mm accuracy
+      if (raw.pointCount < 2000) {
+        throw new Error(`Zu wenige Punkte erfasst (${raw.pointCount}). Mindestens 2000 Punkte für präzise Maße benötigt. Bewege das Handy langsamer und umrunde den Fuß vollständig.`)
+      }
+      if ((raw.anglesCovered ?? 0) < 6) {
+        throw new Error(`Nur ${raw.anglesCovered ?? 0} von 12 Winkeln erfasst. Bitte den Fuß von allen Seiten scannen.`)
       }
 
       // Send point cloud + auto-captured training images to backend
@@ -1082,30 +1085,40 @@ export default function FootScan() {
           width:        r1(R.right_width  ?? R.raw?.width  ?? 92),
           arch:         R.right_arch_height != null ? r1(R.right_arch_height) : (R.right_arch != null ? r1(R.right_arch) : null),
           foot_height:  R.right_foot_height != null ? r1(R.right_foot_height) : (R.raw?.height != null ? r1(R.raw.height) : null),
+          toe_girth:    R.right_toe_girth    ?? null,
+          preball_girth: R.right_preball_girth ?? null,
           ball_girth:   R.right_ball_girth   ?? null,
-          instep_girth: R.right_instep_girth ?? null,
-          heel_girth:   R.right_heel_girth   ?? null,
           waist_girth:  R.right_waist_girth  ?? null,
+          midinstep_girth: R.right_midinstep_girth ?? null,
+          instep_girth: R.right_instep_girth ?? null,
+          upper_instep_girth: R.right_upper_instep_girth ?? null,
+          heel_girth:   R.right_heel_girth   ?? null,
           ankle_girth:  R.right_ankle_girth  ?? null,
           long_heel_girth:  R.right_long_heel_girth  ?? null,
           short_heel_girth: R.right_short_heel_girth ?? null,
           crossSections: R.cross_sections ?? {},
           pointCloud:    R.raw?.point_cloud_mm ?? null,
+          pointCount:    R.raw?.point_count ?? null,
         }
         const left = {
           length:       r1(L.left_length ?? L.raw?.length ?? 253),
           width:        r1(L.left_width  ?? L.raw?.width  ?? 91),
           arch:         L.left_arch_height != null ? r1(L.left_arch_height) : (L.left_arch != null ? r1(L.left_arch) : null),
           foot_height:  L.left_foot_height != null ? r1(L.left_foot_height) : (L.raw?.height != null ? r1(L.raw.height) : null),
+          toe_girth:    L.left_toe_girth    ?? null,
+          preball_girth: L.left_preball_girth ?? null,
           ball_girth:   L.left_ball_girth   ?? null,
-          instep_girth: L.left_instep_girth ?? null,
-          heel_girth:   L.left_heel_girth   ?? null,
           waist_girth:  L.left_waist_girth  ?? null,
+          midinstep_girth: L.left_midinstep_girth ?? null,
+          instep_girth: L.left_instep_girth ?? null,
+          upper_instep_girth: L.left_upper_instep_girth ?? null,
+          heel_girth:   L.left_heel_girth   ?? null,
           ankle_girth:  L.left_ankle_girth  ?? null,
           long_heel_girth:  L.left_long_heel_girth  ?? null,
           short_heel_girth: L.left_short_heel_girth ?? null,
           crossSections: L.cross_sections ?? {},
           pointCloud:    L.raw?.point_cloud_mm ?? null,
+          pointCount:    L.raw?.point_count ?? null,
         }
         setProgress(100)
         setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI: true, source: 'lidar' })
@@ -1867,6 +1880,18 @@ export default function FootScan() {
                   </div>
                 )}
 
+                {/* Scan quality indicator (LiDAR only) */}
+                {result.source === 'lidar' && (result.right?.pointCount || result.left?.pointCount) && (
+                  <div className="flex items-center gap-3 px-3.5 py-2.5 bg-[#f6f5f3] border border-black/5 text-[10px] text-black/40">
+                    <span>Scan-Qualität:</span>
+                    {result.right?.pointCount && <span>R: {Number(result.right.pointCount).toLocaleString('de-DE')} Punkte</span>}
+                    {result.left?.pointCount && <span>L: {Number(result.left.pointCount).toLocaleString('de-DE')} Punkte</span>}
+                    <span className={`ml-auto font-medium ${(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'text-[#30D158]' : 'text-amber-500'}`}>
+                      {(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? '±1mm' : '±1.5mm'}
+                    </span>
+                  </div>
+                )}
+
                 {/* Measurements — editable by user */}
                 <div>
                   <div className="flex items-center justify-between mb-2 px-1">
@@ -1880,17 +1905,21 @@ export default function FootScan() {
                       </div>
                       <div className="grid grid-cols-2 gap-0">
                         {[
-                          { label: 'Länge',              key: 'length',           value: m.length,           optional: true, accuracy: '±1 mm' },
-                          { label: 'Breite',              key: 'width',            value: m.width,            optional: false, accuracy: '±1.5 mm' },
-                          { label: 'Ballenumfang',        key: 'ball_girth',       value: m.ball_girth,       optional: true, accuracy: '±5 mm' },
-                          { label: 'Ristumfang',          key: 'instep_girth',     value: m.instep_girth,     optional: true, accuracy: '±2.5 mm' },
-                          { label: 'Lg. Fersenumfang',    key: 'long_heel_girth',  value: m.long_heel_girth,  optional: true, accuracy: '±7 mm' },
-                          { label: 'Kz. Fersenumfang',    key: 'short_heel_girth', value: m.short_heel_girth, optional: true, accuracy: '±3 mm' },
-                          { label: 'Fersenumfang',        key: 'heel_girth',       value: m.heel_girth,       optional: false, accuracy: '±7 mm' },
-                          { label: 'Gewölbehöhe',         key: 'arch',             value: m.arch,             optional: false, accuracy: '±4 mm' },
-                          { label: 'Gelenkweite',         key: 'waist_girth',      value: m.waist_girth,      optional: false, accuracy: '±2.5 mm' },
-                          { label: 'Knöchel',             key: 'ankle_girth',      value: m.ankle_girth,      optional: false, accuracy: '±10 mm' },
-                          { label: 'Fußhöhe',             key: 'foot_height',      value: m.foot_height,      optional: false, accuracy: '±4 mm' },
+                          { label: 'Länge',              key: 'length',           value: m.length,           optional: false, accuracy: '±1 mm' },
+                          { label: 'Breite',              key: 'width',            value: m.width,            optional: false, accuracy: '±1 mm' },
+                          { label: 'Zehenumfang',         key: 'toe_girth',        value: m.toe_girth,        optional: true, accuracy: '±1 mm' },
+                          { label: 'Vorballenumfang',     key: 'preball_girth',    value: m.preball_girth,    optional: true, accuracy: '±1 mm' },
+                          { label: 'Ballenumfang',        key: 'ball_girth',       value: m.ball_girth,       optional: true, accuracy: '±1 mm' },
+                          { label: 'Gelenkweite',         key: 'waist_girth',      value: m.waist_girth,      optional: false, accuracy: '±1 mm' },
+                          { label: 'Spannumfang',         key: 'midinstep_girth',  value: m.midinstep_girth,  optional: true, accuracy: '±1 mm' },
+                          { label: 'Ristumfang',          key: 'instep_girth',     value: m.instep_girth,     optional: true, accuracy: '±1 mm' },
+                          { label: 'Oberer Rist',         key: 'upper_instep_girth', value: m.upper_instep_girth, optional: true, accuracy: '±1 mm' },
+                          { label: 'Lg. Fersenumfang',    key: 'long_heel_girth',  value: m.long_heel_girth,  optional: true, accuracy: '±1.5 mm' },
+                          { label: 'Kz. Fersenumfang',    key: 'short_heel_girth', value: m.short_heel_girth, optional: true, accuracy: '±1.5 mm' },
+                          { label: 'Fersenumfang',        key: 'heel_girth',       value: m.heel_girth,       optional: false, accuracy: '±1 mm' },
+                          { label: 'Knöchel',             key: 'ankle_girth',      value: m.ankle_girth,      optional: false, accuracy: '±1 mm' },
+                          { label: 'Gewölbehöhe',         key: 'arch',             value: m.arch,             optional: false, accuracy: '±1.5 mm' },
+                          { label: 'Fußhöhe',             key: 'foot_height',      value: m.foot_height,      optional: false, accuracy: '±1.5 mm' },
                         ].filter(({ optional, value }) => !optional || value != null)
                         .map(({ label: lbl, key, value, accuracy }, i) => {
                           const editKey = `${side}_${key}`

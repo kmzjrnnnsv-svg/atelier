@@ -367,19 +367,25 @@ def girth_perpendicular(pts_aligned, frac, centers, x_positions, band_m=0.005):
 
     pts_2d = np.column_stack([slice_pts @ right, slice_pts @ up_perp])
 
-    return alpha_hull_perimeter_mm(pts_2d, alpha_m=0.010)
+    # Adaptive alpha: finer radius when dense scan → ±1mm accuracy
+    alpha = 0.005 if len(slice_pts) > 50 else 0.010
+    return alpha_hull_perimeter_mm(pts_2d, alpha_m=alpha)
 
 
-# ─── 8b. Cross-section contour extraction at 6 standardized levels ───────
+# ─── 8b. Cross-section contour extraction at 10 standardized levels ──────
 
-# The 6 Leisten-relevant measurement levels
+# 10 Leisten-relevant measurement levels for ±1mm shoe-last accuracy
 CROSS_SECTION_LEVELS = [
-    ("Ferse",   0.15),   # heel
-    ("Gewölbe", 0.30),   # arch / vault
-    ("Ballen",  0.40),   # ball / metatarsal
-    ("Taille",  0.45),   # waist
-    ("Rist",    0.60),   # instep
-    ("Knöchel", 0.88),   # ankle
+    ("Zehen",         0.10),   # toe box
+    ("Ferse",         0.15),   # heel
+    ("Gewölbe",       0.30),   # arch / vault
+    ("Vorballen",     0.35),   # pre-ball transition
+    ("Ballen",        0.40),   # ball / metatarsal
+    ("Taille",        0.45),   # waist
+    ("Spann",         0.52),   # mid-instep
+    ("Rist",          0.60),   # instep
+    ("Oberer_Rist",   0.75),   # upper instep / ankle transition
+    ("Knöchel",       0.88),   # ankle
 ]
 
 
@@ -424,8 +430,9 @@ def extract_cross_section_contour(pts_aligned, frac, centers, x_positions, band_
     # Project to 2D (Y=right, Z=up) in metres
     pts_2d = np.column_stack([slice_pts @ right, slice_pts @ up_perp])
 
-    # Compute girth via alpha hull
-    girth = alpha_hull_perimeter_mm(pts_2d, alpha_m=0.010)
+    # Compute girth via alpha hull (adaptive: finer for dense scans)
+    alpha_r = 0.005 if len(slice_pts) > 50 else 0.010
+    girth = alpha_hull_perimeter_mm(pts_2d, alpha_m=alpha_r)
 
     # Convert 2D points to mm for storage
     pts_2d_mm = pts_2d * 1000
@@ -594,11 +601,11 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     # Step 1: Parse point cloud -> (N, 3) float64
     pts = np.array([[p["x"], p["y"], p["z"]] for p in point_cloud], dtype=np.float64)
 
-    if len(pts) < 150:
-        raise ValueError(f"Punktwolke zu dünn: nur {len(pts)} Punkte (mindestens 150 benötigt). Bewege das Handy langsamer.")
+    if len(pts) < 1000:
+        raise ValueError(f"Punktwolke zu dünn: nur {len(pts)} Punkte (mindestens 1000 für ±1mm Genauigkeit). Bewege das Handy langsamer und umrunde den Fuß.")
 
     # Step 2: RANSAC floor detection
-    normal, d = ransac_floor(pts, n_iter=300, thr=0.004)
+    normal, d = ransac_floor(pts, n_iter=500, thr=0.0025)
     heights   = height_above_floor(pts, normal, d)
 
     # Step 3: Isolate foot region: 5 mm - 200 mm above floor
@@ -615,7 +622,9 @@ def measure_foot(point_cloud: list[dict]) -> dict:
         raise ValueError(f"Zu wenige Punkte nach Bereinigung: {len(foot_pts)}. Scan enthält zu viel Rauschen.")
 
     # Step 5: Voxel-grid normalisation (0.5 mm) -- NEW
-    foot_pts = voxel_downsample(foot_pts, voxel_m=0.0005)
+    # Adaptive voxel size: finer grid for dense scans → better ±1mm accuracy
+    voxel = 0.0003 if len(foot_pts) > 10000 else 0.0005
+    foot_pts = voxel_downsample(foot_pts, voxel_m=voxel)
 
     if len(foot_pts) < 40:
         raise ValueError(f"Zu wenige Punkte nach Voxel-Normalisierung: {len(foot_pts)}. Bitte erneut scannen.")
@@ -643,13 +652,17 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     #     Rist    ~60%  -- instep
     #     Knöchel ~88%  -- just above the heel / lower ankle
     #     heel    ~85%  -- heel cup (legacy)
+    toe_girth    = girth_perpendicular(aligned, 0.10, centers, x_positions, band_m=0.005)
     ball_girth   = girth_perpendicular(aligned, 0.40, centers, x_positions, band_m=0.005)
+    preball_girth = girth_perpendicular(aligned, 0.35, centers, x_positions, band_m=0.005)
     waist_girth  = girth_perpendicular(aligned, 0.45, centers, x_positions, band_m=0.005)
+    midinstep_girth = girth_perpendicular(aligned, 0.52, centers, x_positions, band_m=0.005)
     instep_girth = girth_perpendicular(aligned, 0.60, centers, x_positions, band_m=0.005)
+    upper_instep_girth = girth_perpendicular(aligned, 0.75, centers, x_positions, band_m=0.005)
     heel_girth   = girth_perpendicular(aligned, 0.85, centers, x_positions, band_m=0.005)
     ankle_girth  = girth_perpendicular(aligned, 0.88, centers, x_positions, band_m=0.005)
 
-    # Step 9c: Extract cross-section contour geometries at 6 standardized levels
+    # Step 9c: Extract cross-section contour geometries at 10 standardized levels
     cross_sections = extract_cross_sections(aligned, centers, x_positions)
 
     # Step 9b: Arch height — minimum Z in medial arch region (30-65% of length)
@@ -668,9 +681,13 @@ def measure_foot(point_cloud: list[dict]) -> dict:
         arch_height_mm = None
 
     # Ellipse fallback for any missing girths
+    if toe_girth    is None: toe_girth    = ellipse_girth_mm(width_mm * 0.35,     height_mm * 0.30)
+    if preball_girth is None: preball_girth = ellipse_girth_mm(width_mm * 0.48,   height_mm * 0.48)
     if ball_girth   is None: ball_girth   = ellipse_girth_mm(width_mm / 2,        height_mm / 2)
-    if instep_girth is None: instep_girth = ellipse_girth_mm(width_mm * 0.45,     height_mm * 0.55)
     if waist_girth  is None: waist_girth  = ellipse_girth_mm(width_mm * 0.44,     height_mm * 0.50)
+    if midinstep_girth is None: midinstep_girth = ellipse_girth_mm(width_mm * 0.44, height_mm * 0.52)
+    if instep_girth is None: instep_girth = ellipse_girth_mm(width_mm * 0.45,     height_mm * 0.55)
+    if upper_instep_girth is None: upper_instep_girth = ellipse_girth_mm(width_mm * 0.40, height_mm * 0.50)
     if heel_girth   is None: heel_girth   = ellipse_girth_mm(width_mm * 0.38,     height_mm * 0.48)
     if ankle_girth  is None: ankle_girth  = ellipse_girth_mm(width_mm * 0.35,     height_mm * 0.45)
 
@@ -683,9 +700,13 @@ def measure_foot(point_cloud: list[dict]) -> dict:
         "width":           width_mm,
         "height":          height_mm,
         "arch_height":     arch_height_mm,
+        "toe_girth":       toe_girth,
+        "preball_girth":   preball_girth,
         "ball_girth":      ball_girth,
-        "instep_girth":    instep_girth,
         "waist_girth":     waist_girth,
+        "midinstep_girth": midinstep_girth,
+        "instep_girth":    instep_girth,
+        "upper_instep_girth": upper_instep_girth,
         "heel_girth":      heel_girth,
         "ankle_girth":     ankle_girth,
         "point_count":     len(foot_pts),

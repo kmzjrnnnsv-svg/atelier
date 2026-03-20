@@ -47,5 +47,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Kamera wird für den 3D-Fußscan benötigt</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Fotos werden für die Fußvermessung gespeichert</string>
 </dict>
 </plist>
