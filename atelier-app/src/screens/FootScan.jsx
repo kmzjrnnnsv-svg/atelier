@@ -10,6 +10,7 @@ import { buildFootGeoAsync, downloadSTL } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
 import DepthSensing, { depthCapabilities } from '../plugins/depthSensing'
+import { speak, stopSpeaking, hapticLight, hapticMedium, hapticStrong, hapticSuccess, SCAN_MESSAGES, setVoiceEnabled, isVoiceEnabled } from '../utils/scanVoice'
 
 // ─── Size lookup ───────────────────────────────────────────────────────────────
 const r1 = x => Math.round(x * 10) / 10
@@ -670,6 +671,7 @@ export default function FootScan() {
   const [lidarData,  setLidarData]  = useState({ right: null, left: null })
   const [lidarError, setLidarError] = useState(null)
   const [walkProgress, setWalkProgress] = useState(0)
+  const [voiceOn, setVoiceOn]           = useState(true)
   const [depthMode, setDepthMode]     = useState('none') // 'webxr' | 'sfm' | 'none'
   const [a4Detected, setA4Detected]   = useState(null)   // { x, y, w, h, confidence }
   const [depthFrames, setDepthFrames] = useState({})      // depth data per capture phase
@@ -834,13 +836,19 @@ export default function FootScan() {
     setWalkPoints(0)
     setAiStatus('Scan läuft…')
 
+    // Voice: announce scan start
+    speak(SCAN_MESSAGES.startScan)
+    hapticMedium()
+
     try {
       // Use Continuous Depth Capture (Mode 3) — more reliable than mesh reconstruction
       await LidarScanNative.startContinuousCapture()
 
-      // Poll real coverage-based progress
+      // Poll real coverage-based progress with voice guidance
       const startTime = Date.now()
-      let autoFinish = false
+      let lastVoicePhase = -1
+      let lastAngleWarningTime = 0
+      let lastPointWarningTime = 0
 
       // Fast polling (150ms) for responsive progress ring + single Promise
       await new Promise((resolve) => {
@@ -852,11 +860,40 @@ export default function FootScan() {
             const prog = await LidarScanNative.getContinuousCaptureProgress()
             const elapsed = Date.now() - startTime
             const coverage = prog.estimatedCoverage ?? 0
+            const pts = prog.pointCount ?? 0
+            const angles = prog.anglesCovered ?? 0
+            const now = Date.now()
 
             // Smooth progress: interpolate toward target to avoid jumpy ring
             lastCoverage = lastCoverage + (coverage - lastCoverage) * 0.4
             setWalkProgress(Math.round(lastCoverage))
-            setWalkPoints(prog.pointCount ?? 0)
+            setWalkPoints(pts)
+
+            // ── Voice guidance at phase transitions ──
+            const voicePhase = coverage < 20 ? 0 : coverage < 45 ? 1 : coverage < 70 ? 2 : coverage < 95 ? 3 : 4
+            if (voicePhase !== lastVoicePhase) {
+              lastVoicePhase = voicePhase
+              hapticLight()
+              if (voicePhase === 0) speak(SCAN_MESSAGES.phase1)
+              else if (voicePhase === 1) speak(SCAN_MESSAGES.phase2)
+              else if (voicePhase === 2) speak(SCAN_MESSAGES.phase3)
+              else if (voicePhase === 3) speak(SCAN_MESSAGES.phase4)
+            }
+
+            // ── Real-time warnings ──
+            // Warn if too few points after 8 seconds (scanning too fast or too far away)
+            if (elapsed > 8000 && pts < 800 && now - lastPointWarningTime > 6000) {
+              speak(SCAN_MESSAGES.tooFewPoints, { urgent: true })
+              hapticStrong()
+              lastPointWarningTime = now
+            }
+
+            // Warn if angular coverage is stuck (only scanning from one side)
+            if (elapsed > 12000 && angles < 4 && now - lastAngleWarningTime > 8000) {
+              speak(SCAN_MESSAGES.moveAround, { urgent: true })
+              hapticStrong()
+              lastAngleWarningTime = now
+            }
 
             // Auto-finish when: coverage ≥ 95% AND at least MIN_SCAN_MS elapsed
             // OR hard stop after MAX_SCAN_MS
@@ -871,16 +908,24 @@ export default function FootScan() {
 
       setWalkProgress(100)
       setAiStatus('Scan wird abgeschlossen…')
+      hapticSuccess()
 
       const raw = await LidarScanNative.finishContinuousCapture()
 
       // Quality check: ensure enough data for ±1mm accuracy
       if (raw.pointCount < 2000) {
+        speak(SCAN_MESSAGES.lowQuality, { urgent: true })
+        hapticStrong()
         throw new Error(`Zu wenige Punkte erfasst (${raw.pointCount}). Mindestens 2000 Punkte für präzise Maße benötigt. Bewege das Handy langsamer und umrunde den Fuß vollständig.`)
       }
       if ((raw.anglesCovered ?? 0) < 6) {
+        speak(SCAN_MESSAGES.moveAround, { urgent: true })
+        hapticStrong()
         throw new Error(`Nur ${raw.anglesCovered ?? 0} von 12 Winkeln erfasst. Bitte den Fuß von allen Seiten scannen.`)
       }
+
+      // Voice: side complete
+      speak(SCAN_MESSAGES.sideComplete(side))
 
       setAiStatus(`${raw.pointCount.toLocaleString('de-DE')} Punkte · Maße werden berechnet…`)
 
@@ -899,8 +944,14 @@ export default function FootScan() {
         console.warn('[LiDAR] Session-Warnung:', raw.sessionWarning)
       }
 
-      if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-transition') }
-      else                  { setPhase('processing') }
+      if (side === 'right') {
+        setWalkProgress(0); setWalkPoints(0); setPhase('lidar-transition')
+        // Voice: switch to left foot
+        setTimeout(() => speak(SCAN_MESSAGES.switchFoot), 800)
+      } else {
+        speak(SCAN_MESSAGES.processing)
+        setPhase('processing')
+      }
     } catch (e) {
       // Clean up native session on error
       try { await LidarScanNative.finishContinuousCapture() } catch {}
@@ -916,6 +967,9 @@ export default function FootScan() {
         : msg.includes('Python') || msg.includes('ModuleNotFoundError')
         ? 'Server-Fehler bei der Verarbeitung. Bitte kontaktiere den Support.'
         : `Scan-Fehler: ${msg}`
+      // Voice: announce error
+      speak(SCAN_MESSAGES.error, { urgent: true })
+      hapticStrong()
       setLidarError(userMsg)
       setWalkProgress(0)
     }
@@ -1330,6 +1384,20 @@ export default function FootScan() {
 
   const LIDAR_PHASES = ['lidar-right', 'lidar-transition', 'lidar-left']
 
+  // ── Voice: announce ready when entering LiDAR scan phase ──
+  useEffect(() => {
+    if (phase === 'lidar-right') {
+      speak(SCAN_MESSAGES.ready('right'))
+    } else if (phase === 'lidar-left') {
+      speak(SCAN_MESSAGES.ready('left'))
+    } else if (phase === 'result') {
+      speak(SCAN_MESSAGES.done)
+      hapticSuccess()
+    }
+    // Clean up speech when leaving scan
+    return () => { if (!LIDAR_PHASES.includes(phase)) stopSpeaking() }
+  }, [phase]) // eslint-disable-line
+
   // ── Face ID-style arc segment path helper ──
   const arcSegmentPath = (index, total, radius, cx, cy) => {
     const arcDeg = 360 / total
@@ -1453,16 +1521,37 @@ export default function FootScan() {
 
           {/* Minimal header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
-            <button onClick={() => { setPhase('start'); setWalkProgress(0) }}
+            <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking() }}
               className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-0">
               <X size={16} className="text-white/80" strokeWidth={2} />
             </button>
             <span className="text-[15px] font-semibold text-white tracking-tight">
               {phase === 'lidar-transition' ? 'Rechter Fuß' : phase === 'lidar-right' ? 'Rechter Fuß' : 'Linker Fuß'}
             </span>
-            <div className="flex gap-1.5">
-              <div className={`w-2 h-2 rounded-full ${phase === 'lidar-left' ? 'bg-white/30' : 'bg-white'}`} />
-              <div className={`w-2 h-2 rounded-full ${phase === 'lidar-left' ? 'bg-white' : 'bg-white/30'}`} />
+            <div className="flex items-center gap-3">
+              {/* Voice guidance toggle */}
+              <button onClick={() => { const next = !voiceOn; setVoiceOn(next); setVoiceEnabled(next); if (!next) stopSpeaking() }}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={voiceOn ? '#30D158' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  {voiceOn ? (
+                    <>
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill={voiceOn ? 'rgba(48,209,88,0.2)' : 'none'} />
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                    </>
+                  ) : (
+                    <>
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                      <line x1="23" y1="9" x2="17" y2="15" />
+                      <line x1="17" y1="9" x2="23" y2="15" />
+                    </>
+                  )}
+                </svg>
+              </button>
+              <div className="flex gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${phase === 'lidar-left' ? 'bg-white/30' : 'bg-white'}`} />
+                <div className={`w-2 h-2 rounded-full ${phase === 'lidar-left' ? 'bg-white' : 'bg-white/30'}`} />
+              </div>
             </div>
           </div>
 
