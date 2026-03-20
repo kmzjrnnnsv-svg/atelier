@@ -870,7 +870,7 @@ export default function FootScan() {
         console.warn('[LiDAR] Session-Warnung:', raw.sessionWarning)
       }
 
-      if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-left') }
+      if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-transition') }
       else                  { setPhase('processing') }
     } catch (e) {
       const msg = e.message ?? 'Unbekannter Fehler'
@@ -1284,7 +1284,23 @@ export default function FootScan() {
     save()
   }, [phase, result, saved]) // eslint-disable-line
 
-  const LIDAR_PHASES = ['lidar-right', 'lidar-left']
+  const LIDAR_PHASES = ['lidar-right', 'lidar-transition', 'lidar-left']
+
+  // ── Face ID-style arc segment path helper ──
+  const arcSegmentPath = (index, total, radius, cx, cy) => {
+    const arcDeg = 360 / total
+    const gapDeg = 1.2
+    const segDeg = arcDeg - gapDeg
+    const startAngle = index * arcDeg - 90
+    const endAngle = startAngle + segDeg
+    const startRad = (startAngle * Math.PI) / 180
+    const endRad = (endAngle * Math.PI) / 180
+    const x1 = cx + radius * Math.cos(startRad)
+    const y1 = cy + radius * Math.sin(startRad)
+    const x2 = cx + radius * Math.cos(endRad)
+    const y2 = cy + radius * Math.sin(endRad)
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`
+  }
 
   // ── Routing helpers ──
   const isCamPhase    = CAM_PHASES.includes(phase) || PG_PHASES.includes(phase)
@@ -1357,164 +1373,158 @@ export default function FootScan() {
           camStatus={camStatus} />
       )}
 
-      {/* ── LiDAR scan screens (Face ID-style) ── */}
+      {/* ── LiDAR scan screens (Apple Face ID-style) ── */}
       {LIDAR_PHASES.includes(phase) && (
         <div className="absolute inset-0 flex flex-col bg-black">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-4 flex-shrink-0">
+          <style>{`
+            @keyframes checkDraw { to { stroke-dashoffset: 0 } }
+            @keyframes faceidFadeInUp {
+              from { opacity: 0; transform: translateY(16px) }
+              to   { opacity: 1; transform: translateY(0) }
+            }
+          `}</style>
+
+          {/* Minimal header */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
             <button onClick={() => { setPhase('start'); setWalkProgress(0) }}
-              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center border-0">
-              <X size={17} className="text-white" strokeWidth={1.8} />
+              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-0">
+              <X size={16} className="text-white/80" strokeWidth={2} />
             </button>
-            <div className="text-center">
-              <p className="text-[8px] text-white/30 uppercase tracking-widest" style={{ letterSpacing: '0.2em' }}>LiDAR 3D</p>
-              <span className="text-[13px] font-bold text-white" style={{ letterSpacing: '0.08em' }}>
-                {phase === 'lidar-right' ? 'Rechter Fuß' : 'Linker Fuß'}
-              </span>
-            </div>
+            <span className="text-[15px] font-semibold text-white tracking-tight">
+              {phase === 'lidar-transition' ? 'Rechter Fuß' : phase === 'lidar-right' ? 'Rechter Fuß' : 'Linker Fuß'}
+            </span>
             <div className="flex gap-1.5">
-              <div className={`h-1.5 w-8 ${phase === 'lidar-right' ? 'bg-teal-400' : 'bg-white'}`} />
-              <div className={`h-1.5 w-8 ${phase === 'lidar-left'  ? 'bg-teal-400' : 'bg-white/25'}`} />
+              <div className={`w-2 h-2 rounded-full ${phase === 'lidar-left' ? 'bg-white/30' : 'bg-white'}`} />
+              <div className={`w-2 h-2 rounded-full ${phase === 'lidar-left' ? 'bg-white' : 'bg-white/30'}`} />
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
-            {/* Face ID-style segmented circular progress */}
-            <div className="relative w-56 h-56 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-                {/* Background segments */}
-                {Array.from({ length: 60 }).map((_, i) => {
-                  const angle = (i / 60) * 360 - 90
-                  const rad = (angle * Math.PI) / 180
-                  const r = 88
-                  const segLen = 4.8 // arc length per segment (degrees)
-                  const x1 = 100 + r * Math.cos(rad)
-                  const y1 = 100 + r * Math.sin(rad)
-                  const endRad = ((angle + segLen) * Math.PI) / 180
-                  const x2 = 100 + r * Math.cos(endRad)
-                  const y2 = 100 + r * Math.sin(endRad)
-                  const filled = i < Math.floor(walkProgress * 0.6)
-                  return (
-                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
-                      stroke={filled ? '#2dd4bf' : 'rgba(255,255,255,0.08)'}
-                      strokeWidth={filled ? '5' : '3.5'}
-                      strokeLinecap="round"
-                      style={{ transition: 'stroke 0.3s ease, stroke-width 0.3s ease' }}
-                    />
-                  )
-                })}
-                {/* Glow effect on latest filled segment */}
-                {walkProgress > 0 && walkProgress < 100 && (() => {
-                  const idx = Math.floor(walkProgress * 0.6) - 1
-                  if (idx < 0) return null
-                  const angle = (idx / 60) * 360 - 90
-                  const rad = (angle * Math.PI) / 180
-                  const r = 88
-                  const cx = 100 + r * Math.cos(rad)
-                  const cy = 100 + r * Math.sin(rad)
-                  return <circle cx={cx} cy={cy} r="6" fill="#2dd4bf" opacity="0.3">
-                    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.2s" repeatCount="indefinite" />
-                  </circle>
-                })()}
+          {phase === 'lidar-transition' ? (
+            /* ── Transition screen: right foot done → left foot next ── */
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center"
+              style={{ animation: 'faceidFadeInUp 0.5s ease forwards' }}>
+              <svg width="80" height="80" viewBox="0 0 80 80" className="mb-8">
+                <circle cx="40" cy="40" r="38" fill="none" stroke="#30D158" strokeWidth="2.5" opacity="0.25" />
+                <circle cx="40" cy="40" r="38" fill="none" stroke="#30D158" strokeWidth="2.5"
+                  strokeDasharray="239" strokeDashoffset="239"
+                  style={{ animation: 'checkDraw 0.6s ease forwards 0.1s' }} />
+                <path d="M23 42l12 12 22-22" fill="none" stroke="#30D158" strokeWidth="3"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="55" strokeDashoffset="55"
+                  style={{ animation: 'checkDraw 0.5s ease forwards 0.5s' }} />
               </svg>
-
-              {/* Center content */}
-              <div className="flex flex-col items-center z-10">
-                {walkProgress === 0 && !lidarError ? (
-                  <>
-                    <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-                      <Scan size={28} className="text-teal-400" strokeWidth={1.2} />
-                    </div>
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Bereit</span>
-                  </>
-                ) : walkProgress >= 100 ? (
-                  <>
-                    <CheckCircle2 size={36} className="text-teal-400 mb-2" strokeWidth={1.5} />
-                    <span className="text-3xl font-bold text-white">100%</span>
-                    <span className="text-[10px] text-teal-400 mt-1 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Erfasst</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-4xl font-bold text-white">{walkProgress}%</span>
-                    {walkPoints > 0 && (
-                      <span className="text-[10px] text-white/40 mt-1">{(walkPoints/1000).toFixed(1)}k Punkte</span>
-                    )}
-                    <span className="text-[9px] text-teal-400/70 mt-0.5">Scannen…</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Instructions below circle */}
-            {walkProgress === 0 && !lidarError && (
-              <>
-                <div>
-                  <p className="text-[15px] font-bold text-white mb-1.5" style={{ letterSpacing: '0.03em' }}>
-                    Bewege das iPhone langsam um den Fuß
-                  </p>
-                  <p className="text-[11px] text-white/40 leading-relaxed">
-                    Halte 30–50 cm Abstand. Erfasse alle Seiten gleichmäßig — wie bei der Face ID-Einrichtung.
-                  </p>
-                </div>
-                <div className="w-full grid grid-cols-4 gap-2 mt-1">
-                  {[
-                    { icon: '↑', label: 'Oben' },
-                    { icon: '→', label: 'Außen' },
-                    { icon: '↓', label: 'Vorne' },
-                    { icon: '←', label: 'Innen' },
-                  ].map(({ icon, label }) => (
-                    <div key={label} className="flex flex-col items-center gap-1 py-2.5 bg-white/5 border border-white/8">
-                      <span className="text-base text-white/60">{icon}</span>
-                      <span className="text-[8px] text-white/35 uppercase tracking-wider">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-              <div>
-                <p className="text-[13px] font-semibold text-white mb-1">Weiterscannen…</p>
-                <p className="text-[11px] text-white/40">
-                  {walkProgress < 30 ? 'Beginne von oben und bewege dich zur Seite' :
-                   walkProgress < 60 ? 'Gut! Erfasse jetzt die Seitenbereiche' :
-                   walkProgress < 85 ? 'Fast fertig — fehlende Winkel auffüllen' :
-                   'Letzte Details…'}
-                </p>
-              </div>
-            )}
-
-            {aiStatus && !lidarError && walkProgress >= 100 && (
-              <p className="text-[11px] text-teal-400 font-medium">{aiStatus}</p>
-            )}
-
-            {lidarError && (
-              <div className="w-full p-4 bg-red-500/8 border border-red-400/20">
-                <p className="text-[12px] text-red-400 font-medium mb-2">{lidarError}</p>
-                <button onClick={() => setPhase('start')}
-                  className="text-[10px] text-red-300/70 underline border-0 bg-transparent p-0">
-                  Zum Foto-Modus wechseln
-                </button>
-              </div>
-            )}
-
-            {!lidarError && walkProgress === 0 && (
+              <h2 className="text-[22px] font-semibold text-white mb-2">
+                Erster Scan abgeschlossen
+              </h2>
+              <p className="text-[15px] text-white/50 mb-12 leading-relaxed">
+                Jetzt den linken Fuß scannen.
+              </p>
               <button
-                onClick={() => runLidarSide(phase === 'lidar-right' ? 'right' : 'left')}
-                className="w-full py-4 bg-teal-500 text-white font-bold text-[13px] border-0 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
-                style={{ letterSpacing: '0.12em' }}>
-                <Scan size={16} strokeWidth={1.5} />
-                Scan starten
+                onClick={() => { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-left') }}
+                className="w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
+                Weiter
               </button>
-            )}
+            </div>
+          ) : (
+            /* ── Scan screen with Face ID ring ── */
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+              {/* Face ID-style segmented circular progress */}
+              <div className="relative w-64 h-64 flex items-center justify-center mb-6">
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
+                  {Array.from({ length: 72 }).map((_, i) => {
+                    const filled = i < Math.floor(walkProgress * 0.72)
+                    const isLeading = filled && i === Math.floor(walkProgress * 0.72) - 1 && walkProgress < 100
+                    return (
+                      <path key={i} d={arcSegmentPath(i, 72, 88, 100, 100)}
+                        fill="none"
+                        stroke={filled ? '#30D158' : 'rgba(255,255,255,0.08)'}
+                        strokeWidth={6}
+                        strokeLinecap="round"
+                        style={{
+                          transition: 'stroke 0.4s ease',
+                          filter: isLeading ? 'drop-shadow(0 0 8px rgba(48,209,88,0.6))' : 'none',
+                        }}
+                      />
+                    )
+                  })}
+                </svg>
 
-            {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-              <div className="w-full py-4 bg-white/5 border border-white/10 flex items-center justify-center gap-3">
-                <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-400 animate-spin" />
-                <span className="text-sm text-gray-300 font-medium">Scannen läuft…</span>
+                {/* Center content */}
+                <div className="flex flex-col items-center z-10">
+                  {walkProgress === 0 && !lidarError ? (
+                    <>
+                      <svg width="44" height="56" viewBox="0 0 44 56" fill="none" className="mb-3 opacity-50">
+                        <ellipse cx="22" cy="36" rx="14" ry="18" stroke="white" strokeWidth="1.5" />
+                        <ellipse cx="22" cy="36" rx="8" ry="11" stroke="white" strokeWidth="1" opacity="0.4" />
+                        <circle cx="12" cy="16" r="3.5" stroke="white" strokeWidth="1.2" />
+                        <circle cx="18" cy="11" r="4" stroke="white" strokeWidth="1.2" />
+                        <circle cx="26" cy="10" r="4.2" stroke="white" strokeWidth="1.2" />
+                        <circle cx="33" cy="13" r="3.5" stroke="white" strokeWidth="1.2" />
+                        <circle cx="37" cy="19" r="2.8" stroke="white" strokeWidth="1.2" />
+                      </svg>
+                      <span className="text-[11px] text-white/40 font-medium tracking-wide">Bereit</span>
+                    </>
+                  ) : walkProgress >= 100 ? (
+                    <>
+                      <svg width="48" height="48" viewBox="0 0 48 48" className="mb-2">
+                        <circle cx="24" cy="24" r="22" fill="none" stroke="#30D158" strokeWidth="2" opacity="0.3" />
+                        <path d="M14 25l7 7 13-13" fill="none" stroke="#30D158" strokeWidth="2.5"
+                          strokeLinecap="round" strokeLinejoin="round"
+                          strokeDasharray="38" strokeDashoffset="38"
+                          style={{ animation: 'checkDraw 0.5s ease forwards 0.2s' }} />
+                      </svg>
+                      <span className="text-[11px] text-[#30D158] mt-1 font-medium tracking-wide">Erfasst</span>
+                    </>
+                  ) : (
+                    <span className="text-[42px] font-semibold text-white"
+                      style={{ fontFeatureSettings: '"tnum"' }}>
+                      {walkProgress}<span className="text-[24px] font-normal text-white/60">%</span>
+                    </span>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
+
+              {/* Instructions */}
+              {walkProgress === 0 && !lidarError && (
+                <div className="mt-2">
+                  <p className="text-[17px] font-semibold text-white mb-2 leading-snug">
+                    Bewege dein iPhone langsam{'\n'}um deinen Fuß herum.
+                  </p>
+                  <p className="text-[13px] text-white/45 leading-relaxed">
+                    Halte 30–50 cm Abstand.
+                  </p>
+                </div>
+              )}
+
+              {walkProgress > 0 && walkProgress < 100 && !lidarError && (
+                <p className="text-[13px] text-white/45">
+                  {walkProgress < 50 ? 'Bewege dich langsam um den Fuß…' : 'Fast fertig…'}
+                </p>
+              )}
+
+              {aiStatus && !lidarError && walkProgress >= 100 && (
+                <p className="text-[13px] text-[#30D158] font-medium">{aiStatus}</p>
+              )}
+
+              {lidarError && (
+                <div className="w-full p-4 rounded-xl bg-red-500/10 border border-red-400/20">
+                  <p className="text-[13px] text-red-400 font-medium mb-2">{lidarError}</p>
+                  <button onClick={() => setPhase('start')}
+                    className="text-[11px] text-red-300/70 underline border-0 bg-transparent p-0">
+                    Zum Foto-Modus wechseln
+                  </button>
+                </div>
+              )}
+
+              {!lidarError && walkProgress === 0 && (
+                <button
+                  onClick={() => runLidarSide(phase === 'lidar-right' ? 'right' : 'left')}
+                  className="mt-8 w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
+                  Scan starten
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1590,7 +1600,7 @@ export default function FootScan() {
                         <p className="text-[9px] text-black/30 uppercase tracking-widest mb-3" style={{ letterSpacing: '0.15em' }}>Empfohlen</p>
                         <button onClick={() => { setLidarData({ right: null, left: null }); setLidarError(null); setPhase('lidar-right') }}
                           className="w-full py-5 bg-black text-white font-bold text-[13px] border-0 flex flex-col items-center gap-2 active:opacity-80">
-                          <Scan size={20} className="text-teal-400" strokeWidth={1.5} />
+                          <Scan size={20} className="text-[#30D158]" strokeWidth={1.5} />
                           <span className="uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>LiDAR 3D-Scan</span>
                           <span className="text-[9px] text-white/40 font-normal normal-case tracking-normal">
                             Direkte Punktwolke · 20 Sek. pro Fuß · ±0.5–1mm
