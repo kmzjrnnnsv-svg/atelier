@@ -832,12 +832,12 @@ export default function FootScan() {
     setLidarError(null)
     setWalkProgress(0)
     setWalkPoints(0)
-    setAiStatus(`📡 Scan läuft…`)
+    setAiStatus(`Scan läuft…`)
 
     try {
       await LidarScanNative.startWalkAround()
 
-      // Poll progress every 500ms
+      // Poll progress every 500ms, warn if point count stays too low
       const startTime = Date.now()
       const pollInterval = setInterval(async () => {
         try {
@@ -852,19 +852,37 @@ export default function FootScan() {
       clearInterval(pollInterval)
       setWalkProgress(100)
 
-      setAiStatus('☁️ Punktwolke wird verarbeitet…')
+      setAiStatus('Punktwolke wird verarbeitet…')
       const raw = await LidarScanNative.finishWalkAround()
+
+      // Send point cloud + auto-captured training images to backend
+      const payload = { pointCloud: raw.pointCloud, side }
+      if (raw.capturedImages?.top)  payload.topImage  = raw.capturedImages.top
+      if (raw.capturedImages?.side) payload.sideImage = raw.capturedImages.side
 
       const measurements = await apiFetch('/api/scans/lidar-measurements', {
         method: 'POST',
-        body: JSON.stringify({ pointCloud: raw.pointCloud, side }),
+        body: JSON.stringify(payload),
       })
       setLidarData(d => ({ ...d, [side]: measurements }))
+
+      if (raw.sessionWarning) {
+        console.warn('[LiDAR] Session-Warnung:', raw.sessionWarning)
+      }
 
       if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-left') }
       else                  { setPhase('processing') }
     } catch (e) {
-      setLidarError(e.message ?? 'LiDAR-Fehler — bitte erneut versuchen')
+      const msg = e.message ?? 'Unbekannter Fehler'
+      // Translate common error patterns to German user-friendly messages
+      const userMsg = msg.includes('Zu wenige') || msg.includes('too sparse') || msg.includes('Insufficient')
+        ? 'Zu wenige Punkte erfasst. Bewege das Handy langsamer und halte 15–80 cm Abstand.'
+        : msg.includes('NOT_ACTIVE') || msg.includes('keine aktive')
+        ? 'Scan-Session wurde unterbrochen. Bitte erneut versuchen.'
+        : msg.includes('ARKIT_ERROR') || msg.includes('ARKit')
+        ? 'AR-Fehler aufgetreten. Stelle sicher, dass genug Licht vorhanden ist.'
+        : `LiDAR-Fehler: ${msg}`
+      setLidarError(userMsg)
       setWalkProgress(0)
     }
   }, []) // eslint-disable-line
@@ -1029,7 +1047,7 @@ export default function FootScan() {
         const right = {
           length:       r1(R.right_length ?? R.raw?.length ?? 255),
           width:        r1(R.right_width  ?? R.raw?.width  ?? 92),
-          arch:         R.right_arch != null ? r1(R.right_arch) : null,
+          arch:         R.right_arch_height != null ? r1(R.right_arch_height) : (R.right_arch != null ? r1(R.right_arch) : null),
           foot_height:  R.right_foot_height != null ? r1(R.right_foot_height) : (R.raw?.height != null ? r1(R.raw.height) : null),
           ball_girth:   R.right_ball_girth   ?? null,
           instep_girth: R.right_instep_girth ?? null,
@@ -1044,7 +1062,7 @@ export default function FootScan() {
         const left = {
           length:       r1(L.left_length ?? L.raw?.length ?? 253),
           width:        r1(L.left_width  ?? L.raw?.width  ?? 91),
-          arch:         L.left_arch != null ? r1(L.left_arch) : null,
+          arch:         L.left_arch_height != null ? r1(L.left_arch_height) : (L.left_arch != null ? r1(L.left_arch) : null),
           foot_height:  L.left_foot_height != null ? r1(L.left_foot_height) : (L.raw?.height != null ? r1(L.raw.height) : null),
           ball_girth:   L.left_ball_girth   ?? null,
           instep_girth: L.left_instep_girth ?? null,

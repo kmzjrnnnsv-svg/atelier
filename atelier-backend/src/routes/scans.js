@@ -1024,6 +1024,65 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
     console.warn('[learning] prediction storage failed:', e.message)
   }
 
+  // ── Link pending training images to this scan (LiDAR + auto-captured photos) ──
+  if (reference_type === 'lidar') {
+    try {
+      const db = getDb()
+      // Find the most recent unlinked training data entry for this user
+      const pending = db.prepare(
+        `SELECT id, right_top_img, right_side_img, left_top_img, left_side_img
+         FROM scan_training_data
+         WHERE scan_id = 0
+         AND created_at > datetime('now', '-10 minutes')
+         ORDER BY created_at DESC LIMIT 1`
+      ).get()
+
+      if (pending) {
+        // Link to the actual scan
+        db.prepare('UPDATE scan_training_data SET scan_id = ? WHERE id = ?')
+          .run(scanId, pending.id)
+
+        // If we have images from both sides, trigger save_real_scan.py
+        const hasAllImages = pending.right_top_img && pending.left_top_img
+        if (hasAllImages) {
+          try {
+            const saveScript = new URL(
+              '../../../atelier-ml/scripts/save_real_scan.py',
+              import.meta.url
+            ).pathname
+            const scanData = JSON.stringify({
+              scan_id: String(scanId),
+              rightTopImg:  pending.right_top_img  || '',
+              rightSideImg: pending.right_side_img || '',
+              leftTopImg:   pending.left_top_img   || '',
+              leftSideImg:  pending.left_side_img  || '',
+              lidar: {
+                right_length, right_width, right_foot_height,
+                right_arch_height: right_arch,
+                right_ball_girth, right_instep_girth, right_heel_girth,
+                right_waist_girth, right_ankle_girth,
+                left_length, left_width, left_foot_height,
+                left_arch_height: left_arch,
+                left_ball_girth, left_instep_girth, left_heel_girth,
+                left_waist_girth, left_ankle_girth,
+              },
+            })
+            // Run asynchronously — don't block the response
+            const { spawn } = await import('child_process')
+            const child = spawn('python3', [saveScript, '--data', scanData], {
+              stdio: 'ignore', detached: true,
+            })
+            child.unref()
+          } catch (e) {
+            console.warn('[training] save_real_scan.py fehlgeschlagen:', e.message)
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[training] Linking training images failed:', e.message)
+    }
+  }
+
   res.status(201).json(row)
 })
 
@@ -1426,10 +1485,10 @@ router.post('/trigger-training', authenticate, requireRole('admin'), async (req,
 // Receives an iPhone LiDAR point cloud, runs process_lidar.py, returns mm measurements.
 // The client can then call  POST /api/scans  with these values to save a full scan.
 router.post('/lidar-measurements', authenticate, async (req, res) => {
-  const { pointCloud, side } = req.body   // side: 'right' | 'left' | 'both'
+  const { pointCloud, side, topImage, sideImage } = req.body
 
-  if (!Array.isArray(pointCloud) || pointCloud.length < 200) {
-    return res.status(400).json({ error: 'pointCloud must be an array with ≥200 points' })
+  if (!Array.isArray(pointCloud) || pointCloud.length < 150) {
+    return res.status(400).json({ error: 'pointCloud muss ein Array mit mindestens 150 Punkten sein' })
   }
 
   // Write point cloud to a temp file so Python can read it
@@ -1466,28 +1525,73 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
   }
 
   // Return measurements keyed by side prefix for direct use in  POST /api/scans
-  const prefix = (s) => side === 'left' ? `left_${s}` : `right_${s}`
-  res.json({
+  const s = side ?? 'right'
+  const response = {
     source: 'lidar',
-    side: side ?? 'right',
+    side: s,
     raw: measurements,
     // Scan-ready fields:
-    [`${side ?? 'right'}_length`]:       measurements.length,
-    [`${side ?? 'right'}_width`]:        measurements.width,
-    [`${side ?? 'right'}_arch`]:         measurements.arch_height ?? null,
-    [`${side ?? 'right'}_foot_height`]:  measurements.height,
-    [`${side ?? 'right'}_ball_girth`]:   measurements.ball_girth,
-    [`${side ?? 'right'}_instep_girth`]: measurements.instep_girth,
-    [`${side ?? 'right'}_waist_girth`]:  measurements.waist_girth,
-    [`${side ?? 'right'}_heel_girth`]:   measurements.heel_girth,
-    [`${side ?? 'right'}_ankle_girth`]:  measurements.ankle_girth,
+    [`${s}_length`]:       measurements.length,
+    [`${s}_width`]:        measurements.width,
+    [`${s}_arch`]:         measurements.arch_height ?? null,
+    [`${s}_foot_height`]:  measurements.height,
+    [`${s}_ball_girth`]:   measurements.ball_girth,
+    [`${s}_instep_girth`]: measurements.instep_girth,
+    [`${s}_waist_girth`]:  measurements.waist_girth,
+    [`${s}_heel_girth`]:   measurements.heel_girth,
+    [`${s}_ankle_girth`]:  measurements.ankle_girth,
     point_count: measurements.point_count,
     // Phase 5: cross-section geometries for shoe last production
     cross_sections: measurements.cross_sections ?? {},
     // Point cloud included for client-side storage after scan save
     _has_point_cloud: !!measurements.point_cloud_mm,
     _point_cloud_count: measurements.point_cloud_mm?.length ?? 0,
-  })
+  }
+
+  // ── Store training images (auto-captured during walk-around) ────────────
+  // Photos are paired with LiDAR ground-truth measurements for ML training.
+  if (topImage || sideImage) {
+    try {
+      const db = getDb()
+      const topCol  = s === 'left' ? 'left_top_img'  : 'right_top_img'
+      const sideCol = s === 'left' ? 'left_side_img' : 'right_side_img'
+
+      // Use a temporary scan_id based on user + timestamp (will be linked to
+      // the actual scan later when POST /api/scans is called)
+      const tempId = `lidar_${req.user.id}_${Date.now()}`
+
+      // Check if we already have a partial entry for this user's current scan session
+      const existing = db.prepare(
+        `SELECT id FROM scan_training_data
+         WHERE scan_id IN (
+           SELECT id FROM foot_scans WHERE user_id = ? ORDER BY created_at DESC LIMIT 1
+         )
+         AND created_at > datetime('now', '-5 minutes')
+         ORDER BY created_at DESC LIMIT 1`
+      ).get(req.user.id)
+
+      if (existing) {
+        // Update existing entry with the other side's images
+        db.prepare(
+          `UPDATE scan_training_data SET ${topCol} = ?, ${sideCol} = ? WHERE id = ?`
+        ).run(topImage || null, sideImage || null, existing.id)
+      } else {
+        // Create new training data entry
+        db.prepare(
+          `INSERT INTO scan_training_data (scan_id, ${topCol}, ${sideCol})
+           VALUES (0, ?, ?)`
+        ).run(topImage || null, sideImage || null)
+      }
+
+      response._training_images_saved = true
+    } catch (e) {
+      // Non-critical: don't fail the scan if training data storage fails
+      console.error('[lidar-measurements] Fehler beim Speichern der Trainingsbilder:', e.message)
+      response._training_images_saved = false
+    }
+  }
+
+  res.json(response)
 })
 
 // GET /api/scans/mine — current user's own scans

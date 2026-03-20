@@ -594,8 +594,8 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     # Step 1: Parse point cloud -> (N, 3) float64
     pts = np.array([[p["x"], p["y"], p["z"]] for p in point_cloud], dtype=np.float64)
 
-    if len(pts) < 200:
-        raise ValueError(f"Point cloud too sparse: {len(pts)} points")
+    if len(pts) < 150:
+        raise ValueError(f"Punktwolke zu dünn: nur {len(pts)} Punkte (mindestens 150 benötigt). Bewege das Handy langsamer.")
 
     # Step 2: RANSAC floor detection
     normal, d = ransac_floor(pts, n_iter=300, thr=0.004)
@@ -605,20 +605,20 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     foot_mask = (heights > 0.005) & (heights < 0.200)
     foot_pts  = pts[foot_mask]
 
-    if len(foot_pts) < 100:
-        raise ValueError(f"Too few foot points after floor removal: {len(foot_pts)}")
+    if len(foot_pts) < 80:
+        raise ValueError(f"Zu wenige Fußpunkte nach Bodenerkennung: {len(foot_pts)}. Fuß muss auf ebenem Boden stehen.")
 
     # Step 4: Statistical outlier removal (k-NN)
     foot_pts = remove_outliers(foot_pts, k=20, std_ratio=2.0)
 
-    if len(foot_pts) < 50:
-        raise ValueError(f"Too few foot points after outlier removal: {len(foot_pts)}")
+    if len(foot_pts) < 40:
+        raise ValueError(f"Zu wenige Punkte nach Bereinigung: {len(foot_pts)}. Scan enthält zu viel Rauschen.")
 
     # Step 5: Voxel-grid normalisation (0.5 mm) -- NEW
     foot_pts = voxel_downsample(foot_pts, voxel_m=0.0005)
 
-    if len(foot_pts) < 50:
-        raise ValueError(f"Too few points after voxel downsampling: {len(foot_pts)}")
+    if len(foot_pts) < 40:
+        raise ValueError(f"Zu wenige Punkte nach Voxel-Normalisierung: {len(foot_pts)}. Bitte erneut scannen.")
 
     # Step 6: PCA-based axis alignment
     aligned, _R, _centroid = align_foot(foot_pts)
@@ -632,7 +632,7 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     centers, x_positions = compute_medial_axis(aligned, n_slices=60)
 
     if len(centers) < 2:
-        raise ValueError("Medial axis computation failed: insufficient distinct slices")
+        raise ValueError("Mediale Achse konnte nicht berechnet werden: zu wenige Querschnitte. Fuß wurde möglicherweise nicht vollständig erfasst.")
 
     # Step 9: Alpha-hull cross-section girths (5 mm band) -- IMPROVED
     #   Fractions along foot length (0 = toe, 1 = heel):
