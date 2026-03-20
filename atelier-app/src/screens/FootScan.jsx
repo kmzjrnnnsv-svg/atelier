@@ -824,39 +824,67 @@ export default function FootScan() {
     }
   }, [phase, camStatus])
 
-  // ── LiDAR walk-around scan (one foot at a time) ──
-  // Walk-around duration in ms
-  const WALK_DURATION_MS = 20_000
+  // ── LiDAR continuous depth capture (one foot at a time) ──
+  const MAX_SCAN_MS = 30_000  // Absolute max: 30s
+  const MIN_SCAN_MS = 10_000  // Minimum scan time: 10s
 
   const runLidarSide = useCallback(async (side) => {
     setLidarError(null)
     setWalkProgress(0)
     setWalkPoints(0)
-    setAiStatus(`Scan läuft…`)
+    setAiStatus('Scan läuft…')
 
     try {
-      await LidarScanNative.startWalkAround()
+      // Use Continuous Depth Capture (Mode 3) — more reliable than mesh reconstruction
+      await LidarScanNative.startContinuousCapture()
 
-      // Poll progress every 500ms, warn if point count stays too low
+      // Poll real coverage-based progress
       const startTime = Date.now()
+      let autoFinish = false
+
       const pollInterval = setInterval(async () => {
         try {
-          const prog = await LidarScanNative.getWalkAroundProgress()
+          const prog = await LidarScanNative.getContinuousCaptureProgress()
           const elapsed = Date.now() - startTime
-          setWalkProgress(Math.min(100, Math.round((elapsed / WALK_DURATION_MS) * 100)))
+
+          setWalkProgress(prog.estimatedCoverage ?? 0)
           setWalkPoints(prog.pointCount ?? 0)
-        } catch { /* ignore */ }
-      }, 500)
 
-      await new Promise(resolve => setTimeout(resolve, WALK_DURATION_MS))
-      clearInterval(pollInterval)
+          // Auto-finish when: coverage ≥ 95% AND at least MIN_SCAN_MS elapsed
+          if (prog.estimatedCoverage >= 95 && elapsed >= MIN_SCAN_MS) {
+            autoFinish = true
+            clearInterval(pollInterval)
+          }
+
+          // Hard stop after MAX_SCAN_MS
+          if (elapsed >= MAX_SCAN_MS) {
+            autoFinish = true
+            clearInterval(pollInterval)
+          }
+        } catch { /* ignore polling errors */ }
+      }, 400)
+
+      // Wait for auto-finish signal
+      await new Promise(resolve => {
+        const check = setInterval(() => {
+          if (autoFinish) { clearInterval(check); resolve() }
+        }, 200)
+        // Safety: always resolve after MAX_SCAN_MS + 2s
+        setTimeout(() => { clearInterval(check); clearInterval(pollInterval); resolve() }, MAX_SCAN_MS + 2000)
+      })
+
       setWalkProgress(100)
-
       setAiStatus('Punktwolke wird verarbeitet…')
-      const raw = await LidarScanNative.finishWalkAround()
+
+      const raw = await LidarScanNative.finishContinuousCapture()
+
+      // Quality check: ensure enough data was captured
+      if (raw.pointCount < 500) {
+        throw new Error(`Zu wenige Punkte erfasst (${raw.pointCount}). Bewege das Handy langsamer und näher am Fuß.`)
+      }
 
       // Send point cloud + auto-captured training images to backend
-      const payload = { pointCloud: raw.pointCloud, side }
+      const payload = { pointCloud: raw.pointCloud, side, anglesCovered: raw.anglesCovered }
       if (raw.capturedImages?.top)  payload.topImage  = raw.capturedImages.top
       if (raw.capturedImages?.side) payload.sideImage = raw.capturedImages.side
 
@@ -873,15 +901,20 @@ export default function FootScan() {
       if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-transition') }
       else                  { setPhase('processing') }
     } catch (e) {
-      const msg = e.message ?? 'Unbekannter Fehler'
-      // Translate common error patterns to German user-friendly messages
+      // Clean up native session on error
+      try { await LidarScanNative.finishContinuousCapture() } catch {}
+
+      // apiFetch now throws Error instances with .message
+      const msg = e?.message ?? e?.error ?? e?.detail ?? 'Unbekannter Fehler'
       const userMsg = msg.includes('Zu wenige') || msg.includes('too sparse') || msg.includes('Insufficient')
-        ? 'Zu wenige Punkte erfasst. Bewege das Handy langsamer und halte 15–80 cm Abstand.'
+        ? 'Zu wenige Punkte erfasst. Bewege das Handy langsamer und halte 15–50 cm Abstand.'
         : msg.includes('NOT_ACTIVE') || msg.includes('keine aktive')
         ? 'Scan-Session wurde unterbrochen. Bitte erneut versuchen.'
         : msg.includes('ARKIT_ERROR') || msg.includes('ARKit')
         ? 'AR-Fehler aufgetreten. Stelle sicher, dass genug Licht vorhanden ist.'
-        : `LiDAR-Fehler: ${msg}`
+        : msg.includes('Python') || msg.includes('ModuleNotFoundError')
+        ? 'Server-Fehler bei der Verarbeitung. Bitte kontaktiere den Support.'
+        : `Scan-Fehler: ${msg}`
       setLidarError(userMsg)
       setWalkProgress(0)
     }
@@ -1498,7 +1531,10 @@ export default function FootScan() {
 
               {walkProgress > 0 && walkProgress < 100 && !lidarError && (
                 <p className="text-[13px] text-white/45">
-                  {walkProgress < 50 ? 'Bewege dich langsam um den Fuß…' : 'Fast fertig…'}
+                  {walkProgress < 25 ? 'Beginne von oben und bewege dich zur Seite…'
+                    : walkProgress < 50 ? 'Gut! Bewege dich weiter um den Fuß…'
+                    : walkProgress < 80 ? 'Fast fertig — umrunde den Fuß vollständig…'
+                    : 'Letzte Details werden erfasst…'}
                 </p>
               )}
 
@@ -1508,11 +1544,17 @@ export default function FootScan() {
 
               {lidarError && (
                 <div className="w-full p-4 rounded-xl bg-red-500/10 border border-red-400/20">
-                  <p className="text-[13px] text-red-400 font-medium mb-2">{lidarError}</p>
-                  <button onClick={() => setPhase('start')}
-                    className="text-[11px] text-red-300/70 underline border-0 bg-transparent p-0">
-                    Zum Foto-Modus wechseln
-                  </button>
+                  <p className="text-[13px] text-red-400 font-medium mb-3">{lidarError}</p>
+                  <div className="flex gap-3">
+                    <button onClick={() => { setLidarError(null); setWalkProgress(0); runLidarSide(phase === 'lidar-right' ? 'right' : 'left') }}
+                      className="flex-1 py-2.5 rounded-lg bg-white/10 text-white text-[12px] font-medium border-0 active:opacity-80">
+                      Nochmal versuchen
+                    </button>
+                    <button onClick={() => setPhase('start')}
+                      className="flex-1 py-2.5 rounded-lg bg-transparent text-red-300/70 text-[12px] border border-red-400/20 active:opacity-80">
+                      Andere Methode
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1803,9 +1845,18 @@ export default function FootScan() {
               <div className="px-5 pt-4 pb-10 space-y-4">
                 {/* Save status */}
                 {saved ? (
-                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/60 text-[11px] font-medium">
-                    <CheckCircle2 size={15} strokeWidth={1.5} /> In deinem Profil gespeichert
-                  </div>
+                  <>
+                    <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/60 text-[11px] font-medium">
+                      <CheckCircle2 size={15} strokeWidth={1.5} /> In deinem Profil gespeichert
+                    </div>
+                    <div className="p-3.5 bg-[#f6f5f3] border border-black/5">
+                      <p className="text-[10px] text-black/40 leading-relaxed">
+                        Deine Fußdaten sind sicher in deinem Profil gespeichert.
+                        Wenn du einen Schuh bestellst, werden die Maße automatisch
+                        an den Hersteller übermittelt, um deinen individuellen Leisten zu fertigen.
+                      </p>
+                    </div>
+                  </>
                 ) : saveErr ? (
                   <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-red-600 text-[11px] font-medium">
                     <AlertCircle size={15} strokeWidth={1.5} /> {saveErr}

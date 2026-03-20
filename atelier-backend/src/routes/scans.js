@@ -1505,16 +1505,30 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     import.meta.url
   ).pathname
 
+  // Verify Python is available before spawning
+  const pythonCheck = spawnSync('python3', ['--version'], { encoding: 'utf8', timeout: 5000 })
+  if (pythonCheck.status !== 0) {
+    try { unlinkSync(tmpFile) } catch { /* ignore */ }
+    return res.status(500).json({ error: 'Python3 nicht gefunden auf dem Server', detail: 'python3 --version failed' })
+  }
+
   const proc = spawnSync('python3', [scriptPath, '--cloud', tmpFile], {
     encoding: 'utf8',
-    timeout: 30_000,
+    timeout: 60_000,
   })
 
   try { unlinkSync(tmpFile) } catch { /* ignore */ }
 
   if (proc.status !== 0) {
-    const err = proc.stderr?.trim() || 'Unknown Python error'
-    return res.status(422).json({ error: 'LiDAR processing failed', detail: err })
+    const stderr = proc.stderr?.trim() || ''
+    const isModuleError = stderr.includes('ModuleNotFoundError') || stderr.includes('No module named')
+    const isTimeout = proc.signal === 'SIGTERM'
+    const detail = isModuleError
+      ? 'Python-Abhängigkeiten fehlen. Bitte "pip install -r requirements.txt" im atelier-ml Verzeichnis ausführen.'
+      : isTimeout
+      ? 'Verarbeitung hat zu lange gedauert (>60s). Punktwolke möglicherweise zu groß.'
+      : stderr.slice(0, 500) || 'Unknown Python error'
+    return res.status(422).json({ error: 'LiDAR-Verarbeitung fehlgeschlagen', detail })
   }
 
   let measurements

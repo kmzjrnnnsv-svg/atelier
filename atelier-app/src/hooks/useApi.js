@@ -58,8 +58,12 @@ export async function apiFetch(url, options = {}) {
   }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Unknown error' }))
-    throw err
+    const body = await res.json().catch(() => ({ error: 'Unknown error' }))
+    const errMsg = body.detail || body.error || body.message || `HTTP ${res.status}`
+    const error = new Error(errMsg)
+    error.status = res.status
+    error.body = body
+    throw error
   }
 
   const text = await res.text()
