@@ -1128,7 +1128,7 @@ export default function FootScan() {
               clearTimeout(safetyTimeout)
               resolve()
             }
-          } catch { /* ignore polling errors */ }
+          } catch (pollErr) { console.warn('[LiDAR poll]', pollErr?.message || pollErr) }
         }, 150)
       })
 

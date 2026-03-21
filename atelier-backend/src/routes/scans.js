@@ -1451,7 +1451,6 @@ router.get('/learning-stats', authenticate, requireRole('admin'), (req, res) => 
     calibrations,
     pca_model_available: (() => {
       try {
-        const { existsSync } = require('fs')
         return existsSync(join(ML_SCRIPTS, '..', 'data', 'shape_model', 'meta.json'))
       } catch { return false }
     })(),
