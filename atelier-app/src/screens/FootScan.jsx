@@ -164,10 +164,21 @@ function detectA4InFrame(videoEl, overlayCanvas) {
   ctx.drawImage(videoEl, 0, 0, sw, sh)
   const { data } = ctx.getImageData(0, 0, sw, sh)
 
-  // Build brightness map
-  const bright = new Uint8Array(sw * sh)
+  // Build brightness map with adaptive threshold
+  // Compute scene brightness to handle low-light conditions
+  const lumas = new Uint8Array(sw * sh)
+  let lumaSum = 0
   for (let i = 0; i < data.length; i += 4) {
-    bright[i >> 2] = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) > 180 ? 1 : 0
+    const l = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
+    lumas[i >> 2] = l
+    lumaSum += l
+  }
+  const avgLuma = lumaSum / (sw * sh)
+  // Adaptive: in dark scenes (avg < 100) lower the threshold; clamp to [120, 200]
+  const whiteThreshold = Math.max(120, Math.min(200, avgLuma + 80))
+  const bright = new Uint8Array(sw * sh)
+  for (let i = 0; i < lumas.length; i++) {
+    bright[i] = lumas[i] > whiteThreshold ? 1 : 0
   }
 
   // Find largest connected white rectangular region (simplified blob detection)
@@ -777,9 +788,14 @@ export default function FootScan() {
 
       // Initialize depth sensing for Android devices
       if (caps.webxr && !hasLidar) {
-        const ds = new DepthSensing()
-        ds.init().then(mode => setDepthMode(mode))
-        depthRef.current = ds
+        try {
+          const ds = new DepthSensing()
+          const mode = await ds.init()
+          setDepthMode(mode)
+          depthRef.current = ds
+        } catch (e) {
+          console.warn('[FootScan] Depth sensing init failed, continuing without:', e.message)
+        }
       }
 
       const info = { isIPhone: isIPhone || isIPad, hasLidar, model: isIPhone ? 'iPhone' : isIPad ? 'iPad' : 'Android/Other' }
@@ -810,28 +826,21 @@ export default function FootScan() {
       a4CanvasRef.current = document.createElement('canvas')
     }
 
-    let animId
-    const detect = () => {
-      const rect = detectA4InFrame(videoRef.current, a4CanvasRef.current)
-      setA4Detected(rect)
-      animId = requestAnimationFrame(detect)
-    }
     // Run at ~8fps (every 125ms) to avoid perf issues
-    let intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
       const rect = detectA4InFrame(videoRef.current, a4CanvasRef.current)
       setA4Detected(rect)
     }, 125)
 
     return () => {
       clearInterval(intervalId)
-      if (animId) cancelAnimationFrame(animId)
     }
   }, [phase, camStatus])
 
   // ── Countdown + auto-start: user doesn't need to look at screen ──
-  const startScanWithCountdown = useCallback((side) => {
+  const startScanWithCountdown = useCallback((side, { isRetry = false } = {}) => {
     setLidarError(null)
-    setAutoRetryCount(0)
+    if (!isRetry) setAutoRetryCount(0)
     speak(SCAN_MESSAGES.ready(side))
     hapticMedium()
     setCountdown(3)
@@ -1004,8 +1013,8 @@ export default function FootScan() {
         speak(retryMsg, { urgent: true })
         hapticStrong()
         setWalkProgress(0)
-        // Wait 3 seconds, then auto-retry with countdown
-        setTimeout(() => startScanWithCountdown(side), 3000)
+        // Wait 3 seconds, then auto-retry with countdown (keep retry count)
+        setTimeout(() => startScanWithCountdown(side, { isRetry: true }), 3000)
         return
       }
 
@@ -1149,7 +1158,7 @@ export default function FootScan() {
       } catch (err) {
         if (!cancelled) {
           setAiStatus('Die Auswertung hat leider nicht geklappt')
-          setResult({ error: err.message })
+          setResult({ error: 'Dein Fuß konnte nicht vermessen werden. Bitte versuche es nochmal — achte auf gutes Licht und lege das A4-Blatt gut sichtbar daneben.' })
           setProgress(100)
         }
       }
@@ -1353,7 +1362,7 @@ export default function FootScan() {
 
   // ── Auto-save + Training-Images Upload ──
   useEffect(() => {
-    if (phase !== 'result' || !result || saved || result.isDemo) return
+    if (phase !== 'result' || !result || saved || result.isDemo || result.error) return
     async function save() {
       try {
         const payload = {
@@ -2063,7 +2072,28 @@ export default function FootScan() {
           )}
 
           {/* ── RESULT ── */}
-          {phase === 'result' && result && (
+          {phase === 'result' && result && result.error && (
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-6">
+              <div className="w-20 h-20 bg-[#f6f5f3] flex items-center justify-center">
+                <span className="text-4xl">😕</span>
+              </div>
+              <div>
+                <p className="text-[14px] font-bold text-black mb-3" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung nicht möglich</p>
+                <p className="text-[12px] text-black/50 leading-relaxed max-w-xs">{result.error}</p>
+              </div>
+              <div className="w-full space-y-3 pt-2">
+                <button onClick={() => { setPhase('start'); setResult(null); setProgress(0) }}
+                  className="w-full py-4 bg-black text-white font-bold text-[12px] border-0 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
+                  Nochmal versuchen
+                </button>
+                <button onClick={() => navigate('/collection', { replace: true })}
+                  className="w-full py-3.5 bg-[#f6f5f3] text-black/50 font-semibold text-[11px] border-0">
+                  Zurück zur Kollektion
+                </button>
+              </div>
+            </div>
+          )}
+          {phase === 'result' && result && !result.error && (
             <div className="flex-1 overflow-y-auto">
               {/* Size hero header bar */}
               <div className="bg-black px-5 py-6 text-center">
