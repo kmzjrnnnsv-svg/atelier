@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Atelier',
   webDir: 'dist',
   ios: {
-    contentInset: 'always',
+    contentInset: 'never',
   },
   plugins: {
     SplashScreen: { launchAutoHide: false },
