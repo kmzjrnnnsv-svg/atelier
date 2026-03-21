@@ -275,7 +275,7 @@ function GuideOverlay({ phase }) {
         </text>
         <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
           fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="500">
-          Kamera senkrecht von oben · ca. 35 cm Abstand
+          Von oben fotografieren · ca. eine Handlänge Abstand
         </text>
       </svg>
     )
@@ -307,10 +307,10 @@ function GuideOverlay({ phase }) {
             fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="600" letterSpacing="1">A4</text>
         </g>
         <text x="195" y="510" textAnchor="middle" fill="rgba(45,212,191,0.7)"
-          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Gewölbe + Rist sichtbar</text>
+          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Fußwölbung soll sichtbar sein</text>
         <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
           fontSize="11" fontFamily="system-ui,sans-serif">
-          Kamera auf Bodenhöhe · Innenseite des Fußes
+          Kamera auf den Boden stellen · Innenseite des Fußes
         </text>
       </svg>
     )
@@ -338,10 +338,10 @@ function GuideOverlay({ phase }) {
           {isRight ? 'RECHTS · AUSSEN' : 'LINKS · AUSSEN'}
         </text>
         <text x="195" y="510" textAnchor="middle" fill="rgba(255,255,255,0.5)"
-          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Ferse + Außenrist sichtbar</text>
+          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Ferse und Außenseite soll sichtbar sein</text>
         <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
           fontSize="11" fontFamily="system-ui,sans-serif">
-          Kamera auf Bodenhöhe · Außenseite des Fußes
+          Kamera auf den Boden stellen · Außenseite des Fußes
         </text>
       </svg>
     )
@@ -367,7 +367,7 @@ function GuideOverlay({ phase }) {
         </g>
         <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
           fontSize="11" fontFamily="system-ui,sans-serif">
-          Kamera auf Bodenhöhe seitlich halten
+          Kamera auf den Boden stellen, seitlich halten
         </text>
       </svg>
     )
@@ -391,14 +391,14 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
   const handleTap = () => { if (!ready) return; setFlash(true); setTimeout(() => setFlash(false), 160); onCapture() }
 
   const INFO = {
-    'right-top':     { emoji: '📄', title: 'Rechter Fuß — Draufsicht',   sub: 'A4-Papier neben dem Fuß · Kamera senkrecht von oben ~35 cm' },
-    'right-medial':  { emoji: '🦶', title: 'Rechter Fuß — Innenseite',   sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Innenseite' },
-    'right-lateral': { emoji: '🦶', title: 'Rechter Fuß — Außenseite',   sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Außenseite' },
-    'right-side':    { emoji: '📐', title: 'Rechten Fuß von der Seite',   sub: 'A4-Blatt aufrecht daneben halten · Kamera auf Bodenhöhe' },
-    'left-top':      { emoji: '📄', title: 'Linker Fuß — Draufsicht',    sub: 'A4-Papier neben dem Fuß · Kamera senkrecht von oben ~35 cm' },
-    'left-medial':   { emoji: '🦶', title: 'Linker Fuß — Innenseite',    sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Innenseite' },
-    'left-lateral':  { emoji: '🦶', title: 'Linker Fuß — Außenseite',    sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Außenseite' },
-    'left-side':     { emoji: '📐', title: 'Linken Fuß von der Seite',    sub: 'A4-Blatt aufrecht daneben halten · Kamera auf Bodenhöhe' },
+    'right-top':     { emoji: '📄', title: 'Rechter Fuß — von oben',      sub: 'A4-Blatt neben den Fuß legen · Handy von oben draufhalten' },
+    'right-medial':  { emoji: '🦶', title: 'Rechter Fuß — Innenseite',    sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Innenseite fotografieren' },
+    'right-lateral': { emoji: '🦶', title: 'Rechter Fuß — Außenseite',    sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Außenseite fotografieren' },
+    'right-side':    { emoji: '📐', title: 'Rechter Fuß — Seite',         sub: 'A4-Blatt aufrecht daneben halten · Handy auf den Boden stellen' },
+    'left-top':      { emoji: '📄', title: 'Linker Fuß — von oben',       sub: 'A4-Blatt neben den Fuß legen · Handy von oben draufhalten' },
+    'left-medial':   { emoji: '🦶', title: 'Linker Fuß — Innenseite',     sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Innenseite fotografieren' },
+    'left-lateral':  { emoji: '🦶', title: 'Linker Fuß — Außenseite',     sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Außenseite fotografieren' },
+    'left-side':     { emoji: '📐', title: 'Linker Fuß — Seite',          sub: 'A4-Blatt aufrecht daneben halten · Handy auf den Boden stellen' },
   }
   const { emoji, title, sub } = INFO[phase] || { emoji: '📷', title: 'Foto aufnehmen', sub: '' }
 
@@ -443,7 +443,7 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       {!a4Detected && camStatus === 'active' && (
         <div className="absolute top-16 left-0 right-0 z-15 flex justify-center pointer-events-none">
           <div className="bg-red-500/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
-            <span className="text-[10px] text-white font-semibold">A4-Blatt nicht erkannt</span>
+            <span className="text-[10px] text-white font-semibold">Weißes Blatt noch nicht sichtbar</span>
           </div>
         </div>
       )}
@@ -605,11 +605,11 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
 
 // ─── Camera Error ──────────────────────────────────────────────────────────────
 const CAM_ERRORS = {
-  insecure: { emoji: '🔒', title: 'HTTPS erforderlich',        desc: 'Die Kamera funktioniert nur über eine sichere HTTPS-Verbindung.',                                                  retry: false },
-  denied:   { emoji: '🚫', title: 'Kamerazugriff verweigert', desc: 'Erlaube den Kamerazugriff in den Browser-Einstellungen.\niPhone: Einstellungen → Safari → Kamera → Erlauben', retry: true  },
-  notfound: { emoji: '📵', title: 'Keine Kamera gefunden',    desc: 'Bitte verwende ein Gerät mit Rückkamera.',                                                                            retry: false },
-  inuse:    { emoji: '⏳', title: 'Kamera in Verwendung',     desc: 'Schließe FaceTime oder andere Kamera-Apps und versuche es erneut.',                                                   retry: true  },
-  error:    { emoji: '⚠️', title: 'Kamera-Fehler',            desc: 'Die Kamera konnte nicht gestartet werden.',                                                                           retry: true  },
+  insecure: { emoji: '🔒', title: 'Sichere Verbindung nötig',   desc: 'Die Kamera funktioniert nur über eine sichere Internetverbindung. Bitte öffne die Seite über den Link, den du erhalten hast.', retry: false },
+  denied:   { emoji: '🚫', title: 'Kamera nicht erlaubt',       desc: 'Bitte erlaube den Kamerazugriff in deinen Handy-Einstellungen.\niPhone: Einstellungen → Safari → Kamera → Erlauben',          retry: true  },
+  notfound: { emoji: '📵', title: 'Keine Kamera gefunden',      desc: 'Bitte öffne die App auf einem Smartphone oder Tablet mit Kamera.',                                                             retry: false },
+  inuse:    { emoji: '⏳', title: 'Kamera wird gerade genutzt', desc: 'Schließe andere Apps, die die Kamera verwenden (z.B. FaceTime, WhatsApp) und versuche es nochmal.',                            retry: true  },
+  error:    { emoji: '⚠️', title: 'Kamera-Problem',             desc: 'Die Kamera konnte nicht gestartet werden. Versuche es nochmal oder starte die App neu.',                                       retry: true  },
 }
 
 function CamError({ status, onRetry, onDemo, onBack }) {
@@ -940,18 +940,18 @@ export default function FootScan() {
       if (raw.pointCount < 2000) {
         speak(SCAN_MESSAGES.lowQuality, { urgent: true })
         hapticStrong()
-        throw new Error(`Zu wenige Punkte erfasst (${raw.pointCount}). Mindestens 2000 Punkte für präzise Maße benötigt. Bewege das Handy langsamer und umrunde den Fuß vollständig.`)
+        throw new Error('Zu wenige Daten erfasst. Bewege das Handy langsamer und gehe einmal komplett um den Fuß herum.')
       }
       if ((raw.anglesCovered ?? 0) < 6) {
         speak(SCAN_MESSAGES.moveAround, { urgent: true })
         hapticStrong()
-        throw new Error(`Nur ${raw.anglesCovered ?? 0} von 12 Winkeln erfasst. Bitte den Fuß von allen Seiten scannen.`)
+        throw new Error('Der Fuß wurde nicht von genug Seiten erfasst. Bitte einmal komplett um den Fuß herum gehen.')
       }
 
       // Voice: side complete
       speak(SCAN_MESSAGES.sideComplete(side))
 
-      setAiStatus(`${raw.pointCount.toLocaleString('de-DE')} Punkte · Maße werden berechnet…`)
+      setAiStatus('Maße werden berechnet…')
 
       // Send point cloud + auto-captured training images to backend
       const payload = { pointCloud: raw.pointCloud, side, anglesCovered: raw.anglesCovered }
@@ -983,24 +983,24 @@ export default function FootScan() {
       // apiFetch now throws Error instances with .message
       const msg = e?.message ?? e?.error ?? e?.detail ?? 'Unbekannter Fehler'
       const userMsg = msg.includes('Zu wenige') || msg.includes('too sparse') || msg.includes('Insufficient')
-        ? 'Zu wenige Punkte erfasst. Bewege das Handy langsamer und halte 15–50 cm Abstand.'
+        ? 'Der Scan konnte den Fuß nicht gut genug erkennen. Bewege das Handy langsamer und halte es näher über den Fuß.'
         : msg.includes('NOT_ACTIVE') || msg.includes('keine aktive')
-        ? 'Scan-Session wurde unterbrochen. Bitte erneut versuchen.'
+        ? 'Der Scan wurde unterbrochen. Bitte versuche es nochmal.'
         : msg.includes('ARKIT_ERROR') || msg.includes('ARKit')
-        ? 'AR-Fehler aufgetreten. Stelle sicher, dass genug Licht vorhanden ist.'
+        ? 'Der Scan braucht gutes Licht. Bitte sorge für ausreichend Beleuchtung.'
         : msg.includes('Python') || msg.includes('ModuleNotFoundError')
-        ? 'Server-Fehler bei der Verarbeitung. Bitte kontaktiere den Support.'
-        : `Scan-Fehler: ${msg}`
+        ? 'Es gibt ein technisches Problem. Bitte kontaktiere uns über die Hilfe-Seite.'
+        : 'Etwas hat nicht funktioniert. Bitte versuche es nochmal.'
       // Auto-retry for recoverable errors (max 2 times), then show manual UI
       const isRecoverable = !msg.includes('Python') && !msg.includes('ModuleNotFoundError') && !msg.includes('Server')
       if (isRecoverable && autoRetryCount < 2) {
         setAutoRetryCount(prev => prev + 1)
         // Voice: specific guidance for the problem, then auto-retry
         const retryMsg = msg.includes('Zu wenige') || msg.includes('too sparse')
-          ? 'Zu wenige Punkte. Bewege das Handy langsamer. Neuer Versuch startet automatisch.'
+          ? 'Bewege das Handy etwas langsamer. Wir versuchen es gleich nochmal.'
           : msg.includes('Winkel') || msg.includes('anglesCovered')
-          ? 'Nicht genug Seiten erfasst. Bewege dich mehr um den Fuß. Neuer Versuch startet automatisch.'
-          : 'Ein kleiner Fehler. Neuer Versuch startet automatisch.'
+          ? 'Bewege dich mehr um den Fuß herum. Wir versuchen es gleich nochmal.'
+          : 'Kleiner Fehler — wir versuchen es gleich nochmal.'
         speak(retryMsg, { urgent: true })
         hapticStrong()
         setWalkProgress(0)
@@ -1041,22 +1041,22 @@ export default function FootScan() {
   // ── Photogrammetrie: 8 Ansichten je Fuß ──────────────────────────────────────
   // Ansichten: top, front, front_left, left, back_left, back, back_right, right
   const PG_VIEW_INFO = [
-    { side: 'right', label: 'Rechts – Draufsicht',       sub: 'Direkt von oben, ~35 cm Abstand, A4-Papier daneben' },
-    { side: 'right', label: 'Rechts – Vorne',             sub: 'Auf Zehnhöhe, leicht schräg nach unten' },
-    { side: 'right', label: 'Rechts – Vorne-Links 45°',   sub: '45° Winkel, Zehen sichtbar' },
-    { side: 'right', label: 'Rechts – Linke Seite',       sub: 'Seitenansicht links (Innenrist)' },
-    { side: 'right', label: 'Rechts – Hinten-Links 45°',  sub: '45° Winkel, Ferse sichtbar' },
-    { side: 'right', label: 'Rechts – Hinten',            sub: 'Direkt von hinten, Ferse zentriert' },
-    { side: 'right', label: 'Rechts – Hinten-Rechts 45°', sub: '45° Winkel, Außenrist' },
-    { side: 'right', label: 'Rechts – Rechte Seite',      sub: 'Seitenansicht rechts (Außenrist)' },
-    { side: 'left',  label: 'Links – Draufsicht',         sub: 'Direkt von oben, ~35 cm Abstand, A4-Papier daneben' },
-    { side: 'left',  label: 'Links – Vorne',              sub: 'Auf Zehnhöhe, leicht schräg nach unten' },
-    { side: 'left',  label: 'Links – Vorne-Rechts 45°',   sub: '45° Winkel, Zehen sichtbar' },
-    { side: 'left',  label: 'Links – Rechte Seite',       sub: 'Seitenansicht rechts (Außenrist)' },
-    { side: 'left',  label: 'Links – Hinten-Rechts 45°',  sub: '45° Winkel, Ferse sichtbar' },
-    { side: 'left',  label: 'Links – Hinten',             sub: 'Direkt von hinten, Ferse zentriert' },
-    { side: 'left',  label: 'Links – Hinten-Links 45°',   sub: '45° Winkel, Innenrist' },
-    { side: 'left',  label: 'Links – Linke Seite',        sub: 'Seitenansicht links (Innenrist)' },
+    { side: 'right', label: 'Rechts – von oben',             sub: 'Von oben fotografieren, A4-Blatt daneben legen' },
+    { side: 'right', label: 'Rechts – von vorne',            sub: 'Auf Zehenhöhe, leicht schräg nach unten' },
+    { side: 'right', label: 'Rechts – schräg vorne links',   sub: 'Schräg von vorne, Zehen sollen sichtbar sein' },
+    { side: 'right', label: 'Rechts – Innenseite',           sub: 'Von der Innenseite fotografieren' },
+    { side: 'right', label: 'Rechts – schräg hinten links',  sub: 'Schräg von hinten, Ferse soll sichtbar sein' },
+    { side: 'right', label: 'Rechts – von hinten',           sub: 'Direkt von hinten, Ferse in der Mitte' },
+    { side: 'right', label: 'Rechts – schräg hinten rechts', sub: 'Schräg von hinten, Außenseite sichtbar' },
+    { side: 'right', label: 'Rechts – Außenseite',           sub: 'Von der Außenseite fotografieren' },
+    { side: 'left',  label: 'Links – von oben',              sub: 'Von oben fotografieren, A4-Blatt daneben legen' },
+    { side: 'left',  label: 'Links – von vorne',             sub: 'Auf Zehenhöhe, leicht schräg nach unten' },
+    { side: 'left',  label: 'Links – schräg vorne rechts',   sub: 'Schräg von vorne, Zehen sollen sichtbar sein' },
+    { side: 'left',  label: 'Links – Außenseite',            sub: 'Von der Außenseite fotografieren' },
+    { side: 'left',  label: 'Links – schräg hinten rechts',  sub: 'Schräg von hinten, Ferse soll sichtbar sein' },
+    { side: 'left',  label: 'Links – von hinten',            sub: 'Direkt von hinten, Ferse in der Mitte' },
+    { side: 'left',  label: 'Links – schräg hinten links',   sub: 'Schräg von hinten, Innenseite sichtbar' },
+    { side: 'left',  label: 'Links – Innenseite',            sub: 'Von der Innenseite fotografieren' },
   ]
 
   const handlePgCapture = useCallback(() => {
@@ -1081,7 +1081,7 @@ export default function FootScan() {
   // ── Photogrammetrie-Processing: 8 Ansichten → 3D Visual Hull → Maße ──────────
   useEffect(() => {
     if (phase !== 'pg-processing') return
-    setProgress(5); setResult(null); setAiStatus('3D-Rekonstruktion läuft…')
+    setProgress(5); setResult(null); setAiStatus('Dein Fuß wird vermessen…')
     let cancelled = false
     async function runPg() {
       try {
@@ -1148,7 +1148,7 @@ export default function FootScan() {
         }
       } catch (err) {
         if (!cancelled) {
-          setAiStatus('Rekonstruktion fehlgeschlagen')
+          setAiStatus('Die Auswertung hat leider nicht geklappt')
           setResult({ error: err.message })
           setProgress(100)
         }
@@ -1229,7 +1229,7 @@ export default function FootScan() {
 
       if (hasAllFrames) {
         try {
-          setAiStatus('Bilder werden komprimiert…'); setProgress(6)
+          setAiStatus('Fotos werden vorbereitet…'); setProgress(6)
           const compressAll = []
           compressAll.push(compressImage(frames.rightTop, 1200))
           compressAll.push(compressImage(hasIBVFrames ? frames.rightMedial : frames.rightSide, 1000))
@@ -1243,7 +1243,7 @@ export default function FootScan() {
           const compressed = await Promise.all(compressAll)
           const [rT, rS, lT, lS, rLat, lLat] = compressed
           if (cancelled) return
-          setAiStatus(`🤖 Claude KI analysiert ${hasIBVFrames ? '6' : '4'} Bilder…`); setProgress(18)
+          setAiStatus(`Fotos werden ausgewertet…`); setProgress(18)
 
           const analyzeBody = { rightTopImg: rT, rightSideImg: rS, leftTopImg: lT, leftSideImg: lS }
           if (hasIBVFrames && rLat && lLat) {
@@ -1270,7 +1270,7 @@ export default function FootScan() {
           })
           if (cancelled) return
 
-          clearInterval(ambientTimer); setProgress(82); setAiStatus('Schuhgröße wird berechnet…')
+          clearInterval(ambientTimer); setProgress(82); setAiStatus('Deine Schuhgröße wird ermittelt…')
           rightM     = { length: ai.right_length, width: ai.right_width }
           leftM      = { length: ai.left_length,  width: ai.left_width  }
           archRight       = ai.right_arch_height ?? null
@@ -1302,15 +1302,15 @@ export default function FootScan() {
           }
         } catch (e) {
           console.warn('[FootScan] KI fehlgeschlagen, CV-Fallback:', e.message)
-          setAiStatus('Lokale Analyse…')
+          setAiStatus('Fotos werden ausgewertet…')
         }
       }
 
       if (!usedAI) {
         clearInterval(ambientTimer)
         // No AI/CV measurement succeeded — report error instead of random values
-        setAiStatus('Messung fehlgeschlagen')
-        setResult({ error: 'Fußmaße konnten nicht bestimmt werden. Bitte erneut scannen mit A4-Papier als Referenz.' })
+        setAiStatus('Hat leider nicht geklappt')
+        setResult({ error: 'Dein Fuß konnte nicht vermessen werden. Bitte versuche es nochmal — lege das weiße A4-Blatt gut sichtbar neben den Fuß.' })
         setProgress(100)
         return
       }
@@ -1419,7 +1419,7 @@ export default function FootScan() {
             }
           }
         }
-      } catch { setSaveErr('Verbindungsfehler — Scan nicht gespeichert.') }
+      } catch { setSaveErr('Keine Internetverbindung — Scan konnte nicht gespeichert werden.') }
     }
     save()
   }, [phase, result, saved]) // eslint-disable-line
@@ -1526,7 +1526,7 @@ export default function FootScan() {
     return (
       <div className="relative h-full overflow-hidden bg-black flex flex-col items-center justify-center text-center px-8">
         <Scan size={48} className="text-white/20 mb-4" />
-        <h2 className="text-lg font-light text-white uppercase tracking-[0.15em] mb-2">3D Foot Scan</h2>
+        <h2 className="text-lg font-light text-white uppercase tracking-[0.15em] mb-2">3D Fußscan</h2>
         <p className="text-[11px] text-white/40 leading-relaxed max-w-xs">
           Der Fußscan ist nur auf Smartphones und Tablets verfügbar. Bitte öffne die App auf deinem Mobilgerät, um einen Scan durchzuführen.
         </p>
@@ -1731,15 +1731,15 @@ export default function FootScan() {
                   <div className="space-y-3 text-left inline-block">
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
                       <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">1</span>
-                      iPhone 30 cm über den Fuß halten
+                      Handy eine Handlänge über den Fuß halten
                     </p>
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
                       <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">2</span>
-                      Langsam im Kreis herum bewegen
+                      Langsam einmal um den Fuß herum bewegen
                     </p>
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
                       <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">3</span>
-                      Auch die Ferse und Seiten erfassen
+                      Auch Ferse und Seiten mitnehmen
                     </p>
                   </div>
                 </div>
@@ -1750,16 +1750,16 @@ export default function FootScan() {
                   style={{ animation: 'fadeInSoft 0.3s ease' }}>
                   {/* Big, readable instruction — user glances at screen briefly */}
                   <p className="text-[20px] font-bold text-white mb-2 leading-snug">
-                    {walkProgress < 20 ? '↓  Von oben halten'
+                    {walkProgress < 20 ? '↓  Von oben draufhalten'
                       : walkProgress < 45 ? '↻  Zur Seite bewegen'
                       : walkProgress < 70 ? '↻  Um die Ferse herum'
-                      : '✓  Fast fertig!'}
+                      : '✓  Fast geschafft!'}
                   </p>
                   <p className="text-[14px] text-white/60">
-                    {walkProgress < 20 ? 'iPhone ruhig über dem Fuß halten'
-                      : walkProgress < 45 ? 'Langsam nach rechts bewegen'
-                      : walkProgress < 70 ? 'Gehe weiter herum, auch die Ferse'
-                      : 'Halte kurz die Position'}
+                    {walkProgress < 20 ? 'Handy ruhig über dem Fuß halten'
+                      : walkProgress < 45 ? 'Langsam zur Seite bewegen'
+                      : walkProgress < 70 ? 'Weiter um den Fuß herum, auch die Ferse'
+                      : 'Gleich fertig — noch kurz so halten'}
                   </p>
                 </div>
               )}
@@ -1801,7 +1801,7 @@ export default function FootScan() {
                     style={{ fontFeatureSettings: '"tnum"', animation: 'faceidFadeInUp 0.3s ease' }}>
                     {countdown}
                   </span>
-                  <p className="text-[15px] text-white/60 mt-2">Halte das iPhone ruhig über dem Fuß</p>
+                  <p className="text-[15px] text-white/60 mt-2">Halte das Handy ruhig über dem Fuß</p>
                 </div>
               )}
             </div>
@@ -1869,8 +1869,8 @@ export default function FootScan() {
                   <div className="px-5 pt-3 pb-4 border-b border-black/5">
                     <p className="text-[10px] text-black/45 leading-relaxed">
                       {lidarAvail
-                        ? 'LiDAR erkannt — Dein Gerät unterstützt direkte 3D-Erfassung mit höchster Präzision.'
-                        : 'Kein LiDAR-Sensor gefunden. Wähle eine kamerabasierte Methode:'}
+                        ? 'Dein Gerät hat einen präzisen 3D-Sensor — wir empfehlen den schnellen Scan.'
+                        : 'Wähle eine Methode, um deine Füße zu vermessen:'}
                     </p>
                   </div>
 
@@ -1882,9 +1882,9 @@ export default function FootScan() {
                         <button onClick={() => { setLidarData({ right: null, left: null }); setLidarError(null); setPhase('lidar-right') }}
                           className="w-full py-5 bg-black text-white font-bold text-[13px] border-0 flex flex-col items-center gap-2 active:opacity-80">
                           <Scan size={20} className="text-[#30D158]" strokeWidth={1.5} />
-                          <span className="uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>LiDAR 3D-Scan</span>
+                          <span className="uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Schneller 3D-Scan</span>
                           <span className="text-[10px] text-white/40 font-normal normal-case tracking-normal">
-                            20 Sek. pro Fuß · Sprachanleitung führt dich durch
+                            20 Sek. pro Fuß · Sprachführung leitet dich Schritt für Schritt
                           </span>
                         </button>
                       </div>
@@ -1893,11 +1893,11 @@ export default function FootScan() {
                         <div className="space-y-2">
                           <button onClick={() => setPhase('right-top')}
                             className="w-full py-3.5 bg-[#f6f5f3] text-black/60 font-semibold text-[11px] border-0">
-                            Foto-Scan (6 Bilder · A4-Referenz)
+                            Foto-Scan (6 Bilder · mit A4-Papier)
                           </button>
                           <button onClick={() => { setPgMode(true); setPgStep(0); setPgImgs({ right: [], left: [] }); setPhase('pg-0') }}
                             className="w-full py-3.5 bg-[#f6f5f3] text-black/60 font-semibold text-[11px] border-0">
-                            Photogrammetrie (16 Bilder · 8 Winkel)
+                            Rundum-Scan (16 Bilder · alle Seiten)
                           </button>
                         </div>
                       </div>
@@ -1917,15 +1917,15 @@ export default function FootScan() {
                             </div>
                             <div>
                               <p className="text-[12px] font-bold uppercase tracking-widest" style={{ letterSpacing: '0.1em' }}>Foto-Scan</p>
-                              <p className="text-[9px] text-white/40 mt-0.5">6 Fotos · A4-Referenz · ~2 Min.</p>
+                              <p className="text-[9px] text-white/40 mt-0.5">6 Fotos · mit A4-Papier · ca. 2 Min.</p>
                             </div>
                             <ChevronRight size={16} className="text-white/30 ml-auto" />
                           </div>
                           <div className="space-y-1.5 pl-1">
                             {[
-                              'Draufsicht + Innenseite + Außenseite je Fuß',
-                              'A4-Papier als Kalibrierung',
-                              'Präzision: ±3–5mm',
+                              'Oben, innen und außen je Fuß fotografieren',
+                              'Ein A4-Blatt danebenlegen als Größenvergleich',
+                              'Gute Genauigkeit für die Schuhgrößen-Bestimmung',
                             ].map(t => (
                               <p key={t} className="text-[9px] text-white/35 flex items-center gap-2">
                                 <span className="w-1 h-1 bg-teal-400/50 flex-shrink-0" />
@@ -1943,16 +1943,16 @@ export default function FootScan() {
                               <Scan size={18} className="text-black/40" strokeWidth={1.5} />
                             </div>
                             <div>
-                              <p className="text-[12px] font-bold uppercase tracking-widest" style={{ letterSpacing: '0.1em' }}>Photogrammetrie</p>
-                              <p className="text-[9px] text-black/40 mt-0.5">16 Fotos · 8 Winkel · ~4 Min.</p>
+                              <p className="text-[12px] font-bold uppercase tracking-widest" style={{ letterSpacing: '0.1em' }}>Rundum-Scan</p>
+                              <p className="text-[9px] text-black/40 mt-0.5">16 Fotos · von allen Seiten · ca. 4 Min.</p>
                             </div>
                             <ChevronRight size={16} className="text-black/20 ml-auto" />
                           </div>
                           <div className="space-y-1.5 pl-1">
                             {[
-                              '8 Blickwinkel pro Fuß (360° Abdeckung)',
-                              'Shape-from-Silhouettes 3D-Rekonstruktion',
-                              'Präzision: ±1–2mm',
+                              'Den Fuß einmal rundherum fotografieren',
+                              'Daraus wird ein genaues 3D-Modell erstellt',
+                              'Höchste Genauigkeit bei der Vermessung',
                             ].map(t => (
                               <p key={t} className="text-[9px] text-black/35 flex items-center gap-2">
                                 <span className="w-1 h-1 bg-black/20 flex-shrink-0" />
@@ -1969,7 +1969,7 @@ export default function FootScan() {
                           <AlertCircle size={13} className="text-black/40" strokeWidth={1.5} />
                         </div>
                         <p className="text-[9px] text-black/45 leading-relaxed">
-                          <strong className="text-black/60">Wichtig:</strong> Halte ein A4-Druckerpapier (297x210mm) als Maßstab bereit. Es muss auf jedem Foto sichtbar sein.
+                          <strong className="text-black/60">Wichtig:</strong> Lege ein normales weißes A4-Blatt (Druckerpapier) neben deinen Fuß. Es muss auf jedem Foto zu sehen sein — so können wir die Größe richtig berechnen.
                         </p>
                       </div>
                     </>
@@ -1997,7 +1997,7 @@ export default function FootScan() {
               </div>
 
               <div className="text-center w-full">
-                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>3D-Rekonstruktion</p>
+                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung läuft</p>
                 <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
@@ -2009,7 +2009,7 @@ export default function FootScan() {
               </div>
 
               <p className="text-[9px] text-black/25 text-center px-4">
-                KI rekonstruiert den Fuß in 3D aus 3 Blickwinkeln — nach dem IBV-Verfahren mit über 20 Maßen
+                Dein Fuß wird aus mehreren Fotos vermessen — Länge, Breite, Umfang und mehr
               </p>
             </div>
           )}
@@ -2027,7 +2027,7 @@ export default function FootScan() {
               </div>
 
               <div className="text-center w-full">
-                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>3D-Rekonstruktion</p>
+                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung läuft</p>
                 <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
@@ -2040,10 +2040,10 @@ export default function FootScan() {
 
               <div className="w-full space-y-1.5">
                 {[
-                  { pct: 15,  label: '16 Fotos werden vorbereitet' },
-                  { pct: 30,  label: 'A4-Kalibrierung & Silhouette-Segmentierung' },
-                  { pct: 65,  label: 'Shape-from-Silhouettes 3D-Rekonstruktion' },
-                  { pct: 85,  label: 'Maße aus 3D-Punktwolke berechnen' },
+                  { pct: 15,  label: 'Fotos werden vorbereitet' },
+                  { pct: 30,  label: 'Größenverhältnisse werden erkannt' },
+                  { pct: 65,  label: '3D-Modell wird erstellt' },
+                  { pct: 85,  label: 'Maße werden berechnet' },
                 ].map(({ pct, label }) => (
                   <div key={pct} className={`flex items-center gap-3 px-3.5 py-2.5 border transition-all ${
                     progress >= pct
@@ -2057,7 +2057,7 @@ export default function FootScan() {
               </div>
 
               <p className="text-[9px] text-black/25 text-center px-4">
-                16 Aufnahmen aus 8 Winkeln → visueller Rumpf → sub-mm Maße
+                Aus deinen Fotos wird ein 3D-Modell erstellt und millimetergenau vermessen
               </p>
             </div>
           )}
@@ -2076,7 +2076,7 @@ export default function FootScan() {
                   </div>
                 ) : result.usedAI && (
                   <div className="inline-flex items-center gap-1.5 bg-white/8 px-3 py-1.5">
-                    <span className="text-[9px] text-white/50 font-medium">Claude KI · 4-Foto A4-Scan</span>
+                    <span className="text-[9px] text-white/50 font-medium">Automatisch vermessen</span>
                   </div>
                 )}
               </div>
@@ -2092,7 +2092,7 @@ export default function FootScan() {
                       <p className="text-[10px] text-black/40 leading-relaxed">
                         Deine Fußdaten sind sicher in deinem Profil gespeichert.
                         Wenn du einen Schuh bestellst, werden die Maße automatisch
-                        an den Hersteller übermittelt, um deinen individuellen Leisten zu fertigen.
+                        an den Hersteller übermittelt — so wird der Schuh genau auf deinen Fuß angepasst.
                       </p>
                     </div>
                   </>
@@ -2110,10 +2110,8 @@ export default function FootScan() {
                 {result.source === 'lidar' && (result.right?.pointCount || result.left?.pointCount) && (
                   <div className="flex items-center gap-3 px-3.5 py-2.5 bg-[#f6f5f3] border border-black/5 text-[10px] text-black/40">
                     <span>Scan-Qualität:</span>
-                    {result.right?.pointCount && <span>R: {Number(result.right.pointCount).toLocaleString('de-DE')} Punkte</span>}
-                    {result.left?.pointCount && <span>L: {Number(result.left.pointCount).toLocaleString('de-DE')} Punkte</span>}
                     <span className={`ml-auto font-medium ${(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'text-[#30D158]' : 'text-amber-500'}`}>
-                      {(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? '±1mm' : '±1.5mm'}
+                      {(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'Sehr gut' : 'Gut'}
                     </span>
                   </div>
                 )}
@@ -2131,23 +2129,23 @@ export default function FootScan() {
                       </div>
                       <div className="grid grid-cols-2 gap-0">
                         {[
-                          { label: 'Länge',              key: 'length',           value: m.length,           optional: false, accuracy: '±1 mm' },
-                          { label: 'Breite',              key: 'width',            value: m.width,            optional: false, accuracy: '±1 mm' },
-                          { label: 'Zehenumfang',         key: 'toe_girth',        value: m.toe_girth,        optional: true, accuracy: '±1 mm' },
-                          { label: 'Vorballenumfang',     key: 'preball_girth',    value: m.preball_girth,    optional: true, accuracy: '±1 mm' },
-                          { label: 'Ballenumfang',        key: 'ball_girth',       value: m.ball_girth,       optional: true, accuracy: '±1 mm' },
-                          { label: 'Gelenkweite',         key: 'waist_girth',      value: m.waist_girth,      optional: false, accuracy: '±1 mm' },
-                          { label: 'Spannumfang',         key: 'midinstep_girth',  value: m.midinstep_girth,  optional: true, accuracy: '±1 mm' },
-                          { label: 'Ristumfang',          key: 'instep_girth',     value: m.instep_girth,     optional: true, accuracy: '±1 mm' },
-                          { label: 'Oberer Rist',         key: 'upper_instep_girth', value: m.upper_instep_girth, optional: true, accuracy: '±1 mm' },
-                          { label: 'Lg. Fersenumfang',    key: 'long_heel_girth',  value: m.long_heel_girth,  optional: true, accuracy: '±1.5 mm' },
-                          { label: 'Kz. Fersenumfang',    key: 'short_heel_girth', value: m.short_heel_girth, optional: true, accuracy: '±1.5 mm' },
-                          { label: 'Fersenumfang',        key: 'heel_girth',       value: m.heel_girth,       optional: false, accuracy: '±1 mm' },
-                          { label: 'Knöchel',             key: 'ankle_girth',      value: m.ankle_girth,      optional: false, accuracy: '±1 mm' },
-                          { label: 'Gewölbehöhe',         key: 'arch',             value: m.arch,             optional: false, accuracy: '±1.5 mm' },
-                          { label: 'Fußhöhe',             key: 'foot_height',      value: m.foot_height,      optional: false, accuracy: '±1.5 mm' },
+                          { label: 'Länge',                    key: 'length',           value: m.length,           optional: false },
+                          { label: 'Breite',                    key: 'width',            value: m.width,            optional: false },
+                          { label: 'Umfang Zehen',              key: 'toe_girth',        value: m.toe_girth,        optional: true },
+                          { label: 'Umfang vor Ballen',         key: 'preball_girth',    value: m.preball_girth,    optional: true },
+                          { label: 'Umfang Ballen',             key: 'ball_girth',       value: m.ball_girth,       optional: true },
+                          { label: 'Schmalste Stelle',          key: 'waist_girth',      value: m.waist_girth,      optional: false },
+                          { label: 'Umfang Mittelfuß',          key: 'midinstep_girth',  value: m.midinstep_girth,  optional: true },
+                          { label: 'Umfang Spann',              key: 'instep_girth',     value: m.instep_girth,     optional: true },
+                          { label: 'Umfang oberer Spann',       key: 'upper_instep_girth', value: m.upper_instep_girth, optional: true },
+                          { label: 'Langer Fersenumfang',       key: 'long_heel_girth',  value: m.long_heel_girth,  optional: true },
+                          { label: 'Kurzer Fersenumfang',       key: 'short_heel_girth', value: m.short_heel_girth, optional: true },
+                          { label: 'Umfang Ferse',              key: 'heel_girth',       value: m.heel_girth,       optional: false },
+                          { label: 'Umfang Knöchel',            key: 'ankle_girth',      value: m.ankle_girth,      optional: false },
+                          { label: 'Höhe Fußgewölbe',           key: 'arch',             value: m.arch,             optional: false },
+                          { label: 'Fußhöhe',                   key: 'foot_height',      value: m.foot_height,      optional: false },
                         ].filter(({ optional, value }) => !optional || value != null)
-                        .map(({ label: lbl, key, value, accuracy }, i) => {
+                        .map(({ label: lbl, key, value }, i) => {
                           const editKey = `${side}_${key}`
                           const edited = editedValues[editKey]
                           const displayVal = edited !== undefined ? edited : (value != null ? Number(value).toFixed(1) : '')
@@ -2157,7 +2155,6 @@ export default function FootScan() {
                             } ${i >= 2 ? 'border-t border-black/5' : ''}`}>
                               <div>
                                 <span className="text-[9px] text-black/35 block">{lbl}</span>
-                                <span className="text-[7px] text-black/20">{accuracy}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <input
@@ -2211,7 +2208,7 @@ export default function FootScan() {
                           }
                           setEditedValues({})
                         } catch (err) {
-                          setSaveErr('Fehler beim Speichern: ' + (err.message || err))
+                          setSaveErr('Speichern hat nicht geklappt — bitte versuche es nochmal.')
                         }
                         setSavingEdits(false)
                       }}
