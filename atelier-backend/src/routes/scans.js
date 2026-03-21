@@ -1577,7 +1577,7 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
         }
         try {
           const parsed = JSON.parse(stdout)
-          if (!parsed.length || !parsed.width) {
+          if (typeof parsed !== 'object' || Array.isArray(parsed) || !parsed.length || !parsed.width) {
             return reject(Object.assign(new Error(
               `process_lidar.py lieferte unvollständige Daten (length=${parsed.length}, width=${parsed.width}). stderr: ${(stderr || '').slice(-200)}`
             ), { statusCode: 422 }))
