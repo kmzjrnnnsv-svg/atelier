@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
@@ -104,12 +104,31 @@ const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', 
 
 export const isNative = Capacitor.isNativePlatform()
 
+// Track window.innerHeight for browser mode — this is the only value
+// that dynamically follows Safari's toolbar resize (shrink on scroll).
+function useViewportHeight() {
+  const [vh, setVh] = useState(window.innerHeight)
+  const update = useCallback(() => setVh(window.innerHeight), [])
+  useEffect(() => {
+    if (isNative) return
+    window.addEventListener('resize', update)
+    // visualViewport fires more reliably on iOS Safari toolbar changes
+    window.visualViewport?.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.visualViewport?.removeEventListener('resize', update)
+    }
+  }, [update])
+  return vh
+}
+
 function AppRoutes() {
   const location = useLocation()
   const { user } = useAuth()
   const { initStore } = useAtelierStore()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
+  const viewportHeight = useViewportHeight()
 
   // Configure native status bar for edge-to-edge rendering
   useEffect(() => {
@@ -128,7 +147,7 @@ function AppRoutes() {
 
   if (isCMS) {
     return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', ...(isNative ? { height: '100dvh' } : { bottom: 0 }), zIndex: 50, overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: isNative ? '100dvh' : viewportHeight, zIndex: 50, overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
@@ -160,7 +179,7 @@ function AppRoutes() {
   }
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', ...(isNative ? { height: '100dvh' } : { bottom: 0 }), display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: isNative ? '100dvh' : viewportHeight, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
       <div className="flex-1 overflow-hidden relative">
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
