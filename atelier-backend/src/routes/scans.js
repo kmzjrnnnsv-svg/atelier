@@ -1528,11 +1528,15 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     import.meta.url
   ).pathname
 
-  // Verify Python is available before spawning
-  const pythonCheck = spawnSync('python3', ['--version'], { encoding: 'utf8', timeout: 5000 })
-  if (pythonCheck.status !== 0) {
+  // Verify Python + critical dependencies before spawning
+  const depCheck = spawnSync('python3', ['-c', 'import numpy, scipy, sklearn; print("ok")'], { encoding: 'utf8', timeout: 10000 })
+  if (depCheck.status !== 0) {
     try { unlinkSync(tmpFile) } catch { /* ignore */ }
-    return res.status(500).json({ error: 'Python3 nicht gefunden auf dem Server', detail: 'python3 --version failed' })
+    const missing = (depCheck.stderr || '').match(/No module named '(\w+)'/)?.[1] ?? 'unbekannt'
+    return res.status(500).json({
+      error: `Python-Abhängigkeit fehlt: ${missing}`,
+      detail: 'Bitte "pip install -r requirements.txt" im atelier-ml Verzeichnis ausführen.',
+    })
   }
 
   // Async spawn — doesn't block the Node.js event loop
@@ -1690,6 +1694,16 @@ router.post('/photogrammetry', authenticate, async (req, res) => {
   }
   if (!Array.isArray(leftImgs) || leftImgs.length < 4) {
     return res.status(400).json({ error: 'leftImgs: mindestens 4 Bilder erforderlich' })
+  }
+
+  // Verify Python + critical dependencies before spawning long-running process
+  const depCheck = spawnSync('python3', ['-c', 'import cv2, numpy, scipy; print("ok")'], { encoding: 'utf8', timeout: 10000 })
+  if (depCheck.status !== 0) {
+    const missing = (depCheck.stderr || '').match(/No module named '(\w+)'/)?.[1] ?? 'unbekannt'
+    return res.status(500).json({
+      error: `Python-Abhängigkeit fehlt: ${missing}`,
+      detail: 'Bitte "pip install opencv-python numpy scipy scikit-learn" im atelier-ml Verzeichnis ausführen.',
+    })
   }
 
   try {

@@ -173,8 +173,8 @@ export function buildShoeLastGeo(scanData, options = {}) {
   const lastW = footWidth + preset.width_ease_mm
   const lastH = (footH || 65) + preset.instep_raise_mm
 
-  const SL = 64  // slices along length
-  const SC = 32  // circumference segments per slice
+  const SL = 128  // slices along length (128 for CNC/3D-print precision)
+  const SC = 64   // circumference segments per slice
 
   const verts = []
   const indices = []
@@ -206,17 +206,15 @@ export function buildShoeLastGeo(scanData, options = {}) {
     // Cross-section dimensions at this slice
     let halfW, dorsalZ, plantarZ
 
-    // Check if we have actual contour data for nearby level
-    const contourCs = _findNearestContour(csLookup, tFoot)
+    // Use measured cross-section data (exact or interpolated between levels)
+    const contourCs = _interpolateContour(csLookup, tFoot)
 
-    if (contourCs && contourCs.contour && contourCs.contour.length >= 6) {
-      // Use actual contour shape — will be used for precise export
-      // For the smooth last surface, interpolate dimensions
+    if (contourCs && contourCs.width_mm > 0 && contourCs.height_mm > 0) {
       halfW = (contourCs.width_mm + preset.width_ease_mm) / 2
       dorsalZ = (contourCs.height_mm + preset.instep_raise_mm) * 0.65
       plantarZ = (contourCs.height_mm + preset.instep_raise_mm) * 0.35
     } else {
-      // Parametric cross-section (same as footSTL.js body but with Zugabe)
+      // Parametric fallback when no scan contours available
       const cs = _parametricCrossSection(tFoot, lastW, lastH, archH, preset)
       halfW = cs.halfW
       dorsalZ = cs.dorsalZ
@@ -308,23 +306,65 @@ export function buildShoeLastGeo(scanData, options = {}) {
 }
 
 
-function _findNearestContour(csLookup, tFoot) {
-  // Map foot fraction to nearest cross-section level (all 10 Python output levels)
-  // Tighter tolerance (0.04 instead of 0.08) to avoid mismatched contours
-  const levels = [
-    ['Zehen', 0.10], ['Ferse', 0.15], ['Gewölbe', 0.30], ['Vorballen', 0.35],
-    ['Ballen', 0.40], ['Taille', 0.45], ['Spann', 0.52], ['Rist', 0.60],
-    ['Oberer_Rist', 0.75], ['Knöchel', 0.88],
-  ]
-  let best = null, bestDist = Infinity
-  for (const [name, frac] of levels) {
-    const dist = Math.abs(tFoot - frac)
-    if (dist < bestDist && dist < 0.04 && csLookup[name]) {
-      bestDist = dist
-      best = csLookup[name]
+// Cross-section level definitions (matching Python output)
+const CS_LEVELS = [
+  ['Zehen', 0.10], ['Ferse', 0.15], ['Gewölbe', 0.30], ['Vorballen', 0.35],
+  ['Ballen', 0.40], ['Taille', 0.45], ['Spann', 0.52], ['Rist', 0.60],
+  ['Oberer_Rist', 0.75], ['Knöchel', 0.88],
+]
+
+/**
+ * Interpolate cross-section dimensions between two nearest measured levels.
+ * Returns { width_mm, height_mm } interpolated, or null if no data.
+ */
+function _interpolateContour(csLookup, tFoot) {
+  if (tFoot < 0 || tFoot > 1) return null
+
+  // Collect available levels sorted by fraction
+  const available = []
+  for (const [name, frac] of CS_LEVELS) {
+    const cs = csLookup[name]
+    if (cs && cs.width_mm > 0 && cs.height_mm > 0) {
+      available.push({ frac, cs })
     }
   }
-  return best
+  if (available.length === 0) return null
+
+  // Exact or near-exact match (within 1% of foot length)
+  for (const { frac, cs } of available) {
+    if (Math.abs(tFoot - frac) < 0.01) return cs
+  }
+
+  // Find bracketing levels for interpolation
+  let below = null, above = null
+  for (const entry of available) {
+    if (entry.frac <= tFoot) {
+      if (!below || entry.frac > below.frac) below = entry
+    }
+    if (entry.frac >= tFoot) {
+      if (!above || entry.frac < above.frac) above = entry
+    }
+  }
+
+  // Only one side available — use it if close enough (within 8% of foot length)
+  if (!below && above) return Math.abs(tFoot - above.frac) < 0.08 ? above.cs : null
+  if (!above && below) return Math.abs(tFoot - below.frac) < 0.08 ? below.cs : null
+  if (!below || !above) return null
+
+  // Both sides available — linear interpolation
+  const span = above.frac - below.frac
+  if (span < 0.001) return below.cs
+  const t = (tFoot - below.frac) / span
+
+  return {
+    width_mm: lerp(below.cs.width_mm, above.cs.width_mm, t),
+    height_mm: lerp(below.cs.height_mm, above.cs.height_mm, t),
+    girth_mm: (below.cs.girth_mm && above.cs.girth_mm)
+      ? lerp(below.cs.girth_mm, above.cs.girth_mm, t)
+      : null,
+    contour: null,  // Interpolated — no raw contour points
+    _interpolated: true,
+  }
 }
 
 

@@ -2494,6 +2494,17 @@ export default function FootScan() {
                           der exakt zu deinem Fuß passt.
                         </p>
 
+                        {/* Warning for photo-only scans (no cross-sections → generic last) */}
+                        {result.source !== 'lidar' && result.source !== 'photogrammetry' && (
+                          <div className="flex gap-2 p-2.5 bg-amber-500/10 border border-amber-400/20">
+                            <span className="text-amber-300 text-[10px] leading-relaxed">
+                              Foto-Scan: Dein Leisten basiert auf Standardformen.
+                              Für einen individuellen Leisten mit exakter Fußgeometrie
+                              nutze den LiDAR-Scan oder die 16-Foto-Photogrammetrie.
+                            </span>
+                          </div>
+                        )}
+
                         {/* Export tools — admin/curator only */}
                         {(user?.role === 'admin' || user?.role === 'curator') && (<>
                         {/* Export format selector */}
