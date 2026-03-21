@@ -85,6 +85,16 @@ export function hapticSuccess() {
   try { navigator?.vibrate?.([15, 60, 15, 60, 30]) } catch { /* not available */ }
 }
 
+/** Selection tap (tab switches, toggles) */
+export function hapticSelection() {
+  try { navigator?.vibrate?.(8) } catch { /* not available */ }
+}
+
+/** Warning double-tap (quality issues, lost tracking) */
+export function hapticWarning() {
+  try { navigator?.vibrate?.([20, 40, 20]) } catch { /* not available */ }
+}
+
 // ─── Pre-built scan guidance messages ────────────────────────────────────────
 
 export const SCAN_MESSAGES = {

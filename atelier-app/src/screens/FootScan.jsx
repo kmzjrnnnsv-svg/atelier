@@ -10,7 +10,7 @@ import { buildFootGeoAsync, downloadSTL } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
 import DepthSensing, { depthCapabilities } from '../plugins/depthSensing'
-import { speak, stopSpeaking, hapticLight, hapticMedium, hapticStrong, hapticSuccess, SCAN_MESSAGES, setVoiceEnabled, isVoiceEnabled } from '../utils/scanVoice'
+import { speak, stopSpeaking, hapticLight, hapticMedium, hapticStrong, hapticSuccess, hapticWarning, SCAN_MESSAGES, setVoiceEnabled, isVoiceEnabled } from '../utils/scanVoice'
 
 // ─── Size lookup ───────────────────────────────────────────────────────────────
 const r1 = x => Math.round(x * 10) / 10
@@ -487,29 +487,32 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
         <div className="w-11" />
       </div>
 
-      {/* Bottom sheet */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white px-5 pt-5 pb-10">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 bg-black flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-[11px] font-bold">{stepNum}</span>
-          </div>
-          <span className="text-xs text-black/40 font-medium">Schritt {stepNum} von {totalSteps}</span>
+      {/* Bottom sheet — dark translucent overlay for immersive camera feel */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/60 backdrop-blur-xl px-5 pt-5 pb-10"
+        style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)' }}>
+        {/* Progress dots */}
+        <div className="flex items-center justify-center gap-1.5 mb-4">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div key={i} className={`rounded-full transition-all duration-300 ${
+              i < stepNum ? 'w-2 h-2 bg-white' : i === stepNum ? 'w-2 h-2 bg-white/60' : 'w-1.5 h-1.5 bg-white/20'
+            }`} />
+          ))}
         </div>
-        <p className="text-[15px] font-bold text-black leading-snug mb-1" style={{ letterSpacing: '0.03em' }}>{emoji} {title}</p>
-        <p className="text-[11px] text-black/40 leading-relaxed mb-5">{sub}</p>
+        <p className="text-[15px] font-bold text-white leading-snug mb-1 text-center" style={{ letterSpacing: '0.03em' }}>{title}</p>
+        <p className="text-[11px] text-white/50 leading-relaxed mb-5 text-center">{sub}</p>
 
         {ready ? (
-          <button onClick={handleTap}
-            className="w-full py-4 bg-black text-white font-bold text-[13px] border-0 uppercase tracking-widest active:opacity-80 transition-opacity"
-            style={{ letterSpacing: '0.12em' }}>
-            Foto aufnehmen
-          </button>
+          <div className="flex justify-center">
+            <button onClick={handleTap}
+              className="w-[68px] h-[68px] rounded-full border-[3px] border-white bg-transparent flex items-center justify-center active:scale-95 transition-transform">
+              <div className="w-[56px] h-[56px] rounded-full bg-white" />
+            </button>
+          </div>
         ) : (
-          <div className="w-full py-4 bg-[#f6f5f3] flex items-center justify-center gap-3">
-            <div className="w-8 h-8 bg-black/10 flex items-center justify-center">
-              <span className="text-base font-bold text-black/50">{count}</span>
+          <div className="flex justify-center">
+            <div className="w-[68px] h-[68px] rounded-full border-[3px] border-white/30 flex items-center justify-center">
+              <span className="text-[24px] font-bold text-white/50">{count}</span>
             </div>
-            <span className="text-[12px] font-semibold text-black/35">Positioniere dich…</span>
           </div>
         )}
       </div>
@@ -579,34 +582,30 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
         <div className="w-11" />
       </div>
 
-      {/* Bottom sheet */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white px-5 pt-5 pb-10">
+      {/* Bottom sheet — dark translucent overlay for immersive camera feel */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/60 backdrop-blur-xl px-5 pt-5 pb-10"
+        style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-black flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-[11px] font-bold">{pgStep + 1}</span>
-            </div>
-            <span className="text-xs text-black/40 font-medium">Aufnahme {pgStep + 1} von 16</span>
-          </div>
-          <span className="text-[10px] font-semibold text-black bg-[#f6f5f3] px-2.5 py-1 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
+          <span className="text-[11px] text-white/40 font-medium">Aufnahme {pgStep + 1} von 16</span>
+          <span className="text-[10px] font-semibold text-white/70 bg-white/10 px-2.5 py-1 rounded-full uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
             {info.side === 'right' ? 'Rechts' : 'Links'}
           </span>
         </div>
-        <p className="text-[15px] font-bold text-black leading-snug mb-1" style={{ letterSpacing: '0.03em' }}>{info.label}</p>
-        <p className="text-[11px] text-black/40 leading-relaxed mb-5">{info.sub}</p>
+        <p className="text-[15px] font-bold text-white leading-snug mb-1 text-center" style={{ letterSpacing: '0.03em' }}>{info.label}</p>
+        <p className="text-[11px] text-white/50 leading-relaxed mb-5 text-center">{info.sub}</p>
 
         {ready ? (
-          <button onClick={handleTap}
-            className="w-full py-4 font-bold text-[13px] border-0 text-white bg-black uppercase tracking-widest active:opacity-80 transition-opacity"
-            style={{ letterSpacing: '0.12em' }}>
-            Foto aufnehmen
-          </button>
+          <div className="flex justify-center">
+            <button onClick={handleTap}
+              className="w-[68px] h-[68px] rounded-full border-[3px] border-white bg-transparent flex items-center justify-center active:scale-95 transition-transform">
+              <div className="w-[56px] h-[56px] rounded-full bg-white" />
+            </button>
+          </div>
         ) : (
-          <div className="w-full py-4 bg-[#f6f5f3] flex items-center justify-center gap-3">
-            <div className="w-8 h-8 bg-black/10 flex items-center justify-center">
-              <span className="text-base font-bold text-black/50">{count}</span>
+          <div className="flex justify-center">
+            <div className="w-[68px] h-[68px] rounded-full border-[3px] border-white/30 flex items-center justify-center">
+              <span className="text-[24px] font-bold text-white/50">{count}</span>
             </div>
-            <span className="text-[12px] font-semibold text-black/35">Positioniere dich…</span>
           </div>
         )}
       </div>
@@ -695,6 +694,8 @@ export default function FootScan() {
   const [pgStep,     setPgStep]    = useState(0)        // 0-15 (8 rechts + 8 links)
   const [pgImgs,     setPgImgs]    = useState({ right: [], left: [] })
   const [walkPoints,   setWalkPoints]   = useState(0)
+  const [deviceStable, setDeviceStable] = useState(true)  // DeviceMotion stability
+  const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
 
   // ── Shoe last export state ──
   const [lastShoeType, setLastShoeType] = useState('oxford')
@@ -837,6 +838,38 @@ export default function FootScan() {
     }
   }, [phase, camStatus])
 
+  // ── DeviceMotion: stability feedback during LiDAR scan ──
+  useEffect(() => {
+    const isScanning = (phase === 'lidar-right' || phase === 'lidar-left') && walkProgress > 0 && walkProgress < 100
+    if (!isScanning || reduceMotion.current) { setDeviceStable(true); return }
+
+    let lastWarnTime = 0
+    const handler = (e) => {
+      const a = e.acceleration || {}
+      const mag = Math.sqrt((a.x || 0) ** 2 + (a.y || 0) ** 2 + (a.z || 0) ** 2)
+      const stable = mag < 1.0
+      setDeviceStable(stable)
+      if (!stable && Date.now() - lastWarnTime > 4000) {
+        lastWarnTime = Date.now()
+        speak('Halte das Handy ruhiger', { urgent: true })
+        hapticWarning()
+      }
+    }
+    window.addEventListener('devicemotion', handler)
+    return () => window.removeEventListener('devicemotion', handler)
+  }, [phase, walkProgress])
+
+  // ── A4 detection haptic feedback ──
+  const prevA4Ref = useRef(null)
+  useEffect(() => {
+    if (reduceMotion.current) return
+    const wasDetected = prevA4Ref.current?.confidence > 0.7
+    const isDetected = a4Detected?.confidence > 0.7
+    if (!wasDetected && isDetected) hapticLight()
+    if (wasDetected && !isDetected) hapticWarning()
+    prevA4Ref.current = a4Detected
+  }, [a4Detected])
+
   // ── Countdown + auto-start: user doesn't need to look at screen ──
   const startScanWithCountdown = useCallback((side, { isRetry = false } = {}) => {
     setLidarError(null)
@@ -882,6 +915,7 @@ export default function FootScan() {
       let lastVoicePhase = -1
       let lastAngleWarningTime = 0
       let lastPointWarningTime = 0
+      let lastMilestone = 0
 
       // Fast polling (150ms) for responsive progress ring + single Promise
       await new Promise((resolve) => {
@@ -901,6 +935,10 @@ export default function FootScan() {
             lastCoverage = lastCoverage + (coverage - lastCoverage) * 0.4
             setWalkProgress(Math.round(lastCoverage))
             setWalkPoints(pts)
+
+            // ── Milestone haptics at 25/50/75% ──
+            const milestone = coverage >= 75 ? 75 : coverage >= 50 ? 50 : coverage >= 25 ? 25 : 0
+            if (milestone > lastMilestone) { lastMilestone = milestone; hapticMedium() }
 
             // ── Voice guidance at phase transitions ──
             const voicePhase = coverage < 20 ? 0 : coverage < 45 ? 1 : coverage < 70 ? 2 : coverage < 95 ? 3 : 4
@@ -1666,12 +1704,12 @@ export default function FootScan() {
                     return (
                       <path key={i} d={arcSegmentPath(i, 72, 88, 100, 100)}
                         fill="none"
-                        stroke={filled ? '#30D158' : 'rgba(255,255,255,0.08)'}
+                        stroke={filled ? (deviceStable ? '#30D158' : '#FF9F0A') : 'rgba(255,255,255,0.08)'}
                         strokeWidth={6}
                         strokeLinecap="round"
                         style={{
                           transition: 'stroke 0.4s ease',
-                          filter: isLeading ? 'drop-shadow(0 0 8px rgba(48,209,88,0.6))' : 'none',
+                          filter: isLeading ? `drop-shadow(0 0 8px ${deviceStable ? 'rgba(48,209,88,0.6)' : 'rgba(255,159,10,0.6)'})` : 'none',
                         }}
                       />
                     )
@@ -1757,6 +1795,12 @@ export default function FootScan() {
               {walkProgress > 0 && walkProgress < 100 && !lidarError && (
                 <div key={walkProgress < 20 ? 'step1' : walkProgress < 45 ? 'step2' : walkProgress < 70 ? 'step3' : 'step4'}
                   style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                  {/* Stability warning */}
+                  {!deviceStable && (
+                    <p className="text-[13px] text-[#FF9F0A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                      Halte das Handy ruhiger
+                    </p>
+                  )}
                   {/* Big, readable instruction — user glances at screen briefly */}
                   <p className="text-[20px] font-bold text-white mb-2 leading-snug">
                     {walkProgress < 20 ? '↓  Von oben draufhalten'
