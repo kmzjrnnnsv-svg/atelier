@@ -6,9 +6,16 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   ios: {
     contentInset: 'never',
+    backgroundColor: '#ffffff',
+    preferredContentMode: 'mobile',
   },
   plugins: {
     SplashScreen: { launchAutoHide: false },
+    StatusBar: {
+      overlaysWebView: true,
+      style: 'DARK',
+      backgroundColor: '#ffffff',
+    },
   },
 }
 

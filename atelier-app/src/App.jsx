@@ -5,6 +5,7 @@ import { ProtectedRoute, CMSRoute, AdminRoute } from './components/ProtectedRout
 import BottomNav from './components/BottomNav'
 import useAtelierStore from './store/atelierStore'
 import ErrorBoundary from './components/ErrorBoundary'
+import { Capacitor } from '@capacitor/core'
 
 // Eager: needed immediately on first paint
 import Login from './screens/Login'
@@ -107,6 +108,16 @@ function AppRoutes() {
   const { initStore } = useAtelierStore()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
+
+  // Configure native status bar for edge-to-edge rendering
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+        StatusBar.setOverlaysWebView({ overlay: true })
+        StatusBar.setStyle({ style: Style.Dark })
+      })
+    }
+  }, [])
 
   // Load store data from DB whenever a user session is active
   useEffect(() => {
