@@ -50,7 +50,8 @@ function sizeFromLength(mm) {
     const dist = Math.abs(mm - row.mm)
     if (dist < bestDist) { bestDist = dist; best = row }
   }
-  return { eu: best.eu, uk: best.uk, us: best.us }
+  const outOfRange = mm < table[0].mm - 3 || mm > table[table.length - 1].mm + 3
+  return { eu: best.eu, uk: best.uk, us: best.us, outOfRange }
 }
 
 // ─── Image helpers ─────────────────────────────────────────────────────────────
@@ -961,12 +962,8 @@ export default function FootScan() {
       setDeviceInfo(info)
       setDeviceDetected(true)
 
-      // Auto-select: if LiDAR available, go directly to LiDAR scan
-      if (hasLidar && phase === 'start') {
-        setLidarData({ right: null, left: null })
-        setLidarError(null)
-        setPhase('lidar-right')
-      }
+      // LiDAR available: stay on start screen so user sees instructions first
+      // The start screen highlights LiDAR as "Empfohlen" with a prominent button
     }
     detect()
     return () => { depthRef.current?.destroy() }
@@ -2300,6 +2297,10 @@ export default function FootScan() {
                 {result.isDemo ? (
                   <div className="inline-flex items-center gap-1.5 bg-amber-500/15 px-3 py-1.5">
                     <span className="text-[9px] text-amber-300 font-medium uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Demo · Beispielwerte</span>
+                  </div>
+                ) : result.sizes?.outOfRange ? (
+                  <div className="inline-flex items-center gap-1.5 bg-amber-500/15 px-3 py-1.5">
+                    <span className="text-[9px] text-amber-300 font-medium">Deine Fußlänge liegt außerhalb der Standard-Größentabelle — die angezeigte Größe ist ein Richtwert</span>
                   </div>
                 ) : result.usedAI && (
                   <div className="inline-flex items-center gap-1.5 bg-white/8 px-3 py-1.5">

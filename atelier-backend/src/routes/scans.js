@@ -1539,7 +1539,8 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
   let measurements
   try {
     measurements = await new Promise((resolve, reject) => {
-      const child = spawn('python3', [scriptPath, '--cloud', tmpFile], { encoding: 'utf8' })
+      const sideArg = side === 'left' ? 'left' : 'right'
+      const child = spawn('python3', [scriptPath, '--cloud', tmpFile, '--side', sideArg], { encoding: 'utf8' })
       let stdout = '', stderr = ''
       const timeout = setTimeout(() => { child.kill('SIGTERM'); reject(new Error('TIMEOUT')) }, 60_000)
 

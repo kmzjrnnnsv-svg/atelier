@@ -583,7 +583,7 @@ def pca_regularize(meas: dict) -> dict:
 
 # ─── Main measurement function ────────────────────────────────────────────────
 
-def measure_foot(point_cloud: list[dict]) -> dict:
+def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
     """
     Convert a raw LiDAR point cloud into foot measurements.
 
@@ -655,15 +655,19 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     #     Rist    ~60%  -- instep
     #     Knöchel ~88%  -- just above the heel / lower ankle
     #     heel    ~85%  -- heel cup (legacy)
-    toe_girth    = girth_perpendicular(aligned, 0.10, centers, x_positions, band_m=0.005)
-    ball_girth   = girth_perpendicular(aligned, 0.40, centers, x_positions, band_m=0.005)
-    preball_girth = girth_perpendicular(aligned, 0.35, centers, x_positions, band_m=0.005)
-    waist_girth  = girth_perpendicular(aligned, 0.45, centers, x_positions, band_m=0.005)
-    midinstep_girth = girth_perpendicular(aligned, 0.52, centers, x_positions, band_m=0.005)
-    instep_girth = girth_perpendicular(aligned, 0.60, centers, x_positions, band_m=0.005)
-    upper_instep_girth = girth_perpendicular(aligned, 0.75, centers, x_positions, band_m=0.005)
-    heel_girth   = girth_perpendicular(aligned, 0.85, centers, x_positions, band_m=0.005)
-    ankle_girth  = girth_perpendicular(aligned, 0.88, centers, x_positions, band_m=0.005)
+    # Scale cross-section band proportionally to foot size (ref: 5mm at 270mm foot)
+    _x_ext = np.percentile(aligned[:, 0], [0.5, 99.5])
+    _bm = max(0.004, 0.005 * (_x_ext[1] - _x_ext[0]) / 0.270)
+
+    toe_girth    = girth_perpendicular(aligned, 0.10, centers, x_positions, band_m=_bm)
+    ball_girth   = girth_perpendicular(aligned, 0.40, centers, x_positions, band_m=_bm)
+    preball_girth = girth_perpendicular(aligned, 0.35, centers, x_positions, band_m=_bm)
+    waist_girth  = girth_perpendicular(aligned, 0.45, centers, x_positions, band_m=_bm)
+    midinstep_girth = girth_perpendicular(aligned, 0.52, centers, x_positions, band_m=_bm)
+    instep_girth = girth_perpendicular(aligned, 0.60, centers, x_positions, band_m=_bm)
+    upper_instep_girth = girth_perpendicular(aligned, 0.75, centers, x_positions, band_m=_bm)
+    heel_girth   = girth_perpendicular(aligned, 0.85, centers, x_positions, band_m=_bm)
+    ankle_girth  = girth_perpendicular(aligned, 0.88, centers, x_positions, band_m=_bm)
 
     # Step 9c: Extract cross-section contour geometries at 10 standardized levels
     cross_sections = extract_cross_sections(aligned, centers, x_positions)
@@ -671,10 +675,14 @@ def measure_foot(point_cloud: list[dict]) -> dict:
     # Step 9b: Arch height — minimum Z in medial arch region (30-65% of length)
     x_min, x_max = np.percentile(aligned[:, 0], [0.5, 99.5])
     foot_len = x_max - x_min
+    # Medial half: for right foot medial = positive Y (big-toe side),
+    # for left foot medial = negative Y (after PCA alignment)
+    med_y = np.median(aligned[:, 1])
+    medial_mask = (aligned[:, 1] > med_y) if side == 'right' else (aligned[:, 1] < med_y)
     arch_region = aligned[
         (aligned[:, 0] > x_min + 0.30 * foot_len) &
         (aligned[:, 0] < x_min + 0.65 * foot_len) &
-        (aligned[:, 1] > np.median(aligned[:, 1]))  # medial half only
+        medial_mask
     ]
     if len(arch_region) > 5:
         # Arch height = minimum Z value in the medial midfoot region
@@ -740,13 +748,19 @@ def main():
         help="Path to JSON file containing the point cloud "
              "(list of {x, y, z} dicts, or {pointCloud: [...]})",
     )
+    parser.add_argument(
+        "--side",
+        default="right",
+        choices=["right", "left"],
+        help="Which foot (affects medial/lateral arch height selection)",
+    )
     args = parser.parse_args()
 
     with open(args.cloud) as f:
         data = json.load(f)
 
     cloud  = data if isinstance(data, list) else data.get("pointCloud", [])
-    result = measure_foot(cloud)
+    result = measure_foot(cloud, side=args.side)
 
     print(json.dumps(result, indent=2))
 
