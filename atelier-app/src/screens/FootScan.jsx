@@ -1561,7 +1561,7 @@ export default function FootScan() {
     async function save() {
       try {
         const payload = {
-          reference_type: result.source === 'lidar' ? 'lidar' : 'a4',
+          reference_type: result.source === 'lidar' ? 'lidar' : result.source === 'photogrammetry' ? 'photogrammetry' : 'a4',
           right_length: result.right.length, right_width: result.right.width,
           right_arch: result.right.arch ?? 14,
           left_length:  result.left.length,  left_width:  result.left.width,
@@ -1573,6 +1573,10 @@ export default function FootScan() {
           ...(result.right.heel_girth   != null && { right_heel_girth:   result.right.heel_girth }),
           ...(result.right.waist_girth  != null && { right_waist_girth:  result.right.waist_girth }),
           ...(result.right.ankle_girth      != null && { right_ankle_girth:      result.right.ankle_girth }),
+          ...(result.right.toe_girth        != null && { right_toe_girth:        result.right.toe_girth }),
+          ...(result.right.preball_girth    != null && { right_preball_girth:    result.right.preball_girth }),
+          ...(result.right.midinstep_girth  != null && { right_midinstep_girth:  result.right.midinstep_girth }),
+          ...(result.right.upper_instep_girth != null && { right_upper_instep_girth: result.right.upper_instep_girth }),
           ...(result.right.long_heel_girth  != null && { right_long_heel_girth:  result.right.long_heel_girth }),
           ...(result.right.short_heel_girth != null && { right_short_heel_girth: result.right.short_heel_girth }),
           ...(result.left.ball_girth    != null && { left_ball_girth:    result.left.ball_girth }),
@@ -1580,6 +1584,10 @@ export default function FootScan() {
           ...(result.left.heel_girth    != null && { left_heel_girth:    result.left.heel_girth }),
           ...(result.left.waist_girth   != null && { left_waist_girth:   result.left.waist_girth }),
           ...(result.left.ankle_girth       != null && { left_ankle_girth:       result.left.ankle_girth }),
+          ...(result.left.toe_girth         != null && { left_toe_girth:         result.left.toe_girth }),
+          ...(result.left.preball_girth     != null && { left_preball_girth:     result.left.preball_girth }),
+          ...(result.left.midinstep_girth   != null && { left_midinstep_girth:   result.left.midinstep_girth }),
+          ...(result.left.upper_instep_girth != null && { left_upper_instep_girth: result.left.upper_instep_girth }),
           ...(result.left.long_heel_girth  != null && { left_long_heel_girth:  result.left.long_heel_girth }),
           ...(result.left.short_heel_girth != null && { left_short_heel_girth: result.left.short_heel_girth }),
           eu_size: result.sizes.eu, uk_size: String(result.sizes.uk), us_size: String(result.sizes.us),

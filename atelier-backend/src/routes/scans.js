@@ -927,7 +927,7 @@ router.get('/training-export', authenticate, requireRole('admin'), (req, res) =>
 })
 
 const saveValidators = [
-  body('reference_type').isIn(['card', 'a4', 'lidar']),
+  body('reference_type').isIn(['card', 'a4', 'lidar', 'photogrammetry']),
   body('ppm').optional().isFloat({ min: 0 }),
   body('right_length').isFloat({ min: 100, max: 400 }),
   body('right_width').isFloat({ min: 50, max: 200 }),
@@ -966,8 +966,10 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
   const { reference_type, ppm, right_length, right_width, right_arch,
           left_length, left_width, left_arch,
           right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+          right_toe_girth, right_preball_girth, right_midinstep_girth, right_upper_instep_girth,
           right_long_heel_girth, right_short_heel_girth,
           left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+          left_toe_girth, left_preball_girth, left_midinstep_girth, left_upper_instep_girth,
           left_long_heel_girth, left_short_heel_girth,
           right_foot_height, left_foot_height,
           eu_size, uk_size, us_size, accuracy, notes,
@@ -978,21 +980,27 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
       (user_id, reference_type, ppm, right_length, right_width, right_arch,
        left_length, left_width, left_arch,
        right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+       right_toe_girth, right_preball_girth, right_midinstep_girth, right_upper_instep_girth,
        right_long_heel_girth, right_short_heel_girth,
        left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+       left_toe_girth, left_preball_girth, left_midinstep_girth, left_upper_instep_girth,
        left_long_heel_girth, left_short_heel_girth,
        right_foot_height, left_foot_height,
        eu_size, uk_size, us_size, accuracy, notes, scanned_with_socks)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     req.user.id, reference_type, ppm ?? null,
     right_length, right_width, right_arch,
     left_length,  left_width,  left_arch,
     right_ball_girth ?? null, right_instep_girth ?? null, right_heel_girth ?? null,
     right_waist_girth ?? null, right_ankle_girth ?? null,
+    right_toe_girth ?? null, right_preball_girth ?? null,
+    right_midinstep_girth ?? null, right_upper_instep_girth ?? null,
     right_long_heel_girth ?? null, right_short_heel_girth ?? null,
     left_ball_girth  ?? null,  left_instep_girth ?? null,  left_heel_girth ?? null,
     left_waist_girth ?? null,  left_ankle_girth ?? null,
+    left_toe_girth ?? null, left_preball_girth ?? null,
+    left_midinstep_girth ?? null, left_upper_instep_girth ?? null,
     left_long_heel_girth ?? null, left_short_heel_girth ?? null,
     right_foot_height ?? null, left_foot_height ?? null,
     eu_size, uk_size, us_size, accuracy, notes ?? null,
