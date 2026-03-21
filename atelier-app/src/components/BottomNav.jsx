@@ -1,9 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTransition } from 'react'
-import { ShoppingBag, Compass, ShoppingCart, User, Search } from 'lucide-react'
-import { prefetchRoute } from '../App'
-import { hapticSelection } from '../utils/scanVoice'
-import useAtelierStore from '../store/atelierStore'
+
 
 const NAV_ITEMS = [
   { id: 'shop',    icon: ShoppingBag,  label: 'Kollektion', path: '/collection' },
@@ -24,13 +21,7 @@ export default function BottomNav() {
   )?.id
 
   return (
-    <div
-      className="flex items-center justify-around px-1 pt-0.5 flex-shrink-0 bg-white/90 backdrop-blur-xl"
-      style={{
-        borderTop: '0.5px solid rgba(0,0,0,0.1)',
-        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)',
-      }}
-    >
+main
       {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
         const isActive = activeId === id
         return (

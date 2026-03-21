@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { isNative } from '../App'
 import { ArrowLeft, Check, ChevronRight, MapPin, Receipt, Gift, ShoppingBag, Plus, Minus, CheckCircle2 } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useAtelierStore from '../store/atelierStore'
@@ -368,7 +369,7 @@ export default function Checkout() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="px-5 pt-3 border-t border-black/5 flex-shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)' }}>
+      <div className="px-5 pt-3 border-t border-black/5 flex-shrink-0" style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 20px)' : '20px' }}>
         {step < 3 ? (
           <button
             onClick={handleNext}

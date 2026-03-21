@@ -22,13 +22,20 @@ cd "$APP_DIR"
 git pull origin "$BRANCH"
 echo "  Code aktualisiert"
 
-# 2. Backend Dependencies prüfen
+# 2. Frontend bauen
+echo "→ Frontend bauen..."
+cd "$APP_DIR/atelier-app"
+npm install
+npm run build
+echo "  Frontend gebaut"
+
+# 3. Backend Dependencies prüfen
 echo "→ npm install (Backend)..."
 cd "$APP_DIR/atelier-backend"
 npm install --production
 echo "  Dependencies aktuell"
 
-# 3. Backend neustarten
+# 4. Backend neustarten
 echo "→ Backend neustarten..."
 pm2 restart atelier
 echo "  Backend neu gestartet"

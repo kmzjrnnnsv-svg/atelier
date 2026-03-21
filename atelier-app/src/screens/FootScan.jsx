@@ -150,9 +150,8 @@ async function analyzeFrame(dataUrl, refSizeMm) {
   })
 }
 
-// ─── Real-time A4 detection (runs on each camera frame) ──────────────────────
-// Detects the white A4 rectangle in the camera feed and returns its bounding box.
-// Uses edge-based detection: find the largest white rectangular region.
+// ─── Real-time A4 + foot detection (runs on each camera frame) ───────────────
+// Detects the white A4 rectangle and dark foot shape in the camera feed.
 function detectA4InFrame(videoEl, overlayCanvas) {
   if (!videoEl || !overlayCanvas) return null
   const vw = videoEl.videoWidth, vh = videoEl.videoHeight
@@ -165,26 +164,10 @@ function detectA4InFrame(videoEl, overlayCanvas) {
   ctx.drawImage(videoEl, 0, 0, sw, sh)
   const { data } = ctx.getImageData(0, 0, sw, sh)
 
-  // Build brightness map with adaptive threshold
-  // Compute scene brightness to handle low-light conditions
-  const lumas = new Uint8Array(sw * sh)
-  let lumaSum = 0
-  for (let i = 0; i < data.length; i += 4) {
-    const l = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
-    lumas[i >> 2] = l
-    lumaSum += l
-  }
-  const avgLuma = lumaSum / (sw * sh)
-  // Adaptive: in dark scenes (avg < 100) lower the threshold; clamp to [120, 200]
-  const whiteThreshold = Math.max(120, Math.min(200, avgLuma + 80))
-  const bright = new Uint8Array(sw * sh)
-  for (let i = 0; i < lumas.length; i++) {
-    bright[i] = lumas[i] > whiteThreshold ? 1 : 0
-  }
 
-  // Find largest connected white rectangular region (simplified blob detection)
+
+  // ── A4 detection (white rectangle) ──
   let bestArea = 0, bestRect = null
-  // Scan horizontal runs of white pixels, find the biggest bounding box
   for (let y = 2; y < sh - 2; y += 3) {
     let runStart = -1
     for (let x = 0; x < sw; x++) {
@@ -192,14 +175,12 @@ function detectA4InFrame(videoEl, overlayCanvas) {
         if (runStart < 0) runStart = x
       } else {
         if (runStart >= 0 && (x - runStart) > 15) {
-          // Check vertical extent
           let yTop = y, yBot = y
           const midX = (runStart + x) >> 1
           while (yTop > 0 && bright[(yTop - 1) * sw + midX]) yTop--
           while (yBot < sh - 1 && bright[(yBot + 1) * sw + midX]) yBot++
           const w = x - runStart, h = yBot - yTop
           const area = w * h
-          // A4 aspect ratio check: 210/297 ≈ 0.707 (portrait) or 1.414 (landscape)
           const aspect = Math.min(w, h) / Math.max(w, h)
           if (area > bestArea && aspect > 0.55 && aspect < 0.85 && area > 400) {
             bestArea = area
@@ -218,7 +199,61 @@ function detectA4InFrame(videoEl, overlayCanvas) {
     }
   }
 
-  return bestRect
+  // ── Foot detection (dark region, skin-toned or darker than background) ──
+  // Compute adaptive threshold for dark pixels
+  const sorted = []
+  for (let i = 0; i < luma.length; i += 8) sorted.push(luma[i])
+  sorted.sort((a, b) => a - b)
+  const darkThresh = sorted[Math.floor(sorted.length * 0.35)] ?? 100
+  const brightThresh = sorted[Math.floor(sorted.length * 0.7)] ?? 180
+
+  // Find the largest dark blob (foot-shaped) — exclude the A4 region
+  const a4Left = bestRect ? (bestRect.x / 100) * sw : -1
+  const a4Top = bestRect ? (bestRect.y / 100) * sh : -1
+  const a4Right = bestRect ? a4Left + (bestRect.w / 100) * sw : -1
+  const a4Bot = bestRect ? a4Top + (bestRect.h / 100) * sh : -1
+
+  let fMinX = sw, fMaxX = 0, fMinY = sh, fMaxY = 0, footPixels = 0
+  for (let y = 2; y < sh - 2; y += 2) {
+    for (let x = 2; x < sw - 2; x += 2) {
+      // Skip A4 area
+      if (bestRect && x >= a4Left - 3 && x <= a4Right + 3 && y >= a4Top - 3 && y <= a4Bot + 3) continue
+      const l = luma[y * sw + x]
+      // Foot pixels: darker than bright background but not too dark (shadows)
+      if (l > 30 && l < brightThresh && l < darkThresh + 40) {
+        // Check if surrounded by similar pixels (noise filter)
+        const l2 = luma[(y + 1) * sw + x], l3 = luma[y * sw + x + 1]
+        if (l2 > 30 && l2 < brightThresh && l3 > 30 && l3 < brightThresh) {
+          fMinX = Math.min(fMinX, x); fMaxX = Math.max(fMaxX, x)
+          fMinY = Math.min(fMinY, y); fMaxY = Math.max(fMaxY, y)
+          footPixels++
+        }
+      }
+    }
+  }
+
+  let footRect = null
+  const fW = fMaxX - fMinX, fH = fMaxY - fMinY
+  // Foot should be somewhat elongated (taller than wide) and have enough pixels
+  if (footPixels > 200 && fH > 20 && fW > 10) {
+    const fAspect = fW / fH
+    // For top view: foot is ~2-3x taller than wide
+    if (fAspect < 0.8 && fAspect > 0.15) {
+      footRect = {
+        x: (fMinX / sw) * 100,
+        y: (fMinY / sh) * 100,
+        w: (fW / sw) * 100,
+        h: (fH / sh) * 100,
+        cx: ((fMinX + fW / 2) / sw) * 100,
+        cy: ((fMinY + fH / 2) / sh) * 100,
+        rx: (fW / 2 / sw) * 100,
+        ry: (fH / 2 / sh) * 100,
+        confidence: Math.min(1, footPixels / 1500),
+      }
+    }
+  }
+
+  return { a4: bestRect, foot: footRect }
 }
 
 // ─── 3D Preview ────────────────────────────────────────────────────────────────
@@ -412,40 +447,72 @@ function ScanMeshPreview({ progress, side }) {
 }
 
 // ─── Camera guide overlays (IBV-style: 3 angles per foot) ────────────────────
-function GuideOverlay({ phase }) {
+// Overlays adapt dynamically to detected A4 + foot positions
+function GuideOverlay({ phase, a4Detected, footDetected }) {
+  // Smooth interpolation: blend between default and detected positions
+  const lerp = (def, det, t) => def + (det - def) * t
+
   // ── Top view (zenithal): A4 + foot from above ──
   if (phase === 'right-top' || phase === 'left-top') {
     const isRight = phase === 'right-top'
-    const a4X = isRight ? 18 : 252, a4Y = 330, a4W = 90, a4H = 127
-    const footCx = isRight ? 270 : 110, footCy = 400
+    // Default positions (fallback when nothing detected)
+    const defA4X = isRight ? 18 : 252, defA4Y = 330, defA4W = 90, defA4H = 127
+    const defFootCx = isRight ? 270 : 110, defFootCy = 400, defFootRx = 58, defFootRy = 138
+
+    // Map detected A4 from % to viewBox coords (390×844)
+    const a4 = a4Detected
+    const a4Conf = a4 ? Math.min(a4.confidence / 0.5, 1) : 0  // blend factor 0–1
+    const a4X = a4 ? lerp(defA4X, a4.x * 3.9, a4Conf) : defA4X
+    const a4Y = a4 ? lerp(defA4Y, a4.y * 8.44, a4Conf) : defA4Y
+    const a4W = a4 ? lerp(defA4W, a4.w * 3.9, a4Conf) : defA4W
+    const a4H = a4 ? lerp(defA4H, a4.h * 8.44, a4Conf) : defA4H
+    const a4Color = a4 && a4.confidence > 0.7 ? 'rgba(45,212,191,0.9)' : a4 && a4.confidence > 0.4 ? 'rgba(250,204,21,0.8)' : 'white'
+
+    // Map detected foot from % to viewBox coords
+    const ft = footDetected
+    const ftConf = ft ? Math.min(ft.confidence / 0.5, 1) : 0
+    const footCx = ft ? lerp(defFootCx, ft.cx * 3.9, ftConf) : defFootCx
+    const footCy = ft ? lerp(defFootCy, ft.cy * 8.44, ftConf) : defFootCy
+    const footRx = ft ? lerp(defFootRx, ft.rx * 3.9, ftConf) : defFootRx
+    const footRy = ft ? lerp(defFootRy, ft.ry * 8.44, ftConf) : defFootRy
+    const footColor = ft && ft.confidence > 0.5 ? 'rgba(45,212,191,0.9)' : 'white'
+
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid meet">
+
         <rect x={a4X} y={a4Y} width={a4W} height={a4H} rx="6"
-          stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
-          <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
+          stroke={a4Color} strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6"
+          style={{ transition: 'all 0.3s ease-out' }}>
+          {!a4 && <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />}
         </rect>
         {[[a4X,a4Y],[a4X+a4W,a4Y],[a4X,a4Y+a4H],[a4X+a4W,a4Y+a4H]].map(([cx,cy],i) => (
-          <g key={i} stroke="white" strokeWidth="3" fill="none" strokeLinecap="round">
+          <g key={i} stroke={a4Color} strokeWidth="3" fill="none" strokeLinecap="round"
+            style={{ transition: 'all 0.3s ease-out' }}>
             <line x1={cx + (i%2===0?6:-6)} y1={cy} x2={cx} y2={cy} />
             <line x1={cx} y1={cy + (i<2?6:-6)} x2={cx} y2={cy} />
           </g>
         ))}
-        <text x={a4X + a4W/2} y={a4Y + a4H/2 - 4} textAnchor="middle" fill="rgba(255,255,255,0.85)"
-          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="1.5">A4</text>
+        <text x={a4X + a4W/2} y={a4Y + a4H/2 - 4} textAnchor="middle" fill={a4Color}
+          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="1.5"
+          style={{ transition: 'all 0.3s ease-out' }}>
+          A4 {a4 && a4.confidence > 0.7 ? '✓' : ''}
+        </text>
         <text x={a4X + a4W/2} y={a4Y + a4H/2 + 10} textAnchor="middle" fill="rgba(255,255,255,0.55)"
-          fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="500">297×210mm</text>
-        <ellipse cx={footCx} cy={footCy} rx="58" ry="138"
-          stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.05)" strokeDasharray="12 6">
-          <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />
+          fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="500"
+          style={{ transition: 'all 0.3s ease-out' }}>297×210mm</text>
+
+        {/* Foot outline — snaps to detected foot */}
+        <ellipse cx={footCx} cy={footCy} rx={footRx} ry={footRy}
+          stroke={footColor} strokeWidth="2.5" fill="rgba(255,255,255,0.05)" strokeDasharray="12 6"
+          style={{ transition: 'all 0.3s ease-out' }}>
+          {!ft && <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite" />}
         </ellipse>
-        <text x={footCx} y={footCy + 165} textAnchor="middle" fill="rgba(255,255,255,0.9)"
-          fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="2">
+        <text x={footCx} y={footCy + footRy + 25} textAnchor="middle"
+          fill={ft && ft.confidence > 0.5 ? 'rgba(45,212,191,0.9)' : 'rgba(255,255,255,0.9)'}
+          fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="2"
+          style={{ transition: 'all 0.3s ease-out' }}>
           {isRight ? 'RECHTER FUß' : 'LINKER FUß'}
         </text>
-        <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
-          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="500">
-          Von oben fotografieren · ca. eine Handlänge Abstand
-        </text>
+
       </svg>
     )
   }
@@ -453,34 +520,35 @@ function GuideOverlay({ phase }) {
   // ── Medial view (inside of foot): IBV-style ──
   if (phase === 'right-medial' || phase === 'left-medial') {
     const isRight = phase === 'right-medial'
-    const cx = 195
+    const ft = footDetected
+    const ftConf = ft ? Math.min(ft.confidence / 0.5, 1) : 0
+    // Shift the side-profile guide based on detected foot position
+    const defCx = 195, defCy = 380
+    const cx = ft ? lerp(defCx, ft.cx * 3.9, ftConf * 0.5) : defCx
+    const cy = ft ? lerp(defCy, ft.cy * 8.44, ftConf * 0.3) : defCy
+    const footColor = ft && ft.confidence > 0.5 ? 'rgba(45,212,191,0.9)' : 'white'
+    const a4Color = a4Detected && a4Detected.confidence > 0.7 ? 'rgba(45,212,191,0.7)' : 'rgba(255,255,255,0.6)'
+
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid meet">
-        <g transform={`translate(${cx}, 380)`}>
+
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
-            stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
-            <animate attributeName="opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" />
+            stroke={footColor} strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
+            {!ft && <animate attributeName="opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" />}
           </path>
-          {/* Arch curve — visible from medial side */}
           <path d="M -90 95 C -60 55 -20 50 20 95"
             stroke="rgba(45,212,191,0.7)" strokeWidth="2.5" fill="none" strokeDasharray="6 4" />
-          <text x="0" y="-35" textAnchor="middle" fill="rgba(255,255,255,0.85)"
+          <text x="0" y="-35" textAnchor="middle" fill={footColor}
             fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="1.5">
             {isRight ? 'RECHTS · INNEN' : 'LINKS · INNEN'}
           </text>
-          {/* A4 reference */}
           <rect x="128" y="-60" width="22" height="155" rx="3"
-            stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
-          <text x="139" y="-68" textAnchor="middle" fill="rgba(255,255,255,0.55)"
+            stroke={a4Color} strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
+          <text x="139" y="-68" textAnchor="middle" fill={a4Color}
             fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="600" letterSpacing="1">A4</text>
         </g>
         <text x="195" y="510" textAnchor="middle" fill="rgba(45,212,191,0.7)"
-          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Fußwölbung soll sichtbar sein</text>
-        <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
-          fontSize="11" fontFamily="system-ui,sans-serif">
-          Kamera auf den Boden stellen · Innenseite des Fußes
-        </text>
+
       </svg>
     )
   }
@@ -488,30 +556,33 @@ function GuideOverlay({ phase }) {
   // ── Lateral view (outside of foot): IBV-style ──
   if (phase === 'right-lateral' || phase === 'left-lateral') {
     const isRight = phase === 'right-lateral'
-    const cx = 195
+    const ft = footDetected
+    const ftConf = ft ? Math.min(ft.confidence / 0.5, 1) : 0
+    const defCx = 195, defCy = 380
+    const cx = ft ? lerp(defCx, ft.cx * 3.9, ftConf * 0.5) : defCx
+    const cy = ft ? lerp(defCy, ft.cy * 8.44, ftConf * 0.3) : defCy
+    const footColor = ft && ft.confidence > 0.5 ? 'rgba(45,212,191,0.9)' : 'white'
+    const a4Color = a4Detected && a4Detected.confidence > 0.7 ? 'rgba(45,212,191,0.7)' : 'rgba(255,255,255,0.6)'
+
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid meet">
-        <g transform={`translate(${cx}, 380) scale(-1, 1)`}>
+
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
-            stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
-            <animate attributeName="opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" />
+            stroke={footColor} strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
+            {!ft && <animate attributeName="opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" />}
           </path>
           <rect x="128" y="-60" width="22" height="155" rx="3"
-            stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
-          <text x="139" y="-68" textAnchor="middle" fill="rgba(255,255,255,0.55)"
+            stroke={a4Color} strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
+          <text x="139" y="-68" textAnchor="middle" fill={a4Color}
             fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="600" letterSpacing="1" transform="scale(-1,1)" style={{ transformOrigin: '139px 0' }}>A4</text>
         </g>
-        <text x="195" y="345" textAnchor="middle" fill="rgba(255,255,255,0.85)"
-          fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="1.5">
+        <text x="195" y={cy - 35} textAnchor="middle" fill={footColor}
+          fontSize="13" fontFamily="system-ui,sans-serif" fontWeight="700" letterSpacing="1.5"
+          style={{ transition: 'all 0.3s ease-out' }}>
           {isRight ? 'RECHTS · AUSSEN' : 'LINKS · AUSSEN'}
         </text>
         <text x="195" y="510" textAnchor="middle" fill="rgba(255,255,255,0.5)"
-          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Ferse und Außenseite soll sichtbar sein</text>
-        <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
-          fontSize="11" fontFamily="system-ui,sans-serif">
-          Kamera auf den Boden stellen · Außenseite des Fußes
-        </text>
+
       </svg>
     )
   }
@@ -534,10 +605,7 @@ function GuideOverlay({ phase }) {
           <rect x="128" y="-60" width="22" height="155" rx="3"
             stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
         </g>
-        <text x="195" y="620" textAnchor="middle" fill="rgba(255,255,255,0.4)"
-          fontSize="11" fontFamily="system-ui,sans-serif">
-          Kamera auf den Boden stellen, seitlich halten
-        </text>
+
       </svg>
     )
   }
@@ -546,7 +614,7 @@ function GuideOverlay({ phase }) {
 }
 
 // ─── Camera Step ───────────────────────────────────────────────────────────────
-function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, totalSteps, camStatus, a4Detected, depthMode }) {
+function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, totalSteps, camStatus, a4Detected, footDetected, depthMode }) {
   const [ready, setReady] = useState(false)
   const [flash, setFlash] = useState(false)
   const [count, setCount] = useState(3)
@@ -591,28 +659,22 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
 
       {flash && <div className="absolute inset-0 bg-white z-50 pointer-events-none" />}
 
-      <GuideOverlay phase={phase} />
+      <GuideOverlay phase={phase} a4Detected={a4Detected} footDetected={footDetected} />
 
-      {/* Real-time A4 detection feedback */}
-      {a4Detected && (
-        <div className="absolute z-15 pointer-events-none" style={{
-          left: `${a4Detected.x}%`, top: `${a4Detected.y}%`,
-          width: `${a4Detected.w}%`, height: `${a4Detected.h}%`,
-        }}>
-          <div className={`w-full h-full border-2 ${
-            a4Detected.confidence > 0.7 ? 'border-green-400' : a4Detected.confidence > 0.4 ? 'border-yellow-400' : 'border-red-400'
-          }`} style={{ borderRadius: 4 }} />
-          <span className={`absolute -top-5 left-1 text-[9px] font-bold ${
-            a4Detected.confidence > 0.7 ? 'text-green-400' : 'text-yellow-400'
-          }`}>
-            A4 {a4Detected.confidence > 0.7 ? '✓' : '…'}
-          </span>
-        </div>
-      )}
+      {/* A4 not detected warning */}
       {!a4Detected && camStatus === 'active' && (
         <div className="absolute top-16 left-0 right-0 z-15 flex justify-center pointer-events-none">
           <div className="bg-red-500/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
             <span className="text-[10px] text-white font-semibold">Weißes Blatt noch nicht sichtbar</span>
+          </div>
+        </div>
+      )}
+      {/* Foot detected feedback */}
+      {footDetected && footDetected.confidence > 0.5 && (
+        <div className="absolute top-16 left-4 z-15 pointer-events-none">
+          <div className="bg-teal-500/70 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+            <span className="text-[8px] text-white font-bold uppercase tracking-wider">Fuß erkannt</span>
           </div>
         </div>
       )}
@@ -845,6 +907,7 @@ export default function FootScan() {
   const autoRetryRef = useRef(0)                              // ref mirror to avoid stale closures
   const [depthMode, setDepthMode]     = useState('none') // 'webxr' | 'sfm' | 'none'
   const [a4Detected, setA4Detected]   = useState(null)   // { x, y, w, h, confidence }
+  const [footDetected, setFootDetected] = useState(null) // { cx, cy, rx, ry, confidence }
   const [depthFrames, setDepthFrames] = useState({})      // depth data per capture phase
   const depthRef = useRef(null)        // DepthSensing instance
   const a4CanvasRef = useRef(null)     // offscreen canvas for A4 detection
@@ -981,23 +1044,22 @@ export default function FootScan() {
     return () => { depthRef.current?.destroy() }
   }, []) // eslint-disable-line
 
-  // ── Real-time A4 detection loop (runs during camera phases) ──
+  // ── Real-time A4 + foot detection loop (runs during camera phases) ──
   useEffect(() => {
     const CAM = ['right-top', 'right-medial', 'right-lateral', 'left-top', 'left-medial', 'left-lateral']
     if (!CAM.includes(phase) || camStatus !== 'active') {
       setA4Detected(null)
+      setFootDetected(null)
       return
     }
 
-    // Create offscreen canvas for A4 detection
+    // Create offscreen canvas for detection
     if (!a4CanvasRef.current) {
       a4CanvasRef.current = document.createElement('canvas')
     }
 
     // Run at ~8fps (every 125ms) to avoid perf issues
-    const intervalId = setInterval(() => {
-      const rect = detectA4InFrame(videoRef.current, a4CanvasRef.current)
-      setA4Detected(rect)
+
     }, 125)
 
     return () => {
@@ -1794,7 +1856,7 @@ export default function FootScan() {
           onCapture={captureHandler}
           onBack={() => { stopCam(); navigate('/collection', { replace: true }) }}
           stepNum={camStepNum} totalSteps={totalCamSteps} camStatus={camStatus}
-          a4Detected={a4Detected} depthMode={depthMode} />
+          a4Detected={a4Detected} footDetected={footDetected} depthMode={depthMode} />
       )}
 
       {/* ── Photogrammetrie camera view (16-shot mode) ── */}

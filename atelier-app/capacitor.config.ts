@@ -5,10 +5,17 @@ const config: CapacitorConfig = {
   appName: 'Atelier',
   webDir: 'dist',
   ios: {
-    contentInset: 'always',
+    contentInset: 'never',
+    backgroundColor: '#ffffff',
+    preferredContentMode: 'mobile',
   },
   plugins: {
     SplashScreen: { launchAutoHide: false },
+    StatusBar: {
+      overlaysWebView: true,
+      style: 'DARK',
+      backgroundColor: '#ffffff',
+    },
   },
 }
 

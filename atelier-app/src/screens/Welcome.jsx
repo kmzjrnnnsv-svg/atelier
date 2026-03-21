@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { isNative } from '../App'
 import { ArrowRight, Footprints, Sparkles, Ruler, ShoppingBag } from 'lucide-react'
 
 const STEPS = [
@@ -61,7 +62,7 @@ export default function Welcome() {
       </div>
 
       {/* Dots + Button */}
-      <div className="px-5 space-y-5 flex-shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 24px)' }}>
+      <div className="px-5 space-y-5 flex-shrink-0" style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 24px)' : '24px' }}>
         {/* Dots */}
         <div className="flex justify-center gap-2">
           {STEPS.map((_, i) => (
