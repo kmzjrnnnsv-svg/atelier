@@ -981,7 +981,7 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
           left_long_heel_girth, left_short_heel_girth,
           right_foot_height, left_foot_height,
           eu_size, uk_size, us_size, accuracy, notes,
-          scanned_with_socks } = req.body
+          scanned_with_socks, shoe_type } = req.body
 
   const result = getDb().prepare(`
     INSERT INTO foot_scans
@@ -994,8 +994,8 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
        left_toe_girth, left_preball_girth, left_midinstep_girth, left_upper_instep_girth,
        left_long_heel_girth, left_short_heel_girth,
        right_foot_height, left_foot_height,
-       eu_size, uk_size, us_size, accuracy, notes, scanned_with_socks)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       eu_size, uk_size, us_size, accuracy, notes, scanned_with_socks, shoe_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     req.user.id, reference_type, ppm ?? null,
     right_length, right_width, right_arch,
@@ -1012,7 +1012,8 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
     left_long_heel_girth ?? null, left_short_heel_girth ?? null,
     right_foot_height ?? null, left_foot_height ?? null,
     eu_size, uk_size, us_size, accuracy, notes ?? null,
-    scanned_with_socks != null ? (scanned_with_socks ? 1 : 0) : 1
+    scanned_with_socks != null ? (scanned_with_socks ? 1 : 0) : 1,
+    shoe_type ?? 'oxford'
   )
 
   const scanId = result.lastInsertRowid

@@ -246,6 +246,8 @@ export function runMigrations(db) {
     `ALTER TABLE foot_scans ADD COLUMN left_preball_girth       REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_midinstep_girth     REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_upper_instep_girth  REAL`,
+    // foot_scans — preferred shoe type for last generation
+    `ALTER TABLE foot_scans ADD COLUMN shoe_type TEXT DEFAULT 'oxford'`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }

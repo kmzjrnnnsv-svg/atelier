@@ -1594,6 +1594,7 @@ export default function FootScan() {
           ...(result.left.short_heel_girth != null && { left_short_heel_girth: result.left.short_heel_girth }),
           eu_size: result.sizes.eu, uk_size: String(result.sizes.uk), us_size: String(result.sizes.us),
           accuracy: result.accuracy ?? (result.source === 'lidar' ? 96.0 : result.source === 'photogrammetry' ? 94.0 : result.usedAI ? 88.0 : 82.0),
+          shoe_type: lastShoeType,
         }
         const saved_scan = await apiFetch('/api/scans', { method: 'POST', body: JSON.stringify(payload) })
         setSaved(true); refreshScan()
@@ -2296,11 +2297,10 @@ export default function FootScan() {
           )}
           {phase === 'result' && result && !result.error && (
             <div className="flex-1 overflow-y-auto">
-              {/* Size hero header bar */}
-              <div className="bg-black px-5 py-6 text-center">
-                <p className="text-[8px] text-white/30 uppercase tracking-widest mb-2" style={{ letterSpacing: '0.2em' }}>Deine Schuhgröße</p>
-                <p className="text-6xl font-bold text-white leading-none mb-1">{result.sizes.eu}</p>
-                <p className="text-[11px] text-white/40 mb-3">EU · UK {result.sizes.uk} · US {result.sizes.us}</p>
+              {/* Foot profile header */}
+              <div className="bg-black px-5 py-5 text-center">
+                <p className="text-[9px] text-white/40 uppercase tracking-widest mb-1" style={{ letterSpacing: '0.2em' }}>Dein individuelles Fußprofil</p>
+                <p className="text-[13px] text-white/60 mb-3">EU {result.sizes.eu} · UK {result.sizes.uk} · US {result.sizes.us}</p>
                 {result.isDemo ? (
                   <div className="inline-flex items-center gap-1.5 bg-amber-500/15 px-3 py-1.5">
                     <span className="text-[9px] text-amber-300 font-medium uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Demo · Beispielwerte</span>
@@ -2459,8 +2459,7 @@ export default function FootScan() {
                   )}
                 </div>
 
-                {/* 3D Preview + Exports — admin/curator only */}
-                {(user?.role === 'admin' || user?.role === 'curator') && (
+                {/* 3D Preview + Shoe Last Export */}
                 <div>
                   <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>3D-Vorschau</p>
                   <div className="overflow-hidden" style={{ background: '#111111' }}>
@@ -2475,9 +2474,8 @@ export default function FootScan() {
                       </div>
                     </div>
 
-                    {/* Shoe Last / STL / OBJ Export */}
+                    {/* Shoe type selector — visible to all users */}
                     <div className="p-3 border-t border-white/5 space-y-2">
-                        {/* Shoe type selector */}
                         <div className="flex items-center gap-2 mb-2">
                           <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Schuhtyp:</label>
                           <select
@@ -2490,8 +2488,16 @@ export default function FootScan() {
                           </select>
                         </div>
 
+                        <p className="text-[10px] text-white/30 leading-relaxed px-0.5">
+                          Dein Fußprofil und der gewählte Schuhtyp werden bei der Bestellung
+                          automatisch an die Werkstatt übermittelt — so entsteht ein Leisten,
+                          der exakt zu deinem Fuß passt.
+                        </p>
+
+                        {/* Export tools — admin/curator only */}
+                        {(user?.role === 'admin' || user?.role === 'curator') && (<>
                         {/* Export format selector */}
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 pt-2 border-t border-white/5">
                           <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Format:</label>
                           <div className="flex gap-1">
                             {['stl', 'obj'].map(fmt => (
@@ -2508,7 +2514,7 @@ export default function FootScan() {
                           </div>
                         </div>
 
-                        {/* Export buttons */}
+                        {/* Leisten export buttons */}
                         <div className="grid grid-cols-2 gap-2">
                           {[
                             { side: 'right', label: 'Leisten Rechts', m: result.right },
@@ -2581,10 +2587,10 @@ export default function FootScan() {
                           <span className="text-xs font-semibold text-gray-300">Maßblatt herunterladen</span>
                           <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
                         </button>
+                        </>)}
                       </div>
                   </div>
                 </div>
-                )}
 
                 {/* Notes input — saves to user profile */}
                 <div>
