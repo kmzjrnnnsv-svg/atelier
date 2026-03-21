@@ -74,13 +74,15 @@ echo "  PM2 installiert + Autostart konfiguriert"
 
 # ── 6. Python ML-Umgebung ─────────────────────────────────────────────────
 echo "→ Python ML-Umgebung vorbereiten..."
+ML_VENV="/home/$APP_USER/ml-venv"
 sudo -u $APP_USER bash -c "
-  python3 -m venv /home/$APP_USER/ml-venv
-  source /home/$APP_USER/ml-venv/bin/activate
+  python3 -m venv $ML_VENV
+  source $ML_VENV/bin/activate
   pip install --upgrade pip
-  pip install numpy scipy scikit-learn torch torchvision opencv-python-headless pillow
+  pip install -r $APP_DIR/atelier-ml/requirements.txt
 "
-echo "  Python venv + ML-Pakete installiert"
+echo "  Python venv + alle ML-Pakete aus requirements.txt installiert"
+echo "  venv: $ML_VENV/bin/python3"
 
 # ── 7. Repo klonen ────────────────────────────────────────────────────────
 echo "→ Repository klonen..."
@@ -124,6 +126,9 @@ JWT_REFRESH_SECRET=$REFRESH_SECRET
 # ANTHROPIC_API_KEY=sk-ant-...
 
 FRONTEND_URL=https://deine-domain.de
+
+# Python venv (PEP 668: system pip install blocked on Ubuntu 24.04+)
+PYTHON_PATH=/home/$APP_USER/ml-venv/bin/python3
 EOF
   echo "  .env erstellt mit generierten Secrets"
   echo "  ⚠️  BITTE ANPASSEN: $ENV_FILE"
@@ -203,6 +208,10 @@ cd "$APP_DIR"
 git pull origin main >> "$LOG" 2>&1
 cd atelier-backend
 npm install >> "$LOG" 2>&1
+# Update Python ML dependencies if requirements changed
+if [ -f "$HOME/ml-venv/bin/pip" ]; then
+  "$HOME/ml-venv/bin/pip" install -q -r "$APP_DIR/atelier-ml/requirements.txt" >> "$LOG" 2>&1
+fi
 pm2 restart atelier >> "$LOG" 2>&1
 echo "$(date) — Deploy abgeschlossen" >> "$LOG"
 DEPLOY

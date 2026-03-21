@@ -58,7 +58,7 @@ app.use(cors({
 }))
 
 app.use(cookieParser())
-app.use(express.json({ limit: '4mb' })) // allow image uploads
+app.use(express.json({ limit: '25mb' })) // LiDAR point clouds (~2MB) + photogrammetry 16 images (~20MB)
 
 // Global rate limit
 app.use('/api', apiLimiter)

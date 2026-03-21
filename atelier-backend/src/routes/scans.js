@@ -12,6 +12,18 @@ const router = Router()
 
 const ML_SCRIPTS = join(new URL('.', import.meta.url).pathname, '..', '..', '..', 'atelier-ml', 'scripts')
 
+// Resolve Python binary: prefer venv over system python3
+// Searches: PYTHON_PATH env → ../atelier-ml/.venv/bin/python3 → ~/ml-venv/bin/python3 → python3
+function resolvePython() {
+  if (process.env.PYTHON_PATH && existsSync(process.env.PYTHON_PATH)) return process.env.PYTHON_PATH
+  const venvLocal = join(ML_SCRIPTS, '..', '.venv', 'bin', 'python3')
+  if (existsSync(venvLocal)) return venvLocal
+  const venvHome = join(process.env.HOME || '/root', 'ml-venv', 'bin', 'python3')
+  if (existsSync(venvHome)) return venvHome
+  return 'python3'
+}
+const PYTHON = resolvePython()
+
 // Path to the computer-vision measurement script
 const PROCESS_PHOTOS_PY       = join(ML_SCRIPTS, 'process_photos.py')
 const SAVE_REAL_SCAN_PY       = join(ML_SCRIPTS, 'save_real_scan.py')
@@ -302,7 +314,7 @@ function bayesianUserAverage(db, userId) {
 function runCvPipeline(rightTopImg, rightSideImg, leftTopImg, leftSideImg) {
   try {
     const payload = JSON.stringify({ rightTopImg, rightSideImg, leftTopImg, leftSideImg })
-    const proc = spawnSync('python3', [PROCESS_PHOTOS_PY, '--data', payload], {
+    const proc = spawnSync(PYTHON, [PROCESS_PHOTOS_PY, '--data', payload], {
       timeout: 30_000,
       maxBuffer: 2 * 1024 * 1024,
     })
@@ -562,7 +574,7 @@ function processDepthData(depthData) {
       writeFileSync(tmpFile, JSON.stringify(data.pointCloud))
 
       const PROCESS_LIDAR_PY = join(ML_SCRIPTS, 'process_lidar.py')
-      const pyResult = spawnSync('python3', [PROCESS_LIDAR_PY, '--cloud', tmpFile], {
+      const pyResult = spawnSync(PYTHON, [PROCESS_LIDAR_PY, '--cloud', tmpFile], {
         timeout: 30_000, encoding: 'utf8',
       })
 
@@ -615,7 +627,7 @@ with open('${tmpFile}') as f:
 result = pca_regularize(meas)
 print(json.dumps(result))
 `
-    const pyResult = spawnSync('python3', ['-c', pyCode], {
+    const pyResult = spawnSync(PYTHON, ['-c', pyCode], {
       timeout: 10_000, encoding: 'utf8',
     })
 
@@ -909,7 +921,7 @@ router.patch('/:id/validate', authenticate, requireRole('admin', 'curator'), (re
           left_ankle_girth:   row.left_ankle_girth,
         },
       })
-      spawnSync('python3', [SAVE_REAL_SCAN_PY, '--data', payload], { timeout: 15_000 })
+      spawnSync(PYTHON, [SAVE_REAL_SCAN_PY, '--data', payload], { timeout: 15_000 })
     }
   } catch (e) {
     console.warn('[validate] ML-Export fehlgeschlagen (nicht kritisch):', e.message)
@@ -1087,7 +1099,7 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
             })
             // Run asynchronously — don't block the response
             const { spawn } = await import('child_process')
-            const child = spawn('python3', [saveScript, '--data', scanData], {
+            const child = spawn(PYTHON, [saveScript, '--data', scanData], {
               stdio: 'ignore', detached: true,
             })
             child.unref()
@@ -1475,7 +1487,7 @@ router.post('/trigger-training', authenticate, requireRole('admin'), async (req,
 
   try {
     const TRAIN_SCRIPT = join(ML_SCRIPTS, '..', 'train_photo.py')
-    const proc = spawn('python3', [TRAIN_SCRIPT, '--export-first'], {
+    const proc = spawn(PYTHON, [TRAIN_SCRIPT, '--export-first'], {
       cwd: join(ML_SCRIPTS, '..'),
       stdio: ['ignore', 'pipe', 'pipe'],
     })
@@ -1529,7 +1541,7 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
   ).pathname
 
   // Verify Python + critical dependencies before spawning
-  const depCheck = spawnSync('python3', ['-c', 'import numpy, scipy, sklearn; print("ok")'], { encoding: 'utf8', timeout: 10000 })
+  const depCheck = spawnSync(PYTHON, ['-c', 'import numpy, scipy, sklearn; print("ok")'], { encoding: 'utf8', timeout: 10000 })
   if (depCheck.status !== 0) {
     try { unlinkSync(tmpFile) } catch { /* ignore */ }
     const missing = (depCheck.stderr || '').match(/No module named '(\w+)'/)?.[1] ?? 'unbekannt'
@@ -1544,7 +1556,7 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
   try {
     measurements = await new Promise((resolve, reject) => {
       const sideArg = side === 'left' ? 'left' : 'right'
-      const child = spawn('python3', [scriptPath, '--cloud', tmpFile, '--side', sideArg], { encoding: 'utf8' })
+      const child = spawn(PYTHON, [scriptPath, '--cloud', tmpFile, '--side', sideArg], { encoding: 'utf8' })
       let stdout = '', stderr = ''
       const timeout = setTimeout(() => { child.kill('SIGTERM'); reject(new Error('TIMEOUT')) }, 60_000)
 
@@ -1697,7 +1709,7 @@ router.post('/photogrammetry', authenticate, async (req, res) => {
   }
 
   // Verify Python + critical dependencies before spawning long-running process
-  const depCheck = spawnSync('python3', ['-c', 'import cv2, numpy, scipy; print("ok")'], { encoding: 'utf8', timeout: 10000 })
+  const depCheck = spawnSync(PYTHON, ['-c', 'import cv2, numpy, scipy; print("ok")'], { encoding: 'utf8', timeout: 10000 })
   if (depCheck.status !== 0) {
     const missing = (depCheck.stderr || '').match(/No module named '(\w+)'/)?.[1] ?? 'unbekannt'
     return res.status(500).json({
@@ -1708,7 +1720,7 @@ router.post('/photogrammetry', authenticate, async (req, res) => {
 
   try {
     const payload = JSON.stringify({ rightImgs, leftImgs })
-    const proc = spawnSync('python3', [PROCESS_PHOTOGRAMMETRY, '--stdin'], {
+    const proc = spawnSync(PYTHON, [PROCESS_PHOTOGRAMMETRY, '--stdin'], {
       input: payload,
       timeout: 120_000,          // Rekonstruktion kann 60-90s dauern
       maxBuffer: 5 * 1024 * 1024,
