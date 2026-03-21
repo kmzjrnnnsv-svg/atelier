@@ -1575,7 +1575,19 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
             : (stderr.trim() || 'Unknown Python error').slice(0, 500)
           return reject(Object.assign(new Error(detail), { statusCode: 422 }))
         }
-        try { resolve(JSON.parse(stdout)) } catch { reject(new Error('Invalid JSON from process_lidar.py')) }
+        try {
+          const parsed = JSON.parse(stdout)
+          if (!parsed.length || !parsed.width) {
+            return reject(Object.assign(new Error(
+              `process_lidar.py lieferte unvollständige Daten (length=${parsed.length}, width=${parsed.width}). stderr: ${(stderr || '').slice(-200)}`
+            ), { statusCode: 422 }))
+          }
+          resolve(parsed)
+        } catch (e) {
+          reject(Object.assign(new Error(
+            `Ungültiges JSON von process_lidar.py: ${e.message}. stdout-Länge: ${stdout.length} Zeichen. stderr: ${(stderr || '').slice(-200)}`
+          ), { statusCode: 422 }))
+        }
       })
       child.on('error', (err) => { clearTimeout(timeout); reject(err) })
     })

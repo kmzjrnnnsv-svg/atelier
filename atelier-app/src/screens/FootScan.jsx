@@ -884,21 +884,33 @@ export default function FootScan() {
   const startCam = useCallback(async () => {
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { setCamStatus('insecure'); return }
     setCamStatus('requesting')
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-        audio: false,
-      })
-      streamRef.current = stream
-      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}) }
-      setCamStatus('active')
-    } catch (err) {
-      const n = err?.name || ''
-      if (n === 'NotAllowedError'  || n === 'PermissionDeniedError')  setCamStatus('denied')
-      else if (n === 'NotFoundError'   || n === 'DevicesNotFoundError') setCamStatus('notfound')
-      else if (n === 'NotReadableError'|| n === 'TrackStartError')      setCamStatus('inuse')
-      else                                                               setCamStatus('error')
+    // Try high-res first, fall back to lower resolution for older devices
+    const configs = [
+      { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      { facingMode: 'environment' },
+    ]
+    let stream = null
+    for (const video of configs) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video, audio: false })
+        break
+      } catch (err) {
+        // OverconstrainedError → try next config; other errors → abort
+        if (err.name !== 'OverconstrainedError') {
+          const n = err?.name || ''
+          if (n === 'NotAllowedError'  || n === 'PermissionDeniedError')  setCamStatus('denied')
+          else if (n === 'NotFoundError'   || n === 'DevicesNotFoundError') setCamStatus('notfound')
+          else if (n === 'NotReadableError'|| n === 'TrackStartError')      setCamStatus('inuse')
+          else                                                               setCamStatus('error')
+          return
+        }
+      }
     }
+    if (!stream) { setCamStatus('error'); return }
+    streamRef.current = stream
+    if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}) }
+    setCamStatus('active')
   }, [])
 
   const stopCam = useCallback(() => {
@@ -1160,9 +1172,18 @@ export default function FootScan() {
       if (raw.capturedImages?.top)  payload.topImage  = raw.capturedImages.top
       if (raw.capturedImages?.side) payload.sideImage = raw.capturedImages.side
 
+      // Validate payload size before upload (Express limit: 25MB)
+      const jsonStr = JSON.stringify(payload)
+      const payloadMB = jsonStr.length / (1024 * 1024)
+      if (payloadMB > 23) {
+        // Trim point cloud to fit — keep most recent/best points
+        console.warn(`[LiDAR] Payload ${payloadMB.toFixed(1)}MB exceeds safe limit, trimming point cloud`)
+        payload.pointCloud = raw.pointCloud.slice(-40000)
+      }
+
       const measurements = await apiFetch('/api/scans/lidar-measurements', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: payloadMB <= 23 ? jsonStr : JSON.stringify(payload),
       })
       setLidarData(d => ({ ...d, [side]: measurements }))
 
