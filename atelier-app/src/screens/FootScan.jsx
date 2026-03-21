@@ -1292,9 +1292,11 @@ export default function FootScan() {
         setProgress(15); setAiStatus('Bilder werden hochgeladen…')
         // Komprimiere Bilder auf 1200px max (Bandbreite sparen)
         const compress = (b64) => {
-          return new Promise(resolve => {
+          return new Promise((resolve, reject) => {
             const img = new Image()
+            const timeout = setTimeout(() => reject(new Error('Image load timeout')), 10_000)
             img.onload = () => {
+              clearTimeout(timeout)
               const scale = Math.min(1200 / Math.max(img.width, img.height), 1)
               const canvas = document.createElement('canvas')
               canvas.width  = Math.round(img.width  * scale)
@@ -1302,6 +1304,7 @@ export default function FootScan() {
               canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
               resolve(canvas.toDataURL('image/jpeg', 0.88))
             }
+            img.onerror = () => { clearTimeout(timeout); reject(new Error('Invalid image data')) }
             img.src = b64
           })
         }
@@ -2321,6 +2324,10 @@ export default function FootScan() {
                 ) : saveErr ? (
                   <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-red-600 text-[11px] font-medium">
                     <AlertCircle size={15} strokeWidth={1.5} /> {saveErr}
+                  </div>
+                ) : result.isDemo ? (
+                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-amber-600 text-[11px] font-medium">
+                    <AlertCircle size={15} strokeWidth={1.5} /> Demo-Daten werden nicht gespeichert
                   </div>
                 ) : (
                   <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/40 text-[11px]">

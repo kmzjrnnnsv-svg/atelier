@@ -1678,7 +1678,8 @@ router.post('/photogrammetry', authenticate, async (req, res) => {
 
   try {
     const payload = JSON.stringify({ rightImgs, leftImgs })
-    const proc = spawnSync('python3', [PROCESS_PHOTOGRAMMETRY, '--data', payload], {
+    const proc = spawnSync('python3', [PROCESS_PHOTOGRAMMETRY, '--stdin'], {
+      input: payload,
       timeout: 120_000,          // Rekonstruktion kann 60-90s dauern
       maxBuffer: 5 * 1024 * 1024,
     })
