@@ -261,7 +261,7 @@ function FootMini3D({ length, width, arch, label }) {
 
 function ScanMeshPreview({ progress, side }) {
   const mountRef = useRef(null)
-  const stateRef = useRef({ sectors: [], scene: null, renderer: null, camera: null, raf: 0, footGroup: null })
+  const stateRef = useRef({ sectors: [], scene: null, renderer: null, camera: null, raf: 0, coveredBins: 0 })
 
   // Build scene once on mount
   useEffect(() => {
@@ -287,12 +287,10 @@ function ScanMeshPreview({ progress, side }) {
     const rimLight = new THREE.DirectionalLight(0x2dd4bf, 0.5)
     rimLight.position.set(-80, 200, -50); scene.add(rimLight)
 
-    // Floor grid (subtle, like RoomPlan)
+    // Floor grid (subtle, like RoomPlan) — lies in XY plane at Z=0
     const gridGeo = new THREE.PlaneGeometry(400, 400, 20, 20)
     const gridMat = new THREE.MeshBasicMaterial({ color: 0x2dd4bf, wireframe: true, transparent: true, opacity: 0.04 })
-    const grid = new THREE.Mesh(gridGeo, gridMat)
-    grid.rotation.x = 0 // already XY plane
-    scene.add(grid)
+    scene.add(new THREE.Mesh(gridGeo, gridMat))
 
     // Build the foot geometry and split into 12 angular sectors
     const footGroup = new THREE.Group()
@@ -302,29 +300,47 @@ function ScanMeshPreview({ progress, side }) {
     const pos = geo.attributes.position.array
     const idx = geo.index.array
 
-    // Compute centroid for angular binning
-    let cx = 0, cz = 0, n = 0
-    for (let i = 0; i < pos.length; i += 3) { cx += pos[i]; cz += pos[i + 2]; n++ }
-    cx /= n; cz /= n
+    // Compute centroid for horizontal azimuth binning (X=length, Y=width)
+    // This matches the LiDAR plugin which bins by atan2(forward.x, forward.z) = horizontal walk-around angle
+    let centX = 0, centY = 0, nVerts = 0
+    for (let i = 0; i < pos.length; i += 3) { centX += pos[i]; centY += pos[i + 1]; nVerts++ }
+    centX /= nVerts; centY /= nVerts
 
-    // Assign each triangle to one of 12 angular bins based on face centroid angle
+    // Assign each triangle to one of 12 angular bins by horizontal azimuth of face centroid
     const sectorTris = Array.from({ length: 12 }, () => [])
     for (let i = 0; i < idx.length; i += 3) {
       const a = idx[i] * 3, b = idx[i + 1] * 3, c = idx[i + 2] * 3
-      const fx = (pos[a] + pos[b] + pos[c]) / 3 - cx
-      const fz = (pos[a + 2] + pos[b + 2] + pos[c + 2]) / 3 - cz
-      let angle = Math.atan2(fz, fx) * 180 / Math.PI  // -180..180
-      if (angle < 0) angle += 360
-      const bin = Math.min(11, Math.floor(angle / 30))
+      const fx = (pos[a] + pos[b] + pos[c]) / 3 - centX
+      const fy = (pos[a + 1] + pos[b + 1] + pos[c + 1]) / 3 - centY
+      // Match LiDAR Swift: bin = floor((atan2(x, z) * 180/pi + 180) / 30) % 12
+      const angleDeg = Math.atan2(fy, fx) * 180 / Math.PI  // -180..180
+      const bin = Math.floor((angleDeg + 180) / 30) % 12
       sectorTris[bin].push(idx[i], idx[i + 1], idx[i + 2])
     }
 
-    // Create sector meshes
+    // Build compact per-sector geometry (avoids full-vertex clone and fixes boundary normals)
     const sectors = []
     for (let s = 0; s < 12; s++) {
       if (sectorTris[s].length === 0) continue
-      const sGeo = geo.clone()
-      sGeo.setIndex(new THREE.BufferAttribute(new Uint32Array(sectorTris[s]), 1))
+
+      // Remap: collect only vertices referenced by this sector's triangles
+      const triIndices = sectorTris[s]
+      const vertMap = new Map()
+      const newPos = []
+      const newIdx = []
+      for (let ti = 0; ti < triIndices.length; ti++) {
+        const orig = triIndices[ti]
+        if (!vertMap.has(orig)) {
+          const ni = newPos.length / 3
+          vertMap.set(orig, ni)
+          newPos.push(pos[orig * 3], pos[orig * 3 + 1], pos[orig * 3 + 2])
+        }
+        newIdx.push(vertMap.get(orig))
+      }
+
+      const sGeo = new THREE.BufferGeometry()
+      sGeo.setAttribute('position', new THREE.Float32BufferAttribute(newPos, 3))
+      sGeo.setIndex(newIdx)
       sGeo.computeVertexNormals()
 
       // Solid fill (teal, transparent)
@@ -332,24 +348,21 @@ function ScanMeshPreview({ progress, side }) {
         color: 0x2dd4bf, transparent: true, opacity: 0,
         roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide,
       })
-      const fillMesh = new THREE.Mesh(sGeo, fillMat)
-
-      // Wireframe (bright teal edges)
+      // Wireframe (bright green edges)
       const wireMat = new THREE.MeshBasicMaterial({
         color: 0x30D158, wireframe: true, transparent: true, opacity: 0,
       })
-      const wireMesh = new THREE.Mesh(sGeo.clone(), wireMat)
 
-      footGroup.add(fillMesh)
-      footGroup.add(wireMesh)
-      sectors.push({ bin: s, fillMat, wireMat, revealed: 0 })
+      footGroup.add(new THREE.Mesh(sGeo, fillMat))
+      footGroup.add(new THREE.Mesh(sGeo, wireMat))
+      sectors.push({ bin: s, fillMat, wireMat, revealed: 0, target: 0 })
     }
 
     geo.dispose()
 
-    stateRef.current = { sectors, scene, renderer, camera, raf: 0, footGroup }
+    stateRef.current = { sectors, scene, renderer, camera, raf: 0, coveredBins: 0 }
 
-    // Animation loop
+    // Animation loop — also drives smooth opacity transitions per frame
     let frame = 0
     const animate = () => {
       stateRef.current.raf = requestAnimationFrame(animate)
@@ -361,38 +374,37 @@ function ScanMeshPreview({ progress, side }) {
       camera.position.set(Math.sin(t) * dist * 0.3, -Math.cos(t) * dist, 180 + Math.sin(t * 0.5) * 30)
       camera.lookAt(0, 0, 20)
 
+      // Smooth opacity transitions every frame (not just on React re-render)
+      const covered = stateRef.current.coveredBins
+      for (const sec of sectors) {
+        sec.target = sec.bin < covered ? 1 : 0
+        sec.revealed += (sec.target - sec.revealed) * 0.06  // smooth ease per frame (~60fps)
+        sec.wireMat.opacity = Math.min(0.35, sec.revealed * 0.35)
+        sec.fillMat.opacity = Math.max(0, (sec.revealed - 0.3) * 0.4)
+      }
+
       renderer.render(scene, camera)
     }
     animate()
 
     return () => {
       cancelAnimationFrame(stateRef.current.raf)
+      // Dispose all GPU resources to prevent memory leaks
+      scene.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose()
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose())
+          else obj.material.dispose()
+        }
+      })
       renderer.dispose()
       if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
     }
   }, [side])
 
-  // Update sector visibility based on progress (0-100)
+  // Update covered bin count (read by animation loop each frame)
   useEffect(() => {
-    const { sectors } = stateRef.current
-    if (!sectors.length) return
-
-    // Map progress to how many of the 12 bins are "covered"
-    const coveredBins = Math.round(progress * 12 / 100)
-
-    // Reveal sectors progressively — each sector has a staggered reveal
-    // that mimics the RoomPlan "mesh appearing" effect
-    for (const sec of sectors) {
-      const shouldReveal = sec.bin < coveredBins
-      const target = shouldReveal ? 1 : 0
-
-      // Smooth transition
-      sec.revealed += (target - sec.revealed) * 0.12
-
-      // Wireframe appears first (brighter), fill follows
-      sec.wireMat.opacity = Math.min(0.35, sec.revealed * 0.35)
-      sec.fillMat.opacity = Math.max(0, (sec.revealed - 0.3) * 0.4)  // delayed fill
-    }
+    stateRef.current.coveredBins = Math.round(progress * 12 / 100)
   }, [progress])
 
   return <div ref={mountRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
