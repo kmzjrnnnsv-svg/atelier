@@ -235,6 +235,8 @@ export function runMigrations(db) {
     `ALTER TABLE users ADD COLUMN last_order_at TEXT`,
     // foot_scans — scan with socks (measurements include sock thickness)
     `ALTER TABLE foot_scans ADD COLUMN scanned_with_socks INTEGER NOT NULL DEFAULT 1`,
+    // scan_training_data — track which user uploaded the training images
+    `ALTER TABLE scan_training_data ADD COLUMN user_id INTEGER REFERENCES users(id)`,
     // foot_scans — extended LiDAR girth measurements (toe, preball, midinstep, upper instep)
     `ALTER TABLE foot_scans ADD COLUMN right_toe_girth          REAL`,
     `ALTER TABLE foot_scans ADD COLUMN right_preball_girth      REAL`,

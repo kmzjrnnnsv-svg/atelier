@@ -841,6 +841,7 @@ export default function FootScan() {
   const [voiceOn, setVoiceOn]           = useState(true)
   const [countdown, setCountdown]       = useState(0)       // 3-2-1 countdown before scan
   const [autoRetryCount, setAutoRetryCount] = useState(0)   // auto-retry on recoverable errors
+  const autoRetryRef = useRef(0)                              // ref mirror to avoid stale closures
   const [depthMode, setDepthMode]     = useState('none') // 'webxr' | 'sfm' | 'none'
   const [a4Detected, setA4Detected]   = useState(null)   // { x, y, w, h, confidence }
   const [depthFrames, setDepthFrames] = useState({})      // depth data per capture phase
@@ -1030,7 +1031,7 @@ export default function FootScan() {
   // ── Countdown + auto-start: user doesn't need to look at screen ──
   const startScanWithCountdown = useCallback((side, { isRetry = false } = {}) => {
     setLidarError(null)
-    if (!isRetry) setAutoRetryCount(0)
+    if (!isRetry) { setAutoRetryCount(0); autoRetryRef.current = 0 }
     speak(SCAN_MESSAGES.ready(side))
     hapticMedium()
     setCountdown(3)
@@ -1197,8 +1198,9 @@ export default function FootScan() {
         : 'Etwas hat nicht funktioniert. Bitte versuche es nochmal.'
       // Auto-retry for recoverable errors (max 2 times), then show manual UI
       const isRecoverable = !msg.includes('Python') && !msg.includes('ModuleNotFoundError') && !msg.includes('Server')
-      if (isRecoverable && autoRetryCount < 2) {
-        setAutoRetryCount(prev => prev + 1)
+      if (isRecoverable && autoRetryRef.current < 2) {
+        autoRetryRef.current += 1
+        setAutoRetryCount(autoRetryRef.current)
         // Voice: specific guidance for the problem, then auto-retry
         const retryMsg = msg.includes('Zu wenige') || msg.includes('too sparse')
           ? 'Bewege das Handy etwas langsamer. Wir versuchen es gleich nochmal.'
@@ -1219,7 +1221,7 @@ export default function FootScan() {
       setLidarError(userMsg)
       setWalkProgress(0)
     }
-  }, [autoRetryCount]) // eslint-disable-line
+  }, []) // eslint-disable-line
 
   // ── Demo ──
   const startDemo = useCallback(() => {
@@ -1859,7 +1861,7 @@ export default function FootScan() {
 
           {phase === 'lidar-transition' ? (
             /* ── Transition screen: right foot done → left foot next (auto-continues after 5s) ── */
-            <TransitionScreen onContinue={() => { setWalkProgress(0); setWalkPoints(0); setAutoRetryCount(0); startScanWithCountdown('left') }} />
+            <TransitionScreen onContinue={() => { setWalkProgress(0); setWalkPoints(0); setAutoRetryCount(0); autoRetryRef.current = 0; startScanWithCountdown('left') }} />
           ) : (
             /* ── Scan screen with RoomPlan-style 3D mesh preview ── */
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center relative">

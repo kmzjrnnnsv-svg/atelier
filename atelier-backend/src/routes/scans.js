@@ -4,7 +4,7 @@ import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import Anthropic from '@anthropic-ai/sdk'
 import { spawn, spawnSync } from 'child_process'
-import { writeFileSync, unlinkSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 
@@ -26,7 +26,7 @@ const okLen   = v => typeof v === 'number' && v >= 150 && v <= 380
 const okWid   = v => typeof v === 'number' && v >=  50 && v <= 160
 const okArch  = v => typeof v === 'number' && v >=   2 && v <=  50
 const okH     = v => typeof v === 'number' && v >=  30 && v <= 120
-const okGirth = v => typeof v === 'number' && v >= 150 && v <= 450
+const okGirth = v => typeof v === 'number' && v >= 150 && v <= 500
 
 // ─── Superellipse perimeter (Lamé curve) ────────────────────────────────────
 // Feet are NOT ellipses. Superellipse with n≈2.3 captures metatarsal bulge
@@ -600,7 +600,6 @@ function pcaRegularize(measurements) {
   const metaPath = join(SHAPE_MODEL_DIR, 'meta.json')
 
   try {
-    const { existsSync, readFileSync } = require('fs')
     if (!existsSync(metaPath)) return null
 
     // Run PCA regularization via process_lidar.py's pca_regularize function
@@ -1041,9 +1040,10 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
         `SELECT id, right_top_img, right_side_img, left_top_img, left_side_img
          FROM scan_training_data
          WHERE scan_id = 0
+         AND user_id = ?
          AND created_at > datetime('now', '-10 minutes')
          ORDER BY created_at DESC LIMIT 1`
-      ).get()
+      ).get(req.user.id)
 
       if (pending) {
         // Link to the actual scan
@@ -1610,9 +1610,9 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
       } else {
         // Create new training data entry
         db.prepare(
-          `INSERT INTO scan_training_data (scan_id, ${topCol}, ${sideCol})
-           VALUES (0, ?, ?)`
-        ).run(topImage || null, sideImage || null)
+          `INSERT INTO scan_training_data (scan_id, user_id, ${topCol}, ${sideCol})
+           VALUES (0, ?, ?, ?)`
+        ).run(req.user.id, topImage || null, sideImage || null)
       }
 
       response._training_images_saved = true
