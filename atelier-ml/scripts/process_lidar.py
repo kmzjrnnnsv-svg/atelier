@@ -92,7 +92,7 @@ def height_above_floor(pts, normal, d):
 
 # ─── 2. Statistical outlier removal (k-NN) ────────────────────────────────────
 
-def remove_outliers(pts, k=20, std_ratio=2.0):
+def remove_outliers(pts, k=20, std_ratio=2.5):
     """
     Remove points whose mean k-NN distance is more than `std_ratio` standard
     deviations above the global mean.

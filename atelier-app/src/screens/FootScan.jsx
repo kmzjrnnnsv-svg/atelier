@@ -418,7 +418,7 @@ function GuideOverlay({ phase }) {
     const a4X = isRight ? 18 : 252, a4Y = 330, a4W = 90, a4H = 127
     const footCx = isRight ? 270 : 110, footCy = 400
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
+      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid meet">
         <rect x={a4X} y={a4Y} width={a4W} height={a4H} rx="6"
           stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
           <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
@@ -454,7 +454,7 @@ function GuideOverlay({ phase }) {
     const isRight = phase === 'right-medial'
     const cx = 195
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
+      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid meet">
         <g transform={`translate(${cx}, 380)`}>
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
@@ -489,7 +489,7 @@ function GuideOverlay({ phase }) {
     const isRight = phase === 'right-lateral'
     const cx = 195
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
+      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid meet">
         <g transform={`translate(${cx}, 380) scale(-1, 1)`}>
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
@@ -521,7 +521,7 @@ function GuideOverlay({ phase }) {
     const flip = isRight ? 1 : -1
     const cx = 195
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
+      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid meet">
         <g transform={`translate(${cx}, 380) scale(${flip}, 1)`}>
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
@@ -1009,7 +1009,7 @@ export default function FootScan() {
       setDeviceStable(stable)
       if (!stable && Date.now() - lastWarnTime > 4000) {
         lastWarnTime = Date.now()
-        speak('Halte das Handy ruhiger', { urgent: true })
+        speak(deviceInfo?.model === 'iPad' ? 'Halte das iPad ruhiger' : 'Halte das Handy ruhiger', { urgent: true })
         hapticWarning()
       }
     }
@@ -1145,7 +1145,7 @@ export default function FootScan() {
       if (raw.pointCount < 2000) {
         speak(SCAN_MESSAGES.lowQuality, { urgent: true })
         hapticStrong()
-        throw new Error('Zu wenige Daten erfasst. Bewege das Handy langsamer und gehe einmal komplett um den Fuß herum.')
+        throw new Error('Zu wenige Daten erfasst. Bewege das Gerät langsamer und gehe einmal komplett um den Fuß herum.')
       }
       if ((raw.anglesCovered ?? 0) < 6) {
         speak(SCAN_MESSAGES.moveAround, { urgent: true })
@@ -1931,7 +1931,7 @@ export default function FootScan() {
                   <div className="space-y-3 text-left inline-block">
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
                       <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">1</span>
-                      Handy eine Handlänge über den Fuß halten
+                      {deviceInfo?.model === 'iPad' ? 'iPad' : 'Handy'} eine Handlänge über den Fuß halten
                     </p>
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
                       <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">2</span>
@@ -1951,7 +1951,7 @@ export default function FootScan() {
                   {/* Stability warning */}
                   {!deviceStable && (
                     <p className="text-[13px] text-[#FF9F0A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                      Halte das Handy ruhiger
+                      {deviceInfo?.model === 'iPad' ? 'Halte das iPad ruhiger' : 'Halte das Handy ruhiger'}
                     </p>
                   )}
                   {/* Big, readable instruction — user glances at screen briefly */}

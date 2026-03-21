@@ -733,6 +733,15 @@ router.post('/analyze', authenticate, async (req, res) => {
     const rIssues = validateAnatomical({ length: R.length, width: R.width, foot_height: R.foot_height, ball_girth: R.ball_girth })
     const lIssues = validateAnatomical({ length: L.length, width: L.width, foot_height: L.foot_height, ball_girth: L.ball_girth })
 
+    // Cross-foot asymmetry warnings (clinically significant if > 5mm)
+    const asymWarnings = []
+    if (R.length && L.length && Math.abs(R.length - L.length) > 5)
+      asymWarnings.push(`Längenasymmetrie: R=${R.length}mm L=${L.length}mm (${Math.abs(R.length - L.length).toFixed(1)}mm)`)
+    if (R.width && L.width && Math.abs(R.width - L.width) > 5)
+      asymWarnings.push(`Breitenasymmetrie: R=${R.width}mm L=${L.width}mm (${Math.abs(R.width - L.width).toFixed(1)}mm)`)
+    if (R.ball_girth && L.ball_girth && Math.abs(R.ball_girth - L.ball_girth) > 8)
+      asymWarnings.push(`Ballenumfang-Asymmetrie: R=${R.ball_girth}mm L=${L.ball_girth}mm`)
+
     // Compute realistic confidence score
     // LiDAR-only: höchste Genauigkeit (MAE 0.8mm), hybrid: Fusion, photo: Regression
     const isLidarScan = Object.values(depthData || {}).some(d => d?.source === 'lidar')
@@ -819,7 +828,7 @@ router.post('/analyze', authenticate, async (req, res) => {
       _measurement_passes: cl._measurement_passes ?? 1,
       _pass_deviations: cl._pass_deviations ?? {},
       _a4_validation: cl.a4_validation ?? null,
-      _anatomical_warnings: [...rIssues.map(i => `R: ${i}`), ...lIssues.map(i => `L: ${i}`)],
+      _anatomical_warnings: [...rIssues.map(i => `R: ${i}`), ...lIssues.map(i => `L: ${i}`), ...asymWarnings],
     })
   } catch (err) {
     console.error('[scan/analyze]', err.message)
