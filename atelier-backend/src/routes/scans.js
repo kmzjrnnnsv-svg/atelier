@@ -1134,7 +1134,7 @@ router.get('/training-data', authenticate, requireRole('admin', 'curator'), (req
 router.patch(
   '/:id/measurements',
   authenticate,
-  requireRole('admin'),
+  requireRole('admin', 'curator'),
   [
     body('right_length').optional().isFloat({ min: 100, max: 400 }),
     body('right_width').optional().isFloat({ min: 50, max: 200 }),
@@ -1210,7 +1210,7 @@ router.patch(
       INSERT INTO scan_comparison_pairs (scan_id, measurement, source, predicted_mm, actual_mm, error_mm)
       VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(scan_id, measurement) DO UPDATE SET
-        actual_mm = excluded.actual_mm, error_mm = excluded.error_mm
+        source = excluded.source, actual_mm = excluded.actual_mm, error_mm = excluded.error_mm
     `)
     let pairsStored = 0
     for (const [key, newVal] of Object.entries(fieldMap)) {
@@ -1466,23 +1466,29 @@ router.post('/trigger-training', authenticate, requireRole('admin'), async (req,
 
   try {
     const TRAIN_SCRIPT = join(ML_SCRIPTS, '..', 'train_photo.py')
-    const proc = spawnSync('python3', [TRAIN_SCRIPT, '--export-first'], {
-      timeout: 300_000, // 5 min max
-      maxBuffer: 10 * 1024 * 1024,
+    const proc = spawn('python3', [TRAIN_SCRIPT, '--export-first'], {
       cwd: join(ML_SCRIPTS, '..'),
+      stdio: ['ignore', 'pipe', 'pipe'],
     })
-    const stdout = proc.stdout?.toString() ?? ''
-    const stderr = proc.stderr?.toString() ?? ''
 
-    if (proc.status !== 0) {
-      console.warn('[trigger-training] Failed:', stderr)
-      return res.json({ ok: false, message: 'Training fehlgeschlagen', stderr: stderr.slice(-500) })
-    }
+    let stdout = '', stderr = ''
+    proc.stdout.on('data', d => { stdout += d.toString(); if (stdout.length > 10_000) stdout = stdout.slice(-5000) })
+    proc.stderr.on('data', d => { stderr += d.toString(); if (stderr.length > 10_000) stderr = stderr.slice(-5000) })
 
+    // Set a 5-minute timeout
+    const timeout = setTimeout(() => { proc.kill('SIGTERM') }, 300_000)
+
+    proc.on('close', code => {
+      clearTimeout(timeout)
+      if (code !== 0) {
+        console.warn('[trigger-training] Failed:', stderr.slice(-500))
+      }
+    })
+
+    // Respond immediately — training runs in background
     res.json({
       ok: true,
-      message: `Training gestartet mit ${validatedCount} validierten Scans`,
-      output: stdout.slice(-1000),
+      message: `Training gestartet mit ${validatedCount} validierten Scans (läuft im Hintergrund)`,
     })
   } catch (e) {
     res.status(500).json({ error: 'Training konnte nicht gestartet werden', detail: e.message })
