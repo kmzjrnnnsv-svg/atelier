@@ -110,7 +110,7 @@ export const SCAN_MESSAGES = {
 
   // Quality warnings (urgent)
   tooFewPoints: 'Zu wenige Punkte. Bewege das iPhone langsamer und näher am Fuß.',
-  moveAround: 'Bitte auch die andere Seite scannen. Bewege dich weiter um den Fuß.',
+  moveAround: 'Bitte auch die andere Seite scannen. Bewege das Gerät weiter um den Fuß.',
   tooFast: 'Etwas langsamer bitte. Die Kamera muss den Fuß scharf sehen.',
 
   // Completion

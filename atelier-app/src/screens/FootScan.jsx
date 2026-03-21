@@ -1142,12 +1142,12 @@ export default function FootScan() {
       if (raw.pointCount < 2000) {
         speak(SCAN_MESSAGES.lowQuality, { urgent: true })
         hapticStrong()
-        throw new Error('Zu wenige Daten erfasst. Bewege das Gerät langsamer und gehe einmal komplett um den Fuß herum.')
+        throw new Error('Zu wenige Daten erfasst. Bewege das Gerät langsamer und führe es einmal komplett um den Fuß herum.')
       }
       if ((raw.anglesCovered ?? 0) < 6) {
         speak(SCAN_MESSAGES.moveAround, { urgent: true })
         hapticStrong()
-        throw new Error('Der Fuß wurde nicht von genug Seiten erfasst. Bitte einmal komplett um den Fuß herum gehen.')
+        throw new Error('Der Fuß wurde nicht von genug Seiten erfasst. Bitte das Gerät einmal komplett um den Fuß herum führen.')
       }
 
       // Voice: side complete
@@ -1202,7 +1202,7 @@ export default function FootScan() {
         const retryMsg = msg.includes('Zu wenige') || msg.includes('too sparse')
           ? 'Bewege das Handy etwas langsamer. Wir versuchen es gleich nochmal.'
           : msg.includes('Winkel') || msg.includes('anglesCovered')
-          ? 'Bewege dich mehr um den Fuß herum. Wir versuchen es gleich nochmal.'
+          ? 'Bewege das Gerät mehr um den Fuß herum. Wir versuchen es gleich nochmal.'
           : 'Kleiner Fehler — wir versuchen es gleich nochmal.'
         speak(retryMsg, { urgent: true })
         hapticStrong()
@@ -1823,16 +1823,18 @@ export default function FootScan() {
           {/* Minimal header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
             <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking() }}
-              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-0">
-              <X size={16} className="text-white/80" strokeWidth={2} />
+              aria-label="Scan abbrechen"
+              className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center border-0">
+              <X size={18} className="text-white/80" strokeWidth={2} />
             </button>
-            <span className="text-[15px] font-semibold text-white tracking-tight">
+            <span className="text-[15px] font-semibold text-white tracking-tight" aria-live="polite">
               {phase === 'lidar-transition' ? 'Rechter Fuß' : phase === 'lidar-right' ? 'Rechter Fuß' : 'Linker Fuß'}
             </span>
             <div className="flex items-center gap-3">
               {/* Voice guidance toggle */}
               <button onClick={() => { const next = !voiceOn; setVoiceOn(next); setVoiceEnabled(next); if (!next) stopSpeaking() }}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center border-0">
+                aria-label={voiceOn ? 'Sprachführung ausschalten' : 'Sprachführung einschalten'}
+                className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center border-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={voiceOn ? '#30D158' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   {voiceOn ? (
                     <>
@@ -1911,7 +1913,9 @@ export default function FootScan() {
                             style={{ transition: 'stroke 0.4s ease' }} />
                         })}
                       </svg>
-                      <span className="text-[18px] font-semibold text-white" style={{ fontFeatureSettings: '"tnum"' }}>
+                      <span className="text-[18px] font-semibold text-white" style={{ fontFeatureSettings: '"tnum"' }}
+                        role="progressbar" aria-valuenow={walkProgress} aria-valuemin={0} aria-valuemax={100}
+                        aria-label={`Scan-Fortschritt ${walkProgress} Prozent`}>
                         {walkProgress}<span className="text-[12px] font-normal text-white/60">%</span>
                       </span>
                     </div>
@@ -1972,16 +1976,18 @@ export default function FootScan() {
               )}
 
               {lidarError && (
-                <div className="w-full p-5 rounded-2xl bg-red-500/10 border border-red-400/20"
+                <div className="w-full p-5 rounded-2xl bg-red-500/10 border border-red-400/20" role="alert" aria-live="assertive"
                   style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease' }}>
                   <p className="text-[15px] text-white font-semibold mb-2">Nicht geklappt — kein Problem!</p>
                   <p className="text-[13px] text-white/60 mb-4 leading-relaxed">{lidarError}</p>
                   <div className="flex gap-3">
                     <button onClick={() => { setLidarError(null); setWalkProgress(0); startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left') }}
+                      aria-label="Scan nochmal versuchen"
                       className="flex-1 py-3.5 rounded-xl bg-[#30D158] text-white text-[14px] font-semibold border-0 active:opacity-80">
                       Nochmal versuchen
                     </button>
                     <button onClick={() => setPhase('start')}
+                      aria-label="Andere Scan-Methode wählen"
                       className="flex-1 py-3.5 rounded-xl bg-transparent text-white/40 text-[13px] border border-white/10 active:opacity-80">
                       Andere Methode
                     </button>
@@ -1992,6 +1998,7 @@ export default function FootScan() {
               {!lidarError && walkProgress === 0 && countdown === 0 && (
                 <button
                   onClick={() => startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left')}
+                  aria-label={`${phase === 'lidar-right' ? 'Rechten' : 'Linken'} Fuß scannen`}
                   className="mt-8 w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
                   Scan starten
                 </button>
