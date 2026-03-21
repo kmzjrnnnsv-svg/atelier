@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
-import { buildFootGeoAsync, downloadSTL } from '../utils/footSTL'
+import { buildFootGeoAsync, buildFootGeo, downloadSTL } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
 import DepthSensing, { depthCapabilities } from '../plugins/depthSensing'
@@ -251,6 +251,151 @@ function FootMini3D({ length, width, arch, label }) {
     return () => { cancelled = true; renderer.dispose(); if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement) }
   }, [length, width, arch, label])
   return <div ref={mountRef} className="w-full" style={{ height: 160 }} />
+}
+
+
+// ─── RoomPlan-style progressive 3D foot mesh during LiDAR scan ──────────────
+// Divides a foot mesh into 12 angular sectors (matching LiDAR angle bins).
+// Each sector materialises as the corresponding bin is covered: wireframe first,
+// then semi-transparent teal fill — mimicking Apple's RoomPlan scanning UX.
+
+function ScanMeshPreview({ progress, side }) {
+  const mountRef = useRef(null)
+  const stateRef = useRef({ sectors: [], scene: null, renderer: null, camera: null, raf: 0, footGroup: null })
+
+  // Build scene once on mount
+  useEffect(() => {
+    const el = mountRef.current
+    if (!el) return
+    const w = el.clientWidth || 280, h = el.clientHeight || 280
+    const scene = new THREE.Scene()
+    scene.background = null  // transparent — CSS handles bg
+    const camera = new THREE.PerspectiveCamera(32, w / h, 1, 2000)
+    camera.up.set(0, 0, 1)
+    camera.position.set(0, -420, 180)
+    camera.lookAt(0, 0, 20)
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setSize(w, h)
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    renderer.setClearColor(0x000000, 0)
+    el.appendChild(renderer.domElement)
+
+    // Lighting: soft blue-white (RoomPlan-style)
+    scene.add(new THREE.AmbientLight(0x8ecae6, 0.5))
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.9)
+    keyLight.position.set(100, -200, 300); scene.add(keyLight)
+    const rimLight = new THREE.DirectionalLight(0x2dd4bf, 0.5)
+    rimLight.position.set(-80, 200, -50); scene.add(rimLight)
+
+    // Floor grid (subtle, like RoomPlan)
+    const gridGeo = new THREE.PlaneGeometry(400, 400, 20, 20)
+    const gridMat = new THREE.MeshBasicMaterial({ color: 0x2dd4bf, wireframe: true, transparent: true, opacity: 0.04 })
+    const grid = new THREE.Mesh(gridGeo, gridMat)
+    grid.rotation.x = 0 // already XY plane
+    scene.add(grid)
+
+    // Build the foot geometry and split into 12 angular sectors
+    const footGroup = new THREE.Group()
+    scene.add(footGroup)
+
+    const geo = buildFootGeo(265, 96, 13, side === 'left' ? 'left' : 'right')
+    const pos = geo.attributes.position.array
+    const idx = geo.index.array
+
+    // Compute centroid for angular binning
+    let cx = 0, cz = 0, n = 0
+    for (let i = 0; i < pos.length; i += 3) { cx += pos[i]; cz += pos[i + 2]; n++ }
+    cx /= n; cz /= n
+
+    // Assign each triangle to one of 12 angular bins based on face centroid angle
+    const sectorTris = Array.from({ length: 12 }, () => [])
+    for (let i = 0; i < idx.length; i += 3) {
+      const a = idx[i] * 3, b = idx[i + 1] * 3, c = idx[i + 2] * 3
+      const fx = (pos[a] + pos[b] + pos[c]) / 3 - cx
+      const fz = (pos[a + 2] + pos[b + 2] + pos[c + 2]) / 3 - cz
+      let angle = Math.atan2(fz, fx) * 180 / Math.PI  // -180..180
+      if (angle < 0) angle += 360
+      const bin = Math.min(11, Math.floor(angle / 30))
+      sectorTris[bin].push(idx[i], idx[i + 1], idx[i + 2])
+    }
+
+    // Create sector meshes
+    const sectors = []
+    for (let s = 0; s < 12; s++) {
+      if (sectorTris[s].length === 0) continue
+      const sGeo = geo.clone()
+      sGeo.setIndex(new THREE.BufferAttribute(new Uint32Array(sectorTris[s]), 1))
+      sGeo.computeVertexNormals()
+
+      // Solid fill (teal, transparent)
+      const fillMat = new THREE.MeshStandardMaterial({
+        color: 0x2dd4bf, transparent: true, opacity: 0,
+        roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide,
+      })
+      const fillMesh = new THREE.Mesh(sGeo, fillMat)
+
+      // Wireframe (bright teal edges)
+      const wireMat = new THREE.MeshBasicMaterial({
+        color: 0x30D158, wireframe: true, transparent: true, opacity: 0,
+      })
+      const wireMesh = new THREE.Mesh(sGeo.clone(), wireMat)
+
+      footGroup.add(fillMesh)
+      footGroup.add(wireMesh)
+      sectors.push({ bin: s, fillMat, wireMat, revealed: 0 })
+    }
+
+    geo.dispose()
+
+    stateRef.current = { sectors, scene, renderer, camera, raf: 0, footGroup }
+
+    // Animation loop
+    let frame = 0
+    const animate = () => {
+      stateRef.current.raf = requestAnimationFrame(animate)
+      frame++
+
+      // Slow orbit
+      const t = frame * 0.003
+      const dist = 420
+      camera.position.set(Math.sin(t) * dist * 0.3, -Math.cos(t) * dist, 180 + Math.sin(t * 0.5) * 30)
+      camera.lookAt(0, 0, 20)
+
+      renderer.render(scene, camera)
+    }
+    animate()
+
+    return () => {
+      cancelAnimationFrame(stateRef.current.raf)
+      renderer.dispose()
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
+    }
+  }, [side])
+
+  // Update sector visibility based on progress (0-100)
+  useEffect(() => {
+    const { sectors } = stateRef.current
+    if (!sectors.length) return
+
+    // Map progress to how many of the 12 bins are "covered"
+    const coveredBins = Math.round(progress * 12 / 100)
+
+    // Reveal sectors progressively — each sector has a staggered reveal
+    // that mimics the RoomPlan "mesh appearing" effect
+    for (const sec of sectors) {
+      const shouldReveal = sec.bin < coveredBins
+      const target = shouldReveal ? 1 : 0
+
+      // Smooth transition
+      sec.revealed += (target - sec.revealed) * 0.12
+
+      // Wireframe appears first (brighter), fill follows
+      sec.wireMat.opacity = Math.min(0.35, sec.revealed * 0.35)
+      sec.fillMat.opacity = Math.max(0, (sec.revealed - 0.3) * 0.4)  // delayed fill
+    }
+  }, [progress])
+
+  return <div ref={mountRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
 }
 
 // ─── Camera guide overlays (IBV-style: 3 angles per foot) ────────────────────
@@ -1693,78 +1838,61 @@ export default function FootScan() {
             /* ── Transition screen: right foot done → left foot next (auto-continues after 5s) ── */
             <TransitionScreen onContinue={() => { setWalkProgress(0); setWalkPoints(0); setAutoRetryCount(0); startScanWithCountdown('left') }} />
           ) : (
-            /* ── Scan screen with Face ID ring ── */
-            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-              {/* Face ID-style segmented circular progress */}
-              <div className="relative w-64 h-64 flex items-center justify-center mb-6">
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-                  {Array.from({ length: 72 }).map((_, i) => {
-                    const filled = i < Math.floor(walkProgress * 0.72)
-                    const isLeading = filled && i === Math.floor(walkProgress * 0.72) - 1 && walkProgress < 100
-                    return (
-                      <path key={i} d={arcSegmentPath(i, 72, 88, 100, 100)}
-                        fill="none"
-                        stroke={filled ? (deviceStable ? '#30D158' : '#FF9F0A') : 'rgba(255,255,255,0.08)'}
-                        strokeWidth={6}
-                        strokeLinecap="round"
-                        style={{
-                          transition: 'stroke 0.4s ease',
-                          filter: isLeading ? `drop-shadow(0 0 8px ${deviceStable ? 'rgba(48,209,88,0.6)' : 'rgba(255,159,10,0.6)'})` : 'none',
-                        }}
-                      />
-                    )
-                  })}
-                </svg>
+            /* ── Scan screen with RoomPlan-style 3D mesh preview ── */
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center relative">
+              {/* Progressive 3D foot mesh (RoomPlan-style) */}
+              <div className="relative w-72 h-72 flex items-center justify-center mb-4">
+                <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} />
 
-                {/* Center content */}
-                <div className="flex flex-col items-center z-10">
+                {/* Progress overlay on top of 3D scene */}
+                <div className="absolute inset-0 flex flex-col items-center justify-end z-10 pointer-events-none pb-2">
                   {walkProgress === 0 && !lidarError ? (
-                    <>
-                      {/* Foot silhouette with orbiting phone icon */}
-                      <div className="relative w-24 h-24 flex items-center justify-center">
-                        <svg width="44" height="56" viewBox="0 0 44 56" fill="none" className="opacity-50">
-                          <ellipse cx="22" cy="36" rx="14" ry="18" stroke="white" strokeWidth="1.5" />
-                          <ellipse cx="22" cy="36" rx="8" ry="11" stroke="white" strokeWidth="1" opacity="0.4" />
-                          <circle cx="12" cy="16" r="3.5" stroke="white" strokeWidth="1.2" />
-                          <circle cx="18" cy="11" r="4" stroke="white" strokeWidth="1.2" />
-                          <circle cx="26" cy="10" r="4.2" stroke="white" strokeWidth="1.2" />
-                          <circle cx="33" cy="13" r="3.5" stroke="white" strokeWidth="1.2" />
-                          <circle cx="37" cy="19" r="2.8" stroke="white" strokeWidth="1.2" />
-                        </svg>
-                        {/* Orbiting phone indicator */}
+                    <div className="flex flex-col items-center" style={{ animation: 'fadeInSoft 0.4s ease' }}>
+                      {/* Orbiting phone hint */}
+                      <div className="relative w-16 h-16 flex items-center justify-center mb-1">
                         <div className="absolute inset-0 flex items-center justify-center"
                           style={{ animation: 'orbitPhone 4s linear infinite' }}>
-                          <svg width="16" height="22" viewBox="0 0 16 22" fill="none">
+                          <svg width="14" height="20" viewBox="0 0 16 22" fill="none">
                             <rect x="1" y="1" width="14" height="20" rx="2" stroke="#30D158" strokeWidth="1.5" />
                             <circle cx="8" cy="17" r="1.2" fill="#30D158" opacity="0.6" />
-                            <line x1="5" y1="4" x2="11" y2="4" stroke="#30D158" strokeWidth="0.8" opacity="0.4" />
                           </svg>
                         </div>
-                        {/* Circular arrow hint */}
-                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 96 96" style={{ animation: 'arrowPulse 2s ease infinite' }}>
-                          <path d="M 70 20 A 35 35 0 1 1 26 20" fill="none" stroke="white" strokeWidth="0.8" opacity="0.25"
-                            strokeDasharray="3,4" />
-                          <path d="M 26 20 L 30 14 M 26 20 L 32 23" fill="none" stroke="white" strokeWidth="1" opacity="0.35" />
+                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 64 64" style={{ animation: 'arrowPulse 2s ease infinite' }}>
+                          <path d="M 48 14 A 24 24 0 1 1 16 14" fill="none" stroke="white" strokeWidth="0.8" opacity="0.25" strokeDasharray="3,4" />
+                          <path d="M 16 14 L 19 10 M 16 14 L 21 16" fill="none" stroke="white" strokeWidth="1" opacity="0.35" />
                         </svg>
                       </div>
-                      <span className="text-[11px] text-white/40 font-medium tracking-wide mt-1">Bereit</span>
-                    </>
+                      <span className="text-[11px] text-white/50 font-medium tracking-wide">Bereit</span>
+                    </div>
                   ) : walkProgress >= 100 ? (
-                    <>
-                      <svg width="48" height="48" viewBox="0 0 48 48" className="mb-2">
-                        <circle cx="24" cy="24" r="22" fill="none" stroke="#30D158" strokeWidth="2" opacity="0.3" />
+                    <div className="flex flex-col items-center">
+                      <svg width="36" height="36" viewBox="0 0 48 48" className="mb-1">
+                        <circle cx="24" cy="24" r="22" fill="rgba(0,0,0,0.4)" stroke="#30D158" strokeWidth="2" opacity="0.5" />
                         <path d="M14 25l7 7 13-13" fill="none" stroke="#30D158" strokeWidth="2.5"
                           strokeLinecap="round" strokeLinejoin="round"
                           strokeDasharray="38" strokeDashoffset="38"
                           style={{ animation: 'checkDraw 0.5s ease forwards 0.2s' }} />
                       </svg>
-                      <span className="text-[11px] text-[#30D158] mt-1 font-medium tracking-wide">Erfasst</span>
-                    </>
+                      <span className="text-[11px] text-[#30D158] font-medium tracking-wide">Erfasst</span>
+                    </div>
                   ) : (
-                    <span className="text-[42px] font-semibold text-white"
-                      style={{ fontFeatureSettings: '"tnum"' }}>
-                      {walkProgress}<span className="text-[24px] font-normal text-white/60">%</span>
-                    </span>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
+                      {/* Mini segmented ring */}
+                      <svg width="24" height="24" viewBox="0 0 24 24">
+                        {Array.from({ length: 12 }).map((_, i) => {
+                          const filled = i < Math.floor(walkProgress * 0.12)
+                          const a1 = (i * 30 - 90) * Math.PI / 180
+                          const a2 = ((i + 1) * 30 - 91) * Math.PI / 180
+                          return <path key={i} d={`M ${12 + 10 * Math.cos(a1)} ${12 + 10 * Math.sin(a1)} A 10 10 0 0 1 ${12 + 10 * Math.cos(a2)} ${12 + 10 * Math.sin(a2)}`}
+                            fill="none" stroke={filled ? (deviceStable ? '#30D158' : '#FF9F0A') : 'rgba(255,255,255,0.15)'}
+                            strokeWidth={2} strokeLinecap="round"
+                            style={{ transition: 'stroke 0.4s ease' }} />
+                        })}
+                      </svg>
+                      <span className="text-[18px] font-semibold text-white" style={{ fontFeatureSettings: '"tnum"' }}>
+                        {walkProgress}<span className="text-[12px] font-normal text-white/60">%</span>
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
