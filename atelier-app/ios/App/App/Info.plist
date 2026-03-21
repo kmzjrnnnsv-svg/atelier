@@ -47,5 +47,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Kamera wird für den 3D-Fußscan benötigt</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Fotos werden für die Fußvermessung gespeichert</string>
+	<key>NSWorldSensingUsageDescription</key>
+	<string>Der LiDAR-Sensor erstellt ein präzises 3D-Modell deines Fußes für individuelle Schuhleisten</string>
 </dict>
 </plist>

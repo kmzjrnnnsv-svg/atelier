@@ -32,6 +32,7 @@ const lazyImports = {
   '/legal':      () => import('./screens/LegalDoc'),
   '/my-scans':   () => import('./screens/MyScans'),
   '/welcome':    () => import('./screens/Welcome'),
+  '/search':     () => import('./screens/Search'),
 }
 
 // Prefetch a route's chunk on hover/touch — safe to call multiple times
@@ -60,6 +61,7 @@ const Feedback          = lazy(lazyImports['/feedback'])
 const LegalDoc          = lazy(lazyImports['/legal'])
 const MyScans           = lazy(lazyImports['/my-scans'])
 const Welcome           = lazy(lazyImports['/welcome'])
+const Search            = lazy(lazyImports['/search'])
 
 // CMS
 const CMSLayout            = lazy(() => import('./screens/cms/CMSLayout'))
@@ -185,6 +187,7 @@ function AppRoutes() {
             <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
             <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
             <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
+            <Route path="/search"      element={<ProtectedRoute><Search /></ProtectedRoute>} />
             <Route path="*"            element={<NotFound />} />
           </Routes>
         </Suspense>

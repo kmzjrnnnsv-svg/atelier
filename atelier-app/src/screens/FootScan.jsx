@@ -6,10 +6,11 @@ import * as THREE from 'three'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
-import { buildFootGeoAsync, downloadSTL } from '../utils/footSTL'
+import { buildFootGeoAsync, buildFootGeo, downloadSTL } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
 import DepthSensing, { depthCapabilities } from '../plugins/depthSensing'
+import { speak, stopSpeaking, hapticLight, hapticMedium, hapticStrong, hapticSuccess, hapticWarning, SCAN_MESSAGES, setVoiceEnabled, isVoiceEnabled } from '../utils/scanVoice'
 
 // ─── Size lookup ───────────────────────────────────────────────────────────────
 const r1 = x => Math.round(x * 10) / 10
@@ -49,7 +50,8 @@ function sizeFromLength(mm) {
     const dist = Math.abs(mm - row.mm)
     if (dist < bestDist) { bestDist = dist; best = row }
   }
-  return { eu: best.eu, uk: best.uk, us: best.us }
+  const outOfRange = mm < table[0].mm - 3 || mm > table[table.length - 1].mm + 3
+  return { eu: best.eu, uk: best.uk, us: best.us, outOfRange }
 }
 
 // ─── Image helpers ─────────────────────────────────────────────────────────────
@@ -162,14 +164,7 @@ function detectA4InFrame(videoEl, overlayCanvas) {
   ctx.drawImage(videoEl, 0, 0, sw, sh)
   const { data } = ctx.getImageData(0, 0, sw, sh)
 
-  // Build brightness + luma maps
-  const bright = new Uint8Array(sw * sh)
-  const luma = new Float32Array(sw * sh)
-  for (let i = 0; i < data.length; i += 4) {
-    const l = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
-    luma[i >> 2] = l
-    bright[i >> 2] = l > 180 ? 1 : 0
-  }
+
 
   // ── A4 detection (white rectangle) ──
   let bestArea = 0, bestRect = null
@@ -294,6 +289,163 @@ function FootMini3D({ length, width, arch, label }) {
   return <div ref={mountRef} className="w-full" style={{ height: 160 }} />
 }
 
+
+// ─── RoomPlan-style progressive 3D foot mesh during LiDAR scan ──────────────
+// Divides a foot mesh into 12 angular sectors (matching LiDAR angle bins).
+// Each sector materialises as the corresponding bin is covered: wireframe first,
+// then semi-transparent teal fill — mimicking Apple's RoomPlan scanning UX.
+
+function ScanMeshPreview({ progress, side }) {
+  const mountRef = useRef(null)
+  const stateRef = useRef({ sectors: [], scene: null, renderer: null, camera: null, raf: 0, coveredBins: 0 })
+
+  // Build scene once on mount
+  useEffect(() => {
+    const el = mountRef.current
+    if (!el) return
+    const w = el.clientWidth || 280, h = el.clientHeight || 280
+    const scene = new THREE.Scene()
+    scene.background = null  // transparent — CSS handles bg
+    const camera = new THREE.PerspectiveCamera(32, w / h, 1, 2000)
+    camera.up.set(0, 0, 1)
+    camera.position.set(0, -420, 180)
+    camera.lookAt(0, 0, 20)
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setSize(w, h)
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    renderer.setClearColor(0x000000, 0)
+    el.appendChild(renderer.domElement)
+
+    // Lighting: soft blue-white (RoomPlan-style)
+    scene.add(new THREE.AmbientLight(0x8ecae6, 0.5))
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.9)
+    keyLight.position.set(100, -200, 300); scene.add(keyLight)
+    const rimLight = new THREE.DirectionalLight(0x2dd4bf, 0.5)
+    rimLight.position.set(-80, 200, -50); scene.add(rimLight)
+
+    // Floor grid (subtle, like RoomPlan) — lies in XY plane at Z=0
+    const gridGeo = new THREE.PlaneGeometry(400, 400, 20, 20)
+    const gridMat = new THREE.MeshBasicMaterial({ color: 0x2dd4bf, wireframe: true, transparent: true, opacity: 0.04 })
+    scene.add(new THREE.Mesh(gridGeo, gridMat))
+
+    // Build the foot geometry and split into 12 angular sectors
+    const footGroup = new THREE.Group()
+    scene.add(footGroup)
+
+    const geo = buildFootGeo(265, 96, 13, side === 'left' ? 'left' : 'right')
+    const pos = geo.attributes.position.array
+    const idx = geo.index.array
+
+    // Compute centroid for horizontal azimuth binning (X=length, Y=width)
+    // This matches the LiDAR plugin which bins by atan2(forward.x, forward.z) = horizontal walk-around angle
+    let centX = 0, centY = 0, nVerts = 0
+    for (let i = 0; i < pos.length; i += 3) { centX += pos[i]; centY += pos[i + 1]; nVerts++ }
+    centX /= nVerts; centY /= nVerts
+
+    // Assign each triangle to one of 12 angular bins by horizontal azimuth of face centroid
+    const sectorTris = Array.from({ length: 12 }, () => [])
+    for (let i = 0; i < idx.length; i += 3) {
+      const a = idx[i] * 3, b = idx[i + 1] * 3, c = idx[i + 2] * 3
+      const fx = (pos[a] + pos[b] + pos[c]) / 3 - centX
+      const fy = (pos[a + 1] + pos[b + 1] + pos[c + 1]) / 3 - centY
+      // Match LiDAR Swift: bin = floor((atan2(x, z) * 180/pi + 180) / 30) % 12
+      const angleDeg = Math.atan2(fy, fx) * 180 / Math.PI  // -180..180
+      const bin = Math.floor((angleDeg + 180) / 30) % 12
+      sectorTris[bin].push(idx[i], idx[i + 1], idx[i + 2])
+    }
+
+    // Build compact per-sector geometry (avoids full-vertex clone and fixes boundary normals)
+    const sectors = []
+    for (let s = 0; s < 12; s++) {
+      if (sectorTris[s].length === 0) continue
+
+      // Remap: collect only vertices referenced by this sector's triangles
+      const triIndices = sectorTris[s]
+      const vertMap = new Map()
+      const newPos = []
+      const newIdx = []
+      for (let ti = 0; ti < triIndices.length; ti++) {
+        const orig = triIndices[ti]
+        if (!vertMap.has(orig)) {
+          const ni = newPos.length / 3
+          vertMap.set(orig, ni)
+          newPos.push(pos[orig * 3], pos[orig * 3 + 1], pos[orig * 3 + 2])
+        }
+        newIdx.push(vertMap.get(orig))
+      }
+
+      const sGeo = new THREE.BufferGeometry()
+      sGeo.setAttribute('position', new THREE.Float32BufferAttribute(newPos, 3))
+      sGeo.setIndex(newIdx)
+      sGeo.computeVertexNormals()
+
+      // Solid fill (teal, transparent)
+      const fillMat = new THREE.MeshStandardMaterial({
+        color: 0x2dd4bf, transparent: true, opacity: 0,
+        roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide,
+      })
+      // Wireframe (bright green edges)
+      const wireMat = new THREE.MeshBasicMaterial({
+        color: 0x30D158, wireframe: true, transparent: true, opacity: 0,
+      })
+
+      footGroup.add(new THREE.Mesh(sGeo, fillMat))
+      footGroup.add(new THREE.Mesh(sGeo, wireMat))
+      sectors.push({ bin: s, fillMat, wireMat, revealed: 0, target: 0 })
+    }
+
+    geo.dispose()
+
+    stateRef.current = { sectors, scene, renderer, camera, raf: 0, coveredBins: 0 }
+
+    // Animation loop — also drives smooth opacity transitions per frame
+    let frame = 0
+    const animate = () => {
+      stateRef.current.raf = requestAnimationFrame(animate)
+      frame++
+
+      // Slow orbit
+      const t = frame * 0.003
+      const dist = 420
+      camera.position.set(Math.sin(t) * dist * 0.3, -Math.cos(t) * dist, 180 + Math.sin(t * 0.5) * 30)
+      camera.lookAt(0, 0, 20)
+
+      // Smooth opacity transitions every frame (not just on React re-render)
+      const covered = stateRef.current.coveredBins
+      for (const sec of sectors) {
+        sec.target = sec.bin < covered ? 1 : 0
+        sec.revealed += (sec.target - sec.revealed) * 0.06  // smooth ease per frame (~60fps)
+        sec.wireMat.opacity = Math.min(0.35, sec.revealed * 0.35)
+        sec.fillMat.opacity = Math.max(0, (sec.revealed - 0.3) * 0.4)
+      }
+
+      renderer.render(scene, camera)
+    }
+    animate()
+
+    return () => {
+      cancelAnimationFrame(stateRef.current.raf)
+      // Dispose all GPU resources to prevent memory leaks
+      scene.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose()
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose())
+          else obj.material.dispose()
+        }
+      })
+      renderer.dispose()
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
+    }
+  }, [side])
+
+  // Update covered bin count (read by animation loop each frame)
+  useEffect(() => {
+    stateRef.current.coveredBins = Math.round(progress * 12 / 100)
+  }, [progress])
+
+  return <div ref={mountRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
+}
+
 // ─── Camera guide overlays (IBV-style: 3 angles per foot) ────────────────────
 // Overlays adapt dynamically to detected A4 + foot positions
 function GuideOverlay({ phase, a4Detected, footDetected }) {
@@ -326,8 +478,7 @@ function GuideOverlay({ phase, a4Detected, footDetected }) {
     const footColor = ft && ft.confidence > 0.5 ? 'rgba(45,212,191,0.9)' : 'white'
 
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
-        {/* A4 guide — snaps to detected paper */}
+
         <rect x={a4X} y={a4Y} width={a4W} height={a4H} rx="6"
           stroke={a4Color} strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6"
           style={{ transition: 'all 0.3s ease-out' }}>
@@ -361,6 +512,7 @@ function GuideOverlay({ phase, a4Detected, footDetected }) {
           style={{ transition: 'all 0.3s ease-out' }}>
           {isRight ? 'RECHTER FUß' : 'LINKER FUß'}
         </text>
+
       </svg>
     )
   }
@@ -378,8 +530,7 @@ function GuideOverlay({ phase, a4Detected, footDetected }) {
     const a4Color = a4Detected && a4Detected.confidence > 0.7 ? 'rgba(45,212,191,0.7)' : 'rgba(255,255,255,0.6)'
 
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
-        <g transform={`translate(${cx}, ${cy})`} style={{ transition: 'all 0.3s ease-out' }}>
+
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
             stroke={footColor} strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
@@ -397,7 +548,7 @@ function GuideOverlay({ phase, a4Detected, footDetected }) {
             fontSize="9" fontFamily="system-ui,sans-serif" fontWeight="600" letterSpacing="1">A4</text>
         </g>
         <text x="195" y="510" textAnchor="middle" fill="rgba(45,212,191,0.7)"
-          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Gewölbe + Rist sichtbar</text>
+
       </svg>
     )
   }
@@ -414,8 +565,7 @@ function GuideOverlay({ phase, a4Detected, footDetected }) {
     const a4Color = a4Detected && a4Detected.confidence > 0.7 ? 'rgba(45,212,191,0.7)' : 'rgba(255,255,255,0.6)'
 
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
-        <g transform={`translate(${cx}, ${cy}) scale(-1, 1)`} style={{ transition: 'all 0.3s ease-out' }}>
+
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
             stroke={footColor} strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
@@ -432,7 +582,7 @@ function GuideOverlay({ phase, a4Detected, footDetected }) {
           {isRight ? 'RECHTS · AUSSEN' : 'LINKS · AUSSEN'}
         </text>
         <text x="195" y="510" textAnchor="middle" fill="rgba(255,255,255,0.5)"
-          fontSize="11" fontFamily="system-ui,sans-serif" fontWeight="600">Ferse + Außenrist sichtbar</text>
+
       </svg>
     )
   }
@@ -443,7 +593,7 @@ function GuideOverlay({ phase, a4Detected, footDetected }) {
     const flip = isRight ? 1 : -1
     const cx = 195
     return (
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="none">
+      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid meet">
         <g transform={`translate(${cx}, 380) scale(${flip}, 1)`}>
           <line x1="-155" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
           <path d="M -120 95 C -120 95 -115 20 -80 0 C -50 -16 0 -18 40 -10 C 80 -2 110 15 120 40 C 128 60 120 82 110 90 C 95 95 -110 95 -120 95 Z"
@@ -455,6 +605,7 @@ function GuideOverlay({ phase, a4Detected, footDetected }) {
           <rect x="128" y="-60" width="22" height="155" rx="3"
             stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" fill="rgba(255,255,255,0.05)" strokeDasharray="6 4" />
         </g>
+
       </svg>
     )
   }
@@ -477,14 +628,14 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
   const handleTap = () => { if (!ready) return; setFlash(true); setTimeout(() => setFlash(false), 160); onCapture() }
 
   const INFO = {
-    'right-top':     { emoji: '📄', title: 'Rechter Fuß — Draufsicht',   sub: 'A4-Papier neben dem Fuß · Kamera senkrecht von oben ~35 cm' },
-    'right-medial':  { emoji: '🦶', title: 'Rechter Fuß — Innenseite',   sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Innenseite' },
-    'right-lateral': { emoji: '🦶', title: 'Rechter Fuß — Außenseite',   sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Außenseite' },
-    'right-side':    { emoji: '📐', title: 'Rechten Fuß von der Seite',   sub: 'A4-Blatt aufrecht daneben halten · Kamera auf Bodenhöhe' },
-    'left-top':      { emoji: '📄', title: 'Linker Fuß — Draufsicht',    sub: 'A4-Papier neben dem Fuß · Kamera senkrecht von oben ~35 cm' },
-    'left-medial':   { emoji: '🦶', title: 'Linker Fuß — Innenseite',    sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Innenseite' },
-    'left-lateral':  { emoji: '🦶', title: 'Linker Fuß — Außenseite',    sub: 'A4-Blatt hinter dem Fuß · Kamera auf Bodenhöhe, Außenseite' },
-    'left-side':     { emoji: '📐', title: 'Linken Fuß von der Seite',    sub: 'A4-Blatt aufrecht daneben halten · Kamera auf Bodenhöhe' },
+    'right-top':     { emoji: '📄', title: 'Rechter Fuß — von oben',      sub: 'A4-Blatt neben den Fuß legen · Handy von oben draufhalten' },
+    'right-medial':  { emoji: '🦶', title: 'Rechter Fuß — Innenseite',    sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Innenseite fotografieren' },
+    'right-lateral': { emoji: '🦶', title: 'Rechter Fuß — Außenseite',    sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Außenseite fotografieren' },
+    'right-side':    { emoji: '📐', title: 'Rechter Fuß — Seite',         sub: 'A4-Blatt aufrecht daneben halten · Handy auf den Boden stellen' },
+    'left-top':      { emoji: '📄', title: 'Linker Fuß — von oben',       sub: 'A4-Blatt neben den Fuß legen · Handy von oben draufhalten' },
+    'left-medial':   { emoji: '🦶', title: 'Linker Fuß — Innenseite',     sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Innenseite fotografieren' },
+    'left-lateral':  { emoji: '🦶', title: 'Linker Fuß — Außenseite',     sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Außenseite fotografieren' },
+    'left-side':     { emoji: '📐', title: 'Linker Fuß — Seite',          sub: 'A4-Blatt aufrecht daneben halten · Handy auf den Boden stellen' },
   }
   const { emoji, title, sub } = INFO[phase] || { emoji: '📷', title: 'Foto aufnehmen', sub: '' }
 
@@ -514,7 +665,7 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       {!a4Detected && camStatus === 'active' && (
         <div className="absolute top-16 left-0 right-0 z-15 flex justify-center pointer-events-none">
           <div className="bg-red-500/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
-            <span className="text-[10px] text-white font-semibold">A4-Blatt nicht erkannt</span>
+            <span className="text-[10px] text-white font-semibold">Weißes Blatt noch nicht sichtbar</span>
           </div>
         </div>
       )}
@@ -556,29 +707,32 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
         <div className="w-11" />
       </div>
 
-      {/* Bottom sheet */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white px-5 pt-5 pb-10">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 bg-black flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-[11px] font-bold">{stepNum}</span>
-          </div>
-          <span className="text-xs text-black/40 font-medium">Schritt {stepNum} von {totalSteps}</span>
+      {/* Bottom sheet — dark translucent overlay for immersive camera feel */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/60 backdrop-blur-xl px-5 pt-5 pb-10"
+        style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)' }}>
+        {/* Progress dots */}
+        <div className="flex items-center justify-center gap-1.5 mb-4">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div key={i} className={`rounded-full transition-all duration-300 ${
+              i < stepNum ? 'w-2 h-2 bg-white' : i === stepNum ? 'w-2 h-2 bg-white/60' : 'w-1.5 h-1.5 bg-white/20'
+            }`} />
+          ))}
         </div>
-        <p className="text-[15px] font-bold text-black leading-snug mb-1" style={{ letterSpacing: '0.03em' }}>{emoji} {title}</p>
-        <p className="text-[11px] text-black/40 leading-relaxed mb-5">{sub}</p>
+        <p className="text-[15px] font-bold text-white leading-snug mb-1 text-center" style={{ letterSpacing: '0.03em' }}>{title}</p>
+        <p className="text-[11px] text-white/50 leading-relaxed mb-5 text-center">{sub}</p>
 
         {ready ? (
-          <button onClick={handleTap}
-            className="w-full py-4 bg-black text-white font-bold text-[13px] border-0 uppercase tracking-widest active:opacity-80 transition-opacity"
-            style={{ letterSpacing: '0.12em' }}>
-            Foto aufnehmen
-          </button>
+          <div className="flex justify-center">
+            <button onClick={handleTap}
+              className="w-[68px] h-[68px] rounded-full border-[3px] border-white bg-transparent flex items-center justify-center active:scale-95 transition-transform">
+              <div className="w-[56px] h-[56px] rounded-full bg-white" />
+            </button>
+          </div>
         ) : (
-          <div className="w-full py-4 bg-[#f6f5f3] flex items-center justify-center gap-3">
-            <div className="w-8 h-8 bg-black/10 flex items-center justify-center">
-              <span className="text-base font-bold text-black/50">{count}</span>
+          <div className="flex justify-center">
+            <div className="w-[68px] h-[68px] rounded-full border-[3px] border-white/30 flex items-center justify-center">
+              <span className="text-[24px] font-bold text-white/50">{count}</span>
             </div>
-            <span className="text-[12px] font-semibold text-black/35">Positioniere dich…</span>
           </div>
         )}
       </div>
@@ -648,34 +802,30 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
         <div className="w-11" />
       </div>
 
-      {/* Bottom sheet */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white px-5 pt-5 pb-10">
+      {/* Bottom sheet — dark translucent overlay for immersive camera feel */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/60 backdrop-blur-xl px-5 pt-5 pb-10"
+        style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-black flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-[11px] font-bold">{pgStep + 1}</span>
-            </div>
-            <span className="text-xs text-black/40 font-medium">Aufnahme {pgStep + 1} von 16</span>
-          </div>
-          <span className="text-[10px] font-semibold text-black bg-[#f6f5f3] px-2.5 py-1 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
+          <span className="text-[11px] text-white/40 font-medium">Aufnahme {pgStep + 1} von 16</span>
+          <span className="text-[10px] font-semibold text-white/70 bg-white/10 px-2.5 py-1 rounded-full uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
             {info.side === 'right' ? 'Rechts' : 'Links'}
           </span>
         </div>
-        <p className="text-[15px] font-bold text-black leading-snug mb-1" style={{ letterSpacing: '0.03em' }}>{info.label}</p>
-        <p className="text-[11px] text-black/40 leading-relaxed mb-5">{info.sub}</p>
+        <p className="text-[15px] font-bold text-white leading-snug mb-1 text-center" style={{ letterSpacing: '0.03em' }}>{info.label}</p>
+        <p className="text-[11px] text-white/50 leading-relaxed mb-5 text-center">{info.sub}</p>
 
         {ready ? (
-          <button onClick={handleTap}
-            className="w-full py-4 font-bold text-[13px] border-0 text-white bg-black uppercase tracking-widest active:opacity-80 transition-opacity"
-            style={{ letterSpacing: '0.12em' }}>
-            Foto aufnehmen
-          </button>
+          <div className="flex justify-center">
+            <button onClick={handleTap}
+              className="w-[68px] h-[68px] rounded-full border-[3px] border-white bg-transparent flex items-center justify-center active:scale-95 transition-transform">
+              <div className="w-[56px] h-[56px] rounded-full bg-white" />
+            </button>
+          </div>
         ) : (
-          <div className="w-full py-4 bg-[#f6f5f3] flex items-center justify-center gap-3">
-            <div className="w-8 h-8 bg-black/10 flex items-center justify-center">
-              <span className="text-base font-bold text-black/50">{count}</span>
+          <div className="flex justify-center">
+            <div className="w-[68px] h-[68px] rounded-full border-[3px] border-white/30 flex items-center justify-center">
+              <span className="text-[24px] font-bold text-white/50">{count}</span>
             </div>
-            <span className="text-[12px] font-semibold text-black/35">Positioniere dich…</span>
           </div>
         )}
       </div>
@@ -685,11 +835,11 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
 
 // ─── Camera Error ──────────────────────────────────────────────────────────────
 const CAM_ERRORS = {
-  insecure: { emoji: '🔒', title: 'HTTPS erforderlich',        desc: 'Die Kamera funktioniert nur über eine sichere HTTPS-Verbindung.',                                                  retry: false },
-  denied:   { emoji: '🚫', title: 'Kamerazugriff verweigert', desc: 'Erlaube den Kamerazugriff in den Browser-Einstellungen.\niPhone: Einstellungen → Safari → Kamera → Erlauben', retry: true  },
-  notfound: { emoji: '📵', title: 'Keine Kamera gefunden',    desc: 'Bitte verwende ein Gerät mit Rückkamera.',                                                                            retry: false },
-  inuse:    { emoji: '⏳', title: 'Kamera in Verwendung',     desc: 'Schließe FaceTime oder andere Kamera-Apps und versuche es erneut.',                                                   retry: true  },
-  error:    { emoji: '⚠️', title: 'Kamera-Fehler',            desc: 'Die Kamera konnte nicht gestartet werden.',                                                                           retry: true  },
+  insecure: { emoji: '🔒', title: 'Sichere Verbindung nötig',   desc: 'Die Kamera funktioniert nur über eine sichere Internetverbindung. Bitte öffne die Seite über den Link, den du erhalten hast.', retry: false },
+  denied:   { emoji: '🚫', title: 'Kamera nicht erlaubt',       desc: 'Bitte erlaube den Kamerazugriff in deinen Handy-Einstellungen.\niPhone: Einstellungen → Safari → Kamera → Erlauben',          retry: true  },
+  notfound: { emoji: '📵', title: 'Keine Kamera gefunden',      desc: 'Bitte öffne die App auf einem Smartphone oder Tablet mit Kamera.',                                                             retry: false },
+  inuse:    { emoji: '⏳', title: 'Kamera wird gerade genutzt', desc: 'Schließe andere Apps, die die Kamera verwenden (z.B. FaceTime, WhatsApp) und versuche es nochmal.',                            retry: true  },
+  error:    { emoji: '⚠️', title: 'Kamera-Problem',             desc: 'Die Kamera konnte nicht gestartet werden. Versuche es nochmal oder starte die App neu.',                                       retry: true  },
 }
 
 function CamError({ status, onRetry, onDemo, onBack }) {
@@ -751,6 +901,10 @@ export default function FootScan() {
   const [lidarData,  setLidarData]  = useState({ right: null, left: null })
   const [lidarError, setLidarError] = useState(null)
   const [walkProgress, setWalkProgress] = useState(0)
+  const [voiceOn, setVoiceOn]           = useState(true)
+  const [countdown, setCountdown]       = useState(0)       // 3-2-1 countdown before scan
+  const [autoRetryCount, setAutoRetryCount] = useState(0)   // auto-retry on recoverable errors
+  const autoRetryRef = useRef(0)                              // ref mirror to avoid stale closures
   const [depthMode, setDepthMode]     = useState('none') // 'webxr' | 'sfm' | 'none'
   const [a4Detected, setA4Detected]   = useState(null)   // { x, y, w, h, confidence }
   const [footDetected, setFootDetected] = useState(null) // { cx, cy, rx, ry, confidence }
@@ -762,6 +916,8 @@ export default function FootScan() {
   const [pgStep,     setPgStep]    = useState(0)        // 0-15 (8 rechts + 8 links)
   const [pgImgs,     setPgImgs]    = useState({ right: [], left: [] })
   const [walkPoints,   setWalkPoints]   = useState(0)
+  const [deviceStable, setDeviceStable] = useState(true)  // DeviceMotion stability
+  const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
 
   // ── Shoe last export state ──
   const [lastShoeType, setLastShoeType] = useState('oxford')
@@ -791,21 +947,33 @@ export default function FootScan() {
   const startCam = useCallback(async () => {
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { setCamStatus('insecure'); return }
     setCamStatus('requesting')
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-        audio: false,
-      })
-      streamRef.current = stream
-      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}) }
-      setCamStatus('active')
-    } catch (err) {
-      const n = err?.name || ''
-      if (n === 'NotAllowedError'  || n === 'PermissionDeniedError')  setCamStatus('denied')
-      else if (n === 'NotFoundError'   || n === 'DevicesNotFoundError') setCamStatus('notfound')
-      else if (n === 'NotReadableError'|| n === 'TrackStartError')      setCamStatus('inuse')
-      else                                                               setCamStatus('error')
+    // Try high-res first, fall back to lower resolution for older devices
+    const configs = [
+      { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      { facingMode: 'environment' },
+    ]
+    let stream = null
+    for (const video of configs) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video, audio: false })
+        break
+      } catch (err) {
+        // OverconstrainedError → try next config; other errors → abort
+        if (err.name !== 'OverconstrainedError') {
+          const n = err?.name || ''
+          if (n === 'NotAllowedError'  || n === 'PermissionDeniedError')  setCamStatus('denied')
+          else if (n === 'NotFoundError'   || n === 'DevicesNotFoundError') setCamStatus('notfound')
+          else if (n === 'NotReadableError'|| n === 'TrackStartError')      setCamStatus('inuse')
+          else                                                               setCamStatus('error')
+          return
+        }
+      }
     }
+    if (!stream) { setCamStatus('error'); return }
+    streamRef.current = stream
+    if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}) }
+    setCamStatus('active')
   }, [])
 
   const stopCam = useCallback(() => {
@@ -855,21 +1023,22 @@ export default function FootScan() {
 
       // Initialize depth sensing for Android devices
       if (caps.webxr && !hasLidar) {
-        const ds = new DepthSensing()
-        ds.init().then(mode => setDepthMode(mode))
-        depthRef.current = ds
+        try {
+          const ds = new DepthSensing()
+          const mode = await ds.init()
+          setDepthMode(mode)
+          depthRef.current = ds
+        } catch (e) {
+          console.warn('[FootScan] Depth sensing init failed, continuing without:', e.message)
+        }
       }
 
       const info = { isIPhone: isIPhone || isIPad, hasLidar, model: isIPhone ? 'iPhone' : isIPad ? 'iPad' : 'Android/Other' }
       setDeviceInfo(info)
       setDeviceDetected(true)
 
-      // Auto-select: if LiDAR available, go directly to LiDAR scan
-      if (hasLidar && phase === 'start') {
-        setLidarData({ right: null, left: null })
-        setLidarError(null)
-        setPhase('lidar-right')
-      }
+      // LiDAR available: stay on start screen so user sees instructions first
+      // The start screen highlights LiDAR as "Empfohlen" with a prominent button
     }
     detect()
     return () => { depthRef.current?.destroy() }
@@ -890,15 +1059,7 @@ export default function FootScan() {
     }
 
     // Run at ~8fps (every 125ms) to avoid perf issues
-    let intervalId = setInterval(() => {
-      const result = detectA4InFrame(videoRef.current, a4CanvasRef.current)
-      if (result) {
-        setA4Detected(result.a4)
-        setFootDetected(result.foot)
-      } else {
-        setA4Detected(null)
-        setFootDetected(null)
-      }
+
     }, 125)
 
     return () => {
@@ -906,45 +1067,185 @@ export default function FootScan() {
     }
   }, [phase, camStatus])
 
-  // ── LiDAR walk-around scan (one foot at a time) ──
-  // Walk-around duration in ms
-  const WALK_DURATION_MS = 20_000
+  // ── DeviceMotion: stability feedback during LiDAR scan ──
+  useEffect(() => {
+    const isScanning = (phase === 'lidar-right' || phase === 'lidar-left') && walkProgress > 0 && walkProgress < 100
+    if (!isScanning || reduceMotion.current) { setDeviceStable(true); return }
+
+    let lastWarnTime = 0
+    const handler = (e) => {
+      const a = e.acceleration || {}
+      const mag = Math.sqrt((a.x || 0) ** 2 + (a.y || 0) ** 2 + (a.z || 0) ** 2)
+      const stable = mag < 1.0
+      setDeviceStable(stable)
+      if (!stable && Date.now() - lastWarnTime > 4000) {
+        lastWarnTime = Date.now()
+        speak(deviceInfo?.model === 'iPad' ? 'Halte das iPad ruhiger' : 'Halte das Handy ruhiger', { urgent: true })
+        hapticWarning()
+      }
+    }
+    window.addEventListener('devicemotion', handler)
+    return () => window.removeEventListener('devicemotion', handler)
+  }, [phase, walkProgress])
+
+  // ── A4 detection haptic feedback ──
+  const prevA4Ref = useRef(null)
+  useEffect(() => {
+    if (reduceMotion.current) return
+    const wasDetected = prevA4Ref.current?.confidence > 0.7
+    const isDetected = a4Detected?.confidence > 0.7
+    if (!wasDetected && isDetected) hapticLight()
+    if (wasDetected && !isDetected) hapticWarning()
+    prevA4Ref.current = a4Detected
+  }, [a4Detected])
+
+  // ── Countdown + auto-start: user doesn't need to look at screen ──
+  const startScanWithCountdown = useCallback((side, { isRetry = false } = {}) => {
+    setLidarError(null)
+    if (!isRetry) { setAutoRetryCount(0); autoRetryRef.current = 0 }
+    speak(SCAN_MESSAGES.ready(side))
+    hapticMedium()
+    setCountdown(3)
+    let c = 3
+    const iv = setInterval(() => {
+      c -= 1
+      if (c > 0) {
+        setCountdown(c)
+        speak(`${c}`, { force: true })
+        hapticLight()
+      } else {
+        clearInterval(iv)
+        setCountdown(0)
+        runLidarSide(side)
+      }
+    }, 1200)
+  }, []) // eslint-disable-line
+
+  // ── LiDAR continuous depth capture (one foot at a time) ──
+  const MAX_SCAN_MS = 30_000  // Absolute max: 30s
+  const MIN_SCAN_MS = 10_000  // Minimum scan time: 10s
 
   const runLidarSide = useCallback(async (side) => {
     setLidarError(null)
     setWalkProgress(0)
     setWalkPoints(0)
-    setAiStatus(`Scan läuft…`)
+    setAiStatus('Scan läuft…')
+
+    // Voice: announce scan start
+    speak(SCAN_MESSAGES.startScan)
+    hapticMedium()
 
     try {
-      await LidarScanNative.startWalkAround()
+      // Use Continuous Depth Capture (Mode 3) — more reliable than mesh reconstruction
+      await LidarScanNative.startContinuousCapture()
 
-      // Poll progress every 500ms, warn if point count stays too low
+      // Poll real coverage-based progress with voice guidance
       const startTime = Date.now()
-      const pollInterval = setInterval(async () => {
-        try {
-          const prog = await LidarScanNative.getWalkAroundProgress()
-          const elapsed = Date.now() - startTime
-          setWalkProgress(Math.min(100, Math.round((elapsed / WALK_DURATION_MS) * 100)))
-          setWalkPoints(prog.pointCount ?? 0)
-        } catch { /* ignore */ }
-      }, 500)
+      let lastVoicePhase = -1
+      let lastAngleWarningTime = 0
+      let lastPointWarningTime = 0
+      let lastMilestone = 0
 
-      await new Promise(resolve => setTimeout(resolve, WALK_DURATION_MS))
-      clearInterval(pollInterval)
+      // Fast polling (150ms) for responsive progress ring + single Promise
+      await new Promise((resolve) => {
+        let lastCoverage = 0
+        const safetyTimeout = setTimeout(() => { clearInterval(pollInterval); resolve() }, MAX_SCAN_MS + 2000)
+
+        const pollInterval = setInterval(async () => {
+          try {
+            const prog = await LidarScanNative.getContinuousCaptureProgress()
+            const elapsed = Date.now() - startTime
+            const coverage = prog.estimatedCoverage ?? 0
+            const pts = prog.pointCount ?? 0
+            const angles = prog.anglesCovered ?? 0
+            const now = Date.now()
+
+            // Smooth progress: interpolate toward target to avoid jumpy ring
+            lastCoverage = lastCoverage + (coverage - lastCoverage) * 0.4
+            setWalkProgress(Math.round(lastCoverage))
+            setWalkPoints(pts)
+
+            // ── Milestone haptics at 25/50/75% ──
+            const milestone = coverage >= 75 ? 75 : coverage >= 50 ? 50 : coverage >= 25 ? 25 : 0
+            if (milestone > lastMilestone) { lastMilestone = milestone; hapticMedium() }
+
+            // ── Voice guidance at phase transitions ──
+            const voicePhase = coverage < 20 ? 0 : coverage < 45 ? 1 : coverage < 70 ? 2 : coverage < 95 ? 3 : 4
+            if (voicePhase !== lastVoicePhase) {
+              lastVoicePhase = voicePhase
+              hapticLight()
+              if (voicePhase === 0) speak(SCAN_MESSAGES.phase1)
+              else if (voicePhase === 1) speak(SCAN_MESSAGES.phase2)
+              else if (voicePhase === 2) speak(SCAN_MESSAGES.phase3)
+              else if (voicePhase === 3) speak(SCAN_MESSAGES.phase4)
+            }
+
+            // ── Real-time warnings ──
+            // Warn if too few points after 8 seconds (scanning too fast or too far away)
+            if (elapsed > 8000 && pts < 800 && now - lastPointWarningTime > 6000) {
+              speak(SCAN_MESSAGES.tooFewPoints, { urgent: true })
+              hapticStrong()
+              lastPointWarningTime = now
+            }
+
+            // Warn if angular coverage is stuck (only scanning from one side)
+            if (elapsed > 12000 && angles < 4 && now - lastAngleWarningTime > 8000) {
+              speak(SCAN_MESSAGES.moveAround, { urgent: true })
+              hapticStrong()
+              lastAngleWarningTime = now
+            }
+
+            // Auto-finish when: coverage ≥ 95% AND at least MIN_SCAN_MS elapsed
+            // OR hard stop after MAX_SCAN_MS
+            if ((coverage >= 95 && elapsed >= MIN_SCAN_MS) || elapsed >= MAX_SCAN_MS) {
+              clearInterval(pollInterval)
+              clearTimeout(safetyTimeout)
+              resolve()
+            }
+          } catch (pollErr) { console.warn('[LiDAR poll]', pollErr?.message || pollErr) }
+        }, 150)
+      })
+
       setWalkProgress(100)
+      setAiStatus('Scan wird abgeschlossen…')
+      hapticSuccess()
 
-      setAiStatus('Punktwolke wird verarbeitet…')
-      const raw = await LidarScanNative.finishWalkAround()
+      const raw = await LidarScanNative.finishContinuousCapture()
+
+      // Quality check: ensure enough data for ±1mm accuracy
+      if (raw.pointCount < 2000) {
+        speak(SCAN_MESSAGES.lowQuality, { urgent: true })
+        hapticStrong()
+        throw new Error('Zu wenige Daten erfasst. Bewege das Gerät langsamer und führe es einmal komplett um den Fuß herum.')
+      }
+      if ((raw.anglesCovered ?? 0) < 6) {
+        speak(SCAN_MESSAGES.moveAround, { urgent: true })
+        hapticStrong()
+        throw new Error('Der Fuß wurde nicht von genug Seiten erfasst. Bitte das Gerät einmal komplett um den Fuß herum führen.')
+      }
+
+      // Voice: side complete
+      speak(SCAN_MESSAGES.sideComplete(side))
+
+      setAiStatus('Maße werden berechnet…')
 
       // Send point cloud + auto-captured training images to backend
-      const payload = { pointCloud: raw.pointCloud, side }
+      const payload = { pointCloud: raw.pointCloud, side, anglesCovered: raw.anglesCovered }
       if (raw.capturedImages?.top)  payload.topImage  = raw.capturedImages.top
       if (raw.capturedImages?.side) payload.sideImage = raw.capturedImages.side
 
+      // Validate payload size before upload (Express limit: 25MB)
+      const jsonStr = JSON.stringify(payload)
+      const payloadMB = jsonStr.length / (1024 * 1024)
+      if (payloadMB > 23) {
+        // Trim point cloud to fit — keep most recent/best points
+        console.warn(`[LiDAR] Payload ${payloadMB.toFixed(1)}MB exceeds safe limit, trimming point cloud`)
+        payload.pointCloud = raw.pointCloud.slice(-40000)
+      }
+
       const measurements = await apiFetch('/api/scans/lidar-measurements', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: payloadMB <= 23 ? jsonStr : JSON.stringify(payload),
       })
       setLidarData(d => ({ ...d, [side]: measurements }))
 
@@ -952,18 +1253,51 @@ export default function FootScan() {
         console.warn('[LiDAR] Session-Warnung:', raw.sessionWarning)
       }
 
-      if (side === 'right') { setWalkProgress(0); setWalkPoints(0); setPhase('lidar-left') }
-      else                  { setPhase('processing') }
+      if (side === 'right') {
+        setWalkProgress(0); setWalkPoints(0); setPhase('lidar-transition')
+        // Voice: switch to left foot
+        setTimeout(() => speak(SCAN_MESSAGES.switchFoot), 800)
+      } else {
+        speak(SCAN_MESSAGES.processing)
+        setPhase('processing')
+      }
     } catch (e) {
-      const msg = e.message ?? 'Unbekannter Fehler'
-      // Translate common error patterns to German user-friendly messages
+      // Clean up native session on error
+      try { await LidarScanNative.finishContinuousCapture() } catch {}
+
+      // apiFetch now throws Error instances with .message
+      const msg = e?.message ?? e?.error ?? e?.detail ?? 'Unbekannter Fehler'
       const userMsg = msg.includes('Zu wenige') || msg.includes('too sparse') || msg.includes('Insufficient')
-        ? 'Zu wenige Punkte erfasst. Bewege das Handy langsamer und halte 15–80 cm Abstand.'
+        ? 'Der Scan konnte den Fuß nicht gut genug erkennen. Bewege das Handy langsamer und halte es näher über den Fuß.'
         : msg.includes('NOT_ACTIVE') || msg.includes('keine aktive')
-        ? 'Scan-Session wurde unterbrochen. Bitte erneut versuchen.'
+        ? 'Der Scan wurde unterbrochen. Bitte versuche es nochmal.'
         : msg.includes('ARKIT_ERROR') || msg.includes('ARKit')
-        ? 'AR-Fehler aufgetreten. Stelle sicher, dass genug Licht vorhanden ist.'
-        : `LiDAR-Fehler: ${msg}`
+        ? 'Der Scan braucht gutes Licht. Bitte sorge für ausreichend Beleuchtung.'
+        : msg.includes('Python') || msg.includes('ModuleNotFoundError')
+        ? 'Es gibt ein technisches Problem. Bitte kontaktiere uns über die Hilfe-Seite.'
+        : 'Etwas hat nicht funktioniert. Bitte versuche es nochmal.'
+      // Auto-retry for recoverable errors (max 2 times), then show manual UI
+      const isRecoverable = !msg.includes('Python') && !msg.includes('ModuleNotFoundError') && !msg.includes('Server')
+      if (isRecoverable && autoRetryRef.current < 2) {
+        autoRetryRef.current += 1
+        setAutoRetryCount(autoRetryRef.current)
+        // Voice: specific guidance for the problem, then auto-retry
+        const retryMsg = msg.includes('Zu wenige') || msg.includes('too sparse')
+          ? 'Bewege das Handy etwas langsamer. Wir versuchen es gleich nochmal.'
+          : msg.includes('Winkel') || msg.includes('anglesCovered')
+          ? 'Bewege das Gerät mehr um den Fuß herum. Wir versuchen es gleich nochmal.'
+          : 'Kleiner Fehler — wir versuchen es gleich nochmal.'
+        speak(retryMsg, { urgent: true })
+        hapticStrong()
+        setWalkProgress(0)
+        // Wait 3 seconds, then auto-retry with countdown (keep retry count)
+        setTimeout(() => startScanWithCountdown(side, { isRetry: true }), 3000)
+        return
+      }
+
+      // Non-recoverable or too many retries: show manual error UI
+      speak(SCAN_MESSAGES.error, { urgent: true })
+      hapticStrong()
       setLidarError(userMsg)
       setWalkProgress(0)
     }
@@ -993,22 +1327,22 @@ export default function FootScan() {
   // ── Photogrammetrie: 8 Ansichten je Fuß ──────────────────────────────────────
   // Ansichten: top, front, front_left, left, back_left, back, back_right, right
   const PG_VIEW_INFO = [
-    { side: 'right', label: 'Rechts – Draufsicht',       sub: 'Direkt von oben, ~35 cm Abstand, A4-Papier daneben' },
-    { side: 'right', label: 'Rechts – Vorne',             sub: 'Auf Zehnhöhe, leicht schräg nach unten' },
-    { side: 'right', label: 'Rechts – Vorne-Links 45°',   sub: '45° Winkel, Zehen sichtbar' },
-    { side: 'right', label: 'Rechts – Linke Seite',       sub: 'Seitenansicht links (Innenrist)' },
-    { side: 'right', label: 'Rechts – Hinten-Links 45°',  sub: '45° Winkel, Ferse sichtbar' },
-    { side: 'right', label: 'Rechts – Hinten',            sub: 'Direkt von hinten, Ferse zentriert' },
-    { side: 'right', label: 'Rechts – Hinten-Rechts 45°', sub: '45° Winkel, Außenrist' },
-    { side: 'right', label: 'Rechts – Rechte Seite',      sub: 'Seitenansicht rechts (Außenrist)' },
-    { side: 'left',  label: 'Links – Draufsicht',         sub: 'Direkt von oben, ~35 cm Abstand, A4-Papier daneben' },
-    { side: 'left',  label: 'Links – Vorne',              sub: 'Auf Zehnhöhe, leicht schräg nach unten' },
-    { side: 'left',  label: 'Links – Vorne-Rechts 45°',   sub: '45° Winkel, Zehen sichtbar' },
-    { side: 'left',  label: 'Links – Rechte Seite',       sub: 'Seitenansicht rechts (Außenrist)' },
-    { side: 'left',  label: 'Links – Hinten-Rechts 45°',  sub: '45° Winkel, Ferse sichtbar' },
-    { side: 'left',  label: 'Links – Hinten',             sub: 'Direkt von hinten, Ferse zentriert' },
-    { side: 'left',  label: 'Links – Hinten-Links 45°',   sub: '45° Winkel, Innenrist' },
-    { side: 'left',  label: 'Links – Linke Seite',        sub: 'Seitenansicht links (Innenrist)' },
+    { side: 'right', label: 'Rechts – von oben',             sub: 'Von oben fotografieren, A4-Blatt daneben legen' },
+    { side: 'right', label: 'Rechts – von vorne',            sub: 'Auf Zehenhöhe, leicht schräg nach unten' },
+    { side: 'right', label: 'Rechts – schräg vorne links',   sub: 'Schräg von vorne, Zehen sollen sichtbar sein' },
+    { side: 'right', label: 'Rechts – Innenseite',           sub: 'Von der Innenseite fotografieren' },
+    { side: 'right', label: 'Rechts – schräg hinten links',  sub: 'Schräg von hinten, Ferse soll sichtbar sein' },
+    { side: 'right', label: 'Rechts – von hinten',           sub: 'Direkt von hinten, Ferse in der Mitte' },
+    { side: 'right', label: 'Rechts – schräg hinten rechts', sub: 'Schräg von hinten, Außenseite sichtbar' },
+    { side: 'right', label: 'Rechts – Außenseite',           sub: 'Von der Außenseite fotografieren' },
+    { side: 'left',  label: 'Links – von oben',              sub: 'Von oben fotografieren, A4-Blatt daneben legen' },
+    { side: 'left',  label: 'Links – von vorne',             sub: 'Auf Zehenhöhe, leicht schräg nach unten' },
+    { side: 'left',  label: 'Links – schräg vorne rechts',   sub: 'Schräg von vorne, Zehen sollen sichtbar sein' },
+    { side: 'left',  label: 'Links – Außenseite',            sub: 'Von der Außenseite fotografieren' },
+    { side: 'left',  label: 'Links – schräg hinten rechts',  sub: 'Schräg von hinten, Ferse soll sichtbar sein' },
+    { side: 'left',  label: 'Links – von hinten',            sub: 'Direkt von hinten, Ferse in der Mitte' },
+    { side: 'left',  label: 'Links – schräg hinten links',   sub: 'Schräg von hinten, Innenseite sichtbar' },
+    { side: 'left',  label: 'Links – Innenseite',            sub: 'Von der Innenseite fotografieren' },
   ]
 
   const handlePgCapture = useCallback(() => {
@@ -1033,16 +1367,18 @@ export default function FootScan() {
   // ── Photogrammetrie-Processing: 8 Ansichten → 3D Visual Hull → Maße ──────────
   useEffect(() => {
     if (phase !== 'pg-processing') return
-    setProgress(5); setResult(null); setAiStatus('3D-Rekonstruktion läuft…')
+    setProgress(5); setResult(null); setAiStatus('Dein Fuß wird vermessen…')
     let cancelled = false
     async function runPg() {
       try {
         setProgress(15); setAiStatus('Bilder werden hochgeladen…')
         // Komprimiere Bilder auf 1200px max (Bandbreite sparen)
         const compress = (b64) => {
-          return new Promise(resolve => {
+          return new Promise((resolve, reject) => {
             const img = new Image()
+            const timeout = setTimeout(() => reject(new Error('Image load timeout')), 10_000)
             img.onload = () => {
+              clearTimeout(timeout)
               const scale = Math.min(1200 / Math.max(img.width, img.height), 1)
               const canvas = document.createElement('canvas')
               canvas.width  = Math.round(img.width  * scale)
@@ -1050,6 +1386,7 @@ export default function FootScan() {
               canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
               resolve(canvas.toDataURL('image/jpeg', 0.88))
             }
+            img.onerror = () => { clearTimeout(timeout); reject(new Error('Invalid image data')) }
             img.src = b64
           })
         }
@@ -1100,8 +1437,8 @@ export default function FootScan() {
         }
       } catch (err) {
         if (!cancelled) {
-          setAiStatus('Rekonstruktion fehlgeschlagen')
-          setResult({ error: err.message })
+          setAiStatus('Die Auswertung hat leider nicht geklappt')
+          setResult({ error: 'Dein Fuß konnte nicht vermessen werden. Bitte versuche es nochmal — achte auf gutes Licht und lege das A4-Blatt gut sichtbar daneben.' })
           setProgress(100)
         }
       }
@@ -1131,30 +1468,40 @@ export default function FootScan() {
           width:        r1(R.right_width  ?? R.raw?.width  ?? 92),
           arch:         R.right_arch_height != null ? r1(R.right_arch_height) : (R.right_arch != null ? r1(R.right_arch) : null),
           foot_height:  R.right_foot_height != null ? r1(R.right_foot_height) : (R.raw?.height != null ? r1(R.raw.height) : null),
+          toe_girth:    R.right_toe_girth    ?? null,
+          preball_girth: R.right_preball_girth ?? null,
           ball_girth:   R.right_ball_girth   ?? null,
-          instep_girth: R.right_instep_girth ?? null,
-          heel_girth:   R.right_heel_girth   ?? null,
           waist_girth:  R.right_waist_girth  ?? null,
+          midinstep_girth: R.right_midinstep_girth ?? null,
+          instep_girth: R.right_instep_girth ?? null,
+          upper_instep_girth: R.right_upper_instep_girth ?? null,
+          heel_girth:   R.right_heel_girth   ?? null,
           ankle_girth:  R.right_ankle_girth  ?? null,
           long_heel_girth:  R.right_long_heel_girth  ?? null,
           short_heel_girth: R.right_short_heel_girth ?? null,
           crossSections: R.cross_sections ?? {},
           pointCloud:    R.raw?.point_cloud_mm ?? null,
+          pointCount:    R.raw?.point_count ?? null,
         }
         const left = {
           length:       r1(L.left_length ?? L.raw?.length ?? 253),
           width:        r1(L.left_width  ?? L.raw?.width  ?? 91),
           arch:         L.left_arch_height != null ? r1(L.left_arch_height) : (L.left_arch != null ? r1(L.left_arch) : null),
           foot_height:  L.left_foot_height != null ? r1(L.left_foot_height) : (L.raw?.height != null ? r1(L.raw.height) : null),
+          toe_girth:    L.left_toe_girth    ?? null,
+          preball_girth: L.left_preball_girth ?? null,
           ball_girth:   L.left_ball_girth   ?? null,
-          instep_girth: L.left_instep_girth ?? null,
-          heel_girth:   L.left_heel_girth   ?? null,
           waist_girth:  L.left_waist_girth  ?? null,
+          midinstep_girth: L.left_midinstep_girth ?? null,
+          instep_girth: L.left_instep_girth ?? null,
+          upper_instep_girth: L.left_upper_instep_girth ?? null,
+          heel_girth:   L.left_heel_girth   ?? null,
           ankle_girth:  L.left_ankle_girth  ?? null,
           long_heel_girth:  L.left_long_heel_girth  ?? null,
           short_heel_girth: L.left_short_heel_girth ?? null,
           crossSections: L.cross_sections ?? {},
           pointCloud:    L.raw?.point_cloud_mm ?? null,
+          pointCount:    L.raw?.point_count ?? null,
         }
         setProgress(100)
         setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI: true, source: 'lidar' })
@@ -1171,7 +1518,7 @@ export default function FootScan() {
 
       if (hasAllFrames) {
         try {
-          setAiStatus('Bilder werden komprimiert…'); setProgress(6)
+          setAiStatus('Fotos werden vorbereitet…'); setProgress(6)
           const compressAll = []
           compressAll.push(compressImage(frames.rightTop, 1200))
           compressAll.push(compressImage(hasIBVFrames ? frames.rightMedial : frames.rightSide, 1000))
@@ -1185,7 +1532,7 @@ export default function FootScan() {
           const compressed = await Promise.all(compressAll)
           const [rT, rS, lT, lS, rLat, lLat] = compressed
           if (cancelled) return
-          setAiStatus(`🤖 Claude KI analysiert ${hasIBVFrames ? '6' : '4'} Bilder…`); setProgress(18)
+          setAiStatus(`Fotos werden ausgewertet…`); setProgress(18)
 
           const analyzeBody = { rightTopImg: rT, rightSideImg: rS, leftTopImg: lT, leftSideImg: lS }
           if (hasIBVFrames && rLat && lLat) {
@@ -1212,7 +1559,7 @@ export default function FootScan() {
           })
           if (cancelled) return
 
-          clearInterval(ambientTimer); setProgress(82); setAiStatus('Schuhgröße wird berechnet…')
+          clearInterval(ambientTimer); setProgress(82); setAiStatus('Deine Schuhgröße wird ermittelt…')
           rightM     = { length: ai.right_length, width: ai.right_width }
           leftM      = { length: ai.left_length,  width: ai.left_width  }
           archRight       = ai.right_arch_height ?? null
@@ -1244,15 +1591,15 @@ export default function FootScan() {
           }
         } catch (e) {
           console.warn('[FootScan] KI fehlgeschlagen, CV-Fallback:', e.message)
-          setAiStatus('Lokale Analyse…')
+          setAiStatus('Fotos werden ausgewertet…')
         }
       }
 
       if (!usedAI) {
         clearInterval(ambientTimer)
         // No AI/CV measurement succeeded — report error instead of random values
-        setAiStatus('Messung fehlgeschlagen')
-        setResult({ error: 'Fußmaße konnten nicht bestimmt werden. Bitte erneut scannen mit A4-Papier als Referenz.' })
+        setAiStatus('Hat leider nicht geklappt')
+        setResult({ error: 'Dein Fuß konnte nicht vermessen werden. Bitte versuche es nochmal — lege das weiße A4-Blatt gut sichtbar neben den Fuß.' })
         setProgress(100)
         return
       }
@@ -1295,11 +1642,11 @@ export default function FootScan() {
 
   // ── Auto-save + Training-Images Upload ──
   useEffect(() => {
-    if (phase !== 'result' || !result || saved || result.isDemo) return
+    if (phase !== 'result' || !result || saved || result.isDemo || result.error) return
     async function save() {
       try {
         const payload = {
-          reference_type: result.source === 'lidar' ? 'lidar' : 'a4',
+          reference_type: result.source === 'lidar' ? 'lidar' : result.source === 'photogrammetry' ? 'photogrammetry' : 'a4',
           right_length: result.right.length, right_width: result.right.width,
           right_arch: result.right.arch ?? 14,
           left_length:  result.left.length,  left_width:  result.left.width,
@@ -1311,6 +1658,10 @@ export default function FootScan() {
           ...(result.right.heel_girth   != null && { right_heel_girth:   result.right.heel_girth }),
           ...(result.right.waist_girth  != null && { right_waist_girth:  result.right.waist_girth }),
           ...(result.right.ankle_girth      != null && { right_ankle_girth:      result.right.ankle_girth }),
+          ...(result.right.toe_girth        != null && { right_toe_girth:        result.right.toe_girth }),
+          ...(result.right.preball_girth    != null && { right_preball_girth:    result.right.preball_girth }),
+          ...(result.right.midinstep_girth  != null && { right_midinstep_girth:  result.right.midinstep_girth }),
+          ...(result.right.upper_instep_girth != null && { right_upper_instep_girth: result.right.upper_instep_girth }),
           ...(result.right.long_heel_girth  != null && { right_long_heel_girth:  result.right.long_heel_girth }),
           ...(result.right.short_heel_girth != null && { right_short_heel_girth: result.right.short_heel_girth }),
           ...(result.left.ball_girth    != null && { left_ball_girth:    result.left.ball_girth }),
@@ -1318,10 +1669,15 @@ export default function FootScan() {
           ...(result.left.heel_girth    != null && { left_heel_girth:    result.left.heel_girth }),
           ...(result.left.waist_girth   != null && { left_waist_girth:   result.left.waist_girth }),
           ...(result.left.ankle_girth       != null && { left_ankle_girth:       result.left.ankle_girth }),
+          ...(result.left.toe_girth         != null && { left_toe_girth:         result.left.toe_girth }),
+          ...(result.left.preball_girth     != null && { left_preball_girth:     result.left.preball_girth }),
+          ...(result.left.midinstep_girth   != null && { left_midinstep_girth:   result.left.midinstep_girth }),
+          ...(result.left.upper_instep_girth != null && { left_upper_instep_girth: result.left.upper_instep_girth }),
           ...(result.left.long_heel_girth  != null && { left_long_heel_girth:  result.left.long_heel_girth }),
           ...(result.left.short_heel_girth != null && { left_short_heel_girth: result.left.short_heel_girth }),
           eu_size: result.sizes.eu, uk_size: String(result.sizes.uk), us_size: String(result.sizes.us),
           accuracy: result.accuracy ?? (result.source === 'lidar' ? 96.0 : result.source === 'photogrammetry' ? 94.0 : result.usedAI ? 88.0 : 82.0),
+          shoe_type: lastShoeType,
         }
         const saved_scan = await apiFetch('/api/scans', { method: 'POST', body: JSON.stringify(payload) })
         setSaved(true); refreshScan()
@@ -1361,12 +1717,87 @@ export default function FootScan() {
             }
           }
         }
-      } catch { setSaveErr('Verbindungsfehler — Scan nicht gespeichert.') }
+      } catch { setSaveErr('Keine Internetverbindung — Scan konnte nicht gespeichert werden.') }
     }
     save()
   }, [phase, result, saved]) // eslint-disable-line
 
-  const LIDAR_PHASES = ['lidar-right', 'lidar-left']
+  // ── Transition screen with auto-continue countdown ──
+  const TransitionScreen = ({ onContinue }) => {
+    const [transCountdown, setTransCountdown] = useState(5)
+    useEffect(() => {
+      const iv = setInterval(() => {
+        setTransCountdown(prev => {
+          if (prev <= 1) { clearInterval(iv); onContinue(); return 0 }
+          return prev - 1
+        })
+      }, 1000)
+      return () => clearInterval(iv)
+    }, []) // eslint-disable-line
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center"
+        style={{ animation: 'faceidFadeInUp 0.5s ease forwards' }}>
+        <svg width="80" height="80" viewBox="0 0 80 80" className="mb-8">
+          <circle cx="40" cy="40" r="38" fill="none" stroke="#30D158" strokeWidth="2.5" opacity="0.25" />
+          <circle cx="40" cy="40" r="38" fill="none" stroke="#30D158" strokeWidth="2.5"
+            strokeDasharray="239" strokeDashoffset="239"
+            style={{ animation: 'checkDraw 0.6s ease forwards 0.1s' }} />
+          <path d="M23 42l12 12 22-22" fill="none" stroke="#30D158" strokeWidth="3"
+            strokeLinecap="round" strokeLinejoin="round"
+            strokeDasharray="55" strokeDashoffset="55"
+            style={{ animation: 'checkDraw 0.5s ease forwards 0.5s' }} />
+        </svg>
+        <h2 className="text-[22px] font-semibold text-white mb-2">
+          Rechter Fuß erfasst ✓
+        </h2>
+        <p className="text-[17px] text-white/70 mb-3 leading-relaxed font-medium">
+          Jetzt den linken Fuß aufstellen.
+        </p>
+        <p className="text-[13px] text-white/40 mb-10 leading-relaxed">
+          Scan startet automatisch in {transCountdown} Sekunden…
+        </p>
+        <button
+          onClick={onContinue}
+          className="w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
+          Jetzt starten
+        </button>
+      </div>
+    )
+  }
+
+  const LIDAR_PHASES = ['lidar-right', 'lidar-transition', 'lidar-left']
+
+  // ── Voice: announce phase changes ──
+  useEffect(() => {
+    if (phase === 'lidar-right') {
+      // Don't speak ready here — startScanWithCountdown handles it
+    } else if (phase === 'lidar-left') {
+      // Don't speak ready here — startScanWithCountdown handles it
+    } else if (phase === 'processing' || phase === 'pg-processing') {
+      speak(SCAN_MESSAGES.processing)
+    } else if (phase === 'result') {
+      speak(SCAN_MESSAGES.done)
+      hapticSuccess()
+    }
+    // Clean up speech when leaving scan
+    return () => { if (!LIDAR_PHASES.includes(phase)) stopSpeaking() }
+  }, [phase]) // eslint-disable-line
+
+  // ── Face ID-style arc segment path helper ──
+  const arcSegmentPath = (index, total, radius, cx, cy) => {
+    const arcDeg = 360 / total
+    const gapDeg = 1.2
+    const segDeg = arcDeg - gapDeg
+    const startAngle = index * arcDeg - 90
+    const endAngle = startAngle + segDeg
+    const startRad = (startAngle * Math.PI) / 180
+    const endRad = (endAngle * Math.PI) / 180
+    const x1 = cx + radius * Math.cos(startRad)
+    const y1 = cy + radius * Math.sin(startRad)
+    const x2 = cx + radius * Math.cos(endRad)
+    const y2 = cy + radius * Math.sin(endRad)
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2}`
+  }
 
   // ── Routing helpers ──
   const isCamPhase    = CAM_PHASES.includes(phase) || PG_PHASES.includes(phase)
@@ -1393,7 +1824,7 @@ export default function FootScan() {
     return (
       <div className="relative h-full overflow-hidden bg-black flex flex-col items-center justify-center text-center px-8">
         <Scan size={48} className="text-white/20 mb-4" />
-        <h2 className="text-lg font-light text-white uppercase tracking-[0.15em] mb-2">3D Foot Scan</h2>
+        <h2 className="text-lg font-light text-white uppercase tracking-[0.15em] mb-2">3D Fußscan</h2>
         <p className="text-[11px] text-white/40 leading-relaxed max-w-xs">
           Der Fußscan ist nur auf Smartphones und Tablets verfügbar. Bitte öffne die App auf deinem Mobilgerät, um einen Scan durchzuführen.
         </p>
@@ -1439,164 +1870,236 @@ export default function FootScan() {
           camStatus={camStatus} />
       )}
 
-      {/* ── LiDAR scan screens (Face ID-style) ── */}
+      {/* ── LiDAR scan screens (Apple Face ID-style) ── */}
       {LIDAR_PHASES.includes(phase) && (
         <div className="absolute inset-0 flex flex-col bg-black">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-4 flex-shrink-0">
-            <button onClick={() => { setPhase('start'); setWalkProgress(0) }}
-              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center border-0">
-              <X size={17} className="text-white" strokeWidth={1.8} />
+          <style>{`
+            @keyframes checkDraw { to { stroke-dashoffset: 0 } }
+            @keyframes faceidFadeInUp {
+              from { opacity: 0; transform: translateY(16px) }
+              to   { opacity: 1; transform: translateY(0) }
+            }
+            @keyframes fadeInSoft {
+              from { opacity: 0; transform: translateY(4px) }
+              to   { opacity: 1; transform: translateY(0) }
+            }
+            @keyframes pulseCount {
+              0%, 100% { opacity: 0.5 }
+              50% { opacity: 1 }
+            }
+            @keyframes shakeError {
+              0%, 100% { transform: translateX(0) }
+              20% { transform: translateX(-6px) }
+              40% { transform: translateX(6px) }
+              60% { transform: translateX(-4px) }
+              80% { transform: translateX(4px) }
+            }
+            @keyframes orbitPhone {
+              0%   { transform: rotate(0deg) translateX(38px) rotate(0deg) }
+              100% { transform: rotate(360deg) translateX(38px) rotate(-360deg) }
+            }
+            @keyframes arrowPulse {
+              0%, 100% { opacity: 0.3 }
+              50% { opacity: 0.7 }
+            }
+          `}</style>
+
+          {/* Minimal header */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
+            <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking() }}
+              aria-label="Scan abbrechen"
+              className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center border-0">
+              <X size={18} className="text-white/80" strokeWidth={2} />
             </button>
-            <div className="text-center">
-              <p className="text-[8px] text-white/30 uppercase tracking-widest" style={{ letterSpacing: '0.2em' }}>LiDAR 3D</p>
-              <span className="text-[13px] font-bold text-white" style={{ letterSpacing: '0.08em' }}>
-                {phase === 'lidar-right' ? 'Rechter Fuß' : 'Linker Fuß'}
-              </span>
-            </div>
-            <div className="flex gap-1.5">
-              <div className={`h-1.5 w-8 ${phase === 'lidar-right' ? 'bg-teal-400' : 'bg-white'}`} />
-              <div className={`h-1.5 w-8 ${phase === 'lidar-left'  ? 'bg-teal-400' : 'bg-white/25'}`} />
-            </div>
-          </div>
-
-          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
-            {/* Face ID-style segmented circular progress */}
-            <div className="relative w-56 h-56 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-                {/* Background segments */}
-                {Array.from({ length: 60 }).map((_, i) => {
-                  const angle = (i / 60) * 360 - 90
-                  const rad = (angle * Math.PI) / 180
-                  const r = 88
-                  const segLen = 4.8 // arc length per segment (degrees)
-                  const x1 = 100 + r * Math.cos(rad)
-                  const y1 = 100 + r * Math.sin(rad)
-                  const endRad = ((angle + segLen) * Math.PI) / 180
-                  const x2 = 100 + r * Math.cos(endRad)
-                  const y2 = 100 + r * Math.sin(endRad)
-                  const filled = i < Math.floor(walkProgress * 0.6)
-                  return (
-                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
-                      stroke={filled ? '#2dd4bf' : 'rgba(255,255,255,0.08)'}
-                      strokeWidth={filled ? '5' : '3.5'}
-                      strokeLinecap="round"
-                      style={{ transition: 'stroke 0.3s ease, stroke-width 0.3s ease' }}
-                    />
-                  )
-                })}
-                {/* Glow effect on latest filled segment */}
-                {walkProgress > 0 && walkProgress < 100 && (() => {
-                  const idx = Math.floor(walkProgress * 0.6) - 1
-                  if (idx < 0) return null
-                  const angle = (idx / 60) * 360 - 90
-                  const rad = (angle * Math.PI) / 180
-                  const r = 88
-                  const cx = 100 + r * Math.cos(rad)
-                  const cy = 100 + r * Math.sin(rad)
-                  return <circle cx={cx} cy={cy} r="6" fill="#2dd4bf" opacity="0.3">
-                    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.2s" repeatCount="indefinite" />
-                  </circle>
-                })()}
-              </svg>
-
-              {/* Center content */}
-              <div className="flex flex-col items-center z-10">
-                {walkProgress === 0 && !lidarError ? (
-                  <>
-                    <div className="w-16 h-16 bg-white/5 border border-white/10 flex items-center justify-center mb-3">
-                      <Scan size={28} className="text-teal-400" strokeWidth={1.2} />
-                    </div>
-                    <span className="text-[10px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Bereit</span>
-                  </>
-                ) : walkProgress >= 100 ? (
-                  <>
-                    <CheckCircle2 size={36} className="text-teal-400 mb-2" strokeWidth={1.5} />
-                    <span className="text-3xl font-bold text-white">100%</span>
-                    <span className="text-[10px] text-teal-400 mt-1 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Erfasst</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-4xl font-bold text-white">{walkProgress}%</span>
-                    {walkPoints > 0 && (
-                      <span className="text-[10px] text-white/40 mt-1">{(walkPoints/1000).toFixed(1)}k Punkte</span>
-                    )}
-                    <span className="text-[9px] text-teal-400/70 mt-0.5">Scannen…</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Instructions below circle */}
-            {walkProgress === 0 && !lidarError && (
-              <>
-                <div>
-                  <p className="text-[15px] font-bold text-white mb-1.5" style={{ letterSpacing: '0.03em' }}>
-                    Bewege das iPhone langsam um den Fuß
-                  </p>
-                  <p className="text-[11px] text-white/40 leading-relaxed">
-                    Halte 30–50 cm Abstand. Erfasse alle Seiten gleichmäßig — wie bei der Face ID-Einrichtung.
-                  </p>
-                </div>
-                <div className="w-full grid grid-cols-4 gap-2 mt-1">
-                  {[
-                    { icon: '↑', label: 'Oben' },
-                    { icon: '→', label: 'Außen' },
-                    { icon: '↓', label: 'Vorne' },
-                    { icon: '←', label: 'Innen' },
-                  ].map(({ icon, label }) => (
-                    <div key={label} className="flex flex-col items-center gap-1 py-2.5 bg-white/5 border border-white/8">
-                      <span className="text-base text-white/60">{icon}</span>
-                      <span className="text-[8px] text-white/35 uppercase tracking-wider">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-              <div>
-                <p className="text-[13px] font-semibold text-white mb-1">Weiterscannen…</p>
-                <p className="text-[11px] text-white/40">
-                  {walkProgress < 30 ? 'Beginne von oben und bewege dich zur Seite' :
-                   walkProgress < 60 ? 'Gut! Erfasse jetzt die Seitenbereiche' :
-                   walkProgress < 85 ? 'Fast fertig — fehlende Winkel auffüllen' :
-                   'Letzte Details…'}
-                </p>
-              </div>
-            )}
-
-            {aiStatus && !lidarError && walkProgress >= 100 && (
-              <p className="text-[11px] text-teal-400 font-medium">{aiStatus}</p>
-            )}
-
-            {lidarError && (
-              <div className="w-full p-4 bg-red-500/8 border border-red-400/20">
-                <p className="text-[12px] text-red-400 font-medium mb-2">{lidarError}</p>
-                <button onClick={() => setPhase('start')}
-                  className="text-[10px] text-red-300/70 underline border-0 bg-transparent p-0">
-                  Zum Foto-Modus wechseln
-                </button>
-              </div>
-            )}
-
-            {!lidarError && walkProgress === 0 && (
-              <button
-                onClick={() => runLidarSide(phase === 'lidar-right' ? 'right' : 'left')}
-                className="w-full py-4 bg-teal-500 text-white font-bold text-[13px] border-0 flex items-center justify-center gap-2 uppercase tracking-widest active:opacity-80"
-                style={{ letterSpacing: '0.12em' }}>
-                <Scan size={16} strokeWidth={1.5} />
-                Scan starten
+            <span className="text-[15px] font-semibold text-white tracking-tight" aria-live="polite">
+              {phase === 'lidar-transition' ? 'Rechter Fuß' : phase === 'lidar-right' ? 'Rechter Fuß' : 'Linker Fuß'}
+            </span>
+            <div className="flex items-center gap-3">
+              {/* Voice guidance toggle */}
+              <button onClick={() => { const next = !voiceOn; setVoiceOn(next); setVoiceEnabled(next); if (!next) stopSpeaking() }}
+                aria-label={voiceOn ? 'Sprachführung ausschalten' : 'Sprachführung einschalten'}
+                className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center border-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={voiceOn ? '#30D158' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  {voiceOn ? (
+                    <>
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill={voiceOn ? 'rgba(48,209,88,0.2)' : 'none'} />
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                    </>
+                  ) : (
+                    <>
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                      <line x1="23" y1="9" x2="17" y2="15" />
+                      <line x1="17" y1="9" x2="23" y2="15" />
+                    </>
+                  )}
+                </svg>
               </button>
-            )}
-
-            {walkProgress > 0 && walkProgress < 100 && !lidarError && (
-              <div className="w-full py-4 bg-white/5 border border-white/10 flex items-center justify-center gap-3">
-                <div className="w-4 h-4 border-2 border-teal-400/40 border-t-teal-400 animate-spin" />
-                <span className="text-sm text-gray-300 font-medium">Scannen läuft…</span>
+              <div className="flex gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${phase === 'lidar-left' ? 'bg-white/30' : 'bg-white'}`} />
+                <div className={`w-2 h-2 rounded-full ${phase === 'lidar-left' ? 'bg-white' : 'bg-white/30'}`} />
               </div>
-            )}
+            </div>
           </div>
+
+          {phase === 'lidar-transition' ? (
+            /* ── Transition screen: right foot done → left foot next (auto-continues after 5s) ── */
+            <TransitionScreen onContinue={() => { setWalkProgress(0); setWalkPoints(0); setAutoRetryCount(0); autoRetryRef.current = 0; startScanWithCountdown('left') }} />
+          ) : (
+            /* ── Scan screen with RoomPlan-style 3D mesh preview ── */
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center relative">
+              {/* Progressive 3D foot mesh (RoomPlan-style) */}
+              <div className="relative w-72 h-72 flex items-center justify-center mb-4">
+                <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} />
+
+                {/* Progress overlay on top of 3D scene */}
+                <div className="absolute inset-0 flex flex-col items-center justify-end z-10 pointer-events-none pb-2">
+                  {walkProgress === 0 && !lidarError ? (
+                    <div className="flex flex-col items-center" style={{ animation: 'fadeInSoft 0.4s ease' }}>
+                      {/* Orbiting phone hint */}
+                      <div className="relative w-16 h-16 flex items-center justify-center mb-1">
+                        <div className="absolute inset-0 flex items-center justify-center"
+                          style={{ animation: 'orbitPhone 4s linear infinite' }}>
+                          <svg width="14" height="20" viewBox="0 0 16 22" fill="none">
+                            <rect x="1" y="1" width="14" height="20" rx="2" stroke="#30D158" strokeWidth="1.5" />
+                            <circle cx="8" cy="17" r="1.2" fill="#30D158" opacity="0.6" />
+                          </svg>
+                        </div>
+                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 64 64" style={{ animation: 'arrowPulse 2s ease infinite' }}>
+                          <path d="M 48 14 A 24 24 0 1 1 16 14" fill="none" stroke="white" strokeWidth="0.8" opacity="0.25" strokeDasharray="3,4" />
+                          <path d="M 16 14 L 19 10 M 16 14 L 21 16" fill="none" stroke="white" strokeWidth="1" opacity="0.35" />
+                        </svg>
+                      </div>
+                      <span className="text-[11px] text-white/50 font-medium tracking-wide">Bereit</span>
+                    </div>
+                  ) : walkProgress >= 100 ? (
+                    <div className="flex flex-col items-center">
+                      <svg width="36" height="36" viewBox="0 0 48 48" className="mb-1">
+                        <circle cx="24" cy="24" r="22" fill="rgba(0,0,0,0.4)" stroke="#30D158" strokeWidth="2" opacity="0.5" />
+                        <path d="M14 25l7 7 13-13" fill="none" stroke="#30D158" strokeWidth="2.5"
+                          strokeLinecap="round" strokeLinejoin="round"
+                          strokeDasharray="38" strokeDashoffset="38"
+                          style={{ animation: 'checkDraw 0.5s ease forwards 0.2s' }} />
+                      </svg>
+                      <span className="text-[11px] text-[#30D158] font-medium tracking-wide">Erfasst</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
+                      {/* Mini segmented ring */}
+                      <svg width="24" height="24" viewBox="0 0 24 24">
+                        {Array.from({ length: 12 }).map((_, i) => {
+                          const filled = i < Math.floor(walkProgress * 0.12)
+                          const a1 = (i * 30 - 90) * Math.PI / 180
+                          const a2 = ((i + 1) * 30 - 91) * Math.PI / 180
+                          return <path key={i} d={`M ${12 + 10 * Math.cos(a1)} ${12 + 10 * Math.sin(a1)} A 10 10 0 0 1 ${12 + 10 * Math.cos(a2)} ${12 + 10 * Math.sin(a2)}`}
+                            fill="none" stroke={filled ? (deviceStable ? '#30D158' : '#FF9F0A') : 'rgba(255,255,255,0.15)'}
+                            strokeWidth={2} strokeLinecap="round"
+                            style={{ transition: 'stroke 0.4s ease' }} />
+                        })}
+                      </svg>
+                      <span className="text-[18px] font-semibold text-white" style={{ fontFeatureSettings: '"tnum"' }}
+                        role="progressbar" aria-valuenow={walkProgress} aria-valuemin={0} aria-valuemax={100}
+                        aria-label={`Scan-Fortschritt ${walkProgress} Prozent`}>
+                        {walkProgress}<span className="text-[12px] font-normal text-white/60">%</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Instructions — big, readable, glanceable */}
+              {walkProgress === 0 && !lidarError && countdown === 0 && (
+                <div className="mt-2" style={{ animation: 'fadeInSoft 0.4s ease' }}>
+                  <p className="text-[20px] font-bold text-white mb-4 leading-snug">
+                    {phase === 'lidar-right' ? 'Rechten' : 'Linken'} Fuß auf den Boden stellen
+                  </p>
+                  <div className="space-y-3 text-left inline-block">
+                    <p className="text-[15px] text-white/70 flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">1</span>
+                      {deviceInfo?.model === 'iPad' ? 'iPad' : 'Handy'} eine Handlänge über den Fuß halten
+                    </p>
+                    <p className="text-[15px] text-white/70 flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">2</span>
+                      Langsam einmal um den Fuß herum bewegen
+                    </p>
+                    <p className="text-[15px] text-white/70 flex items-center gap-3">
+                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">3</span>
+                      Auch Ferse und Seiten mitnehmen
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {walkProgress > 0 && walkProgress < 100 && !lidarError && (
+                <div key={walkProgress < 20 ? 'step1' : walkProgress < 45 ? 'step2' : walkProgress < 70 ? 'step3' : 'step4'}
+                  style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                  {/* Stability warning */}
+                  {!deviceStable && (
+                    <p className="text-[13px] text-[#FF9F0A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                      {deviceInfo?.model === 'iPad' ? 'Halte das iPad ruhiger' : 'Halte das Handy ruhiger'}
+                    </p>
+                  )}
+                  {/* Big, readable instruction — user glances at screen briefly */}
+                  <p className="text-[20px] font-bold text-white mb-2 leading-snug">
+                    {walkProgress < 20 ? '↓  Von oben draufhalten'
+                      : walkProgress < 45 ? '↻  Zur Seite bewegen'
+                      : walkProgress < 70 ? '↻  Um die Ferse herum'
+                      : '✓  Fast geschafft!'}
+                  </p>
+                  <p className="text-[14px] text-white/60">
+                    {walkProgress < 20 ? 'Handy ruhig über dem Fuß halten'
+                      : walkProgress < 45 ? 'Langsam zur Seite bewegen'
+                      : walkProgress < 70 ? 'Weiter um den Fuß herum, auch die Ferse'
+                      : 'Gleich fertig — noch kurz so halten'}
+                  </p>
+                </div>
+              )}
+
+              {aiStatus && !lidarError && walkProgress >= 100 && (
+                <p className="text-[13px] text-[#30D158] font-medium" style={{ animation: 'fadeInSoft 0.4s ease' }}>{aiStatus}</p>
+              )}
+
+              {lidarError && (
+                <div className="w-full p-5 rounded-2xl bg-red-500/10 border border-red-400/20" role="alert" aria-live="assertive"
+                  style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease' }}>
+                  <p className="text-[15px] text-white font-semibold mb-2">Nicht geklappt — kein Problem!</p>
+                  <p className="text-[13px] text-white/60 mb-4 leading-relaxed">{lidarError}</p>
+                  <div className="flex gap-3">
+                    <button onClick={() => { setLidarError(null); setWalkProgress(0); startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left') }}
+                      aria-label="Scan nochmal versuchen"
+                      className="flex-1 py-3.5 rounded-xl bg-[#30D158] text-white text-[14px] font-semibold border-0 active:opacity-80">
+                      Nochmal versuchen
+                    </button>
+                    <button onClick={() => setPhase('start')}
+                      aria-label="Andere Scan-Methode wählen"
+                      className="flex-1 py-3.5 rounded-xl bg-transparent text-white/40 text-[13px] border border-white/10 active:opacity-80">
+                      Andere Methode
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!lidarError && walkProgress === 0 && countdown === 0 && (
+                <button
+                  onClick={() => startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left')}
+                  aria-label={`${phase === 'lidar-right' ? 'Rechten' : 'Linken'} Fuß scannen`}
+                  className="mt-8 w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
+                  Scan starten
+                </button>
+              )}
+
+              {/* Countdown overlay */}
+              {countdown > 0 && (
+                <div className="mt-8 flex flex-col items-center">
+                  <span className="text-[72px] font-bold text-[#30D158]"
+                    style={{ fontFeatureSettings: '"tnum"', animation: 'faceidFadeInUp 0.3s ease' }}>
+                    {countdown}
+                  </span>
+                  <p className="text-[15px] text-white/60 mt-2">Halte das Handy ruhig über dem Fuß</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1660,8 +2163,8 @@ export default function FootScan() {
                   <div className="px-5 pt-3 pb-4 border-b border-black/5">
                     <p className="text-[10px] text-black/45 leading-relaxed">
                       {lidarAvail
-                        ? 'LiDAR erkannt — Dein Gerät unterstützt direkte 3D-Erfassung mit höchster Präzision.'
-                        : 'Kein LiDAR-Sensor gefunden. Wähle eine kamerabasierte Methode:'}
+                        ? 'Dein Gerät hat einen präzisen 3D-Sensor — wir empfehlen den schnellen Scan.'
+                        : 'Wähle eine Methode, um deine Füße zu vermessen:'}
                     </p>
                   </div>
 
@@ -1672,10 +2175,10 @@ export default function FootScan() {
                         <p className="text-[9px] text-black/30 uppercase tracking-widest mb-3" style={{ letterSpacing: '0.15em' }}>Empfohlen</p>
                         <button onClick={() => { setLidarData({ right: null, left: null }); setLidarError(null); setPhase('lidar-right') }}
                           className="w-full py-5 bg-black text-white font-bold text-[13px] border-0 flex flex-col items-center gap-2 active:opacity-80">
-                          <Scan size={20} className="text-teal-400" strokeWidth={1.5} />
-                          <span className="uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>LiDAR 3D-Scan</span>
-                          <span className="text-[9px] text-white/40 font-normal normal-case tracking-normal">
-                            Direkte Punktwolke · 20 Sek. pro Fuß · ±0.5–1mm
+                          <Scan size={20} className="text-[#30D158]" strokeWidth={1.5} />
+                          <span className="uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Schneller 3D-Scan</span>
+                          <span className="text-[10px] text-white/40 font-normal normal-case tracking-normal">
+                            20 Sek. pro Fuß · Sprachführung leitet dich Schritt für Schritt
                           </span>
                         </button>
                       </div>
@@ -1684,11 +2187,11 @@ export default function FootScan() {
                         <div className="space-y-2">
                           <button onClick={() => setPhase('right-top')}
                             className="w-full py-3.5 bg-[#f6f5f3] text-black/60 font-semibold text-[11px] border-0">
-                            Foto-Scan (6 Bilder · A4-Referenz)
+                            Foto-Scan (6 Bilder · mit A4-Papier)
                           </button>
                           <button onClick={() => { setPgMode(true); setPgStep(0); setPgImgs({ right: [], left: [] }); setPhase('pg-0') }}
                             className="w-full py-3.5 bg-[#f6f5f3] text-black/60 font-semibold text-[11px] border-0">
-                            Photogrammetrie (16 Bilder · 8 Winkel)
+                            Rundum-Scan (16 Bilder · alle Seiten)
                           </button>
                         </div>
                       </div>
@@ -1708,15 +2211,15 @@ export default function FootScan() {
                             </div>
                             <div>
                               <p className="text-[12px] font-bold uppercase tracking-widest" style={{ letterSpacing: '0.1em' }}>Foto-Scan</p>
-                              <p className="text-[9px] text-white/40 mt-0.5">6 Fotos · A4-Referenz · ~2 Min.</p>
+                              <p className="text-[9px] text-white/40 mt-0.5">6 Fotos · mit A4-Papier · ca. 2 Min.</p>
                             </div>
                             <ChevronRight size={16} className="text-white/30 ml-auto" />
                           </div>
                           <div className="space-y-1.5 pl-1">
                             {[
-                              'Draufsicht + Innenseite + Außenseite je Fuß',
-                              'A4-Papier als Kalibrierung',
-                              'Präzision: ±3–5mm',
+                              'Oben, innen und außen je Fuß fotografieren',
+                              'Ein A4-Blatt danebenlegen als Größenvergleich',
+                              'Gute Genauigkeit für die Schuhgrößen-Bestimmung',
                             ].map(t => (
                               <p key={t} className="text-[9px] text-white/35 flex items-center gap-2">
                                 <span className="w-1 h-1 bg-teal-400/50 flex-shrink-0" />
@@ -1734,16 +2237,16 @@ export default function FootScan() {
                               <Scan size={18} className="text-black/40" strokeWidth={1.5} />
                             </div>
                             <div>
-                              <p className="text-[12px] font-bold uppercase tracking-widest" style={{ letterSpacing: '0.1em' }}>Photogrammetrie</p>
-                              <p className="text-[9px] text-black/40 mt-0.5">16 Fotos · 8 Winkel · ~4 Min.</p>
+                              <p className="text-[12px] font-bold uppercase tracking-widest" style={{ letterSpacing: '0.1em' }}>Rundum-Scan</p>
+                              <p className="text-[9px] text-black/40 mt-0.5">16 Fotos · von allen Seiten · ca. 4 Min.</p>
                             </div>
                             <ChevronRight size={16} className="text-black/20 ml-auto" />
                           </div>
                           <div className="space-y-1.5 pl-1">
                             {[
-                              '8 Blickwinkel pro Fuß (360° Abdeckung)',
-                              'Shape-from-Silhouettes 3D-Rekonstruktion',
-                              'Präzision: ±1–2mm',
+                              'Den Fuß einmal rundherum fotografieren',
+                              'Daraus wird ein genaues 3D-Modell erstellt',
+                              'Höchste Genauigkeit bei der Vermessung',
                             ].map(t => (
                               <p key={t} className="text-[9px] text-black/35 flex items-center gap-2">
                                 <span className="w-1 h-1 bg-black/20 flex-shrink-0" />
@@ -1760,7 +2263,7 @@ export default function FootScan() {
                           <AlertCircle size={13} className="text-black/40" strokeWidth={1.5} />
                         </div>
                         <p className="text-[9px] text-black/45 leading-relaxed">
-                          <strong className="text-black/60">Wichtig:</strong> Halte ein A4-Druckerpapier (297x210mm) als Maßstab bereit. Es muss auf jedem Foto sichtbar sein.
+                          <strong className="text-black/60">Wichtig:</strong> Lege ein normales weißes A4-Blatt (Druckerpapier) neben deinen Fuß. Es muss auf jedem Foto zu sehen sein — so können wir die Größe richtig berechnen.
                         </p>
                       </div>
                     </>
@@ -1788,7 +2291,7 @@ export default function FootScan() {
               </div>
 
               <div className="text-center w-full">
-                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>3D-Rekonstruktion</p>
+                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung läuft</p>
                 <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
@@ -1800,7 +2303,7 @@ export default function FootScan() {
               </div>
 
               <p className="text-[9px] text-black/25 text-center px-4">
-                KI rekonstruiert den Fuß in 3D aus 3 Blickwinkeln — nach dem IBV-Verfahren mit über 20 Maßen
+                Dein Fuß wird aus mehreren Fotos vermessen — Länge, Breite, Umfang und mehr
               </p>
             </div>
           )}
@@ -1818,7 +2321,7 @@ export default function FootScan() {
               </div>
 
               <div className="text-center w-full">
-                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>3D-Rekonstruktion</p>
+                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung läuft</p>
                 <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
@@ -1831,10 +2334,10 @@ export default function FootScan() {
 
               <div className="w-full space-y-1.5">
                 {[
-                  { pct: 15,  label: '16 Fotos werden vorbereitet' },
-                  { pct: 30,  label: 'A4-Kalibrierung & Silhouette-Segmentierung' },
-                  { pct: 65,  label: 'Shape-from-Silhouettes 3D-Rekonstruktion' },
-                  { pct: 85,  label: 'Maße aus 3D-Punktwolke berechnen' },
+                  { pct: 15,  label: 'Fotos werden vorbereitet' },
+                  { pct: 30,  label: 'Größenverhältnisse werden erkannt' },
+                  { pct: 65,  label: '3D-Modell wird erstellt' },
+                  { pct: 85,  label: 'Maße werden berechnet' },
                 ].map(({ pct, label }) => (
                   <div key={pct} className={`flex items-center gap-3 px-3.5 py-2.5 border transition-all ${
                     progress >= pct
@@ -1848,26 +2351,50 @@ export default function FootScan() {
               </div>
 
               <p className="text-[9px] text-black/25 text-center px-4">
-                16 Aufnahmen aus 8 Winkeln → visueller Rumpf → sub-mm Maße
+                Aus deinen Fotos wird ein 3D-Modell erstellt und millimetergenau vermessen
               </p>
             </div>
           )}
 
           {/* ── RESULT ── */}
-          {phase === 'result' && result && (
+          {phase === 'result' && result && result.error && (
+            <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-6">
+              <div className="w-20 h-20 bg-[#f6f5f3] flex items-center justify-center">
+                <span className="text-4xl">😕</span>
+              </div>
+              <div>
+                <p className="text-[14px] font-bold text-black mb-3" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung nicht möglich</p>
+                <p className="text-[12px] text-black/50 leading-relaxed max-w-xs">{result.error}</p>
+              </div>
+              <div className="w-full space-y-3 pt-2">
+                <button onClick={() => { setPhase('start'); setResult(null); setProgress(0) }}
+                  className="w-full py-4 bg-black text-white font-bold text-[12px] border-0 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
+                  Nochmal versuchen
+                </button>
+                <button onClick={() => navigate('/collection', { replace: true })}
+                  className="w-full py-3.5 bg-[#f6f5f3] text-black/50 font-semibold text-[11px] border-0">
+                  Zurück zur Kollektion
+                </button>
+              </div>
+            </div>
+          )}
+          {phase === 'result' && result && !result.error && (
             <div className="flex-1 overflow-y-auto">
-              {/* Size hero header bar */}
-              <div className="bg-black px-5 py-6 text-center">
-                <p className="text-[8px] text-white/30 uppercase tracking-widest mb-2" style={{ letterSpacing: '0.2em' }}>Deine Schuhgröße</p>
-                <p className="text-6xl font-bold text-white leading-none mb-1">{result.sizes.eu}</p>
-                <p className="text-[11px] text-white/40 mb-3">EU · UK {result.sizes.uk} · US {result.sizes.us}</p>
+              {/* Foot profile header */}
+              <div className="bg-black px-5 py-5 text-center">
+                <p className="text-[9px] text-white/40 uppercase tracking-widest mb-1" style={{ letterSpacing: '0.2em' }}>Dein individuelles Fußprofil</p>
+                <p className="text-[13px] text-white/60 mb-3">EU {result.sizes.eu} · UK {result.sizes.uk} · US {result.sizes.us}</p>
                 {result.isDemo ? (
                   <div className="inline-flex items-center gap-1.5 bg-amber-500/15 px-3 py-1.5">
                     <span className="text-[9px] text-amber-300 font-medium uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Demo · Beispielwerte</span>
                   </div>
+                ) : result.sizes?.outOfRange ? (
+                  <div className="inline-flex items-center gap-1.5 bg-amber-500/15 px-3 py-1.5">
+                    <span className="text-[9px] text-amber-300 font-medium">Deine Fußlänge liegt außerhalb der Standard-Größentabelle — die angezeigte Größe ist ein Richtwert</span>
+                  </div>
                 ) : result.usedAI && (
                   <div className="inline-flex items-center gap-1.5 bg-white/8 px-3 py-1.5">
-                    <span className="text-[9px] text-white/50 font-medium">Claude KI · 4-Foto A4-Scan</span>
+                    <span className="text-[9px] text-white/50 font-medium">Automatisch vermessen</span>
                   </div>
                 )}
               </div>
@@ -1875,16 +2402,39 @@ export default function FootScan() {
               <div className="px-5 pt-4 pb-10 space-y-4">
                 {/* Save status */}
                 {saved ? (
-                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/60 text-[11px] font-medium">
-                    <CheckCircle2 size={15} strokeWidth={1.5} /> In deinem Profil gespeichert
-                  </div>
+                  <>
+                    <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/60 text-[11px] font-medium">
+                      <CheckCircle2 size={15} strokeWidth={1.5} /> In deinem Profil gespeichert
+                    </div>
+                    <div className="p-3.5 bg-[#f6f5f3] border border-black/5">
+                      <p className="text-[10px] text-black/40 leading-relaxed">
+                        Deine Fußdaten sind sicher in deinem Profil gespeichert.
+                        Wenn du einen Schuh bestellst, werden die Maße automatisch
+                        an den Hersteller übermittelt — so wird der Schuh genau auf deinen Fuß angepasst.
+                      </p>
+                    </div>
+                  </>
                 ) : saveErr ? (
                   <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-red-600 text-[11px] font-medium">
                     <AlertCircle size={15} strokeWidth={1.5} /> {saveErr}
                   </div>
+                ) : result.isDemo ? (
+                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-amber-600 text-[11px] font-medium">
+                    <AlertCircle size={15} strokeWidth={1.5} /> Demo-Daten werden nicht gespeichert
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/40 text-[11px]">
                     <CloudUpload size={15} className="animate-pulse" strokeWidth={1.5} /> Wird gespeichert…
+                  </div>
+                )}
+
+                {/* Scan quality indicator (LiDAR only) */}
+                {result.source === 'lidar' && (result.right?.pointCount || result.left?.pointCount) && (
+                  <div className="flex items-center gap-3 px-3.5 py-2.5 bg-[#f6f5f3] border border-black/5 text-[10px] text-black/40">
+                    <span>Scan-Qualität:</span>
+                    <span className={`ml-auto font-medium ${(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'text-[#30D158]' : 'text-amber-500'}`}>
+                      {(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'Sehr gut' : 'Gut'}
+                    </span>
                   </div>
                 )}
 
@@ -1901,19 +2451,23 @@ export default function FootScan() {
                       </div>
                       <div className="grid grid-cols-2 gap-0">
                         {[
-                          { label: 'Länge',              key: 'length',           value: m.length,           optional: true, accuracy: '±1 mm' },
-                          { label: 'Breite',              key: 'width',            value: m.width,            optional: false, accuracy: '±1.5 mm' },
-                          { label: 'Ballenumfang',        key: 'ball_girth',       value: m.ball_girth,       optional: true, accuracy: '±5 mm' },
-                          { label: 'Ristumfang',          key: 'instep_girth',     value: m.instep_girth,     optional: true, accuracy: '±2.5 mm' },
-                          { label: 'Lg. Fersenumfang',    key: 'long_heel_girth',  value: m.long_heel_girth,  optional: true, accuracy: '±7 mm' },
-                          { label: 'Kz. Fersenumfang',    key: 'short_heel_girth', value: m.short_heel_girth, optional: true, accuracy: '±3 mm' },
-                          { label: 'Fersenumfang',        key: 'heel_girth',       value: m.heel_girth,       optional: false, accuracy: '±7 mm' },
-                          { label: 'Gewölbehöhe',         key: 'arch',             value: m.arch,             optional: false, accuracy: '±4 mm' },
-                          { label: 'Gelenkweite',         key: 'waist_girth',      value: m.waist_girth,      optional: false, accuracy: '±2.5 mm' },
-                          { label: 'Knöchel',             key: 'ankle_girth',      value: m.ankle_girth,      optional: false, accuracy: '±10 mm' },
-                          { label: 'Fußhöhe',             key: 'foot_height',      value: m.foot_height,      optional: false, accuracy: '±4 mm' },
+                          { label: 'Länge',                    key: 'length',           value: m.length,           optional: false },
+                          { label: 'Breite',                    key: 'width',            value: m.width,            optional: false },
+                          { label: 'Umfang Zehen',              key: 'toe_girth',        value: m.toe_girth,        optional: true },
+                          { label: 'Umfang vor Ballen',         key: 'preball_girth',    value: m.preball_girth,    optional: true },
+                          { label: 'Umfang Ballen',             key: 'ball_girth',       value: m.ball_girth,       optional: true },
+                          { label: 'Schmalste Stelle',          key: 'waist_girth',      value: m.waist_girth,      optional: false },
+                          { label: 'Umfang Mittelfuß',          key: 'midinstep_girth',  value: m.midinstep_girth,  optional: true },
+                          { label: 'Umfang Spann',              key: 'instep_girth',     value: m.instep_girth,     optional: true },
+                          { label: 'Umfang oberer Spann',       key: 'upper_instep_girth', value: m.upper_instep_girth, optional: true },
+                          { label: 'Langer Fersenumfang',       key: 'long_heel_girth',  value: m.long_heel_girth,  optional: true },
+                          { label: 'Kurzer Fersenumfang',       key: 'short_heel_girth', value: m.short_heel_girth, optional: true },
+                          { label: 'Umfang Ferse',              key: 'heel_girth',       value: m.heel_girth,       optional: false },
+                          { label: 'Umfang Knöchel',            key: 'ankle_girth',      value: m.ankle_girth,      optional: false },
+                          { label: 'Höhe Fußgewölbe',           key: 'arch',             value: m.arch,             optional: false },
+                          { label: 'Fußhöhe',                   key: 'foot_height',      value: m.foot_height,      optional: false },
                         ].filter(({ optional, value }) => !optional || value != null)
-                        .map(({ label: lbl, key, value, accuracy }, i) => {
+                        .map(({ label: lbl, key, value }, i) => {
                           const editKey = `${side}_${key}`
                           const edited = editedValues[editKey]
                           const displayVal = edited !== undefined ? edited : (value != null ? Number(value).toFixed(1) : '')
@@ -1923,7 +2477,6 @@ export default function FootScan() {
                             } ${i >= 2 ? 'border-t border-black/5' : ''}`}>
                               <div>
                                 <span className="text-[9px] text-black/35 block">{lbl}</span>
-                                <span className="text-[7px] text-black/20">{accuracy}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <input
@@ -1977,7 +2530,7 @@ export default function FootScan() {
                           }
                           setEditedValues({})
                         } catch (err) {
-                          setSaveErr('Fehler beim Speichern: ' + (err.message || err))
+                          setSaveErr('Speichern hat nicht geklappt — bitte versuche es nochmal.')
                         }
                         setSavingEdits(false)
                       }}
@@ -1989,8 +2542,7 @@ export default function FootScan() {
                   )}
                 </div>
 
-                {/* 3D Preview + Exports — admin/curator only */}
-                {(user?.role === 'admin' || user?.role === 'curator') && (
+                {/* 3D Preview + Shoe Last Export */}
                 <div>
                   <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>3D-Vorschau</p>
                   <div className="overflow-hidden" style={{ background: '#111111' }}>
@@ -2005,9 +2557,8 @@ export default function FootScan() {
                       </div>
                     </div>
 
-                    {/* Shoe Last / STL / OBJ Export */}
+                    {/* Shoe type selector — visible to all users */}
                     <div className="p-3 border-t border-white/5 space-y-2">
-                        {/* Shoe type selector */}
                         <div className="flex items-center gap-2 mb-2">
                           <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Schuhtyp:</label>
                           <select
@@ -2020,8 +2571,27 @@ export default function FootScan() {
                           </select>
                         </div>
 
+                        <p className="text-[10px] text-white/30 leading-relaxed px-0.5">
+                          Dein Fußprofil und der gewählte Schuhtyp werden bei der Bestellung
+                          automatisch an die Werkstatt übermittelt — so entsteht ein Leisten,
+                          der exakt zu deinem Fuß passt.
+                        </p>
+
+                        {/* Warning for photo-only scans (no cross-sections → generic last) */}
+                        {result.source !== 'lidar' && result.source !== 'photogrammetry' && (
+                          <div className="flex gap-2 p-2.5 bg-amber-500/10 border border-amber-400/20">
+                            <span className="text-amber-300 text-[10px] leading-relaxed">
+                              Foto-Scan: Dein Leisten basiert auf Standardformen.
+                              Für einen individuellen Leisten mit exakter Fußgeometrie
+                              nutze den LiDAR-Scan oder die 16-Foto-Photogrammetrie.
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Export tools — admin/curator only */}
+                        {(user?.role === 'admin' || user?.role === 'curator') && (<>
                         {/* Export format selector */}
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 pt-2 border-t border-white/5">
                           <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Format:</label>
                           <div className="flex gap-1">
                             {['stl', 'obj'].map(fmt => (
@@ -2038,7 +2608,7 @@ export default function FootScan() {
                           </div>
                         </div>
 
-                        {/* Export buttons */}
+                        {/* Leisten export buttons */}
                         <div className="grid grid-cols-2 gap-2">
                           {[
                             { side: 'right', label: 'Leisten Rechts', m: result.right },
@@ -2075,7 +2645,7 @@ export default function FootScan() {
                             { side: 'left',  label: 'Fuß-STL Links',  m: result.left  },
                           ].map(({ side, label, m }) => (
                             <button key={`foot-${side}`}
-                              onClick={async () => { const geo = await buildFootGeoAsync(m.length, m.width, m.arch, side); downloadSTL(geo, result.sizes.eu, side) }}
+                              onClick={async () => { try { const geo = await buildFootGeoAsync(m.length, m.width, m.arch, side); downloadSTL(geo, result.sizes.eu, side) } catch { /* fallback handled in buildFootGeoAsync */ } }}
                               className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2">
                               <span className="text-[10px] text-gray-400">{label}</span>
                               <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
@@ -2111,10 +2681,10 @@ export default function FootScan() {
                           <span className="text-xs font-semibold text-gray-300">Maßblatt herunterladen</span>
                           <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
                         </button>
+                        </>)}
                       </div>
                   </div>
                 </div>
-                )}
 
                 {/* Notes input — saves to user profile */}
                 <div>

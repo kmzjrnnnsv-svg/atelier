@@ -3,14 +3,26 @@ import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import Anthropic from '@anthropic-ai/sdk'
-import { spawnSync } from 'child_process'
-import { writeFileSync, unlinkSync } from 'fs'
+import { spawn, spawnSync } from 'child_process'
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 
 const router = Router()
 
 const ML_SCRIPTS = join(new URL('.', import.meta.url).pathname, '..', '..', '..', 'atelier-ml', 'scripts')
+
+// Resolve Python binary: prefer venv over system python3
+// Searches: PYTHON_PATH env → ../atelier-ml/.venv/bin/python3 → ~/ml-venv/bin/python3 → python3
+function resolvePython() {
+  if (process.env.PYTHON_PATH && existsSync(process.env.PYTHON_PATH)) return process.env.PYTHON_PATH
+  const venvLocal = join(ML_SCRIPTS, '..', '.venv', 'bin', 'python3')
+  if (existsSync(venvLocal)) return venvLocal
+  const venvHome = join(process.env.HOME || '/root', 'ml-venv', 'bin', 'python3')
+  if (existsSync(venvHome)) return venvHome
+  return 'python3'
+}
+const PYTHON = resolvePython()
 
 // Path to the computer-vision measurement script
 const PROCESS_PHOTOS_PY       = join(ML_SCRIPTS, 'process_photos.py')
@@ -26,7 +38,7 @@ const okLen   = v => typeof v === 'number' && v >= 150 && v <= 380
 const okWid   = v => typeof v === 'number' && v >=  50 && v <= 160
 const okArch  = v => typeof v === 'number' && v >=   2 && v <=  50
 const okH     = v => typeof v === 'number' && v >=  30 && v <= 120
-const okGirth = v => typeof v === 'number' && v >= 150 && v <= 450
+const okGirth = v => typeof v === 'number' && v >= 150 && v <= 500
 
 // ─── Superellipse perimeter (Lamé curve) ────────────────────────────────────
 // Feet are NOT ellipses. Superellipse with n≈2.3 captures metatarsal bulge
@@ -302,7 +314,7 @@ function bayesianUserAverage(db, userId) {
 function runCvPipeline(rightTopImg, rightSideImg, leftTopImg, leftSideImg) {
   try {
     const payload = JSON.stringify({ rightTopImg, rightSideImg, leftTopImg, leftSideImg })
-    const proc = spawnSync('python3', [PROCESS_PHOTOS_PY, '--data', payload], {
+    const proc = spawnSync(PYTHON, [PROCESS_PHOTOS_PY, '--data', payload], {
       timeout: 30_000,
       maxBuffer: 2 * 1024 * 1024,
     })
@@ -562,7 +574,7 @@ function processDepthData(depthData) {
       writeFileSync(tmpFile, JSON.stringify(data.pointCloud))
 
       const PROCESS_LIDAR_PY = join(ML_SCRIPTS, 'process_lidar.py')
-      const pyResult = spawnSync('python3', [PROCESS_LIDAR_PY, '--cloud', tmpFile], {
+      const pyResult = spawnSync(PYTHON, [PROCESS_LIDAR_PY, '--cloud', tmpFile], {
         timeout: 30_000, encoding: 'utf8',
       })
 
@@ -600,7 +612,6 @@ function pcaRegularize(measurements) {
   const metaPath = join(SHAPE_MODEL_DIR, 'meta.json')
 
   try {
-    const { existsSync, readFileSync } = require('fs')
     if (!existsSync(metaPath)) return null
 
     // Run PCA regularization via process_lidar.py's pca_regularize function
@@ -616,7 +627,7 @@ with open('${tmpFile}') as f:
 result = pca_regularize(meas)
 print(json.dumps(result))
 `
-    const pyResult = spawnSync('python3', ['-c', pyCode], {
+    const pyResult = spawnSync(PYTHON, ['-c', pyCode], {
       timeout: 10_000, encoding: 'utf8',
     })
 
@@ -734,6 +745,15 @@ router.post('/analyze', authenticate, async (req, res) => {
     const rIssues = validateAnatomical({ length: R.length, width: R.width, foot_height: R.foot_height, ball_girth: R.ball_girth })
     const lIssues = validateAnatomical({ length: L.length, width: L.width, foot_height: L.foot_height, ball_girth: L.ball_girth })
 
+    // Cross-foot asymmetry warnings (clinically significant if > 5mm)
+    const asymWarnings = []
+    if (R.length && L.length && Math.abs(R.length - L.length) > 5)
+      asymWarnings.push(`Längenasymmetrie: R=${R.length}mm L=${L.length}mm (${Math.abs(R.length - L.length).toFixed(1)}mm)`)
+    if (R.width && L.width && Math.abs(R.width - L.width) > 5)
+      asymWarnings.push(`Breitenasymmetrie: R=${R.width}mm L=${L.width}mm (${Math.abs(R.width - L.width).toFixed(1)}mm)`)
+    if (R.ball_girth && L.ball_girth && Math.abs(R.ball_girth - L.ball_girth) > 8)
+      asymWarnings.push(`Ballenumfang-Asymmetrie: R=${R.ball_girth}mm L=${L.ball_girth}mm`)
+
     // Compute realistic confidence score
     // LiDAR-only: höchste Genauigkeit (MAE 0.8mm), hybrid: Fusion, photo: Regression
     const isLidarScan = Object.values(depthData || {}).some(d => d?.source === 'lidar')
@@ -820,7 +840,7 @@ router.post('/analyze', authenticate, async (req, res) => {
       _measurement_passes: cl._measurement_passes ?? 1,
       _pass_deviations: cl._pass_deviations ?? {},
       _a4_validation: cl.a4_validation ?? null,
-      _anatomical_warnings: [...rIssues.map(i => `R: ${i}`), ...lIssues.map(i => `L: ${i}`)],
+      _anatomical_warnings: [...rIssues.map(i => `R: ${i}`), ...lIssues.map(i => `L: ${i}`), ...asymWarnings],
     })
   } catch (err) {
     console.error('[scan/analyze]', err.message)
@@ -901,7 +921,7 @@ router.patch('/:id/validate', authenticate, requireRole('admin', 'curator'), (re
           left_ankle_girth:   row.left_ankle_girth,
         },
       })
-      spawnSync('python3', [SAVE_REAL_SCAN_PY, '--data', payload], { timeout: 15_000 })
+      spawnSync(PYTHON, [SAVE_REAL_SCAN_PY, '--data', payload], { timeout: 15_000 })
     }
   } catch (e) {
     console.warn('[validate] ML-Export fehlgeschlagen (nicht kritisch):', e.message)
@@ -927,7 +947,7 @@ router.get('/training-export', authenticate, requireRole('admin'), (req, res) =>
 })
 
 const saveValidators = [
-  body('reference_type').isIn(['card', 'a4', 'lidar']),
+  body('reference_type').isIn(['card', 'a4', 'lidar', 'photogrammetry']),
   body('ppm').optional().isFloat({ min: 0 }),
   body('right_length').isFloat({ min: 100, max: 400 }),
   body('right_width').isFloat({ min: 50, max: 200 }),
@@ -966,37 +986,46 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
   const { reference_type, ppm, right_length, right_width, right_arch,
           left_length, left_width, left_arch,
           right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+          right_toe_girth, right_preball_girth, right_midinstep_girth, right_upper_instep_girth,
           right_long_heel_girth, right_short_heel_girth,
           left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+          left_toe_girth, left_preball_girth, left_midinstep_girth, left_upper_instep_girth,
           left_long_heel_girth, left_short_heel_girth,
           right_foot_height, left_foot_height,
           eu_size, uk_size, us_size, accuracy, notes,
-          scanned_with_socks } = req.body
+          scanned_with_socks, shoe_type } = req.body
 
   const result = getDb().prepare(`
     INSERT INTO foot_scans
       (user_id, reference_type, ppm, right_length, right_width, right_arch,
        left_length, left_width, left_arch,
        right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
+       right_toe_girth, right_preball_girth, right_midinstep_girth, right_upper_instep_girth,
        right_long_heel_girth, right_short_heel_girth,
        left_ball_girth,  left_instep_girth,  left_heel_girth,  left_waist_girth,  left_ankle_girth,
+       left_toe_girth, left_preball_girth, left_midinstep_girth, left_upper_instep_girth,
        left_long_heel_girth, left_short_heel_girth,
        right_foot_height, left_foot_height,
-       eu_size, uk_size, us_size, accuracy, notes, scanned_with_socks)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       eu_size, uk_size, us_size, accuracy, notes, scanned_with_socks, shoe_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     req.user.id, reference_type, ppm ?? null,
     right_length, right_width, right_arch,
     left_length,  left_width,  left_arch,
     right_ball_girth ?? null, right_instep_girth ?? null, right_heel_girth ?? null,
     right_waist_girth ?? null, right_ankle_girth ?? null,
+    right_toe_girth ?? null, right_preball_girth ?? null,
+    right_midinstep_girth ?? null, right_upper_instep_girth ?? null,
     right_long_heel_girth ?? null, right_short_heel_girth ?? null,
     left_ball_girth  ?? null,  left_instep_girth ?? null,  left_heel_girth ?? null,
     left_waist_girth ?? null,  left_ankle_girth ?? null,
+    left_toe_girth ?? null, left_preball_girth ?? null,
+    left_midinstep_girth ?? null, left_upper_instep_girth ?? null,
     left_long_heel_girth ?? null, left_short_heel_girth ?? null,
     right_foot_height ?? null, left_foot_height ?? null,
     eu_size, uk_size, us_size, accuracy, notes ?? null,
-    scanned_with_socks != null ? (scanned_with_socks ? 1 : 0) : 1
+    scanned_with_socks != null ? (scanned_with_socks ? 1 : 0) : 1,
+    shoe_type ?? 'oxford'
   )
 
   const scanId = result.lastInsertRowid
@@ -1033,9 +1062,10 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
         `SELECT id, right_top_img, right_side_img, left_top_img, left_side_img
          FROM scan_training_data
          WHERE scan_id = 0
+         AND user_id = ?
          AND created_at > datetime('now', '-10 minutes')
          ORDER BY created_at DESC LIMIT 1`
-      ).get()
+      ).get(req.user.id)
 
       if (pending) {
         // Link to the actual scan
@@ -1069,7 +1099,7 @@ router.post('/', authenticate, ...saveValidators, (req, res) => {
             })
             // Run asynchronously — don't block the response
             const { spawn } = await import('child_process')
-            const child = spawn('python3', [saveScript, '--data', scanData], {
+            const child = spawn(PYTHON, [saveScript, '--data', scanData], {
               stdio: 'ignore', detached: true,
             })
             child.unref()
@@ -1126,7 +1156,7 @@ router.get('/training-data', authenticate, requireRole('admin', 'curator'), (req
 router.patch(
   '/:id/measurements',
   authenticate,
-  requireRole('admin'),
+  requireRole('admin', 'curator'),
   [
     body('right_length').optional().isFloat({ min: 100, max: 400 }),
     body('right_width').optional().isFloat({ min: 50, max: 200 }),
@@ -1202,7 +1232,7 @@ router.patch(
       INSERT INTO scan_comparison_pairs (scan_id, measurement, source, predicted_mm, actual_mm, error_mm)
       VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(scan_id, measurement) DO UPDATE SET
-        actual_mm = excluded.actual_mm, error_mm = excluded.error_mm
+        source = excluded.source, actual_mm = excluded.actual_mm, error_mm = excluded.error_mm
     `)
     let pairsStored = 0
     for (const [key, newVal] of Object.entries(fieldMap)) {
@@ -1434,7 +1464,6 @@ router.get('/learning-stats', authenticate, requireRole('admin'), (req, res) => 
     calibrations,
     pca_model_available: (() => {
       try {
-        const { existsSync } = require('fs')
         return existsSync(join(ML_SCRIPTS, '..', 'data', 'shape_model', 'meta.json'))
       } catch { return false }
     })(),
@@ -1458,23 +1487,29 @@ router.post('/trigger-training', authenticate, requireRole('admin'), async (req,
 
   try {
     const TRAIN_SCRIPT = join(ML_SCRIPTS, '..', 'train_photo.py')
-    const proc = spawnSync('python3', [TRAIN_SCRIPT, '--export-first'], {
-      timeout: 300_000, // 5 min max
-      maxBuffer: 10 * 1024 * 1024,
+    const proc = spawn(PYTHON, [TRAIN_SCRIPT, '--export-first'], {
       cwd: join(ML_SCRIPTS, '..'),
+      stdio: ['ignore', 'pipe', 'pipe'],
     })
-    const stdout = proc.stdout?.toString() ?? ''
-    const stderr = proc.stderr?.toString() ?? ''
 
-    if (proc.status !== 0) {
-      console.warn('[trigger-training] Failed:', stderr)
-      return res.json({ ok: false, message: 'Training fehlgeschlagen', stderr: stderr.slice(-500) })
-    }
+    let stdout = '', stderr = ''
+    proc.stdout.on('data', d => { stdout += d.toString(); if (stdout.length > 10_000) stdout = stdout.slice(-5000) })
+    proc.stderr.on('data', d => { stderr += d.toString(); if (stderr.length > 10_000) stderr = stderr.slice(-5000) })
 
+    // Set a 5-minute timeout
+    const timeout = setTimeout(() => { proc.kill('SIGTERM') }, 300_000)
+
+    proc.on('close', code => {
+      clearTimeout(timeout)
+      if (code !== 0) {
+        console.warn('[trigger-training] Failed:', stderr.slice(-500))
+      }
+    })
+
+    // Respond immediately — training runs in background
     res.json({
       ok: true,
-      message: `Training gestartet mit ${validatedCount} validierten Scans`,
-      output: stdout.slice(-1000),
+      message: `Training gestartet mit ${validatedCount} validierten Scans (läuft im Hintergrund)`,
     })
   } catch (e) {
     res.status(500).json({ error: 'Training konnte nicht gestartet werden', detail: e.message })
@@ -1487,8 +1522,8 @@ router.post('/trigger-training', authenticate, requireRole('admin'), async (req,
 router.post('/lidar-measurements', authenticate, async (req, res) => {
   const { pointCloud, side, topImage, sideImage } = req.body
 
-  if (!Array.isArray(pointCloud) || pointCloud.length < 150) {
-    return res.status(400).json({ error: 'pointCloud muss ein Array mit mindestens 150 Punkten sein' })
+  if (!Array.isArray(pointCloud) || pointCloud.length < 1000) {
+    return res.status(400).json({ error: 'pointCloud muss ein Array mit mindestens 1000 Punkten sein. Bewege das Handy langsamer und umrunde den Fuß.' })
   }
 
   // Write point cloud to a temp file so Python can read it
@@ -1505,23 +1540,60 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     import.meta.url
   ).pathname
 
-  const proc = spawnSync('python3', [scriptPath, '--cloud', tmpFile], {
-    encoding: 'utf8',
-    timeout: 30_000,
-  })
-
-  try { unlinkSync(tmpFile) } catch { /* ignore */ }
-
-  if (proc.status !== 0) {
-    const err = proc.stderr?.trim() || 'Unknown Python error'
-    return res.status(422).json({ error: 'LiDAR processing failed', detail: err })
+  // Verify Python + critical dependencies before spawning
+  const depCheck = spawnSync(PYTHON, ['-c', 'import numpy, scipy, sklearn; print("ok")'], { encoding: 'utf8', timeout: 10000 })
+  if (depCheck.status !== 0) {
+    try { unlinkSync(tmpFile) } catch { /* ignore */ }
+    const missing = (depCheck.stderr || '').match(/No module named '(\w+)'/)?.[1] ?? 'unbekannt'
+    return res.status(500).json({
+      error: `Python-Abhängigkeit fehlt: ${missing}`,
+      detail: 'Bitte "pip install -r requirements.txt" im atelier-ml Verzeichnis ausführen.',
+    })
   }
 
+  // Async spawn — doesn't block the Node.js event loop
   let measurements
   try {
-    measurements = JSON.parse(proc.stdout)
-  } catch {
-    return res.status(500).json({ error: 'Invalid JSON from process_lidar.py' })
+    measurements = await new Promise((resolve, reject) => {
+      const sideArg = side === 'left' ? 'left' : 'right'
+      const child = spawn(PYTHON, [scriptPath, '--cloud', tmpFile, '--side', sideArg], { encoding: 'utf8' })
+      let stdout = '', stderr = ''
+      const timeout = setTimeout(() => { child.kill('SIGTERM'); reject(new Error('TIMEOUT')) }, 60_000)
+
+      child.stdout.on('data', (d) => { stdout += d })
+      child.stderr.on('data', (d) => { stderr += d })
+      child.on('close', (code) => {
+        clearTimeout(timeout)
+        try { unlinkSync(tmpFile) } catch { /* ignore */ }
+        if (code !== 0) {
+          const isModuleError = stderr.includes('ModuleNotFoundError') || stderr.includes('No module named')
+          const isTimeout = stderr.includes('TIMEOUT') || code === null
+          const detail = isModuleError
+            ? 'Python-Abhängigkeiten fehlen. Bitte "pip install -r requirements.txt" im atelier-ml Verzeichnis ausführen.'
+            : isTimeout
+            ? 'Verarbeitung hat zu lange gedauert (>60s). Punktwolke möglicherweise zu groß.'
+            : (stderr.trim() || 'Unknown Python error').slice(0, 500)
+          return reject(Object.assign(new Error(detail), { statusCode: 422 }))
+        }
+        try {
+          const parsed = JSON.parse(stdout)
+          if (typeof parsed !== 'object' || Array.isArray(parsed) || !parsed.length || !parsed.width) {
+            return reject(Object.assign(new Error(
+              `process_lidar.py lieferte unvollständige Daten (length=${parsed.length}, width=${parsed.width}). stderr: ${(stderr || '').slice(-200)}`
+            ), { statusCode: 422 }))
+          }
+          resolve(parsed)
+        } catch (e) {
+          reject(Object.assign(new Error(
+            `Ungültiges JSON von process_lidar.py: ${e.message}. stdout-Länge: ${stdout.length} Zeichen. stderr: ${(stderr || '').slice(-200)}`
+          ), { statusCode: 422 }))
+        }
+      })
+      child.on('error', (err) => { clearTimeout(timeout); reject(err) })
+    })
+  } catch (err) {
+    try { unlinkSync(tmpFile) } catch { /* ignore */ }
+    return res.status(err.statusCode || 500).json({ error: 'LiDAR-Verarbeitung fehlgeschlagen', detail: err.message })
   }
 
   // Return measurements keyed by side prefix for direct use in  POST /api/scans
@@ -1535,9 +1607,13 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     [`${s}_width`]:        measurements.width,
     [`${s}_arch`]:         measurements.arch_height ?? null,
     [`${s}_foot_height`]:  measurements.height,
+    [`${s}_toe_girth`]:    measurements.toe_girth ?? null,
+    [`${s}_preball_girth`]: measurements.preball_girth ?? null,
     [`${s}_ball_girth`]:   measurements.ball_girth,
-    [`${s}_instep_girth`]: measurements.instep_girth,
     [`${s}_waist_girth`]:  measurements.waist_girth,
+    [`${s}_midinstep_girth`]: measurements.midinstep_girth ?? null,
+    [`${s}_instep_girth`]: measurements.instep_girth,
+    [`${s}_upper_instep_girth`]: measurements.upper_instep_girth ?? null,
     [`${s}_heel_girth`]:   measurements.heel_girth,
     [`${s}_ankle_girth`]:  measurements.ankle_girth,
     point_count: measurements.point_count,
@@ -1578,9 +1654,9 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
       } else {
         // Create new training data entry
         db.prepare(
-          `INSERT INTO scan_training_data (scan_id, ${topCol}, ${sideCol})
-           VALUES (0, ?, ?)`
-        ).run(topImage || null, sideImage || null)
+          `INSERT INTO scan_training_data (scan_id, user_id, ${topCol}, ${sideCol})
+           VALUES (0, ?, ?, ?)`
+        ).run(req.user.id, topImage || null, sideImage || null)
       }
 
       response._training_images_saved = true
@@ -1644,9 +1720,20 @@ router.post('/photogrammetry', authenticate, async (req, res) => {
     return res.status(400).json({ error: 'leftImgs: mindestens 4 Bilder erforderlich' })
   }
 
+  // Verify Python + critical dependencies before spawning long-running process
+  const depCheck = spawnSync(PYTHON, ['-c', 'import cv2, numpy, scipy; print("ok")'], { encoding: 'utf8', timeout: 10000 })
+  if (depCheck.status !== 0) {
+    const missing = (depCheck.stderr || '').match(/No module named '(\w+)'/)?.[1] ?? 'unbekannt'
+    return res.status(500).json({
+      error: `Python-Abhängigkeit fehlt: ${missing}`,
+      detail: 'Bitte "pip install opencv-python numpy scipy scikit-learn" im atelier-ml Verzeichnis ausführen.',
+    })
+  }
+
   try {
     const payload = JSON.stringify({ rightImgs, leftImgs })
-    const proc = spawnSync('python3', [PROCESS_PHOTOGRAMMETRY, '--data', payload], {
+    const proc = spawnSync(PYTHON, [PROCESS_PHOTOGRAMMETRY, '--stdin'], {
+      input: payload,
       timeout: 120_000,          // Rekonstruktion kann 60-90s dauern
       maxBuffer: 5 * 1024 * 1024,
     })

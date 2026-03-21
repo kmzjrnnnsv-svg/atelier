@@ -51,7 +51,13 @@ function _loadBase() {
 
 // ─── Public: async OBJ-based foot geometry ────────────────────────────────────
 export async function buildFootGeoAsync(length = 265, width = 95, _arch = 13, side = 'right') {
-  const base = await _loadBase()
+  let base
+  try {
+    base = await _loadBase()
+  } catch {
+    // OBJ failed to load (offline, missing file) — fall back to procedural mesh
+    return buildFootGeo(length, width, _arch, side)
+  }
   const geo  = base.clone()
   const pos  = geo.attributes.position
   const arr  = pos.array

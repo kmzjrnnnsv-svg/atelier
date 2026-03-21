@@ -1,43 +1,53 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTransition } from 'react'
-import { Home, Compass, User } from 'lucide-react'
-import { prefetchRoute, isNative } from '../App'
+
 
 const NAV_ITEMS = [
-  { id: 'shop',    icon: Home,    label: 'SOLE',    path: '/collection' },
-  { id: 'explore', icon: Compass, label: 'EXPLORE', path: '/explore'    },
-  { id: 'profile', icon: User,    label: 'PROFILE', path: '/profile'    },
+  { id: 'shop',    icon: ShoppingBag,  label: 'Kollektion', path: '/collection' },
+  { id: 'explore', icon: Compass,      label: 'Entdecken',  path: '/explore'    },
+  { id: 'cart',    icon: ShoppingCart,  label: 'Warenkorb',  path: '/checkout'   },
+  { id: 'profile', icon: User,         label: 'Profil',     path: '/profile'    },
+  { id: 'search',  icon: Search,       label: 'Suche',      path: '/search'     },
 ]
 
 export default function BottomNav() {
-  const navigate        = useNavigate()
-  const { pathname }    = useLocation()
+  const navigate     = useNavigate()
+  const { pathname } = useLocation()
   const [isPending, startTransition] = useTransition()
+  const cartCount = useAtelierStore(s => s.cart.length)
 
   const activeId = NAV_ITEMS.find(item =>
     pathname === item.path || pathname.startsWith(item.path + '/')
   )?.id
 
   return (
-    <div className="bg-white border-t border-black/5 flex items-center justify-around px-2 pt-0 flex-shrink-0"
-      style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
+main
       {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
         const isActive = activeId === id
         return (
           <button
             key={id}
-            onClick={() => startTransition(() => navigate(path))}
+            onClick={() => {
+              hapticSelection()
+              startTransition(() => navigate(path))
+            }}
             onPointerEnter={() => prefetchRoute(path)}
             onTouchStart={() => prefetchRoute(path)}
-            className={`flex flex-col items-center gap-0.5 bg-transparent border-0 pt-2 pb-2 px-2 transition-colors ${
-              isActive ? 'text-black' : 'text-black/30'
+            className={`relative flex flex-col items-center gap-0.5 bg-transparent border-0 py-1.5 px-1 min-w-[44px] min-h-[44px] transition-colors ${
+              isActive ? 'text-black' : 'text-black/40'
             } ${isPending ? 'opacity-70' : ''}`}
-            style={{ borderTop: isActive ? '2px solid black' : '2px solid transparent' }}
           >
-            <Icon size={22} strokeWidth={isActive ? 1.8 : 1.5} />
+            <div className="relative">
+              <Icon size={24} strokeWidth={isActive ? 2 : 1.5} />
+              {id === 'cart' && cartCount > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[9px] font-semibold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 leading-none">
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
+            </div>
             <span
-              className="text-[7px] uppercase tracking-[0.18em] font-normal"
-              style={{ letterSpacing: '0.18em' }}
+              className="text-[10px] tracking-wide leading-tight"
+              style={{ fontWeight: isActive ? 500 : 400 }}
             >{label}</span>
           </button>
         )
