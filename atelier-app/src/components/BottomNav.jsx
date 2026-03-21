@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTransition } from 'react'
 import { Home, Compass, User } from 'lucide-react'
-import { prefetchRoute } from '../App'
+import { prefetchRoute, isNative } from '../App'
 
 const NAV_ITEMS = [
   { id: 'shop',    icon: Home,    label: 'SOLE',    path: '/collection' },
@@ -20,7 +20,7 @@ export default function BottomNav() {
 
   return (
     <div className="bg-white border-t border-black/5 flex items-center justify-around px-2 pt-0 flex-shrink-0"
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}>
+      style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
       {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
         const isActive = activeId === id
         return (

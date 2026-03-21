@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { isNative } from '../App'
 import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
@@ -516,7 +517,7 @@ export default function Customize() {
 
       {/* ── Kaufen (LV-Style) ──────────────────────────────────── */}
       <div className="bg-white border-t border-black/5 flex-shrink-0"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0px)' }}>
+        style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 0px)' : '0px' }}>
         <button
           onClick={handleBuy}
           disabled={added}

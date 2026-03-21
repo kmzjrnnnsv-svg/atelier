@@ -102,6 +102,8 @@ function DelayedSpinner() {
 // Routes where the global bottom nav should NOT appear
 const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/settings']
 
+export const isNative = Capacitor.isNativePlatform()
+
 function AppRoutes() {
   const location = useLocation()
   const { user } = useAuth()
@@ -126,7 +128,7 @@ function AppRoutes() {
 
   if (isCMS) {
     return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', zIndex: 50, overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', zIndex: 50, overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
@@ -158,7 +160,7 @@ function AppRoutes() {
   }
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
       <div className="flex-1 overflow-hidden relative">
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
