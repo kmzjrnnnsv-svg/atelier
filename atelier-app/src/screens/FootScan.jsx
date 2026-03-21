@@ -2380,7 +2380,7 @@ export default function FootScan() {
                             { side: 'left',  label: 'Fuß-STL Links',  m: result.left  },
                           ].map(({ side, label, m }) => (
                             <button key={`foot-${side}`}
-                              onClick={async () => { const geo = await buildFootGeoAsync(m.length, m.width, m.arch, side); downloadSTL(geo, result.sizes.eu, side) }}
+                              onClick={async () => { try { const geo = await buildFootGeoAsync(m.length, m.width, m.arch, side); downloadSTL(geo, result.sizes.eu, side) } catch { /* fallback handled in buildFootGeoAsync */ } }}
                               className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2">
                               <span className="text-[10px] text-gray-400">{label}</span>
                               <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />

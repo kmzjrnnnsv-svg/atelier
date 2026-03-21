@@ -73,6 +73,9 @@ def ransac_floor(pts, n_iter=300, thr=0.004):
         if abs(n[1]) < 0.7:
             continue
 
+        # Ensure normal points upward (positive Y) so height_above_floor() > 0 for foot
+        if n[1] < 0:
+            n = -n
         d = -(n @ p0)
         dist = np.abs(pts @ n + d)
         inliers = int((dist < thr).sum())
@@ -515,7 +518,7 @@ def _order_boundary_points(pts_2d_mm):
 
 
 def extract_cross_sections(aligned, centers, x_positions):
-    """Extract cross-section contours at all 6 standardized measurement levels."""
+    """Extract cross-section contours at all 10 standardized measurement levels."""
     sections = {}
     for name, frac in CROSS_SECTION_LEVELS:
         cs = extract_cross_section_contour(aligned, frac, centers, x_positions)

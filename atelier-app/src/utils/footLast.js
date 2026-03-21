@@ -180,10 +180,13 @@ export function buildShoeLastGeo(scanData, options = {}) {
   const indices = []
 
   // Precompute cross-section data lookup
+  // Python returns cross_sections as Object {"Ballen": {...}, "Ferse": {...}}
   const csLookup = {}
-  if (crossSections && Array.isArray(crossSections)) {
-    for (const cs of crossSections) {
-      csLookup[cs.level_name] = cs
+  if (crossSections && typeof crossSections === 'object') {
+    if (Array.isArray(crossSections)) {
+      for (const cs of crossSections) csLookup[cs.level_name] = cs
+    } else {
+      for (const [name, cs] of Object.entries(crossSections)) csLookup[name] = cs
     }
   }
 
@@ -306,11 +309,12 @@ export function buildShoeLastGeo(scanData, options = {}) {
 
 
 function _findNearestContour(csLookup, tFoot) {
-  // Map foot fraction to nearest cross-section level
+  // Map foot fraction to nearest cross-section level (all 10 Python output levels)
   // Tighter tolerance (0.04 instead of 0.08) to avoid mismatched contours
   const levels = [
-    ['Ferse', 0.15], ['Gewölbe', 0.30], ['Ballen', 0.40],
-    ['Taille', 0.45], ['Rist', 0.60], ['Knöchel', 0.88],
+    ['Zehen', 0.10], ['Ferse', 0.15], ['Gewölbe', 0.30], ['Vorballen', 0.35],
+    ['Ballen', 0.40], ['Taille', 0.45], ['Spann', 0.52], ['Rist', 0.60],
+    ['Oberer_Rist', 0.75], ['Knöchel', 0.88],
   ]
   let best = null, bestDist = Infinity
   for (const [name, frac] of levels) {

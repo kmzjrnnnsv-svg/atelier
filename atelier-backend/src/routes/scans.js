@@ -1487,8 +1487,8 @@ router.post('/trigger-training', authenticate, requireRole('admin'), async (req,
 router.post('/lidar-measurements', authenticate, async (req, res) => {
   const { pointCloud, side, topImage, sideImage } = req.body
 
-  if (!Array.isArray(pointCloud) || pointCloud.length < 150) {
-    return res.status(400).json({ error: 'pointCloud muss ein Array mit mindestens 150 Punkten sein' })
+  if (!Array.isArray(pointCloud) || pointCloud.length < 1000) {
+    return res.status(400).json({ error: 'pointCloud muss ein Array mit mindestens 1000 Punkten sein. Bewege das Handy langsamer und umrunde den Fuß.' })
   }
 
   // Write point cloud to a temp file so Python can read it
