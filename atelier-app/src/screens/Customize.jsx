@@ -449,7 +449,7 @@ export default function Customize() {
                       style={{
                         aspectRatio: '1',
                         background: '#f6f5f3',
-                        outline: selected ? '1.5px solid black' : 'none',
+                        border: selected ? '1.5px solid black' : '1.5px solid transparent',
                       }}
                     >
                       <div
