@@ -7,7 +7,7 @@ Type=simple
 User=root
 WorkingDirectory=/home/nrply/app/atelier
 ExecStart=/opt/node22/bin/node /home/nrply/app/atelier/webhook.js
-Environment=WEBHOOK_SECRET=atelier-webhook-secret-change-me
+Environment=WEBHOOK_SECRET=95f0314fdba3bd306bff7f771178414b51afd854c60492b8c5b41458c958da3a
 Restart=always
 RestartSec=5
 
