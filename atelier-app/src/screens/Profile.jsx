@@ -113,7 +113,7 @@ export default function Profile() {
   const initials = (user?.name || 'A').charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden relative">
+    <div className="flex flex-col min-h-full bg-white relative">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4">
@@ -172,10 +172,10 @@ export default function Profile() {
           </button>
         </div>
       </div>
-      {showNotifs && <div className="absolute inset-0 bg-black/30 z-40" onClick={() => setShowNotifs(false)} />}
+      {showNotifs && <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setShowNotifs(false)} />}
 
       {/* ── Content ────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
 
         {/* Profile Hero */}
         <div className="bg-white px-5 pt-5 pb-6 border-b border-black/8">

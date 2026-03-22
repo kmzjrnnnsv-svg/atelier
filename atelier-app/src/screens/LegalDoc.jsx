@@ -26,7 +26,7 @@ export default function LegalDoc() {
   }, [type])
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
@@ -39,7 +39,7 @@ export default function LegalDoc() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-5">
+      <div className="flex-1 px-5 py-5">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-black animate-spin" />

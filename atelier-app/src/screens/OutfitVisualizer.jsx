@@ -62,7 +62,7 @@ export default function OutfitVisualizer() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 bg-white border-b border-gray-100">
@@ -78,7 +78,7 @@ export default function OutfitVisualizer() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
 
         {/* ── 3D Visualizer Canvas ───────────────────────────────────── */}
         <div

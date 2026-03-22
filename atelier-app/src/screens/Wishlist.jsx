@@ -9,7 +9,7 @@ export default function Wishlist() {
   const wishlist = shoes.filter(s => favorites.includes(s.id))
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/5 flex-shrink-0">
@@ -25,7 +25,7 @@ export default function Wishlist() {
         <div className="w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
+      <div className="flex-1 px-4 pt-4 pb-4">
         {wishlist.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 bg-black/5 flex items-center justify-center mb-4">

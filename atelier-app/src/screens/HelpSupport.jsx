@@ -17,7 +17,7 @@ export default function HelpSupport() {
   const filtered = activeFilter === 'Alle' ? faqs : faqs.filter(f => f.category === activeFilter)
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/5 flex-shrink-0">
@@ -31,7 +31,7 @@ export default function HelpSupport() {
         <div className="w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
 
         {/* Category Filters */}
         {categories.length > 1 && (

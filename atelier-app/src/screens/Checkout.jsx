@@ -157,8 +157,8 @@ export default function Checkout() {
   // ── Order success ──
   if (placed) {
     return (
-      <div className="flex flex-col h-full bg-white overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-6 pt-16 pb-8">
+      <div className="flex flex-col min-h-full bg-white">
+        <div className="flex-1 px-6 pt-16 pb-8">
           <div className="flex flex-col items-center text-center mb-6">
             <div className="w-16 h-16 bg-black flex items-center justify-center mb-4">
               <CheckCircle2 size={28} className="text-white" strokeWidth={1.5} />
@@ -242,7 +242,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-black/5 flex-shrink-0">
@@ -258,7 +258,7 @@ export default function Checkout() {
 
       <StepBar current={step} />
 
-      <div className="flex-1 overflow-y-auto px-5 pb-4">
+      <div className="flex-1 px-5 pb-4">
 
         {/* ── Step 0: Delivery Address ── */}
         {step === 0 && (

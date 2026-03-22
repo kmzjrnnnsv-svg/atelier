@@ -169,7 +169,7 @@ export default function Orders() {
     .reduce((sum, o) => sum + (parseInt(String(o.price).replace(/[^0-9]/g, ''), 10) || 0), 0)
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/5 flex-shrink-0">
         <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
           <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
@@ -181,7 +181,7 @@ export default function Orders() {
         <div className="w-10" />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
         {orders.length > 0 && (
           <>
             {/* Stats summary */}
