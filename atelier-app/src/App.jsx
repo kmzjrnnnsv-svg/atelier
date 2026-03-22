@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
+import TopBar from './components/TopBar'
 import useAtelierStore from './store/atelierStore'
 import ErrorBoundary from './components/ErrorBoundary'
+import { Capacitor } from '@capacitor/core'
 
 // Eager: needed immediately on first paint
 import Login from './screens/Login'
@@ -31,6 +33,7 @@ const lazyImports = {
   '/legal':      () => import('./screens/LegalDoc'),
   '/my-scans':   () => import('./screens/MyScans'),
   '/welcome':    () => import('./screens/Welcome'),
+  '/search':     () => import('./screens/Search'),
 }
 
 // Prefetch a route's chunk on hover/touch — safe to call multiple times
@@ -59,6 +62,7 @@ const Feedback          = lazy(lazyImports['/feedback'])
 const LegalDoc          = lazy(lazyImports['/legal'])
 const MyScans           = lazy(lazyImports['/my-scans'])
 const Welcome           = lazy(lazyImports['/welcome'])
+const Search            = lazy(lazyImports['/search'])
 
 // CMS
 const CMSLayout            = lazy(() => import('./screens/cms/CMSLayout'))
@@ -101,12 +105,43 @@ function DelayedSpinner() {
 // Routes where the global bottom nav should NOT appear
 const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/settings']
 
+export const isNative = Capacitor.isNativePlatform()
+
+// Track window.innerHeight for browser mode — this is the only value
+// that dynamically follows Safari's toolbar resize (shrink on scroll).
+function useViewportHeight() {
+  const [vh, setVh] = useState(window.innerHeight)
+  const update = useCallback(() => setVh(window.innerHeight), [])
+  useEffect(() => {
+    if (isNative) return
+    window.addEventListener('resize', update)
+    // visualViewport fires more reliably on iOS Safari toolbar changes
+    window.visualViewport?.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      window.visualViewport?.removeEventListener('resize', update)
+    }
+  }, [update])
+  return vh
+}
+
 function AppRoutes() {
   const location = useLocation()
   const { user } = useAuth()
   const { initStore } = useAtelierStore()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
+  const viewportHeight = useViewportHeight()
+
+  // Configure native status bar for edge-to-edge rendering
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+        StatusBar.setOverlaysWebView({ overlay: true })
+        StatusBar.setStyle({ style: Style.Dark })
+      })
+    }
+  }, [])
 
   // Load store data from DB whenever a user session is active
   useEffect(() => {
@@ -115,7 +150,7 @@ function AppRoutes() {
 
   if (isCMS) {
     return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', zIndex: 50, overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: isNative ? '100dvh' : viewportHeight, zIndex: 50, overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
@@ -147,7 +182,8 @@ function AppRoutes() {
   }
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: isNative ? '100dvh' : viewportHeight, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
+      {!isNative && showNav && <TopBar />}
       <div className="flex-1 overflow-hidden relative">
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
@@ -172,11 +208,12 @@ function AppRoutes() {
             <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
             <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
             <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
+            <Route path="/search"      element={<ProtectedRoute><Search /></ProtectedRoute>} />
             <Route path="*"            element={<NotFound />} />
           </Routes>
         </Suspense>
       </div>
-      {showNav && <BottomNav />}
+      {isNative && showNav && <BottomNav />}
     </div>
   )
 }

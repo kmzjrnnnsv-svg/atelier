@@ -235,6 +235,19 @@ export function runMigrations(db) {
     `ALTER TABLE users ADD COLUMN last_order_at TEXT`,
     // foot_scans — scan with socks (measurements include sock thickness)
     `ALTER TABLE foot_scans ADD COLUMN scanned_with_socks INTEGER NOT NULL DEFAULT 1`,
+    // scan_training_data — track which user uploaded the training images
+    `ALTER TABLE scan_training_data ADD COLUMN user_id INTEGER REFERENCES users(id)`,
+    // foot_scans — extended LiDAR girth measurements (toe, preball, midinstep, upper instep)
+    `ALTER TABLE foot_scans ADD COLUMN right_toe_girth          REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_preball_girth      REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_midinstep_girth    REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_upper_instep_girth REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_toe_girth           REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_preball_girth       REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_midinstep_girth     REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_upper_instep_girth  REAL`,
+    // foot_scans — preferred shoe type for last generation
+    `ALTER TABLE foot_scans ADD COLUMN shoe_type TEXT DEFAULT 'oxford'`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
