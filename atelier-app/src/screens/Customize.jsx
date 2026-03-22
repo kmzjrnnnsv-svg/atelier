@@ -383,54 +383,62 @@ export default function Customize() {
             </div>
           </div>
 
-          {/* ── Zubehör (nur Desktop) ────────────────────────────── */}
+          {/* ── Zubehör (nur Desktop, Apple-style) ─────────────── */}
           <div
-            className="hidden lg:block pt-8 px-1 pb-12"
+            className="hidden lg:flex flex-col gap-4 pt-10 pb-16"
             style={{
-              opacity: rightFullyScrolled ? 1 : 0.35,
-              transition: 'opacity 0.4s ease',
+              opacity: rightFullyScrolled ? 1 : 0.3,
+              transition: 'opacity 0.5s ease',
             }}
           >
-            <p className="text-[10px] text-black/30 uppercase mb-4" style={{ letterSpacing: '0.18em' }}>Zubehör dazu bestellen</p>
-            <div className="grid grid-cols-3 gap-3">
-              {accessories.map((acc) => {
-                const selected = selectedAccessories.includes(acc.id)
-                return (
-                  <button
-                    key={acc.id}
-                    onClick={() => toggleAccessory(acc.id)}
-                    className="group relative text-left"
+            <p className="text-[10px] text-black/30 uppercase px-1 mb-1" style={{ letterSpacing: '0.18em' }}>Passend dazu</p>
+
+            {accessories.map((acc) => {
+              const selected = selectedAccessories.includes(acc.id)
+              return (
+                <button
+                  key={acc.id}
+                  onClick={() => toggleAccessory(acc.id)}
+                  className="relative w-full text-left group"
+                >
+                  {/* Large product card */}
+                  <div
+                    className="w-full rounded-sm overflow-hidden flex items-center justify-center"
+                    style={{
+                      aspectRatio: '4 / 3',
+                      background: '#f6f5f3',
+                      outline: selected ? '1.5px solid black' : 'none',
+                    }}
                   >
+                    {/* Placeholder visual */}
                     <div
-                      className="aspect-square rounded-sm flex items-center justify-center mb-1.5 transition-all"
+                      className="w-16 h-16 rounded-full transition-transform group-hover:scale-110"
+                      style={{ background: acc.color, opacity: 0.7 }}
+                    />
+                  </div>
+
+                  {/* Info row below image */}
+                  <div className="flex items-center justify-between mt-2.5 px-0.5">
+                    <div>
+                      <p className="text-[13px] text-black/80 font-light">{acc.name}</p>
+                      <p className="text-[11px] text-black/35 mt-0.5">€{acc.price}</p>
+                    </div>
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center transition-all shrink-0"
                       style={{
-                        background: '#f6f5f3',
-                        outline: selected ? '1.5px solid black' : '1px solid transparent',
+                        background: selected ? 'black' : 'transparent',
+                        border: selected ? '1.5px solid black' : '1.5px solid rgba(0,0,0,0.15)',
                       }}
                     >
-                      <div
-                        className="w-8 h-8 rounded-full"
-                        style={{ background: acc.color }}
-                      />
-                      <div
-                        className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-all"
-                        style={{
-                          background: selected ? 'black' : 'white',
-                          border: selected ? '1px solid black' : '1px solid rgba(0,0,0,0.12)',
-                        }}
-                      >
-                        {selected
-                          ? <Check size={10} className="text-white" strokeWidth={2.5} />
-                          : <Plus size={10} className="text-black/30" strokeWidth={2} />
-                        }
-                      </div>
+                      {selected
+                        ? <Check size={12} className="text-white" strokeWidth={2.5} />
+                        : <Plus size={12} className="text-black/30" strokeWidth={2} />
+                      }
                     </div>
-                    <p className="text-[10px] text-black/60 leading-tight">{acc.name}</p>
-                    <p className="text-[10px] text-black/30">€{acc.price}</p>
-                  </button>
-                )
-              })}
-            </div>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
 
