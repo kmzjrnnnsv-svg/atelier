@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye } from 'lucide-react'
+import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -94,8 +94,39 @@ export default function Customize() {
   const [selSole, setSelSole] = useState(() => getDefaultSole(soleList))
   const [added,   setAdded]   = useState(false)
 
-  // Ref for right panel – wheel events on the left image forward here
+  // Refs for scroll forwarding between panels
   const rightPanelRef = useRef(null)
+  const leftPanelRef = useRef(null)
+  const [rightFullyScrolled, setRightFullyScrolled] = useState(false)
+  const [selectedAccessories, setSelectedAccessories] = useState([])
+
+  const accessories = [
+    { id: 'shoe-cream', name: 'Schuhcreme', price: 28, image: null, color: '#2c1810' },
+    { id: 'brush', name: 'Rosshaarbürste', price: 34, image: null, color: '#8B6914' },
+    { id: 'shoe-horn', name: 'Schuhlöffel', price: 45, image: null, color: '#C0C0C0' },
+    { id: 'polish-cloth', name: 'Poliertuch', price: 12, image: null, color: '#F5F0E8' },
+    { id: 'travel-bag', name: 'Reise-Schuhbeutel', price: 38, image: null, color: '#3a3a3a' },
+    { id: 'cedar-balls', name: 'Zedernholzkugeln', price: 18, image: null, color: '#D2A86E' },
+  ]
+
+  const toggleAccessory = (id) => {
+    setSelectedAccessories(prev =>
+      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+    )
+  }
+
+  // Track if right panel is fully scrolled
+  useEffect(() => {
+    const el = rightPanelRef.current
+    if (!el) return
+    const onScroll = () => {
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 2
+      setRightFullyScrolled(atBottom)
+    }
+    onScroll()
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
 
   // 3D Viewer
   const [is3D, setIs3D] = useState(false)
@@ -227,11 +258,35 @@ export default function Customize() {
       <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 lg:min-h-0">
 
         {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
-        <div className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:overflow-hidden" onWheel={(e) => { if (rightPanelRef.current) { rightPanelRef.current.scrollTop += e.deltaY } }}>
+        <div
+          ref={leftPanelRef}
+          className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:overflow-y-auto"
+          style={{ scrollbarWidth: 'none' }}
+          onWheel={(e) => {
+            const rp = rightPanelRef.current
+            if (!rp) return
+            const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
+            if (!rpAtBottom && e.deltaY > 0) {
+              // Right not fully scrolled – forward scroll to right
+              e.preventDefault()
+              rp.scrollTop += e.deltaY
+            } else if (rpAtBottom) {
+              // Right fully scrolled – let left panel scroll naturally
+            } else if (e.deltaY < 0) {
+              // Scrolling up on left panel
+              const lp = leftPanelRef.current
+              if (lp && lp.scrollTop <= 0) {
+                e.preventDefault()
+                rp.scrollTop += e.deltaY
+              }
+            }
+          }}
+        >
           <div
-            className="relative overflow-hidden select-none lg:rounded-sm lg:h-full"
+            className="relative overflow-hidden select-none lg:rounded-sm"
             style={{
               height: 'clamp(240px, 40dvh, 380px)',
+              minHeight: '380px',
               cursor: is3D ? 'grab' : 'default',
               background: '#f6f5f3',
             }}
@@ -325,6 +380,56 @@ export default function Customize() {
                   <span className="text-[11px] text-black/40">{item}</span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* ── Zubehör (nur Desktop) ────────────────────────────── */}
+          <div
+            className="hidden lg:block pt-8 px-1 pb-12"
+            style={{
+              opacity: rightFullyScrolled ? 1 : 0.35,
+              transition: 'opacity 0.4s ease',
+            }}
+          >
+            <p className="text-[10px] text-black/30 uppercase mb-4" style={{ letterSpacing: '0.18em' }}>Zubehör dazu bestellen</p>
+            <div className="grid grid-cols-3 gap-3">
+              {accessories.map((acc) => {
+                const selected = selectedAccessories.includes(acc.id)
+                return (
+                  <button
+                    key={acc.id}
+                    onClick={() => toggleAccessory(acc.id)}
+                    className="group relative text-left"
+                  >
+                    <div
+                      className="aspect-square rounded-sm flex items-center justify-center mb-1.5 transition-all"
+                      style={{
+                        background: '#f6f5f3',
+                        outline: selected ? '1.5px solid black' : '1px solid transparent',
+                      }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full"
+                        style={{ background: acc.color }}
+                      />
+                      <div
+                        className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center transition-all"
+                        style={{
+                          background: selected ? 'black' : 'white',
+                          border: selected ? '1px solid black' : '1px solid rgba(0,0,0,0.12)',
+                        }}
+                      >
+                        {selected
+                          ? <Check size={10} className="text-white" strokeWidth={2.5} />
+                          : <Plus size={10} className="text-black/30" strokeWidth={2} />
+                        }
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-black/60 leading-tight">{acc.name}</p>
+                    <p className="text-[10px] text-black/30">€{acc.price}</p>
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
