@@ -334,6 +334,28 @@ export default function Customize() {
 
           <div className="h-px bg-black/8 lg:my-4" />
 
+          {/* ── Produktbeschreibung ────────────────────────────── */}
+          <div className="px-5 py-4 lg:px-0 lg:py-2">
+            <p className="text-[11px] lg:text-[12px] text-black/50 leading-[1.8]" style={{ letterSpacing: '0.02em' }}>
+              {product.description || (
+                <>
+                  Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> wird in unserer Manufaktur von Hand gefertigt — mit über 200 präzisen Arbeitsschritten.
+                  Dank unserer <span className="text-black/70">3D-Fußvermessung</span> wird jedes Paar exakt auf Ihre Fußform zugeschnitten.
+                  Ausgesuchtes europäisches Leder, durchgenähte Konstruktion und eine ergonomische Passform, die Sie vom ersten Schritt an spüren.
+                </>
+              )}
+            </p>
+            <div className="flex items-center gap-4 mt-3">
+              <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Handgenäht</span>
+              <span className="text-black/10">·</span>
+              <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Maßgefertigt</span>
+              <span className="text-black/10">·</span>
+              <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>200+ Schritte</span>
+            </div>
+          </div>
+
+          <div className="h-px bg-black/8 lg:my-2" />
+
           {/* ── Auswahl ────────────────────────────────────────── */}
           <div className="pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0">
 
