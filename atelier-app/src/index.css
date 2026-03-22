@@ -12,6 +12,12 @@ html {
   background-attachment: fixed;
 }
 
+/* Native & mobile-web: white background to prevent overscroll color mismatch */
+html.native, html.native body,
+html.mobile-web, html.mobile-web body {
+  background: #fff;
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
