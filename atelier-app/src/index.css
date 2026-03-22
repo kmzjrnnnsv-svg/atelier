@@ -7,6 +7,10 @@
   box-sizing: border-box;
 }
 
+html {
+  background: #ffffff;
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -67,6 +71,15 @@ body {
 
 .animate-spin-custom {
   animation: spin 1s linear infinite;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.25s ease-out;
 }
 
 .shimmer {

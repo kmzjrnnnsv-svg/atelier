@@ -31,6 +31,7 @@ Erforderliche Aufnahmen (8 Bilder je Fuß):
 A4-Papier muss in jedem Bild vollständig sichtbar sein (als Referenz).
 
 Usage:
+  echo '{"rightImgs": [...], "leftImgs": [...]}' | python3 process_photogrammetry.py --stdin
   python3 process_photogrammetry.py --data '{"rightImgs": [...8 base64...], "leftImgs": [...]}'
 """
 
@@ -952,10 +953,18 @@ def process_photogrammetry(right_imgs: list[str], left_imgs: list[str]) -> dict:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', required=True,
+    parser.add_argument('--data', default=None,
                         help='JSON mit rightImgs (8 base64) und leftImgs (8 base64)')
+    parser.add_argument('--stdin', action='store_true',
+                        help='Read JSON payload from stdin (avoids OS ARG_MAX limits)')
     args = parser.parse_args()
-    data = json.loads(args.data)
+    if args.stdin:
+        import sys
+        data = json.loads(sys.stdin.read())
+    elif args.data:
+        data = json.loads(args.data)
+    else:
+        parser.error('Either --data or --stdin is required')
 
     right_imgs = data.get('rightImgs', [])
     left_imgs  = data.get('leftImgs', [])

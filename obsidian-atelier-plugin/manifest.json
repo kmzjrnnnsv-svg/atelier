@@ -1,0 +1,9 @@
+{
+  "id": "atelier-plugin",
+  "name": "Atelier",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Verbindet Obsidian mit dem Atelier-Backend: Fußscans, Bestellungen, Kunden, Schuhe & CMS-Inhalte synchronisieren.",
+  "author": "Atelier",
+  "isDesktopOnly": false
+}
