@@ -107,8 +107,12 @@ const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', 
 
 export const isNative = Capacitor.isNativePlatform()
 
-// Add 'native' class to <html> so CSS can differentiate
+// Detect mobile web (iOS/Android browser, not Capacitor)
+export const isMobileWeb = !isNative && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+// Add class to <html> so CSS can differentiate
 if (isNative) document.documentElement.classList.add('native')
+if (isMobileWeb) document.documentElement.classList.add('mobile-web')
 
 // Track window.innerHeight for browser mode — this is the only value
 // that dynamically follows Safari's toolbar resize (shrink on scroll).
@@ -222,38 +226,52 @@ function AppRoutes() {
     )
   }
 
-  // ── Web: natural document scroll (Safari glass effect works) ──
+  const routes = (
+    <Routes>
+      <Route path="/"           element={<Navigate to="/login" replace />} />
+      <Route path="/login"      element={<Login />} />
+      <Route path="/register"   element={<Registration />} />
+      <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
+      <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
+      <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
+      <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
+      <Route path="/visualizer" element={<ProtectedRoute><OutfitVisualizer /></ProtectedRoute>} />
+      <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
+      <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+      <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
+      <Route path="/learn"      element={<Navigate to="/explore" replace />} />
+      <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+      <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+      <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+      <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
+      <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
+      <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
+      <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
+      <Route path="/search"      element={<ProtectedRoute><Search /></ProtectedRoute>} />
+      <Route path="*"            element={<NotFound />} />
+    </Routes>
+  )
+
+  // ── Mobile web: natural document scroll (Safari glass effect) ──
+  if (isMobileWeb) {
+    return (
+      <>
+        {showNav && <TopBar />}
+        <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+      </>
+    )
+  }
+
+  // ── Desktop web: fixed container (unchanged behavior) ──
   return (
-    <>
-      {showNav && <TopBar />}
-      <Suspense fallback={<DelayedSpinner />}>
-        <Routes>
-          <Route path="/"           element={<Navigate to="/login" replace />} />
-          <Route path="/login"      element={<Login />} />
-          <Route path="/register"   element={<Registration />} />
-          <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
-          <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
-          <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
-          <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
-          <Route path="/visualizer" element={<ProtectedRoute><OutfitVisualizer /></ProtectedRoute>} />
-          <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
-          <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-          <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
-          <Route path="/learn"      element={<Navigate to="/explore" replace />} />
-          <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-          <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-          <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-          <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
-          <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
-          <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
-          <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
-          <Route path="/search"      element={<ProtectedRoute><Search /></ProtectedRoute>} />
-          <Route path="*"            element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', overflow: 'hidden', boxSizing: 'border-box' }}>
+      <div className="flex-1 overflow-y-auto relative">
+        {showNav && <TopBar />}
+        <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+      </div>
+    </div>
   )
 }
 
