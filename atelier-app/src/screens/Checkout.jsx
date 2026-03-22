@@ -100,6 +100,7 @@ export default function Checkout() {
 
   // Product from navigation state
   const product = location.state?.product || {}
+  const incomingAccessories = location.state?.accessories || []
 
   const [step,        setStep]        = useState(0)
   const [delivery,    setDelivery]    = useState({ name:'', street:'', zip:'', city:'', country:'Deutschland', phone:'' })
@@ -110,10 +111,23 @@ export default function Checkout() {
   const [placed,      setPlaced]      = useState(null)
   const [error,       setError]       = useState(null)
 
+  // Merge incoming accessories from Customize page into ACCESSORIES list
+  const extraAccessories = incomingAccessories
+    .filter(a => !ACCESSORIES.find(x => x.id === a.id))
+    .map(a => ({ id: a.id, name: a.name, desc: '', price: `€ ${a.price}`, priceNum: a.price }))
+  const allAccessories = [...extraAccessories, ...ACCESSORIES]
+
+  // Pre-select incoming accessories on mount
+  const [initialized, setInitialized] = useState(false)
+  if (!initialized && incomingAccessories.length > 0) {
+    setSelectedAcc(incomingAccessories.map(a => a.id))
+    setInitialized(true)
+  }
+
   const toggleAcc = id =>
     setSelectedAcc(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
-  const chosenAccessories = ACCESSORIES.filter(a => selectedAcc.includes(a.id))
+  const chosenAccessories = allAccessories.filter(a => selectedAcc.includes(a.id))
 
   // Parse shoe price to compute total
   const shoePrice = parseFloat((product.price || '€ 0').replace(/[^0-9.]/g, '')) || 0
@@ -302,7 +316,7 @@ export default function Checkout() {
             <h2 className="text-base font-bold text-black mb-1 uppercase" style={{ letterSpacing: '0.12em' }}>Zubehör & Accessoires</h2>
             <p className="text-[11px] text-black/40 mb-5">Ergänzen Sie Ihre Bestellung mit passendem Zubehör.</p>
             <div className="space-y-3">
-              {ACCESSORIES.map(item => (
+              {allAccessories.map(item => (
                 <AccessoryCard
                   key={item.id}
                   item={item}
