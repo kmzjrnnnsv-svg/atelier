@@ -94,6 +94,9 @@ export default function Customize() {
   const [selSole, setSelSole] = useState(() => getDefaultSole(soleList))
   const [added,   setAdded]   = useState(false)
 
+  // Ref for right panel – wheel events on the left image forward here
+  const rightPanelRef = useRef(null)
+
   // 3D Viewer
   const [is3D, setIs3D] = useState(false)
   const [rotY, setRotY] = useState(0)
@@ -224,7 +227,7 @@ export default function Customize() {
       <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 lg:min-h-0">
 
         {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
-        <div className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:overflow-hidden">
+        <div className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:overflow-hidden" onWheel={(e) => { if (rightPanelRef.current) { rightPanelRef.current.scrollTop += e.deltaY } }}>
           <div
             className="relative overflow-hidden select-none lg:rounded-sm lg:h-full"
             style={{
@@ -309,7 +312,7 @@ export default function Customize() {
         </div>
 
         {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
-        <div className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0" style={{ scrollbarWidth: 'none' }}>
+        <div ref={rightPanelRef} className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0" style={{ scrollbarWidth: 'none' }}>
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
           <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
