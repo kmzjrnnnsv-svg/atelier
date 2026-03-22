@@ -107,6 +107,9 @@ const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', 
 
 export const isNative = Capacitor.isNativePlatform()
 
+// Add 'native' class to <html> so CSS can differentiate
+if (isNative) document.documentElement.classList.add('native')
+
 // Track window.innerHeight for browser mode — this is the only value
 // that dynamically follows Safari's toolbar resize (shrink on scroll).
 function useViewportHeight() {
@@ -181,40 +184,76 @@ function AppRoutes() {
     )
   }
 
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: isNative ? '100dvh' : viewportHeight, display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
-      <div className="flex-1 overflow-y-auto relative">
-        {!isNative && showNav && <TopBar />}
-        <Suspense fallback={<DelayedSpinner />}>
-          <Routes>
-            <Route path="/"           element={<Navigate to="/login" replace />} />
-            <Route path="/login"      element={<Login />} />
-            <Route path="/register"   element={<Registration />} />
-            <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
-            <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
-            <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
-            <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
-            <Route path="/visualizer" element={<ProtectedRoute><OutfitVisualizer /></ProtectedRoute>} />
-            <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
-            <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-            <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
-            <Route path="/learn"      element={<Navigate to="/explore" replace />} />
-            <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
-            <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-            <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-            <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
-            <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
-            <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
-            <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
-            <Route path="/search"      element={<ProtectedRoute><Search /></ProtectedRoute>} />
-            <Route path="*"            element={<NotFound />} />
-          </Routes>
-        </Suspense>
+  // ── Native: fixed container with internal scroll (Capacitor) ──
+  if (isNative) {
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+        <div className="flex-1 overflow-y-auto relative">
+          <Suspense fallback={<DelayedSpinner />}>
+            <Routes>
+              <Route path="/"           element={<Navigate to="/login" replace />} />
+              <Route path="/login"      element={<Login />} />
+              <Route path="/register"   element={<Registration />} />
+              <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
+              <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
+              <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
+              <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
+              <Route path="/visualizer" element={<ProtectedRoute><OutfitVisualizer /></ProtectedRoute>} />
+              <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
+              <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+              <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
+              <Route path="/learn"      element={<Navigate to="/explore" replace />} />
+              <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+              <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+              <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
+              <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
+              <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
+              <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
+              <Route path="/search"      element={<ProtectedRoute><Search /></ProtectedRoute>} />
+              <Route path="*"            element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </div>
+        {showNav && <BottomNav />}
       </div>
-      {isNative && showNav && <BottomNav />}
-    </div>
+    )
+  }
+
+  // ── Web: natural document scroll (Safari glass effect works) ──
+  return (
+    <>
+      {showNav && <TopBar />}
+      <Suspense fallback={<DelayedSpinner />}>
+        <Routes>
+          <Route path="/"           element={<Navigate to="/login" replace />} />
+          <Route path="/login"      element={<Login />} />
+          <Route path="/register"   element={<Registration />} />
+          <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
+          <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
+          <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
+          <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
+          <Route path="/visualizer" element={<ProtectedRoute><OutfitVisualizer /></ProtectedRoute>} />
+          <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
+          <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+          <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
+          <Route path="/learn"      element={<Navigate to="/explore" replace />} />
+          <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+          <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+          <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+          <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
+          <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
+          <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
+          <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
+          <Route path="/search"      element={<ProtectedRoute><Search /></ProtectedRoute>} />
+          <Route path="*"            element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </>
   )
 }
 
