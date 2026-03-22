@@ -370,7 +370,7 @@ export default function MyScans() {
   useEffect(() => { load() }, [])
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
 
       {/* ── Header ── */}
       <div className="bg-white px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
@@ -398,7 +398,7 @@ export default function MyScans() {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
 
         {/* Loading */}
         {loading && (

@@ -74,7 +74,7 @@ export default function Feedback() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/5 flex-shrink-0">
@@ -88,7 +88,7 @@ export default function Feedback() {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
 
         {/* ── New ticket form ── */}
         <div className="px-5 pt-5 pb-6 border-b border-black/5">

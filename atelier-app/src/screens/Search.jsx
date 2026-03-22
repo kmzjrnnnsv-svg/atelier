@@ -24,7 +24,7 @@ export default function Search() {
   }, [query, shoes])
 
   return (
-    <div className="h-full bg-white flex flex-col">
+    <div className="min-h-full bg-white flex flex-col">
       {/* Search header */}
       <div className="flex items-center gap-2 px-4 pt-3 pb-2">
         <button onClick={() => navigate(-1)} className="p-1 bg-transparent border-0">
@@ -49,7 +49,7 @@ export default function Search() {
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div className="flex-1 px-4 pb-4">
         {!query.trim() && (
           <p className="text-center text-black/30 text-sm mt-12">
             Suche nach Name oder Kategorie

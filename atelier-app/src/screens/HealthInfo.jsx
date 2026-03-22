@@ -59,7 +59,7 @@ export default function HealthInfo() {
   const navigate = useNavigate()
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-full bg-white">
       {/* Header */}
       <div className="bg-white px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
         <div className="flex items-center gap-3 mb-1">
@@ -77,7 +77,7 @@ export default function HealthInfo() {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
 
         {/* Intro card — section-style header */}
         <div className="flex items-center gap-3 px-5 py-4" style={{ background: '#0f172a' }}>

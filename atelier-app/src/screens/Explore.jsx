@@ -284,7 +284,7 @@ export default function Explore() {
   // Article detail
   if (selectedArticle) {
     return (
-      <div className="flex flex-col h-full bg-white overflow-hidden">
+      <div className="flex flex-col min-h-full bg-white">
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/5 flex-shrink-0">
           <button onClick={() => setSelectedArticle(null)} className="w-10 h-10 flex items-center justify-center bg-transparent border-0">
             <ArrowLeft size={18} strokeWidth={1.5} className="text-black" />
@@ -317,7 +317,7 @@ export default function Explore() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden relative">
+    <div className="flex flex-col min-h-full bg-white relative">
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="px-5 pt-4 pb-2 flex items-center justify-between bg-white relative z-20">
@@ -422,7 +422,7 @@ export default function Explore() {
           </button>
         </div>
       </div>
-      {cartOpen && <div className="absolute inset-0 bg-black/30 z-40" onClick={() => setCartOpen(false)} />}
+      {cartOpen && <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setCartOpen(false)} />}
 
       {/* ── Title + Category Tabs (like ShoeCollection) ───────────────────── */}
       <div className="px-5 pb-3 bg-white border-b border-black/8">
@@ -445,7 +445,7 @@ export default function Explore() {
       </div>
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto" {...swipeHandlers}>
+      <div className="flex-1" {...swipeHandlers}>
 
         {/* Hero image (only on ALLE tab, only if CMS provides one) */}
         {heroImage && activeTab === 'ALLE' && (
