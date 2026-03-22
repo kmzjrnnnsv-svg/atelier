@@ -14,6 +14,7 @@ export default defineConfig({
     // Workaround: explicit entry avoids Vite failing on "#" in path
     rollupOptions: {
       input: fileURLToPath(new URL('./index.html', import.meta.url)),
+      external: ['@capacitor/status-bar'],
     },
   },
   server: {
