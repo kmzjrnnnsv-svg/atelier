@@ -197,7 +197,7 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-y-auto lg:overflow-auto">
+    <div className="flex flex-col h-full bg-white overflow-y-auto">
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
@@ -224,7 +224,7 @@ export default function Customize() {
       <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4">
 
         {/* ── LEFT: Produkt-Viewer (sticky) ──────────────────────── */}
-        <div className="sticky top-12 z-10 lg:flex-1 lg:top-14 lg:self-start">
+        <div className="sticky top-12 z-10 lg:w-1/2 lg:top-14 lg:self-start">
           <div
             className="relative overflow-hidden select-none lg:rounded-sm"
             style={{
