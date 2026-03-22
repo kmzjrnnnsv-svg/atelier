@@ -197,7 +197,7 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-y-auto">
+    <div className="flex flex-col h-full bg-white overflow-y-auto lg:overflow-hidden">
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
@@ -221,12 +221,12 @@ export default function Customize() {
       </div>
 
       {/* ── Desktop: Two-Column / Mobile: Stacked ────────────────── */}
-      <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4">
+      <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 lg:min-h-0">
 
-        {/* ── LEFT: Produkt-Viewer (sticky) ──────────────────────── */}
-        <div className="sticky top-12 z-10 lg:w-1/2 lg:top-14 lg:self-start">
+        {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
+        <div className="sticky top-12 z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:overflow-hidden">
           <div
-            className="relative overflow-hidden select-none lg:rounded-sm"
+            className="relative overflow-hidden select-none lg:rounded-sm lg:h-full"
             style={{
               height: 'clamp(240px, 40dvh, 380px)',
               cursor: is3D ? 'grab' : 'default',
@@ -309,7 +309,7 @@ export default function Customize() {
         </div>
 
         {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
-        <div className="flex-1 flex flex-col lg:max-w-md">
+        <div className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0" style={{ scrollbarWidth: 'none' }}>
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
           <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
