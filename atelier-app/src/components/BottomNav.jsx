@@ -27,8 +27,8 @@ export default function BottomNav() {
   )?.id
 
   return (
-    <div className="flex items-center justify-around px-2 pt-0"
-      style={{ position: isNative ? 'relative' : 'sticky', bottom: 0, zIndex: 20, paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px', background: 'rgba(250,250,250,0.5)', backdropFilter: 'blur(40px) saturate(180%) brightness(1.1)', WebkitBackdropFilter: 'blur(40px) saturate(180%) brightness(1.1)', boxShadow: 'inset 0 0 4px 0 rgba(255,255,255,0.5), 0 -0.5px 0 0 rgba(0,0,0,0.05)', borderTop: '0.5px solid rgba(255,255,255,0.6)', flexShrink: 0 }}>
+    <div className="bg-white border-t border-black/5 flex items-center justify-around px-2 pt-0 flex-shrink-0"
+      style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
       {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
         const isActive = activeId === id
         return (

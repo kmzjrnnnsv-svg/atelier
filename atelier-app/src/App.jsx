@@ -212,8 +212,8 @@ function AppRoutes() {
             <Route path="*"            element={<NotFound />} />
           </Routes>
         </Suspense>
-        {showNav && <BottomNav />}
       </div>
+      {isNative && showNav && <BottomNav />}
     </div>
   )
 }
