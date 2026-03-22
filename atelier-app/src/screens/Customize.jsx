@@ -260,23 +260,29 @@ export default function Customize() {
         {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
         <div
           ref={leftPanelRef}
-          className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:overflow-y-auto"
-          style={{ scrollbarWidth: 'none' }}
+          className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch"
+          style={{
+            scrollbarWidth: 'none',
+            overflowY: rightFullyScrolled ? 'auto' : 'hidden',
+          }}
           onWheel={(e) => {
             const rp = rightPanelRef.current
             const lp = leftPanelRef.current
             if (!rp || !lp) return
             const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
             if (!rpAtBottom) {
-              // Phase 1: right panel scrolls first
+              // Phase 1: right panel scrolls first, left stays locked
               e.preventDefault()
               rp.scrollTop += e.deltaY
+            } else if (e.deltaY > 0) {
+              // Phase 2: right done, left scrolls — ensure overflow is unlocked
+              lp.style.overflowY = 'auto'
             } else if (e.deltaY < 0 && lp.scrollTop <= 0) {
-              // Scrolling up & left is at top → scroll right back up
+              // Scrolling up & left is at top → lock left, scroll right back up
+              lp.style.overflowY = 'hidden'
               e.preventDefault()
               rp.scrollTop += e.deltaY
             }
-            // Otherwise: left scrolls naturally (Phase 2)
           }}
         >
           <div
@@ -448,13 +454,17 @@ export default function Customize() {
             if (!rp || !lp) return
             const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
             if (rpAtBottom && e.deltaY > 0) {
-              // Right fully scrolled → forward to left panel
+              // Phase 2: right done → unlock left and scroll it
               e.preventDefault()
+              lp.style.overflowY = 'auto'
               lp.scrollTop += e.deltaY
             } else if (e.deltaY < 0 && rp.scrollTop <= 0) {
-              // Right at top, scrolling up → scroll left back up
+              // Scrolling up & right at top → scroll left back up
               e.preventDefault()
               lp.scrollTop += e.deltaY
+              if (lp.scrollTop <= 0) {
+                lp.style.overflowY = 'hidden'
+              }
             }
           }}
         >
