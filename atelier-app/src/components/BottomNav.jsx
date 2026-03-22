@@ -1,6 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTransition } from 'react'
+import { ShoppingBag, Compass, ShoppingCart, User, Search } from 'lucide-react'
+import { prefetchRoute, isNative } from '../App'
+import useAtelierStore from '../store/atelierStore'
 
+function hapticSelection() {
+  if (navigator.vibrate) navigator.vibrate(10)
+}
 
 const NAV_ITEMS = [
   { id: 'shop',    icon: ShoppingBag,  label: 'Kollektion', path: '/collection' },
@@ -21,7 +27,8 @@ export default function BottomNav() {
   )?.id
 
   return (
-main
+    <div className="bg-white border-t border-black/5 flex items-center justify-around px-2 pt-0 flex-shrink-0"
+      style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
       {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
         const isActive = activeId === id
         return (

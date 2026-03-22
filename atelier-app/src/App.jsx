@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
+import TopBar from './components/TopBar'
 import useAtelierStore from './store/atelierStore'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Capacitor } from '@capacitor/core'
@@ -182,6 +183,7 @@ function AppRoutes() {
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: isNative ? '100dvh' : viewportHeight, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
+      {!isNative && showNav && <TopBar />}
       <div className="flex-1 overflow-hidden relative">
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
@@ -211,7 +213,7 @@ function AppRoutes() {
           </Routes>
         </Suspense>
       </div>
-      {showNav && <BottomNav />}
+      {isNative && showNav && <BottomNav />}
     </div>
   )
 }
