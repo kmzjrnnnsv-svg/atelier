@@ -566,8 +566,34 @@ export default function Customize() {
               )}
             </div>
 
-            {/* Desktop: Buttons inline */}
+            {/* Desktop: Konfig-Zusammenfassung + Buttons */}
             <div className="hidden lg:block lg:pt-4 lg:pb-8">
+              <div className="border border-black/8 p-4 mb-4">
+                <p className="text-[10px] text-black/40 mb-2.5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Ihre Konfiguration</p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-black/50">Leder</span>
+                    <span className="text-[11px] text-black">{mat?.label}{mat?.sub ? ` · ${mat.sub}` : ''}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-black/50">Farbe</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: color }} />
+                      <span className="text-[11px] text-black">{col?.name}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-black/50">Sohle</span>
+                    <span className="text-[11px] text-black">{sole?.label}{soleExtra > 0 ? ` (+€${soleExtra})` : ''}</span>
+                  </div>
+                  {latestScan && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-black/50">Größe</span>
+                      <span className="text-[11px] text-black">EU {latestScan.eu_size}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
               <p className="text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
                 {displayPrice}
                 {soleExtra > 0 && <span className="text-[11px] text-black/35 ml-2">(+€{soleExtra} Sohle)</span>}
@@ -603,6 +629,16 @@ export default function Customize() {
       {/* ── Kaufen: Fixed Bottom (nur mobil) ──────────────────── */}
       <div className="sticky bottom-0 z-20 bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2"
         style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 8px)' : '8px' }}>
+        <div className="flex items-center justify-center gap-3 mb-1.5">
+          <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{mat?.label}</span>
+          <span className="text-black/15">·</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: color }} />
+            <span className="text-[9px] text-black/40">{col?.name}</span>
+          </div>
+          <span className="text-black/15">·</span>
+          <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{sole?.label}</span>
+        </div>
         <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>{displayPrice}</p>
         <div className="flex gap-2">
           <button
