@@ -178,15 +178,15 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col h-full bg-white overflow-hidden lg:overflow-auto">
 
-      {/* ── Header (LV-Style) ────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-1">
+      {/* ── Header ────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
         <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
           <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
         </button>
         <div className="text-center flex-1 px-2">
-          <p className="text-[11px] font-normal text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>{product.name}</p>
+          <p className="text-[11px] lg:text-[13px] font-normal text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>{product.name}</p>
         </div>
         <div className="flex items-center gap-1">
           <button className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
@@ -201,322 +201,350 @@ export default function Customize() {
         </div>
       </div>
 
-      {/* ── Produkt-Viewer (LV-Style) ────────────────────────────── */}
-      <div
-        className="relative overflow-hidden select-none"
-        style={{
-          height: 'clamp(200px, 34dvh, 300px)',
-          cursor: is3D ? 'grab' : 'default',
-          background: '#f6f5f3',
-        }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-      >
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{
-            transform: is3D
-              ? `perspective(800px) rotateY(${rotY}deg)`
-              : zoomed ? 'scale(1.6)' : 'none',
-            transition: drag.current.on ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
-          }}
-        >
-          {product.image ? (
-            <img src={product.image} alt={product.name} className="w-full h-full object-contain p-8" />
-          ) : (
-            <svg viewBox="0 0 260 130" className="w-64">
-              <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
-              <path d="M20 100 Q17 108 38 112 L222 112 Q238 112 238 100 L232 80 Q226 62 210 60 L72 60 Q47 60 42 68 Z" fill={color} />
-              <path d="M42 68 Q37 48 62 36 L120 30 Q155 27 178 42 Q198 54 232 80 L210 60 Q180 50 148 52 L90 53 Q60 55 42 68 Z" fill={color} opacity="0.88" />
-              <path d="M42 68 Q36 55 53 44 Q68 34 87 34 L87 53 Q63 55 42 68 Z" fill={color} />
-              <path d="M87 53 L210 60 Q210 50 178 42 Q155 27 120 30 L87 34 Z" fill="white" opacity="0.1" />
-              <path d="M90 38 Q115 30 148 31 Q175 31 198 44" stroke="white" strokeWidth="1" fill="none" opacity="0.12" />
-            </svg>
-          )}
-        </div>
+      {/* ── Desktop: Two-Column / Mobile: Stacked ────────────────── */}
+      <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 overflow-hidden lg:overflow-visible">
 
-        {/* Steuerungs-Icons links unten */}
-        <div className="absolute left-4 bottom-4 flex items-center gap-2">
-          <button
-            onClick={() => { setIs3D(v => !v); setRotY(0); setZoomed(false) }}
-            className={`w-8 h-8 flex items-center justify-center border transition-all ${
-              is3D ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
-            }`}
+        {/* ── LEFT: Produkt-Viewer (sticky on desktop) ──────────── */}
+        <div className="lg:flex-1 lg:sticky lg:top-0 lg:self-start">
+          <div
+            className="relative overflow-hidden select-none lg:rounded-sm"
+            style={{
+              height: 'clamp(200px, 34dvh, 300px)',
+              cursor: is3D ? 'grab' : 'default',
+              background: '#f6f5f3',
+            }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
           >
-            <Box size={14} strokeWidth={1.5} />
-          </button>
-          <button
-            onClick={() => { setZoomed(v => !v); setIs3D(false) }}
-            className={`w-8 h-8 flex items-center justify-center border transition-all ${
-              zoomed ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
-            }`}
-          >
-            {zoomed ? <ZoomOut size={14} strokeWidth={1.5} /> : <ZoomIn size={14} strokeWidth={1.5} />}
-          </button>
-          <button className="w-8 h-8 bg-white/90 text-black border border-black/10 flex items-center justify-center transition-all">
-            <Eye size={14} strokeWidth={1.5} />
-          </button>
-        </div>
-
-        {/* 3D-Hinweis */}
-        {is3D && (
-          <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
-            <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-              Ziehen zum Drehen
-            </span>
-          </div>
-        )}
-
-        {/* Pagination Dots */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
-          {Array.from({ length: imgCount }).map((_, i) => (
-            <div key={i} className={`rounded-full transition-all ${i === imgIdx ? 'w-5 h-1.5 bg-black' : 'w-1.5 h-1.5 bg-black/20'}`} />
-          ))}
-        </div>
-
-        {/* Swipe-Hinweis */}
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none">
-          <span className="text-[9px] text-black/25" style={{ letterSpacing: '0.2em' }}>
-            ← WISCHEN ZUM WECHSELN →
-          </span>
-        </div>
-      </div>
-
-      {/* ── Produkt-Info (LV-Style) ─────────────────────────────── */}
-      <div className="px-5 pt-4 pb-2">
-        <p className="text-[13px] font-light text-black leading-tight">{product.name}</p>
-        <p className="text-[13px] text-black mt-0.5" style={{ letterSpacing: '0.04em' }}>{product.price}</p>
-        <div className="flex items-center gap-4 mt-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
-            <span className="text-[11px] font-medium text-black">{product.match || '98.4%'}</span>
-          </div>
-          {latestScan && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Größe</span>
-              <span className="text-[11px] font-medium text-black">EU {latestScan.eu_size}</span>
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{
+                transform: is3D
+                  ? `perspective(800px) rotateY(${rotY}deg)`
+                  : zoomed ? 'scale(1.6)' : 'none',
+                transition: drag.current.on ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+              }}
+            >
+              {product.image ? (
+                <img src={product.image} alt={product.name} className="w-full h-full object-contain p-8 lg:p-12" />
+              ) : (
+                <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
+                  <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
+                  <path d="M20 100 Q17 108 38 112 L222 112 Q238 112 238 100 L232 80 Q226 62 210 60 L72 60 Q47 60 42 68 Z" fill={color} />
+                  <path d="M42 68 Q37 48 62 36 L120 30 Q155 27 178 42 Q198 54 232 80 L210 60 Q180 50 148 52 L90 53 Q60 55 42 68 Z" fill={color} opacity="0.88" />
+                  <path d="M42 68 Q36 55 53 44 Q68 34 87 34 L87 53 Q63 55 42 68 Z" fill={color} />
+                  <path d="M87 53 L210 60 Q210 50 178 42 Q155 27 120 30 L87 34 Z" fill="white" opacity="0.1" />
+                  <path d="M90 38 Q115 30 148 31 Q175 31 198 44" stroke="white" strokeWidth="1" fill="none" opacity="0.12" />
+                </svg>
+              )}
             </div>
-          )}
-        </div>
-      </div>
 
-      <div className="h-px bg-black/8" />
-
-      {/* ── Auswahl ────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto pt-4 pb-4 space-y-5">
-
-        {/* 1. Leder */}
-        <div {...matSwipe}>
-          <p className="text-[10px] text-black/40 mb-3 px-5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder</p>
-          <div className="flex gap-2 overflow-x-auto flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-            {matList.map((m, i) => {
-              const id = m.key || String(m.id)
-              const avail = m.available !== 0 && m.available !== false
-              const reminded = hasReminder('material', id)
-              return (
-                <button key={id}
-                  onClick={() => {
-                    if (avail) setSelMat(id)
-                    else if (!reminded) addReminder({ type: 'material', itemId: id, label: m.label })
-                    else removeReminder('material', id)
-                  }}
-                  className={`w-20 flex-shrink-0 py-2 transition-all bg-transparent flex flex-col items-center gap-1.5 border ${
-                    !avail ? 'border-black/5 opacity-40' : selMat === id ? 'border-black' : 'border-black/8'
-                  }${i === 0 ? ' ml-5' : ''}${i === matList.length - 1 ? ' mr-5' : ''}`}
-                >
-                  <div className="relative">
-                    <div className="w-10 h-10 rounded-full"
-                      style={{ background: m.color }} />
-                    {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/80" />}
-                    {!avail && reminded && <BellRing size={10} className="absolute inset-0 m-auto text-teal-500" />}
-                  </div>
-                  <span className="text-[10px] text-black/70" style={{ letterSpacing: '0.05em' }}>{m.label}</span>
-                  {!avail && <span className="text-[9px] text-black/30">{reminded ? 'Erinnert' : 'Bald da'}</span>}
-                </button>
-              )
-            })}
-          </div>
-          {mat?.tip && (
-            <p className="text-[10px] text-black/35 mt-2 leading-relaxed px-5">{mat.tip}</p>
-          )}
-        </div>
-
-        {/* 2. Farbe */}
-        <div {...colSwipe}>
-          <div className="flex items-center justify-between mb-3 px-5">
-            <p className="text-[10px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe</p>
-            {col && <span className="text-[10px] text-black/50">{col.name}</span>}
-          </div>
-          <div className="flex gap-2 overflow-x-auto flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-            {colList.map((c, i) => {
-              const id = c.key || String(c.id)
-              const avail = c.available !== 0 && c.available !== false
-              const reminded = hasReminder('color', id)
-              const sel = avail && selCol === id
-              return (
-                <div key={id}
-                  className={`flex-shrink-0 w-12 h-12 flex items-center justify-center border-2 transition-all ${
-                    sel ? 'border-black' : 'border-transparent'
-                  }${i === 0 ? ' ml-5' : ''}${i === colList.length - 1 ? ' mr-5' : ''}`}
-                >
-                  <button
-                    onClick={() => {
-                      if (avail) setSelCol(id)
-                      else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
-                      else removeReminder('color', id)
-                    }}
-                    className={`w-9 h-9 rounded-full transition-all flex items-center justify-center border-0 ${
-                      !avail ? 'opacity-30' : ''
-                    }`}
-                    style={{ backgroundColor: c.hex }}
-                    title={c.name}
-                  >
-                    {sel && <Check size={14} className="text-white drop-shadow" strokeWidth={2.5} />}
-                    {!avail && <Lock size={10} className="text-white/60" />}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-          {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2 px-5">Passt zu: {col.pairs_with}</p>}
-        </div>
-
-        {/* 3. Sohle */}
-        <div {...soleSwipe}>
-          <p className="text-[10px] text-black/40 mb-3 px-5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sohle</p>
-
-          {soleList.length === 1 && (category === 'BOOT' || category === 'SNEAKER') && (
-            <p className="text-[10px] text-black/35 mb-2 px-5">
-              {category === 'BOOT' ? 'Boots haben immer die Gummi-Profilsohle.' : 'Sneaker haben immer ihre eigene Sohle.'}
-            </p>
-          )}
-
-          <div className="space-y-2">
-            {soleList.map(s => {
-              const id = s.key || String(s.id)
-              const sel = selSole === id
-              return (
-                <button key={id}
-                  onClick={() => soleList.length > 1 && setSelSole(id)}
-                  className={`w-full flex items-center gap-3 p-3.5 transition-all bg-transparent text-left border-y ${
-                    sel ? 'border-black' : 'border-black/8'
-                  }`}
-                >
-                  <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${sel ? 'bg-black' : 'bg-black/5'}`}>
-                    <ShieldCheck size={18} className={sel ? 'text-white' : 'text-black/30'} strokeWidth={1.5} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-black" style={{ letterSpacing: '0.03em' }}>{s.label}</span>
-                      {s.rating && <Dot rating={s.rating} />}
-                      {(s.recommended === 1 || s.recommended === true) && soleList.length > 1 && (
-                        <span className="text-[9px] text-black/40 border border-black/15 px-1.5 py-0.5" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Empfohlen</span>
-                      )}
-                    </div>
-                    {s.description && <p className="text-[10px] text-black/35 mt-0.5">{s.description}</p>}
-                  </div>
-                  {s.price_extra > 0 && <span className="text-[10px] text-black/50">+€{s.price_extra}</span>}
-                  {sel && <Check size={14} className="text-black" strokeWidth={2} />}
-                </button>
-              )
-            })}
-          </div>
-          {sole?.rating === 'warn' && soleList.length > 1 && (() => {
-            const rec = soleList.find(s => s.recommended === 1 || s.recommended === true)
-            if (!rec || (rec.key || String(rec.id)) === selSole) return null
-            return (
+            {/* Steuerungs-Icons links unten */}
+            <div className="absolute left-4 bottom-4 flex items-center gap-2">
               <button
-                onClick={() => setSelSole(rec.key || String(rec.id))}
-                className="mt-2 w-full text-center text-[10px] text-black/50 border border-black/10 py-2 bg-transparent"
-                style={{ letterSpacing: '0.05em' }}
+                onClick={() => { setIs3D(v => !v); setRotY(0); setZoomed(false) }}
+                className={`w-8 h-8 flex items-center justify-center border transition-all ${
+                  is3D ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
+                }`}
               >
-                Lieber die {rec.label}? Besser bei Regen und Schnee.
+                <Box size={14} strokeWidth={1.5} />
               </button>
-            )
-          })()}
+              <button
+                onClick={() => { setZoomed(v => !v); setIs3D(false) }}
+                className={`w-8 h-8 flex items-center justify-center border transition-all ${
+                  zoomed ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
+                }`}
+              >
+                {zoomed ? <ZoomOut size={14} strokeWidth={1.5} /> : <ZoomIn size={14} strokeWidth={1.5} />}
+              </button>
+              <button className="w-8 h-8 bg-white/90 text-black border border-black/10 flex items-center justify-center transition-all">
+                <Eye size={14} strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* 3D-Hinweis */}
+            {is3D && (
+              <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
+                <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                  Ziehen zum Drehen
+                </span>
+              </div>
+            )}
+
+            {/* Pagination Dots */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+              {Array.from({ length: imgCount }).map((_, i) => (
+                <div key={i} className={`rounded-full transition-all ${i === imgIdx ? 'w-5 h-1.5 bg-black' : 'w-1.5 h-1.5 bg-black/20'}`} />
+              ))}
+            </div>
+
+            {/* Swipe-Hinweis (nur mobil) */}
+            <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none lg:hidden">
+              <span className="text-[9px] text-black/25" style={{ letterSpacing: '0.2em' }}>
+                ← WISCHEN ZUM WECHSELN →
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Scan-Hinweis */}
-        {!latestScan && (
-          <button
-            onClick={() => navigate('/scan')}
-            className="w-full p-4 border-y border-dashed border-black/15 bg-transparent flex items-center gap-3 text-left"
-          >
-            <div className="w-10 h-10 bg-black flex items-center justify-center flex-shrink-0">
-              <ScanLine size={18} className="text-white" strokeWidth={1.5} />
-            </div>
-            <div>
-              <p className="text-[11px] text-black" style={{ letterSpacing: '0.05em' }}>Fuß scannen</p>
-              <p className="text-[10px] text-black/35">Für die perfekte Größe</p>
-            </div>
-          </button>
-        )}
+        {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
+        <div className="flex-1 flex flex-col overflow-hidden lg:overflow-visible lg:max-w-md">
 
-        {/* Reviews (kompakt) */}
-        <div className="px-5">
-          <button
-            onClick={() => setShowReview(v => !v)}
-            className="w-full flex items-center justify-between bg-transparent border-0 p-0 pb-2 border-b border-black/8"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Bewertungen</span>
-              {reviews.length > 0 && (
-                <>
-                  <Stars value={avg} size={10} />
-                  <span className="text-[10px] text-black/30">({reviews.length})</span>
-                </>
-              )}
-            </div>
-            {showReview ? <ChevronUp size={14} className="text-black/30" /> : <ChevronDown size={14} className="text-black/30" />}
-          </button>
-
-          {showReview && (
-            <div className="space-y-2 mt-3">
-              {reviews.length === 0 && (
-                <p className="text-[10px] text-black/30 text-center py-3">Noch keine Bewertungen.</p>
-              )}
-              {reviews.slice(0, 3).map(rev => (
-                <div key={rev.id} className="border-b border-black/5 pb-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-black/60">{rev.user_name}</span>
-                    <Stars value={rev.rating} size={9} />
-                  </div>
-                  {rev.comment && <p className="text-[10px] text-black/40 mt-1">{rev.comment}</p>}
+          {/* ── Produkt-Info ─────────────────────────────────────── */}
+          <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
+            <p className="text-[13px] lg:text-[22px] font-light text-black leading-tight">{product.name}</p>
+            <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>{product.price}</p>
+            <div className="flex items-center gap-4 mt-2 lg:mt-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
+                <span className="text-[11px] lg:text-[12px] font-medium text-black">{product.match || '98.4%'}</span>
+              </div>
+              {latestScan && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Größe</span>
+                  <span className="text-[11px] lg:text-[12px] font-medium text-black">EU {latestScan.eu_size}</span>
                 </div>
-              ))}
+              )}
+            </div>
+          </div>
 
-              {!myRev && product.id && (
-                <div className="pt-2 space-y-2">
-                  <p className="text-[10px] text-black/40" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Deine Bewertung</p>
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map(n => (
-                      <button key={n} onClick={() => setMyRating(n)} className="bg-transparent border-0 p-0">
-                        <Star size={22} className={n <= myRating ? 'text-black fill-black' : 'text-black/15'} strokeWidth={1} />
+          <div className="h-px bg-black/8 lg:my-4" />
+
+          {/* ── Auswahl ────────────────────────────────────────── */}
+          <div className="flex-1 overflow-y-auto pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0 lg:overflow-visible">
+
+            {/* 1. Leder */}
+            <div {...matSwipe}>
+              <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder</p>
+              <div className="flex gap-2 overflow-x-auto flex-nowrap lg:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                {matList.map((m, i) => {
+                  const id = m.key || String(m.id)
+                  const avail = m.available !== 0 && m.available !== false
+                  const reminded = hasReminder('material', id)
+                  return (
+                    <button key={id}
+                      onClick={() => {
+                        if (avail) setSelMat(id)
+                        else if (!reminded) addReminder({ type: 'material', itemId: id, label: m.label })
+                        else removeReminder('material', id)
+                      }}
+                      className={`w-20 flex-shrink-0 lg:flex-shrink py-2 transition-all bg-transparent flex flex-col items-center gap-1.5 border ${
+                        !avail ? 'border-black/5 opacity-40' : selMat === id ? 'border-black' : 'border-black/8'
+                      }${i === 0 ? ' ml-5 lg:ml-0' : ''}${i === matList.length - 1 ? ' mr-5 lg:mr-0' : ''}`}
+                    >
+                      <div className="relative">
+                        <div className="w-10 h-10 rounded-full"
+                          style={{ background: m.color }} />
+                        {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/80" />}
+                        {!avail && reminded && <BellRing size={10} className="absolute inset-0 m-auto text-teal-500" />}
+                      </div>
+                      <span className="text-[10px] text-black/70" style={{ letterSpacing: '0.05em' }}>{m.label}</span>
+                      {!avail && <span className="text-[9px] text-black/30">{reminded ? 'Erinnert' : 'Bald da'}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+              {mat?.tip && (
+                <p className="text-[10px] text-black/35 mt-2 leading-relaxed px-5 lg:px-0">{mat.tip}</p>
+              )}
+            </div>
+
+            {/* 2. Farbe */}
+            <div {...colSwipe}>
+              <div className="flex items-center justify-between mb-3 px-5 lg:px-0">
+                <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe</p>
+                {col && <span className="text-[10px] lg:text-[11px] text-black/50">{col.name}</span>}
+              </div>
+              <div className="flex gap-2 overflow-x-auto flex-nowrap lg:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                {colList.map((c, i) => {
+                  const id = c.key || String(c.id)
+                  const avail = c.available !== 0 && c.available !== false
+                  const reminded = hasReminder('color', id)
+                  const sel = avail && selCol === id
+                  return (
+                    <div key={id}
+                      className={`flex-shrink-0 w-12 h-12 flex items-center justify-center border-2 transition-all ${
+                        sel ? 'border-black' : 'border-transparent'
+                      }${i === 0 ? ' ml-5 lg:ml-0' : ''}${i === colList.length - 1 ? ' mr-5 lg:mr-0' : ''}`}
+                    >
+                      <button
+                        onClick={() => {
+                          if (avail) setSelCol(id)
+                          else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
+                          else removeReminder('color', id)
+                        }}
+                        className={`w-9 h-9 rounded-full transition-all flex items-center justify-center border-0 ${
+                          !avail ? 'opacity-30' : ''
+                        }`}
+                        style={{ backgroundColor: c.hex }}
+                        title={c.name}
+                      >
+                        {sel && <Check size={14} className="text-white drop-shadow" strokeWidth={2.5} />}
+                        {!avail && <Lock size={10} className="text-white/60" />}
                       </button>
-                    ))}
-                  </div>
-                  <textarea
-                    value={myComment} onChange={e => setMyComment(e.target.value)}
-                    placeholder="Kommentar (optional)"
-                    className="w-full text-[11px] bg-transparent border border-black/10 px-3 py-2 outline-none focus:border-black/30 resize-none"
-                    rows={2} style={{ fontFamily: 'inherit' }}
-                  />
-                  <button onClick={handleReview} disabled={submitting || !myRating}
-                    className="w-full h-9 bg-black text-white text-[10px] border-0 disabled:opacity-20 flex items-center justify-center gap-1.5"
-                    style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                    <Send size={11} /> Absenden
+                    </div>
+                  )
+                })}
+              </div>
+              {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2 px-5 lg:px-0">Passt zu: {col.pairs_with}</p>}
+            </div>
+
+            {/* 3. Sohle */}
+            <div {...soleSwipe}>
+              <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sohle</p>
+
+              {soleList.length === 1 && (category === 'BOOT' || category === 'SNEAKER') && (
+                <p className="text-[10px] text-black/35 mb-2 px-5 lg:px-0">
+                  {category === 'BOOT' ? 'Boots haben immer die Gummi-Profilsohle.' : 'Sneaker haben immer ihre eigene Sohle.'}
+                </p>
+              )}
+
+              <div className="space-y-2">
+                {soleList.map(s => {
+                  const id = s.key || String(s.id)
+                  const sel = selSole === id
+                  return (
+                    <button key={id}
+                      onClick={() => soleList.length > 1 && setSelSole(id)}
+                      className={`w-full flex items-center gap-3 p-3.5 transition-all bg-transparent text-left border-y lg:border lg:rounded-sm ${
+                        sel ? 'border-black' : 'border-black/8'
+                      }`}
+                    >
+                      <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${sel ? 'bg-black' : 'bg-black/5'}`}>
+                        <ShieldCheck size={18} className={sel ? 'text-white' : 'text-black/30'} strokeWidth={1.5} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-black" style={{ letterSpacing: '0.03em' }}>{s.label}</span>
+                          {s.rating && <Dot rating={s.rating} />}
+                          {(s.recommended === 1 || s.recommended === true) && soleList.length > 1 && (
+                            <span className="text-[9px] text-black/40 border border-black/15 px-1.5 py-0.5" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Empfohlen</span>
+                          )}
+                        </div>
+                        {s.description && <p className="text-[10px] text-black/35 mt-0.5">{s.description}</p>}
+                      </div>
+                      {s.price_extra > 0 && <span className="text-[10px] text-black/50">+€{s.price_extra}</span>}
+                      {sel && <Check size={14} className="text-black" strokeWidth={2} />}
+                    </button>
+                  )
+                })}
+              </div>
+              {sole?.rating === 'warn' && soleList.length > 1 && (() => {
+                const rec = soleList.find(s => s.recommended === 1 || s.recommended === true)
+                if (!rec || (rec.key || String(rec.id)) === selSole) return null
+                return (
+                  <button
+                    onClick={() => setSelSole(rec.key || String(rec.id))}
+                    className="mt-2 w-full text-center text-[10px] text-black/50 border border-black/10 py-2 bg-transparent"
+                    style={{ letterSpacing: '0.05em' }}
+                  >
+                    Lieber die {rec.label}? Besser bei Regen und Schnee.
                   </button>
+                )
+              })()}
+            </div>
+
+            {/* Scan-Hinweis */}
+            {!latestScan && (
+              <button
+                onClick={() => navigate('/scan')}
+                className="w-full p-4 border-y lg:border lg:rounded-sm border-dashed border-black/15 bg-transparent flex items-center gap-3 text-left"
+              >
+                <div className="w-10 h-10 bg-black flex items-center justify-center flex-shrink-0">
+                  <ScanLine size={18} className="text-white" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-[11px] text-black" style={{ letterSpacing: '0.05em' }}>Fuß scannen</p>
+                  <p className="text-[10px] text-black/35">Für die perfekte Größe</p>
+                </div>
+              </button>
+            )}
+
+            {/* Reviews (kompakt) */}
+            <div className="px-5 lg:px-0">
+              <button
+                onClick={() => setShowReview(v => !v)}
+                className="w-full flex items-center justify-between bg-transparent border-0 p-0 pb-2 border-b border-black/8"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Bewertungen</span>
+                  {reviews.length > 0 && (
+                    <>
+                      <Stars value={avg} size={10} />
+                      <span className="text-[10px] text-black/30">({reviews.length})</span>
+                    </>
+                  )}
+                </div>
+                {showReview ? <ChevronUp size={14} className="text-black/30" /> : <ChevronDown size={14} className="text-black/30" />}
+              </button>
+
+              {showReview && (
+                <div className="space-y-2 mt-3">
+                  {reviews.length === 0 && (
+                    <p className="text-[10px] text-black/30 text-center py-3">Noch keine Bewertungen.</p>
+                  )}
+                  {reviews.slice(0, 3).map(rev => (
+                    <div key={rev.id} className="border-b border-black/5 pb-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-black/60">{rev.user_name}</span>
+                        <Stars value={rev.rating} size={9} />
+                      </div>
+                      {rev.comment && <p className="text-[10px] text-black/40 mt-1">{rev.comment}</p>}
+                    </div>
+                  ))}
+
+                  {!myRev && product.id && (
+                    <div className="pt-2 space-y-2">
+                      <p className="text-[10px] text-black/40" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Deine Bewertung</p>
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map(n => (
+                          <button key={n} onClick={() => setMyRating(n)} className="bg-transparent border-0 p-0">
+                            <Star size={22} className={n <= myRating ? 'text-black fill-black' : 'text-black/15'} strokeWidth={1} />
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={myComment} onChange={e => setMyComment(e.target.value)}
+                        placeholder="Kommentar (optional)"
+                        className="w-full text-[11px] bg-transparent border border-black/10 px-3 py-2 outline-none focus:border-black/30 resize-none"
+                        rows={2} style={{ fontFamily: 'inherit' }}
+                      />
+                      <button onClick={handleReview} disabled={submitting || !myRating}
+                        className="w-full h-9 bg-black text-white text-[10px] border-0 disabled:opacity-20 flex items-center justify-center gap-1.5"
+                        style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                        <Send size={11} /> Absenden
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
+
+            {/* Desktop: Kaufen-Button inline */}
+            <div className="hidden lg:block lg:pt-4 lg:pb-8">
+              <button
+                onClick={handleBuy}
+                disabled={added}
+                className={`w-full h-14 flex items-center justify-center gap-2.5 transition-all border-0 ${
+                  added ? 'bg-black/80 text-white' : 'bg-black text-white hover:bg-black/90 active:bg-black/85'
+                }`}
+                style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
+              >
+                {added
+                  ? <><Check size={16} strokeWidth={1.5} /> Bestellt</>
+                  : <><ShoppingBag size={16} strokeWidth={1.5} /> In den Warenkorb</>
+                }
+              </button>
+              <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ── Kaufen (LV-Style) ──────────────────────────────────── */}
-      <div className="bg-white border-t border-black/5 flex-shrink-0"
+      {/* ── Kaufen: Fixed Bottom (nur mobil) ──────────────────── */}
+      <div className="bg-white border-t border-black/5 flex-shrink-0 lg:hidden"
         style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 0px)' : '0px' }}>
         <button
           onClick={handleBuy}
