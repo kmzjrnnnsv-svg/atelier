@@ -309,6 +309,24 @@ export default function Customize() {
               </span>
             </div>
           </div>
+
+          {/* ── Lieferumfang (nur Desktop) ──────────────────────── */}
+          <div className="hidden lg:block pt-6 px-1">
+            <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Lieferumfang</p>
+            <div className="flex flex-col gap-1.5">
+              {[
+                'Handgefertigte Schuhe',
+                'Schuhbeutel aus Baumwolle',
+                'Schuhspanner aus Zedernholz',
+                'Pflegeanleitung',
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-2">
+                  <div className="w-1 h-1 rounded-full bg-black/15" />
+                  <span className="text-[11px] text-black/40">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
