@@ -7,17 +7,18 @@ const router = Router()
 const canWrite = [authenticate, requireRole('admin', 'curator')]
 const mustRead = [authenticate]
 
-function makeContentRouter(table, writeValidators = []) {
+function makeContentRouter(table, writeValidators = [], { publicRead = false } = {}) {
   const r = Router()
+  const readGuard = publicRead ? [] : mustRead
 
   // GET all
-  r.get('/', mustRead, (req, res) => {
+  r.get('/', ...readGuard, (req, res) => {
     const rows = getDb().prepare(`SELECT * FROM ${table} ORDER BY id ASC`).all()
     res.json(rows)
   })
 
   // GET one
-  r.get('/:id', mustRead, param('id').isInt(), (req, res) => {
+  r.get('/:id', ...readGuard, param('id').isInt(), (req, res) => {
     const row = getDb().prepare(`SELECT * FROM ${table} WHERE id = ?`).get(req.params.id)
     if (!row) return res.status(404).json({ error: 'Not found' })
     res.json(row)
@@ -136,14 +137,14 @@ const exploreValidators = [
   body('sort_order').optional().isInt({ min: 0 }),
 ]
 
-export const shoesRouter      = makeContentRouter('shoes', shoeValidators)
+export const shoesRouter      = makeContentRouter('shoes', shoeValidators, { publicRead: true })
 export const curatedRouter    = makeContentRouter('curated_items')
 export const wardrobeRouter   = makeContentRouter('wardrobe_items')
 export const outfitsRouter    = makeContentRouter('outfits', outfitValidators)
-export const articlesRouter   = makeContentRouter('articles', articleValidators)
-export const materialsRouter  = makeContentRouter('shoe_materials')
-export const colorsRouter     = makeContentRouter('shoe_colors')
-export const solesRouter      = makeContentRouter('shoe_soles')
-export const exploreSectionsRouter = makeContentRouter('explore_sections', exploreValidators)
+export const articlesRouter   = makeContentRouter('articles', articleValidators, { publicRead: true })
+export const materialsRouter  = makeContentRouter('shoe_materials', [], { publicRead: true })
+export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true })
+export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead: true })
+export const exploreSectionsRouter = makeContentRouter('explore_sections', exploreValidators, { publicRead: true })
 
 export default router

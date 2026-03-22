@@ -105,7 +105,7 @@ router.put('/email',
 // ─── GET /api/settings/explore — curators + admin ───────────────────────────
 const EXPLORE_KEYS = ['explore_hero_image', 'explore_hero_title', 'explore_hero_subtitle']
 
-router.get('/explore', authenticate, requireRole('admin', 'curator'), (req, res) => {
+router.get('/explore', (req, res) => {
   const db   = getDb()
   const rows = db.prepare(`SELECT key, value FROM settings WHERE key IN (${EXPLORE_KEYS.map(() => '?').join(',')})`)
     .all(...EXPLORE_KEYS)
