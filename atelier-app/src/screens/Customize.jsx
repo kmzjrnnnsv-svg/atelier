@@ -192,10 +192,14 @@ export default function Customize() {
   const avg      = reviews.length ? reviews.reduce((s,r) => s + r.rating, 0) / reviews.length : 0
   const myRev    = reviews.find(r => r.user_id === user?.id)
 
-  // Preis: Basispreis aus DB + Sohle-Aufpreis
+  // Preis: Basispreis aus DB + Sohle-Aufpreis + Zubehör
   const basePrice = parseFloat(String(product.price).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
   const soleExtra = sole?.price_extra || 0
-  const totalPrice = basePrice + soleExtra
+  const accessoryTotal = selectedAccessories.reduce((sum, id) => {
+    const acc = accessories.find(a => a.id === id)
+    return sum + (acc?.price || 0)
+  }, 0)
+  const totalPrice = basePrice + soleExtra + accessoryTotal
   const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
   const displayPrice = formatPrice(totalPrice)
 
@@ -223,26 +227,49 @@ export default function Customize() {
   const onPointerUp = () => { drag.current.on = false }
 
   const handleAddToCart = () => {
+    // Schuh hinzufügen
     addToCart({
       shoeId: product.id, name: product.name,
       material: mat?.label || product.material,
-      color, price: displayPrice,
+      color, price: formatPrice(basePrice + soleExtra),
       sole: sole?.label || 'Sohle',
       image: product.image,
+    })
+    // Ausgewähltes Zubehör einzeln hinzufügen
+    selectedAccessories.forEach(id => {
+      const acc = accessories.find(a => a.id === id)
+      if (acc) {
+        addToCart({
+          shoeId: `acc-${acc.id}`,
+          name: acc.name,
+          material: '',
+          color: acc.color,
+          price: formatPrice(acc.price),
+          sole: '',
+          image: null,
+          isAccessory: true,
+        })
+      }
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
 
   const handleBuyNow = () => {
+    const cartAccessories = selectedAccessories.map(id => {
+      const acc = accessories.find(a => a.id === id)
+      return acc ? { id: acc.id, name: acc.name, price: acc.price, color: acc.color } : null
+    }).filter(Boolean)
+
     navigate('/checkout', {
       state: {
         product: {
           id: product.id, name: product.name,
           material: mat?.label || product.material,
-          color, price: displayPrice,
+          color, price: formatPrice(basePrice + soleExtra),
           sole: sole?.label || 'Sohle',
         },
+        accessories: cartAccessories,
       },
     })
   }
@@ -516,7 +543,11 @@ export default function Customize() {
             <p className="text-[13px] lg:text-[22px] font-light text-black leading-tight">{product.name}</p>
             <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
               {displayPrice}
-              {soleExtra > 0 && <span className="text-[10px] text-black/35 ml-2">(+€{soleExtra} Sohle)</span>}
+              {(soleExtra > 0 || accessoryTotal > 0) && (
+                <span className="text-[10px] text-black/35 ml-2">
+                  ({[soleExtra > 0 && `+€${soleExtra} Sohle`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
+                </span>
+              )}
             </p>
             <div className="flex items-center gap-4 mt-2 lg:mt-3">
               <div className="flex items-center gap-1.5">
@@ -792,11 +823,23 @@ export default function Customize() {
                       <span className="text-[11px] text-black">EU {latestScan.eu_size}</span>
                     </div>
                   )}
+                  {selectedAccessories.length > 0 && (
+                    <div className="flex items-center justify-between pt-1 mt-1 border-t border-black/5">
+                      <span className="text-[11px] text-black/50">Zubehör</span>
+                      <span className="text-[11px] text-black">
+                        {selectedAccessories.length}× (+€{accessoryTotal})
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <p className="text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
                 {displayPrice}
-                {soleExtra > 0 && <span className="text-[11px] text-black/35 ml-2">(+€{soleExtra} Sohle)</span>}
+                {(soleExtra > 0 || accessoryTotal > 0) && (
+                  <span className="text-[11px] text-black/35 ml-2">
+                    ({[soleExtra > 0 && `+€${soleExtra} Sohle`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
+                  </span>
+                )}
               </p>
               <div className="flex gap-3">
                 <button
@@ -839,7 +882,10 @@ export default function Customize() {
           <span className="text-black/15">·</span>
           <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{sole?.label}</span>
         </div>
-        <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>{displayPrice}</p>
+        <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>
+          {displayPrice}
+          {accessoryTotal > 0 && <span className="text-[9px] text-black/35 ml-1">(inkl. {selectedAccessories.length}× Zubehör)</span>}
+        </p>
         <div className="flex gap-2">
           <button
             onClick={handleAddToCart}
