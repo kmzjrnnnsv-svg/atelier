@@ -264,22 +264,19 @@ export default function Customize() {
           style={{ scrollbarWidth: 'none' }}
           onWheel={(e) => {
             const rp = rightPanelRef.current
-            if (!rp) return
+            const lp = leftPanelRef.current
+            if (!rp || !lp) return
             const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
-            if (!rpAtBottom && e.deltaY > 0) {
-              // Right not fully scrolled – forward scroll to right
+            if (!rpAtBottom) {
+              // Phase 1: right panel scrolls first
               e.preventDefault()
               rp.scrollTop += e.deltaY
-            } else if (rpAtBottom) {
-              // Right fully scrolled – let left panel scroll naturally
-            } else if (e.deltaY < 0) {
-              // Scrolling up on left panel
-              const lp = leftPanelRef.current
-              if (lp && lp.scrollTop <= 0) {
-                e.preventDefault()
-                rp.scrollTop += e.deltaY
-              }
+            } else if (e.deltaY < 0 && lp.scrollTop <= 0) {
+              // Scrolling up & left is at top → scroll right back up
+              e.preventDefault()
+              rp.scrollTop += e.deltaY
             }
+            // Otherwise: left scrolls naturally (Phase 2)
           }}
         >
           <div
@@ -383,67 +380,84 @@ export default function Customize() {
             </div>
           </div>
 
-          {/* ── Zubehör (nur Desktop, Apple-style) ─────────────── */}
+          {/* ── Zubehör (nur Desktop, Apple-style 2x2) ────────── */}
           <div
-            className="hidden lg:flex flex-col gap-4 pt-10 pb-16"
+            className="hidden lg:block pt-10 pb-16"
             style={{
               opacity: rightFullyScrolled ? 1 : 0.3,
               transition: 'opacity 0.5s ease',
             }}
           >
-            <p className="text-[10px] text-black/30 uppercase px-1 mb-1" style={{ letterSpacing: '0.18em' }}>Passend dazu</p>
+            <p className="text-[10px] text-black/30 uppercase px-1 mb-4" style={{ letterSpacing: '0.18em' }}>Passend dazu</p>
 
-            {accessories.map((acc) => {
-              const selected = selectedAccessories.includes(acc.id)
-              return (
-                <button
-                  key={acc.id}
-                  onClick={() => toggleAccessory(acc.id)}
-                  className="relative w-full text-left group"
-                >
-                  {/* Large product card */}
-                  <div
-                    className="w-full rounded-sm overflow-hidden flex items-center justify-center"
-                    style={{
-                      aspectRatio: '4 / 3',
-                      background: '#f6f5f3',
-                      outline: selected ? '1.5px solid black' : 'none',
-                    }}
+            <div className="grid grid-cols-2 gap-4">
+              {accessories.map((acc) => {
+                const selected = selectedAccessories.includes(acc.id)
+                return (
+                  <button
+                    key={acc.id}
+                    onClick={() => toggleAccessory(acc.id)}
+                    className="relative text-left group"
                   >
-                    {/* Placeholder visual */}
+                    {/* Product image area */}
                     <div
-                      className="w-16 h-16 rounded-full transition-transform group-hover:scale-110"
-                      style={{ background: acc.color, opacity: 0.7 }}
-                    />
-                  </div>
-
-                  {/* Info row below image */}
-                  <div className="flex items-center justify-between mt-2.5 px-0.5">
-                    <div>
-                      <p className="text-[13px] text-black/80 font-light">{acc.name}</p>
-                      <p className="text-[11px] text-black/35 mt-0.5">€{acc.price}</p>
-                    </div>
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center transition-all shrink-0"
+                      className="w-full rounded-sm overflow-hidden flex items-center justify-center"
                       style={{
-                        background: selected ? 'black' : 'transparent',
-                        border: selected ? '1.5px solid black' : '1.5px solid rgba(0,0,0,0.15)',
+                        aspectRatio: '1',
+                        background: '#f6f5f3',
+                        outline: selected ? '1.5px solid black' : 'none',
                       }}
                     >
-                      {selected
-                        ? <Check size={12} className="text-white" strokeWidth={2.5} />
-                        : <Plus size={12} className="text-black/30" strokeWidth={2} />
-                      }
+                      <div
+                        className="w-12 h-12 rounded-full transition-transform group-hover:scale-110"
+                        style={{ background: acc.color, opacity: 0.7 }}
+                      />
+                      {/* Toggle badge */}
+                      <div
+                        className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-all"
+                        style={{
+                          background: selected ? 'black' : 'white',
+                          border: selected ? '1.5px solid black' : '1.5px solid rgba(0,0,0,0.12)',
+                        }}
+                      >
+                        {selected
+                          ? <Check size={11} className="text-white" strokeWidth={2.5} />
+                          : <Plus size={11} className="text-black/30" strokeWidth={2} />
+                        }
+                      </div>
                     </div>
-                  </div>
-                </button>
-              )
-            })}
+
+                    {/* Info below */}
+                    <p className="text-[12px] text-black/70 font-light mt-2 px-0.5">{acc.name}</p>
+                    <p className="text-[11px] text-black/35 px-0.5">€{acc.price}</p>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
 
         {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
-        <div ref={rightPanelRef} className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0" style={{ scrollbarWidth: 'none' }}>
+        <div
+          ref={rightPanelRef}
+          className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0"
+          style={{ scrollbarWidth: 'none' }}
+          onWheel={(e) => {
+            const rp = rightPanelRef.current
+            const lp = leftPanelRef.current
+            if (!rp || !lp) return
+            const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
+            if (rpAtBottom && e.deltaY > 0) {
+              // Right fully scrolled → forward to left panel
+              e.preventDefault()
+              lp.scrollTop += e.deltaY
+            } else if (e.deltaY < 0 && rp.scrollTop <= 0) {
+              // Right at top, scrolling up → scroll left back up
+              e.preventDefault()
+              lp.scrollTop += e.deltaY
+            }
+          }}
+        >
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
           <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
