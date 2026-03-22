@@ -17,6 +17,10 @@ html, body, #root {
   padding: 0;
   width: 100vw;
   max-width: 100vw;
+}
+
+/* Native (Capacitor) gets fixed viewport; web uses natural document scroll */
+html.native, html.native body, html.native #root {
   height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
