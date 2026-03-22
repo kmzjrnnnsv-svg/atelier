@@ -979,7 +979,7 @@ const saveValidators = [
 ]
 
 // POST /api/scans — save a scan (any authenticated user)
-router.post('/', authenticate, ...saveValidators, (req, res) => {
+router.post('/', authenticate, ...saveValidators, async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
 
