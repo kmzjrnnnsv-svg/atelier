@@ -128,6 +128,13 @@ export default function Customize() {
   const avg      = reviews.length ? reviews.reduce((s,r) => s + r.rating, 0) / reviews.length : 0
   const myRev    = reviews.find(r => r.user_id === user?.id)
 
+  // Preis: Basispreis aus DB + Sohle-Aufpreis
+  const basePrice = parseFloat(String(product.price).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
+  const soleExtra = sole?.price_extra || 0
+  const totalPrice = basePrice + soleExtra
+  const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
+  const displayPrice = formatPrice(totalPrice)
+
   // Swipe
   const matSwipe  = useSwipe(matList, selMat, setSelMat)
   const colSwipe  = useSwipe(colList, selCol, setSelCol)
@@ -155,7 +162,7 @@ export default function Customize() {
     addToCart({
       shoeId: product.id, name: product.name,
       material: mat?.label || product.material,
-      color, price: product.price,
+      color, price: displayPrice,
       sole: sole?.label || 'Sohle',
       image: product.image,
     })
@@ -169,7 +176,7 @@ export default function Customize() {
         product: {
           id: product.id, name: product.name,
           material: mat?.label || product.material,
-          color, price: product.price,
+          color, price: displayPrice,
           sole: sole?.label || 'Sohle',
         },
       },
@@ -307,7 +314,10 @@ export default function Customize() {
           {/* ── Produkt-Info ─────────────────────────────────────── */}
           <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
             <p className="text-[13px] lg:text-[22px] font-light text-black leading-tight">{product.name}</p>
-            <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>{product.price}</p>
+            <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
+              {displayPrice}
+              {soleExtra > 0 && <span className="text-[10px] text-black/35 ml-2">(+€{soleExtra} Sohle)</span>}
+            </p>
             <div className="flex items-center gap-4 mt-2 lg:mt-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
@@ -536,6 +546,10 @@ export default function Customize() {
 
             {/* Desktop: Buttons inline */}
             <div className="hidden lg:block lg:pt-4 lg:pb-8">
+              <p className="text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
+                {displayPrice}
+                {soleExtra > 0 && <span className="text-[11px] text-black/35 ml-2">(+€{soleExtra} Sohle)</span>}
+              </p>
               <div className="flex gap-3">
                 <button
                   onClick={handleAddToCart}
@@ -558,7 +572,7 @@ export default function Customize() {
                   Jetzt kaufen
                 </button>
               </div>
-              <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
+              <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Kostenlose Lieferung</p>
             </div>
           </div>
         </div>
@@ -567,6 +581,7 @@ export default function Customize() {
       {/* ── Kaufen: Fixed Bottom (nur mobil) ──────────────────── */}
       <div className="sticky bottom-0 z-20 bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2"
         style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 8px)' : '8px' }}>
+        <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>{displayPrice}</p>
         <div className="flex gap-2">
           <button
             onClick={handleAddToCart}
@@ -589,7 +604,7 @@ export default function Customize() {
             Jetzt kaufen
           </button>
         </div>
-        <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
+        <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Kostenlose Lieferung</p>
       </div>
     </div>
   )
