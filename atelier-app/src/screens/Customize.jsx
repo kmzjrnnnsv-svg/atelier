@@ -224,7 +224,7 @@ export default function Customize() {
       <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 lg:min-h-0">
 
         {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
-        <div className="sticky top-12 z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:overflow-hidden">
+        <div className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:overflow-hidden">
           <div
             className="relative overflow-hidden select-none lg:rounded-sm lg:h-full"
             style={{
