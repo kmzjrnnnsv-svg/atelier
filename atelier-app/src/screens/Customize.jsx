@@ -68,7 +68,7 @@ function getDefaultSole(soles) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles } = useAtelierStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart } = useAtelierStore()
   const { user } = useAuth()
 
   const product = location.state?.product || {
@@ -151,7 +151,19 @@ export default function Customize() {
   }
   const onPointerUp = () => { drag.current.on = false }
 
-  const handleBuy = () => {
+  const handleAddToCart = () => {
+    addToCart({
+      shoeId: product.id, name: product.name,
+      material: mat?.label || product.material,
+      color, price: product.price,
+      sole: sole?.label || 'Sohle',
+      image: product.image,
+    })
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
+  }
+
+  const handleBuyNow = () => {
     navigate('/checkout', {
       state: {
         product: {
@@ -522,21 +534,30 @@ export default function Customize() {
               )}
             </div>
 
-            {/* Desktop: Kaufen-Button inline */}
+            {/* Desktop: Buttons inline */}
             <div className="hidden lg:block lg:pt-4 lg:pb-8">
-              <button
-                onClick={handleBuy}
-                disabled={added}
-                className={`w-full h-14 flex items-center justify-center gap-2.5 transition-all border-0 ${
-                  added ? 'bg-black/80 text-white' : 'bg-black text-white hover:bg-black/90 active:bg-black/85'
-                }`}
-                style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
-              >
-                {added
-                  ? <><Check size={16} strokeWidth={1.5} /> Bestellt</>
-                  : <><ShoppingBag size={16} strokeWidth={1.5} /> In den Warenkorb</>
-                }
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={added}
+                  className={`flex-1 h-14 flex items-center justify-center gap-2.5 transition-all border ${
+                    added ? 'bg-black/5 text-black border-black/20' : 'bg-white text-black border-black/20 hover:bg-black/5 active:bg-black/10'
+                  }`}
+                  style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
+                >
+                  {added
+                    ? <><Check size={16} strokeWidth={1.5} /> Hinzugefügt</>
+                    : <><ShoppingBag size={16} strokeWidth={1.5} /> Warenkorb</>
+                  }
+                </button>
+                <button
+                  onClick={handleBuyNow}
+                  className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85"
+                  style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
+                >
+                  Jetzt kaufen
+                </button>
+              </div>
               <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
             </div>
           </div>
@@ -544,22 +565,31 @@ export default function Customize() {
       </div>
 
       {/* ── Kaufen: Fixed Bottom (nur mobil) ──────────────────── */}
-      <div className="bg-white border-t border-black/5 flex-shrink-0 lg:hidden"
-        style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 0px)' : '0px' }}>
-        <button
-          onClick={handleBuy}
-          disabled={added}
-          className={`w-full h-12 flex items-center justify-center gap-2.5 transition-all border-0 ${
-            added ? 'bg-black/80 text-white' : 'bg-black text-white active:bg-black/85'
-          }`}
-          style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '11px', borderRadius: 0 }}
-        >
-          {added
-            ? <><Check size={16} strokeWidth={1.5} /> Bestellt</>
-            : <><ShoppingBag size={16} strokeWidth={1.5} /> In den Warenkorb</>
-          }
-        </button>
-        <p className="text-center text-[9px] text-black/25 mt-2.5 pb-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
+      <div className="bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2"
+        style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 8px)' : '8px' }}>
+        <div className="flex gap-2">
+          <button
+            onClick={handleAddToCart}
+            disabled={added}
+            className={`flex-1 h-12 flex items-center justify-center gap-2 transition-all border ${
+              added ? 'bg-black/5 text-black border-black/20' : 'bg-white text-black border-black/20 active:bg-black/5'
+            }`}
+            style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
+          >
+            {added
+              ? <><Check size={14} strokeWidth={1.5} /> Hinzugefügt</>
+              : <><ShoppingBag size={14} strokeWidth={1.5} /> Warenkorb</>
+            }
+          </button>
+          <button
+            onClick={handleBuyNow}
+            className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85"
+            style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
+          >
+            Jetzt kaufen
+          </button>
+        </div>
+        <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
       </div>
     </div>
   )
