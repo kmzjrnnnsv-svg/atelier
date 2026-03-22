@@ -32,7 +32,7 @@ body {
   background-attachment: fixed;
 }
 
-#root {
+html.native #root {
   display: flex;
   flex-direction: column;
 }
