@@ -128,6 +128,13 @@ export default function Customize() {
   const avg      = reviews.length ? reviews.reduce((s,r) => s + r.rating, 0) / reviews.length : 0
   const myRev    = reviews.find(r => r.user_id === user?.id)
 
+  // Preis: Basispreis aus DB + Sohle-Aufpreis
+  const basePrice = parseFloat(String(product.price).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
+  const soleExtra = sole?.price_extra || 0
+  const totalPrice = basePrice + soleExtra
+  const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
+  const displayPrice = formatPrice(totalPrice)
+
   // Swipe
   const matSwipe  = useSwipe(matList, selMat, setSelMat)
   const colSwipe  = useSwipe(colList, selCol, setSelCol)
@@ -155,7 +162,7 @@ export default function Customize() {
     addToCart({
       shoeId: product.id, name: product.name,
       material: mat?.label || product.material,
-      color, price: product.price,
+      color, price: displayPrice,
       sole: sole?.label || 'Sohle',
       image: product.image,
     })
@@ -169,7 +176,7 @@ export default function Customize() {
         product: {
           id: product.id, name: product.name,
           material: mat?.label || product.material,
-          color, price: product.price,
+          color, price: displayPrice,
           sole: sole?.label || 'Sohle',
         },
       },
@@ -190,7 +197,7 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden lg:overflow-auto">
+    <div className="flex flex-col h-full bg-white overflow-y-auto lg:overflow-auto">
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
@@ -214,14 +221,14 @@ export default function Customize() {
       </div>
 
       {/* ── Desktop: Two-Column / Mobile: Stacked ────────────────── */}
-      <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 overflow-hidden lg:overflow-visible">
+      <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4">
 
-        {/* ── LEFT: Produkt-Viewer (sticky on desktop) ──────────── */}
-        <div className="lg:flex-1 lg:sticky lg:top-0 lg:self-start">
+        {/* ── LEFT: Produkt-Viewer (sticky) ──────────────────────── */}
+        <div className="sticky top-12 z-10 lg:flex-1 lg:top-14 lg:self-start">
           <div
             className="relative overflow-hidden select-none lg:rounded-sm"
             style={{
-              height: 'clamp(200px, 34dvh, 300px)',
+              height: 'clamp(240px, 40dvh, 380px)',
               cursor: is3D ? 'grab' : 'default',
               background: '#f6f5f3',
             }}
@@ -240,7 +247,7 @@ export default function Customize() {
               }}
             >
               {product.image ? (
-                <img src={product.image} alt={product.name} className="w-full h-full object-contain p-8 lg:p-12" />
+                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
                   <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
@@ -302,12 +309,15 @@ export default function Customize() {
         </div>
 
         {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
-        <div className="flex-1 flex flex-col overflow-hidden lg:overflow-visible lg:max-w-md">
+        <div className="flex-1 flex flex-col lg:max-w-md">
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
           <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
             <p className="text-[13px] lg:text-[22px] font-light text-black leading-tight">{product.name}</p>
-            <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>{product.price}</p>
+            <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
+              {displayPrice}
+              {soleExtra > 0 && <span className="text-[10px] text-black/35 ml-2">(+€{soleExtra} Sohle)</span>}
+            </p>
             <div className="flex items-center gap-4 mt-2 lg:mt-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
@@ -325,7 +335,7 @@ export default function Customize() {
           <div className="h-px bg-black/8 lg:my-4" />
 
           {/* ── Auswahl ────────────────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0 lg:overflow-visible">
+          <div className="pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0">
 
             {/* 1. Leder */}
             <div {...matSwipe}>
@@ -536,6 +546,10 @@ export default function Customize() {
 
             {/* Desktop: Buttons inline */}
             <div className="hidden lg:block lg:pt-4 lg:pb-8">
+              <p className="text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
+                {displayPrice}
+                {soleExtra > 0 && <span className="text-[11px] text-black/35 ml-2">(+€{soleExtra} Sohle)</span>}
+              </p>
               <div className="flex gap-3">
                 <button
                   onClick={handleAddToCart}
@@ -558,15 +572,16 @@ export default function Customize() {
                   Jetzt kaufen
                 </button>
               </div>
-              <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
+              <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Kostenlose Lieferung</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Kaufen: Fixed Bottom (nur mobil) ──────────────────── */}
-      <div className="bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2"
+      <div className="sticky bottom-0 z-20 bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2"
         style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 8px)' : '8px' }}>
+        <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>{displayPrice}</p>
         <div className="flex gap-2">
           <button
             onClick={handleAddToCart}
@@ -589,7 +604,7 @@ export default function Customize() {
             Jetzt kaufen
           </button>
         </div>
-        <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Lieferung in 4 Wochen</p>
+        <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Kostenlose Lieferung</p>
       </div>
     </div>
   )
