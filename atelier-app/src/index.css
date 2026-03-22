@@ -43,6 +43,11 @@ html:not(.mobile-web) #root {
   flex-direction: column;
 }
 
+/* Mobile web: screens must fill at least the viewport */
+html.mobile-web #root > * {
+  min-height: 100dvh;
+}
+
 .font-playfair {
   font-family: 'Playfair Display', serif;
 }
