@@ -7,8 +7,8 @@ const router = Router()
 const canRead  = authenticate
 const canWrite = [authenticate, requireRole('admin', 'curator')]
 
-// GET /api/faqs
-router.get('/', canRead, (req, res) => {
+// GET /api/faqs (public)
+router.get('/', (req, res) => {
   const rows = getDb()
     .prepare('SELECT * FROM faqs ORDER BY sort_order ASC, id ASC')
     .all()

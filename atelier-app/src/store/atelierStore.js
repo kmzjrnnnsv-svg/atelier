@@ -83,11 +83,11 @@ const useAtelierStore = create((set, get) => ({
     set({ loading: true, error: null })
     try {
       const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData] = await Promise.all([
-        apiFetch('/api/shoes'),
-        apiFetch('/api/curated'),
-        apiFetch('/api/wardrobe'),
-        apiFetch('/api/outfits'),
-        apiFetch('/api/articles'),
+        apiFetch('/api/shoes').catch(() => []),
+        apiFetch('/api/curated').catch(() => []),
+        apiFetch('/api/wardrobe').catch(() => []),
+        apiFetch('/api/outfits').catch(() => []),
+        apiFetch('/api/articles').catch(() => []),
         apiFetch('/api/favorites/mine').catch(() => []),
         apiFetch('/api/orders/mine').catch(() => []),
         apiFetch('/api/faqs').catch(() => []),

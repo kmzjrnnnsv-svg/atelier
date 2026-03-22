@@ -5,8 +5,8 @@ import { authenticate } from '../middleware/auth.js'
 
 const router = Router()
 
-// GET /api/reviews/shoe/:shoeId
-router.get('/shoe/:shoeId', authenticate, (req, res) => {
+// GET /api/reviews/shoe/:shoeId (public)
+router.get('/shoe/:shoeId', (req, res) => {
   const rows = getDb()
     .prepare(`SELECT r.*, u.name as user_name
               FROM reviews r JOIN users u ON u.id = r.user_id
