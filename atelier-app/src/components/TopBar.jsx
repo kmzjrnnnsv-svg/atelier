@@ -28,7 +28,7 @@ export default function TopBar() {
   return (
     <>
       {/* ── Header bar ── */}
-      <header className="flex items-center justify-between px-4 h-12" style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(250,250,250,0.5)', backdropFilter: 'blur(40px) saturate(180%) brightness(1.1)', WebkitBackdropFilter: 'blur(40px) saturate(180%) brightness(1.1)', boxShadow: 'inset 0 0 4px 0 rgba(255,255,255,0.5), 0 0.5px 0 0 rgba(0,0,0,0.05)', borderBottom: '0.5px solid rgba(255,255,255,0.6)' }}>
+      <header className="flex items-center justify-between px-4 h-12" style={{ position: 'sticky', top: 0, zIndex: 20, background: '#fff', boxShadow: '0 0.5px 0 0 rgba(0,0,0,0.05)', borderBottom: '0.5px solid rgba(0,0,0,0.05)' }}>
         <button onClick={() => setOpen(true)} className="bg-transparent border-0 p-1 -ml-1 text-black">
           <Menu size={22} strokeWidth={1.5} />
         </button>
