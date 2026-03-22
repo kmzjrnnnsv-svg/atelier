@@ -28,7 +28,7 @@ export default function BottomNav() {
 
   return (
     <div className="bg-white border-t border-black/5 flex items-center justify-around px-2 pt-0 flex-shrink-0"
-      style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
+      style={{ paddingBottom: isNative ? 'calc(env(safe-area-inset-bottom, 0px) + 4px)' : '12px' }}>
       {NAV_ITEMS.map(({ id, icon: Icon, label, path }) => {
         const isActive = activeId === id
         return (
