@@ -31,9 +31,9 @@ const server = http.createServer((req, res) => {
     }
 
     const payload = JSON.parse(body)
-    if (payload.ref !== 'refs/heads/main') {
+    if (payload.ref !== 'refs/heads/website') {
       res.writeHead(200)
-      return res.end('Not main branch — skipped')
+      return res.end('Not website branch — skipped')
     }
 
     console.log(`Deploy triggered by push from ${payload.pusher?.name}`)
@@ -41,7 +41,7 @@ const server = http.createServer((req, res) => {
     res.end('Deploying...')
 
     try {
-      execSync(`cd ${APP_DIR} && git pull origin main`, { stdio: 'inherit' })
+      execSync(`cd ${APP_DIR} && git pull origin website`, { stdio: 'inherit' })
       execSync(`cd ${APP_DIR}/atelier-app && npm install && npm run build`, { stdio: 'inherit' })
       execSync(`cd ${APP_DIR}/atelier-backend && npm install --production`, { stdio: 'inherit' })
       // Restart backend — adjust to your process manager (pm2/systemd)
