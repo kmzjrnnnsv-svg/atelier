@@ -3,6 +3,8 @@ import express from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import crypto from 'crypto'
+import { execFile } from 'child_process'
 import { getDb } from './db/database.js'
 import { seedDatabase } from './db/seed.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
@@ -87,6 +89,31 @@ app.use('/api/email-templates', emailTemplatesRouter)
 app.use('/api/explore-sections', exploreSectionsRouter)
 app.use('/api/loyalty', loyaltyRouter)
 app.use('/api/feedback', feedbackRouter)
+
+// GitHub Webhook — auto-deploy on push to website
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const secret = process.env.WEBHOOK_SECRET
+  if (secret) {
+    const sig = req.headers['x-hub-signature-256']
+    const hmac = crypto.createHmac('sha256', secret).update(req.body).digest('hex')
+    if (sig !== `sha256=${hmac}`) {
+      return res.status(401).json({ error: 'Invalid signature' })
+    }
+  }
+
+  const payload = JSON.parse(req.body)
+  if (payload.ref !== 'refs/heads/website') {
+    return res.json({ status: 'ignored', ref: payload.ref })
+  }
+
+  console.log('Webhook: deploying website branch...')
+  execFile('/home/nrply/app/deploy.sh', (err, stdout, stderr) => {
+    if (err) console.error('Deploy failed:', stderr)
+    else console.log('Deploy done:', stdout)
+  })
+
+  res.json({ status: 'deploying' })
+})
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
