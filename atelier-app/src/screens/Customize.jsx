@@ -190,7 +190,7 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-hidden lg:overflow-auto">
+    <div className="flex flex-col h-full bg-white overflow-y-auto lg:overflow-auto">
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
@@ -214,14 +214,14 @@ export default function Customize() {
       </div>
 
       {/* ── Desktop: Two-Column / Mobile: Stacked ────────────────── */}
-      <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 overflow-hidden lg:overflow-visible">
+      <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4">
 
-        {/* ── LEFT: Produkt-Viewer (sticky on desktop) ──────────── */}
-        <div className="lg:flex-1 lg:sticky lg:top-0 lg:self-start">
+        {/* ── LEFT: Produkt-Viewer (sticky) ──────────────────────── */}
+        <div className="sticky top-12 z-10 lg:flex-1 lg:top-14 lg:self-start">
           <div
             className="relative overflow-hidden select-none lg:rounded-sm"
             style={{
-              height: 'clamp(200px, 34dvh, 300px)',
+              height: 'clamp(240px, 40dvh, 380px)',
               cursor: is3D ? 'grab' : 'default',
               background: '#f6f5f3',
             }}
@@ -240,7 +240,7 @@ export default function Customize() {
               }}
             >
               {product.image ? (
-                <img src={product.image} alt={product.name} className="w-full h-full object-contain p-8 lg:p-12" />
+                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
                   <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
@@ -302,7 +302,7 @@ export default function Customize() {
         </div>
 
         {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
-        <div className="flex-1 flex flex-col overflow-hidden lg:overflow-visible lg:max-w-md">
+        <div className="flex-1 flex flex-col lg:max-w-md">
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
           <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
@@ -325,7 +325,7 @@ export default function Customize() {
           <div className="h-px bg-black/8 lg:my-4" />
 
           {/* ── Auswahl ────────────────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0 lg:overflow-visible">
+          <div className="pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0">
 
             {/* 1. Leder */}
             <div {...matSwipe}>
@@ -565,7 +565,7 @@ export default function Customize() {
       </div>
 
       {/* ── Kaufen: Fixed Bottom (nur mobil) ──────────────────── */}
-      <div className="bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2"
+      <div className="sticky bottom-0 z-20 bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2"
         style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 8px)' : '8px' }}>
         <div className="flex gap-2">
           <button
