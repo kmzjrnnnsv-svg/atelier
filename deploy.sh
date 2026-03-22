@@ -10,7 +10,7 @@ set -e
 
 APP_DIR="$HOME/atelier"
 LOG="$HOME/deploy.log"
-BRANCH="main"
+BRANCH="website"
 
 echo "──────────────────────────────────────"
 echo "  Atelier Deploy — $(date '+%Y-%m-%d %H:%M:%S')"
