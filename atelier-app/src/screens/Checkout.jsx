@@ -96,7 +96,7 @@ function AccessoryCard({ item, selected, onToggle }) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty } = useAtelierStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, savedDeliveryAddress, savedBillingAddress, saveAddresses } = useAtelierStore()
 
   // Product from navigation state (legacy single-product flow)
   const product = location.state?.product || {}
@@ -106,10 +106,12 @@ export default function Checkout() {
   // If arriving from Customize with a product, skip to step 1 (delivery)
   const startStep = product.id ? 1 : 0
 
+  const emptyAddr = { name:'', street:'', zip:'', city:'', country:'Deutschland', phone:'' }
   const [step,        setStep]        = useState(startStep)
-  const [delivery,    setDelivery]    = useState({ name:'', street:'', zip:'', city:'', country:'Deutschland', phone:'' })
+  const [delivery,    setDelivery]    = useState(savedDeliveryAddress || emptyAddr)
   const [sameBilling, setSameBilling] = useState(true)
-  const [billing,     setBilling]     = useState({ name:'', street:'', zip:'', city:'', country:'Deutschland', phone:'' })
+  const [billing,     setBilling]     = useState(savedBillingAddress || emptyAddr)
+  const [saveAddr,    setSaveAddr]    = useState(true) // offer to save addresses
   const [selectedAcc, setSelectedAcc] = useState([])
   const [placing,     setPlacing]     = useState(false)
   const [placed,      setPlaced]      = useState(null)
@@ -169,6 +171,10 @@ export default function Checkout() {
         accessories:      chosenAccessories.map(a => ({ name: a.name, price: a.price })),
         foot_notes:       footNotes || null,
       })
+      // Save addresses to profile if user opted in
+      if (saveAddr) {
+        saveAddresses(delivery, sameBilling ? null : billing).catch(() => {})
+      }
       setPlaced(row)
     } catch (e) {
       setError(e?.error || 'Bestellung fehlgeschlagen. Bitte erneut versuchen.')
@@ -324,12 +330,32 @@ export default function Checkout() {
 
         {/* ── Step 1: Delivery Address ── */}
         {step === 1 && (
-          <AddressForm
-            title="Lieferadresse"
-            value={delivery}
-            onChange={setDelivery}
-            sameToggle={null}
-          />
+          <div>
+            {savedDeliveryAddress && isAddrComplete(delivery) && (
+              <div className="flex items-center gap-2 mb-3 px-2 py-2 bg-teal-50 border border-teal-200/50">
+                <Check size={12} className="text-teal-600 flex-shrink-0" strokeWidth={2} />
+                <span className="text-[9px] text-teal-700 font-medium">Gespeicherte Adresse geladen</span>
+              </div>
+            )}
+            <AddressForm
+              title="Lieferadresse"
+              value={delivery}
+              onChange={setDelivery}
+              sameToggle={null}
+            />
+            <button
+              onClick={() => setSaveAddr(v => !v)}
+              className="w-full flex items-center gap-2.5 mt-3 p-2.5 border transition-all text-left bg-transparent"
+              style={{ border: saveAddr ? '1.5px solid #000' : '1.5px solid rgba(0,0,0,0.08)' }}
+            >
+              <div className={`w-4 h-4 border-[1.5px] flex items-center justify-center flex-shrink-0 transition-all ${
+                saveAddr ? 'bg-black border-black' : 'border-black/20'
+              }`}>
+                {saveAddr && <Check size={9} strokeWidth={3} className="text-white" />}
+              </div>
+              <span className="text-[10px] text-black/60">Adresse für nächste Bestellung speichern</span>
+            </button>
+          </div>
         )}
 
         {/* ── Step 2: Billing Address ── */}
