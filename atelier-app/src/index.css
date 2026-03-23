@@ -110,3 +110,43 @@ html.mobile-web body {
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* ── Journey map animations ──────────────────────────────────────────────── */
+@keyframes pulseRing {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  50%  { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(1);   opacity: 0.6; }
+}
+
+@keyframes walkShoe {
+  0%, 100% { transform: translateY(0); }
+  25%      { transform: translateY(-2px) rotate(-5deg); }
+  75%      { transform: translateY(-2px) rotate(5deg); }
+}
+
+@keyframes drawPath {
+  from { transform: scaleY(0); transform-origin: top; }
+  to   { transform: scaleY(1); transform-origin: top; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-pulse-ring {
+  animation: pulseRing 2s ease-in-out infinite;
+}
+
+.animate-walk-shoe {
+  animation: walkShoe 1.2s ease-in-out infinite;
+}
+
+.animate-draw-path {
+  animation: drawPath 1s ease-out forwards;
+}
+
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 0.5s ease-out forwards;
+}
