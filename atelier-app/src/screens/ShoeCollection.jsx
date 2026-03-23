@@ -205,21 +205,8 @@ export default function ShoeCollection() {
     <div className="flex flex-col min-h-full bg-white relative">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="px-5 pt-4 pb-2 flex items-center justify-between bg-white">
-        <div>
-          <p className="text-[17px] font-normal text-black leading-tight uppercase tracking-[0.15em]">{user?.name || 'My Studio'}</p>
-        </div>
-        <button
-          className="w-9 h-9 flex items-center justify-center border border-black/10 bg-transparent relative"
-          onClick={() => setCartOpen(v => !v)}
-        >
-          <ShoppingBag size={17} strokeWidth={1.5} className="text-black/60" />
-          {cart.length > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-black border-2 border-white flex items-center justify-center">
-              <span className="text-[8px] font-bold text-white">{cart.reduce((s, c) => s + c.qty, 0)}</span>
-            </span>
-          )}
-        </button>
+      <div className="px-5 pt-4 pb-2 bg-white">
+        <p className="text-[17px] font-normal text-black leading-tight uppercase tracking-[0.15em]">{user?.name || 'My Studio'}</p>
       </div>
 
       {/* ── Warenkorb (slide in from right) ────────────────────────────── */}

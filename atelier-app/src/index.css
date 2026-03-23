@@ -48,6 +48,12 @@ html.mobile-web #root > * {
   min-height: 100dvh;
 }
 
+/* Mobile web: prevent overscroll bounce showing background behind Safari bar */
+html.mobile-web,
+html.mobile-web body {
+  overscroll-behavior-y: none;
+}
+
 .font-playfair {
   font-family: 'Playfair Display', serif;
 }
