@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Check, ChevronRight, MapPin, Receipt, Gift, ShoppingBag, Plus, Minus, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, MapPin, Receipt, Gift, ShoppingBag, Plus, Minus, CheckCircle2, X } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useAtelierStore from '../store/atelierStore'
 
@@ -15,7 +15,7 @@ const ACCESSORIES = [
 ]
 
 // ── Step indicator ────────────────────────────────────────────────────────────
-const STEPS = ['Lieferung', 'Rechnung', 'Zubehör', 'Übersicht']
+const STEPS = ['Warenkorb', 'Lieferung', 'Rechnung', 'Zubehör', 'Übersicht']
 
 function StepBar({ current }) {
   return (
@@ -96,13 +96,17 @@ function AccessoryCard({ item, selected, onToggle }) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { latestScan, placeOrder, footNotes } = useAtelierStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty } = useAtelierStore()
 
-  // Product from navigation state
+  // Product from navigation state (legacy single-product flow)
   const product = location.state?.product || {}
   const incomingAccessories = location.state?.accessories || []
 
-  const [step,        setStep]        = useState(0)
+  // If arriving from TopBar cart icon (no product in state), start at step 0 (cart view)
+  // If arriving from Customize with a product, skip to step 1 (delivery)
+  const startStep = product.id ? 1 : 0
+
+  const [step,        setStep]        = useState(startStep)
   const [delivery,    setDelivery]    = useState({ name:'', street:'', zip:'', city:'', country:'Deutschland', phone:'' })
   const [sameBilling, setSameBilling] = useState(true)
   const [billing,     setBilling]     = useState({ name:'', street:'', zip:'', city:'', country:'Deutschland', phone:'' })
@@ -131,15 +135,20 @@ export default function Checkout() {
 
   // Parse shoe price to compute total
   const shoePrice = parseFloat((product.price || '€ 0').replace(/[^0-9.]/g, '')) || 0
+  const cartTotal = cart.reduce((sum, item) => {
+    const p = parseFloat((item.price || '€ 0').replace(/[^0-9.]/g, '')) || 0
+    return sum + p * item.qty
+  }, 0)
   const accTotal  = chosenAccessories.reduce((sum, a) => sum + a.priceNum, 0)
-  const total     = shoePrice + accTotal
+  const total     = (product.id ? shoePrice : cartTotal) + accTotal
 
-  const canNext = step === 0 ? isAddrComplete(delivery)
-    : step === 1 ? (sameBilling || isAddrComplete(billing))
+  const canNext = step === 0 ? cart.length > 0
+    : step === 1 ? isAddrComplete(delivery)
+    : step === 2 ? (sameBilling || isAddrComplete(billing))
     : true
 
   const handleNext = () => {
-    if (step < 3) setStep(s => s + 1)
+    if (step < 4) setStep(s => s + 1)
   }
 
   const handlePlace = async () => {
@@ -266,7 +275,7 @@ export default function Checkout() {
         >
           <ArrowLeft size={18} strokeWidth={1.8} className="text-black/70" />
         </button>
-        <span className="text-sm font-bold text-black uppercase" style={{ letterSpacing: '0.12em' }}>Checkout</span>
+        <span className="text-sm font-bold text-black uppercase" style={{ letterSpacing: '0.12em' }}>{step === 0 ? 'Warenkorb' : 'Checkout'}</span>
         <div className="w-9" />
       </div>
 
@@ -274,8 +283,66 @@ export default function Checkout() {
 
       <div className="flex-1 px-5 pb-4">
 
-        {/* ── Step 0: Delivery Address ── */}
+        {/* ── Step 0: Cart ── */}
         {step === 0 && (
+          <div>
+            <h2 className="text-base font-bold text-black mb-4 uppercase" style={{ letterSpacing: '0.12em' }}>Warenkorb</h2>
+            {cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <ShoppingBag size={40} strokeWidth={1} className="text-black/15 mb-4" />
+                <p className="text-sm text-black/40 mb-1">Dein Warenkorb ist leer</p>
+                <p className="text-[11px] text-black/25 mb-6">Füge Schuhe aus der Kollektion hinzu</p>
+                <button onClick={() => navigate('/collection')} className="px-6 py-3 bg-black text-white text-xs font-bold uppercase border-0" style={{ letterSpacing: '0.15em' }}>
+                  Zur Kollektion
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {cart.map(item => {
+                  const itemPrice = parseFloat((item.price || '€ 0').replace(/[^0-9.]/g, '')) || 0
+                  return (
+                    <div key={item.id} className="flex gap-3 p-3 bg-[#f6f5f3]">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-16 h-16 object-cover bg-white flex-shrink-0" />
+                      ) : (
+                        <div className="w-16 h-16 bg-black/5 flex items-center justify-center flex-shrink-0">
+                          <ShoppingBag size={18} className="text-black/20" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-black leading-tight truncate">{item.name}</p>
+                        {item.material && <p className="text-[10px] text-black/40 mt-0.5">{item.material}{item.color ? ` · ${item.color}` : ''}</p>}
+                        {item.sole && <p className="text-[10px] text-black/40">{item.sole}</p>}
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-7 h-7 flex items-center justify-center border border-black/10 bg-white text-black">
+                              <Minus size={12} strokeWidth={2} />
+                            </button>
+                            <span className="text-xs font-bold text-black w-5 text-center">{item.qty}</span>
+                            <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-7 h-7 flex items-center justify-center border border-black/10 bg-white text-black">
+                              <Plus size={12} strokeWidth={2} />
+                            </button>
+                          </div>
+                          <span className="text-sm font-bold text-black">€ {(itemPrice * item.qty).toLocaleString('de-DE')}</span>
+                        </div>
+                      </div>
+                      <button onClick={() => removeFromCart(item.id)} className="self-start p-1 bg-transparent border-0 text-black/30 hover:text-red-500">
+                        <X size={14} strokeWidth={2} />
+                      </button>
+                    </div>
+                  )
+                })}
+                <div className="flex items-center justify-between pt-3 border-t border-black/10">
+                  <span className="text-sm font-bold text-black">Zwischensumme</span>
+                  <span className="text-base font-bold text-black">€ {cartTotal.toLocaleString('de-DE')}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Step 1: Delivery Address ── */}
+        {step === 1 && (
           <AddressForm
             title="Lieferadresse"
             value={delivery}
@@ -284,8 +351,8 @@ export default function Checkout() {
           />
         )}
 
-        {/* ── Step 1: Billing Address ── */}
-        {step === 1 && (
+        {/* ── Step 2: Billing Address ── */}
+        {step === 2 && (
           <div>
             <button
               onClick={() => setSameBilling(v => !v)}
@@ -310,8 +377,8 @@ export default function Checkout() {
           </div>
         )}
 
-        {/* ── Step 2: Accessories ── */}
-        {step === 2 && (
+        {/* ── Step 3: Accessories ── */}
+        {step === 3 && (
           <div>
             <h2 className="text-base font-bold text-black mb-1 uppercase" style={{ letterSpacing: '0.12em' }}>Zubehör & Accessoires</h2>
             <p className="text-[11px] text-black/40 mb-5">Ergänzen Sie Ihre Bestellung mit passendem Zubehör.</p>
@@ -328,24 +395,36 @@ export default function Checkout() {
           </div>
         )}
 
-        {/* ── Step 3: Summary ── */}
-        {step === 3 && (
+        {/* ── Step 4: Summary ── */}
+        {step === 4 && (
           <div>
             <h2 className="text-base font-bold text-black mb-5 uppercase" style={{ letterSpacing: '0.12em' }}>Bestellübersicht</h2>
 
-            {/* Shoe */}
+            {/* Products */}
             <div className="bg-[#f6f5f3] p-4 mb-4">
-              <p className="text-[9px] uppercase tracking-widest text-black/40 mb-3">Schuh</p>
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-bold text-black">{product.name || product.shoe_name}</p>
-                  <p className="text-[10px] text-black/40 mt-0.5">{product.material}{product.sole ? ` · ${product.sole}` : ''}</p>
-                  {latestScan && (
-                    <p className="text-[10px] text-teal-600 mt-0.5">EU {latestScan.eu_size} — aus 3D-Scan</p>
-                  )}
+              <p className="text-[9px] uppercase tracking-widest text-black/40 mb-3">{product.id ? 'Schuh' : 'Artikel'}</p>
+              {product.id ? (
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-bold text-black">{product.name || product.shoe_name}</p>
+                    <p className="text-[10px] text-black/40 mt-0.5">{product.material}{product.sole ? ` · ${product.sole}` : ''}</p>
+                    {latestScan && (
+                      <p className="text-[10px] text-teal-600 mt-0.5">EU {latestScan.eu_size} — aus 3D-Scan</p>
+                    )}
+                  </div>
+                  <p className="text-sm font-bold text-black">{product.price}</p>
                 </div>
-                <p className="text-sm font-bold text-black">{product.price}</p>
-              </div>
+              ) : (
+                cart.map(item => (
+                  <div key={item.id} className="flex justify-between py-1.5 border-b border-black/5 last:border-0">
+                    <div>
+                      <span className="text-sm text-black">{item.name}</span>
+                      {item.qty > 1 && <span className="text-[10px] text-black/40 ml-1">×{item.qty}</span>}
+                    </div>
+                    <span className="text-sm font-semibold text-black">{item.price}</span>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Accessories */}
@@ -384,7 +463,7 @@ export default function Checkout() {
 
       {/* Bottom CTA */}
       <div className="px-5 pt-3 border-t border-black/5 flex-shrink-0" style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 20px)' : '20px' }}>
-        {step < 3 ? (
+        {step < 4 ? (
           <button
             onClick={handleNext}
             disabled={!canNext}
