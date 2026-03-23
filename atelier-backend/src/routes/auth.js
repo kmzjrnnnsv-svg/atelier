@@ -205,6 +205,46 @@ router.put('/me/foot-notes', authenticate, (req, res) => {
   res.json({ foot_notes: foot_notes ?? '' })
 })
 
+// ── Saved addresses ───────────────────────────────────────────────────────────
+
+// GET /api/auth/me/addresses — get saved delivery & billing addresses
+router.get('/me/addresses', authenticate, (req, res) => {
+  const row = getDb().prepare('SELECT saved_delivery_address, saved_billing_address FROM users WHERE id = ?').get(req.user.id)
+  res.json({
+    delivery: row?.saved_delivery_address ? JSON.parse(row.saved_delivery_address) : null,
+    billing:  row?.saved_billing_address  ? JSON.parse(row.saved_billing_address)  : null,
+  })
+})
+
+// PUT /api/auth/me/addresses — save delivery & billing addresses
+router.put('/me/addresses', authenticate, (req, res) => {
+  const { delivery, billing } = req.body
+  const db = getDb()
+  db.prepare("UPDATE users SET saved_delivery_address = ?, saved_billing_address = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(
+      delivery ? JSON.stringify(delivery) : null,
+      billing  ? JSON.stringify(billing)  : null,
+      req.user.id
+    )
+  res.json({ delivery: delivery || null, billing: billing || null })
+})
+
+// ── Saved cart ────────────────────────────────────────────────────────────────
+
+// GET /api/auth/me/cart — get saved cart
+router.get('/me/cart', authenticate, (req, res) => {
+  const row = getDb().prepare('SELECT saved_cart FROM users WHERE id = ?').get(req.user.id)
+  res.json({ cart: row?.saved_cart ? JSON.parse(row.saved_cart) : [] })
+})
+
+// PUT /api/auth/me/cart — save cart
+router.put('/me/cart', authenticate, (req, res) => {
+  const { cart } = req.body
+  getDb().prepare("UPDATE users SET saved_cart = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(cart && cart.length > 0 ? JSON.stringify(cart) : null, req.user.id)
+  res.json({ cart: cart || [] })
+})
+
 // ── MFA Routes ────────────────────────────────────────────────────────────────
 
 // GET /api/auth/mfa/status

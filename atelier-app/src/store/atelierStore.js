@@ -22,6 +22,8 @@ const useAtelierStore = create((set, get) => ({
   exploreHero: { image: null, title: '', subtitle: '' },
   loyaltyTiers: [],
   loyaltyStatus: { points: 0, tier: 'bronze' },
+  savedDeliveryAddress: null, // persisted delivery address
+  savedBillingAddress:  null, // persisted billing address
   notifications: [], // in-app notifications
   reminders:  [],    // items user wants to be reminded about
   loading:    false,
@@ -59,7 +61,11 @@ const useAtelierStore = create((set, get) => ({
     return get().reminders.some(r => r.type === type && r.itemId === itemId)
   },
 
-  // --- CART ---
+  // --- CART (persisted to backend) ---
+  _syncCart() {
+    const cart = get().cart
+    apiFetch('/api/auth/me/cart', { method: 'PUT', body: JSON.stringify({ cart }) }).catch(() => {})
+  },
   addToCart(item) {
     const existing = get().cart.find(c => c.shoeId === item.shoeId && c.material === item.material && c.color === item.color && c.sole === item.sole)
     if (existing) {
@@ -67,22 +73,26 @@ const useAtelierStore = create((set, get) => ({
     } else {
       set(s => ({ cart: [...s.cart, { id: Date.now(), qty: 1, addedAt: new Date().toISOString(), ...item }] }))
     }
+    setTimeout(() => get()._syncCart(), 0)
   },
   removeFromCart(id) {
     set(s => ({ cart: s.cart.filter(c => c.id !== id) }))
+    setTimeout(() => get()._syncCart(), 0)
   },
   updateCartQty(id, qty) {
     if (qty <= 0) return get().removeFromCart(id)
     set(s => ({ cart: s.cart.map(c => c.id === id ? { ...c, qty } : c) }))
+    setTimeout(() => get()._syncCart(), 0)
   },
   clearCart() {
     set({ cart: [] })
+    get()._syncCart()
   },
 
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData] = await Promise.all([
+      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData] = await Promise.all([
         apiFetch('/api/shoes').catch(() => []),
         apiFetch('/api/curated').catch(() => []),
         apiFetch('/api/wardrobe').catch(() => []),
@@ -100,6 +110,8 @@ const useAtelierStore = create((set, get) => ({
         apiFetch('/api/loyalty/tiers').catch(() => []),
         apiFetch('/api/loyalty/my-status').catch(() => ({ points: 0, tier: 'bronze' })),
         apiFetch('/api/auth/me/foot-notes').catch(() => ({ foot_notes: '' })),
+        apiFetch('/api/auth/me/addresses').catch(() => ({ delivery: null, billing: null })),
+        apiFetch('/api/auth/me/cart').catch(() => ({ cart: [] })),
       ])
       const settingsMap = settings || {}
       set({
@@ -124,6 +136,9 @@ const useAtelierStore = create((set, get) => ({
         loyaltyTiers: Array.isArray(loyaltyTiers) ? loyaltyTiers.map(normalizeLoyaltyTier) : [],
         loyaltyStatus: loyaltyStatus || { points: 0, tier: 'bronze' },
         footNotes: footNotesData?.foot_notes || '',
+        savedDeliveryAddress: addressData?.delivery || null,
+        savedBillingAddress:  addressData?.billing  || null,
+        cart: Array.isArray(cartData?.cart) && cartData.cart.length > 0 ? cartData.cart : get().cart,
         loading:    false,
       })
     } catch (e) {
@@ -160,6 +175,15 @@ const useAtelierStore = create((set, get) => ({
       body: JSON.stringify({ foot_notes: notes }),
     })
     set({ footNotes: res.foot_notes || '' })
+  },
+
+  // --- SAVED ADDRESSES ---
+  async saveAddresses(delivery, billing) {
+    const res = await apiFetch('/api/auth/me/addresses', {
+      method: 'PUT',
+      body: JSON.stringify({ delivery, billing }),
+    })
+    set({ savedDeliveryAddress: res.delivery, savedBillingAddress: res.billing })
   },
 
   // --- ORDERS ---

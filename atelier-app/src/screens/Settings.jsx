@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, User, Mail, Lock, LogOut, ChevronRight,
-  Shield, FileText, HelpCircle, Star, Trash2, Check, X, Eye, EyeOff,
+  Shield, FileText, HelpCircle, Star, Trash2, Check, X, Eye, EyeOff, MapPin,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
+import useAtelierStore from '../store/atelierStore'
 
 // ── Badge-Farben je Rolle ─────────────────────────────────────────────────────
 const roleMeta = {
@@ -176,6 +177,43 @@ export default function Settings() {
     }
   }
 
+  // ── Abschnitt: Adressen ────────────────────────────────────────────────────
+  const { savedDeliveryAddress, savedBillingAddress, saveAddresses } = useAtelierStore()
+  const [addrOpen, setAddrOpen] = useState(false)
+  const emptyAddr = { name:'', street:'', zip:'', city:'', country:'Deutschland', phone:'' }
+  const [addrDelivery, setAddrDelivery] = useState(savedDeliveryAddress || emptyAddr)
+  const [addrBilling,  setAddrBilling]  = useState(savedBillingAddress || emptyAddr)
+  const [addrSaving,   setAddrSaving]   = useState(false)
+
+  const saveAddr = async () => {
+    setAddrSaving(true)
+    try {
+      const d = addrDelivery.name ? addrDelivery : null
+      const b = addrBilling.name ? addrBilling : null
+      await saveAddresses(d, b)
+      showToast('Adressen gespeichert')
+      setAddrOpen(false)
+    } catch {
+      showToast('Fehler beim Speichern', 'error')
+    } finally {
+      setAddrSaving(false)
+    }
+  }
+
+  const clearAddresses = async () => {
+    setAddrSaving(true)
+    try {
+      await saveAddresses(null, null)
+      setAddrDelivery(emptyAddr)
+      setAddrBilling(emptyAddr)
+      showToast('Adressen gelöscht')
+    } catch {
+      showToast('Fehler', 'error')
+    } finally {
+      setAddrSaving(false)
+    }
+  }
+
   // ── Abmelden ───────────────────────────────────────────────────────────────
   const [logoutConfirm, setLogoutConfirm] = useState(false)
   const handleLogout = () => {
@@ -333,6 +371,53 @@ export default function Settings() {
                   className="flex-1 py-2.5 bg-black text-white text-xs font-semibold border-0 disabled:opacity-50"
                 >
                   {pwSaving ? 'Speichern…' : 'Passwort ändern'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <Divider />
+
+          {/* Adressen */}
+          <SettingsRow
+            icon={MapPin}
+            label="Lieferadresse"
+            sub={savedDeliveryAddress ? `${savedDeliveryAddress.street}, ${savedDeliveryAddress.city}` : 'Noch nicht gespeichert'}
+            onPress={() => { setAddrOpen(o => !o); setProfileOpen(false); setPwOpen(false) }}
+            rightEl={
+              <ChevronRight
+                size={15}
+                className={`text-black/20 flex-shrink-0 transition-transform ${addrOpen ? 'rotate-90' : ''}`}
+              />
+            }
+          />
+          {addrOpen && (
+            <div className="bg-[#f6f5f3] border-t border-black/5">
+              <p className="text-[9px] uppercase tracking-[0.15em] text-black/35 font-semibold px-5 pt-3 mb-1">Lieferadresse</p>
+              <EditableField label="Name" value={addrDelivery.name} placeholder="Vollständiger Name" onChange={v => setAddrDelivery(a => ({...a, name: v}))} />
+              <EditableField label="Straße" value={addrDelivery.street} placeholder="Straße + Hausnummer" onChange={v => setAddrDelivery(a => ({...a, street: v}))} />
+              <div className="flex gap-2 px-5">
+                <div className="w-[35%]">
+                  <EditableField label="PLZ" value={addrDelivery.zip} placeholder="PLZ" onChange={v => setAddrDelivery(a => ({...a, zip: v}))} />
+                </div>
+                <div className="flex-1">
+                  <EditableField label="Stadt" value={addrDelivery.city} placeholder="Stadt" onChange={v => setAddrDelivery(a => ({...a, city: v}))} />
+                </div>
+              </div>
+              <EditableField label="Land" value={addrDelivery.country} placeholder="Land" onChange={v => setAddrDelivery(a => ({...a, country: v}))} />
+              <EditableField label="Telefon" value={addrDelivery.phone} placeholder="Optional" onChange={v => setAddrDelivery(a => ({...a, phone: v}))} />
+
+              <div className="px-5 pb-4 pt-2 flex gap-3">
+                {savedDeliveryAddress && (
+                  <button onClick={clearAddresses} disabled={addrSaving} className="py-2.5 px-4 border border-red-300 text-xs font-semibold text-red-500 bg-white">
+                    Löschen
+                  </button>
+                )}
+                <button onClick={() => setAddrOpen(false)} className="flex-1 py-2.5 border border-black/10 text-xs font-semibold text-black/45 bg-white">
+                  Abbrechen
+                </button>
+                <button onClick={saveAddr} disabled={addrSaving} className="flex-1 py-2.5 bg-black text-white text-xs font-semibold border-0 disabled:opacity-50">
+                  {addrSaving ? 'Speichern…' : 'Speichern'}
                 </button>
               </div>
             </div>
