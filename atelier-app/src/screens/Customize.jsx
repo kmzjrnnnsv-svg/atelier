@@ -116,28 +116,31 @@ export default function Customize() {
   }
 
   // Smooth scroll forwarding state
-  const scrollPhase = useRef('right') // 'right' | 'left'
+  // Phase 'left' = left panel scrolls first, then 'right' = right panel scrolls
+  const scrollPhase = useRef('left') // 'left' | 'right'
   const animFrame = useRef(null)
   const scrollTarget = useRef({ el: null, amount: 0 })
+  const [leftFullyScrolled, setLeftFullyScrolled] = useState(false)
 
-  // Smooth scroll helper with requestAnimationFrame
+  // Smooth scroll helper
   const smoothForwardScroll = useCallback((targetEl, delta) => {
     if (!targetEl) return
     targetEl.scrollBy({ top: delta, behavior: 'instant' })
   }, [])
 
-  // Track if right panel is fully scrolled
+  // Track if left panel is fully scrolled
   useEffect(() => {
-    const el = rightPanelRef.current
+    const el = leftPanelRef.current
     if (!el) return
     const onScroll = () => {
       const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 2
-      setRightFullyScrolled(atBottom)
+      setLeftFullyScrolled(atBottom)
+      setRightFullyScrolled(atBottom) // keep accessories opacity tied to left scroll
       if (atBottom) {
-        scrollPhase.current = 'left'
+        scrollPhase.current = 'right'
       }
       if (el.scrollTop <= 0) {
-        scrollPhase.current = 'right'
+        scrollPhase.current = 'left'
       }
     }
     onScroll()
@@ -145,13 +148,13 @@ export default function Customize() {
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Track left panel scroll for phase transitions
+  // Track right panel scroll for phase transitions (scrolling back up)
   useEffect(() => {
-    const el = leftPanelRef.current
+    const el = rightPanelRef.current
     if (!el) return
     const onScroll = () => {
       if (el.scrollTop <= 0) {
-        scrollPhase.current = 'right'
+        scrollPhase.current = 'left'
       }
     }
     el.addEventListener('scroll', onScroll, { passive: true })
@@ -320,32 +323,28 @@ export default function Customize() {
           className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch"
           style={{
             scrollbarWidth: 'none',
-            overflowY: scrollPhase.current === 'left' || rightFullyScrolled ? 'auto' : 'hidden',
+            overflowY: 'auto',
           }}
           onWheel={(e) => {
-            if (window.innerWidth < 1024) return // skip on mobile
+            if (window.innerWidth < 1024) return
             const rp = rightPanelRef.current
             const lp = leftPanelRef.current
             if (!rp || !lp) return
 
-            const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
-            const rpAtTop = rp.scrollTop <= 0
+            const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
             const lpAtTop = lp.scrollTop <= 0
+            const rpAtTop = rp.scrollTop <= 0
 
-            if (scrollPhase.current === 'right' || (!rpAtBottom && e.deltaY > 0)) {
-              // Phase 1: forward scroll to right panel
+            if (lpAtBottom && e.deltaY > 0) {
+              // Left done scrolling down → forward to right panel
               e.preventDefault()
               scrollPhase.current = 'right'
-              lp.style.overflowY = 'hidden'
               smoothForwardScroll(rp, e.deltaY)
-            } else if (scrollPhase.current === 'left' && e.deltaY > 0) {
-              // Phase 2: right done → left scrolls naturally
-              lp.style.overflowY = 'auto'
+            } else if (lpAtTop && e.deltaY < 0 && rpAtTop) {
+              // Both at top, scrolling up → do nothing (already at top)
             } else if (e.deltaY < 0 && lpAtTop) {
-              // Scrolling up & left at top → scroll right back up
+              // Left at top, scrolling up → scroll right back up
               e.preventDefault()
-              scrollPhase.current = 'right'
-              lp.style.overflowY = 'hidden'
               smoothForwardScroll(rp, e.deltaY)
             }
           }}
@@ -514,26 +513,24 @@ export default function Customize() {
           className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0"
           style={{ scrollbarWidth: 'none' }}
           onWheel={(e) => {
-            if (window.innerWidth < 1024) return // skip on mobile
+            if (window.innerWidth < 1024) return
             const rp = rightPanelRef.current
             const lp = leftPanelRef.current
             if (!rp || !lp) return
 
-            const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
+            const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
             const rpAtTop = rp.scrollTop <= 0
 
-            if (rpAtBottom && e.deltaY > 0) {
-              // Phase 2: right done → transition to left panel
+            if (!lpAtBottom && e.deltaY > 0) {
+              // Left not done yet → forward scroll to left panel first
               e.preventDefault()
               scrollPhase.current = 'left'
-              lp.style.overflowY = 'auto'
               smoothForwardScroll(lp, e.deltaY)
             } else if (rpAtTop && e.deltaY < 0) {
-              // At top of right, scrolling up → forward to left (which may be scrolled)
-              if (lp.scrollTop > 0) {
-                e.preventDefault()
-                smoothForwardScroll(lp, e.deltaY)
-              }
+              // Right at top, scrolling up → scroll left back up
+              e.preventDefault()
+              scrollPhase.current = 'left'
+              smoothForwardScroll(lp, e.deltaY)
             }
           }}
         >
