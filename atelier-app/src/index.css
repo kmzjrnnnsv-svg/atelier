@@ -43,8 +43,8 @@ html:not(.mobile-web) #root {
   flex-direction: column;
 }
 
-/* Mobile web: screens must fill at least the viewport */
-html.mobile-web #root > * {
+/* Mobile web: route content must fill at least the viewport */
+html.mobile-web .mobile-web-content {
   min-height: 100dvh;
 }
 

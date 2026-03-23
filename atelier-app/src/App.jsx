@@ -259,7 +259,9 @@ function AppRoutes() {
     return (
       <>
         {showNav && <TopBar />}
-        <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        <div className="mobile-web-content">
+          <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        </div>
       </>
     )
   }
