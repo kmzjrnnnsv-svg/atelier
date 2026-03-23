@@ -19,23 +19,23 @@ const STEPS = ['Warenkorb', 'Lieferung', 'Rechnung', 'Zubehör', 'Übersicht']
 
 function StepBar({ current }) {
   return (
-    <div className="flex items-center px-6 py-4">
+    <div className="flex items-center px-6 py-3 flex-shrink-0">
       {STEPS.map((label, i) => (
         <div key={label} className="flex items-center" style={{ flex: i < STEPS.length - 1 ? '1 1 0' : 'none' }}>
-          <div className="flex flex-col items-center gap-1">
-            <div className={`w-7 h-7 flex items-center justify-center text-[10px] font-bold transition-all ${
+          <div className="flex flex-col items-center gap-0.5">
+            <div className={`w-6 h-6 flex items-center justify-center text-[9px] font-bold transition-all ${
               i < current  ? 'bg-black text-white' :
               i === current ? 'bg-black text-white ring-2 ring-black ring-offset-2' :
               'bg-black/5 text-black/30'
             }`}>
-              {i < current ? <Check size={12} strokeWidth={2.5} /> : i + 1}
+              {i < current ? <Check size={10} strokeWidth={2.5} /> : i + 1}
             </div>
-            <span className={`text-[8px] uppercase whitespace-nowrap ${i === current ? 'text-black font-bold' : 'text-black/30'}`} style={{ letterSpacing: '0.12em' }}>
+            <span className={`text-[7px] uppercase whitespace-nowrap ${i === current ? 'text-black font-bold' : 'text-black/30'}`} style={{ letterSpacing: '0.1em' }}>
               {label}
             </span>
           </div>
           {i < STEPS.length - 1 && (
-            <div className={`h-px flex-1 mx-2 mb-4 transition-all ${i < current ? 'bg-black' : 'bg-black/10'}`} />
+            <div className={`h-px flex-1 mx-1.5 mb-3 transition-all ${i < current ? 'bg-black' : 'bg-black/10'}`} />
           )}
         </div>
       ))}
@@ -46,15 +46,15 @@ function StepBar({ current }) {
 // ── Address form ──────────────────────────────────────────────────────────────
 function AddressForm({ title, value, onChange, sameToggle }) {
   const f = (field, val) => onChange({ ...value, [field]: val })
-  const inp = 'w-full border border-black/10 px-4 py-3 text-sm placeholder-black/20 focus:outline-none focus:border-black transition-colors'
+  const inp = 'w-full border border-black/10 px-3 py-2.5 text-sm placeholder-black/20 focus:outline-none focus:border-black transition-colors'
   return (
     <div>
-      <h2 className="text-base font-bold text-black mb-4 uppercase" style={{ letterSpacing: '0.12em' }}>{title}</h2>
+      <h2 className="text-sm font-bold text-black mb-3 uppercase" style={{ letterSpacing: '0.12em' }}>{title}</h2>
       {sameToggle}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <input className={inp} placeholder="Vollständiger Name" value={value.name || ''} onChange={e => f('name', e.target.value)} />
         <input className={inp} placeholder="Straße + Hausnummer" value={value.street || ''} onChange={e => f('street', e.target.value)} />
-        <div className="flex gap-3">
+        <div className="flex gap-2.5">
           <input className={inp} placeholder="PLZ" value={value.zip || ''} onChange={e => f('zip', e.target.value)} style={{ width: '35%' }} />
           <input className={inp} placeholder="Stadt" value={value.city || ''} onChange={e => f('city', e.target.value)} style={{ flex: 1 }} />
         </div>
@@ -74,20 +74,20 @@ function AccessoryCard({ item, selected, onToggle }) {
   return (
     <button
       onClick={onToggle}
-      className={`w-full flex items-center gap-4 p-4 border-2 transition-all text-left ${
+      className={`w-full flex items-center gap-3 p-3 border-2 transition-all text-left ${
         selected ? 'border-black bg-black/3' : 'border-black/8 bg-white'
       }`}
     >
-      <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${
+      <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 ${
         selected ? 'bg-black text-white' : 'bg-black/5 text-black/30'
       }`}>
-        {selected ? <Check size={16} strokeWidth={2.5} /> : <Plus size={16} strokeWidth={2} />}
+        {selected ? <Check size={14} strokeWidth={2.5} /> : <Plus size={14} strokeWidth={2} />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-black leading-tight">{item.name}</p>
-        <p className="text-[10px] text-black/40 mt-0.5">{item.desc}</p>
+        <p className="text-xs font-semibold text-black leading-tight">{item.name}</p>
+        <p className="text-[9px] text-black/40 mt-0.5">{item.desc}</p>
       </div>
-      <span className="text-sm font-bold text-black flex-shrink-0">{item.price}</span>
+      <span className="text-xs font-bold text-black flex-shrink-0">{item.price}</span>
     </button>
   )
 }
@@ -177,84 +177,66 @@ export default function Checkout() {
     }
   }
 
-  // ── Order success ──
+  // ── Order success — compact, fits 100vh ──
   if (placed) {
     return (
-      <div className="flex flex-col min-h-full bg-white">
-        <div className="flex-1 px-6 pt-16 pb-8">
-          <div className="flex flex-col items-center text-center mb-6">
-            <div className="w-16 h-16 bg-black flex items-center justify-center mb-4">
-              <CheckCircle2 size={28} className="text-white" strokeWidth={1.5} />
+      <div className="flex flex-col bg-white" style={{ height: 'calc(100dvh - 48px)' }}>
+        <div className="flex-1 flex flex-col justify-center px-5">
+          {/* Header */}
+          <div className="flex flex-col items-center text-center mb-5">
+            <div className="w-12 h-12 bg-black flex items-center justify-center mb-3">
+              <CheckCircle2 size={22} className="text-white" strokeWidth={1.5} />
             </div>
-            <h1 className="text-xl font-bold text-black mb-1 uppercase" style={{ letterSpacing: '0.12em' }}>Bestellung aufgegeben</h1>
-            <p className="text-[11px] text-black/40">
-              #{placed.id} · Ihr {placed.user_order_number}. Schuh bei ATELIER
+            <h1 className="text-base font-bold text-black uppercase" style={{ letterSpacing: '0.12em' }}>Bestellung aufgegeben</h1>
+            <p className="text-[10px] text-black/40 mt-1">
+              #{placed.id} · {placed.shoe_name} · € {total.toLocaleString('de-DE')}
             </p>
           </div>
 
-          {/* Bank transfer card */}
-          <div className="bg-teal-50 border border-teal-200 p-5 mb-4">
-            <p className="text-[9px] uppercase tracking-widest text-teal-700 font-bold mb-3">Banküberweisung</p>
-            <p className="text-[11px] text-black/50 mb-4 leading-relaxed">
-              Bitte überweisen Sie den Betrag — Ihre Bestellung wird nach Zahlungseingang freigegeben.
-            </p>
-            <div className="space-y-2.5">
-              {[
-                { label: 'Betrag',       value: `€ ${total.toLocaleString('de-DE')}`, big: true },
-                { label: 'Kontoinhaber', value: placed.bank_holder },
-                { label: 'Bank',         value: placed.bank_name   },
-                { label: 'IBAN',         value: placed.bank_iban, mono: true },
-                { label: 'BIC',          value: placed.bank_bic,  mono: true },
-              ].map(({ label, value, big, mono }) => (
-                <div key={label} className="flex items-center justify-between gap-3">
-                  <span className="text-[9px] uppercase tracking-widest text-black/40 flex-shrink-0">{label}</span>
-                  <span className={`text-right break-all ${big ? 'text-base font-bold text-teal-700' : mono ? 'text-[11px] font-mono font-semibold text-black/70' : 'text-[11px] font-semibold text-black/70'}`}>
-                    {value}
-                  </span>
-                </div>
-              ))}
+          {/* Bank transfer — compact */}
+          <div className="bg-[#f0fdf9] border border-teal-200/60 p-4 mb-4">
+            <p className="text-[8px] uppercase tracking-widest text-teal-700 font-bold mb-2.5">Überweisung</p>
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-[8px] uppercase tracking-widest text-black/35">Betrag</span>
+                <span className="text-sm font-bold text-teal-700">€ {total.toLocaleString('de-DE')}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[8px] uppercase tracking-widest text-black/35">Empfänger</span>
+                <span className="text-[10px] font-semibold text-black/70">{placed.bank_holder}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[8px] uppercase tracking-widest text-black/35">IBAN</span>
+                <span className="text-[10px] font-mono font-semibold text-black/70">{placed.bank_iban}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[8px] uppercase tracking-widest text-black/35">BIC</span>
+                <span className="text-[10px] font-mono font-semibold text-black/70">{placed.bank_bic}</span>
+              </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-teal-200">
-              <p className="text-[9px] uppercase tracking-widest text-black/50 mb-2">Verwendungszweck (pflicht)</p>
-              <div className="bg-black px-4 py-2.5 text-center">
-                <span className="text-white font-mono font-bold tracking-widest text-base">ATELIER-{placed.id}</span>
+            <div className="mt-3 pt-3 border-t border-teal-200/60">
+              <p className="text-[8px] uppercase tracking-widest text-black/40 mb-1.5">Verwendungszweck</p>
+              <div className="bg-black px-3 py-2 text-center">
+                <span className="text-white font-mono font-bold tracking-widest text-sm">ATELIER-{placed.id}</span>
               </div>
             </div>
           </div>
 
-          {/* Order summary */}
-          <div className="bg-[#f6f5f3] p-4 mb-4">
-            <p className="text-[9px] uppercase tracking-widest text-black/40 mb-3">Bestellung</p>
-            <div className="flex justify-between mb-2">
-              <span className="text-sm font-semibold text-black">{placed.shoe_name}</span>
-              <span className="text-sm font-bold text-black">{product.price}</span>
-            </div>
-            {chosenAccessories.map(a => (
-              <div key={a.id} className="flex justify-between">
-                <span className="text-[11px] text-black/50">{a.name}</span>
-                <span className="text-[11px] text-black/50">{a.price}</span>
-              </div>
-            ))}
-            <div className="border-t border-black/10 mt-3 pt-3 flex justify-between">
-              <span className="text-sm font-bold text-black">Total</span>
-              <span className="text-sm font-bold text-black">€ {total.toLocaleString('de-DE')}</span>
-            </div>
-          </div>
-
-          <p className="text-[10px] text-black/40 text-center mb-6">
-            Zahlungsanweisung wurde an Ihre E-Mail-Adresse gesendet.
+          <p className="text-[9px] text-black/35 text-center mb-5 leading-relaxed">
+            Nach Zahlungseingang startet die Fertigung Ihres Schuhs.<br />
+            Sie können den Fortschritt jederzeit verfolgen.
           </p>
 
           <div className="flex gap-3">
             <button
               onClick={() => navigate('/orders')}
-              className="flex-1 py-3.5 border-2 border-black text-sm font-bold text-black bg-white uppercase" style={{ letterSpacing: '0.18em' }}
+              className="flex-1 py-3 bg-black text-xs font-bold text-white border-0 uppercase" style={{ letterSpacing: '0.15em' }}
             >
-              Meine Bestellungen
+              Bestellung verfolgen
             </button>
             <button
               onClick={() => navigate('/collection')}
-              className="flex-1 py-3.5 bg-black text-sm font-bold text-white border-0 uppercase" style={{ letterSpacing: '0.18em' }}
+              className="flex-1 py-3 border-2 border-black text-xs font-bold text-black bg-white uppercase" style={{ letterSpacing: '0.15em' }}
             >
               Weiter shoppen
             </button>
@@ -265,10 +247,10 @@ export default function Checkout() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-white">
+    <div className="flex flex-col bg-white" style={{ height: 'calc(100dvh - 48px)' }}>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-black/5 flex-shrink-0">
+      <div className="flex items-center justify-between px-5 pt-3 pb-2 border-b border-black/5 flex-shrink-0">
         <button
           onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)}
           className="w-9 h-9 bg-black/3 flex items-center justify-center border-0"
@@ -281,60 +263,59 @@ export default function Checkout() {
 
       <StepBar current={step} />
 
-      <div className="flex-1 px-5 pb-4">
+      <div className="flex-1 overflow-y-auto px-5 pb-3">
 
         {/* ── Step 0: Cart ── */}
         {step === 0 && (
           <div>
-            <h2 className="text-base font-bold text-black mb-4 uppercase" style={{ letterSpacing: '0.12em' }}>Warenkorb</h2>
+            <h2 className="text-sm font-bold text-black mb-3 uppercase" style={{ letterSpacing: '0.12em' }}>Warenkorb</h2>
             {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <ShoppingBag size={40} strokeWidth={1} className="text-black/15 mb-4" />
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <ShoppingBag size={36} strokeWidth={1} className="text-black/15 mb-3" />
                 <p className="text-sm text-black/40 mb-1">Dein Warenkorb ist leer</p>
-                <p className="text-[11px] text-black/25 mb-6">Füge Schuhe aus der Kollektion hinzu</p>
-                <button onClick={() => navigate('/collection')} className="px-6 py-3 bg-black text-white text-xs font-bold uppercase border-0" style={{ letterSpacing: '0.15em' }}>
+                <p className="text-[11px] text-black/25 mb-5">Füge Schuhe aus der Kollektion hinzu</p>
+                <button onClick={() => navigate('/collection')} className="px-5 py-2.5 bg-black text-white text-xs font-bold uppercase border-0" style={{ letterSpacing: '0.15em' }}>
                   Zur Kollektion
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {cart.map(item => {
                   const itemPrice = parseFloat((item.price || '€ 0').replace(/[^0-9.]/g, '')) || 0
                   return (
                     <div key={item.id} className="flex gap-3 p-3 bg-[#f6f5f3]">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-16 h-16 object-cover bg-white flex-shrink-0" />
+                        <img src={item.image} alt={item.name} className="w-14 h-14 object-cover bg-white flex-shrink-0" />
                       ) : (
-                        <div className="w-16 h-16 bg-black/5 flex items-center justify-center flex-shrink-0">
-                          <ShoppingBag size={18} className="text-black/20" />
+                        <div className="w-14 h-14 bg-black/5 flex items-center justify-center flex-shrink-0">
+                          <ShoppingBag size={16} className="text-black/20" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-black leading-tight truncate">{item.name}</p>
-                        {item.material && <p className="text-[10px] text-black/40 mt-0.5">{item.material}{item.color ? ` · ${item.color}` : ''}</p>}
-                        {item.sole && <p className="text-[10px] text-black/40">{item.sole}</p>}
-                        <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-7 h-7 flex items-center justify-center border border-black/10 bg-white text-black">
-                              <Minus size={12} strokeWidth={2} />
+                        <p className="text-xs font-semibold text-black leading-tight truncate">{item.name}</p>
+                        {item.material && <p className="text-[9px] text-black/40 mt-0.5">{item.material}{item.color ? ` · ${item.color}` : ''}</p>}
+                        <div className="flex items-center justify-between mt-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-6 h-6 flex items-center justify-center border border-black/10 bg-white text-black">
+                              <Minus size={10} strokeWidth={2} />
                             </button>
-                            <span className="text-xs font-bold text-black w-5 text-center">{item.qty}</span>
-                            <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-7 h-7 flex items-center justify-center border border-black/10 bg-white text-black">
-                              <Plus size={12} strokeWidth={2} />
+                            <span className="text-[10px] font-bold text-black w-4 text-center">{item.qty}</span>
+                            <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-6 h-6 flex items-center justify-center border border-black/10 bg-white text-black">
+                              <Plus size={10} strokeWidth={2} />
                             </button>
                           </div>
-                          <span className="text-sm font-bold text-black">€ {(itemPrice * item.qty).toLocaleString('de-DE')}</span>
+                          <span className="text-xs font-bold text-black">€ {(itemPrice * item.qty).toLocaleString('de-DE')}</span>
                         </div>
                       </div>
                       <button onClick={() => removeFromCart(item.id)} className="self-start p-1 bg-transparent border-0 text-black/30 hover:text-red-500">
-                        <X size={14} strokeWidth={2} />
+                        <X size={12} strokeWidth={2} />
                       </button>
                     </div>
                   )
                 })}
-                <div className="flex items-center justify-between pt-3 border-t border-black/10">
-                  <span className="text-sm font-bold text-black">Zwischensumme</span>
-                  <span className="text-base font-bold text-black">€ {cartTotal.toLocaleString('de-DE')}</span>
+                <div className="flex items-center justify-between pt-2.5 border-t border-black/10">
+                  <span className="text-xs font-bold text-black">Zwischensumme</span>
+                  <span className="text-sm font-bold text-black">€ {cartTotal.toLocaleString('de-DE')}</span>
                 </div>
               </div>
             )}
@@ -356,7 +337,7 @@ export default function Checkout() {
           <div>
             <button
               onClick={() => setSameBilling(v => !v)}
-              className="w-full flex items-center gap-3 p-4 border-2 mb-5 transition-all text-left bg-transparent"
+              className="w-full flex items-center gap-3 p-3.5 border-2 mb-4 transition-all text-left bg-transparent"
               style={{ border: sameBilling ? '2px solid #000' : '2px solid rgba(0,0,0,0.08)' }}
             >
               <div className={`w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 transition-all ${
@@ -364,7 +345,7 @@ export default function Checkout() {
               }`}>
                 {sameBilling && <Check size={11} strokeWidth={3} className="text-white" />}
               </div>
-              <span className="text-sm font-semibold text-black">Rechnungsadresse = Lieferadresse</span>
+              <span className="text-xs font-semibold text-black">Rechnungsadresse = Lieferadresse</span>
             </button>
             {!sameBilling && (
               <AddressForm
@@ -380,9 +361,9 @@ export default function Checkout() {
         {/* ── Step 3: Accessories ── */}
         {step === 3 && (
           <div>
-            <h2 className="text-base font-bold text-black mb-1 uppercase" style={{ letterSpacing: '0.12em' }}>Zubehör & Accessoires</h2>
-            <p className="text-[11px] text-black/40 mb-5">Ergänzen Sie Ihre Bestellung mit passendem Zubehör.</p>
-            <div className="space-y-3">
+            <h2 className="text-sm font-bold text-black mb-1 uppercase" style={{ letterSpacing: '0.12em' }}>Zubehör & Accessoires</h2>
+            <p className="text-[10px] text-black/40 mb-3">Ergänzen Sie Ihre Bestellung mit passendem Zubehör.</p>
+            <div className="space-y-2">
               {allAccessories.map(item => (
                 <AccessoryCard
                   key={item.id}
@@ -398,30 +379,30 @@ export default function Checkout() {
         {/* ── Step 4: Summary ── */}
         {step === 4 && (
           <div>
-            <h2 className="text-base font-bold text-black mb-5 uppercase" style={{ letterSpacing: '0.12em' }}>Bestellübersicht</h2>
+            <h2 className="text-sm font-bold text-black mb-3 uppercase" style={{ letterSpacing: '0.12em' }}>Bestellübersicht</h2>
 
             {/* Products */}
-            <div className="bg-[#f6f5f3] p-4 mb-4">
-              <p className="text-[9px] uppercase tracking-widest text-black/40 mb-3">{product.id ? 'Schuh' : 'Artikel'}</p>
+            <div className="bg-[#f6f5f3] p-3 mb-3">
+              <p className="text-[8px] uppercase tracking-widest text-black/40 mb-2">{product.id ? 'Schuh' : 'Artikel'}</p>
               {product.id ? (
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-sm font-bold text-black">{product.name || product.shoe_name}</p>
-                    <p className="text-[10px] text-black/40 mt-0.5">{product.material}{product.sole ? ` · ${product.sole}` : ''}</p>
+                    <p className="text-xs font-bold text-black">{product.name || product.shoe_name}</p>
+                    <p className="text-[9px] text-black/40 mt-0.5">{product.material}{product.sole ? ` · ${product.sole}` : ''}</p>
                     {latestScan && (
-                      <p className="text-[10px] text-teal-600 mt-0.5">EU {latestScan.eu_size} — aus 3D-Scan</p>
+                      <p className="text-[9px] text-teal-600 mt-0.5">EU {latestScan.eu_size} — aus 3D-Scan</p>
                     )}
                   </div>
-                  <p className="text-sm font-bold text-black">{product.price}</p>
+                  <p className="text-xs font-bold text-black">{product.price}</p>
                 </div>
               ) : (
                 cart.map(item => (
-                  <div key={item.id} className="flex justify-between py-1.5 border-b border-black/5 last:border-0">
+                  <div key={item.id} className="flex justify-between py-1 border-b border-black/5 last:border-0">
                     <div>
-                      <span className="text-sm text-black">{item.name}</span>
-                      {item.qty > 1 && <span className="text-[10px] text-black/40 ml-1">×{item.qty}</span>}
+                      <span className="text-xs text-black">{item.name}</span>
+                      {item.qty > 1 && <span className="text-[9px] text-black/40 ml-1">×{item.qty}</span>}
                     </div>
-                    <span className="text-sm font-semibold text-black">{item.price}</span>
+                    <span className="text-xs font-semibold text-black">{item.price}</span>
                   </div>
                 ))
               )}
@@ -429,45 +410,45 @@ export default function Checkout() {
 
             {/* Accessories */}
             {chosenAccessories.length > 0 && (
-              <div className="bg-[#f6f5f3] p-4 mb-4">
-                <p className="text-[9px] uppercase tracking-widest text-black/40 mb-3">Zubehör</p>
+              <div className="bg-[#f6f5f3] p-3 mb-3">
+                <p className="text-[8px] uppercase tracking-widest text-black/40 mb-2">Zubehör</p>
                 {chosenAccessories.map(a => (
-                  <div key={a.id} className="flex justify-between py-1.5 border-b border-black/5 last:border-0">
-                    <span className="text-sm text-black/60">{a.name}</span>
-                    <span className="text-sm font-semibold text-black">{a.price}</span>
+                  <div key={a.id} className="flex justify-between py-1 border-b border-black/5 last:border-0">
+                    <span className="text-xs text-black/60">{a.name}</span>
+                    <span className="text-xs font-semibold text-black">{a.price}</span>
                   </div>
                 ))}
               </div>
             )}
 
             {/* Addresses */}
-            <div className="bg-[#f6f5f3] p-4 mb-4">
-              <p className="text-[9px] uppercase tracking-widest text-black/40 mb-2">Lieferadresse</p>
-              <p className="text-[12px] text-black/60 leading-relaxed">
+            <div className="bg-[#f6f5f3] p-3 mb-3">
+              <p className="text-[8px] uppercase tracking-widest text-black/40 mb-1.5">Lieferadresse</p>
+              <p className="text-[10px] text-black/60 leading-relaxed">
                 {delivery.name}<br />{delivery.street}<br />{delivery.zip} {delivery.city}<br />{delivery.country}
               </p>
             </div>
 
             {/* Total */}
-            <div className="flex items-center justify-between py-4 border-t-2 border-black">
-              <span className="text-base font-bold text-black">Gesamtbetrag</span>
-              <span className="text-xl font-bold text-black">€ {total.toLocaleString('de-DE')}</span>
+            <div className="flex items-center justify-between py-3 border-t-2 border-black">
+              <span className="text-sm font-bold text-black">Gesamtbetrag</span>
+              <span className="text-lg font-bold text-black">€ {total.toLocaleString('de-DE')}</span>
             </div>
 
             {error && (
-              <p className="text-[11px] text-red-500 mt-2 text-center">{error}</p>
+              <p className="text-[10px] text-red-500 mt-1.5 text-center">{error}</p>
             )}
           </div>
         )}
       </div>
 
       {/* Bottom CTA */}
-      <div className="px-5 pt-3 border-t border-black/5 flex-shrink-0" style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 20px)' : '20px' }}>
+      <div className="px-5 pt-2.5 border-t border-black/5 flex-shrink-0" style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 16px)' : '16px' }}>
         {step < 4 ? (
           <button
             onClick={handleNext}
             disabled={!canNext}
-            className={`w-full py-4 flex items-center justify-center gap-2 font-bold text-sm transition-all border-0 uppercase ${
+            className={`w-full py-3.5 flex items-center justify-center gap-2 font-bold text-sm transition-all border-0 uppercase ${
               canNext ? 'bg-black text-white active:scale-[.98]' : 'bg-black/5 text-black/20'
             }`}
             style={{ letterSpacing: '0.18em' }}
@@ -478,7 +459,7 @@ export default function Checkout() {
           <button
             onClick={handlePlace}
             disabled={placing}
-            className="w-full py-4 flex items-center justify-center gap-2 bg-black text-white font-bold text-sm uppercase active:scale-[.98] border-0 disabled:opacity-60"
+            className="w-full py-3.5 flex items-center justify-center gap-2 bg-black text-white font-bold text-sm uppercase active:scale-[.98] border-0 disabled:opacity-60"
             style={{ letterSpacing: '0.18em' }}
           >
             {placing ? (

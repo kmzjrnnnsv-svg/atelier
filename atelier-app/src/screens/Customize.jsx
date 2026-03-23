@@ -843,15 +843,14 @@ export default function Customize() {
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={handleAddToCart}
-                  disabled={added}
+                  onClick={added ? () => navigate('/checkout') : handleAddToCart}
                   className={`flex-1 h-14 flex items-center justify-center gap-2.5 transition-all border ${
-                    added ? 'bg-black/5 text-black border-black/20' : 'bg-white text-black border-black/20 hover:bg-black/5 active:bg-black/10'
+                    added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 hover:bg-black/5 active:bg-black/10'
                   }`}
                   style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
                 >
                   {added
-                    ? <><Check size={16} strokeWidth={1.5} /> Hinzugefügt</>
+                    ? <><ShoppingBag size={16} strokeWidth={1.5} /> Zum Warenkorb</>
                     : <><ShoppingBag size={16} strokeWidth={1.5} /> Warenkorb</>
                   }
                 </button>
@@ -888,15 +887,14 @@ export default function Customize() {
         </p>
         <div className="flex gap-2">
           <button
-            onClick={handleAddToCart}
-            disabled={added}
+            onClick={added ? () => navigate('/checkout') : handleAddToCart}
             className={`flex-1 h-12 flex items-center justify-center gap-2 transition-all border ${
-              added ? 'bg-black/5 text-black border-black/20' : 'bg-white text-black border-black/20 active:bg-black/5'
+              added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 active:bg-black/5'
             }`}
             style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
           >
             {added
-              ? <><Check size={14} strokeWidth={1.5} /> Hinzugefügt</>
+              ? <><ShoppingBag size={14} strokeWidth={1.5} /> Zum Warenkorb</>
               : <><ShoppingBag size={14} strokeWidth={1.5} /> Warenkorb</>
             }
           </button>
