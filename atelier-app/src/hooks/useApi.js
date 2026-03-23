@@ -63,6 +63,8 @@ export async function apiFetch(url, options = {}) {
     const error = new Error(errMsg)
     error.status = res.status
     error.body = body
+    error.code = body.code || null
+    error.error = body.error || errMsg
     throw error
   }
 
