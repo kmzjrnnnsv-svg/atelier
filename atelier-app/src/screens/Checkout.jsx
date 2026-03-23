@@ -92,11 +92,25 @@ function AccessoryCard({ item, selected, onToggle }) {
   )
 }
 
+// Parse German-formatted price string: "€ 1.485" → 1485, "€ 1.485,50" → 1485.5
+function parsePrice(str) {
+  if (!str) return 0
+  const cleaned = str.replace(/[^0-9.,]/g, '') // keep digits, dots, commas
+    .replace(/\./g, '')           // remove dots (thousands separator)
+    .replace(',', '.')            // comma → decimal point
+  return parseFloat(cleaned) || 0
+}
+
+// Format price as German locale string: 8910 → "8.910"
+function fmtPrice(n) {
+  return n.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+}
+
 // ── Main Checkout ─────────────────────────────────────────────────────────────
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, savedDeliveryAddress, savedBillingAddress, saveAddresses } = useAtelierStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses } = useAtelierStore()
 
   // Product from navigation state (legacy single-product flow)
   const product = location.state?.product || {}
@@ -136,11 +150,8 @@ export default function Checkout() {
   const chosenAccessories = allAccessories.filter(a => selectedAcc.includes(a.id))
 
   // Parse shoe price to compute total
-  const shoePrice = parseFloat((product.price || '€ 0').replace(/[^0-9.]/g, '')) || 0
-  const cartTotal = cart.reduce((sum, item) => {
-    const p = parseFloat((item.price || '€ 0').replace(/[^0-9.]/g, '')) || 0
-    return sum + p * item.qty
-  }, 0)
+  const shoePrice = parsePrice(product.price)
+  const cartTotal = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.qty, 0)
   const accTotal  = chosenAccessories.reduce((sum, a) => sum + a.priceNum, 0)
   const total     = (product.id ? shoePrice : cartTotal) + accTotal
 
@@ -158,24 +169,50 @@ export default function Checkout() {
     setError(null)
     try {
       const billingAddr = sameBilling ? delivery : billing
-      const row = await placeOrder({
-        shoe_id:          product.id,
-        shoe_name:        product.name || product.shoe_name,
-        material:         product.material,
-        color:            product.color || product.selectedColor || '',
-        price:            `€ ${total.toLocaleString('de-DE')}`,
-        eu_size:          latestScan?.eu_size || null,
-        scan_id:          latestScan?.id || null,
-        delivery_address: delivery,
-        billing_address:  billingAddr,
-        accessories:      chosenAccessories.map(a => ({ name: a.name, price: a.price })),
-        foot_notes:       footNotes || null,
-      })
+      const accList = chosenAccessories.map(a => ({ name: a.name, price: a.price }))
+      let lastRow
+
+      if (product.id) {
+        // Single-product flow (from Customize)
+        lastRow = await placeOrder({
+          shoe_id:          product.id,
+          shoe_name:        product.name || product.shoe_name,
+          material:         product.material,
+          color:            product.color || product.selectedColor || '',
+          price:            `€ ${fmtPrice(total)}`,
+          eu_size:          latestScan?.eu_size || null,
+          scan_id:          latestScan?.id || null,
+          delivery_address: delivery,
+          billing_address:  billingAddr,
+          accessories:      accList,
+          foot_notes:       footNotes || null,
+        })
+      } else {
+        // Cart flow — one order per cart item
+        for (const item of cart) {
+          const itemTotal = parsePrice(item.price) * item.qty
+          lastRow = await placeOrder({
+            shoe_id:          item.shoeId || null,
+            shoe_name:        item.name,
+            material:         item.material || '',
+            color:            item.color || '',
+            price:            `€ ${fmtPrice(itemTotal)}`,
+            eu_size:          latestScan?.eu_size || null,
+            scan_id:          latestScan?.id || null,
+            delivery_address: delivery,
+            billing_address:  billingAddr,
+            accessories:      accList,
+            foot_notes:       footNotes || null,
+          })
+        }
+        clearCart()
+      }
+
       // Save addresses to profile if user opted in
       if (saveAddr) {
         saveAddresses(delivery, sameBilling ? null : billing).catch(() => {})
       }
-      setPlaced(row)
+      setPlaced(lastRow)
     } catch (e) {
       setError(e?.error || 'Bestellung fehlgeschlagen. Bitte erneut versuchen.')
     } finally {
@@ -195,7 +232,7 @@ export default function Checkout() {
             </div>
             <h1 className="text-base font-bold text-black uppercase" style={{ letterSpacing: '0.12em' }}>Bestellung aufgegeben</h1>
             <p className="text-[10px] text-black/40 mt-1">
-              #{placed.id} · {placed.shoe_name} · € {total.toLocaleString('de-DE')}
+              #{placed.id} · {placed.shoe_name} · € {fmtPrice(total)}
             </p>
           </div>
 
@@ -205,7 +242,7 @@ export default function Checkout() {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <span className="text-[8px] uppercase tracking-widest text-black/35">Betrag</span>
-                <span className="text-sm font-bold text-teal-700">€ {total.toLocaleString('de-DE')}</span>
+                <span className="text-sm font-bold text-teal-700">€ {fmtPrice(total)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[8px] uppercase tracking-widest text-black/35">Empfänger</span>
@@ -287,7 +324,7 @@ export default function Checkout() {
             ) : (
               <div className="space-y-2.5">
                 {cart.map(item => {
-                  const itemPrice = parseFloat((item.price || '€ 0').replace(/[^0-9.]/g, '')) || 0
+                  const itemPrice = parsePrice(item.price)
                   return (
                     <div key={item.id} className="flex gap-3 p-3 bg-[#f6f5f3]">
                       {item.image ? (
@@ -310,7 +347,7 @@ export default function Checkout() {
                               <Plus size={10} strokeWidth={2} />
                             </button>
                           </div>
-                          <span className="text-xs font-bold text-black">€ {(itemPrice * item.qty).toLocaleString('de-DE')}</span>
+                          <span className="text-xs font-bold text-black">€ {fmtPrice(itemPrice * item.qty)}</span>
                         </div>
                       </div>
                       <button onClick={() => removeFromCart(item.id)} className="self-start p-1 bg-transparent border-0 text-black/30 hover:text-red-500">
@@ -321,7 +358,7 @@ export default function Checkout() {
                 })}
                 <div className="flex items-center justify-between pt-2.5 border-t border-black/10">
                   <span className="text-xs font-bold text-black">Zwischensumme</span>
-                  <span className="text-sm font-bold text-black">€ {cartTotal.toLocaleString('de-DE')}</span>
+                  <span className="text-sm font-bold text-black">€ {fmtPrice(cartTotal)}</span>
                 </div>
               </div>
             )}
@@ -426,9 +463,9 @@ export default function Checkout() {
                   <div key={item.id} className="flex justify-between py-1 border-b border-black/5 last:border-0">
                     <div>
                       <span className="text-xs text-black">{item.name}</span>
-                      {item.qty > 1 && <span className="text-[9px] text-black/40 ml-1">×{item.qty}</span>}
+                      {item.qty > 1 && <span className="text-[9px] text-black/40 ml-1">{'\u00D7'}{item.qty}</span>}
                     </div>
-                    <span className="text-xs font-semibold text-black">{item.price}</span>
+                    <span className="text-xs font-semibold text-black">€ {fmtPrice(parsePrice(item.price) * item.qty)}</span>
                   </div>
                 ))
               )}
@@ -458,7 +495,7 @@ export default function Checkout() {
             {/* Total */}
             <div className="flex items-center justify-between py-3 border-t-2 border-black">
               <span className="text-sm font-bold text-black">Gesamtbetrag</span>
-              <span className="text-lg font-bold text-black">€ {total.toLocaleString('de-DE')}</span>
+              <span className="text-lg font-bold text-black">€ {fmtPrice(total)}</span>
             </div>
 
             {error && (
@@ -491,7 +528,7 @@ export default function Checkout() {
             {placing ? (
               <><div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin" /> Wird verarbeitet…</>
             ) : (
-              <><ShoppingBag size={16} strokeWidth={2} /> Jetzt bestellen — € {total.toLocaleString('de-DE')}</>
+              <><ShoppingBag size={16} strokeWidth={2} /> Jetzt bestellen — € {fmtPrice(total)}</>
             )}
           </button>
         )}
