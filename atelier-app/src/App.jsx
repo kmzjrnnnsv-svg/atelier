@@ -86,6 +86,10 @@ const ProductConfigEditor  = lazy(() => import('./screens/cms/ProductConfigEdito
 const ExploreEditor        = lazy(() => import('./screens/cms/ExploreEditor'))
 const LoyaltyEditor        = lazy(() => import('./screens/cms/LoyaltyEditor'))
 const FeedbackPanel        = lazy(() => import('./screens/cms/FeedbackPanel'))
+const AccessoriesPanel     = lazy(() => import('./screens/cms/AccessoriesPanel'))
+const ShippingPanel        = lazy(() => import('./screens/cms/ShippingPanel'))
+const CouponsPanel         = lazy(() => import('./screens/cms/CouponsPanel'))
+const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -181,6 +185,9 @@ function AppRoutes() {
               <Route path="leisten"       element={<LastSettings />} />
               <Route path="product-config" element={<ProductConfigEditor />} />
               <Route path="feedback" element={<FeedbackPanel />} />
+              <Route path="accessories" element={<AccessoriesPanel />} />
+              <Route path="shipping" element={<AdminRoute><ShippingPanel /></AdminRoute>} />
+              <Route path="coupons"  element={<AdminRoute><CouponsPanel /></AdminRoute>} />
             </Route>
           </Routes>
         </Suspense>
@@ -198,6 +205,7 @@ function AppRoutes() {
               <Route path="/"           element={<Navigate to="/login" replace />} />
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
+              <Route path="/register-promotion" element={<RegisterPromotion />} />
               <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
               <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
               <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
@@ -231,6 +239,7 @@ function AppRoutes() {
       <Route path="/"           element={<Navigate to="/login" replace />} />
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Registration />} />
+      <Route path="/register-promotion" element={<RegisterPromotion />} />
       <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
       <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
       <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />

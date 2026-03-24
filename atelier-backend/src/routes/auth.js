@@ -40,7 +40,7 @@ function issueTokens(res, user) {
 
   res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS)
 
-  return { accessToken, user: { id: user.id, name: user.name, email: user.email, role: user.role } }
+  return { accessToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion } }
 }
 
 // POST /api/auth/register
@@ -130,7 +130,8 @@ router.post('/logout', (req, res) => {
 // GET /api/auth/me
 router.get('/me', authenticate, (req, res) => {
   const { id, name, email, role } = req.user
-  res.json({ id, name, email, role })
+  const row = getDb().prepare('SELECT is_promotion, promotion_discount_pct, promotion_max_orders, promotion_orders_used FROM users WHERE id = ?').get(id)
+  res.json({ id, name, email, role, is_promotion: !!(row?.is_promotion), promotion_discount_pct: row?.promotion_discount_pct, promotion_max_orders: row?.promotion_max_orders, promotion_orders_used: row?.promotion_orders_used })
 })
 
 // PATCH /api/auth/me  –  Update own profile (name / email / password)
@@ -244,6 +245,36 @@ router.put('/me/cart', authenticate, (req, res) => {
     .run(cart && cart.length > 0 ? JSON.stringify(cart) : null, req.user.id)
   res.json({ cart: cart || [] })
 })
+
+// POST /api/auth/register-promotion — register via invite token
+router.post('/register-promotion',
+  body('token').trim().notEmpty().withMessage('Token erforderlich'),
+  body('name').trim().isLength({ min: 2 }).withMessage('Name min 2 Zeichen'),
+  body('password')
+    .isLength({ min: 8 }).withMessage('Passwort min 8 Zeichen')
+    .matches(/[0-9]/).withMessage('Passwort muss eine Zahl enthalten')
+    .matches(/[^a-zA-Z0-9]/).withMessage('Passwort muss ein Sonderzeichen enthalten'),
+  async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const { token, name, password } = req.body
+    const db = getDb()
+
+    const user = db.prepare('SELECT * FROM users WHERE promotion_invite_token = ?').get(token)
+    if (!user) return res.status(404).json({ error: 'Ungültiger oder abgelaufener Einladungslink' })
+
+    const hash = await bcrypt.hash(password, 12)
+    db.prepare(`
+      UPDATE users SET name = ?, password_hash = ?, promotion_invite_token = NULL, is_active = 1, updated_at = datetime('now')
+      WHERE id = ?
+    `).run(name, hash, user.id)
+
+    const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id)
+    const result = issueTokens(res, updated)
+    res.status(201).json(result)
+  }
+)
 
 // ── MFA Routes ────────────────────────────────────────────────────────────────
 

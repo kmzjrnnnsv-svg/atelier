@@ -78,7 +78,19 @@ function MatchBadge({ match, variant = 'dark' }) {
 }
 
 // ── Hero Card (featured first shoe) ────────────────────────────────────────
-function HeroCard({ product, onSelect, isFav, onToggleFav }) {
+function PromoPrice({ product, isPromo, className }) {
+  if (isPromo && product.promotion_price) {
+    return (
+      <span className={className}>
+        <span className="line-through opacity-40 mr-1.5">{product.price}</span>
+        <span>{product.promotion_price}</span>
+      </span>
+    )
+  }
+  return <span className={className}>{product.price}</span>
+}
+
+function HeroCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
   return (
     <div
       className="relative overflow-hidden mb-5 cursor-pointer active:scale-[0.98] transition-transform"
@@ -116,7 +128,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav }) {
       <div className="absolute bottom-0 left-0 right-0 p-4">
         <p className="text-[9px] uppercase tracking-[0.16em] text-white/50 mb-0.5">{product.material}</p>
         <h3 className="text-lg font-light text-white leading-tight uppercase tracking-[0.06em]">{product.name}</h3>
-        <p className="text-sm text-white/50 mt-0.5">{product.price}</p>
+        <PromoPrice product={product} isPromo={isPromo} className="text-sm text-white/50 mt-0.5" />
 
         <div className="flex items-center gap-2 mt-3">
           <button
@@ -134,7 +146,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav }) {
 }
 
 // ── Grid Card ───────────────────────────────────────────────────────────────
-function GridCard({ product, onSelect, isFav, onToggleFav }) {
+function GridCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
   return (
     <div
       className="bg-white overflow-hidden cursor-pointer active:scale-95 transition-transform border border-black/8"
@@ -169,7 +181,7 @@ function GridCard({ product, onSelect, isFav, onToggleFav }) {
         <p className="text-[8px] uppercase tracking-widest text-black/35">{product.category}</p>
         <p className="text-sm font-light text-black mt-0.5 leading-tight">{product.name}</p>
         <p className="text-[10px] text-black/35 italic mt-0.5">{product.material}</p>
-        <p className="text-sm font-normal text-black mt-1.5">{product.price}</p>
+        <PromoPrice product={product} isPromo={isPromo} className="text-sm font-normal text-black mt-1.5" />
       </div>
     </div>
   )
@@ -306,6 +318,7 @@ export default function ShoeCollection() {
                 onSelect={() => navigate('/customize', { state: { product: hero } })}
                 isFav={favorites.includes(hero.id)}
                 onToggleFav={() => toggleFavorite(hero.id)}
+                isPromo={!!user?.is_promotion}
               />
             )}
 
@@ -329,6 +342,7 @@ export default function ShoeCollection() {
                       onSelect={() => navigate('/customize', { state: { product } })}
                       isFav={favorites.includes(product.id)}
                       onToggleFav={() => toggleFavorite(product.id)}
+                      isPromo={!!user?.is_promotion}
                     />
                   ))}
                 </div>

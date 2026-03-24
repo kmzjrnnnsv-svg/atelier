@@ -18,6 +18,7 @@ function getActiveIndex(status) {
     case 'pending_payment': return 0
     case 'pending':         return 1
     case 'processing':      return 2
+    case 'quality_check':   return 3
     case 'shipped':         return 4
     case 'delivered':       return 5
     case 'cancelled':       return -1
@@ -163,6 +164,7 @@ const STATUS_CONFIG = {
   pending_payment: { label: 'Zahlung ausstehend', icon: Banknote,      bg: 'bg-amber-50',  text: 'text-amber-600' },
   pending:         { label: 'Ausstehend',          icon: Clock,         bg: 'bg-black/5',   text: 'text-black/40' },
   processing:      { label: 'In Fertigung',        icon: Package,       bg: 'bg-teal-50',   text: 'text-teal-600' },
+  quality_check:   { label: 'Qualitätskontrolle',  icon: SearchCheck,   bg: 'bg-purple-50', text: 'text-purple-600' },
   shipped:         { label: 'Versendet',           icon: Truck,         bg: 'bg-blue-50',   text: 'text-blue-600' },
   delivered:       { label: 'Geliefert',           icon: CheckCircle2,  bg: 'bg-green-50',  text: 'text-green-600' },
   cancelled:       { label: 'Storniert',           icon: XCircle,       bg: 'bg-black/4',   text: 'text-black/30' },
@@ -236,7 +238,7 @@ export default function Orders() {
 
   const filtered = orders.filter(o => {
     if (filter === 'all') return true
-    if (filter === 'active') return ['pending_payment', 'pending', 'processing', 'shipped'].includes(o.status)
+    if (filter === 'active') return ['pending_payment', 'pending', 'processing', 'quality_check', 'shipped'].includes(o.status)
     if (filter === 'delivered') return o.status === 'delivered'
     if (filter === 'cancelled') return o.status === 'cancelled'
     return true

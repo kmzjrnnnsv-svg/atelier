@@ -9,6 +9,7 @@ const STATUS_CONFIG = {
  pending_payment: { label: 'Zahlung ausstehend', color: 'bg-black/15 text-black/70', dot: 'bg-black/15' },
  pending: { label: 'Ausstehend', color: 'bg-black/8 text-black/50', dot: 'bg-black/15' },
  processing: { label: 'In Fertigung', color: 'bg-black/8 text-black/50', dot: 'bg-black/25' },
+ quality_check: { label: 'Qualitätskontrolle', color: 'bg-black/8 text-black/50', dot: 'bg-black/35' },
  shipped: { label: 'Versendet', color: 'bg-black/8 text-black/50', dot: 'bg-black/40' },
  delivered: { label: 'Geliefert', color: 'bg-black/8 text-black/50', dot: 'bg-black/60' },
  cancelled: { label: 'Storniert', color: 'bg-black/8 text-black/50', dot: 'bg-black/10' },
@@ -18,6 +19,7 @@ const FILTERS = [
  { key: 'all', label: 'Alle' },
  { key: 'pending_payment', label: 'Zahlung offen' },
  { key: 'processing', label: 'In Fertigung' },
+ { key: 'quality_check', label: 'Qualitätskontrolle' },
  { key: 'shipped', label: 'Versendet' },
  { key: 'delivered', label: 'Geliefert' },
  { key: 'cancelled', label: 'Storniert' },
@@ -26,7 +28,8 @@ const FILTERS = [
 const NEXT_STATUSES = {
  pending_payment: ['processing', 'cancelled'],
  pending: ['processing', 'cancelled'],
- processing: ['shipped', 'cancelled'],
+ processing: ['quality_check', 'cancelled'],
+ quality_check: ['shipped', 'cancelled'],
  shipped: ['delivered', 'cancelled'],
  delivered: [],
  cancelled: [],
@@ -34,7 +37,8 @@ const NEXT_STATUSES = {
 
 const STATUS_LABELS = {
  processing: 'Zahlung bestätigen → Fertigung',
- shipped: 'Als versendet markieren',
+ quality_check: 'Zur Qualitätskontrolle',
+ shipped: 'QC bestanden → Versand',
  delivered: 'Als geliefert markieren',
  cancelled: 'Stornieren',
 }

@@ -111,6 +111,12 @@ export function AuthProvider({ children }) {
     return data.user
   }
 
+  function loginWithTokenData(data) {
+    setAccessToken(data.accessToken)
+    setUser(data.user)
+    scheduleRefresh()
+  }
+
   function logout() {
     setAccessToken(null)
     setUser(null)
@@ -119,7 +125,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, silentRefresh }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, silentRefresh, loginWithTokenData }}>
       {children}
     </AuthContext.Provider>
   )

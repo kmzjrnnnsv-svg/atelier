@@ -193,6 +193,13 @@ const useAtelierStore = create((set, get) => ({
     return row
   },
 
+  async validateCoupon(code, orderTotal) {
+    return apiFetch('/api/coupons/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code, order_total: orderTotal }),
+    })
+  },
+
   // --- FAQS (CMS) ---
   async fetchFaqs() {
     const rows = await apiFetch('/api/faqs')
@@ -380,7 +387,7 @@ const useAtelierStore = create((set, get) => ({
 
 // DB snake_case → app camelCase
 function normalizeShoe(r) {
-  return { id: String(r.id), name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null }
+  return { id: String(r.id), name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null, cost_price: r.cost_price ?? '', promotion_price: r.promotion_price || '' }
 }
 function normalizeCurated(r) {
   return { id: String(r.id), name: r.name, color: r.color, badge: r.badge || '' }
@@ -469,7 +476,7 @@ function exploreSectionToApi(s) {
 }
 
 function shoeToApi(s) {
-  return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null }
+  return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null }
 }
 function outfitToApi(o) {
   return { style: o.style, description: o.description, top: o.top, bottom: o.bottom, shoe: o.shoe, shoe_color: o.shoeColor, bg_color: o.bgColor }

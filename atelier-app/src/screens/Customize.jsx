@@ -196,7 +196,9 @@ export default function Customize() {
   const myRev    = reviews.find(r => r.user_id === user?.id)
 
   // Preis: Basispreis aus DB + Sohle-Aufpreis + Zubehör
-  const basePrice = parseFloat(String(product.price).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
+  const isPromo = !!user?.is_promotion
+  const effectivePrice = isPromo && product.promotion_price ? product.promotion_price : product.price
+  const basePrice = parseFloat(String(effectivePrice).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
   const soleExtra = sole?.price_extra || 0
   const accessoryTotal = selectedAccessories.reduce((sum, id) => {
     const acc = accessories.find(a => a.id === id)

@@ -85,6 +85,11 @@ const DEFAULTS = {
     intro:   '{{shoe_name}} wurden soeben versandt und befinden sich auf dem Weg zu Ihnen.',
     body:    'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der ATELIER App unter Meine Bestellungen.\nBei Fragen wenden Sie sich an unser Team — wir sind gerne für Sie da.',
   },
+  quality_check: {
+    subject: 'ATELIER — Ihre Maßschuhe in der Qualitätskontrolle {{order_ref}}',
+    intro:   'Ihre Maßschuhe {{shoe_name}} wurden erfolgreich gefertigt und befinden sich jetzt in unserer Qualitätskontrolle.',
+    body:    'Jedes Detail wird geprüft — von der Nahtführung bis zur Passform. Nach bestandener Kontrolle werden Ihre Schuhe umgehend versandt.\nDen aktuellen Status finden Sie jederzeit in der ATELIER App.',
+  },
   manufacturer: {
     subject: '[ATELIER] Neue Bestellung {{order_ref}} — USER-{{user_id_padded}} — {{shoe_name}}',
     intro:   'Neue Bestellung eingegangen. Bitte Fertigung vorbereiten.',
@@ -283,6 +288,45 @@ export async function sendOrderConfirmed(order, user) {
       <div class="val">${order.shoe_name} · ${order.material} · ${order.color}</div>
       <div class="label">Geschätzte Lieferzeit</div>
       <div class="val">6–8 Wochen</div>
+    </div>
+    <hr class="divider">
+    <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">${closing}</p>
+  </div>
+  <div class="footer">ATELIER Bespoke Footwear · Alle Schuhe sind Einzelanfertigungen</div>
+</div>
+</body></html>`
+
+  await send({ to: user.email, subject, html })
+}
+
+// ─── Quality check notification email ──────────────────────────────────────────
+export async function sendQualityCheckNotification(order, user) {
+  const tmpl = getTemplate('quality_check')
+  const ref  = order.order_ref || `#${order.id}`
+  const vars = {
+    name: user.name, order_id: order.id, order_ref: ref, shoe_name: order.shoe_name,
+    material: order.material, color: order.color, price: order.price,
+    eu_size: order.eu_size || '—', user_order_number: order.user_order_number,
+  }
+  const subject = render(tmpl.subject, vars)
+  const intro   = nl2br(render(tmpl.intro, vars))
+  const closing = nl2br(render(tmpl.body, vars))
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <h1>ATELIER</h1>
+    <p>QUALITÄTSKONTROLLE · ${ref}</p>
+  </div>
+  <div class="body" style="text-align:center">
+    <div class="badge" style="background:#8b5cf6;color:#fff">✓ QUALITÄTSKONTROLLE</div>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Ihre Maßschuhe werden geprüft.</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">${intro}</p>
+    <div style="text-align:left">
+      <div class="label">Bestellnummer</div>
+      <div class="val">${ref}</div>
+      <div class="label">Ihr Schuh</div>
+      <div class="val">${order.shoe_name} · ${order.material} · ${order.color}</div>
     </div>
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">${closing}</p>
@@ -504,4 +548,33 @@ export async function sendManufacturerNotification(order, user, scan) {
 </body></html>`
 
   await send({ to: cfg.mfgEmail, subject, html })
+}
+
+// ─── Promotion invitation email ─────────────────────────────────────────────
+export async function sendPromotionInvitation(email, name, inviteToken, discountPct) {
+  const cfg = getEmailConfig()
+  const link = `${cfg.appUrl}/register-promotion?token=${inviteToken}`
+  const discountText = discountPct ? `${discountPct}% Sonderkonditionen` : 'exklusive Sonderkonditionen'
+
+  const subject = 'ATELIER — Ihr exklusiver Promotion-Zugang'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <h1>ATELIER</h1>
+    <p>PROMOTION-EINLADUNG</p>
+  </div>
+  <div class="body" style="text-align:center">
+    <div class="badge" style="background:#d97706;color:#fff">★ PROMOTION</div>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Willkommen, ${name}!</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">
+      Sie wurden eingeladen, ein ATELIER Promotion-Konto mit ${discountText} zu erstellen.
+    </p>
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto erstellen</a>
+    <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
+  </div>
+  <div class="footer">ATELIER Bespoke Footwear · Vertrauliche Einladung</div>
+</div>
+</body></html>`
+
+  await send({ to: email, subject, html })
 }

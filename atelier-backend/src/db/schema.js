@@ -187,7 +187,12 @@ export function runMigrations(db) {
       ('bank_bic',    'XXXXXXXX'),
       ('bank_holder', 'ATELIER GmbH'),
       ('bank_name',   'Musterbank'),
-      ('loyalty_expiry_days', '365');
+      ('loyalty_expiry_days', '365'),
+      ('shipping_to_warehouse', '0'),
+      ('shipping_to_customer', '0'),
+      ('packaging_cost', '0'),
+      ('customs_cost', '0'),
+      ('promotion_scan_tolerance_pct', '10');
   `)
 
   // ── Checkout columns (added after initial schema) ─────────────────────────
@@ -252,6 +257,23 @@ export function runMigrations(db) {
     `ALTER TABLE foot_scans ADD COLUMN left_upper_instep_girth  REAL`,
     // foot_scans — preferred shoe type for last generation
     `ALTER TABLE foot_scans ADD COLUMN shoe_type TEXT DEFAULT 'oxford'`,
+    // orders — shipping
+    `ALTER TABLE orders ADD COLUMN shipping_method TEXT`,
+    `ALTER TABLE orders ADD COLUMN shipping_cost   TEXT`,
+    // orders — coupons
+    `ALTER TABLE orders ADD COLUMN coupon_code      TEXT`,
+    `ALTER TABLE orders ADD COLUMN discount_amount   TEXT`,
+    `ALTER TABLE orders ADD COLUMN original_price    TEXT`,
+    // users — promotion accounts
+    `ALTER TABLE users ADD COLUMN is_promotion            INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE users ADD COLUMN promotion_discount_pct  REAL DEFAULT NULL`,
+    `ALTER TABLE users ADD COLUMN promotion_max_orders    INTEGER DEFAULT NULL`,
+    `ALTER TABLE users ADD COLUMN promotion_orders_used   INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE users ADD COLUMN promotion_invited_by    INTEGER REFERENCES users(id)`,
+    `ALTER TABLE users ADD COLUMN promotion_invite_token  TEXT`,
+    // shoes — cost pricing
+    `ALTER TABLE shoes ADD COLUMN cost_price       REAL DEFAULT NULL`,
+    `ALTER TABLE shoes ADD COLUMN promotion_price   TEXT DEFAULT NULL`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
@@ -292,6 +314,46 @@ export function runMigrations(db) {
       `)
     }
   } catch (e) { console.error('[migrate orders pending_payment]', e.message) }
+
+  // ── Migrate orders: add quality_check to status CHECK ────────────────────
+  try {
+    const row = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='orders'").get()
+    if (row && !row.sql.includes('quality_check')) {
+      db.exec(`
+        CREATE TABLE orders_new2 (
+          id                INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          shoe_id           INTEGER REFERENCES shoes(id) ON DELETE SET NULL,
+          shoe_name         TEXT NOT NULL,
+          material          TEXT NOT NULL,
+          color             TEXT NOT NULL,
+          price             TEXT NOT NULL,
+          status            TEXT NOT NULL DEFAULT 'pending_payment'
+                            CHECK(status IN ('pending_payment','pending','processing','quality_check','shipped','delivered','cancelled')),
+          created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at        TEXT NOT NULL DEFAULT (datetime('now')),
+          user_order_number INTEGER NOT NULL DEFAULT 0,
+          delivery_address  TEXT,
+          billing_address   TEXT,
+          accessories       TEXT NOT NULL DEFAULT '[]',
+          scan_id           INTEGER REFERENCES foot_scans(id),
+          eu_size           TEXT,
+          order_ref         TEXT,
+          foot_notes        TEXT,
+          foot_notes_en     TEXT
+        );
+        INSERT INTO orders_new2
+          SELECT id,user_id,shoe_id,shoe_name,material,color,price,status,
+                 created_at,updated_at,user_order_number,delivery_address,
+                 billing_address,accessories,scan_id,eu_size,order_ref,
+                 foot_notes,foot_notes_en
+          FROM orders;
+        DROP TABLE orders;
+        ALTER TABLE orders_new2 RENAME TO orders;
+        CREATE INDEX IF NOT EXISTS idx_orders_usr ON orders(user_id);
+      `)
+    }
+  } catch (e) { console.error('[migrate orders quality_check]', e.message) }
 
   // ── ML Training data — foot scan images ──────────────────────────────────
   // Stores compressed images for each scan to build a training dataset.
@@ -500,6 +562,74 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_tickets_user   ON feedback_tickets(user_id);
     CREATE INDEX IF NOT EXISTS idx_tickets_status ON feedback_tickets(status);
+
+    -- ── Accessories (CMS-editable) ────────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS accessories (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      key         TEXT    NOT NULL UNIQUE,
+      name        TEXT    NOT NULL,
+      description TEXT,
+      price       REAL    NOT NULL DEFAULT 0,
+      image_data  TEXT,
+      is_active   INTEGER NOT NULL DEFAULT 1,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      created_by  INTEGER REFERENCES users(id),
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT OR IGNORE INTO accessories (key, name, description, price, sort_order) VALUES
+      ('shoetrees',  'Zedernholz Schuhspanner',  'Formerhalt & Feuchtigkeitskontrolle',  45,  0),
+      ('carekit',    'Lederpflege-Set',           'Creme, Bürste & Tuch',                 35,  1),
+      ('dustbag',    'Samtbeutel',                'Schutzaufbewahrung aus Baumwolle',      25,  2),
+      ('shoehorn',   'Messing-Schuhlöffel',       'Handgraviert, 38 cm',                   20,  3),
+      ('belt',       'Passendes Ledergürtel',     'Gleiche Haut & Farbe wie der Schuh',   180, 4);
+
+    -- ── Shipping configuration ──────────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS shipping_config (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      key             TEXT    NOT NULL UNIQUE,
+      label           TEXT    NOT NULL,
+      description     TEXT,
+      price           REAL    NOT NULL DEFAULT 0,
+      free_above      REAL    DEFAULT NULL,
+      is_default      INTEGER NOT NULL DEFAULT 0,
+      is_active       INTEGER NOT NULL DEFAULT 1,
+      created_by      INTEGER REFERENCES users(id),
+      updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT OR IGNORE INTO shipping_config (key, label, description, price, free_above, is_default, is_active) VALUES
+      ('standard', 'Standardversand', 'Lieferung in 3–5 Werktagen', 9.90, 500, 1, 1),
+      ('express',  'Expressversand',  'Lieferung in 1–2 Werktagen', 19.90, NULL, 0, 1);
+
+    -- ── Coupons ──────────────────────────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS coupons (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      code            TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+      type            TEXT    NOT NULL CHECK(type IN ('percentage','fixed','free_shipping','free_accessory')),
+      value           REAL    NOT NULL DEFAULT 0,
+      free_accessory_id TEXT  DEFAULT NULL,
+      min_order_value REAL    DEFAULT NULL,
+      max_uses        INTEGER DEFAULT NULL,
+      used_count      INTEGER NOT NULL DEFAULT 0,
+      single_use      INTEGER NOT NULL DEFAULT 0,
+      expires_at      TEXT    DEFAULT NULL,
+      is_active       INTEGER NOT NULL DEFAULT 1,
+      created_by      INTEGER REFERENCES users(id),
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_coupon_code ON coupons(code);
+
+    CREATE TABLE IF NOT EXISTS coupon_usages (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      coupon_id  INTEGER NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      order_id   INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(coupon_id, order_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_usage_coupon ON coupon_usages(coupon_id);
+    CREATE INDEX IF NOT EXISTS idx_usage_user   ON coupon_usages(user_id);
 
     INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, season, rating, sort_order) VALUES
       ('calfskin', 'CALFSKIN', 'Full-Grain', '#b45309', 1, 'Robust und langlebig — entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.', 'Ganzjährig', 'good', 0),

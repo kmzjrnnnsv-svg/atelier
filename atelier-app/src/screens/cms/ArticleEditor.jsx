@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Pencil, Trash2, Check, X, Star, BookOpen, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, Star, BookOpen, ChevronDown, ChevronUp, Upload, ImageIcon } from 'lucide-react'
 import useAtelierStore from '../../store/atelierStore'
 
 const CATEGORIES = ['Gesundheit', 'Tipps', 'Wissen', 'Allgemein']
@@ -109,6 +109,39 @@ function ArticleForm({ initial = emptyForm, onSave, onCancel, saving }) {
  </div>
  </label>
 
+ {/* Header Image */}
+ <div>
+ <label className="block text-xs font-medium text-black/35 mb-1.5">Header-Bild (optional)</label>
+ <div className="flex gap-3 items-start">
+ {form.image ? (
+ <div className="relative w-32 h-20 flex-shrink-0 bg-black/5 overflow-hidden">
+ <img src={form.image} alt="" className="w-full h-full object-cover" />
+ <button
+ onClick={() => setField('image', null)}
+ className="absolute top-1 right-1 w-5 h-5 bg-black/60 flex items-center justify-center border-0 hover:bg-black/80"
+ >
+ <X size={10} className="text-white" />
+ </button>
+ </div>
+ ) : (
+ <div className="w-32 h-20 flex-shrink-0 bg-black/3 flex items-center justify-center border border-dashed border-black/10">
+ <ImageIcon size={18} className="text-black/15" />
+ </div>
+ )}
+ <label className="flex-1 flex items-center gap-2 bg-white border border-black/8 px-3.5 py-3 cursor-pointer hover:bg-black/3 transition-colors">
+ <Upload size={14} className="text-black/35" strokeWidth={1.5} />
+ <span className="text-[11px] text-black/40">{form.image ? 'Bild ersetzen' : 'Bild hochladen'}</span>
+ <input type="file" accept="image/*" className="hidden" onChange={e => {
+ const file = e.target.files[0]
+ if (!file) return
+ const reader = new FileReader()
+ reader.onload = ev => setField('image', ev.target.result)
+ reader.readAsDataURL(file)
+ }} />
+ </label>
+ </div>
+ </div>
+
  {/* Excerpt */}
  <div>
  <label className="block text-xs font-medium text-black/35 mb-1.5">
@@ -176,10 +209,16 @@ function ArticleRow({ article, onEdit, onDelete }) {
  return (
  <div className="bg-white border border-black/6 overflow-hidden hover:border-black/10 transition-all">
  <div className="flex items-center gap-3 px-5 py-4">
- {/* Icon */}
+ {/* Thumbnail / Icon */}
+ {article.image ? (
+ <div className="w-9 h-9 flex-shrink-0 overflow-hidden bg-black/5">
+ <img src={article.image} alt="" className="w-full h-full object-cover" />
+ </div>
+ ) : (
  <div className="w-9 h-9 bg-black/5 flex items-center justify-center flex-shrink-0">
  <BookOpen size={15} className="text-black/45" />
  </div>
+ )}
 
  {/* Info */}
  <div className="flex-1 min-w-0">
@@ -227,6 +266,9 @@ function ArticleRow({ article, onEdit, onDelete }) {
  {/* Expandable preview */}
  {expanded && (
  <div className="px-5 pb-4 border-t border-black/10 pt-3">
+ {article.image && (
+ <img src={article.image} alt="" className="w-full max-h-40 object-cover mb-3" />
+ )}
  {article.excerpt && (
  <p className="text-xs text-black/45 italic mb-2 leading-relaxed">{article.excerpt}</p>
  )}
