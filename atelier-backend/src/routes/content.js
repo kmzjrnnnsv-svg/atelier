@@ -146,5 +146,6 @@ export const materialsRouter  = makeContentRouter('shoe_materials', [], { public
 export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true })
 export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead: true })
 export const exploreSectionsRouter = makeContentRouter('explore_sections', exploreValidators, { publicRead: true })
+export const accessoriesRouter    = makeContentRouter('accessories', [], { publicRead: true })
 
 export default router

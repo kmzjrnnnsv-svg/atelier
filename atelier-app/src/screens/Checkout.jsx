@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Check, ChevronRight, MapPin, Receipt, Gift, ShoppingBag, Plus, Minus, CheckCircle2, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, MapPin, Receipt, Gift, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useAtelierStore from '../store/atelierStore'
 
@@ -110,7 +110,7 @@ function fmtPrice(n) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses } = useAtelierStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon } = useAtelierStore()
 
   // Product from navigation state (legacy single-product flow)
   const product = location.state?.product || {}
@@ -130,6 +130,10 @@ export default function Checkout() {
   const [placing,     setPlacing]     = useState(false)
   const [placed,      setPlaced]      = useState(null)
   const [error,       setError]       = useState(null)
+  const [couponCode,    setCouponCode]    = useState('')
+  const [couponResult,  setCouponResult]  = useState(null)
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [couponError,   setCouponError]   = useState(null)
 
   // Merge incoming accessories from Customize page into ACCESSORIES list
   const extraAccessories = incomingAccessories
@@ -153,7 +157,35 @@ export default function Checkout() {
   const shoePrice = parsePrice(product.price)
   const cartTotal = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.qty, 0)
   const accTotal  = chosenAccessories.reduce((sum, a) => sum + a.priceNum, 0)
-  const total     = (product.id ? shoePrice : cartTotal) + accTotal
+  const subtotal  = (product.id ? shoePrice : cartTotal) + accTotal
+  const discountAmount = couponResult?.valid ? couponResult.discount_amount : 0
+  const total     = Math.max(0, subtotal - discountAmount)
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+    setCouponLoading(true)
+    setCouponError(null)
+    try {
+      const res = await validateCoupon(couponCode.trim(), subtotal)
+      if (res.valid) {
+        setCouponResult(res)
+        setCouponError(null)
+      } else {
+        setCouponResult(null)
+        setCouponError(res.reason)
+      }
+    } catch {
+      setCouponError('Fehler bei der Gutschein-Validierung')
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setCouponResult(null)
+    setCouponCode('')
+    setCouponError(null)
+  }
 
   const canNext = step === 0 ? cart.length > 0
     : step === 1 ? isAddrComplete(delivery)
@@ -172,6 +204,8 @@ export default function Checkout() {
       const accList = chosenAccessories.map(a => ({ name: a.name, price: a.price }))
       let lastRow
 
+      const appliedCoupon = couponResult?.valid ? couponCode.trim().toUpperCase() : null
+
       if (product.id) {
         // Single-product flow (from Customize)
         lastRow = await placeOrder({
@@ -186,10 +220,12 @@ export default function Checkout() {
           billing_address:  billingAddr,
           accessories:      accList,
           foot_notes:       footNotes || null,
+          coupon_code:      appliedCoupon,
         })
       } else {
-        // Cart flow — one order per cart item
-        for (const item of cart) {
+        // Cart flow — one order per cart item (coupon on first item only)
+        for (let i = 0; i < cart.length; i++) {
+          const item = cart[i]
           const itemTotal = parsePrice(item.price) * item.qty
           lastRow = await placeOrder({
             shoe_id:          item.shoeId || null,
@@ -203,6 +239,7 @@ export default function Checkout() {
             billing_address:  billingAddr,
             accessories:      accList,
             foot_notes:       footNotes || null,
+            coupon_code:      i === 0 ? appliedCoupon : null,
           })
         }
         clearCart()
@@ -492,10 +529,56 @@ export default function Checkout() {
               </p>
             </div>
 
+            {/* Coupon */}
+            <div className="bg-[#f6f5f3] p-3 mb-3">
+              <p className="text-[8px] uppercase tracking-widest text-black/40 mb-2 flex items-center gap-1"><Ticket size={10} /> Gutschein-Code</p>
+              {couponResult?.valid ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-green-700">{couponCode.toUpperCase()}</span>
+                    <span className="text-[10px] text-green-600 ml-2">{couponResult.description}</span>
+                  </div>
+                  <button onClick={handleRemoveCoupon} className="text-black/30 hover:text-black border-0 bg-transparent"><X size={14} /></button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 border border-black/10 px-3 py-2 text-sm uppercase placeholder-black/20 focus:outline-none focus:border-black transition-colors"
+                    placeholder="Code eingeben"
+                    value={couponCode}
+                    onChange={e => setCouponCode(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponCode.trim()}
+                    className="px-4 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-wider border-0 disabled:opacity-40"
+                  >
+                    {couponLoading ? '…' : 'Einlösen'}
+                  </button>
+                </div>
+              )}
+              {couponError && <p className="text-[10px] text-red-500 mt-1.5">{couponError}</p>}
+            </div>
+
             {/* Total */}
-            <div className="flex items-center justify-between py-3 border-t-2 border-black">
-              <span className="text-sm font-bold text-black">Gesamtbetrag</span>
-              <span className="text-lg font-bold text-black">€ {fmtPrice(total)}</span>
+            <div className="py-3 border-t-2 border-black">
+              {couponResult?.valid && (
+                <>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-xs text-black/50">Zwischensumme</span>
+                    <span className="text-xs text-black/50">€ {fmtPrice(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between mb-1.5">
+                    <span className="text-xs text-green-600">Gutschein ({couponCode.toUpperCase()})</span>
+                    <span className="text-xs text-green-600">- € {fmtPrice(discountAmount)}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-black">Gesamtbetrag</span>
+                <span className="text-lg font-bold text-black">€ {fmtPrice(total)}</span>
+              </div>
             </div>
 
             {error && (

@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
-import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification } from '../utils/email.js'
+import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification } from '../utils/email.js'
 import { totpVerify } from '../utils/totp.js'
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -61,7 +61,7 @@ router.post('/',
     const {
       shoe_id, shoe_name, material, color, price, eu_size,
       delivery_address, billing_address, accessories, scan_id,
-      foot_notes,
+      foot_notes, shipping_method, shipping_cost, coupon_code,
     } = req.body
 
     // Translate foot notes to English for manufacturer
@@ -69,6 +69,39 @@ router.post('/',
 
     const db  = getDb()
     const uid = req.user.id
+
+    // Check promotion order limit
+    const userRow = db.prepare('SELECT is_promotion, promotion_max_orders, promotion_orders_used FROM users WHERE id = ?').get(uid)
+    if (userRow?.is_promotion && userRow.promotion_max_orders != null) {
+      if (userRow.promotion_orders_used >= userRow.promotion_max_orders) {
+        return res.status(403).json({ error: 'Bestelllimit für Promotion-Account erreicht' })
+      }
+    }
+
+    // Validate coupon if provided
+    let couponRow = null
+    let discount_amount = null
+    let original_price = null
+    if (coupon_code) {
+      couponRow = db.prepare('SELECT * FROM coupons WHERE code = ? AND is_active = 1').get(coupon_code.toUpperCase())
+      if (couponRow) {
+        if (couponRow.expires_at && new Date(couponRow.expires_at) < new Date()) couponRow = null
+        if (couponRow && couponRow.max_uses && couponRow.used_count >= couponRow.max_uses) couponRow = null
+        if (couponRow && couponRow.single_use) {
+          const usage = db.prepare('SELECT id FROM coupon_usages WHERE coupon_id = ? AND user_id = ?').get(couponRow.id, uid)
+          if (usage) couponRow = null
+        }
+      }
+      if (couponRow) {
+        const priceNum = parseFloat(String(price).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
+        original_price = price
+        if (couponRow.type === 'percentage') {
+          discount_amount = `€ ${Math.round(priceNum * (couponRow.value / 100))}`
+        } else if (couponRow.type === 'fixed') {
+          discount_amount = `€ ${Math.min(couponRow.value, priceNum)}`
+        }
+      }
+    }
 
     // Sequential order number for this user
     const { count } = db
@@ -88,8 +121,8 @@ router.post('/',
       INSERT INTO orders
         (user_id, shoe_id, shoe_name, material, color, price, eu_size,
          delivery_address, billing_address, accessories, scan_id, user_order_number, status, order_ref,
-         foot_notes, foot_notes_en)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).run(
       uid,
       shoe_id    || null,
@@ -107,7 +140,24 @@ router.post('/',
       order_ref,
       foot_notes || null,
       foot_notes_en || null,
+      shipping_method || null,
+      shipping_cost || null,
+      couponRow ? coupon_code.toUpperCase() : null,
+      discount_amount || null,
+      original_price || null,
     )
+
+    // Record coupon usage + increment promotion orders
+    if (couponRow) {
+      db.prepare('INSERT INTO coupon_usages (coupon_id, user_id, order_id) VALUES (?, ?, ?)')
+        .run(couponRow.id, uid, result.lastInsertRowid)
+      db.prepare("UPDATE coupons SET used_count = used_count + 1, updated_at = datetime('now') WHERE id = ?")
+        .run(couponRow.id)
+    }
+    if (userRow?.is_promotion) {
+      db.prepare("UPDATE users SET promotion_orders_used = promotion_orders_used + 1, updated_at = datetime('now') WHERE id = ?")
+        .run(uid)
+    }
 
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid)
     const user  = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(uid)
@@ -135,7 +185,7 @@ router.post('/',
 // PUT /api/orders/:id — update status (admin/curator)
 router.put('/:id',
   ...canWrite,
-  body('status').isIn(['pending_payment','pending','processing','shipped','delivered','cancelled']),
+  body('status').isIn(['pending_payment','pending','processing','quality_check','shipped','delivered','cancelled']),
   (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
@@ -198,6 +248,11 @@ router.put('/:id',
         sendOrderConfirmed(row, user).catch(e => console.error('[email confirmed]', e.message)),
         sendManufacturerNotification(row, user, scan).catch(e => console.error('[email mfr]', e.message)),
       ])
+    }
+
+    // When marked as quality_check → notify customer
+    if (req.body.status === 'quality_check' && existing.status !== 'quality_check') {
+      sendQualityCheckNotification(row, user).catch(e => console.error('[email qc]', e.message))
     }
 
     // When admin/curator marks as shipped → notify customer

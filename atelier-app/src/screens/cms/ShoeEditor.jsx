@@ -14,6 +14,8 @@ const emptyForm = {
  color: '#1f2937',
  tag: null,
  image: null,
+ cost_price: '',
+ promotion_price: '',
 }
 
 function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
@@ -146,6 +148,32 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </div>
  </div>
 
+ {/* Cost & Promotion pricing */}
+ <div className="border-t border-black/6 pt-4 mt-2">
+ <p className="text-[10px] font-semibold text-black/40 uppercase tracking-wider mb-3">Kalkulation & Promotion</p>
+ <div className="grid grid-cols-2 gap-3">
+ <div>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Einkaufspreis (EK)</label>
+ <input
+ type="number" step="0.01"
+ value={form.cost_price}
+ onChange={(e) => set('cost_price', e.target.value)}
+ placeholder="z.B. 280"
+ className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
+ />
+ </div>
+ <div>
+ <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Promotion-Preis</label>
+ <input
+ value={form.promotion_price}
+ onChange={(e) => set('promotion_price', e.target.value)}
+ placeholder="z.B. € 890"
+ className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
+ />
+ </div>
+ </div>
+ </div>
+
  {/* Actions */}
  <div className="flex gap-3 pt-2">
  <button
@@ -261,7 +289,11 @@ export default function ShoeEditor() {
  </div>
 
  {/* Price */}
- <p className="text-sm font-bold text-black/70 flex-shrink-0">{shoe.price}</p>
+ <div className="flex-shrink-0 text-right">
+ <p className="text-sm font-bold text-black/70">{shoe.price}</p>
+ {shoe.cost_price && <p className="text-[9px] text-black/30">EK: € {shoe.cost_price}</p>}
+ {shoe.promotion_price && <p className="text-[9px] text-amber-600">Promo: {shoe.promotion_price}</p>}
+ </div>
 
  {/* Actions */}
  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -979,9 +979,53 @@ const saveValidators = [
 ]
 
 // POST /api/scans — save a scan (any authenticated user)
+// POST /api/scans/assign — admin/curator assigns scan to promotion account
+router.post('/assign', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const { scan_id, target_user_id } = req.body
+  const db = getDb()
+
+  const scan = db.prepare('SELECT * FROM foot_scans WHERE id = ?').get(scan_id)
+  if (!scan) return res.status(404).json({ error: 'Scan nicht gefunden' })
+
+  const targetUser = db.prepare('SELECT id, is_promotion FROM users WHERE id = ?').get(target_user_id)
+  if (!targetUser) return res.status(404).json({ error: 'Benutzer nicht gefunden' })
+
+  // Duplicate scan for target user
+  const cols = Object.keys(scan).filter(k => k !== 'id' && k !== 'user_id' && k !== 'created_at')
+  const vals = cols.map(k => scan[k])
+  db.prepare(`
+    INSERT INTO foot_scans (user_id, ${cols.join(', ')})
+    VALUES (?, ${cols.map(() => '?').join(', ')})
+  `).run(target_user_id, ...vals)
+
+  res.json({ ok: true, message: 'Scan zugewiesen' })
+})
+
 router.post('/', authenticate, ...saveValidators, async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+  // Promotion scan deviation check
+  const db = getDb()
+  const userRow = db.prepare('SELECT is_promotion FROM users WHERE id = ?').get(req.user.id)
+  if (userRow?.is_promotion) {
+    const existingScan = db.prepare('SELECT right_length, right_width, left_length, left_width FROM foot_scans WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').get(req.user.id)
+    if (existingScan) {
+      const toleranceSetting = db.prepare("SELECT value FROM settings WHERE key = 'promotion_scan_tolerance_pct'").get()
+      const tolerance = parseFloat(toleranceSetting?.value || '10') / 100
+      const fields = ['right_length', 'right_width', 'left_length', 'left_width']
+      for (const f of fields) {
+        const oldVal = existingScan[f]
+        const newVal = parseFloat(req.body[f])
+        if (oldVal && newVal && Math.abs(newVal - oldVal) / oldVal > tolerance) {
+          return res.status(403).json({
+            error: 'Scan weicht zu stark vom bestehenden Profil ab. Promotion-Konten erlauben nur einen Benutzer.',
+            code: 'PROMO_SCAN_DEVIATION',
+          })
+        }
+      }
+    }
+  }
 
   const { reference_type, ppm, right_length, right_width, right_arch,
           left_length, left_width, left_arch,
