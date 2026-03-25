@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, Heart, Package, Smartphone, Footprints, BookOpen } from 'lucide-react'
+import { ChevronRight, Heart, Package, Smartphone, Footprints, BookOpen, ShoppingBag, Gift, ArrowRight } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -119,7 +119,7 @@ function ArticleCard({ article, onClick }) {
 export default function ForYou() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { shoes, favorites, orders, latestScan, articles } = useAtelierStore()
+  const { shoes, favorites, orders, latestScan, articles, accessories } = useAtelierStore()
   const [recentOrders, setRecentOrders] = useState([])
   const [featuredShoes, setFeaturedShoes] = useState([])
 
@@ -235,6 +235,83 @@ export default function ForYou() {
           </div>
         </div>
       )}
+
+      {/* ── Kollektion CTA (desktop: fuller page) ───────────────────── */}
+      <div className="mt-10">
+        <button onClick={() => navigate('/collection')} className="w-full bg-transparent border-0 p-0 text-left active:opacity-90">
+          <div className="w-full overflow-hidden relative" style={{ background: '#1D1D1F' }}>
+            <div className="px-5 lg:px-8 py-8 lg:py-14 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40 mb-2">Handgefertigt</p>
+                <p className="text-[22px] lg:text-[28px] font-bold text-white leading-tight">Die gesamte Kollektion</p>
+                <p className="text-[14px] text-white/50 mt-2 max-w-md">Maßschuhe, individuell angepasst an deinen Fuß. Jedes Paar ein Unikat.</p>
+              </div>
+              <ArrowRight size={24} strokeWidth={1.5} className="text-white/40 flex-shrink-0 hidden lg:block" />
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* ── Alle Produkte (desktop: show full grid) ──────────────── */}
+      {shoes.length > 0 && (
+        <div className="mt-10 hidden lg:block">
+          <div className="px-5 lg:px-8">
+            <SectionLabel icon={ShoppingBag} color="#000" label="Unsere Schuhe" onTap={() => navigate('/collection')} />
+          </div>
+          <div className="grid grid-cols-3 lg:grid-cols-4 gap-3 px-5 lg:px-8">
+            {shoes.slice(0, 8).map(shoe => (
+              <ProductCard key={shoe.id} product={shoe} onSelect={selectShoe} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Zubehör Teaser ───────────────────────────────────────── */}
+      {(accessories || []).filter(a => a.is_active !== 0).length > 0 && (
+        <div className="mt-10">
+          <div className="px-5 lg:px-8">
+            <SectionLabel icon={Gift} color="#000" label="Zubehör" onTap={() => navigate('/accessories')} />
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-5 lg:px-8">
+            {(accessories || []).filter(a => a.is_active !== 0).slice(0, 4).map(acc => (
+              <button key={acc.id} onClick={() => navigate('/accessories')} className="bg-transparent border-0 text-left p-0 w-full active:opacity-80 transition-opacity">
+                <div className="w-full aspect-square overflow-hidden flex items-center justify-center mb-2 bg-black/[0.02]">
+                  {acc.image_data ? (
+                    <img src={acc.image_data} alt={acc.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Gift size={24} strokeWidth={1} className="text-black/10" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-[13px] text-black leading-tight line-clamp-2">{acc.name}</p>
+                  <p className="text-[13px] text-black/40 mt-0.5">€ {parseFloat(acc.price) || 0}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Service Promise Banner ────────────────────────────────── */}
+      <div className="mt-10 border-t border-black/5">
+        <div className="px-5 lg:px-8 py-8 lg:py-10 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="text-center lg:text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-black/30 mb-1">Handgefertigt</p>
+            <p className="text-[14px] font-semibold text-black">Jeder Schuh ein Unikat</p>
+            <p className="text-[12px] text-black/40 mt-1">Von Hand gefertigt aus erlesenen Materialien.</p>
+          </div>
+          <div className="text-center lg:text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-black/30 mb-1">3D-Fußscan</p>
+            <p className="text-[14px] font-semibold text-black">Perfekte Passform</p>
+            <p className="text-[12px] text-black/40 mt-1">Millimetergenau vermessen für maximalen Komfort.</p>
+          </div>
+          <div className="text-center lg:text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-black/30 mb-1">Kostenloser Versand</p>
+            <p className="text-[14px] font-semibold text-black">Ab € 500 Bestellwert</p>
+            <p className="text-[12px] text-black/40 mt-1">Sicher verpackt und versichert direkt zu dir.</p>
+          </div>
+        </div>
+      </div>
 
       {/* ── Bottom spacer ──────────────────────────────────────────── */}
       <div className="h-12" />

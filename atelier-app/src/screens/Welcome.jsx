@@ -54,7 +54,7 @@ export default function Welcome() {
 
       {/* Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-        <div className="w-20 h-20 bg-[#f6f5f3] flex items-center justify-center mb-6">
+        <div className="w-20 h-20 bg-black/[0.03] flex items-center justify-center mb-6">
           <step.icon size={32} strokeWidth={1.5} className="text-black" />
         </div>
         <h1 className="text-[13px] text-black leading-tight mb-3" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>{step.title}</h1>

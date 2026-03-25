@@ -287,12 +287,14 @@ function AppRoutes() {
     )
   }
 
-  // ── Desktop web: TopBar + natural document scroll, centered content ──
+  // ── Desktop web: fixed container, internal scroll, white bg ──
   return (
-    <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box' }}>
       {showNav && <TopBar />}
-      <div className="max-w-5xl mx-auto w-full">
-        <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+      <div className="flex-1 overflow-y-auto relative">
+        <div className="max-w-5xl mx-auto w-full">
+          <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        </div>
       </div>
     </div>
   )

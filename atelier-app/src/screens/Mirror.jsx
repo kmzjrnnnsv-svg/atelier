@@ -418,7 +418,7 @@ function ProductCard({ item, isSelected, onSelect, onDelete }) {
       <button
         onClick={() => onSelect(item.id)}
         className={`w-28 rounded-xl overflow-hidden border-2 transition-all bg-transparent text-left ${
-          isSelected ? 'border-blue-500 shadow-lg shadow-blue-500/20' : 'border-gray-100'
+          isSelected ? 'border-blue-500 shadow-lg shadow-blue-500/20' : 'border-black/[0.06]'
         }`}
       >
         <div className="relative h-24 overflow-hidden">
@@ -444,7 +444,7 @@ function ProductCard({ item, isSelected, onSelect, onDelete }) {
         </div>
         <div className="p-2 bg-white">
           <p className="text-[8px] font-bold text-black leading-tight truncate">{item.name}</p>
-          {item.price ? <p className="text-[8px] text-gray-400 mt-0.5">{item.price}</p> : null}
+          {item.price ? <p className="text-[8px] text-black/40 mt-0.5">{item.price}</p> : null}
         </div>
       </button>
       {item.isLocal && onDelete && (
@@ -622,7 +622,7 @@ export default function Mirror() {
         </div>
 
         <h2 className="text-2xl font-bold text-white leading-tight mb-2">Dein virtueller Spiegel</h2>
-        <p className="text-sm text-gray-400 leading-relaxed mb-8">
+        <p className="text-sm text-black/40 leading-relaxed mb-8">
           Erstelle einen realistischen Avatar mit deinen Körpermassen. Probiere Outfits an — auch mit abfotografierten Kleidungsstücken.
         </p>
 
@@ -638,7 +638,7 @@ export default function Mirror() {
               </div>
               <div className="text-left">
                 <p className="text-xs font-semibold text-white">{text}</p>
-                <p className="text-[9px] text-gray-400 mt-0.5">{sub}</p>
+                <p className="text-[9px] text-black/40 mt-0.5">{sub}</p>
               </div>
             </div>
           ))}
@@ -658,7 +658,7 @@ export default function Mirror() {
         </button>
         <button
           onClick={() => setPhase('mirror')}
-          className="text-[10px] text-gray-600 uppercase tracking-widest bg-transparent border-0"
+          className="text-[10px] text-black/60 uppercase tracking-widest bg-transparent border-0"
         >
           Demo-Modus überspringen
         </button>
@@ -687,7 +687,7 @@ export default function Mirror() {
       </div>
 
       <div className="text-center px-5 mb-2 z-10">
-        <p className="text-[9px] uppercase tracking-[0.2em] text-gray-400 font-semibold">
+        <p className="text-[9px] uppercase tracking-[0.2em] text-black/40 font-semibold">
           Schritt {scanStep} von 4{step.optional ? ' (Optional)' : ''}
         </p>
         <p className="text-lg font-bold text-white mt-0.5">{step.label}</p>
@@ -722,7 +722,7 @@ export default function Mirror() {
       </div>
 
       <div className="px-5 pb-8 text-center">
-        <p className="text-sm text-gray-300 mb-5 leading-relaxed">{step.instruction}</p>
+        <p className="text-sm text-black/30 mb-5 leading-relaxed">{step.instruction}</p>
         <div className="flex gap-3">
           {step.optional && (
             <button onClick={skipBody} className="flex-1 h-14 rounded-xl bg-white/10 text-white text-sm font-bold uppercase tracking-widest border-0">
@@ -740,7 +740,7 @@ export default function Mirror() {
         </div>
         {scanStep < 3 && (
           <button onClick={() => setScanStep(p => p + 1)}
-            className="mt-3 text-[9px] text-gray-500 uppercase tracking-widest bg-transparent border-0">
+            className="mt-3 text-[9px] text-black/50 uppercase tracking-widest bg-transparent border-0">
             Demo: Schritt überspringen
           </button>
         )}
@@ -759,7 +759,7 @@ export default function Mirror() {
         <span className="text-3xl font-bold text-white">{processingPct}%</span>
       </div>
       <h2 className="text-xl font-bold text-white mb-2">KI erstellt deinen Avatar…</h2>
-      <p className="text-sm text-gray-400 mb-8">Bitte warte einen Moment</p>
+      <p className="text-sm text-black/40 mb-8">Bitte warte einen Moment</p>
       <div className="w-full space-y-3">
         {[
           { label: 'Gesicht analysieren',          done: processingPct > 20 },
@@ -771,7 +771,7 @@ export default function Mirror() {
             <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${done ? 'bg-green-500' : 'bg-white/10'}`}>
               {done ? <Check size={11} className="text-white" strokeWidth={2.5} /> : <div className="w-2 h-2 rounded-full bg-white/30" />}
             </div>
-            <span className={`text-xs ${done ? 'text-white font-semibold' : 'text-gray-500'}`}>{label}</span>
+            <span className={`text-xs ${done ? 'text-white font-semibold' : 'text-black/50'}`}>{label}</span>
           </div>
         ))}
       </div>
@@ -782,13 +782,13 @@ export default function Mirror() {
 
   if (phase === 'editor') return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
-      <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
-        <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center border-0">
+      <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-black/[0.06]">
+        <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-lg bg-black/[0.03] flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-gray-800" />
         </button>
         <div className="text-center">
           <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-black">Avatar Editor</p>
-          <p className="text-[9px] text-gray-400 mt-0.5">Körpermasse & Aussehen</p>
+          <p className="text-[9px] text-black/40 mt-0.5">Körpermasse & Aussehen</p>
         </div>
         <button onClick={() => setPhase('mirror')}
           className="text-[9px] font-bold uppercase tracking-widest text-black bg-transparent border-0">
@@ -798,7 +798,7 @@ export default function Mirror() {
 
       <div className="flex-1 overflow-y-auto px-5 pb-8">
         {/* Live preview */}
-        <div className="flex items-center justify-center py-6 bg-gray-50 rounded-xl mt-4 mb-5">
+        <div className="flex items-center justify-center py-6 bg-black/[0.02] rounded-xl mt-4 mb-5">
           <AvatarSVG skinColor={skinColor} hairColor={hairColor} shapeIdx={shapeIdx}
             topColor="#1e3a5f" pantsColor="#111827" shoeColor="#92400e" />
         </div>
@@ -812,28 +812,28 @@ export default function Mirror() {
         </div>
 
         {/* Height slider */}
-        <p className="text-[9px] uppercase tracking-[0.16em] text-gray-400 font-semibold mb-2">
+        <p className="text-[9px] uppercase tracking-[0.16em] text-black/40 font-semibold mb-2">
           Körpergröße — {bodyHeight} cm
         </p>
         <input type="range" min="150" max="210" value={bodyHeight}
           onChange={e => setBodyHeight(Number(e.target.value))}
-          className="w-full h-2 appearance-none bg-gray-200 rounded-full outline-none mb-5" />
+          className="w-full h-2 appearance-none bg-black/[0.06] rounded-full outline-none mb-5" />
 
         {/* Weight slider */}
-        <p className="text-[9px] uppercase tracking-[0.16em] text-gray-400 font-semibold mb-2">
+        <p className="text-[9px] uppercase tracking-[0.16em] text-black/40 font-semibold mb-2">
           Gewicht — {bodyWeight} kg
         </p>
         <input type="range" min="45" max="130" value={bodyWeight}
           onChange={e => setBodyWeight(Number(e.target.value))}
-          className="w-full h-2 appearance-none bg-gray-200 rounded-full outline-none mb-5" />
+          className="w-full h-2 appearance-none bg-black/[0.06] rounded-full outline-none mb-5" />
 
         {/* Manual shape override */}
-        <p className="text-[9px] uppercase tracking-[0.16em] text-gray-400 font-semibold mb-2">Körperform (manuell)</p>
+        <p className="text-[9px] uppercase tracking-[0.16em] text-black/40 font-semibold mb-2">Körperform (manuell)</p>
         <div className="flex gap-2 mb-5">
           {BODY_SHAPES.map((b, i) => (
             <button key={b.label} onClick={() => setShapeIdx(i)}
               className={`flex-1 py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide border-2 transition-all bg-transparent ${
-                shapeIdx === i ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400'
+                shapeIdx === i ? 'border-black bg-black text-white' : 'border-black/[0.06] text-black/40'
               }`}>
               {b.label}
             </button>
@@ -841,7 +841,7 @@ export default function Mirror() {
         </div>
 
         {/* Skin tone */}
-        <p className="text-[9px] uppercase tracking-[0.16em] text-gray-400 font-semibold mb-2">Hautton</p>
+        <p className="text-[9px] uppercase tracking-[0.16em] text-black/40 font-semibold mb-2">Hautton</p>
         <div className="flex gap-2 mb-5 flex-wrap">
           {SKIN_TONES.map(tone => (
             <button key={tone} onClick={() => setSkinColor(tone)}
@@ -851,7 +851,7 @@ export default function Mirror() {
         </div>
 
         {/* Hair color */}
-        <p className="text-[9px] uppercase tracking-[0.16em] text-gray-400 font-semibold mb-2">Haarfarbe</p>
+        <p className="text-[9px] uppercase tracking-[0.16em] text-black/40 font-semibold mb-2">Haarfarbe</p>
         <div className="flex gap-2 mb-6 flex-wrap">
           {HAIR_COLORS.map(hc => (
             <button key={hc} onClick={() => setHairColor(hc)}
@@ -871,7 +871,7 @@ export default function Mirror() {
   // ── MIRROR (main view) ────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+    <div className="flex flex-col h-full overflow-hidden bg-black/[0.02]">
 
       {/* Hidden camera file input */}
       <input
@@ -884,15 +884,15 @@ export default function Mirror() {
       />
 
       {/* Header */}
-      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center border-0">
+      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/[0.06]">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-black/[0.03] flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-gray-800" />
         </button>
         <div className="text-center">
           <p className="text-[11px] uppercase tracking-[0.22em] font-bold text-black">Mirror</p>
           <p className="text-[9px] uppercase tracking-[0.14em] font-semibold" style={{ color: '#f59e0b' }}>Outfit Studio</p>
         </div>
-        <button onClick={() => setPhase('editor')} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center border-0">
+        <button onClick={() => setPhase('editor')} className="w-9 h-9 rounded-lg bg-black/[0.03] flex items-center justify-center border-0">
           <Sliders size={16} className="text-gray-700" />
         </button>
       </div>
@@ -980,7 +980,7 @@ export default function Mirror() {
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest border-0 whitespace-nowrap transition-all flex-shrink-0 ${
-                activeCategory === cat.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'
+                activeCategory === cat.id ? 'bg-black text-white' : 'bg-black/[0.03] text-black/50'
               }`}
             >
               <span>{cat.icon}</span>
@@ -996,10 +996,10 @@ export default function Mirror() {
             {/* Camera capture tile */}
             <button
               onClick={() => handleCaptureClick(activeCategory)}
-              className="flex-shrink-0 w-28 h-36 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 bg-white transition-all hover:border-gray-400 hover:bg-gray-50"
+              className="flex-shrink-0 w-28 h-36 rounded-xl border-2 border-dashed border-black/10 flex flex-col items-center justify-center gap-2 bg-white transition-all hover:border-black/30 hover:bg-black/[0.02]"
             >
-              <Camera size={22} className="text-gray-400" />
-              <span className="text-[8px] text-gray-400 font-semibold text-center leading-tight px-2">
+              <Camera size={22} className="text-black/40" />
+              <span className="text-[8px] text-black/40 font-semibold text-center leading-tight px-2">
                 Kleidung abfotografieren
               </span>
             </button>
@@ -1017,7 +1017,7 @@ export default function Mirror() {
           </div>
 
           {allProducts[activeCategory]?.length === 0 && (
-            <p className="text-center text-gray-400 text-xs py-2 pb-4">
+            <p className="text-center text-black/40 text-xs py-2 pb-4">
               Noch keine Artikel. Kleidung abfotografieren oder Kollektion besuchen.
             </p>
           )}
@@ -1037,7 +1037,7 @@ export default function Mirror() {
         {/* Rescan button */}
         <button
           onClick={() => { setPhase('scan'); setScanStep(1); setCapturedSteps([]) }}
-          className="mx-4 mt-3 w-[calc(100%-32px)] py-3 rounded-xl bg-white border border-gray-200 text-[9px] font-bold uppercase tracking-widest text-gray-500 flex items-center justify-center gap-2"
+          className="mx-4 mt-3 w-[calc(100%-32px)] py-3 rounded-xl bg-white border border-black/[0.08] text-[9px] font-bold uppercase tracking-widest text-black/50 flex items-center justify-center gap-2"
           style={{ border: '1px solid #e5e7eb' }}
         >
           <Camera size={14} />
@@ -1046,11 +1046,11 @@ export default function Mirror() {
       </div>
 
       {/* Bottom CTA bar */}
-      <div className="bg-white border-t border-gray-100 px-4 pt-3 pb-3 flex items-center gap-2">
+      <div className="bg-white border-t border-black/[0.06] px-4 pt-3 pb-3 flex items-center gap-2">
         <button
           onClick={() => setSaved(v => !v)}
           className={`flex items-center gap-1.5 px-4 rounded-xl border-2 transition-all text-[9px] font-bold uppercase tracking-widest h-12 ${
-            saved ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200'
+            saved ? 'bg-black text-white border-black' : 'bg-white text-black border-black/[0.08]'
           }`}
         >
           <Bookmark size={14} className={saved ? 'fill-white text-white' : 'text-black'} strokeWidth={1.5} />
@@ -1058,7 +1058,7 @@ export default function Mirror() {
         </button>
         <button
           onClick={() => navigate('/collection')}
-          className="flex-1 rounded-xl bg-gray-100 text-black flex items-center justify-center text-[9px] font-bold uppercase tracking-widest border-0 h-12"
+          className="flex-1 rounded-xl bg-black/[0.03] text-black flex items-center justify-center text-[9px] font-bold uppercase tracking-widest border-0 h-12"
         >
           Kollektion
         </button>

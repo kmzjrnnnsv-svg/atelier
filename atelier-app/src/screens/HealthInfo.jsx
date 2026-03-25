@@ -120,7 +120,7 @@ export default function HealthInfo() {
               {/* Items */}
               <div className="px-5 pt-3 pb-4 space-y-2">
                 {sec.items.map(({ icon: ItemIcon, title, desc }) => (
-                  <div key={title} className="bg-[#f6f5f3] p-3.5 flex items-start gap-3">
+                  <div key={title} className="bg-white border border-black/[0.06] p-3.5 flex items-start gap-3">
                     <div className="w-7 h-7 flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `${sec.color}15` }}>
                       <ItemIcon size={13} style={{ color: sec.color }} strokeWidth={1.5} />
                     </div>

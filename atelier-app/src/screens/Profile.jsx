@@ -186,7 +186,7 @@ export default function Profile() {
           const points = loyaltyStatus.points
 
           return (
-            <div className="bg-[#f6f5f3] border-b border-black/8">
+            <div className="bg-white border-b border-black/8">
               {/* Progress bar */}
               {nextTier && (
                 <div className="px-5 pt-4 pb-3">
@@ -487,7 +487,7 @@ export default function Profile() {
                 <div className="border-t border-black/5 pt-3 mt-2">
                   <p className="text-[8px] uppercase tracking-widest text-black/30 mb-2" style={{ letterSpacing: '0.15em' }}>Alle Fußtypen</p>
                   {ARCHETYPES.map(a => (
-                    <div key={a.key} className={`flex items-center gap-3 py-2 ${a.key === scanArchtype ? 'bg-[#f6f5f3] px-2 -mx-2' : ''}`}>
+                    <div key={a.key} className={`flex items-center gap-3 py-2 ${a.key === scanArchtype ? 'bg-black/[0.02] px-2 -mx-2' : ''}`}>
                       <div className={`w-1.5 h-1.5 flex-shrink-0 ${a.key === scanArchtype ? 'bg-black' : 'bg-black/15'}`} />
                       <div className="flex-1">
                         <p className={`text-[10px] ${a.key === scanArchtype ? 'font-semibold text-black' : 'text-black/50'}`}>{a.label}</p>
@@ -507,7 +507,7 @@ export default function Profile() {
                       value={noteText}
                       onChange={e => setNoteText(e.target.value)}
                       maxLength={1000}
-                      className="w-full border border-black/10 bg-[#f6f5f3] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/30"
+                      className="w-full border border-black/10 bg-black/[0.02] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/30"
                       rows={4}
                       placeholder="Persönliche Notizen zu deinen Füßen..."
                       autoFocus

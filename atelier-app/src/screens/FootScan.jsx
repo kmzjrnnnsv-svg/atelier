@@ -790,7 +790,7 @@ function CamError({ status, onRetry, onDemo, onBack }) {
         </button>
       </div>
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-5">
-        <div className="w-16 h-16 bg-[#f6f5f3] flex items-center justify-center">
+        <div className="w-16 h-16 bg-black/[0.02] flex items-center justify-center">
           <span className="text-3xl">{err.emoji}</span>
         </div>
         <div>
@@ -803,7 +803,7 @@ function CamError({ status, onRetry, onDemo, onBack }) {
               Erneut versuchen
             </button>
           )}
-          <button onClick={onDemo} className="w-full py-4 bg-[#f6f5f3] text-black/60 font-semibold text-[12px] border-0">
+          <button onClick={onDemo} className="w-full py-4 bg-black/[0.02] text-black/60 font-semibold text-[12px] border-0">
             Demo-Modus (ohne Kamera)
           </button>
         </div>
@@ -2062,7 +2062,7 @@ export default function FootScan() {
 
       {/* White screens: start / processing / pg-processing / result */}
       {['start', 'processing', 'pg-processing', 'result'].includes(phase) && (
-        <div className="absolute inset-0 flex flex-col bg-[#F2F2F7] overflow-hidden">
+        <div className="absolute inset-0 flex flex-col bg-white overflow-hidden">
 
           {/* Shared header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-4 flex-shrink-0">
@@ -2143,11 +2143,11 @@ export default function FootScan() {
                         <p className="text-[9px] text-black/30 uppercase tracking-widest mb-3" style={{ letterSpacing: '0.15em' }}>Alternativ</p>
                         <div className="space-y-2">
                           <button onClick={() => setPhase('right-top')}
-                            className="w-full py-3.5 bg-[#f6f5f3] text-black/60 font-semibold text-[11px] border-0">
+                            className="w-full py-3.5 bg-black/[0.02] text-black/60 font-semibold text-[11px] border-0">
                             Foto-Scan (6 Bilder · mit A4-Papier)
                           </button>
                           <button onClick={() => { setPgMode(true); setPgStep(0); setPgImgs({ right: [], left: [] }); setPhase('pg-0') }}
-                            className="w-full py-3.5 bg-[#f6f5f3] text-black/60 font-semibold text-[11px] border-0">
+                            className="w-full py-3.5 bg-black/[0.02] text-black/60 font-semibold text-[11px] border-0">
                             Rundum-Scan (16 Bilder · alle Seiten)
                           </button>
                         </div>
@@ -2188,7 +2188,7 @@ export default function FootScan() {
 
                         {/* Photogrammetrie card */}
                         <button onClick={() => { setPgMode(true); setPgStep(0); setPgImgs({ right: [], left: [] }); setPhase('pg-0') }}
-                          className="w-full p-4 bg-[#f6f5f3] text-black text-left border border-black/5 active:opacity-80">
+                          className="w-full p-4 bg-black/[0.02] text-black text-left border border-black/5 active:opacity-80">
                           <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 bg-black/5 flex items-center justify-center flex-shrink-0">
                               <Scan size={18} className="text-black/40" strokeWidth={1.5} />
@@ -2215,7 +2215,7 @@ export default function FootScan() {
                       </div>
 
                       {/* A4 tip */}
-                      <div className="mx-5 mt-1 p-3.5 bg-[#f6f5f3] border border-black/5 flex gap-3">
+                      <div className="mx-5 mt-1 p-3.5 bg-black/[0.02] border border-black/5 flex gap-3">
                         <div className="w-7 h-7 bg-black/8 flex items-center justify-center flex-shrink-0">
                           <AlertCircle size={13} className="text-black/40" strokeWidth={1.5} />
                         </div>
@@ -2264,7 +2264,7 @@ export default function FootScan() {
                   <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
                   <span className="text-[10px] font-bold text-black">{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-[#f6f5f3] overflow-hidden">
+                <div className="w-full h-1.5 bg-black/[0.02] overflow-hidden">
                   <div className="h-full bg-black transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
               </div>
@@ -2294,7 +2294,7 @@ export default function FootScan() {
                   <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
                   <span className="text-[10px] font-bold text-black">{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-[#f6f5f3] overflow-hidden">
+                <div className="w-full h-1.5 bg-black/[0.02] overflow-hidden">
                   <div className="h-full bg-black transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
               </div>
@@ -2308,7 +2308,7 @@ export default function FootScan() {
                 ].map(({ pct, label }) => (
                   <div key={pct} className={`flex items-center gap-3 px-3.5 py-2.5 border transition-all ${
                     progress >= pct
-                      ? 'bg-[#f6f5f3] border-black/8 text-black'
+                      ? 'bg-black/[0.02] border-black/8 text-black'
                       : 'bg-white border-black/5 text-black/30'
                   }`}>
                     <span className="text-[10px] font-medium">{label}</span>
@@ -2326,7 +2326,7 @@ export default function FootScan() {
           {/* ── RESULT ── */}
           {phase === 'result' && result && result.error && (
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-6">
-              <div className="w-20 h-20 bg-[#f6f5f3] flex items-center justify-center">
+              <div className="w-20 h-20 bg-black/[0.02] flex items-center justify-center">
                 <span className="text-4xl">😕</span>
               </div>
               <div>
@@ -2339,7 +2339,7 @@ export default function FootScan() {
                   Nochmal versuchen
                 </button>
                 <button onClick={() => navigate('/collection', { replace: true })}
-                  className="w-full py-3.5 bg-[#f6f5f3] text-black/50 font-semibold text-[11px] border-0">
+                  className="w-full py-3.5 bg-black/[0.02] text-black/50 font-semibold text-[11px] border-0">
                   Zurück zur Kollektion
                 </button>
               </div>
@@ -2370,10 +2370,10 @@ export default function FootScan() {
                 {/* Save status */}
                 {saved ? (
                   <>
-                    <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/60 text-[11px] font-medium">
+                    <div className="flex items-center gap-2.5 p-3.5 bg-black/[0.02] border border-black/5 text-black/60 text-[11px] font-medium">
                       <CheckCircle2 size={15} strokeWidth={1.5} /> In deinem Profil gespeichert
                     </div>
-                    <div className="p-3.5 bg-[#f6f5f3] border border-black/5">
+                    <div className="p-3.5 bg-black/[0.02] border border-black/5">
                       <p className="text-[10px] text-black/40 leading-relaxed">
                         Deine Fußdaten sind sicher in deinem Profil gespeichert.
                         Wenn du einen Schuh bestellst, werden die Maße automatisch
@@ -2382,22 +2382,22 @@ export default function FootScan() {
                     </div>
                   </>
                 ) : saveErr ? (
-                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-red-600 text-[11px] font-medium">
+                  <div className="flex items-center gap-2.5 p-3.5 bg-black/[0.02] border border-black/5 text-red-600 text-[11px] font-medium">
                     <AlertCircle size={15} strokeWidth={1.5} /> {saveErr}
                   </div>
                 ) : result.isDemo ? (
-                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-amber-600 text-[11px] font-medium">
+                  <div className="flex items-center gap-2.5 p-3.5 bg-black/[0.02] border border-black/5 text-amber-600 text-[11px] font-medium">
                     <AlertCircle size={15} strokeWidth={1.5} /> Demo-Daten werden nicht gespeichert
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2.5 p-3.5 bg-[#f6f5f3] border border-black/5 text-black/40 text-[11px]">
+                  <div className="flex items-center gap-2.5 p-3.5 bg-black/[0.02] border border-black/5 text-black/40 text-[11px]">
                     <CloudUpload size={15} className="animate-pulse" strokeWidth={1.5} /> Wird gespeichert…
                   </div>
                 )}
 
                 {/* Scan quality indicator (LiDAR only) */}
                 {result.source === 'lidar' && (result.right?.pointCount || result.left?.pointCount) && (
-                  <div className="flex items-center gap-3 px-3.5 py-2.5 bg-[#f6f5f3] border border-black/5 text-[10px] text-black/40">
+                  <div className="flex items-center gap-3 px-3.5 py-2.5 bg-black/[0.02] border border-black/5 text-[10px] text-black/40">
                     <span>Scan-Qualität:</span>
                     <span className={`ml-auto font-medium ${(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'text-[#30D158]' : 'text-amber-500'}`}>
                       {(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'Sehr gut' : 'Gut'}
@@ -2662,7 +2662,7 @@ export default function FootScan() {
                     value={scanNotes}
                     onChange={e => setScanNotes(e.target.value)}
                     maxLength={1000}
-                    className="w-full border border-black/8 bg-[#f6f5f3] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/20"
+                    className="w-full border border-black/8 bg-black/[0.02] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/20"
                     rows={3}
                     placeholder="Persönliche Notizen zu deinen Füßen…"
                   />

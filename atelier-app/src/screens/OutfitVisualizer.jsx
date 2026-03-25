@@ -66,14 +66,14 @@ export default function OutfitVisualizer() {
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 pt-4 pb-3 bg-white border-b border-gray-100">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-black/[0.03] flex items-center justify-center border-0">
           <ArrowLeft size={18} strokeWidth={1.8} className="text-gray-800" />
         </button>
         <div className="text-center">
           <p className="text-[11px] uppercase tracking-[0.22em] font-bold text-black">Outfit Visualizer</p>
           <p className="text-[9px] uppercase tracking-[0.14em] font-semibold" style={{ color: '#b45309' }}>3D Studio Mode</p>
         </div>
-        <button className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
+        <button className="w-9 h-9 rounded-full bg-black/[0.03] flex items-center justify-center border-0">
           <SlidersHorizontal size={17} strokeWidth={1.5} className="text-gray-700" />
         </button>
       </div>
@@ -162,7 +162,7 @@ export default function OutfitVisualizer() {
               key={tab}
               onClick={() => setViewTab(tab)}
               className={`px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest border-0 transition-all ${
-                viewTab === tab ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'
+                viewTab === tab ? 'bg-black text-white' : 'bg-black/[0.03] text-gray-500'
               }`}
             >
               {tab}
