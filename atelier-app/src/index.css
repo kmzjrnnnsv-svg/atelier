@@ -8,8 +8,7 @@
 }
 
 html {
-  background: linear-gradient(180deg, #f0eeeb 0%, #e8e6e3 50%, #f0eeeb 100%);
-  background-attachment: fixed;
+  background: #fff;
 }
 
 /* Native & mobile-web: white background to prevent overscroll color mismatch */
@@ -33,9 +32,8 @@ html:not(.mobile-web), html:not(.mobile-web) body, html:not(.mobile-web) #root {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(180deg, #f0eeeb 0%, #e8e6e3 50%, #f0eeeb 100%);
-  background-attachment: fixed;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  background: #fff;
 }
 
 html:not(.mobile-web) #root {

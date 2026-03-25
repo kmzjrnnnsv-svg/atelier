@@ -178,10 +178,10 @@ export default function Explore() {
     <div className="min-h-full bg-white">
 
       {/* ── Large Title Header ────────────────────────────────────── */}
-      <div className="px-5 pt-3 pb-4 flex items-start justify-between">
+      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-4 flex items-start justify-between">
         <div>
-          <p className="text-[34px] font-bold text-black leading-tight tracking-tight">Entdecken</p>
-          <p className="text-[15px] text-black/45 mt-1">Lass dich inspirieren.</p>
+          <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Entdecken</p>
+          <p className="text-[15px] lg:text-[17px] text-black/45 mt-1">Lass dich inspirieren.</p>
         </div>
         <button
           onClick={() => navigate('/profile')}
@@ -193,7 +193,7 @@ export default function Explore() {
         </button>
       </div>
 
-      <div className="px-5 pb-8 space-y-6">
+      <div className="px-5 lg:px-8 pb-8 space-y-6 lg:space-y-10">
 
         {/* ── Featured Section (hero card) ────────────────────────── */}
         {featuredSection && <FeaturedCard section={featuredSection} />}
@@ -201,8 +201,8 @@ export default function Explore() {
         {/* ── Featured Articles ────────────────────────────────────── */}
         {featuredArticles.length > 0 && (
           <div>
-            <p className="text-[20px] font-bold text-black mb-3">Empfohlen</p>
-            <div className="space-y-4">
+            <p className="text-[20px] lg:text-[24px] font-bold text-black mb-3 lg:mb-5">Empfohlen</p>
+            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
               {featuredArticles.map(article => (
                 <ArticleCard key={article.id} article={article} onClick={() => setSelectedArticle(article)} />
               ))}
@@ -213,7 +213,7 @@ export default function Explore() {
         {/* ── More Sections (horizontal scroll) ───────────────────── */}
         {moreSections.length > 0 && (
           <div>
-            <p className="text-[20px] font-bold text-black mb-3">Themen</p>
+            <p className="text-[20px] lg:text-[24px] font-bold text-black mb-3 lg:mb-5">Themen</p>
             <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-1" style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}>
               {moreSections.map(section => (
                 <SmallSectionCard key={section.id} section={section} />
@@ -225,8 +225,8 @@ export default function Explore() {
         {/* ── Articles Grid ───────────────────────────────────────── */}
         {regularArticles.length > 0 && (
           <div>
-            <p className="text-[20px] font-bold text-black mb-3">Artikel</p>
-            <div className="space-y-4">
+            <p className="text-[20px] lg:text-[24px] font-bold text-black mb-3 lg:mb-5">Artikel</p>
+            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
               {regularArticles.map(article => (
                 <ArticleCard key={article.id} article={article} onClick={() => setSelectedArticle(article)} />
               ))}

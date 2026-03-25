@@ -134,13 +134,13 @@ export default function ShoeCollection() {
     <div className="min-h-full bg-white">
 
       {/* ── Large Title Header ────────────────────────────────────── */}
-      <div className="px-5 pt-3 pb-2">
-        <p className="text-[34px] font-bold text-black leading-tight tracking-tight">Kollektion</p>
-        <p className="text-[15px] text-black/45 mt-1">Schuhe, individuell angepasst an deinen Fuß.</p>
+      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-2">
+        <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Kollektion</p>
+        <p className="text-[15px] lg:text-[17px] text-black/45 mt-1">Schuhe, individuell angepasst an deinen Fuß.</p>
       </div>
 
       {/* ── Category Tabs (pill style like Apple) ─────────────────── */}
-      <div ref={tabsRef} className="px-5 pb-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      <div ref={tabsRef} className="px-5 lg:px-8 pb-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {CATEGORIES.map(cat => (
           <button
             key={cat.value}
@@ -157,7 +157,7 @@ export default function ShoeCollection() {
       </div>
 
       {/* ── Product Grid ──────────────────────────────────────────── */}
-      <div className="px-5 pb-8">
+      <div className="px-5 lg:px-8 pb-8">
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-[17px] font-semibold text-black/80 mb-1">Bald verfügbar</p>
@@ -176,7 +176,7 @@ export default function ShoeCollection() {
             )}
 
             {rest.length > 0 && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                 {rest.map(product => (
                   <ProductCard
                     key={product.id}

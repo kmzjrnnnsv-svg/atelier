@@ -34,13 +34,13 @@ export default function Search() {
 
       {/* ── Large Title Header ────────────────────────────────────── */}
       {!focused && !query && (
-        <div className="px-5 pt-3 pb-2">
-          <p className="text-[34px] font-bold text-black leading-tight tracking-tight">Suche</p>
+        <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-2">
+          <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Suche</p>
         </div>
       )}
 
       {/* ── Search Bar ────────────────────────────────────────────── */}
-      <div className="px-5 pt-2 pb-3 flex items-center gap-3">
+      <div className="px-5 lg:px-8 pt-2 pb-3 flex items-center gap-3">
         <div className="flex-1 flex items-center gap-2.5 bg-[#F5F5F7] rounded-xl px-3.5 py-2.5">
           <SearchIcon size={18} strokeWidth={1.5} className="text-[#8E8E93] flex-shrink-0" />
           <input
@@ -70,8 +70,8 @@ export default function Search() {
 
       {/* ── Suggestions (when no query) ───────────────────────────── */}
       {!query.trim() && (
-        <div className="px-5 pt-2">
-          <p className="text-[20px] font-bold text-black mb-3">Entdecken</p>
+        <div className="px-5 lg:px-8 pt-2">
+          <p className="text-[20px] lg:text-[24px] font-bold text-black mb-3">Entdecken</p>
           <div className="flex flex-wrap gap-2">
             {SUGGESTIONS.map(s => (
               <button
@@ -88,7 +88,7 @@ export default function Search() {
           {/* Recently popular / featured shoes */}
           {shoes.length > 0 && (
             <div className="mt-6">
-              <p className="text-[20px] font-bold text-black mb-3">Beliebte Modelle</p>
+              <p className="text-[20px] lg:text-[24px] font-bold text-black mb-3">Beliebte Modelle</p>
               <div className="space-y-0">
                 {shoes.slice(0, 6).map(shoe => (
                   <button
@@ -118,14 +118,14 @@ export default function Search() {
 
       {/* ── Search Results ────────────────────────────────────────── */}
       {query.trim() && (
-        <div className="px-5">
+        <div className="px-5 lg:px-8">
           {results.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-[17px] font-semibold text-black/80 mb-1">Keine Ergebnisse</p>
               <p className="text-[15px] text-[#8E8E93]">Versuche einen anderen Suchbegriff.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 pb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 pb-6">
               {results.map(shoe => (
                 <button
                   key={shoe.id}
