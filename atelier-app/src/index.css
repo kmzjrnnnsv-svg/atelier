@@ -8,13 +8,13 @@
 }
 
 html {
-  background: #fff;
+  background: #F2F2F7;
 }
 
-/* Native & mobile-web: white background to prevent overscroll color mismatch */
+/* Native & mobile-web: match system gray to prevent overscroll color mismatch */
 html.native, html.native body,
 html.mobile-web, html.mobile-web body {
-  background: #fff;
+  background: #F2F2F7;
 }
 
 html, body, #root {
