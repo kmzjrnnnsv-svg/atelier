@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useAtelierStore from '../store/atelierStore'
 
@@ -121,6 +121,16 @@ export default function Checkout() {
   const [couponResult,  setCouponResult]  = useState(null)
   const [couponLoading, setCouponLoading] = useState(false)
   const [couponError,   setCouponError]   = useState(null)
+  const [shippingOptions, setShippingOptions] = useState([])
+  const [selectedShipping, setSelectedShipping] = useState(null)
+
+  useEffect(() => {
+    apiFetch('/api/shipping').then(opts => {
+      setShippingOptions(opts || [])
+      const def = (opts || []).find(o => o.is_default) || opts?.[0]
+      if (def) setSelectedShipping(def.id)
+    }).catch(() => {})
+  }, [])
 
   const dbAccessories = (shoeAccessoryMap[product.id] || []).map(a => ({
     id: a.id, name: a.name, desc: a.description || '', price: `€ ${parseFloat(a.price) || 0}`, priceNum: parseFloat(a.price) || 0,
@@ -146,7 +156,11 @@ export default function Checkout() {
   const accTotal  = chosenAccessories.reduce((sum, a) => sum + a.priceNum, 0)
   const subtotal  = (product.id ? shoePrice : cartTotal) + accTotal
   const discountAmount = couponResult?.valid ? couponResult.discount_amount : 0
-  const total     = Math.max(0, subtotal - discountAmount)
+  const shippingOpt = shippingOptions.find(o => o.id === selectedShipping)
+  const isFreeShipping = (couponResult?.valid && couponResult.type === 'free_shipping') ||
+    (shippingOpt?.free_above && subtotal >= shippingOpt.free_above)
+  const shippingCost = isFreeShipping ? 0 : (shippingOpt?.price || 0)
+  const total     = Math.max(0, subtotal + shippingCost - discountAmount)
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return
@@ -178,6 +192,8 @@ export default function Checkout() {
       let lastRow
       const appliedCoupon = couponResult?.valid ? couponCode.trim().toUpperCase() : null
 
+      const shippingData = shippingOpt ? { shipping_method: shippingOpt.key, shipping_cost: `€ ${fmtPrice(shippingCost)}` } : {}
+
       if (product.id) {
         lastRow = await placeOrder({
           shoe_id: product.id, shoe_name: product.name || product.shoe_name,
@@ -186,6 +202,7 @@ export default function Checkout() {
           scan_id: latestScan?.id || null, delivery_address: delivery,
           billing_address: billingAddr, accessories: accList,
           foot_notes: footNotes || null, coupon_code: appliedCoupon,
+          ...shippingData,
         })
       } else {
         for (let i = 0; i < cart.length; i++) {
@@ -198,6 +215,7 @@ export default function Checkout() {
             scan_id: latestScan?.id || null, delivery_address: delivery,
             billing_address: billingAddr, accessories: accList,
             foot_notes: footNotes || null, coupon_code: i === 0 ? appliedCoupon : null,
+            ...shippingData,
           })
         }
         clearCart()
@@ -456,6 +474,51 @@ export default function Checkout() {
               </p>
             </div>
 
+            {/* Shipping */}
+            {shippingOptions.length > 0 && (
+              <div className="bg-white p-4">
+                <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Truck size={11} /> Versand
+                </p>
+                <div className="space-y-1.5">
+                  {shippingOptions.map(opt => {
+                    const isSelected = selectedShipping === opt.id
+                    const optFree = opt.free_above && subtotal >= opt.free_above
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => setSelectedShipping(opt.id)}
+                        className={`w-full flex items-center justify-between p-3 text-left border-0 transition-all ${
+                          isSelected ? 'bg-black/3 border-l-2 border-l-black' : 'bg-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 flex items-center justify-center flex-shrink-0 transition-all ${
+                            isSelected ? 'bg-black' : 'border-[1.5px] border-black/15'}`}>
+                            {isSelected && <Check size={9} strokeWidth={3} className="text-white" />}
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-medium text-black">{opt.label}</p>
+                            {opt.description && <p className="text-[10px] text-black/35 mt-0.5">{opt.description}</p>}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {optFree || (couponResult?.valid && couponResult.type === 'free_shipping') ? (
+                            <span className="text-[13px] font-semibold text-[#34C759]">Gratis</span>
+                          ) : (
+                            <span className="text-[13px] font-semibold text-black">€ {fmtPrice(opt.price)}</span>
+                          )}
+                          {opt.free_above && !optFree && !(couponResult?.valid && couponResult.type === 'free_shipping') && (
+                            <p className="text-[9px] text-black/30 mt-0.5">Gratis ab € {fmtPrice(opt.free_above)}</p>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Coupon */}
             <div className="bg-white p-4">
               <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -487,16 +550,28 @@ export default function Checkout() {
 
             {/* Total */}
             <div className="bg-white p-4">
-              {couponResult?.valid && (
+              {(couponResult?.valid || shippingCost > 0 || isFreeShipping) && (
                 <>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-[13px] text-black/40">Zwischensumme</span>
                     <span className="text-[13px] text-black/40">€ {fmtPrice(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-[13px] text-[#34C759]">Gutschein</span>
-                    <span className="text-[13px] text-[#34C759]">- € {fmtPrice(discountAmount)}</span>
-                  </div>
+                  {shippingOpt && (
+                    <div className="flex justify-between mb-1.5">
+                      <span className="text-[13px] text-black/40">Versand ({shippingOpt.label})</span>
+                      {isFreeShipping ? (
+                        <span className="text-[13px] text-[#34C759]">Gratis</span>
+                      ) : (
+                        <span className="text-[13px] text-black/40">€ {fmtPrice(shippingCost)}</span>
+                      )}
+                    </div>
+                  )}
+                  {couponResult?.valid && (
+                    <div className="flex justify-between mb-2">
+                      <span className="text-[13px] text-[#34C759]">Gutschein</span>
+                      <span className="text-[13px] text-[#34C759]">- € {fmtPrice(discountAmount)}</span>
+                    </div>
+                  )}
                   <div className="h-px bg-black/5 mb-2" />
                 </>
               )}

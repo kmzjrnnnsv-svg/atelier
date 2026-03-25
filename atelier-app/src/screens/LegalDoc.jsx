@@ -29,26 +29,26 @@ export default function LegalDoc() {
     <div className="flex flex-col min-h-full bg-white">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center border-0">
-          <ArrowLeft size={18} strokeWidth={1.8} className="text-gray-800" />
+      <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-black/5 flex items-center justify-center border-0">
+          <ArrowLeft size={18} strokeWidth={1.8} className="text-black/70" />
         </button>
         <span className="text-sm font-bold tracking-wide text-black text-center flex-1 px-2">{title}</span>
-        <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
-          <FileText size={16} className="text-gray-600" strokeWidth={1.5} />
+        <div className="w-9 h-9 rounded-lg bg-black/5 flex items-center justify-center">
+          <FileText size={16} className="text-black/50" strokeWidth={1.5} />
         </div>
       </div>
 
       <div className="flex-1 px-5 py-5">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-black animate-spin" />
+            <div className="w-6 h-6 rounded-full border-2 border-black/10 border-t-black animate-spin" />
           </div>
         ) : !doc?.content ? (
           <div className="text-center py-20">
-            <FileText size={36} className="text-gray-200 mx-auto mb-3" />
+            <FileText size={36} className="text-black/10 mx-auto mb-3" />
             <p className="text-sm font-semibold text-black">Noch nicht verfügbar</p>
-            <p className="text-[11px] text-gray-400 mt-1">Dieses Dokument wird in Kürze bereitgestellt.</p>
+            <p className="text-[11px] text-black/35 mt-1">Dieses Dokument wird in Kürze bereitgestellt.</p>
           </div>
         ) : (
           <>
@@ -62,7 +62,7 @@ export default function LegalDoc() {
                   className={`leading-relaxed ${
                     para.length < 80 && !para.includes('.') && i === 0
                       ? 'text-base font-semibold text-black'
-                      : 'text-[13px] text-gray-700'
+                      : 'text-[13px] text-black/60'
                   }`}
                 >
                   {para}
@@ -70,7 +70,7 @@ export default function LegalDoc() {
               ))}
             </div>
             {doc.updated_at && (
-              <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-8 pb-4 border-t border-gray-100 pt-4">
+              <p className="text-[9px] text-black/35 uppercase tracking-widest mt-8 pb-4 border-t border-black/5 pt-4">
                 Zuletzt aktualisiert: {new Date(doc.updated_at).toLocaleDateString('de-DE')}
               </p>
             )}
