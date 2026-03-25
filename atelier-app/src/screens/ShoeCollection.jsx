@@ -24,7 +24,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   return (
     <button onClick={() => onSelect(product)} className="w-full bg-transparent border-0 text-left p-0 mb-6">
-      <div className="w-full rounded-xl overflow-hidden" style={{ background: '#FFFFFF' }}>
+      <div className="w-full overflow-hidden" style={{ background: '#FFFFFF' }}>
         <div className="relative aspect-[4/3] flex items-center justify-center">
           {product.image ? (
             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -71,7 +71,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
 function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
   return (
     <button onClick={() => onSelect(product)} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="w-full rounded-xl overflow-hidden" style={{ background: '#FFFFFF' }}>
+      <div className="w-full overflow-hidden" style={{ background: '#FFFFFF' }}>
         <div className="relative aspect-square flex items-center justify-center">
           {product.image ? (
             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -131,7 +131,7 @@ export default function ShoeCollection() {
   const selectShoe = (product) => navigate('/customize', { state: { product } })
 
   return (
-    <div className="min-h-full bg-[#F2F2F7]">
+    <div className="min-h-full bg-white">
 
       {/* ── Large Title Header ────────────────────────────────────── */}
       <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-2">
@@ -148,7 +148,7 @@ export default function ShoeCollection() {
             className={`flex-shrink-0 px-4 py-2 rounded-lg text-[13px] font-medium transition-all border-0 ${
               activeCategory === cat.value
                 ? 'bg-black text-white'
-                : 'bg-[#F5F5F7] text-black/60'
+                : 'bg-white text-black/50 border border-black/10'
             }`}
           >
             {cat.label}

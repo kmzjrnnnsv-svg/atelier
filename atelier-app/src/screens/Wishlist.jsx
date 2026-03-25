@@ -20,8 +20,8 @@ export default function Wishlist() {
             <div className="w-16 h-16 bg-black/5 flex items-center justify-center mb-4">
               <Heart size={28} className="text-black/20" strokeWidth={1.5} />
             </div>
-            <p className="text-[12px] text-black">Noch keine Favoriten</p>
-            <p className="text-[10px] text-black/35 mt-1.5 max-w-[200px] leading-relaxed">
+            <p className="text-[13px] text-black">Noch keine Favoriten</p>
+            <p className="text-[11px] text-black/35 mt-1.5 max-w-[200px] leading-relaxed">
               Markiere Schuhe in der Kollektion mit einem Herz
             </p>
             <button
@@ -60,11 +60,11 @@ export default function Wishlist() {
                 </div>
 
                 <div className="p-3">
-                  <p className="text-[8px] text-black/35" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>{product.category}</p>
-                  <p className="text-[12px] text-black mt-0.5 leading-tight">{product.name}</p>
-                  <p className="text-[10px] text-black/35 mt-0.5">{product.material}</p>
+                  <p className="text-[10px] text-black/35" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>{product.category}</p>
+                  <p className="text-[13px] text-black mt-0.5 leading-tight">{product.name}</p>
+                  <p className="text-[11px] text-black/35 mt-0.5">{product.material}</p>
                   <div className="flex items-center justify-between mt-1.5">
-                    <p className="text-[12px] text-black">{product.price}</p>
+                    <p className="text-[13px] text-black">{product.price}</p>
                     <button
                       className="w-7 h-7 bg-black flex items-center justify-center border-0"
                       onClick={e => { e.stopPropagation(); navigate('/customize', { state: { product } }) }}

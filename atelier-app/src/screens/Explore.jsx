@@ -162,7 +162,7 @@ export default function Explore() {
   // Article detail view
   if (selectedArticle) {
     return (
-      <div className="flex flex-col min-h-full bg-[#F2F2F7]">
+      <div className="flex flex-col min-h-full bg-white">
         <div className="flex items-center gap-3 px-4 pt-3 pb-2 flex-shrink-0">
           <button onClick={() => setSelectedArticle(null)} className="w-10 h-10 flex items-center justify-center bg-transparent border-0">
             <ArrowLeft size={20} strokeWidth={1.5} className="text-[#007AFF]" />
@@ -175,7 +175,7 @@ export default function Explore() {
   }
 
   return (
-    <div className="min-h-full bg-[#F2F2F7]">
+    <div className="min-h-full bg-white">
 
       {/* ── Large Title Header ────────────────────────────────────── */}
       <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-4">

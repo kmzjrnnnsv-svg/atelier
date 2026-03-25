@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, Heart, Package, Award, Star, Footprints, Smartphone } from 'lucide-react'
+import { ChevronRight, Heart, Package, Smartphone, Footprints, BookOpen } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -22,10 +22,10 @@ function SectionLabel({ icon: Icon, color, label, onTap }) {
 }
 
 // ── Product Card ──────────────────────────────────────────────────────────
-function ProductCard({ product, onSelect, large }) {
+function ProductCard({ product, onSelect }) {
   return (
     <button onClick={() => onSelect(product)} className="bg-transparent border-0 text-left p-0 w-full active:opacity-80 transition-opacity">
-      <div className={`w-full ${large ? 'aspect-[3/4]' : 'aspect-square'} overflow-hidden flex items-center justify-center mb-3 bg-white`}>
+      <div className="w-full aspect-square overflow-hidden flex items-center justify-center mb-2 bg-white">
         {product.image ? (
           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -35,60 +35,15 @@ function ProductCard({ product, onSelect, large }) {
           </svg>
         )}
       </div>
-      <div className="px-2">
+      <div>
         <p className="text-[13px] text-black leading-tight line-clamp-2">{product.name}</p>
-        <p className="text-[13px] text-black/40 mt-1">{product.price}</p>
+        <p className="text-[13px] text-black/40 mt-0.5">{product.price}</p>
       </div>
     </button>
   )
 }
 
-// ── Order Card ──────────────────────────────────────────────────────────────
-function OrderCard({ order, onClick }) {
-  const statusLabels = {
-    pending: 'In Bearbeitung', confirmed: 'Bestätigt',
-    quality_check: 'Qualitätskontrolle', shipped: 'Versandt', delivered: 'Zugestellt',
-  }
-  return (
-    <button onClick={onClick} className="bg-transparent border-0 text-left p-0 w-full active:opacity-80">
-      <div className="w-full aspect-[4/3] overflow-hidden flex items-center justify-center mb-2 bg-white">
-        <Package size={32} strokeWidth={1} className="text-black/15" />
-      </div>
-      <p className="text-[13px] text-black leading-tight">Bestellung #{order.id}</p>
-      <p className="text-[13px] text-black/40 mt-0.5">{statusLabels[order.status] || order.status}</p>
-    </button>
-  )
-}
-
-// ── Loyalty Banner ──────────────────────────────────────────────────────────
-function LoyaltyBanner({ status, tiers }) {
-  const currentTier = tiers?.find(t => t.name?.toLowerCase() === status?.tier?.toLowerCase()) || tiers?.[0]
-  return (
-    <div style={{ background: 'linear-gradient(135deg, #1D1D1F 0%, #3A3A3C 100%)' }}>
-      <div className="px-5 py-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] text-white/40 font-medium uppercase tracking-wider">Treueprogramm</p>
-            <p className="text-[22px] font-bold text-white mt-1">{status?.points || 0} Punkte</p>
-          </div>
-          <div className="w-11 h-11 bg-white/10 flex items-center justify-center">
-            <Award size={22} strokeWidth={1.5} className="text-amber-400" />
-          </div>
-        </div>
-        {currentTier && (
-          <div className="flex items-center gap-2 mt-3">
-            <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
-              <div className="h-full rounded-full bg-amber-400" style={{ width: `${Math.min(100, ((status?.points || 0) / (currentTier.min_points + 500)) * 100)}%` }} />
-            </div>
-            <span className="text-[11px] text-white/40 font-medium">{currentTier.name}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── App Download Banner (mobile web only, replaces scan banner) ──────────
+// ── App Download Banner (mobile web only) ──────────────────────────────────
 function AppBanner() {
   return (
     <div style={{ background: 'linear-gradient(135deg, #1D1D1F 0%, #2C2C2E 100%)' }}>
@@ -130,11 +85,41 @@ function ScanBanner({ scan, onScanTap }) {
   )
 }
 
+// ── Article Card ─────────────────────────────────────────────────────────
+const ARTICLE_THEME = {
+  'Gesundheit': { color: '#FF3B30' },
+  'Tipps':      { color: '#FF9500' },
+  'Wissen':     { color: '#007AFF' },
+  'Allgemein':  { color: '#8E8E93' },
+}
+
+function ArticleCard({ article, onClick }) {
+  const theme = ARTICLE_THEME[article.category] || ARTICLE_THEME.Allgemein
+  return (
+    <button onClick={onClick} className="w-full bg-white border-0 text-left p-0 active:opacity-80 overflow-hidden">
+      {article.image_data ? (
+        <div className="w-full aspect-[16/9] overflow-hidden">
+          <img src={article.image_data} alt={article.title} className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="w-full aspect-[16/9] flex items-center justify-center" style={{ background: theme.color + '10' }}>
+          <BookOpen size={28} strokeWidth={1} style={{ color: theme.color, opacity: 0.3 }} />
+        </div>
+      )}
+      <div className="p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: theme.color, letterSpacing: '0.1em' }}>{article.category}</p>
+        <p className="text-[14px] font-semibold text-black leading-snug line-clamp-2">{article.title}</p>
+        {article.subtitle && <p className="text-[12px] text-black/40 mt-1 line-clamp-2">{article.subtitle}</p>}
+      </div>
+    </button>
+  )
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ForYou() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { shoes, favorites, orders, latestScan, loyaltyTiers, loyaltyStatus } = useAtelierStore()
+  const { shoes, favorites, orders, latestScan, articles } = useAtelierStore()
   const [recentOrders, setRecentOrders] = useState([])
 
   useEffect(() => {
@@ -142,16 +127,17 @@ export default function ForYou() {
   }, [])
 
   const favShoes = shoes.filter(s => favorites.includes(String(s.id)))
-  const recommended = shoes.filter(s => s.match && parseFloat(s.match) > 90).slice(0, 6)
-  const recentlyViewed = shoes.slice(0, 4)
 
   const selectShoe = (product) => navigate('/customize', { state: { product } })
 
   // Hero shoe for full-width banner
   const heroShoe = shoes.find(s => s.tag === 'BESTSELLER') || shoes[0]
 
+  // Published articles for bottom section
+  const publishedArticles = (articles || []).filter(a => a.status === 'published').slice(0, 4)
+
   return (
-    <div className="min-h-full bg-[#F2F2F7]">
+    <div className="min-h-full bg-white">
 
       {/* ── Hero Banner (edge-to-edge) ─────────────────────────────── */}
       {heroShoe && (
@@ -181,22 +167,6 @@ export default function ForYou() {
         )}
       </div>
 
-      {/* ── Empfohlen für dich ─────────────────────────────────────── */}
-      {recommended.length > 0 && (
-        <div className="mt-10">
-          <div className="px-5 lg:px-8">
-            <SectionLabel icon={Star} color="#FF9500" label="Empfohlen für dich" onTap={() => navigate('/collection')} />
-          </div>
-          <div className="flex gap-3 overflow-x-auto pl-5 lg:pl-8 lg:pr-8 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible" style={{ scrollSnapType: 'x mandatory' }}>
-            {recommended.map(shoe => (
-              <div key={shoe.id} className="flex-shrink-0 lg:flex-shrink lg:!w-auto" style={{ width: '44vw', scrollSnapAlign: 'start' }}>
-                <ProductCard product={shoe} onSelect={selectShoe} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* ── Gespeichert (Favorites) ────────────────────────────────── */}
       {favShoes.length > 0 && (
         <div className="mt-10">
@@ -211,40 +181,44 @@ export default function ForYou() {
         </div>
       )}
 
-      {/* ── Zuletzt angesehen ──────────────────────────────────────── */}
-      {recentlyViewed.length > 0 && (
-        <div className="mt-10">
-          <div className="px-5 lg:px-8">
-            <SectionLabel icon={Heart} color="#FF3B30" label="Zuletzt angesehen" onTap={() => navigate('/collection')} />
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-5 lg:px-8">
-            {recentlyViewed.map(shoe => (
-              <ProductCard key={shoe.id} product={shoe} onSelect={selectShoe} />
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* ── Letzte Bestellungen ────────────────────────────────────── */}
       {recentOrders.length > 0 && (
         <div className="mt-10">
           <div className="px-5 lg:px-8">
             <SectionLabel icon={Package} color="#34C759" label="Deine Bestellungen" onTap={() => navigate('/orders')} />
           </div>
-          <div className="flex gap-3 overflow-x-auto pl-5 lg:pl-8 lg:pr-8 lg:grid lg:grid-cols-4 lg:gap-3 pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+          <div className="px-5 lg:px-8 space-y-2">
             {recentOrders.map(order => (
-              <div key={order.id} className="flex-shrink-0 lg:flex-shrink lg:!w-auto" style={{ width: '44vw', scrollSnapAlign: 'start' }}>
-                <OrderCard order={order} onClick={() => navigate('/orders')} />
-              </div>
+              <button key={order.id} onClick={() => navigate('/orders')} className="w-full bg-white border-0 text-left p-4 active:opacity-80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 bg-black/5 flex items-center justify-center flex-shrink-0">
+                    <Package size={16} strokeWidth={1.5} className="text-black/30" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-black truncate">{order.shoe_name}</p>
+                    <p className="text-[11px] text-black/40 mt-0.5">{order.material} · {order.price}</p>
+                  </div>
+                </div>
+                <ChevronRight size={14} strokeWidth={1.5} className="text-black/20 flex-shrink-0" />
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── Loyalty (edge-to-edge) ─────────────────────────────────── */}
-      <div className="mt-10">
-        <LoyaltyBanner status={loyaltyStatus} tiers={loyaltyTiers} />
-      </div>
+      {/* ── Artikel ────────────────────────────────────────────────── */}
+      {publishedArticles.length > 0 && (
+        <div className="mt-10">
+          <div className="px-5 lg:px-8">
+            <SectionLabel icon={BookOpen} color="#007AFF" label="Artikel" onTap={() => navigate('/explore')} />
+          </div>
+          <div className="px-5 lg:px-8 space-y-3">
+            {publishedArticles.map(article => (
+              <ArticleCard key={article.id} article={article} onClick={() => navigate('/explore')} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Bottom spacer ──────────────────────────────────────────── */}
       <div className="h-12" />

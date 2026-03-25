@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Menu, User, ShoppingBag, X, Compass, Heart, Package, HelpCircle } from 'lucide-react'
+import { Menu, User, ShoppingBag, X, Compass, Heart, Package, HelpCircle, Settings } from 'lucide-react'
 import { prefetchRoute, isMobileWeb } from '../App'
 import useAtelierStore from '../store/atelierStore'
 
@@ -10,7 +10,8 @@ const MENU_ITEMS = [
   { icon: Compass,      label: 'Entdecken',      path: '/explore' },
   { icon: Heart,        label: 'Wunschliste',    path: '/wishlist' },
   { icon: Package,      label: 'Bestellungen',   path: '/orders' },
-  { icon: HelpCircle,   label: 'Hilfe',          path: '/help' },
+  { icon: HelpCircle,   label: 'Hilfe & Kontakt', path: '/help' },
+  { icon: Settings,     label: 'Einstellungen',   path: '/settings' },
 ]
 
 // Page titles for sub-pages — when set, replaces "ATELIER" in center
@@ -21,7 +22,7 @@ const PAGE_TITLES = {
   '/orders':     'Bestellungen',
   '/profile':    'Profil',
   '/settings':   'Einstellungen',
-  '/help':       'Hilfe',
+  '/help':       'Hilfe & Kontakt',
   '/explore':    'Entdecken',
 }
 
@@ -41,16 +42,11 @@ export default function TopBar() {
         className="flex items-center justify-between bg-white flex-shrink-0"
         style={{ position: 'sticky', top: 0, zIndex: 20, borderBottom: '0.5px solid rgba(0,0,0,0.08)', height: isMobileWeb ? '48px' : '52px', padding: isMobileWeb ? '0 16px' : '0 28px' }}
       >
-        {/* Left: Burger */}
-        <div className="flex items-center gap-1">
+        {/* Left: Burger only */}
+        <div className="flex items-center">
           <button onClick={() => setOpen(true)} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
             <Menu size={isMobileWeb ? 22 : 20} strokeWidth={1.3} />
           </button>
-          {!isMobileWeb && (
-            <button onClick={() => go('/collection')} className="bg-transparent border-0 px-1.5 py-1 text-black/70 active:opacity-50 hidden lg:flex items-center">
-              <span className="text-[13px]">Menü</span>
-            </button>
-          )}
         </div>
 
         {/* Center: Page title or Brand */}
@@ -65,14 +61,9 @@ export default function TopBar() {
         {/* Right: Wishlist (desktop) + Account + Cart */}
         <div className="flex items-center gap-0.5">
           {!isMobileWeb && (
-            <>
-              <button onClick={() => go('/help')} className="bg-transparent border-0 px-2 py-1 text-black/70 active:opacity-50 hidden lg:flex items-center">
-                <span className="text-[13px]">Kundenservice</span>
-              </button>
-              <button onClick={() => go('/wishlist')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
-                <Heart size={18} strokeWidth={1.3} />
-              </button>
-            </>
+            <button onClick={() => go('/wishlist')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
+              <Heart size={18} strokeWidth={1.3} />
+            </button>
           )}
           <button onClick={() => go('/profile')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
             <User size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
@@ -95,7 +86,7 @@ export default function TopBar() {
           <nav className="relative w-72 max-w-[80vw] bg-white flex flex-col shadow-2xl" style={{ animation: 'slideInLeft 0.3s ease', height: '100dvh' }}>
             <div className="flex items-center justify-between px-5 h-14 border-b border-black/5">
               <span className="text-[16px] font-bold tracking-[0.05em]">ATELIER</span>
-              <button onClick={() => setOpen(false)} className="w-8 h-8 bg-[#F2F2F7] flex items-center justify-center border-0 active:opacity-60">
+              <button onClick={() => setOpen(false)} className="w-8 h-8 flex items-center justify-center border-0 bg-transparent active:opacity-60">
                 <X size={16} strokeWidth={2} className="text-black/60" />
               </button>
             </div>
@@ -108,7 +99,7 @@ export default function TopBar() {
                     onClick={() => go(path)}
                     onPointerEnter={() => prefetchRoute(path)}
                     className={`w-full flex items-center gap-3.5 px-5 py-3.5 bg-transparent border-0 text-left transition-colors ${
-                      isActive ? 'text-black bg-[#F2F2F7]' : 'text-black/60'
+                      isActive ? 'text-black' : 'text-black/50'
                     }`}
                   >
                     <Icon size={18} strokeWidth={isActive ? 2 : 1.3} />
