@@ -40,7 +40,9 @@ function issueTokens(res, user) {
 
   res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS)
 
-  return { accessToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion } }
+  // Return refreshToken in body too — Capacitor native apps can't rely on
+  // cross-origin cookies in WKWebView, so they store it in memory instead.
+  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion } }
 }
 
 // POST /api/auth/register
@@ -91,7 +93,8 @@ router.post('/login', authLimiter, validateLogin, (req, res) => {
 
 // POST /api/auth/refresh
 router.post('/refresh', refreshLimiter, (req, res) => {
-  const rawToken = req.cookies?.refreshToken
+  // Accept refresh token from: cookie (web), request body (Capacitor native)
+  const rawToken = req.cookies?.refreshToken || req.body?.refreshToken
   if (!rawToken) return res.status(401).json({ error: 'No refresh token' })
 
   const db = getDb()
@@ -118,7 +121,7 @@ router.post('/refresh', refreshLimiter, (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
-  const rawToken = req.cookies?.refreshToken
+  const rawToken = req.cookies?.refreshToken || req.body?.refreshToken
   if (rawToken) {
     const db = getDb()
     db.prepare('DELETE FROM refresh_tokens WHERE token_hash = ?').run(hashToken(rawToken))

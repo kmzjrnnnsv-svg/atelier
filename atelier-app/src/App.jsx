@@ -15,6 +15,7 @@ import NotFound from './screens/NotFound'
 
 // Lazy import factories — used both by lazy() and prefetchRoute()
 const lazyImports = {
+  '/foryou':     () => import('./screens/ForYou'),
   '/collection': () => import('./screens/ShoeCollection'),
   '/customize':  () => import('./screens/Customize'),
   '/profile':    () => import('./screens/Profile'),
@@ -45,6 +46,7 @@ export function prefetchRoute(path) {
 }
 
 // Lazy: loaded on demand per route
+const ForYou            = lazy(lazyImports['/foryou'])
 const ShoeCollection    = lazy(lazyImports['/collection'])
 const Customize         = lazy(lazyImports['/customize'])
 const Profile           = lazy(lazyImports['/profile'])
@@ -202,10 +204,11 @@ function AppRoutes() {
         <div className="flex-1 overflow-y-auto relative">
           <Suspense fallback={<DelayedSpinner />}>
             <Routes>
-              <Route path="/"           element={<Navigate to="/login" replace />} />
+              <Route path="/"           element={<Navigate to="/foryou" replace />} />
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
+              <Route path="/foryou"    element={<ProtectedRoute><ForYou /></ProtectedRoute>} />
               <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
               <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
               <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
@@ -236,10 +239,11 @@ function AppRoutes() {
 
   const routes = (
     <Routes>
-      <Route path="/"           element={<Navigate to="/login" replace />} />
+      <Route path="/"           element={<Navigate to="/foryou" replace />} />
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />
+      <Route path="/foryou"    element={<ProtectedRoute><ForYou /></ProtectedRoute>} />
       <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
       <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
       <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
