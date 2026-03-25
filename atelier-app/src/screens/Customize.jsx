@@ -117,7 +117,7 @@ export default function Customize() {
 
   // Smooth scroll forwarding state
   // Phase 'left' = left panel scrolls first, then 'right' = right panel scrolls
-  const scrollPhase = useRef('left') // 'left' | 'right'
+  const scrollPhase = useRef('right') // 'right' first, then 'left'
   const animFrame = useRef(null)
   const scrollTarget = useRef({ el: null, amount: 0 })
   const [leftFullyScrolled, setLeftFullyScrolled] = useState(false)
@@ -128,35 +128,36 @@ export default function Customize() {
     targetEl.scrollBy({ top: delta, behavior: 'instant' })
   }, [])
 
-  // Track if left panel is fully scrolled
+  // Track right panel scroll — when right reaches bottom, switch to left
+  useEffect(() => {
+    const el = rightPanelRef.current
+    if (!el) return
+    const onScroll = () => {
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 2
+      if (atBottom) {
+        scrollPhase.current = 'left'
+      }
+      if (el.scrollTop <= 0) {
+        scrollPhase.current = 'right'
+      }
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Track left panel scroll for accessories opacity + scroll-up phase
   useEffect(() => {
     const el = leftPanelRef.current
     if (!el) return
     const onScroll = () => {
       const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 2
       setLeftFullyScrolled(atBottom)
-      setRightFullyScrolled(atBottom) // keep accessories opacity tied to left scroll
-      if (atBottom) {
-        scrollPhase.current = 'right'
-      }
+      setRightFullyScrolled(atBottom)
       if (el.scrollTop <= 0) {
-        scrollPhase.current = 'left'
+        scrollPhase.current = 'right'
       }
     }
     onScroll()
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [])
-
-  // Track right panel scroll for phase transitions (scrolling back up)
-  useEffect(() => {
-    const el = rightPanelRef.current
-    if (!el) return
-    const onScroll = () => {
-      if (el.scrollTop <= 0) {
-        scrollPhase.current = 'left'
-      }
-    }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
@@ -333,21 +334,26 @@ export default function Customize() {
             const lp = leftPanelRef.current
             if (!rp || !lp) return
 
-            const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
-            const lpAtTop = lp.scrollTop <= 0
+            const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
             const rpAtTop = rp.scrollTop <= 0
+            const lpAtTop = lp.scrollTop <= 0
 
-            if (lpAtBottom && e.deltaY > 0) {
-              // Left done scrolling down → forward to right panel
-              e.preventDefault()
-              scrollPhase.current = 'right'
-              smoothForwardScroll(rp, e.deltaY)
-            } else if (lpAtTop && e.deltaY < 0 && rpAtTop) {
-              // Both at top, scrolling up → do nothing (already at top)
-            } else if (e.deltaY < 0 && lpAtTop) {
-              // Left at top, scrolling up → scroll right back up
-              e.preventDefault()
-              smoothForwardScroll(rp, e.deltaY)
+            if (e.deltaY > 0) {
+              // Scrolling down: right panel first
+              if (!rpAtBottom) {
+                e.preventDefault()
+                smoothForwardScroll(rp, e.deltaY)
+              }
+              // else: right at bottom, let left scroll naturally
+            } else {
+              // Scrolling up: left panel first
+              if (!lpAtTop) {
+                // left not at top yet — let it scroll naturally
+              } else if (!rpAtTop) {
+                // left at top, scroll right up
+                e.preventDefault()
+                smoothForwardScroll(rp, e.deltaY)
+              }
             }
           }}
         >
@@ -520,19 +526,24 @@ export default function Customize() {
             const lp = leftPanelRef.current
             if (!rp || !lp) return
 
-            const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
+            const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
             const rpAtTop = rp.scrollTop <= 0
+            const lpAtTop = lp.scrollTop <= 0
 
-            if (!lpAtBottom && e.deltaY > 0) {
-              // Left not done yet → forward scroll to left panel first
-              e.preventDefault()
-              scrollPhase.current = 'left'
-              smoothForwardScroll(lp, e.deltaY)
-            } else if (rpAtTop && e.deltaY < 0) {
-              // Right at top, scrolling up → scroll left back up
-              e.preventDefault()
-              scrollPhase.current = 'left'
-              smoothForwardScroll(lp, e.deltaY)
+            if (e.deltaY > 0) {
+              // Scrolling down: right first, then left
+              if (rpAtBottom) {
+                e.preventDefault()
+                smoothForwardScroll(lp, e.deltaY)
+              }
+              // else: right not at bottom, let it scroll naturally
+            } else {
+              // Scrolling up: left first, then right
+              if (!lpAtTop) {
+                e.preventDefault()
+                smoothForwardScroll(lp, e.deltaY)
+              }
+              // else: left at top, let right scroll naturally
             }
           }}
         >
