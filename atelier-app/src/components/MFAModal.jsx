@@ -39,7 +39,7 @@ export default function MFAModal({ open, onClose, onConfirm, loading, error, tit
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onKeyDown={handleKey}
     >
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-80 p-6">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-80 p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">

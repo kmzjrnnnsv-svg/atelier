@@ -181,7 +181,7 @@ export default function Profile() {
         <div className="bg-white px-5 pt-5 pb-6 border-b border-black/8">
           <div className="flex flex-col items-center">
             <div className="relative mb-3">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-black/10"
+              <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-black/10"
                 style={{ background: 'linear-gradient(135deg, #d1d5db, #9ca3af)' }}>
                 <div className="w-full h-full flex items-center justify-center">
                   <span className="text-4xl font-bold text-white font-playfair">{initials}</span>

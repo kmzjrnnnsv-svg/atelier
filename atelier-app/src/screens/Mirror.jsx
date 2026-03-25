@@ -417,7 +417,7 @@ function ProductCard({ item, isSelected, onSelect, onDelete }) {
     <div className="relative flex-shrink-0">
       <button
         onClick={() => onSelect(item.id)}
-        className={`w-28 rounded-2xl overflow-hidden border-2 transition-all bg-transparent text-left ${
+        className={`w-28 rounded-xl overflow-hidden border-2 transition-all bg-transparent text-left ${
           isSelected ? 'border-blue-500 shadow-lg shadow-blue-500/20' : 'border-gray-100'
         }`}
       >
@@ -428,16 +428,16 @@ function ProductCard({ item, isSelected, onSelect, onDelete }) {
             <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: item.color || '#374151' }}>
-              <div className="w-10 h-10 rounded-full" style={{ background: `radial-gradient(circle at 35% 35%, ${item.color}88, ${item.color})` }} />
+              <div className="w-10 h-10 rounded-lg" style={{ background: `radial-gradient(circle at 35% 35%, ${item.color}88, ${item.color})` }} />
             </div>
           )}
           {isSelected && (
-            <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow">
+            <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-md flex items-center justify-center shadow">
               <Check size={10} className="text-white" strokeWidth={3} />
             </div>
           )}
           {item.isLocal && (
-            <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-full px-1.5 py-0.5">
+            <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-md px-1.5 py-0.5">
               <span className="text-[7px] text-amber-300 font-bold">📸 MEIN</span>
             </div>
           )}
@@ -450,7 +450,7 @@ function ProductCard({ item, isSelected, onSelect, onDelete }) {
       {item.isLocal && onDelete && (
         <button
           onClick={e => { e.stopPropagation(); onDelete(item.id) }}
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-0 shadow-md"
+          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-md bg-red-500 flex items-center justify-center border-0 shadow-md"
         >
           <X size={9} className="text-white" strokeWidth={3} />
         </button>
@@ -601,7 +601,7 @@ export default function Mirror() {
     <div className="flex flex-col h-full overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 60%, #0f172a 100%)' }}>
       <div className="flex items-center justify-between px-5 pt-4 pb-4">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center border-0">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-white" />
         </button>
         <div className="text-center">
@@ -632,7 +632,7 @@ export default function Mirror() {
             { icon: Sliders,     text: 'Körpermasse anpassen',           sub: 'Größe & Gewicht für realistische Proportionen' },
             { icon: ShoppingBag, text: 'Outfits anprobieren',            sub: 'Kleidung abfotografieren & live anziehen' },
           ].map(({ icon: Icon, text, sub }) => (
-            <div key={text} className="flex items-center gap-3 bg-white/5 rounded-2xl px-4 py-3">
+            <div key={text} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3">
               <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                 <Icon size={15} className="text-purple-300" />
               </div>
@@ -646,13 +646,13 @@ export default function Mirror() {
 
         <button
           onClick={() => { setPhase('scan'); setScanStep(1); setCapturedSteps([]) }}
-          className="w-full h-14 rounded-2xl bg-white text-black text-sm font-bold uppercase tracking-widest border-0 mb-3"
+          className="w-full h-14 rounded-xl bg-white text-black text-sm font-bold uppercase tracking-widest border-0 mb-3"
         >
           Avatar erstellen →
         </button>
         <button
           onClick={() => setPhase('editor')}
-          className="w-full h-11 rounded-2xl bg-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest border-0 mb-2"
+          className="w-full h-11 rounded-xl bg-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest border-0 mb-2"
         >
           Direkt anpassen
         </button>
@@ -671,7 +671,7 @@ export default function Mirror() {
   if (phase === 'scan') return (
     <div className="flex flex-col h-full overflow-hidden bg-black">
       <div className="flex items-center justify-between px-5 pt-4 pb-4 z-10">
-        <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center border-0">
+        <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center border-0">
           <X size={18} className="text-white" />
         </button>
         <div className="flex items-center gap-2">
@@ -693,7 +693,7 @@ export default function Mirror() {
         <p className="text-lg font-bold text-white mt-0.5">{step.label}</p>
       </div>
 
-      <div className="flex-1 relative flex items-center justify-center mx-4 mb-4 rounded-3xl overflow-hidden"
+      <div className="flex-1 relative flex items-center justify-center mx-4 mb-4 rounded-xl overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%)', minHeight: 300 }}>
         <div className="absolute inset-0 opacity-10">
           {[1,2,3].map(i => <div key={i} className="absolute left-0 right-0 border-t border-white" style={{ top: `${i*25}%` }} />)}
@@ -705,7 +705,7 @@ export default function Mirror() {
         <ScanGuide shapeType={step.shapeType} />
         {capturedSteps.includes(scanStep) ? (
           <div className="absolute inset-0 flex items-center justify-center bg-green-500/10">
-            <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-xl bg-green-500 flex items-center justify-center">
               <Check size={32} className="text-white" strokeWidth={2.5} />
             </div>
           </div>
@@ -714,7 +714,7 @@ export default function Mirror() {
             style={{ top: '45%', animation: 'scan-line 2s ease-in-out infinite' }} />
         )}
         <div className="absolute top-4 left-0 right-0 flex justify-center">
-          <div className="flex items-center gap-1.5 bg-red-500 rounded-full px-2.5 py-1">
+          <div className="flex items-center gap-1.5 bg-red-500 rounded-lg px-2.5 py-1">
             <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             <span className="text-[8px] font-bold text-white uppercase tracking-wide">LIVE</span>
           </div>
@@ -725,13 +725,13 @@ export default function Mirror() {
         <p className="text-sm text-gray-300 mb-5 leading-relaxed">{step.instruction}</p>
         <div className="flex gap-3">
           {step.optional && (
-            <button onClick={skipBody} className="flex-1 h-14 rounded-2xl bg-white/10 text-white text-sm font-bold uppercase tracking-widest border-0">
+            <button onClick={skipBody} className="flex-1 h-14 rounded-xl bg-white/10 text-white text-sm font-bold uppercase tracking-widest border-0">
               Überspringen
             </button>
           )}
           <button
             onClick={captureStep}
-            className="flex-1 h-14 rounded-2xl flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-widest border-0"
+            className="flex-1 h-14 rounded-xl flex items-center justify-center gap-2 text-sm font-bold uppercase tracking-widest border-0"
             style={{ background: capturedSteps.includes(scanStep) ? '#22c55e' : 'white', color: 'black' }}
           >
             <Camera size={18} />
@@ -768,7 +768,7 @@ export default function Mirror() {
           { label: 'Modell finalisieren',            done: processingPct > 90 },
         ].map(({ label, done }) => (
           <div key={label} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-2.5">
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${done ? 'bg-green-500' : 'bg-white/10'}`}>
+            <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${done ? 'bg-green-500' : 'bg-white/10'}`}>
               {done ? <Check size={11} className="text-white" strokeWidth={2.5} /> : <div className="w-2 h-2 rounded-full bg-white/30" />}
             </div>
             <span className={`text-xs ${done ? 'text-white font-semibold' : 'text-gray-500'}`}>{label}</span>
@@ -783,7 +783,7 @@ export default function Mirror() {
   if (phase === 'editor') return (
     <div className="flex flex-col h-full bg-white overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100">
-        <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
+        <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-gray-800" />
         </button>
         <div className="text-center">
@@ -798,13 +798,13 @@ export default function Mirror() {
 
       <div className="flex-1 overflow-y-auto px-5 pb-8">
         {/* Live preview */}
-        <div className="flex items-center justify-center py-6 bg-gray-50 rounded-3xl mt-4 mb-5">
+        <div className="flex items-center justify-center py-6 bg-gray-50 rounded-xl mt-4 mb-5">
           <AvatarSVG skinColor={skinColor} hairColor={hairColor} shapeIdx={shapeIdx}
             topColor="#1e3a5f" pantsColor="#111827" shoeColor="#92400e" />
         </div>
 
         {/* BMI badge */}
-        <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-2.5 mb-5">
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 mb-5">
           <div className="w-2 h-2 rounded-full bg-blue-400" />
           <p className="text-[9px] text-blue-700 font-semibold">
             Körperform: {BODY_SHAPES[shapeIdx]?.label} · BMI {Math.round(bodyWeight / Math.pow(bodyHeight/100, 2))}
@@ -845,7 +845,7 @@ export default function Mirror() {
         <div className="flex gap-2 mb-5 flex-wrap">
           {SKIN_TONES.map(tone => (
             <button key={tone} onClick={() => setSkinColor(tone)}
-              className={`w-9 h-9 rounded-full border-2 transition-all bg-transparent ${skinColor === tone ? 'border-black scale-110' : 'border-transparent'}`}
+              className={`w-9 h-9 rounded-lg border-2 transition-all bg-transparent ${skinColor === tone ? 'border-black scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: tone }} />
           ))}
         </div>
@@ -855,13 +855,13 @@ export default function Mirror() {
         <div className="flex gap-2 mb-6 flex-wrap">
           {HAIR_COLORS.map(hc => (
             <button key={hc} onClick={() => setHairColor(hc)}
-              className={`w-9 h-9 rounded-full border-2 transition-all bg-transparent ${hairColor === hc ? 'border-black scale-110' : 'border-transparent'}`}
+              className={`w-9 h-9 rounded-lg border-2 transition-all bg-transparent ${hairColor === hc ? 'border-black scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: hc }} />
           ))}
         </div>
 
         <button onClick={() => setPhase('mirror')}
-          className="w-full h-14 rounded-2xl bg-black text-white text-sm font-bold uppercase tracking-widest border-0">
+          className="w-full h-14 rounded-xl bg-black text-white text-sm font-bold uppercase tracking-widest border-0">
           Zum Mirror →
         </button>
       </div>
@@ -885,14 +885,14 @@ export default function Mirror() {
 
       {/* Header */}
       <div className="bg-white flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-gray-800" />
         </button>
         <div className="text-center">
           <p className="text-[11px] uppercase tracking-[0.22em] font-bold text-black">Mirror</p>
           <p className="text-[9px] uppercase tracking-[0.14em] font-semibold" style={{ color: '#f59e0b' }}>Outfit Studio</p>
         </div>
-        <button onClick={() => setPhase('editor')} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
+        <button onClick={() => setPhase('editor')} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center border-0">
           <Sliders size={16} className="text-gray-700" />
         </button>
       </div>
@@ -900,32 +900,32 @@ export default function Mirror() {
       <div className="flex-1 overflow-y-auto pb-4">
 
         {/* Avatar canvas */}
-        <div className="relative mx-4 mt-4 rounded-3xl overflow-hidden flex items-center justify-center"
+        <div className="relative mx-4 mt-4 rounded-xl overflow-hidden flex items-center justify-center"
           style={{ background: 'linear-gradient(180deg, #111827 0%, #1e1b4b 100%)', height: 316 }}>
 
           {/* Stats badge */}
-          <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1.5 z-10">
+          <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-lg px-3 py-1.5 z-10">
             <span className="text-[9px] font-bold text-white">{bodyHeight} cm · {bodyWeight} kg</span>
           </div>
 
           {/* STL badge */}
-          <div className="absolute top-12 left-4 flex items-center gap-1 bg-white rounded-full px-2.5 py-1 shadow-md z-10">
+          <div className="absolute top-12 left-4 flex items-center gap-1 bg-white rounded-lg px-2.5 py-1 shadow-md z-10">
             <Sparkles size={10} className="text-amber-500" />
             <span className="text-[8px] font-bold text-gray-800 uppercase tracking-wide">STL Match</span>
           </div>
 
           {/* Controls column */}
           <div className="absolute right-3 top-4 flex flex-col gap-2 z-10">
-            <button onClick={spin} className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center border-0">
+            <button onClick={spin} className="w-9 h-9 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center border-0">
               <RotateCcw size={15} className={`text-white transition-transform ${spinning ? 'rotate-180' : ''}`} strokeWidth={1.5} />
             </button>
-            <button onClick={() => setHideAvatar(v => !v)} className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center border-0">
+            <button onClick={() => setHideAvatar(v => !v)} className="w-9 h-9 rounded-lg bg-white/15 backdrop-blur-sm flex items-center justify-center border-0">
               {hideAvatar ? <Eye size={15} className="text-white" /> : <EyeOff size={15} className="text-white" />}
             </button>
           </div>
 
           {/* Edit avatar link */}
-          <button onClick={() => setPhase('editor')} className="absolute bottom-4 left-4 flex items-center gap-1 bg-white/10 border border-white/20 rounded-full px-3 py-1.5 border-0 z-10">
+          <button onClick={() => setPhase('editor')} className="absolute bottom-4 left-4 flex items-center gap-1 bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 border-0 z-10">
             <span className="text-[8px] text-white uppercase tracking-wide font-semibold">Avatar bearbeiten</span>
             <ChevronRight size={9} className="text-white" />
           </button>
@@ -934,21 +934,21 @@ export default function Mirror() {
           {(outfit.tops || outfit.pants || outfit.shoes) && (
             <div className="absolute bottom-4 right-3 flex flex-col items-end gap-1 z-10">
               {outfit.tops && (
-                <div className="bg-black/60 rounded-full px-2 py-0.5">
+                <div className="bg-black/60 rounded-md px-2 py-0.5">
                   <span className="text-[7px] text-white font-semibold">
                     👔 {allProducts.tops.find(p => p.id === outfit.tops)?.name?.slice(0, 18)}
                   </span>
                 </div>
               )}
               {outfit.pants && (
-                <div className="bg-black/60 rounded-full px-2 py-0.5">
+                <div className="bg-black/60 rounded-md px-2 py-0.5">
                   <span className="text-[7px] text-white font-semibold">
                     👖 {allProducts.pants.find(p => p.id === outfit.pants)?.name?.slice(0, 18)}
                   </span>
                 </div>
               )}
               {outfit.shoes && (
-                <div className="bg-black/60 rounded-full px-2 py-0.5">
+                <div className="bg-black/60 rounded-md px-2 py-0.5">
                   <span className="text-[7px] text-white font-semibold">
                     👟 {allProducts.shoes.find(p => p.id === outfit.shoes)?.name?.slice(0, 18)}
                   </span>
@@ -979,7 +979,7 @@ export default function Mirror() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest border-0 whitespace-nowrap transition-all flex-shrink-0 ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest border-0 whitespace-nowrap transition-all flex-shrink-0 ${
                 activeCategory === cat.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'
               }`}
             >
@@ -996,7 +996,7 @@ export default function Mirror() {
             {/* Camera capture tile */}
             <button
               onClick={() => handleCaptureClick(activeCategory)}
-              className="flex-shrink-0 w-28 h-36 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 bg-white transition-all hover:border-gray-400 hover:bg-gray-50"
+              className="flex-shrink-0 w-28 h-36 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-2 bg-white transition-all hover:border-gray-400 hover:bg-gray-50"
             >
               <Camera size={22} className="text-gray-400" />
               <span className="text-[8px] text-gray-400 font-semibold text-center leading-tight px-2">
@@ -1024,7 +1024,7 @@ export default function Mirror() {
         </div>
 
         {/* STL info card */}
-        <div className="mx-4 mt-3 bg-teal-50 border border-teal-100 rounded-2xl px-4 py-3">
+        <div className="mx-4 mt-3 bg-teal-50 border border-teal-100 rounded-xl px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-teal-500" />
             <p className="text-[9px] text-teal-700 font-semibold uppercase tracking-wide">STL-Fußmodell verbunden</p>
@@ -1037,7 +1037,7 @@ export default function Mirror() {
         {/* Rescan button */}
         <button
           onClick={() => { setPhase('scan'); setScanStep(1); setCapturedSteps([]) }}
-          className="mx-4 mt-3 w-[calc(100%-32px)] py-3 rounded-2xl bg-white border border-gray-200 text-[9px] font-bold uppercase tracking-widest text-gray-500 flex items-center justify-center gap-2"
+          className="mx-4 mt-3 w-[calc(100%-32px)] py-3 rounded-xl bg-white border border-gray-200 text-[9px] font-bold uppercase tracking-widest text-gray-500 flex items-center justify-center gap-2"
           style={{ border: '1px solid #e5e7eb' }}
         >
           <Camera size={14} />
@@ -1049,7 +1049,7 @@ export default function Mirror() {
       <div className="bg-white border-t border-gray-100 px-4 pt-3 pb-3 flex items-center gap-2">
         <button
           onClick={() => setSaved(v => !v)}
-          className={`flex items-center gap-1.5 px-4 rounded-2xl border-2 transition-all text-[9px] font-bold uppercase tracking-widest h-12 ${
+          className={`flex items-center gap-1.5 px-4 rounded-xl border-2 transition-all text-[9px] font-bold uppercase tracking-widest h-12 ${
             saved ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200'
           }`}
         >
@@ -1058,13 +1058,13 @@ export default function Mirror() {
         </button>
         <button
           onClick={() => navigate('/collection')}
-          className="flex-1 rounded-2xl bg-gray-100 text-black flex items-center justify-center text-[9px] font-bold uppercase tracking-widest border-0 h-12"
+          className="flex-1 rounded-xl bg-gray-100 text-black flex items-center justify-center text-[9px] font-bold uppercase tracking-widest border-0 h-12"
         >
           Kollektion
         </button>
         <button
           onClick={() => navigate('/collection')}
-          className="flex-1 rounded-2xl bg-black text-white flex items-center justify-center gap-1.5 text-[9px] font-bold uppercase tracking-widest border-0 h-12"
+          className="flex-1 rounded-xl bg-black text-white flex items-center justify-center gap-1.5 text-[9px] font-bold uppercase tracking-widest border-0 h-12"
         >
           <ShoppingBag size={13} />
           Kaufen

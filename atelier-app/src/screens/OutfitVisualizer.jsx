@@ -82,11 +82,11 @@ export default function OutfitVisualizer() {
 
         {/* ── 3D Visualizer Canvas ───────────────────────────────────── */}
         <div
-          className="relative mx-4 mt-4 rounded-3xl overflow-hidden"
+          className="relative mx-4 mt-4 rounded-xl overflow-hidden"
           style={{ background: 'linear-gradient(180deg, #111827 0%, #1f2937 100%)', minHeight: 'clamp(220px, 36dvh, 340px)' }}
         >
           {/* AI Confidence badge */}
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-md">
+          <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-white rounded-lg px-3 py-1.5 shadow-md">
             <svg viewBox="0 0 16 16" className="w-3 h-3" fill="none">
               <path d="M8 1l1.8 3.6L14 5.5l-3 2.9.7 4.1L8 10.4l-3.7 2.1.7-4.1-3-2.9 4.2-.9z" fill="#f59e0b" />
             </svg>
@@ -161,7 +161,7 @@ export default function OutfitVisualizer() {
             <button
               key={tab}
               onClick={() => setViewTab(tab)}
-              className={`px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest border-0 transition-all ${
+              className={`px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest border-0 transition-all ${
                 viewTab === tab ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'
               }`}
             >
@@ -182,7 +182,7 @@ export default function OutfitVisualizer() {
                 <button
                   key={item.id}
                   onClick={() => selectGarment(sIdx, item.id)}
-                  className={`flex-shrink-0 w-36 rounded-2xl overflow-hidden border-2 transition-all bg-transparent text-left ${
+                  className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all bg-transparent text-left ${
                     item.selected ? 'border-blue-500' : 'border-gray-100'
                   }`}
                 >
@@ -218,14 +218,14 @@ export default function OutfitVisualizer() {
         <div className="flex items-center gap-3 px-4 pt-3 pb-2">
           <button
             onClick={() => setSaved(!saved)}
-            className={`flex items-center gap-2 px-5 h-12 rounded-2xl border-2 transition-all text-[10px] font-bold uppercase tracking-widest ${
+            className={`flex items-center gap-2 px-5 h-12 rounded-xl border-2 transition-all text-[10px] font-bold uppercase tracking-widest ${
               saved ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200'
             }`}
           >
             <Bookmark size={16} className={saved ? 'fill-white text-white' : 'text-black'} strokeWidth={1.5} />
             Save
           </button>
-          <button className="flex-1 h-12 rounded-2xl bg-black text-white flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest border-0">
+          <button className="flex-1 h-12 rounded-xl bg-black text-white flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest border-0">
             <ShoppingBag size={16} strokeWidth={1.5} />
             Checkout (€ {totalEur.toLocaleString('de-DE')})
           </button>

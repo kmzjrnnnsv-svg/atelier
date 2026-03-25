@@ -241,7 +241,7 @@ export default function Settings() {
 
         {/* ── Nutzer-Info-Karte ─────────────────────────────────────────────── */}
         <div className="bg-white border-b border-black/8 p-4 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-black/8 flex items-center justify-center flex-shrink-0">
+          <div className="w-14 h-14 rounded-xl bg-black/8 flex items-center justify-center flex-shrink-0">
             <span className="text-2xl font-bold text-black/45 font-playfair">
               {user?.name?.[0]?.toUpperCase() ?? '?'}
             </span>

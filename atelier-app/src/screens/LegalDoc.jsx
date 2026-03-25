@@ -30,11 +30,11 @@ export default function LegalDoc() {
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-gray-100 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center border-0">
+        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center border-0">
           <ArrowLeft size={18} strokeWidth={1.8} className="text-gray-800" />
         </button>
         <span className="text-sm font-bold tracking-wide text-black text-center flex-1 px-2">{title}</span>
-        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+        <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
           <FileText size={16} className="text-gray-600" strokeWidth={1.5} />
         </div>
       </div>

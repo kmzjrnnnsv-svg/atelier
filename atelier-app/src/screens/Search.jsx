@@ -53,7 +53,7 @@ export default function Search() {
             className="flex-1 bg-transparent border-0 outline-none text-[17px] text-black placeholder:text-[#8E8E93]"
           />
           {query && (
-            <button onClick={() => { setQuery(''); inputRef.current?.focus() }} className="w-5 h-5 rounded-full bg-[#8E8E93] flex items-center justify-center border-0">
+            <button onClick={() => { setQuery(''); inputRef.current?.focus() }} className="w-5 h-5 rounded-lg bg-[#8E8E93] flex items-center justify-center border-0">
               <X size={12} strokeWidth={2.5} className="text-white" />
             </button>
           )}
@@ -100,7 +100,7 @@ export default function Search() {
                       {shoe.image ? (
                         <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full" style={{ background: shoe.color || '#ccc', opacity: 0.5 }} />
+                        <div className="w-8 h-8 rounded-lg" style={{ background: shoe.color || '#ccc', opacity: 0.5 }} />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
