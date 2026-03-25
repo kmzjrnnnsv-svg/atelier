@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useTransition } from 'react'
+import { useTransition, useState, useEffect, useRef, useCallback } from 'react'
 import { Search } from 'lucide-react'
-import { prefetchRoute, isNative } from '../App'
+import { prefetchRoute, isNative, isMobileWeb } from '../App'
 import useAtelierStore from '../store/atelierStore'
 
 function hapticSelection() {
@@ -63,72 +63,131 @@ const PILL_ITEMS = [
   { id: 'bag',     icon: IconBag,       label: 'Einkaufstasche',    path: '/checkout' },
 ]
 
+// Hook: hide nav on scroll down, show on scroll up
+function useScrollDirection() {
+  const [visible, setVisible] = useState(true)
+  const lastY = useRef(0)
+  const ticking = useRef(false)
+
+  const onScroll = useCallback(() => {
+    if (ticking.current) return
+    ticking.current = true
+    requestAnimationFrame(() => {
+      const y = window.scrollY
+      const delta = y - lastY.current
+      // Show when scrolling up or near top, hide when scrolling down past threshold
+      if (y < 60) {
+        setVisible(true)
+      } else if (delta > 6) {
+        setVisible(false)
+      } else if (delta < -4) {
+        setVisible(true)
+      }
+      lastY.current = y
+      ticking.current = false
+    })
+  }, [])
+
+  useEffect(() => {
+    // Only use scroll-direction hide on mobile web (document scroll)
+    if (!isMobileWeb) return
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [onScroll])
+
+  // For native (internal scroll container), always visible
+  if (!isMobileWeb) return true
+  return visible
+}
+
 export default function BottomNav() {
   const navigate     = useNavigate()
   const { pathname } = useLocation()
   const [isPending, startTransition] = useTransition()
   const cartCount = useAtelierStore(s => s.cart.length)
+  const visible = useScrollDirection()
 
   const activeId = pathname === '/search' ? 'search'
     : PILL_ITEMS.find(item => pathname === item.path || pathname.startsWith(item.path + '/'))?.id
 
-  return (
-    <div
-      className="flex items-end justify-center gap-2.5 px-4 flex-shrink-0"
-      style={{ paddingBottom: isNative ? 'calc(env(safe-area-inset-bottom, 0px) + 4px)' : '12px' }}
-    >
-      {/* ── Main pill tab bar ── */}
-      <div
-        className="flex items-center justify-around flex-1 rounded-[22px] px-1 py-1"
-        style={{
-          background: 'rgba(45,45,48,0.92)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          maxWidth: '380px',
-        }}
-      >
-        {PILL_ITEMS.map(({ id, icon: Icon, label, path }) => {
-          const isActive = activeId === id
-          return (
-            <button
-              key={id}
-              onClick={() => {
-                hapticSelection()
-                startTransition(() => navigate(path))
-              }}
-              onPointerEnter={() => prefetchRoute(path)}
-              onTouchStart={() => prefetchRoute(path)}
-              className={`relative flex flex-col items-center gap-0 bg-transparent border-0 py-1.5 px-2 min-w-0 flex-1 transition-colors ${
-                isActive ? 'text-[#007AFF]' : 'text-white/60'
-              } ${isPending ? 'opacity-70' : ''}`}
-            >
-              <Icon active={isActive} count={id === 'bag' ? cartCount : 0} />
-              <span className="text-[9px] leading-tight mt-0.5 truncate w-full text-center" style={{ fontWeight: isActive ? 600 : 400 }}>
-                {label}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+  // On mobile web: fixed to viewport bottom, animated show/hide
+  // On native: flex-shrink-0 inside the fixed container
+  const wrapperStyle = isMobileWeb
+    ? {
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        transform: visible ? 'translateY(0)' : 'translateY(calc(100% + 10px))',
+        transition: 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+        willChange: 'transform',
+        pointerEvents: visible ? 'auto' : 'none',
+      }
+    : {}
 
-      {/* ── Separate search circle button ── */}
-      <button
-        onClick={() => {
-          hapticSelection()
-          startTransition(() => navigate('/search'))
-        }}
-        onPointerEnter={() => prefetchRoute('/search')}
-        className={`w-[52px] h-[52px] rounded-full flex items-center justify-center border-0 flex-shrink-0 transition-colors ${
-          activeId === 'search' ? 'text-[#007AFF]' : 'text-white/70'
-        }`}
-        style={{
-          background: 'rgba(45,45,48,0.92)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-        }}
+  return (
+    <div style={wrapperStyle}>
+      <div
+        className="flex items-end justify-center gap-2.5 px-4 flex-shrink-0"
+        style={{ paddingBottom: isNative ? 'calc(env(safe-area-inset-bottom, 0px) + 4px)' : '12px', paddingTop: '6px' }}
       >
-        <Search size={22} strokeWidth={activeId === 'search' ? 2.2 : 1.8} />
-      </button>
+        {/* ── Main pill tab bar ── */}
+        <div
+          className="flex items-center justify-around flex-1 rounded-[22px] px-1 py-1"
+          style={{
+            background: 'rgba(45,45,48,0.92)',
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
+            maxWidth: '380px',
+          }}
+        >
+          {PILL_ITEMS.map(({ id, icon: Icon, label, path }) => {
+            const isActive = activeId === id
+            return (
+              <button
+                key={id}
+                onClick={() => {
+                  hapticSelection()
+                  startTransition(() => navigate(path))
+                }}
+                onPointerEnter={() => prefetchRoute(path)}
+                onTouchStart={() => prefetchRoute(path)}
+                className={`relative flex flex-col items-center gap-0 bg-transparent border-0 py-1.5 px-2 min-w-0 flex-1 transition-colors ${
+                  isActive ? 'text-[#007AFF]' : 'text-white/60'
+                } ${isPending ? 'opacity-70' : ''}`}
+              >
+                <Icon active={isActive} count={id === 'bag' ? cartCount : 0} />
+                <span className="text-[9px] leading-tight mt-0.5 truncate w-full text-center" style={{ fontWeight: isActive ? 600 : 400 }}>
+                  {label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* ── Separate search circle button ── */}
+        <button
+          onClick={() => {
+            hapticSelection()
+            startTransition(() => navigate('/search'))
+          }}
+          onPointerEnter={() => prefetchRoute('/search')}
+          className={`w-[52px] h-[52px] rounded-full flex items-center justify-center border-0 flex-shrink-0 transition-colors ${
+            activeId === 'search' ? 'text-[#007AFF]' : 'text-white/70'
+          }`}
+          style={{
+            background: 'rgba(45,45,48,0.92)',
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
+          }}
+        >
+          <Search size={22} strokeWidth={activeId === 'search' ? 2.2 : 1.8} />
+        </button>
+      </div>
     </div>
   )
 }
+
+// Height constant for content padding (so content isn't hidden behind fixed nav)
+export const BOTTOM_NAV_HEIGHT = 76

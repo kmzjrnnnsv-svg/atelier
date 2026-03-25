@@ -2066,7 +2066,7 @@ export default function FootScan() {
 
           {/* Shared header */}
           <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
-            <button onClick={() => { stopCam(); navigate('/collection', { replace: true }) }}
+            <button onClick={() => { stopCam(); navigate(-1) }}
               className="bg-transparent border-0 p-0">
               <X size={20} className="text-black" strokeWidth={1.5} />
             </button>
@@ -2222,6 +2222,16 @@ export default function FootScan() {
                         <p className="text-[9px] text-black/45 leading-relaxed">
                           <strong className="text-black/60">Wichtig:</strong> Lege ein normales weißes A4-Blatt (Druckerpapier) neben deinen Fuß. Es muss auf jedem Foto zu sehen sein — so können wir die Größe richtig berechnen.
                         </p>
+                      </div>
+
+                      {/* Back button */}
+                      <div className="px-5 pt-4">
+                        <button
+                          onClick={() => { stopCam(); navigate(-1) }}
+                          className="w-full py-3.5 bg-transparent text-[#007AFF] font-semibold text-[13px] border border-black/8 rounded-xl active:opacity-60 transition-opacity"
+                        >
+                          Zurück
+                        </button>
                       </div>
                     </>
                   )}
