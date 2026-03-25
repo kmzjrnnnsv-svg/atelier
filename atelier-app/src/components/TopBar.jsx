@@ -86,7 +86,7 @@ export default function TopBar() {
       {open && (
         <div className="fixed inset-0 z-[999] flex">
           <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <nav className="relative w-72 max-w-[80vw] bg-white h-full flex flex-col shadow-2xl" style={{ animation: 'slideInLeft 0.3s ease' }}>
+          <nav className="relative w-72 max-w-[80vw] bg-white flex flex-col shadow-2xl" style={{ animation: 'slideInLeft 0.3s ease', height: '100dvh' }}>
             <div className="flex items-center justify-between px-5 h-14 border-b border-black/5">
               <span className="text-[16px] font-bold tracking-[0.05em]">ATELIER</span>
               <button onClick={() => setOpen(false)} className="w-8 h-8 bg-[#F2F2F7] flex items-center justify-center border-0 active:opacity-60">

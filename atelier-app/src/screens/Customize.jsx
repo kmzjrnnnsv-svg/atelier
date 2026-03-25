@@ -492,12 +492,12 @@ export default function Customize() {
                       }}
                     >
                       <div
-                        className="w-12 h-12 rounded-full transition-transform group-hover:scale-110"
+                        className="w-12 h-12 rounded-lg transition-transform group-hover:scale-110"
                         style={{ background: acc.color, opacity: 0.7 }}
                       />
                       {/* Toggle badge */}
                       <div
-                        className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-all"
+                        className="absolute top-2 right-2 w-6 h-6 rounded-md flex items-center justify-center transition-all"
                         style={{
                           background: selected ? 'black' : 'white',
                           border: selected ? '1.5px solid black' : '1.5px solid rgba(0,0,0,0.12)',
@@ -599,7 +599,7 @@ export default function Customize() {
                       }${i === 0 ? ' ml-5 lg:ml-0' : ''}${i === matList.length - 1 ? ' mr-5 lg:mr-0' : ''}`}
                     >
                       <div className="relative">
-                        <div className="w-10 h-10 rounded-full"
+                        <div className="w-10 h-10 rounded-lg"
                           style={{ background: m.color }} />
                         {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/80" />}
                         {!avail && reminded && <BellRing size={10} className="absolute inset-0 m-auto text-teal-500" />}
@@ -639,7 +639,7 @@ export default function Customize() {
                           else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
                           else removeReminder('color', id)
                         }}
-                        className={`w-9 h-9 rounded-full transition-all flex items-center justify-center border-0 ${
+                        className={`w-9 h-9 rounded-lg transition-all flex items-center justify-center border-0 ${
                           !avail ? 'opacity-30' : ''
                         }`}
                         style={{ backgroundColor: c.hex }}

@@ -21,7 +21,7 @@ export default class ErrorBoundary extends Component {
           <span className="font-playfair text-lg font-semibold tracking-[0.3em] uppercase text-black mb-10">
             ATELIER
           </span>
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-6">
+          <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center mb-6">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />

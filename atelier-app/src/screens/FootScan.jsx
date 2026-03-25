@@ -611,7 +611,7 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       )}
       {!a4Detected && camStatus === 'active' && (
         <div className="absolute top-16 left-0 right-0 z-15 flex justify-center pointer-events-none">
-          <div className="bg-red-500/80 backdrop-blur-sm px-3 py-1.5 rounded-full">
+          <div className="bg-red-500/80 backdrop-blur-sm px-3 py-1.5 rounded-lg">
             <span className="text-[10px] text-white font-semibold">Weißes Blatt noch nicht sichtbar</span>
           </div>
         </div>
@@ -620,7 +620,7 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       {/* Depth mode indicator */}
       {depthMode && depthMode !== 'none' && (
         <div className="absolute top-16 right-4 z-15 pointer-events-none">
-          <div className="bg-teal-500/70 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+          <div className="bg-teal-500/70 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             <span className="text-[8px] text-white font-bold uppercase tracking-wider">
               {depthMode === 'webxr' ? '3D Depth' : depthMode === 'lidar' ? 'LiDAR' : 'Depth'}
@@ -632,7 +632,7 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-3 flex items-center justify-between">
         <button onClick={onBack}
-          className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10">
+          className="w-11 h-11 rounded-lg bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10">
           <X size={18} className="text-white" strokeWidth={1.8} />
         </button>
         <div className="flex gap-2 items-center">
@@ -724,7 +724,7 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
       {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-3 flex items-center justify-between">
         <button onClick={onBack}
-          className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10">
+          className="w-11 h-11 rounded-lg bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10">
           <X size={18} className="text-white" strokeWidth={1.8} />
         </button>
         {/* 16 progress dots */}
@@ -745,7 +745,7 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
         style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center justify-between mb-4">
           <span className="text-[11px] text-white/40 font-medium">Aufnahme {pgStep + 1} von 16</span>
-          <span className="text-[10px] font-semibold text-white/70 bg-white/10 px-2.5 py-1 rounded-full uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
+          <span className="text-[10px] font-semibold text-white/70 bg-white/10 px-2.5 py-1 rounded-lg uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
             {info.side === 'right' ? 'Rechts' : 'Links'}
           </span>
         </div>
@@ -1865,7 +1865,7 @@ export default function FootScan() {
           <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
             <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking() }}
               aria-label="Scan abbrechen"
-              className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center border-0">
+              className="w-11 h-11 rounded-lg bg-white/10 flex items-center justify-center border-0">
               <X size={18} className="text-white/80" strokeWidth={2} />
             </button>
             <span className="text-[15px] font-semibold text-white tracking-tight" aria-live="polite">
@@ -1875,7 +1875,7 @@ export default function FootScan() {
               {/* Voice guidance toggle */}
               <button onClick={() => { const next = !voiceOn; setVoiceOn(next); setVoiceEnabled(next); if (!next) stopSpeaking() }}
                 aria-label={voiceOn ? 'Sprachführung ausschalten' : 'Sprachführung einschalten'}
-                className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center border-0">
+                className="w-11 h-11 rounded-lg bg-white/10 flex items-center justify-center border-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={voiceOn ? '#30D158' : 'rgba(255,255,255,0.3)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   {voiceOn ? (
                     <>
@@ -1941,7 +1941,7 @@ export default function FootScan() {
                       <span className="text-[11px] text-[#30D158] font-medium tracking-wide">Erfasst</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-lg" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
                       {/* Mini segmented ring */}
                       <svg width="24" height="24" viewBox="0 0 24 24">
                         {Array.from({ length: 12 }).map((_, i) => {
@@ -1972,15 +1972,15 @@ export default function FootScan() {
                   </p>
                   <div className="space-y-3 text-left inline-block">
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">1</span>
+                      <span className="w-7 h-7 rounded-lg bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">1</span>
                       {deviceInfo?.model === 'iPad' ? 'iPad' : 'Handy'} eine Handlänge über den Fuß halten
                     </p>
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">2</span>
+                      <span className="w-7 h-7 rounded-lg bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">2</span>
                       Langsam einmal um den Fuß herum bewegen
                     </p>
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">3</span>
+                      <span className="w-7 h-7 rounded-lg bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">3</span>
                       Auch Ferse und Seiten mitnehmen
                     </p>
                   </div>
@@ -2017,7 +2017,7 @@ export default function FootScan() {
               )}
 
               {lidarError && (
-                <div className="w-full p-5 rounded-2xl bg-red-500/10 border border-red-400/20" role="alert" aria-live="assertive"
+                <div className="w-full p-5 rounded-xl bg-red-500/10 border border-red-400/20" role="alert" aria-live="assertive"
                   style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease' }}>
                   <p className="text-[15px] text-white font-semibold mb-2">Nicht geklappt — kein Problem!</p>
                   <p className="text-[13px] text-white/60 mb-4 leading-relaxed">{lidarError}</p>
