@@ -113,7 +113,7 @@ export default function Profile() {
   const initials = (user?.name || 'A').charAt(0).toUpperCase()
 
   return (
-    <div className="flex flex-col min-h-full bg-white relative">
+    <div className="flex flex-col min-h-full bg-white relative overflow-x-hidden">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4">

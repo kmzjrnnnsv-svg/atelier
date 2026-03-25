@@ -8,20 +8,21 @@
 }
 
 html {
-  background: #fff;
+  background: #F2F2F7;
 }
 
-/* Native & mobile-web: white background to prevent overscroll color mismatch */
+/* Native & mobile-web: match system gray to prevent overscroll color mismatch */
 html.native, html.native body,
 html.mobile-web, html.mobile-web body {
-  background: #fff;
+  background: #F2F2F7;
 }
 
 html, body, #root {
   margin: 0;
   padding: 0;
-  width: 100vw;
+  width: 100%;
   max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Desktop web & native: fixed viewport with internal scroll */
@@ -33,7 +34,7 @@ html:not(.mobile-web), html:not(.mobile-web) body, html:not(.mobile-web) #root {
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  background: #fff;
+  background: #F2F2F7;
 }
 
 html:not(.mobile-web) #root {

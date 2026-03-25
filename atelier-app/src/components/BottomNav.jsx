@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useTransition, useState, useEffect, useRef, useCallback } from 'react'
+import { useTransition } from 'react'
 import { Search } from 'lucide-react'
 import { prefetchRoute, isNative, isMobileWeb } from '../App'
 import useAtelierStore from '../store/atelierStore'
@@ -63,54 +63,17 @@ const PILL_ITEMS = [
   { id: 'bag',     icon: IconBag,       label: 'Einkaufstasche',    path: '/checkout' },
 ]
 
-// Hook: hide nav on scroll down, show on scroll up
-function useScrollDirection() {
-  const [visible, setVisible] = useState(true)
-  const lastY = useRef(0)
-  const ticking = useRef(false)
-
-  const onScroll = useCallback(() => {
-    if (ticking.current) return
-    ticking.current = true
-    requestAnimationFrame(() => {
-      const y = window.scrollY
-      const delta = y - lastY.current
-      // Show when scrolling up or near top, hide when scrolling down past threshold
-      if (y < 60) {
-        setVisible(true)
-      } else if (delta > 6) {
-        setVisible(false)
-      } else if (delta < -4) {
-        setVisible(true)
-      }
-      lastY.current = y
-      ticking.current = false
-    })
-  }, [])
-
-  useEffect(() => {
-    // Only use scroll-direction hide on mobile web (document scroll)
-    if (!isMobileWeb) return
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [onScroll])
-
-  // For native (internal scroll container), always visible
-  if (!isMobileWeb) return true
-  return visible
-}
 
 export default function BottomNav() {
   const navigate     = useNavigate()
   const { pathname } = useLocation()
   const [isPending, startTransition] = useTransition()
   const cartCount = useAtelierStore(s => s.cart.length)
-  const visible = useScrollDirection()
 
   const activeId = pathname === '/search' ? 'search'
     : PILL_ITEMS.find(item => pathname === item.path || pathname.startsWith(item.path + '/'))?.id
 
-  // On mobile web: fixed to viewport bottom, animated show/hide
+  // On mobile web: fixed to viewport bottom (always visible)
   // On native: flex-shrink-0 inside the fixed container
   const wrapperStyle = isMobileWeb
     ? {
@@ -119,10 +82,6 @@ export default function BottomNav() {
         left: 0,
         right: 0,
         zIndex: 50,
-        transform: visible ? 'translateY(0)' : 'translateY(calc(100% + 10px))',
-        transition: 'transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
-        willChange: 'transform',
-        pointerEvents: visible ? 'auto' : 'none',
       }
     : {}
 
