@@ -30,7 +30,7 @@ export default function Search() {
   const selectShoe = (shoe) => navigate('/customize', { state: { product: shoe } })
 
   return (
-    <div className="min-h-full bg-[#F2F2F7]">
+    <div className="min-h-full bg-white">
 
       {/* ── Large Title Header ────────────────────────────────────── */}
       {!focused && !query && (
@@ -41,7 +41,7 @@ export default function Search() {
 
       {/* ── Search Bar ────────────────────────────────────────────── */}
       <div className="px-5 lg:px-8 pt-2 pb-3 flex items-center gap-3">
-        <div className="flex-1 flex items-center gap-2.5 bg-[#F5F5F7] rounded-xl px-3.5 py-2.5">
+        <div className="flex-1 flex items-center gap-2.5 bg-black/[0.03] rounded-xl px-3.5 py-2.5">
           <SearchIcon size={18} strokeWidth={1.5} className="text-[#8E8E93] flex-shrink-0" />
           <input
             ref={inputRef}
@@ -77,7 +77,7 @@ export default function Search() {
               <button
                 key={s}
                 onClick={() => { setQuery(s); setFocused(true) }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#F5F5F7] text-[15px] text-black/70 border-0"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-black/[0.03] text-[15px] text-black/70 border-0"
               >
                 <TrendingUp size={14} strokeWidth={1.5} className="text-[#8E8E93]" />
                 {s}

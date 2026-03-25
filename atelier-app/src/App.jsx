@@ -211,7 +211,7 @@ function AppRoutes() {
   // ── Native: fixed container with internal scroll (Capacitor) ──
   if (isNative) {
     return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#F2F2F7', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex-1 overflow-y-auto relative">
           <Suspense fallback={<DelayedSpinner />}>
             <Routes>
@@ -280,16 +280,16 @@ function AppRoutes() {
   // ── Mobile web: TopBar (burger menu), natural document scroll ──
   if (isMobileWeb) {
     return (
-      <div style={{ minHeight: '100dvh', background: '#F2F2F7' }}>
+      <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
       </div>
     )
   }
 
-  // ── Desktop web: TopBar + fixed container ──
+  // ── Desktop web: fixed container, internal scroll, white bg ──
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#F2F2F7', overflow: 'hidden', boxSizing: 'border-box' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box' }}>
       {showNav && <TopBar />}
       <div className="flex-1 overflow-y-auto relative">
         <div className="max-w-5xl mx-auto w-full">

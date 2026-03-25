@@ -230,7 +230,7 @@ export default function Checkout() {
   // ── Order success ──
   if (placed) {
     return (
-      <div className="min-h-full bg-black/[0.03]">
+      <div className="min-h-full bg-white">
         <div className="flex flex-col items-center justify-center px-5 pt-16 pb-8">
           <div className="w-14 h-14 bg-[#34C759] flex items-center justify-center mb-4">
             <CheckCircle2 size={24} className="text-white" strokeWidth={1.5} />
@@ -240,7 +240,7 @@ export default function Checkout() {
         </div>
 
         <div className="px-5 pb-8 space-y-3">
-          <div className="bg-white p-5">
+          <div className="bg-white p-5 border border-black/[0.06]">
             <p className="text-[10px] font-bold text-[#34C759] uppercase tracking-wider mb-3">Überweisung</p>
             <div className="space-y-2.5">
               <div className="flex justify-between">
@@ -290,18 +290,19 @@ export default function Checkout() {
   // ── Empty cart — simple, clean ──
   if (step === 0 && cart.length === 0 && !product.id) {
     return (
-      <div className="min-h-full bg-black/[0.03]">
+      <div className="min-h-full bg-white">
         <div className="px-5 pt-3 pb-1">
           <p className="text-[28px] font-bold text-black tracking-tight">Einkaufstasche</p>
         </div>
         <div className="flex flex-col items-center justify-center py-20 text-center px-5">
-          <div className="w-16 h-16 bg-white flex items-center justify-center mb-4">
-            <ShoppingBag size={28} strokeWidth={1} className="text-black/15" />
+          <div className="w-14 h-14 bg-black/[0.03] flex items-center justify-center mb-4">
+            <ShoppingBag size={24} strokeWidth={1.5} className="text-black/20" />
           </div>
-          <p className="text-[17px] font-semibold text-black mb-1">Noch keine Artikel</p>
-          <p className="text-[13px] text-black/40 mb-6">Entdecke unsere Kollektion und finde deinen Schuh.</p>
+          <p className="text-[15px] font-semibold text-black">Noch keine Artikel</p>
+          <p className="text-[13px] text-black/40 mt-1 max-w-[220px] leading-relaxed">Entdecke unsere Kollektion und finde deinen Schuh.</p>
           <button onClick={() => navigate('/collection')}
-            className="px-6 py-3 bg-black text-white text-[14px] font-semibold border-0 active:opacity-80">
+            className="mt-5 px-6 py-3 bg-black text-white text-[11px] font-semibold border-0 active:opacity-80"
+            style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
             Zur Kollektion
           </button>
         </div>
@@ -310,7 +311,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-black/[0.03]">
+    <div className="flex flex-col min-h-full bg-white">
 
       {/* Header — simple large title */}
       <div className="px-5 pt-3 pb-1 flex items-center gap-3 flex-shrink-0">
@@ -331,7 +332,7 @@ export default function Checkout() {
             {cart.map(item => {
               const itemPrice = parsePrice(item.price)
               return (
-                <div key={item.id} className="bg-white p-3.5 flex gap-3.5">
+                <div key={item.id} className="bg-white p-3.5 flex gap-3.5 border border-black/[0.06]">
                   {item.image ? (
                     <img src={item.image} alt={item.name} className="w-16 h-16 object-cover flex-shrink-0" />
                   ) : (
@@ -365,7 +366,7 @@ export default function Checkout() {
                 </div>
               )
             })}
-            <div className="bg-white px-4 py-3 flex items-center justify-between">
+            <div className="bg-white px-4 py-3 flex items-center justify-between border border-black/[0.06]">
               <span className="text-[13px] text-black/50">Zwischensumme</span>
               <span className="text-[15px] font-bold text-black">€ {fmtPrice(cartTotal)}</span>
             </div>
@@ -375,7 +376,7 @@ export default function Checkout() {
         {/* ── Step 1: Delivery Address ── */}
         {step === 1 && (
           <div className="px-5">
-            <div className="bg-white p-5">
+            <div className="bg-white p-5 border border-black/[0.06]">
               {savedDeliveryAddress && isAddrComplete(delivery) && (
                 <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-[#34C759]/10">
                   <Check size={12} className="text-[#34C759] flex-shrink-0" strokeWidth={2.5} />
@@ -399,7 +400,7 @@ export default function Checkout() {
         {/* ── Step 2: Billing Address ── */}
         {step === 2 && (
           <div className="px-5">
-            <div className="bg-white p-5">
+            <div className="bg-white p-5 border border-black/[0.06]">
               <button onClick={() => setSameBilling(v => !v)}
                 className="w-full flex items-center gap-3 p-3 mb-4 text-left border-0"
                 style={{ background: sameBilling ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
@@ -431,7 +432,7 @@ export default function Checkout() {
         {step === 4 && (
           <div className="px-5 space-y-2">
             {/* Products */}
-            <div className="bg-white p-4">
+            <div className="bg-white p-4 border border-black/[0.06]">
               <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">{product.id ? 'Schuh' : 'Artikel'}</p>
               {product.id ? (
                 <div className="flex justify-between items-start">
@@ -455,7 +456,7 @@ export default function Checkout() {
 
             {/* Accessories */}
             {chosenAccessories.length > 0 && (
-              <div className="bg-white p-4">
+              <div className="bg-white p-4 border border-black/[0.06]">
                 <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">Zubehör</p>
                 {chosenAccessories.map(a => (
                   <div key={a.id} className="flex justify-between items-center py-1.5 border-b border-black/5 last:border-0">
@@ -467,7 +468,7 @@ export default function Checkout() {
             )}
 
             {/* Address */}
-            <div className="bg-white p-4">
+            <div className="bg-white p-4 border border-black/[0.06]">
               <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">Lieferadresse</p>
               <p className="text-[12px] text-black/55 leading-relaxed">
                 {delivery.name}<br />{delivery.street}<br />{delivery.zip} {delivery.city}<br />{delivery.country}
@@ -476,7 +477,7 @@ export default function Checkout() {
 
             {/* Shipping */}
             {shippingOptions.length > 0 && (
-              <div className="bg-white p-4">
+              <div className="bg-white p-4 border border-black/[0.06]">
                 <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <Truck size={11} /> Versand
                 </p>
@@ -520,7 +521,7 @@ export default function Checkout() {
             )}
 
             {/* Coupon */}
-            <div className="bg-white p-4">
+            <div className="bg-white p-4 border border-black/[0.06]">
               <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Ticket size={11} /> Gutschein
               </p>
@@ -549,7 +550,7 @@ export default function Checkout() {
             </div>
 
             {/* Total */}
-            <div className="bg-white p-4">
+            <div className="bg-white p-4 border border-black/[0.06]">
               {(couponResult?.valid || shippingCost > 0 || isFreeShipping) && (
                 <>
                   <div className="flex justify-between mb-1.5">

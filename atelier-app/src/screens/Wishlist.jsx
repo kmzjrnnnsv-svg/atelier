@@ -17,17 +17,17 @@ export default function Wishlist() {
       <div className="flex-1 px-4 pt-4 pb-4">
         {wishlist.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 bg-black/5 flex items-center justify-center mb-4">
-              <Heart size={28} className="text-black/20" strokeWidth={1.5} />
+            <div className="w-14 h-14 bg-black/[0.03] flex items-center justify-center mb-4">
+              <Heart size={24} className="text-black/20" strokeWidth={1.5} />
             </div>
-            <p className="text-[13px] text-black">Noch keine Favoriten</p>
-            <p className="text-[11px] text-black/35 mt-1.5 max-w-[200px] leading-relaxed">
+            <p className="text-[15px] font-semibold text-black">Noch keine Favoriten</p>
+            <p className="text-[13px] text-black/40 mt-1 max-w-[220px] leading-relaxed">
               Markiere Schuhe in der Kollektion mit einem Herz
             </p>
             <button
               onClick={() => navigate('/collection')}
-              className="mt-5 px-6 py-3 bg-black text-white text-[10px] border-0"
-              style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}
+              className="mt-5 px-6 py-3 bg-black text-white text-[11px] font-semibold border-0"
+              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
             >
               Kollektion entdecken
             </button>
