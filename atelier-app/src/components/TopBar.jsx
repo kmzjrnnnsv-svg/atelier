@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Menu, User, ShoppingBag, X, Compass, Heart, Package, HelpCircle, Settings } from 'lucide-react'
+import { Menu, User, ShoppingBag, X, Compass, Heart, Package, HelpCircle, Settings, Gift } from 'lucide-react'
 import { prefetchRoute, isMobileWeb } from '../App'
 import useAtelierStore from '../store/atelierStore'
 
 const MENU_ITEMS = [
   { icon: User,         label: 'Für dich',       path: '/foryou' },
   { icon: ShoppingBag,  label: 'Produkte',       path: '/collection' },
+  { icon: Gift,         label: 'Zubehör',        path: '/accessories' },
   { icon: Compass,      label: 'Entdecken',      path: '/explore' },
   { icon: Heart,        label: 'Wunschliste',    path: '/wishlist' },
   { icon: Package,      label: 'Bestellungen',   path: '/orders' },
@@ -23,7 +24,8 @@ const PAGE_TITLES = {
   '/profile':    'Profil',
   '/settings':   'Einstellungen',
   '/help':       'Hilfe & Kontakt',
-  '/explore':    'Entdecken',
+  '/explore':      'Entdecken',
+  '/accessories':  'Zubehör',
 }
 
 export default function TopBar() {

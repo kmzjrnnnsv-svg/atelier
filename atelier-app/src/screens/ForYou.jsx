@@ -121,9 +121,11 @@ export default function ForYou() {
   const { user } = useAuth()
   const { shoes, favorites, orders, latestScan, articles } = useAtelierStore()
   const [recentOrders, setRecentOrders] = useState([])
+  const [featuredShoes, setFeaturedShoes] = useState([])
 
   useEffect(() => {
     apiFetch('/api/orders').then(o => setRecentOrders((o || []).slice(0, 4))).catch(() => {})
+    apiFetch('/api/settings/featured-shoes').then(data => setFeaturedShoes(data || [])).catch(() => {})
   }, [])
 
   const favShoes = shoes.filter(s => favorites.includes(String(s.id)))
@@ -166,6 +168,20 @@ export default function ForYou() {
           <AppBanner />
         )}
       </div>
+
+      {/* ── Empfehlungen (CMS-curated) ─────────────────────────────── */}
+      {featuredShoes.length > 0 && (
+        <div className="mt-10">
+          <div className="px-5 lg:px-8">
+            <SectionLabel icon={Heart} color="#000" label="Empfohlen" onTap={() => navigate('/collection')} />
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 px-5 lg:px-8">
+            {featuredShoes.map(shoe => (
+              <ProductCard key={shoe.id} product={{...shoe, price: shoe.price || `€ ${shoe.base_price || ''}`}} onSelect={selectShoe} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Gespeichert (Favorites) ────────────────────────────────── */}
       {favShoes.length > 0 && (

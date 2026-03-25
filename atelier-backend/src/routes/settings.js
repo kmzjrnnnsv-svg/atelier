@@ -132,4 +132,33 @@ router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res)
   res.json({ message: 'Explore-Einstellungen gespeichert' })
 })
 
+// ─── GET /api/settings/featured-shoes — public (used by ForYou page) ────────
+router.get('/featured-shoes', (req, res) => {
+  const db  = getDb()
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'featured_shoes'").get()
+  const ids = row?.value ? JSON.parse(row.value) : []
+  if (ids.length === 0) return res.json([])
+  const placeholders = ids.map(() => '?').join(',')
+  const shoes = db.prepare(`SELECT * FROM shoes WHERE id IN (${placeholders})`).all(...ids)
+  // preserve order
+  const ordered = ids.map(id => shoes.find(s => s.id === id)).filter(Boolean)
+  res.json(ordered)
+})
+
+// ─── PUT /api/settings/featured-shoes — admin/curator ───────────────────────
+router.put('/featured-shoes', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const { shoe_ids } = req.body
+  if (!Array.isArray(shoe_ids) || shoe_ids.length > 3) {
+    return res.status(400).json({ error: 'Maximal 3 Schuhe erlaubt' })
+  }
+  const db  = getDb()
+  const uid = req.user.id
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES ('featured_shoes', ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `).run(JSON.stringify(shoe_ids), uid)
+  res.json({ message: 'Empfehlungen gespeichert', shoe_ids })
+})
+
 export default router

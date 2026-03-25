@@ -38,7 +38,8 @@ const lazyImports = {
   '/settings':   () => import('./screens/Settings'),
   '/wishlist':   () => import('./screens/Wishlist'),
   '/orders':     () => import('./screens/Orders'),
-  '/checkout':   () => import('./screens/Checkout'),
+  '/checkout':    () => import('./screens/Checkout'),
+  '/accessories': () => import('./screens/Accessories'),
   '/help':       () => import('./screens/HelpSupport'),
   '/feedback':   () => import('./screens/Feedback'),
   '/legal':      () => import('./screens/LegalDoc'),
@@ -67,6 +68,7 @@ const Settings          = lazy(lazyImports['/settings'])
 const Wishlist          = lazy(lazyImports['/wishlist'])
 const Orders            = lazy(lazyImports['/orders'])
 const Checkout          = lazy(lazyImports['/checkout'])
+const Accessories       = lazy(lazyImports['/accessories'])
 const HelpSupport       = lazy(lazyImports['/help'])
 const Feedback          = lazy(lazyImports['/feedback'])
 const LegalDoc          = lazy(lazyImports['/legal'])
@@ -98,6 +100,7 @@ const FeedbackPanel        = lazy(() => import('./screens/cms/FeedbackPanel'))
 const AccessoriesPanel     = lazy(() => import('./screens/cms/AccessoriesPanel'))
 const ShippingPanel        = lazy(() => import('./screens/cms/ShippingPanel'))
 const CouponsPanel         = lazy(() => import('./screens/cms/CouponsPanel'))
+const FeaturedShoesPanel   = lazy(() => import('./screens/cms/FeaturedShoesPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
@@ -197,6 +200,7 @@ function AppRoutes() {
               <Route path="accessories" element={<AccessoriesPanel />} />
               <Route path="shipping" element={<AdminRoute><ShippingPanel /></AdminRoute>} />
               <Route path="coupons"  element={<AdminRoute><CouponsPanel /></AdminRoute>} />
+              <Route path="featured" element={<FeaturedShoesPanel />} />
             </Route>
           </Routes>
         </Suspense>
@@ -230,6 +234,7 @@ function AppRoutes() {
               <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
               <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
               <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/accessories" element={<ProtectedRoute><Accessories /></ProtectedRoute>} />
               <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
               <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
               <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
