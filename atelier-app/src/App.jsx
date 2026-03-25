@@ -268,7 +268,6 @@ function AppRoutes() {
       <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
       <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
-      <Route path="/search"      element={<ProtectedRoute><Search /></ProtectedRoute>} />
       <Route path="*"            element={<NotFound />} />
     </Routes>
   )
