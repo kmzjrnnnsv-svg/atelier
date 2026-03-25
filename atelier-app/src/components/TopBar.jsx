@@ -29,30 +29,26 @@ export default function TopBar() {
 
   return (
     <>
-      {/* ── Header bar ── */}
-      <header className="flex items-center justify-between px-4 h-12 bg-[#F2F2F7]" style={{ position: 'sticky', top: 0, zIndex: 20, borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
-        <button onClick={() => setOpen(true)} className="bg-transparent border-0 p-1 -ml-1 text-black">
-          <Menu size={22} strokeWidth={1.5} />
-        </button>
-
-        <button onClick={() => go('/foryou')} className="bg-transparent border-0 p-0">
-          <span className="text-[15px] font-bold tracking-[0.08em] text-black">ATELIER</span>
+      {/* ── Floating nav icons (no bar, transparent) ── */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-1" style={{ position: 'sticky', top: 0, zIndex: 20 }}>
+        <button onClick={() => setOpen(true)} className="w-9 h-9 bg-white/80 backdrop-blur-sm flex items-center justify-center border-0 active:opacity-60">
+          <Menu size={20} strokeWidth={1.5} className="text-black" />
         </button>
 
         <div className="flex items-center gap-2">
-          <button onClick={() => go('/profile')} className="w-8 h-8 bg-white flex items-center justify-center border-0">
-            <User size={16} strokeWidth={1.5} className="text-black/60" />
+          <button onClick={() => go('/profile')} className="w-9 h-9 bg-white/80 backdrop-blur-sm flex items-center justify-center border-0 active:opacity-60">
+            <User size={17} strokeWidth={1.5} className="text-black/70" />
           </button>
-          <button onClick={() => go('/checkout')} className="bg-transparent border-0 p-1 text-black relative">
-            <ShoppingCart size={20} strokeWidth={1.5} />
+          <button onClick={() => go('/checkout')} className="w-9 h-9 bg-white/80 backdrop-blur-sm flex items-center justify-center border-0 active:opacity-60 relative">
+            <ShoppingCart size={17} strokeWidth={1.5} className="text-black/70" />
             {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-1 bg-black text-white text-[9px] font-bold min-w-[14px] h-3.5 flex items-center justify-center px-0.5 leading-none">
+              <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[8px] font-bold min-w-[14px] h-3.5 flex items-center justify-center px-0.5 leading-none">
                 {cartCount > 99 ? '99+' : cartCount}
               </span>
             )}
           </button>
         </div>
-      </header>
+      </div>
 
       {/* ── Slide-out menu overlay ── */}
       {open && (
