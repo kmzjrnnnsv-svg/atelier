@@ -256,7 +256,6 @@ function AppRoutes() {
       <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
       <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
-      <Route path="/visualizer" element={<ProtectedRoute><OutfitVisualizer /></ProtectedRoute>} />
       <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
       <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
       <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
