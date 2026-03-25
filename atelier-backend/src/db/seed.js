@@ -5,6 +5,7 @@ export async function seedDatabase(db) {
   // also populates articles in existing databases on upgrade.
   seedEmailTemplates(db)
   seedArticles(db)
+  seedShoeAccessories(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -107,6 +108,7 @@ export async function seedDatabase(db) {
   })
 
   seedAll()
+  seedShoeAccessories(db)
   console.log(`✅ Seeded: admin@atelier.com / Atelier@2026!`)
   console.log(`✅ Seeded: curator@atelier.com / Curator@2026!`)
   console.log(`✅ Seeded: 12 shoes, 5 curated items, 8 wardrobe items, 4 outfits`)
@@ -284,4 +286,111 @@ function seedEmailTemplates(db) {
       'STL-Dateien mit Kennung U{{user_id_padded}} im Admin-Panel herunterladen.'
     )
   })()
+}
+
+// ── SHOE ↔ ACCESSORY ASSIGNMENTS ────────────────────────────────────────────
+// Runs independently — assigns accessories to shoes based on material & category.
+function seedShoeAccessories(db) {
+  const existing = db.prepare('SELECT COUNT(*) as count FROM shoe_accessories').get()
+  if (existing.count > 0) return
+
+  // Build lookup maps
+  const shoes = db.prepare('SELECT id, name, material, category, color FROM shoes').all()
+  const accs  = db.prepare('SELECT id, key FROM accessories WHERE is_active = 1').all()
+  if (!shoes.length || !accs.length) return
+
+  const accByKey = Object.fromEntries(accs.map(a => [a.key, a.id]))
+  const ak = (key) => accByKey[key] // shorthand
+
+  // Material / category detection helpers
+  const isSuede    = (m) => /suede|nubuck|velour/i.test(m)
+  const isCordovan = (m) => /cordovan/i.test(m)
+  const isPatent   = (m) => /patent|lack/i.test(m)
+  const isExotic   = (m) => /croc|krokodil|exotic|embossed|strauss|python/i.test(m)
+  const isDark     = (s) => /schwarz|black|midnight|dark|antiqued/i.test(s.material + s.name) || /^#[0-3][0-9a-f]/i.test(s.color)
+  const isBoot     = (cat) => cat === 'BOOT'
+  const isSneaker  = (cat) => cat === 'SNEAKER'
+  const isMonk     = (cat) => cat === 'MONK'
+  const hasLaces   = (cat) => cat === 'OXFORD' || cat === 'DERBY'
+
+  const stmt = db.prepare('INSERT OR IGNORE INTO shoe_accessories (shoe_id, accessory_id, sort_order) VALUES (?, ?, ?)')
+
+  db.transaction(() => {
+    for (const shoe of shoes) {
+      const links = []
+      const mat = shoe.material || ''
+      const cat = shoe.category || ''
+
+      if (isSneaker(cat)) {
+        // ── Sneaker: minimal care ──
+        if (ak('dustbag'))     links.push(ak('dustbag'))
+        if (ak('sneaker_kit')) links.push(ak('sneaker_kit'))
+      } else if (isSuede(mat)) {
+        // ── Suede / Nubuck: specific care ──
+        if (ak('shoetrees'))    links.push(ak('shoetrees'))
+        if (ak('dustbag'))      links.push(ak('dustbag'))
+        if (ak('shoehorn'))     links.push(ak('shoehorn'))
+        if (ak('suede_brush'))  links.push(ak('suede_brush'))
+        if (ak('suede_spray'))  links.push(ak('suede_spray'))
+        if (ak('suede_eraser')) links.push(ak('suede_eraser'))
+        if (hasLaces(cat) && ak('waxed_laces')) links.push(ak('waxed_laces'))
+      } else if (isCordovan(mat)) {
+        // ── Shell / Cognac Cordovan ──
+        if (ak('shoetrees'))       links.push(ak('shoetrees'))
+        if (ak('dustbag'))         links.push(ak('dustbag'))
+        if (ak('shoehorn'))        links.push(ak('shoehorn'))
+        if (ak('belt'))            links.push(ak('belt'))
+        if (ak('horsehair_brush')) links.push(ak('horsehair_brush'))
+        if (ak('cordovan_balm'))   links.push(ak('cordovan_balm'))
+        if (ak('polishing_cloth')) links.push(ak('polishing_cloth'))
+        if (ak('sole_oil'))        links.push(ak('sole_oil'))
+        if (isBoot(cat) && ak('boot_jack')) links.push(ak('boot_jack'))
+        if (hasLaces(cat) && ak('waxed_laces')) links.push(ak('waxed_laces'))
+      } else if (isPatent(mat)) {
+        // ── Patent Leather ──
+        if (ak('shoetrees'))       links.push(ak('shoetrees'))
+        if (ak('dustbag'))         links.push(ak('dustbag'))
+        if (ak('shoehorn'))        links.push(ak('shoehorn'))
+        if (ak('belt'))            links.push(ak('belt'))
+        if (ak('patent_care'))     links.push(ak('patent_care'))
+        if (ak('polishing_cloth')) links.push(ak('polishing_cloth'))
+        if (hasLaces(cat) && ak('waxed_laces')) links.push(ak('waxed_laces'))
+      } else if (isExotic(mat)) {
+        // ── Crocodile-Embossed / Exotic ──
+        if (ak('shoetrees'))       links.push(ak('shoetrees'))
+        if (ak('dustbag'))         links.push(ak('dustbag'))
+        if (ak('shoehorn'))        links.push(ak('shoehorn'))
+        if (ak('belt'))            links.push(ak('belt'))
+        if (ak('exotic_care'))     links.push(ak('exotic_care'))
+        if (ak('polishing_cloth')) links.push(ak('polishing_cloth'))
+        if (ak('sole_oil'))        links.push(ak('sole_oil'))
+        if (isMonk(cat) && ak('buckle_cloth')) links.push(ak('buckle_cloth'))
+      } else {
+        // ── Smooth leather (Calfskin, Pebble-Grain, etc.) ──
+        if (ak('shoetrees'))       links.push(ak('shoetrees'))
+        if (ak('dustbag'))         links.push(ak('dustbag'))
+        if (ak('shoehorn'))        links.push(ak('shoehorn'))
+        if (ak('belt'))            links.push(ak('belt'))
+        if (ak('horsehair_brush')) links.push(ak('horsehair_brush'))
+        // Color-matched shoe cream
+        if (isDark(shoe)) {
+          if (ak('cream_dark')) links.push(ak('cream_dark'))
+        } else {
+          if (ak('cream_cognac')) links.push(ak('cream_cognac'))
+        }
+        if (ak('polishing_cloth')) links.push(ak('polishing_cloth'))
+        if (ak('sole_oil'))        links.push(ak('sole_oil'))
+        if (isBoot(cat) && ak('boot_jack'))     links.push(ak('boot_jack'))
+        if (isMonk(cat) && ak('buckle_cloth'))  links.push(ak('buckle_cloth'))
+        if (hasLaces(cat) && ak('waxed_laces')) links.push(ak('waxed_laces'))
+      }
+
+      // Insert all links with sort_order
+      links.forEach((accId, idx) => {
+        if (accId) stmt.run(shoe.id, accId, idx)
+      })
+    }
+  })()
+
+  console.log(`✅ Seeded: shoe-accessory assignments for ${shoes.length} shoes`)
 }

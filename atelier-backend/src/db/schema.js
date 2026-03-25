@@ -578,11 +578,26 @@ export function runMigrations(db) {
       updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
     INSERT OR IGNORE INTO accessories (key, name, description, price, sort_order) VALUES
-      ('shoetrees',  'Zedernholz Schuhspanner',  'Formerhalt & Feuchtigkeitskontrolle',  45,  0),
-      ('carekit',    'Lederpflege-Set',           'Creme, Bürste & Tuch',                 35,  1),
-      ('dustbag',    'Samtbeutel',                'Schutzaufbewahrung aus Baumwolle',      25,  2),
-      ('shoehorn',   'Messing-Schuhlöffel',       'Handgraviert, 38 cm',                   20,  3),
-      ('belt',       'Passendes Ledergürtel',     'Gleiche Haut & Farbe wie der Schuh',   180, 4);
+      ('shoetrees',       'Zedernholz Schuhspanner',    'Formerhalt & Feuchtigkeitskontrolle',                      45,   0),
+      ('carekit',         'Lederpflege-Set',             'Creme, Bürste & Tuch',                                     35,   1),
+      ('dustbag',         'Samtbeutel',                  'Schutzaufbewahrung aus Baumwolle',                          25,   2),
+      ('shoehorn',        'Messing-Schuhlöffel',         'Handgraviert, 38 cm',                                       20,   3),
+      ('belt',            'Passendes Ledergürtel',       'Gleiche Haut & Farbe wie der Schuh',                       180,  4),
+      ('horsehair_brush', 'Rosshaar-Bürste',             'Weiche Naturborsten für tägliches Polieren von Glattleder', 28,   5),
+      ('suede_brush',     'Wildleder-Kreppbürste',       'Krepp- & Messingborsten für Velours und Nubuk',              32,   6),
+      ('suede_spray',     'Imprägnierspray',             'Nano-Schutz gegen Feuchtigkeit & Flecken, 250 ml',          18,   7),
+      ('suede_eraser',    'Wildleder-Radierer',          'Entfernt trockene Flecken & Salzränder schonend',            12,   8),
+      ('cream_dark',      'Schuhcreme Schwarz',          'Pigmentierte Pflegecreme für schwarzes Glattleder',          15,   9),
+      ('cream_cognac',    'Schuhcreme Cognac',           'Pigmentierte Pflegecreme für braunes & cognacfarbenes Leder',15,  10),
+      ('cordovan_balm',   'Cordovan-Balsam',             'Spezialwachs für Shell Cordovan — nährt & schützt',         38,  11),
+      ('patent_care',     'Lackleder-Pflege',            'Reinigung & Glanzerhalt für Patentleder',                    22,  12),
+      ('boot_jack',       'Stiefelknecht',               'Massives Buchenholz mit Gummischutz',                        35,  13),
+      ('waxed_laces',     'Gewachste Schnürsenkel',      'Rundes Profil, 75 cm, passend gefärbt',                      12,  14),
+      ('sneaker_kit',     'Sneaker-Reinigungsset',       'Spezialschaum, Mikrofasertuch & Sohlenbürste',               28,  15),
+      ('buckle_cloth',    'Schnallen-Poliertuch',        'Anti-Anlauf-Tuch für Messing- & Silberschnallen',            15,  16),
+      ('sole_oil',        'Ledersohlen-Balsam',          'Pflegt & imprägniert offenporige Ledersohlen',               18,  17),
+      ('exotic_care',     'Exotenleder-Pflege',          'Spezialcreme für Kroko-Prägung & strukturierte Leder',       42,  18),
+      ('polishing_cloth', 'Poliertuch',                  'Doppellagiges Baumwollflanell für Hochglanz-Finish',         12,  19);
 
     -- ── Shipping configuration ──────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS shipping_config (
