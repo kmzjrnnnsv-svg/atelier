@@ -39,7 +39,7 @@ function StepBar({ current }) {
 // ── Address form ──────────────────────────────────────────────────────────────
 function AddressForm({ title, value, onChange }) {
   const f = (field, val) => onChange({ ...value, [field]: val })
-  const inp = 'w-full bg-[#F2F2F7] border-0 px-4 py-3 text-[15px] text-black placeholder-black/30 focus:outline-none focus:ring-1 focus:ring-black/10 transition-all'
+  const inp = 'w-full bg-black/[0.03] border-0 px-4 py-3 text-[15px] text-black placeholder-black/30 focus:outline-none focus:ring-1 focus:ring-black/10 transition-all'
   return (
     <div>
       <h2 className="text-[11px] font-bold text-black/40 mb-3 uppercase" style={{ letterSpacing: '0.1em' }}>{title}</h2>
@@ -71,7 +71,7 @@ function AccessoryCard({ item, selected, onToggle }) {
       }`}
     >
       <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 transition-all ${
-        selected ? 'bg-black text-white' : 'bg-[#F2F2F7] text-black/30'
+        selected ? 'bg-black text-white' : 'bg-black/[0.03] text-black/30'
       }`}>
         {selected ? <Check size={14} strokeWidth={2.5} /> : <Plus size={14} strokeWidth={2} />}
       </div>
@@ -230,7 +230,7 @@ export default function Checkout() {
   // ── Order success ──
   if (placed) {
     return (
-      <div className="min-h-full bg-[#F2F2F7]">
+      <div className="min-h-full bg-black/[0.03]">
         <div className="flex flex-col items-center justify-center px-5 pt-16 pb-8">
           <div className="w-14 h-14 bg-[#34C759] flex items-center justify-center mb-4">
             <CheckCircle2 size={24} className="text-white" strokeWidth={1.5} />
@@ -290,7 +290,7 @@ export default function Checkout() {
   // ── Empty cart — simple, clean ──
   if (step === 0 && cart.length === 0 && !product.id) {
     return (
-      <div className="min-h-full bg-[#F2F2F7]">
+      <div className="min-h-full bg-black/[0.03]">
         <div className="px-5 pt-3 pb-1">
           <p className="text-[28px] font-bold text-black tracking-tight">Einkaufstasche</p>
         </div>
@@ -310,7 +310,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#F2F2F7]">
+    <div className="flex flex-col min-h-full bg-black/[0.03]">
 
       {/* Header — simple large title */}
       <div className="px-5 pt-3 pb-1 flex items-center gap-3 flex-shrink-0">
@@ -335,7 +335,7 @@ export default function Checkout() {
                   {item.image ? (
                     <img src={item.image} alt={item.name} className="w-16 h-16 object-cover flex-shrink-0" />
                   ) : (
-                    <div className="w-16 h-16 bg-[#F2F2F7] flex items-center justify-center flex-shrink-0">
+                    <div className="w-16 h-16 bg-black/[0.03] flex items-center justify-center flex-shrink-0">
                       <ShoppingBag size={18} className="text-black/15" />
                     </div>
                   )}
@@ -351,11 +351,11 @@ export default function Checkout() {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-1.5">
-                        <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-[#F2F2F7] text-black active:bg-black/10">
+                        <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-black/[0.03] text-black active:bg-black/10">
                           <Minus size={12} strokeWidth={2} />
                         </button>
                         <span className="text-[14px] font-semibold text-black w-5 text-center">{item.qty}</span>
-                        <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-[#F2F2F7] text-black active:bg-black/10">
+                        <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-black/[0.03] text-black active:bg-black/10">
                           <Plus size={12} strokeWidth={2} />
                         </button>
                       </div>
@@ -535,7 +535,7 @@ export default function Checkout() {
               ) : (
                 <div className="flex gap-2">
                   <input
-                    className="flex-1 bg-[#F2F2F7] border-0 px-3 py-2.5 text-[14px] uppercase placeholder-black/25 focus:outline-none"
+                    className="flex-1 bg-black/[0.03] border-0 px-3 py-2.5 text-[14px] uppercase placeholder-black/25 focus:outline-none"
                     placeholder="Code eingeben" value={couponCode}
                     onChange={e => setCouponCode(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()} />

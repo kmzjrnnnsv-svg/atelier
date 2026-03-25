@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Package, ShoppingBag, Clock, Truck, CheckCircle2, XCircle, Banknote, Award, CreditCard, Scissors, SearchCheck, MapPin } from 'lucide-react'
+import { ArrowLeft, Package, ShoppingBag, Clock, Truck, CheckCircle2, XCircle, Banknote, CreditCard, Scissors, SearchCheck } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 
 // ── Journey stages ────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ function JourneyMap({ order, onBack }) {
   const isCancelled = order.status === 'cancelled'
 
   return (
-    <div className="flex flex-col bg-[#f9f7f4]" style={{ height: 'calc(100dvh - 48px)' }}>
+    <div className="flex flex-col bg-white" style={{ height: 'calc(100dvh - 48px)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-3 pb-2 border-b border-black/5 flex-shrink-0 bg-white">
         <button onClick={onBack} className="w-9 h-9 bg-black/3 flex items-center justify-center border-0">
@@ -188,12 +188,12 @@ function OrderCard({ order, onSelect }) {
     <button onClick={() => onSelect(order)} className="w-full text-left bg-white border-0 p-4 transition-all active:bg-black/[0.02]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-black leading-tight truncate">{order.shoe_name}</p>
-          <p className="text-[9px] text-black/35 mt-0.5">{order.material} · {order.color}</p>
+          <p className="text-[13px] font-semibold text-black leading-tight truncate">{order.shoe_name}</p>
+          <p className="text-[11px] text-black/35 mt-0.5">{order.material} · {order.color}</p>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-xs font-bold text-black">{order.price}</p>
-          <p className="text-[8px] text-black/25 mt-0.5">
+          <p className="text-[13px] font-bold text-black">{order.price}</p>
+          <p className="text-[10px] text-black/25 mt-0.5">
             {new Date(order.created_at.replace(' ', 'T') + 'Z').toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
           </p>
         </div>
@@ -227,7 +227,7 @@ function OrderCard({ order, onSelect }) {
 // ── Main Orders ───────────────────────────────────────────────────────────────
 export default function Orders() {
   const navigate = useNavigate()
-  const { orders, loyaltyStatus } = useAtelierStore()
+  const { orders } = useAtelierStore()
   const [filter, setFilter] = useState('all')
   const [selectedOrder, setSelectedOrder] = useState(null)
 
@@ -259,18 +259,13 @@ export default function Orders() {
             {/* Stats */}
             <div className="flex items-center justify-between px-5 py-2.5 border-b border-black/5">
               <div className="text-center flex-1">
-                <p className="text-sm text-black font-medium">{orders.length}</p>
-                <p className="text-[7px] text-black/30" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Bestellungen</p>
+                <p className="text-[13px] text-black font-medium">{orders.length}</p>
+                <p className="text-[8px] text-black/30" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Bestellungen</p>
               </div>
               <div className="w-px h-7 bg-black/5" />
               <div className="text-center flex-1">
-                <p className="text-sm text-black font-medium">{totalSpent > 0 ? `${totalSpent}€` : '—'}</p>
-                <p className="text-[7px] text-black/30" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Geliefert</p>
-              </div>
-              <div className="w-px h-7 bg-black/5" />
-              <div className="text-center flex-1">
-                <p className="text-sm text-black font-medium">{loyaltyStatus.points.toLocaleString()}</p>
-                <p className="text-[7px] text-black/30" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Punkte</p>
+                <p className="text-[13px] text-black font-medium">{totalSpent > 0 ? `${totalSpent}€` : '—'}</p>
+                <p className="text-[8px] text-black/30" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Geliefert</p>
               </div>
             </div>
 
@@ -298,13 +293,13 @@ export default function Orders() {
               <div className="w-14 h-14 bg-black/5 flex items-center justify-center mb-3">
                 <ShoppingBag size={24} className="text-black/20" strokeWidth={1.5} />
               </div>
-              <p className="text-xs text-black">Noch keine Bestellungen</p>
-              <p className="text-[9px] text-black/35 mt-1 max-w-[200px] leading-relaxed">
-                Ihre Maßschuhe erscheinen hier nach der Bestellung
+              <p className="text-[13px] text-black">Noch keine Bestellungen</p>
+              <p className="text-[11px] text-black/35 mt-1 max-w-[200px] leading-relaxed">
+                Deine Maßschuhe erscheinen hier nach der Bestellung
               </p>
               <button
                 onClick={() => navigate('/collection')}
-                className="mt-4 px-5 py-2.5 bg-black text-white text-[9px] border-0"
+                className="mt-4 px-5 py-2.5 bg-black text-white text-[10px] border-0"
                 style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}
               >
                 Kollektion erkunden

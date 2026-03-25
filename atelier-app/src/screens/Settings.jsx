@@ -60,7 +60,7 @@ function EditableField({ label, value, type = 'text', placeholder, onChange }) {
         value={value}
         placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className="w-full text-sm text-black bg-[#f6f5f3] border border-black/10 px-3.5 py-2.5 outline-none focus:border-black transition-colors"
+        className="w-full text-sm text-black bg-black/[0.02] border border-black/10 px-3.5 py-2.5 outline-none focus:border-black transition-colors"
         style={{ fontFamily: 'inherit' }}
       />
     </div>
@@ -81,7 +81,7 @@ function PasswordField({ label, value, onChange, placeholder }) {
           value={value}
           placeholder={placeholder ?? '••••••••'}
           onChange={e => onChange(e.target.value)}
-          className="w-full text-sm text-black bg-[#f6f5f3] border border-black/10 px-3.5 py-2.5 pr-10 outline-none focus:border-black transition-colors"
+          className="w-full text-sm text-black bg-black/[0.02] border border-black/10 px-3.5 py-2.5 pr-10 outline-none focus:border-black transition-colors"
           style={{ fontFamily: 'inherit' }}
         />
         <button
@@ -267,7 +267,7 @@ export default function Settings() {
             }
           />
           {profileOpen && (
-            <div className="bg-[#f6f5f3] border-t border-black/5">
+            <div className="bg-black/[0.02] border-t border-black/5">
               <EditableField
                 label="Name"
                 value={profileName}
@@ -315,7 +315,7 @@ export default function Settings() {
             }
           />
           {pwOpen && (
-            <div className="bg-[#f6f5f3] border-t border-black/5">
+            <div className="bg-black/[0.02] border-t border-black/5">
               <PasswordField
                 label="Aktuelles Passwort"
                 value={pwCurrent}
@@ -386,7 +386,7 @@ export default function Settings() {
             }
           />
           {addrOpen && (
-            <div className="bg-[#f6f5f3] border-t border-black/5">
+            <div className="bg-black/[0.02] border-t border-black/5">
               <p className="text-[9px] uppercase tracking-[0.15em] text-black/35 font-semibold px-5 pt-3 mb-1">Lieferadresse</p>
               <EditableField label="Name" value={addrDelivery.name} placeholder="Vollständiger Name" onChange={v => setAddrDelivery(a => ({...a, name: v}))} />
               <EditableField label="Straße" value={addrDelivery.street} placeholder="Straße + Hausnummer" onChange={v => setAddrDelivery(a => ({...a, street: v}))} />
