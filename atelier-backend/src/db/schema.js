@@ -340,13 +340,20 @@ export function runMigrations(db) {
           eu_size           TEXT,
           order_ref         TEXT,
           foot_notes        TEXT,
-          foot_notes_en     TEXT
+          foot_notes_en     TEXT,
+          shipping_method   TEXT,
+          shipping_cost     TEXT,
+          coupon_code       TEXT,
+          discount_amount   TEXT,
+          original_price    TEXT
         );
         INSERT INTO orders_new2
           SELECT id,user_id,shoe_id,shoe_name,material,color,price,status,
                  created_at,updated_at,user_order_number,delivery_address,
                  billing_address,accessories,scan_id,eu_size,order_ref,
-                 foot_notes,foot_notes_en
+                 foot_notes,foot_notes_en,
+                 shipping_method,shipping_cost,coupon_code,discount_amount,
+                 original_price
           FROM orders;
         DROP TABLE orders;
         ALTER TABLE orders_new2 RENAME TO orders;

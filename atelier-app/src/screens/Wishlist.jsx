@@ -9,7 +9,7 @@ export default function Wishlist() {
   const wishlist = shoes.filter(s => favorites.includes(s.id))
 
   return (
-    <div className="flex flex-col min-h-full bg-white">
+    <div className="flex flex-col min-h-screen bg-white">
 
       {/* Spacer under TopBar */}
       <div className="h-2" />
@@ -33,14 +33,14 @@ export default function Wishlist() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-px bg-black/8">
+          <div className="grid grid-cols-2 gap-3">
             {wishlist.map(product => (
               <div
                 key={product.id}
                 className="bg-white overflow-hidden cursor-pointer active:scale-95 transition-transform"
                 onClick={() => navigate('/customize', { state: { product } })}
               >
-                <div className="relative bg-[#f6f5f3] h-36 flex items-center justify-center">
+                <div className="relative bg-white h-36 flex items-center justify-center">
                   <button
                     className="absolute top-2 right-2 w-7 h-7 bg-white/80 flex items-center justify-center border-0 z-10"
                     onClick={e => { e.stopPropagation(); toggleFavorite(product.id) }}

@@ -7,9 +7,9 @@ export default function NotFound() {
       <span className="font-playfair text-lg font-semibold tracking-[0.3em] uppercase text-black mb-10">
         ATELIER
       </span>
-      <p className="text-7xl font-playfair text-gray-200 font-bold mb-2">404</p>
+      <p className="text-7xl font-playfair text-black/10 font-bold mb-2">404</p>
       <h1 className="font-playfair text-2xl text-black mb-3">Seite nicht gefunden</h1>
-      <p className="text-sm text-gray-400 leading-relaxed mb-8 max-w-xs">
+      <p className="text-sm text-black/35 leading-relaxed mb-8 max-w-xs">
         Die von Ihnen gesuchte Seite existiert nicht oder wurde verschoben.
       </p>
       <button
@@ -20,7 +20,7 @@ export default function NotFound() {
       </button>
       <button
         onClick={() => navigate('/collection')}
-        className="text-xs text-gray-400 underline bg-transparent border-0"
+        className="text-xs text-black/35 underline bg-transparent border-0"
       >
         Zur Kollektion
       </button>

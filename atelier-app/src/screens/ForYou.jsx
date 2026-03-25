@@ -187,7 +187,7 @@ export default function ForYou() {
           <div className="px-5 lg:px-8">
             <SectionLabel icon={Star} color="#FF9500" label="Empfohlen für dich" onTap={() => navigate('/collection')} />
           </div>
-          <div className="flex gap-3 overflow-x-auto lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible" style={{ scrollSnapType: 'x mandatory' }}>
+          <div className="flex gap-3 overflow-x-auto pl-5 lg:pl-8 lg:pr-8 lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible" style={{ scrollSnapType: 'x mandatory' }}>
             {recommended.map(shoe => (
               <div key={shoe.id} className="flex-shrink-0 lg:flex-shrink lg:!w-auto" style={{ width: '44vw', scrollSnapAlign: 'start' }}>
                 <ProductCard product={shoe} onSelect={selectShoe} />
@@ -231,7 +231,7 @@ export default function ForYou() {
           <div className="px-5 lg:px-8">
             <SectionLabel icon={Package} color="#34C759" label="Deine Bestellungen" onTap={() => navigate('/orders')} />
           </div>
-          <div className="flex gap-3 overflow-x-auto lg:grid lg:grid-cols-4 lg:gap-3 pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+          <div className="flex gap-3 overflow-x-auto pl-5 lg:pl-8 lg:pr-8 lg:grid lg:grid-cols-4 lg:gap-3 pb-1" style={{ scrollSnapType: 'x mandatory' }}>
             {recentOrders.map(order => (
               <div key={order.id} className="flex-shrink-0 lg:flex-shrink lg:!w-auto" style={{ width: '44vw', scrollSnapAlign: 'start' }}>
                 <OrderCard order={order} onClick={() => navigate('/orders')} />

@@ -596,12 +596,6 @@ export default function Profile() {
               path:  '/my-scans',
             },
             {
-              icon: () => <svg viewBox="0 0 24 24" className="w-4 h-4 text-black" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>,
-              label: 'Outfit Visualization',
-              sub:   'Vorschau mit deiner Garderobe',
-              path:  '/visualizer',
-            },
-            {
               icon: () => <BookOpen size={16} className="text-amber-500" strokeWidth={1.5} />,
               label: 'Schuh-Info & Gesundheit',
               sub:   'Folgen von falschem Schuhwerk',
