@@ -111,7 +111,7 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
   const [noteText, setNoteText] = useState(scan.notes || '')
 
   return (
-    <div className="bg-[#f6f5f3] border border-black/5 overflow-hidden">
+    <div className="bg-white border border-black/5 overflow-hidden">
       {/* Collapsed header */}
       <button
         onClick={() => setExpanded(v => !v)}
@@ -277,7 +277,7 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
                 <select
                   defaultValue="oxford"
                   onChange={e => { scan._shoeType = e.target.value }}
-                  className="flex-1 bg-[#f6f5f3] border border-black/8 px-2 py-1.5 text-[10px] text-black/60"
+                  className="flex-1 bg-black/3 border border-black/8 px-2 py-1.5 text-[10px] text-black/60"
                 >
                   {Object.entries(SHOE_TYPES).map(([key, { name }]) => (
                     <option key={key} value={key}>{name}</option>
@@ -287,7 +287,7 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
                   {['stl', 'obj'].map(fmt => (
                     <button key={fmt}
                       onClick={() => { scan._fmt = fmt }}
-                      className="px-2 py-1 text-[9px] font-semibold bg-[#f6f5f3] border border-black/8 text-black/50 hover:bg-black hover:text-white transition-colors">
+                      className="px-2 py-1 text-[9px] font-semibold bg-black/3 border border-black/8 text-black/50 hover:bg-black hover:text-white transition-colors">
                       .{fmt.toUpperCase()}
                     </button>
                   ))}
@@ -370,7 +370,7 @@ export default function MyScans() {
   useEffect(() => { load() }, [])
 
   return (
-    <div className="flex flex-col min-h-full bg-white">
+    <div className="flex flex-col min-h-screen bg-white">
 
       {/* ── Header ── */}
       <div className="bg-white px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
@@ -401,7 +401,7 @@ export default function MyScans() {
         {/* Error */}
         {error && !loading && (
           <div className="flex flex-col items-center justify-center h-64 gap-4 px-8">
-            <div className="w-14 h-14 bg-[#f6f5f3] flex items-center justify-center">
+            <div className="w-14 h-14 bg-black/3 flex items-center justify-center">
               <AlertCircle size={24} className="text-black/30" strokeWidth={1.5} />
             </div>
             <p className="text-[11px] text-black/40 text-center">{error}</p>
@@ -418,7 +418,7 @@ export default function MyScans() {
         {/* Empty state */}
         {!loading && !error && scans.length === 0 && (
           <div className="flex flex-col items-center justify-center h-64 gap-5 px-8">
-            <div className="w-20 h-20 bg-[#f6f5f3] flex items-center justify-center">
+            <div className="w-20 h-20 bg-black/3 flex items-center justify-center">
               <Footprints size={32} className="text-black/20" strokeWidth={1.2} />
             </div>
             <div className="text-center">
@@ -441,7 +441,7 @@ export default function MyScans() {
         {!loading && !error && scans.length > 0 && (
           <div className="px-4 pt-3 pb-6 space-y-3">
             {/* Info banner */}
-            <div className="flex items-center gap-2 bg-[#f6f5f3] border border-black/5 px-3.5 py-2.5 mb-2">
+            <div className="flex items-center gap-2 bg-black/3 border border-black/5 px-3.5 py-2.5 mb-2">
               <Box size={13} className="text-black/30 flex-shrink-0" strokeWidth={1.5} />
               <p className="text-[9px] text-black/40 leading-relaxed">
                 3D-Modell · Sub-Pixel-Präzision ±0,1 mm · Tippe auf einen Scan für Details &amp; 3D-Vorschau

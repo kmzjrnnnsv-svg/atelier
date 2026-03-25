@@ -176,7 +176,7 @@ export default function ShoeCollection() {
             )}
 
             {rest.length > 0 && (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                 {rest.map(product => (
                   <ProductCard
                     key={product.id}
