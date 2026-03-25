@@ -278,21 +278,20 @@ function AppRoutes() {
     </Routes>
   )
 
-  // ── Mobile web: natural document scroll, BottomNav fixed to viewport bottom ──
+  // ── Mobile web: TopBar (burger menu), natural document scroll ──
   if (isMobileWeb) {
     return (
       <div style={{ minHeight: '100dvh', background: '#F2F2F7' }}>
-        <div style={{ paddingBottom: showNav ? '80px' : 0 }}>
-          <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
-        </div>
-        {showNav && <BottomNav />}
+        {showNav && <TopBar />}
+        <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
       </div>
     )
   }
 
-  // ── Desktop web: fixed container ──
+  // ── Desktop web: TopBar + fixed container ──
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#F2F2F7', overflow: 'hidden', boxSizing: 'border-box' }}>
+      {showNav && <TopBar />}
       <div className="flex-1 overflow-y-auto relative">
         <div className="max-w-5xl mx-auto w-full">
           <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
