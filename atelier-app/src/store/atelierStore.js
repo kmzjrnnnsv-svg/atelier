@@ -18,6 +18,8 @@ const useAtelierStore = create((set, get) => ({
   shoeMaterials: [],
   shoeColors:   [],
   shoeSoles:    [],
+  accessories:  [],          // all accessories from DB
+  shoeAccessoryMap: {},      // { shoeId: [accessory, ...] }
   exploreSections: [],
   exploreHero: { image: null, title: '', subtitle: '' },
   loyaltyTiers: [],
@@ -92,7 +94,7 @@ const useAtelierStore = create((set, get) => ({
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData] = await Promise.all([
+      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData] = await Promise.all([
         apiFetch('/api/shoes').catch(() => []),
         apiFetch('/api/curated').catch(() => []),
         apiFetch('/api/wardrobe').catch(() => []),
@@ -105,6 +107,8 @@ const useAtelierStore = create((set, get) => ({
         apiFetch('/api/materials').catch(() => []),
         apiFetch('/api/colors').catch(() => []),
         apiFetch('/api/soles').catch(() => []),
+        apiFetch('/api/accessories').catch(() => []),
+        apiFetch('/api/accessories/by-shoe').catch(() => ({})),
         apiFetch('/api/explore-sections').catch(() => []),
         apiFetch('/api/settings/explore').catch(() => ({})),
         apiFetch('/api/loyalty/tiers').catch(() => []),
@@ -127,6 +131,8 @@ const useAtelierStore = create((set, get) => ({
         shoeMaterials: Array.isArray(mats) ? mats : [],
         shoeColors:    Array.isArray(cols) ? cols : [],
         shoeSoles:     Array.isArray(soles) ? soles : [],
+        accessories:   Array.isArray(accs) ? accs.filter(a => a.is_active) : [],
+        shoeAccessoryMap: accByShoe || {},
         exploreSections: Array.isArray(expSections) ? expSections.map(normalizeExploreSection) : [],
         exploreHero: {
           image: settingsMap['explore_hero_image'] || null,

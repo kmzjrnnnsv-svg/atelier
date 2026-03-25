@@ -148,4 +148,67 @@ export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead
 export const exploreSectionsRouter = makeContentRouter('explore_sections', exploreValidators, { publicRead: true })
 export const accessoriesRouter    = makeContentRouter('accessories', [], { publicRead: true })
 
+// ── Shoe ↔ Accessory relationship endpoints ────────────────────────────────
+
+// GET /api/shoes/:id/accessories — public: get accessories assigned to a shoe
+shoesRouter.get('/:id/accessories', param('id').isInt(), (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT a.*, sa.sort_order as link_sort_order
+    FROM shoe_accessories sa
+    JOIN accessories a ON a.id = sa.accessory_id
+    WHERE sa.shoe_id = ? AND a.is_active = 1
+    ORDER BY sa.sort_order ASC, a.sort_order ASC
+  `).all(req.params.id)
+  res.json(rows)
+})
+
+// PUT /api/shoes/:id/accessories — admin/curator: set accessories for a shoe (full replace)
+shoesRouter.put('/:id/accessories', ...canWrite, param('id').isInt(), (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+  const db = getDb()
+  const shoeId = parseInt(req.params.id)
+  const shoe = db.prepare('SELECT id FROM shoes WHERE id = ?').get(shoeId)
+  if (!shoe) return res.status(404).json({ error: 'Shoe not found' })
+
+  const accessoryIds = req.body.accessory_ids || []
+
+  db.transaction(() => {
+    db.prepare('DELETE FROM shoe_accessories WHERE shoe_id = ?').run(shoeId)
+    const insert = db.prepare('INSERT INTO shoe_accessories (shoe_id, accessory_id, sort_order) VALUES (?, ?, ?)')
+    accessoryIds.forEach((accId, i) => {
+      insert.run(shoeId, accId, i)
+    })
+  })()
+
+  // Return updated list
+  const rows = db.prepare(`
+    SELECT a.*, sa.sort_order as link_sort_order
+    FROM shoe_accessories sa
+    JOIN accessories a ON a.id = sa.accessory_id
+    WHERE sa.shoe_id = ?
+    ORDER BY sa.sort_order ASC
+  `).all(shoeId)
+  res.json(rows)
+})
+
+// GET /api/accessories/by-shoe — public: bulk fetch all shoe→accessory mappings
+accessoriesRouter.get('/by-shoe', (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT sa.shoe_id, a.*
+    FROM shoe_accessories sa
+    JOIN accessories a ON a.id = sa.accessory_id
+    WHERE a.is_active = 1
+    ORDER BY sa.shoe_id, sa.sort_order ASC, a.sort_order ASC
+  `).all()
+  // Group by shoe_id
+  const map = {}
+  for (const r of rows) {
+    if (!map[r.shoe_id]) map[r.shoe_id] = []
+    map[r.shoe_id].push(r)
+  }
+  res.json(map)
+})
+
 export default router

@@ -68,7 +68,7 @@ function getDefaultSole(soles) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart } = useAtelierStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, shoeAccessoryMap } = useAtelierStore()
   const { user } = useAuth()
 
   const product = location.state?.product || {
@@ -100,14 +100,13 @@ export default function Customize() {
   const [rightFullyScrolled, setRightFullyScrolled] = useState(false)
   const [selectedAccessories, setSelectedAccessories] = useState([])
 
-  const accessories = [
-    { id: 'shoe-cream', name: 'Schuhcreme', price: 28, image: null, color: '#2c1810' },
-    { id: 'brush', name: 'Rosshaarbürste', price: 34, image: null, color: '#8B6914' },
-    { id: 'shoe-horn', name: 'Schuhlöffel', price: 45, image: null, color: '#C0C0C0' },
-    { id: 'polish-cloth', name: 'Poliertuch', price: 12, image: null, color: '#F5F0E8' },
-    { id: 'travel-bag', name: 'Reise-Schuhbeutel', price: 38, image: null, color: '#3a3a3a' },
-    { id: 'cedar-balls', name: 'Zedernholzkugeln', price: 18, image: null, color: '#D2A86E' },
-  ]
+  const accessories = (shoeAccessoryMap[product.id] || []).map(a => ({
+    id: a.id,
+    name: a.name,
+    price: parseFloat(a.price) || 0,
+    image: a.image_data || null,
+    color: a.color || '#888',
+  }))
 
   const toggleAccessory = (id) => {
     setSelectedAccessories(prev =>

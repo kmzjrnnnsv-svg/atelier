@@ -5,14 +5,7 @@ import { ArrowLeft, Check, ChevronRight, MapPin, Receipt, Gift, ShoppingBag, Plu
 import { apiFetch } from '../hooks/useApi'
 import useAtelierStore from '../store/atelierStore'
 
-// ── Accessories catalogue ─────────────────────────────────────────────────────
-const ACCESSORIES = [
-  { id: 'shoetrees',   name: 'Zedernholz Schuhspanner',  desc: 'Formerhalt & Feuchtigkeitskontrolle',  price: '€ 45',  priceNum: 45  },
-  { id: 'carekit',    name: 'Lederpflege-Set',            desc: 'Creme, Bürste & Tuch',                price: '€ 35',  priceNum: 35  },
-  { id: 'dustbag',    name: 'Samtbeutel',                 desc: 'Schutzaufbewahrung aus Baumwolle',    price: '€ 25',  priceNum: 25  },
-  { id: 'shoehorn',   name: 'Messing-Schuhlöffel',        desc: 'Handgraviert, 38 cm',                  price: '€ 20',  priceNum: 20  },
-  { id: 'belt',       name: 'Passendes Ledergürtel',      desc: 'Gleiche Haut & Farbe wie der Schuh',  price: '€ 180', priceNum: 180 },
-]
+// Accessories are loaded from the DB via shoeAccessoryMap in the store
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 const STEPS = ['Warenkorb', 'Lieferung', 'Rechnung', 'Zubehör', 'Übersicht']
@@ -110,7 +103,7 @@ function fmtPrice(n) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon } = useAtelierStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, shoeAccessoryMap } = useAtelierStore()
 
   // Product from navigation state (legacy single-product flow)
   const product = location.state?.product || {}
@@ -135,11 +128,14 @@ export default function Checkout() {
   const [couponLoading, setCouponLoading] = useState(false)
   const [couponError,   setCouponError]   = useState(null)
 
-  // Merge incoming accessories from Customize page into ACCESSORIES list
+  // Build accessories list from DB (shoe-specific) + any extras from Customize navigation
+  const dbAccessories = (shoeAccessoryMap[product.id] || []).map(a => ({
+    id: a.id, name: a.name, desc: a.description || '', price: `€ ${parseFloat(a.price) || 0}`, priceNum: parseFloat(a.price) || 0,
+  }))
   const extraAccessories = incomingAccessories
-    .filter(a => !ACCESSORIES.find(x => x.id === a.id))
+    .filter(a => !dbAccessories.find(x => x.id === a.id))
     .map(a => ({ id: a.id, name: a.name, desc: '', price: `€ ${a.price}`, priceNum: a.price }))
-  const allAccessories = [...extraAccessories, ...ACCESSORIES]
+  const allAccessories = [...dbAccessories, ...extraAccessories]
 
   // Pre-select incoming accessories on mount
   const [initialized, setInitialized] = useState(false)
