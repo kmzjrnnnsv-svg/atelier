@@ -8,6 +8,12 @@ const config: CapacitorConfig = {
     contentInset: 'never',
     backgroundColor: '#ffffff',
     preferredContentMode: 'mobile',
+    // Allow WKWebView to send cookies cross-origin to the API server
+    allowsLinkPreview: false,
+  },
+  server: {
+    // Allow mixed content and cross-origin requests to the API
+    allowNavigation: ['raza.work', '*.raza.work'],
   },
   plugins: {
     SplashScreen: { launchAutoHide: false },

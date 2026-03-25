@@ -1,15 +1,29 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { setNativeRefreshToken } from '../hooks/useApi'
 
 const AuthContext = createContext(null)
 
 // Access token lives only in memory — never localStorage
 let _accessToken = null
+// Refresh token — only used in Capacitor native mode (WKWebView can't do cross-origin cookies)
+let _refreshToken = null
+
+const isNativePlatform = Capacitor.isNativePlatform()
 
 export function getAccessToken() { return _accessToken }
 export function setAccessToken(t) { _accessToken = t }
 
 // In Capacitor iOS builds, relative URLs don't reach the backend.
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
+function storeTokens(data) {
+  _accessToken = data.accessToken
+  if (isNativePlatform && data.refreshToken) {
+    _refreshToken = data.refreshToken
+    setNativeRefreshToken(data.refreshToken) // sync with useApi
+  }
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)        // { id, name, email, role }
@@ -30,21 +44,32 @@ export function AuthProvider({ children }) {
 
     refreshPromise.current = (async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/auth/refresh`, { method: 'POST', credentials: 'include' })
+        // In native mode: no cookie available, send refresh token in body
+        const fetchOpts = {
+          method: 'POST',
+          credentials: 'include',
+        }
+        if (isNativePlatform && _refreshToken) {
+          fetchOpts.headers = { 'Content-Type': 'application/json' }
+          fetchOpts.body = JSON.stringify({ refreshToken: _refreshToken })
+        }
+        const res = await fetch(`${API_BASE}/api/auth/refresh`, fetchOpts)
         if (!res.ok) {
           // Don't call logout() — it would destroy the DB token permanently.
-          setAccessToken(null)
+          storeTokens({ accessToken: null })
+          _refreshToken = null
+          setNativeRefreshToken(null)
           setUser(null)
           if (refreshTimer.current) clearTimeout(refreshTimer.current)
           return
         }
         const data = await res.json()
-        setAccessToken(data.accessToken)
+        storeTokens(data)
         setUser(data.user)
         scheduleRefresh()
       } catch {
         // Network error — just clear local state, keep the cookie
-        setAccessToken(null)
+        _accessToken = null
         setUser(null)
         if (refreshTimer.current) clearTimeout(refreshTimer.current)
       } finally {
@@ -55,7 +80,7 @@ export function AuthProvider({ children }) {
     return refreshPromise.current
   }, [])
 
-  // On mount: try to restore session via httpOnly refresh cookie
+  // On mount: try to restore session via httpOnly refresh cookie (or stored token in native)
   useEffect(() => {
     silentRefresh().finally(() => setLoading(false))
     return () => { if (refreshTimer.current) clearTimeout(refreshTimer.current) }
@@ -80,7 +105,7 @@ export function AuthProvider({ children }) {
       throw { error: `Server-Fehler (${res.status})` }
     }
     if (!res.ok) throw data
-    setAccessToken(data.accessToken)
+    storeTokens(data)
     setUser(data.user)
     scheduleRefresh()
     return data.user
@@ -105,23 +130,27 @@ export function AuthProvider({ children }) {
       throw { error: `Server-Fehler (${res.status})` }
     }
     if (!res.ok) throw data
-    setAccessToken(data.accessToken)
+    storeTokens(data)
     setUser(data.user)
     scheduleRefresh()
     return data.user
   }
 
   function loginWithTokenData(data) {
-    setAccessToken(data.accessToken)
+    storeTokens(data)
     setUser(data.user)
     scheduleRefresh()
   }
 
   function logout() {
-    setAccessToken(null)
+    const body = isNativePlatform && _refreshToken ? JSON.stringify({ refreshToken: _refreshToken }) : undefined
+    const headers = body ? { 'Content-Type': 'application/json' } : undefined
+    _accessToken = null
+    _refreshToken = null
+    setNativeRefreshToken(null)
     setUser(null)
     if (refreshTimer.current) clearTimeout(refreshTimer.current)
-    fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {})
+    fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include', headers, body }).catch(() => {})
   }
 
   return (
