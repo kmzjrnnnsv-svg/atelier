@@ -1,20 +1,29 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Menu, Search, User, ShoppingBag, X, Compass, Heart, Package, Settings, HelpCircle, Footprints } from 'lucide-react'
+import { Menu, User, ShoppingBag, X, Compass, Heart, Package, HelpCircle } from 'lucide-react'
 import { prefetchRoute, isMobileWeb } from '../App'
 import useAtelierStore from '../store/atelierStore'
 
 const MENU_ITEMS = [
   { icon: User,         label: 'Für dich',       path: '/foryou' },
   { icon: ShoppingBag,  label: 'Produkte',       path: '/collection' },
-  { icon: Compass,      label: 'Mehr machen',    path: '/explore' },
-  { icon: Search,       label: 'Suche',          path: '/search' },
+  { icon: Compass,      label: 'Entdecken',      path: '/explore' },
   { icon: Heart,        label: 'Wunschliste',    path: '/wishlist' },
-  { icon: Footprints,   label: 'Meine Scans',    path: '/my-scans' },
   { icon: Package,      label: 'Bestellungen',   path: '/orders' },
-  { icon: Settings,     label: 'Einstellungen',  path: '/settings' },
   { icon: HelpCircle,   label: 'Hilfe',          path: '/help' },
 ]
+
+// Page titles for sub-pages — when set, replaces "ATELIER" in center
+const PAGE_TITLES = {
+  '/collection': 'Kollektion',
+  '/wishlist':   'Wunschliste',
+  '/my-scans':   'Meine Scans',
+  '/orders':     'Bestellungen',
+  '/profile':    'Profil',
+  '/settings':   'Einstellungen',
+  '/help':       'Hilfe',
+  '/explore':    'Entdecken',
+}
 
 export default function TopBar() {
   const [open, setOpen] = useState(false)
@@ -23,6 +32,7 @@ export default function TopBar() {
   const cartCount = useAtelierStore(s => s.cart.length)
 
   const go = (path) => { setOpen(false); navigate(path) }
+  const pageTitle = PAGE_TITLES[pathname]
 
   return (
     <>
@@ -31,7 +41,7 @@ export default function TopBar() {
         className="flex items-center justify-between bg-white flex-shrink-0"
         style={{ position: 'sticky', top: 0, zIndex: 20, borderBottom: '0.5px solid rgba(0,0,0,0.08)', height: isMobileWeb ? '48px' : '52px', padding: isMobileWeb ? '0 16px' : '0 28px' }}
       >
-        {/* Left: Burger + Search */}
+        {/* Left: Burger */}
         <div className="flex items-center gap-1">
           <button onClick={() => setOpen(true)} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
             <Menu size={isMobileWeb ? 22 : 20} strokeWidth={1.3} />
@@ -41,19 +51,15 @@ export default function TopBar() {
               <span className="text-[13px]">Menü</span>
             </button>
           )}
-          <button onClick={() => go('/search')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
-            <Search size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
-          </button>
-          {!isMobileWeb && (
-            <button onClick={() => go('/search')} className="bg-transparent border-0 px-1 py-1 text-black/70 active:opacity-50 hidden lg:flex items-center">
-              <span className="text-[13px]">Suche</span>
-            </button>
-          )}
         </div>
 
-        {/* Center: Brand */}
+        {/* Center: Page title or Brand */}
         <button onClick={() => go('/foryou')} className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60">
-          <span className="text-[18px] font-bold tracking-[0.06em] text-black" style={{ fontFamily: "'Inter', sans-serif" }}>ATELIER</span>
+          {pageTitle ? (
+            <span className="text-[14px] font-semibold tracking-wide text-black">{pageTitle}</span>
+          ) : (
+            <span className="text-[18px] font-bold tracking-[0.06em] text-black" style={{ fontFamily: "'Inter', sans-serif" }}>ATELIER</span>
+          )}
         </button>
 
         {/* Right: Wishlist (desktop) + Account + Cart */}

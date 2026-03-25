@@ -228,14 +228,8 @@ export default function Settings() {
     <div className="flex flex-col h-full bg-white overflow-hidden">
       <Toast message={toast.message} type={toast.type} />
 
-      {/* Header */}
-      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="bg-transparent border-0 p-0">
-          <ArrowLeft size={22} strokeWidth={1.5} className="text-black/80" />
-        </button>
-        <span className="text-sm font-bold uppercase tracking-[0.12em] text-black">Einstellungen</span>
-        <div className="w-6" />
-      </div>
+      {/* Spacer */}
+      <div className="h-2" />
 
       <div className="flex-1 overflow-y-auto pb-10">
 

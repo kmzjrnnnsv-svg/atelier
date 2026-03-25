@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Bell, CheckCircle, ChevronRight, BookOpen, Footprints, X, BellRing, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3, Package } from 'lucide-react'
+import { CheckCircle, ChevronRight, BookOpen, Footprints, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3, Package } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
+import { isMobileWeb } from '../App'
 
 const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
 
@@ -90,16 +91,14 @@ const styleCards = [
 export default function Profile() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
-  const { favorites, orders, notifications, markAllNotificationsRead, loyaltyTiers, loyaltyStatus, latestScan, averagedScan, refreshScan, footNotes, saveFootNotes } = useAtelierStore()
+  const { favorites, orders, loyaltyTiers, loyaltyStatus, latestScan, averagedScan, refreshScan, footNotes, saveFootNotes } = useAtelierStore()
   const [activeTab, setActiveTab] = useState('SIZE')
-  const [showNotifs, setShowNotifs] = useState(false)
   const [showLoyalty, setShowLoyalty] = useState(false)
   const [editingNotes, setEditingNotes] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [editMode, setEditMode] = useState(false)
   const [editedValues, setEditedValues] = useState({})
   const [savingEdits, setSavingEdits] = useState(false)
-  const unreadCount = notifications.filter(n => !n.read).length
 
   const tabKeys = tabs.map(t => t.id)
   const swipeHandlers = useSwipeTabs(tabKeys, activeTab, setActiveTab)
@@ -115,64 +114,9 @@ export default function Profile() {
   return (
     <div className="flex flex-col min-h-full bg-white relative overflow-x-hidden">
 
-      {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="bg-white flex items-center justify-between px-5 pt-4 pb-4">
-        <button onClick={() => navigate('/settings')} className="w-9 h-9 flex items-center justify-center border border-black/10 bg-transparent">
-          <Settings size={17} strokeWidth={1.5} className="text-black/60" />
-        </button>
-        <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-black">My Profile</span>
-        <button
-          onClick={() => { setShowNotifs(v => !v); if (!showNotifs && unreadCount) markAllNotificationsRead() }}
-          className="w-9 h-9 flex items-center justify-center border border-black/10 bg-transparent relative"
-        >
-          <Bell size={17} strokeWidth={1.5} className="text-black/60" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-black border-2 border-white flex items-center justify-center">
-              <span className="text-[8px] font-bold text-white">{unreadCount}</span>
-            </span>
-          )}
-        </button>
-      </div>
+      {/* Spacer */}
+      <div className="h-2" />
 
-      {/* ── Notification Panel (slide in from right) ─────────────────── */}
-      <div className="absolute top-0 right-0 bottom-0 bg-white shadow-2xl z-50 flex flex-col"
-        style={{ width: 'min(340px, 85vw)', transform: showNotifs ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-black/5">
-          <h3 className="text-[12px] uppercase tracking-[0.18em] text-black font-medium">Benachrichtigungen</h3>
-          <button onClick={() => setShowNotifs(false)} className="w-9 h-9 flex items-center justify-center border border-black/10 bg-transparent">
-            <X size={17} strokeWidth={1.5} className="text-black/60" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <BellRing size={32} className="text-black/10 mb-3" />
-              <p className="text-[11px] text-black/40">Keine Benachrichtigungen</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {notifications.slice(0, 20).map(n => (
-                <div key={n.id} className="border border-black/8 p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-medium text-black">{n.title}</p>
-                    <span className="text-[8px] uppercase tracking-wider text-black/30">
-                      {new Date(n.createdAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
-                    </span>
-                  </div>
-                  <p className="text-[9px] text-black/40 mt-0.5">{n.message}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="px-5 pb-5 pt-3 border-t border-black/5">
-          <button onClick={() => { setShowNotifs(false); if (unreadCount) markAllNotificationsRead() }}
-            className="w-full py-3 bg-black text-white text-[10px] uppercase tracking-[0.18em] font-medium border-0">
-            Alle als gelesen markieren
-          </button>
-        </div>
-      </div>
-      {showNotifs && <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setShowNotifs(false)} />}
 
       {/* ── Content ────────────────────────────────────────────────────── */}
       <div className="flex-1">
@@ -348,42 +292,44 @@ export default function Profile() {
           )
         })()}
 
-        {/* 3D Scan Card */}
-        <div
-          className="overflow-hidden cursor-pointer border-b border-black/8"
-          style={{ background: '#1a1a1a' }}
-          onClick={() => navigate('/scan')}
-        >
-          <div className="p-4 flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-5 h-5 flex items-center justify-center bg-teal-500/20">
-                  <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="#2dd4bf" strokeWidth="1.5">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                  </svg>
+        {/* 3D Scan Card — hidden on mobile web, only native */}
+        {!isMobileWeb && (
+          <div
+            className="overflow-hidden cursor-pointer border-b border-black/8"
+            style={{ background: '#1a1a1a' }}
+            onClick={() => navigate('/scan')}
+          >
+            <div className="p-4 flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 flex items-center justify-center bg-teal-500/20">
+                    <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="#2dd4bf" strokeWidth="1.5">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                  </div>
+                  <span className="text-[8px] uppercase tracking-widest text-teal-400 font-semibold">AI Lab</span>
                 </div>
-                <span className="text-[8px] uppercase tracking-widest text-teal-400 font-semibold">AI Lab</span>
+                <h3 className="text-base font-bold text-white">3D Foot Scan</h3>
+                <p className="text-[9px] text-white/40 mt-1 leading-relaxed">
+                  Update your precision model for the perfect bespoke fit using AI.
+                </p>
+                <button
+                  onClick={e => { e.stopPropagation(); navigate('/scan') }}
+                  className="mt-3 flex items-center gap-1.5 bg-white text-black text-[9px] font-bold uppercase tracking-widest px-4 py-2 border-0"
+                >
+                  Start New Scan →
+                </button>
               </div>
-              <h3 className="text-base font-bold text-white">3D Foot Scan</h3>
-              <p className="text-[9px] text-white/40 mt-1 leading-relaxed">
-                Update your precision model for the perfect bespoke fit using AI.
-              </p>
-              <button
-                onClick={e => { e.stopPropagation(); navigate('/scan') }}
-                className="mt-3 flex items-center gap-1.5 bg-white text-black text-[9px] font-bold uppercase tracking-widest px-4 py-2 border-0"
-              >
-                Start New Scan →
-              </button>
-            </div>
-            <div className="w-16 h-16 flex items-center justify-center flex-shrink-0">
-              <svg viewBox="0 0 60 60" className="w-14 opacity-60">
-                <ellipse cx="30" cy="52" rx="22" ry="5" fill="#2dd4bf" opacity="0.3" />
-                <path d="M12 45 Q10 50 15 52 L45 52 Q50 52 50 45 L48 35 Q46 26 40 24 L22 24 Q15 24 13 30 Z" fill="#2dd4bf" opacity="0.4" />
-                <path d="M13 30 Q11 20 18 14 L30 12 Q40 11 45 18 Q48 23 48 35 L40 24 L22 24 Q15 24 13 30 Z" fill="#2dd4bf" opacity="0.3" />
-              </svg>
+              <div className="w-16 h-16 flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 60 60" className="w-14 opacity-60">
+                  <ellipse cx="30" cy="52" rx="22" ry="5" fill="#2dd4bf" opacity="0.3" />
+                  <path d="M12 45 Q10 50 15 52 L45 52 Q50 52 50 45 L48 35 Q46 26 40 24 L22 24 Q15 24 13 30 Z" fill="#2dd4bf" opacity="0.4" />
+                  <path d="M13 30 Q11 20 18 14 L30 12 Q40 11 45 18 Q48 23 48 35 L40 24 L22 24 Q15 24 13 30 Z" fill="#2dd4bf" opacity="0.3" />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Saved Dimensions */}
         {displayScan ? (

@@ -1,6 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTransition } from 'react'
-import { Search } from 'lucide-react'
 import { prefetchRoute, isNative, isMobileWeb } from '../App'
 import useAtelierStore from '../store/atelierStore'
 
@@ -70,8 +69,7 @@ export default function BottomNav() {
   const [isPending, startTransition] = useTransition()
   const cartCount = useAtelierStore(s => s.cart.length)
 
-  const activeId = pathname === '/search' ? 'search'
-    : PILL_ITEMS.find(item => pathname === item.path || pathname.startsWith(item.path + '/'))?.id
+  const activeId = PILL_ITEMS.find(item => pathname === item.path || pathname.startsWith(item.path + '/'))?.id
 
   // On mobile web: fixed to viewport bottom (always visible)
   // On native: flex-shrink-0 inside the fixed container
@@ -125,24 +123,6 @@ export default function BottomNav() {
           })}
         </div>
 
-        {/* ── Separate search circle button ── */}
-        <button
-          onClick={() => {
-            hapticSelection()
-            startTransition(() => navigate('/search'))
-          }}
-          onPointerEnter={() => prefetchRoute('/search')}
-          className={`w-[52px] h-[52px] rounded-xl flex items-center justify-center border-0 flex-shrink-0 transition-colors ${
-            activeId === 'search' ? 'text-[#007AFF]' : 'text-white/70'
-          }`}
-          style={{
-            background: 'rgba(45,45,48,0.92)',
-            backdropFilter: 'blur(40px)',
-            WebkitBackdropFilter: 'blur(40px)',
-          }}
-        >
-          <Search size={22} strokeWidth={activeId === 'search' ? 2.2 : 1.8} />
-        </button>
       </div>
     </div>
   )
