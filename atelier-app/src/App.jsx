@@ -200,7 +200,7 @@ function AppRoutes() {
   // ── Native: fixed container with internal scroll (Capacitor) ──
   if (isNative) {
     return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#F2F2F7', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex-1 overflow-y-auto relative">
           <Suspense fallback={<DelayedSpinner />}>
             <Routes>
@@ -267,23 +267,22 @@ function AppRoutes() {
     </Routes>
   )
 
-  // ── Mobile web: natural document scroll (Safari glass effect) ──
+  // ── Mobile web: natural document scroll, BottomNav like native ──
   if (isMobileWeb) {
     return (
-      <>
-        {showNav && <TopBar />}
-        <div className="mobile-web-content">
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: '#F2F2F7' }}>
+        <div className="flex-1 mobile-web-content">
           <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
         </div>
-      </>
+        {showNav && <div style={{ position: 'sticky', bottom: 0, zIndex: 30 }}><BottomNav /></div>}
+      </div>
     )
   }
 
-  // ── Desktop web: fixed container (unchanged behavior) ──
+  // ── Desktop web: fixed container ──
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#F2F2F7', overflow: 'hidden', boxSizing: 'border-box' }}>
       <div className="flex-1 overflow-y-auto relative">
-        {showNav && <TopBar />}
         <div className="max-w-5xl mx-auto w-full">
           <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
         </div>

@@ -30,7 +30,7 @@ export default function Search() {
   const selectShoe = (shoe) => navigate('/customize', { state: { product: shoe } })
 
   return (
-    <div className="min-h-full bg-white">
+    <div className="min-h-full bg-[#F2F2F7]">
 
       {/* ── Large Title Header ────────────────────────────────────── */}
       {!focused && !query && (
@@ -96,7 +96,7 @@ export default function Search() {
                     onClick={() => selectShoe(shoe)}
                     className="w-full flex items-center gap-4 py-3 border-b border-[#F5F5F7] bg-transparent border-x-0 border-t-0 text-left"
                   >
-                    <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: '#F5F5F7' }}>
+                    <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: '#FFFFFF' }}>
                       {shoe.image ? (
                         <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover" />
                       ) : (
@@ -132,7 +132,7 @@ export default function Search() {
                   onClick={() => selectShoe(shoe)}
                   className="w-full bg-transparent border-0 text-left p-0"
                 >
-                  <div className="w-full rounded-2xl overflow-hidden" style={{ background: '#F5F5F7' }}>
+                  <div className="w-full rounded-2xl overflow-hidden" style={{ background: '#FFFFFF' }}>
                     <div className="aspect-square flex items-center justify-center">
                       {shoe.image ? (
                         <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover" />
