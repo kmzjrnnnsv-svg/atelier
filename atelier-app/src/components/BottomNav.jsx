@@ -134,7 +134,7 @@ export default function BottomNav() {
       >
         {/* ── Main pill tab bar ── */}
         <div
-          className="flex items-center justify-around flex-1 rounded-[22px] px-1 py-1"
+          className="flex items-center justify-around flex-1 rounded-2xl px-1 py-1"
           style={{
             background: 'rgba(45,45,48,0.92)',
             backdropFilter: 'blur(40px)',
@@ -173,7 +173,7 @@ export default function BottomNav() {
             startTransition(() => navigate('/search'))
           }}
           onPointerEnter={() => prefetchRoute('/search')}
-          className={`w-[52px] h-[52px] rounded-full flex items-center justify-center border-0 flex-shrink-0 transition-colors ${
+          className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center border-0 flex-shrink-0 transition-colors ${
             activeId === 'search' ? 'text-[#007AFF]' : 'text-white/70'
           }`}
           style={{

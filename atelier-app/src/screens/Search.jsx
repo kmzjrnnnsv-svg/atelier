@@ -77,7 +77,7 @@ export default function Search() {
               <button
                 key={s}
                 onClick={() => { setQuery(s); setFocused(true) }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F5F5F7] text-[15px] text-black/70 border-0"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#F5F5F7] text-[15px] text-black/70 border-0"
               >
                 <TrendingUp size={14} strokeWidth={1.5} className="text-[#8E8E93]" />
                 {s}
@@ -132,7 +132,7 @@ export default function Search() {
                   onClick={() => selectShoe(shoe)}
                   className="w-full bg-transparent border-0 text-left p-0"
                 >
-                  <div className="w-full rounded-2xl overflow-hidden" style={{ background: '#FFFFFF' }}>
+                  <div className="w-full rounded-xl overflow-hidden" style={{ background: '#FFFFFF' }}>
                     <div className="aspect-square flex items-center justify-center">
                       {shoe.image ? (
                         <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover" />
