@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Plus, Pencil, Trash2, X, Check, Upload } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Plus, Pencil, Trash2, X, Check, Upload, Gift, ChevronDown, ChevronUp } from 'lucide-react'
 import useAtelierStore from '../../store/atelierStore'
+import { apiFetch } from '../../hooks/useApi'
 
 const CATEGORIES = ['OXFORD', 'LOAFER', 'DERBY', 'BOOT', 'SNEAKER', 'MONK']
 const TAGS = [null, 'BESTSELLER', 'NEW', 'LIMITED']
@@ -196,10 +197,72 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  )
 }
 
+function AccessoryAssigner({ shoeId }) {
+ const { accessories } = useAtelierStore()
+ const [assigned, setAssigned] = useState([])
+ const [loading, setLoading] = useState(true)
+ const [saving, setSaving] = useState(false)
+
+ useEffect(() => {
+  apiFetch(`/api/shoes/${shoeId}/accessories`).then(rows => {
+   setAssigned(rows.map(r => r.id))
+   setLoading(false)
+  }).catch(() => setLoading(false))
+ }, [shoeId])
+
+ const toggle = (accId) => {
+  setAssigned(prev => prev.includes(accId) ? prev.filter(id => id !== accId) : [...prev, accId])
+ }
+
+ const save = async () => {
+  setSaving(true)
+  try {
+   await apiFetch(`/api/shoes/${shoeId}/accessories`, {
+    method: 'PUT',
+    body: JSON.stringify({ accessory_ids: assigned }),
+   })
+  } catch {} finally { setSaving(false) }
+ }
+
+ if (loading) return <p className="text-[10px] text-black/30 py-2">Laden…</p>
+ if (!accessories.length) return <p className="text-[10px] text-black/30 py-2">Keine Zubehörteile vorhanden</p>
+
+ return (
+  <div className="pt-3 pb-2 space-y-2">
+   <div className="flex flex-wrap gap-2">
+    {accessories.filter(a => a.is_active !== 0).map(acc => {
+     const on = assigned.includes(acc.id)
+     return (
+      <button
+       key={acc.id}
+       onClick={() => toggle(acc.id)}
+       className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] border transition-all ${
+        on ? 'bg-black text-white border-black' : 'bg-white text-black/50 border-black/10 hover:border-black/25'
+       }`}
+      >
+       {on && <Check size={11} strokeWidth={2} />}
+       {acc.name}
+       {acc.price != null && <span className="opacity-60 ml-0.5">{acc.price}</span>}
+      </button>
+     )
+    })}
+   </div>
+   <button
+    onClick={save}
+    disabled={saving}
+    className="text-[10px] font-semibold uppercase tracking-wider bg-black/5 hover:bg-black/10 text-black/50 px-4 py-1.5 transition-colors border-0"
+   >
+    {saving ? 'Speichern…' : 'Zubehör speichern'}
+   </button>
+  </div>
+ )
+}
+
 export default function ShoeEditor() {
  const { shoes, addShoe, updateShoe, deleteShoe } = useAtelierStore()
  const [mode, setMode] = useState(null)
  const [filterCat, setFilterCat] = useState('ALL')
+ const [expandedAcc, setExpandedAcc] = useState(null)
 
  const filtered = filterCat === 'ALL' ? shoes : shoes.filter((s) => s.category === filterCat)
 
@@ -256,8 +319,8 @@ export default function ShoeEditor() {
  onCancel={() => setMode(null)}
  />
  ) : (
+ <React.Fragment key={shoe.id}>
  <div
- key={shoe.id}
  className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/12 transition-all min-w-0"
  >
  {/* Preview */}
@@ -298,6 +361,13 @@ export default function ShoeEditor() {
  {/* Actions */}
  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
  <button
+ onClick={() => setExpandedAcc(expandedAcc === shoe.id ? null : shoe.id)}
+ className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/10 transition-colors border-0"
+ title="Zubehör zuweisen"
+ >
+ <Gift size={13} className="text-black/45" strokeWidth={1.5} />
+ </button>
+ <button
  onClick={() => setMode({ editing: shoe })}
  className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/10 transition-colors border-0"
  >
@@ -311,6 +381,16 @@ export default function ShoeEditor() {
  </button>
  </div>
  </div>
+ {expandedAcc === shoe.id && (
+ <div className="bg-white border border-black/6 border-t-0 px-5 py-3">
+ <div className="flex items-center gap-2 mb-2">
+ <Gift size={12} className="text-black/40" strokeWidth={1.5} />
+ <p className="text-[10px] font-semibold text-black/40 uppercase tracking-wider">Zubehör für {shoe.name}</p>
+ </div>
+ <AccessoryAssigner shoeId={shoe.id} />
+ </div>
+ )}
+ </React.Fragment>
  )
  ))}
 

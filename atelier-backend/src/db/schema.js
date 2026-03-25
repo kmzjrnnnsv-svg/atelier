@@ -631,6 +631,17 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_usage_coupon ON coupon_usages(coupon_id);
     CREATE INDEX IF NOT EXISTS idx_usage_user   ON coupon_usages(user_id);
 
+    -- ── Shoe ↔ Accessory join table ────────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS shoe_accessories (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      shoe_id       INTEGER NOT NULL REFERENCES shoes(id) ON DELETE CASCADE,
+      accessory_id  INTEGER NOT NULL REFERENCES accessories(id) ON DELETE CASCADE,
+      sort_order    INTEGER NOT NULL DEFAULT 0,
+      UNIQUE(shoe_id, accessory_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_sa_shoe ON shoe_accessories(shoe_id);
+    CREATE INDEX IF NOT EXISTS idx_sa_acc  ON shoe_accessories(accessory_id);
+
     INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, season, rating, sort_order) VALUES
       ('calfskin', 'CALFSKIN', 'Full-Grain', '#b45309', 1, 'Robust und langlebig — entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.', 'Ganzjährig', 'good', 0),
       ('suede', 'SUEDE', 'Nubuck', '#78716c', 1, 'Samtig-weiche Oberfläche für lässig-elegante Looks. Empfindlich bei Nässe — am besten für trockene Tage und Indoor-Anlässe.', 'Frühling / Sommer', 'warn', 1),
