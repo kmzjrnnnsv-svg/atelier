@@ -138,9 +138,9 @@ export default function ForYou() {
     <div className="min-h-full bg-white">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="px-5 pt-3 pb-4 flex items-start justify-between">
+      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-4 flex items-start justify-between">
         <div>
-          <p className="text-[34px] font-bold text-black leading-tight tracking-tight">Für dich</p>
+          <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Für dich</p>
         </div>
         <button
           onClick={() => navigate('/profile')}
@@ -152,7 +152,7 @@ export default function ForYou() {
         </button>
       </div>
 
-      <div className="px-5 pb-8 space-y-7">
+      <div className="px-5 lg:px-8 pb-8 space-y-7 lg:space-y-10">
 
         {/* ── 3D Scan Banner ──────────────────────────────────────── */}
         <ScanBanner scan={latestScan} onScanTap={() => navigate(latestScan ? '/my-scans' : '/scan')} />
@@ -161,9 +161,9 @@ export default function ForYou() {
         {favShoes.length > 0 && (
           <div>
             <SectionLabel icon={Bookmark} color="#007AFF" label="Gespeichert" />
-            <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+            <div className="flex gap-3 overflow-x-auto lg:grid lg:grid-cols-4 lg:overflow-visible pb-1" style={{ scrollSnapType: 'x mandatory' }}>
               {favShoes.map(shoe => (
-                <div key={shoe.id} className="flex-shrink-0" style={{ width: '140px', scrollSnapAlign: 'start' }}>
+                <div key={shoe.id} className="flex-shrink-0 lg:!w-auto" style={{ width: '140px', scrollSnapAlign: 'start' }}>
                   <ProductCard product={shoe} onSelect={selectShoe} />
                 </div>
               ))}
@@ -175,9 +175,9 @@ export default function ForYou() {
         {recommended.length > 0 && (
           <div>
             <SectionLabel icon={Star} color="#FF9500" label="Empfohlen für dich" />
-            <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+            <div className="flex gap-3 overflow-x-auto lg:grid lg:grid-cols-4 lg:overflow-visible pb-1" style={{ scrollSnapType: 'x mandatory' }}>
               {recommended.map(shoe => (
-                <div key={shoe.id} className="flex-shrink-0" style={{ width: '140px', scrollSnapAlign: 'start' }}>
+                <div key={shoe.id} className="flex-shrink-0 lg:!w-auto" style={{ width: '140px', scrollSnapAlign: 'start' }}>
                   <ProductCard product={shoe} onSelect={selectShoe} />
                 </div>
               ))}
@@ -206,7 +206,7 @@ export default function ForYou() {
         {recentlyViewed.length > 0 && (
           <div>
             <SectionLabel icon={Heart} color="#FF3B30" label="Zuletzt angesehen" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
               {recentlyViewed.map(shoe => (
                 <ProductCard key={shoe.id} product={shoe} onSelect={selectShoe} />
               ))}

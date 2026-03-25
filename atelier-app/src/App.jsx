@@ -281,10 +281,12 @@ function AppRoutes() {
 
   // ── Desktop web: fixed container (unchanged behavior) ──
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', overflow: 'hidden', boxSizing: 'border-box' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden', boxSizing: 'border-box' }}>
       <div className="flex-1 overflow-y-auto relative">
         {showNav && <TopBar />}
-        <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        <div className="max-w-5xl mx-auto w-full">
+          <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        </div>
       </div>
     </div>
   )
