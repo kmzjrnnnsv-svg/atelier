@@ -65,7 +65,7 @@ function FeaturedCard({ section, onClick }) {
 function SmallSectionCard({ section }) {
   const Icon = ICON_MAP[section.icon] || Compass
   return (
-    <div className="flex-shrink-0 rounded-2xl overflow-hidden" style={{ width: '260px', background: '#F5F5F7' }}>
+    <div className="flex-shrink-0 rounded-2xl overflow-hidden" style={{ width: '260px', background: '#FFFFFF' }}>
       <div className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: section.accent + '20' }}>
@@ -92,7 +92,7 @@ function ArticleCard({ article, onClick }) {
   const theme = ARTICLE_THEME[article.category] || ARTICLE_THEME['Allgemein']
   return (
     <button onClick={onClick} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="rounded-2xl overflow-hidden" style={{ background: '#F5F5F7' }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF' }}>
         {article.image ? (
           <div className="aspect-[16/9] overflow-hidden">
             <img src={article.image} alt="" className="w-full h-full object-cover" />
@@ -162,7 +162,7 @@ export default function Explore() {
   // Article detail view
   if (selectedArticle) {
     return (
-      <div className="flex flex-col min-h-full bg-white">
+      <div className="flex flex-col min-h-full bg-[#F2F2F7]">
         <div className="flex items-center gap-3 px-4 pt-3 pb-2 flex-shrink-0">
           <button onClick={() => setSelectedArticle(null)} className="w-10 h-10 flex items-center justify-center bg-transparent border-0">
             <ArrowLeft size={20} strokeWidth={1.5} className="text-[#007AFF]" />
@@ -175,7 +175,7 @@ export default function Explore() {
   }
 
   return (
-    <div className="min-h-full bg-white">
+    <div className="min-h-full bg-[#F2F2F7]">
 
       {/* ── Large Title Header ────────────────────────────────────── */}
       <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-4 flex items-start justify-between">
@@ -235,7 +235,7 @@ export default function Explore() {
         )}
 
         {/* ── Atelier Session Promo ───────────────────────────────── */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#F5F5F7' }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF' }}>
           <div className="p-5 text-center">
             <p className="text-[11px] font-semibold text-[#007AFF] uppercase tracking-wider mb-2">Atelier Session</p>
             <p className="text-[22px] font-bold text-black leading-tight">Besuche das Atelier</p>

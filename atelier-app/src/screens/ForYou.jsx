@@ -27,7 +27,7 @@ function ProductCard({ product, onSelect }) {
       onClick={() => onSelect(product)}
       className="bg-transparent border-0 text-left p-0 w-full"
     >
-      <div className="w-full aspect-square rounded-2xl overflow-hidden flex items-center justify-center mb-2" style={{ background: '#F5F5F7' }}>
+      <div className="w-full aspect-square rounded-2xl overflow-hidden flex items-center justify-center mb-2" style={{ background: '#FFFFFF' }}>
         {product.image ? (
           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -54,7 +54,7 @@ function OrderCard({ order, onClick }) {
   }
   return (
     <button onClick={onClick} className="bg-transparent border-0 text-left p-0 w-full">
-      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center mb-2" style={{ background: '#F5F5F7' }}>
+      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center mb-2" style={{ background: '#FFFFFF' }}>
         <Package size={32} strokeWidth={1} className="text-black/20" />
       </div>
       <p className="text-[12px] text-black/90 leading-tight line-clamp-2">Bestellung #{order.id}</p>
@@ -135,7 +135,7 @@ export default function ForYou() {
   const selectShoe = (product) => navigate('/customize', { state: { product } })
 
   return (
-    <div className="min-h-full bg-white">
+    <div className="min-h-full bg-[#F2F2F7]">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-4 flex items-start justify-between">
