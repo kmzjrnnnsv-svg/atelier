@@ -24,7 +24,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   return (
     <button onClick={() => onSelect(product)} className="w-full bg-transparent border-0 text-left p-0 mb-6">
-      <div className="w-full rounded-2xl overflow-hidden" style={{ background: '#FFFFFF' }}>
+      <div className="w-full rounded-xl overflow-hidden" style={{ background: '#FFFFFF' }}>
         <div className="relative aspect-[4/3] flex items-center justify-center">
           {product.image ? (
             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -36,7 +36,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
             </svg>
           )}
           <button
-            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center border-0 shadow-sm"
+            className="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center border-0 shadow-sm"
             onClick={e => { e.stopPropagation(); onToggleFav() }}
           >
             <Bookmark size={16} strokeWidth={1.5} className={isFav ? 'text-[#007AFF] fill-[#007AFF]' : 'text-black/40'} />
@@ -71,7 +71,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
 function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
   return (
     <button onClick={() => onSelect(product)} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="w-full rounded-2xl overflow-hidden" style={{ background: '#FFFFFF' }}>
+      <div className="w-full rounded-xl overflow-hidden" style={{ background: '#FFFFFF' }}>
         <div className="relative aspect-square flex items-center justify-center">
           {product.image ? (
             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -82,7 +82,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
             </svg>
           )}
           <button
-            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center border-0"
+            className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center border-0"
             onClick={e => { e.stopPropagation(); onToggleFav() }}
           >
             <Bookmark size={13} strokeWidth={1.5} className={isFav ? 'text-[#007AFF] fill-[#007AFF]' : 'text-black/30'} />
@@ -145,7 +145,7 @@ export default function ShoeCollection() {
           <button
             key={cat.value}
             onClick={() => setActiveCategory(cat.value)}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-medium transition-all border-0 ${
+            className={`flex-shrink-0 px-4 py-2 rounded-lg text-[13px] font-medium transition-all border-0 ${
               activeCategory === cat.value
                 ? 'bg-black text-white'
                 : 'bg-[#F5F5F7] text-black/60'

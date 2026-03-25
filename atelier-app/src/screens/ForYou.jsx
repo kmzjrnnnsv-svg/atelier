@@ -27,7 +27,7 @@ function ProductCard({ product, onSelect }) {
       onClick={() => onSelect(product)}
       className="bg-transparent border-0 text-left p-0 w-full"
     >
-      <div className="w-full aspect-square rounded-2xl overflow-hidden flex items-center justify-center mb-2" style={{ background: '#FFFFFF' }}>
+      <div className="w-full aspect-square rounded-xl overflow-hidden flex items-center justify-center mb-2" style={{ background: '#FFFFFF' }}>
         {product.image ? (
           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -54,7 +54,7 @@ function OrderCard({ order, onClick }) {
   }
   return (
     <button onClick={onClick} className="bg-transparent border-0 text-left p-0 w-full">
-      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden flex items-center justify-center mb-2" style={{ background: '#FFFFFF' }}>
+      <div className="w-full aspect-[4/3] rounded-xl overflow-hidden flex items-center justify-center mb-2" style={{ background: '#FFFFFF' }}>
         <Package size={32} strokeWidth={1} className="text-black/20" />
       </div>
       <p className="text-[12px] text-black/90 leading-tight line-clamp-2">Bestellung #{order.id}</p>
@@ -67,7 +67,7 @@ function OrderCard({ order, onClick }) {
 function LoyaltyBanner({ status, tiers }) {
   const currentTier = tiers?.find(t => t.name?.toLowerCase() === status?.tier?.toLowerCase()) || tiers?.[0]
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #1D1D1F 0%, #3A3A3C 100%)' }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #1D1D1F 0%, #3A3A3C 100%)' }}>
       <div className="px-5 py-5">
         <div className="flex items-center justify-between">
           <div>
@@ -95,9 +95,9 @@ function LoyaltyBanner({ status, tiers }) {
 function ScanBanner({ scan, onScanTap }) {
   return (
     <button onClick={onScanTap} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)' }}>
         <div className="px-5 py-5 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0">
+          <div className="w-14 h-14 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
             <Footprints size={28} strokeWidth={1.5} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -144,7 +144,7 @@ export default function ForYou() {
         </div>
         <button
           onClick={() => navigate('/profile')}
-          className="w-9 h-9 rounded-full bg-[#F5F5F7] flex items-center justify-center border-0 mt-1 flex-shrink-0"
+          className="w-9 h-9 rounded-lg bg-[#F5F5F7] flex items-center justify-center border-0 mt-1 flex-shrink-0"
         >
           <span className="text-[14px] font-semibold text-[#007AFF]">
             {user?.name?.charAt(0)?.toUpperCase() || 'A'}

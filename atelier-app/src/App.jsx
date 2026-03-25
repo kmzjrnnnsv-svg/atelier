@@ -267,14 +267,14 @@ function AppRoutes() {
     </Routes>
   )
 
-  // ── Mobile web: natural document scroll, BottomNav like native ──
+  // ── Mobile web: natural document scroll, BottomNav fixed to viewport bottom ──
   if (isMobileWeb) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: '#F2F2F7' }}>
-        <div className="flex-1 mobile-web-content">
+      <div style={{ minHeight: '100dvh', background: '#F2F2F7' }}>
+        <div style={{ paddingBottom: showNav ? '80px' : 0 }}>
           <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
         </div>
-        {showNav && <div style={{ position: 'sticky', bottom: 0, zIndex: 30 }}><BottomNav /></div>}
+        {showNav && <BottomNav />}
       </div>
     )
   }

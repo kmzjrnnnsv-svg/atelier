@@ -33,7 +33,7 @@ function FeaturedCard({ section, onClick }) {
   const Icon = ICON_MAP[section.icon] || Compass
   return (
     <button onClick={onClick} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="rounded-2xl overflow-hidden" style={{ background: section.color }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: section.color }}>
         {section.image ? (
           <div className="relative aspect-[16/10]">
             <img src={section.image} alt="" className="w-full h-full object-cover" />
@@ -47,7 +47,7 @@ function FeaturedCard({ section, onClick }) {
         ) : (
           <div className="p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: section.accent + '20' }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: section.accent + '20' }}>
                 <Icon size={20} strokeWidth={1.5} style={{ color: section.accent }} />
               </div>
               <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: section.accent }}>{section.label}</p>
@@ -65,7 +65,7 @@ function FeaturedCard({ section, onClick }) {
 function SmallSectionCard({ section }) {
   const Icon = ICON_MAP[section.icon] || Compass
   return (
-    <div className="flex-shrink-0 rounded-2xl overflow-hidden" style={{ width: '260px', background: '#FFFFFF' }}>
+    <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: '260px', background: '#FFFFFF' }}>
       <div className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: section.accent + '20' }}>
@@ -78,7 +78,7 @@ function SmallSectionCard({ section }) {
         {section.previewItems && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {section.previewItems.slice(0, 2).map(item => (
-              <span key={item} className="text-[11px] text-black/40 bg-white rounded-full px-2.5 py-1">{item}</span>
+              <span key={item} className="text-[11px] text-black/40 bg-white rounded-lg px-2.5 py-1">{item}</span>
             ))}
           </div>
         )}
@@ -92,7 +92,7 @@ function ArticleCard({ article, onClick }) {
   const theme = ARTICLE_THEME[article.category] || ARTICLE_THEME['Allgemein']
   return (
     <button onClick={onClick} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: '#FFFFFF' }}>
         {article.image ? (
           <div className="aspect-[16/9] overflow-hidden">
             <img src={article.image} alt="" className="w-full h-full object-cover" />
@@ -185,7 +185,7 @@ export default function Explore() {
         </div>
         <button
           onClick={() => navigate('/profile')}
-          className="w-9 h-9 rounded-full bg-[#F5F5F7] flex items-center justify-center border-0 mt-1 flex-shrink-0"
+          className="w-9 h-9 rounded-lg bg-[#F5F5F7] flex items-center justify-center border-0 mt-1 flex-shrink-0"
         >
           <span className="text-[14px] font-semibold text-[#007AFF]">
             {user?.name?.charAt(0)?.toUpperCase() || 'A'}
@@ -235,7 +235,7 @@ export default function Explore() {
         )}
 
         {/* ── Atelier Session Promo ───────────────────────────────── */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF' }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: '#FFFFFF' }}>
           <div className="p-5 text-center">
             <p className="text-[11px] font-semibold text-[#007AFF] uppercase tracking-wider mb-2">Atelier Session</p>
             <p className="text-[22px] font-bold text-black leading-tight">Besuche das Atelier</p>
@@ -244,7 +244,7 @@ export default function Explore() {
             </p>
             <button
               onClick={() => navigate('/scan')}
-              className="mt-4 px-6 py-2.5 rounded-full bg-[#007AFF] text-white text-[15px] font-medium border-0"
+              className="mt-4 px-6 py-2.5 rounded-lg bg-[#007AFF] text-white text-[15px] font-medium border-0"
             >
               Termin vereinbaren
             </button>
