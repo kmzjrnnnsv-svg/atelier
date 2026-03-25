@@ -115,37 +115,74 @@ export default function Customize() {
     )
   }
 
-  // Smooth scroll forwarding state
-  // Phase 'left' = left panel scrolls first, then 'right' = right panel scrolls
-  const scrollPhase = useRef('right') // 'right' first, then 'left'
-  const animFrame = useRef(null)
-  const scrollTarget = useRef({ el: null, amount: 0 })
+  // Sequenced scroll: right panel first (down), left panel first (up)
+  const twoColRef = useRef(null)
   const [leftFullyScrolled, setLeftFullyScrolled] = useState(false)
 
-  // Smooth scroll helper
-  const smoothForwardScroll = useCallback((targetEl, delta) => {
-    if (!targetEl) return
-    targetEl.scrollBy({ top: delta, behavior: 'instant' })
-  }, [])
-
-  // Track right panel scroll — when right reaches bottom, switch to left
+  // Sequenced scroll handler — works for both wheel (MacBook) and touch (iPad)
   useEffect(() => {
-    const el = rightPanelRef.current
-    if (!el) return
-    const onScroll = () => {
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 2
-      if (atBottom) {
-        scrollPhase.current = 'left'
+    const wrapper = twoColRef.current
+    if (!wrapper) return
+    if (window.innerWidth < 1024) return
+
+    // Helper: route a vertical delta to the correct panel
+    const routeScroll = (deltaY) => {
+      const rp = rightPanelRef.current
+      const lp = leftPanelRef.current
+      if (!rp || !lp) return false
+
+      const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
+      const rpAtTop = rp.scrollTop <= 0
+      const lpAtTop = lp.scrollTop <= 0
+      const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
+
+      if (deltaY > 0) {
+        // DOWN: right first, then left
+        if (!rpAtBottom) { rp.scrollTop += deltaY; return true }
+        if (!lpAtBottom) { lp.scrollTop += deltaY; return true }
+      } else {
+        // UP: left first, then right
+        if (!lpAtTop) { lp.scrollTop += deltaY; return true }
+        if (!rpAtTop) { rp.scrollTop += deltaY; return true }
       }
-      if (el.scrollTop <= 0) {
-        scrollPhase.current = 'right'
-      }
+      return false // both panels at boundary
     }
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
+
+    // ── Wheel (MacBook trackpad / mouse) ──
+    const onWheel = (e) => {
+      if (routeScroll(e.deltaY)) e.preventDefault()
+    }
+
+    // ── Touch (iPad) ──
+    let touchY0 = 0
+    let touchActive = false
+    const onTouchStart = (e) => {
+      touchY0 = e.touches[0].clientY
+      touchActive = true
+    }
+    const onTouchMove = (e) => {
+      if (!touchActive) return
+      const y = e.touches[0].clientY
+      const deltaY = touchY0 - y  // positive = finger moves up = scroll down
+      touchY0 = y
+      if (routeScroll(deltaY)) e.preventDefault()
+    }
+    const onTouchEnd = () => { touchActive = false }
+
+    // Use capture phase so we intercept before child panels scroll natively
+    wrapper.addEventListener('wheel', onWheel, { passive: false, capture: true })
+    wrapper.addEventListener('touchstart', onTouchStart, { passive: true, capture: true })
+    wrapper.addEventListener('touchmove', onTouchMove, { passive: false, capture: true })
+    wrapper.addEventListener('touchend', onTouchEnd, { passive: true, capture: true })
+    return () => {
+      wrapper.removeEventListener('wheel', onWheel, { capture: true })
+      wrapper.removeEventListener('touchstart', onTouchStart, { capture: true })
+      wrapper.removeEventListener('touchmove', onTouchMove, { capture: true })
+      wrapper.removeEventListener('touchend', onTouchEnd, { capture: true })
+    }
   }, [])
 
-  // Track left panel scroll for accessories opacity + scroll-up phase
+  // Track left panel scroll position for accessories opacity
   useEffect(() => {
     const el = leftPanelRef.current
     if (!el) return
@@ -153,9 +190,6 @@ export default function Customize() {
       const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 2
       setLeftFullyScrolled(atBottom)
       setRightFullyScrolled(atBottom)
-      if (el.scrollTop <= 0) {
-        scrollPhase.current = 'right'
-      }
     }
     onScroll()
     el.addEventListener('scroll', onScroll, { passive: true })
@@ -318,7 +352,7 @@ export default function Customize() {
       </div>
 
       {/* ── Desktop: Two-Column / Mobile: Stacked ────────────────── */}
-      <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 lg:min-h-0">
+      <div ref={twoColRef} className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 lg:min-h-0">
 
         {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
         <div
@@ -327,34 +361,6 @@ export default function Customize() {
           style={{
             scrollbarWidth: 'none',
             overflowY: 'auto',
-          }}
-          onWheel={(e) => {
-            if (window.innerWidth < 1024) return
-            const rp = rightPanelRef.current
-            const lp = leftPanelRef.current
-            if (!rp || !lp) return
-
-            const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
-            const rpAtTop = rp.scrollTop <= 0
-            const lpAtTop = lp.scrollTop <= 0
-
-            if (e.deltaY > 0) {
-              // Scrolling down: right panel first
-              if (!rpAtBottom) {
-                e.preventDefault()
-                smoothForwardScroll(rp, e.deltaY)
-              }
-              // else: right at bottom, let left scroll naturally
-            } else {
-              // Scrolling up: left panel first
-              if (!lpAtTop) {
-                // left not at top yet — let it scroll naturally
-              } else if (!rpAtTop) {
-                // left at top, scroll right up
-                e.preventDefault()
-                smoothForwardScroll(rp, e.deltaY)
-              }
-            }
           }}
         >
           <div
@@ -520,32 +526,6 @@ export default function Customize() {
           ref={rightPanelRef}
           className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0"
           style={{ scrollbarWidth: 'none' }}
-          onWheel={(e) => {
-            if (window.innerWidth < 1024) return
-            const rp = rightPanelRef.current
-            const lp = leftPanelRef.current
-            if (!rp || !lp) return
-
-            const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
-            const rpAtTop = rp.scrollTop <= 0
-            const lpAtTop = lp.scrollTop <= 0
-
-            if (e.deltaY > 0) {
-              // Scrolling down: right first, then left
-              if (rpAtBottom) {
-                e.preventDefault()
-                smoothForwardScroll(lp, e.deltaY)
-              }
-              // else: right not at bottom, let it scroll naturally
-            } else {
-              // Scrolling up: left first, then right
-              if (!lpAtTop) {
-                e.preventDefault()
-                smoothForwardScroll(lp, e.deltaY)
-              }
-              // else: left at top, let right scroll naturally
-            }
-          }}
         >
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
