@@ -22,7 +22,7 @@ export default function Login() {
       if (user.role === 'admin' || user.role === 'curator') {
         navigate('/cms', { replace: true })
       } else {
-        navigate('/collection', { replace: true })
+        navigate('/foryou', { replace: true })
       }
     } catch (err) {
       setError(err?.error || 'Login fehlgeschlagen')
