@@ -269,6 +269,7 @@ function AppRoutes() {
       <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
       <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
       <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+      <Route path="/accessories" element={<ProtectedRoute><Accessories /></ProtectedRoute>} />
       <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
       <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
