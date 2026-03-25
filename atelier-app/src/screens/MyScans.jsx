@@ -374,17 +374,7 @@ export default function MyScans() {
 
       {/* ── Header ── */}
       <div className="bg-white px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="bg-transparent border-0 p-0"
-          >
-            <ArrowLeft size={20} strokeWidth={1.5} className="text-black" />
-          </button>
-          <div className="text-center">
-            <p className="text-[8px] uppercase tracking-widest text-black/30" style={{ letterSpacing: '0.2em' }}>Fußscan</p>
-            <h1 className="text-[14px] text-black leading-tight" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Meine Scans</h1>
-          </div>
+        <div className="flex items-center justify-end">
           <button
             onClick={load}
             className="bg-transparent border-0 p-0"

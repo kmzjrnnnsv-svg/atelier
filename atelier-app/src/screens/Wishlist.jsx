@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Heart, ShoppingBag } from 'lucide-react'
+import { Heart, ShoppingBag } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 
 export default function Wishlist() {
@@ -11,19 +11,8 @@ export default function Wishlist() {
   return (
     <div className="flex flex-col min-h-full bg-white">
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/5 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
-          <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
-        </button>
-        <div className="text-center">
-          <span className="text-[11px] text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Wishlist</span>
-          {favorites.length > 0 && (
-            <span className="ml-2 text-[10px] text-black/30">({favorites.length})</span>
-          )}
-        </div>
-        <div className="w-10" />
-      </div>
+      {/* Spacer under TopBar */}
+      <div className="h-2" />
 
       <div className="flex-1 px-4 pt-4 pb-4">
         {wishlist.length === 0 ? (

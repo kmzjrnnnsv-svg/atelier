@@ -4,7 +4,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, Heart, Package, Award, Star, Footprints, Bookmark, Smartphone } from 'lucide-react'
+import { ChevronRight, Heart, Package, Award, Star, Footprints, Smartphone } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -13,7 +13,7 @@ import { isNative, isMobileWeb } from '../App'
 // ── Section Header ──────────────────────────────────────────────────────────
 function SectionLabel({ icon: Icon, color, label, onTap }) {
   return (
-    <button onClick={onTap} className="flex items-center gap-1.5 mb-3 bg-transparent border-0 p-0 text-left active:opacity-60">
+    <button onClick={onTap} className="flex items-center gap-1.5 mb-4 bg-transparent border-0 p-0 text-left active:opacity-60">
       {Icon && <Icon size={14} strokeWidth={2} style={{ color }} />}
       <span className="text-[14px] font-semibold" style={{ color }}>{label}</span>
       <ChevronRight size={14} strokeWidth={2} style={{ color, opacity: 0.5 }} />
@@ -25,7 +25,7 @@ function SectionLabel({ icon: Icon, color, label, onTap }) {
 function ProductCard({ product, onSelect, large }) {
   return (
     <button onClick={() => onSelect(product)} className="bg-transparent border-0 text-left p-0 w-full active:opacity-80 transition-opacity">
-      <div className={`w-full ${large ? 'aspect-[3/4]' : 'aspect-square'} overflow-hidden flex items-center justify-center mb-2 bg-white`}>
+      <div className={`w-full ${large ? 'aspect-[3/4]' : 'aspect-square'} overflow-hidden flex items-center justify-center mb-3 bg-white`}>
         {product.image ? (
           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         ) : (
@@ -35,8 +35,10 @@ function ProductCard({ product, onSelect, large }) {
           </svg>
         )}
       </div>
-      <p className="text-[13px] text-black leading-tight line-clamp-2">{product.name}</p>
-      <p className="text-[13px] text-black/40 mt-0.5">{product.price}</p>
+      <div className="px-2">
+        <p className="text-[13px] text-black leading-tight line-clamp-2">{product.name}</p>
+        <p className="text-[13px] text-black/40 mt-1">{product.price}</p>
+      </div>
     </button>
   )
 }
@@ -171,7 +173,7 @@ export default function ForYou() {
       )}
 
       {/* ── Scan / App Banner (edge-to-edge) ──────────────────────── */}
-      <div className="mt-2">
+      <div className="mt-4">
         {isNative ? (
           <ScanBanner scan={latestScan} onScanTap={() => navigate(latestScan ? '/my-scans' : '/scan')} />
         ) : (
@@ -181,11 +183,11 @@ export default function ForYou() {
 
       {/* ── Empfohlen für dich ─────────────────────────────────────── */}
       {recommended.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-10">
           <div className="px-5 lg:px-8">
             <SectionLabel icon={Star} color="#FF9500" label="Empfohlen für dich" onTap={() => navigate('/collection')} />
           </div>
-          <div className="flex gap-px overflow-x-auto lg:grid lg:grid-cols-4 lg:gap-px lg:overflow-visible" style={{ scrollSnapType: 'x mandatory' }}>
+          <div className="flex gap-3 overflow-x-auto lg:grid lg:grid-cols-4 lg:gap-3 lg:overflow-visible" style={{ scrollSnapType: 'x mandatory' }}>
             {recommended.map(shoe => (
               <div key={shoe.id} className="flex-shrink-0 lg:flex-shrink lg:!w-auto" style={{ width: '44vw', scrollSnapAlign: 'start' }}>
                 <ProductCard product={shoe} onSelect={selectShoe} />
@@ -197,11 +199,11 @@ export default function ForYou() {
 
       {/* ── Gespeichert (Favorites) ────────────────────────────────── */}
       {favShoes.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-10">
           <div className="px-5 lg:px-8">
-            <SectionLabel icon={Bookmark} color="#007AFF" label="Gespeichert" onTap={() => navigate('/wishlist')} />
+            <SectionLabel icon={Heart} color="#FF3B30" label="Gespeichert" onTap={() => navigate('/wishlist')} />
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-5 lg:px-8">
             {favShoes.slice(0, 4).map(shoe => (
               <ProductCard key={shoe.id} product={shoe} onSelect={selectShoe} />
             ))}
@@ -211,11 +213,11 @@ export default function ForYou() {
 
       {/* ── Zuletzt angesehen ──────────────────────────────────────── */}
       {recentlyViewed.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-10">
           <div className="px-5 lg:px-8">
             <SectionLabel icon={Heart} color="#FF3B30" label="Zuletzt angesehen" onTap={() => navigate('/collection')} />
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-5 lg:px-8">
             {recentlyViewed.map(shoe => (
               <ProductCard key={shoe.id} product={shoe} onSelect={selectShoe} />
             ))}
@@ -225,11 +227,11 @@ export default function ForYou() {
 
       {/* ── Letzte Bestellungen ────────────────────────────────────── */}
       {recentOrders.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-10">
           <div className="px-5 lg:px-8">
             <SectionLabel icon={Package} color="#34C759" label="Deine Bestellungen" onTap={() => navigate('/orders')} />
           </div>
-          <div className="flex gap-px overflow-x-auto lg:grid lg:grid-cols-4 lg:gap-px pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+          <div className="flex gap-3 overflow-x-auto lg:grid lg:grid-cols-4 lg:gap-3 pb-1" style={{ scrollSnapType: 'x mandatory' }}>
             {recentOrders.map(order => (
               <div key={order.id} className="flex-shrink-0 lg:flex-shrink lg:!w-auto" style={{ width: '44vw', scrollSnapAlign: 'start' }}>
                 <OrderCard order={order} onClick={() => navigate('/orders')} />
@@ -240,12 +242,12 @@ export default function ForYou() {
       )}
 
       {/* ── Loyalty (edge-to-edge) ─────────────────────────────────── */}
-      <div className="mt-6">
+      <div className="mt-10">
         <LoyaltyBanner status={loyaltyStatus} tiers={loyaltyTiers} />
       </div>
 
       {/* ── Bottom spacer ──────────────────────────────────────────── */}
-      <div className="h-8" />
+      <div className="h-12" />
     </div>
   )
 }

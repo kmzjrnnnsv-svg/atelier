@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Heart, Bookmark } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -39,7 +39,7 @@ function HeroCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
             className="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center border-0 shadow-sm"
             onClick={e => { e.stopPropagation(); onToggleFav() }}
           >
-            <Bookmark size={16} strokeWidth={1.5} className={isFav ? 'text-[#007AFF] fill-[#007AFF]' : 'text-black/40'} />
+            <Heart size={16} strokeWidth={1.5} className={isFav ? 'text-red-500 fill-red-500' : 'text-black/40'} />
           </button>
         </div>
         <div className="px-4 py-3.5">
@@ -85,7 +85,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
             className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center border-0"
             onClick={e => { e.stopPropagation(); onToggleFav() }}
           >
-            <Bookmark size={13} strokeWidth={1.5} className={isFav ? 'text-[#007AFF] fill-[#007AFF]' : 'text-black/30'} />
+            <Heart size={13} strokeWidth={1.5} className={isFav ? 'text-red-500 fill-red-500' : 'text-black/30'} />
           </button>
         </div>
         <div className="px-3 py-2.5">

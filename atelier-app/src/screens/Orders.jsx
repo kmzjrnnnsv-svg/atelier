@@ -250,16 +250,8 @@ export default function Orders() {
 
   return (
     <div className="flex flex-col bg-white" style={{ height: 'calc(100dvh - 48px)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-3 pb-2.5 border-b border-black/5 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center border-0 bg-transparent">
-          <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
-        </button>
-        <div className="text-center">
-          <p className="text-[10px] font-bold text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Bestellungen</p>
-        </div>
-        <div className="w-9" />
-      </div>
+      {/* Spacer */}
+      <div className="h-1" />
 
       <div className="flex-1 overflow-y-auto">
         {orders.length > 0 && (

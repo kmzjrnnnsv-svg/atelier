@@ -178,19 +178,9 @@ export default function Explore() {
     <div className="min-h-full bg-[#F2F2F7]">
 
       {/* ── Large Title Header ────────────────────────────────────── */}
-      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-4 flex items-start justify-between">
-        <div>
-          <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Entdecken</p>
-          <p className="text-[15px] lg:text-[17px] text-black/45 mt-1">Lass dich inspirieren.</p>
-        </div>
-        <button
-          onClick={() => navigate('/profile')}
-          className="w-9 h-9 rounded-lg bg-[#F5F5F7] flex items-center justify-center border-0 mt-1 flex-shrink-0"
-        >
-          <span className="text-[14px] font-semibold text-[#007AFF]">
-            {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-          </span>
-        </button>
+      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-4">
+        <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Entdecken</p>
+        <p className="text-[15px] lg:text-[17px] text-black/45 mt-1">Lass dich inspirieren.</p>
       </div>
 
       <div className="px-5 lg:px-8 pb-8 space-y-6 lg:space-y-10">
