@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { X, ChevronLeft, Search, ShoppingBag, User, Heart } from 'lucide-react'
+import { X, ChevronLeft, ShoppingBag, User, Heart } from 'lucide-react'
 import { prefetchRoute, isMobileWeb } from '../App'
 import useAtelierStore from '../store/atelierStore'
 
@@ -22,16 +22,32 @@ const SECONDARY_ITEMS = [
 // Pages that are "main" tabs — show burger. Others show back arrow.
 const MAIN_PAGES = new Set(['/foryou', '/collection', '/accessories', '/explore', '/checkout'])
 
+const ANIM_DURATION = 280 // ms — must match CSS
+
 export default function TopBar() {
   const [open, setOpen] = useState(false)
+  const [closing, setClosing] = useState(false)
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const cartCount = useAtelierStore(s => s.cart.length)
+  const pendingNav = useRef(null)
 
   const isSubPage = !MAIN_PAGES.has(pathname)
 
-  // Close menu on route change
-  useEffect(() => { setOpen(false) }, [pathname])
+  // Close menu (with animation) then optionally navigate
+  const closeMenu = useCallback((path) => {
+    if (!open || closing) return
+    if (path) pendingNav.current = path
+    setClosing(true)
+    setTimeout(() => {
+      setOpen(false)
+      setClosing(false)
+      if (pendingNav.current) {
+        navigate(pendingNav.current)
+        pendingNav.current = null
+      }
+    }, ANIM_DURATION)
+  }, [open, closing, navigate])
 
   // Lock body scroll when menu is open
   useEffect(() => {
@@ -41,7 +57,7 @@ export default function TopBar() {
     }
   }, [open])
 
-  const go = (path) => { setOpen(false); navigate(path) }
+  const go = (path) => closeMenu(path)
 
   const headerH = isMobileWeb ? 48 : 52
   const headerPx = isMobileWeb ? 16 : 28
@@ -75,7 +91,6 @@ export default function TopBar() {
               className="bg-transparent border-0 p-1.5 text-black active:opacity-50"
               aria-label="Menü öffnen"
             >
-              {/* LV-style thin hamburger lines */}
               <div className="flex flex-col gap-[5px]" style={{ width: isMobileWeb ? 20 : 18 }}>
                 <div className="h-px bg-black w-full" />
                 <div className="h-px bg-black w-full" />
@@ -86,7 +101,7 @@ export default function TopBar() {
 
         {/* Center: Brand */}
         <button
-          onClick={() => go('/foryou')}
+          onClick={() => navigate('/foryou')}
           className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60"
         >
           <span className="text-[16px] lg:text-[17px] font-normal tracking-[0.18em] text-black">
@@ -97,14 +112,14 @@ export default function TopBar() {
         {/* Right: icons */}
         <div className="flex items-center gap-0.5" style={{ minWidth: 80, justifyContent: 'flex-end' }}>
           {!isMobileWeb && (
-            <button onClick={() => go('/wishlist')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
+            <button onClick={() => navigate('/wishlist')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
               <Heart size={18} strokeWidth={1.3} />
             </button>
           )}
-          <button onClick={() => go('/profile')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
+          <button onClick={() => navigate('/profile')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
             <User size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
           </button>
-          <button onClick={() => go('/checkout')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50 relative">
+          <button onClick={() => navigate('/checkout')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50 relative">
             <ShoppingBag size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
             {cartCount > 0 && (
               <span
@@ -127,7 +142,7 @@ export default function TopBar() {
             style={{
               width: isMobileWeb ? '85vw' : '420px',
               maxWidth: '420px',
-              animation: 'menuSlideIn 0.3s ease',
+              animation: `${closing ? 'menuSlideOut' : 'menuSlideIn'} ${ANIM_DURATION}ms ease both`,
             }}
           >
             {/* Panel header — X + Schließen */}
@@ -139,7 +154,7 @@ export default function TopBar() {
               }}
             >
               <button
-                onClick={() => setOpen(false)}
+                onClick={() => closeMenu()}
                 className="bg-transparent border-0 p-1 text-black active:opacity-50"
                 aria-label="Menü schließen"
               >
@@ -214,8 +229,11 @@ export default function TopBar() {
           {/* Right: dark overlay showing page behind */}
           <div
             className="flex-1 h-full cursor-pointer"
-            onClick={() => setOpen(false)}
-            style={{ background: 'rgba(0,0,0,0.4)', animation: 'menuFadeIn 0.3s ease' }}
+            onClick={() => closeMenu()}
+            style={{
+              background: 'rgba(0,0,0,0.4)',
+              animation: `${closing ? 'menuOverlayOut' : 'menuFadeIn'} ${ANIM_DURATION}ms ease both`,
+            }}
           />
         </div>
       )}
