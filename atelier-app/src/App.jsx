@@ -295,7 +295,7 @@ function AppRoutes() {
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box' }}>
       {showNav && <TopBar />}
       <div className="flex-1 overflow-y-auto relative">
-        <div className="max-w-5xl mx-auto w-full">
+        <div className="w-full">
           <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
         </div>
       </div>
