@@ -110,7 +110,7 @@ export default function ShoeCollection() {
       {/* ── Hero header (LV style — centered, minimal) ──────────── */}
       <div className="text-center px-5 lg:px-16 pt-10 lg:pt-16 pb-6 lg:pb-8">
         <p className="text-[11px] text-black/25 uppercase tracking-[0.3em] mb-3 lg:mb-4">Atelier Kollektion</p>
-        <h1 className="text-[32px] lg:text-[48px] font-extralight text-black leading-[1.05] tracking-tight">
+        <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.05] tracking-tight">
           Maßschuhe
         </h1>
         <p className="text-[13px] lg:text-[15px] text-black/35 mt-3 lg:mt-4 max-w-md mx-auto leading-[1.7] font-light">
