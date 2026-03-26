@@ -1,75 +1,131 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Menu, User, ShoppingBag, X, Compass, Heart, Package, HelpCircle, Settings, Gift } from 'lucide-react'
+import { X, ChevronLeft, ShoppingBag, User, Heart } from 'lucide-react'
 import { prefetchRoute, isMobileWeb } from '../App'
 import useAtelierStore from '../store/atelierStore'
 
-const MENU_ITEMS = [
-  { icon: User,         label: 'Für dich',       path: '/foryou' },
-  { icon: ShoppingBag,  label: 'Produkte',       path: '/collection' },
-  { icon: Gift,         label: 'Zubehör',        path: '/accessories' },
-  { icon: Compass,      label: 'Entdecken',      path: '/explore' },
-  { icon: Heart,        label: 'Wunschliste',    path: '/wishlist' },
-  { icon: Package,      label: 'Bestellungen',   path: '/orders' },
-  { icon: HelpCircle,   label: 'Hilfe & Kontakt', path: '/help' },
-  { icon: Settings,     label: 'Einstellungen',   path: '/settings' },
+// ── Navigation structure (LV-style) ─────────────────────────────────────────
+const NAV_ITEMS = [
+  { label: 'Für dich',       path: '/foryou' },
+  { label: 'Kollektion',     path: '/collection' },
+  { label: 'Zubehör',        path: '/accessories' },
+  { label: 'Entdecken',      path: '/explore' },
 ]
 
-// Page titles for sub-pages — when set, replaces "ATELIER" in center
-const PAGE_TITLES = {
-  '/collection': 'Kollektion',
-  '/wishlist':   'Wunschliste',
-  '/my-scans':   'Meine Scans',
-  '/orders':     'Bestellungen',
-  '/profile':    'Profil',
-  '/settings':   'Einstellungen',
-  '/help':       'Hilfe & Kontakt',
-  '/explore':      'Entdecken',
-  '/accessories':  'Zubehör',
-}
+const SECONDARY_ITEMS = [
+  { label: 'Wunschliste',     path: '/wishlist' },
+  { label: 'Bestellungen',    path: '/orders' },
+  { label: 'Hilfe & Kontakt', path: '/help' },
+  { label: 'Einstellungen',   path: '/settings' },
+]
+
+// Pages that are "main" tabs — show burger. Others show back arrow.
+const MAIN_PAGES = new Set(['/foryou', '/collection', '/accessories', '/explore', '/checkout'])
+
+const ANIM_DURATION = 280 // ms — must match CSS
 
 export default function TopBar() {
   const [open, setOpen] = useState(false)
+  const [closing, setClosing] = useState(false)
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const cartCount = useAtelierStore(s => s.cart.length)
+  const pendingNav = useRef(null)
 
-  const go = (path) => { setOpen(false); navigate(path) }
-  const pageTitle = PAGE_TITLES[pathname]
+  const isSubPage = !MAIN_PAGES.has(pathname)
+
+  // Close menu (with animation) then optionally navigate
+  const closeMenu = useCallback((path) => {
+    if (!open || closing) return
+    if (path) pendingNav.current = path
+    setClosing(true)
+    setTimeout(() => {
+      setOpen(false)
+      setClosing(false)
+      if (pendingNav.current) {
+        navigate(pendingNav.current)
+        pendingNav.current = null
+      }
+    }, ANIM_DURATION)
+  }, [open, closing, navigate])
+
+  // Lock body scroll when menu is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = '' }
+    }
+  }, [open])
+
+  const go = (path) => closeMenu(path)
+
+  const headerH = isMobileWeb ? 48 : 52
+  const headerPx = isMobileWeb ? 16 : 28
 
   return (
     <>
       {/* ── Header bar ── */}
       <header
         className="flex items-center justify-between bg-white flex-shrink-0"
-        style={{ position: 'sticky', top: 0, zIndex: 20, borderBottom: '0.5px solid rgba(0,0,0,0.08)', height: isMobileWeb ? '48px' : '52px', padding: isMobileWeb ? '0 16px' : '0 28px' }}
+        style={{
+          position: 'sticky', top: 0, zIndex: 50,
+          borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+          height: headerH, padding: `0 ${headerPx}px`,
+        }}
       >
-        {/* Left: Burger only */}
-        <div className="flex items-center">
-          <button onClick={() => setOpen(true)} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
-            <Menu size={isMobileWeb ? 22 : 20} strokeWidth={1.3} />
-          </button>
+        {/* Left */}
+        <div className="flex items-center" style={{ minWidth: 80 }}>
+          {isSubPage ? (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1 bg-transparent border-0 p-1 text-black active:opacity-50"
+            >
+              <ChevronLeft size={isMobileWeb ? 22 : 20} strokeWidth={1.3} />
+              {!isMobileWeb && (
+                <span className="text-[13px] font-light text-black/60">Zurück</span>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={() => setOpen(true)}
+              className="bg-transparent border-0 p-1.5 text-black active:opacity-50"
+              aria-label="Menü öffnen"
+            >
+              <div className="flex flex-col gap-[5px]" style={{ width: isMobileWeb ? 20 : 18 }}>
+                <div className="h-px bg-black w-full" />
+                <div className="h-px bg-black w-full" />
+              </div>
+            </button>
+          )}
         </div>
 
-        {/* Center: Brand (always show ATELIER like LV shows LOUIS VUITTON) */}
-        <button onClick={() => go('/foryou')} className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60">
-          <span className="text-[16px] lg:text-[17px] font-normal tracking-[0.18em] text-black">ATELIER</span>
+        {/* Center: Brand */}
+        <button
+          onClick={() => navigate('/foryou')}
+          className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60"
+        >
+          <span className="text-[16px] lg:text-[17px] font-normal tracking-[0.18em] text-black">
+            ATELIER
+          </span>
         </button>
 
-        {/* Right: Wishlist (desktop) + Account + Cart */}
-        <div className="flex items-center gap-0.5">
+        {/* Right: icons */}
+        <div className="flex items-center gap-0.5" style={{ minWidth: 80, justifyContent: 'flex-end' }}>
           {!isMobileWeb && (
-            <button onClick={() => go('/wishlist')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
+            <button onClick={() => navigate('/wishlist')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
               <Heart size={18} strokeWidth={1.3} />
             </button>
           )}
-          <button onClick={() => go('/profile')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
+          <button onClick={() => navigate('/profile')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
             <User size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
           </button>
-          <button onClick={() => go('/checkout')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50 relative">
+          <button onClick={() => navigate('/checkout')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50 relative">
             <ShoppingBag size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
             {cartCount > 0 && (
-              <span className="absolute top-0.5 right-0 bg-black text-white text-[7px] font-bold min-w-[13px] h-[13px] flex items-center justify-center px-0.5 leading-none" style={{ borderRadius: '6px' }}>
+              <span
+                className="absolute top-0.5 right-0 bg-black text-white text-[7px] font-bold min-w-[13px] h-[13px] flex items-center justify-center px-0.5 leading-none"
+                style={{ borderRadius: '6px' }}
+              >
                 {cartCount > 99 ? '99+' : cartCount}
               </span>
             )}
@@ -77,34 +133,108 @@ export default function TopBar() {
         </div>
       </header>
 
-      {/* ── Dropdown menu overlay ── */}
+      {/* ── Side panel menu (LV-style) ── */}
       {open && (
-        <div className="fixed inset-0 z-[999]" onClick={() => setOpen(false)}>
-          <div className="absolute inset-0 bg-black/20" />
-          <nav
-            className="absolute left-0 right-0 bg-white shadow-lg"
-            style={{ top: isMobileWeb ? 48 : 52, animation: 'slideDown 0.25s ease' }}
-            onClick={e => e.stopPropagation()}
+        <div className="fixed inset-0 z-[999] flex">
+          {/* Left: white panel */}
+          <div
+            className="h-full bg-white flex flex-col flex-shrink-0"
+            style={{
+              width: isMobileWeb ? '85vw' : '420px',
+              maxWidth: '420px',
+              animation: `${closing ? 'menuSlideOut' : 'menuSlideIn'} ${ANIM_DURATION}ms ease both`,
+            }}
           >
-            <div className="py-3 border-b border-black/[0.06]">
-              {MENU_ITEMS.map(({ icon: Icon, label, path }) => {
-                const isActive = pathname === path || pathname.startsWith(path + '/')
-                return (
-                  <button
-                    key={path}
-                    onClick={() => go(path)}
-                    onPointerEnter={() => prefetchRoute(path)}
-                    className={`w-full flex items-center gap-3.5 px-6 lg:px-8 py-3 bg-transparent border-0 text-left transition-colors hover:bg-black/[0.02] ${
-                      isActive ? 'text-black' : 'text-black/40'
-                    }`}
-                  >
-                    <Icon size={16} strokeWidth={isActive ? 1.8 : 1.2} />
-                    <span className={`text-[13px] ${isActive ? 'font-normal' : 'font-light'}`}>{label}</span>
-                  </button>
-                )
-              })}
+            {/* Panel header — X + Schließen */}
+            <div
+              className="flex items-center gap-2 flex-shrink-0"
+              style={{
+                height: headerH, padding: `0 ${isMobileWeb ? 20 : 28}px`,
+                borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              <button
+                onClick={() => closeMenu()}
+                className="bg-transparent border-0 p-1 text-black active:opacity-50"
+                aria-label="Menü schließen"
+              >
+                <X size={18} strokeWidth={1.3} />
+              </button>
+              <span className="text-[13px] font-light text-black/50">Schließen</span>
             </div>
-          </nav>
+
+            {/* Panel content */}
+            <div className="flex-1 flex flex-col justify-center overflow-hidden px-6 lg:px-10">
+              {/* Primary navigation */}
+              <nav>
+                {NAV_ITEMS.map(({ label, path }) => {
+                  const isActive = pathname === path || pathname.startsWith(path + '/')
+                  return (
+                    <button
+                      key={path}
+                      onClick={() => go(path)}
+                      onPointerEnter={() => prefetchRoute(path)}
+                      className="block w-full text-left bg-transparent border-0 py-2.5 lg:py-3 group"
+                    >
+                      <span
+                        className={`text-[22px] lg:text-[26px] font-extralight tracking-tight transition-colors ${
+                          isActive ? 'text-black' : 'text-black/80 group-hover:text-black'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </nav>
+
+              {/* Divider */}
+              <div className="my-5 h-px bg-black/[0.06]" />
+
+              {/* Secondary navigation */}
+              <nav>
+                {SECONDARY_ITEMS.map(({ label, path }) => {
+                  const isActive = pathname === path
+                  return (
+                    <button
+                      key={path}
+                      onClick={() => go(path)}
+                      onPointerEnter={() => prefetchRoute(path)}
+                      className="block w-full text-left bg-transparent border-0 py-2 group"
+                    >
+                      <span
+                        className={`text-[14px] font-light transition-colors ${
+                          isActive ? 'text-black' : 'text-black/40 group-hover:text-black'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </nav>
+            </div>
+
+            {/* Panel footer */}
+            <div className="flex-shrink-0 border-t border-black/[0.06] px-6 lg:px-10 py-5">
+              <button
+                onClick={() => go('/help')}
+                className="text-[13px] font-light text-black/35 bg-transparent border-0 p-0 hover:text-black transition-colors"
+              >
+                Wünschen Sie Beratung?
+              </button>
+            </div>
+          </div>
+
+          {/* Right: dark overlay showing page behind */}
+          <div
+            className="flex-1 h-full cursor-pointer"
+            onClick={() => closeMenu()}
+            style={{
+              background: 'rgba(0,0,0,0.4)',
+              animation: `${closing ? 'menuOverlayOut' : 'menuFadeIn'} ${ANIM_DURATION}ms ease both`,
+            }}
+          />
         </div>
       )}
     </>

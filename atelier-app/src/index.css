@@ -105,6 +105,26 @@ html.mobile-web body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes menuFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes menuSlideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes menuSlideOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes menuOverlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 .animate-slide-in-left {
   animation: slideInLeft 0.25s ease-out;
 }
