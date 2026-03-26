@@ -108,19 +108,15 @@ export default function ShoeCollection() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero banner — compact, LV-style ─────────────────────── */}
-      <div className="relative">
-        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 4' }}>
-          <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
-        </div>
-        <div className="absolute inset-0 flex items-end" style={{ background: 'linear-gradient(transparent 20%, rgba(0,0,0,0.5) 100%)' }}>
-          <div className="text-center w-full px-5 lg:px-16 pb-6 lg:pb-10">
-            <p className="text-[10px] text-white/40 uppercase tracking-[0.3em] mb-2">Atelier Kollektion</p>
-            <h1 className="text-[22px] lg:text-[28px] font-extralight text-white leading-[1.05] tracking-tight">
-              Maßschuhe
-            </h1>
-          </div>
-        </div>
+      {/* ── Hero — image then text below (LV-style) ──────────────── */}
+      <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
+        <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
+      </div>
+      <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-6 lg:pb-8">
+        <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Atelier Kollektion</p>
+        <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.05] tracking-tight">
+          Maßschuhe
+        </h1>
       </div>
 
       {/* ── Category navigation (LV underline tabs) ────────────── */}
