@@ -1,142 +1,115 @@
 /**
- * Explore.jsx — "Entdecken" tab (Apple Store "Go Further" style)
- * Editorial content, articles, style guides with Apple's clean card aesthetic
+ * Explore.jsx — LV-inspired editorial & discovery page
+ * Warm tones, generous whitespace, elegant typography
  */
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  ChevronRight, ArrowLeft, BookOpen, Film, Layers, Sparkles, Users, TrendingUp, Compass, Play, Star,
-} from 'lucide-react'
+import { ArrowLeft, BookOpen, Compass } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
-import { useAuth } from '../context/AuthContext'
-
-const ICON_MAP = { BookOpen, Film, Layers, Sparkles, Users, TrendingUp, Compass }
-
-const DEFAULT_SECTIONS = [
-  { id: 'editorial', icon: 'BookOpen', label: 'Editorial', color: '#1D1D1F', accent: '#007AFF', title: 'Saisonale Editorials', description: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Kollektion.', previewItems: ['Herbst / Winter 2025', 'The Riviera Collection', 'Made in Florence'], visible: true },
-  { id: 'craft', icon: 'Film', label: 'Behind the Craft', color: '#1D1D1F', accent: '#FF9500', title: 'Handwerk trifft Technologie', description: 'Kurz-Dokumentationen über die Herstellung jedes Modells.', previewItems: ['Wie ein Leisten entsteht', 'Das Leder von Bontoni', 'Stitching mit Gefühl'], visible: true },
-  { id: 'styleguide', icon: 'Layers', label: 'Style Guide', color: '#1D1D1F', accent: '#34C759', title: 'Outfit-Inspirationen', description: 'Kuratierte Kombinationsvorschläge auf Basis deiner Garderobe.', previewItems: ['Oxford trifft Flanell', 'Derby & Chino', 'Loafer im Business-Look'], visible: true },
-  { id: 'trends', icon: 'TrendingUp', label: 'Trends', color: '#1D1D1F', accent: '#AF52DE', title: 'Material- & Stil-Trends', description: 'Saisonale Trend-Reports zu Lederarten und Sohlenformen.', previewItems: ['Patina als Statement', 'Crepe Soles 2026', 'Naturfarben dominieren'], visible: true },
-  { id: 'collabs', icon: 'Sparkles', label: 'Kollaborationen', color: '#1D1D1F', accent: '#FF9500', title: 'Limited Editions & Kollabs', description: 'Exklusive Capsule Collections mit Designern und Künstlern.', previewItems: ['× Mailänder Architekt', '× Toskana Tannery', 'Member Exclusive Drop'], visible: true },
-  { id: 'community', icon: 'Users', label: 'Community', color: '#1D1D1F', accent: '#5AC8FA', title: 'Style Community', description: 'ATELIER-Träger weltweit zeigen ihre Kombinationen.', previewItems: ['Riviera Loafer in Tokyo', 'Oxford in New York', 'Derby im Alltag'], visible: true },
-]
 
 const ARTICLE_THEME = {
-  'Gesundheit': { color: '#FF3B30', icon: 'BookOpen' },
-  'Tipps':      { color: '#FF9500', icon: 'Sparkles' },
-  'Wissen':     { color: '#007AFF', icon: 'BookOpen' },
-  'Allgemein':  { color: '#8E8E93', icon: 'BookOpen' },
+  'Gesundheit': '#19110B',
+  'Tipps':      '#19110B',
+  'Wissen':     '#19110B',
+  'Allgemein':  '#19110B',
 }
 
-// ── Featured Content Card (large, image-based) ──────────────────────────────
-function FeaturedCard({ section, onClick }) {
-  const Icon = ICON_MAP[section.icon] || Compass
+const DEFAULT_SECTIONS = [
+  { id: 'editorial', label: 'Editorial', title: 'Saisonale Editorials', description: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Kollektion.', previewItems: ['Herbst / Winter 2025', 'The Riviera Collection', 'Made in Florence'], visible: true },
+  { id: 'craft', label: 'Handwerk', title: 'Handwerk trifft Technologie', description: 'Kurz-Dokumentationen über die Herstellung jedes Modells — vom Leisten bis zur letzten Naht.', previewItems: ['Wie ein Leisten entsteht', 'Das Leder von Bontoni', 'Stitching mit Gefühl'], visible: true },
+  { id: 'styleguide', label: 'Style Guide', title: 'Outfit-Inspirationen', description: 'Kuratierte Kombinationsvorschläge auf Basis Ihrer Garderobe und Ihres Stils.', previewItems: ['Oxford trifft Flanell', 'Derby & Chino', 'Loafer im Business-Look'], visible: true },
+  { id: 'trends', label: 'Trends', title: 'Material- & Stil-Trends', description: 'Saisonale Reports zu Lederarten, Sohlenformen und den Farbtönen der Saison.', previewItems: ['Patina als Statement', 'Crepe Soles 2026', 'Naturfarben dominieren'], visible: true },
+  { id: 'collabs', label: 'Kollaborationen', title: 'Limited Editions', description: 'Exklusive Capsule Collections mit Designern, Architekten und Künstlern.', previewItems: ['× Mailänder Architekt', '× Toskana Tannery', 'Member Exclusive Drop'], visible: true },
+  { id: 'community', label: 'Community', title: 'Style Community', description: 'ATELIER-Träger weltweit zeigen ihre Kombinationen und teilen ihre Erfahrungen.', previewItems: ['Riviera Loafer in Tokyo', 'Oxford in New York', 'Derby im Alltag'], visible: true },
+]
+
+// ── Section Card (editorial topic) ───────────────────────────────────────
+function SectionCard({ section, featured }) {
   return (
-    <button onClick={onClick} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="overflow-hidden" style={{ background: section.color }}>
+    <div className="group cursor-pointer">
+      <div
+        className={`w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] transition-all duration-500 group-hover:bg-[#efeee9] ${
+          featured ? 'mb-4 lg:mb-5' : 'mb-3'
+        }`}
+        style={{ aspectRatio: featured ? '16 / 7' : '3 / 2' }}
+      >
         {section.image ? (
-          <div className="relative aspect-[16/10]">
-            <img src={section.image} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 100%)' }} />
-            <div className="absolute bottom-0 left-0 right-0 p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: section.accent }}>{section.label}</p>
-              <p className="text-[22px] font-bold text-white leading-tight mt-1">{section.title}</p>
-              <p className="text-[13px] text-white/60 mt-1.5 line-clamp-2">{section.description}</p>
-            </div>
-          </div>
+          <img src={section.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
         ) : (
-          <div className="p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 flex items-center justify-center" style={{ background: section.accent + '20' }}>
-                <Icon size={20} strokeWidth={1.5} style={{ color: section.accent }} />
-              </div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: section.accent }}>{section.label}</p>
-            </div>
-            <p className="text-[22px] font-bold text-white leading-tight">{section.title}</p>
-            <p className="text-[15px] text-white/60 mt-2 leading-relaxed">{section.description}</p>
+          <div className="flex flex-col items-center gap-2 opacity-[0.07]">
+            <Compass size={featured ? 48 : 32} strokeWidth={0.6} className="text-black" />
           </div>
         )}
       </div>
-    </button>
-  )
-}
-
-// ── Small Section Card (side-scroll) ────────────────────────────────────────
-function SmallSectionCard({ section }) {
-  const Icon = ICON_MAP[section.icon] || Compass
-  return (
-    <div className="flex-shrink-0 overflow-hidden" style={{ width: '260px', background: '#FFFFFF' }}>
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 flex items-center justify-center" style={{ background: section.accent + '20' }}>
-            <Icon size={16} strokeWidth={1.5} style={{ color: section.accent }} />
-          </div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: section.accent }}>{section.label}</span>
+      <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] mb-1">{section.label}</p>
+      <p className={`${featured ? 'text-[20px] lg:text-[24px]' : 'text-[14px] lg:text-[15px]'} text-black font-light leading-snug`}>
+        {section.title}
+      </p>
+      <p className={`${featured ? 'text-[13px] lg:text-[14px] mt-2' : 'text-[12px] mt-1'} text-black/35 leading-relaxed font-light line-clamp-2`}>
+        {section.description}
+      </p>
+      {section.previewItems && featured && (
+        <div className="flex flex-wrap gap-2 mt-3">
+          {section.previewItems.map(item => (
+            <span key={item} className="text-[10px] text-black/25 border border-black/[0.06] px-2.5 py-1 font-light">{item}</span>
+          ))}
         </div>
-        <p className="text-[15px] font-semibold text-black leading-snug">{section.title}</p>
-        <p className="text-[13px] text-black/50 mt-1 line-clamp-2">{section.description}</p>
-        {section.previewItems && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {section.previewItems.slice(0, 2).map(item => (
-              <span key={item} className="text-[11px] text-black/40 bg-white px-2.5 py-1">{item}</span>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }
 
-// ── Article Card (Apple "Today at Apple" style) ─────────────────────────────
-function ArticleCard({ article, onClick }) {
-  const theme = ARTICLE_THEME[article.category] || ARTICLE_THEME['Allgemein']
+// ── Article Card ─────────────────────────────────────────────────────────
+function ArticleCard({ article, onClick, featured }) {
   return (
-    <button onClick={onClick} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="overflow-hidden" style={{ background: '#FFFFFF' }}>
+    <div className="group cursor-pointer" onClick={onClick}>
+      <div
+        className={`w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] transition-all duration-500 group-hover:bg-[#efeee9] ${
+          featured ? 'mb-4' : 'mb-3'
+        }`}
+        style={{ aspectRatio: featured ? '16 / 9' : '3 / 2' }}
+      >
         {article.image ? (
-          <div className="aspect-[16/9] overflow-hidden">
-            <img src={article.image} alt="" className="w-full h-full object-cover" />
-          </div>
+          <img src={article.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
         ) : (
-          <div className="aspect-[16/9] flex items-center justify-center" style={{ background: '#E8E8ED' }}>
-            <BookOpen size={32} strokeWidth={1} className="text-black/15" />
-          </div>
+          <BookOpen size={featured ? 36 : 28} strokeWidth={0.6} className="text-black/[0.07]" />
         )}
-        <div className="p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: theme.color }}>{article.category}</p>
-          <p className="text-[17px] font-semibold text-black leading-snug mt-1">{article.title}</p>
-          {article.excerpt && (
-            <p className="text-[13px] text-black/50 mt-1 line-clamp-2">{article.excerpt}</p>
-          )}
-        </div>
       </div>
-    </button>
+      <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] mb-1">{article.category}</p>
+      <p className={`${featured ? 'text-[17px] lg:text-[20px]' : 'text-[13px] lg:text-[14px]'} text-black font-light leading-snug`}>
+        {article.title}
+      </p>
+      {article.excerpt && (
+        <p className={`${featured ? 'text-[13px] mt-2' : 'text-[11px] mt-1'} text-black/30 leading-relaxed font-light line-clamp-2`}>
+          {article.excerpt}
+        </p>
+      )}
+    </div>
   )
 }
 
-// ── Article Detail ──────────────────────────────────────────────────────────
+// ── Article Detail ───────────────────────────────────────────────────────
 function ArticleDetail({ article, onBack }) {
-  const theme = ARTICLE_THEME[article.category] || ARTICLE_THEME['Allgemein']
   return (
     <div className="flex-1 overflow-y-auto bg-white">
       {article.image ? (
-        <div className="aspect-[16/10] overflow-hidden">
+        <div className="aspect-[16/8] overflow-hidden">
           <img src={article.image} alt="" className="w-full h-full object-cover" />
         </div>
       ) : (
-        <div className="h-24" style={{ background: theme.color }} />
+        <div className="h-32 bg-[#f6f5f3]" />
       )}
-      <div className="px-5 py-5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: theme.color }}>{article.category}</p>
-        <h1 className="text-[28px] font-bold text-black leading-tight mt-2">{article.title}</h1>
+      <div className="px-5 lg:px-16 py-8 lg:py-12 max-w-3xl">
+        <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">{article.category}</p>
+        <h1 className="text-[28px] lg:text-[36px] font-extralight text-black leading-[1.15] tracking-tight">{article.title}</h1>
         {article.excerpt && (
-          <p className="text-[17px] text-black/50 mt-3 leading-relaxed">{article.excerpt}</p>
+          <p className="text-[15px] lg:text-[17px] text-black/40 mt-4 leading-[1.7] font-light">{article.excerpt}</p>
         )}
-        <div className="h-px bg-black/8 my-5" />
+        <div className="h-px bg-black/[0.06] my-6 lg:my-8" />
         {article.content?.split('\n\n').map((block, i) => {
           const isHeading = block.split('\n').length === 1 && block.length < 60 && i > 0
-          if (isHeading) return <h3 key={i} className="text-[17px] font-semibold text-black mt-6 mb-2">{block}</h3>
-          return <p key={i} className="text-[15px] text-black/60 leading-relaxed mb-4">{block}</p>
+          if (isHeading) return <h3 key={i} className="text-[15px] lg:text-[17px] font-normal text-black mt-8 mb-3 tracking-tight">{block}</h3>
+          return <p key={i} className="text-[13px] lg:text-[15px] text-black/45 leading-[1.8] mb-5 font-light">{block}</p>
         })}
       </div>
     </div>
@@ -146,7 +119,6 @@ function ArticleDetail({ article, onBack }) {
 // ═════════════════════════════════════════════════════════════════════════════
 export default function Explore() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const { exploreSections, articles } = useAtelierStore()
   const [selectedArticle, setSelectedArticle] = useState(null)
 
@@ -163,11 +135,11 @@ export default function Explore() {
   if (selectedArticle) {
     return (
       <div className="flex flex-col min-h-full bg-white">
-        <div className="flex items-center gap-3 px-4 pt-3 pb-2 flex-shrink-0">
+        <div className="flex items-center gap-3 px-5 lg:px-16 pt-4 pb-2 flex-shrink-0">
           <button onClick={() => setSelectedArticle(null)} className="w-10 h-10 flex items-center justify-center bg-transparent border-0">
-            <ArrowLeft size={20} strokeWidth={1.5} className="text-[#007AFF]" />
+            <ArrowLeft size={18} strokeWidth={1.5} className="text-black" />
           </button>
-          <span className="text-[17px] font-semibold text-black flex-1 truncate">{selectedArticle.category}</span>
+          <span className="text-[11px] text-black/30 uppercase tracking-[0.2em]">{selectedArticle.category}</span>
         </div>
         <ArticleDetail article={selectedArticle} onBack={() => setSelectedArticle(null)} />
       </div>
@@ -177,46 +149,51 @@ export default function Explore() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Large Title Header ────────────────────────────────────── */}
-      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-4">
-        <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Entdecken</p>
-        <p className="text-[15px] lg:text-[17px] text-black/45 mt-1">Lass dich inspirieren.</p>
+      {/* ── Hero header ─────────────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-6 lg:pb-10">
+        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Atelier Journal</p>
+        <h1 className="text-[32px] lg:text-[44px] font-extralight text-black leading-[1.1] tracking-tight">
+          Entdecken
+        </h1>
+        <p className="text-[13px] lg:text-[15px] text-black/40 mt-3 lg:mt-4 max-w-lg leading-[1.7] font-light">
+          Editorials, Handwerkskunst und Inspirationen — die Welt hinter jedem Schuh.
+        </p>
       </div>
 
-      <div className="px-5 lg:px-8 pb-8 space-y-6 lg:space-y-10">
+      <div className="px-5 lg:px-16 pb-16 space-y-10 lg:space-y-16">
 
-        {/* ── Featured Section (hero card) ────────────────────────── */}
-        {featuredSection && <FeaturedCard section={featuredSection} />}
+        {/* ── Featured Section (hero) ───────────────────────────── */}
+        {featuredSection && <SectionCard section={featuredSection} featured />}
 
-        {/* ── Featured Articles ────────────────────────────────────── */}
+        {/* ── Featured Articles ──────────────────────────────────── */}
         {featuredArticles.length > 0 && (
           <div>
-            <p className="text-[20px] lg:text-[24px] font-bold text-black mb-3 lg:mb-5">Empfohlen</p>
-            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+            <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-5 lg:mb-6">Empfohlen</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               {featuredArticles.map(article => (
-                <ArticleCard key={article.id} article={article} onClick={() => setSelectedArticle(article)} />
+                <ArticleCard key={article.id} article={article} onClick={() => setSelectedArticle(article)} featured />
               ))}
             </div>
           </div>
         )}
 
-        {/* ── More Sections (horizontal scroll) ───────────────────── */}
+        {/* ── Topics grid ───────────────────────────────────────── */}
         {moreSections.length > 0 && (
           <div>
-            <p className="text-[20px] lg:text-[24px] font-bold text-black mb-3 lg:mb-5">Themen</p>
-            <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-1" style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}>
+            <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-5 lg:mb-6">Themen</p>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-10">
               {moreSections.map(section => (
-                <SmallSectionCard key={section.id} section={section} />
+                <SectionCard key={section.id} section={section} />
               ))}
             </div>
           </div>
         )}
 
-        {/* ── Articles Grid ───────────────────────────────────────── */}
+        {/* ── Articles ──────────────────────────────────────────── */}
         {regularArticles.length > 0 && (
           <div>
-            <p className="text-[20px] lg:text-[24px] font-bold text-black mb-3 lg:mb-5">Artikel</p>
-            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+            <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-5 lg:mb-6">Artikel</p>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-10">
               {regularArticles.map(article => (
                 <ArticleCard key={article.id} article={article} onClick={() => setSelectedArticle(article)} />
               ))}
@@ -224,17 +201,20 @@ export default function Explore() {
           </div>
         )}
 
-        {/* ── Atelier Session Promo ───────────────────────────────── */}
-        <div className="overflow-hidden" style={{ background: '#FFFFFF' }}>
-          <div className="p-5 text-center">
-            <p className="text-[11px] font-semibold text-[#007AFF] uppercase tracking-wider mb-2">Atelier Session</p>
-            <p className="text-[22px] font-bold text-black leading-tight">Besuche das Atelier</p>
-            <p className="text-[15px] text-black/50 mt-2 leading-relaxed">
-              Erlebe dein persönliches Fitting mit 3D-Scan. Kostenlos und unverbindlich.
+        {/* ── Atelier Session CTA ───────────────────────────────── */}
+        <div className="border-t border-black/[0.06] pt-10 lg:pt-14">
+          <div className="max-w-md mx-auto text-center">
+            <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">Persönliche Beratung</p>
+            <p className="text-[22px] lg:text-[28px] font-extralight text-black leading-[1.2] tracking-tight">
+              Besuchen Sie das Atelier
+            </p>
+            <p className="text-[13px] text-black/35 mt-3 leading-[1.7] font-light">
+              Erleben Sie Ihr persönliches Fitting mit 3D-Fußvermessung. Kostenlos und unverbindlich.
             </p>
             <button
               onClick={() => navigate('/scan')}
-              className="mt-4 px-6 py-2.5 bg-[#007AFF] text-white text-[15px] font-medium border-0"
+              className="mt-6 px-8 h-12 bg-black text-white text-[11px] border-0 hover:bg-white hover:text-black border border-black transition-all duration-300"
+              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
             >
               Termin vereinbaren
             </button>
