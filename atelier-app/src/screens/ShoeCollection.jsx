@@ -10,6 +10,7 @@ import useAtelierStore from '../store/atelierStore'
 import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
+import { HEROES, SHOES } from '../lib/editorialImages'
 
 const CATEGORIES = [
   { label: 'Alle Modelle', value: 'ALL' },
@@ -107,15 +108,22 @@ export default function ShoeCollection() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero header (LV style — centered, minimal) ──────────── */}
-      <div className="text-center px-5 lg:px-16 pt-10 lg:pt-16 pb-6 lg:pb-8">
-        <p className="text-[11px] text-black/25 uppercase tracking-[0.3em] mb-3 lg:mb-4">Atelier Kollektion</p>
-        <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.05] tracking-tight">
-          Maßschuhe
-        </h1>
-        <p className="text-[13px] lg:text-[15px] text-black/35 mt-3 lg:mt-4 max-w-md mx-auto leading-[1.7] font-light">
-          Individuell angepasst an Ihren Fuß. Jedes Paar wird in über 200 Arbeitsschritten von Hand gefertigt.
-        </p>
+      {/* ── Hero banner — full-bleed editorial ──────────────────── */}
+      <div className="relative">
+        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
+          <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
+        </div>
+        <div className="absolute inset-0 flex items-end" style={{ background: 'linear-gradient(transparent 40%, rgba(0,0,0,0.5) 100%)' }}>
+          <div className="text-center w-full px-5 lg:px-16 pb-8 lg:pb-14">
+            <p className="text-[10px] text-white/40 uppercase tracking-[0.3em] mb-2 lg:mb-3">Atelier Kollektion</p>
+            <h1 className="text-[24px] lg:text-[32px] font-extralight text-white leading-[1.05] tracking-tight">
+              Maßschuhe
+            </h1>
+            <p className="text-[13px] lg:text-[15px] text-white/40 mt-2 lg:mt-3 max-w-md mx-auto leading-[1.7] font-light">
+              Individuell angepasst an Ihren Fuß. Jedes Paar wird in über 200 Arbeitsschritten von Hand gefertigt.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* ── Category navigation (LV underline tabs) ────────────── */}

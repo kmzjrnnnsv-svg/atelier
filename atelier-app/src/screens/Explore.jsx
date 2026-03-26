@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, BookOpen, Compass } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import CtaBanner from '../components/CtaBanner'
+import { HEROES, EXPLORE, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 
 const DEFAULT_SECTIONS = [
   { id: 'editorial', label: 'Editorial', title: 'Saisonale Editorials', description: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Kollektion.', previewItems: ['Herbst / Winter 2025', 'The Riviera Collection', 'Made in Florence'], visible: true },
@@ -21,13 +22,9 @@ const DEFAULT_SECTIONS = [
 function ArticleDetail({ article, onBack }) {
   return (
     <div className="flex-1 overflow-y-auto bg-white">
-      {article.image ? (
-        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 8' }}>
-          <img src={article.image} alt="" className="w-full h-full object-cover" />
-        </div>
-      ) : (
-        <div className="h-32 bg-[#f6f5f3]" />
-      )}
+      <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 8' }}>
+        <img src={article.image || CRAFT.hands} alt="" className="w-full h-full object-cover" />
+      </div>
       <div className="px-8 lg:px-24 xl:px-32 py-10 lg:py-16 max-w-3xl">
         <p className="text-[10px] text-black/25 uppercase tracking-[0.25em] mb-3">{article.category}</p>
         <h1 className="text-[28px] lg:text-[40px] font-extralight text-black leading-[1.15] tracking-tight">{article.title}</h1>
@@ -87,13 +84,7 @@ export default function Explore() {
             className="w-full overflow-hidden bg-[#f6f5f3]"
             style={{ aspectRatio: '16 / 8' }}
           >
-            {featuredSection.image ? (
-              <img src={featuredSection.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Compass size={60} strokeWidth={0.3} className="text-black/[0.04]" />
-              </div>
-            )}
+            <img src={featuredSection.image || HEROES.explore} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-16" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.4) 100%)' }}>
             <p className="text-[10px] text-white/40 uppercase tracking-[0.3em] mb-2 lg:mb-3">{featuredSection.label}</p>
@@ -111,13 +102,7 @@ export default function Explore() {
           {featuredArticles.slice(0, 2).map(article => (
             <div key={article.id} className="relative cursor-pointer group" onClick={() => setSelectedArticle(article)}>
               <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: '3 / 4' }}>
-                {article.image ? (
-                  <img src={article.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <BookOpen size={36} strokeWidth={0.3} className="text-black/[0.04]" />
-                  </div>
-                )}
+                <img src={article.image || CRAFT[['workshop', 'hands', 'leather', 'stitching'][article.id % 4]]} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-8" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.35) 100%)' }}>
                 <p className="text-[9px] lg:text-[10px] text-white/40 uppercase tracking-[0.25em] mb-1">{article.category}</p>
@@ -131,8 +116,12 @@ export default function Explore() {
       {/* ══════════════════════════════════════════════════════════
           CTA — Full-bleed dark banner
           ══════════════════════════════════════════════════════════ */}
-      <div className="bg-[#1a1a1a]">
-        <div className="max-w-4xl mx-auto px-8 lg:px-16 py-16 lg:py-28 text-center">
+      <div className="relative">
+        <div className="absolute inset-0 overflow-hidden">
+          <img src={CRAFT.leather} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/65" />
+        </div>
+        <div className="relative max-w-4xl mx-auto px-8 lg:px-16 py-16 lg:py-28 text-center">
           <p className="text-[10px] text-white/25 uppercase tracking-[0.3em] mb-4 lg:mb-5">Atelier Journal</p>
           <h2 className="text-[28px] lg:text-[44px] font-extralight text-white leading-[1.1] tracking-tight">
             Die Welt hinter jedem Schuh
@@ -159,11 +148,7 @@ export default function Explore() {
                     className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]"
                     style={{ aspectRatio: '3 / 2' }}
                   >
-                    {section.image ? (
-                      <img src={section.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                    ) : (
-                      <Compass size={32} strokeWidth={0.5} className="text-black/[0.05]" />
-                    )}
+                    <img src={section.image || EXPLORE[section.id] || LIFESTYLE.detail} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
                   </div>
                   <p className="text-[10px] text-black/25 uppercase tracking-[0.2em] mb-1">{section.label}</p>
                   <p className="text-[14px] lg:text-[16px] text-black font-light leading-snug">{section.title}</p>
@@ -183,13 +168,7 @@ export default function Explore() {
           {/* Full-bleed first article */}
           <div className="relative cursor-pointer group" onClick={() => setSelectedArticle(regularArticles[0])}>
             <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: '16 / 7' }}>
-              {regularArticles[0].image ? (
-                <img src={regularArticles[0].image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <BookOpen size={48} strokeWidth={0.3} className="text-black/[0.04]" />
-                </div>
-              )}
+              <img src={regularArticles[0].image || LIFESTYLE.walking} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
             </div>
             <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-16" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.4) 100%)' }}>
               <p className="text-[10px] text-white/40 uppercase tracking-[0.3em] mb-2">{regularArticles[0].category}</p>
@@ -208,11 +187,7 @@ export default function Explore() {
                         className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]"
                         style={{ aspectRatio: '3 / 2' }}
                       >
-                        {article.image ? (
-                          <img src={article.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
-                        ) : (
-                          <BookOpen size={28} strokeWidth={0.5} className="text-black/[0.06]" />
-                        )}
+                        <img src={article.image || LIFESTYLE[['walking', 'suit', 'store', 'detail'][article.id % 4]]} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
                       </div>
                       <p className="text-[10px] text-black/25 uppercase tracking-[0.2em] mb-1">{article.category}</p>
                       <p className="text-[13px] lg:text-[15px] text-black font-light leading-snug">{article.title}</p>

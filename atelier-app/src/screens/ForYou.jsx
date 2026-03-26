@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 import { isNative, isMobileWeb } from '../App'
 import CtaBanner from '../components/CtaBanner'
+import { SHOES, CRAFT, CARE, LIFESTYLE, HEROES } from '../lib/editorialImages'
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ForYou() {
@@ -40,13 +41,7 @@ export default function ForYou() {
       {heroShoe && (
         <div className="relative cursor-pointer" onClick={() => selectShoe(heroShoe)}>
           <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: isMobileWeb ? '3 / 4' : '16 / 8' }}>
-            {heroShoe.image ? (
-              <img src={heroShoe.image} alt={heroShoe.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
-                <span className="text-white/[0.06] text-[80px] lg:text-[120px] font-extralight tracking-[0.4em]">ATELIER</span>
-              </div>
-            )}
+            <img src={heroShoe.image || HEROES.foryou} alt={heroShoe.name} className="w-full h-full object-cover" />
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-16" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.45) 100%)' }}>
             <p className="text-[10px] lg:text-[11px] text-white/50 uppercase tracking-[0.3em] mb-2 lg:mb-3">Atelier Kollektion</p>
@@ -71,16 +66,7 @@ export default function ForYou() {
           {shoes.slice(1, 3).map(shoe => (
             <div key={shoe.id} className="relative cursor-pointer group" onClick={() => selectShoe(shoe)}>
               <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: '3 / 4' }}>
-                {shoe.image ? (
-                  <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <svg viewBox="0 0 260 130" className="w-1/2 opacity-40">
-                      <path d="M20 100 Q17 108 38 112 L222 112 Q238 112 238 100 L232 80 Q226 62 210 60 L72 60 Q47 60 42 68 Z" fill={shoe.color || '#374151'} />
-                      <path d="M42 68 Q37 48 62 36 L120 30 Q155 27 178 42 Q198 54 232 80 L210 60 Q180 50 148 52 L90 53 Q60 55 42 68 Z" fill={shoe.color || '#374151'} opacity="0.85" />
-                    </svg>
-                  </div>
-                )}
+                <img src={shoe.image || (shoe.id % 2 === 0 ? SHOES.editorial1 : SHOES.editorial2)} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-8" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.35) 100%)' }}>
                 <p className="text-[18px] lg:text-[26px] font-extralight text-white leading-tight tracking-tight">{shoe.name}</p>
@@ -94,8 +80,12 @@ export default function ForYou() {
       {/* ══════════════════════════════════════════════════════════
           COLLECTION CTA — Full-bleed dark banner
           ══════════════════════════════════════════════════════════ */}
-      <div className="bg-[#1a1a1a] cursor-pointer" onClick={() => navigate('/collection')}>
-        <div className="max-w-4xl mx-auto px-8 lg:px-16 py-16 lg:py-28 text-center">
+      <div className="relative cursor-pointer" onClick={() => navigate('/collection')}>
+        <div className="absolute inset-0 overflow-hidden">
+          <img src={CRAFT.workshop} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/65" />
+        </div>
+        <div className="relative max-w-4xl mx-auto px-8 lg:px-16 py-16 lg:py-28 text-center">
           <p className="text-[10px] text-white/25 uppercase tracking-[0.3em] mb-4 lg:mb-5">Handgefertigt in über 200 Schritten</p>
           <h2 className="text-[28px] lg:text-[44px] font-extralight text-white leading-[1.1] tracking-tight">
             Die Kollektion entdecken
@@ -126,13 +116,7 @@ export default function ForYou() {
               {featuredShoes.slice(0, 8).map(shoe => (
                 <div key={shoe.id} className="group cursor-pointer" onClick={() => selectShoe(shoe)}>
                   <div className="w-full overflow-hidden bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '3 / 4' }}>
-                    {shoe.image ? (
-                      <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag size={28} strokeWidth={0.5} className="text-black/[0.06]" />
-                      </div>
-                    )}
+                    <img src={shoe.image || SHOES[['dressShoes', 'oxfords', 'loafers', 'boots'][shoe.id % 4]]} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
                   </div>
                   <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{shoe.name}</p>
                   <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 font-light">{shoe.price || `€ ${shoe.base_price || ''}`}</p>
@@ -157,21 +141,19 @@ export default function ForYou() {
           ══════════════════════════════════════════════════════════ */}
       {!isMobileWeb && (
         <div className="relative cursor-pointer" onClick={() => navigate(isNative ? '/scan' : '/explore')}>
-          <div className="w-full bg-[#f6f5f3]" style={{ aspectRatio: '16 / 6' }}>
-            <div className="w-full h-full flex items-center justify-center">
-              <Footprints size={60} strokeWidth={0.3} className="text-black/[0.04]" />
-            </div>
+          <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 6' }}>
+            <img src={CRAFT.hands} alt="" className="w-full h-full object-cover" />
           </div>
-          <div className="absolute inset-0 flex items-center justify-center text-center px-6">
+          <div className="absolute inset-0 flex items-center justify-center text-center px-6" style={{ background: 'linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.45))' }}>
             <div>
-              <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">
+              <p className="text-[10px] text-white/50 uppercase tracking-[0.3em] mb-3">
                 {isNative ? '3D-Technologie' : 'Savoir-Faire'}
               </p>
-              <h2 className="text-[26px] lg:text-[40px] font-extralight text-black leading-[1.1] tracking-tight">
+              <h2 className="text-[26px] lg:text-[40px] font-extralight text-white leading-[1.1] tracking-tight">
                 {isNative ? 'Der perfekte Scan' : 'Handwerkskunst erleben'}
               </h2>
               <button
-                className="mt-6 px-8 py-3 bg-black text-white text-[11px] border border-black hover:bg-white hover:text-black transition-all duration-300"
+                className="mt-6 px-8 py-3 bg-white text-black text-[11px] border-0 hover:bg-black hover:text-white transition-all duration-300"
                 style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
               >
                 Entdecken
@@ -231,13 +213,7 @@ export default function ForYou() {
               {favShoes.slice(0, 4).map(shoe => (
                 <div key={shoe.id} className="group cursor-pointer" onClick={() => selectShoe(shoe)}>
                   <div className="w-full overflow-hidden bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '3 / 4' }}>
-                    {shoe.image ? (
-                      <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Heart size={24} strokeWidth={0.5} className="text-black/[0.06]" />
-                      </div>
-                    )}
+                    <img src={shoe.image || SHOES[['dressShoes', 'oxfords', 'loafers', 'boots'][shoe.id % 4]]} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
                   </div>
                   <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{shoe.name}</p>
                   <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 font-light">{shoe.price}</p>
@@ -284,15 +260,13 @@ export default function ForYou() {
         <>
           {/* Full-bleed editorial banner for accessories */}
           <div className="relative cursor-pointer" onClick={() => navigate('/accessories')}>
-            <div className="w-full bg-[#f6f5f3]" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '16 / 5' }}>
-              <div className="w-full h-full flex items-center justify-center">
-                <Gift size={48} strokeWidth={0.3} className="text-black/[0.04]" />
-              </div>
+            <div className="w-full overflow-hidden" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '16 / 5' }}>
+              <img src={CARE.polish} alt="" className="w-full h-full object-cover" />
             </div>
-            <div className="absolute inset-0 flex items-center justify-center text-center px-6">
+            <div className="absolute inset-0 flex items-center justify-center text-center px-6" style={{ background: 'linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.5))' }}>
               <div>
-                <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Zubehör & Pflege</p>
-                <h2 className="text-[26px] lg:text-[40px] font-extralight text-black leading-[1.1] tracking-tight">
+                <p className="text-[10px] text-white/50 uppercase tracking-[0.3em] mb-3">Zubehör & Pflege</p>
+                <h2 className="text-[26px] lg:text-[40px] font-extralight text-white leading-[1.1] tracking-tight">
                   Das Beste für Ihre Schuhe
                 </h2>
               </div>
@@ -306,11 +280,7 @@ export default function ForYou() {
                 {activeAccessories.slice(0, 4).map(acc => (
                   <div key={acc.id} className="group cursor-pointer" onClick={() => navigate('/accessories')}>
                     <div className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '3 / 4' }}>
-                      {acc.image_data ? (
-                        <img src={acc.image_data} alt={acc.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                      ) : (
-                        <Gift size={28} strokeWidth={0.5} className="text-black/[0.06]" />
-                      )}
+                      <img src={acc.image_data || CARE[['polish', 'brushes', 'cream'][acc.id % 3]]} alt={acc.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
                     </div>
                     <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{acc.name}</p>
                     <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 font-light">€ {parseFloat(acc.price) || 0}</p>
@@ -339,13 +309,7 @@ export default function ForYou() {
           {/* Full-bleed first article */}
           <div className="relative cursor-pointer" onClick={() => navigate('/explore')}>
             <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '16 / 6' }}>
-              {publishedArticles[0].image_data ? (
-                <img src={publishedArticles[0].image_data} alt={publishedArticles[0].title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <BookOpen size={48} strokeWidth={0.3} className="text-black/[0.04]" />
-                </div>
-              )}
+              <img src={publishedArticles[0].image_data || CRAFT.leather} alt={publishedArticles[0].title} className="w-full h-full object-cover" />
             </div>
             <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-16" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.4) 100%)' }}>
               <p className="text-[10px] text-white/40 uppercase tracking-[0.3em] mb-2">Atelier Journal</p>
@@ -361,13 +325,7 @@ export default function ForYou() {
                   {publishedArticles.slice(1, 4).map(article => (
                     <div key={article.id} className="group cursor-pointer" onClick={() => navigate('/explore')}>
                       <div className="w-full overflow-hidden bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '4 / 3' }}>
-                        {article.image_data ? (
-                          <img src={article.image_data} alt={article.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <BookOpen size={32} strokeWidth={0.5} className="text-black/[0.06]" />
-                          </div>
-                        )}
+                        <img src={article.image_data || CRAFT[['workshop', 'stitching', 'tools'][article.id % 3]]} alt={article.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
                       </div>
                       <p className="text-[10px] text-black/25 uppercase tracking-[0.2em] mb-1">{article.category}</p>
                       <p className="text-[14px] lg:text-[16px] text-black font-light leading-snug">{article.title}</p>
