@@ -282,36 +282,44 @@ export function runMigrations(db) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
 
-  // ── Migrate accessories: populate recommendation data if empty ─────────────
+  // ── Ensure accessories exist with full data (upsert) ─────────────────────
   try {
-    const needsUpdate = db.prepare("SELECT COUNT(*) as c FROM accessories WHERE recommended_for = '[]' OR recommended_for IS NULL").get()
-    if (needsUpdate?.c > 0) {
-      const recs = {
-        shoetrees:       { rec: '["OXFORD","DERBY","LOAFER","MONK","BOOT"]', not: '["SNEAKER"]' },
-        carekit:         { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-        dustbag:         { rec: '["OXFORD","DERBY","LOAFER","MONK","BOOT","SNEAKER"]', not: '[]' },
-        shoehorn:        { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-        belt:            { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
-        horsehair_brush: { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-        suede_brush:     { rec: '["DERBY","LOAFER","BOOT"]', not: '["OXFORD","SNEAKER"]' },
-        suede_spray:     { rec: '["DERBY","BOOT","LOAFER"]', not: '[]' },
-        suede_eraser:    { rec: '["DERBY","LOAFER","BOOT"]', not: '["OXFORD","SNEAKER"]' },
-        cream_dark:      { rec: '["OXFORD","DERBY","MONK"]', not: '["SNEAKER","BOOT"]' },
-        cream_cognac:    { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-        cordovan_balm:   { rec: '["OXFORD","DERBY","MONK"]', not: '["SNEAKER","BOOT","LOAFER"]' },
-        patent_care:     { rec: '["OXFORD","DERBY"]', not: '["SNEAKER","BOOT","LOAFER"]' },
-        boot_jack:       { rec: '["BOOT"]', not: '["OXFORD","DERBY","LOAFER","SNEAKER","MONK"]' },
-        waxed_laces:     { rec: '["OXFORD","DERBY"]', not: '["LOAFER","BOOT","SNEAKER","MONK"]' },
-        sneaker_kit:     { rec: '["SNEAKER"]', not: '["OXFORD","DERBY","BOOT","MONK","LOAFER"]' },
-        buckle_cloth:    { rec: '["MONK","LOAFER"]', not: '["SNEAKER","OXFORD","DERBY"]' },
-        sole_oil:        { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-        exotic_care:     { rec: '["OXFORD","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
-        polishing_cloth: { rec: '["OXFORD","DERBY","MONK","LOAFER"]', not: '["SNEAKER"]' },
-      }
-      const stmt = db.prepare("UPDATE accessories SET recommended_for = ?, not_recommended_for = ? WHERE key = ?")
-      for (const [key, { rec, not }] of Object.entries(recs)) {
-        stmt.run(rec, not, key)
-      }
+    const accData = [
+      { key: 'shoetrees',       name: 'Zedernholz Schuhspanner',    desc: 'Formerhalt & Feuchtigkeitskontrolle. Zedernholz absorbiert Feuchtigkeit und hält Ihren Schuh in perfekter Form.', price: 45,  sort: 0,  rec: '["OXFORD","DERBY","LOAFER","MONK","BOOT"]', not: '["SNEAKER"]' },
+      { key: 'carekit',         name: 'Lederpflege-Set',             desc: 'Komplett-Set mit Creme, Rosshaar-Bürste & Poliertuch für die optimale Pflege von Glattleder.',                   price: 35,  sort: 1,  rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+      { key: 'dustbag',         name: 'Samtbeutel',                  desc: 'Schutzaufbewahrung aus weicher Baumwolle. Bewahrt den Glanz und schützt vor Staub und Kratzern.',                price: 25,  sort: 2,  rec: '["OXFORD","DERBY","LOAFER","MONK","BOOT","SNEAKER"]', not: '[]' },
+      { key: 'shoehorn',        name: 'Messing-Schuhlöffel',         desc: 'Handgravierter Schuhlöffel aus massivem Messing, 38 cm. Schont die Fersenkappe beim Anziehen.',                  price: 20,  sort: 3,  rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+      { key: 'belt',            name: 'Passendes Ledergürtel',       desc: 'Maßgefertigter Gürtel aus derselben Haut & Farbe wie Ihr Schuh. Das perfekte Ensemble.',                        price: 180, sort: 4,  rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
+      { key: 'horsehair_brush', name: 'Rosshaar-Bürste',             desc: 'Weiche Naturborsten für das tägliche Polieren von Glattleder. Entfernt Staub und bringt den natürlichen Glanz zurück.', price: 28, sort: 5, rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+      { key: 'suede_brush',     name: 'Wildleder-Kreppbürste',       desc: 'Krepp- & Messingborsten für Velours und Nubuk. Richtet das Flor auf und entfernt hartnäckige Flecken.',           price: 32,  sort: 6,  rec: '["DERBY","LOAFER","BOOT"]', not: '["OXFORD","SNEAKER"]' },
+      { key: 'suede_spray',     name: 'Imprägnierspray',             desc: 'Nano-Schutz gegen Feuchtigkeit & Flecken, 250 ml. Unverzichtbar für empfindliche Leder und Wildleder.',          price: 18,  sort: 7,  rec: '["DERBY","BOOT","LOAFER"]', not: '[]' },
+      { key: 'suede_eraser',    name: 'Wildleder-Radierer',          desc: 'Entfernt trockene Flecken & Salzränder schonend, ohne das Material zu beschädigen.',                              price: 12,  sort: 8,  rec: '["DERBY","LOAFER","BOOT"]', not: '["OXFORD","SNEAKER"]' },
+      { key: 'cream_dark',      name: 'Schuhcreme Schwarz',          desc: 'Pigmentierte Pflegecreme für schwarzes Glattleder. Nährt das Leder und frischt die Farbe auf.',                  price: 15,  sort: 9,  rec: '["OXFORD","DERBY","MONK"]', not: '["SNEAKER","BOOT"]' },
+      { key: 'cream_cognac',    name: 'Schuhcreme Cognac',           desc: 'Pigmentierte Pflegecreme für braunes & cognacfarbenes Leder. Perfekt für warme Brauntöne.',                       price: 15,  sort: 10, rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+      { key: 'cordovan_balm',   name: 'Cordovan-Balsam',             desc: 'Spezialwachs für Shell Cordovan. Nährt das edle Pferdeleder und schützt vor Austrocknung.',                      price: 38,  sort: 11, rec: '["OXFORD","DERBY","MONK"]', not: '["SNEAKER","BOOT","LOAFER"]' },
+      { key: 'patent_care',     name: 'Lackleder-Pflege',            desc: 'Reinigung & Glanzerhalt für Patentleder. Entfernt Fingerabdrücke und kleine Kratzer.',                            price: 22,  sort: 12, rec: '["OXFORD","DERBY"]', not: '["SNEAKER","BOOT","LOAFER"]' },
+      { key: 'boot_jack',       name: 'Stiefelknecht',               desc: 'Massives Buchenholz mit Gummischutz. Erleichtert das Ausziehen von hohen Chelsea Boots.',                        price: 35,  sort: 13, rec: '["BOOT"]', not: '["OXFORD","DERBY","LOAFER","SNEAKER","MONK"]' },
+      { key: 'waxed_laces',     name: 'Gewachste Schnürsenkel',      desc: 'Rundes Profil, 75 cm, passend gefärbt. Halten besser und sehen eleganter aus.',                                  price: 12,  sort: 14, rec: '["OXFORD","DERBY"]', not: '["LOAFER","BOOT","SNEAKER","MONK"]' },
+      { key: 'sneaker_kit',     name: 'Sneaker-Reinigungsset',       desc: 'Spezialschaum, Mikrofasertuch & Sohlenbürste. Speziell für Glattleder-Sneaker entwickelt.',                      price: 28,  sort: 15, rec: '["SNEAKER"]', not: '["OXFORD","DERBY","BOOT","MONK","LOAFER"]' },
+      { key: 'buckle_cloth',    name: 'Schnallen-Poliertuch',        desc: 'Anti-Anlauf-Tuch für Messing- & Silberschnallen. Hält Schnallen und Metallteile glänzend.',                       price: 15,  sort: 16, rec: '["MONK","LOAFER"]', not: '["SNEAKER","OXFORD","DERBY"]' },
+      { key: 'sole_oil',        name: 'Ledersohlen-Balsam',          desc: 'Pflegt & imprägniert offenporige Ledersohlen. Verlängert die Lebensdauer der Sohle erheblich.',                  price: 18,  sort: 17, rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+      { key: 'exotic_care',     name: 'Exotenleder-Pflege',          desc: 'Spezialcreme für Kroko-Prägung & strukturierte Leder. Erhält die einzigartige Textur.',                          price: 42,  sort: 18, rec: '["OXFORD","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
+      { key: 'polishing_cloth', name: 'Poliertuch',                  desc: 'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                  price: 12,  sort: 19, rec: '["OXFORD","DERBY","MONK","LOAFER"]', not: '["SNEAKER"]' },
+    ]
+    const upsert = db.prepare(`
+      INSERT INTO accessories (key, name, description, price, sort_order, is_active, recommended_for, not_recommended_for)
+      VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET
+        name = excluded.name,
+        description = excluded.description,
+        price = excluded.price,
+        sort_order = excluded.sort_order,
+        is_active = 1,
+        recommended_for = excluded.recommended_for,
+        not_recommended_for = excluded.not_recommended_for
+    `)
+    for (const a of accData) {
+      upsert.run(a.key, a.name, a.desc, a.price, a.sort, a.rec, a.not)
     }
   } catch { /* table may not exist yet on first run */ }
 
