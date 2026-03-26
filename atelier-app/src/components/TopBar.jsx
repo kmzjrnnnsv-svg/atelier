@@ -162,10 +162,10 @@ export default function TopBar() {
             </div>
           </div>
 
-          {/* Menu content */}
-          <div className="overflow-y-auto" style={{ height: `calc(100vh - ${headerH}px)` }}>
+          {/* Menu content — fixed layout, no scroll */}
+          <div className="flex flex-col justify-center" style={{ height: `calc(100vh - ${headerH}px)`, overflow: 'hidden' }}>
             {/* Primary navigation — large text like LV */}
-            <nav className="px-6 lg:px-12 pt-8 lg:pt-12">
+            <nav className="px-6 lg:px-12">
               {NAV_ITEMS.map(({ label, path }) => {
                 const isActive = pathname === path || pathname.startsWith(path + '/')
                 return (
@@ -188,10 +188,10 @@ export default function TopBar() {
             </nav>
 
             {/* Divider */}
-            <div className="mx-6 lg:mx-12 my-6 lg:my-8 h-px bg-black/[0.06]" />
+            <div className="mx-6 lg:mx-12 my-4 lg:my-6 h-px bg-black/[0.06]" />
 
             {/* Secondary navigation */}
-            <nav className="px-6 lg:px-12 pb-10 lg:pb-16">
+            <nav className="px-6 lg:px-12">
               {SECONDARY_ITEMS.map(({ label, path }) => {
                 const isActive = pathname === path
                 return (
@@ -199,10 +199,10 @@ export default function TopBar() {
                     key={path}
                     onClick={() => go(path)}
                     onPointerEnter={() => prefetchRoute(path)}
-                    className="block w-full text-left bg-transparent border-0 py-2.5 lg:py-3 group"
+                    className="block w-full text-left bg-transparent border-0 py-2 lg:py-2.5 group"
                   >
                     <span
-                      className={`text-[15px] lg:text-[16px] font-light transition-colors ${
+                      className={`text-[14px] lg:text-[15px] font-light transition-colors ${
                         isActive ? 'text-black' : 'text-black/35 group-hover:text-black'
                       }`}
                     >
@@ -212,19 +212,6 @@ export default function TopBar() {
                 )
               })}
             </nav>
-
-            {/* Footer — client service */}
-            <div className="border-t border-black/[0.06] px-6 lg:px-12 py-8 lg:py-10">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-black/20 font-light mb-4">
-                Kundenservice
-              </p>
-              <button
-                onClick={() => go('/help')}
-                className="text-[13px] font-light text-black/40 bg-transparent border-0 p-0 hover:text-black transition-colors"
-              >
-                Können wir Ihnen behilflich sein?
-              </button>
-            </div>
           </div>
         </div>
       )}
