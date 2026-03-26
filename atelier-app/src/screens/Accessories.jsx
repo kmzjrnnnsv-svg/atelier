@@ -1,155 +1,36 @@
 /**
  * Accessories.jsx — Customer-facing accessories browsing page
- * Each accessory shows which shoes it's recommended for (horizontal scroll)
- * Layout: full-width accessory cards with shoe recommendations
+ * Clean grid layout with minimal cards
  */
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShoppingBag, Plus, Check, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { ShoppingBag, Plus, Check } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
-  MONK: 'Wholecut', BOOT: 'Chelsea', SNEAKER: 'Sneaker',
+  MONK: 'Monk', BOOT: 'Boot', SNEAKER: 'Sneaker',
 }
 
-// ── Horizontal shoe scroll (right-to-left initial position) ──────────────
-function ShoeScroll({ shoes, label, color }) {
-  const ref = useRef(null)
-
-  // Scroll to end on mount (right side first)
-  const handleRef = (el) => {
-    if (el && !ref.current) {
-      ref.current = el
-      // Start scrolled to right, user scrolls left to discover
-      requestAnimationFrame(() => {
-        el.scrollLeft = el.scrollWidth - el.clientWidth
-      })
-    }
-  }
-
-  if (!shoes.length) return null
-
-  return (
-    <div className="mt-2">
-      <p className="text-[9px] font-semibold uppercase tracking-widest mb-1.5" style={{ color, letterSpacing: '0.12em' }}>
-        {label}
-      </p>
-      <div
-        ref={handleRef}
-        className="flex gap-2 overflow-x-auto pb-1"
-        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
-      >
-        {shoes.map(shoe => (
-          <div key={shoe.id} className="flex-shrink-0 w-20">
-            <div className="w-20 h-20 overflow-hidden bg-black/[0.02] flex items-center justify-center">
-              {shoe.image ? (
-                <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover" />
-              ) : (
-                <svg viewBox="0 0 200 90" className="w-14 opacity-50">
-                  <path d="M15 75 Q12 80 28 84 L172 84 Q186 84 186 75 L182 62 Q178 50 165 48 L55 48 Q36 48 31 54 Z" fill={shoe.color || '#666'} />
-                  <path d="M31 54 Q27 37 50 28 L100 24 Q128 22 150 33 Q168 42 182 62 L165 48 L55 48 Q36 48 31 54 Z" fill={shoe.color || '#666'} opacity="0.85" />
-                </svg>
-              )}
-            </div>
-            <p className="text-[9px] text-black/50 mt-1 leading-tight truncate">{shoe.name}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Accessory Detail Card ────────────────────────────────────────────────
-function AccessoryDetail({ acc, shoes, inCart, onAdd, onNavigateShoe }) {
-  const recommended = JSON.parse(acc.recommended_for || '[]')
-  const notRecommended = JSON.parse(acc.not_recommended_for || '[]')
-
-  const recShoes = shoes.filter(s => recommended.includes(s.category))
-  const notShoes = shoes.filter(s => notRecommended.includes(s.category))
-
-  return (
-    <div className="border-b border-black/5 last:border-b-0">
-      <div className="px-5 lg:px-8 py-6">
-        <div className="flex gap-4 lg:gap-6">
-          {/* Image */}
-          <div className="w-28 h-28 lg:w-36 lg:h-36 flex-shrink-0 bg-black/[0.02] flex items-center justify-center overflow-hidden">
-            {acc.image_data ? (
-              <img src={acc.image_data} alt={acc.name} className="w-full h-full object-cover" />
-            ) : (
-              <ShoppingBag size={32} strokeWidth={0.8} className="text-black/10" />
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-[15px] lg:text-[17px] font-semibold text-black leading-snug">{acc.name}</p>
-                {acc.description && (
-                  <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 leading-relaxed line-clamp-3">{acc.description}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 mt-3">
-              <p className="text-[15px] font-semibold text-black">€ {parseFloat(acc.price) || 0}</p>
-              <button
-                onClick={() => onAdd(acc)}
-                disabled={inCart}
-                className={`h-8 px-3.5 flex items-center gap-1.5 border-0 text-[11px] font-semibold transition-all ${
-                  inCart ? 'bg-black/5 text-black/30' : 'bg-black text-white active:opacity-80'
-                }`}
-              >
-                {inCart ? <><Check size={12} strokeWidth={2.5} /> Hinzugefügt</> : <><Plus size={12} strokeWidth={2} /> Warenkorb</>}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Shoe recommendations — horizontal scroll */}
-        <div className="mt-4 flex flex-col lg:flex-row gap-3 lg:gap-6">
-          {recShoes.length > 0 && (
-            <div className="flex-1 min-w-0">
-              <ShoeScroll shoes={recShoes} label="Empfohlen für" color="#34C759" />
-            </div>
-          )}
-          {notShoes.length > 0 && (
-            <div className="flex-1 min-w-0">
-              <ShoeScroll shoes={notShoes} label="Nicht empfohlen" color="#FF3B30" />
-            </div>
-          )}
-        </div>
-
-        {/* Category tags */}
-        {recommended.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {recommended.map(cat => (
-              <span key={cat} className="text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 bg-[#34C759]/10 text-[#34C759]">
-                {CATEGORY_LABELS[cat] || cat}
-              </span>
-            ))}
-            {notRecommended.map(cat => (
-              <span key={cat} className="text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 bg-black/[0.03] text-black/25 line-through">
-                {CATEGORY_LABELS[cat] || cat}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+// ── Filter pills ─────────────────────────────────────────────────────────
+const FILTERS = [
+  { key: 'all', label: 'Alle' },
+  { key: 'pflege', label: 'Pflege', match: ['carekit', 'cream_dark', 'cream_cognac', 'cordovan_balm', 'patent_care', 'exotic_care', 'sole_oil'] },
+  { key: 'buersten', label: 'Bürsten', match: ['horsehair_brush', 'suede_brush', 'polishing_cloth', 'buckle_cloth'] },
+  { key: 'schutz', label: 'Schutz', match: ['suede_spray', 'suede_eraser', 'dustbag', 'shoetrees'] },
+  { key: 'extras', label: 'Extras', match: ['shoehorn', 'belt', 'boot_jack', 'waxed_laces', 'sneaker_kit'] },
+]
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function Accessories() {
   const navigate = useNavigate()
-  const { shoes, cart, addToCart } = useAtelierStore()
+  const { cart, addToCart } = useAtelierStore()
   const [accessoriesList, setAccessoriesList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
+  const [expandedId, setExpandedId] = useState(null)
 
-  // Always fetch directly — store may not have loaded accessories yet
   useEffect(() => {
     setLoading(true)
     apiFetch('/api/accessories')
@@ -161,10 +42,14 @@ export default function Accessories() {
       .finally(() => setLoading(false))
   }, [])
 
-  const activeAccessories = accessoriesList
+  const filtered = filter === 'all'
+    ? accessoriesList
+    : accessoriesList.filter(a => FILTERS.find(f => f.key === filter)?.match?.includes(a.key))
+
   const cartIds = cart.filter(c => c.isAccessory).map(c => c.id)
 
-  const handleAdd = (acc) => {
+  const handleAdd = (acc, e) => {
+    e.stopPropagation()
     if (cartIds.includes(`acc-${acc.id}`)) return
     addToCart({
       id: `acc-${acc.id}`,
@@ -180,49 +65,121 @@ export default function Accessories() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Large Title Header ────────────────────────────────────── */}
-      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-2">
-        <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Zubehör</p>
-        <p className="text-[15px] lg:text-[17px] text-black/45 mt-1">Pflege, Schutz und Extras für deine Maßschuhe.</p>
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div className="px-5 lg:px-10 pt-4 lg:pt-10 pb-1">
+        <p className="text-[11px] text-black/30 uppercase mb-1" style={{ letterSpacing: '0.18em' }}>Kollektion</p>
+        <p className="text-[28px] lg:text-[36px] font-light text-black leading-tight">Zubehör</p>
+        <p className="text-[13px] lg:text-[14px] text-black/40 mt-2 max-w-md leading-relaxed">
+          Pflege, Schutz und Extras — abgestimmt auf handgefertigte Lederschuhe.
+        </p>
       </div>
 
-      {/* ── Accessory count ──────────────────────────────────────── */}
+      {/* ── Filter pills ──────────────────────────────────────── */}
+      <div className="px-5 lg:px-10 pt-4 pb-2">
+        <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {FILTERS.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`flex-shrink-0 h-8 px-4 text-[11px] border transition-all ${
+                filter === f.key
+                  ? 'bg-black text-white border-black'
+                  : 'bg-transparent text-black/50 border-black/10 hover:border-black/20'
+              }`}
+              style={{ letterSpacing: '0.06em' }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Count ──────────────────────────────────────────────── */}
       {!loading && (
-        <div className="px-5 lg:px-8 pb-4">
-          <p className="text-[11px] text-black/30 uppercase tracking-wider">{activeAccessories.length} Produkte</p>
+        <div className="px-5 lg:px-10 pb-4 pt-2">
+          <p className="text-[11px] text-black/25">{filtered.length} Produkte</p>
         </div>
       )}
 
-      {/* ── Loading ──────────────────────────────────────────────── */}
+      {/* ── Loading ────────────────────────────────────────────── */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 border-2 border-black/10 border-t-black animate-spin" />
+          <div className="w-5 h-5 border-2 border-black/10 border-t-black animate-spin" />
         </div>
-      ) : activeAccessories.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center px-5">
           <div className="w-14 h-14 bg-black/[0.03] flex items-center justify-center mb-4">
             <ShoppingBag size={24} className="text-black/20" strokeWidth={1.5} />
           </div>
-          <p className="text-[15px] font-semibold text-black">Kein Zubehör verfügbar</p>
-          <p className="text-[13px] text-black/40 mt-1 max-w-[220px] leading-relaxed">Bald findest du hier passendes Zubehör.</p>
+          <p className="text-[15px] font-medium text-black">Kein Zubehör gefunden</p>
+          <p className="text-[13px] text-black/40 mt-1">Versuche einen anderen Filter.</p>
         </div>
       ) : (
-        <div>
-          {activeAccessories.map(acc => (
-            <AccessoryDetail
-              key={acc.id}
-              acc={acc}
-              shoes={shoes}
-              inCart={cartIds.includes(`acc-${acc.id}`)}
-              onAdd={handleAdd}
-              onNavigateShoe={(shoe) => navigate('/customize', { state: { product: shoe } })}
-            />
-          ))}
+        /* ── Product Grid ──────────────────────────────────────── */
+        <div className="px-5 lg:px-10 pb-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+            {filtered.map(acc => {
+              const inCart = cartIds.includes(`acc-${acc.id}`)
+              const recommended = JSON.parse(acc.recommended_for || '[]')
+              const expanded = expandedId === acc.id
+
+              return (
+                <div
+                  key={acc.id}
+                  className="group cursor-pointer"
+                  onClick={() => setExpandedId(expanded ? null : acc.id)}
+                >
+                  {/* Image */}
+                  <div className="w-full overflow-hidden flex items-center justify-center bg-black/[0.02] relative"
+                    style={{ aspectRatio: '1' }}
+                  >
+                    {acc.image_data ? (
+                      <img src={acc.image_data} alt={acc.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <ShoppingBag size={28} strokeWidth={0.7} className="text-black/8" />
+                    )}
+
+                    {/* Add button overlay */}
+                    <button
+                      onClick={(e) => handleAdd(acc, e)}
+                      disabled={inCart}
+                      className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center border-0 transition-all ${
+                        inCart ? 'bg-black text-white' : 'bg-white/90 text-black/40 opacity-0 group-hover:opacity-100'
+                      }`}
+                    >
+                      {inCart ? <Check size={12} strokeWidth={2.5} /> : <Plus size={12} strokeWidth={2} />}
+                    </button>
+                  </div>
+
+                  {/* Info */}
+                  <div className="pt-2.5 pb-1">
+                    <p className="text-[12px] lg:text-[13px] text-black leading-snug">{acc.name}</p>
+                    <p className="text-[12px] lg:text-[13px] text-black/40 mt-0.5">€{parseFloat(acc.price) || 0}</p>
+                  </div>
+
+                  {/* Expanded: description + tags */}
+                  {expanded && (
+                    <div className="pb-3">
+                      {acc.description && (
+                        <p className="text-[11px] text-black/35 leading-relaxed mt-1">{acc.description}</p>
+                      )}
+                      {recommended.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {recommended.map(cat => (
+                            <span key={cat} className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 bg-black/[0.04] text-black/30">
+                              {CATEGORY_LABELS[cat] || cat}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
-
-      {/* ── Bottom spacer ──────────────────────────────────────── */}
-      <div className="h-12" />
     </div>
   )
 }
