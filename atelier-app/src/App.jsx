@@ -120,7 +120,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/settings']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize']
 
 export const isNative = Capacitor.isNativePlatform()
 
