@@ -23,7 +23,7 @@ const FILTERS = [
 
 export default function Accessories() {
   const navigate = useNavigate()
-  const { cart, addToCart } = useAtelierStore()
+  const { cart, addToCart, removeFromCart } = useAtelierStore()
   const [accessoriesList, setAccessoriesList] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
@@ -45,18 +45,22 @@ export default function Accessories() {
 
   const cartIds = cart.filter(c => c.isAccessory).map(c => c.id)
 
-  const handleAdd = (acc, e) => {
+  const handleToggleCart = (acc, e) => {
     e.stopPropagation()
-    if (cartIds.includes(`acc-${acc.id}`)) return
-    addToCart({
-      id: `acc-${acc.id}`,
-      name: acc.name,
-      price: `€ ${parseFloat(acc.price) || 0}`,
-      material: 'Zubehör',
-      image: acc.image_data || null,
-      isAccessory: true,
-      shoeId: null,
-    })
+    const accId = `acc-${acc.id}`
+    if (cartIds.includes(accId)) {
+      removeFromCart(accId)
+    } else {
+      addToCart({
+        id: accId,
+        name: acc.name,
+        price: `€ ${parseFloat(acc.price) || 0}`,
+        material: 'Zubehör',
+        image: acc.image_data || null,
+        isAccessory: true,
+        shoeId: null,
+      })
+    }
   }
 
   return (
@@ -158,11 +162,10 @@ export default function Accessories() {
 
                   {/* Add to cart */}
                   <button
-                    onClick={(e) => handleAdd(acc, e)}
-                    disabled={inCart}
+                    onClick={(e) => handleToggleCart(acc, e)}
                     className={`mt-3 w-full h-10 lg:h-11 flex items-center justify-center gap-2 text-[11px] lg:text-[12px] transition-all duration-300 border ${
                       inCart
-                        ? 'bg-black text-white border-black'
+                        ? 'bg-black text-white border-black hover:bg-white hover:text-black'
                         : 'bg-white text-black border-black/15 hover:bg-black hover:text-white hover:border-black'
                     }`}
                     style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
