@@ -194,18 +194,17 @@ export default function Customize() {
     }
   }, [])
 
-  // Track left panel scroll position for accessories opacity
+  // Track right panel scroll position for accessories opacity
   useEffect(() => {
-    const el = leftPanelRef.current
-    if (!el) return
+    const rp = rightPanelRef.current
+    if (!rp) return
     const onScroll = () => {
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 2
-      setLeftFullyScrolled(atBottom)
+      const atBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
       setRightFullyScrolled(atBottom)
     }
     onScroll()
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
+    rp.addEventListener('scroll', onScroll, { passive: true })
+    return () => rp.removeEventListener('scroll', onScroll)
   }, [])
 
   // 3D Viewer
@@ -369,10 +368,9 @@ export default function Customize() {
         {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
         <div
           ref={leftPanelRef}
-          className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch"
+          className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:min-h-0 lg:overflow-y-auto"
           style={{
             scrollbarWidth: 'none',
-            overflowY: 'auto',
           }}
         >
           <div
