@@ -274,10 +274,46 @@ export function runMigrations(db) {
     // shoes — cost pricing
     `ALTER TABLE shoes ADD COLUMN cost_price       REAL DEFAULT NULL`,
     `ALTER TABLE shoes ADD COLUMN promotion_price   TEXT DEFAULT NULL`,
+    // accessories — shoe recommendations (JSON arrays of category strings)
+    `ALTER TABLE accessories ADD COLUMN recommended_for TEXT DEFAULT '[]'`,
+    `ALTER TABLE accessories ADD COLUMN not_recommended_for TEXT DEFAULT '[]'`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
+
+  // ── Migrate accessories: populate recommendation data if empty ─────────────
+  try {
+    const needsUpdate = db.prepare("SELECT COUNT(*) as c FROM accessories WHERE recommended_for = '[]' OR recommended_for IS NULL").get()
+    if (needsUpdate?.c > 0) {
+      const recs = {
+        shoetrees:       { rec: '["OXFORD","DERBY","LOAFER","MONK","BOOT"]', not: '["SNEAKER"]' },
+        carekit:         { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+        dustbag:         { rec: '["OXFORD","DERBY","LOAFER","MONK","BOOT","SNEAKER"]', not: '[]' },
+        shoehorn:        { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+        belt:            { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
+        horsehair_brush: { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+        suede_brush:     { rec: '["DERBY","LOAFER","BOOT"]', not: '["OXFORD","SNEAKER"]' },
+        suede_spray:     { rec: '["DERBY","BOOT","LOAFER"]', not: '[]' },
+        suede_eraser:    { rec: '["DERBY","LOAFER","BOOT"]', not: '["OXFORD","SNEAKER"]' },
+        cream_dark:      { rec: '["OXFORD","DERBY","MONK"]', not: '["SNEAKER","BOOT"]' },
+        cream_cognac:    { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+        cordovan_balm:   { rec: '["OXFORD","DERBY","MONK"]', not: '["SNEAKER","BOOT","LOAFER"]' },
+        patent_care:     { rec: '["OXFORD","DERBY"]', not: '["SNEAKER","BOOT","LOAFER"]' },
+        boot_jack:       { rec: '["BOOT"]', not: '["OXFORD","DERBY","LOAFER","SNEAKER","MONK"]' },
+        waxed_laces:     { rec: '["OXFORD","DERBY"]', not: '["LOAFER","BOOT","SNEAKER","MONK"]' },
+        sneaker_kit:     { rec: '["SNEAKER"]', not: '["OXFORD","DERBY","BOOT","MONK","LOAFER"]' },
+        buckle_cloth:    { rec: '["MONK","LOAFER"]', not: '["SNEAKER","OXFORD","DERBY"]' },
+        sole_oil:        { rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
+        exotic_care:     { rec: '["OXFORD","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
+        polishing_cloth: { rec: '["OXFORD","DERBY","MONK","LOAFER"]', not: '["SNEAKER"]' },
+      }
+      const stmt = db.prepare("UPDATE accessories SET recommended_for = ?, not_recommended_for = ? WHERE key = ?")
+      for (const [key, { rec, not }] of Object.entries(recs)) {
+        stmt.run(rec, not, key)
+      }
+    }
+  } catch { /* table may not exist yet on first run */ }
 
   // ── Migrate orders: add pending_payment to status CHECK ───────────────────
   try {
@@ -584,27 +620,27 @@ export function runMigrations(db) {
       created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
-    INSERT OR IGNORE INTO accessories (key, name, description, price, sort_order) VALUES
-      ('shoetrees',       'Zedernholz Schuhspanner',    'Formerhalt & Feuchtigkeitskontrolle',                      45,   0),
-      ('carekit',         'Lederpflege-Set',             'Creme, Bürste & Tuch',                                     35,   1),
-      ('dustbag',         'Samtbeutel',                  'Schutzaufbewahrung aus Baumwolle',                          25,   2),
-      ('shoehorn',        'Messing-Schuhlöffel',         'Handgraviert, 38 cm',                                       20,   3),
-      ('belt',            'Passendes Ledergürtel',       'Gleiche Haut & Farbe wie der Schuh',                       180,  4),
-      ('horsehair_brush', 'Rosshaar-Bürste',             'Weiche Naturborsten für tägliches Polieren von Glattleder', 28,   5),
-      ('suede_brush',     'Wildleder-Kreppbürste',       'Krepp- & Messingborsten für Velours und Nubuk',              32,   6),
-      ('suede_spray',     'Imprägnierspray',             'Nano-Schutz gegen Feuchtigkeit & Flecken, 250 ml',          18,   7),
-      ('suede_eraser',    'Wildleder-Radierer',          'Entfernt trockene Flecken & Salzränder schonend',            12,   8),
-      ('cream_dark',      'Schuhcreme Schwarz',          'Pigmentierte Pflegecreme für schwarzes Glattleder',          15,   9),
-      ('cream_cognac',    'Schuhcreme Cognac',           'Pigmentierte Pflegecreme für braunes & cognacfarbenes Leder',15,  10),
-      ('cordovan_balm',   'Cordovan-Balsam',             'Spezialwachs für Shell Cordovan — nährt & schützt',         38,  11),
-      ('patent_care',     'Lackleder-Pflege',            'Reinigung & Glanzerhalt für Patentleder',                    22,  12),
-      ('boot_jack',       'Stiefelknecht',               'Massives Buchenholz mit Gummischutz',                        35,  13),
-      ('waxed_laces',     'Gewachste Schnürsenkel',      'Rundes Profil, 75 cm, passend gefärbt',                      12,  14),
-      ('sneaker_kit',     'Sneaker-Reinigungsset',       'Spezialschaum, Mikrofasertuch & Sohlenbürste',               28,  15),
-      ('buckle_cloth',    'Schnallen-Poliertuch',        'Anti-Anlauf-Tuch für Messing- & Silberschnallen',            15,  16),
-      ('sole_oil',        'Ledersohlen-Balsam',          'Pflegt & imprägniert offenporige Ledersohlen',               18,  17),
-      ('exotic_care',     'Exotenleder-Pflege',          'Spezialcreme für Kroko-Prägung & strukturierte Leder',       42,  18),
-      ('polishing_cloth', 'Poliertuch',                  'Doppellagiges Baumwollflanell für Hochglanz-Finish',         12,  19);
+    INSERT OR IGNORE INTO accessories (key, name, description, price, sort_order, recommended_for, not_recommended_for) VALUES
+      ('shoetrees',       'Zedernholz Schuhspanner',    'Formerhalt & Feuchtigkeitskontrolle. Zedernholz absorbiert Feuchtigkeit und hält Ihren Schuh in perfekter Form.',  45,   0, '["OXFORD","DERBY","LOAFER","MONK","BOOT"]', '["SNEAKER"]'),
+      ('carekit',         'Lederpflege-Set',             'Komplett-Set mit Creme, Rosshaar-Bürste & Poliertuch für die optimale Pflege von Glattleder.',                     35,   1, '["OXFORD","DERBY","LOAFER","MONK"]', '["SNEAKER"]'),
+      ('dustbag',         'Samtbeutel',                  'Schutzaufbewahrung aus weicher Baumwolle. Bewahrt den Glanz und schützt vor Staub und Kratzern.',                  25,   2, '["OXFORD","DERBY","LOAFER","MONK","BOOT","SNEAKER"]', '[]'),
+      ('shoehorn',        'Messing-Schuhlöffel',         'Handgravierter Schuhlöffel aus massivem Messing, 38 cm. Schont die Fersenkappe beim Anziehen.',                    20,   3, '["OXFORD","DERBY","LOAFER","MONK"]', '["SNEAKER"]'),
+      ('belt',            'Passendes Ledergürtel',       'Maßgefertigter Gürtel aus derselben Haut & Farbe wie Ihr Schuh. Das perfekte Ensemble.',                          180,  4, '["OXFORD","DERBY","LOAFER","MONK"]', '["SNEAKER","BOOT"]'),
+      ('horsehair_brush', 'Rosshaar-Bürste',             'Weiche Naturborsten für das tägliche Polieren von Glattleder. Entfernt Staub und bringt den natürlichen Glanz zurück.', 28, 5, '["OXFORD","DERBY","LOAFER","MONK"]', '["SNEAKER"]'),
+      ('suede_brush',     'Wildleder-Kreppbürste',       'Krepp- & Messingborsten für Velours und Nubuk. Richtet das Flor auf und entfernt hartnäckige Flecken.',             32,   6, '["DERBY","LOAFER","BOOT"]', '["OXFORD","SNEAKER"]'),
+      ('suede_spray',     'Imprägnierspray',             'Nano-Schutz gegen Feuchtigkeit & Flecken, 250 ml. Unverzichtbar für empfindliche Leder und Wildleder.',            18,   7, '["DERBY","BOOT","LOAFER"]', '[]'),
+      ('suede_eraser',    'Wildleder-Radierer',          'Entfernt trockene Flecken & Salzränder schonend, ohne das Material zu beschädigen.',                                12,   8, '["DERBY","LOAFER","BOOT"]', '["OXFORD","SNEAKER"]'),
+      ('cream_dark',      'Schuhcreme Schwarz',          'Pigmentierte Pflegecreme für schwarzes Glattleder. Nährt das Leder und frischt die Farbe auf.',                    15,   9, '["OXFORD","DERBY","MONK"]', '["SNEAKER","BOOT"]'),
+      ('cream_cognac',    'Schuhcreme Cognac',           'Pigmentierte Pflegecreme für braunes & cognacfarbenes Leder. Perfekt für warme Brauntöne.',                         15,  10, '["OXFORD","DERBY","LOAFER","MONK"]', '["SNEAKER"]'),
+      ('cordovan_balm',   'Cordovan-Balsam',             'Spezialwachs für Shell Cordovan. Nährt das edle Pferdeleder und schützt vor Austrocknung.',                        38,  11, '["OXFORD","DERBY","MONK"]', '["SNEAKER","BOOT","LOAFER"]'),
+      ('patent_care',     'Lackleder-Pflege',            'Reinigung & Glanzerhalt für Patentleder. Entfernt Fingerabdrücke und kleine Kratzer.',                              22,  12, '["OXFORD","DERBY"]', '["SNEAKER","BOOT","LOAFER"]'),
+      ('boot_jack',       'Stiefelknecht',               'Massives Buchenholz mit Gummischutz. Erleichtert das Ausziehen von hohen Chelsea Boots.',                          35,  13, '["BOOT"]', '["OXFORD","DERBY","LOAFER","SNEAKER","MONK"]'),
+      ('waxed_laces',     'Gewachste Schnürsenkel',      'Rundes Profil, 75 cm, passend gefärbt. Halten besser und sehen eleganter aus.',                                    12,  14, '["OXFORD","DERBY"]', '["LOAFER","BOOT","SNEAKER","MONK"]'),
+      ('sneaker_kit',     'Sneaker-Reinigungsset',       'Spezialschaum, Mikrofasertuch & Sohlenbürste. Speziell für Glattleder-Sneaker entwickelt.',                        28,  15, '["SNEAKER"]', '["OXFORD","DERBY","BOOT","MONK","LOAFER"]'),
+      ('buckle_cloth',    'Schnallen-Poliertuch',        'Anti-Anlauf-Tuch für Messing- & Silberschnallen. Hält Schnallen und Metallteile glänzend.',                         15,  16, '["MONK","LOAFER"]', '["SNEAKER","OXFORD","DERBY"]'),
+      ('sole_oil',        'Ledersohlen-Balsam',          'Pflegt & imprägniert offenporige Ledersohlen. Verlängert die Lebensdauer der Sohle erheblich.',                    18,  17, '["OXFORD","DERBY","LOAFER","MONK"]', '["SNEAKER"]'),
+      ('exotic_care',     'Exotenleder-Pflege',          'Spezialcreme für Kroko-Prägung & strukturierte Leder. Erhält die einzigartige Textur.',                            42,  18, '["OXFORD","LOAFER","MONK"]', '["SNEAKER","BOOT"]'),
+      ('polishing_cloth', 'Poliertuch',                  'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                    12,  19, '["OXFORD","DERBY","MONK","LOAFER"]', '["SNEAKER"]');
 
     -- ── Shipping configuration ──────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS shipping_config (
