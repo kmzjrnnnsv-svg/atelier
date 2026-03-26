@@ -1,7 +1,7 @@
 /**
  * ForYou.jsx — Louis Vuitton-style homepage
- * Edge-to-edge editorial banners alternating with padded, breathing product sections.
- * Rhythm: FULL-BLEED → generous whitespace → PADDED content → FULL-BLEED → …
+ * Alternating rhythm: EDGE-TO-EDGE image → PADDED white section → EDGE-TO-EDGE → PADDED → …
+ * Like LV: image on top, then category label + title + product grid on white below.
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -36,7 +36,7 @@ export default function ForYou() {
     <div className="min-h-full bg-white">
 
       {/* ══════════════════════════════════════════════════════════
-          HERO — Full-bleed editorial banner, edge-to-edge
+          1. HERO — Full-bleed editorial banner (edge-to-edge)
           ══════════════════════════════════════════════════════════ */}
       {heroShoe && (
         <div className="relative cursor-pointer" onClick={() => selectShoe(heroShoe)}>
@@ -59,7 +59,41 @@ export default function ForYou() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          EDITORIAL SPLIT — Two-column, edge-to-edge, no gap
+          2. FEATURED PRODUCTS — Padded, white breathing room
+          ══════════════════════════════════════════════════════════ */}
+      {featuredShoes.length > 0 && (
+        <div className="py-16 lg:py-28">
+          <div className="text-center mb-10 lg:mb-14">
+            <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Herren</p>
+            <h2 className="text-[22px] lg:text-[30px] font-extralight text-black tracking-tight">Empfohlen für Sie</h2>
+          </div>
+          <div className="px-8 lg:px-24 xl:px-32">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-10 lg:gap-y-14">
+              {featuredShoes.slice(0, 4).map(shoe => (
+                <div key={shoe.id} className="group cursor-pointer" onClick={() => selectShoe(shoe)}>
+                  <div className="w-full overflow-hidden bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '3 / 4' }}>
+                    <img src={shoe.image || SHOES[['dressShoes', 'oxfords', 'loafers', 'boots'][shoe.id % 4]]} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                  </div>
+                  <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{shoe.name}</p>
+                  <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 font-light">{shoe.price || `€ ${shoe.base_price || ''}`}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="text-center mt-10 lg:mt-14">
+            <button
+              onClick={() => navigate('/collection')}
+              className="px-10 py-3.5 bg-white text-black text-[11px] border border-black hover:bg-black hover:text-white transition-all duration-300"
+              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
+            >
+              Entdecken Sie die Kollektion
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          3. EDITORIAL SPLIT — Two-column, edge-to-edge
           ══════════════════════════════════════════════════════════ */}
       {shoes.length >= 3 && (
         <div className="grid grid-cols-2">
@@ -78,87 +112,26 @@ export default function ForYou() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          COLLECTION CTA — Full-bleed dark banner
-          ══════════════════════════════════════════════════════════ */}
-      <div className="relative cursor-pointer" onClick={() => navigate('/collection')}>
-        <div className="absolute inset-0 overflow-hidden">
-          <img src={CRAFT.workshop} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/65" />
-        </div>
-        <div className="relative max-w-4xl mx-auto px-8 lg:px-16 py-16 lg:py-28 text-center">
-          <p className="text-[10px] text-white/25 uppercase tracking-[0.3em] mb-4 lg:mb-5">Handgefertigt in über 200 Schritten</p>
-          <h2 className="text-[28px] lg:text-[44px] font-extralight text-white leading-[1.1] tracking-tight">
-            Die Kollektion entdecken
-          </h2>
-          <p className="text-[13px] lg:text-[15px] text-white/30 mt-4 lg:mt-5 font-light leading-relaxed max-w-md mx-auto">
-            Maßschuhe, individuell angepasst an Ihren Fuß. Jedes Paar ein Unikat.
-          </p>
-          <button
-            className="mt-7 lg:mt-10 px-8 py-3 bg-white text-black text-[11px] border-0 hover:bg-black hover:text-white hover:outline hover:outline-1 hover:outline-white transition-all duration-300"
-            style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
-            onClick={e => { e.stopPropagation(); navigate('/collection') }}
-          >
-            Kollektion
-          </button>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════
-          FEATURED PRODUCTS — Padded with generous whitespace
-          ══════════════════════════════════════════════════════════ */}
-      {featuredShoes.length > 0 && (
-        <div className="py-16 lg:py-28">
-          <div className="text-center mb-10 lg:mb-14">
-            <p className="text-[10px] text-black/25 uppercase tracking-[0.3em]">Empfohlen für Sie</p>
-          </div>
-          <div className="px-8 lg:px-24 xl:px-32">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-10 lg:gap-y-14">
-              {featuredShoes.slice(0, 8).map(shoe => (
-                <div key={shoe.id} className="group cursor-pointer" onClick={() => selectShoe(shoe)}>
-                  <div className="w-full overflow-hidden bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '3 / 4' }}>
-                    <img src={shoe.image || SHOES[['dressShoes', 'oxfords', 'loafers', 'boots'][shoe.id % 4]]} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                  </div>
-                  <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{shoe.name}</p>
-                  <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 font-light">{shoe.price || `€ ${shoe.base_price || ''}`}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="text-center mt-10 lg:mt-14">
-            <button
-              onClick={() => navigate('/collection')}
-              className="px-8 py-3 bg-black text-white text-[11px] border border-black hover:bg-white hover:text-black transition-all duration-300"
-              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
-            >
-              Alle Modelle
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════
-          EDITORIAL BANNER — Full-bleed, edge-to-edge
+          4. SAVOIR-FAIRE — Image then text below (LV pattern)
           ══════════════════════════════════════════════════════════ */}
       {!isMobileWeb && (
-        <div className="relative cursor-pointer" onClick={() => navigate(isNative ? '/scan' : '/explore')}>
-          <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 6' }}>
+        <div className="cursor-pointer" onClick={() => navigate(isNative ? '/scan' : '/explore')}>
+          <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
             <img src={CRAFT.hands} alt="" className="w-full h-full object-cover" />
           </div>
-          <div className="absolute inset-0 flex items-center justify-center text-center px-6" style={{ background: 'linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.45))' }}>
-            <div>
-              <p className="text-[10px] text-white/50 uppercase tracking-[0.3em] mb-3">
-                {isNative ? '3D-Technologie' : 'Savoir-Faire'}
-              </p>
-              <h2 className="text-[26px] lg:text-[40px] font-extralight text-white leading-[1.1] tracking-tight">
-                {isNative ? 'Der perfekte Scan' : 'Handwerkskunst erleben'}
-              </h2>
-              <button
-                className="mt-6 px-8 py-3 bg-white text-black text-[11px] border-0 hover:bg-black hover:text-white transition-all duration-300"
-                style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
-              >
-                Entdecken
-              </button>
-            </div>
+          <div className="text-center px-8 lg:px-16 pt-10 lg:pt-14 pb-12 lg:pb-16">
+            <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">
+              {isNative ? '3D-Technologie' : 'Savoir-Faire'}
+            </p>
+            <h2 className="text-[22px] lg:text-[30px] font-extralight text-black leading-[1.1] tracking-tight">
+              {isNative ? 'Der perfekte Scan' : 'Handwerkskunst erleben'}
+            </h2>
+            <button
+              className="mt-6 px-10 py-3.5 bg-white text-black text-[11px] border border-black hover:bg-black hover:text-white transition-all duration-300"
+              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
+            >
+              Entdecken
+            </button>
           </div>
         </div>
       )}
@@ -198,15 +171,36 @@ export default function ForYou() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          FAVORITES — Padded with generous whitespace
+          5. COLLECTION CTA — Full-bleed dark banner (edge-to-edge)
+          ══════════════════════════════════════════════════════════ */}
+      <div className="relative cursor-pointer" onClick={() => navigate('/collection')}>
+        <div className="absolute inset-0 overflow-hidden">
+          <img src={CRAFT.workshop} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/65" />
+        </div>
+        <div className="relative max-w-4xl mx-auto px-8 lg:px-16 py-16 lg:py-28 text-center">
+          <p className="text-[10px] text-white/25 uppercase tracking-[0.3em] mb-4 lg:mb-5">Handgefertigt in über 200 Schritten</p>
+          <h2 className="text-[24px] lg:text-[36px] font-extralight text-white leading-[1.1] tracking-tight">
+            Die Kollektion entdecken
+          </h2>
+          <button
+            className="mt-7 lg:mt-10 px-10 py-3.5 bg-white text-black text-[11px] border-0 hover:bg-black hover:text-white hover:outline hover:outline-1 hover:outline-white transition-all duration-300"
+            style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
+            onClick={e => { e.stopPropagation(); navigate('/collection') }}
+          >
+            Kollektion
+          </button>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════
+          6. FAVORITES — Padded with generous whitespace
           ══════════════════════════════════════════════════════════ */}
       {favShoes.length > 0 && (
         <div className="py-16 lg:py-24">
-          <div className="flex items-center justify-between px-8 lg:px-24 xl:px-32 mb-8 lg:mb-12">
-            <p className="text-[10px] text-black/25 uppercase tracking-[0.3em]">Ihre Favoriten</p>
-            <button onClick={() => navigate('/wishlist')} className="text-[11px] text-black/30 bg-transparent border-0 hover:text-black transition-colors font-light underline underline-offset-4 decoration-black/15">
-              Alle anzeigen
-            </button>
+          <div className="text-center mb-10 lg:mb-14">
+            <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Herren</p>
+            <h2 className="text-[22px] lg:text-[30px] font-extralight text-black tracking-tight">Ihre Favoriten</h2>
           </div>
           <div className="px-8 lg:px-24 xl:px-32">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-10 lg:gap-y-14">
@@ -221,11 +215,62 @@ export default function ForYou() {
               ))}
             </div>
           </div>
+          <div className="text-center mt-10 lg:mt-14">
+            <button
+              onClick={() => navigate('/wishlist')}
+              className="px-10 py-3.5 bg-white text-black text-[11px] border border-black hover:bg-black hover:text-white transition-all duration-300"
+              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
+            >
+              Alle Favoriten anzeigen
+            </button>
+          </div>
         </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          ORDERS — Padded minimal list
+          7. ACCESSORIES — Image then text below + padded grid
+          ══════════════════════════════════════════════════════════ */}
+      {activeAccessories.length > 0 && (
+        <div className="cursor-pointer" onClick={() => navigate('/accessories')}>
+          <div className="w-full overflow-hidden" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '16 / 5' }}>
+            <img src={CARE.polish} alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="text-center px-8 lg:px-16 pt-10 lg:pt-14 pb-4 lg:pb-6">
+            <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Zubehör & Pflege</p>
+            <h2 className="text-[22px] lg:text-[30px] font-extralight text-black leading-[1.1] tracking-tight">
+              Das Beste für Ihre Schuhe
+            </h2>
+          </div>
+
+          <div className="py-10 lg:py-14">
+            <div className="px-8 lg:px-24 xl:px-32">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-10 lg:gap-y-14">
+                {activeAccessories.slice(0, 4).map(acc => (
+                  <div key={acc.id} className="group" onClick={e => e.stopPropagation()}>
+                    <div className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '3 / 4' }}>
+                      <img src={acc.image_data || CARE[['polish', 'brushes', 'cream'][acc.id % 3]]} alt={acc.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                    </div>
+                    <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{acc.name}</p>
+                    <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 font-light">€ {parseFloat(acc.price) || 0}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="text-center mt-10 lg:mt-14">
+              <button
+                onClick={e => { e.stopPropagation(); navigate('/accessories') }}
+                className="px-10 py-3.5 bg-white text-black text-[11px] border border-black hover:bg-black hover:text-white transition-all duration-300"
+                style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
+              >
+                Alle Produkte
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          8. ORDERS — Padded minimal list
           ══════════════════════════════════════════════════════════ */}
       {recentOrders.length > 0 && (
         <div className="border-t border-black/[0.06] py-14 lg:py-20">
@@ -254,76 +299,24 @@ export default function ForYou() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          ACCESSORIES — Full-bleed editorial banner + padded grid
-          ══════════════════════════════════════════════════════════ */}
-      {activeAccessories.length > 0 && (
-        <>
-          {/* Full-bleed editorial banner for accessories */}
-          <div className="relative cursor-pointer" onClick={() => navigate('/accessories')}>
-            <div className="w-full overflow-hidden" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '16 / 5' }}>
-              <img src={CARE.polish} alt="" className="w-full h-full object-cover" />
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center text-center px-6" style={{ background: 'linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.5))' }}>
-              <div>
-                <p className="text-[10px] text-white/50 uppercase tracking-[0.3em] mb-3">Zubehör & Pflege</p>
-                <h2 className="text-[26px] lg:text-[40px] font-extralight text-white leading-[1.1] tracking-tight">
-                  Das Beste für Ihre Schuhe
-                </h2>
-              </div>
-            </div>
-          </div>
-
-          {/* Padded product grid */}
-          <div className="py-14 lg:py-20">
-            <div className="px-8 lg:px-24 xl:px-32">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-10 lg:gap-y-14">
-                {activeAccessories.slice(0, 4).map(acc => (
-                  <div key={acc.id} className="group cursor-pointer" onClick={() => navigate('/accessories')}>
-                    <div className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '3 / 4' }}>
-                      <img src={acc.image_data || CARE[['polish', 'brushes', 'cream'][acc.id % 3]]} alt={acc.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                    </div>
-                    <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{acc.name}</p>
-                    <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 font-light">€ {parseFloat(acc.price) || 0}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="text-center mt-10 lg:mt-14">
-              <button
-                onClick={() => navigate('/accessories')}
-                className="px-8 py-3 bg-black text-white text-[11px] border border-black hover:bg-white hover:text-black transition-all duration-300"
-                style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
-              >
-                Alle Produkte
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════
-          JOURNAL — Full-bleed featured article + padded grid
+          9. JOURNAL — Image then text below + padded article grid
           ══════════════════════════════════════════════════════════ */}
       {publishedArticles.length > 0 && (
-        <>
-          {/* Full-bleed first article */}
-          <div className="relative cursor-pointer" onClick={() => navigate('/explore')}>
-            <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '16 / 6' }}>
-              <img src={publishedArticles[0].image_data || CRAFT.leather} alt={publishedArticles[0].title} className="w-full h-full object-cover" />
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-16" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.4) 100%)' }}>
-              <p className="text-[10px] text-white/40 uppercase tracking-[0.3em] mb-2">Atelier Journal</p>
-              <h2 className="text-[24px] lg:text-[36px] font-extralight text-white leading-[1.1] tracking-tight">{publishedArticles[0].title}</h2>
-            </div>
+        <div className="cursor-pointer" onClick={() => navigate('/explore')}>
+          <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '16 / 5' }}>
+            <img src={publishedArticles[0].image_data || CRAFT.leather} alt={publishedArticles[0].title} className="w-full h-full object-cover" />
+          </div>
+          <div className="text-center px-8 lg:px-16 pt-10 lg:pt-14 pb-4 lg:pb-6">
+            <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Atelier Journal</p>
+            <h2 className="text-[22px] lg:text-[30px] font-extralight text-black leading-[1.1] tracking-tight">{publishedArticles[0].title}</h2>
           </div>
 
-          {/* Padded article cards */}
           {publishedArticles.length > 1 && (
-            <div className="py-14 lg:py-20">
+            <div className="py-10 lg:py-14">
               <div className="px-8 lg:px-24 xl:px-32">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                   {publishedArticles.slice(1, 4).map(article => (
-                    <div key={article.id} className="group cursor-pointer" onClick={() => navigate('/explore')}>
+                    <div key={article.id} className="group" onClick={e => e.stopPropagation()}>
                       <div className="w-full overflow-hidden bg-[#f6f5f3] mb-4 transition-all duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '4 / 3' }}>
                         <img src={article.image_data || CRAFT[['workshop', 'stitching', 'tools'][article.id % 3]]} alt={article.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
                       </div>
@@ -335,11 +328,11 @@ export default function ForYou() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          SERVICE PROMISE — Padded three-column
+          10. SERVICE PROMISE — Padded three-column
           ══════════════════════════════════════════════════════════ */}
       <div className="border-t border-black/[0.06] py-16 lg:py-24">
         <div className="px-8 lg:px-24 xl:px-32">
