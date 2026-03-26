@@ -145,20 +145,23 @@ function AccessoryDetail({ acc, shoes, inCart, onAdd, onNavigateShoe }) {
 // ═════════════════════════════════════════════════════════════════════════════
 export default function Accessories() {
   const navigate = useNavigate()
-  const { accessories: storeAccessories, shoes, cart, addToCart } = useAtelierStore()
-  const [fetchedAccessories, setFetchedAccessories] = useState(null)
+  const { shoes, cart, addToCart } = useAtelierStore()
+  const [accessoriesList, setAccessoriesList] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Fallback: fetch directly from API if store is empty
+  // Always fetch directly — store may not have loaded accessories yet
   useEffect(() => {
-    if (!storeAccessories || storeAccessories.length === 0) {
-      apiFetch('/api/accessories')
-        .then(data => setFetchedAccessories(Array.isArray(data) ? data : []))
-        .catch(() => setFetchedAccessories([]))
-    }
-  }, [storeAccessories])
+    setLoading(true)
+    apiFetch('/api/accessories')
+      .then(data => {
+        const items = Array.isArray(data) ? data.filter(a => a.is_active) : []
+        setAccessoriesList(items)
+      })
+      .catch(() => setAccessoriesList([]))
+      .finally(() => setLoading(false))
+  }, [])
 
-  const allAccessories = (storeAccessories && storeAccessories.length > 0) ? storeAccessories : (fetchedAccessories || [])
-  const activeAccessories = allAccessories.filter(a => a.is_active !== 0 && a.is_active !== false)
+  const activeAccessories = accessoriesList
   const cartIds = cart.filter(c => c.isAccessory).map(c => c.id)
 
   const handleAdd = (acc) => {
@@ -184,12 +187,18 @@ export default function Accessories() {
       </div>
 
       {/* ── Accessory count ──────────────────────────────────────── */}
-      <div className="px-5 lg:px-8 pb-4">
-        <p className="text-[11px] text-black/30 uppercase tracking-wider">{activeAccessories.length} Produkte</p>
-      </div>
+      {!loading && (
+        <div className="px-5 lg:px-8 pb-4">
+          <p className="text-[11px] text-black/30 uppercase tracking-wider">{activeAccessories.length} Produkte</p>
+        </div>
+      )}
 
-      {/* ── Accessory List ───────────────────────────────────────── */}
-      {activeAccessories.length === 0 ? (
+      {/* ── Loading ──────────────────────────────────────────────── */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-6 h-6 border-2 border-black/10 border-t-black animate-spin" />
+        </div>
+      ) : activeAccessories.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center px-5">
           <div className="w-14 h-14 bg-black/[0.03] flex items-center justify-center mb-4">
             <ShoppingBag size={24} className="text-black/20" strokeWidth={1.5} />
