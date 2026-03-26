@@ -356,7 +356,7 @@ export default function Customize() {
     <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden" style={desktopH ? { height: desktopH } : undefined} ref={outerRef}>
 
       {/* ── Header ────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
+      <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-6 lg:w-full">
         <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
           <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
         </button>
@@ -377,18 +377,18 @@ export default function Customize() {
       </div>
 
       {/* ── Desktop: Two-Column / Mobile: Stacked ────────────────── */}
-      <div ref={twoColRef} className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 lg:min-h-0">
+      <div ref={twoColRef} className="flex-1 flex flex-col lg:flex-row lg:w-full lg:min-h-0">
 
-        {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
+        {/* ── LEFT: Produkt-Viewer + Zubehör (4/6 der Breite) ────── */}
         <div
           ref={leftPanelRef}
-          className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:min-h-0 lg:overflow-y-auto"
+          className="z-10 lg:w-4/6 lg:top-0 lg:self-stretch lg:min-h-0 lg:overflow-y-auto lg:px-6"
           style={{
             scrollbarWidth: 'none',
           }}
         >
           <div
-            className="relative overflow-hidden select-none lg:rounded-sm"
+            className="relative overflow-hidden select-none lg:rounded-sm lg:min-h-[500px]"
             style={{
               height: 'clamp(240px, 40dvh, 380px)',
               minHeight: '380px',
@@ -498,7 +498,7 @@ export default function Customize() {
           >
             <p className="text-[10px] text-black/30 uppercase px-1 mb-4" style={{ letterSpacing: '0.18em' }}>Passend dazu</p>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {accessories.map((acc) => {
                 const selected = selectedAccessories.includes(acc.id)
                 return (
@@ -545,10 +545,10 @@ export default function Customize() {
           </div>
         </div>
 
-        {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
+        {/* ── RIGHT: Konfiguration (2/6 der Breite, rechter Rand) ── */}
         <div
           ref={rightPanelRef}
-          className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0"
+          className="flex-1 flex flex-col lg:flex-initial lg:w-2/6 lg:overflow-y-auto lg:min-h-0 lg:border-l lg:border-black/5 lg:px-6"
           style={{ scrollbarWidth: 'none' }}
         >
 
