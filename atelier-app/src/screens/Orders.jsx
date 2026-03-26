@@ -249,7 +249,7 @@ export default function Orders() {
     .reduce((sum, o) => sum + (parseInt(String(o.price).replace(/[^0-9]/g, ''), 10) || 0), 0)
 
   return (
-    <div className="flex flex-col bg-white" style={{ height: 'calc(100dvh - 48px)' }}>
+    <div className="flex flex-col bg-white min-h-screen">
       {/* Spacer */}
       <div className="h-1" />
 

@@ -9,10 +9,10 @@ export default function Wishlist() {
   const wishlist = shoes.filter(s => favorites.includes(s.id))
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col bg-white min-h-screen">
 
       {/* Spacer under TopBar */}
-      <div className="h-2" />
+      <div className="h-1" />
 
       <div className="flex-1 px-4 pt-4 pb-4">
         {wishlist.length === 0 ? (

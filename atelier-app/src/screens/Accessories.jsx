@@ -3,10 +3,11 @@
  * Each accessory shows which shoes it's recommended for (horizontal scroll)
  * Layout: full-width accessory cards with shoe recommendations
  */
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShoppingBag, Plus, Check, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
+import { apiFetch } from '../hooks/useApi'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
@@ -144,9 +145,20 @@ function AccessoryDetail({ acc, shoes, inCart, onAdd, onNavigateShoe }) {
 // ═════════════════════════════════════════════════════════════════════════════
 export default function Accessories() {
   const navigate = useNavigate()
-  const { accessories, shoes, cart, addToCart } = useAtelierStore()
+  const { accessories: storeAccessories, shoes, cart, addToCart } = useAtelierStore()
+  const [fetchedAccessories, setFetchedAccessories] = useState(null)
 
-  const activeAccessories = (accessories || []).filter(a => a.is_active !== 0)
+  // Fallback: fetch directly from API if store is empty
+  useEffect(() => {
+    if (!storeAccessories || storeAccessories.length === 0) {
+      apiFetch('/api/accessories')
+        .then(data => setFetchedAccessories(Array.isArray(data) ? data : []))
+        .catch(() => setFetchedAccessories([]))
+    }
+  }, [storeAccessories])
+
+  const allAccessories = (storeAccessories && storeAccessories.length > 0) ? storeAccessories : (fetchedAccessories || [])
+  const activeAccessories = allAccessories.filter(a => a.is_active !== 0 && a.is_active !== false)
   const cartIds = cart.filter(c => c.isAccessory).map(c => c.id)
 
   const handleAdd = (acc) => {
