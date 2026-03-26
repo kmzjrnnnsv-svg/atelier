@@ -95,6 +95,7 @@ export default function Customize() {
   const [added,   setAdded]   = useState(false)
 
   // Refs for scroll forwarding between panels
+  const outerRef = useRef(null)
   const rightPanelRef = useRef(null)
   const leftPanelRef = useRef(null)
   const [rightFullyScrolled, setRightFullyScrolled] = useState(false)
@@ -131,6 +132,16 @@ export default function Customize() {
   const twoColRef = useRef(null)
   const [leftFullyScrolled, setLeftFullyScrolled] = useState(false)
 
+  // Lock parent scroll container on desktop mount
+  useEffect(() => {
+    if (window.innerWidth < 1024) return
+    const parentScroller = outerRef.current?.closest('.overflow-y-auto')
+    if (parentScroller) {
+      parentScroller.style.overflow = 'hidden'
+      return () => { parentScroller.style.overflow = '' }
+    }
+  }, [])
+
   // Sequenced scroll handler — works for both wheel (MacBook) and touch (iPad)
   useEffect(() => {
     const wrapper = twoColRef.current
@@ -160,9 +171,10 @@ export default function Customize() {
       return false // both panels at boundary
     }
 
-    // ── Wheel (MacBook trackpad / mouse) ──
+    // ── Wheel (MacBook trackpad / mouse) — always prevent default on desktop ──
     const onWheel = (e) => {
-      if (routeScroll(e.deltaY)) e.preventDefault()
+      e.preventDefault()
+      routeScroll(e.deltaY)
     }
 
     // ── Touch (iPad) ──
@@ -339,7 +351,7 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-y-auto lg:overflow-hidden">
+    <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden" style={{ minHeight: '100%' }} ref={outerRef}>
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
