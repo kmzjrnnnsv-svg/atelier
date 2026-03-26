@@ -130,7 +130,7 @@ export default function Accessories() {
                   onClick={() => setExpandedId(expanded ? null : acc.id)}
                 >
                   {/* Image */}
-                  <div className="w-full overflow-hidden flex items-center justify-center bg-black/[0.02] relative"
+                  <div className="w-full overflow-hidden flex items-center justify-center bg-black/[0.02]"
                     style={{ aspectRatio: '1' }}
                   >
                     {acc.image_data ? (
@@ -138,17 +138,6 @@ export default function Accessories() {
                     ) : (
                       <ShoppingBag size={28} strokeWidth={0.7} className="text-black/8" />
                     )}
-
-                    {/* Add button overlay */}
-                    <button
-                      onClick={(e) => handleAdd(acc, e)}
-                      disabled={inCart}
-                      className={`absolute top-2 right-2 w-7 h-7 flex items-center justify-center border-0 transition-all ${
-                        inCart ? 'bg-black text-white' : 'bg-white/90 text-black/40 opacity-0 group-hover:opacity-100'
-                      }`}
-                    >
-                      {inCart ? <Check size={12} strokeWidth={2.5} /> : <Plus size={12} strokeWidth={2} />}
-                    </button>
                   </div>
 
                   {/* Info */}
@@ -156,6 +145,20 @@ export default function Accessories() {
                     <p className="text-[12px] lg:text-[13px] text-black leading-snug">{acc.name}</p>
                     <p className="text-[12px] lg:text-[13px] text-black/40 mt-0.5">€{parseFloat(acc.price) || 0}</p>
                   </div>
+
+                  {/* Add to cart button — always visible */}
+                  <button
+                    onClick={(e) => handleAdd(acc, e)}
+                    disabled={inCart}
+                    className={`w-full h-9 flex items-center justify-center gap-1.5 border text-[11px] transition-all ${
+                      inCart
+                        ? 'bg-black/[0.03] text-black/30 border-black/5'
+                        : 'bg-transparent text-black/60 border-black/10 hover:border-black/30 hover:text-black'
+                    }`}
+                    style={{ letterSpacing: '0.04em' }}
+                  >
+                    {inCart ? <><Check size={12} strokeWidth={2.5} /> Hinzugefügt</> : <><Plus size={12} strokeWidth={2} /> Warenkorb</>}
+                  </button>
 
                   {/* Expanded: description + tags */}
                   {expanded && (
