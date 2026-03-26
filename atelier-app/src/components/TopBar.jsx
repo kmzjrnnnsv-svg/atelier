@@ -118,101 +118,105 @@ export default function TopBar() {
         </div>
       </header>
 
-      {/* ── Full-screen menu overlay (LV-style) ── */}
+      {/* ── Side panel menu (LV-style) ── */}
       {open && (
-        <div
-          className="fixed inset-0 z-[999] bg-white"
-          style={{ animation: 'menuFadeIn 0.3s ease' }}
-        >
-          {/* Menu header */}
+        <div className="fixed inset-0 z-[999] flex">
+          {/* Left: white panel */}
           <div
-            className="flex items-center justify-between"
+            className="h-full bg-white flex flex-col flex-shrink-0"
             style={{
-              height: headerH, padding: `0 ${headerPx}px`,
-              borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+              width: isMobileWeb ? '85vw' : '420px',
+              maxWidth: '420px',
+              animation: 'menuSlideIn 0.3s ease',
             }}
           >
-            <button
-              onClick={() => setOpen(false)}
-              className="bg-transparent border-0 p-1.5 text-black active:opacity-50"
-              aria-label="Menü schließen"
+            {/* Panel header — X + Schließen */}
+            <div
+              className="flex items-center gap-2 flex-shrink-0"
+              style={{
+                height: headerH, padding: `0 ${isMobileWeb ? 20 : 28}px`,
+                borderBottom: '0.5px solid rgba(0,0,0,0.08)',
+              }}
             >
-              <X size={isMobileWeb ? 22 : 20} strokeWidth={1.3} />
-            </button>
-
-            <span className="absolute left-1/2 -translate-x-1/2 text-[16px] lg:text-[17px] font-normal tracking-[0.18em] text-black">
-              ATELIER
-            </span>
-
-            <div className="flex items-center gap-0.5">
-              <button onClick={() => go('/profile')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
-                <User size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
+              <button
+                onClick={() => setOpen(false)}
+                className="bg-transparent border-0 p-1 text-black active:opacity-50"
+                aria-label="Menü schließen"
+              >
+                <X size={18} strokeWidth={1.3} />
               </button>
-              <button onClick={() => go('/checkout')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50 relative">
-                <ShoppingBag size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
-                {cartCount > 0 && (
-                  <span
-                    className="absolute top-0.5 right-0 bg-black text-white text-[7px] font-bold min-w-[13px] h-[13px] flex items-center justify-center px-0.5 leading-none"
-                    style={{ borderRadius: '6px' }}
-                  >
-                    {cartCount > 99 ? '99+' : cartCount}
-                  </span>
-                )}
+              <span className="text-[13px] font-light text-black/50">Schließen</span>
+            </div>
+
+            {/* Panel content */}
+            <div className="flex-1 flex flex-col justify-center overflow-hidden px-6 lg:px-10">
+              {/* Primary navigation */}
+              <nav>
+                {NAV_ITEMS.map(({ label, path }) => {
+                  const isActive = pathname === path || pathname.startsWith(path + '/')
+                  return (
+                    <button
+                      key={path}
+                      onClick={() => go(path)}
+                      onPointerEnter={() => prefetchRoute(path)}
+                      className="block w-full text-left bg-transparent border-0 py-2.5 lg:py-3 group"
+                    >
+                      <span
+                        className={`text-[22px] lg:text-[26px] font-extralight tracking-tight transition-colors ${
+                          isActive ? 'text-black' : 'text-black/80 group-hover:text-black'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </nav>
+
+              {/* Divider */}
+              <div className="my-5 h-px bg-black/[0.06]" />
+
+              {/* Secondary navigation */}
+              <nav>
+                {SECONDARY_ITEMS.map(({ label, path }) => {
+                  const isActive = pathname === path
+                  return (
+                    <button
+                      key={path}
+                      onClick={() => go(path)}
+                      onPointerEnter={() => prefetchRoute(path)}
+                      className="block w-full text-left bg-transparent border-0 py-2 group"
+                    >
+                      <span
+                        className={`text-[14px] font-light transition-colors ${
+                          isActive ? 'text-black' : 'text-black/40 group-hover:text-black'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </nav>
+            </div>
+
+            {/* Panel footer */}
+            <div className="flex-shrink-0 border-t border-black/[0.06] px-6 lg:px-10 py-5">
+              <button
+                onClick={() => go('/help')}
+                className="text-[13px] font-light text-black/35 bg-transparent border-0 p-0 hover:text-black transition-colors"
+              >
+                Wünschen Sie Beratung?
               </button>
             </div>
           </div>
 
-          {/* Menu content — fixed layout, no scroll */}
-          <div className="flex flex-col justify-center" style={{ height: `calc(100vh - ${headerH}px)`, overflow: 'hidden' }}>
-            {/* Primary navigation — large text like LV */}
-            <nav className="px-6 lg:px-12">
-              {NAV_ITEMS.map(({ label, path }) => {
-                const isActive = pathname === path || pathname.startsWith(path + '/')
-                return (
-                  <button
-                    key={path}
-                    onClick={() => go(path)}
-                    onPointerEnter={() => prefetchRoute(path)}
-                    className="block w-full text-left bg-transparent border-0 py-3 lg:py-4 group"
-                  >
-                    <span
-                      className={`text-[28px] lg:text-[34px] font-extralight tracking-tight transition-colors ${
-                        isActive ? 'text-black' : 'text-black/30 group-hover:text-black'
-                      }`}
-                    >
-                      {label}
-                    </span>
-                  </button>
-                )
-              })}
-            </nav>
-
-            {/* Divider */}
-            <div className="mx-6 lg:mx-12 my-4 lg:my-6 h-px bg-black/[0.06]" />
-
-            {/* Secondary navigation */}
-            <nav className="px-6 lg:px-12">
-              {SECONDARY_ITEMS.map(({ label, path }) => {
-                const isActive = pathname === path
-                return (
-                  <button
-                    key={path}
-                    onClick={() => go(path)}
-                    onPointerEnter={() => prefetchRoute(path)}
-                    className="block w-full text-left bg-transparent border-0 py-2 lg:py-2.5 group"
-                  >
-                    <span
-                      className={`text-[14px] lg:text-[15px] font-light transition-colors ${
-                        isActive ? 'text-black' : 'text-black/35 group-hover:text-black'
-                      }`}
-                    >
-                      {label}
-                    </span>
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
+          {/* Right: dark overlay showing page behind */}
+          <div
+            className="flex-1 h-full cursor-pointer"
+            onClick={() => setOpen(false)}
+            style={{ background: 'rgba(0,0,0,0.4)', animation: 'menuFadeIn 0.3s ease' }}
+          />
         </div>
       )}
     </>
