@@ -89,10 +89,13 @@ export default function Customize() {
     { id: 1, key: 'rubber-grip', label: 'Anti-Rutsch', sub: 'Gummi', description: 'Profilsohle mit Grip.', price_extra: 35, rating: 'good', recommended: 1 },
   ]
 
-  const [selMat,  setSelMat]  = useState(() => matList[0]?.key || '')
-  const [selCol,  setSelCol]  = useState(() => colList[0]?.key || '')
-  const [selSole, setSelSole] = useState(() => getDefaultSole(soleList))
+  const [selMat,  setSelMat]  = useState('')
+  const [selCol,  setSelCol]  = useState('')
+  const [selSole, setSelSole] = useState('')
   const [added,   setAdded]   = useState(false)
+
+  // Step-by-step guided flow: 0=nothing, 1=leather chosen, 2=color chosen, 3=sole chosen
+  const configStep = selSole ? 3 : selCol ? 2 : selMat ? 1 : 0
 
   // Refs for scroll forwarding between panels
   const outerRef = useRef(null)
@@ -244,15 +247,15 @@ export default function Customize() {
   const [myComment, setMyComment]   = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Store-Daten aktualisieren
+  // Store-Daten aktualisieren (only reset if current value is invalid, not if empty)
   useEffect(() => {
-    if (shoeMaterials.length && !shoeMaterials.find(m => m.key === selMat)) setSelMat(shoeMaterials[0]?.key || '')
+    if (shoeMaterials.length && selMat && !shoeMaterials.find(m => m.key === selMat)) setSelMat('')
   }, [shoeMaterials])
   useEffect(() => {
-    if (shoeColors.length && !shoeColors.find(c => c.key === selCol)) setSelCol(shoeColors[0]?.key || '')
+    if (shoeColors.length && selCol && !shoeColors.find(c => c.key === selCol)) setSelCol('')
   }, [shoeColors])
   useEffect(() => {
-    if (availableSoles.length && !availableSoles.find(s => s.key === selSole)) setSelSole(getDefaultSole(availableSoles))
+    if (availableSoles.length && selSole && !availableSoles.find(s => s.key === selSole)) setSelSole('')
   }, [shoeSoles, category])
 
   const mat      = matList.find(m => m.key === selMat) || matList[0]
@@ -609,12 +612,48 @@ export default function Customize() {
 
           <div className="h-px bg-black/8 lg:my-2" />
 
-          {/* ── Auswahl ────────────────────────────────────────── */}
+          {/* ── Auswahl (step-by-step guided flow) ────────────── */}
           <div className="pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0">
+
+            {/* Step indicator */}
+            <div className="flex items-center gap-0 px-5 lg:px-0">
+              {['Leder', 'Farbe', 'Sohle'].map((label, i) => {
+                const done = configStep > i
+                const active = configStep === i
+                return (
+                  <div key={label} className="flex items-center flex-1">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-6 h-6 flex items-center justify-center text-[10px] font-light transition-all duration-500"
+                        style={{
+                          background: done ? '#000' : active ? '#000' : '#f6f5f3',
+                          color: done || active ? '#fff' : 'rgba(0,0,0,0.2)',
+                        }}
+                      >
+                        {done ? <Check size={12} strokeWidth={2} /> : i + 1}
+                      </div>
+                      <span className={`text-[10px] tracking-[0.1em] uppercase transition-colors duration-500 ${
+                        done || active ? 'text-black' : 'text-black/20'
+                      }`}>{label}</span>
+                    </div>
+                    {i < 2 && (
+                      <div className="flex-1 mx-3">
+                        <div className="h-px bg-black/[0.06] relative">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-black transition-all duration-700"
+                            style={{ width: done ? '100%' : '0%' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
 
             {/* 1. Leder */}
             <div {...matSwipe}>
-              <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder</p>
+              <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
               <div className="flex gap-2 overflow-x-auto flex-nowrap lg:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                 {matList.map((m, i) => {
                   const id = m.key || String(m.id)
@@ -649,9 +688,18 @@ export default function Customize() {
             </div>
 
             {/* 2. Farbe */}
-            <div {...colSwipe}>
+            <div
+              {...(configStep >= 1 ? colSwipe : {})}
+              className="transition-all duration-700 ease-out"
+              style={{
+                opacity: configStep >= 1 ? 1 : 0.25,
+                transform: configStep >= 1 ? 'translateY(0)' : 'translateY(8px)',
+                pointerEvents: configStep >= 1 ? 'auto' : 'none',
+                filter: configStep >= 1 ? 'none' : 'grayscale(1)',
+              }}
+            >
               <div className="flex items-center justify-between mb-3 px-5 lg:px-0">
-                <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe</p>
+                <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe wählen</p>
                 {col && <span className="text-[10px] lg:text-[11px] text-black/50">{col.name}</span>}
               </div>
               <div className="flex gap-2 overflow-x-auto flex-nowrap lg:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
@@ -689,8 +737,17 @@ export default function Customize() {
             </div>
 
             {/* 3. Sohle */}
-            <div {...soleSwipe}>
-              <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sohle</p>
+            <div
+              {...(configStep >= 2 ? soleSwipe : {})}
+              className="transition-all duration-700 ease-out"
+              style={{
+                opacity: configStep >= 2 ? 1 : 0.25,
+                transform: configStep >= 2 ? 'translateY(0)' : 'translateY(8px)',
+                pointerEvents: configStep >= 2 ? 'auto' : 'none',
+                filter: configStep >= 2 ? 'none' : 'grayscale(1)',
+              }}
+            >
+              <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sohle wählen</p>
 
               {soleList.length === 1 && (category === 'BOOT' || category === 'SNEAKER') && (
                 <p className="text-[10px] text-black/35 mb-2 px-5 lg:px-0">
@@ -704,7 +761,7 @@ export default function Customize() {
                   const sel = selSole === id
                   return (
                     <button key={id}
-                      onClick={() => soleList.length > 1 && setSelSole(id)}
+                      onClick={() => setSelSole(id)}
                       className={`w-full flex items-center gap-3 p-3.5 transition-all bg-transparent text-left border-y lg:border lg:rounded-sm ${
                         sel ? 'border-black' : 'border-black/8'
                       }`}
@@ -742,6 +799,8 @@ export default function Customize() {
                 )
               })()}
             </div>
+
+            {/* ── Remaining sections (visible after all steps) ── */}
 
             {/* Scan-Hinweis */}
             {!latestScan && (
@@ -820,7 +879,14 @@ export default function Customize() {
             </div>
 
             {/* Desktop: Konfig-Zusammenfassung + Buttons */}
-            <div className="hidden lg:block lg:pt-4 lg:pb-8">
+            <div
+              className="hidden lg:block lg:pt-4 lg:pb-8 transition-all duration-700"
+              style={{
+                opacity: configStep >= 3 ? 1 : 0.15,
+                transform: configStep >= 3 ? 'translateY(0)' : 'translateY(8px)',
+                pointerEvents: configStep >= 3 ? 'auto' : 'none',
+              }}
+            >
               <div className="border border-black/8 p-4 mb-4">
                 <p className="text-[10px] text-black/40 mb-2.5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Ihre Konfiguration</p>
                 <div className="space-y-1.5">
@@ -891,8 +957,14 @@ export default function Customize() {
       </div>
 
       {/* ── Kaufen: Fixed Bottom (nur mobil) ──────────────────── */}
-      <div className="sticky bottom-0 z-20 bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2"
-        style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 8px)' : '8px' }}>
+      <div
+        className="sticky bottom-0 z-20 bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2 transition-all duration-500"
+        style={{
+          paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 8px)' : '8px',
+          opacity: configStep >= 3 ? 1 : 0.3,
+          pointerEvents: configStep >= 3 ? 'auto' : 'none',
+        }}
+      >
         <div className="flex items-center justify-center gap-3 mb-1.5">
           <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{mat?.label}</span>
           <span className="text-black/15">·</span>
