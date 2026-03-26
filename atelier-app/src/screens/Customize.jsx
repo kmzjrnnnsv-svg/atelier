@@ -132,15 +132,23 @@ export default function Customize() {
   const twoColRef = useRef(null)
   const [leftFullyScrolled, setLeftFullyScrolled] = useState(false)
 
-  // On desktop: lock parent scroll container & measure available height
-  const [desktopH, setDesktopH] = useState(null)
+  // On desktop: lock parent scroll container so panels scroll independently
   useEffect(() => {
     if (window.innerWidth < 1024) return
-    const parentScroller = outerRef.current?.closest('.overflow-y-auto')
-    if (parentScroller) {
-      parentScroller.style.overflow = 'hidden'
-      setDesktopH(parentScroller.clientHeight)
-      return () => { parentScroller.style.overflow = '' }
+    // Lock the App-level scroller and all ancestors in the chain
+    let el = outerRef.current?.parentElement
+    while (el) {
+      const style = getComputedStyle(el)
+      if (style.overflow === 'auto' || style.overflowY === 'auto') {
+        el.style.overflow = 'hidden'
+        const lockedEl = el
+        // Also make the intermediate wrapper fill height
+        if (outerRef.current?.parentElement && outerRef.current.parentElement !== el) {
+          outerRef.current.parentElement.style.height = '100%'
+        }
+        return () => { lockedEl.style.overflow = '' }
+      }
+      el = el.parentElement
     }
   }, [])
 
@@ -353,7 +361,7 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden" style={desktopH ? { height: desktopH } : undefined} ref={outerRef}>
+    <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden lg:h-full" ref={outerRef}>
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-6 lg:w-full">
