@@ -144,11 +144,11 @@ export default function Customize() {
     }
   }, [])
 
-  // Sequenced scroll handler — works for both wheel (MacBook) and touch (iPad)
+  // Sequenced scroll handler — captures wheel/touch anywhere on the page
   useEffect(() => {
-    const wrapper = twoColRef.current
-    if (!wrapper) return
     if (window.innerWidth < 1024) return
+    const wrapper = outerRef.current
+    if (!wrapper) return
 
     // Helper: route a vertical delta to the correct panel
     const routeScroll = (deltaY) => {
