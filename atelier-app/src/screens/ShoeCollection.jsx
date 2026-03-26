@@ -1,8 +1,8 @@
 /**
- * ShoeCollection.jsx — "Kollektion" tab (Apple Store "Products" style)
- * Large hero product card + browsable category grid with clean Apple aesthetic
+ * ShoeCollection.jsx — LV-inspired product listing
+ * Clean grid, warm tones, elegant typography, generous whitespace
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
@@ -10,97 +10,79 @@ import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 
 const CATEGORIES = [
-  { label: 'Alle',       value: 'ALL' },
-  { label: 'Loafers',    value: 'LOAFER' },
-  { label: 'Oxfords',    value: 'OXFORD' },
-  { label: 'Derby',      value: 'DERBY' },
-  { label: 'Chelsea',    value: 'BOOT' },
-  { label: 'Sneaker',    value: 'SNEAKER' },
-  { label: 'Wholecuts',  value: 'MONK' },
+  { label: 'Alle Modelle', value: 'ALL' },
+  { label: 'Oxford',       value: 'OXFORD' },
+  { label: 'Derby',        value: 'DERBY' },
+  { label: 'Loafer',       value: 'LOAFER' },
+  { label: 'Chelsea Boot', value: 'BOOT' },
+  { label: 'Sneaker',      value: 'SNEAKER' },
+  { label: 'Monk',         value: 'MONK' },
 ]
 
-// ── Hero Product Card (large, Apple-style) ──────────────────────────────────
-function HeroCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
+// ── Product Card ──────────────────────────────────────────────────────────
+function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, featured }) {
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   return (
-    <button onClick={() => onSelect(product)} className="w-full bg-transparent border-0 text-left p-0 mb-6">
-      <div className="w-full overflow-hidden" style={{ background: '#FFFFFF' }}>
-        <div className="relative aspect-[4/3] flex items-center justify-center">
-          {product.image ? (
-            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            <svg viewBox="0 0 300 130" className="w-3/4 opacity-70">
-              <ellipse cx="150" cy="118" rx="130" ry="10" fill="#d1d5db" />
-              <path d="M20 100 Q16 108 45 112 L255 112 Q280 112 280 100 L274 78 Q266 58 245 56 L75 56 Q48 56 42 66 Z" fill={product.color || '#374151'} />
-              <path d="M42 66 Q36 42 65 30 L140 24 Q180 20 210 38 Q235 52 274 78 L245 56 L75 56 Q48 56 42 66 Z" fill={product.color || '#374151'} opacity="0.85" />
-            </svg>
-          )}
-          <button
-            className="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center border-0 shadow-sm"
-            onClick={e => { e.stopPropagation(); onToggleFav() }}
-          >
-            <Heart size={16} strokeWidth={1.5} className={isFav ? 'text-red-500 fill-red-500' : 'text-black/40'} />
-          </button>
-        </div>
-        <div className="px-4 py-3.5">
-          {product.tag && (
-            <p className="text-[11px] font-medium text-[#FF9500] mb-1">{product.tag}</p>
-          )}
-          <p className="text-[17px] font-semibold text-black leading-snug">{product.name}</p>
-          <p className="text-[13px] text-black/50 mt-0.5">{product.material}</p>
-          <div className="flex items-center justify-between mt-2">
-            {isPromo && product.promotion_price ? (
-              <p className="text-[15px] font-medium text-black">
-                <span className="line-through text-black/30 mr-1.5">{product.price}</span>
-                {product.promotion_price}
-              </p>
-            ) : (
-              <p className="text-[15px] font-medium text-black">{product.price}</p>
-            )}
-            {product.match && (
-              <span className="text-[12px] text-[#34C759] font-medium">{product.match} Match</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </button>
-  )
-}
+    <div className="group cursor-pointer" onClick={() => onSelect(product)}>
+      {/* Image */}
+      <div
+        className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] relative transition-all duration-500 group-hover:bg-[#efeee9]"
+        style={{ aspectRatio: featured ? '3 / 2' : '3 / 4' }}
+      >
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <svg viewBox="0 0 260 130" className={`${featured ? 'w-2/3' : 'w-3/5'} opacity-60`}>
+            <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
+            <path d="M20 100 Q17 108 38 112 L222 112 Q238 112 238 100 L232 80 Q226 62 210 60 L72 60 Q47 60 42 68 Z" fill={product.color || '#374151'} />
+            <path d="M42 68 Q37 48 62 36 L120 30 Q155 27 178 42 Q198 54 232 80 L210 60 Q180 50 148 52 L90 53 Q60 55 42 68 Z" fill={product.color || '#374151'} opacity="0.85" />
+          </svg>
+        )}
 
-// ── Grid Product Card ───────────────────────────────────────────────────────
-function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
-  return (
-    <button onClick={() => onSelect(product)} className="w-full bg-transparent border-0 text-left p-0">
-      <div className="w-full overflow-hidden" style={{ background: '#FFFFFF' }}>
-        <div className="relative aspect-square flex items-center justify-center">
-          {product.image ? (
-            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            <svg viewBox="0 0 200 90" className="w-3/4 opacity-60">
-              <path d="M15 75 Q12 80 28 84 L172 84 Q186 84 186 75 L182 62 Q178 50 165 48 L55 48 Q36 48 31 54 Z" fill={product.color || '#666'} />
-              <path d="M31 54 Q27 37 50 28 L100 24 Q128 22 150 33 Q168 42 182 62 L165 48 L55 48 Q36 48 31 54 Z" fill={product.color || '#666'} opacity="0.85" />
-            </svg>
-          )}
-          <button
-            className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white/80 backdrop-blur-sm flex items-center justify-center border-0"
-            onClick={e => { e.stopPropagation(); onToggleFav() }}
-          >
-            <Heart size={13} strokeWidth={1.5} className={isFav ? 'text-red-500 fill-red-500' : 'text-black/30'} />
-          </button>
-        </div>
-        <div className="px-3 py-2.5">
-          <p className="text-[13px] font-medium text-black leading-snug line-clamp-2">{product.name}</p>
+        {/* Wishlist */}
+        <button
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center border-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          onClick={e => { e.stopPropagation(); onToggleFav() }}
+        >
+          <Heart size={16} strokeWidth={1.5} className={isFav ? 'text-black fill-black' : 'text-black/30'} />
+        </button>
+
+        {/* Match badge */}
+        {product.match && (
+          <div className="absolute bottom-3 left-3">
+            <span className="text-[10px] text-black/40 bg-white/80 backdrop-blur-sm px-2 py-1" style={{ letterSpacing: '0.05em' }}>
+              {product.match} Passform
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className={`${featured ? 'pt-4' : 'pt-3'}`}>
+        <p className={`${featured ? 'text-[15px] lg:text-[17px]' : 'text-[12px] lg:text-[13px]'} text-black font-normal leading-snug`}>
+          {product.name}
+        </p>
+        {featured && product.material && (
+          <p className="text-[12px] lg:text-[13px] text-black/30 mt-1 font-light">{product.material}</p>
+        )}
+        <div className="flex items-center gap-2 mt-1.5">
           {isPromo && product.promotion_price ? (
-            <p className="text-[13px] text-black/50 mt-0.5">
-              <span className="line-through mr-1">{product.price}</span>
+            <p className={`${featured ? 'text-[14px]' : 'text-[12px] lg:text-[13px]'} text-black/50 font-light`}>
+              <span className="line-through text-black/25 mr-1.5">{product.price}</span>
               {product.promotion_price}
             </p>
           ) : (
-            <p className="text-[13px] text-black/50 mt-0.5">{product.price}</p>
+            <p className={`${featured ? 'text-[14px]' : 'text-[12px] lg:text-[13px]'} text-black/50 font-light`}>
+              {displayPrice}
+            </p>
           )}
         </div>
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -112,7 +94,6 @@ export default function ShoeCollection() {
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy, setScanAccuracy] = useState(null)
   const isPromo = !!user?.is_promotion
-  const tabsRef = useRef(null)
 
   useEffect(() => {
     apiFetch('/api/scans/mine')
@@ -126,57 +107,82 @@ export default function ShoeCollection() {
   }))
 
   const filtered = activeCategory === 'ALL' ? enriched : enriched.filter(p => p.category === activeCategory)
-  const [hero, ...rest] = filtered
-
   const selectShoe = (product) => navigate('/customize', { state: { product } })
+
+  // Split: first product as featured hero, rest as grid
+  const [hero, ...rest] = filtered
 
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Large Title Header ────────────────────────────────────── */}
-      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-2">
-        <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Kollektion</p>
-        <p className="text-[15px] lg:text-[17px] text-black/45 mt-1">Schuhe, individuell angepasst an deinen Fuß.</p>
+      {/* ── Hero header ─────────────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-4 lg:pb-6">
+        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Atelier Kollektion</p>
+        <h1 className="text-[32px] lg:text-[44px] font-extralight text-black leading-[1.1] tracking-tight">
+          Maßschuhe
+        </h1>
+        <p className="text-[13px] lg:text-[15px] text-black/40 mt-3 lg:mt-4 max-w-lg leading-[1.7] font-light">
+          Individuell angepasst an Ihren Fuß. Jedes Paar wird in über 200 Arbeitsschritten von Hand gefertigt.
+        </p>
       </div>
 
-      {/* ── Category Tabs (pill style like Apple) ─────────────────── */}
-      <div ref={tabsRef} className="px-5 lg:px-8 pb-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat.value}
-            onClick={() => setActiveCategory(cat.value)}
-            className={`flex-shrink-0 px-4 py-2 rounded-lg text-[13px] font-medium transition-all border-0 ${
-              activeCategory === cat.value
-                ? 'bg-black text-white'
-                : 'bg-white text-black/50 border border-black/10'
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
+      {/* ── Category navigation (LV tab style) ──────────────────── */}
+      <div className="px-5 lg:px-16 pb-5 lg:pb-8 border-b border-black/[0.06]">
+        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {CATEGORIES.map(cat => {
+            const count = cat.value === 'ALL' ? enriched.length : enriched.filter(p => p.category === cat.value).length
+            return (
+              <button
+                key={cat.value}
+                onClick={() => setActiveCategory(cat.value)}
+                className={`flex-shrink-0 px-4 py-2 text-[11px] lg:text-[12px] border-0 bg-transparent transition-all ${
+                  activeCategory === cat.value
+                    ? 'text-black font-medium'
+                    : 'text-black/30 hover:text-black/60'
+                }`}
+                style={{
+                  letterSpacing: '0.06em',
+                  borderBottom: activeCategory === cat.value ? '2px solid black' : '2px solid transparent',
+                }}
+              >
+                {cat.label}
+                {count > 0 && <span className="text-black/20 ml-1.5 font-light">{count}</span>}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {/* ── Product Grid ──────────────────────────────────────────── */}
-      <div className="px-5 lg:px-8 pb-8">
+      {/* ── Product count ───────────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2">
+        <p className="text-[11px] text-black/25 font-light">{filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}</p>
+      </div>
+
+      {/* ── Products ────────────────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pb-16">
         {filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-[17px] font-semibold text-black/80 mb-1">Bald verfügbar</p>
-            <p className="text-[15px] text-black/40">Diese Kategorie wird gerade kuratiert.</p>
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <p className="text-[14px] font-light text-black/60">Diese Kategorie wird gerade kuratiert.</p>
+            <p className="text-[12px] text-black/25 mt-2">Bald verfügbar.</p>
           </div>
         ) : (
-          <>
+          <div className="space-y-8 lg:space-y-12">
+
+            {/* Featured hero product */}
             {hero && (
-              <HeroCard
+              <ProductCard
                 product={hero}
                 onSelect={selectShoe}
                 isFav={favorites.includes(String(hero.id))}
                 onToggleFav={() => toggleFavorite(hero.id)}
                 isPromo={isPromo}
+                featured
               />
             )}
 
+            {/* Product grid */}
             {rest.length > 0 && (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-12">
                 {rest.map(product => (
                   <ProductCard
                     key={product.id}
@@ -189,7 +195,7 @@ export default function ShoeCollection() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
