@@ -69,11 +69,15 @@ const useAtelierStore = create((set, get) => ({
     apiFetch('/api/auth/me/cart', { method: 'PUT', body: JSON.stringify({ cart }) }).catch(() => {})
   },
   addToCart(item) {
-    const existing = get().cart.find(c => c.shoeId === item.shoeId && c.material === item.material && c.color === item.color && c.sole === item.sole)
+    const existing = get().cart.find(c =>
+      item.isAccessory
+        ? c.id === item.id
+        : c.shoeId === item.shoeId && c.material === item.material && c.color === item.color && c.sole === item.sole
+    )
     if (existing) {
       set(s => ({ cart: s.cart.map(c => c.id === existing.id ? { ...c, qty: c.qty + 1 } : c) }))
     } else {
-      set(s => ({ cart: [...s.cart, { id: Date.now(), qty: 1, addedAt: new Date().toISOString(), ...item }] }))
+      set(s => ({ cart: [...s.cart, { qty: 1, addedAt: new Date().toISOString(), ...item, id: item.id || Date.now() }] }))
     }
     setTimeout(() => get()._syncCart(), 0)
   },

@@ -1,155 +1,34 @@
 /**
- * Accessories.jsx — Customer-facing accessories browsing page
- * Each accessory shows which shoes it's recommended for (horizontal scroll)
- * Layout: full-width accessory cards with shoe recommendations
+ * Accessories.jsx — LV-inspired accessories browsing page
+ * Clean, luxurious grid with warm tones and elegant typography
  */
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShoppingBag, Plus, Check, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { ShoppingBag, Plus, Check } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
+import CtaBanner from '../components/CtaBanner'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
-  MONK: 'Wholecut', BOOT: 'Chelsea', SNEAKER: 'Sneaker',
+  MONK: 'Monk', BOOT: 'Boot', SNEAKER: 'Sneaker',
 }
 
-// ── Horizontal shoe scroll (right-to-left initial position) ──────────────
-function ShoeScroll({ shoes, label, color }) {
-  const ref = useRef(null)
+const FILTERS = [
+  { key: 'all', label: 'Alle Produkte' },
+  { key: 'pflege', label: 'Pflege', match: ['carekit', 'cream_dark', 'cream_cognac', 'cordovan_balm', 'patent_care', 'exotic_care', 'sole_oil'] },
+  { key: 'buersten', label: 'Bürsten & Tücher', match: ['horsehair_brush', 'suede_brush', 'polishing_cloth', 'buckle_cloth'] },
+  { key: 'schutz', label: 'Schutz & Pflege', match: ['suede_spray', 'suede_eraser', 'dustbag', 'shoetrees'] },
+  { key: 'extras', label: 'Accessoires', match: ['shoehorn', 'belt', 'boot_jack', 'waxed_laces', 'sneaker_kit'] },
+]
 
-  // Scroll to end on mount (right side first)
-  const handleRef = (el) => {
-    if (el && !ref.current) {
-      ref.current = el
-      // Start scrolled to right, user scrolls left to discover
-      requestAnimationFrame(() => {
-        el.scrollLeft = el.scrollWidth - el.clientWidth
-      })
-    }
-  }
-
-  if (!shoes.length) return null
-
-  return (
-    <div className="mt-2">
-      <p className="text-[9px] font-semibold uppercase tracking-widest mb-1.5" style={{ color, letterSpacing: '0.12em' }}>
-        {label}
-      </p>
-      <div
-        ref={handleRef}
-        className="flex gap-2 overflow-x-auto pb-1"
-        style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
-      >
-        {shoes.map(shoe => (
-          <div key={shoe.id} className="flex-shrink-0 w-20">
-            <div className="w-20 h-20 overflow-hidden bg-black/[0.02] flex items-center justify-center">
-              {shoe.image ? (
-                <img src={shoe.image} alt={shoe.name} className="w-full h-full object-cover" />
-              ) : (
-                <svg viewBox="0 0 200 90" className="w-14 opacity-50">
-                  <path d="M15 75 Q12 80 28 84 L172 84 Q186 84 186 75 L182 62 Q178 50 165 48 L55 48 Q36 48 31 54 Z" fill={shoe.color || '#666'} />
-                  <path d="M31 54 Q27 37 50 28 L100 24 Q128 22 150 33 Q168 42 182 62 L165 48 L55 48 Q36 48 31 54 Z" fill={shoe.color || '#666'} opacity="0.85" />
-                </svg>
-              )}
-            </div>
-            <p className="text-[9px] text-black/50 mt-1 leading-tight truncate">{shoe.name}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Accessory Detail Card ────────────────────────────────────────────────
-function AccessoryDetail({ acc, shoes, inCart, onAdd, onNavigateShoe }) {
-  const recommended = JSON.parse(acc.recommended_for || '[]')
-  const notRecommended = JSON.parse(acc.not_recommended_for || '[]')
-
-  const recShoes = shoes.filter(s => recommended.includes(s.category))
-  const notShoes = shoes.filter(s => notRecommended.includes(s.category))
-
-  return (
-    <div className="border-b border-black/5 last:border-b-0">
-      <div className="px-5 lg:px-8 py-6">
-        <div className="flex gap-4 lg:gap-6">
-          {/* Image */}
-          <div className="w-28 h-28 lg:w-36 lg:h-36 flex-shrink-0 bg-black/[0.02] flex items-center justify-center overflow-hidden">
-            {acc.image_data ? (
-              <img src={acc.image_data} alt={acc.name} className="w-full h-full object-cover" />
-            ) : (
-              <ShoppingBag size={32} strokeWidth={0.8} className="text-black/10" />
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-[15px] lg:text-[17px] font-semibold text-black leading-snug">{acc.name}</p>
-                {acc.description && (
-                  <p className="text-[12px] lg:text-[13px] text-black/40 mt-1 leading-relaxed line-clamp-3">{acc.description}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 mt-3">
-              <p className="text-[15px] font-semibold text-black">€ {parseFloat(acc.price) || 0}</p>
-              <button
-                onClick={() => onAdd(acc)}
-                disabled={inCart}
-                className={`h-8 px-3.5 flex items-center gap-1.5 border-0 text-[11px] font-semibold transition-all ${
-                  inCart ? 'bg-black/5 text-black/30' : 'bg-black text-white active:opacity-80'
-                }`}
-              >
-                {inCart ? <><Check size={12} strokeWidth={2.5} /> Hinzugefügt</> : <><Plus size={12} strokeWidth={2} /> Warenkorb</>}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Shoe recommendations — horizontal scroll */}
-        <div className="mt-4 flex flex-col lg:flex-row gap-3 lg:gap-6">
-          {recShoes.length > 0 && (
-            <div className="flex-1 min-w-0">
-              <ShoeScroll shoes={recShoes} label="Empfohlen für" color="#34C759" />
-            </div>
-          )}
-          {notShoes.length > 0 && (
-            <div className="flex-1 min-w-0">
-              <ShoeScroll shoes={notShoes} label="Nicht empfohlen" color="#FF3B30" />
-            </div>
-          )}
-        </div>
-
-        {/* Category tags */}
-        {recommended.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {recommended.map(cat => (
-              <span key={cat} className="text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 bg-[#34C759]/10 text-[#34C759]">
-                {CATEGORY_LABELS[cat] || cat}
-              </span>
-            ))}
-            {notRecommended.map(cat => (
-              <span key={cat} className="text-[8px] font-semibold uppercase tracking-wider px-2 py-0.5 bg-black/[0.03] text-black/25 line-through">
-                {CATEGORY_LABELS[cat] || cat}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
 export default function Accessories() {
   const navigate = useNavigate()
-  const { shoes, cart, addToCart } = useAtelierStore()
+  const { cart, addToCart, removeFromCart } = useAtelierStore()
   const [accessoriesList, setAccessoriesList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
 
-  // Always fetch directly — store may not have loaded accessories yet
   useEffect(() => {
     setLoading(true)
     apiFetch('/api/accessories')
@@ -161,68 +40,153 @@ export default function Accessories() {
       .finally(() => setLoading(false))
   }, [])
 
-  const activeAccessories = accessoriesList
+  const filtered = filter === 'all'
+    ? accessoriesList
+    : accessoriesList.filter(a => FILTERS.find(f => f.key === filter)?.match?.includes(a.key))
+
   const cartIds = cart.filter(c => c.isAccessory).map(c => c.id)
 
-  const handleAdd = (acc) => {
-    if (cartIds.includes(`acc-${acc.id}`)) return
-    addToCart({
-      id: `acc-${acc.id}`,
-      name: acc.name,
-      price: `€ ${parseFloat(acc.price) || 0}`,
-      material: 'Zubehör',
-      image: acc.image_data || null,
-      isAccessory: true,
-      shoeId: null,
-    })
+  const handleToggleCart = (acc, e) => {
+    e.stopPropagation()
+    const accId = `acc-${acc.id}`
+    if (cartIds.includes(accId)) {
+      removeFromCart(accId)
+    } else {
+      addToCart({
+        id: accId,
+        name: acc.name,
+        price: `€ ${parseFloat(acc.price) || 0}`,
+        material: 'Zubehör',
+        image: acc.image_data || null,
+        isAccessory: true,
+        shoeId: null,
+      })
+    }
   }
 
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Large Title Header ────────────────────────────────────── */}
-      <div className="px-5 lg:px-8 pt-3 lg:pt-8 pb-2">
-        <p className="text-[34px] lg:text-[40px] font-bold text-black leading-tight tracking-tight">Zubehör</p>
-        <p className="text-[15px] lg:text-[17px] text-black/45 mt-1">Pflege, Schutz und Extras für deine Maßschuhe.</p>
+      {/* ── Hero header ─────────────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-6 lg:pb-10">
+        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Atelier Kollektion</p>
+        <h1 className="text-[32px] lg:text-[44px] font-extralight text-black leading-[1.1] tracking-tight">
+          Zubehör & Pflege
+        </h1>
+        <p className="text-[13px] lg:text-[15px] text-black/40 mt-3 lg:mt-4 max-w-lg leading-[1.7] font-light">
+          Ausgewählte Pflegeprodukte und Accessoires, abgestimmt auf die Ansprüche handgefertigter Lederschuhe.
+        </p>
       </div>
 
-      {/* ── Accessory count ──────────────────────────────────────── */}
-      {!loading && (
-        <div className="px-5 lg:px-8 pb-4">
-          <p className="text-[11px] text-black/30 uppercase tracking-wider">{activeAccessories.length} Produkte</p>
-        </div>
-      )}
-
-      {/* ── Loading ──────────────────────────────────────────────── */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 border-2 border-black/10 border-t-black animate-spin" />
-        </div>
-      ) : activeAccessories.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center px-5">
-          <div className="w-14 h-14 bg-black/[0.03] flex items-center justify-center mb-4">
-            <ShoppingBag size={24} className="text-black/20" strokeWidth={1.5} />
-          </div>
-          <p className="text-[15px] font-semibold text-black">Kein Zubehör verfügbar</p>
-          <p className="text-[13px] text-black/40 mt-1 max-w-[220px] leading-relaxed">Bald findest du hier passendes Zubehör.</p>
-        </div>
-      ) : (
-        <div>
-          {activeAccessories.map(acc => (
-            <AccessoryDetail
-              key={acc.id}
-              acc={acc}
-              shoes={shoes}
-              inCart={cartIds.includes(`acc-${acc.id}`)}
-              onAdd={handleAdd}
-              onNavigateShoe={(shoe) => navigate('/customize', { state: { product: shoe } })}
-            />
+      {/* ── Filter navigation ───────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pb-6 lg:pb-8 border-b border-black/[0.06]">
+        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {FILTERS.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`flex-shrink-0 px-4 py-2 text-[11px] lg:text-[12px] border-0 bg-transparent transition-all ${
+                filter === f.key
+                  ? 'text-black border-b-2 border-black font-medium'
+                  : 'text-black/35 hover:text-black/60'
+              }`}
+              style={{ letterSpacing: '0.06em', borderBottom: filter === f.key ? '2px solid black' : '2px solid transparent' }}
+            >
+              {f.label}
+            </button>
           ))}
         </div>
+      </div>
+
+      {/* ── Product count ───────────────────────────────────────── */}
+      {!loading && (
+        <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2">
+          <p className="text-[11px] text-black/25 font-light">{filtered.length} {filtered.length === 1 ? 'Produkt' : 'Produkte'}</p>
+        </div>
       )}
 
-      {/* ── Bottom spacer ──────────────────────────────────────── */}
-      <div className="h-12" />
+      {/* ── Content ─────────────────────────────────────────────── */}
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <div className="w-5 h-5 border border-black/15 border-t-black/60 rounded-full animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center px-5">
+          <ShoppingBag size={32} className="text-black/10 mb-4" strokeWidth={1} />
+          <p className="text-[14px] font-light text-black/60">Keine Produkte in dieser Kategorie</p>
+        </div>
+      ) : (
+
+        /* ── Product Grid ──────────────────────────────────────── */
+        <div className="px-5 lg:px-16 pb-16 pt-2">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-12">
+            {filtered.map(acc => {
+              const inCart = cartIds.includes(`acc-${acc.id}`)
+              const recommended = JSON.parse(acc.recommended_for || '[]')
+
+              return (
+                <div key={acc.id} className="group">
+
+                  {/* Product image */}
+                  <div
+                    className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-3 lg:mb-4 transition-all duration-500 group-hover:bg-[#efeee9]"
+                    style={{ aspectRatio: '3 / 4' }}
+                  >
+                    {acc.image_data ? (
+                      <img
+                        src={acc.image_data}
+                        alt={acc.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <ShoppingBag size={32} strokeWidth={0.6} className="text-black/[0.07]" />
+                    )}
+                  </div>
+
+                  {/* Product info */}
+                  <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{acc.name}</p>
+                  {acc.description && (
+                    <p className="text-[11px] text-black/30 mt-1 leading-relaxed line-clamp-2 font-light">{acc.description}</p>
+                  )}
+                  <p className="text-[12px] lg:text-[13px] text-black/60 mt-1.5 font-light">€ {parseFloat(acc.price) || 0}</p>
+
+                  {/* Category tags */}
+                  {recommended.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {recommended.slice(0, 3).map(cat => (
+                        <span key={cat} className="text-[8px] lg:text-[9px] uppercase tracking-wider text-black/25 font-light">
+                          {CATEGORY_LABELS[cat] || cat}{recommended.indexOf(cat) < Math.min(recommended.length, 3) - 1 ? ' ·' : ''}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add to cart */}
+                  <button
+                    onClick={(e) => handleToggleCart(acc, e)}
+                    className={`mt-3 w-full h-10 lg:h-11 flex items-center justify-center gap-2 text-[11px] lg:text-[12px] transition-all duration-300 border ${
+                      inCart
+                        ? 'bg-black text-white border-black hover:bg-white hover:text-black'
+                        : 'bg-white text-black border-black/15 hover:bg-black hover:text-white hover:border-black'
+                    }`}
+                    style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
+                  >
+                    {inCart
+                      ? <><Check size={13} strokeWidth={2} /> Hinzugefügt</>
+                      : 'In den Warenkorb'
+                    }
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}
+      <div className="px-5 lg:px-16 pb-16">
+        <CtaBanner page="accessories" />
+      </div>
     </div>
   )
 }
