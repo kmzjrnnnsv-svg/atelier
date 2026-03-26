@@ -10,7 +10,7 @@ import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 import { isMobileWeb } from '../App'
 import CtaBanner from '../components/CtaBanner'
-import { SHOES, LIFESTYLE, HEROES } from '../lib/editorialImages'
+import { SHOES, HEROES } from '../lib/editorialImages'
 
 const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
 
@@ -94,12 +94,12 @@ export default function Profile() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero banner ──────────────────────────────────────────── */}
+      {/* ── Hero banner — subtle, compact ─────────────────────────── */}
       <div className="relative">
-        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
+        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 3' }}>
           <img src={HEROES.profile} alt="" className="w-full h-full object-cover" />
         </div>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 30%, rgba(255,255,255,0.95) 90%, white 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 20%, rgba(255,255,255,0.95) 85%, white 100%)' }} />
       </div>
 
       {/* ── Hero header ─────────────────────────────────────────── */}

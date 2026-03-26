@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { HelpCircle, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import CtaBanner from '../components/CtaBanner'
-import { LIFESTYLE } from '../lib/editorialImages'
+import { HEROES } from '../lib/editorialImages'
 
 export default function HelpSupport() {
   const navigate = useNavigate()
@@ -25,20 +25,17 @@ export default function HelpSupport() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero banner ──────────────────────────────────────────── */}
+      {/* ── Hero banner — compact, LV-style ─────────────────────── */}
       <div className="relative">
-        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
-          <img src={LIFESTYLE.store} alt="" className="w-full h-full object-cover" />
+        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 4' }}>
+          <img src={HEROES.help} alt="" className="w-full h-full object-cover" />
         </div>
-        <div className="absolute inset-0 flex items-end" style={{ background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.55) 100%)' }}>
-          <div className="px-5 lg:px-16 pb-6 lg:pb-12">
-            <p className="text-[10px] lg:text-[11px] text-white/40 uppercase tracking-[0.25em] mb-2">Atelier Service</p>
-            <h1 className="text-[28px] lg:text-[44px] font-extralight text-white leading-[1.1] tracking-tight">
+        <div className="absolute inset-0 flex items-end" style={{ background: 'linear-gradient(transparent 20%, rgba(0,0,0,0.5) 100%)' }}>
+          <div className="px-5 lg:px-16 pb-6 lg:pb-10">
+            <p className="text-[10px] text-white/40 uppercase tracking-[0.25em] mb-2">Atelier Service</p>
+            <h1 className="text-[22px] lg:text-[28px] font-extralight text-white leading-[1.1] tracking-tight">
               Hilfe & Support
             </h1>
-            <p className="text-[13px] lg:text-[15px] text-white/40 mt-2 lg:mt-3 max-w-lg leading-[1.7] font-light">
-              Häufig gestellte Fragen und direkter Kontakt zu unserem Team.
-            </p>
           </div>
         </div>
       </div>

@@ -36,10 +36,10 @@ export const MATERIALS = {
 
 // ── Lifestyle & Editorial ───────────────────────────────────────────────────
 export const LIFESTYLE = {
-  walking:       UNS('photo-1460353581641-37baddab0fa2', 1200),  // Person walking
-  suit:          UNS('photo-1507003211169-0a1dd7228f2d', 1200),  // Man in suit
+  walking:       UNS('photo-1460353581641-37baddab0fa2', 1200),  // Person walking (shoes visible)
+  elegance:      UNS('photo-1542291026-7eec264c27ff', 1200),     // Elegant shoes on display
   store:         UNS('photo-1441986300917-64674bd600d8', 1200),  // Luxury interior
-  detail:        UNS('photo-1617606002806-94e279c22f4c', 1200),  // Fashion detail
+  detail:        UNS('photo-1449505278894-297fdb3edbc1', 1200),  // Leather shoe close-up detail
 }
 
 // ── Accessories & Care ──────────────────────────────────────────────────────
@@ -55,7 +55,8 @@ export const HEROES = {
   collection:    UNS('photo-1614252235316-8c857d38b5f4', 1600),
   explore:       UNS('photo-1452587925148-ce544e77e70d', 1600),
   accessories:   UNS('photo-1582897085656-c636d006a246', 1600),
-  profile:       UNS('photo-1507003211169-0a1dd7228f2d', 1200),
+  profile:       UNS('photo-1542291026-7eec264c27ff', 1600),     // Elegant shoes on display (no face)
+  help:          UNS('photo-1560343090-f0409e92791a', 1600),      // Shoes on surface
 }
 
 // ── Explore section images ──────────────────────────────────────────────────
@@ -65,5 +66,5 @@ export const EXPLORE = {
   styleguide:    UNS('photo-1460353581641-37baddab0fa2', 1200),  // Style
   trends:        UNS('photo-1558618666-fcd25c85f82e', 1200),     // Materials/Trends
   collabs:       UNS('photo-1441986300917-64674bd600d8', 1200),  // Limited editions
-  community:     UNS('photo-1507003211169-0a1dd7228f2d', 1200),  // Community
+  community:     UNS('photo-1542291026-7eec264c27ff', 1200),     // Community (elegant shoes)
 }

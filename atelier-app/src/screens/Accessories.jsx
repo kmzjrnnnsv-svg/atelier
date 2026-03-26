@@ -68,20 +68,17 @@ export default function Accessories() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero banner — full-bleed editorial ──────────────────── */}
+      {/* ── Hero banner — compact, LV-style ─────────────────────── */}
       <div className="relative">
-        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 6' }}>
+        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 4' }}>
           <img src={HEROES.accessories} alt="" className="w-full h-full object-cover" />
         </div>
-        <div className="absolute inset-0 flex items-end" style={{ background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.55) 100%)' }}>
-          <div className="px-5 lg:px-16 pb-6 lg:pb-12">
-            <p className="text-[10px] lg:text-[11px] text-white/40 uppercase tracking-[0.25em] mb-2">Atelier Kollektion</p>
-            <h1 className="text-[28px] lg:text-[44px] font-extralight text-white leading-[1.1] tracking-tight">
+        <div className="absolute inset-0 flex items-end" style={{ background: 'linear-gradient(transparent 20%, rgba(0,0,0,0.5) 100%)' }}>
+          <div className="px-5 lg:px-16 pb-6 lg:pb-10">
+            <p className="text-[10px] text-white/40 uppercase tracking-[0.25em] mb-2">Atelier Kollektion</p>
+            <h1 className="text-[22px] lg:text-[28px] font-extralight text-white leading-[1.1] tracking-tight">
               Zubehör & Pflege
             </h1>
-            <p className="text-[13px] lg:text-[15px] text-white/40 mt-2 lg:mt-3 max-w-lg leading-[1.7] font-light">
-              Ausgewählte Pflegeprodukte und Accessoires, abgestimmt auf die Ansprüche handgefertigter Lederschuhe.
-            </p>
           </div>
         </div>
       </div>
