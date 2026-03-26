@@ -132,12 +132,14 @@ export default function Customize() {
   const twoColRef = useRef(null)
   const [leftFullyScrolled, setLeftFullyScrolled] = useState(false)
 
-  // Lock parent scroll container on desktop mount
+  // On desktop: lock parent scroll container & measure available height
+  const [desktopH, setDesktopH] = useState(null)
   useEffect(() => {
     if (window.innerWidth < 1024) return
     const parentScroller = outerRef.current?.closest('.overflow-y-auto')
     if (parentScroller) {
       parentScroller.style.overflow = 'hidden'
+      setDesktopH(parentScroller.clientHeight)
       return () => { parentScroller.style.overflow = '' }
     }
   }, [])
@@ -351,7 +353,7 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden" style={{ minHeight: '100%' }} ref={outerRef}>
+    <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden" style={desktopH ? { height: desktopH } : undefined} ref={outerRef}>
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
