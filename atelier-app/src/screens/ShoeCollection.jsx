@@ -151,15 +151,15 @@ export default function ShoeCollection() {
         <p className="text-[11px] text-black/20 font-light">{filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}</p>
       </div>
 
-      {/* ── Product Grid (LV style — clean, no hero, uniform cards) ── */}
-      <div className="px-5 lg:px-16 pb-16">
+      {/* ── Product Grid (LV style — 4-col, compact cards) ────── */}
+      <div className="px-8 lg:px-24 xl:px-32 pb-16">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <p className="text-[14px] font-light text-black/40">Diese Kategorie wird gerade kuratiert.</p>
             <p className="text-[12px] text-black/20 mt-2 font-light">Bald verfügbar.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 lg:gap-x-5 gap-y-8 lg:gap-y-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-8 lg:gap-y-12">
             {filtered.map(product => (
               <ProductCard
                 key={product.id}
