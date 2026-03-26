@@ -95,6 +95,7 @@ export default function Customize() {
   const [added,   setAdded]   = useState(false)
 
   // Refs for scroll forwarding between panels
+  const outerRef = useRef(null)
   const rightPanelRef = useRef(null)
   const leftPanelRef = useRef(null)
   const [rightFullyScrolled, setRightFullyScrolled] = useState(false)
@@ -131,11 +132,31 @@ export default function Customize() {
   const twoColRef = useRef(null)
   const [leftFullyScrolled, setLeftFullyScrolled] = useState(false)
 
-  // Sequenced scroll handler — works for both wheel (MacBook) and touch (iPad)
+  // On desktop: lock parent scroll container so panels scroll independently
   useEffect(() => {
-    const wrapper = twoColRef.current
-    if (!wrapper) return
     if (window.innerWidth < 1024) return
+    // Lock the App-level scroller and all ancestors in the chain
+    let el = outerRef.current?.parentElement
+    while (el) {
+      const style = getComputedStyle(el)
+      if (style.overflow === 'auto' || style.overflowY === 'auto') {
+        el.style.overflow = 'hidden'
+        const lockedEl = el
+        // Also make the intermediate wrapper fill height
+        if (outerRef.current?.parentElement && outerRef.current.parentElement !== el) {
+          outerRef.current.parentElement.style.height = '100%'
+        }
+        return () => { lockedEl.style.overflow = '' }
+      }
+      el = el.parentElement
+    }
+  }, [])
+
+  // Sequenced scroll handler — captures wheel/touch anywhere on the page
+  useEffect(() => {
+    if (window.innerWidth < 1024) return
+    const wrapper = outerRef.current
+    if (!wrapper) return
 
     // Helper: route a vertical delta to the correct panel
     const routeScroll = (deltaY) => {
@@ -160,9 +181,10 @@ export default function Customize() {
       return false // both panels at boundary
     }
 
-    // ── Wheel (MacBook trackpad / mouse) ──
+    // ── Wheel (MacBook trackpad / mouse) — always prevent default on desktop ──
     const onWheel = (e) => {
-      if (routeScroll(e.deltaY)) e.preventDefault()
+      e.preventDefault()
+      routeScroll(e.deltaY)
     }
 
     // ── Touch (iPad) ──
@@ -339,10 +361,10 @@ export default function Customize() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-y-auto lg:overflow-hidden">
+    <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden lg:h-full" ref={outerRef}>
 
       {/* ── Header ────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-8 lg:max-w-7xl lg:mx-auto lg:w-full">
+      <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-6 lg:w-full">
         <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
           <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
         </button>
@@ -363,18 +385,18 @@ export default function Customize() {
       </div>
 
       {/* ── Desktop: Two-Column / Mobile: Stacked ────────────────── */}
-      <div ref={twoColRef} className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:w-full lg:gap-12 lg:px-8 lg:pt-4 lg:min-h-0">
+      <div ref={twoColRef} className="flex-1 flex flex-col lg:flex-row lg:w-full lg:min-h-0">
 
-        {/* ── LEFT: Produkt-Viewer (fest auf Desktop) ─────────────── */}
+        {/* ── LEFT: Produkt-Viewer + Zubehör (4/6 der Breite) ────── */}
         <div
           ref={leftPanelRef}
-          className="z-10 lg:w-1/2 lg:top-0 lg:self-stretch lg:min-h-0 lg:overflow-y-auto"
+          className="z-10 lg:w-4/6 lg:top-0 lg:self-stretch lg:min-h-0 lg:overflow-y-auto lg:px-6"
           style={{
             scrollbarWidth: 'none',
           }}
         >
           <div
-            className="relative overflow-hidden select-none lg:rounded-sm"
+            className="relative overflow-hidden select-none lg:rounded-sm lg:min-h-[500px]"
             style={{
               height: 'clamp(240px, 40dvh, 380px)',
               minHeight: '380px',
@@ -484,7 +506,7 @@ export default function Customize() {
           >
             <p className="text-[10px] text-black/30 uppercase px-1 mb-4" style={{ letterSpacing: '0.18em' }}>Passend dazu</p>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {accessories.map((acc) => {
                 const selected = selectedAccessories.includes(acc.id)
                 return (
@@ -531,10 +553,10 @@ export default function Customize() {
           </div>
         </div>
 
-        {/* ── RIGHT: Konfiguration (scrollbar auf Desktop) ─────── */}
+        {/* ── RIGHT: Konfiguration (2/6 der Breite, rechter Rand) ── */}
         <div
           ref={rightPanelRef}
-          className="flex-1 flex flex-col lg:max-w-md lg:overflow-y-auto lg:min-h-0"
+          className="flex-1 flex flex-col lg:flex-initial lg:w-2/6 lg:overflow-y-auto lg:min-h-0 lg:border-l lg:border-black/5 lg:px-6"
           style={{ scrollbarWidth: 'none' }}
         >
 
