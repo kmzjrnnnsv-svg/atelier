@@ -51,13 +51,9 @@ export default function TopBar() {
           </button>
         </div>
 
-        {/* Center: Page title or Brand */}
+        {/* Center: Brand (always show ATELIER like LV shows LOUIS VUITTON) */}
         <button onClick={() => go('/foryou')} className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60">
-          {pageTitle ? (
-            <span className="text-[14px] font-semibold tracking-wide text-black">{pageTitle}</span>
-          ) : (
-            <span className="text-[18px] font-bold tracking-[0.06em] text-black" style={{ fontFamily: "'Inter', sans-serif" }}>ATELIER</span>
-          )}
+          <span className="text-[16px] lg:text-[17px] font-normal tracking-[0.18em] text-black">ATELIER</span>
         </button>
 
         {/* Right: Wishlist (desktop) + Account + Cart */}
@@ -81,18 +77,16 @@ export default function TopBar() {
         </div>
       </header>
 
-      {/* ── Slide-out menu overlay ── */}
+      {/* ── Dropdown menu overlay ── */}
       {open && (
-        <div className="fixed inset-0 z-[999] flex">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <nav className="relative w-72 max-w-[80vw] bg-white flex flex-col shadow-2xl" style={{ animation: 'slideInLeft 0.3s ease', height: '100dvh' }}>
-            <div className="flex items-center justify-between px-5 h-14 border-b border-black/5">
-              <span className="text-[16px] font-bold tracking-[0.05em]">ATELIER</span>
-              <button onClick={() => setOpen(false)} className="w-8 h-8 flex items-center justify-center border-0 bg-transparent active:opacity-60">
-                <X size={16} strokeWidth={2} className="text-black/60" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto py-2">
+        <div className="fixed inset-0 z-[999]" onClick={() => setOpen(false)}>
+          <div className="absolute inset-0 bg-black/20" />
+          <nav
+            className="absolute left-0 right-0 bg-white shadow-lg"
+            style={{ top: isMobileWeb ? 48 : 52, animation: 'slideDown 0.25s ease' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="py-3 border-b border-black/[0.06]">
               {MENU_ITEMS.map(({ icon: Icon, label, path }) => {
                 const isActive = pathname === path || pathname.startsWith(path + '/')
                 return (
@@ -100,12 +94,12 @@ export default function TopBar() {
                     key={path}
                     onClick={() => go(path)}
                     onPointerEnter={() => prefetchRoute(path)}
-                    className={`w-full flex items-center gap-3.5 px-5 py-3.5 bg-transparent border-0 text-left transition-colors ${
-                      isActive ? 'text-black' : 'text-black/50'
+                    className={`w-full flex items-center gap-3.5 px-6 lg:px-8 py-3 bg-transparent border-0 text-left transition-colors hover:bg-black/[0.02] ${
+                      isActive ? 'text-black' : 'text-black/40'
                     }`}
                   >
-                    <Icon size={18} strokeWidth={isActive ? 2 : 1.3} />
-                    <span className="text-[15px]" style={{ fontWeight: isActive ? 600 : 400 }}>{label}</span>
+                    <Icon size={16} strokeWidth={isActive ? 1.8 : 1.2} />
+                    <span className={`text-[13px] ${isActive ? 'font-normal' : 'font-light'}`}>{label}</span>
                   </button>
                 )
               })}

@@ -12,23 +12,23 @@ const STEPS = ['Warenkorb', 'Lieferung', 'Rechnung', 'Zubehör', 'Übersicht']
 
 function StepBar({ current }) {
   return (
-    <div className="flex items-center gap-1 px-5 py-3">
+    <div className="flex items-center gap-1 px-5 lg:px-16 py-4">
       {STEPS.map((label, i) => (
         <div key={label} className="flex items-center" style={{ flex: i < STEPS.length - 1 ? '1 1 0' : 'none' }}>
-          <div className="flex flex-col items-center gap-0.5">
-            <div className={`w-6 h-6 flex items-center justify-center text-[9px] font-bold transition-all ${
+          <div className="flex flex-col items-center gap-1">
+            <div className={`w-6 h-6 flex items-center justify-center text-[9px] transition-all ${
               i < current  ? 'bg-black text-white' :
               i === current ? 'bg-black text-white' :
-              'bg-black/5 text-black/30'
-            }`}>
-              {i < current ? <Check size={10} strokeWidth={2.5} /> : i + 1}
+              'bg-[#f6f5f3] text-black/25'
+            }`} style={{ fontWeight: 300 }}>
+              {i < current ? <Check size={10} strokeWidth={2} /> : i + 1}
             </div>
-            <span className={`text-[7px] uppercase whitespace-nowrap ${i === current ? 'text-black font-bold' : 'text-black/30'}`} style={{ letterSpacing: '0.08em' }}>
+            <span className={`text-[8px] uppercase whitespace-nowrap font-light ${i === current ? 'text-black' : 'text-black/25'}`} style={{ letterSpacing: '0.1em' }}>
               {label}
             </span>
           </div>
           {i < STEPS.length - 1 && (
-            <div className={`h-px flex-1 mx-1 mb-3 transition-all ${i < current ? 'bg-black' : 'bg-black/8'}`} />
+            <div className={`h-px flex-1 mx-1.5 mb-4 transition-all ${i < current ? 'bg-black' : 'bg-black/[0.06]'}`} />
           )}
         </div>
       ))}
@@ -39,10 +39,10 @@ function StepBar({ current }) {
 // ── Address form ──────────────────────────────────────────────────────────────
 function AddressForm({ title, value, onChange }) {
   const f = (field, val) => onChange({ ...value, [field]: val })
-  const inp = 'w-full bg-black/[0.03] border-0 px-4 py-3 text-[15px] text-black placeholder-black/30 focus:outline-none focus:ring-1 focus:ring-black/10 transition-all'
+  const inp = 'w-full bg-[#f6f5f3] border border-black/[0.06] px-4 py-3 text-[13px] text-black placeholder-black/25 focus:outline-none focus:border-black/15 transition-all font-light'
   return (
     <div>
-      <h2 className="text-[11px] font-bold text-black/40 mb-3 uppercase" style={{ letterSpacing: '0.1em' }}>{title}</h2>
+      <h2 className="text-[10px] text-black/30 mb-4 uppercase font-light" style={{ letterSpacing: '0.2em' }}>{title}</h2>
       <div className="space-y-2">
         <input className={inp} placeholder="Vollständiger Name" value={value.name || ''} onChange={e => f('name', e.target.value)} />
         <input className={inp} placeholder="Straße + Hausnummer" value={value.street || ''} onChange={e => f('street', e.target.value)} />
@@ -232,16 +232,16 @@ export default function Checkout() {
     return (
       <div className="min-h-full bg-white">
         <div className="flex flex-col items-center justify-center px-5 pt-16 pb-8">
-          <div className="w-14 h-14 bg-[#34C759] flex items-center justify-center mb-4">
-            <CheckCircle2 size={24} className="text-white" strokeWidth={1.5} />
+          <div className="w-14 h-14 bg-black flex items-center justify-center mb-5">
+            <CheckCircle2 size={22} className="text-white" strokeWidth={1.5} />
           </div>
-          <p className="text-[22px] font-bold text-black">Bestellt</p>
-          <p className="text-[13px] text-black/40 mt-1">#{placed.id} · {placed.shoe_name}</p>
+          <p className="text-[24px] font-extralight text-black tracking-tight">Bestellt</p>
+          <p className="text-[12px] text-black/30 mt-2 font-light">#{placed.id} · {placed.shoe_name}</p>
         </div>
 
         <div className="px-5 pb-8 space-y-3">
           <div className="bg-white p-5 border border-black/[0.06]">
-            <p className="text-[10px] font-bold text-[#34C759] uppercase tracking-wider mb-3">Überweisung</p>
+            <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light mb-4">Überweisung</p>
             <div className="space-y-2.5">
               <div className="flex justify-between">
                 <span className="text-[13px] text-black/40">Betrag</span>
@@ -275,11 +275,13 @@ export default function Checkout() {
           </p>
 
           <button onClick={() => navigate('/orders')}
-            className="w-full py-3.5 bg-black text-white text-[14px] font-semibold border-0 active:opacity-80">
+            className="w-full py-3.5 bg-black text-white text-[12px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300"
+            style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
             Bestellung verfolgen
           </button>
           <button onClick={() => navigate('/collection')}
-            className="w-full py-3.5 bg-white text-black text-[14px] font-semibold border-0 active:opacity-80">
+            className="w-full py-3.5 bg-white text-black text-[12px] font-light border border-black/15 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
+            style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
             Weiter shoppen
           </button>
         </div>
@@ -291,19 +293,18 @@ export default function Checkout() {
   if (step === 0 && cart.length === 0 && !product.id) {
     return (
       <div className="min-h-full bg-white">
-        <div className="px-5 pt-3 pb-1">
-          <p className="text-[28px] font-bold text-black tracking-tight">Einkaufstasche</p>
+        <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-1">
+          <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Atelier</p>
+          <p className="text-[28px] lg:text-[36px] font-extralight text-black tracking-tight">Einkaufstasche</p>
         </div>
         <div className="flex flex-col items-center justify-center py-20 text-center px-5">
-          <div className="w-14 h-14 bg-black/[0.03] flex items-center justify-center mb-4">
-            <ShoppingBag size={24} strokeWidth={1.5} className="text-black/20" />
-          </div>
-          <p className="text-[15px] font-semibold text-black">Noch keine Artikel</p>
-          <p className="text-[13px] text-black/40 mt-1 max-w-[220px] leading-relaxed">Entdecke unsere Kollektion und finde deinen Schuh.</p>
+          <ShoppingBag size={32} strokeWidth={0.8} className="text-black/10 mb-4" />
+          <p className="text-[14px] font-light text-black/50">Noch keine Artikel</p>
+          <p className="text-[12px] text-black/25 mt-2 max-w-[240px] leading-relaxed font-light">Entdecken Sie unsere Kollektion und finden Sie Ihren Schuh.</p>
           <button onClick={() => navigate('/collection')}
-            className="mt-5 px-6 py-3 bg-black text-white text-[11px] font-semibold border-0 active:opacity-80"
+            className="mt-6 px-8 py-3 bg-black text-white text-[11px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300"
             style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-            Zur Kollektion
+            Kollektion entdecken
           </button>
         </div>
       </div>
@@ -313,13 +314,13 @@ export default function Checkout() {
   return (
     <div className="flex flex-col min-h-full bg-white">
 
-      {/* Header — simple large title */}
-      <div className="px-5 pt-3 pb-1 flex items-center gap-3 flex-shrink-0">
+      {/* Header */}
+      <div className="px-5 lg:px-16 pt-4 pb-2 flex items-center gap-3 flex-shrink-0">
         <button onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)}
-          className="w-8 h-8 bg-white flex items-center justify-center border-0 active:opacity-60 flex-shrink-0">
-          <ArrowLeft size={16} strokeWidth={1.8} className="text-black" />
+          className="w-8 h-8 bg-transparent flex items-center justify-center border-0 active:opacity-60 flex-shrink-0">
+          <ArrowLeft size={16} strokeWidth={1.5} className="text-black" />
         </button>
-        <span className="text-[17px] font-bold text-black">{step === 0 ? 'Einkaufstasche' : 'Checkout'}</span>
+        <span className="text-[15px] font-light text-black tracking-tight">{step === 0 ? 'Einkaufstasche' : 'Checkout'}</span>
       </div>
 
       <StepBar current={step} />
@@ -588,18 +589,20 @@ export default function Checkout() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="px-5 pt-2 flex-shrink-0" style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
+      <div className="px-5 lg:px-16 pt-3 flex-shrink-0" style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
         {step < 4 ? (
           <button onClick={handleNext} disabled={!canNext}
-            className={`w-full py-3.5 flex items-center justify-center gap-2 font-semibold text-[15px] transition-all border-0 ${
-              canNext ? 'bg-black text-white active:opacity-80' : 'bg-black/5 text-black/20'}`}>
-            Weiter <ChevronRight size={16} strokeWidth={2} />
+            className={`w-full py-3.5 flex items-center justify-center gap-2 text-[12px] font-light transition-all border ${
+              canNext ? 'bg-black text-white border-black hover:bg-white hover:text-black' : 'bg-[#f6f5f3] text-black/20 border-transparent'}`}
+            style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            Weiter <ChevronRight size={14} strokeWidth={1.5} />
           </button>
         ) : (
           <button onClick={handlePlace} disabled={placing}
-            className="w-full py-3.5 flex items-center justify-center gap-2 bg-black text-white font-semibold text-[15px] active:opacity-80 border-0 disabled:opacity-50">
+            className="w-full py-3.5 flex items-center justify-center gap-2 bg-black text-white text-[12px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300 disabled:opacity-50"
+            style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             {placing ? (
-              <><div className="w-4 h-4 border-2 border-white/30 border-t-white animate-spin" /> Wird verarbeitet…</>
+              <><div className="w-4 h-4 border border-white/30 border-t-white rounded-full animate-spin" /> Wird verarbeitet…</>
             ) : (
               <>Bestellen — € {fmtPrice(total)}</>
             )}
