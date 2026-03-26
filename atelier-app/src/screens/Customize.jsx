@@ -100,7 +100,20 @@ export default function Customize() {
   const [rightFullyScrolled, setRightFullyScrolled] = useState(false)
   const [selectedAccessories, setSelectedAccessories] = useState([])
 
-  const accessories = (shoeAccessoryMap[product.id] || []).map(a => ({
+  const [directAccessories, setDirectAccessories] = useState([])
+  const storeAcc = shoeAccessoryMap[product.id] || []
+
+  // Fallback: fetch shoe-specific accessories directly if store is empty
+  useEffect(() => {
+    if (product.id && storeAcc.length === 0) {
+      apiFetch(`/api/shoes/${product.id}/accessories`)
+        .then(data => setDirectAccessories(Array.isArray(data) ? data : []))
+        .catch(() => setDirectAccessories([]))
+    }
+  }, [product.id, storeAcc.length])
+
+  const rawAcc = storeAcc.length > 0 ? storeAcc : directAccessories
+  const accessories = rawAcc.map(a => ({
     id: a.id,
     name: a.name,
     price: parseFloat(a.price) || 0,
