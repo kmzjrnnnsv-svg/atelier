@@ -1,6 +1,6 @@
 /**
- * Accessories.jsx — Customer-facing accessories browsing page
- * Clean grid layout with minimal cards
+ * Accessories.jsx — LV-inspired accessories browsing page
+ * Clean, luxurious grid with warm tones and elegant typography
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -13,23 +13,20 @@ const CATEGORY_LABELS = {
   MONK: 'Monk', BOOT: 'Boot', SNEAKER: 'Sneaker',
 }
 
-// ── Filter pills ─────────────────────────────────────────────────────────
 const FILTERS = [
-  { key: 'all', label: 'Alle' },
+  { key: 'all', label: 'Alle Produkte' },
   { key: 'pflege', label: 'Pflege', match: ['carekit', 'cream_dark', 'cream_cognac', 'cordovan_balm', 'patent_care', 'exotic_care', 'sole_oil'] },
-  { key: 'buersten', label: 'Bürsten', match: ['horsehair_brush', 'suede_brush', 'polishing_cloth', 'buckle_cloth'] },
-  { key: 'schutz', label: 'Schutz', match: ['suede_spray', 'suede_eraser', 'dustbag', 'shoetrees'] },
-  { key: 'extras', label: 'Extras', match: ['shoehorn', 'belt', 'boot_jack', 'waxed_laces', 'sneaker_kit'] },
+  { key: 'buersten', label: 'Bürsten & Tücher', match: ['horsehair_brush', 'suede_brush', 'polishing_cloth', 'buckle_cloth'] },
+  { key: 'schutz', label: 'Schutz & Pflege', match: ['suede_spray', 'suede_eraser', 'dustbag', 'shoetrees'] },
+  { key: 'extras', label: 'Accessoires', match: ['shoehorn', 'belt', 'boot_jack', 'waxed_laces', 'sneaker_kit'] },
 ]
 
-// ═════════════════════════════════════════════════════════════════════════════
 export default function Accessories() {
   const navigate = useNavigate()
   const { cart, addToCart } = useAtelierStore()
   const [accessoriesList, setAccessoriesList] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
-  const [expandedId, setExpandedId] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -65,28 +62,30 @@ export default function Accessories() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="px-5 lg:px-10 pt-4 lg:pt-10 pb-1">
-        <p className="text-[11px] text-black/30 uppercase mb-1" style={{ letterSpacing: '0.18em' }}>Kollektion</p>
-        <p className="text-[28px] lg:text-[36px] font-light text-black leading-tight">Zubehör</p>
-        <p className="text-[13px] lg:text-[14px] text-black/40 mt-2 max-w-md leading-relaxed">
-          Pflege, Schutz und Extras — abgestimmt auf handgefertigte Lederschuhe.
+      {/* ── Hero header ─────────────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-6 lg:pb-10">
+        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Atelier Kollektion</p>
+        <h1 className="text-[32px] lg:text-[44px] font-extralight text-black leading-[1.1] tracking-tight">
+          Zubehör & Pflege
+        </h1>
+        <p className="text-[13px] lg:text-[15px] text-black/40 mt-3 lg:mt-4 max-w-lg leading-[1.7] font-light">
+          Ausgewählte Pflegeprodukte und Accessoires, abgestimmt auf die Ansprüche handgefertigter Lederschuhe.
         </p>
       </div>
 
-      {/* ── Filter pills ──────────────────────────────────────── */}
-      <div className="px-5 lg:px-10 pt-4 pb-2">
-        <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      {/* ── Filter navigation ───────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pb-6 lg:pb-8 border-b border-black/[0.06]">
+        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {FILTERS.map(f => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`flex-shrink-0 h-8 px-4 text-[11px] border transition-all ${
+              className={`flex-shrink-0 px-4 py-2 text-[11px] lg:text-[12px] border-0 bg-transparent transition-all ${
                 filter === f.key
-                  ? 'bg-black text-white border-black'
-                  : 'bg-transparent text-black/50 border-black/10 hover:border-black/20'
+                  ? 'text-black border-b-2 border-black font-medium'
+                  : 'text-black/35 hover:text-black/60'
               }`}
-              style={{ letterSpacing: '0.06em' }}
+              style={{ letterSpacing: '0.06em', borderBottom: filter === f.key ? '2px solid black' : '2px solid transparent' }}
             >
               {f.label}
             </button>
@@ -94,89 +93,85 @@ export default function Accessories() {
         </div>
       </div>
 
-      {/* ── Count ──────────────────────────────────────────────── */}
+      {/* ── Product count ───────────────────────────────────────── */}
       {!loading && (
-        <div className="px-5 lg:px-10 pb-4 pt-2">
-          <p className="text-[11px] text-black/25">{filtered.length} Produkte</p>
+        <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2">
+          <p className="text-[11px] text-black/25 font-light">{filtered.length} {filtered.length === 1 ? 'Produkt' : 'Produkte'}</p>
         </div>
       )}
 
-      {/* ── Loading ────────────────────────────────────────────── */}
+      {/* ── Content ─────────────────────────────────────────────── */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-5 h-5 border-2 border-black/10 border-t-black animate-spin" />
+        <div className="flex items-center justify-center py-24">
+          <div className="w-5 h-5 border border-black/15 border-t-black/60 rounded-full animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center px-5">
-          <div className="w-14 h-14 bg-black/[0.03] flex items-center justify-center mb-4">
-            <ShoppingBag size={24} className="text-black/20" strokeWidth={1.5} />
-          </div>
-          <p className="text-[15px] font-medium text-black">Kein Zubehör gefunden</p>
-          <p className="text-[13px] text-black/40 mt-1">Versuche einen anderen Filter.</p>
+        <div className="flex flex-col items-center justify-center py-24 text-center px-5">
+          <ShoppingBag size={32} className="text-black/10 mb-4" strokeWidth={1} />
+          <p className="text-[14px] font-light text-black/60">Keine Produkte in dieser Kategorie</p>
         </div>
       ) : (
+
         /* ── Product Grid ──────────────────────────────────────── */
-        <div className="px-5 lg:px-10 pb-12">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+        <div className="px-5 lg:px-16 pb-16 pt-2">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-12">
             {filtered.map(acc => {
               const inCart = cartIds.includes(`acc-${acc.id}`)
               const recommended = JSON.parse(acc.recommended_for || '[]')
-              const expanded = expandedId === acc.id
 
               return (
-                <div
-                  key={acc.id}
-                  className="group cursor-pointer"
-                  onClick={() => setExpandedId(expanded ? null : acc.id)}
-                >
-                  {/* Image */}
-                  <div className="w-full overflow-hidden flex items-center justify-center bg-black/[0.02]"
-                    style={{ aspectRatio: '1' }}
+                <div key={acc.id} className="group">
+
+                  {/* Product image */}
+                  <div
+                    className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-3 lg:mb-4 transition-all duration-500 group-hover:bg-[#efeee9]"
+                    style={{ aspectRatio: '3 / 4' }}
                   >
                     {acc.image_data ? (
-                      <img src={acc.image_data} alt={acc.name} className="w-full h-full object-cover" />
+                      <img
+                        src={acc.image_data}
+                        alt={acc.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                      />
                     ) : (
-                      <ShoppingBag size={28} strokeWidth={0.7} className="text-black/8" />
+                      <ShoppingBag size={32} strokeWidth={0.6} className="text-black/[0.07]" />
                     )}
                   </div>
 
-                  {/* Info */}
-                  <div className="pt-2.5 pb-1">
-                    <p className="text-[12px] lg:text-[13px] text-black leading-snug">{acc.name}</p>
-                    <p className="text-[12px] lg:text-[13px] text-black/40 mt-0.5">€{parseFloat(acc.price) || 0}</p>
-                  </div>
+                  {/* Product info */}
+                  <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{acc.name}</p>
+                  {acc.description && (
+                    <p className="text-[11px] text-black/30 mt-1 leading-relaxed line-clamp-2 font-light">{acc.description}</p>
+                  )}
+                  <p className="text-[12px] lg:text-[13px] text-black/60 mt-1.5 font-light">€ {parseFloat(acc.price) || 0}</p>
 
-                  {/* Add to cart button — always visible */}
+                  {/* Category tags */}
+                  {recommended.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {recommended.slice(0, 3).map(cat => (
+                        <span key={cat} className="text-[8px] lg:text-[9px] uppercase tracking-wider text-black/25 font-light">
+                          {CATEGORY_LABELS[cat] || cat}{recommended.indexOf(cat) < Math.min(recommended.length, 3) - 1 ? ' ·' : ''}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add to cart */}
                   <button
                     onClick={(e) => handleAdd(acc, e)}
                     disabled={inCart}
-                    className={`w-full h-9 flex items-center justify-center gap-1.5 border text-[11px] transition-all ${
+                    className={`mt-3 w-full h-10 lg:h-11 flex items-center justify-center gap-2 text-[11px] lg:text-[12px] transition-all duration-300 border ${
                       inCart
-                        ? 'bg-black/[0.03] text-black/30 border-black/5'
-                        : 'bg-transparent text-black/60 border-black/10 hover:border-black/30 hover:text-black'
+                        ? 'bg-black text-white border-black'
+                        : 'bg-white text-black border-black/15 hover:bg-black hover:text-white hover:border-black'
                     }`}
-                    style={{ letterSpacing: '0.04em' }}
+                    style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
                   >
-                    {inCart ? <><Check size={12} strokeWidth={2.5} /> Hinzugefügt</> : <><Plus size={12} strokeWidth={2} /> Warenkorb</>}
+                    {inCart
+                      ? <><Check size={13} strokeWidth={2} /> Hinzugefügt</>
+                      : 'In den Warenkorb'
+                    }
                   </button>
-
-                  {/* Expanded: description + tags */}
-                  {expanded && (
-                    <div className="pb-3">
-                      {acc.description && (
-                        <p className="text-[11px] text-black/35 leading-relaxed mt-1">{acc.description}</p>
-                      )}
-                      {recommended.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {recommended.map(cat => (
-                            <span key={cat} className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 bg-black/[0.04] text-black/30">
-                              {CATEGORY_LABELS[cat] || cat}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               )
             })}
