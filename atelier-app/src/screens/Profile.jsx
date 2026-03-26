@@ -10,6 +10,7 @@ import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
 import { isMobileWeb } from '../App'
 import CtaBanner from '../components/CtaBanner'
+import { SHOES, HEROES } from '../lib/editorialImages'
 
 const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
 
@@ -93,8 +94,16 @@ export default function Profile() {
   return (
     <div className="min-h-full bg-white">
 
+      {/* ── Hero banner — subtle, compact ─────────────────────────── */}
+      <div className="relative">
+        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 3' }}>
+          <img src={HEROES.profile} alt="" className="w-full h-full object-cover" />
+        </div>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 20%, rgba(255,255,255,0.95) 85%, white 100%)' }} />
+      </div>
+
       {/* ── Hero header ─────────────────────────────────────────── */}
-      <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-6 lg:pb-8">
+      <div className="px-5 lg:px-16 -mt-16 relative z-10 pb-6 lg:pb-8">
         <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Ihr Profil</p>
 
         {/* Profile info */}
@@ -504,18 +513,19 @@ export default function Profile() {
         <p className="text-[12px] text-black/30 mb-4 font-light">Ihr persönlicher Stil für maßgefertigte Schuhe.</p>
         <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {[
-            { label: 'Modern Business', desc: 'Sharp, tailored', active: true },
-            { label: 'Classic',          desc: 'Timeless, refined', active: false },
-            { label: 'Weekend',          desc: 'Relaxed, smart', active: false },
+            { label: 'Modern Business', desc: 'Sharp, tailored', active: true, img: SHOES.oxfords },
+            { label: 'Classic',          desc: 'Timeless, refined', active: false, img: SHOES.dressShoes },
+            { label: 'Weekend',          desc: 'Relaxed, smart', active: false, img: SHOES.loafers },
           ].map(card => (
             <div
               key={card.label}
               className={`flex-shrink-0 w-36 h-24 overflow-hidden relative cursor-pointer transition-all ${card.active ? 'border border-black' : 'border border-black/[0.06]'}`}
             >
-              <div className="absolute inset-0 bg-[#f6f5f3]" />
+              <img src={card.img} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.6) 100%)' }} />
               <div className="absolute bottom-0 left-0 right-0 p-3">
-                <p className="text-[10px] text-black font-light leading-tight">{card.label}</p>
-                <p className="text-[9px] text-black/30 mt-0.5 font-light">{card.desc}</p>
+                <p className="text-[10px] text-white font-light leading-tight">{card.label}</p>
+                <p className="text-[9px] text-white/50 mt-0.5 font-light">{card.desc}</p>
               </div>
               {card.active && (
                 <div className="absolute top-2 right-2 w-4 h-4 bg-black flex items-center justify-center">

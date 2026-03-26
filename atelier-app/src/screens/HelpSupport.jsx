@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { HelpCircle, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import CtaBanner from '../components/CtaBanner'
+import { HEROES } from '../lib/editorialImages'
 
 export default function HelpSupport() {
   const navigate = useNavigate()
@@ -24,15 +25,15 @@ export default function HelpSupport() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero header ─────────────────────────────────────────── */}
-      <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-6 lg:pb-10">
-        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Atelier Service</p>
-        <h1 className="text-[32px] lg:text-[44px] font-extralight text-black leading-[1.1] tracking-tight">
+      {/* ── Hero — image then text below (LV-style) ──────────────── */}
+      <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
+        <img src={HEROES.help} alt="" className="w-full h-full object-cover" />
+      </div>
+      <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-6 lg:pb-8">
+        <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">Atelier Service</p>
+        <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.1] tracking-tight">
           Hilfe & Support
         </h1>
-        <p className="text-[13px] lg:text-[15px] text-black/40 mt-3 lg:mt-4 max-w-lg leading-[1.7] font-light">
-          Häufig gestellte Fragen und direkter Kontakt zu unserem Team.
-        </p>
       </div>
 
       {/* ── Category filters ───────────────────────────────────── */}
