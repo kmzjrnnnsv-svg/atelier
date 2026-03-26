@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
+import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 
@@ -197,6 +198,11 @@ export default function ShoeCollection() {
             )}
           </div>
         )}
+      </div>
+
+      {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}
+      <div className="px-5 lg:px-16 pb-16">
+        <CtaBanner page="collection" />
       </div>
     </div>
   )

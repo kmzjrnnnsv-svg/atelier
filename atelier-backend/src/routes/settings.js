@@ -161,4 +161,40 @@ router.put('/featured-shoes', authenticate, requireRole('admin', 'curator'), (re
   res.json({ message: 'Empfehlungen gespeichert', shoe_ids })
 })
 
+// ─── GET /api/settings/cta-banner — public ──────────────────────────────
+const CTA_KEYS = ['cta_label', 'cta_title', 'cta_text', 'cta_button', 'cta_link', 'cta_pages']
+router.get('/cta-banner', (req, res) => {
+  const db = getDb()
+  const rows = db.prepare(`SELECT key, value FROM settings WHERE key IN (${CTA_KEYS.map(() => '?').join(',')})`)
+    .all(...CTA_KEYS)
+  const result = Object.fromEntries(rows.map(r => [r.key, r.value]))
+  res.json({
+    label:  result.cta_label  || 'Persönliche Beratung',
+    title:  result.cta_title  || 'Besuchen Sie das Atelier',
+    text:   result.cta_text   || 'Erleben Sie Ihr persönliches Fitting mit 3D-Fußvermessung. Kostenlos und unverbindlich.',
+    button: result.cta_button || 'Termin vereinbaren',
+    link:   result.cta_link   || '/scan',
+    pages:  result.cta_pages  ? JSON.parse(result.cta_pages) : ['explore', 'collection', 'accessories'],
+  })
+})
+
+// ─── PUT /api/settings/cta-banner — admin/curator ───────────────────────
+router.put('/cta-banner', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db = getDb()
+  const uid = req.user.id
+  const upsert = db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `)
+  const { label, title, text, button, link, pages } = req.body
+  if (label !== undefined) upsert.run('cta_label', label, uid)
+  if (title !== undefined) upsert.run('cta_title', title, uid)
+  if (text !== undefined)  upsert.run('cta_text', text, uid)
+  if (button !== undefined) upsert.run('cta_button', button, uid)
+  if (link !== undefined) upsert.run('cta_link', link, uid)
+  if (pages !== undefined) upsert.run('cta_pages', JSON.stringify(pages), uid)
+  res.json({ message: 'CTA-Banner gespeichert' })
+})
+
 export default router

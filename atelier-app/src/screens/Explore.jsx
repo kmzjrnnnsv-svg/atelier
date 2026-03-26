@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, BookOpen, Compass } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
+import CtaBanner from '../components/CtaBanner'
 
 const ARTICLE_THEME = {
   'Gesundheit': '#19110B',
@@ -201,25 +202,8 @@ export default function Explore() {
           </div>
         )}
 
-        {/* ── Atelier Session CTA ───────────────────────────────── */}
-        <div className="border-t border-black/[0.06] pt-10 lg:pt-14">
-          <div className="max-w-md mx-auto text-center">
-            <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">Persönliche Beratung</p>
-            <p className="text-[22px] lg:text-[28px] font-extralight text-black leading-[1.2] tracking-tight">
-              Besuchen Sie das Atelier
-            </p>
-            <p className="text-[13px] text-black/35 mt-3 leading-[1.7] font-light">
-              Erleben Sie Ihr persönliches Fitting mit 3D-Fußvermessung. Kostenlos und unverbindlich.
-            </p>
-            <button
-              onClick={() => navigate('/scan')}
-              className="mt-6 px-8 h-12 bg-black text-white text-[11px] border-0 hover:bg-white hover:text-black border border-black transition-all duration-300"
-              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
-            >
-              Termin vereinbaren
-            </button>
-          </div>
-        </div>
+        {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}
+        <CtaBanner page="explore" />
 
       </div>
     </div>

@@ -101,6 +101,7 @@ const AccessoriesPanel     = lazy(() => import('./screens/cms/AccessoriesPanel')
 const ShippingPanel        = lazy(() => import('./screens/cms/ShippingPanel'))
 const CouponsPanel         = lazy(() => import('./screens/cms/CouponsPanel'))
 const FeaturedShoesPanel   = lazy(() => import('./screens/cms/FeaturedShoesPanel'))
+const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
@@ -187,6 +188,7 @@ function AppRoutes() {
               <Route path="explore"  element={<ExploreEditor />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />
               <Route path="articles" element={<ArticleEditor />} />
+              <Route path="cta-banner" element={<CtaBannerPanel />} />
               <Route path="orders"   element={<OrdersPanel />} />
               <Route path="faq"      element={<FAQEditor />} />
               <Route path="legal"    element={<LegalEditor />} />

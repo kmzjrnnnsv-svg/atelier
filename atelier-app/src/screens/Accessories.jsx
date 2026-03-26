@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { ShoppingBag, Plus, Check } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
 import { apiFetch } from '../hooks/useApi'
+import CtaBanner from '../components/CtaBanner'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
@@ -181,6 +182,11 @@ export default function Accessories() {
           </div>
         </div>
       )}
+
+      {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}
+      <div className="px-5 lg:px-16 pb-16">
+        <CtaBanner page="accessories" />
+      </div>
     </div>
   )
 }

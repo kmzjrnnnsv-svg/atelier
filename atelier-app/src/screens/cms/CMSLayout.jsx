@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star } from 'lucide-react'
+import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useAtelierStore from '../../store/atelierStore'
 
@@ -57,6 +57,7 @@ export default function CMSLayout() {
               { to: '/cms/wardrobe', label: 'Garderobe',        icon: Shirt },
               { to: '/cms/outfits',  label: 'Outfits',          icon: Image },
               { to: '/cms/articles', label: 'Artikel',          icon: BookOpen },
+              { to: '/cms/cta-banner', label: 'CTA-Banner',     icon: Megaphone },
             ]},
             { heading: 'Kunden', items: [
               { to: '/cms/scans',    label: 'Foot Scans',   icon: ScanLine },
