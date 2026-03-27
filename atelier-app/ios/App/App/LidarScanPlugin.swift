@@ -32,11 +32,14 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     public let identifier = "LidarScanPlugin"
     public let jsName = "LidarScan"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "isLidarSupported",      returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "captureFootScan",        returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "startWalkAround",        returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getWalkAroundProgress",  returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "finishWalkAround",       returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "isLidarSupported",              returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "captureFootScan",               returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startWalkAround",               returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getWalkAroundProgress",         returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "finishWalkAround",              returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startContinuousCapture",        returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getContinuousCaptureProgress",  returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "finishContinuousCapture",       returnType: CAPPluginReturnPromise),
     ]
 
     // ── Shared ARKit session ──────────────────────────────────────────────────

@@ -1187,15 +1187,6 @@ export default function FootScan() {
         payload.pointCloud = raw.pointCloud.slice(-40000)
       }
 
-      // Check if we got enough data
-      if ((raw.pointCount ?? 0) < 100) {
-        setLidarError('Zu wenige Punkte erfasst. Bitte achte auf gute Beleuchtung und halte 30–50 cm Abstand.')
-        setWalkProgress(0)
-        setLidarSubPhase('intro')
-        return
-      }
-
-      setAiStatus('Maße werden berechnet…')
       const measurements = await apiFetch('/api/scans/lidar-measurements', {
         method: 'POST',
         body: payloadMB <= 23 ? jsonStr : JSON.stringify(payload),
