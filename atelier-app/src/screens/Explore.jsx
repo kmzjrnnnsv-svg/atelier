@@ -6,7 +6,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
-import CtaBanner from '../components/CtaBanner'
 import { HEROES, EXPLORE, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import { isMobileWeb } from '../App'
 
@@ -191,9 +190,23 @@ export default function Explore() {
         </div>
       </div>
 
-      {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}
-      <div className="px-4 lg:px-16 xl:px-24 py-10 lg:py-16">
-        <CtaBanner page="explore" />
+      {/* ── Service Promise ──────────────────────────────────── */}
+      <div className="border-t border-black/[0.04] py-10 lg:py-16">
+        <div className="px-4 lg:px-16 xl:px-24">
+          <div className="grid grid-cols-3 gap-[1px] bg-black/[0.04]">
+            {[
+              { label: 'Editorials', title: 'Geschichten hinter der Kollektion', text: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Saison.' },
+              { label: 'Handwerk', title: 'Vom Leisten bis zur Naht', text: 'Kurz-Dokumentationen über die Herstellung jedes Modells in über 200 Schritten.' },
+              { label: 'Community', title: 'Atelier-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
+            ].map(item => (
+              <div key={item.label} className="bg-white p-4 lg:p-8">
+                <p className="text-[8px] lg:text-[9px] uppercase tracking-[0.3em] text-black/20 mb-2 lg:mb-3">{item.label}</p>
+                <p className="text-[12px] lg:text-[15px] text-black font-light leading-snug">{item.title}</p>
+                <p className="text-[10px] lg:text-[12px] text-black/25 mt-1.5 lg:mt-2 font-light leading-relaxed hidden lg:block">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
