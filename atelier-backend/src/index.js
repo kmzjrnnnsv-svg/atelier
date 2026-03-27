@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
+import path from 'path'
 import helmet from 'helmet'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
@@ -66,6 +67,9 @@ app.use(cors({
 
 app.use(cookieParser())
 app.use(express.json({ limit: '25mb' })) // LiDAR point clouds (~2MB) + photogrammetry 16 images (~20MB)
+
+// Static file serving for uploaded media
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')))
 
 // Global rate limit
 app.use('/api', apiLimiter)

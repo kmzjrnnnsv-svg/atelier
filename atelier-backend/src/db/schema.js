@@ -762,7 +762,7 @@ export function runMigrations(db) {
     CREATE TABLE IF NOT EXISTS cms_media (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       name        TEXT    NOT NULL,
-      image_data  TEXT    NOT NULL,
+      filename    TEXT    NOT NULL,
       created_by  INTEGER REFERENCES users(id),
       created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );

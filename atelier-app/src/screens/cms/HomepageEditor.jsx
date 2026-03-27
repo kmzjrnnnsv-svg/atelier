@@ -3,6 +3,7 @@
  * Each section has: image URL, label (small caps), title, description, button text, link
  */
 import { useState, useEffect } from 'react'
+import ImagePicker from '../../components/ImagePicker'
 import { apiFetch } from '../../hooks/useApi'
 
 const DEFAULT_SECTIONS = [
@@ -126,31 +127,18 @@ export default function HomepageEditor() {
               <div className="space-y-4">
                 {/* Image previews */}
                 {hasImage && (
-                  <div>
-                    <label className={labelCls}>Bild-URL</label>
-                    <input
-                      value={section.image}
-                      onChange={e => update(section.key, 'image', e.target.value)}
-                      className={inputCls}
-                      placeholder="https://images.unsplash.com/..."
-                    />
-                    {section.image && (
-                      <div className="mt-3 w-full overflow-hidden bg-[#fafaf9]" style={{ aspectRatio: '16 / 5', maxHeight: 120 }}>
-                        <img src={section.image} alt="" className="w-full h-full object-cover" onError={e => e.target.style.display = 'none'} />
-                      </div>
-                    )}
-                  </div>
+                  <ImagePicker
+                    value={section.image}
+                    onChange={val => update(section.key, 'image', val)}
+                    label="Bild"
+                  />
                 )}
                 {hasImage2 && (
-                  <div>
-                    <label className={labelCls}>Bild-URL (rechts)</label>
-                    <input
-                      value={section.image2 || ''}
-                      onChange={e => update(section.key, 'image2', e.target.value)}
-                      className={inputCls}
-                      placeholder="https://..."
-                    />
-                  </div>
+                  <ImagePicker
+                    value={section.image2 || ''}
+                    onChange={val => update(section.key, 'image2', val)}
+                    label="Bild (rechts)"
+                  />
                 )}
 
                 {/* Text fields in pairs */}

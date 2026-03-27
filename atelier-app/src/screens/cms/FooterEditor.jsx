@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../../hooks/useApi'
+import ImagePicker from '../../components/ImagePicker'
 
 const DEFAULT_CONFIG = {
   // Help banner
@@ -147,10 +148,11 @@ export default function FooterEditor() {
                 <p className={labelCls}>Button-Text</p>
                 <input value={config.help_button} onChange={e => set('help_button', e.target.value)} className={inputCls} />
               </div>
-              <div>
-                <p className={labelCls}>Bild-URL</p>
-                <input value={config.help_image} onChange={e => set('help_image', e.target.value)} className={inputCls} placeholder="https://..." />
-              </div>
+              <ImagePicker
+                value={config.help_image}
+                onChange={val => set('help_image', val)}
+                label="Bild"
+              />
             </div>
           </div>
         </div>
