@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone, Home, ExternalLink } from 'lucide-react'
+import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, ImagePlus, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone, Home, ExternalLink } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useAtelierStore from '../../store/atelierStore'
 
@@ -28,7 +28,7 @@ export default function CMSLayout() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-4 pb-4 overflow-y-auto">
+        <nav className="flex-1 px-4 pb-4 overflow-y-auto" data-keep-scroll>
           {[
             { heading: null, items: [
               { to: '/cms', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -52,6 +52,8 @@ export default function CMSLayout() {
               { to: '/cms/outfits',  label: 'Outfits',          icon: Image },
               { to: '/cms/articles', label: 'Artikel',          icon: BookOpen },
               { to: '/cms/cta-banner', label: 'CTA-Banner',     icon: Megaphone },
+              { to: '/cms/footer',     label: 'Footer & Service', icon: FileText },
+              { to: '/cms/media',      label: 'Mediathek',        icon: ImagePlus },
             ]},
             { heading: 'Kunden', items: [
               { to: '/cms/scans',    label: 'Foot Scans',   icon: ScanLine },

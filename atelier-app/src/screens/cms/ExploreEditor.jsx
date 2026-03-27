@@ -1,6 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Plus, Pencil, Trash2, Check, Upload, X, Eye, EyeOff, GripVertical, Image } from 'lucide-react'
 import useAtelierStore from '../../store/atelierStore'
+import { apiFetch } from '../../hooks/useApi'
+import ImagePicker from '../../components/ImagePicker'
 
 const ICON_OPTIONS = ['BookOpen', 'Film', 'Layers', 'Sparkles', 'Users', 'TrendingUp', 'Compass', 'Star', 'Heart', 'Globe']
 const TAG_OPTIONS = ['Demnächst', 'In Produktion', 'Beta', 'Geheim', 'Neu', 'Live']
@@ -245,6 +247,113 @@ function HeroEditor({ hero, onSave }) {
   )
 }
 
+const inputCls = 'w-full h-10 px-0 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15'
+const labelCls = 'text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light'
+
+const PAGE_TEXT_FIELDS = [
+  { key: 'topics_label', label: 'Themen — Label', placeholder: 'Entdecken' },
+  { key: 'topics_title', label: 'Themen — Titel', placeholder: 'Themen' },
+  { key: 'articles_label', label: 'Artikel — Label', placeholder: 'Atelier Journal' },
+  { key: 'articles_title', label: 'Artikel — Titel', placeholder: 'Alle Artikel' },
+  { key: 'journal_cta_label', label: 'Journal-CTA — Label', placeholder: 'Atelier Journal' },
+  { key: 'journal_cta_title', label: 'Journal-CTA — Titel', placeholder: 'Die Welt hinter jedem Schuh' },
+  { key: 'journal_cta_description', label: 'Journal-CTA — Beschreibung', placeholder: 'Editorials, Handwerkskunst und Inspirationen...' },
+]
+
+function PageTextsEditor() {
+  const [texts, setTexts] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    apiFetch('/api/settings/explore')
+      .then(data => { if (data) setTexts(data) })
+      .catch(() => {})
+  }, [])
+
+  const handleSave = async () => {
+    setSaving(true)
+    setSaved(false)
+    try {
+      await apiFetch('/api/settings/explore', {
+        method: 'PUT',
+        body: JSON.stringify({ config: texts }),
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch {}
+    setSaving(false)
+  }
+
+  return (
+    <div className="bg-white p-7 mb-8">
+      <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">Seiten-Texte</p>
+      <div className="space-y-4">
+        {PAGE_TEXT_FIELDS.map(field => (
+          <div key={field.key} className={field.key.includes('label') && PAGE_TEXT_FIELDS.find(f => f.key === field.key.replace('label', 'title')) ? 'flex gap-5' : ''}>
+            {field.key.includes('label') && PAGE_TEXT_FIELDS.find(f => f.key === field.key.replace('label', 'title')) ? (
+              <>
+                <div className="flex-1">
+                  <label className={labelCls}>{field.label}</label>
+                  <input
+                    value={texts[field.key] || ''}
+                    onChange={e => setTexts(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    className={inputCls}
+                    placeholder={field.placeholder}
+                  />
+                </div>
+                {(() => {
+                  const titleField = PAGE_TEXT_FIELDS.find(f => f.key === field.key.replace('label', 'title'))
+                  return titleField ? (
+                    <div className="flex-1">
+                      <label className={labelCls}>{titleField.label}</label>
+                      <input
+                        value={texts[titleField.key] || ''}
+                        onChange={e => setTexts(prev => ({ ...prev, [titleField.key]: e.target.value }))}
+                        className={inputCls}
+                        placeholder={titleField.placeholder}
+                      />
+                    </div>
+                  ) : null
+                })()}
+              </>
+            ) : !field.key.includes('title') || !PAGE_TEXT_FIELDS.find(f => f.key === field.key.replace('title', 'label')) ? (
+              <div>
+                <label className={labelCls}>{field.label}</label>
+                <input
+                  value={texts[field.key] || ''}
+                  onChange={e => setTexts(prev => ({ ...prev, [field.key]: e.target.value }))}
+                  className={inputCls}
+                  placeholder={field.placeholder}
+                />
+              </div>
+            ) : null}
+          </div>
+        ))}
+
+        {/* Image Picker for Journal CTA */}
+        <div className="pt-2">
+          <ImagePicker
+            value={texts.journal_cta_image || ''}
+            onChange={(val) => setTexts(prev => ({ ...prev, journal_cta_image: val }))}
+            label="Journal-CTA — Bild"
+          />
+        </div>
+      </div>
+      <div className="mt-6 flex items-center gap-4">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-8 h-10 border border-black text-[10px] uppercase tracking-[0.2em] font-light hover:bg-black hover:text-white transition-all disabled:opacity-30"
+        >
+          {saving ? 'Speichert …' : 'Texte speichern'}
+        </button>
+        {saved && <span className="text-[11px] text-black/35 font-light">Gespeichert</span>}
+      </div>
+    </div>
+  )
+}
+
 export default function ExploreEditor() {
   const { exploreSections, exploreHero, addExploreSection, updateExploreSection, deleteExploreSection, updateExploreHero } = useAtelierStore()
   const [mode, setMode] = useState(null)
@@ -257,7 +366,7 @@ export default function ExploreEditor() {
         <div>
           <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Content</p>
           <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Explore</h1>
-          <p className="text-[13px] text-black/30 mt-2 font-light">Hero-Bild & Sektionen der Explore-Seite</p>
+          <p className="text-[13px] text-black/30 mt-2 font-light">Hero-Bild, Seiten-Texte & Sektionen der Explore-Seite</p>
         </div>
         {!mode && (
           <button onClick={() => setMode('add')}
@@ -266,6 +375,9 @@ export default function ExploreEditor() {
           </button>
         )}
       </div>
+
+      {/* Page Texts Editor */}
+      <PageTextsEditor />
 
       {/* Hero Editor */}
       <HeroEditor hero={exploreHero} onSave={updateExploreHero} />

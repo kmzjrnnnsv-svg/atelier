@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
 import TopBar from './components/TopBar'
+import Footer from './components/Footer'
 import useAtelierStore from './store/atelierStore'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Capacitor } from '@capacitor/core'
@@ -13,8 +14,8 @@ function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
     window.scrollTo(0, 0)
-    // Also reset any internal scroll containers
-    document.querySelectorAll('.overflow-y-auto').forEach(el => { el.scrollTop = 0 })
+    // Also reset any internal scroll containers (skip elements that opt out)
+    document.querySelectorAll('.overflow-y-auto:not([data-keep-scroll])').forEach(el => { el.scrollTop = 0 })
   }, [pathname])
   return null
 }
@@ -102,6 +103,8 @@ const ShippingPanel        = lazy(() => import('./screens/cms/ShippingPanel'))
 const CouponsPanel         = lazy(() => import('./screens/cms/CouponsPanel'))
 const FeaturedShoesPanel   = lazy(() => import('./screens/cms/FeaturedShoesPanel'))
 const HomepageEditor       = lazy(() => import('./screens/cms/HomepageEditor'))
+const FooterEditor         = lazy(() => import('./screens/cms/FooterEditor'))
+const MediaLibrary         = lazy(() => import('./screens/cms/MediaLibrary'))
 const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 
@@ -156,6 +159,8 @@ function AppRoutes() {
   const { initStore } = useAtelierStore()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
+  const FOOTER_PATHS = ['/foryou', '/collection', '/accessories', '/explore']
+  const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
 
   // Configure native status bar for edge-to-edge rendering
@@ -205,6 +210,8 @@ function AppRoutes() {
               <Route path="coupons"  element={<AdminRoute><CouponsPanel /></AdminRoute>} />
               <Route path="featured" element={<FeaturedShoesPanel />} />
               <Route path="homepage" element={<HomepageEditor />} />
+              <Route path="footer" element={<FooterEditor />} />
+              <Route path="media" element={<MediaLibrary />} />
             </Route>
           </Routes>
         </Suspense>
@@ -288,6 +295,7 @@ function AppRoutes() {
       <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        {showFooter && <Footer />}
       </div>
     )
   }
@@ -299,6 +307,7 @@ function AppRoutes() {
       <div className="flex-1 overflow-y-auto relative">
         <div className="w-full">
           <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+          {showFooter && <Footer />}
         </div>
       </div>
     </div>
