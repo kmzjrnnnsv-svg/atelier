@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
 import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck } from 'lucide-react'
@@ -32,6 +32,38 @@ function StepBar({ current }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// ── Cart item with swipe-to-remove ───────────────────────────────────────────
+function CartItem({ id, onRemove, children }) {
+  const ref = useRef(null)
+  const [removing, setRemoving] = useState(false)
+
+  const handleRemove = useCallback(() => {
+    setRemoving(true)
+    setTimeout(() => onRemove(id), 250)
+  }, [id, onRemove])
+
+  return (
+    <div
+      ref={ref}
+      className="relative overflow-hidden"
+      style={{
+        transition: removing ? 'max-height 250ms ease, opacity 200ms ease, margin 250ms ease' : 'none',
+        maxHeight: removing ? '0px' : '200px',
+        opacity: removing ? 0 : 1,
+        marginBottom: removing ? '0px' : undefined,
+      }}
+    >
+      <button
+        onClick={handleRemove}
+        className="absolute top-2 right-2 z-10 p-1 bg-transparent border-0 text-black/25 hover:text-red-500 active:text-red-500 transition-colors"
+      >
+        <X size={14} strokeWidth={1.5} />
+      </button>
+      {children}
     </div>
   )
 }
@@ -101,7 +133,7 @@ function fmtPrice(n) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, shoeAccessoryMap, accessories: storeAccessories } = useAtelierStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, shoeAccessoryMap, accessories: storeAccessories, shoes } = useAtelierStore()
 
   const product = location.state?.product || {}
   const incomingAccessories = location.state?.accessories || []
@@ -338,7 +370,19 @@ export default function Checkout() {
 
       {/* Header */}
       <div className="px-5 lg:px-16 pt-4 pb-2 flex items-center gap-3 flex-shrink-0">
-        <button onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)}
+        <button onClick={() => {
+            if (step > 0) { setStep(s => s - 1); return }
+            // Navigate back to the last configured shoe
+            const lastShoe = [...cart].reverse().find(c => !c.isAccessory && c.shoeId)
+            if (lastShoe) {
+              const product = shoes.find(s => s.id === lastShoe.shoeId)
+              if (product) {
+                navigate('/customize', { state: { product } })
+                return
+              }
+            }
+            navigate(-1)
+          }}
           className="w-8 h-8 bg-transparent flex items-center justify-center border-0 active:opacity-60 flex-shrink-0">
           <ArrowLeft size={16} strokeWidth={1.5} className="text-black" />
         </button>
@@ -355,38 +399,37 @@ export default function Checkout() {
             {cart.map(item => {
               const itemPrice = parsePrice(item.price)
               return (
-                <div key={item.id} className="bg-white p-3.5 flex gap-3.5 border border-black/[0.06]">
-                  {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-16 h-16 bg-black/[0.03] flex items-center justify-center flex-shrink-0">
-                      <ShoppingBag size={18} className="text-black/15" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[14px] font-semibold text-black leading-tight truncate">{item.name}</p>
-                        {item.material && <p className="text-[11px] text-black/40 mt-0.5">{item.material}</p>}
+                <CartItem key={item.id} id={item.id} onRemove={removeFromCart}>
+                  <div className="bg-white p-3.5 flex gap-3.5 border border-black/[0.06]">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-16 h-16 bg-black/[0.03] flex items-center justify-center flex-shrink-0">
+                        <ShoppingBag size={18} className="text-black/15" />
                       </div>
-                      <button onClick={() => removeFromCart(item.id)} className="p-0.5 bg-transparent border-0 text-black/25 active:text-red-500 flex-shrink-0">
-                        <X size={14} strokeWidth={1.5} />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-black/[0.03] text-black active:bg-black/10">
-                          <Minus size={12} strokeWidth={2} />
-                        </button>
-                        <span className="text-[14px] font-semibold text-black w-5 text-center">{item.qty}</span>
-                        <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-black/[0.03] text-black active:bg-black/10">
-                          <Plus size={12} strokeWidth={2} />
-                        </button>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[14px] font-semibold text-black leading-tight truncate">{item.name}</p>
+                          {item.material && <p className="text-[11px] text-black/40 mt-0.5">{item.material}</p>}
+                        </div>
                       </div>
-                      <span className="text-[15px] font-bold text-black">€ {fmtPrice(itemPrice * item.qty)}</span>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-black/[0.03] text-black active:bg-black/10">
+                            <Minus size={12} strokeWidth={2} />
+                          </button>
+                          <span className="text-[14px] font-semibold text-black w-5 text-center">{item.qty}</span>
+                          <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-black/[0.03] text-black active:bg-black/10">
+                            <Plus size={12} strokeWidth={2} />
+                          </button>
+                        </div>
+                        <span className="text-[15px] font-bold text-black">€ {fmtPrice(itemPrice * item.qty)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </CartItem>
               )
             })}
             <div className="bg-white px-4 py-3 flex items-center justify-between border border-black/[0.06]">
