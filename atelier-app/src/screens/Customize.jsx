@@ -68,7 +68,7 @@ function getDefaultSole(soles) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, shoeAccessoryMap } = useAtelierStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, shoeAccessoryMap } = useAtelierStore()
   const { user } = useAuth()
 
   const product = location.state?.product || {
@@ -103,6 +103,7 @@ export default function Customize() {
   const leftPanelRef = useRef(null)
   const [rightFullyScrolled, setRightFullyScrolled] = useState(false)
   const [selectedAccessories, setSelectedAccessories] = useState([])
+  const [duplicateDialog, setDuplicateDialog] = useState(false)
 
   const [directAccessories, setDirectAccessories] = useState([])
   const storeAcc = shoeAccessoryMap[product.id] || []
@@ -302,16 +303,7 @@ export default function Customize() {
   }
   const onPointerUp = () => { drag.current.on = false }
 
-  const handleAddToCart = () => {
-    // Schuh hinzufügen
-    addToCart({
-      shoeId: product.id, name: product.name,
-      material: mat?.label || product.material,
-      color, price: formatPrice(basePrice + soleExtra),
-      sole: sole?.label || 'Sohle',
-      image: product.image,
-    })
-    // Ausgewähltes Zubehör einzeln hinzufügen
+  const addAccessoriesToCart = () => {
     selectedAccessories.forEach(id => {
       const acc = accessories.find(a => a.id === id)
       if (acc) {
@@ -327,6 +319,45 @@ export default function Customize() {
         })
       }
     })
+  }
+
+  const addShoeToCart = () => {
+    addToCart({
+      shoeId: product.id, name: product.name,
+      material: mat?.label || product.material,
+      color, price: formatPrice(basePrice + soleExtra),
+      sole: sole?.label || 'Sohle',
+      image: product.image,
+    })
+  }
+
+  const handleAddToCart = () => {
+    // Prüfe ob derselbe Schuh in gleicher Konfiguration bereits im Warenkorb liegt
+    const sameConfig = cart.find(c =>
+      !c.isAccessory &&
+      c.shoeId === product.id &&
+      c.material === (mat?.label || product.material) &&
+      c.color === color &&
+      c.sole === (sole?.label || 'Sohle')
+    )
+
+    if (sameConfig && selectedAccessories.length > 0) {
+      // Gleiche Konfiguration + Zubehör ausgewählt → Nutzer fragen
+      setDuplicateDialog(true)
+      return
+    }
+
+    // Keine Duplikat-Situation oder kein Zubehör → normal hinzufügen
+    addShoeToCart()
+    addAccessoriesToCart()
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
+  }
+
+  const handleDuplicateChoice = (includeShoe) => {
+    if (includeShoe) addShoeToCart()
+    addAccessoriesToCart()
+    setDuplicateDialog(false)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -1002,6 +1033,42 @@ export default function Customize() {
         </div>
         <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Kostenlose Lieferung</p>
       </div>
+
+      {/* ── Duplikat-Dialog ────────────────────────────────────── */}
+      {duplicateDialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40" onClick={() => setDuplicateDialog(false)}>
+          <div className="bg-white mx-4 w-full max-w-md p-7" onClick={e => e.stopPropagation()}>
+            <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-3 font-light">Warenkorb</p>
+            <p className="text-[16px] font-extralight text-black tracking-tight leading-snug mb-2">
+              Dieser Schuh befindet sich bereits in Ihrem Warenkorb
+            </p>
+            <p className="text-[12px] text-black/35 font-light leading-relaxed mb-6">
+              {product.name} in derselben Konfiguration liegt bereits im Warenkorb.
+              Möchten Sie nur das Zubehör hinzufügen oder den Schuh erneut?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleDuplicateChoice(false)}
+                className="flex-1 h-12 border border-black text-black text-[10px] uppercase tracking-[0.15em] font-light bg-transparent hover:bg-black hover:text-white transition-all"
+              >
+                Nur Zubehör
+              </button>
+              <button
+                onClick={() => handleDuplicateChoice(true)}
+                className="flex-1 h-12 bg-black text-white text-[10px] uppercase tracking-[0.15em] font-light border border-black hover:bg-black/85 transition-all"
+              >
+                Schuh + Zubehör
+              </button>
+            </div>
+            <button
+              onClick={() => setDuplicateDialog(false)}
+              className="w-full mt-3 h-9 text-[10px] text-black/30 hover:text-black/60 bg-transparent border-0 font-light uppercase tracking-[0.15em] transition-all"
+            >
+              Abbrechen
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
