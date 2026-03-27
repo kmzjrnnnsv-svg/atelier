@@ -49,6 +49,7 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  const [mfaOpen, setMfaOpen] = useState(false)
  const [mfaErr, setMfaErr] = useState(null)
  const [pendingStatus, setPendingStatus] = useState(null)
+ const [confirmDialog, setConfirmDialog] = useState(null)
  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending
 
  const delivery = order.delivery_address ? JSON.parse(order.delivery_address) : null
@@ -79,6 +80,19 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  } finally { setUpdating(false) }
  }
 
+ const CONFIRM_MESSAGES = {
+   shipped: {
+     title: 'Versand bestätigen',
+     text: `Soll die Bestellung ${order.order_ref || `#${order.id}`} wirklich als versendet markiert werden? Dieser Schritt informiert den Kunden.`,
+     confirm: 'Ja, versenden',
+   },
+   cancelled: {
+     title: 'Stornierung bestätigen',
+     text: `Soll die Bestellung ${order.order_ref || `#${order.id}`} wirklich storniert werden? Diese Aktion kann nicht rückgängig gemacht werden.`,
+     confirm: 'Ja, stornieren',
+   },
+ }
+
  const handleStatus = (newStatus) => {
  // Payment confirmation requires MFA modal
  if (newStatus === 'processing' && order.status === 'pending_payment') {
@@ -87,7 +101,17 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  setMfaOpen(true)
  return
  }
+ // Shipped & cancelled require explicit confirmation
+ if (CONFIRM_MESSAGES[newStatus]) {
+ setConfirmDialog(newStatus)
+ return
+ }
  doStatusUpdate(newStatus, null)
+ }
+
+ const handleConfirm = () => {
+   doStatusUpdate(confirmDialog, null)
+   setConfirmDialog(null)
  }
 
  const handleMfaConfirm = (code) => {
@@ -210,6 +234,40 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  </div>
  )}
  </div>
+ )}
+
+ {/* Confirmation dialog */}
+ {confirmDialog && CONFIRM_MESSAGES[confirmDialog] && (
+   <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40" onClick={() => setConfirmDialog(null)}>
+     <div className="bg-white mx-4 w-full max-w-sm p-7" onClick={e => e.stopPropagation()}>
+       <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-3 font-light">Bestätigung</p>
+       <p className="text-[16px] font-extralight text-black tracking-tight leading-snug mb-2">
+         {CONFIRM_MESSAGES[confirmDialog].title}
+       </p>
+       <p className="text-[12px] text-black/35 font-light leading-relaxed mb-6">
+         {CONFIRM_MESSAGES[confirmDialog].text}
+       </p>
+       <div className="flex gap-3">
+         <button
+           onClick={() => setConfirmDialog(null)}
+           className="flex-1 h-11 border border-black/15 text-black/40 text-[10px] uppercase tracking-[0.15em] font-light bg-transparent hover:border-black/30 hover:text-black/60 transition-all"
+         >
+           Abbrechen
+         </button>
+         <button
+           onClick={handleConfirm}
+           disabled={updating}
+           className={`flex-1 h-11 text-[10px] uppercase tracking-[0.15em] font-light border transition-all disabled:opacity-50 ${
+             confirmDialog === 'cancelled'
+               ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
+               : 'bg-black text-white border-black hover:bg-black/85'
+           }`}
+         >
+           {updating ? '...' : CONFIRM_MESSAGES[confirmDialog].confirm}
+         </button>
+       </div>
+     </div>
+   </div>
  )}
 
  <MFAModal
