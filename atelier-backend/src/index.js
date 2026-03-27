@@ -129,8 +129,13 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
 
-// 404
-app.use((req, res) => res.status(404).json({ error: 'Route not found' }))
+// Serve frontend dist (production)
+const distPath = path.resolve(process.cwd(), '../atelier-app/dist')
+app.use(express.static(distPath))
+app.get('/{*splat}', (req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) return next()
+  res.sendFile(path.join(distPath, 'index.html'))
+})
 
 // Error handler
 app.use((err, req, res, next) => {
