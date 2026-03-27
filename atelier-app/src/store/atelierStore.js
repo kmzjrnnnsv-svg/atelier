@@ -1,6 +1,16 @@
 import { create } from 'zustand'
 import { apiFetch } from '../hooks/useApi'
 
+// Debounced cart sync — avoids race conditions when removing items quickly
+let _syncTimer = null
+function debouncedSyncCart(getFn) {
+  clearTimeout(_syncTimer)
+  _syncTimer = setTimeout(() => {
+    const cart = getFn().cart
+    apiFetch('/api/auth/me/cart', { method: 'PUT', body: JSON.stringify({ cart }) }).catch(() => {})
+  }, 300)
+}
+
 // Client-side cache — source of truth is the backend DB
 const useAtelierStore = create((set, get) => ({
   shoes:      [],
@@ -65,8 +75,7 @@ const useAtelierStore = create((set, get) => ({
 
   // --- CART (persisted to backend) ---
   _syncCart() {
-    const cart = get().cart
-    apiFetch('/api/auth/me/cart', { method: 'PUT', body: JSON.stringify({ cart }) }).catch(() => {})
+    debouncedSyncCart(get)
   },
   addToCart(item) {
     const existing = get().cart.find(c =>
@@ -79,20 +88,21 @@ const useAtelierStore = create((set, get) => ({
     } else {
       set(s => ({ cart: [...s.cart, { qty: 1, addedAt: new Date().toISOString(), ...item, id: item.id || Date.now() }] }))
     }
-    setTimeout(() => get()._syncCart(), 0)
+    debouncedSyncCart(get)
   },
   removeFromCart(id) {
     set(s => ({ cart: s.cart.filter(c => c.id !== id) }))
-    setTimeout(() => get()._syncCart(), 0)
+    debouncedSyncCart(get)
   },
   updateCartQty(id, qty) {
     if (qty <= 0) return get().removeFromCart(id)
     set(s => ({ cart: s.cart.map(c => c.id === id ? { ...c, qty } : c) }))
-    setTimeout(() => get()._syncCart(), 0)
+    debouncedSyncCart(get)
   },
   clearCart() {
     set({ cart: [] })
-    get()._syncCart()
+    clearTimeout(_syncTimer)
+    apiFetch('/api/auth/me/cart', { method: 'PUT', body: JSON.stringify({ cart: [] }) }).catch(() => {})
   },
 
   async initStore() {

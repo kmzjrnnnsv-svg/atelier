@@ -8,16 +8,30 @@ import Footer from './components/Footer'
 import useAtelierStore from './store/atelierStore'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Capacitor } from '@capacitor/core'
+import useDeviceInfo from './hooks/useDeviceInfo'
 
 // Scroll to top on route change
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
+    // Reset document scroll (mobile web)
     window.scrollTo(0, 0)
-    // Also reset any internal scroll containers (skip elements that opt out)
-    document.querySelectorAll('.overflow-y-auto:not([data-keep-scroll])').forEach(el => { el.scrollTop = 0 })
+    // Reset all internal scroll containers (native + desktop fixed layouts)
+    const resetContainers = () =>
+      document.querySelectorAll('.overflow-y-auto:not([data-keep-scroll])').forEach(el => { el.scrollTop = 0 })
+    resetContainers()
+    // Also reset after React has rendered the new route content
+    requestAnimationFrame(resetContainers)
   }, [pathname])
   return null
+}
+
+// Page transition wrapper — re-triggers fade-in animation on route change
+function PageTransition({ children }) {
+  const { pathname } = useLocation()
+  const [key, setKey] = useState(pathname)
+  useEffect(() => { setKey(pathname) }, [pathname])
+  return <div key={key} className="page-transition">{children}</div>
 }
 
 // Eager: needed immediately on first paint
@@ -157,6 +171,7 @@ function AppRoutes() {
   const location = useLocation()
   const { user } = useAuth()
   const { initStore } = useAtelierStore()
+  const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
   const FOOTER_PATHS = ['/foryou', '/collection', '/accessories', '/explore']
@@ -181,6 +196,15 @@ function AppRoutes() {
   if (isCMS) {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: isNative ? '100dvh' : viewportHeight, zIndex: 50, overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
+        {/* CMS nur auf iPad / Desktop (>= 768px) */}
+        <div className="flex md:hidden items-center justify-center h-full bg-white px-8">
+          <div className="text-center">
+            <p className="text-[16px] font-semibold text-black mb-2">CMS Studio</p>
+            <p className="text-[13px] text-black/50 font-light leading-relaxed mb-4">Das CMS ist nur auf iPad und Desktop verfügbar.</p>
+            <p className="text-[11px] text-black/30 font-light">Erkannt: {device.label}</p>
+          </div>
+        </div>
+        <div className="hidden md:block h-full">
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
@@ -215,6 +239,7 @@ function AppRoutes() {
             </Route>
           </Routes>
         </Suspense>
+        </div>
       </div>
     )
   }
@@ -225,6 +250,7 @@ function AppRoutes() {
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex-1 overflow-y-auto relative">
           <Suspense fallback={<DelayedSpinner />}>
+            <PageTransition>
             <Routes>
               <Route path="/"           element={<Navigate to="/foryou" replace />} />
               <Route path="/login"      element={<Login />} />
@@ -253,6 +279,7 @@ function AppRoutes() {
 
               <Route path="*"            element={<NotFound />} />
             </Routes>
+            </PageTransition>
           </Suspense>
         </div>
         {showNav && <BottomNav />}
@@ -294,7 +321,7 @@ function AppRoutes() {
     return (
       <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
         {showNav && <TopBar />}
-        <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
         {showFooter && <Footer />}
       </div>
     )
@@ -306,7 +333,7 @@ function AppRoutes() {
       {showNav && <TopBar />}
       <div className="flex-1 overflow-y-auto relative">
         <div className="w-full">
-          <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+          <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
           {showFooter && <Footer />}
         </div>
       </div>
