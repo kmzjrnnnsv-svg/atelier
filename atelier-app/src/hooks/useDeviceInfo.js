@@ -3,13 +3,17 @@ import { Capacitor } from '@capacitor/core'
 
 /**
  * Detects device type, OS, and capabilities from user agent + screen info.
- * Returns a stable object that updates on resize (tablet ↔ desktop breakpoint).
+ * Async LiDAR detection via native plugin for iPhone Pro models.
  */
 export default function useDeviceInfo() {
   const [info, setInfo] = useState(() => detect())
   useEffect(() => {
-    const update = () => setInfo(detect())
+    const update = () => setInfo(prev => ({ ...detect(), hasLidar: prev.hasLidar, lidarChecked: prev.lidarChecked }))
     window.addEventListener('resize', update)
+    // Async LiDAR check (native plugin or WebXR)
+    checkLidar().then(hasLidar => {
+      setInfo(prev => ({ ...prev, hasLidar, lidarChecked: true }))
+    })
     return () => window.removeEventListener('resize', update)
   }, [])
   return info
@@ -36,7 +40,7 @@ function detect() {
   const isIPad = /iPad/.test(ua) || (platform === 'MacIntel' && maxTouch > 1 && !isIPhone)
 
   // ── Device type ──
-  let type = 'desktop' // default
+  let type = 'desktop'
   if (isIPhone || (isAndroid && /Mobile/i.test(ua))) {
     type = 'smartphone'
   } else if (isIPad || (isAndroid && !/Mobile/i.test(ua))) {
@@ -47,13 +51,11 @@ function detect() {
     type = 'desktop'
   }
 
-  // ── LiDAR capability (heuristic) ──
-  // iPhone 12 Pro+ and iPad Pro 2020+ have LiDAR
-  // In browser we can only reliably detect iPad Pro; iPhone Pro needs native plugin
+  // ── LiDAR: sync heuristic (iPad Pro) ──
   const isIPadPro = platform === 'MacIntel' && maxTouch > 1
-  const hasLidar = isIPadPro // conservative; FootScan uses native plugin for iPhones
+  const hasLidar = isIPadPro // updated async below for iPhones
 
-  // ── Device label for display ──
+  // ── Device label ──
   let label = 'Desktop'
   if (isIPhone) label = 'iPhone'
   else if (isIPad) label = 'iPad'
@@ -64,18 +66,18 @@ function detect() {
   else if (isLinux) label = 'Linux PC'
 
   // ── Icon hint ──
-  let icon = 'monitor' // lucide icon name
+  let icon = 'monitor'
   if (type === 'smartphone') icon = 'smartphone'
   else if (type === 'tablet') icon = 'tablet'
-  else icon = 'monitor'
 
   return {
     type,       // 'smartphone' | 'tablet' | 'desktop'
     os,         // 'ios' | 'android' | 'macos' | 'windows' | 'linux' | 'unknown'
-    label,      // Human-readable: 'iPhone', 'iPad', 'Mac', etc.
-    icon,       // Lucide icon name suggestion
-    isNative,   // Running in Capacitor
-    hasLidar,   // LiDAR heuristic (conservative)
+    label,      // 'iPhone', 'iPad', 'Mac', etc.
+    icon,       // lucide icon name
+    isNative,
+    hasLidar,
+    lidarChecked: false, // true once async check completes
     isIPhone,
     isIPad,
     isAndroid,
@@ -83,6 +85,43 @@ function detect() {
     isWindows,
     screenWidth: w,
   }
+}
+
+/**
+ * Async LiDAR detection:
+ * 1. Native Capacitor plugin (most reliable — detects iPhone 12 Pro+)
+ * 2. iPad Pro heuristic (MacIntel + touch)
+ * 3. WebXR depth sensing check (Android ARCore)
+ */
+async function checkLidar() {
+  const ua = navigator.userAgent || ''
+  const platform = navigator.platform || ''
+  const maxTouch = navigator.maxTouchPoints || 0
+
+  // iPad Pro with LiDAR (2020+)
+  if (platform === 'MacIntel' && maxTouch > 1) return true
+
+  // Native plugin check (iPhone Pro models)
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { lidarAvailable } = await import('../plugins/lidarScan')
+      return await lidarAvailable()
+    } catch {
+      // plugin not available
+    }
+  }
+
+  // WebXR depth sensing (Android with ARCore)
+  if (/Android/i.test(ua) && navigator.xr) {
+    try {
+      const supported = await navigator.xr.isSessionSupported('immersive-ar')
+      if (supported) return true // ARCore depth sensing available
+    } catch {
+      // WebXR not available
+    }
+  }
+
+  return false
 }
 
 // Static version for non-React contexts

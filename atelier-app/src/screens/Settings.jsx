@@ -440,7 +440,7 @@ export default function Settings() {
       <SectionLabel>Gerät</SectionLabel>
       <SettingsRow
         icon={DEVICE_ICON[device.type] || Monitor}
-        label={device.label}
+        label={device.isIPhone && device.hasLidar ? 'iPhone Pro' : device.label}
         sub={[
           device.type === 'smartphone' ? 'Smartphone' : device.type === 'tablet' ? 'Tablet' : 'Desktop',
           device.os === 'ios' ? 'iOS' : device.os === 'android' ? 'Android' : device.os === 'macos' ? 'macOS' : device.os === 'windows' ? 'Windows' : device.os === 'linux' ? 'Linux' : '',
