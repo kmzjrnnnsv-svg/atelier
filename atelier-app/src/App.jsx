@@ -14,8 +14,8 @@ function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
     window.scrollTo(0, 0)
-    // Also reset any internal scroll containers
-    document.querySelectorAll('.overflow-y-auto').forEach(el => { el.scrollTop = 0 })
+    // Also reset any internal scroll containers (skip elements that opt out)
+    document.querySelectorAll('.overflow-y-auto:not([data-keep-scroll])').forEach(el => { el.scrollTop = 0 })
   }, [pathname])
   return null
 }

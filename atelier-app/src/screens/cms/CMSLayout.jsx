@@ -28,7 +28,7 @@ export default function CMSLayout() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-4 pb-4 overflow-y-auto">
+        <nav className="flex-1 px-4 pb-4 overflow-y-auto" data-keep-scroll>
           {[
             { heading: null, items: [
               { to: '/cms', label: 'Dashboard', icon: LayoutDashboard, end: true },
