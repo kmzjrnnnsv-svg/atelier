@@ -27,95 +27,93 @@ function TierForm({ initial = emptyForm, onSave, onCancel, isNew }) {
   const removeBenefit = (i) => setForm(f => ({ ...f, benefits: f.benefits.filter((_, j) => j !== i) }))
 
   return (
-    <div className="bg-white border border-black/6 p-5 space-y-4">
+    <div className="bg-white p-7 space-y-5">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: form.color }}>
-          {(() => { const I = ICON_MAP[form.icon] || Award; return <I size={16} color="white" /> })()}
-        </div>
-        <h3 className="text-sm font-semibold text-black/65">{isNew ? 'Neuer Tier' : `${form.label} bearbeiten`}</h3>
+        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: form.color }} />
+        <h3 className="text-[13px] font-light text-black/60 tracking-wide">{isNew ? 'Neuer Tier' : `${form.label} bearbeiten`}</h3>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-5">
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Key *</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Key *</label>
           <input value={form.key} onChange={e => s('key', e.target.value)} placeholder="gold"
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
             disabled={!isNew} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Label *</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Label *</label>
           <input value={form.label} onChange={e => s('label', e.target.value)} placeholder="Gold"
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20" />
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Min. Punkte</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Min. Punkte</label>
           <input type="number" value={form.minPoints} onChange={e => s('minPoints', Number(e.target.value))}
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none" />
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-5">
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Farbe</label>
-          <div className="flex items-center gap-2">
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Farbe</label>
+          <div className="flex items-center gap-3">
             <input type="color" value={form.color} onChange={e => s('color', e.target.value)}
-              className="w-10 h-10 border border-black/15 bg-transparent cursor-pointer" />
+              className="w-10 h-10 border-0 bg-transparent cursor-pointer" />
             <input value={form.color} onChange={e => s('color', e.target.value)}
-              className="flex-1 bg-white border border-black/10 px-2 py-2.5 text-xs text-black/90 font-mono focus:outline-none" />
+              className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[11px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 font-mono" />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Icon</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Icon</label>
           <select value={form.icon} onChange={e => s('icon', e.target.value)}
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none">
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70">
             {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Sortierung</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Sortierung</label>
           <input type="number" value={form.sortOrder} onChange={e => s('sortOrder', Number(e.target.value))}
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none" />
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-black/35 mb-1.5">Beschreibung</label>
+        <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Beschreibung</label>
         <textarea value={form.description || ''} onChange={e => s('description', e.target.value)} rows={2}
           placeholder="Beschreibung des Tiers für die App (leer lassen = verborgen bis erreicht)"
-          className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none resize-none" />
+          className="w-full px-4 py-3 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15 resize-none" />
       </div>
 
       {/* Benefits */}
       <div>
-        <label className="block text-xs font-medium text-black/35 mb-1.5">Vorteile</label>
+        <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Vorteile</label>
         <div className="space-y-2">
           {form.benefits.map((b, i) => (
-            <div key={i} className="flex gap-2">
+            <div key={i} className="flex gap-2 items-center">
               <input value={b} onChange={e => updateBenefit(i, e.target.value)} placeholder={`Vorteil ${i + 1}`}
-                className="flex-1 bg-white border border-black/10 px-3.5 py-2 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
+                className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
               {form.benefits.length > 1 && (
-                <button onClick={() => removeBenefit(i)} className="w-8 h-8 bg-black/4 flex items-center justify-center border-0 flex-shrink-0 mt-0.5">
-                  <X size={12} className="text-black/35" />
+                <button onClick={() => removeBenefit(i)} className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] border-0 bg-transparent flex-shrink-0">
+                  <X size={12} strokeWidth={1.25} className="text-black/25" />
                 </button>
               )}
             </div>
           ))}
-          <button onClick={addBenefit} className="text-[10px] text-black/40 hover:text-black/70 bg-transparent border-0 px-0">+ Vorteil hinzufügen</button>
+          <button onClick={addBenefit} className="text-[10px] text-black/30 hover:text-black/60 bg-transparent border-0 px-0 font-light tracking-wide">+ Vorteil hinzufügen</button>
         </div>
       </div>
 
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex items-center gap-2.5 cursor-pointer">
         <input type="checkbox" checked={form.visible} onChange={e => s('visible', e.target.checked)} className="w-4 h-4" />
-        <span className="text-xs text-black/60">Sichtbar in der App (deaktiviert = wird erst bei Erreichen angezeigt)</span>
+        <span className="text-[12px] text-black/40 font-light">Sichtbar in der App (deaktiviert = wird erst bei Erreichen angezeigt)</span>
       </label>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-2">
         <button onClick={() => valid && onSave({ ...form, benefits: form.benefits.filter(b => b.trim()) })} disabled={!valid}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium border-0 ${valid ? 'bg-black text-white' : 'bg-black/5 text-black/35 cursor-not-allowed'}`}>
-          <Check size={14} /> Speichern
+          className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 flex items-center justify-center gap-2">
+          <Check size={13} strokeWidth={1.25} /> Speichern
         </button>
         <button onClick={onCancel}
-          className="px-4 py-2.5 text-xs font-medium text-black/45 hover:text-black/90 bg-black/5 border-0">
+          className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 font-light">
           Abbrechen
         </button>
       </div>
@@ -157,24 +155,25 @@ export default function LoyaltyEditor() {
   const sorted = [...loyaltyTiers].sort((a, b) => a.sortOrder - b.sortOrder)
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="px-10 py-10 lg:px-14 lg:py-12">
+      <div className="flex items-center justify-between mb-10">
         <div>
-          <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Loyalty & Membership</h1>
-          <p className="text-black/45 text-sm mt-1">Punkte-System, Tier-Stufen und Vorteile</p>
+          <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Programme</p>
+          <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Loyalty & Membership</h1>
+          <p className="text-[13px] text-black/30 mt-2 font-light">Punkte-System, Tier-Stufen und Vorteile</p>
         </div>
         {!mode && (
           <button onClick={() => setMode('add')}
-            className="flex items-center gap-2 bg-black text-white text-xs font-medium px-4 py-2 border-0">
-            <Plus size={14} /> Neuer Tier
+            className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] bg-transparent uppercase tracking-[0.2em] font-light">
+            <Plus size={13} strokeWidth={1.25} /> Neuer Tier
           </button>
         )}
       </div>
 
       {/* Info box */}
-      <div className="bg-[#f6f5f3] border border-black/5 p-4 mb-6">
-        <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold mb-2">Punkte-System</p>
-        <p className="text-xs text-black/55 leading-relaxed">
+      <div className="bg-white p-7 mb-6">
+        <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Punkte-System</p>
+        <p className="text-[13px] text-black/40 leading-relaxed font-light">
           Kunden sammeln Punkte durch Bestellungen (Einkaufswert = Punkte, nur bei gelieferten/behaltenen Bestellungen).
           Punkte verfallen, wenn innerhalb der eingestellten Frist keine neue Bestellung aufgegeben wird —
           außer der Kunde hat bereits Gold-Status oder höher erreicht.
@@ -182,29 +181,29 @@ export default function LoyaltyEditor() {
       </div>
 
       {/* Expiry settings */}
-      <div className="bg-white border border-black/6 p-5 mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Timer size={14} className="text-black/35" strokeWidth={1.5} />
-          <p className="text-[10px] text-black/40 uppercase tracking-wider font-semibold">Punkteverfall</p>
+      <div className="bg-white p-7 mb-6">
+        <div className="flex items-center gap-2.5 mb-5">
+          <Timer size={13} strokeWidth={1.25} className="text-black/25" />
+          <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">Punkteverfall</p>
         </div>
-        <div className="flex items-end gap-3">
+        <div className="flex items-end gap-4">
           <div>
-            <label className="block text-xs font-medium text-black/35 mb-1.5">Verfall-Frist (Tage)</label>
+            <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Verfall-Frist (Tage)</label>
             <input type="number" value={expiryDays} onChange={e => setExpiryDays(Number(e.target.value))} min={0}
-              className="w-32 bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none" />
+              className="w-32 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
           </div>
           <button onClick={saveExpiry} disabled={expirySaving}
-            className="flex items-center gap-2 bg-black text-white text-xs font-medium px-4 py-2.5 border-0 disabled:opacity-50">
-            {expirySaving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />} Speichern
+            className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 flex items-center gap-2">
+            {expirySaving ? <Loader size={12} strokeWidth={1.25} className="animate-spin" /> : <Save size={12} strokeWidth={1.25} />} Speichern
           </button>
           <button onClick={runExpire}
-            className="flex items-center gap-2 bg-black/5 text-black/50 text-xs font-medium px-4 py-2.5 border border-black/10 hover:bg-black/8">
+            className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] bg-transparent uppercase tracking-[0.2em] font-light">
             Verfall jetzt prüfen
           </button>
-          {expiryMsg && <span className="text-xs text-black/40">{expiryMsg}</span>}
-          {expireResult && <span className="text-xs text-black/40">{expireResult}</span>}
+          {expiryMsg && <span className="text-[11px] text-black/30 font-light">{expiryMsg}</span>}
+          {expireResult && <span className="text-[11px] text-black/30 font-light">{expireResult}</span>}
         </div>
-        <p className="text-[9px] text-black/35 mt-2 leading-relaxed">
+        <p className="text-[11px] text-black/25 mt-3 leading-relaxed font-light">
           0 = Verfall deaktiviert. Punkte verfallen nur für Mitglieder unterhalb des Gold-Status.
         </p>
       </div>
@@ -217,40 +216,38 @@ export default function LoyaltyEditor() {
       )}
 
       {/* Tiers list */}
-      <div className="space-y-2">
+      <div>
         {sorted.map(tier => (
           mode?.editing?.id === tier.id ? (
             <TierForm key={tier.id} initial={tier}
               onSave={t => { updateLoyaltyTier(tier.id, t); setMode(null) }}
               onCancel={() => setMode(null)} />
           ) : (
-            <div key={tier.id} className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
-              <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: tier.color }}>
-                {(() => { const I = ICON_MAP[tier.icon] || Award; return <I size={18} color="white" /> })()}
-              </div>
+            <div key={tier.id} className="bg-white px-6 py-4 group hover:bg-black/[0.01] border-b border-black/[0.04] flex items-center gap-4">
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tier.color }} />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-black/90">{tier.label}</p>
-                  {!tier.visible && <EyeOff size={12} className="text-black/25" />}
-                  <span className="text-[9px] text-black/30 font-mono">{tier.minPoints.toLocaleString()} Pkt.</span>
+                <div className="flex items-center gap-3">
+                  <p className="text-[13px] font-light text-black/70 tracking-wide">{tier.label}</p>
+                  {!tier.visible && <EyeOff size={11} strokeWidth={1.25} className="text-black/20" />}
+                  <span className="text-[10px] text-black/25 font-light">{tier.minPoints.toLocaleString()} Pkt.</span>
                 </div>
-                <p className="text-[10px] text-black/45 mt-0.5 truncate">{tier.benefits?.length || 0} Vorteile · {tier.description ? 'Beschreibung vorhanden' : 'Keine Beschreibung (verborgen)'}</p>
+                <p className="text-[11px] text-black/30 mt-0.5 truncate font-light">{tier.benefits?.length || 0} Vorteile · {tier.description ? 'Beschreibung vorhanden' : 'Keine Beschreibung (verborgen)'}</p>
               </div>
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={() => setMode({ editing: tier })}
-                  className="w-8 h-8 bg-black/5 flex items-center justify-center hover:bg-black/10 border-0">
-                  <Pencil size={13} className="text-black/65" />
+                  className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] border-0 bg-transparent">
+                  <Pencil size={12} strokeWidth={1.25} className="text-black/25" />
                 </button>
                 <button onClick={() => { if (confirm(`"${tier.label}" löschen?`)) deleteLoyaltyTier(tier.id) }}
-                  className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
-                  <Trash2 size={13} className="text-black/35" />
+                  className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] border-0 bg-transparent">
+                  <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />
                 </button>
               </div>
             </div>
           )
         ))}
         {sorted.length === 0 && (
-          <div className="text-center py-16 text-black/35 text-sm">Keine Loyalty-Tiers konfiguriert</div>
+          <div className="text-center py-20 text-[13px] text-black/25 font-light">Keine Loyalty-Tiers konfiguriert</div>
         )}
       </div>
     </div>

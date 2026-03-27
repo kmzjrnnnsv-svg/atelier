@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Ticket, Plus, Pencil, Trash2, Check, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 
 const TYPES = [
@@ -85,32 +85,28 @@ export default function CouponsPanel() {
   })
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="px-10 py-10 lg:px-14 lg:py-12">
+      <div className="flex items-center justify-between mb-10">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Ticket size={18} strokeWidth={1.5} className="text-black/35" />
-            <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Gutscheine</h1>
-          </div>
-          <p className="text-black/45 text-sm">Gutschein-Codes erstellen und verwalten</p>
+          <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Verwaltung</p>
+          <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Gutscheine</h1>
+          <p className="text-[13px] text-black/30 mt-2 font-light">Gutschein-Codes erstellen und verwalten</p>
         </div>
         <button
           onClick={() => startEdit(null)}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white text-xs border-0 hover:bg-black/85"
-          style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
+          className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] transition-all bg-transparent uppercase tracking-[0.2em] font-light"
         >
-          <Plus size={13} /> Neuer Gutschein
+          <Plus size={13} strokeWidth={1.25} /> Neuer Gutschein
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-4 mb-8">
         {['all', 'active', 'expired'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`text-[10px] px-3 py-1.5 border-0 transition-colors ${filter === f ? 'bg-black text-white' : 'bg-black/5 text-black/40 hover:bg-black/10'}`}
-            style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}
+            className={`text-[10px] px-0 py-1 border-0 border-b transition-all bg-transparent uppercase tracking-[0.2em] font-light ${filter === f ? 'border-b border-black text-black/70' : 'text-black/25 hover:text-black/50'}`}
           >
             {f === 'all' ? 'Alle' : f === 'active' ? 'Aktiv' : 'Abgelaufen'}
           </button>
@@ -119,67 +115,70 @@ export default function CouponsPanel() {
 
       {loading && (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border-2 border-black/15 border-t-black animate-spin-custom" />
+          <div className="w-5 h-5 border border-black/10 border-t-black/40 rounded-full animate-spin" />
         </div>
       )}
 
       {!loading && (
-        <div className="space-y-3">
+        <div className="space-y-6">
           {/* New/Edit form */}
           {editing === 'new' && (
             <FormBlock form={form} set={set} onSave={save} onCancel={() => setEditing(null)} title="Neuer Gutschein" />
           )}
 
-          {/* Table header */}
-          <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 px-5 py-2 bg-[#f6f5f3]">
-            {['Code', 'Typ', 'Wert', 'Nutzungen', 'Ablauf', 'Aktionen'].map(h => (
-              <p key={h} className="text-[10px] font-medium text-black/30 uppercase tracking-wider">{h}</p>
-            ))}
+          {/* Table */}
+          <div className="bg-white overflow-hidden">
+            {/* Table header */}
+            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 px-6 py-4 border-b border-black/[0.04]">
+              {['Code', 'Typ', 'Wert', 'Nutzungen', 'Ablauf', 'Aktionen'].map(h => (
+                <p key={h} className="text-[9px] text-black/20 uppercase tracking-[0.25em] font-light">{h}</p>
+              ))}
+            </div>
+
+            {filtered.map(c => {
+              const expired = c.expires_at && c.expires_at <= now
+              const active = c.is_active && !expired
+
+              if (editing === c.id) {
+                return <FormBlock key={c.id} form={form} set={set} onSave={save} onCancel={() => setEditing(null)} title="Bearbeiten" />
+              }
+
+              return (
+                <div key={c.id} className={`grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 px-6 py-4 hover:bg-black/[0.01] border-b border-black/[0.04] items-center ${!active ? 'opacity-40' : ''}`}>
+                  <div>
+                    <span className="text-[13px] font-light tracking-[0.08em] text-black/85">{c.code}</span>
+                    {c.min_order_value && <span className="text-[9px] text-black/20 ml-2 font-light">ab {'\u20AC'}{c.min_order_value}</span>}
+                  </div>
+                  <span className="text-[11px] text-black/35 font-light">{typeLabel(c.type)}</span>
+                  <span className="text-[13px] text-black/60 font-light">
+                    {c.type === 'percentage' ? `${c.value}%` :
+                     c.type === 'fixed' ? `\u20AC${c.value}` :
+                     c.type === 'free_shipping' ? '\u2014' :
+                     ACCESSORIES.find(a => a.id === c.free_accessory_id)?.name || c.free_accessory_id}
+                  </span>
+                  <span className="text-[11px] text-black/35 font-light">
+                    {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
+                    {c.single_use ? ' (1\u00D7/User)' : ''}
+                  </span>
+                  <span className="text-[11px] text-black/30 font-light">
+                    {c.expires_at ? new Date(c.expires_at).toLocaleDateString('de-DE') : '\u221E'}
+                  </span>
+                  <div className="flex gap-1">
+                    <button onClick={() => startEdit(c)} className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] border-0 bg-transparent">
+                      <Pencil size={12} strokeWidth={1.25} className="text-black/25" />
+                    </button>
+                    <button onClick={() => remove(c.id)} className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] border-0 bg-transparent">
+                      <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+
+            {!filtered.length && !editing && (
+              <p className="text-center text-black/20 text-[13px] font-light py-12">Keine Gutscheine vorhanden</p>
+            )}
           </div>
-
-          {filtered.map(c => {
-            const expired = c.expires_at && c.expires_at <= now
-            const active = c.is_active && !expired
-
-            if (editing === c.id) {
-              return <FormBlock key={c.id} form={form} set={set} onSave={save} onCancel={() => setEditing(null)} title="Bearbeiten" />
-            }
-
-            return (
-              <div key={c.id} className={`grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 px-5 py-3 bg-white border items-center ${active ? 'border-black/6' : 'border-black/4 opacity-50'}`}>
-                <div>
-                  <span className="text-sm font-mono font-bold text-black/85">{c.code}</span>
-                  {c.min_order_value && <span className="text-[9px] text-black/30 ml-2">ab €{c.min_order_value}</span>}
-                </div>
-                <span className="text-[10px] text-black/50">{typeLabel(c.type)}</span>
-                <span className="text-sm text-black/70">
-                  {c.type === 'percentage' ? `${c.value}%` :
-                   c.type === 'fixed' ? `€${c.value}` :
-                   c.type === 'free_shipping' ? '—' :
-                   ACCESSORIES.find(a => a.id === c.free_accessory_id)?.name || c.free_accessory_id}
-                </span>
-                <span className="text-[11px] text-black/50">
-                  {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
-                  {c.single_use ? ' (1×/User)' : ''}
-                </span>
-                <span className="text-[11px] text-black/40">
-                  {c.expires_at ? new Date(c.expires_at).toLocaleDateString('de-DE') : '∞'}
-                </span>
-                <div className="flex gap-1.5">
-                  <button onClick={() => startEdit(c)} className="w-7 h-7 bg-black/4 hover:bg-black/8 flex items-center justify-center border-0">
-                    <Pencil size={12} strokeWidth={1.5} className="text-black/40" />
-                  </button>
-                  <button onClick={() => remove(c.id)} className="w-7 h-7 bg-black/4 hover:bg-black/8 flex items-center justify-center border-0">
-                    <Trash2 size={12} strokeWidth={1.5} className="text-black/30" />
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-
-          {!filtered.length && !editing && (
-            <p className="text-center text-black/30 text-sm py-8">Keine Gutscheine vorhanden</p>
-          )}
         </div>
       )}
     </div>
@@ -188,32 +187,59 @@ export default function CouponsPanel() {
 
 function FormBlock({ form, set, onSave, onCancel, title }) {
   return (
-    <div className="bg-white border border-black/10 p-5 space-y-3">
-      <p className="text-[10px] font-semibold text-black/50 uppercase tracking-wider">{title}</p>
-      <div className="grid grid-cols-2 gap-3">
-        <input value={form.code} onChange={e => set('code', e.target.value.toUpperCase())} placeholder="CODE (z.B. SOMMER20)" className="border border-black/10 px-3 py-2 text-sm font-mono focus:outline-none focus:border-black/30" />
-        <select value={form.type} onChange={e => set('type', e.target.value)} className="border border-black/10 px-3 py-2 text-sm focus:outline-none focus:border-black/30 bg-white">
-          {TYPES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
-        </select>
+    <div className="bg-white p-7">
+      <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-5 font-light">{title}</p>
+      <div className="grid grid-cols-2 gap-5">
+        <div>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Code</label>
+          <input value={form.code} onChange={e => set('code', e.target.value.toUpperCase())} placeholder="z.B. SOMMER20" className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
+        </div>
+        <div>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Typ</label>
+          <select value={form.type} onChange={e => set('type', e.target.value)} className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70">
+            {TYPES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+          </select>
+        </div>
         {(form.type === 'percentage' || form.type === 'fixed') && (
-          <input type="number" step={form.type === 'percentage' ? '1' : '0.01'} value={form.value} onChange={e => set('value', e.target.value)} placeholder={form.type === 'percentage' ? 'Prozent (z.B. 20)' : 'Betrag in € (z.B. 50)'} className="border border-black/10 px-3 py-2 text-sm focus:outline-none focus:border-black/30" />
+          <div>
+            <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Wert</label>
+            <input type="number" step={form.type === 'percentage' ? '1' : '0.01'} value={form.value} onChange={e => set('value', e.target.value)} placeholder={form.type === 'percentage' ? 'Prozent (z.B. 20)' : 'Betrag in \u20AC (z.B. 50)'} className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
+          </div>
         )}
         {form.type === 'free_accessory' && (
-          <select value={form.free_accessory_id} onChange={e => set('free_accessory_id', e.target.value)} className="border border-black/10 px-3 py-2 text-sm focus:outline-none focus:border-black/30 bg-white">
-            <option value="">Zubehör wählen…</option>
-            {ACCESSORIES.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
+          <div>
+            <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Zubehor</label>
+            <select value={form.free_accessory_id} onChange={e => set('free_accessory_id', e.target.value)} className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70">
+              <option value="">Zubehor wahlen...</option>
+              {ACCESSORIES.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </div>
         )}
-        <input type="number" step="1" value={form.min_order_value} onChange={e => set('min_order_value', e.target.value)} placeholder="Mindestbestellwert (€)" className="border border-black/10 px-3 py-2 text-sm focus:outline-none focus:border-black/30" />
-        <input type="number" step="1" value={form.max_uses} onChange={e => set('max_uses', e.target.value)} placeholder="Max. Nutzungen (leer = ∞)" className="border border-black/10 px-3 py-2 text-sm focus:outline-none focus:border-black/30" />
-        <input type="date" value={form.expires_at} onChange={e => set('expires_at', e.target.value)} className="border border-black/10 px-3 py-2 text-sm focus:outline-none focus:border-black/30" />
-        <label className="flex items-center gap-2 text-sm text-black/60">
-          <input type="checkbox" checked={form.single_use} onChange={e => set('single_use', e.target.checked)} /> Einmalig pro Nutzer
-        </label>
+        <div>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Mindestbestellwert</label>
+          <input type="number" step="1" value={form.min_order_value} onChange={e => set('min_order_value', e.target.value)} placeholder="\u20AC" className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
+        </div>
+        <div>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Max. Nutzungen</label>
+          <input type="number" step="1" value={form.max_uses} onChange={e => set('max_uses', e.target.value)} placeholder="Leer = unbegrenzt" className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
+        </div>
+        <div>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Ablaufdatum</label>
+          <input type="date" value={form.expires_at} onChange={e => set('expires_at', e.target.value)} className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
+        </div>
+        <div className="flex items-end pb-2">
+          <label className="flex items-center gap-2.5 text-[11px] text-black/40 font-light cursor-pointer">
+            <input type="checkbox" checked={form.single_use} onChange={e => set('single_use', e.target.checked)} className="accent-black" /> Einmalig pro Nutzer
+          </label>
+        </div>
       </div>
-      <div className="flex gap-2">
-        <button onClick={onSave} disabled={!form.code} className="flex items-center gap-1.5 px-4 py-2 bg-black text-white text-xs border-0 disabled:opacity-30"><Check size={12} /> Speichern</button>
-        <button onClick={onCancel} className="flex items-center gap-1.5 px-4 py-2 bg-black/5 text-black/50 text-xs border-0"><X size={12} /> Abbrechen</button>
+      <div className="flex gap-3 mt-7">
+        <button onClick={onSave} disabled={!form.code} className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-black flex items-center gap-2">
+          <Check size={12} strokeWidth={1.25} /> Speichern
+        </button>
+        <button onClick={onCancel} className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] transition-all bg-transparent uppercase tracking-[0.2em] font-light">
+          <X size={12} strokeWidth={1.25} /> Abbrechen
+        </button>
       </div>
     </div>
   )

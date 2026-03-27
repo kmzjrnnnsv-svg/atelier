@@ -67,7 +67,7 @@ export default function ForYou() {
           2. FEATURED PRODUCTS — Padded, white breathing room
           ══════════════════════════════════════════════════════════ */}
       {featuredShoes.length > 0 && (
-        <div className="py-10 lg:py-28">
+        <div className="py-12 lg:py-28">
           <div className="text-center mb-7 lg:mb-14">
             <p className="text-[9px] lg:text-[10px] text-black/25 uppercase tracking-[0.3em] mb-2 lg:mb-3">{c('featured', 'label', 'Herren')}</p>
             <h2 className="text-[20px] lg:text-[30px] font-extralight text-black tracking-tight">{c('featured', 'title', 'Empfohlen für Sie')}</h2>
@@ -117,13 +117,15 @@ export default function ForYou() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          4. SAVOIR-FAIRE — Image then text below (LV pattern)
+          4. SAVOIR-FAIRE — Padded section (image + text below, contained)
           ══════════════════════════════════════════════════════════ */}
-      <div className="cursor-pointer" onClick={() => navigate(isNative ? '/scan' : '/explore')}>
-        <div className="w-full overflow-hidden" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '16 / 5' }}>
-          <img src={c('savoir_faire', 'image', '') || CRAFT.hands} alt="" className="w-full h-full object-cover" />
+      <div className="py-12 lg:py-28 cursor-pointer" onClick={() => navigate(isNative ? '/scan' : '/explore')}>
+        <div className="px-4 lg:px-16 xl:px-24">
+          <div className="w-full overflow-hidden" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '21 / 9' }}>
+            <img src={c('savoir_faire', 'image', '') || CRAFT.hands} alt="" className="w-full h-full object-cover" />
+          </div>
         </div>
-        <div className="text-center px-5 lg:px-16 pt-7 lg:pt-14 pb-8 lg:pb-16">
+        <div className="text-center px-5 lg:px-16 pt-8 lg:pt-14 pb-2 lg:pb-4">
           <p className="text-[9px] lg:text-[10px] text-black/25 uppercase tracking-[0.3em] mb-2 lg:mb-3">
             {isNative ? '3D-Technologie' : c('savoir_faire', 'label', 'Savoir-Faire')}
           </p>
@@ -185,7 +187,7 @@ export default function ForYou() {
           6. FAVORITES — Padded with generous whitespace
           ══════════════════════════════════════════════════════════ */}
       {favShoes.length > 0 && (
-        <div className="py-10 lg:py-24">
+        <div className="py-12 lg:py-28">
           <div className="text-center mb-7 lg:mb-14">
             <p className="text-[9px] lg:text-[10px] text-black/25 uppercase tracking-[0.3em] mb-2 lg:mb-3">{c('favorites', 'label', 'Herren')}</p>
             <h2 className="text-[20px] lg:text-[30px] font-extralight text-black tracking-tight">{c('favorites', 'title', 'Ihre Favoriten')}</h2>
@@ -230,7 +232,7 @@ export default function ForYou() {
             </h2>
           </div>
 
-          <div className="py-6 lg:py-14">
+          <div className="py-8 lg:py-14">
             <div className="px-4 lg:px-24 xl:px-32">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 lg:gap-x-6 gap-y-6 lg:gap-y-14">
                 {activeAccessories.slice(0, 4).map(acc => (
@@ -261,7 +263,7 @@ export default function ForYou() {
           8. ORDERS — Padded minimal list
           ══════════════════════════════════════════════════════════ */}
       {recentOrders.length > 0 && (
-        <div className="border-t border-black/[0.06] py-10 lg:py-20">
+        <div className="py-12 lg:py-24">
           <div className="flex items-center justify-between px-4 lg:px-24 xl:px-32 mb-5 lg:mb-8">
             <p className="text-[9px] lg:text-[10px] text-black/25 uppercase tracking-[0.3em]">Ihre Bestellungen</p>
             <button onClick={() => navigate('/orders')} className="text-[10px] lg:text-[11px] text-black/30 bg-transparent border-0 hover:text-black transition-colors font-light underline underline-offset-4 decoration-black/15">
@@ -322,7 +324,7 @@ export default function ForYou() {
       {/* ══════════════════════════════════════════════════════════
           10. SERVICE PROMISE — Padded three-column
           ══════════════════════════════════════════════════════════ */}
-      <div className="border-t border-black/[0.06] py-10 lg:py-24">
+      <div className="py-12 lg:py-28">
         <div className="px-4 lg:px-24 xl:px-32">
           <div className="grid grid-cols-3 gap-4 lg:gap-20">
             {[

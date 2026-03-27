@@ -8,7 +8,7 @@ export default function CMSDashboard() {
 
  const stats = [
  { label: 'Schuhe', value: shoes.length, icon: Footprints, to: '/cms/shoes' },
- { label: 'Curated Items', value: curated.length, icon: Sparkles, to: '/cms/curated' },
+ { label: 'Curated', value: curated.length, icon: Sparkles, to: '/cms/curated' },
  { label: 'Garderobe', value: wardrobe.length, icon: Shirt, to: '/cms/wardrobe' },
  { label: 'Outfits', value: outfits.length, icon: Image, to: '/cms/outfits' },
  { label: 'Bestellungen', value: orders.length, icon: ShoppingBag, to: '/cms/orders' },
@@ -23,77 +23,76 @@ export default function CMSDashboard() {
  ]
 
  return (
- <div className="p-8">
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
  {/* Header */}
- <div className="mb-8">
- <h1 className="text-xl font-bold text-black/90" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Dashboard</h1>
- <p className="text-black/35 text-sm mt-1">Verwalte alle Inhalte der ATELIER App</p>
+ <div className="mb-12">
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Übersicht</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Dashboard</h1>
  </div>
 
  {/* Stats grid */}
- <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">
+ <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-14">
  {stats.map(({ label, value, icon: Icon, to }) => (
  <button
  key={label}
  onClick={() => navigate(to)}
- className="bg-white border border-black/6 p-5 text-left hover:border-black/15 transition-all group"
+ className="bg-white p-6 text-left hover:bg-black/[0.01] transition-all group border-0"
  >
- <div className="flex items-center justify-between mb-4">
- <div className="w-9 h-9 bg-black/4 flex items-center justify-center">
- <Icon size={16} className="text-black/40" strokeWidth={1.5} />
+ <div className="flex items-center justify-between mb-5">
+ <div className="w-8 h-8 flex items-center justify-center">
+ <Icon size={16} className="text-black/20" strokeWidth={1.25} />
  </div>
- <ArrowRight size={12} className="text-black/15 group-hover:text-black/40 transition-colors" />
+ <ArrowRight size={11} className="text-black/10 group-hover:text-black/30 transition-colors" strokeWidth={1.25} />
  </div>
- <p className="text-2xl font-bold text-black/85">{value}</p>
- <p className="text-[10px] font-medium text-black/30 mt-1 uppercase tracking-wider">{label}</p>
+ <p className="text-[26px] font-extralight text-black/80">{value}</p>
+ <p className="text-[9px] text-black/25 mt-1.5 uppercase tracking-[0.2em] font-light">{label}</p>
  </button>
  ))}
  </div>
 
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+ <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
  {/* Recent Shoes */}
- <div className="bg-white border border-black/6 overflow-hidden">
- <div className="flex items-center justify-between px-5 py-4 border-b border-black/6">
- <div className="flex items-center gap-2">
- <Footprints size={14} className="text-black/35" strokeWidth={1.5} />
- <span className="text-[11px] font-semibold text-black/70 uppercase tracking-wider">Aktuelle Schuhe</span>
- </div>
- <button onClick={() => navigate('/cms/shoes')} className="text-[10px] font-medium text-black/30 hover:text-black/60 transition-colors bg-transparent border-0 flex items-center gap-1">
- Alle ansehen <ArrowRight size={9} />
+ <div className="bg-white overflow-hidden">
+ <div className="flex items-center justify-between px-6 py-5 border-b border-black/[0.04]">
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Aktuelle Schuhe</p>
+ <button onClick={() => navigate('/cms/shoes')} className="text-[10px] text-black/25 hover:text-black/50 transition-colors bg-transparent border-0 flex items-center gap-1.5 font-light">
+ Alle ansehen <ArrowRight size={9} strokeWidth={1.25} />
  </button>
  </div>
- <div className="divide-y divide-black/5">
+ <div className="divide-y divide-black/[0.04]">
  {shoes.slice(0, 5).map((shoe) => (
- <div key={shoe.id} className="flex items-center gap-4 px-5 py-3 hover:bg-black/2 transition-colors">
- <div className="w-9 h-9 flex-shrink-0" style={{ backgroundColor: shoe.color }} />
+ <div key={shoe.id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-black/[0.01] transition-colors">
+ <div className="w-10 h-10 flex-shrink-0 overflow-hidden" style={{ backgroundColor: shoe.color }}>
+ {shoe.image && <img src={shoe.image} alt="" className="w-full h-full object-cover" />}
+ </div>
  <div className="flex-1 min-w-0">
- <p className="text-[13px] font-medium text-black/80 truncate">{shoe.name}</p>
- <p className="text-[10px] text-black/30">{shoe.category} · {shoe.material}</p>
+ <p className="text-[13px] font-light text-black/75 truncate">{shoe.name}</p>
+ <p className="text-[10px] text-black/25 font-light">{shoe.category} · {shoe.material}</p>
  </div>
  <div className="text-right flex-shrink-0">
- <p className="text-[13px] font-semibold text-black/70">{shoe.price}</p>
+ <p className="text-[13px] font-light text-black/60">{shoe.price}</p>
  {shoe.tag && (
- <span className="text-[9px] bg-black/4 text-black/40 px-1.5 py-0.5">{shoe.tag}</span>
+ <span className="text-[8px] text-black/25 uppercase tracking-wider font-light">{shoe.tag}</span>
  )}
  </div>
  </div>
  ))}
  {shoes.length === 0 && (
- <p className="text-[11px] text-black/30 text-center py-8">Keine Schuhe vorhanden</p>
+ <p className="text-[12px] text-black/25 text-center py-10 font-light">Keine Schuhe vorhanden</p>
  )}
  </div>
  </div>
 
  {/* Quick actions + Recent orders */}
- <div className="space-y-6">
- <div className="bg-white border border-black/6 p-5">
- <p className="text-[11px] font-semibold text-black/70 uppercase tracking-wider mb-4">Schnellaktionen</p>
- <div className="grid grid-cols-2 gap-2">
+ <div className="space-y-8">
+ <div className="bg-white p-6">
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">Schnellaktionen</p>
+ <div className="grid grid-cols-2 gap-2.5">
  {quickActions.map(({ label, to }) => (
  <button
  key={label}
  onClick={() => navigate(to)}
- className="bg-black/4 hover:bg-black/8 text-black/60 hover:text-black/80 text-[11px] font-medium py-2.5 px-3 transition-all border-0 text-left"
+ className="text-black/40 hover:text-black/70 text-[11px] py-3 px-4 transition-all border border-black/[0.06] hover:border-black/15 text-left font-light bg-transparent"
  >
  {label}
  </button>
@@ -102,34 +101,31 @@ export default function CMSDashboard() {
  </div>
 
  {/* Orders preview */}
- <div className="bg-white border border-black/6 overflow-hidden">
- <div className="flex items-center justify-between px-5 py-4 border-b border-black/6">
- <div className="flex items-center gap-2">
- <ShoppingBag size={14} className="text-black/35" strokeWidth={1.5} />
- <span className="text-[11px] font-semibold text-black/70 uppercase tracking-wider">Letzte Bestellungen</span>
- </div>
- <button onClick={() => navigate('/cms/orders')} className="text-[10px] font-medium text-black/30 hover:text-black/60 transition-colors bg-transparent border-0 flex items-center gap-1">
- Alle <ArrowRight size={9} />
+ <div className="bg-white overflow-hidden">
+ <div className="flex items-center justify-between px-6 py-5 border-b border-black/[0.04]">
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Letzte Bestellungen</p>
+ <button onClick={() => navigate('/cms/orders')} className="text-[10px] text-black/25 hover:text-black/50 transition-colors bg-transparent border-0 flex items-center gap-1.5 font-light">
+ Alle <ArrowRight size={9} strokeWidth={1.25} />
  </button>
  </div>
- <div className="divide-y divide-black/5">
+ <div className="divide-y divide-black/[0.04]">
  {orders.slice(0, 4).map((o) => (
- <div key={o.id} className="flex items-center gap-3 px-5 py-3">
- <div className={`w-2 h-2 flex-shrink-0 ${
- o.status === 'delivered' ? 'bg-black/60' :
- o.status === 'shipped' ? 'bg-black/40' :
- o.status === 'processing' ? 'bg-black/30' :
- o.status === 'cancelled' ? 'bg-black/15' : 'bg-black/20'
+ <div key={o.id} className="flex items-center gap-3 px-6 py-3.5">
+ <div className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${
+ o.status === 'delivered' ? 'bg-black/50' :
+ o.status === 'shipped' ? 'bg-black/30' :
+ o.status === 'processing' ? 'bg-black/20' :
+ o.status === 'cancelled' ? 'bg-black/10' : 'bg-black/15'
  }`} />
  <div className="flex-1 min-w-0">
- <p className="text-[11px] font-medium text-black/70 truncate">{o.shoe_name}</p>
- <p className="text-[9px] text-black/30">{o.order_ref || `#${o.id}`}</p>
+ <p className="text-[12px] font-light text-black/60 truncate">{o.shoe_name}</p>
+ <p className="text-[9px] text-black/25 font-light">{o.order_ref || `#${o.id}`}</p>
  </div>
- <span className="text-[10px] text-black/40">{o.price}</span>
+ <span className="text-[11px] text-black/35 font-light">{o.price}</span>
  </div>
  ))}
  {orders.length === 0 && (
- <p className="text-[11px] text-black/30 text-center py-6">Keine Bestellungen</p>
+ <p className="text-[12px] text-black/25 text-center py-8 font-light">Keine Bestellungen</p>
  )}
  </div>
  </div>

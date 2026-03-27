@@ -10,31 +10,31 @@ function ItemForm({ initial = emptyForm, title, onSave, onCancel }) {
  const valid = form.name.trim().length > 0
 
  return (
- <div className="bg-white border border-black/6 p-5 space-y-4">
- <h3 className="text-sm font-semibold text-black/65">{title}</h3>
+ <div className="bg-white p-7 space-y-4">
+ <h3 className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">{title}</h3>
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Name *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Name *</label>
  <input value={form.name} onChange={(e) => set('name', e.target.value)}
  placeholder="Charcoal Suit"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" />
  </div>
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Farbe</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Farbe</label>
  <div className="flex items-center gap-2">
  <input type="color" value={form.color} onChange={(e) => set('color', e.target.value)}
- className="w-10 h-10 border border-black/10 bg-transparent cursor-pointer" />
+ className="w-10 h-10 border-b border-black/[0.08] bg-transparent cursor-pointer" />
  <input value={form.color} onChange={(e) => set('color', e.target.value)}
- className="flex-1 bg-white border border-black/10 px-3 py-2.5 text-xs text-black/90 font-mono focus:outline-none" />
+ className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 font-mono" />
  </div>
  </div>
  </div>
  <div className="flex gap-3">
  <button onClick={() => valid && onSave(form)} disabled={!valid}
- className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium border-0 ${valid ? 'bg-black text-white hover:bg-black' : 'bg-black/5 text-black/35 cursor-not-allowed'}`}>
+ className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light disabled:opacity-30 flex-1 flex items-center justify-center gap-2">
  <Check size={14} /> Speichern
  </button>
- <button onClick={onCancel} className="px-4 py-2.5 text-xs font-medium text-black/45 bg-black/5 border-0">
+ <button onClick={onCancel} className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 transition-colors font-light">
  Abbrechen
  </button>
  </div>
@@ -46,56 +46,58 @@ function Section({ title, description, items, onAdd, onUpdate, onDelete, editMod
  const [showAdd, setShowAdd] = useState(false)
 
  return (
- <div className="bg-white border border-black/6 overflow-hidden mb-4">
- <div className="flex items-center justify-between px-5 py-4 border-b border-black/6">
+ <div className="bg-white overflow-hidden mb-4">
+ <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.04]">
  <div>
- <p className="text-sm font-semibold text-black/65">{title}</p>
- <p className="text-xs text-black/35 mt-0.5">{description}</p>
+ <p className="text-[13px] font-light text-black/70">{title}</p>
+ <p className="text-[10px] text-black/30 mt-0.5 font-light">{description}</p>
  </div>
  <button onClick={() => setShowAdd(true)}
- className="flex items-center gap-1.5 bg-black/5 hover:bg-black/10 text-black/65 px-3 py-2 text-xs font-medium border-0 transition-colors">
+ className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] transition-all bg-transparent uppercase tracking-[0.2em] font-light">
  <Plus size={11} /> Hinzufügen
  </button>
  </div>
 
  {showAdd && (
- <div className="p-4 border-b border-black/10">
+ <div className="p-7 border-b border-black/[0.04]">
  <ItemForm title={`Neues ${title} Item`}
  onSave={(f) => { onAdd(f); setShowAdd(false) }}
  onCancel={() => setShowAdd(false)} />
  </div>
  )}
 
- <div className="divide-y divide-black/8">
+ <div>
  {items.map((item) => (
  editMode?.key === sectionKey && editMode?.id === item.id ? (
- <div key={item.id} className="p-4">
+ <div key={item.id} className="p-7">
  <ItemForm initial={item} title="Bearbeiten"
  onSave={(f) => { onUpdate(item.id, f); setEditMode(null) }}
  onCancel={() => setEditMode(null)} />
  </div>
  ) : (
- <div key={item.id} className="flex items-center gap-4 px-5 py-3 group hover:bg-black/5 transition-colors">
+ <div key={item.id} className="bg-white flex items-center gap-4 px-6 py-4 group hover:bg-black/[0.01] transition-all border-b border-black/[0.04]">
  <div className="w-10 h-10 flex-shrink-0" style={{ backgroundColor: item.color }} />
  <div className="flex-1 min-w-0">
- <p className="text-sm font-medium text-black/90">{item.name}</p>
- <p className="text-[9px] text-black/35 font-mono">{item.color}</p>
+ <p className="text-[13px] font-light text-black/70">{item.name}</p>
+ <p className="text-[9px] text-black/30 font-mono font-light">{item.color}</p>
  </div>
  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
  <button onClick={() => setEditMode({ key: sectionKey, id: item.id })}
- className="w-7 h-7 bg-black/10 flex items-center justify-center hover:bg-black/15 border-0">
- <Pencil size={11} className="text-black/65" />
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent">
+ <Pencil size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  <button onClick={() => { if (confirm(`"${item.name}" löschen?`)) onDelete(item.id) }}
- className="w-7 h-7 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
- <Trash2 size={11} className="text-black/35" />
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent">
+ <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  </div>
  </div>
  )
  ))}
  {items.length === 0 && (
- <p className="text-center py-8 text-black/35 text-xs">Noch keine Einträge</p>
+ <div className="text-center py-20">
+ <p className="text-[13px] text-black/25 font-light">Noch keine Einträge</p>
+ </div>
  )}
  </div>
  </div>
@@ -107,23 +109,24 @@ export default function WardrobeEditor() {
  const [editMode, setEditMode] = useState(null)
 
  return (
- <div className="p-8">
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
  <div className="mb-6">
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Garderobe</h1>
- <p className="text-black/45 text-sm mt-1">Kleidungsstücke für den Outfit Visualizer</p>
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Wardrobe</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Garderobe</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">Kleidungsstücke für den Outfit Visualizer</p>
  </div>
 
  {/* Live Preview */}
- <div className="bg-white border border-black/6 p-4 mb-6">
- <p className="text-xs font-medium text-black/35 mb-3">Vorschau (App)</p>
+ <div className="bg-white p-7 mb-6">
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">Vorschau (App)</p>
  <div className="flex gap-2 overflow-x-auto pb-1">
  {wardrobe.map((item) => (
- <div key={item.id} className="flex-shrink-0 bg-black/5 p-2 text-center w-20">
+ <div key={item.id} className="flex-shrink-0 bg-black/[0.02] p-2 text-center w-20">
  <div className="w-full h-10 mx-auto mb-1" style={{ backgroundColor: item.color }} />
- <p className="text-[8px] text-black/45 leading-tight">{item.name}</p>
+ <p className="text-[8px] text-black/30 leading-tight font-light">{item.name}</p>
  </div>
  ))}
- {wardrobe.length === 0 && <p className="text-xs text-black/35">Keine Garderobe-Items</p>}
+ {wardrobe.length === 0 && <p className="text-[13px] text-black/25 font-light">Keine Garderobe-Items</p>}
  </div>
  </div>
 

@@ -4,10 +4,10 @@ import { MessageSquare, RefreshCw, ChevronDown, ChevronUp, Trash2, Send, AlertCi
 import { apiFetch } from '../../hooks/useApi'
 
 const STATUS_CONFIG = {
-  open: { label: 'Offen', color: 'bg-black/15 text-black/70' },
-  in_progress: { label: 'In Bearbeitung', color: 'bg-black/10 text-black/50' },
-  resolved: { label: 'Gelöst', color: 'bg-black/5 text-black/35' },
-  closed: { label: 'Geschlossen', color: 'bg-black/4 text-black/25' },
+  open: { label: 'Offen', color: 'bg-black/15 text-black/60' },
+  in_progress: { label: 'In Bearbeitung', color: 'bg-black/8 text-black/40' },
+  resolved: { label: 'Gel\u00f6st', color: 'bg-black/5 text-black/30' },
+  closed: { label: 'Geschlossen', color: 'bg-black/[0.03] text-black/25' },
 }
 
 const TYPE_CONFIG = {
@@ -21,7 +21,7 @@ const STATUS_FILTERS = [
   { key: 'all', label: 'Alle' },
   { key: 'open', label: 'Offen' },
   { key: 'in_progress', label: 'In Bearbeitung' },
-  { key: 'resolved', label: 'Gelöst' },
+  { key: 'resolved', label: 'Gel\u00f6st' },
   { key: 'closed', label: 'Geschlossen' },
 ]
 
@@ -96,118 +96,116 @@ function TicketCard({ ticket, onUpdate, onDelete }) {
   const nextOptions = NEXT_STATUSES[ticket.status] || []
 
   return (
-    <div className="bg-white border border-black/6 overflow-hidden hover:bg-black/3 transition-colors">
+    <div className="bg-white px-6 py-5 hover:bg-black/[0.01] border-b border-black/[0.04] transition-colors">
       {/* Row header */}
-      <div className="flex items-center gap-3 px-4 py-3">
+      <div className="flex items-center gap-4">
         {/* Type badge */}
-        <span className="flex items-center gap-1 text-[10px] font-medium bg-black/8 text-black/50 px-2 py-0.5 flex-shrink-0">
-          <TypeIcon size={10} strokeWidth={1.5} />
+        <span className="flex items-center gap-1.5 text-[9px] font-light bg-black/8 text-black/40 px-2.5 py-0.5 uppercase tracking-wider flex-shrink-0">
+          <TypeIcon size={10} strokeWidth={1} />
           {typeCfg.label}
         </span>
 
         {/* Ticket info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-bold text-black/90 truncate">{ticket.subject}</span>
+            <span className="text-[13px] font-light text-black/85 truncate tracking-tight">{ticket.subject}</span>
           </div>
-          <div className="flex items-center gap-3 mt-0.5">
-            <span className="text-[10px] text-black/45">{ticket.user_name}</span>
-            <span className="text-[10px] text-black/35">{ticket.user_email}</span>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-[10px] text-black/35 font-light">{ticket.user_name}</span>
+            <span className="text-[10px] text-black/25 font-light">{ticket.user_email}</span>
             {ticket.order_ref && (
-              <span className="text-[10px] bg-black/5 text-black/40 px-1.5 py-0.5">
+              <span className="text-[9px] bg-black/[0.03] text-black/30 px-2 py-0.5 font-light tracking-wider">
                 {ticket.order_ref}
               </span>
             )}
-            <span className="text-[10px] text-black/30">
+            <span className="text-[10px] text-black/20 font-light">
               {new Date(ticket.created_at.replace(' ', 'T') + 'Z').toLocaleDateString('de-DE')}
             </span>
           </div>
         </div>
 
         {/* Message preview */}
-        <span className="text-[10px] text-black/35 max-w-[200px] truncate hidden sm:block flex-shrink-0">
+        <span className="text-[10px] text-black/25 font-light max-w-[200px] truncate hidden sm:block flex-shrink-0">
           {ticket.message}
         </span>
 
         {/* Status badge */}
-        <span className={`text-[10px] font-medium px-2 py-0.5 flex-shrink-0 ${statusCfg.color}`}>
+        <span className={`text-[9px] font-light px-2.5 py-0.5 uppercase tracking-wider flex-shrink-0 ${statusCfg.color}`}>
           {statusCfg.label}
         </span>
 
         {/* Expand */}
         <button
           onClick={() => setExpanded(v => !v)}
-          className="w-7 h-7 bg-black/5 flex items-center justify-center flex-shrink-0 border-0 hover:bg-black/10 transition-colors"
+          className="w-8 h-8 flex items-center justify-center flex-shrink-0 border-0 bg-transparent hover:bg-black/[0.03] transition-colors"
         >
           {expanded
-            ? <ChevronUp size={12} strokeWidth={1.5} className="text-black/45" />
-            : <ChevronDown size={12} strokeWidth={1.5} className="text-black/45" />}
+            ? <ChevronUp size={12} strokeWidth={1} className="text-black/25" />
+            : <ChevronDown size={12} strokeWidth={1} className="text-black/25" />}
         </button>
       </div>
 
       {/* Expanded details */}
       {expanded && (
-        <div className="border-t border-black/6 px-4 py-4 space-y-4 bg-[#f6f5f3]">
+        <div className="mt-5 pt-5 border-t border-black/[0.04] space-y-5">
           {/* Customer */}
           <div>
-            <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Kunde</p>
-            <p className="text-xs text-black/65">{ticket.user_name}</p>
-            <p className="text-[10px] text-black/45">{ticket.user_email}</p>
-            <p className="text-[9px] text-black/35 mt-0.5">USER-{String(ticket.user_id).padStart(5, '0')}</p>
+            <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-2 font-light">Kunde</p>
+            <p className="text-[13px] font-light text-black/65">{ticket.user_name}</p>
+            <p className="text-[11px] text-black/35 font-light mt-0.5">{ticket.user_email}</p>
+            <p className="text-[9px] text-black/25 font-light italic mt-1">USER-{String(ticket.user_id).padStart(5, '0')}</p>
           </div>
 
           {/* Order reference */}
           {ticket.order_ref && (
             <div>
-              <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Bestellreferenz</p>
-              <p className="text-xs text-black/65">{ticket.order_ref}</p>
+              <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-2 font-light">Bestellreferenz</p>
+              <p className="text-[13px] font-light text-black/65">{ticket.order_ref}</p>
               {ticket.shoe_name && (
-                <p className="text-[10px] text-black/45">{ticket.shoe_name}</p>
+                <p className="text-[11px] text-black/35 font-light mt-0.5">{ticket.shoe_name}</p>
               )}
             </div>
           )}
 
           {/* Full message */}
           <div>
-            <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Nachricht</p>
-            <p className="text-xs text-black/65 leading-relaxed whitespace-pre-wrap">{ticket.message}</p>
+            <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-2 font-light">Nachricht</p>
+            <p className="text-[13px] font-light text-black/55 leading-relaxed whitespace-pre-wrap">{ticket.message}</p>
           </div>
 
           {/* Admin notes */}
           <div>
-            <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Interne Notizen</p>
+            <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-2 font-light">Interne Notizen</p>
             <textarea
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
-              placeholder="Interne Notizen hinzufügen..."
-              className="w-full text-xs text-black/65 bg-white border border-black/6 p-3 resize-y min-h-[80px] placeholder:text-black/25 focus:outline-none focus:border-black/15"
+              placeholder="Interne Notizen hinzuf\u00fcgen..."
+              className="w-full text-[13px] font-light text-black/55 bg-white border border-black/[0.06] p-4 resize-y min-h-[80px] placeholder:text-black/20 focus:outline-none focus:border-black/15 transition-colors"
             />
             <button
               onClick={handleSaveNotes}
               disabled={updating || adminNotes === (ticket.admin_notes || '')}
-              className="mt-2 flex items-center gap-1.5 bg-black/8 text-black/50 hover:bg-black/12 text-[10px] font-medium px-3 py-1.5 border-0 transition-colors disabled:opacity-50"
+              className="mt-3 px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black flex items-center gap-2"
             >
-              <Send size={10} strokeWidth={1.5} />
+              <Send size={10} strokeWidth={1} />
               Notizen speichern
             </button>
           </div>
 
           {/* Actions */}
-          <div className="pt-2 border-t border-black/6 flex flex-wrap items-center gap-2">
+          <div className="pt-4 border-t border-black/[0.04] flex flex-wrap items-center gap-3">
             {nextOptions.map(s => (
               <button
                 key={s}
                 disabled={updating}
                 onClick={() => handleStatusChange(s)}
-                className={`text-[10px] font-medium px-3 py-2 border-0 transition-all disabled:opacity-50 ${
-                  s === 'closed'
-                    ? 'bg-black/8 text-black/40 hover:bg-black/12'
-                    : s === 'resolved'
-                      ? 'bg-black text-white hover:bg-black/85'
-                      : 'bg-black/8 text-black/50 hover:bg-black/12'
+                className={`px-6 h-10 text-[11px] uppercase tracking-[0.2em] font-light transition-all disabled:opacity-30 ${
+                  s === 'resolved'
+                    ? 'border border-black text-black bg-transparent hover:bg-black hover:text-white'
+                    : 'border-0 bg-black/[0.04] text-black/35 hover:bg-black/[0.08] hover:text-black/55'
                 }`}
               >
-                {updating ? '…' : STATUS_CONFIG[s]?.label || s}
+                {updating ? '\u2026' : STATUS_CONFIG[s]?.label || s}
               </button>
             ))}
 
@@ -215,18 +213,18 @@ function TicketCard({ ticket, onUpdate, onDelete }) {
 
             {/* Delete */}
             {confirmDelete ? (
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-black/45">Wirklich löschen?</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] text-black/25 font-light italic">Wirklich l\u00f6schen?</span>
                 <button
                   onClick={handleDelete}
                   disabled={updating}
-                  className="text-[10px] font-medium px-3 py-2 bg-black text-white border-0 transition-all disabled:opacity-50 hover:bg-black/85"
+                  className="px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30"
                 >
-                  {updating ? '…' : 'Ja, löschen'}
+                  {updating ? '\u2026' : 'Ja, l\u00f6schen'}
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="text-[10px] font-medium px-3 py-2 bg-black/8 text-black/50 border-0 transition-all hover:bg-black/12"
+                  className="px-6 h-10 text-[11px] text-black/25 hover:text-black/50 bg-transparent border-0 uppercase tracking-[0.2em] font-light transition-all"
                 >
                   Abbrechen
                 </button>
@@ -234,10 +232,10 @@ function TicketCard({ ticket, onUpdate, onDelete }) {
             ) : (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="flex items-center gap-1 text-[10px] font-medium px-3 py-2 bg-black/5 text-black/35 border-0 transition-all hover:bg-black/10 hover:text-black/50"
+                className="flex items-center gap-2 text-[11px] text-black/20 hover:text-black/40 bg-transparent border-0 uppercase tracking-[0.2em] font-light transition-all"
               >
-                <Trash2 size={10} strokeWidth={1.5} />
-                Löschen
+                <Trash2 size={10} strokeWidth={1} />
+                L\u00f6schen
               </button>
             )}
           </div>
@@ -287,51 +285,49 @@ export default function FeedbackPanel() {
   for (const t of tickets) typeCounts[t.type] = (typeCounts[t.type] || 0) + 1
 
   return (
-    <div className="p-8 min-h-full">
+    <div className="px-10 py-10 lg:px-14 lg:py-12 min-h-full">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-10">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <MessageSquare size={18} strokeWidth={1.5} className="text-black/35" />
-            <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Feedback & Beschwerden</h1>
-          </div>
-          <p className="text-xs text-black/45">{tickets.length} Tickets gesamt</p>
+          <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Kundendienst</p>
+          <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Feedback & Beschwerden</h1>
+          <p className="text-[13px] text-black/30 mt-2 font-light">{tickets.length} Tickets gesamt</p>
         </div>
         <button
           onClick={load}
           disabled={loading}
-          className="flex items-center gap-2 bg-black/5 hover:bg-black/10 text-black/65 text-xs px-3 py-2 border-0 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 h-9 text-[11px] text-black/25 hover:text-black/50 bg-transparent border-0 font-light transition-colors disabled:opacity-50"
         >
-          <RefreshCw size={12} strokeWidth={1.5} className={loading ? 'animate-spin' : ''} />
+          <RefreshCw size={12} strokeWidth={1} className={loading ? 'animate-spin' : ''} />
           Aktualisieren
         </button>
       </div>
 
       {/* Stats row */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-5 mb-10">
         {[
           { label: 'Gesamt', value: tickets.length },
           { label: 'Offen', value: statusCounts.open || 0 },
           { label: 'In Bearbeitung', value: statusCounts.in_progress || 0 },
-          { label: 'Gelöst', value: statusCounts.resolved || 0 },
+          { label: 'Gel\u00f6st', value: statusCounts.resolved || 0 },
         ].map(stat => (
-          <div key={stat.label} className="flex-1 bg-white border border-black/6 px-4 py-3">
-            <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1">{stat.label}</p>
-            <p className="text-lg font-bold text-black/85">{stat.value}</p>
+          <div key={stat.label} className="flex-1 bg-white p-6">
+            <p className="text-[9px] text-black/25 uppercase tracking-[0.2em] font-light mb-2">{stat.label}</p>
+            <p className="text-[26px] font-extralight text-black/80">{stat.value}</p>
           </div>
         ))}
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex gap-1.5 flex-wrap mb-3">
+      <div className="flex gap-1 flex-wrap mb-3">
         {STATUS_FILTERS.map(f => (
           <button
             key={f.key}
             onClick={() => setStatusFilter(f.key)}
-            className={`text-xs font-medium px-3 py-1.5 border-0 transition-all ${
+            className={`px-3.5 py-1.5 text-[10px] border-0 tracking-wider font-light transition-all ${
               statusFilter === f.key
                 ? 'bg-black text-white'
-                : 'bg-black/5 text-black/45 hover:bg-black/10 hover:text-black/90'
+                : 'text-black/25 hover:text-black/50 bg-transparent'
             }`}
           >
             {f.label}
@@ -342,15 +338,15 @@ export default function FeedbackPanel() {
       </div>
 
       {/* Type filter tabs */}
-      <div className="flex gap-1.5 flex-wrap mb-5">
+      <div className="flex gap-1 flex-wrap mb-8">
         {TYPE_FILTERS.map(f => (
           <button
             key={f.key}
             onClick={() => setTypeFilter(f.key)}
-            className={`text-xs font-medium px-3 py-1.5 border-0 transition-all ${
+            className={`px-3.5 py-1.5 text-[10px] border-0 tracking-wider font-light transition-all ${
               typeFilter === f.key
                 ? 'bg-black text-white'
-                : 'bg-black/5 text-black/45 hover:bg-black/10 hover:text-black/90'
+                : 'text-black/25 hover:text-black/50 bg-transparent'
             }`}
           >
             {f.label}
@@ -362,16 +358,16 @@ export default function FeedbackPanel() {
 
       {/* List */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 border-2 border-black/15 border-t-black animate-spin" />
+        <div className="flex items-center justify-center py-24">
+          <div className="w-5 h-5 border border-black/10 border-t-black/40 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <MessageSquare size={32} strokeWidth={1.5} className="text-black/20 mb-3" />
-          <p className="text-sm text-black/45">Keine Tickets gefunden</p>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <MessageSquare size={28} strokeWidth={1} className="text-black/15 mb-4" />
+          <p className="text-[13px] text-black/30 font-light">Keine Tickets gefunden</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="bg-white">
           {filtered.map(ticket => (
             <TicketCard
               key={ticket.id}

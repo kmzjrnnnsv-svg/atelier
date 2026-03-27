@@ -63,70 +63,73 @@ export default function HomepageEditor() {
   }
 
   return (
-    <div className="p-6 max-w-2xl">
-      <h2 className="text-lg font-semibold mb-1">Homepage-Sektionen</h2>
-      <p className="text-sm text-black/40 mb-6">Bilder und Texte der Sektionen auf der „Für dich"-Seite anpassen.</p>
+    <div className="px-10 py-10 lg:px-14 lg:py-12 max-w-3xl">
+      <div className="mb-10">
+        <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Inhalte</p>
+        <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Homepage-Sektionen</h1>
+        <p className="text-[13px] text-black/30 mt-2 font-light">Bilder und Texte der Sektionen auf der „Für dich"-Seite anpassen.</p>
+      </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {sections.map(section => (
-          <div key={section.key} className="border border-black/[0.08] bg-white p-5">
-            <p className="text-xs font-medium uppercase tracking-wider text-black/50 mb-4">
+          <div key={section.key} className="bg-white p-7">
+            <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">
               {SECTION_LABELS[section.key] || section.key}
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="text-[10px] text-black/40 uppercase tracking-wider block mb-1">Bild-URL</label>
+                <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Bild-URL</label>
                 <input
                   value={section.image}
                   onChange={e => update(section.key, 'image', e.target.value)}
-                  className="w-full h-9 px-3 border border-black/10 text-xs bg-white outline-none focus:border-black/30"
+                  className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
                   placeholder="https://images.unsplash.com/..."
                 />
                 {section.image && (
-                  <div className="mt-2 w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: '16 / 5', maxHeight: 120 }}>
+                  <div className="mt-3 w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: '16 / 5', maxHeight: 120 }}>
                     <img src={section.image} alt="" className="w-full h-full object-cover" onError={e => e.target.style.display = 'none'} />
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-5">
                 <div className="flex-1">
-                  <label className="text-[10px] text-black/40 uppercase tracking-wider block mb-1">Label (Kleintext)</label>
+                  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Label (Kleintext)</label>
                   <input
                     value={section.label}
                     onChange={e => update(section.key, 'label', e.target.value)}
-                    className="w-full h-9 px-3 border border-black/10 text-xs bg-white outline-none focus:border-black/30"
+                    className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
                     placeholder="Herren"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-black/40 uppercase tracking-wider block mb-1">Titel</label>
+                  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Titel</label>
                   <input
                     value={section.title}
                     onChange={e => update(section.key, 'title', e.target.value)}
-                    className="w-full h-9 px-3 border border-black/10 text-xs bg-white outline-none focus:border-black/30"
+                    className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
                     placeholder="Empfohlen für Sie"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-5">
                 <div className="flex-1">
-                  <label className="text-[10px] text-black/40 uppercase tracking-wider block mb-1">Button-Text</label>
+                  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Button-Text</label>
                   <input
                     value={section.button}
                     onChange={e => update(section.key, 'button', e.target.value)}
-                    className="w-full h-9 px-3 border border-black/10 text-xs bg-white outline-none focus:border-black/30"
+                    className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
                     placeholder="Entdecken"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-black/40 uppercase tracking-wider block mb-1">Link / Pfad</label>
+                  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Link / Pfad</label>
                   <input
                     value={section.link}
                     onChange={e => update(section.key, 'link', e.target.value)}
-                    className="w-full h-9 px-3 border border-black/10 text-xs bg-white outline-none focus:border-black/30"
+                    className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
                     placeholder="/collection"
                   />
                 </div>
@@ -139,9 +142,9 @@ export default function HomepageEditor() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="mt-6 px-6 h-10 bg-black text-white text-xs border-0 disabled:opacity-30 uppercase tracking-wider"
+        className="mt-8 px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 disabled:opacity-30 uppercase tracking-[0.2em] font-light"
       >
-        {saving ? 'Speichern...' : saved ? 'Gespeichert!' : 'Speichern'}
+        {saving ? 'Speichern...' : saved ? 'Gespeichert' : 'Speichern'}
       </button>
     </div>
   )

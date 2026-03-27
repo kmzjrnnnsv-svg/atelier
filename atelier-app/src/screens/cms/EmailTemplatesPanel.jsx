@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Mail, Save, CheckCircle2, AlertCircle, Loader, Info, ChevronDown, ChevronUp, ShoppingBag } from 'lucide-react'
+import { Save, CheckCircle2, AlertCircle, Info, ChevronDown, ChevronUp, ShoppingBag } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 
 const TEMPLATE_TYPES = [
- { type: 'order_confirmation', label: 'Bestellbestätigung', color: 'text-black/40', bg: 'bg-black/5' },
- { type: 'payment', label: 'Zahlungsanweisung', color: 'text-black/40', bg: 'bg-black/5' },
- { type: 'order_confirmed', label: 'Zahlung bestätigt', color: 'text-black/40', bg: 'bg-black/5' },
- { type: 'shipping', label: 'Versandbestätigung', color: 'text-black/40', bg: 'bg-black/5' },
- { type: 'manufacturer', label: 'Hersteller-Benachrichtigung', color: 'text-black/40', bg: 'bg-black/5' },
+ { type: 'order_confirmation', label: 'Bestellbestätigung' },
+ { type: 'payment', label: 'Zahlungsanweisung' },
+ { type: 'order_confirmed', label: 'Zahlung bestätigt' },
+ { type: 'shipping', label: 'Versandbestätigung' },
+ { type: 'manufacturer', label: 'Hersteller-Benachrichtigung' },
 ]
 
 const VARIABLES = [
@@ -28,12 +28,12 @@ const VARIABLES = [
 ]
 
 const STATUS_LABELS = {
- pending_payment: { label: 'Zahlung ausstehend', color: 'text-black/40', bg: 'bg-black/5' },
- pending: { label: 'Ausstehend', color: 'text-black/40', bg: 'bg-black/5' },
- processing: { label: 'In Fertigung', color: 'text-black/40', bg: 'bg-black/5' },
- shipped: { label: 'Versandt', color: 'text-black/40', bg: 'bg-black/5' },
- delivered: { label: 'Geliefert', color: 'text-black/40',bg: 'bg-black/5'},
- cancelled: { label: 'Storniert', color: 'text-black/40', bg: 'bg-black/5' },
+ pending_payment: { label: 'Zahlung ausstehend' },
+ pending: { label: 'Ausstehend' },
+ processing: { label: 'In Fertigung' },
+ shipped: { label: 'Versandt' },
+ delivered: { label: 'Geliefert' },
+ cancelled: { label: 'Storniert' },
 }
 
 export default function EmailTemplatesPanel() {
@@ -100,40 +100,37 @@ export default function EmailTemplatesPanel() {
  setForm(prev => ({ ...prev, body: prev.body + varKey }))
  }
 
- const inp = 'w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20 transition-colors'
- const area = inp + ' resize-none leading-relaxed'
  const activeTpl = TEMPLATE_TYPES.find(t => t.type === activeType)
 
  if (loading) {
  return (
- <div className="p-8 flex items-center gap-3 text-black/45">
- <Loader size={16} className="animate-spin" /> Laden…
+ <div className="px-10 py-10 lg:px-14 lg:py-12 flex items-center gap-3">
+ <p className="text-[13px] text-black/30 font-light opacity-50">Laden...</p>
  </div>
  )
  }
 
  return (
- <div className="p-8">
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
  {/* Header */}
- <div className="flex items-center gap-3 mb-2">
- <Mail size={18} className="text-black/35" />
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>E-Mail Vorlagen</h1>
- </div>
- <p className="text-sm text-black/35 mb-8 ml-7 leading-relaxed">
- Bearbeiten Sie die Texte aller automatischen Kunden-E-Mails. Änderungen sind sofort aktiv —
- kein Neustart erforderlich. Verwenden Sie <code className="bg-black/5 px-1 text-xs text-black/55">{'{{variable}}'}</code> für dynamische Inhalte.
+ <div className="mb-10">
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Kommunikation</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">E-Mail Vorlagen</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">
+ Bearbeiten Sie die Texte aller automatischen Kunden-E-Mails. Verwenden Sie <code className="text-[11px] text-black/40 font-light">{'{{variable}}'}</code> für dynamische Inhalte.
  </p>
+ </div>
 
  {/* Template type tabs */}
- <div className="flex flex-wrap gap-2 mb-6">
- {TEMPLATE_TYPES.map(({ type, label, color, bg }) => (
+ <div className="flex flex-wrap gap-6 mb-8 border-b border-black/[0.04] pb-0">
+ {TEMPLATE_TYPES.map(({ type, label }) => (
  <button
  key={type}
  onClick={() => selectType(type)}
- className={`px-3 py-1.5 text-xs font-medium transition-all border-0 ${
+ className={`bg-transparent border-0 cursor-pointer transition-colors ${
  activeType === type
- ? `${bg} ${color}`
- : 'bg-[#f6f5f3] text-black/35 hover:text-black/65 hover:bg-black/5'
+ ? 'border-b border-black text-black/70 text-[11px] pb-2 font-light'
+ : 'text-[11px] text-black/25 hover:text-black/50 pb-2 font-light'
  }`}
  >
  {label}
@@ -142,37 +139,37 @@ export default function EmailTemplatesPanel() {
  </div>
 
  {/* Editor card */}
- <div className="border border-black/6 p-6 mb-6">
+ <div className="bg-white p-7 mb-6">
  <div className="flex items-center justify-between mb-5">
  <div>
- <h2 className="text-sm font-semibold text-black/80">{activeTpl?.label}</h2>
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light">{activeTpl?.label}</p>
  {templates[activeType]?.updated_at && (
- <p className="text-xs text-black/35 mt-0.5">
+ <p className="text-[10px] text-black/25 mt-1 font-light">
  Zuletzt geändert: {new Date(templates[activeType].updated_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
  </p>
  )}
  </div>
  <button
  onClick={() => setShowVars(v => !v)}
- className="flex items-center gap-1.5 text-xs text-black/35 hover:text-black/65 transition-colors bg-transparent border-0 px-2 py-1"
+ className="flex items-center gap-1.5 text-[11px] text-black/25 hover:text-black/50 transition-colors bg-transparent border-0 px-2 py-1 font-light"
  >
- <Info size={12} />
+ <Info size={12} strokeWidth={1.25} />
  Variablen
- {showVars ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+ {showVars ? <ChevronUp size={12} strokeWidth={1.25} /> : <ChevronDown size={12} strokeWidth={1.25} />}
  </button>
  </div>
 
  {/* Variables reference */}
  {showVars && (
- <div className="mb-5 bg-[#f6f5f3] p-4">
- <p className="text-xs font-medium text-black/45 mb-3">Verfügbare Variablen — klicken zum Einfügen in Body:</p>
+ <div className="mb-5 py-4 border-b border-black/[0.04]">
+ <p className="text-[10px] text-black/25 font-light mb-3">Verfügbare Variablen — klicken zum Einfügen in Body:</p>
  <div className="flex flex-wrap gap-2">
  {VARIABLES.map(({ key, desc }) => (
  <button
  key={key}
  onClick={() => insertVar(key)}
  title={desc}
- className="font-mono text-[10px] bg-white border border-black/10 text-black/55 hover:text-black/90 hover:border-black/20 px-2 py-1 transition-colors"
+ className="font-mono text-[10px] border border-black/[0.08] text-black/40 hover:text-black/70 hover:border-black/20 px-2 py-1 transition-colors bg-transparent"
  >
  {key}
  </button>
@@ -183,25 +180,23 @@ export default function EmailTemplatesPanel() {
 
  {/* Status message */}
  {msg && (
- <div className={`flex items-start gap-2 px-4 py-3 mb-5 ${
- msg.type === 'ok' ? 'bg-black/5 border border-black/10' : 'bg-black/5 border border-black/10'
- }`}>
+ <div className="flex items-start gap-2 mb-5">
  {msg.type === 'ok'
- ? <CheckCircle2 size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
- : <AlertCircle size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
+ ? <CheckCircle2 size={12} strokeWidth={1.25} className="text-black/25 flex-shrink-0 mt-0.5" />
+ : <AlertCircle size={12} strokeWidth={1.25} className="text-black/25 flex-shrink-0 mt-0.5" />
  }
- <p className={`text-xs leading-relaxed ${msg.type === 'ok' ? 'text-black/50' : 'text-black/40'}`}>
+ <p className="text-[10px] text-black/25 font-light">
  {msg.text}
  </p>
  </div>
  )}
 
- <div className="space-y-4">
+ <div className="space-y-5">
  {/* Subject */}
  <div>
- <label className="text-xs font-medium text-black/35 block mb-1.5">Betreff (Subject)</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Betreff (Subject)</label>
  <input
- className={inp}
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  value={form.subject}
  onChange={e => setForm(prev => ({ ...prev, subject: e.target.value }))}
  placeholder="E-Mail Betreff..."
@@ -210,28 +205,28 @@ export default function EmailTemplatesPanel() {
 
  {/* Intro */}
  <div>
- <label className="text-xs font-medium text-black/35 block mb-1.5">Einleitungstext (Intro)</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Einleitungstext (Intro)</label>
  <textarea
- className={area}
+ className="w-full px-4 py-3 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 resize-y"
  rows={3}
  value={form.intro}
  onChange={e => setForm(prev => ({ ...prev, intro: e.target.value }))}
  placeholder="Eröffnungstext der E-Mail..."
  />
- <p className="text-[9px] text-black/35 mt-1">Wird als erste Zeile direkt nach dem Header angezeigt.</p>
+ <p className="text-[10px] text-black/25 font-light mt-1">Wird als erste Zeile direkt nach dem Header angezeigt.</p>
  </div>
 
  {/* Body */}
  <div>
- <label className="text-xs font-medium text-black/35 block mb-1.5">Abschlusstext (Body)</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Abschlusstext (Body)</label>
  <textarea
- className={area}
+ className="w-full px-4 py-3 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 resize-y"
  rows={4}
  value={form.body}
  onChange={e => setForm(prev => ({ ...prev, body: e.target.value }))}
  placeholder="Abschluss und zusätzliche Hinweise..."
  />
- <p className="text-[9px] text-black/35 mt-1">Wird als letzter Absatz vor dem Footer angezeigt. Neue Zeile = Zeilenumbruch in der E-Mail.</p>
+ <p className="text-[10px] text-black/25 font-light mt-1">Wird als letzter Absatz vor dem Footer angezeigt. Neue Zeile = Zeilenumbruch in der E-Mail.</p>
  </div>
 
  {/* Save */}
@@ -239,71 +234,70 @@ export default function EmailTemplatesPanel() {
  <button
  onClick={handleSave}
  disabled={saving}
- className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2.5 border-0 transition-colors disabled:opacity-50"
+ className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light disabled:opacity-30"
  >
- {saving ? <Loader size={14} className="animate-spin" /> : <Save size={14} />}
- Vorlage speichern
+ {saving ? 'Speichern...' : 'Vorlage speichern'}
  </button>
  </div>
  </div>
  </div>
 
  {/* Orders reference section */}
- <div className="border border-black/6 overflow-hidden">
+ <div className="bg-white overflow-hidden">
  <button
  onClick={() => setShowOrders(v => !v)}
- className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-black/5 transition-colors border-0 text-left"
+ className="w-full flex items-center justify-between px-6 py-4 bg-transparent hover:bg-black/[0.01] transition-colors border-0 text-left border-b border-black/[0.04]"
  >
  <div className="flex items-center gap-2.5">
- <ShoppingBag size={14} className="text-black/35" />
- <span className="text-sm font-medium text-black/65">Bestellungen — Referenz</span>
- <span className="text-xs text-black/35">({orders.length} neueste)</span>
+ <ShoppingBag size={12} strokeWidth={1.25} className="text-black/25" />
+ <span className="text-[11px] text-black/50 font-light">Bestellungen — Referenz</span>
+ <span className="text-[10px] text-black/25 font-light">({orders.length} neueste)</span>
  </div>
- {showOrders ? <ChevronUp size={14} className="text-black/35" /> : <ChevronDown size={14} className="text-black/35" />}
+ {showOrders ? <ChevronUp size={12} strokeWidth={1.25} className="text-black/25" /> : <ChevronDown size={12} strokeWidth={1.25} className="text-black/25" />}
  </button>
 
  {showOrders && (
- <div className="border-t border-black/6">
+ <div>
  {ordersLoading ? (
- <div className="p-6 flex items-center gap-3 text-black/35">
- <Loader size={14} className="animate-spin" /> Laden…
+ <div className="px-6 py-6 flex items-center gap-3">
+ <p className="text-[13px] text-black/30 font-light opacity-50">Laden...</p>
  </div>
  ) : orders.length === 0 ? (
- <div className="p-6 text-center text-sm text-black/35">Noch keine Bestellungen vorhanden.</div>
+ <div className="px-6 py-6 text-center text-[13px] text-black/30 font-light">Noch keine Bestellungen vorhanden.</div>
  ) : (
  <div className="overflow-x-auto">
- <table className="w-full text-xs">
+ <table className="w-full text-[13px]">
  <thead>
- <tr className="border-b border-black/6">
- <th className="text-left px-5 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">#</th>
- <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">Kunde</th>
- <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">Schuh</th>
- <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">Preis</th>
- <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">Status</th>
- <th className="text-left px-4 py-3 text-[10px] uppercase tracking-wider text-black/35 font-medium">Datum</th>
+ <tr className="border-b border-black/[0.04]">
+ <th className="text-left px-6 py-4 text-[9px] text-black/20 uppercase tracking-[0.25em] font-light">#</th>
+ <th className="text-left px-6 py-4 text-[9px] text-black/20 uppercase tracking-[0.25em] font-light">Kunde</th>
+ <th className="text-left px-6 py-4 text-[9px] text-black/20 uppercase tracking-[0.25em] font-light">Schuh</th>
+ <th className="text-left px-6 py-4 text-[9px] text-black/20 uppercase tracking-[0.25em] font-light">Preis</th>
+ <th className="text-left px-6 py-4 text-[9px] text-black/20 uppercase tracking-[0.25em] font-light">Status</th>
+ <th className="text-left px-6 py-4 text-[9px] text-black/20 uppercase tracking-[0.25em] font-light">Datum</th>
  </tr>
  </thead>
  <tbody>
  {orders.map(order => {
- const st = STATUS_LABELS[order.status] || { label: order.status, color: 'text-black/45', bg: 'bg-[#f6f5f3]' }
+ const st = STATUS_LABELS[order.status] || { label: order.status }
  return (
- <tr key={order.id} className="border-b border-black/5 hover:bg-black/5/50 transition-colors">
- <td className="px-5 py-3 font-mono text-black/45">#{order.id}</td>
- <td className="px-4 py-3">
- <p className="text-black/80 font-medium">{order.user_name}</p>
- <p className="text-black/35">{order.user_email}</p>
+ <tr key={order.id} className="border-b border-black/[0.04] hover:bg-black/[0.01] transition-colors">
+ <td className="px-6 py-4 font-mono text-black/30 text-[11px]">#{order.id}</td>
+ <td className="px-6 py-4">
+ <p className="text-[13px] font-light text-black/70">{order.user_name}</p>
+ <p className="text-[11px] text-black/25 font-light">{order.user_email}</p>
  </td>
- <td className="px-4 py-3">
- <p className="text-black/65">{order.shoe_name}</p>
- <p className="text-black/35">{order.material} · {order.color}</p>
+ <td className="px-6 py-4">
+ <p className="text-[13px] font-light text-black/70">{order.shoe_name}</p>
+ <p className="text-[11px] text-black/25 font-light">{order.material} · {order.color}</p>
  </td>
- <td className="px-4 py-3 text-black/65 font-medium">{order.price}</td>
- <td className="px-4 py-3">
- <span className={`text-[10px] font-medium px-2 py-0.5 ${st.bg} ${st.color}`}>
+ <td className="px-6 py-4 text-[13px] font-light text-black/70">{order.price}</td>
+ <td className="px-6 py-4">
+ <span className="text-[9px] text-black/30 uppercase tracking-[0.15em] font-light">
  {st.label}
  </span>
  </td>
- <td className="px-4 py-3 text-black/35">
+ <td className="px-6 py-4 text-[11px] text-black/25 font-light">
  {new Date(order.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
  </td>
  </tr>

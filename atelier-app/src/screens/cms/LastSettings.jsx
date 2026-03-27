@@ -84,36 +84,32 @@ export default function LastSettings() {
 
  if (loading) {
  return (
- <div className="flex items-center justify-center h-64 text-black/35 gap-2">
- <RefreshCw size={16} className="animate-spin" /> Lade Schuhtypen...
+ <div className="flex items-center justify-center h-64 text-black/25 gap-2 font-light text-[13px]">
+ <div className="w-5 h-5 border border-black/10 border-t-black/40 animate-spin rounded-full" /> Lade Schuhtypen...
  </div>
  )
  }
 
  return (
- <div className="p-8">
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
  {/* Header */}
- <div className="flex items-center gap-3 mb-6">
- <div className="w-9 h-9 bg-black/5 flex items-center justify-center">
- <Footprints size={18} className="text-black/35" />
- </div>
- <div>
- <h2 className="text-lg font-bold text-black/80" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Leisten-Parameter</h2>
- <p className="text-xs text-black/35">Zugabe-Werte je Schuhtyp für die Leistenberechnung</p>
- </div>
+ <div className="mb-10">
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Produkte</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Leisten-Parameter</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">Zugabe-Werte je Schuhtyp für die Leistenberechnung</p>
  </div>
 
  {/* Toast */}
  {toast && (
- <div className={`mb-4 px-4 py-2.5 text-sm font-medium ${
- toast.type === 'ok' ? 'bg-black/5 text-black/50' : 'bg-black/5 text-black/40'
+ <div className={`mb-6 px-5 py-3 text-[12px] font-light bg-white ${
+ toast.type === 'ok' ? 'text-black/50' : 'text-black/40'
  }`}>
  {toast.msg}
  </div>
  )}
 
  {/* Shoe type cards */}
- <div className="space-y-4">
+ <div className="space-y-6">
  {types.map(t => {
  const vals = editValues[t.shoe_type] ?? t
  const isSaving = saving === t.shoe_type
@@ -122,39 +118,38 @@ export default function LastSettings() {
  )
 
  return (
- <div key={t.shoe_type}
- className="bg-white border border-black/6 overflow-hidden">
+ <div key={t.shoe_type} className="bg-white overflow-hidden">
 
  {/* Card header */}
- <div className="flex items-center justify-between px-5 py-3 border-b border-black/5">
+ <div className="flex items-center justify-between px-7 py-5 border-b border-black/[0.04]">
  <div>
- <h3 className="text-sm font-semibold text-black/80">{t.name}</h3>
- <span className="text-[10px] text-black/35 font-mono">{t.shoe_type}</span>
+ <h3 className="text-[15px] font-light text-black/75">{t.name}</h3>
+ <span className="text-[10px] text-black/25 font-light font-mono">{t.shoe_type}</span>
  </div>
  <button
  onClick={() => handleSave(t.shoe_type)}
  disabled={isSaving || !hasChanges}
- className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold border transition-colors ${
+ className={`flex items-center gap-2 px-6 h-9 text-[10px] transition-all uppercase tracking-[0.2em] font-light ${
  hasChanges
- ? 'bg-black text-white border-black hover:bg-black'
- : 'bg-black/5 text-black/20 border-black/6 cursor-not-allowed'
+ ? 'border border-black text-black hover:bg-black hover:text-white'
+ : 'border border-black/[0.06] text-black/15 cursor-not-allowed'
  }`}
  >
  {isSaving
- ? <><RefreshCw size={12} className="animate-spin" /> Speichern...</>
- : <><Save size={12} /> Speichern</>
+ ? <><RefreshCw size={11} className="animate-spin" strokeWidth={1.25} /> Speichern...</>
+ : <><Save size={11} strokeWidth={1.25} /> Speichern</>
  }
  </button>
  </div>
 
  {/* Parameter grid */}
- <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-4">
+ <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 p-7">
  {PARAM_FIELDS.map(({ key, label, unit, desc }) => (
  <div key={key}>
- <label className="block text-[10px] font-medium text-black/35 mb-1" title={desc}>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light" title={desc}>
  {label}
  </label>
- <div className="flex items-center gap-1">
+ <div className="flex items-center gap-1.5">
  <input
  type="number"
  step="0.1"
@@ -162,11 +157,11 @@ export default function LastSettings() {
  max="100"
  value={vals[key] ?? 0}
  onChange={e => setField(t.shoe_type, key, e.target.value)}
- className="w-full bg-white border border-black/10 px-2.5 py-1.5 text-sm text-black/90 text-right focus:outline-none focus:border-black/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+ className="w-full h-9 px-3 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
  />
- <span className="text-[10px] text-black/35 w-6">{unit}</span>
+ <span className="text-[10px] text-black/25 font-light w-6">{unit}</span>
  </div>
- <p className="text-[9px] text-black/20 mt-0.5">{desc}</p>
+ <p className="text-[9px] text-black/15 mt-1 font-light">{desc}</p>
  </div>
  ))}
  </div>
