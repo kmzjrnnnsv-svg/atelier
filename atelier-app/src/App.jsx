@@ -20,6 +20,14 @@ function ScrollToTop() {
   return null
 }
 
+// Page transition wrapper — re-triggers fade-in animation on route change
+function PageTransition({ children }) {
+  const { pathname } = useLocation()
+  const [key, setKey] = useState(pathname)
+  useEffect(() => { setKey(pathname) }, [pathname])
+  return <div key={key} className="page-transition">{children}</div>
+}
+
 // Eager: needed immediately on first paint
 import Login from './screens/Login'
 import Registration from './screens/Registration'
@@ -225,6 +233,7 @@ function AppRoutes() {
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex-1 overflow-y-auto relative">
           <Suspense fallback={<DelayedSpinner />}>
+            <PageTransition>
             <Routes>
               <Route path="/"           element={<Navigate to="/foryou" replace />} />
               <Route path="/login"      element={<Login />} />
@@ -253,6 +262,7 @@ function AppRoutes() {
 
               <Route path="*"            element={<NotFound />} />
             </Routes>
+            </PageTransition>
           </Suspense>
         </div>
         {showNav && <BottomNav />}
@@ -294,7 +304,7 @@ function AppRoutes() {
     return (
       <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
         {showNav && <TopBar />}
-        <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
         {showFooter && <Footer />}
       </div>
     )
@@ -306,7 +316,7 @@ function AppRoutes() {
       {showNav && <TopBar />}
       <div className="flex-1 overflow-y-auto relative">
         <div className="w-full">
-          <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+          <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
           {showFooter && <Footer />}
         </div>
       </div>
