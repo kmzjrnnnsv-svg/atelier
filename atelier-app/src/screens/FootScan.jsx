@@ -1,7 +1,7 @@
 // @refresh reset
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, CheckCircle2, Download, AlertCircle, CloudUpload, ChevronRight, Scan } from 'lucide-react'
+import { X, CheckCircle2, Download, AlertCircle, CloudUpload, ChevronRight, Scan, ArrowLeft } from 'lucide-react'
 import * as THREE from 'three'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -2055,21 +2055,17 @@ export default function FootScan() {
       {['start', 'processing', 'pg-processing', 'result'].includes(phase) && (
         <div className="absolute inset-0 flex flex-col bg-white overflow-hidden">
 
-          {/* Shared header */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-4 flex-shrink-0">
+          {/* Shared header — LV style */}
+          <div className="px-5 lg:px-16 pt-4 pb-2 flex items-center gap-3 flex-shrink-0">
             <button onClick={() => { stopCam(); navigate(-1) }}
-              className="bg-transparent border-0 p-0">
-              <X size={20} className="text-black" strokeWidth={1.5} />
+              className="w-8 h-8 bg-transparent flex items-center justify-center border-0 active:opacity-60 flex-shrink-0">
+              <ArrowLeft size={16} strokeWidth={1.5} className="text-black" />
             </button>
-            <div className="text-center">
-              <p className="text-[8px] uppercase tracking-widest text-black/30" style={{ letterSpacing: '0.2em' }}>3D Scan</p>
-              <span className="text-[13px] font-bold text-black" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                {phase === 'start' ? 'Fußscan' :
-                 phase === 'processing' || phase === 'pg-processing' ? 'Auswertung' :
-                 'Ergebnis'}
-              </span>
-            </div>
-            <div className="w-5" />
+            <span className="text-[15px] font-light text-black tracking-tight">
+              {phase === 'start' ? 'Fußscan' :
+               phase === 'processing' || phase === 'pg-processing' ? 'Auswertung' :
+               'Ergebnis'}
+            </span>
           </div>
 
           {/* ── START ── */}
@@ -2078,159 +2074,82 @@ export default function FootScan() {
               {/* Detecting device state */}
               {!deviceDetected && (
                 <div className="flex-1 flex flex-col items-center justify-center px-8 py-20 gap-5">
-                  <div className="w-14 h-14 bg-black flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-white/20 border-t-white animate-spin" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[12px] font-bold text-black uppercase tracking-widest mb-1" style={{ letterSpacing: '0.1em' }}>Gerät wird erkannt</p>
-                    <p className="text-[10px] text-black/40">Kamera und Sensoren werden geprüft…</p>
-                  </div>
+                  <div className="w-8 h-8 border-2 border-black/10 border-t-black rounded-full animate-spin-custom" />
+                  <p className="text-[12px] text-black/40 font-light">Gerät wird erkannt…</p>
                 </div>
               )}
 
-              {/* Device detected — show appropriate mode selection */}
+              {/* Device detected — show scan options */}
               {deviceDetected && (
                 <>
-                  {/* Hero header bar */}
-                  <div className="flex items-center gap-3 px-5 py-4" style={{ background: '#0f172a' }}>
-                    <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(45,212,191,0.15)' }}>
-                      <Scan size={17} className="text-teal-400" strokeWidth={1.5} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[8px] text-teal-400" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Vermessung</p>
-                      <p className="text-[13px] text-white leading-tight mt-0.5">3D Fußvermessung</p>
-                    </div>
-                    <div className="flex items-center gap-1 px-2.5 py-1 bg-white/10">
-                      <span className="text-[7px] text-white/60 uppercase" style={{ letterSpacing: '0.12em' }}>
-                        {deviceInfo?.model ?? 'Gerät'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Device capability summary */}
-                  <div className="px-5 pt-3 pb-4 border-b border-black/5">
-                    <p className="text-[10px] text-black/45 leading-relaxed">
+                  {/* Hero */}
+                  <div className="px-5 pt-6 pb-8">
+                    <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3 font-light">Atelier</p>
+                    <h1 className="text-[28px] font-extralight text-black tracking-tight leading-tight">3D Fußvermessung</h1>
+                    <p className="text-[12px] text-black/40 font-light mt-3 leading-relaxed max-w-[300px]">
                       {lidarAvail
-                        ? 'Dein Gerät hat einen präzisen 3D-Sensor — wir empfehlen den schnellen Scan.'
-                        : 'Wähle eine Methode, um deine Füße zu vermessen:'}
+                        ? 'Dein Gerät verfügt über einen präzisen LiDAR-Sensor für millimetergenaue Vermessung.'
+                        : 'Wähle eine Methode, um deine Füße für den perfekten Schuh zu vermessen.'}
                     </p>
+                    {deviceInfo?.model && (
+                      <p className="text-[10px] text-black/20 font-light mt-2">{deviceInfo.model}{lidarAvail ? ' · LiDAR' : ''}</p>
+                    )}
                   </div>
 
                   {lidarAvail ? (
-                    <>
-                      {/* LiDAR available — primary action */}
-                      <div className="px-5 pt-5 pb-3">
-                        <p className="text-[9px] text-black/30 uppercase tracking-widest mb-3" style={{ letterSpacing: '0.15em' }}>Empfohlen</p>
-                        <button onClick={() => { setLidarData({ right: null, left: null }); setLidarError(null); setPhase('lidar-right') }}
-                          className="w-full py-5 bg-black text-white font-bold text-[13px] border-0 flex flex-col items-center gap-2 active:opacity-80">
-                          <Scan size={20} className="text-[#30D158]" strokeWidth={1.5} />
-                          <span className="uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Schneller 3D-Scan</span>
-                          <span className="text-[10px] text-white/40 font-normal normal-case tracking-normal">
-                            20 Sek. pro Fuß · Sprachführung leitet dich Schritt für Schritt
-                          </span>
-                        </button>
-                      </div>
-                      <div className="px-5 pb-3">
-                        <p className="text-[9px] text-black/30 uppercase tracking-widest mb-3" style={{ letterSpacing: '0.15em' }}>Alternativ</p>
-                        <div className="space-y-2">
-                          <button onClick={() => setPhase('right-top')}
-                            className="w-full py-3.5 bg-black/[0.02] text-black/60 font-semibold text-[11px] border-0">
-                            Foto-Scan (6 Bilder · mit A4-Papier)
-                          </button>
-                          <button onClick={() => { setPgMode(true); setPgStep(0); setPgImgs({ right: [], left: [] }); setPhase('pg-0') }}
-                            className="w-full py-3.5 bg-black/[0.02] text-black/60 font-semibold text-[11px] border-0">
-                            Rundum-Scan (16 Bilder · alle Seiten)
-                          </button>
-                        </div>
-                      </div>
-                    </>
+                    <div className="px-5 space-y-3">
+                      {/* Primary: LiDAR scan */}
+                      <button onClick={() => { setLidarData({ right: null, left: null }); setLidarError(null); setPhase('lidar-right') }}
+                        className="w-full py-5 bg-black text-white border border-black text-left px-6 active:opacity-80 hover:bg-white hover:text-black transition-all duration-300">
+                        <p className="text-[11px] font-light uppercase" style={{ letterSpacing: '0.15em' }}>Schneller 3D-Scan</p>
+                        <p className="text-[10px] opacity-40 font-light mt-1">20 Sek. pro Fuß · Sprachführung</p>
+                      </button>
+
+                      <p className="text-[9px] text-black/25 uppercase tracking-[0.2em] font-light pt-3">Alternativ</p>
+
+                      <button onClick={() => setPhase('right-top')}
+                        className="w-full py-4 bg-white text-black border border-black/[0.06] text-left px-6 active:opacity-80 hover:border-black/20 transition-all">
+                        <p className="text-[11px] font-light">Foto-Scan</p>
+                        <p className="text-[10px] text-black/30 font-light mt-0.5">6 Bilder · mit A4-Papier</p>
+                      </button>
+
+                      <button onClick={() => { setPgMode(true); setPgStep(0); setPgImgs({ right: [], left: [] }); setPhase('pg-0') }}
+                        className="w-full py-4 bg-white text-black border border-black/[0.06] text-left px-6 active:opacity-80 hover:border-black/20 transition-all">
+                        <p className="text-[11px] font-light">Rundum-Scan</p>
+                        <p className="text-[10px] text-black/30 font-light mt-0.5">16 Bilder · alle Seiten</p>
+                      </button>
+                    </div>
                   ) : (
-                    <>
-                      {/* No LiDAR — show two camera methods side by side */}
-                      <div className="px-5 pt-5 pb-3">
-                        <p className="text-[9px] text-black/30 uppercase tracking-widest mb-3" style={{ letterSpacing: '0.15em' }}>Scan-Methode wählen</p>
+                    <div className="px-5 space-y-3">
+                      <p className="text-[9px] text-black/25 uppercase tracking-[0.2em] font-light">Scan-Methode</p>
 
-                        {/* Foto-Scan card */}
-                        <button onClick={() => setPhase('right-top')}
-                          className="w-full mb-3 p-4 bg-black text-white text-left border-0 active:opacity-80">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 bg-white/10 flex items-center justify-center flex-shrink-0">
-                              <Scan size={18} className="text-teal-400" strokeWidth={1.5} />
-                            </div>
-                            <div>
-                              <p className="text-[12px] font-bold uppercase tracking-widest" style={{ letterSpacing: '0.1em' }}>Foto-Scan</p>
-                              <p className="text-[9px] text-white/40 mt-0.5">6 Fotos · mit A4-Papier · ca. 2 Min.</p>
-                            </div>
-                            <ChevronRight size={16} className="text-white/30 ml-auto" />
-                          </div>
-                          <div className="space-y-1.5 pl-1">
-                            {[
-                              'Oben, innen und außen je Fuß fotografieren',
-                              'Ein A4-Blatt danebenlegen als Größenvergleich',
-                              'Gute Genauigkeit für die Schuhgrößen-Bestimmung',
-                            ].map(t => (
-                              <p key={t} className="text-[9px] text-white/35 flex items-center gap-2">
-                                <span className="w-1 h-1 bg-teal-400/50 flex-shrink-0" />
-                                {t}
-                              </p>
-                            ))}
-                          </div>
-                        </button>
+                      {/* Foto-Scan */}
+                      <button onClick={() => setPhase('right-top')}
+                        className="w-full py-5 bg-black text-white border border-black text-left px-6 active:opacity-80 hover:bg-white hover:text-black transition-all duration-300">
+                        <p className="text-[11px] font-light uppercase" style={{ letterSpacing: '0.15em' }}>Foto-Scan</p>
+                        <p className="text-[10px] opacity-40 font-light mt-1">6 Fotos · mit A4-Papier · ca. 2 Min.</p>
+                      </button>
 
-                        {/* Photogrammetrie card */}
-                        <button onClick={() => { setPgMode(true); setPgStep(0); setPgImgs({ right: [], left: [] }); setPhase('pg-0') }}
-                          className="w-full p-4 bg-black/[0.02] text-black text-left border border-black/5 active:opacity-80">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 bg-black/5 flex items-center justify-center flex-shrink-0">
-                              <Scan size={18} className="text-black/40" strokeWidth={1.5} />
-                            </div>
-                            <div>
-                              <p className="text-[12px] font-bold uppercase tracking-widest" style={{ letterSpacing: '0.1em' }}>Rundum-Scan</p>
-                              <p className="text-[9px] text-black/40 mt-0.5">16 Fotos · von allen Seiten · ca. 4 Min.</p>
-                            </div>
-                            <ChevronRight size={16} className="text-black/20 ml-auto" />
-                          </div>
-                          <div className="space-y-1.5 pl-1">
-                            {[
-                              'Den Fuß einmal rundherum fotografieren',
-                              'Daraus wird ein genaues 3D-Modell erstellt',
-                              'Höchste Genauigkeit bei der Vermessung',
-                            ].map(t => (
-                              <p key={t} className="text-[9px] text-black/35 flex items-center gap-2">
-                                <span className="w-1 h-1 bg-black/20 flex-shrink-0" />
-                                {t}
-                              </p>
-                            ))}
-                          </div>
-                        </button>
-                      </div>
+                      {/* Photogrammetrie */}
+                      <button onClick={() => { setPgMode(true); setPgStep(0); setPgImgs({ right: [], left: [] }); setPhase('pg-0') }}
+                        className="w-full py-4 bg-white text-black border border-black/[0.06] text-left px-6 active:opacity-80 hover:border-black/20 transition-all">
+                        <p className="text-[11px] font-light">Rundum-Scan</p>
+                        <p className="text-[10px] text-black/30 font-light mt-0.5">16 Bilder · alle Seiten · ca. 4 Min.</p>
+                      </button>
 
-                      {/* A4 tip */}
-                      <div className="mx-5 mt-1 p-3.5 bg-black/[0.02] border border-black/5 flex gap-3">
-                        <div className="w-7 h-7 bg-black/8 flex items-center justify-center flex-shrink-0">
-                          <AlertCircle size={13} className="text-black/40" strokeWidth={1.5} />
-                        </div>
-                        <p className="text-[9px] text-black/45 leading-relaxed">
-                          <strong className="text-black/60">Wichtig:</strong> Lege ein normales weißes A4-Blatt (Druckerpapier) neben deinen Fuß. Es muss auf jedem Foto zu sehen sein — so können wir die Größe richtig berechnen.
+                      {/* A4 hint */}
+                      <div className="mt-2 p-4 bg-[#f6f5f3] border border-black/[0.04]">
+                        <p className="text-[10px] text-black/40 font-light leading-relaxed">
+                          Lege ein weißes A4-Blatt neben deinen Fuß — es dient als Größenreferenz und muss auf jedem Foto sichtbar sein.
                         </p>
                       </div>
-
-                      {/* Back button */}
-                      <div className="px-5 pt-4">
-                        <button
-                          onClick={() => { stopCam(); navigate(-1) }}
-                          className="w-full py-3.5 bg-transparent text-[#007AFF] font-semibold text-[13px] border border-black/8 rounded-xl active:opacity-60 transition-opacity"
-                        >
-                          Zurück
-                        </button>
-                      </div>
-                    </>
+                    </div>
                   )}
 
-                  <div className="px-5 pt-3 pb-10">
+                  <div className="px-5 pt-6 pb-10">
                     <button onClick={startDemo}
-                      className="w-full py-3.5 bg-white text-black/35 font-semibold text-[11px] border border-black/8">
-                      Demo-Modus (ohne Kamera)
+                      className="w-full py-3 bg-transparent text-black/25 text-[10px] font-light border-0 uppercase tracking-[0.15em] hover:text-black/40 transition-colors">
+                      Demo-Modus
                     </button>
                   </div>
                 </>

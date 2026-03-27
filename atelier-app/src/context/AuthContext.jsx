@@ -10,6 +10,25 @@ let _accessToken = null
 let _refreshToken = null
 
 const isNativePlatform = Capacitor.isNativePlatform()
+const RT_STORAGE_KEY = '__atelier_rt'
+
+// Persist refresh token for native builds so force-close doesn't log out
+function persistRefreshToken(token) {
+  try {
+    if (token) localStorage.setItem(RT_STORAGE_KEY, token)
+    else localStorage.removeItem(RT_STORAGE_KEY)
+  } catch { /* localStorage unavailable */ }
+}
+
+function loadPersistedRefreshToken() {
+  try { return localStorage.getItem(RT_STORAGE_KEY) || null } catch { return null }
+}
+
+// Restore refresh token from storage on cold start (native only)
+if (isNativePlatform) {
+  _refreshToken = loadPersistedRefreshToken()
+  if (_refreshToken) setNativeRefreshToken(_refreshToken)
+}
 
 export function getAccessToken() { return _accessToken }
 export function setAccessToken(t) { _accessToken = t }
@@ -21,7 +40,8 @@ function storeTokens(data) {
   _accessToken = data.accessToken
   if (isNativePlatform && data.refreshToken) {
     _refreshToken = data.refreshToken
-    setNativeRefreshToken(data.refreshToken) // sync with useApi
+    setNativeRefreshToken(data.refreshToken)
+    persistRefreshToken(data.refreshToken)
   }
 }
 
@@ -59,6 +79,7 @@ export function AuthProvider({ children }) {
           storeTokens({ accessToken: null })
           _refreshToken = null
           setNativeRefreshToken(null)
+          persistRefreshToken(null)
           setUser(null)
           if (refreshTimer.current) clearTimeout(refreshTimer.current)
           return
@@ -148,6 +169,7 @@ export function AuthProvider({ children }) {
     _accessToken = null
     _refreshToken = null
     setNativeRefreshToken(null)
+    persistRefreshToken(null)
     setUser(null)
     if (refreshTimer.current) clearTimeout(refreshTimer.current)
     fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include', headers, body }).catch(() => {})
