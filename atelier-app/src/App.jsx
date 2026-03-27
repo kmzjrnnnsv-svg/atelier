@@ -13,9 +13,14 @@ import { Capacitor } from '@capacitor/core'
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => {
+    // Reset document scroll (mobile web)
     window.scrollTo(0, 0)
-    // Also reset any internal scroll containers (skip elements that opt out)
-    document.querySelectorAll('.overflow-y-auto:not([data-keep-scroll])').forEach(el => { el.scrollTop = 0 })
+    // Reset all internal scroll containers (native + desktop fixed layouts)
+    const resetContainers = () =>
+      document.querySelectorAll('.overflow-y-auto:not([data-keep-scroll])').forEach(el => { el.scrollTop = 0 })
+    resetContainers()
+    // Also reset after React has rendered the new route content
+    requestAnimationFrame(resetContainers)
   }, [pathname])
   return null
 }
