@@ -217,4 +217,44 @@ router.put('/homepage', authenticate, requireRole('admin', 'curator'), (req, res
   res.json({ message: 'Homepage-Sektionen gespeichert' })
 })
 
+// ─── GET /api/settings/footer — public (footer content) ─────────────────────
+router.get('/footer', (req, res) => {
+  const db = getDb()
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'footer_config'").get()
+  const config = row?.value ? JSON.parse(row.value) : null
+  res.json(config)
+})
+
+// ─── PUT /api/settings/footer — admin/curator ──────────────────────────────
+router.put('/footer', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db = getDb()
+  const uid = req.user.id
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES ('footer_config', ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `).run(JSON.stringify(req.body.config), uid)
+  res.json({ message: 'Footer-Einstellungen gespeichert' })
+})
+
+// ─── GET /api/settings/explore — public (explore page service section) ──────
+router.get('/explore', (req, res) => {
+  const db = getDb()
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'explore_config'").get()
+  const config = row?.value ? JSON.parse(row.value) : null
+  res.json(config)
+})
+
+// ─── PUT /api/settings/explore — admin/curator ─────────────────────────────
+router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db = getDb()
+  const uid = req.user.id
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES ('explore_config', ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `).run(JSON.stringify(req.body.config), uid)
+  res.json({ message: 'Explore-Einstellungen gespeichert' })
+})
+
 export default router

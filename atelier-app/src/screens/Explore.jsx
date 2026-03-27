@@ -2,10 +2,11 @@
  * Explore.jsx — LV-style angular editorial & discovery page
  * Sharp edges, product-grid-style layout, minimal editorial
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import useAtelierStore from '../store/atelierStore'
+import { apiFetch } from '../hooks/useApi'
 import { HEROES, EXPLORE, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import { isMobileWeb } from '../App'
 
@@ -54,6 +55,18 @@ export default function Explore() {
 
   const featuredSection = sections[0]
   const moreSections = sections.slice(1)
+  const [serviceSections, setServiceSections] = useState([
+    { label: 'Editorials', title: 'Geschichten hinter der Kollektion', text: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Saison.' },
+    { label: 'Handwerk', title: 'Vom Leisten bis zur Naht', text: 'Kurz-Dokumentationen über die Herstellung jedes Modells in über 200 Schritten.' },
+    { label: 'Community', title: 'Atelier-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
+  ])
+
+  useEffect(() => {
+    apiFetch('/api/settings/footer')
+      .then(data => { if (data?.service_sections) setServiceSections(data.service_sections) })
+      .catch(() => {})
+  }, [])
+
   const featuredArticles = articles.filter(a => a.featured)
   const regularArticles = articles.filter(a => !a.featured)
 
@@ -194,11 +207,7 @@ export default function Explore() {
       <div className="border-t border-black/[0.04] py-10 lg:py-16">
         <div className="px-4 lg:px-16 xl:px-24">
           <div className="grid grid-cols-3 gap-[1px] bg-black/[0.04]">
-            {[
-              { label: 'Editorials', title: 'Geschichten hinter der Kollektion', text: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Saison.' },
-              { label: 'Handwerk', title: 'Vom Leisten bis zur Naht', text: 'Kurz-Dokumentationen über die Herstellung jedes Modells in über 200 Schritten.' },
-              { label: 'Community', title: 'Atelier-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
-            ].map(item => (
+            {serviceSections.map(item => (
               <div key={item.label} className="bg-white p-4 lg:p-8">
                 <p className="text-[8px] lg:text-[9px] uppercase tracking-[0.3em] text-black/20 mb-2 lg:mb-3">{item.label}</p>
                 <p className="text-[12px] lg:text-[15px] text-black font-light leading-snug">{item.title}</p>

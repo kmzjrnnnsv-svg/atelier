@@ -1,46 +1,81 @@
 /**
  * Footer.jsx — Global site footer
- * Matches Dribbble reference: split help banner, links grid, bottom bar
+ * All text CMS-editable via /api/settings/footer
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Instagram, ArrowRight } from 'lucide-react'
+import { apiFetch } from '../hooks/useApi'
 import { CRAFT } from '../lib/editorialImages'
+
+const DEFAULTS = {
+  help_label: 'Brauchen Sie Hilfe?',
+  help_title: 'Wir sind für Sie da',
+  help_text: 'Unser Team hilft Ihnen gerne — persönlich und diskret.',
+  help_button: 'Kontakt',
+  help_image: '',
+  contact_phone: '+49 123 456 789',
+  contact_email: 'service@atelier.de',
+  shop_links: [
+    { label: 'Für dich', path: '/foryou' },
+    { label: 'Kollektion', path: '/collection' },
+    { label: 'Zubehör', path: '/accessories' },
+    { label: 'Entdecken', path: '/explore' },
+  ],
+  account_links: [
+    { label: 'Wunschliste', path: '/wishlist' },
+    { label: 'Bestellungen', path: '/orders' },
+    { label: 'Hilfe & Kontakt', path: '/help' },
+    { label: 'Einstellungen', path: '/settings' },
+  ],
+  legal_links: [
+    { label: 'AGB', path: '/legal/terms' },
+    { label: 'Datenschutz', path: '/legal/privacy' },
+    { label: 'Impressum', path: '/legal/imprint' },
+    { label: 'Widerrufsbelehrung', path: '/legal/withdrawal' },
+    { label: 'Versand & Lieferung', path: '/legal/shipping' },
+  ],
+  newsletter_title: 'Newsletter',
+  newsletter_text: 'Erhalten Sie als Erster exklusive Neuigkeiten und Angebote.',
+  newsletter_placeholder: 'IHRE E-MAIL ADRESSE',
+  copyright: 'Atelier',
+}
 
 export default function Footer() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
+  const [cfg, setCfg] = useState(DEFAULTS)
+
+  useEffect(() => {
+    apiFetch('/api/settings/footer')
+      .then(data => { if (data) setCfg({ ...DEFAULTS, ...data }) })
+      .catch(() => {})
+  }, [])
 
   const handleNewsletter = (e) => {
     e.preventDefault()
-    if (email.trim()) {
-      setEmail('')
-    }
+    if (email.trim()) setEmail('')
   }
 
   return (
     <footer className="bg-[#2a2a2a] text-white">
 
-      {/* ── Help Banner — split: dark text left, image right ── */}
+      {/* ── Help Banner — split: text left, image right ──── */}
       <div className="grid grid-cols-1 lg:grid-cols-2">
-        {/* Text side */}
         <div className="px-6 lg:px-16 xl:px-24 py-10 lg:py-14 flex flex-col justify-center">
-          <p className="text-[9px] text-white/30 uppercase tracking-[0.3em] mb-2 lg:mb-3">Brauchen Sie Hilfe?</p>
-          <h3 className="text-[20px] lg:text-[26px] font-extralight text-white leading-tight tracking-tight">Wir sind für Sie da</h3>
-          <p className="text-[11px] lg:text-[12px] text-white/30 mt-2 lg:mt-3 font-light max-w-xs leading-relaxed">
-            Unser Team hilft Ihnen gerne — persönlich und diskret.
-          </p>
+          <p className="text-[9px] text-white/30 uppercase tracking-[0.3em] mb-2 lg:mb-3">{cfg.help_label}</p>
+          <h3 className="text-[20px] lg:text-[26px] font-extralight text-white leading-tight tracking-tight">{cfg.help_title}</h3>
+          <p className="text-[11px] lg:text-[12px] text-white/30 mt-2 lg:mt-3 font-light max-w-xs leading-relaxed">{cfg.help_text}</p>
           <button
             onClick={() => navigate('/help')}
             className="mt-5 lg:mt-6 px-6 py-2.5 border border-white/25 text-white text-[10px] bg-transparent hover:bg-white hover:text-black transition-all duration-300 w-fit"
             style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
           >
-            Kontakt
+            {cfg.help_button}
           </button>
         </div>
-        {/* Image side */}
         <div className="hidden lg:block overflow-hidden">
-          <img src={CRAFT.hands} alt="" className="w-full h-full object-cover" style={{ minHeight: 240 }} />
+          <img src={cfg.help_image || CRAFT.hands} alt="" className="w-full h-full object-cover" style={{ minHeight: 240 }} />
         </div>
       </div>
 
@@ -49,37 +84,20 @@ export default function Footer() {
         <div className="px-6 lg:px-16 xl:px-24 py-10 lg:py-14">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
 
-            {/* Shop — matches sidebar nav */}
+            {/* Contact */}
             <div>
-              <p className="text-[11px] text-white/60 mb-4 font-normal">Shop</p>
+              <p className="text-[11px] text-white/60 mb-4 font-normal">Kontakt</p>
               <div className="space-y-2">
-                {[
-                  { label: 'Für dich', path: '/foryou' },
-                  { label: 'Kollektion', path: '/collection' },
-                  { label: 'Zubehör', path: '/accessories' },
-                  { label: 'Entdecken', path: '/explore' },
-                ].map(link => (
-                  <button
-                    key={link.label}
-                    onClick={() => navigate(link.path)}
-                    className="block text-[12px] text-white/35 font-light bg-transparent border-0 p-0 hover:text-white/60 transition-colors cursor-pointer"
-                  >
-                    {link.label}
-                  </button>
-                ))}
+                <p className="text-[12px] text-white/35 font-light">{cfg.contact_phone}</p>
+                <p className="text-[12px] text-white/35 font-light">{cfg.contact_email}</p>
               </div>
             </div>
 
-            {/* Konto — matches sidebar secondary */}
+            {/* Shop */}
             <div>
-              <p className="text-[11px] text-white/60 mb-4 font-normal">Konto</p>
+              <p className="text-[11px] text-white/60 mb-4 font-normal">Shop</p>
               <div className="space-y-2">
-                {[
-                  { label: 'Wunschliste', path: '/wishlist' },
-                  { label: 'Bestellungen', path: '/orders' },
-                  { label: 'Hilfe & Kontakt', path: '/help' },
-                  { label: 'Einstellungen', path: '/settings' },
-                ].map(link => (
+                {cfg.shop_links.map(link => (
                   <button
                     key={link.label}
                     onClick={() => navigate(link.path)}
@@ -95,13 +113,7 @@ export default function Footer() {
             <div>
               <p className="text-[11px] text-white/60 mb-4 font-normal">Rechtliches</p>
               <div className="space-y-2">
-                {[
-                  { label: 'AGB', path: '/legal/terms' },
-                  { label: 'Datenschutz', path: '/legal/privacy' },
-                  { label: 'Impressum', path: '/legal/imprint' },
-                  { label: 'Widerrufsbelehrung', path: '/legal/withdrawal' },
-                  { label: 'Versand & Lieferung', path: '/legal/shipping' },
-                ].map(link => (
+                {cfg.legal_links.map(link => (
                   <button
                     key={link.label}
                     onClick={() => navigate(link.path)}
@@ -115,16 +127,14 @@ export default function Footer() {
 
             {/* Newsletter */}
             <div>
-              <p className="text-[11px] text-white/60 mb-4 font-normal">Newsletter</p>
-              <p className="text-[11px] text-white/30 font-light mb-4 leading-relaxed">
-                Erhalten Sie als Erster exklusive Neuigkeiten und Angebote.
-              </p>
+              <p className="text-[11px] text-white/60 mb-4 font-normal">{cfg.newsletter_title}</p>
+              <p className="text-[11px] text-white/30 font-light mb-4 leading-relaxed">{cfg.newsletter_text}</p>
               <form onSubmit={handleNewsletter} className="flex">
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="IHRE E-MAIL ADRESSE"
+                  placeholder={cfg.newsletter_placeholder}
                   className="flex-1 bg-transparent border border-white/15 border-r-0 px-3 py-2.5 text-[10px] text-white/60 placeholder-white/20 outline-none focus:border-white/30 transition-colors font-light tracking-wider"
                 />
                 <button
@@ -142,7 +152,7 @@ export default function Footer() {
       {/* ── Bottom Bar ──────────────────────────────────────── */}
       <div className="border-t border-white/[0.06] px-6 lg:px-16 xl:px-24 py-5 flex items-center justify-between">
         <p className="text-[10px] text-white/20 font-light">
-          Copyright © {new Date().getFullYear()} Atelier
+          Copyright © {new Date().getFullYear()} {cfg.copyright}
         </p>
         <div className="flex items-center gap-5">
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-white/25 hover:text-white/50 transition-colors">
