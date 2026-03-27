@@ -101,15 +101,15 @@ export default function ForYou() {
           3. EDITORIAL SPLIT — Two-column, edge-to-edge
           ══════════════════════════════════════════════════════════ */}
       {shoes.length >= 3 && (
-        <div className="grid grid-cols-2">
+        <div className="grid grid-cols-2 gap-[2px]">
           {shoes.slice(1, 3).map(shoe => (
             <div key={shoe.id} className="relative cursor-pointer group" onClick={() => selectShoe(shoe)}>
-              <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: isMobileWeb ? '2 / 3' : '3 / 4' }}>
+              <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: isMobileWeb ? '3 / 4' : '4 / 5' }}>
                 <img src={shoe.image || (shoe.id % 2 === 0 ? SHOES.editorial1 : SHOES.editorial2)} alt={shoe.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
               </div>
-              <div className="absolute bottom-0 left-0 right-0 p-3 lg:p-8" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.35) 100%)' }}>
-                <p className="text-[14px] lg:text-[26px] font-extralight text-white leading-tight tracking-tight">{shoe.name}</p>
-                <p className="text-[10px] lg:text-[13px] text-white/45 mt-0.5 lg:mt-1 font-light">{shoe.price}</p>
+              <div className="absolute bottom-0 left-0 right-0 p-3 lg:p-6" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.35) 100%)' }}>
+                <p className="text-[13px] lg:text-[20px] font-extralight text-white leading-tight tracking-tight">{shoe.name}</p>
+                <p className="text-[9px] lg:text-[11px] text-white/45 mt-0.5 lg:mt-1 font-light">{shoe.price}</p>
               </div>
             </div>
           ))}

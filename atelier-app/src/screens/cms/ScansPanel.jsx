@@ -69,18 +69,18 @@ function FootMini({ length, width, arch }) {
  if (!el) return
  const w = el.clientWidth, h = el.clientHeight
  const scene = new THREE.Scene()
- scene.background = new THREE.Color(0x111827)
+ scene.background = new THREE.Color(0xfafaf9)
  const camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 2000)
  camera.position.set(0, -300, 90); camera.lookAt(0, 0, 0)
  const renderer = new THREE.WebGLRenderer({ antialias: true })
  renderer.setSize(w, h); renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
  el.appendChild(renderer.domElement)
- scene.add(new THREE.AmbientLight(0x2dd4bf, 0.35))
+ scene.add(new THREE.AmbientLight(0xffffff, 0.5))
  const d = new THREE.DirectionalLight(0xffffff, 1.1)
  d.position.set(200, -100, 280); scene.add(d)
  const geo = buildFootGeo(length, width, arch)
  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xd4a88a, roughness: 0.55 }))
- const wire = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x2dd4bf, wireframe: true, transparent: true, opacity: 0.06 }))
+ const wire = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true, transparent: true, opacity: 0.04 }))
  mesh.rotation.z = -Math.PI / 2; wire.rotation.z = -Math.PI / 2
  scene.add(mesh); scene.add(wire)
  let ry = 0, id
@@ -110,7 +110,7 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
  const geoL = buildFootGeo(scan.left_length, scan.left_width, scan.left_arch)
 
  return (
- <div className="bg-black/5 border border-black/10 overflow-hidden">
+ <div className="bg-[#fafaf9] overflow-hidden">
  {/* Row header */}
  <div className="flex items-center gap-3 px-4 py-2.5">
  {/* Date + size */}
@@ -122,7 +122,7 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
  {scan.reference_type === 'card' ? '💳 Karte' : '📄 A4'}
  </span>
  <span className="text-[8px] text-black/35">·</span>
- <span className="text-[9px] text-black/50 font-semibold">{scan.accuracy?.toFixed(1)}%</span>
+ <span className="text-[9px] text-black/50 font-light">{scan.accuracy?.toFixed(1)}%</span>
  </div>
  {/* Measurements mini */}
  <div className="flex items-center gap-3 mt-1">
@@ -131,7 +131,7 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
  ['L', scan.left_length, scan.left_width, scan.left_arch],
  ].map(([s, l, w, a]) => (
  <span key={s} className="text-[8px] text-black/45 font-mono">
- <span className="text-black/35 font-bold">{s}</span> {l}×{w}×{a}mm
+ <span className="text-black/40 font-light">{s}</span> {l}×{w}×{a}mm
  </span>
  ))}
  </div>
@@ -139,7 +139,7 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
 
  {/* EU size */}
  <div className="text-right flex-shrink-0">
- <span className="text-lg font-bold text-black/90">EU {scan.eu_size}</span>
+ <span className="text-lg font-extralight text-black/80">EU {scan.eu_size}</span>
  <p className="text-[8px] text-black/35">UK {scan.uk_size} · US {scan.us_size}</p>
  </div>
 
@@ -150,10 +150,10 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
  onClick={() => setShow3D(v => !v)}
  title="3D-Vorschau"
  className={`w-7 h-7 flex items-center justify-center border transition-colors ${
- show3D ? 'bg-black/10 border-black/15 text-black/50' : 'bg-black/5 border-black/10 text-black/45 hover:text-black/65'
+ show3D ? 'bg-black/[0.06] border-black/[0.12] text-black/50' : 'bg-transparent border-black/[0.08] text-black/35 hover:text-black/55 hover:border-black/15'
  }`}
  >
- <Box size={12} strokeWidth={1.5} />
+ <Box size={12} strokeWidth={1.25} />
  </button>
 
  {/* STL downloads */}
@@ -162,16 +162,16 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
  <button
  onClick={() => handleDownload('right')}
  title={`Rechter Fuß STL (~${estimateSTLSizeKB(geoR)} KB)`}
- className="w-7 h-7 bg-[#f6f5f3] border border-black/6 flex items-center justify-center text-black/45 hover:text-black/50 hover:border-black/15 transition-colors"
+ className="w-7 h-7 bg-transparent border border-black/[0.08] flex items-center justify-center text-black/35 hover:text-black/55 hover:border-black/15 transition-colors"
  >
- <span className="text-xs font-bold">R</span>
+ <span className="text-[10px] font-light tracking-wide">R</span>
  </button>
  <button
  onClick={() => handleDownload('left')}
  title={`Linker Fuß STL (~${estimateSTLSizeKB(geoL)} KB)`}
- className="w-7 h-7 bg-[#f6f5f3] border border-black/6 flex items-center justify-center text-black/45 hover:text-black/50 hover:border-black/15 transition-colors"
+ className="w-7 h-7 bg-transparent border border-black/[0.08] flex items-center justify-center text-black/35 hover:text-black/55 hover:border-black/15 transition-colors"
  >
- <span className="text-xs font-bold">L</span>
+ <span className="text-[10px] font-light tracking-wide">L</span>
  </button>
  <button
  onClick={() => {
@@ -179,9 +179,9 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
  setTimeout(() => handleDownload('left'), 400)
  }}
  title="Beide Füße als STL herunterladen"
- className="w-7 h-7 bg-black/8 border border-black/10 flex items-center justify-center text-black/50 hover:bg-black/12 transition-colors"
+ className="w-7 h-7 bg-transparent border border-black/[0.08] flex items-center justify-center text-black/35 hover:text-black/55 hover:border-black/15 transition-colors"
  >
- <Download size={11} strokeWidth={1.5} />
+ <Download size={11} strokeWidth={1.25} />
  </button>
  </>
  )}
@@ -191,9 +191,9 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
  <button
  onClick={() => onDelete(scan.id)}
  title="Scan löschen"
- className="w-7 h-7 bg-[#f6f5f3] border border-black/6 flex items-center justify-center text-black/35 hover:text-black/40 hover:border-black/15 transition-colors"
+ className="w-7 h-7 bg-transparent border border-black/[0.08] flex items-center justify-center text-black/25 hover:text-black/45 hover:border-black/15 transition-colors"
  >
- <Trash2 size={11} strokeWidth={1.5} />
+ <Trash2 size={11} strokeWidth={1.25} />
  </button>
  )}
  </div>
@@ -201,17 +201,17 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
 
  {/* 3D preview panel */}
  {show3D && (
- <div className="border-t border-black/10 p-3">
+ <div className="border-t border-black/[0.06] p-3">
  <div className="grid grid-cols-2 gap-3">
  {[
  { side: 'right', label: 'Rechter Fuß', m: { length: scan.right_length, width: scan.right_width, arch: scan.right_arch } },
  { side: 'left', label: 'Linker Fuß', m: { length: scan.left_length, width: scan.left_width, arch: scan.left_arch } },
  ].map(({ side, label, m }) => (
- <div key={side} className=" overflow-hidden border border-black/10" style={{ height: 100 }}>
+ <div key={side} className="overflow-hidden border border-black/[0.06]" style={{ height: 100 }}>
  <FootMini length={m.length} width={m.width} arch={m.arch} />
- <div className="bg-[#f6f5f3] px-2 py-1 flex items-center justify-between">
- <span className="text-[8px] text-black/50 font-semibold">{label}</span>
- <span className="text-[7px] text-black/35 font-mono">{m.length}×{m.width}×{m.arch} mm</span>
+ <div className="bg-[#fafaf9] px-2 py-1 flex items-center justify-between">
+ <span className="text-[8px] text-black/40 font-light">{label}</span>
+ <span className="text-[7px] text-black/30 font-mono font-light">{m.length}×{m.width}×{m.arch} mm</span>
  </div>
  </div>
  ))}
@@ -226,10 +226,10 @@ function ScanRow({ scan, onDelete, canDownload, canDelete, euSize }) {
  handleDownload('right')
  setTimeout(() => handleDownload('left'), 400)
  }}
- className="flex items-center gap-1.5 px-3 py-1.5 bg-black/6 border border-black/10 text-black/50 hover:bg-black/10 transition-colors"
+ className="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border border-black/[0.08] text-black/40 hover:border-black/15 hover:text-black/55 transition-colors"
  >
- <Download size={10} strokeWidth={1.5} />
- <span className="text-xs font-medium">Beide STL</span>
+ <Download size={10} strokeWidth={1.25} />
+ <span className="text-[10px] font-light">Beide STL</span>
  </button>
  </div>
  )}
@@ -245,15 +245,15 @@ function UserCard({ group, onDelete, canDownload, canDelete }) {
  const latest = group.scans[0]
 
  return (
- <div className="bg-white border border-black/6 overflow-hidden">
+ <div className="bg-white overflow-hidden">
  {/* User header */}
  <button
  onClick={() => setExpanded(e => !e)}
- className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-black/5 transition-colors bg-transparent border-0"
+ className="w-full flex items-center gap-3 px-7 py-4 text-left hover:bg-black/[0.01] transition-colors bg-transparent border-0"
  >
  {/* Avatar */}
- <div className="w-10 h-10 bg-black/8 border border-black/10 flex items-center justify-center flex-shrink-0">
- <span className="text-sm font-bold text-black/50">
+ <div className="w-10 h-10 bg-[#fafaf9] flex items-center justify-center flex-shrink-0">
+ <span className="text-[13px] font-extralight text-black/40">
  {group.user_name?.[0]?.toUpperCase() ?? '?'}
  </span>
  </div>
@@ -261,38 +261,38 @@ function UserCard({ group, onDelete, canDownload, canDelete }) {
  {/* User info */}
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2 flex-wrap">
- <p className="text-sm font-semibold text-black/90">{group.user_name}</p>
- <span className={`text-[10px] font-medium px-2 py-0.5 border ${roleBadge(group.user_role)}`}>
+ <p className="text-[13px] font-light text-black/75">{group.user_name}</p>
+ <span className={`text-[9px] font-light px-2 py-0.5 border ${roleBadge(group.user_role)}`}>
  {group.user_role}
  </span>
  </div>
- <p className="text-[9px] text-black/45 truncate mt-0.5">{group.user_email}</p>
+ <p className="text-[9px] text-black/30 truncate mt-0.5 font-light">{group.user_email}</p>
  </div>
 
  {/* Stats */}
- <div className="flex items-center gap-4 flex-shrink-0">
+ <div className="flex items-center gap-5 flex-shrink-0">
  <div className="text-center">
- <p className="text-xs font-medium text-black/35">Scans</p>
- <p className="text-base font-bold text-black/90">{group.scans.length}</p>
+ <p className="text-[9px] font-light text-black/25 uppercase tracking-[0.15em]">Scans</p>
+ <p className="text-[18px] font-extralight text-black/75">{group.scans.length}</p>
  </div>
  <div className="text-center">
- <p className="text-xs font-medium text-black/35">Größe</p>
- <p className="text-base font-bold text-black/50">EU {latest.eu_size}</p>
+ <p className="text-[9px] font-light text-black/25 uppercase tracking-[0.15em]">Größe</p>
+ <p className="text-[18px] font-extralight text-black/50">EU {latest.eu_size}</p>
  </div>
  <div className="text-center">
- <p className="text-xs font-medium text-black/35">Letzter Scan</p>
- <p className="text-[9px] font-semibold text-black/35">{fmtDate(latest.created_at)}</p>
+ <p className="text-[9px] font-light text-black/25 uppercase tracking-[0.15em]">Letzter Scan</p>
+ <p className="text-[10px] font-light text-black/35">{fmtDate(latest.created_at)}</p>
  </div>
- <div className="w-6 h-6 flex items-center justify-center text-black/45">
- {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+ <div className="w-6 h-6 flex items-center justify-center text-black/25">
+ {expanded ? <ChevronUp size={13} strokeWidth={1.25} /> : <ChevronDown size={13} strokeWidth={1.25} />}
  </div>
  </div>
  </button>
 
  {/* Expanded scans */}
  {expanded && (
- <div className="border-t border-black/10 p-3 space-y-2">
- <p className="text-xs font-medium text-black/35 px-1 mb-2">
+ <div className="border-t border-black/[0.04] p-5 space-y-2">
+ <p className="text-[10px] font-light text-black/30 px-1 mb-2">
  {group.scans.length} Scan{group.scans.length > 1 ? 's' : ''} — neueste zuerst
  </p>
  {group.scans.map(scan => (
@@ -315,10 +315,10 @@ function UserCard({ group, onDelete, canDownload, canDelete }) {
  downloadSTL(gR, latest.eu_size, 'right')
  setTimeout(() => downloadSTL(gL, latest.eu_size, 'left'), 400)
  }}
- className="w-full flex items-center justify-center gap-2 py-2.5 bg-black/5 border border-black/10 text-black/50 hover:bg-black/8 transition-colors mt-1"
+ className="w-full flex items-center justify-center gap-2 py-2.5 bg-transparent border border-black/[0.08] text-black/40 hover:border-black/15 hover:text-black/55 transition-colors mt-1"
  >
- <Download size={12} strokeWidth={1.5} />
- <span className="text-xs font-medium">
+ <Download size={11} strokeWidth={1.25} />
+ <span className="text-[10px] font-light tracking-wide">
  Neueste STL herunterladen ({group.user_name})
  </span>
  </button>
@@ -411,54 +411,54 @@ function TrainingScanCard({ row, onSave }) {
  <>
  {photoSrc && <PhotoModal src={photoSrc} onClose={() => setPhotoSrc(null)} />}
 
- <div className="border border-black/6 overflow-hidden mb-2">
+ <div className="bg-white overflow-hidden mb-2">
  {/* Card header */}
  <div
- className="flex items-center gap-3 px-4 py-3 hover:bg-black/5 cursor-pointer transition-colors"
+ className="flex items-center gap-3 px-7 py-4 hover:bg-black/[0.01] cursor-pointer transition-colors"
  onClick={() => setExpanded(e => !e)}
  >
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2 flex-wrap">
- <span className="text-sm font-medium text-black/90 truncate">{row.user_email}</span>
- <span className="text-xs text-black/35">{fmtDate(row.created_at)}</span>
+ <span className="text-[13px] font-light text-black/75 truncate">{row.user_email}</span>
+ <span className="text-[10px] text-black/25 font-light">{fmtDate(row.created_at)}</span>
  {!hasTd && (
- <span className="text-[10px] font-medium px-2 py-0.5 bg-black/5 text-black/35">
+ <span className="text-[9px] font-light px-2 py-0.5 bg-[#fafaf9] text-black/30">
  Keine Fotos
  </span>
  )}
  {hasTd && isValidated && (
- <span className="text-[10px] font-medium px-2 py-0.5 bg-black/5 text-black/50">
- ✓ Validiert
+ <span className="text-[9px] font-light px-2 py-0.5 bg-[#fafaf9] text-black/45">
+ Validiert
  </span>
  )}
  {hasTd && !isValidated && (
- <span className="text-[10px] font-medium px-2 py-0.5 bg-black/5 text-black/40">
+ <span className="text-[9px] font-light px-2 py-0.5 bg-[#fafaf9] text-black/30">
  Ausstehend
  </span>
  )}
  </div>
  <div className="flex items-center gap-3 mt-0.5">
- <span className="text-xs text-black/35">
+ <span className="text-[10px] text-black/30 font-light font-mono">
  R: {row.right_length ?? '?'}×{row.right_width ?? '?'}×{row.right_arch ?? '?'}mm
  </span>
- <span className="text-xs text-black/35">
+ <span className="text-[10px] text-black/30 font-light font-mono">
  L: {row.left_length ?? '?'}×{row.left_width ?? '?'}×{row.left_arch ?? '?'}mm
  </span>
  </div>
  </div>
  <div className="flex items-center gap-2 flex-shrink-0">
- <span className="text-xs font-bold text-black/65">EU {row.eu_size}</span>
- {expanded ? <ChevronUp size={14} className="text-black/35" /> : <ChevronDown size={14} className="text-black/35" />}
+ <span className="text-[13px] font-extralight text-black/60">EU {row.eu_size}</span>
+ {expanded ? <ChevronUp size={13} className="text-black/25" strokeWidth={1.25} /> : <ChevronDown size={13} className="text-black/25" strokeWidth={1.25} />}
  </div>
  </div>
 
  {/* Expanded */}
  {expanded && (
- <div className="border-t border-black/6 p-4 space-y-4">
+ <div className="border-t border-black/[0.04] p-7 space-y-5">
  {/* Photo thumbnails */}
  {hasPhotos && (
  <div>
- <p className="text-xs font-medium text-black/35 mb-2">Fotos</p>
+ <p className="text-[10px] font-light text-black/30 uppercase tracking-[0.2em] mb-2">Fotos</p>
  <div className="flex gap-2">
  {photos.map(({ key, label }) => (
  <div key={key} className="flex flex-col items-center gap-1">
@@ -466,11 +466,11 @@ function TrainingScanCard({ row, onSave }) {
  <img
  src={row[key]}
  alt={label}
- className="w-20 h-20 object-cover border border-black/6 cursor-pointer hover:opacity-80 transition-opacity"
+ className="w-20 h-20 object-cover border border-black/[0.06] cursor-pointer hover:opacity-80 transition-opacity"
  onClick={() => setPhotoSrc(row[key])}
  />
  ) : (
- <div className="w-20 h-20 bg-black/5 border border-black/10 flex items-center justify-center">
+ <div className="w-20 h-20 bg-[#fafaf9] border border-black/[0.06] flex items-center justify-center">
  <ImageIcon size={16} className="text-black/20" />
  </div>
  )}
@@ -484,10 +484,10 @@ function TrainingScanCard({ row, onSave }) {
  {/* Measurements editor */}
  <div>
  <div className="flex items-center justify-between mb-2">
- <p className="text-xs font-medium text-black/35">Maße</p>
+ <p className="text-[10px] font-light text-black/30 uppercase tracking-[0.2em]">Maße</p>
  <button
  onClick={() => setEditing(e => !e)}
- className="flex items-center gap-1 text-xs text-black/35 hover:text-black/65"
+ className="flex items-center gap-1 text-[10px] font-light text-black/30 hover:text-black/55"
  >
  <Edit3 size={11} />
  {editing ? 'Schließen' : 'Bearbeiten'}
@@ -514,9 +514,9 @@ function TrainingScanCard({ row, onSave }) {
  ['Rechts Knöchel', vals.right_ankle_girth],
  ['Links Knöchel', vals.left_ankle_girth],
  ].map(([lbl, val]) => (
- <div key={lbl} className="flex items-center justify-between py-1 border-b border-black/5">
- <span className="text-xs text-black/35">{lbl}</span>
- <span className="text-xs font-medium text-black/65">{val || '—'} {val ? 'mm' : ''}</span>
+ <div key={lbl} className="flex items-center justify-between py-1.5 border-b border-black/[0.04]">
+ <span className="text-[11px] font-light text-black/30">{lbl}</span>
+ <span className="text-[11px] font-light text-black/60">{val || '—'} {val ? 'mm' : ''}</span>
  </div>
  ))}
  </div>
@@ -527,7 +527,7 @@ function TrainingScanCard({ row, onSave }) {
  { label: 'Links', prefix: 'left' },
  ].map(({ label, prefix }) => (
  <div key={prefix}>
- <p className="text-xs font-medium text-black/55 mb-2">{label}</p>
+ <p className="text-[10px] font-light text-black/45 mb-2 uppercase tracking-[0.15em]">{label}</p>
  <div className="grid grid-cols-4 gap-2">
  {[
  { key: `${prefix}_length`, lbl: 'Länge' },
@@ -540,13 +540,13 @@ function TrainingScanCard({ row, onSave }) {
  { key: `${prefix}_ankle_girth`, lbl: 'Knöchel∅' },
  ].map(({ key, lbl }) => (
  <div key={key} className="flex flex-col gap-1">
- <label className="text-[9px] text-black/35">{lbl}</label>
+ <label className="text-[9px] text-black/25 font-light">{lbl}</label>
  <input
  type="number"
  step="0.1"
  value={vals[key]}
  onChange={e => setVals(v => ({ ...v, [key]: e.target.value }))}
- className="w-full bg-white border border-black/10 px-2 py-1.5 text-xs text-center text-black/90 focus:outline-none focus:border-black/20"
+ className="w-full bg-transparent border-b border-black/[0.08] px-2 py-1.5 text-[11px] text-center text-black/70 font-light focus:outline-none focus:border-black/25 transition-colors"
  placeholder="mm"
  />
  </div>
@@ -560,20 +560,20 @@ function TrainingScanCard({ row, onSave }) {
 
  {/* Action buttons */}
  {hasTd && (
- <div className="flex items-center justify-between pt-1">
+ <div className="flex items-center justify-between pt-2">
  <button
  onClick={() => handleValidate(0)}
  disabled={saving}
- className="text-black/35 text-xs hover:text-black/60 transition-colors disabled:opacity-50"
+ className="text-black/30 text-[10px] font-light hover:text-black/55 transition-colors disabled:opacity-50"
  >
- ✗ Ablehnen
+ Ablehnen
  </button>
  <button
  onClick={() => handleValidate(1)}
  disabled={saving}
- className="bg-black hover:bg-black text-white text-xs font-medium px-4 py-2 transition-colors disabled:opacity-50"
+ className="border border-black text-black text-[10px] font-light px-5 py-2 hover:bg-black hover:text-white transition-all uppercase tracking-[0.15em] disabled:opacity-30"
  >
- {saving ? 'Wird gespeichert…' : '✓ Validieren'}
+ {saving ? 'Wird gespeichert…' : 'Validieren'}
  </button>
  </div>
  )}
@@ -637,38 +637,35 @@ function TrainingTab({ isAdmin }) {
  return (
  <div>
  {/* Header */}
- <div className="flex items-center justify-between mb-4">
+ <div className="flex items-center justify-between mb-6">
  <div>
- <div className="flex items-center gap-2">
- <Brain size={16} className="text-black/40" />
- <h2 className="text-base font-semibold text-black/90" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Training-Daten</h2>
- </div>
+ <h2 className="text-[15px] font-light text-black/75">Training-Daten</h2>
  {data && (
- <p className="text-xs text-black/35 mt-0.5">
- Validiert: <span className="font-semibold text-black/50">{data.validated}</span> / {data.total}
- {' · '}Ausstehend: <span className="font-semibold text-black/40">{data.pending}</span>
+ <p className="text-[11px] text-black/30 mt-1 font-light">
+ Validiert: <span className="text-black/45">{data.validated}</span> / {data.total}
+ {' · '}Ausstehend: <span className="text-black/35">{data.pending}</span>
  </p>
  )}
  </div>
  <div className="flex items-center gap-2">
  <button
  onClick={exportCSV}
- className="flex items-center gap-1.5 text-xs font-medium text-black/45 hover:text-black/80 px-3 py-1.5 border border-black/10 hover:border-black/20 transition-colors"
+ className="flex items-center gap-1.5 text-[10px] font-light text-black/40 hover:text-black/70 px-3 py-1.5 border border-black/[0.08] hover:border-black/15 transition-colors uppercase tracking-[0.15em]"
  >
- <Download size={12} />
+ <Download size={11} strokeWidth={1.25} />
  Export CSV
  </button>
  <button
  onClick={load}
- className="flex items-center gap-1.5 text-xs text-black/35 hover:text-black/65 px-3 py-1.5 border border-black/10 transition-colors"
+ className="flex items-center gap-1.5 text-[10px] text-black/30 hover:text-black/55 px-2.5 py-1.5 border border-black/[0.08] hover:border-black/15 transition-colors"
  >
- <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+ <RefreshCw size={12} strokeWidth={1.25} className={loading ? 'animate-spin' : ''} />
  </button>
  </div>
  </div>
 
  {/* Filter tabs */}
- <div className="flex gap-1.5 mb-4">
+ <div className="flex gap-1 mb-6">
  {[
  { key: 'all', label: 'Alle', count: data?.total ?? 0 },
  { key: 'pending', label: 'Ausstehend', count: data?.pending ?? 0 },
@@ -677,11 +674,11 @@ function TrainingTab({ isAdmin }) {
  <button
  key={key}
  onClick={() => setFilter(key)}
- className={`text-xs font-medium px-3 py-1.5 hover:bg-black/5 transition-colors ${
- filter === key ? 'bg-black/5 text-black/90' : 'text-black/35'
+ className={`text-[10px] font-light px-3.5 py-1.5 transition-colors uppercase tracking-[0.15em] ${
+ filter === key ? 'bg-black text-white' : 'text-black/25 hover:text-black/50'
  }`}
  >
- {label} <span className="ml-1 text-black/35">{count}</span>
+ {label} <span className="ml-1 opacity-50">{count}</span>
  </button>
  ))}
  </div>
@@ -689,20 +686,20 @@ function TrainingTab({ isAdmin }) {
  {/* Loading/Error */}
  {loading && (
  <div className="flex justify-center py-12">
- <div className="w-6 h-6 border-2 border-black/10 border-t-black/35 animate-spin" />
+ <div className="w-5 h-5 border border-black/10 border-t-black/40 animate-spin rounded-full" />
  </div>
  )}
  {error && !loading && (
- <div className="flex items-center gap-2 text-black/40 text-sm py-8 justify-center">
- <AlertCircle size={14} /> {error}
+ <div className="flex items-center gap-2 text-black/30 text-[12px] font-light py-8 justify-center">
+ <AlertCircle size={13} strokeWidth={1.25} /> {error}
  </div>
  )}
 
  {/* List */}
  {!loading && !error && filtered.length === 0 && (
- <div className="text-center py-12">
- <Brain size={28} className="text-black/10 mx-auto mb-2" />
- <p className="text-sm text-black/35">Keine Einträge für diesen Filter.</p>
+ <div className="text-center py-16">
+ <Brain size={28} className="text-black/10 mx-auto mb-3" strokeWidth={1} />
+ <p className="text-[12px] text-black/25 font-light">Keine Einträge für diesen Filter.</p>
  </div>
  )}
  {!loading && !error && filtered.length > 0 && (
@@ -714,7 +711,7 @@ function TrainingTab({ isAdmin }) {
  onSave={handleSave}
  />
  ))}
- <p className="text-center text-xs text-black/35 pt-2">
+ <p className="text-center text-[10px] text-black/25 font-light pt-3">
  {filtered.length} Scans angezeigt
  </p>
  </div>
@@ -783,30 +780,28 @@ export default function ScansPanel() {
  const mostCommonEU = Object.keys(euDist).sort((a, b) => euDist[b] - euDist[a])[0] ?? '—'
 
  return (
- <div className="p-8 min-h-full">
+ <div className="px-10 py-10 lg:px-14 lg:py-12 min-h-full">
 
  {/* ── Header ── */}
- <div className="flex items-start justify-between mb-6">
+ <div className="flex items-start justify-between mb-10">
  <div>
- <div className="flex items-center gap-2 mb-1">
- <Footprints size={20} className="text-black/50" />
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Scan-Datenbank</h1>
- </div>
- <p className="text-sm text-black/35">
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Foot Scans</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Scan-Datenbank</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">
  3D-Fußscans · ML Training-Daten
  </p>
  </div>
  <button
  onClick={load}
- className="flex items-center gap-2 px-3 py-2 bg-black/5 border border-black/10 text-xs text-black/65 hover:text-black/90 hover:border-black/20 transition-all"
+ className="flex items-center gap-2 px-5 h-9 border border-black/[0.08] text-[10px] text-black/40 hover:text-black/70 hover:border-black/15 transition-all uppercase tracking-[0.15em] font-light"
  >
- <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+ <RefreshCw size={12} strokeWidth={1.25} className={loading ? 'animate-spin' : ''} />
  Aktualisieren
  </button>
  </div>
 
  {/* ── Tab Navigation ── */}
- <div className="flex gap-1 border-b border-black/6 mb-6">
+ <div className="flex gap-1 border-b border-black/[0.06] mb-8">
  {[
  { key: 'scans', label: 'Scans', icon: Footprints },
  { key: 'training', label: 'Training-Daten', icon: Brain },
@@ -814,13 +809,13 @@ export default function ScansPanel() {
  <button
  key={key}
  onClick={() => setActiveTab(key)}
- className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors border-0 bg-transparent ${
+ className={`flex items-center gap-1.5 px-4 py-2.5 text-[11px] font-light border-b -mb-px transition-colors bg-transparent uppercase tracking-[0.15em] ${
  activeTab === key
- ? 'border-black text-black/90'
- : 'border-transparent text-black/35 hover:text-black/65'
+ ? 'border-black text-black/75'
+ : 'border-transparent text-black/25 hover:text-black/50'
  }`}
  >
- <Icon size={14} />
+ <Icon size={13} strokeWidth={1.25} />
  {label}
  </button>
  ))}
@@ -829,54 +824,54 @@ export default function ScansPanel() {
  {activeTab === 'scans' && (
  <>
  {/* ── Stats ── */}
- <div className="grid grid-cols-4 gap-3 mb-6">
+ <div className="grid grid-cols-4 gap-4 mb-8">
  {[
- { label: 'Benutzer', value: totalUsers, icon: Users, color: 'text-black/40' },
- { label: 'Scans gesamt', value: totalScans, icon: Footprints, color: 'text-black/50' },
- { label: 'Ø EU-Größe', value: avgEU ? `EU ${avgEU}` : '—', icon: Ruler, color: 'text-black/40' },
- { label: 'Häufigste Größe', value: mostCommonEU ? `EU ${mostCommonEU}` : '—', icon: TrendingUp, color: 'text-black/40' },
- ].map(({ label, value, icon: Icon, color }) => (
- <div key={label} className="bg-white border border-black/10 px-4 py-3">
- <div className="flex items-center gap-2 mb-1">
- <Icon size={13} className={color} />
- <span className="text-xs font-medium text-black/35">{label}</span>
+ { label: 'Benutzer', value: totalUsers, icon: Users },
+ { label: 'Scans gesamt', value: totalScans, icon: Footprints },
+ { label: 'Ø EU-Größe', value: avgEU ? `EU ${avgEU}` : '—', icon: Ruler },
+ { label: 'Häufigste Größe', value: mostCommonEU ? `EU ${mostCommonEU}` : '—', icon: TrendingUp },
+ ].map(({ label, value, icon: Icon }) => (
+ <div key={label} className="bg-white p-5">
+ <div className="flex items-center gap-2 mb-3">
+ <Icon size={13} className="text-black/20" strokeWidth={1.25} />
  </div>
- <p className="text-xl font-bold text-black/90">{value}</p>
+ <p className="text-[22px] font-extralight text-black/75">{value}</p>
+ <span className="text-[9px] text-black/25 mt-1.5 uppercase tracking-[0.2em] font-light">{label}</span>
  </div>
  ))}
  </div>
 
  {/* ── Toolbar ── */}
- <div className="flex items-center gap-3 mb-4">
+ <div className="flex items-center gap-3 mb-6">
  {/* Search */}
  <div className="flex-1 relative">
- <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/35" />
+ <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/20" strokeWidth={1.25} />
  <input
  value={search}
  onChange={e => setSearch(e.target.value)}
  placeholder="Suche nach Name, E-Mail oder EU-Größe…"
- className="w-full bg-white border border-black/10 pl-9 pr-4 py-2.5 text-sm text-black/90 placeholder-black/20 outline-none focus:border-black/20 transition-colors"
+ className="w-full bg-white border-b border-black/[0.08] pl-10 pr-4 h-10 text-[13px] font-light text-black/70 placeholder-black/15 outline-none focus:border-black/25 transition-colors"
  />
  </div>
 
  {/* View mode toggle */}
- <div className="flex border border-black/10 overflow-hidden">
+ <div className="flex gap-1">
  <button
  onClick={() => setViewMode('users')}
- className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors border-0 ${
- viewMode === 'users' ? 'bg-black/8 text-black/50' : 'bg-white text-black/45 hover:text-black/65'
+ className={`flex items-center gap-1.5 px-3.5 py-2 text-[10px] font-light transition-colors uppercase tracking-[0.15em] ${
+ viewMode === 'users' ? 'bg-black text-white' : 'text-black/25 hover:text-black/50'
  }`}
  >
- <Users size={12} />
+ <Users size={12} strokeWidth={1.25} />
  Benutzer
  </button>
  <button
  onClick={() => setViewMode('list')}
- className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors border-0 border-l border-black/10 ${
- viewMode === 'list' ? 'bg-black/8 text-black/50' : 'bg-white text-black/45 hover:text-black/65'
+ className={`flex items-center gap-1.5 px-3.5 py-2 text-[10px] font-light transition-colors uppercase tracking-[0.15em] ${
+ viewMode === 'list' ? 'bg-black text-white' : 'text-black/25 hover:text-black/50'
  }`}
  >
- <LayoutList size={12} />
+ <LayoutList size={12} strokeWidth={1.25} />
  Alle Scans
  </button>
  </div>
@@ -884,11 +879,11 @@ export default function ScansPanel() {
 
  {/* ── Download hint for admins ── */}
  {canDownload && (
- <div className="flex items-center gap-2.5 bg-black/4 border border-black/10 px-4 py-2.5 mb-4">
- <Box size={13} className="text-black/50 flex-shrink-0" strokeWidth={1.5} />
- <p className="text-[10px] text-black/50">
- {isAdmin ? 'Admin' : 'Curator'}: Klicke auf <strong>R</strong> / <strong>L</strong> oder{' '}
- <Download size={9} className="inline" /> um STL-Modelle herunterzuladen.
+ <div className="flex items-center gap-2.5 bg-white px-5 py-3 mb-6">
+ <Box size={12} className="text-black/25 flex-shrink-0" strokeWidth={1.25} />
+ <p className="text-[10px] text-black/30 font-light">
+ {isAdmin ? 'Admin' : 'Curator'}: Klicke auf R / L oder{' '}
+ <Download size={9} className="inline" strokeWidth={1.25} /> um STL-Modelle herunterzuladen.
  Öffne einen Scan für die 3D-Vorschau.
  </p>
  </div>
@@ -896,13 +891,13 @@ export default function ScansPanel() {
 
  {/* ── Loading / Error ── */}
  {loading && (
- <div className="flex items-center justify-center py-16">
- <div className="w-8 h-8 border-2 border-black/10 border-t-black/35 animate-spin" />
+ <div className="flex items-center justify-center py-16 gap-2 text-black/25 text-[13px] font-light">
+ <div className="w-5 h-5 border border-black/10 border-t-black/40 animate-spin rounded-full" /> Lade Scans…
  </div>
  )}
  {error && !loading && (
- <div className="flex items-center gap-2 text-black/40 text-sm py-12 justify-center">
- <AlertCircle size={16} />
+ <div className="flex items-center gap-2 text-black/30 text-[12px] font-light py-12 justify-center">
+ <AlertCircle size={13} strokeWidth={1.25} />
  {error}
  </div>
  )}
@@ -910,8 +905,8 @@ export default function ScansPanel() {
  {/* ── Empty ── */}
  {!loading && !error && filtered.length === 0 && (
  <div className="text-center py-16">
- <Footprints size={32} className="text-black/20 mx-auto mb-3" />
- <p className="text-black/45 text-sm">
+ <Footprints size={28} className="text-black/10 mx-auto mb-3" strokeWidth={1} />
+ <p className="text-black/25 text-[12px] font-light">
  {search ? 'Keine Scans für diese Suche gefunden.' : 'Noch keine Scans. Benutzer können in der App scannen.'}
  </p>
  </div>
@@ -939,15 +934,15 @@ export default function ScansPanel() {
  {!loading && !error && filtered.length > 0 && viewMode === 'list' && (
  <div className="space-y-2">
  {filtered.map(scan => (
- <div key={scan.id} className="bg-white border border-black/6 overflow-hidden">
+ <div key={scan.id} className="bg-white overflow-hidden">
  {/* User mini-header */}
- <div className="flex items-center gap-2 px-4 pt-3 pb-1">
- <div className="w-5 h-5 bg-black/8 flex items-center justify-center flex-shrink-0">
- <span className="text-[8px] font-bold text-black/50">{scan.user_name?.[0]?.toUpperCase()}</span>
+ <div className="flex items-center gap-2 px-7 pt-4 pb-1">
+ <div className="w-5 h-5 bg-[#fafaf9] flex items-center justify-center flex-shrink-0">
+ <span className="text-[8px] font-extralight text-black/40">{scan.user_name?.[0]?.toUpperCase()}</span>
  </div>
- <span className="text-[9px] font-semibold text-black/45">{scan.user_name}</span>
- <span className="text-[8px] text-black/35">{scan.user_email}</span>
- <span className={`text-[10px] font-medium px-2 py-0.5 border ml-auto ${roleBadge(scan.user_role)}`}>
+ <span className="text-[10px] font-light text-black/50">{scan.user_name}</span>
+ <span className="text-[9px] text-black/25 font-light">{scan.user_email}</span>
+ <span className={`text-[9px] font-light px-2 py-0.5 border ml-auto ${roleBadge(scan.user_role)}`}>
  {scan.user_role}
  </span>
  </div>
