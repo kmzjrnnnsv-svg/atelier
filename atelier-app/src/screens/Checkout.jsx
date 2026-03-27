@@ -101,7 +101,7 @@ function fmtPrice(n) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, shoeAccessoryMap } = useAtelierStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, shoeAccessoryMap, accessories: storeAccessories } = useAtelierStore()
 
   const product = location.state?.product || {}
   const incomingAccessories = location.state?.accessories || []
@@ -132,13 +132,35 @@ export default function Checkout() {
     }).catch(() => {})
   }, [])
 
-  const dbAccessories = (shoeAccessoryMap[product.id] || []).map(a => ({
-    id: a.id, name: a.name, desc: a.description || '', price: `€ ${parseFloat(a.price) || 0}`, priceNum: parseFloat(a.price) || 0,
-  }))
+  // Collect accessories for all shoes (single product OR cart items)
+  const cartShoeIds = cart.filter(c => !c.isAccessory).map(c => c.shoeId)
+  const cartAccessoryIds = new Set(cart.filter(c => c.isAccessory).map(c => {
+    const m = String(c.shoeId).match(/^acc-(\d+)$/)
+    return m ? Number(m[1]) : null
+  }).filter(Boolean))
+
+  const shoeIds = product.id ? [product.id] : cartShoeIds
+  const seen = new Set()
+  const dbAccessories = shoeIds.flatMap(sid => (shoeAccessoryMap[sid] || []))
+    .filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true })
+    .filter(a => !cartAccessoryIds.has(a.id))
+    .map(a => ({
+      id: a.id, name: a.name, desc: a.description || '', price: `€ ${parseFloat(a.price) || 0}`, priceNum: parseFloat(a.price) || 0,
+    }))
+
+  // If no shoe-specific accessories, fall back to all store accessories
+  const fallbackAccessories = dbAccessories.length === 0
+    ? storeAccessories
+        .filter(a => !cartAccessoryIds.has(a.id) && !seen.has(a.id))
+        .map(a => ({
+          id: a.id, name: a.name, desc: a.description || '', price: `€ ${parseFloat(a.price) || 0}`, priceNum: parseFloat(a.price) || 0,
+        }))
+    : []
+
   const extraAccessories = incomingAccessories
-    .filter(a => !dbAccessories.find(x => x.id === a.id))
+    .filter(a => !dbAccessories.find(x => x.id === a.id) && !cartAccessoryIds.has(a.id))
     .map(a => ({ id: a.id, name: a.name, desc: '', price: `€ ${a.price}`, priceNum: a.price }))
-  const allAccessories = [...dbAccessories, ...extraAccessories]
+  const allAccessories = [...dbAccessories, ...fallbackAccessories, ...extraAccessories]
 
   const [initialized, setInitialized] = useState(false)
   if (!initialized && incomingAccessories.length > 0) {
@@ -420,12 +442,26 @@ export default function Checkout() {
         {step === 3 && (
           <div className="px-5">
             <p className="text-[12px] text-black/40 mb-3">Passendes Zubehör für deine Bestellung.</p>
-            <div className="space-y-px">
-              {allAccessories.map(item => (
-                <AccessoryCard key={item.id} item={item}
-                  selected={selectedAcc.includes(item.id)} onToggle={() => toggleAcc(item.id)} />
-              ))}
-            </div>
+            {allAccessories.length > 0 ? (
+              <div className="space-y-px">
+                {allAccessories.map(item => (
+                  <AccessoryCard key={item.id} item={item}
+                    selected={selectedAcc.includes(item.id)} onToggle={() => toggleAcc(item.id)} />
+                ))}
+              </div>
+            ) : cartAccessoryIds.size > 0 ? (
+              <div className="bg-white p-5 border border-black/[0.06] text-center">
+                <div className="w-10 h-10 bg-black/[0.03] flex items-center justify-center mx-auto mb-3">
+                  <Check size={18} strokeWidth={1.5} className="text-black/30" />
+                </div>
+                <p className="text-[13px] text-black/60 font-light">Alles Zubehör ist bereits im Warenkorb.</p>
+                <p className="text-[11px] text-black/25 mt-1 font-light">Sie können direkt zur Übersicht fortfahren.</p>
+              </div>
+            ) : (
+              <div className="bg-white p-5 border border-black/[0.06] text-center">
+                <p className="text-[13px] text-black/40 font-light">Kein passendes Zubehör verfügbar.</p>
+              </div>
+            )}
           </div>
         )}
 
