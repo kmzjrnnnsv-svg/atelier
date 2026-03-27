@@ -7,10 +7,12 @@ import { useNavigate } from 'react-router-dom'
 import {
   User, Mail, Lock, LogOut, ChevronRight,
   Shield, FileText, HelpCircle, Star, Trash2, Check, X, Eye, EyeOff, MapPin,
+  Smartphone, Tablet, Monitor,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 import useAtelierStore from '../store/atelierStore'
+import useDeviceInfo from '../hooks/useDeviceInfo'
 
 // ── Role labels ─────────────────────────────────────────────────────────────
 const roleMeta = {
@@ -113,9 +115,12 @@ function Toast({ message, type }) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+const DEVICE_ICON = { smartphone: Smartphone, tablet: Tablet, desktop: Monitor }
+
 export default function Settings() {
   const navigate  = useNavigate()
   const { user, logout } = useAuth()
+  const device = useDeviceInfo()
 
   const [toast, setToast] = useState({ message: '', type: 'success' })
   const showToast = (message, type = 'success') => {
@@ -430,6 +435,20 @@ export default function Settings() {
       <SettingsRow icon={FileText} label="Allgemeine Geschäftsbedingungen" onPress={() => navigate('/legal/agb')} />
       <Divider />
       <SettingsRow icon={FileText} label="Impressum" onPress={() => navigate('/legal/impressum')} />
+
+      {/* ── GERÄT ────────────────────────────────────────────────── */}
+      <SectionLabel>Gerät</SectionLabel>
+      <SettingsRow
+        icon={DEVICE_ICON[device.type] || Monitor}
+        label={device.label}
+        sub={[
+          device.type === 'smartphone' ? 'Smartphone' : device.type === 'tablet' ? 'Tablet' : 'Desktop',
+          device.os === 'ios' ? 'iOS' : device.os === 'android' ? 'Android' : device.os === 'macos' ? 'macOS' : device.os === 'windows' ? 'Windows' : device.os === 'linux' ? 'Linux' : '',
+          device.hasLidar ? 'LiDAR' : '',
+        ].filter(Boolean).join(' · ')}
+        chevron={false}
+        onPress={() => {}}
+      />
 
       {/* ── Version ──────────────────────────────────────────────── */}
       <div className="mt-10 mb-4 flex flex-col items-center gap-2">

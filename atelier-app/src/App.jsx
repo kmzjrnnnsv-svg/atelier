@@ -8,6 +8,7 @@ import Footer from './components/Footer'
 import useAtelierStore from './store/atelierStore'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Capacitor } from '@capacitor/core'
+import useDeviceInfo from './hooks/useDeviceInfo'
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -170,6 +171,7 @@ function AppRoutes() {
   const location = useLocation()
   const { user } = useAuth()
   const { initStore } = useAtelierStore()
+  const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
   const FOOTER_PATHS = ['/foryou', '/collection', '/accessories', '/explore']
@@ -198,7 +200,8 @@ function AppRoutes() {
         <div className="flex md:hidden items-center justify-center h-full bg-white px-8">
           <div className="text-center">
             <p className="text-[16px] font-semibold text-black mb-2">CMS Studio</p>
-            <p className="text-[13px] text-black/50 font-light leading-relaxed">Das CMS ist nur auf iPad und Desktop verfügbar. Bitte wechsle zu einem größeren Bildschirm.</p>
+            <p className="text-[13px] text-black/50 font-light leading-relaxed mb-4">Das CMS ist nur auf iPad und Desktop verfügbar.</p>
+            <p className="text-[11px] text-black/30 font-light">Erkannt: {device.label}</p>
           </div>
         </div>
         <div className="hidden md:block h-full">
