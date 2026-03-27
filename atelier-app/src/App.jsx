@@ -194,6 +194,14 @@ function AppRoutes() {
   if (isCMS) {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: isNative ? '100dvh' : viewportHeight, zIndex: 50, overflow: 'hidden', boxSizing: 'border-box', ...(isNative && { paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }) }}>
+        {/* CMS nur auf iPad / Desktop (>= 768px) */}
+        <div className="flex md:hidden items-center justify-center h-full bg-white px-8">
+          <div className="text-center">
+            <p className="text-[16px] font-semibold text-black mb-2">CMS Studio</p>
+            <p className="text-[13px] text-black/50 font-light leading-relaxed">Das CMS ist nur auf iPad und Desktop verfügbar. Bitte wechsle zu einem größeren Bildschirm.</p>
+          </div>
+        </div>
+        <div className="hidden md:block h-full">
         <Suspense fallback={<DelayedSpinner />}>
           <Routes>
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
@@ -228,6 +236,7 @@ function AppRoutes() {
             </Route>
           </Routes>
         </Suspense>
+        </div>
       </div>
     )
   }
