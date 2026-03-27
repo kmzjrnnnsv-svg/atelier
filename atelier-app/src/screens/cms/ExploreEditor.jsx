@@ -1,7 +1,151 @@
 import { useState, useRef, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Check, Upload, X, Eye, EyeOff, GripVertical, Image } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, Upload, X, Eye, EyeOff, GripVertical, Image, ChevronDown, Loader2 } from 'lucide-react'
 import useAtelierStore from '../../store/atelierStore'
 import { apiFetch } from '../../hooks/useApi'
+
+// ── Reusable Image Picker with dropdown + upload ───────────────────────────
+function ImagePicker({ value, onChange, label }) {
+  const [open, setOpen] = useState(false)
+  const [media, setMedia] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef()
+  const dropRef = useRef()
+
+  // close on outside click
+  useEffect(() => {
+    const handler = (e) => { if (dropRef.current && !dropRef.current.contains(e.target)) setOpen(false) }
+    if (open) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const loadMedia = () => {
+    if (media.length) return
+    setLoading(true)
+    apiFetch('/api/media')
+      .then(data => setMedia(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }
+
+  const handleOpen = () => {
+    setOpen(!open)
+    if (!open) loadMedia()
+  }
+
+  const handleUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const dataUri = reader.result
+      try {
+        const res = await apiFetch('/api/media', {
+          method: 'POST',
+          body: JSON.stringify({ name: file.name, image_data: dataUri }),
+        })
+        if (res?.id) {
+          setMedia(prev => [{ id: res.id, name: res.name, image_data: res.image_data }, ...prev])
+          onChange(dataUri)
+        }
+      } catch {}
+      setUploading(false)
+      setOpen(false)
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const handleSelect = (item) => {
+    onChange(item.image_data)
+    setOpen(false)
+  }
+
+  const handleRemove = () => {
+    onChange('')
+  }
+
+  return (
+    <div ref={dropRef} className="relative">
+      <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">{label}</label>
+
+      {/* Selected preview or trigger */}
+      {value ? (
+        <div className="relative group">
+          <div className="w-full overflow-hidden bg-[#fafaf9]" style={{ aspectRatio: '16 / 5', maxHeight: 140 }}>
+            <img src={value} alt="" className="w-full h-full object-cover" />
+          </div>
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+            <button
+              onClick={handleOpen}
+              className="px-4 h-8 bg-white text-[10px] text-black uppercase tracking-[0.15em] font-light border-0 hover:bg-black hover:text-white transition-all"
+            >
+              Ändern
+            </button>
+            <button
+              onClick={handleRemove}
+              className="w-8 h-8 bg-white text-black flex items-center justify-center border-0 hover:bg-red-500 hover:text-white transition-all"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={handleOpen}
+          className="w-full py-6 border border-dashed border-black/[0.08] text-black/25 text-[11px] flex items-center justify-center gap-2 bg-transparent hover:border-black/25 font-light uppercase tracking-[0.15em] transition-all"
+        >
+          <Image size={14} strokeWidth={1.25} />
+          Bild auswählen
+          <ChevronDown size={12} strokeWidth={1.25} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+      )}
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-black/[0.08] shadow-lg max-h-[320px] overflow-y-auto">
+          {/* Upload row */}
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="w-full px-4 py-3 flex items-center gap-2.5 text-[11px] text-black/50 hover:bg-black/[0.02] border-0 border-b border-black/[0.04] bg-transparent font-light uppercase tracking-[0.15em] transition-all disabled:opacity-40"
+          >
+            {uploading ? <Loader2 size={13} strokeWidth={1.25} className="animate-spin" /> : <Upload size={13} strokeWidth={1.25} />}
+            {uploading ? 'Wird hochgeladen …' : 'Neues Bild hochladen'}
+          </button>
+
+          {/* Media grid */}
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 size={16} strokeWidth={1.25} className="animate-spin text-black/20" />
+            </div>
+          ) : media.length === 0 ? (
+            <p className="text-center text-[11px] text-black/20 py-8 font-light">Noch keine Bilder vorhanden</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-[1px] bg-black/[0.04] p-[1px]">
+              {media.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelect(item)}
+                  className="relative group/item bg-white border-0 p-0 cursor-pointer overflow-hidden"
+                  style={{ aspectRatio: '1' }}
+                >
+                  <img src={item.image_data} alt={item.name} className="w-full h-full object-cover transition-transform duration-300 group-hover/item:scale-[1.05]" />
+                  <div className="absolute inset-0 bg-black/0 group-hover/item:bg-black/20 transition-colors" />
+                  <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity">
+                    <p className="text-[8px] text-white/80 truncate font-light">{item.name}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const ICON_OPTIONS = ['BookOpen', 'Film', 'Layers', 'Sparkles', 'Users', 'TrendingUp', 'Compass', 'Star', 'Heart', 'Globe']
 const TAG_OPTIONS = ['Demnächst', 'In Produktion', 'Beta', 'Geheim', 'Neu', 'Live']
@@ -257,7 +401,6 @@ const PAGE_TEXT_FIELDS = [
   { key: 'journal_cta_label', label: 'Journal-CTA — Label', placeholder: 'Atelier Journal' },
   { key: 'journal_cta_title', label: 'Journal-CTA — Titel', placeholder: 'Die Welt hinter jedem Schuh' },
   { key: 'journal_cta_description', label: 'Journal-CTA — Beschreibung', placeholder: 'Editorials, Handwerkskunst und Inspirationen...' },
-  { key: 'journal_cta_image', label: 'Journal-CTA — Bild-URL', placeholder: 'https://images.unsplash.com/...' },
 ]
 
 function PageTextsEditor() {
@@ -326,15 +469,19 @@ function PageTextsEditor() {
                   className={inputCls}
                   placeholder={field.placeholder}
                 />
-                {field.key === 'journal_cta_image' && texts.journal_cta_image && (
-                  <div className="mt-3 w-full overflow-hidden bg-[#fafaf9]" style={{ aspectRatio: '16 / 5', maxHeight: 120 }}>
-                    <img src={texts.journal_cta_image} alt="" className="w-full h-full object-cover" onError={e => e.target.style.display = 'none'} />
-                  </div>
-                )}
               </div>
             ) : null}
           </div>
         ))}
+
+        {/* Image Picker for Journal CTA */}
+        <div className="pt-2">
+          <ImagePicker
+            value={texts.journal_cta_image || ''}
+            onChange={(val) => setTexts(prev => ({ ...prev, journal_cta_image: val }))}
+            label="Journal-CTA — Bild"
+          />
+        </div>
       </div>
       <div className="mt-6 flex items-center gap-4">
         <button

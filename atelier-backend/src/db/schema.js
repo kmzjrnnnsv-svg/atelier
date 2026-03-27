@@ -758,5 +758,13 @@ export function runMigrations(db) {
       ('leather',     'LEDERSOHLE',    'Klassisch',    'Handgenähte Ledersohle — elegant und atmungsaktiv.', 'Nur für trockene Bedingungen empfohlen. Ideal im Sommer und für Indoor-Anlässe. Bei Nässe wird es rutschig.', 0, 'warn', 0, 'OXFORD,LOAFER,DERBY,MONK', 0),
       ('rubber-grip', 'ANTI-RUTSCH',   'Gummi-Profil', 'Gummibeschichtete Profilsohle — maximale Rutschfestigkeit auf allen Oberflächen.', 'Unsere Empfehlung für den Alltag. Sicherer Halt bei Regen, Schnee und nassen Böden. Ganzjährig einsetzbar.', 35, 'good', 1, 'OXFORD,LOAFER,DERBY,MONK,BOOT', 1),
       ('sneaker',     'SNEAKER-SOHLE', 'EVA-Komfort',  'Leichte EVA-Komfortsohle mit Dämpfung — für maximalen Gehkomfort den ganzen Tag.', 'Speziell für Sneaker entwickelt. Stoßdämpfend, flexibel und ultraleicht.', 0, 'good', 0, 'SNEAKER', 2);
+
+    CREATE TABLE IF NOT EXISTS cms_media (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT    NOT NULL,
+      image_data  TEXT    NOT NULL,
+      created_by  INTEGER REFERENCES users(id),
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
   `)
 }
