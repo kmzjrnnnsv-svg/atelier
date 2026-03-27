@@ -46,7 +46,7 @@ export default function ForYou() {
       {heroShoe && (
         <div className="relative cursor-pointer" onClick={() => selectShoe(heroShoe)}>
           <div className="w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: isMobileWeb ? '3 / 4' : '21 / 9' }}>
-            <img src={heroShoe.image || HEROES.foryou} alt={heroShoe.name} className="w-full h-full object-cover" />
+            <img src={c('hero', 'image', '') || heroShoe.image || HEROES.foryou} alt={heroShoe.name} className="w-full h-full object-cover" />
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-14" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.5) 100%)' }}>
             <p className="text-[9px] lg:text-[10px] text-white/40 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{c('hero', 'label', 'Atelier Kollektion')}</p>
@@ -57,7 +57,7 @@ export default function ForYou() {
               style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
               onClick={e => { e.stopPropagation(); selectShoe(heroShoe) }}
             >
-              Entdecken
+              {c('hero', 'button', 'Entdecken')}
             </button>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function ForYou() {
             className="mt-3 lg:mt-5 px-6 lg:px-8 py-2.5 lg:py-3 bg-white text-black text-[10px] lg:text-[11px] border border-black hover:bg-black hover:text-white transition-all duration-300"
             style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
           >
-            Entdecken
+            {c('savoir_faire', 'button', 'Entdecken')}
           </button>
         </div>
       </div>
@@ -150,11 +150,11 @@ export default function ForYou() {
               <Footprints size={16} strokeWidth={1} className="text-black/25" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] text-black font-normal">Ihr 3D-Fußscan</p>
+              <p className="text-[12px] text-black font-normal">{c('scan', 'title', 'Ihr 3D-Fußscan')}</p>
               {latestScan ? (
                 <p className="text-[10px] text-black/30 mt-0.5 font-light">EU {latestScan.eu_size || '-'} · {latestScan.accuracy ? `${latestScan.accuracy.toFixed(1)}%` : '-'}</p>
               ) : (
-                <p className="text-[10px] text-black/30 mt-0.5 font-light">Jetzt scannen für perfekte Passform</p>
+                <p className="text-[10px] text-black/30 mt-0.5 font-light">{c('scan', 'description', 'Jetzt scannen für perfekte Passform')}</p>
               )}
             </div>
             <ArrowRight size={14} strokeWidth={1} className="text-black/15 flex-shrink-0" />
@@ -272,11 +272,11 @@ export default function ForYou() {
         <div className="py-10 lg:py-20 border-t border-black/[0.04]">
           <div className="px-4 lg:px-16 xl:px-24 mb-5 lg:mb-8 flex items-center justify-between">
             <div>
-              <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">Bestellungen</p>
-              <h2 className="text-[18px] lg:text-[26px] font-extralight text-black tracking-tight">Ihre Bestellungen</h2>
+              <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">{c('orders', 'label', 'Bestellungen')}</p>
+              <h2 className="text-[18px] lg:text-[26px] font-extralight text-black tracking-tight">{c('orders', 'title', 'Ihre Bestellungen')}</h2>
             </div>
-            <button onClick={() => navigate('/orders')} className="text-[10px] lg:text-[11px] text-black/30 bg-transparent border-0 hover:text-black transition-colors font-light underline underline-offset-4 decoration-black/15">
-              Alle anzeigen
+            <button onClick={() => navigate(c('orders', 'link', '/orders'))} className="text-[10px] lg:text-[11px] text-black/30 bg-transparent border-0 hover:text-black transition-colors font-light underline underline-offset-4 decoration-black/15">
+              {c('orders', 'button', 'Alle anzeigen')}
             </button>
           </div>
           <div className="px-4 lg:px-16 xl:px-24">
@@ -339,9 +339,9 @@ export default function ForYou() {
         <div className="px-4 lg:px-16 xl:px-24">
           <div className="grid grid-cols-3 gap-[1px] bg-black/[0.04]">
             {[
-              { label: 'Handgefertigt', title: 'Jeder Schuh ein Unikat', text: 'Von Hand gefertigt aus erlesenen Materialien in über 200 Arbeitsschritten.' },
-              { label: '3D-Fußscan', title: 'Perfekte Passform', text: 'Millimetergenau vermessen für maximalen Komfort und Langlebigkeit.' },
-              { label: 'Versand', title: 'Kostenlos ab € 500', text: 'Sicher verpackt und versichert direkt zu Ihnen geliefert.' },
+              { label: c('service_1', 'label', 'Handgefertigt'), title: c('service_1', 'title', 'Jeder Schuh ein Unikat'), text: c('service_1', 'description', 'Von Hand gefertigt aus erlesenen Materialien in über 200 Arbeitsschritten.') },
+              { label: c('service_2', 'label', '3D-Fußscan'), title: c('service_2', 'title', 'Perfekte Passform'), text: c('service_2', 'description', 'Millimetergenau vermessen für maximalen Komfort und Langlebigkeit.') },
+              { label: c('service_3', 'label', 'Versand'), title: c('service_3', 'title', 'Kostenlos ab € 500'), text: c('service_3', 'description', 'Sicher verpackt und versichert direkt zu Ihnen geliefert.') },
             ].map(item => (
               <div key={item.label} className="bg-white p-4 lg:p-8">
                 <p className="text-[8px] lg:text-[9px] uppercase tracking-[0.3em] text-black/20 mb-2 lg:mb-3">{item.label}</p>

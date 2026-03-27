@@ -48,6 +48,7 @@ export default function Explore() {
   const navigate = useNavigate()
   const { exploreSections, articles } = useAtelierStore()
   const [selectedArticle, setSelectedArticle] = useState(null)
+  const [cms, setCms] = useState(null)
 
   const sections = exploreSections.length > 0
     ? exploreSections.filter(s => s.visible).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
@@ -61,9 +62,15 @@ export default function Explore() {
     { label: 'Community', title: 'Atelier-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
   ])
 
+  // CMS helper — returns CMS value or fallback
+  const c = (key, fallback) => cms?.[key] || fallback
+
   useEffect(() => {
     apiFetch('/api/settings/footer')
       .then(data => { if (data?.service_sections) setServiceSections(data.service_sections) })
+      .catch(() => {})
+    apiFetch('/api/settings/explore')
+      .then(data => { if (data) setCms(data) })
       .catch(() => {})
   }, [])
 
@@ -110,8 +117,8 @@ export default function Explore() {
       {moreSections.length > 0 && (
         <div className="py-10 lg:py-20">
           <div className="px-4 lg:px-16 xl:px-24 mb-6 lg:mb-10">
-            <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">Entdecken</p>
-            <h2 className="text-[18px] lg:text-[26px] font-extralight text-black tracking-tight">Themen</h2>
+            <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">{c('topics_label', 'Entdecken')}</p>
+            <h2 className="text-[18px] lg:text-[26px] font-extralight text-black tracking-tight">{c('topics_title', 'Themen')}</h2>
           </div>
           <div className="px-4 lg:px-16 xl:px-24">
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-[1px] bg-black/[0.04]">
@@ -160,8 +167,8 @@ export default function Explore() {
       {regularArticles.length > 0 && (
         <div className="py-10 lg:py-20">
           <div className="px-4 lg:px-16 xl:px-24 mb-6 lg:mb-10">
-            <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">Atelier Journal</p>
-            <h2 className="text-[18px] lg:text-[26px] font-extralight text-black tracking-tight">Alle Artikel</h2>
+            <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">{c('articles_label', 'Atelier Journal')}</p>
+            <h2 className="text-[18px] lg:text-[26px] font-extralight text-black tracking-tight">{c('articles_title', 'Alle Artikel')}</h2>
           </div>
           <div className="px-4 lg:px-16 xl:px-24">
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-[1px] bg-black/[0.04]">
@@ -189,16 +196,16 @@ export default function Explore() {
           ══════════════════════════════════════════════════════════ */}
       <div className="relative">
         <div className="w-full overflow-hidden" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '21 / 9' }}>
-          <img src={CRAFT.leather} alt="" className="w-full h-full object-cover" />
+          <img src={c('journal_cta_image', '') || CRAFT.leather} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/55" />
         </div>
         <div className="absolute bottom-0 left-0 p-5 lg:p-14">
-          <p className="text-[9px] lg:text-[10px] text-white/30 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">Atelier Journal</p>
+          <p className="text-[9px] lg:text-[10px] text-white/30 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{c('journal_cta_label', 'Atelier Journal')}</p>
           <h2 className="text-[20px] lg:text-[32px] font-extralight text-white leading-[1.1] tracking-tight">
-            Die Welt hinter jedem Schuh
+            {c('journal_cta_title', 'Die Welt hinter jedem Schuh')}
           </h2>
           <p className="text-[11px] lg:text-[13px] text-white/25 mt-1.5 lg:mt-2 font-light max-w-md">
-            Editorials, Handwerkskunst und Inspirationen — entdecken Sie die Geschichten.
+            {c('journal_cta_description', 'Editorials, Handwerkskunst und Inspirationen — entdecken Sie die Geschichten.')}
           </p>
         </div>
       </div>

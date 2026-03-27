@@ -1,28 +1,70 @@
 /**
  * HomepageEditor — CMS panel to configure ForYou page section headers
- * Each section has: image URL, label (small caps), title, button text, link
+ * Each section has: image URL, label (small caps), title, description, button text, link
  */
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../../hooks/useApi'
 
 const DEFAULT_SECTIONS = [
-  { key: 'hero', label: 'Atelier Kollektion', title: '', image: '', button: 'Entdecken', link: '' },
-  { key: 'featured', label: 'Herren', title: 'Empfohlen für Sie', image: '', button: 'Entdecken Sie die Kollektion', link: '/collection' },
-  { key: 'savoir_faire', label: 'Savoir-Faire', title: 'Handwerkskunst erleben', image: '', button: 'Entdecken', link: '/explore' },
-  { key: 'collection_cta', label: 'Handgefertigt in über 200 Schritten', title: 'Die Kollektion entdecken', image: '', button: 'Kollektion', link: '/collection' },
-  { key: 'favorites', label: 'Herren', title: 'Ihre Favoriten', image: '', button: 'Alle Favoriten anzeigen', link: '/wishlist' },
-  { key: 'accessories', label: 'Zubehör & Pflege', title: 'Das Beste für Ihre Schuhe', image: '', button: 'Alle Produkte', link: '/accessories' },
-  { key: 'journal', label: 'Atelier Journal', title: '', image: '', button: '', link: '/explore' },
+  { key: 'hero', label: 'Atelier Kollektion', title: '', description: '', image: '', button: 'Entdecken', link: '' },
+  { key: 'featured', label: 'Herren', title: 'Empfohlen für Sie', description: '', image: '', button: 'Kollektion entdecken', link: '/collection' },
+  { key: 'editorial', label: '', title: '', description: '', image: '', image2: '', button: '', link: '' },
+  { key: 'savoir_faire', label: 'Savoir-Faire', title: 'Handwerkskunst erleben', description: '', image: '', button: 'Entdecken', link: '/explore' },
+  { key: 'collection_cta', label: 'Handgefertigt in über 200 Schritten', title: 'Die Kollektion entdecken', description: '', image: '', button: 'Kollektion', link: '/collection' },
+  { key: 'favorites', label: 'Herren', title: 'Ihre Favoriten', description: '', image: '', button: 'Alle Favoriten', link: '/wishlist' },
+  { key: 'accessories', label: 'Zubehör & Pflege', title: 'Das Beste für Ihre Schuhe', description: '', image: '', button: 'Alle Produkte', link: '/accessories' },
+  { key: 'orders', label: 'Bestellungen', title: 'Ihre Bestellungen', description: '', image: '', button: 'Alle anzeigen', link: '/orders' },
+  { key: 'journal', label: 'Atelier Journal', title: '', description: '', image: '', button: '', link: '/explore' },
+  { key: 'scan', label: '', title: 'Ihr 3D-Fußscan', description: 'Jetzt scannen für perfekte Passform', image: '', button: '', link: '/scan' },
+  { key: 'service_1', label: 'Handgefertigt', title: 'Jeder Schuh ein Unikat', description: 'Von Hand gefertigt aus erlesenen Materialien in über 200 Arbeitsschritten.', image: '', button: '', link: '' },
+  { key: 'service_2', label: '3D-Fußscan', title: 'Perfekte Passform', description: 'Millimetergenau vermessen für maximalen Komfort und Langlebigkeit.', image: '', button: '', link: '' },
+  { key: 'service_3', label: 'Versand', title: 'Kostenlos ab € 500', description: 'Sicher verpackt und versichert direkt zu Ihnen geliefert.', image: '', button: '', link: '' },
 ]
 
 const SECTION_LABELS = {
   hero: 'Hero-Banner',
   featured: 'Empfohlene Produkte',
+  editorial: 'Editorial Split (2 Spalten)',
   savoir_faire: 'Savoir-Faire / Handwerk',
   collection_cta: 'Kollektion CTA',
   favorites: 'Favoriten',
   accessories: 'Zubehör & Pflege',
+  orders: 'Bestellungen',
   journal: 'Journal / Artikel',
+  scan: '3D-Fußscan (Native)',
+  service_1: 'Service-Versprechen 1',
+  service_2: 'Service-Versprechen 2',
+  service_3: 'Service-Versprechen 3',
+}
+
+// Fields to show per section type
+const FIELDS = {
+  hero:           ['image', 'label', 'title', 'button'],
+  featured:       ['image', 'label', 'title', 'button', 'link'],
+  editorial:      ['image', 'image2'],
+  savoir_faire:   ['image', 'label', 'title', 'button', 'link'],
+  collection_cta: ['image', 'label', 'title', 'button', 'link'],
+  favorites:      ['label', 'title', 'button', 'link'],
+  accessories:    ['image', 'label', 'title', 'button', 'link'],
+  orders:         ['label', 'title', 'button', 'link'],
+  journal:        ['label', 'title'],
+  scan:           ['title', 'description'],
+  service_1:      ['label', 'title', 'description'],
+  service_2:      ['label', 'title', 'description'],
+  service_3:      ['label', 'title', 'description'],
+}
+
+const inputCls = 'w-full h-10 px-0 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15'
+const labelCls = 'text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light'
+
+const FIELD_LABELS = {
+  image: 'Bild-URL',
+  image2: 'Bild-URL (rechts)',
+  label: 'Label (Kleintext)',
+  title: 'Titel',
+  description: 'Beschreibung',
+  button: 'Button-Text',
+  link: 'Link / Pfad',
 }
 
 export default function HomepageEditor() {
@@ -36,7 +78,6 @@ export default function HomepageEditor() {
       .catch(() => {})
   }, [])
 
-  // Merge saved data with defaults to ensure all keys exist
   function mergeSections(saved) {
     return DEFAULT_SECTIONS.map(def => {
       const s = saved.find(x => x.key === def.key)
@@ -67,85 +108,110 @@ export default function HomepageEditor() {
       <div className="mb-10">
         <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Inhalte</p>
         <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Homepage-Sektionen</h1>
-        <p className="text-[13px] text-black/30 mt-2 font-light">Bilder und Texte der Sektionen auf der „Für dich"-Seite anpassen.</p>
+        <p className="text-[13px] text-black/30 mt-2 font-light">Alle Texte und Bilder der „Für dich"-Seite anpassen.</p>
       </div>
 
       <div className="space-y-8">
-        {sections.map(section => (
-          <div key={section.key} className="bg-white p-7">
-            <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">
-              {SECTION_LABELS[section.key] || section.key}
-            </p>
+        {sections.map(section => {
+          const fields = FIELDS[section.key] || ['image', 'label', 'title', 'description', 'button', 'link']
+          const hasImage = fields.includes('image')
+          const hasImage2 = fields.includes('image2')
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Bild-URL</label>
-                <input
-                  value={section.image}
-                  onChange={e => update(section.key, 'image', e.target.value)}
-                  className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
-                  placeholder="https://images.unsplash.com/..."
-                />
-                {section.image && (
-                  <div className="mt-3 w-full overflow-hidden bg-[#f6f5f3]" style={{ aspectRatio: '16 / 5', maxHeight: 120 }}>
-                    <img src={section.image} alt="" className="w-full h-full object-cover" onError={e => e.target.style.display = 'none'} />
+          return (
+            <div key={section.key} className="bg-white p-7">
+              <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">
+                {SECTION_LABELS[section.key] || section.key}
+              </p>
+
+              <div className="space-y-4">
+                {/* Image previews */}
+                {hasImage && (
+                  <div>
+                    <label className={labelCls}>Bild-URL</label>
+                    <input
+                      value={section.image}
+                      onChange={e => update(section.key, 'image', e.target.value)}
+                      className={inputCls}
+                      placeholder="https://images.unsplash.com/..."
+                    />
+                    {section.image && (
+                      <div className="mt-3 w-full overflow-hidden bg-[#fafaf9]" style={{ aspectRatio: '16 / 5', maxHeight: 120 }}>
+                        <img src={section.image} alt="" className="w-full h-full object-cover" onError={e => e.target.style.display = 'none'} />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {hasImage2 && (
+                  <div>
+                    <label className={labelCls}>Bild-URL (rechts)</label>
+                    <input
+                      value={section.image2 || ''}
+                      onChange={e => update(section.key, 'image2', e.target.value)}
+                      className={inputCls}
+                      placeholder="https://..."
+                    />
+                  </div>
+                )}
+
+                {/* Text fields in pairs */}
+                {fields.includes('label') && fields.includes('title') && (
+                  <div className="flex gap-5">
+                    <div className="flex-1">
+                      <label className={labelCls}>Label (Kleintext)</label>
+                      <input value={section.label} onChange={e => update(section.key, 'label', e.target.value)} className={inputCls} placeholder="Label" />
+                    </div>
+                    <div className="flex-1">
+                      <label className={labelCls}>Titel</label>
+                      <input value={section.title} onChange={e => update(section.key, 'title', e.target.value)} className={inputCls} placeholder="Titel" />
+                    </div>
+                  </div>
+                )}
+                {fields.includes('title') && !fields.includes('label') && (
+                  <div>
+                    <label className={labelCls}>Titel</label>
+                    <input value={section.title} onChange={e => update(section.key, 'title', e.target.value)} className={inputCls} placeholder="Titel" />
+                  </div>
+                )}
+
+                {fields.includes('description') && (
+                  <div>
+                    <label className={labelCls}>Beschreibung</label>
+                    <input value={section.description || ''} onChange={e => update(section.key, 'description', e.target.value)} className={inputCls} placeholder="Beschreibung" />
+                  </div>
+                )}
+
+                {(fields.includes('button') || fields.includes('link')) && (
+                  <div className="flex gap-5">
+                    {fields.includes('button') && (
+                      <div className="flex-1">
+                        <label className={labelCls}>Button-Text</label>
+                        <input value={section.button} onChange={e => update(section.key, 'button', e.target.value)} className={inputCls} placeholder="Entdecken" />
+                      </div>
+                    )}
+                    {fields.includes('link') && (
+                      <div className="flex-1">
+                        <label className={labelCls}>Link / Pfad</label>
+                        <input value={section.link} onChange={e => update(section.key, 'link', e.target.value)} className={inputCls} placeholder="/collection" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-
-              <div className="flex gap-5">
-                <div className="flex-1">
-                  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Label (Kleintext)</label>
-                  <input
-                    value={section.label}
-                    onChange={e => update(section.key, 'label', e.target.value)}
-                    className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
-                    placeholder="Herren"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Titel</label>
-                  <input
-                    value={section.title}
-                    onChange={e => update(section.key, 'title', e.target.value)}
-                    className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
-                    placeholder="Empfohlen für Sie"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-5">
-                <div className="flex-1">
-                  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Button-Text</label>
-                  <input
-                    value={section.button}
-                    onChange={e => update(section.key, 'button', e.target.value)}
-                    className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
-                    placeholder="Entdecken"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Link / Pfad</label>
-                  <input
-                    value={section.link}
-                    onChange={e => update(section.key, 'link', e.target.value)}
-                    className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
-                    placeholder="/collection"
-                  />
-                </div>
-              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="mt-8 px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 disabled:opacity-30 uppercase tracking-[0.2em] font-light"
-      >
-        {saving ? 'Speichern...' : saved ? 'Gespeichert' : 'Speichern'}
-      </button>
+      <div className="mt-10 flex items-center gap-4">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-8 h-10 border border-black text-[10px] uppercase tracking-[0.2em] font-light hover:bg-black hover:text-white transition-all disabled:opacity-30"
+        >
+          {saving ? 'Speichert …' : 'Speichern'}
+        </button>
+        {saved && <span className="text-[11px] text-black/35 font-light">Gespeichert</span>}
+      </div>
     </div>
   )
 }
