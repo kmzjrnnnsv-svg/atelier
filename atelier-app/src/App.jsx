@@ -158,6 +158,8 @@ function AppRoutes() {
   const { initStore } = useAtelierStore()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
+  const FOOTER_PATHS = ['/foryou', '/collection', '/accessories', '/explore']
+  const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
 
   // Configure native status bar for edge-to-edge rendering
@@ -291,7 +293,7 @@ function AppRoutes() {
       <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
-        {showNav && <Footer />}
+        {showFooter && <Footer />}
       </div>
     )
   }
@@ -303,7 +305,7 @@ function AppRoutes() {
       <div className="flex-1 overflow-y-auto relative">
         <div className="w-full">
           <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
-          {showNav && <Footer />}
+          {showFooter && <Footer />}
         </div>
       </div>
     </div>
