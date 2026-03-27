@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
 import TopBar from './components/TopBar'
+import Footer from './components/Footer'
 import useAtelierStore from './store/atelierStore'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Capacitor } from '@capacitor/core'
@@ -288,6 +289,7 @@ function AppRoutes() {
       <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+        {showNav && <Footer />}
       </div>
     )
   }
@@ -299,6 +301,7 @@ function AppRoutes() {
       <div className="flex-1 overflow-y-auto relative">
         <div className="w-full">
           <Suspense fallback={<DelayedSpinner />}>{routes}</Suspense>
+          {showNav && <Footer />}
         </div>
       </div>
     </div>
