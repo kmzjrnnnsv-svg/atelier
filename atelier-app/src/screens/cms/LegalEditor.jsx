@@ -56,28 +56,26 @@ export default function LegalEditor() {
  const isDirty = currentDoc && (form.title !== (currentDoc.title || '') || form.content !== (currentDoc.content || ''))
 
  return (
- <div className="p-8">
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
  {/* Header */}
  <div className="flex items-center justify-between mb-6">
  <div>
- <div className="flex items-center gap-2 mb-1">
- <FileText size={18} className="text-black/35" />
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Rechtliches</h1>
- </div>
- <p className="text-xs text-black/45">Rechtliche Dokumente verwalten · in der App unter Einstellungen sichtbar</p>
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Legal</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Rechtliches</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">Rechtliche Dokumente verwalten · in der App unter Einstellungen sichtbar</p>
  </div>
  </div>
 
  {/* Tab Bar */}
- <div className="flex gap-1 bg-black/5 p-1 border border-black/6 mb-6 w-fit">
+ <div className="flex gap-6 mb-6 border-b border-black/[0.06]">
  {LEGAL_TABS.map(tab => (
  <button
  key={tab.key}
  onClick={() => setActiveTab(tab.key)}
- className={`px-5 py-2.5 text-xs font-medium border-0 transition-all ${
+ className={`pb-3 text-[11px] uppercase tracking-[0.15em] font-light border-0 bg-transparent transition-all ${
  activeTab === tab.key
- ? 'bg-white text-black/90 shadow-sm'
- : 'bg-transparent text-black/45 hover:text-black/90'
+ ? 'border-b-2 border-black text-black/70'
+ : 'text-black/25 hover:text-black/50'
  }`}
  >
  {tab.label}
@@ -86,56 +84,56 @@ export default function LegalEditor() {
  </div>
 
  {/* Editor Panel */}
- <div className="bg-white border border-black/6 p-6">
+ <div className="bg-white p-7">
  <div className="flex items-center justify-between mb-4">
  <div>
- <p className="text-sm font-semibold text-black/65">{currentTabInfo?.description}</p>
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-2 font-light">{currentTabInfo?.description}</p>
  {currentDoc?.updated_at && (
- <p className="text-xs text-black/35 mt-0.5">
+ <p className="text-[10px] text-black/25 font-light">
  Zuletzt gespeichert: {new Date(currentDoc.updated_at).toLocaleString('de-DE')}
  </p>
  )}
  </div>
  {savedTab === activeTab && (
- <div className="flex items-center gap-1.5 bg-black/4 text-black/40 px-3 py-1.5">
+ <div className="flex items-center gap-1.5 text-black/30">
  <Check size={12} />
- <span className="text-xs font-medium">Gespeichert</span>
+ <span className="text-[11px] font-light">Gespeichert</span>
  </div>
  )}
  </div>
 
  {loading ? (
- <div className="flex items-center justify-center py-16 text-black/35">
- <div className="w-5 h-5 border-2 border-black/15 border-t-black animate-spin mr-3" />
- <span className="text-sm">Lade Dokument…</span>
+ <div className="flex items-center justify-center py-20">
+ <div className="w-5 h-5 border border-black/10 border-t-black/40 animate-spin mr-3" />
+ <span className="text-[13px] text-black/25 font-light">Lade Dokument...</span>
  </div>
  ) : (
  <div className="space-y-4">
  {/* Title */}
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Titel *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Titel *</label>
  <input
  value={form.title}
  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
  placeholder={`z.B."Datenschutzrichtlinie"`}
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
 
  {/* Content */}
  <div>
  <div className="flex items-center justify-between mb-1.5">
- <label className="block text-xs font-medium text-black/35">
- Inhalt * <span className="text-black/35 font-normal">(Leerzeilen trennen Absätze)</span>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light">
+ Inhalt * <span className="text-black/20 font-light normal-case tracking-normal">(Leerzeilen trennen Absätze)</span>
  </label>
- <span className="text-xs text-black/35">{form.content.length} Zeichen</span>
+ <span className="text-[10px] text-black/25 font-light">{form.content.length} Zeichen</span>
  </div>
  <textarea
  value={form.content}
  onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
  placeholder={"§1 Allgemeines\nDer Schutz Ihrer persönlichen Daten...\n\n§2 Datenerhebung\nWir erheben folgende Daten..."}
  rows={15}
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-xs text-black/90 placeholder-black/20 resize-y font-mono leading-relaxed focus:outline-none focus:border-black/20"
+ className="w-full py-3 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 resize-y font-mono leading-relaxed"
  />
  </div>
 
@@ -144,16 +142,12 @@ export default function LegalEditor() {
  <button
  onClick={handleSave}
  disabled={!form.title.trim() || !form.content.trim() || saving}
- className={`flex items-center gap-2 px-4 py-2.5 text-xs font-medium border-0 transition-all ${
- form.title.trim() && form.content.trim() && !saving
- ? 'bg-black text-white hover:bg-black'
- : 'bg-black/5 text-black/35 cursor-not-allowed'
- }`}
+ className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light disabled:opacity-30 flex items-center gap-2"
  >
  {saving ? (
  <>
- <div className="w-3 h-3 border border-black/20 border-t-black animate-spin" />
- Speichern…
+ <div className="w-5 h-5 border border-black/10 border-t-black/40 animate-spin" />
+ Speichern...
  </>
  ) : (
  <>
@@ -166,7 +160,7 @@ export default function LegalEditor() {
  {isDirty && !saving && (
  <button
  onClick={() => setForm({ title: currentDoc.title || '', content: currentDoc.content || '' })}
- className="px-4 py-3 text-xs font-medium text-black/45 hover:text-black/90 bg-transparent border-0 transition-all"
+ className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 transition-colors font-light"
  >
  Zurücksetzen
  </button>
@@ -177,11 +171,11 @@ export default function LegalEditor() {
  </div>
 
  {/* Info Box */}
- <div className="mt-4 bg-[#f6f5f3] border border-black/10 p-4">
- <p className="text-xs font-medium text-black/35 mb-1">Hinweis</p>
- <p className="text-xs text-black/45 leading-relaxed">
+ <div className="mt-4 bg-white p-7">
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-3 font-light">Hinweis</p>
+ <p className="text-[13px] text-black/30 font-light leading-relaxed">
  Änderungen werden sofort für alle Nutzer sichtbar. Absätze werden durch Leerzeilen getrennt.
- Der Inhalt wird in der App unter <strong className="text-black/65">Einstellungen → {currentTabInfo?.label}</strong> angezeigt.
+ Der Inhalt wird in der App unter <strong className="text-black/50 font-light">Einstellungen → {currentTabInfo?.label}</strong> angezeigt.
  </p>
  </div>
  </div>

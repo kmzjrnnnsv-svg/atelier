@@ -101,6 +101,7 @@ const AccessoriesPanel     = lazy(() => import('./screens/cms/AccessoriesPanel')
 const ShippingPanel        = lazy(() => import('./screens/cms/ShippingPanel'))
 const CouponsPanel         = lazy(() => import('./screens/cms/CouponsPanel'))
 const FeaturedShoesPanel   = lazy(() => import('./screens/cms/FeaturedShoesPanel'))
+const HomepageEditor       = lazy(() => import('./screens/cms/HomepageEditor'))
 const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 
@@ -203,6 +204,7 @@ function AppRoutes() {
               <Route path="shipping" element={<AdminRoute><ShippingPanel /></AdminRoute>} />
               <Route path="coupons"  element={<AdminRoute><CouponsPanel /></AdminRoute>} />
               <Route path="featured" element={<FeaturedShoesPanel />} />
+              <Route path="homepage" element={<HomepageEditor />} />
             </Route>
           </Routes>
         </Suspense>

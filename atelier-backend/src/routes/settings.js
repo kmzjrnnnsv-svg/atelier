@@ -197,4 +197,24 @@ router.put('/cta-banner', authenticate, requireRole('admin', 'curator'), (req, r
   res.json({ message: 'CTA-Banner gespeichert' })
 })
 
+// ─── GET /api/settings/homepage — public (ForYou page sections) ──────────────
+router.get('/homepage', (req, res) => {
+  const db = getDb()
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'homepage_sections'").get()
+  const sections = row?.value ? JSON.parse(row.value) : null
+  res.json(sections)
+})
+
+// ─── PUT /api/settings/homepage — admin/curator ─────────────────────────────
+router.put('/homepage', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db = getDb()
+  const uid = req.user.id
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES ('homepage_sections', ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `).run(JSON.stringify(req.body.sections), uid)
+  res.json({ message: 'Homepage-Sektionen gespeichert' })
+})
+
 export default router

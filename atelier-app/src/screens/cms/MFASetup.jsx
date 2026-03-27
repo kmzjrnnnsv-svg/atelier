@@ -66,95 +66,98 @@ export default function MFASetup() {
 
  if (!status) {
  return (
- <div className="p-8 flex items-center gap-3 text-black/45">
- <Loader size={16} className="animate-spin" /> Laden…
+ <div className="px-10 py-10 lg:px-14 lg:py-12 flex items-center gap-3 text-black/30">
+ <Loader size={14} className="animate-spin" />
+ <span className="text-[13px] font-light">Laden…</span>
  </div>
  )
  }
 
  return (
- <div className="p-8" style={{ maxWidth: '640px' }}>
- <div className="flex items-center gap-3 mb-6">
- <ShieldCheck size={18} className="text-black/40" />
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Zwei-Faktor-Authentifizierung (MFA)</h1>
- </div>
+ <div className="px-10 py-10 lg:px-14 lg:py-12" style={{ maxWidth: '640px' }}>
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Sicherheit</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Zwei-Faktor-Authentifizierung</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light mb-10">Schutz Ihres Admin-Zugangs mit TOTP-Einmalpasswort</p>
 
  {/* Current status */}
- <div className={`flex items-center gap-3 px-4 py-3 mb-6 ${
- status.enabled ? 'bg-black/4 border border-black/10' : 'bg-black/5 border border-black/15'
- }`}>
+ <div className="bg-white p-7 mb-6">
+ <div className="flex items-center gap-3">
  {status.enabled
- ? <><ShieldCheck size={16} className="text-black/40" /><span className="text-sm text-black/50 font-semibold">MFA ist aktiviert</span></>
- : <><ShieldOff size={16} className="text-black/45" /><span className="text-sm text-black/45">MFA ist nicht aktiviert</span></>
+ ? <><ShieldCheck size={15} className="text-black/30" /><span className="text-[13px] text-black/60 font-light">MFA ist aktiviert</span></>
+ : <><ShieldOff size={15} className="text-black/25" /><span className="text-[13px] text-black/40 font-light">MFA ist nicht aktiviert</span></>
  }
+ </div>
  </div>
 
  {/* Feedback message */}
  {msg && (
- <div className={`flex items-start gap-2 px-4 py-3 mb-5 ${
- msg.type === 'ok' ? 'bg-black/4 border border-black/10' : 'bg-black/4 border border-black/10'
- }`}>
+ <div className="flex items-start gap-3 mb-6">
  {msg.type === 'ok'
- ? <CheckCircle2 size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
- : <AlertCircle size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
+ ? <CheckCircle2 size={13} className="text-black/30 flex-shrink-0 mt-0.5" />
+ : <AlertCircle size={13} className="text-black/25 flex-shrink-0 mt-0.5" />
  }
- <p className={`text-[11px] leading-relaxed ${msg.type === 'ok' ? 'text-black/50' : 'text-black/40'}`}>{msg.text}</p>
+ <p className={`text-[13px] leading-relaxed font-light ${msg.type === 'ok' ? 'text-black/60' : 'text-black/40'}`}>{msg.text}</p>
  </div>
  )}
 
- {/* ── IDLE: Not yet set up ── */}
+ {/* -- IDLE: Not yet set up -- */}
  {phase === 'idle' && !status.enabled && (
  <div>
- <p className="text-[12px] text-black/35 leading-relaxed mb-5">
- Schützen Sie Ihren Admin-Zugang mit einem Einmalpasswort (TOTP).
- Sie benötigen eine Authenticator-App wie <strong className="text-black/90">Google Authenticator</strong> oder <strong className="text-black/90">Aegis</strong>.
+ <p className="text-[13px] text-black/30 font-light leading-relaxed mb-8">
+ Schutzen Sie Ihren Admin-Zugang mit einem Einmalpasswort (TOTP).
+ Sie benotigen eine Authenticator-App wie <span className="text-black/70">Google Authenticator</span> oder <span className="text-black/70">Aegis</span>.
  </p>
  <button
  onClick={handleSetup}
  disabled={loading}
- className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2.5 border-0 transition-colors disabled:opacity-50"
+ className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 flex items-center gap-3"
  >
- {loading ? <Loader size={14} className="animate-spin" /> : <QrCode size={14} />}
+ {loading ? <Loader size={13} className="animate-spin" /> : <QrCode size={13} />}
  MFA einrichten
  </button>
  </div>
  )}
 
- {/* ── SETUP: Show QR code ── */}
+ {/* -- SETUP: Show QR code -- */}
  {phase === 'setup' && (
  <div>
- <p className="text-[12px] text-black/35 mb-4 leading-relaxed">
+ <p className="text-[13px] text-black/30 font-light mb-8 leading-relaxed">
  Scannen Sie diesen QR-Code mit Ihrer Authenticator-App und geben Sie dann den angezeigten 6-stelligen Code ein.
  </p>
- <div className="bg-white p-4 inline-block mb-5">
+ <div className="bg-white p-7 mb-6 inline-block">
+ <div className="border border-black/[0.06] p-4 inline-block">
  <img src={qrCode} alt="MFA QR Code" className="w-48 h-48" />
  </div>
- <div className="bg-black/5 px-4 py-3 mb-5">
- <p className="text-xs font-medium text-black/35 mb-1">Manueller Schlüssel</p>
- <p className="text-xs font-mono text-black/65 break-all">{secret}</p>
  </div>
- <form onSubmit={handleConfirm} className="space-y-3">
+ <div className="bg-white p-7 mb-8">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Manueller Schlussel</label>
+ <p className="text-[13px] font-mono text-black/70 font-light break-all">{secret}</p>
+ </div>
+ <form onSubmit={handleConfirm} className="space-y-4">
+ <div>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Bestatigungscode</label>
  <input
  type="text"
  inputMode="numeric"
  maxLength={6}
  value={code}
  onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-black/90 text-center text-2xl font-mono tracking-[0.5em] focus:outline-none focus:border-black/20 transition-colors placeholder-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15 text-center tracking-[0.5em] font-mono"
  placeholder="000000"
  />
+ </div>
  <button
  type="submit"
  disabled={code.length !== 6 || loading}
- className="w-full py-2.5 bg-black hover:bg-black text-white text-xs font-medium flex items-center justify-center gap-2 border-0 transition-colors disabled:opacity-40"
+ className="w-full px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 flex items-center justify-center gap-3"
  >
- {loading ? <Loader size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+ {loading ? <Loader size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
  Aktivieren
  </button>
  <button
  type="button"
  onClick={() => { setPhase('idle'); setMsg(null) }}
- className="w-full py-2 text-xs text-black/45 hover:text-black/65 border-0 bg-transparent transition-colors"
+ className="w-full px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 font-light transition-all"
  >
  Abbrechen
  </button>
@@ -162,17 +165,17 @@ export default function MFASetup() {
  </div>
  )}
 
- {/* ── IDLE: Already enabled → offer disable ── */}
+ {/* -- IDLE: Already enabled -> offer disable -- */}
  {phase === 'idle' && status.enabled && (
  <div>
- <p className="text-[12px] text-black/35 leading-relaxed mb-5">
- Ihre sensitiven Admin-Aktionen (Zahlungsbestätigung, Bankdaten) sind durch MFA geschützt.
+ <p className="text-[13px] text-black/30 font-light leading-relaxed mb-8">
+ Ihre sensitiven Admin-Aktionen (Zahlungsbestatigung, Bankdaten) sind durch MFA geschutzt.
  </p>
  <button
  onClick={() => { setMfaModal(true); setMfaErr(null) }}
- className="flex items-center gap-2 bg-black/5 hover:bg-black/8 text-black/40 text-xs font-medium px-4 py-2.5 border border-black/10 transition-colors"
+ className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border border-black/[0.08] font-light transition-all uppercase tracking-[0.2em] flex items-center gap-3"
  >
- <ShieldOff size={14} />
+ <ShieldOff size={13} />
  MFA deaktivieren
  </button>
  </div>

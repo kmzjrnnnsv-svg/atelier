@@ -18,70 +18,70 @@ function OutfitForm({ initial = emptyForm, onSave, onCancel }) {
  const valid = form.style && form.description && form.top && form.bottom && form.shoe
 
  return (
- <div className="bg-white border border-black/6 p-5 space-y-4">
- <h3 className="text-sm font-semibold text-black/65">{initial.id ? 'Outfit bearbeiten' : 'Neues Outfit'}</h3>
+ <div className="bg-white p-7 space-y-4">
+ <h3 className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">{initial.id ? 'Outfit bearbeiten' : 'Neues Outfit'}</h3>
 
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Style-Name *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Style-Name *</label>
  <input value={form.style} onChange={(e) => set('style', e.target.value)}
  placeholder="Modern Business"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" />
  </div>
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Beschreibung *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Beschreibung *</label>
  <input value={form.description} onChange={(e) => set('description', e.target.value)}
  placeholder="Power Meeting Look"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" />
  </div>
  </div>
 
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Oberteil *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Oberteil *</label>
  <input value={form.top} onChange={(e) => set('top', e.target.value)}
  placeholder="Charcoal Suit"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" />
  </div>
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Hose/Unterteil *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Hose/Unterteil *</label>
  <input value={form.bottom} onChange={(e) => set('bottom', e.target.value)}
  placeholder="Slim Trousers"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" />
  </div>
  </div>
 
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Schuh-Name *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Schuh-Name *</label>
  <input value={form.shoe} onChange={(e) => set('shoe', e.target.value)}
  placeholder="Heritage Oxford"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" />
  </div>
 
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Schuh-Farbe</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Schuh-Farbe</label>
  <div className="flex items-center gap-2">
  <input type="color" value={form.shoeColor} onChange={(e) => set('shoeColor', e.target.value)}
- className="w-10 h-10 border border-black/10 bg-transparent cursor-pointer" />
+ className="w-10 h-10 border-b border-black/[0.08] bg-transparent cursor-pointer" />
  <input value={form.shoeColor} onChange={(e) => set('shoeColor', e.target.value)}
- className="flex-1 bg-white border border-black/10 px-3 py-2.5 text-xs text-black/90 font-mono focus:outline-none" />
+ className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 font-mono" />
  </div>
  </div>
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Hintergrund-Farbe</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Hintergrund-Farbe</label>
  <div className="flex items-center gap-2">
  <input type="color" value={form.bgColor} onChange={(e) => set('bgColor', e.target.value)}
- className="w-10 h-10 border border-black/10 bg-transparent cursor-pointer" />
+ className="w-10 h-10 border-b border-black/[0.08] bg-transparent cursor-pointer" />
  <input value={form.bgColor} onChange={(e) => set('bgColor', e.target.value)}
- className="flex-1 bg-white border border-black/10 px-3 py-2.5 text-xs text-black/90 font-mono focus:outline-none" />
+ className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 font-mono" />
  </div>
  </div>
  </div>
 
  {/* Mini Preview */}
  <div>
- <label className="block text-xs font-medium text-black/35 mb-2">Live-Vorschau</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Live-Vorschau</label>
  <div className=" overflow-hidden p-4 flex items-center justify-center" style={{ backgroundColor: form.bgColor, height: '100px' }}>
  <svg viewBox="0 0 80 100" className="w-16">
  <circle cx="40" cy="12" r="8" fill="#d4a88a" />
@@ -95,10 +95,11 @@ function OutfitForm({ initial = emptyForm, onSave, onCancel }) {
 
  <div className="flex gap-3">
  <button onClick={() => valid && onSave(form)} disabled={!valid}
- className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium border-0 ${valid ? 'bg-black text-white hover:bg-black' : 'bg-black/5 text-black/35 cursor-not-allowed'}`}>
+ className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light disabled:opacity-30 flex-1 flex items-center justify-center gap-2">
  <Check size={14} /> Speichern
  </button>
- <button onClick={onCancel} className="px-4 py-2.5 text-xs font-medium text-black/45 bg-black/5 border-0">
+ <button onClick={onCancel}
+ className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 transition-colors font-light">
  Abbrechen
  </button>
  </div>
@@ -111,15 +112,16 @@ export default function OutfitEditor() {
  const [mode, setMode] = useState(null)
 
  return (
- <div className="p-8">
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
  <div className="flex items-center justify-between mb-6">
  <div>
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Outfits</h1>
- <p className="text-black/45 text-sm mt-1">{outfits.length} Outfit-Kombinationen</p>
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Styling</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Outfits</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">{outfits.length} Outfit-Kombinationen</p>
  </div>
  {!mode && (
  <button onClick={() => setMode('add')}
- className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2 border-0">
+ className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] transition-all bg-transparent uppercase tracking-[0.2em] font-light">
  <Plus size={14} /> Neues Outfit
  </button>
  )}
@@ -131,14 +133,14 @@ export default function OutfitEditor() {
  </div>
  )}
 
- <div className="space-y-3">
+ <div className="space-y-0">
  {outfits.map((outfit) => (
  mode?.editing?.id === outfit.id ? (
  <OutfitForm key={outfit.id} initial={outfit}
  onSave={(f) => { updateOutfit(outfit.id, f); setMode(null) }}
  onCancel={() => setMode(null)} />
  ) : (
- <div key={outfit.id} className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
+ <div key={outfit.id} className="bg-white flex items-center gap-4 px-6 py-4 group hover:bg-black/[0.01] transition-all border-b border-black/[0.04]">
  {/* Mini preview */}
  <div className="w-14 h-14 overflow-hidden flex-shrink-0 flex items-center justify-center"
  style={{ backgroundColor: outfit.bgColor }}>
@@ -152,32 +154,34 @@ export default function OutfitEditor() {
  </div>
 
  <div className="flex-1 min-w-0">
- <p className="text-sm font-semibold text-black/90">{outfit.style}</p>
- <p className="text-[10px] text-black/45 mt-0.5 italic">{outfit.description}</p>
- <p className="text-[9px] text-black/35 mt-1">{outfit.top} · {outfit.bottom} · {outfit.shoe}</p>
+ <p className="text-[13px] font-light text-black/70">{outfit.style}</p>
+ <p className="text-[10px] text-black/30 mt-0.5 font-light italic">{outfit.description}</p>
+ <p className="text-[9px] text-black/25 mt-1 font-light">{outfit.top} · {outfit.bottom} · {outfit.shoe}</p>
  </div>
 
  {/* Color swatches */}
  <div className="flex gap-1.5">
- <div className="w-5 h-5 border border-black/15" style={{ backgroundColor: outfit.shoeColor }} title="Schuhfarbe" />
- <div className="w-5 h-5 border border-black/15" style={{ backgroundColor: outfit.bgColor }} title="Hintergrund" />
+ <div className="w-5 h-5" style={{ backgroundColor: outfit.shoeColor }} title="Schuhfarbe" />
+ <div className="w-5 h-5" style={{ backgroundColor: outfit.bgColor }} title="Hintergrund" />
  </div>
 
  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
  <button onClick={() => setMode({ editing: outfit })}
- className="w-8 h-8 bg-black/5 flex items-center justify-center hover:bg-black/10 border-0">
- <Pencil size={13} className="text-black/65" />
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent">
+ <Pencil size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  <button onClick={() => { if (confirm(`"${outfit.style}" löschen?`)) deleteOutfit(outfit.id) }}
- className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
- <Trash2 size={13} className="text-black/35" />
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent">
+ <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  </div>
  </div>
  )
  ))}
  {outfits.length === 0 && (
- <div className="text-center py-16 text-black/35 text-sm">Keine Outfits</div>
+ <div className="text-center py-20">
+ <p className="text-[13px] text-black/25 font-light">Keine Outfits</p>
+ </div>
  )}
  </div>
  </div>

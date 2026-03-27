@@ -10,48 +10,48 @@ function CuratedForm({ initial = emptyForm, onSave, onCancel }) {
  const valid = form.name.trim().length > 0
 
  return (
- <div className="bg-white border border-black/6 p-5 space-y-4">
- <h3 className="text-sm font-semibold text-black/65">{initial.id ? 'Bearbeiten' : 'Neues Curated Item'}</h3>
+ <div className="bg-white p-7 space-y-4">
+ <h3 className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">{initial.id ? 'Bearbeiten' : 'Neues Curated Item'}</h3>
 
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Name *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Name *</label>
  <input
  value={form.name}
  onChange={(e) => set('name', e.target.value)}
  placeholder="Oxblood"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Badge</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Badge</label>
  <input
  value={form.badge}
  onChange={(e) => set('badge', e.target.value)}
  placeholder="Limited"
- className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
  </div>
 
  <div>
- <label className="block text-xs font-medium text-black/35 mb-1.5">Farbe</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Farbe</label>
  <div className="flex items-center gap-3">
  <input type="color" value={form.color} onChange={(e) => set('color', e.target.value)}
- className="w-10 h-10 border border-black/15 bg-transparent cursor-pointer" />
+ className="w-10 h-10 border-b border-black/[0.08] bg-transparent cursor-pointer" />
  <input value={form.color} onChange={(e) => set('color', e.target.value)}
- className="flex-1 bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 font-mono focus:outline-none" />
+ className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 font-mono" />
  <div className="w-10 h-10 flex-shrink-0" style={{ backgroundColor: form.color }} />
  </div>
  </div>
 
  <div className="flex gap-3">
  <button onClick={() => valid && onSave(form)} disabled={!valid}
- className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium border-0 ${valid ? 'bg-black text-white hover:bg-black' : 'bg-black/5 text-black/35 cursor-not-allowed'}`}>
+ className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light disabled:opacity-30 flex-1 flex items-center justify-center gap-2">
  <Check size={14} /> Speichern
  </button>
  <button onClick={onCancel}
- className="px-4 py-2.5 text-xs font-medium text-black/45 hover:text-black/90 bg-black/5 border-0">
+ className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 transition-colors font-light">
  Abbrechen
  </button>
  </div>
@@ -64,15 +64,16 @@ export default function CuratedEditor() {
  const [mode, setMode] = useState(null)
 
  return (
- <div className="p-8">
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
  <div className="flex items-center justify-between mb-6">
  <div>
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Curated Sections</h1>
- <p className="text-black/45 text-sm mt-1">Farb-Kollektionen für „Curated for You"</p>
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Collection</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Curated Sections</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">Farb-Kollektionen für „Curated for You"</p>
  </div>
  {!mode && (
  <button onClick={() => setMode('add')}
- className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2 border-0">
+ className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] transition-all bg-transparent uppercase tracking-[0.2em] font-light">
  <Plus size={14} /> Neues Item
  </button>
  )}
@@ -85,48 +86,50 @@ export default function CuratedEditor() {
  )}
 
  {/* Preview of how it looks in the app */}
- <div className="bg-white border border-black/6 p-4 mb-6">
- <p className="text-xs font-medium text-black/35 mb-3">Vorschau (App)</p>
+ <div className="bg-white p-7 mb-6">
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">Vorschau (App)</p>
  <div className="flex gap-3 overflow-x-auto pb-1">
  {curated.map((item) => (
- <div key={item.id} className="flex-shrink-0 bg-black/5 p-3 w-24">
+ <div key={item.id} className="flex-shrink-0 bg-black/[0.02] p-3 w-24">
  <div className="w-full h-12 mb-2" style={{ backgroundColor: item.color }} />
- <p className="text-[9px] font-semibold text-black/90 truncate">{item.name}</p>
- <p className="text-[8px] text-black/45">{item.badge}</p>
+ <p className="text-[9px] font-light text-black/70 truncate">{item.name}</p>
+ <p className="text-[8px] text-black/30 font-light">{item.badge}</p>
  </div>
  ))}
  </div>
  </div>
 
  {/* List */}
- <div className="space-y-2">
+ <div className="space-y-0">
  {curated.map((item) => (
  mode?.editing?.id === item.id ? (
  <CuratedForm key={item.id} initial={item}
  onSave={(f) => { updateCurated(item.id, f); setMode(null) }}
  onCancel={() => setMode(null)} />
  ) : (
- <div key={item.id} className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
+ <div key={item.id} className="bg-white flex items-center gap-4 px-6 py-4 group hover:bg-black/[0.01] transition-all border-b border-black/[0.04]">
  <div className="w-12 h-12 flex-shrink-0" style={{ backgroundColor: item.color }} />
  <div className="flex-1 min-w-0">
- <p className="text-sm font-semibold text-black/90">{item.name}</p>
- <p className="text-[10px] text-black/45 mt-0.5">{item.color} · {item.badge}</p>
+ <p className="text-[13px] font-light text-black/70">{item.name}</p>
+ <p className="text-[10px] text-black/30 mt-0.5 font-light">{item.color} · {item.badge}</p>
  </div>
  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
  <button onClick={() => setMode({ editing: item })}
- className="w-8 h-8 bg-black/5 flex items-center justify-center hover:bg-black/10 border-0">
- <Pencil size={13} className="text-black/65" />
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent">
+ <Pencil size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  <button onClick={() => { if (confirm(`"${item.name}" löschen?`)) deleteCurated(item.id) }}
- className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
- <Trash2 size={13} className="text-black/35" />
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent">
+ <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  </div>
  </div>
  )
  ))}
  {curated.length === 0 && (
- <div className="text-center py-16 text-black/35 text-sm">Keine Curated Items</div>
+ <div className="text-center py-20">
+ <p className="text-[13px] text-black/25 font-light">Keine Curated Items</p>
+ </div>
  )}
  </div>
  </div>

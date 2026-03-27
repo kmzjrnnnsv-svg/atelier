@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Mail, Save, CheckCircle2, AlertCircle, Loader, Eye, EyeOff, Info } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import MFAModal from '../../components/MFAModal'
 
@@ -8,7 +8,7 @@ export default function EmailSettings() {
  smtp_host: '', smtp_port: '587', smtp_user: '',
  smtp_pass: '', smtp_manufacturer_email: '', app_url: '',
  })
- const [passSet, setPassSet] = useState(false) // true = password already saved in DB
+ const [passSet, setPassSet] = useState(false)
  const [showPass, setShowPass] = useState(false)
  const [loading, setLoading] = useState(true)
  const [saving, setSaving] = useState(false)
@@ -27,7 +27,7 @@ export default function EmailSettings() {
  smtp_host: data.smtp_host || '',
  smtp_port: data.smtp_port || '587',
  smtp_user: data.smtp_user || '',
- smtp_pass: '', // never pre-fill password
+ smtp_pass: '',
  smtp_manufacturer_email: data.smtp_manufacturer_email || '',
  app_url: data.app_url || '',
  })
@@ -53,7 +53,7 @@ export default function EmailSettings() {
  })
  setMfaOpen(false)
  if (form.smtp_pass) setPassSet(true)
- setForm(f => ({ ...f, smtp_pass: '' })) // clear password field after save
+ setForm(f => ({ ...f, smtp_pass: '' }))
  setMsg({ type: 'ok', text: 'E-Mail-Einstellungen gespeichert.' })
  } catch (e) {
  if (e?.code === 'MFA_INVALID') {
@@ -68,60 +68,52 @@ export default function EmailSettings() {
  } finally { setSaving(false) }
  }
 
- const inp = 'w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20 transition-colors'
-
  if (loading) {
  return (
- <div className="p-8 flex items-center gap-3 text-black/45">
- <Loader size={16} className="animate-spin" /> Laden…
+ <div className="px-10 py-10 lg:px-14 lg:py-12 flex items-center gap-3">
+ <p className="text-[13px] text-black/30 font-light opacity-50">Laden...</p>
  </div>
  )
  }
 
  return (
- <div className="p-8" style={{ maxWidth: '640px' }}>
+ <div className="px-10 py-10 lg:px-14 lg:py-12 max-w-2xl">
  {/* Header */}
- <div className="flex items-center gap-3 mb-2">
- <Mail size={18} className="text-black/35" />
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>E-Mail / SMTP</h1>
- </div>
- <p className="text-sm text-black/35 mb-8 ml-7 leading-relaxed">
- SMTP-Zugangsdaten für den automatischen E-Mail-Versand (Bestellbestätigungen,
- Zahlungshinweise, Hersteller-Benachrichtigungen). Änderungen erfordern MFA-Bestätigung.
+ <div className="mb-10">
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Konfiguration</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">E-Mail / SMTP</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">
+ SMTP-Zugangsdaten für den automatischen E-Mail-Versand. Änderungen erfordern MFA-Bestätigung.
  </p>
+ </div>
 
  {/* Status message */}
  {msg && (
- <div className={`flex items-start gap-2 px-4 py-3 mb-5 ${
- msg.type === 'ok' ? 'bg-black/4 border border-black/10' : 'bg-black/4 border border-black/10'
- }`}>
- {msg.type === 'ok'
- ? <CheckCircle2 size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
- : <AlertCircle size={14} className="text-black/40 flex-shrink-0 mt-0.5" />
- }
- <p className={`text-[11px] leading-relaxed ${msg.type === 'ok' ? 'text-black/50' : 'text-black/40'}`}>
+ <div className="flex items-start gap-2 mb-6">
+ <p className="text-[10px] text-black/25 font-light">
  {msg.text}
  </p>
  </div>
  )}
 
- <div className="space-y-4">
+ <div className="bg-white p-7 mb-6">
+ <div className="space-y-5">
 
- {/* SMTP Host */}
- <div className="grid grid-cols-3 gap-3">
+ {/* SMTP Host + Port */}
+ <div className="grid grid-cols-3 gap-5">
  <div className="col-span-2">
- <label className="text-xs font-medium text-black/35 block mb-1.5">SMTP Host</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">SMTP Host</label>
  <input
- className={inp}
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  placeholder="smtp.ionos.de"
  value={form.smtp_host}
  onChange={e => f('smtp_host', e.target.value)}
  />
  </div>
  <div>
- <label className="text-xs font-medium text-black/35 block mb-1.5">Port</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Port</label>
  <input
- className={inp}
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  placeholder="587"
  value={form.smtp_port}
  onChange={e => f('smtp_port', e.target.value)}
@@ -131,9 +123,9 @@ export default function EmailSettings() {
 
  {/* Sender email */}
  <div>
- <label className="text-xs font-medium text-black/35 block mb-1.5">Absender E-Mail (SMTP User)</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Absender E-Mail (SMTP User)</label>
  <input
- className={inp}
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  type="email"
  placeholder="info@ihre-domain.de"
  value={form.smtp_user}
@@ -143,15 +135,15 @@ export default function EmailSettings() {
 
  {/* Password */}
  <div>
- <label className="text-xs font-medium text-black/35 block mb-1.5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">
  Passwort
  {passSet && (
- <span className="ml-2 text-black/40 normal-case tracking-normal">✓ gesetzt</span>
+ <span className="ml-2 text-black/25 normal-case tracking-normal font-light">gesetzt</span>
  )}
  </label>
  <div className="relative">
  <input
- className={inp + ' pr-10'}
+ className="w-full h-10 px-4 pr-10 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  type={showPass ? 'text' : 'password'}
  placeholder={passSet ? 'Leer lassen = Passwort behalten' : 'SMTP-Passwort eingeben'}
  value={form.smtp_pass}
@@ -160,61 +152,56 @@ export default function EmailSettings() {
  <button
  type="button"
  onClick={() => setShowPass(v => !v)}
- className="absolute right-3 top-1/2 -translate-y-1/2 text-black/45 hover:text-black/65 bg-transparent border-0 p-0"
+ className="absolute right-3 top-1/2 -translate-y-1/2 text-black/25 hover:text-black/50 bg-transparent border-0 p-0 transition-colors"
  >
- {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+ {showPass ? <EyeOff size={14} strokeWidth={1.25} /> : <Eye size={14} strokeWidth={1.25} />}
  </button>
  </div>
- <div className="flex items-start gap-1.5 mt-1.5">
- <Info size={10} className="text-black/35 flex-shrink-0 mt-0.5" />
- <p className="text-[9px] text-black/35 leading-relaxed">
+ <p className="text-[10px] text-black/25 font-light mt-1.5">
  Das Passwort wird aus Sicherheitsgründen nicht angezeigt. Leer lassen = altes Passwort bleibt erhalten.
  </p>
- </div>
  </div>
 
  {/* Manufacturer email */}
  <div>
- <label className="text-xs font-medium text-black/35 block mb-1.5">Hersteller-E-Mail</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Hersteller-E-Mail</label>
  <input
- className={inp}
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  type="email"
  placeholder="hersteller@ihre-domain.de"
  value={form.smtp_manufacturer_email}
  onChange={e => f('smtp_manufacturer_email', e.target.value)}
  />
- <p className="text-[9px] text-black/35 mt-1 leading-relaxed">
+ <p className="text-[10px] text-black/25 font-light mt-1">
  An diese Adresse werden neue Bestellungen mit Fußmaßen und STL-Link gesendet.
  </p>
  </div>
 
  {/* App URL */}
  <div>
- <label className="text-xs font-medium text-black/35 block mb-1.5">App URL</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">App URL</label>
  <input
- className={inp}
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  type="url"
  placeholder="https://ihre-domain.de"
  value={form.app_url}
  onChange={e => f('app_url', e.target.value)}
  />
- <p className="text-[9px] text-black/35 mt-1 leading-relaxed">
+ <p className="text-[10px] text-black/25 font-light mt-1">
  Wird als Basis für Links in E-Mails verwendet (z.B. Link zum Admin-Panel).
  </p>
  </div>
+ </div>
+ </div>
 
  {/* Save button */}
- <div className="pt-2">
  <button
  onClick={handleSave}
  disabled={saving}
- className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2.5 border-0 transition-colors disabled:opacity-50"
+ className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light disabled:opacity-30"
  >
- {saving ? <Loader size={14} className="animate-spin" /> : <Save size={14} />}
- Speichern (MFA erforderlich)
+ {saving ? 'Speichern...' : 'Speichern (MFA erforderlich)'}
  </button>
- </div>
- </div>
 
  <MFAModal
  open={mfaOpen}

@@ -33,12 +33,12 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  }
 
  return (
- <div className="bg-white border border-black/6 p-6 space-y-4">
- <h3 className="text-[11px] font-semibold text-black/50 uppercase tracking-wider">{initial.id ? 'Schuh bearbeiten' : 'Neuer Schuh'}</h3>
+ <div className="bg-white p-7">
+ <h3 className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">{initial.id ? 'Schuh bearbeiten' : 'Neuer Schuh'}</h3>
 
  {/* Image Upload */}
- <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Produktbild</label>
+ <div className="mb-5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Produktbild</label>
  <div className="flex gap-3 items-start">
  <div
  className="w-20 h-20 flex items-center justify-center flex-shrink-0 overflow-hidden"
@@ -53,43 +53,43 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </svg>
  )}
  </div>
- <label className="flex-1 flex items-center gap-2 bg-white border border-black/8 px-3.5 py-3 cursor-pointer hover:bg-black/3 transition-colors">
- <Upload size={14} className="text-black/35" strokeWidth={1.5} />
- <span className="text-[11px] text-black/40">Bild hochladen</span>
+ <label className="flex-1 flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] transition-all bg-transparent uppercase tracking-[0.2em] font-light cursor-pointer">
+ <Upload size={14} className="text-black/30" strokeWidth={1.25} />
+ <span>Bild hochladen</span>
  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
  </label>
  </div>
  </div>
 
  {/* Name */}
- <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Name *</label>
+ <div className="mb-5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Name *</label>
  <input
  value={form.name}
  onChange={(e) => set('name', e.target.value)}
  placeholder="The Heritage Oxford"
- className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
 
  {/* Category + Tag row */}
- <div className="grid grid-cols-2 gap-3">
+ <div className="grid grid-cols-2 gap-5 mb-5">
  <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Kategorie *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Kategorie *</label>
  <select
  value={form.category}
  onChange={(e) => set('category', e.target.value)}
- className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70"
  >
  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
  </select>
  </div>
  <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Badge</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Badge</label>
  <select
  value={form.tag ?? ''}
  onChange={(e) => set('tag', e.target.value || null)}
- className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70"
  >
  <option value="">Kein Badge</option>
  {TAGS.filter(Boolean).map((t) => <option key={t} value={t}>{t}</option>)}
@@ -98,97 +98,97 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </div>
 
  {/* Price + Match row */}
- <div className="grid grid-cols-2 gap-3">
+ <div className="grid grid-cols-2 gap-5 mb-5">
  <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Preis *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Preis *</label>
  <input
  value={form.price}
  onChange={(e) => set('price', e.target.value)}
  placeholder="€ 1.450"
- className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
  <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Biometric Match</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Biometric Match</label>
  <input
  value={form.match}
  onChange={(e) => set('match', e.target.value)}
  placeholder="99.4%"
- className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
  </div>
 
  {/* Material */}
- <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Material *</label>
+ <div className="mb-5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Material *</label>
  <input
  value={form.material}
  onChange={(e) => set('material', e.target.value)}
  placeholder="Full-Grain Calfskin"
- className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
 
  {/* Color */}
- <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Schuh-Farbe</label>
+ <div className="mb-5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Schuh-Farbe</label>
  <div className="flex items-center gap-3">
  <input
  type="color"
  value={form.color}
  onChange={(e) => set('color', e.target.value)}
- className="w-10 h-10 border border-black/10 bg-transparent cursor-pointer"
+ className="w-10 h-10 border-b border-black/[0.08] bg-transparent cursor-pointer"
  />
  <input
  value={form.color}
  onChange={(e) => set('color', e.target.value)}
- className="flex-1 bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 font-mono focus:outline-none focus:border-black/20"
+ className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 font-mono"
  />
  <div className="w-10 h-10 flex-shrink-0" style={{ backgroundColor: form.color }} />
  </div>
  </div>
 
  {/* Cost & Promotion pricing */}
- <div className="border-t border-black/6 pt-4 mt-2">
- <p className="text-[10px] font-semibold text-black/40 uppercase tracking-wider mb-3">Kalkulation & Promotion</p>
- <div className="grid grid-cols-2 gap-3">
+ <div className="border-t border-black/[0.04] pt-5 mt-2">
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">Kalkulation & Promotion</p>
+ <div className="grid grid-cols-2 gap-5">
  <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Einkaufspreis (EK)</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Einkaufspreis (EK)</label>
  <input
  type="number" step="0.01"
  value={form.cost_price}
  onChange={(e) => set('cost_price', e.target.value)}
  placeholder="z.B. 280"
- className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
  <div>
- <label className="block text-[10px] font-medium text-black/30 mb-1.5 uppercase tracking-wider">Promotion-Preis</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Promotion-Preis</label>
  <input
  value={form.promotion_price}
  onChange={(e) => set('promotion_price', e.target.value)}
  placeholder="z.B. € 890"
- className="w-full bg-white border border-black/8 px-3.5 py-2.5 text-sm text-black/80 placeholder-black/15 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
  </div>
  </div>
 
  {/* Actions */}
- <div className="flex gap-3 pt-2">
+ <div className="flex gap-3 pt-6">
  <button
  onClick={() => valid && onSave(form)}
  disabled={!valid}
- className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-semibold transition-all border-0 uppercase tracking-wider ${
- valid ? 'bg-black text-white' : 'bg-black/5 text-black/25 cursor-not-allowed'
+ className={`px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light flex items-center justify-center gap-2 ${
+ !valid ? 'disabled:opacity-30 cursor-not-allowed' : ''
  }`}
  >
- <Check size={14} strokeWidth={1.5} /> Speichern
+ <Check size={14} strokeWidth={1.25} /> Speichern
  </button>
  <button
  onClick={onCancel}
- className="px-5 py-2.5 text-[11px] font-medium text-black/40 hover:text-black/70 bg-black/4 hover:bg-black/8 transition-all border-0"
+ className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 transition-colors font-light"
  >
  Abbrechen
  </button>
@@ -224,11 +224,11 @@ function AccessoryAssigner({ shoeId }) {
   } catch {} finally { setSaving(false) }
  }
 
- if (loading) return <p className="text-[10px] text-black/30 py-2">Laden…</p>
- if (!accessories.length) return <p className="text-[10px] text-black/30 py-2">Keine Zubehörteile vorhanden</p>
+ if (loading) return <p className="text-[10px] text-black/25 py-2 font-light">Laden…</p>
+ if (!accessories.length) return <p className="text-[10px] text-black/25 py-2 font-light">Keine Zubehörteile vorhanden</p>
 
  return (
-  <div className="pt-3 pb-2 space-y-2">
+  <div className="pt-3 pb-2 space-y-3">
    <div className="flex flex-wrap gap-2">
     {accessories.filter(a => a.is_active !== 0).map(acc => {
      const on = assigned.includes(acc.id)
@@ -236,11 +236,11 @@ function AccessoryAssigner({ shoeId }) {
       <button
        key={acc.id}
        onClick={() => toggle(acc.id)}
-       className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] border transition-all ${
-        on ? 'bg-black text-white border-black' : 'bg-white text-black/50 border-black/10 hover:border-black/25'
+       className={`flex items-center gap-1.5 text-[11px] transition-all font-light ${
+        on ? 'px-3.5 py-1.5 text-[10px] bg-black text-white border-0 tracking-wider' : 'px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border border-black/[0.08] tracking-wider'
        }`}
       >
-       {on && <Check size={11} strokeWidth={2} />}
+       {on && <Check size={11} strokeWidth={1.5} />}
        {acc.name}
        {acc.price != null && <span className="opacity-60 ml-0.5">{acc.price}</span>}
       </button>
@@ -250,7 +250,7 @@ function AccessoryAssigner({ shoeId }) {
    <button
     onClick={save}
     disabled={saving}
-    className="text-[10px] font-semibold uppercase tracking-wider bg-black/5 hover:bg-black/10 text-black/50 px-4 py-1.5 transition-colors border-0"
+    className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light disabled:opacity-30 cursor-not-allowed"
    >
     {saving ? 'Speichern…' : 'Zubehör speichern'}
    </button>
@@ -267,25 +267,26 @@ export default function ShoeEditor() {
  const filtered = filterCat === 'ALL' ? shoes : shoes.filter((s) => s.category === filterCat)
 
  return (
- <div className="p-6 w-full max-w-full overflow-hidden">
- <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+ <div className="px-10 py-10 lg:px-14 lg:py-12 w-full max-w-full overflow-hidden">
+ <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
  <div>
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Schuhe</h1>
- <p className="text-black/35 text-sm mt-1">{shoes.length} Produkte verwalten</p>
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Kollektion</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Schuhe</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">{shoes.length} Produkte verwalten</p>
  </div>
  {!mode && (
  <button
  onClick={() => setMode('add')}
- className="flex items-center gap-2 bg-black text-white text-[11px] font-semibold px-5 py-2.5 transition-colors border-0 uppercase tracking-wider hover:bg-black/85"
+ className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] transition-all bg-transparent uppercase tracking-[0.2em] font-light"
  >
- <Plus size={14} strokeWidth={1.5} /> Neuer Schuh
+ <Plus size={14} strokeWidth={1.25} /> Neuer Schuh
  </button>
  )}
  </div>
 
  {/* Add Form */}
  {mode === 'add' && (
- <div className="mb-6">
+ <div className="mb-8">
  <ShoeForm
  onSave={(f) => { addShoe(f); setMode(null) }}
  onCancel={() => setMode(null)}
@@ -294,14 +295,15 @@ export default function ShoeEditor() {
  )}
 
  {/* Category filter */}
- <div className="flex gap-1.5 mb-5 flex-wrap">
+ <div className="flex gap-1 mb-6 flex-wrap">
  {['ALL', ...CATEGORIES].map((c) => (
  <button
  key={c}
  onClick={() => setFilterCat(c)}
- className={`px-3 py-1.5 text-[10px] font-semibold transition-all border-0 uppercase tracking-wider ${
- filterCat === c ? 'bg-black text-white' : 'bg-black/4 text-black/35 hover:text-black/60 hover:bg-black/8'
- }`}
+ className={filterCat === c
+ ? "px-3.5 py-1.5 text-[10px] bg-black text-white border-0 transition-all tracking-wider font-light"
+ : "px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 transition-all tracking-wider font-light"
+ }
  >
  {c === 'ALL' ? 'Alle' : c}
  </button>
@@ -309,7 +311,7 @@ export default function ShoeEditor() {
  </div>
 
  {/* Shoe List */}
- <div className="space-y-1.5">
+ <div>
  {filtered.map((shoe) => (
  mode?.editing?.id === shoe.id ? (
  <ShoeForm
@@ -321,7 +323,7 @@ export default function ShoeEditor() {
  ) : (
  <React.Fragment key={shoe.id}>
  <div
- className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/12 transition-all min-w-0"
+ className="bg-white flex items-center gap-4 px-6 py-4.5 group hover:bg-black/[0.01] transition-all border-b border-black/[0.04] min-w-0"
  >
  {/* Preview */}
  <div className="w-14 h-14 flex-shrink-0 overflow-hidden flex items-center justify-center" style={{ backgroundColor: shoe.color }}>
@@ -338,54 +340,54 @@ export default function ShoeEditor() {
  {/* Info */}
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2 flex-wrap">
- <p className="text-[13px] font-semibold text-black/80">{shoe.name}</p>
+ <p className="text-[13px] font-light text-black/70">{shoe.name}</p>
  {shoe.tag && (
- <span className="text-[9px] font-semibold bg-black/5 text-black/40 px-2 py-0.5 uppercase tracking-wider">
+ <span className="text-[9px] font-light text-black/25 uppercase tracking-[0.2em]">
  {shoe.tag}
  </span>
  )}
  </div>
- <p className="text-[10px] text-black/35 mt-0.5">{shoe.category} · {shoe.material}</p>
+ <p className="text-[10px] text-black/25 mt-0.5 font-light">{shoe.category} · {shoe.material}</p>
  {shoe.match && (
- <p className="text-[9px] text-black/30 mt-0.5">{shoe.match} Biometric Match</p>
+ <p className="text-[9px] text-black/20 mt-0.5 font-light">{shoe.match} Biometric Match</p>
  )}
  </div>
 
  {/* Price */}
  <div className="flex-shrink-0 text-right">
- <p className="text-sm font-bold text-black/70">{shoe.price}</p>
- {shoe.cost_price && <p className="text-[9px] text-black/30">EK: € {shoe.cost_price}</p>}
- {shoe.promotion_price && <p className="text-[9px] text-amber-600">Promo: {shoe.promotion_price}</p>}
+ <p className="text-[13px] font-light text-black/70">{shoe.price}</p>
+ {shoe.cost_price && <p className="text-[9px] text-black/25 font-light">EK: € {shoe.cost_price}</p>}
+ {shoe.promotion_price && <p className="text-[9px] text-black/30 font-light">Promo: {shoe.promotion_price}</p>}
  </div>
 
  {/* Actions */}
- <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+ <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
  <button
  onClick={() => setExpandedAcc(expandedAcc === shoe.id ? null : shoe.id)}
- className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/10 transition-colors border-0"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  title="Zubehör zuweisen"
  >
- <Gift size={13} className="text-black/45" strokeWidth={1.5} />
+ <Gift size={12} strokeWidth={1.25} className="text-black/30" />
  </button>
  <button
  onClick={() => setMode({ editing: shoe })}
- className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/10 transition-colors border-0"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
- <Pencil size={13} className="text-black/45" strokeWidth={1.5} />
+ <Pencil size={12} strokeWidth={1.25} className="text-black/30" />
  </button>
  <button
  onClick={() => { if (confirm(`"${shoe.name}" löschen?`)) deleteShoe(shoe.id) }}
- className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/10 transition-colors border-0"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
- <Trash2 size={13} className="text-black/35" strokeWidth={1.5} />
+ <Trash2 size={12} strokeWidth={1.25} className="text-black/30" />
  </button>
  </div>
  </div>
  {expandedAcc === shoe.id && (
- <div className="bg-white border border-black/6 border-t-0 px-5 py-3">
- <div className="flex items-center gap-2 mb-2">
- <Gift size={12} className="text-black/40" strokeWidth={1.5} />
- <p className="text-[10px] font-semibold text-black/40 uppercase tracking-wider">Zubehör für {shoe.name}</p>
+ <div className="bg-white px-6 py-5 border-b border-black/[0.04]">
+ <div className="flex items-center gap-2 mb-3">
+ <Gift size={12} className="text-black/30" strokeWidth={1.25} />
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Zubehör für {shoe.name}</p>
  </div>
  <AccessoryAssigner shoeId={shoe.id} />
  </div>
@@ -395,8 +397,8 @@ export default function ShoeEditor() {
  ))}
 
  {filtered.length === 0 && (
- <div className="text-center py-16 text-black/30">
- <p className="text-sm">Keine Schuhe in dieser Kategorie</p>
+ <div className="text-center py-20">
+ <p className="text-[13px] text-black/25 font-light">Keine Schuhe in dieser Kategorie</p>
  </div>
  )}
  </div>

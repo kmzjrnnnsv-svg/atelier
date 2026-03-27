@@ -17,60 +17,60 @@ function FAQForm({ initial = emptyForm, onSave, onCancel, saving }) {
  const isValid = form.question.trim() && form.answer.trim()
 
  return (
- <div className="bg-white border border-black/6 p-6 space-y-4 mb-4">
+ <div className="bg-white p-7 space-y-4 mb-4">
  <div className="flex items-center justify-between">
- <h3 className="text-sm font-semibold text-black/65">
+ <h3 className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">
  {initial.id ? 'FAQ bearbeiten' : 'Neue FAQ'}
  </h3>
- <button onClick={onCancel} className="w-7 h-7 bg-black/4 flex items-center justify-center border-0 hover:bg-black/8">
- <X size={13} strokeWidth={1.5} className="text-black/45" />
+ <button onClick={onCancel} className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent">
+ <X size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  </div>
 
  {/* Question */}
  <div>
- <label className="block text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Frage *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Frage *</label>
  <textarea
  value={form.question}
  onChange={e => setField('question', e.target.value)}
  placeholder="Welche Frage beantwortet dieser Eintrag?"
  rows={2}
- className="w-full bg-white border border-black/6 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 resize-none focus:outline-none focus:border-black/20"
+ className="w-full py-3 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 resize-y"
  />
  </div>
 
  {/* Answer */}
  <div>
- <label className="block text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Antwort *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Antwort *</label>
  <textarea
  value={form.answer}
  onChange={e => setField('answer', e.target.value)}
  placeholder="Ausführliche Antwort auf die Frage..."
  rows={6}
- className="w-full bg-white border border-black/6 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 resize-y font-mono text-xs leading-relaxed focus:outline-none focus:border-black/20"
+ className="w-full py-3 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 resize-y font-mono leading-relaxed"
  />
  </div>
 
  {/* Category + Sort Order */}
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Kategorie</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Kategorie</label>
  <select
  value={form.category}
  onChange={e => setField('category', e.target.value)}
- className="w-full bg-white border border-black/6 px-3 py-2.5 text-sm text-black/90 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 appearance-none"
  >
  {FAQ_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
  </select>
  </div>
  <div>
- <label className="block text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Reihenfolge</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Reihenfolge</label>
  <input
  type="number"
  min="0"
  value={form.sort_order}
  onChange={e => setField('sort_order', parseInt(e.target.value) || 0)}
- className="w-full bg-white border border-black/6 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none focus:border-black/20"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
  </div>
@@ -80,15 +80,13 @@ function FAQForm({ initial = emptyForm, onSave, onCancel, saving }) {
  <button
  onClick={() => isValid && !saving && onSave(form)}
  disabled={!isValid || saving}
- className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium border-0 transition-all ${
- isValid && !saving ? 'bg-black text-white hover:bg-black' : 'bg-black/4 text-black/35 cursor-not-allowed'
- }`}
+ className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light disabled:opacity-30 flex-1 flex items-center justify-center gap-2"
  >
- {saving ? 'Speichern…' : (initial.id ? 'Aktualisieren' : 'FAQ hinzufügen')}
+ {saving ? 'Speichern...' : (initial.id ? 'Aktualisieren' : 'FAQ hinzufügen')}
  </button>
  <button
  onClick={onCancel}
- className="px-4 py-2.5 text-xs font-medium bg-black/4 text-black/45 hover:bg-black/8 border-0 transition-all"
+ className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 transition-colors font-light"
  >
  Abbrechen
  </button>
@@ -134,22 +132,20 @@ export default function FAQEditor() {
  }
 
  return (
- <div className="p-8">
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
  {/* Header */}
  <div className="flex items-center justify-between mb-6">
  <div>
- <div className="flex items-center gap-2 mb-1">
- <HelpCircle size={18} strokeWidth={1.5} className="text-black/35" />
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>FAQ & Support</h1>
- </div>
- <p className="text-xs text-black/45">{faqs.length} Einträge · in der App unter Hilfe & Support sichtbar</p>
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Support</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">FAQ & Support</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">{faqs.length} Einträge · in der App unter Hilfe & Support sichtbar</p>
  </div>
  {mode === null && (
  <button
  onClick={() => setMode('add')}
- className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2 border-0 transition-all"
+ className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] transition-all bg-transparent uppercase tracking-[0.2em] font-light"
  >
- <Plus size={14} strokeWidth={1.5} />
+ <Plus size={14} />
  Neue FAQ
  </button>
  )}
@@ -163,24 +159,27 @@ export default function FAQEditor() {
  <FAQForm initial={mode.editing} onSave={handleSave} onCancel={() => setMode(null)} saving={saving} />
  )}
 
- {/* Search + Category filter */}
+ {/* Search */}
  <div className="flex gap-3 mb-4">
  <input
  value={search}
  onChange={e => setSearch(e.target.value)}
- placeholder="FAQ durchsuchen…"
- className="flex-1 bg-white border border-black/6 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+ placeholder="FAQ durchsuchen..."
+ className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  </div>
 
+ {/* Category filter pills */}
  <div className="flex gap-2 mb-5 flex-wrap">
  {categories.map(cat => (
  <button
  key={cat}
  onClick={() => setActiveCategory(cat)}
- className={`px-3 py-1.5 text-xs font-medium border-0 transition-all ${
- activeCategory === cat ? 'bg-black text-white' : 'bg-black/4 text-black/35 hover:bg-black/8'
- }`}
+ className={
+ activeCategory === cat
+ ? 'px-3.5 py-1.5 text-[10px] bg-black text-white border-0 tracking-wider font-light'
+ : 'px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 tracking-wider font-light'
+ }
  >
  {cat}
  </button>
@@ -189,59 +188,58 @@ export default function FAQEditor() {
 
  {/* FAQ List */}
  {filtered.length === 0 ? (
- <div className="text-center py-16 text-black/35">
- <HelpCircle size={36} strokeWidth={1.5} className="mx-auto mb-3 opacity-30" />
- <p className="text-sm">Keine FAQ-Einträge gefunden</p>
- <button onClick={() => setMode('add')} className="mt-3 text-xs text-black/90 underline bg-transparent border-0">
- Ersten Eintrag erstellen →
+ <div className="text-center py-20">
+ <p className="text-[13px] text-black/25 font-light">Keine FAQ-Einträge gefunden</p>
+ <button onClick={() => setMode('add')} className="mt-3 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 font-light transition-colors">
+ Ersten Eintrag erstellen
  </button>
  </div>
  ) : (
- <div className="space-y-2">
+ <div className="space-y-0">
  {filtered.map(faq => (
- <div key={faq.id} className="bg-white border border-black/6 overflow-hidden">
- <div className="flex items-center gap-3 p-4">
+ <div key={faq.id} className="bg-white border-b border-black/[0.04] overflow-hidden">
+ <div className="flex items-center gap-3 px-6 py-4 group hover:bg-black/[0.01] transition-all">
  <button
  onClick={() => setExpanded(expanded === faq.id ? null : faq.id)}
  className="flex-1 text-left flex items-start gap-3 bg-transparent border-0 p-0"
  >
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2 mb-0.5">
- <span className="text-xs font-medium text-black/40">{faq.category}</span>
- <span className="text-[8px] text-black/35">#{faq.sort_order}</span>
+ <span className="text-[10px] font-light text-black/30">{faq.category}</span>
+ <span className="text-[8px] text-black/20 font-light">#{faq.sort_order}</span>
  </div>
- <p className="text-sm font-medium text-black/90 leading-snug">
- {faq.question.length > 80 ? faq.question.substring(0, 80) + '…' : faq.question}
+ <p className="text-[13px] font-light text-black/70 leading-snug">
+ {faq.question.length > 80 ? faq.question.substring(0, 80) + '...' : faq.question}
  </p>
  </div>
  <div className="flex-shrink-0 mt-0.5">
  {expanded === faq.id
- ? <ChevronUp size={14} strokeWidth={1.5} className="text-black/45" />
- : <ChevronDown size={14} strokeWidth={1.5} className="text-black/45" />
+ ? <ChevronUp size={12} strokeWidth={1.25} className="text-black/25" />
+ : <ChevronDown size={12} strokeWidth={1.25} className="text-black/25" />
  }
  </div>
  </button>
 
- <div className="flex items-center gap-1 flex-shrink-0">
+ <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
  <button
  onClick={() => { setMode({ editing: faq }); setExpanded(null) }}
- className="w-7 h-7 bg-black/4 hover:bg-black/8 flex items-center justify-center border-0 transition-all"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
- <Pencil size={12} strokeWidth={1.5} className="text-black/45" />
+ <Pencil size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  <button
  onClick={() => handleDelete(faq.id)}
- className="w-7 h-7 bg-black/4 hover:bg-black/8 flex items-center justify-center border-0 transition-all"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
- <Trash2 size={12} strokeWidth={1.5} className="text-black/45" />
+ <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  </div>
  </div>
 
  {/* Expanded Answer */}
  {expanded === faq.id && (
- <div className="px-4 pb-4 border-t border-black/6 pt-3">
- <p className="text-sm text-black/65 leading-relaxed whitespace-pre-wrap">{faq.answer}</p>
+ <div className="px-6 pb-4 border-t border-black/[0.04] pt-3">
+ <p className="text-[13px] text-black/40 font-light leading-relaxed whitespace-pre-wrap">{faq.answer}</p>
  </div>
  )}
  </div>

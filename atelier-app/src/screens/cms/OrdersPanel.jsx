@@ -6,13 +6,13 @@ import { useAuth } from '../../context/AuthContext'
 import MFAModal from '../../components/MFAModal'
 
 const STATUS_CONFIG = {
- pending_payment: { label: 'Zahlung ausstehend', color: 'bg-black/15 text-black/70', dot: 'bg-black/15' },
- pending: { label: 'Ausstehend', color: 'bg-black/8 text-black/50', dot: 'bg-black/15' },
- processing: { label: 'In Fertigung', color: 'bg-black/8 text-black/50', dot: 'bg-black/25' },
- quality_check: { label: 'Qualitätskontrolle', color: 'bg-black/8 text-black/50', dot: 'bg-black/35' },
- shipped: { label: 'Versendet', color: 'bg-black/8 text-black/50', dot: 'bg-black/40' },
- delivered: { label: 'Geliefert', color: 'bg-black/8 text-black/50', dot: 'bg-black/60' },
- cancelled: { label: 'Storniert', color: 'bg-black/8 text-black/50', dot: 'bg-black/10' },
+ pending_payment: { label: 'Zahlung ausstehend', color: 'bg-black/[0.06] text-black/50', dot: 'bg-black/15' },
+ pending: { label: 'Ausstehend', color: 'bg-black/[0.04] text-black/40', dot: 'bg-black/15' },
+ processing: { label: 'In Fertigung', color: 'bg-black/[0.04] text-black/40', dot: 'bg-black/25' },
+ quality_check: { label: 'Qualitätskontrolle', color: 'bg-black/[0.04] text-black/40', dot: 'bg-black/35' },
+ shipped: { label: 'Versendet', color: 'bg-black/[0.04] text-black/40', dot: 'bg-black/40' },
+ delivered: { label: 'Geliefert', color: 'bg-black/[0.04] text-black/40', dot: 'bg-black/60' },
+ cancelled: { label: 'Storniert', color: 'bg-black/[0.04] text-black/30', dot: 'bg-black/10' },
 }
 
 const FILTERS = [
@@ -95,80 +95,80 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  }
 
  return (
- <div className="bg-white border border-black/6 overflow-hidden hover:bg-black/3 transition-colors">
+ <div className="bg-white overflow-hidden border-b border-black/[0.04]">
  {/* Row header */}
- <div className="flex items-center gap-3 px-4 py-3">
+ <div className="bg-white px-6 py-4 hover:bg-black/[0.01] transition-all flex items-center gap-3 cursor-pointer" onClick={() => setExpanded(v => !v)}>
  {/* Status dot */}
- <div className={`w-2 h-2 flex-shrink-0 ${cfg.dot}`} />
+ <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
 
  {/* Order info */}
  <div className="flex-1 min-w-0">
- <div className="flex items-center gap-2 flex-wrap">
- <span className="text-xs font-bold text-black/90">{order.order_ref || `#${order.id}`}</span>
- <span className="text-[10px] text-black/45 truncate">{order.shoe_name}</span>
+ <div className="flex items-center gap-2.5 flex-wrap">
+ <span className="text-[11px] font-light text-black/85 tracking-wide">{order.order_ref || `#${order.id}`}</span>
+ <span className="text-[10px] text-black/30 font-light truncate">{order.shoe_name}</span>
  {order.user_order_number > 0 && (
- <span className="text-[9px] bg-black/8 text-black/50 px-1.5 py-0.5">
+ <span className="text-[9px] text-black/25 font-light px-2 py-0.5 bg-black/[0.03] tracking-wider uppercase">
  {order.user_order_number}. Schuh
  </span>
  )}
  </div>
- <div className="flex items-center gap-3 mt-0.5">
- <span className="text-[10px] text-black/45 flex items-center gap-1">
+ <div className="flex items-center gap-3 mt-1">
+ <span className="text-[10px] text-black/30 font-light flex items-center gap-1">
  <User size={9} strokeWidth={1.5} /> {order.user_name}
  </span>
- <span className="text-[10px] text-black/45">{order.price}</span>
- <span className="text-[10px] text-black/35">
+ <span className="text-[10px] text-black/30 font-light">{order.price}</span>
+ <span className="text-[10px] text-black/20 font-light">
  {new Date(order.created_at.replace(' ', 'T') + 'Z').toLocaleDateString('de-DE')}
  </span>
  </div>
  </div>
 
  {/* Status badge */}
- <span className={`text-[10px] font-medium px-2 py-0.5 flex-shrink-0 ${cfg.color}`}>
+ <span className={`text-[9px] font-light px-2.5 py-1 uppercase tracking-wider flex-shrink-0 ${cfg.color}`}>
  {cfg.label}
  </span>
 
  {/* Expand */}
  <button
- onClick={() => setExpanded(v => !v)}
- className="w-7 h-7 bg-black/5 flex items-center justify-center flex-shrink-0 border-0 hover:bg-black/10 transition-colors"
+ onClick={(e) => { e.stopPropagation(); setExpanded(v => !v) }}
+ className="w-7 h-7 flex items-center justify-center flex-shrink-0 border-0 bg-transparent hover:bg-black/[0.03] transition-colors"
  >
  {expanded
- ? <ChevronUp size={12} strokeWidth={1.5} className="text-black/45" />
- : <ChevronDown size={12} strokeWidth={1.5} className="text-black/45" />}
+ ? <ChevronUp size={12} strokeWidth={1} className="text-black/25" />
+ : <ChevronDown size={12} strokeWidth={1} className="text-black/25" />}
  </button>
  </div>
 
  {/* Expanded details */}
  {expanded && (
- <div className="border-t border-black/6 px-4 py-4 space-y-4 bg-[#f6f5f3]">
+ <div className="px-6 py-5 bg-[#fafaf9] border-t border-black/[0.04] space-y-4">
 
  {/* Customer */}
  <div>
- <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Kunde</p>
- <p className="text-xs text-black/65">{order.user_name}</p>
- <p className="text-[10px] text-black/45">{order.user_email}</p>
- <p className="text-[9px] text-black/35 mt-0.5">USER-{String(order.user_id).padStart(5, '0')}</p>
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Kunde</p>
+ <p className="text-[12px] text-black/60 font-light">{order.user_name}</p>
+ <p className="text-[10px] text-black/35 font-light">{order.user_email}</p>
+ <p className="text-[9px] text-black/20 mt-0.5 font-light">USER-{String(order.user_id).padStart(5, '0')}</p>
  </div>
 
  {/* Shoe details */}
  <div>
- <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Bestellung</p>
- <p className="text-xs text-black/65">{order.shoe_name}</p>
- <p className="text-[10px] text-black/45">{order.material} · {order.color}</p>
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Bestellung</p>
+ <p className="text-[12px] text-black/60 font-light">{order.shoe_name}</p>
+ <p className="text-[10px] text-black/35 font-light">{order.material} · {order.color}</p>
  {order.eu_size && (
- <p className="text-[10px] text-black/50 mt-0.5">EU {order.eu_size} · 3D-Scan</p>
+ <p className="text-[10px] text-black/40 mt-0.5 font-light">EU {order.eu_size} · 3D-Scan</p>
  )}
  </div>
 
  {/* Accessories */}
  {accessories.length > 0 && (
  <div>
- <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Zubehör</p>
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Zubehör</p>
  {accessories.map((a, i) => (
  <div key={i} className="flex justify-between text-[10px]">
- <span className="text-black/45">{a.name}</span>
- <span className="text-black/65">{a.price}</span>
+ <span className="text-black/35 font-light">{a.name}</span>
+ <span className="text-black/50 font-light">{a.price}</span>
  </div>
  ))}
  </div>
@@ -177,8 +177,8 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  {/* Delivery address */}
  {delivery && (
  <div>
- <p className="text-[10px] font-medium text-black/30 uppercase tracking-wider mb-1.5">Lieferadresse</p>
- <p className="text-[10px] text-black/45 leading-relaxed">
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Lieferadresse</p>
+ <p className="text-[10px] text-black/35 font-light leading-relaxed">
  {delivery.name}<br />
  {delivery.street}<br />
  {delivery.zip} {delivery.city}<br />
@@ -190,21 +190,21 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
 
  {/* Actions */}
  {nextOptions.length > 0 && (
- <div className="pt-2 border-t border-black/6 flex flex-wrap gap-2">
+ <div className="pt-3 border-t border-black/[0.04] flex flex-wrap gap-2">
  {nextOptions.map(s => (
  <button
  key={s}
  disabled={updating}
  onClick={() => handleStatus(s)}
- className={`text-[10px] font-medium px-3 py-2 border-0 transition-all disabled:opacity-50 ${
+ className={`disabled:opacity-50 transition-all ${
  s === 'cancelled'
- ? 'bg-black/8 text-black/40 hover:bg-black/12'
+ ? 'text-[10px] font-light px-4 py-2 border border-black/10 text-black/30 hover:border-black/25 hover:text-black/50 bg-transparent'
  : s === 'processing'
- ? 'bg-black text-white hover:bg-black/85'
- : 'bg-black/8 text-black/50 hover:bg-black/12'
+ ? 'text-[10px] font-light px-4 py-2 border border-black text-black hover:bg-black hover:text-white bg-transparent'
+ : 'text-[10px] font-light px-4 py-2 border border-black text-black hover:bg-black hover:text-white bg-transparent'
  }`}
  >
- {updating ? '…' : STATUS_LABELS[s] || s}
+ {updating ? '...' : STATUS_LABELS[s] || s}
  </button>
  ))}
  </div>
@@ -256,25 +256,25 @@ export default function OrdersPanel() {
  const pendingPaymentCount = counts['pending_payment'] || 0
 
  return (
- <div className="p-8 min-h-full">
+ <div className="px-10 py-10 lg:px-14 lg:py-12 min-h-full">
  {/* Header */}
- <div className="flex items-center justify-between mb-6">
+ <div className="flex items-center justify-between mb-8">
  <div>
- <div className="flex items-center gap-3 mb-1">
- <ShoppingBag size={18} strokeWidth={1.5} className="text-black/35" />
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Bestellungen</h1>
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Verwaltung</p>
+ <div className="flex items-center gap-3 mb-0">
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Bestellungen</h1>
  {pendingPaymentCount > 0 && (
- <span className="bg-black/15 text-black/70 text-[10px] font-medium px-2 py-0.5">
+ <span className="text-[9px] font-light px-2.5 py-1 uppercase tracking-wider bg-black/[0.06] text-black/50">
  {pendingPaymentCount} Zahlung offen
  </span>
  )}
  </div>
- <p className="text-xs text-black/45">{orders.length} Bestellungen gesamt</p>
+ <p className="text-[13px] text-black/30 mt-2 font-light">{orders.length} Bestellungen gesamt</p>
  </div>
  <button
  onClick={load}
  disabled={loading}
- className="flex items-center gap-2 bg-black/5 hover:bg-black/10 text-black/65 text-xs px-3 py-2 border-0 transition-colors disabled:opacity-50"
+ className="flex items-center gap-2 px-4 h-9 text-[11px] text-black/25 hover:text-black/50 bg-transparent border-0 transition-colors font-light disabled:opacity-50"
  >
  <RefreshCw size={12} strokeWidth={1.5} className={loading ? 'animate-spin' : ''} />
  Aktualisieren
@@ -282,15 +282,15 @@ export default function OrdersPanel() {
  </div>
 
  {/* Filter tabs */}
- <div className="flex gap-1.5 flex-wrap mb-5">
+ <div className="flex gap-1 flex-wrap mb-6">
  {FILTERS.map(f => (
  <button
  key={f.key}
  onClick={() => setFilter(f.key)}
- className={`text-xs font-medium px-3 py-1.5 border-0 transition-all ${
+ className={`transition-all ${
  filter === f.key
- ? 'bg-black text-white'
- : 'bg-black/5 text-black/45 hover:bg-black/10 hover:text-black/90'
+ ? 'px-3.5 py-1.5 text-[10px] bg-black text-white border-0 tracking-wider font-light'
+ : 'px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 tracking-wider font-light'
  }`}
  >
  {f.label}
@@ -303,15 +303,15 @@ export default function OrdersPanel() {
  {/* List */}
  {loading ? (
  <div className="flex items-center justify-center py-20">
- <div className="w-6 h-6 border-2 border-black/15 border-t-black animate-spin" />
+ <div className="w-5 h-5 rounded-full border border-black/10 border-t-black/40 animate-spin" />
  </div>
  ) : filtered.length === 0 ? (
- <div className="flex flex-col items-center justify-center py-20 text-center">
- <ShoppingBag size={32} strokeWidth={1.5} className="text-black/20 mb-3" />
- <p className="text-sm text-black/45">Keine Bestellungen</p>
+ <div className="text-center py-20">
+ <ShoppingBag size={28} strokeWidth={1} className="text-black/15 mx-auto mb-3" />
+ <p className="text-[13px] text-black/25 font-light">Keine Bestellungen</p>
  </div>
  ) : (
- <div className="space-y-2">
+ <div className="bg-white">
  {filtered.map(order => (
  <OrderRow key={order.id} order={order} onStatusChange={handleStatusChange} isAdmin={isAdmin} />
  ))}

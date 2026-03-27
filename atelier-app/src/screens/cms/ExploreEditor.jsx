@@ -35,131 +35,131 @@ function SectionForm({ initial = emptyForm, onSave, onCancel, isNew }) {
   const removePreview = (i) => setForm(f => ({ ...f, previewItems: f.previewItems.filter((_, j) => j !== i) }))
 
   return (
-    <div className="bg-white border border-black/6 p-5 space-y-4">
-      <h3 className="text-sm font-semibold text-black/65">{isNew ? 'Neue Section' : 'Bearbeiten'}</h3>
+    <div className="bg-white p-7 space-y-5">
+      <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">{isNew ? 'Neue Section' : 'Bearbeiten'}</p>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Key *</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Key *</label>
           <input value={form.key} onChange={e => set('key', e.target.value)} placeholder="editorial"
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20"
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
             disabled={!isNew} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Label *</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Label *</label>
           <input value={form.label} onChange={e => set('label', e.target.value)} placeholder="Editorial"
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20" />
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-black/35 mb-1.5">Titel *</label>
+        <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Titel *</label>
         <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="Saisonale Editorials"
-          className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20" />
+          className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-black/35 mb-1.5">Beschreibung</label>
+        <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Beschreibung</label>
         <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3}
-          className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20 resize-none" />
+          className="w-full py-3 border-b border-black/[0.08] bg-transparent resize-y text-[13px] font-light text-black/70 placeholder-black/15 outline-none focus:border-black/25 px-4" />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Tag</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Tag</label>
           <select value={form.tag} onChange={e => set('tag', e.target.value)}
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none">
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70">
             {TAG_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Icon</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Icon</label>
           <select value={form.icon} onChange={e => set('icon', e.target.value)}
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none">
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70">
             {ICON_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Sortierung</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Sortierung</label>
           <input type="number" value={form.sortOrder} onChange={e => set('sortOrder', Number(e.target.value))}
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 focus:outline-none" />
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70" />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Farbe</label>
-          <div className="flex items-center gap-2">
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Farbe</label>
+          <div className="flex items-center gap-3">
             <input type="color" value={form.color} onChange={e => set('color', e.target.value)}
-              className="w-10 h-10 border border-black/15 bg-transparent cursor-pointer" />
+              className="w-10 h-10 border border-black/[0.08] bg-transparent cursor-pointer" />
             <input value={form.color} onChange={e => set('color', e.target.value)}
-              className="flex-1 bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 font-mono focus:outline-none" />
+              className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 font-mono" />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Akzentfarbe</label>
-          <div className="flex items-center gap-2">
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Akzentfarbe</label>
+          <div className="flex items-center gap-3">
             <input type="color" value={form.accent} onChange={e => set('accent', e.target.value)}
-              className="w-10 h-10 border border-black/15 bg-transparent cursor-pointer" />
+              className="w-10 h-10 border border-black/[0.08] bg-transparent cursor-pointer" />
             <input value={form.accent} onChange={e => set('accent', e.target.value)}
-              className="flex-1 bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 font-mono focus:outline-none" />
+              className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 font-mono" />
           </div>
         </div>
       </div>
 
       {/* Section Image */}
       <div>
-        <label className="block text-xs font-medium text-black/35 mb-1.5">Section-Bild</label>
+        <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Section-Bild</label>
         <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
         {form.image ? (
           <div className="relative">
-            <img src={form.image} alt="" className="w-full h-32 object-cover border border-black/10" />
+            <img src={form.image} alt="" className="w-full h-32 object-cover" />
             <button onClick={() => set('image', null)}
-              className="absolute top-2 right-2 w-6 h-6 bg-black/60 text-white flex items-center justify-center border-0">
+              className="absolute top-2 right-2 w-7 h-7 bg-black/60 text-white flex items-center justify-center border-0">
               <X size={12} />
             </button>
           </div>
         ) : (
           <button onClick={() => fileRef.current?.click()}
-            className="w-full py-6 border border-dashed border-black/15 text-black/30 text-xs flex items-center justify-center gap-2 bg-transparent hover:border-black/25">
-            <Upload size={14} /> Bild hochladen
+            className="w-full py-6 border border-dashed border-black/[0.08] text-black/25 text-[11px] flex items-center justify-center gap-2 bg-transparent hover:border-black/25 font-light uppercase tracking-[0.15em] transition-all">
+            <Upload size={13} strokeWidth={1.25} /> Bild hochladen
           </button>
         )}
       </div>
 
       {/* Preview Items */}
       <div>
-        <label className="block text-xs font-medium text-black/35 mb-1.5">Vorschau-Items</label>
+        <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Vorschau-Items</label>
         <div className="space-y-2">
           {form.previewItems.map((item, i) => (
             <div key={i} className="flex gap-2">
               <input value={item} onChange={e => updatePreview(i, e.target.value)} placeholder={`Item ${i + 1}`}
-                className="flex-1 bg-white border border-black/10 px-3.5 py-2 text-sm text-black/90 placeholder-black/20 focus:outline-none" />
+                className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
               {form.previewItems.length > 1 && (
-                <button onClick={() => removePreview(i)} className="w-8 h-8 bg-black/4 flex items-center justify-center border-0 flex-shrink-0 mt-0.5">
-                  <X size={12} className="text-black/35" />
+                <button onClick={() => removePreview(i)} className="w-7 h-7 hover:bg-black/[0.04] border-0 bg-transparent flex items-center justify-center flex-shrink-0 mt-1.5">
+                  <X size={12} strokeWidth={1.25} className="text-black/25" />
                 </button>
               )}
             </div>
           ))}
-          <button onClick={addPreview} className="text-[10px] text-black/40 hover:text-black/70 bg-transparent border-0 px-0">+ Item hinzufügen</button>
+          <button onClick={addPreview} className="flex items-center gap-2 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 px-0 font-light uppercase tracking-[0.15em] transition-all">+ Item hinzufugen</button>
         </div>
       </div>
 
       {/* Visible toggle */}
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex items-center gap-2.5 cursor-pointer">
         <input type="checkbox" checked={form.visible} onChange={e => set('visible', e.target.checked)}
           className="w-4 h-4" />
-        <span className="text-xs text-black/60">Sichtbar in der App</span>
+        <span className="text-[13px] text-black/40 font-light">Sichtbar in der App</span>
       </label>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-2">
         <button onClick={() => valid && onSave({ ...form, previewItems: form.previewItems.filter(p => p.trim()) })} disabled={!valid}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium border-0 ${valid ? 'bg-black text-white hover:bg-black' : 'bg-black/5 text-black/35 cursor-not-allowed'}`}>
-          <Check size={14} /> Speichern
+          className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 flex items-center justify-center gap-2">
+          <Check size={13} strokeWidth={1.25} /> Speichern
         </button>
         <button onClick={onCancel}
-          className="px-4 py-2.5 text-xs font-medium text-black/45 hover:text-black/90 bg-black/5 border-0">
+          className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 font-light">
           Abbrechen
         </button>
       </div>
@@ -187,39 +187,39 @@ function HeroEditor({ hero, onSave }) {
   }
 
   return (
-    <div className="bg-white border border-black/6 p-5 space-y-4 mb-6">
-      <h3 className="text-sm font-semibold text-black/65">Hero-Bereich</h3>
+    <div className="bg-white p-7 space-y-5 mb-8">
+      <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">Hero-Bereich</p>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Hero-Titel</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Hero-Titel</label>
           <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
             placeholder="EXPLORE"
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20" />
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-black/35 mb-1.5">Untertitel</label>
+          <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Untertitel</label>
           <input value={form.subtitle} onChange={e => setForm(f => ({ ...f, subtitle: e.target.value }))}
             placeholder="Inspiration & Handwerk"
-            className="w-full bg-white border border-black/10 px-3.5 py-2.5 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black/20" />
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15" />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-black/35 mb-1.5">Hero-Bild</label>
+        <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Hero-Bild</label>
         <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
         {form.image ? (
           <div className="relative">
-            <img src={form.image} alt="" className="w-full h-40 object-cover border border-black/10" />
+            <img src={form.image} alt="" className="w-full h-40 object-cover" />
             <button onClick={() => setForm(f => ({ ...f, image: null }))}
-              className="absolute top-2 right-2 w-6 h-6 bg-black/60 text-white flex items-center justify-center border-0">
+              className="absolute top-2 right-2 w-7 h-7 bg-black/60 text-white flex items-center justify-center border-0">
               <X size={12} />
             </button>
           </div>
         ) : (
           <button onClick={() => fileRef.current?.click()}
-            className="w-full py-8 border border-dashed border-black/15 text-black/30 text-xs flex items-center justify-center gap-2 bg-transparent hover:border-black/25">
-            <Image size={16} /> Hero-Bild hochladen (empfohlen: 860×400)
+            className="w-full py-8 border border-dashed border-black/[0.08] text-black/25 text-[11px] flex items-center justify-center gap-2 bg-transparent hover:border-black/25 font-light uppercase tracking-[0.15em] transition-all">
+            <Image size={14} strokeWidth={1.25} /> Hero-Bild hochladen (empfohlen: 860x400)
           </button>
         )}
       </div>
@@ -238,8 +238,8 @@ function HeroEditor({ hero, onSave }) {
       )}
 
       <button onClick={save} disabled={saving}
-        className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-medium bg-black text-white border-0">
-        <Check size={14} /> {saving ? 'Speichern…' : 'Hero speichern'}
+        className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 flex items-center justify-center gap-2">
+        <Check size={13} strokeWidth={1.25} /> {saving ? 'Speichern...' : 'Hero speichern'}
       </button>
     </div>
   )
@@ -252,16 +252,17 @@ export default function ExploreEditor() {
   const sorted = [...exploreSections].sort((a, b) => a.sortOrder - b.sortOrder)
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="px-10 py-10 lg:px-14 lg:py-12">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Explore</h1>
-          <p className="text-black/45 text-sm mt-1">Hero-Bild & Sektionen der Explore-Seite</p>
+          <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Content</p>
+          <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Explore</h1>
+          <p className="text-[13px] text-black/30 mt-2 font-light">Hero-Bild & Sektionen der Explore-Seite</p>
         </div>
         {!mode && (
           <button onClick={() => setMode('add')}
-            className="flex items-center gap-2 bg-black hover:bg-black text-white text-xs font-medium px-4 py-2 border-0">
-            <Plus size={14} /> Neue Section
+            className="flex items-center gap-2 px-6 h-10 border border-black/15 text-black/50 hover:border-black hover:text-black text-[11px] bg-transparent uppercase tracking-[0.2em] font-light transition-all">
+            <Plus size={13} strokeWidth={1.25} /> Neue Section
           </button>
         )}
       </div>
@@ -271,50 +272,50 @@ export default function ExploreEditor() {
 
       {/* Add form */}
       {mode === 'add' && (
-        <div className="mb-6">
+        <div className="mb-8">
           <SectionForm isNew onSave={f => { addExploreSection(f); setMode(null) }} onCancel={() => setMode(null)} />
         </div>
       )}
 
       {/* Sections list */}
-      <div className="space-y-2">
+      <div>
         {sorted.map(section => (
           mode?.editing?.id === section.id ? (
             <SectionForm key={section.id} initial={section}
               onSave={f => { updateExploreSection(section.id, f); setMode(null) }}
               onCancel={() => setMode(null)} />
           ) : (
-            <div key={section.id} className="bg-white border border-black/6 flex items-center gap-4 px-5 py-4 group hover:border-black/10 transition-all">
+            <div key={section.id} className="bg-white px-6 py-4 group hover:bg-black/[0.01] border-b border-black/[0.04] flex items-center gap-4 transition-all">
               <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: section.color }}>
-                <span className="text-white text-[10px] font-medium" style={{ letterSpacing: '0.1em' }}>
+                <span className="text-white text-[10px] font-light" style={{ letterSpacing: '0.1em' }}>
                   {section.label?.slice(0, 3).toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-black/90">{section.title}</p>
-                  {!section.visible && <EyeOff size={12} className="text-black/25" />}
+                  <p className="text-[13px] font-light text-black/70">{section.title}</p>
+                  {!section.visible && <EyeOff size={12} strokeWidth={1.25} className="text-black/25" />}
                 </div>
-                <p className="text-[10px] text-black/45 mt-0.5">{section.key} · {section.tag} · {section.previewItems?.length || 0} Items</p>
+                <p className="text-[10px] text-black/30 mt-0.5 font-light">{section.key} · {section.tag} · {section.previewItems?.length || 0} Items</p>
               </div>
               {section.image && (
-                <img src={section.image} alt="" className="w-16 h-12 object-cover flex-shrink-0 border border-black/10" />
+                <img src={section.image} alt="" className="w-16 h-12 object-cover flex-shrink-0" />
               )}
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={() => setMode({ editing: section })}
-                  className="w-8 h-8 bg-black/5 flex items-center justify-center hover:bg-black/10 border-0">
-                  <Pencil size={13} className="text-black/65" />
+                  className="w-7 h-7 hover:bg-black/[0.04] border-0 bg-transparent flex items-center justify-center">
+                  <Pencil size={12} strokeWidth={1.25} className="text-black/25" />
                 </button>
                 <button onClick={() => { if (confirm(`"${section.title}" löschen?`)) deleteExploreSection(section.id) }}
-                  className="w-8 h-8 bg-black/4 flex items-center justify-center hover:bg-black/8 border-0">
-                  <Trash2 size={13} className="text-black/35" />
+                  className="w-7 h-7 hover:bg-black/[0.04] border-0 bg-transparent flex items-center justify-center">
+                  <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />
                 </button>
               </div>
             </div>
           )
         ))}
         {sorted.length === 0 && (
-          <div className="text-center py-16 text-black/35 text-sm">Keine Explore-Sektionen</div>
+          <div className="text-center py-20 text-[13px] text-black/25 font-light">Keine Explore-Sektionen</div>
         )}
       </div>
     </div>

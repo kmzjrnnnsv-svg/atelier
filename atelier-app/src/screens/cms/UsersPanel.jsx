@@ -6,9 +6,9 @@ import { useAuth } from '../../context/AuthContext'
 const ROLES = ['user', 'curator', 'admin']
 
 const roleBadge = {
- admin: 'bg-black text-white',
- curator: 'bg-black/15 text-black/60',
- user: 'bg-black/5 text-black/35',
+ admin: 'text-[9px] bg-black text-white px-2.5 py-0.5 font-light tracking-wider',
+ curator: 'text-[9px] bg-black/10 text-black/50 px-2.5 py-0.5 font-light tracking-wider',
+ user: 'text-[9px] text-black/25 px-2.5 py-0.5 font-light tracking-wider',
 }
 
 export default function UsersPanel() {
@@ -110,17 +110,15 @@ export default function UsersPanel() {
  const filtered = tab === 'promo' ? users.filter(u => u.is_promotion) : users
 
  return (
- <div className="p-8">
- <div className="mb-6">
- <div className="flex items-center gap-2 mb-1">
- <Shield size={18} strokeWidth={1.5} className="text-black/35" />
- <h1 className="text-xl font-bold text-black/85" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>Benutzerverwaltung</h1>
- </div>
- <p className="text-black/45 text-sm">Rollen, Status und Zugriff für alle Accounts verwalten</p>
+ <div className="px-10 py-10 lg:px-14 lg:py-12">
+ <div className="mb-8">
+ <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Administration</p>
+ <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Benutzerverwaltung</h1>
+ <p className="text-[13px] text-black/30 mt-2 font-light">Rollen, Status und Zugriff für alle Accounts verwalten</p>
  </div>
 
  {/* Tabs */}
- <div className="flex items-center gap-3 mb-5">
+ <div className="flex items-center gap-3 mb-6">
  <div className="flex gap-1.5">
  {[
  { key: 'all', label: `Alle (${users.length})` },
@@ -129,8 +127,8 @@ export default function UsersPanel() {
  <button
  key={t.key}
  onClick={() => setTab(t.key)}
- className={`px-3 py-1.5 text-[10px] font-semibold transition-all border-0 uppercase tracking-wider ${
- tab === t.key ? 'bg-black text-white' : 'bg-black/4 text-black/35 hover:text-black/60 hover:bg-black/8'
+ className={`px-3.5 py-1.5 text-[10px] transition-all border-0 uppercase tracking-wider font-light ${
+ tab === t.key ? 'bg-black text-white' : 'text-black/25 hover:text-black/50 bg-transparent'
  }`}
  >{t.label}</button>
  ))}
@@ -139,124 +137,124 @@ export default function UsersPanel() {
  {!showPromoForm && (
  <button
  onClick={() => setShowPromoForm(true)}
- className="flex items-center gap-2 bg-amber-600 text-white text-[10px] font-semibold px-4 py-2 border-0 uppercase tracking-wider hover:bg-amber-700 transition-colors"
+ className="flex items-center gap-2 px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light"
  >
- <Plus size={12} /> Promotion-Account
+ <Plus size={12} strokeWidth={1.25} /> Promotion-Account
  </button>
  )}
  </div>
 
  {/* Create Promo Form */}
  {showPromoForm && (
- <div className="bg-amber-50 border border-amber-200/60 p-5 mb-5 space-y-3">
+ <div className="bg-white p-6 mb-6 space-y-4">
  <div className="flex items-center gap-2 mb-1">
- <Sparkles size={14} className="text-amber-600" />
- <h3 className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Promotion-Account erstellen</h3>
+ <Sparkles size={12} strokeWidth={1.25} className="text-black/25" />
+ <h3 className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">Promotion-Account erstellen</h3>
  </div>
- <div className="grid grid-cols-2 gap-3">
+ <div className="grid grid-cols-2 gap-4">
  <input
  value={promoForm.email} onChange={e => setPromoForm(f => ({ ...f, email: e.target.value }))}
- placeholder="E-Mail *" className="bg-white border border-amber-200 px-3 py-2.5 text-sm placeholder-black/20 focus:outline-none focus:border-amber-400"
+ placeholder="E-Mail *" className="h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
  />
  <input
  value={promoForm.name} onChange={e => setPromoForm(f => ({ ...f, name: e.target.value }))}
- placeholder="Name *" className="bg-white border border-amber-200 px-3 py-2.5 text-sm placeholder-black/20 focus:outline-none focus:border-amber-400"
+ placeholder="Name *" className="h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
  />
  <input
  type="number" value={promoForm.discount_pct} onChange={e => setPromoForm(f => ({ ...f, discount_pct: e.target.value }))}
- placeholder="Rabatt % (z.B. 20)" className="bg-white border border-amber-200 px-3 py-2.5 text-sm placeholder-black/20 focus:outline-none focus:border-amber-400"
+ placeholder="Rabatt % (z.B. 20)" className="h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
  />
  <input
  type="number" value={promoForm.max_orders} onChange={e => setPromoForm(f => ({ ...f, max_orders: e.target.value }))}
- placeholder="Max. Bestellungen (leer = unbegrenzt)" className="bg-white border border-amber-200 px-3 py-2.5 text-sm placeholder-black/20 focus:outline-none focus:border-amber-400"
+ placeholder="Max. Bestellungen (leer = unbegrenzt)" className="h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
  />
  </div>
- <div className="flex gap-2">
+ <div className="flex gap-3 pt-1">
  <button
  onClick={createPromo} disabled={promoSaving || !promoForm.email || !promoForm.name}
- className="flex items-center gap-2 bg-amber-600 text-white text-[10px] font-semibold px-4 py-2 border-0 uppercase tracking-wider hover:bg-amber-700 disabled:opacity-40 transition-all"
+ className="flex items-center gap-2 px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black"
  >
- <Send size={11} /> {promoSaving ? 'Wird gesendet...' : 'Einladung senden'}
+ <Send size={11} strokeWidth={1.25} /> {promoSaving ? 'Wird gesendet...' : 'Einladung senden'}
  </button>
- <button onClick={() => setShowPromoForm(false)} className="px-4 py-2 text-[10px] text-black/40 bg-black/4 border-0 hover:bg-black/8">Abbrechen</button>
+ <button onClick={() => setShowPromoForm(false)} className="px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 tracking-wider font-light uppercase">Abbrechen</button>
  </div>
  </div>
  )}
 
  {/* Scan Assign Modal */}
  {scanAssign && (
- <div className="bg-teal-50 border border-teal-200/60 p-5 mb-5 space-y-3">
- <h3 className="text-[11px] font-semibold text-teal-800 uppercase tracking-wider">Scan zuweisen an {scanAssign.userName}</h3>
- <div className="flex gap-2">
+ <div className="bg-white p-6 mb-6 space-y-4">
+ <h3 className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">Scan zuweisen an {scanAssign.userName}</h3>
+ <div className="flex gap-3">
  <input
  type="number" value={scanId} onChange={e => setScanId(e.target.value)}
- placeholder="Scan-ID eingeben" className="flex-1 bg-white border border-teal-200 px-3 py-2.5 text-sm placeholder-black/20 focus:outline-none focus:border-teal-400"
+ placeholder="Scan-ID eingeben" className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
  />
  <button
  onClick={assignScan} disabled={!scanId}
- className="flex items-center gap-2 bg-teal-600 text-white text-[10px] font-semibold px-4 py-2 border-0 uppercase tracking-wider hover:bg-teal-700 disabled:opacity-40"
+ className="flex items-center gap-2 px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black"
  >
- <ScanLine size={11} /> Zuweisen
+ <ScanLine size={11} strokeWidth={1.25} /> Zuweisen
  </button>
- <button onClick={() => { setScanAssign(null); setScanId('') }} className="px-3 py-2 text-[10px] text-black/40 bg-black/4 border-0 hover:bg-black/8">Abbrechen</button>
+ <button onClick={() => { setScanAssign(null); setScanId('') }} className="px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 tracking-wider font-light uppercase">Abbrechen</button>
  </div>
  </div>
  )}
 
  {/* Role legend */}
- <div className="flex gap-3 mb-5 flex-wrap">
+ <div className="flex gap-3 mb-6 flex-wrap">
  {[
  { role: 'admin', desc: 'Voller Zugriff, User-Verwaltung' },
  { role: 'curator', desc: 'CMS-Inhalte verwalten' },
  { role: 'user', desc: 'Nur App-Zugriff' },
  ].map(({ role, desc }) => (
- <div key={role} className="flex items-center gap-2 bg-white px-3 py-2 border border-black/6">
- <span className={`text-[10px] font-medium px-2 py-0.5 ${roleBadge[role]}`}>{role}</span>
- <span className="text-xs text-black/35">{desc}</span>
+ <div key={role} className="flex items-center gap-2.5 bg-white px-4 py-3">
+ <span className={roleBadge[role]}>{role}</span>
+ <span className="text-[11px] text-black/30 font-light">{desc}</span>
  </div>
  ))}
  </div>
 
  {loading && (
  <div className="flex justify-center py-16">
- <div className="w-6 h-6 border-2 border-black/15 border-t-black animate-spin-custom" />
+ <div className="w-5 h-5 border border-black/10 border-t-black/40 rounded-full animate-spin" />
  </div>
  )}
 
  {error && (
- <div className="bg-black/5 border border-black/10 px-4 py-3 text-sm text-black/50">{error}</div>
+ <div className="bg-white px-6 py-4 text-[13px] text-black/40 font-light">{error}</div>
  )}
 
  {!loading && !error && (
- <div className="bg-white border border-black/6 overflow-hidden">
- <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 py-3 bg-[#f6f5f3] border-b border-black/6">
+ <div className="bg-white overflow-hidden">
+ <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-6 py-4 border-b border-black/[0.04]">
  {['Benutzer', 'Rolle', 'Status', 'Erstellt', 'Aktionen'].map(h => (
- <p key={h} className="text-[10px] font-medium text-black/30 uppercase tracking-wider">{h}</p>
+ <p key={h} className="text-[9px] text-black/20 uppercase tracking-[0.25em] font-light">{h}</p>
  ))}
  </div>
 
- <div className="divide-y divide-black/6">
+ <div>
  {filtered.map(u => (
- <div key={u.id} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 py-4 items-center hover:bg-black/5 transition-colors">
+ <div key={u.id} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-6 py-4 items-center hover:bg-black/[0.01] border-b border-black/[0.04] transition-colors">
  {/* User info */}
  <div className="min-w-0">
- <div className="flex items-center gap-2">
- <div className="w-7 h-7 bg-black/10 flex items-center justify-center flex-shrink-0">
- <span className="text-[10px] font-bold text-black/65">{u.name[0].toUpperCase()}</span>
+ <div className="flex items-center gap-3">
+ <div className="w-7 h-7 bg-black/[0.04] flex items-center justify-center flex-shrink-0">
+ <span className="text-[10px] font-light text-black/30">{u.name[0].toUpperCase()}</span>
  </div>
  <div className="min-w-0">
  <div className="flex items-center gap-1.5">
- <p className="text-sm font-medium text-black/90 truncate">
+ <p className="text-[13px] font-light text-black/70 truncate">
  {u.name}
- {u.id === me.id && <span className="ml-1.5 text-[8px] text-black/45">(du)</span>}
+ {u.id === me.id && <span className="ml-1.5 text-[9px] text-black/20 font-light">(du)</span>}
  </p>
  {!!u.is_promotion && (
- <span className="text-[8px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 uppercase tracking-wider flex-shrink-0">PROMO</span>
+ <span className="text-[8px] bg-black/10 text-black/40 px-2 py-0.5 uppercase tracking-wider font-light flex-shrink-0">PROMO</span>
  )}
  </div>
- <p className="text-[10px] text-black/45 truncate">{u.email}</p>
+ <p className="text-[10px] text-black/25 truncate font-light">{u.email}</p>
  {!!u.is_promotion && (
- <p className="text-[9px] text-amber-600/70 mt-0.5">
+ <p className="text-[9px] text-black/25 mt-0.5 font-light">
  {u.promotion_discount_pct ? `${u.promotion_discount_pct}% Rabatt` : ''}
  {u.promotion_max_orders ? ` · ${u.promotion_orders_used || 0}/${u.promotion_max_orders} Bestellungen` : ''}
  </p>
@@ -268,32 +266,32 @@ export default function UsersPanel() {
  {/* Role selector */}
  <div className="relative">
  {u.id === me.id ? (
- <span className={`text-[10px] font-medium px-2 py-0.5 ${roleBadge[u.role]}`}>{u.role}</span>
+ <span className={roleBadge[u.role]}>{u.role}</span>
  ) : (
  <div className="relative">
  <select
  value={u.role}
  onChange={(e) => changeRole(u.id, e.target.value)}
- className={`appearance-none text-[10px] font-medium px-2 py-0.5 pr-5 cursor-pointer bg-transparent focus:outline-none ${roleBadge[u.role]}`}
+ className={`appearance-none pr-5 cursor-pointer bg-transparent focus:outline-none ${roleBadge[u.role]}`}
  >
  {ROLES.map(r => <option key={r} value={r} className="bg-white text-black/90 normal-case text-sm">{r}</option>)}
  </select>
- <ChevronDown size={9} strokeWidth={1.5} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-current" />
+ <ChevronDown size={8} strokeWidth={1.25} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-current" />
  </div>
  )}
  </div>
 
  {/* Status badge */}
  <div>
- <span className={`text-[10px] font-medium px-2 py-0.5 ${
- u.is_active ? 'bg-black/8 text-black/50' : 'bg-black/4 text-black/25'
+ <span className={`text-[9px] font-light px-2.5 py-0.5 tracking-wider ${
+ u.is_active ? 'bg-black/[0.06] text-black/40' : 'bg-black/[0.02] text-black/20'
  }`}>
  {u.is_active ? 'Aktiv' : 'Inaktiv'}
  </span>
  </div>
 
  {/* Created at */}
- <p className="text-[10px] text-black/35 whitespace-nowrap">
+ <p className="text-[10px] text-black/25 whitespace-nowrap font-light">
  {new Date(u.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
  </p>
 
@@ -304,35 +302,35 @@ export default function UsersPanel() {
  <button
  onClick={() => togglePromo(u)}
  title={u.is_promotion ? 'Promotion entfernen' : 'Zu Promotion machen'}
- className={`w-7 h-7 flex items-center justify-center border-0 transition-colors ${u.is_promotion ? 'bg-amber-100 hover:bg-amber-200' : 'bg-black/4 hover:bg-black/8'}`}
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
- <Sparkles size={11} strokeWidth={1.5} className={u.is_promotion ? 'text-amber-600' : 'text-black/30'} />
+ <Sparkles size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  {!!u.is_promotion && (
  <button
  onClick={() => setScanAssign({ userId: u.id, userName: u.name })}
  title="Scan zuweisen"
- className="w-7 h-7 bg-teal-50 hover:bg-teal-100 flex items-center justify-center border-0 transition-colors"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
- <ScanLine size={11} strokeWidth={1.5} className="text-teal-600" />
+ <ScanLine size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  )}
  <button
  onClick={() => toggleStatus(u.id, u.is_active)}
  title={u.is_active ? 'Deaktivieren' : 'Aktivieren'}
- className="w-7 h-7 flex items-center justify-center border-0 transition-colors bg-black/4 hover:bg-black/8"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
  {u.is_active
- ? <UserX size={12} strokeWidth={1.5} className="text-black/40" />
- : <UserCheck size={12} strokeWidth={1.5} className="text-black/40" />
+ ? <UserX size={12} strokeWidth={1.25} className="text-black/25" />
+ : <UserCheck size={12} strokeWidth={1.25} className="text-black/25" />
  }
  </button>
  <button
  onClick={() => deleteUser(u.id, u.name)}
  title="Löschen"
- className="w-7 h-7 bg-black/4 hover:bg-black/8 flex items-center justify-center border-0 transition-colors"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
- <Trash2 size={12} strokeWidth={1.5} className="text-black/30" />
+ <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  </>
  )}
