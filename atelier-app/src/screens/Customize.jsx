@@ -104,7 +104,6 @@ export default function Customize() {
   const [rightFullyScrolled, setRightFullyScrolled] = useState(false)
   const [selectedAccessories, setSelectedAccessories] = useState([])
   const [duplicateDialog, setDuplicateDialog] = useState(false)
-  const [duplicateBanner, setDuplicateBanner] = useState(false)
 
   const [directAccessories, setDirectAccessories] = useState([])
   const storeAcc = shoeAccessoryMap[product.id] || []
@@ -348,15 +347,16 @@ export default function Customize() {
       return
     }
 
-    if (sameConfig) {
-      // Gleiche Konfiguration ohne Zubehör → Banner anzeigen
-      setDuplicateBanner(true)
+    if (sameConfig && selectedAccessories.length === 0) {
+      // Schuh schon drin, kein Zubehör mehr → zum Warenkorb
+      navigate('/checkout')
       return
     }
 
     // Neue Konfiguration → normal hinzufügen
     addShoeToCart()
     addAccessoriesToCart()
+    setSelectedAccessories([])
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -364,17 +364,12 @@ export default function Customize() {
   const handleDuplicateChoice = (includeShoe) => {
     if (includeShoe) addShoeToCart()
     addAccessoriesToCart()
+    setSelectedAccessories([])
     setDuplicateDialog(false)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
 
-  const handleBannerConfirm = () => {
-    addShoeToCart()
-    setDuplicateBanner(false)
-    setAdded(true)
-    setTimeout(() => setAdded(false), 2000)
-  }
 
   const handleBuyNow = () => {
     const cartAccessories = selectedAccessories.map(id => {
@@ -976,14 +971,14 @@ export default function Customize() {
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={added ? () => navigate('/checkout') : handleAddToCart}
+                  onClick={handleAddToCart}
                   className={`flex-1 h-14 flex items-center justify-center gap-2.5 transition-all border ${
                     added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 hover:bg-black/5 active:bg-black/10'
                   }`}
                   style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
                 >
                   {added
-                    ? <><ShoppingBag size={16} strokeWidth={1.5} /> Zum Warenkorb</>
+                    ? <><Check size={16} strokeWidth={1.5} /> Hinzugefügt</>
                     : <><ShoppingBag size={16} strokeWidth={1.5} /> Warenkorb</>
                   }
                 </button>
@@ -1026,14 +1021,14 @@ export default function Customize() {
         </p>
         <div className="flex gap-2">
           <button
-            onClick={added ? () => navigate('/checkout') : handleAddToCart}
+            onClick={handleAddToCart}
             className={`flex-1 h-12 flex items-center justify-center gap-2 transition-all border ${
               added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 active:bg-black/5'
             }`}
             style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
           >
             {added
-              ? <><ShoppingBag size={14} strokeWidth={1.5} /> Zum Warenkorb</>
+              ? <><Check size={14} strokeWidth={1.5} /> Hinzugefügt</>
               : <><ShoppingBag size={14} strokeWidth={1.5} /> Warenkorb</>
             }
           </button>
@@ -1047,38 +1042,6 @@ export default function Customize() {
         </div>
         <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Kostenlose Lieferung</p>
       </div>
-
-      {/* ── Duplikat-Banner (Schuh ohne Zubehör) ───────────────── */}
-      {duplicateBanner && (
-        <div className="fixed bottom-0 left-0 right-0 z-[90] animate-[slideUp_0.3s_ease-out]">
-          <div className="bg-[#1a1a1a] mx-0 lg:mx-auto lg:max-w-lg">
-            <div className="px-5 py-4 flex items-center gap-4">
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-white/90 font-light leading-snug">
-                  Dieser Schuh ist bereits im Warenkorb.
-                </p>
-                <p className="text-[10px] text-white/35 font-light mt-0.5">
-                  Möchten Sie ihn erneut hinzufügen?
-                </p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <button
-                  onClick={() => setDuplicateBanner(false)}
-                  className="h-9 px-4 text-[9px] text-white/40 uppercase tracking-[0.15em] font-light bg-transparent border border-white/10 hover:border-white/25 transition-all"
-                >
-                  Nein
-                </button>
-                <button
-                  onClick={handleBannerConfirm}
-                  className="h-9 px-4 text-[9px] text-black uppercase tracking-[0.15em] font-light bg-white border border-white hover:bg-white/90 transition-all"
-                >
-                  Ja, hinzufügen
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Duplikat-Dialog ────────────────────────────────────── */}
       {duplicateDialog && (
