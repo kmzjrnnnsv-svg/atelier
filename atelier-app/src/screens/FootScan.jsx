@@ -1174,7 +1174,7 @@ export default function FootScan() {
 
             // ── Real-time warnings ──
             // Warn if too few points after 8 seconds (scanning too fast or too far away)
-            if (elapsed > 8000 && pts < 800 && now - lastPointWarningTime > 6000) {
+            if (elapsed > 8000 && pts < 1500 && now - lastPointWarningTime > 6000) {
               speak(SCAN_MESSAGES.tooFewPoints, { urgent: true })
               hapticStrong()
               lastPointWarningTime = now

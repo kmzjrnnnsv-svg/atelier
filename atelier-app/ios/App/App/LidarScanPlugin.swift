@@ -87,9 +87,9 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     private var capturedFrames: [CapturedFrame] = []
     private let frameCaptureLock = NSLock()
     /// Max RGB frames to keep in memory during walk-around
-    private let maxCapturedFrames = 20
+    private let maxCapturedFrames = 60  // Etappe 3: more frames for future photogrammetry
     /// Minimum interval between frame captures (seconds)
-    private let frameCaptureInterval: TimeInterval = 1.5
+    private let frameCaptureInterval: TimeInterval = 0.5  // Etappe 3: capture 2fps RGB
     /// Timestamp of last captured frame
     private var lastFrameCaptureTime: TimeInterval = 0
     /// Track if an ARKit error occurred during session
@@ -111,7 +111,7 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     /// Timestamp of last depth frame capture in continuous mode
     private var lastContinuousDepthTime: TimeInterval = 0
     /// Minimum interval between depth captures in continuous mode (seconds)
-    private let continuousDepthInterval: TimeInterval = 0.25  // ~4 fps
+    private let continuousDepthInterval: TimeInterval = 0.125  // Etappe 3: ~8 fps for denser capture
 
     // ── Environment Quality Monitoring (Etappe 1) ──────────────────────────
     /// Exponential moving average of ambient light intensity (lux)
@@ -464,7 +464,7 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
 
             // Downscale to max 800px wide to save memory
             let original = UIImage(cgImage: cgImage)
-            let maxWidth: CGFloat = 800
+            let maxWidth: CGFloat = 1200  // Etappe 3: higher res for photogrammetry
             let scale = min(1.0, maxWidth / original.size.width)
             let newSize = CGSize(width: original.size.width * scale, height: original.size.height * scale)
             UIGraphicsBeginImageContextWithOptions(newSize, true, 1.0)
@@ -609,7 +609,9 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
                 let cuClamped = min(max(cu, 0), cWidth  - 1)
                 let cvClamped = min(max(cv, 0), cHeight - 1)
                 let confidence = confPtr[cvClamped * cWidth + cuClamped]
-                guard confidence >= 1 else { continue }   // medium + high confidence
+                // Etappe 3: prefer high confidence (2) for ±1mm accuracy;
+                // medium (1) accepted to maintain point density in difficult areas
+                guard confidence >= 1 else { continue }
 
                 // ── Depth gate ─────────────────────────────────────────────
                 let depth = depthPtr[v * dWidth + u]
@@ -1006,7 +1008,7 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         // Reset state — pre-allocate for ~20k points to avoid resizes under lock
         continuousLock.lock()
         continuousPoints = []
-        continuousPoints.reserveCapacity(20_000)
+        continuousPoints.reserveCapacity(40_000)  // Etappe 3: higher with 8fps capture
         continuousAngles = []
         continuousBinCounts = [:]
         continuousLock.unlock()
