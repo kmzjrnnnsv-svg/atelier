@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
-import { buildFootGeoAsync, buildFootGeo, downloadSTL, downloadPLY, downloadMassblattPDF } from '../utils/footSTL'
+import { buildFootGeoAsync, buildFootGeo, downloadSTL, downloadPLY, downloadMassblattPDF, downloadGLTF, downloadUSDZ } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
@@ -2830,7 +2830,7 @@ export default function FootScan() {
                         <div className="flex items-center gap-2 mb-2 pt-2 border-t border-white/5">
                           <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Format:</label>
                           <div className="flex gap-1">
-                            {['stl', 'obj'].map(fmt => (
+                            {['stl', 'obj', 'glb', 'usdz'].map(fmt => (
                               <button key={fmt}
                                 onClick={() => setLastFormat(fmt)}
                                 className={`px-3 py-1 text-xs font-semibold border ${
@@ -2863,6 +2863,10 @@ export default function FootScan() {
                                 const geo = buildShoeLastGeo(scanData, { shoeType: lastShoeType, side, customPreset })
                                 if (lastFormat === 'obj') {
                                   downloadOBJ(geo, result.sizes.eu, side)
+                                } else if (lastFormat === 'glb') {
+                                  downloadGLTF(geo, result.sizes.eu, side)
+                                } else if (lastFormat === 'usdz') {
+                                  downloadUSDZ(geo, result.sizes.eu, side)
                                 } else {
                                   downloadLastSTL(geo, result.sizes.eu, side)
                                 }

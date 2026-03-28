@@ -15,6 +15,8 @@
 
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
+import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter.js'
 
 // ─── OBJ-based geometry ────────────────────────────────────────────────────────
 // Parse once, reuse for every foot instance
@@ -398,4 +400,45 @@ export function downloadMassblattPDF(result, euSize) {
     a.href = url; a.download = `massblatt_EU${euSize}_${Date.now()}.png`
     a.click(); URL.revokeObjectURL(url)
   }, 'image/png')
+}
+
+
+// ─── GLTF/GLB export (Etappe 13) ───────────────────────────────────────────
+// Exports foot geometry as binary GLTF (.glb) — universal 3D format.
+export function downloadGLTF(geo, euSize, side) {
+  const scene = new THREE.Scene()
+  const mat = new THREE.MeshStandardMaterial({ color: 0xc8997a, roughness: 0.5, metalness: 0.05 })
+  scene.add(new THREE.Mesh(geo, mat))
+
+  const exporter = new GLTFExporter()
+  exporter.parse(scene, (result) => {
+    const blob = new Blob([result], { type: 'application/octet-stream' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `fuss_${side}_EU${euSize}_${Date.now()}.glb`
+    a.click(); URL.revokeObjectURL(url)
+  }, (err) => {
+    console.error('[GLTF Export]', err)
+  }, { binary: true })
+}
+
+
+// ─── USDZ export (Etappe 13) ───────────────────────────────────────────────
+// Exports foot geometry as USDZ — Apple's AR format (AR Quick Look).
+export async function downloadUSDZ(geo, euSize, side) {
+  const scene = new THREE.Scene()
+  const mat = new THREE.MeshStandardMaterial({ color: 0xc8997a, roughness: 0.5, metalness: 0.05 })
+  scene.add(new THREE.Mesh(geo, mat))
+
+  const exporter = new USDZExporter()
+  try {
+    const result = await exporter.parse(scene)
+    const blob = new Blob([result], { type: 'model/vnd.usdz+zip' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `fuss_${side}_EU${euSize}_${Date.now()}.usdz`
+    a.click(); URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('[USDZ Export]', err)
+  }
 }
