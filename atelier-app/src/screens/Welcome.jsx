@@ -43,7 +43,7 @@ export default function Welcome() {
   const skip = () => navigate('/foryou', { replace: true })
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col min-h-[100dvh] bg-white">
       {/* Skip */}
       <div className="flex justify-end px-5 pt-4 pb-2 flex-shrink-0">
         <button onClick={skip} className={`text-[10px] bg-transparent border-0 ${!isLast ? 'text-black/35' : 'text-transparent pointer-events-none'}`}

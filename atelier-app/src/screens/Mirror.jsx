@@ -781,7 +781,7 @@ export default function Mirror() {
   // ── EDITOR ────────────────────────────────────────────────────────────────
 
   if (phase === 'editor') return (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
+    <div className="flex flex-col min-h-[100dvh] bg-white overflow-hidden">
       <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-black/[0.06]">
         <button onClick={() => setPhase('intro')} className="w-9 h-9 rounded-lg bg-black/[0.03] flex items-center justify-center border-0">
           <ArrowLeft size={18} className="text-gray-800" />

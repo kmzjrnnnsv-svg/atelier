@@ -32,7 +32,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col min-h-[100dvh] bg-white">
       {/* Top section - vertically centered */}
       <div className="flex-1 flex flex-col justify-center px-5">
         {/* Header */}
