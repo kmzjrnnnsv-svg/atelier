@@ -1,6 +1,7 @@
 import ARKit
 import Capacitor
 import UIKit
+import Vision
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LidarScanPlugin
@@ -139,6 +140,28 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     /// Count of points classified as foot (above floor, below 200mm)
     private var footPointCount: Int = 0
 
+    // ── ArUco Calibration (Etappe 7) ──────────────────────────────────────
+    /// Scale correction factor derived from ArUco marker detection
+    /// 1.0 = no correction, <1.0 = LiDAR overestimates, >1.0 = underestimates
+    private var calibrationScaleFactor: Float = 1.0
+    /// Whether calibration has been performed
+    private var calibrationDone: Bool = false
+    /// Residual error from calibration (mm)
+    private var calibrationResidualMM: Float = 0.0
+    /// Number of frames where ArUco was detected
+    private var arucoDetectionCount: Int = 0
+    /// Accumulated scale factors for averaging
+    private var arucoScaleFactors: [Float] = []
+    /// Known credit card dimensions for calibration (mm)
+    private let calibrationCardWidthMM: Float = 85.6   // ISO/IEC 7810 ID-1
+    private let calibrationCardHeightMM: Float = 53.98
+    /// Minimum ArUco detections before accepting calibration
+    private let minArucoDetections: Int = 5
+    /// Interval between ArUco detection attempts (seconds)
+    private let arucoDetectionInterval: TimeInterval = 0.5
+    /// Last ArUco detection attempt timestamp
+    private var lastArucoDetectionTime: TimeInterval = 0
+
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: – Capability check
     // ─────────────────────────────────────────────────────────────────────────
@@ -202,6 +225,10 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         if continuousActive {
             processContinuousDepthFrame(frame)
             captureRGBFrameIfNeeded(frame)
+            // Etappe 7: Attempt ArUco/rectangle calibration during scan
+            if !calibrationDone {
+                attemptCalibrationDetection(frame)
+            }
             return
         }
 
@@ -356,6 +383,159 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         return dist >= 0.005 && dist <= 0.200
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: – ArUco / Rectangle Calibration (Etappe 7)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Attempt to detect a credit-card-sized rectangle in the camera frame
+    /// for absolute scale calibration. Uses Vision Framework rectangle detection.
+    ///
+    /// When a rectangle matching credit card proportions is found:
+    /// 1. Measure its apparent size using depth data
+    /// 2. Compare to known dimensions (85.6 × 54mm)
+    /// 3. Compute scale correction factor
+    private func attemptCalibrationDetection(_ frame: ARFrame) {
+        let now = frame.timestamp
+        guard now - lastArucoDetectionTime >= arucoDetectionInterval else { return }
+        lastArucoDetectionTime = now
+
+        // Need depth for 3D measurement of detected rectangle
+        guard let sceneDepth = frame.smoothedSceneDepth else { return }
+
+        let pixelBuffer = frame.capturedImage
+
+        // Use VNDetectRectanglesRequest to find card-like rectangles
+        let request = VNDetectRectanglesRequest { [weak self] request, error in
+            guard let self = self,
+                  error == nil,
+                  let results = request.results as? [VNRectangleObservation],
+                  let rect = results.first
+            else { return }
+
+            // Check aspect ratio matches credit card (~1.586)
+            let width = self.distance(from: rect.topLeft, to: rect.topRight)
+            let height = self.distance(from: rect.topLeft, to: rect.bottomLeft)
+            let aspectRatio = max(width, height) / max(0.001, min(width, height))
+            let targetRatio: CGFloat = 85.6 / 54.0  // 1.585
+
+            // Accept if aspect ratio is within 15% of credit card
+            guard abs(aspectRatio - targetRatio) / targetRatio < 0.15 else { return }
+
+            // Compute 3D scale from rectangle corners using depth
+            let scaleFactor = self.computeScaleFromRectangle(
+                rect: rect,
+                depthMap: sceneDepth.depthMap,
+                camera: frame.camera
+            )
+
+            if let sf = scaleFactor, sf > 0.8 && sf < 1.2 {
+                self.arucoScaleFactors.append(sf)
+                self.arucoDetectionCount += 1
+
+                if self.arucoScaleFactors.count >= self.minArucoDetections && !self.calibrationDone {
+                    // Compute median scale factor (robust to outliers)
+                    let sorted = self.arucoScaleFactors.sorted()
+                    let median = sorted[sorted.count / 2]
+                    self.calibrationScaleFactor = median
+
+                    // Residual: std dev of scale factors × average dimension
+                    let mean = self.arucoScaleFactors.reduce(0, +) / Float(self.arucoScaleFactors.count)
+                    let variance = self.arucoScaleFactors.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / Float(self.arucoScaleFactors.count)
+                    let avgDimMM: Float = (self.calibrationCardWidthMM + self.calibrationCardHeightMM) / 2
+                    self.calibrationResidualMM = sqrt(variance) * avgDimMM
+                    self.calibrationDone = true
+
+                    print("[LiDAR] Calibration done: scale=\(median), residual=\(self.calibrationResidualMM)mm, detections=\(self.arucoScaleFactors.count)")
+                }
+            }
+        }
+
+        request.minimumAspectRatio = 1.3
+        request.maximumAspectRatio = 1.9
+        request.minimumSize = 0.05  // at least 5% of image
+        request.maximumObservations = 1
+        request.minimumConfidence = 0.8
+
+        // Run asynchronously to avoid blocking ARKit delegate
+        DispatchQueue.global(qos: .utility).async {
+            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right)
+            try? handler.perform([request])
+        }
+    }
+
+    /// Compute Euclidean distance between two Vision normalized points
+    private func distance(from a: CGPoint, to b: CGPoint) -> CGFloat {
+        return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y))
+    }
+
+    /// Compute scale factor from a detected rectangle by measuring its
+    /// 3D dimensions via depth and comparing to known card size.
+    private func computeScaleFromRectangle(
+        rect: VNRectangleObservation,
+        depthMap: CVPixelBuffer,
+        camera: ARCamera
+    ) -> Float? {
+        // Get depth at rectangle corners (Vision coords are normalized 0-1)
+        let corners = [rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft]
+
+        let dWidth = CVPixelBufferGetWidth(depthMap)
+        let dHeight = CVPixelBufferGetHeight(depthMap)
+
+        CVPixelBufferLockBaseAddress(depthMap, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
+        let depthPtr = CVPixelBufferGetBaseAddress(depthMap)!.assumingMemoryBound(to: Float32.self)
+
+        // Back-project corners to 3D
+        let imageRes = camera.imageResolution
+        let scaleH = Float(dHeight) / Float(imageRes.height)
+        let intr = camera.intrinsics
+        let fx = intr[0][0] * scaleH
+        let fy = intr[1][1] * scaleH
+        let cx = intr[2][0] * scaleH
+        let cy = intr[2][1] * scaleH
+
+        var points3D: [SIMD3<Float>] = []
+        for corner in corners {
+            // Convert normalized Vision coords to depth buffer coords
+            // Vision: origin bottom-left, depth: origin top-left
+            let u = Int(corner.x * CGFloat(dWidth))
+            let v = Int((1.0 - corner.y) * CGFloat(dHeight))
+            guard u >= 0 && u < dWidth && v >= 0 && v < dHeight else { return nil }
+
+            let depth = depthPtr[v * dWidth + u]
+            guard depth > 0.1 && depth < 1.0 else { return nil }
+
+            let x = (Float(u) - cx) * depth / fx
+            let y = (Float(v) - cy) * depth / fy
+            let z = -depth
+            points3D.append(SIMD3(x, y, z))
+        }
+
+        guard points3D.count == 4 else { return nil }
+
+        // Measure rectangle dimensions in 3D (metres)
+        let topEdge = simd_length(points3D[1] - points3D[0])
+        let bottomEdge = simd_length(points3D[2] - points3D[3])
+        let leftEdge = simd_length(points3D[3] - points3D[0])
+        let rightEdge = simd_length(points3D[2] - points3D[1])
+
+        let measuredWidth = (topEdge + bottomEdge) / 2 * 1000   // mm
+        let measuredHeight = (leftEdge + rightEdge) / 2 * 1000  // mm
+
+        // Compare to known card dimensions
+        let scaleW = calibrationCardWidthMM / measuredWidth
+        let scaleH2 = calibrationCardHeightMM / measuredHeight
+        let avgScale = (scaleW + scaleH2) / 2
+
+        return avgScale
+    }
+
+    /// Apply calibration scale to a world-space point
+    private func applyCalibration(_ point: SIMD3<Float>) -> SIMD3<Float> {
+        guard calibrationDone else { return point }
+        return point * calibrationScaleFactor
+    }
+
     /// Process a depth frame during continuous capture: extract points,
     /// transform to world space, and track angular coverage.
     private func processContinuousDepthFrame(_ frame: ARFrame) {
@@ -417,10 +597,12 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
                 if !isFootPoint(wp) { continue }
                 footPtsThisFrame += 1
             }
+            // Etappe 7: Apply calibration scale if available
+            let calibrated = applyCalibration(wp)
             worldPts.append([
-                "x": Double(wp.x),
-                "y": Double(wp.y),
-                "z": Double(wp.z)
+                "x": Double(calibrated.x),
+                "y": Double(calibrated.y),
+                "z": Double(calibrated.z)
             ])
         }
 
@@ -1084,7 +1266,12 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             "frameCount":        continuousFrameCount,
             // ── Etappe 2: Floor detection ────────────────────────────────
             "floorDetected":     floorDetected,
-            "footPointCount":    currentFootPts
+            "footPointCount":    currentFootPts,
+            // ── Etappe 7: Calibration status ─────────────────────────────
+            "calibrationDone":   calibrationDone,
+            "calibrationScale":  calibrationDone ? calibrationScaleFactor : NSNull(),
+            "calibrationResidualMM": calibrationDone ? calibrationResidualMM : NSNull(),
+            "arucoDetections":   arucoDetectionCount
         ]
 
         if let reason = currentTrackingReason {
@@ -1131,7 +1318,11 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
                 "capturedImages":   bestImages,
                 // ── Etappe 2: Floor detection info ───────────────────────
                 "floorDetected":    self.floorDetected,
-                "footPointCount":   self.footPointCount
+                "footPointCount":   self.footPointCount,
+                // ── Etappe 7: Calibration info ───────────────────────────
+                "calibrationDone":  self.calibrationDone,
+                "calibrationScale": self.calibrationDone ? self.calibrationScaleFactor : NSNull(),
+                "calibrationResidualMM": self.calibrationDone ? self.calibrationResidualMM : NSNull(),
             ]
 
             if let error = self.sessionError {
@@ -1244,6 +1435,13 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         floorDetected = false
         floorCandidatePoints = []
         footPointCount = 0
+        // Reset calibration
+        calibrationScaleFactor = 1.0
+        calibrationDone = false
+        calibrationResidualMM = 0.0
+        arucoDetectionCount = 0
+        arucoScaleFactors = []
+        lastArucoDetectionTime = 0
     }
 
     /// Cleanly tears down any active walk-around session and resets state.

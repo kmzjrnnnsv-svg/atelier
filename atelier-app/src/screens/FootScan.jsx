@@ -859,6 +859,7 @@ export default function FootScan() {
   const [trackingQuality, setTrackingQuality] = useState('normal') // "normal" | "limited" | "notAvailable"
   const [trackingReason, setTrackingReason] = useState(null)
   const [floorDetected, setFloorDetected] = useState(false)   // Etappe 2: floor RANSAC
+  const [calibrationDone, setCalibrationDone] = useState(false)  // Etappe 7: ArUco calibration
   const lastLightWarnTime = useRef(0)
   const lastTrackingWarnTime = useRef(0)
   const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
@@ -1131,6 +1132,7 @@ export default function FootScan() {
             setTrackingQuality(ts)
             setTrackingReason(tr)
             setFloorDetected(prog.floorDetected ?? false)
+            setCalibrationDone(prog.calibrationDone ?? false)
 
             // Use native tracking state for stability (replaces DeviceMotion for native)
             if (ts === 'limited' && tr === 'excessiveMotion') {
@@ -2062,6 +2064,14 @@ export default function FootScan() {
                       <div className={`w-2 h-2 rounded-full ${floorDetected ? 'bg-[#30D158]' : 'bg-white/20'}`} />
                       <span className="text-[10px] text-white/60 font-medium">
                         {floorDetected ? 'Boden ✓' : 'Boden…'}
+                      </span>
+                    </div>
+                    {/* Calibration indicator (Etappe 7) */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      <div className={`w-2 h-2 rounded-full ${calibrationDone ? 'bg-[#30D158]' : 'bg-white/20'}`} />
+                      <span className="text-[10px] text-white/60 font-medium">
+                        {calibrationDone ? 'Kalibr. ✓' : 'Kalibr.…'}
                       </span>
                     </div>
                   </div>
