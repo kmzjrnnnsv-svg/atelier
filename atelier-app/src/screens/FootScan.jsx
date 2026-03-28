@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
-import { buildFootGeoAsync, buildFootGeo, downloadSTL } from '../utils/footSTL'
+import { buildFootGeoAsync, buildFootGeo, downloadSTL, downloadPLY, downloadMassblattPDF } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
@@ -2889,7 +2889,24 @@ export default function FootScan() {
                           ))}
                         </div>
 
-                        {/* Maßblatt download */}
+                        {/* Etappe 12: PLY point cloud export */}
+                        {(result.right.pointCloud || result.left.pointCloud) && (
+                          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                            {[
+                              { side: 'right', label: 'PLY Rechts', pc: result.right.pointCloud },
+                              { side: 'left',  label: 'PLY Links',  pc: result.left.pointCloud },
+                            ].filter(({ pc }) => pc && pc.length > 0).map(({ side, label, pc }) => (
+                              <button key={`ply-${side}`}
+                                onClick={() => downloadPLY(pc, result.sizes.eu, side)}
+                                className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2">
+                                <span className="text-[10px] text-gray-400">{label}</span>
+                                <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Maßblatt download (JSON) */}
                         <button
                           onClick={() => {
                             const blattR = generateMassblatt(
@@ -2914,7 +2931,15 @@ export default function FootScan() {
                             a.click(); URL.revokeObjectURL(url)
                           }}
                           className="w-full flex items-center justify-between bg-white/5 border border-white/8 px-3 py-2.5">
-                          <span className="text-xs font-semibold text-gray-300">Maßblatt herunterladen</span>
+                          <span className="text-xs font-semibold text-gray-300">Maßblatt (JSON)</span>
+                          <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
+                        </button>
+
+                        {/* Etappe 12: PDF Maßblatt */}
+                        <button
+                          onClick={() => downloadMassblattPDF(result, result.sizes.eu)}
+                          className="w-full flex items-center justify-between bg-white/5 border border-white/8 px-3 py-2.5">
+                          <span className="text-xs font-semibold text-gray-300">Maßblatt (PDF)</span>
                           <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
                         </button>
                         </>)}
