@@ -740,6 +740,86 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         ]
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: – Bilateral Depth Filter (Etappe 9)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Apply a simplified bilateral filter to the depth map in-place.
+    /// Smooths depth values while preserving edges (depth discontinuities).
+    /// Uses a 3×3 kernel with spatial and range Gaussian weights.
+    ///
+    /// This approximates Joint Bilateral Upsampling without requiring RGB:
+    ///   - Spatial sigma: 1.0 pixel
+    ///   - Range sigma: 5mm (depth difference threshold for edge preservation)
+    private func bilateralFilterDepth(
+        _ depthPtr: UnsafeMutablePointer<Float32>,
+        width: Int,
+        height: Int,
+        confidencePtr: UnsafePointer<UInt8>,
+        confWidth: Int,
+        confHeight: Int,
+        scaleX: Float,
+        scaleY: Float
+    ) {
+        let rangeSigma: Float = 0.005  // 5mm — preserves edges > 5mm discontinuity
+        let rangeSigmaSq2 = 2.0 * rangeSigma * rangeSigma
+
+        // Pre-computed spatial weights for 3×3 kernel (sigma=1.0)
+        let spatialWeights: [Float] = [
+            0.0585, 0.0965, 0.0585,  // exp(-2/2), exp(-1/2), exp(-2/2)
+            0.0965, 0.1592, 0.0965,  // exp(-1/2), exp(0/2),  exp(-1/2)
+            0.0585, 0.0965, 0.0585,
+        ]
+
+        // Work on a copy to avoid reading modified values
+        let totalPixels = width * height
+        let copy = UnsafeMutablePointer<Float32>.allocate(capacity: totalPixels)
+        copy.initialize(from: depthPtr, count: totalPixels)
+        defer { copy.deallocate() }
+
+        // Process every other pixel (matching our extraction stride of 2)
+        let step = 2
+        for v in Swift.stride(from: 1, to: height - 1, by: step) {
+            for u in Swift.stride(from: 1, to: width - 1, by: step) {
+                let centerDepth = copy[v * width + u]
+                guard centerDepth >= 0.15 && centerDepth <= 0.80 else { continue }
+
+                // Only filter medium+ confidence pixels
+                let cu = min(max(Int(Float(u) * scaleX), 0), confWidth - 1)
+                let cv = min(max(Int(Float(v) * scaleY), 0), confHeight - 1)
+                guard confidencePtr[cv * confWidth + cu] >= 1 else { continue }
+
+                var weightedSum: Float = 0
+                var weightSum: Float = 0
+                var ki = 0
+
+                for dv in -1...1 {
+                    for du in -1...1 {
+                        let nu = u + du
+                        let nv = v + dv
+                        let neighborDepth = copy[nv * width + nu]
+                        guard neighborDepth >= 0.15 && neighborDepth <= 0.80 else {
+                            ki += 1
+                            continue
+                        }
+
+                        let depthDiff = centerDepth - neighborDepth
+                        let rangeWeight = exp(-(depthDiff * depthDiff) / rangeSigmaSq2)
+                        let w = spatialWeights[ki] * rangeWeight
+
+                        weightedSum += w * neighborDepth
+                        weightSum += w
+                        ki += 1
+                    }
+                }
+
+                if weightSum > 0.001 {
+                    depthPtr[v * width + u] = weightedSum / weightSum
+                }
+            }
+        }
+    }
+
     // ── Depth-frame → camera-space 3D points (confidence-filtered) ───────────
     //
     // depthMap:      CVPixelBuffer (kCVPixelFormatType_DepthFloat32)
@@ -754,11 +834,11 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         camera:        ARCamera
     ) -> [SIMD3<Float>] {
 
-        // Lock both buffers for reading
-        CVPixelBufferLockBaseAddress(depthMap,      .readOnly)
+        // Lock both buffers for reading/writing (bilateral filter modifies depth)
+        CVPixelBufferLockBaseAddress(depthMap,      [])
         CVPixelBufferLockBaseAddress(confidenceMap, .readOnly)
         defer {
-            CVPixelBufferUnlockBaseAddress(depthMap,      .readOnly)
+            CVPixelBufferUnlockBaseAddress(depthMap,      [])
             CVPixelBufferUnlockBaseAddress(confidenceMap, .readOnly)
         }
 
@@ -777,6 +857,15 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         //  but we handle the general case for safety)
         let scaleX = Float(cWidth)  / Float(dWidth)
         let scaleY = Float(cHeight) / Float(dHeight)
+
+        // Etappe 9: Apply bilateral depth filter for edge-preserving smoothing
+        if continuousActive {
+            bilateralFilterDepth(
+                depthPtr, width: dWidth, height: dHeight,
+                confidencePtr: confPtr, confWidth: cWidth, confHeight: cHeight,
+                scaleX: scaleX, scaleY: scaleY
+            )
+        }
 
         // Camera intrinsics scaled to depth-buffer resolution
         let imageRes = camera.imageResolution
