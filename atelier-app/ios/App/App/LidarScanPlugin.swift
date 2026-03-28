@@ -1113,20 +1113,25 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             guard let self = self else { return }
 
             self.continuousLock.lock()
-            let points = self.continuousPoints
+            let rawPoints = self.continuousPoints
             let angles = self.continuousAngles
             self.continuousLock.unlock()
+
+            // ── Etappe 5: Voxel-grid averaging for noise reduction ──────
+            let (averagedPoints, rawCount, voxelCount) = self.voxelGridAverage(rawPoints)
 
             let bestImages = self.selectBestFrames()
 
             var result: [String: Any] = [
-                "pointCloud":    points,
-                "pointCount":    points.count,
-                "anglesCovered": angles.count,
-                "capturedImages": bestImages,
+                "pointCloud":       averagedPoints,
+                "pointCount":       averagedPoints.count,
+                "rawPointCount":    rawCount,
+                "voxelCount":       voxelCount,
+                "anglesCovered":    angles.count,
+                "capturedImages":   bestImages,
                 // ── Etappe 2: Floor detection info ───────────────────────
-                "floorDetected":  self.floorDetected,
-                "footPointCount": self.footPointCount
+                "floorDetected":    self.floorDetected,
+                "footPointCount":   self.footPointCount
             ]
 
             if let error = self.sessionError {
@@ -1151,6 +1156,76 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: – Helpers
     // ─────────────────────────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: – Voxel-Grid Point Averaging (Etappe 5)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Voxel size in meters (0.5mm = high resolution for ±1mm accuracy)
+    private let voxelSize: Double = 0.0005
+
+    /// Downsamples a point cloud using voxel-grid averaging.
+    /// All points within each 0.5mm³ voxel are averaged to a single point.
+    /// This reduces noise by √n factor where n = points per voxel.
+    ///
+    /// Returns: (averaged points, original count, voxel count)
+    private func voxelGridAverage(_ points: [[String: Double]]) -> (points: [[String: Double]], originalCount: Int, voxelCount: Int) {
+        let originalCount = points.count
+        guard originalCount > 100 else {
+            return (points, originalCount, originalCount)
+        }
+
+        // Accumulator: voxel key → (sumX, sumY, sumZ, count)
+        struct VoxelAccum {
+            var sumX: Double = 0
+            var sumY: Double = 0
+            var sumZ: Double = 0
+            var count: Int = 0
+        }
+
+        // Use a dictionary with integer voxel coordinates as key
+        // Key = ix * P1 + iy * P2 + iz  (spatial hash)
+        let invVoxel = 1.0 / voxelSize
+        var voxels: [Int64: VoxelAccum] = [:]
+        voxels.reserveCapacity(points.count / 3)  // rough estimate
+
+        // Large primes for spatial hashing to avoid collisions
+        let p1: Int64 = 73856093
+        let p2: Int64 = 19349663
+
+        for pt in points {
+            guard let x = pt["x"], let y = pt["y"], let z = pt["z"] else { continue }
+            let ix = Int64(floor(x * invVoxel))
+            let iy = Int64(floor(y * invVoxel))
+            let iz = Int64(floor(z * invVoxel))
+            let key = ix &* p1 &+ iy &* p2 &+ iz
+
+            if var accum = voxels[key] {
+                accum.sumX += x
+                accum.sumY += y
+                accum.sumZ += z
+                accum.count += 1
+                voxels[key] = accum
+            } else {
+                voxels[key] = VoxelAccum(sumX: x, sumY: y, sumZ: z, count: 1)
+            }
+        }
+
+        // Average each voxel
+        var averaged: [[String: Double]] = []
+        averaged.reserveCapacity(voxels.count)
+        for (_, accum) in voxels {
+            let n = Double(accum.count)
+            averaged.append([
+                "x": accum.sumX / n,
+                "y": accum.sumY / n,
+                "z": accum.sumZ / n
+            ])
+        }
+
+        print("[LiDAR] Voxel averaging: \(originalCount) → \(averaged.count) points (\(String(format: "%.1f", Double(originalCount)/max(1.0, Double(averaged.count))))× compression)")
+        return (averaged, originalCount, averaged.count)
+    }
 
     /// Cleanly tears down any active continuous capture session.
     private func stopContinuousSession() {
