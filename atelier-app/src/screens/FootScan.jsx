@@ -1243,6 +1243,8 @@ export default function FootScan() {
   const startScanWithCountdown = useCallback((side, { isRetry = false } = {}) => {
     setLidarError(null)
     if (!isRetry) { setAutoRetryCount(0); autoRetryRef.current = 0 }
+    // Start camera preview early so user sees feed during countdown
+    LidarScanNative.startCameraPreview().catch(e => console.warn('[LiDAR] Camera preview:', e))
     speak(SCAN_MESSAGES.ready(side))
     hapticMedium()
     setCountdown(3)
@@ -1395,6 +1397,7 @@ export default function FootScan() {
       hapticSuccess()
 
       const raw = await LidarScanNative.finishContinuousCapture()
+      try { await LidarScanNative.stopCameraPreview() } catch {}
 
       // Quality check: use footPointCount when floor was detected (cleaner metric)
       const effectiveCount = raw.floorDetected ? (raw.footPointCount ?? raw.pointCount) : raw.pointCount
@@ -1450,6 +1453,7 @@ export default function FootScan() {
     } catch (e) {
       // Clean up native session on error
       try { await LidarScanNative.finishContinuousCapture() } catch {}
+      try { await LidarScanNative.stopCameraPreview() } catch {}
 
       // apiFetch now throws Error instances with .message
       const msg = e?.message ?? e?.error ?? e?.detail ?? 'Unbekannter Fehler'
@@ -2062,7 +2066,12 @@ export default function FootScan() {
 
       {/* ── LiDAR scan screens (Apple Face ID-style) ── */}
       {LIDAR_PHASES.includes(phase) && (
-        <div className="absolute inset-0 flex flex-col bg-black">
+        <div className="absolute inset-0 flex flex-col" style={{
+          borderWidth: floorDetected && footSegmented && walkProgress > 0 && walkProgress < 100 ? 4 : 0,
+          borderColor: '#30D158',
+          borderStyle: 'solid',
+          transition: 'border-width 0.4s ease, border-color 0.4s ease',
+        }}>
           <style>{`
             @keyframes checkDraw { to { stroke-dashoffset: 0 } }
             @keyframes faceidFadeInUp {
@@ -2094,9 +2103,9 @@ export default function FootScan() {
             }
           `}</style>
 
-          {/* Minimal header */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
-            <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking() }}
+          {/* Minimal header — backdrop blur for readability over camera */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0" style={{ backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' }}>
+            <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking(); LidarScanNative.stopCameraPreview().catch(() => {}) }}
               aria-label="Scan abbrechen"
               className="w-11 h-11 rounded-lg bg-white/10 flex items-center justify-center border-0">
               <X size={18} className="text-white/80" strokeWidth={2} />
@@ -2136,11 +2145,29 @@ export default function FootScan() {
             /* ── Transition screen: right foot done → left foot next (auto-continues after 5s) ── */
             <TransitionScreen onContinue={() => { setWalkProgress(0); setWalkPoints(0); setAutoRetryCount(0); autoRetryRef.current = 0; startScanWithCountdown('left') }} />
           ) : (
-            /* ── Scan screen with RoomPlan-style 3D mesh preview ── */
+            /* ── Scan screen with live camera feed + overlay ── */
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center relative">
-              {/* Progressive 3D foot mesh (RoomPlan-style) */}
+              {/* Foot detection status — large, prominent */}
+              {walkProgress > 0 && walkProgress < 100 && (
+                <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-20 px-5 py-2.5 rounded-2xl transition-all duration-500 ${
+                  floorDetected && footSegmented
+                    ? 'bg-[#30D158]/90 shadow-lg shadow-green-500/30'
+                    : 'bg-black/60 backdrop-blur-md'
+                }`}>
+                  <span className={`text-[13px] font-medium tracking-wide ${
+                    floorDetected && footSegmented ? 'text-white' : 'text-white/70'
+                  }`}>
+                    {floorDetected && footSegmented ? 'Fuß erkannt ✓' : 'Fuß wird gesucht…'}
+                  </span>
+                </div>
+              )}
+
+              {/* Camera feed shows through transparent bg — overlay progress only */}
               <div className="relative w-72 h-72 flex items-center justify-center mb-4">
-                <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} binCounts={binCounts} />
+                {/* ScanMeshPreview hidden during active scan — camera feed visible instead */}
+                {walkProgress >= 100 && (
+                  <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} binCounts={binCounts} />
+                )}
 
                 {/* Progress overlay on top of 3D scene */}
                 <div className="absolute inset-0 flex flex-col items-center justify-end z-10 pointer-events-none pb-2">
@@ -2199,8 +2226,8 @@ export default function FootScan() {
 
               {/* Instructions — big, readable, glanceable */}
               {walkProgress === 0 && !lidarError && countdown === 0 && (
-                <div className="mt-2" style={{ animation: 'fadeInSoft 0.4s ease' }}>
-                  <p className="text-[20px] font-extralight text-white mb-4 leading-snug tracking-tight">
+                <div className="mt-2 rounded-2xl px-5 py-4" style={{ animation: 'fadeInSoft 0.4s ease', backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.35)' }}>
+                  <p className="text-[20px] font-extralight text-white mb-4 leading-snug tracking-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
                     {phase === 'lidar-right' ? 'Rechten' : 'Linken'} Fuß auf den Boden stellen
                   </p>
                   <div className="space-y-3 text-left inline-block">
@@ -2222,7 +2249,8 @@ export default function FootScan() {
 
               {walkProgress > 0 && walkProgress < 100 && !lidarError && (
                 <div key={walkProgress < 20 ? 'step1' : walkProgress < 45 ? 'step2' : walkProgress < 70 ? 'step3' : 'step4'}
-                  style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                  className="rounded-2xl px-4 py-3"
+                  style={{ animation: 'fadeInSoft 0.3s ease', backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.35)' }}>
                   {/* ── Etappe 1: Environment quality indicators ── */}
                   <div className="flex items-center justify-center gap-3 mb-3">
                     {/* Light indicator */}
@@ -2289,13 +2317,13 @@ export default function FootScan() {
                     </p>
                   )}
                   {/* Big, readable instruction — user glances at screen briefly */}
-                  <p className="text-[20px] font-bold text-white mb-2 leading-snug">
+                  <p className="text-[20px] font-bold text-white mb-2 leading-snug" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>
                     {walkProgress < 20 ? '↓  Von oben draufhalten'
                       : walkProgress < 45 ? '↻  Zur Seite bewegen'
                       : walkProgress < 70 ? '↻  Um die Ferse herum'
                       : '✓  Fast geschafft!'}
                   </p>
-                  <p className="text-[14px] text-white/60">
+                  <p className="text-[14px] text-white/60" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
                     {walkProgress < 20 ? 'Handy ruhig über dem Fuß halten'
                       : walkProgress < 45 ? 'Langsam zur Seite bewegen'
                       : walkProgress < 70 ? 'Weiter um den Fuß herum, auch die Ferse'
@@ -2309,8 +2337,8 @@ export default function FootScan() {
               )}
 
               {lidarError && (
-                <div className="w-full p-5 bg-white/[0.06] border border-white/[0.1]" role="alert" aria-live="assertive"
-                  style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease' }}>
+                <div className="w-full p-5 bg-white/[0.06] border border-white/[0.1] rounded-2xl" role="alert" aria-live="assertive"
+                  style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease', backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.5)' }}>
                   <p className="text-[15px] text-white font-light mb-2">Nicht geklappt — kein Problem!</p>
                   <p className="text-[13px] text-white/60 font-light mb-4 leading-relaxed">{lidarError}</p>
                   <div className="flex gap-3">
@@ -2341,10 +2369,10 @@ export default function FootScan() {
               {countdown > 0 && (
                 <div className="mt-8 flex flex-col items-center">
                   <span className="text-[72px] font-extralight text-white"
-                    style={{ fontFeatureSettings: '"tnum"', animation: 'faceidFadeInUp 0.3s ease' }}>
+                    style={{ fontFeatureSettings: '"tnum"', animation: 'faceidFadeInUp 0.3s ease', textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
                     {countdown}
                   </span>
-                  <p className="text-[15px] text-white/60 mt-2">Halte das Handy ruhig über dem Fuß</p>
+                  <p className="text-[15px] text-white/60 mt-2" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>Halte das Handy ruhig über dem Fuß</p>
                 </div>
               )}
             </div>

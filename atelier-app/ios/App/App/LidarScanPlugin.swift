@@ -1,5 +1,6 @@
 import ARKit
 import Capacitor
+import SceneKit
 import UIKit
 import Vision
 
@@ -41,10 +42,16 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         CAPPluginMethod(name: "startContinuousCapture",        returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getContinuousCaptureProgress",  returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "finishContinuousCapture",       returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startCameraPreview",            returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stopCameraPreview",             returnType: CAPPluginReturnPromise),
     ]
 
     // ── Shared ARKit session ──────────────────────────────────────────────────
     private var arSession: ARSession?
+
+    // ── Camera Preview ───────────────────────────────────────────────────────
+    /// Native ARSCNView for live camera feed behind the transparent webview
+    private var cameraPreviewView: ARSCNView?
 
     // Called by Capacitor after plugin is registered with the bridge
     override public func load() {
@@ -1760,5 +1767,72 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         frameCaptureLock.lock()
         capturedFrames = []
         frameCaptureLock.unlock()
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: – Camera Preview (live feed behind transparent webview)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @objc func startCameraPreview(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { call.reject("PLUGIN_DEALLOCATED"); return }
+
+            // Already showing?
+            if self.cameraPreviewView != nil {
+                call.resolve()
+                return
+            }
+
+            // Need an active ARSession
+            guard let session = self.arSession else {
+                print("[LiDAR] startCameraPreview – no active ARSession, creating one")
+                // If no session yet, start one for preview only
+                let session = ARSession()
+                session.delegate = self
+                self.arSession = session
+                let config = ARWorldTrackingConfiguration()
+                if ARWorldTrackingConfiguration.supportsFrameSemantics(.smoothedSceneDepth) {
+                    config.frameSemantics = [.smoothedSceneDepth]
+                }
+                session.run(config)
+                self.insertCameraPreview(session: session)
+                call.resolve()
+                return
+            }
+
+            self.insertCameraPreview(session: session)
+            call.resolve()
+        }
+    }
+
+    private func insertCameraPreview(session: ARSession) {
+        guard let vc = self.bridge?.viewController else {
+            print("[LiDAR] startCameraPreview – no viewController")
+            return
+        }
+
+        let arView = ARSCNView(frame: vc.view.bounds)
+        arView.session = session
+        arView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        arView.scene = SCNScene()
+        arView.rendersContinuously = true
+
+        // Insert behind the webview (index 0)
+        vc.view.insertSubview(arView, at: 0)
+        self.cameraPreviewView = arView
+        print("[LiDAR] ✅ Camera preview inserted behind webview")
+    }
+
+    @objc func stopCameraPreview(_ call: CAPPluginCall) {
+        DispatchQueue.main.async { [weak self] in
+            self?.removeCameraPreview()
+            call.resolve()
+        }
+    }
+
+    private func removeCameraPreview() {
+        cameraPreviewView?.removeFromSuperview()
+        cameraPreviewView = nil
+        print("[LiDAR] Camera preview removed")
     }
 }
