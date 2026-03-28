@@ -113,6 +113,18 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     /// Minimum interval between depth captures in continuous mode (seconds)
     private let continuousDepthInterval: TimeInterval = 0.25  // ~4 fps
 
+    // ── Environment Quality Monitoring (Etappe 1) ──────────────────────────
+    /// Exponential moving average of ambient light intensity (lux)
+    private var lightLevelEMA: Double = 1000.0
+    /// Current light quality classification
+    private var currentLightQuality: String = "good"
+    /// Current ARKit tracking state as string
+    private var currentTrackingState: String = "normal"
+    /// Reason for limited tracking (nil when normal)
+    private var currentTrackingReason: String? = nil
+    /// Number of depth frames processed in current continuous session
+    private var continuousFrameCount: Int = 0
+
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: – Capability check
     // ─────────────────────────────────────────────────────────────────────────
@@ -167,6 +179,11 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
 
     // ARSessionDelegate – fires for every frame (~60 fps)
     public func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        // ── Environment quality monitoring (runs for all active modes) ───
+        if continuousActive || walkAroundActive {
+            updateEnvironmentQuality(frame)
+        }
+
         // ── Mode 3: Continuous depth capture ─────────────────────────────
         if continuousActive {
             processContinuousDepthFrame(frame)
@@ -195,6 +212,54 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         frameBuffer.append((depth: depthMap, confidence: confidenceMap, camera: frame.camera))
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: – Environment Quality Monitoring (Etappe 1)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Reads light estimate and tracking state from the current ARFrame.
+    /// Updates EMA light level and classifies quality for JS consumption.
+    private func updateEnvironmentQuality(_ frame: ARFrame) {
+        // ── Light level (EMA, alpha=0.1 for smooth updates) ──────────────
+        if let lightEstimate = frame.lightEstimate {
+            let intensity = lightEstimate.ambientIntensity  // lux
+            let alpha = 0.1
+            lightLevelEMA = alpha * Double(intensity) + (1.0 - alpha) * lightLevelEMA
+        }
+
+        // Classify: ≥750 = good, 400–750 = low, <400 = critical
+        if lightLevelEMA >= 750 {
+            currentLightQuality = "good"
+        } else if lightLevelEMA >= 400 {
+            currentLightQuality = "low"
+        } else {
+            currentLightQuality = "critical"
+        }
+
+        // ── Tracking state ───────────────────────────────────────────────
+        switch frame.camera.trackingState {
+        case .normal:
+            currentTrackingState = "normal"
+            currentTrackingReason = nil
+        case .limited(let reason):
+            currentTrackingState = "limited"
+            switch reason {
+            case .excessiveMotion:
+                currentTrackingReason = "excessiveMotion"
+            case .insufficientFeatures:
+                currentTrackingReason = "insufficientFeatures"
+            case .initializing:
+                currentTrackingReason = "initializing"
+            case .relocalizing:
+                currentTrackingReason = "relocalizing"
+            @unknown default:
+                currentTrackingReason = "unknown"
+            }
+        case .notAvailable:
+            currentTrackingState = "notAvailable"
+            currentTrackingReason = nil
+        }
+    }
+
     /// Process a depth frame during continuous capture: extract points,
     /// transform to world space, and track angular coverage.
     private func processContinuousDepthFrame(_ frame: ARFrame) {
@@ -206,6 +271,7 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         else { return }
 
         lastContinuousDepthTime = now
+        continuousFrameCount += 1
 
         let pts = extractPointsFromDepthFrame(
             depthMap:      sceneDepth.depthMap,
@@ -820,6 +886,13 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         sessionError = nil
         continuousActive = true
 
+        // Reset environment quality state
+        lightLevelEMA = 1000.0
+        currentLightQuality = "good"
+        currentTrackingState = "normal"
+        currentTrackingReason = nil
+        continuousFrameCount = 0
+
         DispatchQueue.main.async { [weak self] in
             let config = ARWorldTrackingConfiguration()
             config.frameSemantics = [.smoothedSceneDepth]
@@ -858,8 +931,17 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             "pointCount":        pointCount,
             "anglesCovered":     anglesCovered,
             "totalAngleBins":    12,
-            "estimatedCoverage": coverage
+            "estimatedCoverage": coverage,
+            // ── Etappe 1: Environment quality ────────────────────────────
+            "lightLevel":        Int(lightLevelEMA),
+            "lightQuality":      currentLightQuality,
+            "trackingState":     currentTrackingState,
+            "frameCount":        continuousFrameCount
         ]
+
+        if let reason = currentTrackingReason {
+            result["trackingReason"] = reason
+        }
 
         if let error = sessionError {
             result["sessionWarning"] = error
@@ -931,6 +1013,7 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         continuousAngles = []
         continuousBinCounts = [:]
         continuousLock.unlock()
+        continuousFrameCount = 0
     }
 
     /// Cleanly tears down any active walk-around session and resets state.

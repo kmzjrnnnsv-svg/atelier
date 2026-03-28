@@ -854,6 +854,12 @@ export default function FootScan() {
   const [pgImgs,     setPgImgs]    = useState({ right: [], left: [] })
   const [walkPoints,   setWalkPoints]   = useState(0)
   const [deviceStable, setDeviceStable] = useState(true)  // DeviceMotion stability
+  // ── Environment quality (Etappe 1: from native plugin) ──
+  const [lightQuality, setLightQuality] = useState('good')     // "good" | "low" | "critical"
+  const [trackingQuality, setTrackingQuality] = useState('normal') // "normal" | "limited" | "notAvailable"
+  const [trackingReason, setTrackingReason] = useState(null)
+  const lastLightWarnTime = useRef(0)
+  const lastTrackingWarnTime = useRef(0)
   const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
 
   // ── Shoe last export state ──
@@ -1074,6 +1080,12 @@ export default function FootScan() {
     setWalkProgress(0)
     setWalkPoints(0)
     setAiStatus('Scan läuft…')
+    // Reset environment quality state
+    setLightQuality('good')
+    setTrackingQuality('normal')
+    setTrackingReason(null)
+    lastLightWarnTime.current = 0
+    lastTrackingWarnTime.current = 0
 
     // Voice: announce scan start
     speak(SCAN_MESSAGES.startScan)
@@ -1108,6 +1120,39 @@ export default function FootScan() {
             lastCoverage = lastCoverage + (coverage - lastCoverage) * 0.4
             setWalkProgress(Math.round(lastCoverage))
             setWalkPoints(pts)
+
+            // ── Etappe 1: Environment quality from native ──
+            const lq = prog.lightQuality ?? 'good'
+            const ts = prog.trackingState ?? 'normal'
+            const tr = prog.trackingReason ?? null
+            setLightQuality(lq)
+            setTrackingQuality(ts)
+            setTrackingReason(tr)
+
+            // Use native tracking state for stability (replaces DeviceMotion for native)
+            if (ts === 'limited' && tr === 'excessiveMotion') {
+              setDeviceStable(false)
+            } else if (ts === 'normal') {
+              setDeviceStable(true)
+            }
+
+            // ── Light warning (debounced, max every 8s) ──
+            if (lq === 'critical' && now - lastLightWarnTime.current > 8000) {
+              speak(SCAN_MESSAGES.lowLight || 'Bitte für mehr Licht sorgen.', { urgent: true })
+              hapticStrong()
+              lastLightWarnTime.current = now
+            }
+
+            // ── Tracking warning (debounced, max every 6s) ──
+            if (ts === 'limited' && tr !== 'initializing' && now - lastTrackingWarnTime.current > 6000) {
+              if (tr === 'excessiveMotion') {
+                speak(SCAN_MESSAGES.trackingLost || 'Bitte langsamer bewegen.', { urgent: true })
+              } else if (tr === 'insufficientFeatures') {
+                speak(SCAN_MESSAGES.insufficientFeatures || 'Bitte auf texturiertem Untergrund scannen.', { urgent: true })
+              }
+              hapticWarning()
+              lastTrackingWarnTime.current = now
+            }
 
             // ── Milestone haptics at 25/50/75% ──
             const milestone = coverage >= 75 ? 75 : coverage >= 50 ? 50 : coverage >= 25 ? 25 : 0
@@ -1979,10 +2024,45 @@ export default function FootScan() {
               {walkProgress > 0 && walkProgress < 100 && !lidarError && (
                 <div key={walkProgress < 20 ? 'step1' : walkProgress < 45 ? 'step2' : walkProgress < 70 ? 'step3' : 'step4'}
                   style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                  {/* Stability warning */}
+                  {/* ── Etappe 1: Environment quality indicators ── */}
+                  <div className="flex items-center justify-center gap-3 mb-3">
+                    {/* Light indicator */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      <div className={`w-2 h-2 rounded-full ${
+                        lightQuality === 'good' ? 'bg-[#30D158]' :
+                        lightQuality === 'low' ? 'bg-[#FF9F0A]' : 'bg-[#FF453A]'
+                      }`} />
+                      <span className="text-[10px] text-white/60 font-medium">
+                        {lightQuality === 'good' ? 'Licht OK' :
+                         lightQuality === 'low' ? 'Wenig Licht' : 'Zu dunkel'}
+                      </span>
+                    </div>
+                    {/* Tracking indicator */}
+                    {trackingQuality !== 'normal' && trackingReason !== 'initializing' && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                        style={{ background: 'rgba(0,0,0,0.4)' }}>
+                        <div className="w-2 h-2 rounded-full bg-[#FF9F0A]" />
+                        <span className="text-[10px] text-white/60 font-medium">
+                          {trackingReason === 'excessiveMotion' ? 'Zu schnell' :
+                           trackingReason === 'insufficientFeatures' ? 'Wenig Textur' : 'Tracking'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stability / tracking warning */}
                   {!deviceStable && (
                     <p className="text-[13px] text-[#FF9F0A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                      {deviceInfo?.model === 'iPad' ? 'Halte das iPad ruhiger' : 'Halte das Handy ruhiger'}
+                      {trackingReason === 'excessiveMotion'
+                        ? 'Langsamer bewegen'
+                        : deviceInfo?.model === 'iPad' ? 'Halte das iPad ruhiger' : 'Halte das Handy ruhiger'}
+                    </p>
+                  )}
+                  {/* Light critical warning */}
+                  {lightQuality === 'critical' && deviceStable && (
+                    <p className="text-[13px] text-[#FF453A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                      Mehr Licht benötigt
                     </p>
                   )}
                   {/* Big, readable instruction — user glances at screen briefly */}

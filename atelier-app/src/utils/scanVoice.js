@@ -113,6 +113,11 @@ export const SCAN_MESSAGES = {
   moveAround: 'Bitte auch die andere Seite scannen. Bewege das Gerät weiter um den Fuß.',
   tooFast: 'Etwas langsamer bitte. Die Kamera muss den Fuß scharf sehen.',
 
+  // Environment quality warnings (Etappe 1)
+  lowLight: 'Bitte für mehr Licht sorgen. Der Scan braucht gute Beleuchtung.',
+  trackingLost: 'Bitte langsamer bewegen. Das Tracking hat den Überblick verloren.',
+  insufficientFeatures: 'Bitte auf einem texturierten Untergrund scannen.',
+
   // Completion
   sideComplete: (side) => `${side === 'right' ? 'Rechter' : 'Linker'} Fuß erfasst.`,
   switchFoot: 'Jetzt den linken Fuß aufstellen. Der Scan startet automatisch.',
