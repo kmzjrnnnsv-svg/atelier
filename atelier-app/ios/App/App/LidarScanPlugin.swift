@@ -183,6 +183,10 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     /// Interval between body pose detection attempts (seconds)
     private let bodyPoseInterval: TimeInterval = 1.0
 
+    // ── Camera Height Tracking ───────────────────────────────────────────
+    /// Camera height above detected floor in millimetres (updated every frame)
+    private var cameraHeightAboveFloorMM: Float = 0
+
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: – Capability check
     // ─────────────────────────────────────────────────────────────────────────
@@ -245,6 +249,12 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         // ── Mode 3: Continuous depth capture ─────────────────────────────
         if continuousActive {
             processContinuousDepthFrame(frame)
+            // Track camera height above floor for distance feedback
+            if floorDetected, let plane = floorPlane {
+                let camPos = frame.camera.transform.columns.3
+                let dist = camPos.x * plane.x + camPos.y * plane.y + camPos.z * plane.z + plane.w
+                cameraHeightAboveFloorMM = abs(dist) * 1000.0
+            }
             captureRGBFrameIfNeeded(frame)
             // Etappe 7: Attempt ArUco/rectangle calibration during scan
             if !calibrationDone {
@@ -1562,7 +1572,9 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             // ── Etappe 10: Per-bin point counts for quality heatmap ───────
             "binCounts":         currentBinCounts,
             // ── Etappe 15: Vision body pose foot segmentation ────────────
-            "footSegmented":     footSegmented
+            "footSegmented":     footSegmented,
+            // ── Camera distance feedback ─────────────────────────────────
+            "cameraHeightMM":    floorDetected ? Int(cameraHeightAboveFloorMM) : NSNull()
         ]
 
         if let reason = currentTrackingReason {
@@ -1752,6 +1764,8 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         detectedAnkleLeft = nil
         detectedAnkleRight = nil
         lastBodyPoseTime = 0
+        // Reset camera height
+        cameraHeightAboveFloorMM = 0
     }
 
     /// Cleanly tears down any active walk-around session and resets state.

@@ -1048,6 +1048,7 @@ export default function FootScan() {
   const [calibrationDone, setCalibrationDone] = useState(false)  // Etappe 7: ArUco calibration
   const [binCounts, setBinCounts] = useState({})  // Etappe 10: per-bin point counts for heatmap
   const [footSegmented, setFootSegmented] = useState(false)  // Etappe 15: Vision body pose
+  const [cameraHeight, setCameraHeight] = useState(null) // Camera height above floor in mm
   const lastLightWarnTime = useRef(0)
   const lastTrackingWarnTime = useRef(0)
   const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
@@ -1325,6 +1326,7 @@ export default function FootScan() {
             setCalibrationDone(prog.calibrationDone ?? false)
             setBinCounts(prog.binCounts ?? {})
             setFootSegmented(prog.footSegmented ?? false)
+            setCameraHeight(prog.cameraHeightMM ?? null)
 
             // Use native tracking state for stability (replaces DeviceMotion for native)
             if (ts === 'limited' && tr === 'excessiveMotion') {
@@ -2162,11 +2164,33 @@ export default function FootScan() {
                 </div>
               )}
 
-              {/* Camera feed shows through transparent bg — overlay progress only */}
+              {/* Camera feed shows through transparent bg — 3D mesh overlaid */}
               <div className="relative w-72 h-72 flex items-center justify-center mb-4">
-                {/* ScanMeshPreview hidden during active scan — camera feed visible instead */}
-                {walkProgress >= 100 && (
-                  <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} binCounts={binCounts} />
+                {/* Live 3D foot mesh with colored sectors — semi-transparent during scan, opaque at completion */}
+                {walkProgress > 0 && (
+                  <div className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+                    style={{ opacity: walkProgress >= 100 ? 1 : 0.55 }}>
+                    <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} binCounts={binCounts} />
+                  </div>
+                )}
+
+                {/* FaceID-style foot outline guide — visible before scan starts */}
+                {walkProgress === 0 && countdown === 0 && !lidarError && (
+                  <div className="absolute inset-0 flex items-center justify-center z-5 pointer-events-none"
+                    style={{ animation: 'fadeInSoft 0.6s ease' }}>
+                    <svg width="140" height="220" viewBox="0 0 140 220" fill="none" opacity="0.35"
+                      style={phase === 'lidar-left' ? { transform: 'scaleX(-1)' } : undefined}>
+                      {/* Anatomical foot outline — right foot default */}
+                      <path d="M70 10 C50 10 35 18 30 35 C25 52 22 70 20 90 C18 110 16 130 18 150 C20 170 25 185 35 195 C45 205 55 210 70 212 C85 210 95 205 105 195 C115 185 120 170 122 150 C124 130 122 110 120 90 C118 70 115 52 110 35 C105 18 90 10 70 10 Z"
+                        stroke="white" strokeWidth="1.5" strokeDasharray="6,4" />
+                      {/* Toe bumps */}
+                      <ellipse cx="45" cy="15" rx="8" ry="6" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
+                      <ellipse cx="60" cy="8" rx="7" ry="7" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
+                      <ellipse cx="75" cy="10" rx="7" ry="6" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
+                      <ellipse cx="88" cy="16" rx="6" ry="5" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
+                      <ellipse cx="98" cy="25" rx="5" ry="5" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
+                    </svg>
+                  </div>
                 )}
 
                 {/* Progress overlay on top of 3D scene */}
@@ -2202,14 +2226,15 @@ export default function FootScan() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 px-3 py-1 rounded-lg" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
-                      {/* Mini segmented ring */}
+                      {/* Mini segmented ring with per-bin coloring */}
                       <svg width="24" height="24" viewBox="0 0 24 24">
                         {Array.from({ length: 12 }).map((_, i) => {
-                          const filled = i < Math.floor(walkProgress * 0.12)
+                          const bc = binCounts[i] || 0
+                          const color = bc >= 200 ? '#30D158' : bc >= 50 ? '#FFD60A' : bc > 0 ? '#FF453A' : 'rgba(255,255,255,0.15)'
                           const a1 = (i * 30 - 90) * Math.PI / 180
                           const a2 = ((i + 1) * 30 - 91) * Math.PI / 180
                           return <path key={i} d={`M ${12 + 10 * Math.cos(a1)} ${12 + 10 * Math.sin(a1)} A 10 10 0 0 1 ${12 + 10 * Math.cos(a2)} ${12 + 10 * Math.sin(a2)}`}
-                            fill="none" stroke={filled ? (deviceStable ? '#30D158' : '#FF9F0A') : 'rgba(255,255,255,0.15)'}
+                            fill="none" stroke={color}
                             strokeWidth={2} strokeLinecap="round"
                             style={{ transition: 'stroke 0.4s ease' }} />
                         })}
@@ -2219,6 +2244,25 @@ export default function FootScan() {
                         aria-label={`Scan-Fortschritt ${walkProgress} Prozent`}>
                         {walkProgress}<span className="text-[12px] font-normal text-white/60">%</span>
                       </span>
+                      {/* Directional arrow — points toward weakest bin */}
+                      {(() => {
+                        const entries = Object.keys(binCounts).length
+                        if (entries < 1 || walkProgress >= 95) return null
+                        // Find weakest bin
+                        let weakest = 0, weakestCount = Infinity
+                        for (let i = 0; i < 12; i++) {
+                          const c = binCounts[i] || 0
+                          if (c < weakestCount) { weakestCount = c; weakest = i }
+                        }
+                        if (weakestCount >= 200) return null // all bins covered
+                        const angle = weakest * 30 + 15 // center of bin in degrees
+                        return (
+                          <svg width="20" height="20" viewBox="0 0 20 20"
+                            style={{ transform: `rotate(${angle}deg)`, animation: 'arrowPulse 1.5s ease infinite' }}>
+                            <path d="M10 2 L10 14 M10 2 L6 7 M10 2 L14 7" stroke="#FF453A" strokeWidth="2" strokeLinecap="round" fill="none" />
+                          </svg>
+                        )
+                      })()}
                     </div>
                   )}
                 </div>
@@ -2300,6 +2344,21 @@ export default function FootScan() {
                         {footSegmented ? 'Fuß ✓' : 'Fuß…'}
                       </span>
                     </div>
+                    {/* Camera distance indicator */}
+                    {cameraHeight != null && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                        style={{ background: 'rgba(0,0,0,0.4)' }}>
+                        <div className={`w-2 h-2 rounded-full ${
+                          cameraHeight >= 200 && cameraHeight <= 600 ? 'bg-[#30D158]' :
+                          cameraHeight < 200 ? 'bg-[#FF453A]' : 'bg-[#FF9F0A]'
+                        }`} />
+                        <span className="text-[10px] text-white/60 font-medium">
+                          {cameraHeight < 200 ? 'Zu nah' :
+                           cameraHeight > 600 ? 'Zu weit' :
+                           `${Math.round(cameraHeight / 10)} cm`}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Stability / tracking warning */}
@@ -2314,6 +2373,17 @@ export default function FootScan() {
                   {lightQuality === 'critical' && deviceStable && (
                     <p className="text-[13px] text-[#FF453A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
                       Mehr Licht benötigt
+                    </p>
+                  )}
+                  {/* Distance warning */}
+                  {cameraHeight != null && cameraHeight < 200 && deviceStable && (
+                    <p className="text-[13px] text-[#FF453A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                      Zu nah — Handy weiter weg halten
+                    </p>
+                  )}
+                  {cameraHeight != null && cameraHeight > 600 && deviceStable && (
+                    <p className="text-[13px] text-[#FF9F0A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                      Zu weit — Handy näher halten
                     </p>
                   )}
                   {/* Big, readable instruction — user glances at screen briefly */}
