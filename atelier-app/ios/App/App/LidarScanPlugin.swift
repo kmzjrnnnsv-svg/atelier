@@ -80,9 +80,12 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
 
     // ── Auto-capture RGB frames for ML training ─────────────────────────────
     /// Stores camera frames captured during walk-around for later view selection.
+    /// Etappe 8: Extended with intrinsics for photogrammetry/SfM pipeline.
     private struct CapturedFrame {
         let image: UIImage
         let cameraTransform: simd_float4x4
+        let cameraIntrinsics: simd_float3x3
+        let imageResolution: CGSize
         let timestamp: TimeInterval
     }
     private var capturedFrames: [CapturedFrame] = []
@@ -636,6 +639,8 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         // Convert CVPixelBuffer → UIImage on background queue to avoid blocking ARKit
         let pixelBuffer = frame.capturedImage
         let transform = frame.camera.transform
+        let intrinsics = frame.camera.intrinsics
+        let imageRes = frame.camera.imageResolution
         let ts = frame.timestamp
 
         DispatchQueue.global(qos: .utility).async { [weak self] in
@@ -644,9 +649,9 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             let context = CIContext(options: [.useSoftwareRenderer: false])
             guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return }
 
-            // Downscale to max 800px wide to save memory
+            // Downscale to max 1200px wide for photogrammetry
             let original = UIImage(cgImage: cgImage)
-            let maxWidth: CGFloat = 1200  // Etappe 3: higher res for photogrammetry
+            let maxWidth: CGFloat = 1200
             let scale = min(1.0, maxWidth / original.size.width)
             let newSize = CGSize(width: original.size.width * scale, height: original.size.height * scale)
             UIGraphicsBeginImageContextWithOptions(newSize, true, 1.0)
@@ -657,7 +662,13 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             }
             UIGraphicsEndImageContext()
 
-            let captured = CapturedFrame(image: resized, cameraTransform: transform, timestamp: ts)
+            let captured = CapturedFrame(
+                image: resized,
+                cameraTransform: transform,
+                cameraIntrinsics: intrinsics,
+                imageResolution: imageRes,
+                timestamp: ts
+            )
             self.frameCaptureLock.lock()
             if self.capturedFrames.count < self.maxCapturedFrames {
                 self.capturedFrames.append(captured)
@@ -1064,6 +1075,77 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         return images
     }
 
+    /// Etappe 8: Export camera poses for all captured RGB frames.
+    /// Returns array of pose data suitable for SfM/photogrammetry pipeline.
+    private func exportCameraPoses() -> [[String: Any]] {
+        frameCaptureLock.lock()
+        let frames = capturedFrames
+        frameCaptureLock.unlock()
+
+        var poses: [[String: Any]] = []
+        for (i, frame) in frames.enumerated() {
+            let t = frame.cameraTransform
+            // Flatten 4x4 transform to array (column-major, matching ARKit)
+            let transform: [Float] = [
+                t.columns.0.x, t.columns.0.y, t.columns.0.z, t.columns.0.w,
+                t.columns.1.x, t.columns.1.y, t.columns.1.z, t.columns.1.w,
+                t.columns.2.x, t.columns.2.y, t.columns.2.z, t.columns.2.w,
+                t.columns.3.x, t.columns.3.y, t.columns.3.z, t.columns.3.w,
+            ]
+            let intr = frame.cameraIntrinsics
+            let intrinsics: [Float] = [
+                intr.columns.0.x, intr.columns.0.y, intr.columns.0.z,
+                intr.columns.1.x, intr.columns.1.y, intr.columns.1.z,
+                intr.columns.2.x, intr.columns.2.y, intr.columns.2.z,
+            ]
+            poses.append([
+                "index": i,
+                "timestamp": frame.timestamp,
+                "transform": transform.map { Double($0) },
+                "intrinsics": intrinsics.map { Double($0) },
+                "imageWidth": Int(frame.imageResolution.width),
+                "imageHeight": Int(frame.imageResolution.height),
+            ])
+        }
+        return poses
+    }
+
+    /// Etappe 8: Estimate photo overlap quality (0-100%).
+    /// Checks how many consecutive frame pairs have sufficient baseline
+    /// (camera movement) while maintaining viewing overlap.
+    private func estimatePhotoOverlap() -> Int {
+        frameCaptureLock.lock()
+        let frames = capturedFrames
+        frameCaptureLock.unlock()
+
+        guard frames.count >= 2 else { return 0 }
+
+        var goodPairs = 0
+        let totalPairs = frames.count - 1
+
+        for i in 0..<totalPairs {
+            let t1 = frames[i].cameraTransform
+            let t2 = frames[i + 1].cameraTransform
+
+            // Camera positions
+            let p1 = SIMD3<Float>(t1.columns.3.x, t1.columns.3.y, t1.columns.3.z)
+            let p2 = SIMD3<Float>(t2.columns.3.x, t2.columns.3.y, t2.columns.3.z)
+            let baseline = simd_length(p2 - p1)
+
+            // Forward vectors
+            let f1 = -SIMD3<Float>(t1.columns.2.x, t1.columns.2.y, t1.columns.2.z)
+            let f2 = -SIMD3<Float>(t2.columns.2.x, t2.columns.2.y, t2.columns.2.z)
+            let angleCos = simd_dot(simd_normalize(f1), simd_normalize(f2))
+
+            // Good pair: sufficient baseline (>2cm) + still overlapping (angle < 45°)
+            if baseline > 0.02 && baseline < 0.15 && angleCos > 0.707 {
+                goodPairs += 1
+            }
+        }
+
+        return Int(Double(goodPairs) / Double(totalPairs) * 100)
+    }
+
     // ── ARMeshGeometry vertex extraction ─────────────────────────────────────
     //
     // Reads raw (Float, Float, Float) tuples directly from the Metal buffer
@@ -1271,7 +1353,9 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             "calibrationDone":   calibrationDone,
             "calibrationScale":  calibrationDone ? calibrationScaleFactor : NSNull(),
             "calibrationResidualMM": calibrationDone ? calibrationResidualMM : NSNull(),
-            "arucoDetections":   arucoDetectionCount
+            "arucoDetections":   arucoDetectionCount,
+            // ── Etappe 8: Photo capture progress ─────────────────────────
+            "rgbFrameCount":     capturedFrames.count
         ]
 
         if let reason = currentTrackingReason {
@@ -1323,6 +1407,10 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
                 "calibrationDone":  self.calibrationDone,
                 "calibrationScale": self.calibrationDone ? self.calibrationScaleFactor : NSNull(),
                 "calibrationResidualMM": self.calibrationDone ? self.calibrationResidualMM : NSNull(),
+                // ── Etappe 8: SfM camera poses + overlap quality ─────────
+                "cameraPoses":      self.exportCameraPoses(),
+                "photoOverlap":     self.estimatePhotoOverlap(),
+                "rgbFrameCount":    self.capturedFrames.count,
             ]
 
             if let error = self.sessionError {
