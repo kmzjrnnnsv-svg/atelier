@@ -806,9 +806,9 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
       {/* Depth mode indicator */}
       {depthMode && depthMode !== 'none' && (
         <div className="absolute top-16 right-4 z-15 pointer-events-none">
-          <div className="bg-teal-500/70 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
+          <div className="bg-white/15 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            <span className="text-[8px] text-white font-bold uppercase tracking-wider">
+            <span className="text-[8px] text-white/70 font-light uppercase tracking-[0.15em]">
               {depthMode === 'webxr' ? '3D Depth' : depthMode === 'lidar' ? 'LiDAR' : 'Depth'}
             </span>
           </div>
@@ -917,7 +917,7 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
         <div className="flex gap-1 items-center">
           {Array.from({ length: 16 }).map((_, i) => (
             <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${
-              i < totalDone   ? 'w-4 bg-indigo-400' :
+              i < totalDone   ? 'w-4 bg-white/60' :
               i === pgStep    ? 'w-6 bg-white' :
               'w-3 bg-white/25'
             }`} />
@@ -985,7 +985,7 @@ function CamError({ status, onRetry, onDemo, onBack }) {
         </div>
         <div className="w-full space-y-3 pt-2">
           {err.retry && (
-            <button onClick={onRetry} className="w-full py-4 bg-black text-white font-bold text-[12px] border-0 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
+            <button onClick={onRetry} className="w-full h-12 flex items-center justify-center bg-[#19110B] text-white font-light text-[11px] border border-[#19110B] uppercase tracking-[0.15em] transition-all duration-300">
               Erneut versuchen
             </button>
           )}
@@ -1948,7 +1948,7 @@ export default function FootScan() {
         </p>
         <button
           onClick={onContinue}
-          className="w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
+          className="w-full py-4 bg-white text-black font-light text-[13px] uppercase tracking-[0.15em] border-0 active:opacity-80 transition-all duration-300">
           Jetzt starten
         </button>
       </div>
@@ -2171,7 +2171,7 @@ export default function FootScan() {
                           strokeDasharray="38" strokeDashoffset="38"
                           style={{ animation: 'checkDraw 0.5s ease forwards 0.2s' }} />
                       </svg>
-                      <span className="text-[11px] text-[#30D158] font-medium tracking-wide">Erfasst</span>
+                      <span className="text-[11px] text-white/70 font-light tracking-[0.15em] uppercase">Erfasst</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 px-3 py-1 rounded-lg" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
@@ -2200,20 +2200,20 @@ export default function FootScan() {
               {/* Instructions — big, readable, glanceable */}
               {walkProgress === 0 && !lidarError && countdown === 0 && (
                 <div className="mt-2" style={{ animation: 'fadeInSoft 0.4s ease' }}>
-                  <p className="text-[20px] font-bold text-white mb-4 leading-snug">
+                  <p className="text-[20px] font-extralight text-white mb-4 leading-snug tracking-tight">
                     {phase === 'lidar-right' ? 'Rechten' : 'Linken'} Fuß auf den Boden stellen
                   </p>
                   <div className="space-y-3 text-left inline-block">
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-lg bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">1</span>
+                      <span className="w-7 h-7 bg-white/10 flex items-center justify-center text-[13px] font-light text-white/70 shrink-0">1</span>
                       {deviceInfo?.model === 'iPad' ? 'iPad' : 'Handy'} eine Handlänge über den Fuß halten
                     </p>
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-lg bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">2</span>
+                      <span className="w-7 h-7 bg-white/10 flex items-center justify-center text-[13px] font-light text-white/70 shrink-0">2</span>
                       Langsam einmal um den Fuß herum bewegen
                     </p>
                     <p className="text-[15px] text-white/70 flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-lg bg-[#30D158]/20 flex items-center justify-center text-[13px] font-bold text-[#30D158] shrink-0">3</span>
+                      <span className="w-7 h-7 bg-white/10 flex items-center justify-center text-[13px] font-light text-white/70 shrink-0">3</span>
                       Auch Ferse und Seiten mitnehmen
                     </p>
                   </div>
@@ -2305,23 +2305,23 @@ export default function FootScan() {
               )}
 
               {aiStatus && !lidarError && walkProgress >= 100 && (
-                <p className="text-[13px] text-[#30D158] font-medium" style={{ animation: 'fadeInSoft 0.4s ease' }}>{aiStatus}</p>
+                <p className="text-[13px] text-white/70 font-light" style={{ animation: 'fadeInSoft 0.4s ease' }}>{aiStatus}</p>
               )}
 
               {lidarError && (
-                <div className="w-full p-5 rounded-xl bg-red-500/10 border border-red-400/20" role="alert" aria-live="assertive"
+                <div className="w-full p-5 bg-white/[0.06] border border-white/[0.1]" role="alert" aria-live="assertive"
                   style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease' }}>
-                  <p className="text-[15px] text-white font-semibold mb-2">Nicht geklappt — kein Problem!</p>
-                  <p className="text-[13px] text-white/60 mb-4 leading-relaxed">{lidarError}</p>
+                  <p className="text-[15px] text-white font-light mb-2">Nicht geklappt — kein Problem!</p>
+                  <p className="text-[13px] text-white/60 font-light mb-4 leading-relaxed">{lidarError}</p>
                   <div className="flex gap-3">
                     <button onClick={() => { setLidarError(null); setWalkProgress(0); startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left') }}
                       aria-label="Scan nochmal versuchen"
-                      className="flex-1 py-3.5 rounded-xl bg-[#30D158] text-white text-[14px] font-semibold border-0 active:opacity-80">
+                      className="flex-1 py-3.5 bg-white text-black text-[12px] font-light uppercase tracking-[0.15em] border-0 active:opacity-80 transition-all duration-300">
                       Nochmal versuchen
                     </button>
                     <button onClick={() => setPhase('start')}
                       aria-label="Andere Scan-Methode wählen"
-                      className="flex-1 py-3.5 rounded-xl bg-transparent text-white/40 text-[13px] border border-white/10 active:opacity-80">
+                      className="flex-1 py-3.5 bg-transparent text-white/40 text-[12px] font-light border border-white/[0.1] active:opacity-80 transition-all duration-300">
                       Andere Methode
                     </button>
                   </div>
@@ -2332,7 +2332,7 @@ export default function FootScan() {
                 <button
                   onClick={() => startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left')}
                   aria-label={`${phase === 'lidar-right' ? 'Rechten' : 'Linken'} Fuß scannen`}
-                  className="mt-8 w-full py-4 rounded-xl bg-[#30D158] text-white font-semibold text-[15px] border-0 active:opacity-80">
+                  className="mt-8 w-full py-4 bg-white text-black font-light text-[13px] uppercase tracking-[0.15em] border-0 active:opacity-80 transition-all duration-300">
                   Scan starten
                 </button>
               )}
@@ -2340,7 +2340,7 @@ export default function FootScan() {
               {/* Countdown overlay */}
               {countdown > 0 && (
                 <div className="mt-8 flex flex-col items-center">
-                  <span className="text-[72px] font-bold text-[#30D158]"
+                  <span className="text-[72px] font-extralight text-white"
                     style={{ fontFeatureSettings: '"tnum"', animation: 'faceidFadeInUp 0.3s ease' }}>
                     {countdown}
                   </span>
@@ -2463,24 +2463,24 @@ export default function FootScan() {
             <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
               <div className="relative">
                 <div className="w-24 h-24 bg-black flex items-center justify-center">
-                  <span className="text-4xl">{progress < 20 ? '📷' : progress < 75 ? '🤖' : '📐'}</span>
+                  <Scan size={32} className="text-white/40" strokeWidth={1} />
                 </div>
                 <div className="absolute inset-0 border border-black/20 animate-ping" style={{ animationDuration: '2s' }} />
               </div>
 
               <div className="text-center w-full">
-                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung läuft</p>
-                <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
+                <p className="text-[14px] font-light text-black uppercase tracking-[0.15em] mb-1">Vermessung läuft</p>
+                <p className="text-[11px] text-black/40 font-light min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
-                  <span className="text-[10px] font-bold text-black">{Math.round(progress)}%</span>
+                  <span className="text-[10px] text-black/25 font-light uppercase tracking-[0.2em]">Fortschritt</span>
+                  <span className="text-[10px] font-light text-black">{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-black/[0.02] overflow-hidden">
+                <div className="w-full h-px bg-black/[0.08] overflow-hidden">
                   <div className="h-full bg-black transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
               </div>
 
-              <p className="text-[9px] text-black/25 text-center px-4">
+              <p className="text-[9px] text-black/20 font-light text-center px-4">
                 Dein Fuß wird aus mehreren Fotos vermessen — Länge, Breite, Umfang und mehr
               </p>
             </div>
@@ -2491,21 +2491,19 @@ export default function FootScan() {
             <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
               <div className="relative">
                 <div className="w-24 h-24 bg-black flex items-center justify-center">
-                  <span className="text-4xl">
-                    {progress < 30 ? '📸' : progress < 60 ? '🔺' : progress < 85 ? '📐' : '✅'}
-                  </span>
+                  <Scan size={32} className="text-white/40" strokeWidth={1} />
                 </div>
                 <div className="absolute inset-0 border border-black/20 animate-ping" style={{ animationDuration: '2s' }} />
               </div>
 
               <div className="text-center w-full">
-                <p className="text-[14px] font-bold text-black mb-1" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung läuft</p>
-                <p className="text-[11px] text-black/40 min-h-[20px] mb-6">{aiStatus}</p>
+                <p className="text-[14px] font-light text-black uppercase tracking-[0.15em] mb-1">Vermessung läuft</p>
+                <p className="text-[11px] text-black/40 font-light min-h-[20px] mb-6">{aiStatus}</p>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[9px] text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Fortschritt</span>
-                  <span className="text-[10px] font-bold text-black">{Math.round(progress)}%</span>
+                  <span className="text-[10px] text-black/25 font-light uppercase tracking-[0.2em]">Fortschritt</span>
+                  <span className="text-[10px] font-light text-black">{Math.round(progress)}%</span>
                 </div>
-                <div className="w-full h-1.5 bg-black/[0.02] overflow-hidden">
+                <div className="w-full h-px bg-black/[0.08] overflow-hidden">
                   <div className="h-full bg-black transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
               </div>
@@ -2517,13 +2515,13 @@ export default function FootScan() {
                   { pct: 65,  label: '3D-Modell wird erstellt' },
                   { pct: 85,  label: 'Maße werden berechnet' },
                 ].map(({ pct, label }) => (
-                  <div key={pct} className={`flex items-center gap-3 px-3.5 py-2.5 border transition-all ${
+                  <div key={pct} className={`flex items-center gap-3 px-4 py-3 border transition-all duration-300 ${
                     progress >= pct
-                      ? 'bg-black/[0.02] border-black/8 text-black'
-                      : 'bg-white border-black/5 text-black/30'
+                      ? 'bg-[#f6f5f3] border-black/[0.06] text-black/60'
+                      : 'bg-white border-black/[0.04] text-black/25'
                   }`}>
-                    <span className="text-[10px] font-medium">{label}</span>
-                    {progress >= pct && <span className="ml-auto text-black/40 text-[9px]">✓</span>}
+                    <span className="text-[10px] font-light">{label}</span>
+                    {progress >= pct && <span className="ml-auto text-black/30 text-[9px]">✓</span>}
                   </div>
                 ))}
               </div>
@@ -2537,20 +2535,20 @@ export default function FootScan() {
           {/* ── RESULT ── */}
           {phase === 'result' && result && result.error && (
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-6">
-              <div className="w-20 h-20 bg-black/[0.02] flex items-center justify-center">
-                <span className="text-4xl">😕</span>
+              <div className="w-20 h-20 bg-black flex items-center justify-center">
+                <AlertCircle size={28} className="text-white/40" strokeWidth={1} />
               </div>
               <div>
-                <p className="text-[14px] font-bold text-black mb-3" style={{ letterSpacing: '0.05em', textTransform: 'uppercase' }}>Vermessung nicht möglich</p>
-                <p className="text-[12px] text-black/50 leading-relaxed max-w-xs">{result.error}</p>
+                <p className="text-[14px] font-light text-black uppercase tracking-[0.15em] mb-3">Vermessung nicht möglich</p>
+                <p className="text-[12px] text-black/40 font-light leading-relaxed max-w-xs">{result.error}</p>
               </div>
               <div className="w-full space-y-3 pt-2">
                 <button onClick={() => { setPhase('start'); setResult(null); setProgress(0) }}
-                  className="w-full py-4 bg-black text-white font-bold text-[12px] border-0 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>
+                  className="w-full h-12 flex items-center justify-center bg-[#19110B] text-white font-light text-[11px] border border-[#19110B] uppercase tracking-[0.15em] transition-all duration-300">
                   Nochmal versuchen
                 </button>
                 <button onClick={() => navigate('/collection', { replace: true })}
-                  className="w-full py-3.5 bg-black/[0.02] text-black/50 font-semibold text-[11px] border-0">
+                  className="w-full py-3.5 bg-transparent text-black/35 font-light text-[10px] border border-black/[0.06] uppercase tracking-[0.15em]">
                   Zurück zur Kollektion
                 </button>
               </div>
@@ -2559,33 +2557,34 @@ export default function FootScan() {
           {phase === 'result' && result && !result.error && (
             <div className="flex-1 overflow-y-auto">
               {/* Foot profile header */}
-              <div className="bg-black px-5 py-5 text-center">
-                <p className="text-[9px] text-white/40 uppercase tracking-widest mb-1" style={{ letterSpacing: '0.2em' }}>Dein individuelles Fußprofil</p>
-                <p className="text-[13px] text-white/60 mb-3">EU {result.sizes.eu} · UK {result.sizes.uk} · US {result.sizes.us}</p>
+              <div className="bg-black px-5 py-7 text-center">
+                <p className="text-[10px] text-white/30 uppercase tracking-[0.25em] font-light mb-2">Scan-Ergebnis</p>
+                <p className="text-[20px] font-extralight text-white tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Dein individuelles Fußprofil</p>
+                <p className="text-[11px] text-white/35 font-light tracking-[0.1em] mt-3">EU {result.sizes.eu} · UK {result.sizes.uk} · US {result.sizes.us}</p>
                 {result.isDemo ? (
-                  <div className="inline-flex items-center gap-1.5 bg-amber-500/15 px-3 py-1.5">
-                    <span className="text-[9px] text-amber-300 font-medium uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Demo · Beispielwerte</span>
+                  <div className="inline-flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] px-3 py-1.5 mt-3">
+                    <span className="text-[9px] text-white/40 font-light uppercase tracking-[0.15em]">Demo · Beispielwerte</span>
                   </div>
                 ) : result.sizes?.outOfRange ? (
-                  <div className="inline-flex items-center gap-1.5 bg-amber-500/15 px-3 py-1.5">
-                    <span className="text-[9px] text-amber-300 font-medium">Deine Fußlänge liegt außerhalb der Standard-Größentabelle — die angezeigte Größe ist ein Richtwert</span>
+                  <div className="inline-flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] px-3 py-1.5 mt-3">
+                    <span className="text-[9px] text-white/40 font-light">Deine Fußlänge liegt außerhalb der Standard-Größentabelle — die angezeigte Größe ist ein Richtwert</span>
                   </div>
                 ) : result.usedAI && (
-                  <div className="inline-flex items-center gap-1.5 bg-white/8 px-3 py-1.5">
-                    <span className="text-[9px] text-white/50 font-medium">Automatisch vermessen</span>
+                  <div className="inline-flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] px-3 py-1.5 mt-3">
+                    <span className="text-[9px] text-white/35 font-light">Automatisch vermessen</span>
                   </div>
                 )}
               </div>
 
-              <div className="px-5 pt-4 pb-10 space-y-4">
+              <div className="px-5 pt-6 pb-12 space-y-5">
                 {/* Save status */}
                 {saved ? (
                   <>
-                    <div className="flex items-center gap-2.5 p-3.5 bg-black/[0.02] border border-black/5 text-black/60 text-[11px] font-medium">
-                      <CheckCircle2 size={15} strokeWidth={1.5} /> In deinem Profil gespeichert
+                    <div className="flex items-center gap-2.5 p-4 bg-[#f6f5f3] border border-black/[0.06] text-black/50 text-[11px] font-light">
+                      <CheckCircle2 size={15} strokeWidth={1} /> In deinem Profil gespeichert
                     </div>
-                    <div className="p-3.5 bg-black/[0.02] border border-black/5">
-                      <p className="text-[10px] text-black/40 leading-relaxed">
+                    <div className="p-4 bg-[#f6f5f3] border border-black/[0.06]">
+                      <p className="text-[10px] text-black/40 font-light leading-relaxed">
                         Deine Fußdaten sind sicher in deinem Profil gespeichert.
                         Wenn du einen Schuh bestellst, werden die Maße automatisch
                         an den Hersteller übermittelt — so wird der Schuh genau auf deinen Fuß angepasst.
@@ -2593,24 +2592,24 @@ export default function FootScan() {
                     </div>
                   </>
                 ) : saveErr ? (
-                  <div className="flex items-center gap-2.5 p-3.5 bg-black/[0.02] border border-black/5 text-red-600 text-[11px] font-medium">
-                    <AlertCircle size={15} strokeWidth={1.5} /> {saveErr}
+                  <div className="flex items-center gap-2.5 p-4 bg-[#f6f5f3] border border-black/[0.06] text-black/60 text-[11px] font-light">
+                    <AlertCircle size={15} strokeWidth={1} /> {saveErr}
                   </div>
                 ) : result.isDemo ? (
-                  <div className="flex items-center gap-2.5 p-3.5 bg-black/[0.02] border border-black/5 text-amber-600 text-[11px] font-medium">
-                    <AlertCircle size={15} strokeWidth={1.5} /> Demo-Daten werden nicht gespeichert
+                  <div className="flex items-center gap-2.5 p-4 bg-[#f6f5f3] border border-black/[0.06] text-black/40 text-[11px] font-light">
+                    <AlertCircle size={15} strokeWidth={1} /> Demo-Daten werden nicht gespeichert
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2.5 p-3.5 bg-black/[0.02] border border-black/5 text-black/40 text-[11px]">
-                    <CloudUpload size={15} className="animate-pulse" strokeWidth={1.5} /> Wird gespeichert…
+                  <div className="flex items-center gap-2.5 p-4 bg-[#f6f5f3] border border-black/[0.06] text-black/40 text-[11px] font-light">
+                    <CloudUpload size={15} className="animate-pulse" strokeWidth={1} /> Wird gespeichert…
                   </div>
                 )}
 
                 {/* Scan quality indicator (LiDAR only) */}
                 {result.source === 'lidar' && (result.right?.pointCount || result.left?.pointCount) && (
-                  <div className="flex items-center gap-3 px-3.5 py-2.5 bg-black/[0.02] border border-black/5 text-[10px] text-black/40">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-[#f6f5f3] border border-black/[0.06] text-[10px] text-black/35 font-light">
                     <span>Scan-Qualität:</span>
-                    <span className={`ml-auto font-medium ${(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'text-[#30D158]' : 'text-amber-500'}`}>
+                    <span className={`ml-auto ${(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'text-black/60' : 'text-black/40'}`}>
                       {(result.right?.pointCount ?? 0) >= 5000 && (result.left?.pointCount ?? 0) >= 5000 ? 'Sehr gut' : 'Gut'}
                     </span>
                   </div>
@@ -2649,10 +2648,10 @@ export default function FootScan() {
                   }
                   if (warnings.length === 0) return null
                   return (
-                    <div className="p-3.5 bg-amber-50 border border-amber-200/50 space-y-1.5">
-                      <p className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Hinweise</p>
+                    <div className="p-4 bg-[#f6f5f3] border border-black/[0.06] space-y-1.5">
+                      <p className="text-[10px] font-light text-black/35 uppercase tracking-[0.2em]">Hinweise</p>
                       {warnings.map((w, i) => (
-                        <p key={i} className="text-[10px] text-amber-600 leading-relaxed">• {w}</p>
+                        <p key={i} className="text-[10px] text-black/45 font-light leading-relaxed">{'\u2013'} {w}</p>
                       ))}
                     </div>
                   )
@@ -2660,14 +2659,14 @@ export default function FootScan() {
 
                 {/* Measurements — editable by user */}
                 <div>
-                  <div className="flex items-center justify-between mb-2 px-1">
-                    <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Messwerte</p>
-                    <p className="text-[8px] text-black/25">Tippe auf einen Wert zum Ändern</p>
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <p className="text-[10px] font-light text-black/25 uppercase tracking-[0.25em]">Messwerte</p>
+                    <p className="text-[9px] text-black/20 font-light">Tippe auf einen Wert zum Ändern</p>
                   </div>
                   {[['Rechts', result.right, 'right'], ['Links', result.left, 'left']].map(([label, m, side]) => (
-                    <div key={label} className="border border-black/5 overflow-hidden mb-3">
-                      <div className="px-4 py-2.5 bg-black border-b border-black/5">
-                        <span className="text-[10px] font-semibold text-white uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>{label}</span>
+                    <div key={label} className="border border-black/[0.06] overflow-hidden mb-4">
+                      <div className="px-4 py-3 border-b border-black/[0.06]">
+                        <span className="text-[10px] font-light text-black/30 uppercase tracking-[0.2em]">{label}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-0">
                         {[
@@ -2695,13 +2694,13 @@ export default function FootScan() {
                           const errEst = m.errorEstimates?.[key]
                           const errorMm = errEst?.error_mm
                           return (
-                            <div key={lbl} className={`px-3 py-2.5 flex items-center justify-between ${
-                              i % 2 === 0 ? 'border-r border-black/5' : ''
-                            } ${i >= 2 ? 'border-t border-black/5' : ''}`}>
+                            <div key={lbl} className={`px-3.5 py-3 flex items-center justify-between ${
+                              i % 2 === 0 ? 'border-r border-black/[0.06]' : ''
+                            } ${i >= 2 ? 'border-t border-black/[0.06]' : ''}`}>
                               <div>
-                                <span className="text-[9px] text-black/35 block">{lbl}</span>
+                                <span className="text-[10px] text-black/35 font-light block">{lbl}</span>
                               </div>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 <input
                                   type="number"
                                   inputMode="decimal"
@@ -2709,14 +2708,14 @@ export default function FootScan() {
                                   value={displayVal}
                                   onChange={e => setEditedValues(v => ({ ...v, [editKey]: e.target.value }))}
                                   placeholder="—"
-                                  className={`w-16 text-right text-[11px] font-bold bg-transparent border-0 border-b p-0 py-0.5 focus:outline-none ${
-                                    edited !== undefined ? 'text-teal-600 border-teal-300' : 'text-black border-transparent'
+                                  className={`w-16 text-right text-[13px] font-light bg-transparent border-0 border-b p-0 py-0.5 focus:outline-none ${
+                                    edited !== undefined ? 'text-black border-black/20' : 'text-black border-transparent'
                                   }`}
                                 />
-                                <span className="text-[9px] text-black/25">mm</span>
+                                <span className="text-[9px] text-black/20 font-light">mm</span>
                                 {errorMm != null && (
-                                  <span className={`text-[8px] ml-0.5 ${
-                                    errorMm <= 1.0 ? 'text-emerald-500' : errorMm <= 2.0 ? 'text-amber-500' : 'text-red-400'
+                                  <span className={`text-[8px] font-light ml-0.5 ${
+                                    errorMm <= 1.0 ? 'text-black/30' : errorMm <= 2.0 ? 'text-black/25' : 'text-black/40'
                                   }`}>
                                     {'\u00B1'}{errorMm.toFixed(1)}
                                   </span>
@@ -2765,8 +2764,7 @@ export default function FootScan() {
                         setSavingEdits(false)
                       }}
                       disabled={savingEdits}
-                      className="w-full py-3 bg-teal-600 text-white font-bold text-[11px] border-0 uppercase tracking-widest active:opacity-80 disabled:opacity-50"
-                      style={{ letterSpacing: '0.1em' }}>
+                      className="w-full py-3.5 bg-[#19110B] text-white font-light text-[10px] border border-[#19110B] uppercase tracking-[0.15em] active:opacity-80 disabled:opacity-50 transition-all duration-300">
                       {savingEdits ? 'Wird gespeichert…' : 'Werte aktualisieren'}
                     </button>
                   )}
@@ -2787,25 +2785,23 @@ export default function FootScan() {
 
                   return (
                     <div>
-                      <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>Links / Rechts Vergleich</p>
-                      <div className="border border-black/5 overflow-hidden">
+                      <p className="text-[10px] font-light text-black/25 uppercase tracking-[0.25em] mb-3 px-1">Links / Rechts Vergleich</p>
+                      <div className="border border-black/[0.06] overflow-hidden">
                         {comparisons.map((c, i) => {
                           const diff = c.rVal - c.lVal
                           const absDiff = Math.abs(diff)
-                          const color = absDiff < 3 ? 'text-emerald-600' : absDiff < 5 ? 'text-amber-600' : 'text-red-500'
-                          const bgColor = absDiff < 3 ? 'bg-emerald-50' : absDiff < 5 ? 'bg-amber-50' : 'bg-red-50'
-                          const barColor = absDiff < 3 ? 'bg-emerald-400' : absDiff < 5 ? 'bg-amber-400' : 'bg-red-400'
+                          const barOpacity = absDiff < 3 ? 0.15 : absDiff < 5 ? 0.3 : 0.5
                           const desc = absDiff < 0.5 ? 'identisch'
                             : diff > 0 ? `Rechts ${absDiff.toFixed(1)}mm ${c.key.includes('girth') || c.key === 'width' ? 'weiter' : c.key === 'foot_height' ? 'höher' : 'länger'}`
                             : `Links ${absDiff.toFixed(1)}mm ${c.key.includes('girth') || c.key === 'width' ? 'weiter' : c.key === 'foot_height' ? 'höher' : 'länger'}`
                           return (
-                            <div key={c.key} className={`px-3 py-2.5 flex items-center justify-between ${i > 0 ? 'border-t border-black/5' : ''}`}>
-                              <span className="text-[9px] text-black/40">{c.label}</span>
-                              <div className="flex items-center gap-2">
-                                <div className="w-16 h-1 bg-black/5 rounded-full overflow-hidden">
-                                  <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(absDiff / 8 * 100, 100)}%` }} />
+                            <div key={c.key} className={`px-3.5 py-3 flex items-center justify-between ${i > 0 ? 'border-t border-black/[0.06]' : ''}`}>
+                              <span className="text-[10px] text-black/35 font-light">{c.label}</span>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-16 h-px bg-black/[0.08] overflow-hidden">
+                                  <div className="h-full bg-black" style={{ width: `${Math.min(absDiff / 8 * 100, 100)}%`, opacity: barOpacity }} />
                                 </div>
-                                <span className={`text-[10px] font-semibold ${color} ${bgColor} px-1.5 py-0.5 rounded`}>
+                                <span className="text-[10px] font-light text-black/50 bg-black/[0.03] px-2 py-0.5">
                                   {desc}
                                 </span>
                               </div>
@@ -2819,7 +2815,7 @@ export default function FootScan() {
 
                 {/* 3D Preview + Shoe Last Export */}
                 <div>
-                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>
+                  <p className="text-[10px] font-light text-black/25 uppercase tracking-[0.25em] mb-3 px-1">
                     {(result.right.pointCloud || result.left.pointCloud) ? '3D-Modell (drehbar)' : '3D-Vorschau'}
                   </p>
                   <div className="overflow-hidden" style={{ background: '#111111' }}>
@@ -2828,22 +2824,22 @@ export default function FootScan() {
                       <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
                         <div>
                           <FootScan3DResult measurements={result.right} side="right" />
-                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                          <p className="text-center text-[10px] text-white/30 py-2.5 uppercase tracking-[0.2em] font-light">Rechts</p>
                         </div>
                         <div>
                           <FootScan3DResult measurements={result.left} side="left" />
-                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
+                          <p className="text-center text-[10px] text-white/30 py-2.5 uppercase tracking-[0.2em] font-light">Links</p>
                         </div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
                         <div>
                           <FootMini3D length={result.right.length} width={result.right.width} arch={result.right.arch ?? 14} label="Right" />
-                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                          <p className="text-center text-[10px] text-white/30 py-2.5 uppercase tracking-[0.2em] font-light">Rechts</p>
                         </div>
                         <div>
                           <FootMini3D length={result.left.length} width={result.left.width} arch={result.left.arch ?? 13} label="Left" />
-                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
+                          <p className="text-center text-[10px] text-white/30 py-2.5 uppercase tracking-[0.2em] font-light">Links</p>
                         </div>
                       </div>
                     )}
@@ -2851,18 +2847,18 @@ export default function FootScan() {
                     {/* Shoe type selector — visible to all users */}
                     <div className="p-3 border-t border-white/5 space-y-2">
                         <div className="flex items-center gap-2 mb-2">
-                          <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Schuhtyp:</label>
+                          <label className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-light">Schuhtyp:</label>
                           <select
                             value={lastShoeType}
                             onChange={e => setLastShoeType(e.target.value)}
-                            className="flex-1 bg-white/5 border border-white/10 px-2 py-1.5 text-xs text-gray-300">
+                            className="flex-1 bg-white/[0.04] border border-white/[0.08] px-3 py-2 text-[11px] text-white/60 font-light">
                             {Object.entries(SHOE_TYPES).map(([key, { name }]) => (
                               <option key={key} value={key}>{name}</option>
                             ))}
                           </select>
                         </div>
 
-                        <p className="text-[10px] text-white/30 leading-relaxed px-0.5">
+                        <p className="text-[10px] text-white/25 font-light leading-relaxed px-0.5">
                           Dein Fußprofil und der gewählte Schuhtyp werden bei der Bestellung
                           automatisch an die Werkstatt übermittelt — so entsteht ein Leisten,
                           der exakt zu deinem Fuß passt.
@@ -2870,8 +2866,8 @@ export default function FootScan() {
 
                         {/* Warning for photo-only scans (no cross-sections → generic last) */}
                         {result.source !== 'lidar' && result.source !== 'photogrammetry' && (
-                          <div className="flex gap-2 p-2.5 bg-amber-500/10 border border-amber-400/20">
-                            <span className="text-amber-300 text-[10px] leading-relaxed">
+                          <div className="flex gap-2 p-3 bg-white/[0.04] border border-white/[0.08]">
+                            <span className="text-white/40 text-[10px] font-light leading-relaxed">
                               Foto-Scan: Dein Leisten basiert auf Standardformen.
                               Für einen individuellen Leisten mit exakter Fußgeometrie
                               nutze den LiDAR-Scan oder die 16-Foto-Photogrammetrie.
@@ -2882,16 +2878,16 @@ export default function FootScan() {
                         {/* Export tools — admin/curator only */}
                         {(user?.role === 'admin' || user?.role === 'curator') && (<>
                         {/* Export format selector */}
-                        <div className="flex items-center gap-2 mb-2 pt-2 border-t border-white/5">
-                          <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Format:</label>
+                        <div className="flex items-center gap-2 mb-2 pt-3 border-t border-white/[0.06]">
+                          <label className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-light">Format:</label>
                           <div className="flex gap-1">
                             {['stl', 'obj', 'glb', 'usdz'].map(fmt => (
                               <button key={fmt}
                                 onClick={() => setLastFormat(fmt)}
-                                className={`px-3 py-1 text-xs font-semibold border ${
+                                className={`px-3 py-1.5 text-[10px] font-light uppercase tracking-[0.1em] border transition-all duration-300 ${
                                   lastFormat === fmt
-                                    ? 'bg-white/15 border-white/30 text-white'
-                                    : 'bg-white/5 border-white/10 text-gray-400'
+                                    ? 'bg-white/[0.08] border-white/20 text-white'
+                                    : 'bg-transparent border-white/[0.08] text-white/30'
                                 }`}>
                                 .{fmt.toUpperCase()}
                               </button>
@@ -2926,40 +2922,40 @@ export default function FootScan() {
                                   downloadLastSTL(geo, result.sizes.eu, side)
                                 }
                               }}
-                              className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2.5">
-                              <span className="text-xs font-semibold text-gray-300">{label}</span>
-                              <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
+                              className="flex items-center justify-between gap-2 bg-white/[0.03] border border-white/[0.06] px-3 py-2.5 transition-all duration-300 hover:bg-white/[0.06]">
+                              <span className="text-[10px] font-light text-white/50 uppercase tracking-[0.1em]">{label}</span>
+                              <Download size={13} className="text-white/25 flex-shrink-0" strokeWidth={1} />
                             </button>
                           ))}
                         </div>
 
                         {/* Fuss-STL (raw foot, not last) */}
-                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/[0.06]">
                           {[
                             { side: 'right', label: 'Fuß-STL Rechts', m: result.right },
                             { side: 'left',  label: 'Fuß-STL Links',  m: result.left  },
                           ].map(({ side, label, m }) => (
                             <button key={`foot-${side}`}
                               onClick={async () => { try { const geo = await buildFootGeoAsync(m.length, m.width, m.arch, side); downloadSTL(geo, result.sizes.eu, side) } catch { /* fallback handled in buildFootGeoAsync */ } }}
-                              className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2">
-                              <span className="text-[10px] text-gray-400">{label}</span>
-                              <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
+                              className="flex items-center justify-between gap-2 bg-white/[0.03] border border-white/[0.06] px-3 py-2 transition-all duration-300 hover:bg-white/[0.06]">
+                              <span className="text-[10px] text-white/40 font-light">{label}</span>
+                              <Download size={11} className="text-white/25 flex-shrink-0" strokeWidth={1} />
                             </button>
                           ))}
                         </div>
 
                         {/* Etappe 12: PLY point cloud export */}
                         {(result.right.pointCloud || result.left.pointCloud) && (
-                          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/[0.06]">
                             {[
                               { side: 'right', label: 'PLY Rechts', pc: result.right.pointCloud },
                               { side: 'left',  label: 'PLY Links',  pc: result.left.pointCloud },
                             ].filter(({ pc }) => pc && pc.length > 0).map(({ side, label, pc }) => (
                               <button key={`ply-${side}`}
                                 onClick={() => downloadPLY(pc, result.sizes.eu, side)}
-                                className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2">
-                                <span className="text-[10px] text-gray-400">{label}</span>
-                                <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
+                                className="flex items-center justify-between gap-2 bg-white/[0.03] border border-white/[0.06] px-3 py-2 transition-all duration-300 hover:bg-white/[0.06]">
+                                <span className="text-[10px] text-white/40 font-light">{label}</span>
+                                <Download size={11} className="text-white/25 flex-shrink-0" strokeWidth={1} />
                               </button>
                             ))}
                           </div>
@@ -2989,17 +2985,17 @@ export default function FootScan() {
                             a.href = url; a.download = `massblatt_EU${result.sizes.eu}_${Date.now()}.json`
                             a.click(); URL.revokeObjectURL(url)
                           }}
-                          className="w-full flex items-center justify-between bg-white/5 border border-white/8 px-3 py-2.5">
-                          <span className="text-xs font-semibold text-gray-300">Maßblatt (JSON)</span>
-                          <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
+                          className="w-full flex items-center justify-between bg-white/[0.03] border border-white/[0.06] px-3 py-2.5 transition-all duration-300 hover:bg-white/[0.06]">
+                          <span className="text-[10px] font-light text-white/50 uppercase tracking-[0.1em]">Maßblatt (JSON)</span>
+                          <Download size={13} className="text-white/25 flex-shrink-0" strokeWidth={1} />
                         </button>
 
                         {/* Etappe 12: PDF Maßblatt */}
                         <button
                           onClick={() => downloadMassblattPDF(result, result.sizes.eu)}
-                          className="w-full flex items-center justify-between bg-white/5 border border-white/8 px-3 py-2.5">
-                          <span className="text-xs font-semibold text-gray-300">Maßblatt (PDF)</span>
-                          <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
+                          className="w-full flex items-center justify-between bg-white/[0.03] border border-white/[0.06] px-3 py-2.5 transition-all duration-300 hover:bg-white/[0.06]">
+                          <span className="text-[10px] font-light text-white/50 uppercase tracking-[0.1em]">Maßblatt (PDF)</span>
+                          <Download size={13} className="text-white/25 flex-shrink-0" strokeWidth={1} />
                         </button>
                         </>)}
                       </div>
@@ -3008,14 +3004,14 @@ export default function FootScan() {
 
                 {/* Notes input — saves to user profile */}
                 <div>
-                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>
+                  <p className="text-[10px] font-light text-black/25 uppercase tracking-[0.25em] mb-3 px-1">
                     {footNotes && !notesConfirmed ? 'Deine hinterlegten Notizen — bestätigen oder anpassen' : 'Notizen'}
                   </p>
                   <textarea
                     value={scanNotes}
                     onChange={e => setScanNotes(e.target.value)}
                     maxLength={1000}
-                    className="w-full border border-black/8 bg-black/[0.02] p-3 text-[11px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/20"
+                    className="w-full border border-black/[0.06] bg-[#f6f5f3] p-3.5 text-[13px] text-black/80 font-light leading-relaxed resize-none focus:outline-none focus:border-black/15"
                     rows={3}
                     placeholder="Persönliche Notizen zu deinen Füßen…"
                   />
@@ -3031,14 +3027,13 @@ export default function FootScan() {
                           refreshScan()
                         }
                       }}
-                      className="mt-1.5 px-3 py-1.5 text-[9px] text-white bg-black border-0 font-semibold"
+                      className="mt-2 px-4 py-2 text-[10px] text-white bg-black border border-black font-light uppercase tracking-[0.15em]"
                     >{footNotes && !notesConfirmed ? 'Bestätigen & Speichern' : 'Notiz speichern'}</button>
                   )}
                 </div>
 
                 <button onClick={() => navigate('/collection', { replace: true })}
-                  className="w-full py-4 bg-black text-white font-bold text-[12px] border-0 uppercase tracking-widest active:opacity-80"
-                  style={{ letterSpacing: '0.12em' }}>
+                  className="w-full h-12 flex items-center justify-center bg-[#19110B] text-white font-light text-[11px] border border-[#19110B] uppercase tracking-[0.15em] active:opacity-80 transition-all duration-300">
                   Kollektion entdecken
                 </button>
               </div>
