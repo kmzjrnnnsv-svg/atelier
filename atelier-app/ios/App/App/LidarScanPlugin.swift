@@ -165,6 +165,17 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     /// Last ArUco detection attempt timestamp
     private var lastArucoDetectionTime: TimeInterval = 0
 
+    // ── Vision Framework Foot Segmentation (Etappe 15) ──────────────────
+    /// Whether a foot/ankle has been detected via Vision body pose
+    private var footSegmented: Bool = false
+    /// Detected ankle positions in world space (left/right)
+    private var detectedAnkleLeft: SIMD3<Float>? = nil
+    private var detectedAnkleRight: SIMD3<Float>? = nil
+    /// Timestamp of last body pose detection attempt
+    private var lastBodyPoseTime: TimeInterval = 0
+    /// Interval between body pose detection attempts (seconds)
+    private let bodyPoseInterval: TimeInterval = 1.0
+
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: – Capability check
     // ─────────────────────────────────────────────────────────────────────────
@@ -231,6 +242,10 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             // Etappe 7: Attempt ArUco/rectangle calibration during scan
             if !calibrationDone {
                 attemptCalibrationDetection(frame)
+            }
+            // Etappe 15: Vision body pose for ankle/foot segmentation
+            if !footSegmented {
+                attemptBodyPoseDetection(frame)
             }
             return
         }
@@ -537,6 +552,97 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     private func applyCalibration(_ point: SIMD3<Float>) -> SIMD3<Float> {
         guard calibrationDone else { return point }
         return point * calibrationScaleFactor
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: – Vision Framework Foot Segmentation (Etappe 15)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Uses VNDetectHumanBodyPoseRequest to find ankle keypoints.
+    /// Ankle positions are transformed to world space for tighter foot bounding
+    /// and heel girth positioning.
+    private func attemptBodyPoseDetection(_ frame: ARFrame) {
+        let now = frame.timestamp
+        guard now - lastBodyPoseTime >= bodyPoseInterval else { return }
+        lastBodyPoseTime = now
+
+        guard let sceneDepth = frame.smoothedSceneDepth else { return }
+
+        let pixelBuffer = frame.capturedImage
+        let camera = frame.camera
+        let transform = camera.transform
+        let depthMap = sceneDepth.depthMap
+
+        let request = VNDetectHumanBodyPoseRequest { [weak self] request, error in
+            guard let self = self,
+                  error == nil,
+                  let results = request.results as? [VNHumanBodyPoseObservation],
+                  let body = results.first
+            else { return }
+
+            // Extract ankle keypoints
+            do {
+                let leftAnkle = try body.recognizedPoint(.leftAnkle)
+                let rightAnkle = try body.recognizedPoint(.rightAnkle)
+
+                // Only use high-confidence detections
+                guard leftAnkle.confidence > 0.3 || rightAnkle.confidence > 0.3 else { return }
+
+                let dWidth = CVPixelBufferGetWidth(depthMap)
+                let dHeight = CVPixelBufferGetHeight(depthMap)
+                let imageRes = camera.imageResolution
+                let scaleH = Float(dHeight) / Float(imageRes.height)
+                let intr = camera.intrinsics
+                let fx = intr[0][0] * scaleH
+                let fy = intr[1][1] * scaleH
+                let cx = intr[2][0] * scaleH
+                let cy = intr[2][1] * scaleH
+
+                CVPixelBufferLockBaseAddress(depthMap, .readOnly)
+                defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
+                let depthPtr = CVPixelBufferGetBaseAddress(depthMap)!.assumingMemoryBound(to: Float32.self)
+
+                // Helper: Vision normalized coords → world space via depth
+                func toWorldSpace(_ point: VNRecognizedPoint) -> SIMD3<Float>? {
+                    guard point.confidence > 0.3 else { return nil }
+                    let u = Int(point.location.x * CGFloat(dWidth))
+                    let v = Int((1.0 - point.location.y) * CGFloat(dHeight))
+                    guard u >= 0, u < dWidth, v >= 0, v < dHeight else { return nil }
+
+                    let depth = depthPtr[v * dWidth + u]
+                    guard depth > 0.1, depth < 1.5 else { return nil }
+
+                    let x = (Float(u) - cx) * depth / fx
+                    let y = (Float(v) - cy) * depth / fy
+                    let z = -depth
+
+                    let camPt = SIMD4<Float>(x, y, z, 1)
+                    let world = transform * camPt
+                    return SIMD3<Float>(world.x, world.y, world.z)
+                }
+
+                if let lw = toWorldSpace(leftAnkle) {
+                    self.detectedAnkleLeft = lw
+                    print("[LiDAR] Etappe 15: Left ankle detected at world (\(lw.x), \(lw.y), \(lw.z))")
+                }
+                if let rw = toWorldSpace(rightAnkle) {
+                    self.detectedAnkleRight = rw
+                    print("[LiDAR] Etappe 15: Right ankle detected at world (\(rw.x), \(rw.y), \(rw.z))")
+                }
+
+                if self.detectedAnkleLeft != nil || self.detectedAnkleRight != nil {
+                    self.footSegmented = true
+                    print("[LiDAR] Etappe 15: Foot segmented via body pose (ankle detected)")
+                }
+            } catch {
+                // Ankle keypoints not found in this frame — ignore
+            }
+        }
+
+        DispatchQueue.global(qos: .utility).async {
+            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right)
+            try? handler.perform([request])
+        }
     }
 
     /// Process a depth frame during continuous capture: extract points,
@@ -1447,7 +1553,9 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             // ── Etappe 8: Photo capture progress ─────────────────────────
             "rgbFrameCount":     capturedFrames.count,
             // ── Etappe 10: Per-bin point counts for quality heatmap ───────
-            "binCounts":         currentBinCounts
+            "binCounts":         currentBinCounts,
+            // ── Etappe 15: Vision body pose foot segmentation ────────────
+            "footSegmented":     footSegmented
         ]
 
         if let reason = currentTrackingReason {
@@ -1503,7 +1611,17 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
                 "cameraPoses":      self.exportCameraPoses(),
                 "photoOverlap":     self.estimatePhotoOverlap(),
                 "rgbFrameCount":    self.capturedFrames.count,
+                // ── Etappe 15: Foot segmentation info ────────────────────
+                "footSegmented":    self.footSegmented,
             ]
+
+            // Etappe 15: Add ankle positions if detected
+            if let ankle = self.detectedAnkleLeft {
+                result["ankleLeftWorld"] = ["x": Double(ankle.x), "y": Double(ankle.y), "z": Double(ankle.z)]
+            }
+            if let ankle = self.detectedAnkleRight {
+                result["ankleRightWorld"] = ["x": Double(ankle.x), "y": Double(ankle.y), "z": Double(ankle.z)]
+            }
 
             if let error = self.sessionError {
                 result["sessionWarning"] = error
@@ -1622,6 +1740,11 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         arucoDetectionCount = 0
         arucoScaleFactors = []
         lastArucoDetectionTime = 0
+        // Reset body pose / foot segmentation
+        footSegmented = false
+        detectedAnkleLeft = nil
+        detectedAnkleRight = nil
+        lastBodyPoseTime = 0
     }
 
     /// Cleanly tears down any active walk-around session and resets state.

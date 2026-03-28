@@ -1047,6 +1047,7 @@ export default function FootScan() {
   const [floorDetected, setFloorDetected] = useState(false)   // Etappe 2: floor RANSAC
   const [calibrationDone, setCalibrationDone] = useState(false)  // Etappe 7: ArUco calibration
   const [binCounts, setBinCounts] = useState({})  // Etappe 10: per-bin point counts for heatmap
+  const [footSegmented, setFootSegmented] = useState(false)  // Etappe 15: Vision body pose
   const lastLightWarnTime = useRef(0)
   const lastTrackingWarnTime = useRef(0)
   const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
@@ -1321,6 +1322,7 @@ export default function FootScan() {
             setFloorDetected(prog.floorDetected ?? false)
             setCalibrationDone(prog.calibrationDone ?? false)
             setBinCounts(prog.binCounts ?? {})
+            setFootSegmented(prog.footSegmented ?? false)
 
             // Use native tracking state for stability (replaces DeviceMotion for native)
             if (ts === 'limited' && tr === 'excessiveMotion') {
@@ -2262,6 +2264,14 @@ export default function FootScan() {
                         {calibrationDone ? 'Kalibr. ✓' : 'Kalibr.…'}
                       </span>
                     </div>
+                    {/* Foot segmentation indicator (Etappe 15) */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      <div className={`w-2 h-2 rounded-full ${footSegmented ? 'bg-[#30D158]' : 'bg-white/20'}`} />
+                      <span className="text-[10px] text-white/60 font-medium">
+                        {footSegmented ? 'Fuß ✓' : 'Fuß…'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Stability / tracking warning */}
@@ -2761,6 +2771,51 @@ export default function FootScan() {
                     </button>
                   )}
                 </div>
+
+                {/* Etappe 14: Links/Rechts-Vergleich */}
+                {result.right.length && result.left.length && (() => {
+                  const comparisons = [
+                    { label: 'Länge',          key: 'length',       rVal: result.right.length,       lVal: result.left.length },
+                    { label: 'Breite',          key: 'width',        rVal: result.right.width,        lVal: result.left.width },
+                    { label: 'Ballenumfang',    key: 'ball_girth',   rVal: result.right.ball_girth,   lVal: result.left.ball_girth },
+                    { label: 'Spannumfang',     key: 'instep_girth', rVal: result.right.instep_girth, lVal: result.left.instep_girth },
+                    { label: 'Fersenumfang',    key: 'heel_girth',   rVal: result.right.heel_girth,   lVal: result.left.heel_girth },
+                    { label: 'Fußhöhe',         key: 'foot_height',  rVal: result.right.foot_height,  lVal: result.left.foot_height },
+                  ].filter(c => c.rVal != null && c.lVal != null)
+
+                  if (comparisons.length < 2) return null
+
+                  return (
+                    <div>
+                      <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>Links / Rechts Vergleich</p>
+                      <div className="border border-black/5 overflow-hidden">
+                        {comparisons.map((c, i) => {
+                          const diff = c.rVal - c.lVal
+                          const absDiff = Math.abs(diff)
+                          const color = absDiff < 3 ? 'text-emerald-600' : absDiff < 5 ? 'text-amber-600' : 'text-red-500'
+                          const bgColor = absDiff < 3 ? 'bg-emerald-50' : absDiff < 5 ? 'bg-amber-50' : 'bg-red-50'
+                          const barColor = absDiff < 3 ? 'bg-emerald-400' : absDiff < 5 ? 'bg-amber-400' : 'bg-red-400'
+                          const desc = absDiff < 0.5 ? 'identisch'
+                            : diff > 0 ? `Rechts ${absDiff.toFixed(1)}mm ${c.key.includes('girth') || c.key === 'width' ? 'weiter' : c.key === 'foot_height' ? 'höher' : 'länger'}`
+                            : `Links ${absDiff.toFixed(1)}mm ${c.key.includes('girth') || c.key === 'width' ? 'weiter' : c.key === 'foot_height' ? 'höher' : 'länger'}`
+                          return (
+                            <div key={c.key} className={`px-3 py-2.5 flex items-center justify-between ${i > 0 ? 'border-t border-black/5' : ''}`}>
+                              <span className="text-[9px] text-black/40">{c.label}</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 h-1 bg-black/5 rounded-full overflow-hidden">
+                                  <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(absDiff / 8 * 100, 100)}%` }} />
+                                </div>
+                                <span className={`text-[10px] font-semibold ${color} ${bgColor} px-1.5 py-0.5 rounded`}>
+                                  {desc}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {/* 3D Preview + Shoe Last Export */}
                 <div>
