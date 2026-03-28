@@ -583,6 +583,101 @@ def pca_regularize(meas: dict) -> dict:
 
 # ─── Main measurement function ────────────────────────────────────────────────
 
+# ─── Bootstrap resampling for measurement error estimates (Etappe 6) ──────────
+
+def _quick_measure(aligned: np.ndarray, side: str) -> dict:
+    """
+    Fast measurement pass on already-aligned foot points.
+    Returns key measurements in mm for bootstrap aggregation.
+    """
+    length_mm = round(robust_extent(aligned[:, 0]) * 1000, 1)
+    width_mm  = round(robust_extent(aligned[:, 1]) * 1000, 1)
+    height_mm = round(robust_extent(aligned[:, 2]) * 1000, 1)
+
+    centers, x_positions = compute_medial_axis(aligned, n_slices=40)
+    if len(centers) < 2:
+        return {"length": length_mm, "width": width_mm}
+
+    _x_ext = np.percentile(aligned[:, 0], [0.5, 99.5])
+    _bm = max(0.004, 0.005 * (_x_ext[1] - _x_ext[0]) / 0.270)
+
+    ball_girth   = girth_perpendicular(aligned, 0.40, centers, x_positions, band_m=_bm)
+    instep_girth = girth_perpendicular(aligned, 0.60, centers, x_positions, band_m=_bm)
+    heel_girth   = girth_perpendicular(aligned, 0.85, centers, x_positions, band_m=_bm)
+
+    return {
+        "length":       length_mm,
+        "width":        width_mm,
+        "ball_girth":   ball_girth,
+        "instep_girth": instep_girth,
+        "heel_girth":   heel_girth,
+    }
+
+
+def bootstrap_error_estimates(
+    foot_pts: np.ndarray,
+    side: str,
+    n_bootstrap: int = 50,
+    confidence: float = 0.95
+) -> dict:
+    """
+    Resample foot point cloud with replacement N times, re-measure each,
+    and compute confidence intervals for key measurements.
+
+    Returns dict of { measurement_name: { "ci_low": float, "ci_high": float, "std": float } }
+    """
+    n_pts = len(foot_pts)
+    if n_pts < 200:
+        return {}
+
+    rng = np.random.default_rng(42)
+    results = []
+
+    for _ in range(n_bootstrap):
+        # Resample with replacement (80% of points for faster computation)
+        sample_size = int(n_pts * 0.8)
+        indices = rng.choice(n_pts, size=sample_size, replace=True)
+        sample = foot_pts[indices]
+
+        # Voxel normalize the sample
+        sample = voxel_downsample(sample, voxel_m=0.0005)
+        if len(sample) < 40:
+            continue
+
+        # Align and measure
+        try:
+            aligned, _R, _c = align_foot(sample)
+            m = _quick_measure(aligned, side)
+            results.append(m)
+        except Exception:
+            continue
+
+    if len(results) < 10:
+        return {}
+
+    # Aggregate: compute confidence intervals
+    alpha = 1.0 - confidence
+    estimates = {}
+    keys = ["length", "width", "ball_girth", "instep_girth", "heel_girth"]
+
+    for key in keys:
+        vals = [r[key] for r in results if r.get(key) is not None]
+        if len(vals) < 10:
+            continue
+        arr = np.array(vals)
+        lo = float(np.percentile(arr, 100 * alpha / 2))
+        hi = float(np.percentile(arr, 100 * (1 - alpha / 2)))
+        std = float(np.std(arr))
+        estimates[key] = {
+            "ci_low":  round(lo, 1),
+            "ci_high": round(hi, 1),
+            "std":     round(std, 1),
+            "error_mm": round((hi - lo) / 2, 1),  # ±Xmm half-width
+        }
+
+    return estimates
+
+
 def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
     """
     Convert a raw LiDAR point cloud into foot measurements.
@@ -727,7 +822,14 @@ def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
         "point_cloud_mm":  aligned_mm.tolist(),
     }
 
-    # Step 11: Optional PCA shape-model regularization
+    # Step 11: Bootstrap resampling for error estimates (Etappe 6)
+    # Resample foot points N times, re-measure → 95% confidence intervals
+    error_estimates = bootstrap_error_estimates(
+        foot_pts, side, n_bootstrap=50, confidence=0.95
+    )
+    result["error_estimates"] = error_estimates
+
+    # Step 12: Optional PCA shape-model regularization
     regularized = pca_regularize(result)
     if regularized is not result:
         regularized["pca_regularized"] = True

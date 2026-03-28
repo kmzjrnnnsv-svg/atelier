@@ -1478,6 +1478,7 @@ export default function FootScan() {
           crossSections: R.cross_sections ?? {},
           pointCloud:    R.raw?.point_cloud_mm ?? null,
           pointCount:    R.raw?.point_count ?? null,
+          errorEstimates: R.raw?.error_estimates ?? null,
         }
         const left = {
           length:       r1(L.left_length ?? L.raw?.length ?? 253),
@@ -1498,6 +1499,7 @@ export default function FootScan() {
           crossSections: L.cross_sections ?? {},
           pointCloud:    L.raw?.point_cloud_mm ?? null,
           pointCount:    L.raw?.point_count ?? null,
+          errorEstimates: L.raw?.error_estimates ?? null,
         }
         setProgress(100)
         setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI: true, source: 'lidar' })
@@ -2481,6 +2483,9 @@ export default function FootScan() {
                           const editKey = `${side}_${key}`
                           const edited = editedValues[editKey]
                           const displayVal = edited !== undefined ? edited : (value != null ? Number(value).toFixed(1) : '')
+                          // Etappe 6: Show ±Xmm error estimate from bootstrap resampling
+                          const errEst = m.errorEstimates?.[key]
+                          const errorMm = errEst?.error_mm
                           return (
                             <div key={lbl} className={`px-3 py-2.5 flex items-center justify-between ${
                               i % 2 === 0 ? 'border-r border-black/5' : ''
@@ -2501,6 +2506,13 @@ export default function FootScan() {
                                   }`}
                                 />
                                 <span className="text-[9px] text-black/25">mm</span>
+                                {errorMm != null && (
+                                  <span className={`text-[8px] ml-0.5 ${
+                                    errorMm <= 1.0 ? 'text-emerald-500' : errorMm <= 2.0 ? 'text-amber-500' : 'text-red-400'
+                                  }`}>
+                                    {'\u00B1'}{errorMm.toFixed(1)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )
