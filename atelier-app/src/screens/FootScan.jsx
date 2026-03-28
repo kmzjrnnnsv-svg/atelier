@@ -6,8 +6,9 @@ import * as THREE from 'three'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
-import { buildFootGeoAsync, buildFootGeo, downloadSTL } from '../utils/footSTL'
+import { buildFootGeoAsync, buildFootGeo, downloadSTL, downloadPLY, downloadMassblattPDF, downloadGLTF, downloadUSDZ } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
 import DepthSensing, { depthCapabilities } from '../plugins/depthSensing'
 import { speak, stopSpeaking, hapticLight, hapticMedium, hapticStrong, hapticSuccess, hapticWarning, SCAN_MESSAGES, setVoiceEnabled, isVoiceEnabled } from '../utils/scanVoice'
@@ -255,14 +256,180 @@ function FootMini3D({ length, width, arch, label }) {
 }
 
 
+// ─── Etappe 11: Interactive 3D result viewer with measurement paths ──────────
+// Shows point cloud (if available) or OBJ mesh, with measurement lines drawn.
+// Supports touch orbit, pinch zoom. Used in result screen after scan.
+
+function FootScan3DResult({ measurements, side = 'right' }) {
+  const mountRef = useRef(null)
+  useEffect(() => {
+    const el = mountRef.current
+    if (!el) return
+    const w = el.clientWidth || 300, h = 280
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x111111)
+
+    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 3000)
+    camera.up.set(0, 0, 1)
+    const isLeft = side === 'left'
+    camera.position.set(0, isLeft ? 350 : -350, 150)
+    camera.lookAt(0, 0, 0)
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    renderer.setSize(w, h)
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    el.appendChild(renderer.domElement)
+
+    // Orbit controls for interactive rotation
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.08
+    controls.minDistance = 100
+    controls.maxDistance = 800
+    controls.target.set(0, 0, 20)
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5))
+    const key = new THREE.DirectionalLight(0xffffff, 0.9)
+    key.position.set(100, -200, 300); scene.add(key)
+    const rim = new THREE.DirectionalLight(0x2dd4bf, 0.4)
+    rim.position.set(-80, 200, -50); scene.add(rim)
+
+    let cancelled = false
+    const m = measurements
+    const len = m?.length ?? 260
+    const wid = m?.width ?? 95
+
+    // Try point cloud first, fall back to OBJ mesh
+    const pointCloud = m?.pointCloud
+    if (pointCloud && Array.isArray(pointCloud) && pointCloud.length > 100) {
+      // Render point cloud as THREE.Points
+      const positions = new Float32Array(pointCloud.length * 3)
+      for (let i = 0; i < pointCloud.length; i++) {
+        const p = pointCloud[i]
+        // pointCloud is in mm (aligned), X=length, Y=width, Z=height
+        if (Array.isArray(p)) {
+          positions[i * 3] = p[0]; positions[i * 3 + 1] = p[1]; positions[i * 3 + 2] = p[2]
+        } else {
+          positions[i * 3] = p.x ?? p[0] ?? 0
+          positions[i * 3 + 1] = p.y ?? p[1] ?? 0
+          positions[i * 3 + 2] = p.z ?? p[2] ?? 0
+        }
+      }
+      const pcGeo = new THREE.BufferGeometry()
+      pcGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+      pcGeo.center()
+      const pcMat = new THREE.PointsMaterial({ color: 0xc8997a, size: 1.5, sizeAttenuation: true })
+      scene.add(new THREE.Points(pcGeo, pcMat))
+
+      // Add measurement lines
+      addMeasurementLines(scene, pcGeo, m)
+    } else {
+      // Fallback: render OBJ mesh
+      buildFootGeoAsync(len, wid, m?.arch ?? 14, side).then(geo => {
+        if (cancelled) { geo.dispose(); return }
+        scene.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xc8997a, roughness: 0.5, metalness: 0.05, transparent: true, opacity: 0.85 })))
+        scene.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x2dd4bf, wireframe: true, transparent: true, opacity: 0.06 })))
+        addMeasurementLines(scene, geo, m)
+      })
+    }
+
+    // Animation loop
+    let raf = 0
+    const animate = () => {
+      raf = requestAnimationFrame(animate)
+      controls.update()
+      renderer.render(scene, camera)
+    }
+    animate()
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf)
+      controls.dispose()
+      scene.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose()
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(mt => mt.dispose())
+          else obj.material.dispose()
+        }
+      })
+      renderer.dispose()
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
+    }
+  }, [measurements, side])
+
+  return <div ref={mountRef} className="w-full" style={{ height: 280, touchAction: 'none' }} />
+}
+
+// Add measurement lines to a 3D scene (foot length line + girth rings)
+function addMeasurementLines(scene, geo, m) {
+  if (!geo?.attributes?.position) return
+  const pos = geo.attributes.position.array
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x2dd4bf, linewidth: 2 })
+  const labelMat = new THREE.LineBasicMaterial({ color: 0xFFD60A, linewidth: 2 })
+
+  // Compute bounding box for reference
+  geo.computeBoundingBox()
+  const bb = geo.boundingBox
+  if (!bb) return
+  const xMin = bb.min.x, xMax = bb.max.x
+  const footLen = xMax - xMin
+
+  // Foot length line (along X axis)
+  const lengthLine = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(xMin, 0, 2),
+    new THREE.Vector3(xMax, 0, 2),
+  ])
+  scene.add(new THREE.Line(lengthLine, lineMat))
+
+  // Small end markers
+  for (const x of [xMin, xMax]) {
+    const marker = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x, -5, 2), new THREE.Vector3(x, 5, 2),
+    ])
+    scene.add(new THREE.Line(marker, lineMat))
+  }
+
+  // Girth rings at key positions (40% = ball, 60% = instep)
+  const girthPositions = [
+    { frac: 0.40, label: 'Ball' },
+    { frac: 0.60, label: 'Instep' },
+  ]
+
+  for (const { frac } of girthPositions) {
+    const xPos = xMin + frac * footLen
+    // Find approximate cross-section width and height at this position
+    let minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity
+    for (let i = 0; i < pos.length; i += 3) {
+      if (Math.abs(pos[i] - xPos) < footLen * 0.03) {
+        minY = Math.min(minY, pos[i + 1]); maxY = Math.max(maxY, pos[i + 1])
+        minZ = Math.min(minZ, pos[i + 2]); maxZ = Math.max(maxZ, pos[i + 2])
+      }
+    }
+    if (!isFinite(minY)) continue
+
+    // Draw elliptical ring
+    const ry = (maxY - minY) / 2, rz = (maxZ - minZ) / 2
+    const cy = (minY + maxY) / 2, cz = (minZ + maxZ) / 2
+    const ringPts = []
+    for (let a = 0; a <= 64; a++) {
+      const theta = (a / 64) * Math.PI * 2
+      ringPts.push(new THREE.Vector3(xPos, cy + Math.cos(theta) * ry, cz + Math.sin(theta) * rz))
+    }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ringPts), labelMat))
+  }
+}
+
+
 // ─── RoomPlan-style progressive 3D foot mesh during LiDAR scan ──────────────
 // Divides a foot mesh into 12 angular sectors (matching LiDAR angle bins).
 // Each sector materialises as the corresponding bin is covered: wireframe first,
 // then semi-transparent teal fill — mimicking Apple's RoomPlan scanning UX.
 
-function ScanMeshPreview({ progress, side }) {
+function ScanMeshPreview({ progress, side, binCounts = {} }) {
   const mountRef = useRef(null)
-  const stateRef = useRef({ sectors: [], scene: null, renderer: null, camera: null, raf: 0, coveredBins: 0 })
+  const stateRef = useRef({ sectors: [], scene: null, renderer: null, camera: null, raf: 0, coveredBins: 0, binCounts: {} })
 
   // Build scene once on mount
   useEffect(() => {
@@ -375,11 +542,29 @@ function ScanMeshPreview({ progress, side }) {
       camera.position.set(Math.sin(t) * dist * 0.3, -Math.cos(t) * dist, 180 + Math.sin(t * 0.5) * 30)
       camera.lookAt(0, 0, 20)
 
-      // Smooth opacity transitions every frame (not just on React re-render)
+      // Smooth opacity transitions + heatmap coloring (Etappe 10)
       const covered = stateRef.current.coveredBins
+      const bc = stateRef.current.binCounts
       for (const sec of sectors) {
-        sec.target = sec.bin < covered ? 1 : 0
-        sec.revealed += (sec.target - sec.revealed) * 0.06  // smooth ease per frame (~60fps)
+        const count = bc[sec.bin] ?? bc[String(sec.bin)] ?? 0
+        sec.target = (sec.bin < covered || count > 0) ? 1 : 0
+        sec.revealed += (sec.target - sec.revealed) * 0.06
+
+        // Heatmap color: green (≥200 pts = good), yellow (50-199), red (<50)
+        if (count >= 200) {
+          sec.fillMat.color.setHex(0x30D158)  // green — well scanned
+          sec.wireMat.color.setHex(0x30D158)
+        } else if (count >= 50) {
+          sec.fillMat.color.setHex(0xFFD60A)  // yellow — needs more
+          sec.wireMat.color.setHex(0xFFD60A)
+        } else if (count > 0) {
+          sec.fillMat.color.setHex(0xFF453A)  // red — insufficient
+          sec.wireMat.color.setHex(0xFF6B6B)
+        } else {
+          sec.fillMat.color.setHex(0x2dd4bf)  // teal — default unrevealed
+          sec.wireMat.color.setHex(0x30D158)
+        }
+
         sec.wireMat.opacity = Math.min(0.35, sec.revealed * 0.35)
         sec.fillMat.opacity = Math.max(0, (sec.revealed - 0.3) * 0.4)
       }
@@ -403,10 +588,11 @@ function ScanMeshPreview({ progress, side }) {
     }
   }, [side])
 
-  // Update covered bin count (read by animation loop each frame)
+  // Update covered bin count + heatmap data (read by animation loop each frame)
   useEffect(() => {
     stateRef.current.coveredBins = Math.round(progress * 12 / 100)
-  }, [progress])
+    stateRef.current.binCounts = binCounts
+  }, [progress, binCounts])
 
   return <div ref={mountRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
 }
@@ -854,6 +1040,16 @@ export default function FootScan() {
   const [pgImgs,     setPgImgs]    = useState({ right: [], left: [] })
   const [walkPoints,   setWalkPoints]   = useState(0)
   const [deviceStable, setDeviceStable] = useState(true)  // DeviceMotion stability
+  // ── Environment quality (Etappe 1: from native plugin) ──
+  const [lightQuality, setLightQuality] = useState('good')     // "good" | "low" | "critical"
+  const [trackingQuality, setTrackingQuality] = useState('normal') // "normal" | "limited" | "notAvailable"
+  const [trackingReason, setTrackingReason] = useState(null)
+  const [floorDetected, setFloorDetected] = useState(false)   // Etappe 2: floor RANSAC
+  const [calibrationDone, setCalibrationDone] = useState(false)  // Etappe 7: ArUco calibration
+  const [binCounts, setBinCounts] = useState({})  // Etappe 10: per-bin point counts for heatmap
+  const [footSegmented, setFootSegmented] = useState(false)  // Etappe 15: Vision body pose
+  const lastLightWarnTime = useRef(0)
+  const lastTrackingWarnTime = useRef(0)
   const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
 
   // ── Shoe last export state ──
@@ -1074,6 +1270,13 @@ export default function FootScan() {
     setWalkProgress(0)
     setWalkPoints(0)
     setAiStatus('Scan läuft…')
+    // Reset environment quality state
+    setLightQuality('good')
+    setTrackingQuality('normal')
+    setTrackingReason(null)
+    lastLightWarnTime.current = 0
+    lastTrackingWarnTime.current = 0
+    setFloorDetected(false)
 
     // Voice: announce scan start
     speak(SCAN_MESSAGES.startScan)
@@ -1109,6 +1312,43 @@ export default function FootScan() {
             setWalkProgress(Math.round(lastCoverage))
             setWalkPoints(pts)
 
+            // ── Etappe 1: Environment quality from native ──
+            const lq = prog.lightQuality ?? 'good'
+            const ts = prog.trackingState ?? 'normal'
+            const tr = prog.trackingReason ?? null
+            setLightQuality(lq)
+            setTrackingQuality(ts)
+            setTrackingReason(tr)
+            setFloorDetected(prog.floorDetected ?? false)
+            setCalibrationDone(prog.calibrationDone ?? false)
+            setBinCounts(prog.binCounts ?? {})
+            setFootSegmented(prog.footSegmented ?? false)
+
+            // Use native tracking state for stability (replaces DeviceMotion for native)
+            if (ts === 'limited' && tr === 'excessiveMotion') {
+              setDeviceStable(false)
+            } else if (ts === 'normal') {
+              setDeviceStable(true)
+            }
+
+            // ── Light warning (debounced, max every 8s) ──
+            if (lq === 'critical' && now - lastLightWarnTime.current > 8000) {
+              speak(SCAN_MESSAGES.lowLight || 'Bitte für mehr Licht sorgen.', { urgent: true })
+              hapticStrong()
+              lastLightWarnTime.current = now
+            }
+
+            // ── Tracking warning (debounced, max every 6s) ──
+            if (ts === 'limited' && tr !== 'initializing' && now - lastTrackingWarnTime.current > 6000) {
+              if (tr === 'excessiveMotion') {
+                speak(SCAN_MESSAGES.trackingLost || 'Bitte langsamer bewegen.', { urgent: true })
+              } else if (tr === 'insufficientFeatures') {
+                speak(SCAN_MESSAGES.insufficientFeatures || 'Bitte auf texturiertem Untergrund scannen.', { urgent: true })
+              }
+              hapticWarning()
+              lastTrackingWarnTime.current = now
+            }
+
             // ── Milestone haptics at 25/50/75% ──
             const milestone = coverage >= 75 ? 75 : coverage >= 50 ? 50 : coverage >= 25 ? 25 : 0
             if (milestone > lastMilestone) { lastMilestone = milestone; hapticMedium() }
@@ -1126,7 +1366,7 @@ export default function FootScan() {
 
             // ── Real-time warnings ──
             // Warn if too few points after 8 seconds (scanning too fast or too far away)
-            if (elapsed > 8000 && pts < 800 && now - lastPointWarningTime > 6000) {
+            if (elapsed > 8000 && pts < 1500 && now - lastPointWarningTime > 6000) {
               speak(SCAN_MESSAGES.tooFewPoints, { urgent: true })
               hapticStrong()
               lastPointWarningTime = now
@@ -1156,8 +1396,10 @@ export default function FootScan() {
 
       const raw = await LidarScanNative.finishContinuousCapture()
 
-      // Quality check: ensure enough data for ±1mm accuracy
-      if (raw.pointCount < 2000) {
+      // Quality check: use footPointCount when floor was detected (cleaner metric)
+      const effectiveCount = raw.floorDetected ? (raw.footPointCount ?? raw.pointCount) : raw.pointCount
+      const minPoints = raw.floorDetected ? 1500 : 2000  // lower threshold since floor noise removed
+      if (effectiveCount < minPoints) {
         speak(SCAN_MESSAGES.lowQuality, { urgent: true })
         hapticStrong()
         throw new Error('Zu wenige Daten erfasst. Bewege das Gerät langsamer und führe es einmal komplett um den Fuß herum.')
@@ -1428,6 +1670,7 @@ export default function FootScan() {
           crossSections: R.cross_sections ?? {},
           pointCloud:    R.raw?.point_cloud_mm ?? null,
           pointCount:    R.raw?.point_count ?? null,
+          errorEstimates: R.raw?.error_estimates ?? null,
         }
         const left = {
           length:       r1(L.left_length ?? L.raw?.length ?? 253),
@@ -1448,6 +1691,7 @@ export default function FootScan() {
           crossSections: L.cross_sections ?? {},
           pointCloud:    L.raw?.point_cloud_mm ?? null,
           pointCount:    L.raw?.point_count ?? null,
+          errorEstimates: L.raw?.error_estimates ?? null,
         }
         setProgress(100)
         setResult({ right, left, sizes: sizeFromLength(r1((right.length + left.length) / 2)), usedAI: true, source: 'lidar' })
@@ -1896,7 +2140,7 @@ export default function FootScan() {
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center relative">
               {/* Progressive 3D foot mesh (RoomPlan-style) */}
               <div className="relative w-72 h-72 flex items-center justify-center mb-4">
-                <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} />
+                <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} binCounts={binCounts} />
 
                 {/* Progress overlay on top of 3D scene */}
                 <div className="absolute inset-0 flex flex-col items-center justify-end z-10 pointer-events-none pb-2">
@@ -1979,10 +2223,69 @@ export default function FootScan() {
               {walkProgress > 0 && walkProgress < 100 && !lidarError && (
                 <div key={walkProgress < 20 ? 'step1' : walkProgress < 45 ? 'step2' : walkProgress < 70 ? 'step3' : 'step4'}
                   style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                  {/* Stability warning */}
+                  {/* ── Etappe 1: Environment quality indicators ── */}
+                  <div className="flex items-center justify-center gap-3 mb-3">
+                    {/* Light indicator */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      <div className={`w-2 h-2 rounded-full ${
+                        lightQuality === 'good' ? 'bg-[#30D158]' :
+                        lightQuality === 'low' ? 'bg-[#FF9F0A]' : 'bg-[#FF453A]'
+                      }`} />
+                      <span className="text-[10px] text-white/60 font-medium">
+                        {lightQuality === 'good' ? 'Licht OK' :
+                         lightQuality === 'low' ? 'Wenig Licht' : 'Zu dunkel'}
+                      </span>
+                    </div>
+                    {/* Tracking indicator */}
+                    {trackingQuality !== 'normal' && trackingReason !== 'initializing' && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                        style={{ background: 'rgba(0,0,0,0.4)' }}>
+                        <div className="w-2 h-2 rounded-full bg-[#FF9F0A]" />
+                        <span className="text-[10px] text-white/60 font-medium">
+                          {trackingReason === 'excessiveMotion' ? 'Zu schnell' :
+                           trackingReason === 'insufficientFeatures' ? 'Wenig Textur' : 'Tracking'}
+                        </span>
+                      </div>
+                    )}
+                    {/* Floor detection indicator (Etappe 2) */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      <div className={`w-2 h-2 rounded-full ${floorDetected ? 'bg-[#30D158]' : 'bg-white/20'}`} />
+                      <span className="text-[10px] text-white/60 font-medium">
+                        {floorDetected ? 'Boden ✓' : 'Boden…'}
+                      </span>
+                    </div>
+                    {/* Calibration indicator (Etappe 7) */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      <div className={`w-2 h-2 rounded-full ${calibrationDone ? 'bg-[#30D158]' : 'bg-white/20'}`} />
+                      <span className="text-[10px] text-white/60 font-medium">
+                        {calibrationDone ? 'Kalibr. ✓' : 'Kalibr.…'}
+                      </span>
+                    </div>
+                    {/* Foot segmentation indicator (Etappe 15) */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      <div className={`w-2 h-2 rounded-full ${footSegmented ? 'bg-[#30D158]' : 'bg-white/20'}`} />
+                      <span className="text-[10px] text-white/60 font-medium">
+                        {footSegmented ? 'Fuß ✓' : 'Fuß…'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Stability / tracking warning */}
                   {!deviceStable && (
                     <p className="text-[13px] text-[#FF9F0A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                      {deviceInfo?.model === 'iPad' ? 'Halte das iPad ruhiger' : 'Halte das Handy ruhiger'}
+                      {trackingReason === 'excessiveMotion'
+                        ? 'Langsamer bewegen'
+                        : deviceInfo?.model === 'iPad' ? 'Halte das iPad ruhiger' : 'Halte das Handy ruhiger'}
+                    </p>
+                  )}
+                  {/* Light critical warning */}
+                  {lightQuality === 'critical' && deviceStable && (
+                    <p className="text-[13px] text-[#FF453A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
+                      Mehr Licht benötigt
                     </p>
                   )}
                   {/* Big, readable instruction — user glances at screen briefly */}
@@ -2313,6 +2616,48 @@ export default function FootScan() {
                   </div>
                 )}
 
+                {/* Etappe 4: Plausibility warnings */}
+                {(() => {
+                  const warnings = []
+                  const r = result.right, l = result.left
+                  // Joint Girth / Foot Length ratio: 0.85–1.10
+                  for (const [side, m, name] of [['R', r, 'Rechts'], ['L', l, 'Links']]) {
+                    if (!m) continue
+                    if (m.length && (m.length < 180 || m.length > 340))
+                      warnings.push(`${name}: Fußlänge (${Number(m.length).toFixed(0)}mm) außerhalb des Normalbereichs`)
+                    if (m.ball_girth && m.length) {
+                      const ratio = m.ball_girth / m.length
+                      if (ratio < 0.85 || ratio > 1.10)
+                        warnings.push(`${name}: Ballen/Länge-Verhältnis (${ratio.toFixed(2)}) ungewöhnlich`)
+                    }
+                    if (m.instep_girth && m.ball_girth && m.instep_girth > m.ball_girth * 1.05)
+                      warnings.push(`${name}: Spannumfang > Ballenumfang — bitte prüfen`)
+                    if (m.long_heel_girth && m.short_heel_girth && m.short_heel_girth >= m.long_heel_girth)
+                      warnings.push(`${name}: Kurzer Fersenumfang ≥ Langer Fersenumfang — Messfehler?`)
+                    if (m.long_heel_girth && m.length) {
+                      const r2 = m.long_heel_girth / m.length
+                      if (r2 < 1.05 || r2 > 1.40)
+                        warnings.push(`${name}: Langer Fersenumfang/Länge (${r2.toFixed(2)}) ungewöhnlich`)
+                    }
+                  }
+                  // Left/right comparison
+                  if (r && l) {
+                    if (r.length && l.length && Math.abs(r.length - l.length) > 8)
+                      warnings.push(`Längendifferenz ${Math.abs(r.length - l.length).toFixed(1)}mm — eventuell nochmal scannen`)
+                    if (r.ball_girth && l.ball_girth && Math.abs(r.ball_girth - l.ball_girth) > 12)
+                      warnings.push(`Ballenumfang-Differenz ${Math.abs(r.ball_girth - l.ball_girth).toFixed(1)}mm — bitte prüfen`)
+                  }
+                  if (warnings.length === 0) return null
+                  return (
+                    <div className="p-3.5 bg-amber-50 border border-amber-200/50 space-y-1.5">
+                      <p className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Hinweise</p>
+                      {warnings.map((w, i) => (
+                        <p key={i} className="text-[10px] text-amber-600 leading-relaxed">• {w}</p>
+                      ))}
+                    </div>
+                  )
+                })()}
+
                 {/* Measurements — editable by user */}
                 <div>
                   <div className="flex items-center justify-between mb-2 px-1">
@@ -2346,6 +2691,9 @@ export default function FootScan() {
                           const editKey = `${side}_${key}`
                           const edited = editedValues[editKey]
                           const displayVal = edited !== undefined ? edited : (value != null ? Number(value).toFixed(1) : '')
+                          // Etappe 6: Show ±Xmm error estimate from bootstrap resampling
+                          const errEst = m.errorEstimates?.[key]
+                          const errorMm = errEst?.error_mm
                           return (
                             <div key={lbl} className={`px-3 py-2.5 flex items-center justify-between ${
                               i % 2 === 0 ? 'border-r border-black/5' : ''
@@ -2366,6 +2714,13 @@ export default function FootScan() {
                                   }`}
                                 />
                                 <span className="text-[9px] text-black/25">mm</span>
+                                {errorMm != null && (
+                                  <span className={`text-[8px] ml-0.5 ${
+                                    errorMm <= 1.0 ? 'text-emerald-500' : errorMm <= 2.0 ? 'text-amber-500' : 'text-red-400'
+                                  }`}>
+                                    {'\u00B1'}{errorMm.toFixed(1)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )
@@ -2417,20 +2772,81 @@ export default function FootScan() {
                   )}
                 </div>
 
-                {/* 3D Preview + Shoe Last Export */}
-                <div>
-                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>3D-Vorschau</p>
-                  <div className="overflow-hidden" style={{ background: '#111111' }}>
-                    <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
-                      <div>
-                        <FootMini3D length={result.right.length} width={result.right.width} arch={result.right.arch ?? 14} label="Right" />
-                        <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
-                      </div>
-                      <div>
-                        <FootMini3D length={result.left.length} width={result.left.width} arch={result.left.arch ?? 13} label="Left" />
-                        <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
+                {/* Etappe 14: Links/Rechts-Vergleich */}
+                {result.right.length && result.left.length && (() => {
+                  const comparisons = [
+                    { label: 'Länge',          key: 'length',       rVal: result.right.length,       lVal: result.left.length },
+                    { label: 'Breite',          key: 'width',        rVal: result.right.width,        lVal: result.left.width },
+                    { label: 'Ballenumfang',    key: 'ball_girth',   rVal: result.right.ball_girth,   lVal: result.left.ball_girth },
+                    { label: 'Spannumfang',     key: 'instep_girth', rVal: result.right.instep_girth, lVal: result.left.instep_girth },
+                    { label: 'Fersenumfang',    key: 'heel_girth',   rVal: result.right.heel_girth,   lVal: result.left.heel_girth },
+                    { label: 'Fußhöhe',         key: 'foot_height',  rVal: result.right.foot_height,  lVal: result.left.foot_height },
+                  ].filter(c => c.rVal != null && c.lVal != null)
+
+                  if (comparisons.length < 2) return null
+
+                  return (
+                    <div>
+                      <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>Links / Rechts Vergleich</p>
+                      <div className="border border-black/5 overflow-hidden">
+                        {comparisons.map((c, i) => {
+                          const diff = c.rVal - c.lVal
+                          const absDiff = Math.abs(diff)
+                          const color = absDiff < 3 ? 'text-emerald-600' : absDiff < 5 ? 'text-amber-600' : 'text-red-500'
+                          const bgColor = absDiff < 3 ? 'bg-emerald-50' : absDiff < 5 ? 'bg-amber-50' : 'bg-red-50'
+                          const barColor = absDiff < 3 ? 'bg-emerald-400' : absDiff < 5 ? 'bg-amber-400' : 'bg-red-400'
+                          const desc = absDiff < 0.5 ? 'identisch'
+                            : diff > 0 ? `Rechts ${absDiff.toFixed(1)}mm ${c.key.includes('girth') || c.key === 'width' ? 'weiter' : c.key === 'foot_height' ? 'höher' : 'länger'}`
+                            : `Links ${absDiff.toFixed(1)}mm ${c.key.includes('girth') || c.key === 'width' ? 'weiter' : c.key === 'foot_height' ? 'höher' : 'länger'}`
+                          return (
+                            <div key={c.key} className={`px-3 py-2.5 flex items-center justify-between ${i > 0 ? 'border-t border-black/5' : ''}`}>
+                              <span className="text-[9px] text-black/40">{c.label}</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 h-1 bg-black/5 rounded-full overflow-hidden">
+                                  <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(absDiff / 8 * 100, 100)}%` }} />
+                                </div>
+                                <span className={`text-[10px] font-semibold ${color} ${bgColor} px-1.5 py-0.5 rounded`}>
+                                  {desc}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
+                  )
+                })()}
+
+                {/* 3D Preview + Shoe Last Export */}
+                <div>
+                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>
+                    {(result.right.pointCloud || result.left.pointCloud) ? '3D-Modell (drehbar)' : '3D-Vorschau'}
+                  </p>
+                  <div className="overflow-hidden" style={{ background: '#111111' }}>
+                    {/* Etappe 11: Interactive 3D viewer when point cloud available */}
+                    {(result.right.pointCloud || result.left.pointCloud) ? (
+                      <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
+                        <div>
+                          <FootScan3DResult measurements={result.right} side="right" />
+                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                        </div>
+                        <div>
+                          <FootScan3DResult measurements={result.left} side="left" />
+                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
+                        <div>
+                          <FootMini3D length={result.right.length} width={result.right.width} arch={result.right.arch ?? 14} label="Right" />
+                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                        </div>
+                        <div>
+                          <FootMini3D length={result.left.length} width={result.left.width} arch={result.left.arch ?? 13} label="Left" />
+                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Shoe type selector — visible to all users */}
                     <div className="p-3 border-t border-white/5 space-y-2">
@@ -2469,7 +2885,7 @@ export default function FootScan() {
                         <div className="flex items-center gap-2 mb-2 pt-2 border-t border-white/5">
                           <label className="text-[9px] text-white/40 uppercase tracking-widest" style={{ letterSpacing: '0.12em' }}>Format:</label>
                           <div className="flex gap-1">
-                            {['stl', 'obj'].map(fmt => (
+                            {['stl', 'obj', 'glb', 'usdz'].map(fmt => (
                               <button key={fmt}
                                 onClick={() => setLastFormat(fmt)}
                                 className={`px-3 py-1 text-xs font-semibold border ${
@@ -2502,6 +2918,10 @@ export default function FootScan() {
                                 const geo = buildShoeLastGeo(scanData, { shoeType: lastShoeType, side, customPreset })
                                 if (lastFormat === 'obj') {
                                   downloadOBJ(geo, result.sizes.eu, side)
+                                } else if (lastFormat === 'glb') {
+                                  downloadGLTF(geo, result.sizes.eu, side)
+                                } else if (lastFormat === 'usdz') {
+                                  downloadUSDZ(geo, result.sizes.eu, side)
                                 } else {
                                   downloadLastSTL(geo, result.sizes.eu, side)
                                 }
@@ -2528,7 +2948,24 @@ export default function FootScan() {
                           ))}
                         </div>
 
-                        {/* Maßblatt download */}
+                        {/* Etappe 12: PLY point cloud export */}
+                        {(result.right.pointCloud || result.left.pointCloud) && (
+                          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                            {[
+                              { side: 'right', label: 'PLY Rechts', pc: result.right.pointCloud },
+                              { side: 'left',  label: 'PLY Links',  pc: result.left.pointCloud },
+                            ].filter(({ pc }) => pc && pc.length > 0).map(({ side, label, pc }) => (
+                              <button key={`ply-${side}`}
+                                onClick={() => downloadPLY(pc, result.sizes.eu, side)}
+                                className="flex items-center justify-between gap-2 bg-white/5 border border-white/8 px-3 py-2">
+                                <span className="text-[10px] text-gray-400">{label}</span>
+                                <Download size={11} className="text-gray-500 flex-shrink-0" strokeWidth={1.5} />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Maßblatt download (JSON) */}
                         <button
                           onClick={() => {
                             const blattR = generateMassblatt(
@@ -2553,7 +2990,15 @@ export default function FootScan() {
                             a.click(); URL.revokeObjectURL(url)
                           }}
                           className="w-full flex items-center justify-between bg-white/5 border border-white/8 px-3 py-2.5">
-                          <span className="text-xs font-semibold text-gray-300">Maßblatt herunterladen</span>
+                          <span className="text-xs font-semibold text-gray-300">Maßblatt (JSON)</span>
+                          <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
+                        </button>
+
+                        {/* Etappe 12: PDF Maßblatt */}
+                        <button
+                          onClick={() => downloadMassblattPDF(result, result.sizes.eu)}
+                          className="w-full flex items-center justify-between bg-white/5 border border-white/8 px-3 py-2.5">
+                          <span className="text-xs font-semibold text-gray-300">Maßblatt (PDF)</span>
                           <Download size={13} className="text-white/40 flex-shrink-0" strokeWidth={1.5} />
                         </button>
                         </>)}

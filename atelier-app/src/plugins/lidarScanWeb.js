@@ -6,6 +6,6 @@ export class LidarScanWeb {
   async finishWalkAround() { return { pointCloud: [], pointCount: 0, meshAnchorCount: 0, capturedImages: {} } }
   // Mode 3: Continuous Depth Capture
   async startContinuousCapture() { throw new Error('LiDAR only available in native iOS app') }
-  async getContinuousCaptureProgress() { return { pointCount: 0, anglesCovered: 0, totalAngleBins: 12, estimatedCoverage: 0 } }
-  async finishContinuousCapture() { return { pointCloud: [], pointCount: 0, anglesCovered: 0, capturedImages: {} } }
+  async getContinuousCaptureProgress() { return { pointCount: 0, anglesCovered: 0, totalAngleBins: 12, estimatedCoverage: 0, lightLevel: 1000, lightQuality: 'good', trackingState: 'normal', trackingReason: null, frameCount: 0, floorDetected: false, footPointCount: 0, calibrationDone: false, calibrationScale: null, calibrationResidualMM: null, arucoDetections: 0, binCounts: {}, footSegmented: false } }
+  async finishContinuousCapture() { return { pointCloud: [], pointCount: 0, rawPointCount: 0, voxelCount: 0, anglesCovered: 0, capturedImages: {}, floorDetected: false, footPointCount: 0, calibrationDone: false, calibrationScale: null, calibrationResidualMM: null, footSegmented: false } }
 }

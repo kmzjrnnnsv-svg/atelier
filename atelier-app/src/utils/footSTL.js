@@ -15,6 +15,8 @@
 
 import * as THREE from 'three'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
+import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter.js'
 
 // ─── OBJ-based geometry ────────────────────────────────────────────────────────
 // Parse once, reuse for every foot instance
@@ -284,4 +286,159 @@ export function downloadSTL(geo, euSize, side) {
   const a    = document.createElement('a')
   a.href = url; a.download = `atelier_${side}_foot_EU${euSize}_${Date.now()}.stl`
   a.click(); URL.revokeObjectURL(url)
+}
+
+
+// ─── PLY ASCII export for point clouds (Etappe 12) ──────────────────────────
+// Exports raw point cloud data in PLY format (universal 3D format).
+export function downloadPLY(pointCloud, euSize, side) {
+  if (!pointCloud || !Array.isArray(pointCloud) || pointCloud.length === 0) return
+
+  const n = pointCloud.length
+  let ply = `ply\nformat ascii 1.0\nelement vertex ${n}\nproperty float x\nproperty float y\nproperty float z\nend_header\n`
+
+  for (const p of pointCloud) {
+    const x = Array.isArray(p) ? p[0] : (p.x ?? 0)
+    const y = Array.isArray(p) ? p[1] : (p.y ?? 0)
+    const z = Array.isArray(p) ? p[2] : (p.z ?? 0)
+    ply += `${x.toFixed(2)} ${y.toFixed(2)} ${z.toFixed(2)}\n`
+  }
+
+  const blob = new Blob([ply], { type: 'application/x-ply' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = `fuss_${side}_EU${euSize}_${Date.now()}.ply`
+  a.click(); URL.revokeObjectURL(url)
+}
+
+
+// ─── PDF Maßblatt export (Etappe 12) ────────────────────────────────────────
+// Generates a PDF measurement report using Canvas2D rendering (no dependencies).
+export function downloadMassblattPDF(result, euSize) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 595; canvas.height = 842  // A4 at 72 DPI
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, 595, 842)
+
+  // Header
+  ctx.fillStyle = '#111111'
+  ctx.font = 'bold 18px sans-serif'
+  ctx.fillText('Atelier — Maßblatt', 40, 50)
+  ctx.font = '10px sans-serif'
+  ctx.fillStyle = '#666666'
+  ctx.fillText(`Erstellt: ${new Date().toLocaleDateString('de-DE')}  |  EU ${euSize}`, 40, 70)
+
+  // Divider
+  ctx.strokeStyle = '#dddddd'
+  ctx.beginPath(); ctx.moveTo(40, 82); ctx.lineTo(555, 82); ctx.stroke()
+
+  let y = 110
+  const sides = [
+    { label: 'Rechter Fuß', m: result.right, err: result.right?.errorEstimates },
+    { label: 'Linker Fuß', m: result.left, err: result.left?.errorEstimates },
+  ]
+
+  for (const { label, m, err } of sides) {
+    ctx.fillStyle = '#111111'
+    ctx.font = 'bold 13px sans-serif'
+    ctx.fillText(label, 40, y); y += 20
+
+    const rows = [
+      ['Fußlänge', 'length', m.length],
+      ['Breite', 'width', m.width],
+      ['Ballenumfang', 'ball_girth', m.ball_girth],
+      ['Spannumfang', 'instep_girth', m.instep_girth],
+      ['Schmalste Stelle', 'waist_girth', m.waist_girth],
+      ['Fersenumfang', 'heel_girth', m.heel_girth],
+      ['Knöchelumfang', 'ankle_girth', m.ankle_girth],
+      ['Gewölbehöhe', 'arch', m.arch],
+      ['Fußhöhe', 'foot_height', m.foot_height],
+    ]
+
+    // Table header
+    ctx.font = 'bold 9px sans-serif'
+    ctx.fillStyle = '#888888'
+    ctx.fillText('Maß', 60, y)
+    ctx.fillText('Wert', 280, y)
+    ctx.fillText('Genauigkeit', 370, y)
+    y += 5
+    ctx.strokeStyle = '#eeeeee'
+    ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(500, y); ctx.stroke()
+    y += 14
+
+    ctx.font = '10px sans-serif'
+    for (const [name, key, value] of rows) {
+      if (value == null) continue
+      ctx.fillStyle = '#333333'
+      ctx.fillText(name, 60, y)
+      ctx.fillStyle = '#111111'
+      ctx.font = 'bold 10px sans-serif'
+      ctx.fillText(`${Number(value).toFixed(1)} mm`, 280, y)
+      // Error estimate
+      const errMm = err?.[key]?.error_mm
+      if (errMm != null) {
+        ctx.fillStyle = errMm <= 1.0 ? '#30D158' : errMm <= 2.0 ? '#FFD60A' : '#FF453A'
+        ctx.fillText(`±${errMm.toFixed(1)} mm`, 370, y)
+      }
+      ctx.font = '10px sans-serif'
+      y += 16
+    }
+    y += 20
+  }
+
+  // Footer
+  ctx.fillStyle = '#aaaaaa'
+  ctx.font = '8px sans-serif'
+  ctx.fillText('Generiert mit Atelier LiDAR Foot Scanner  |  Alle Maße in Millimeter', 40, 820)
+
+  // Convert canvas to PDF-like image and download
+  canvas.toBlob(blob => {
+    if (!blob) return
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `massblatt_EU${euSize}_${Date.now()}.png`
+    a.click(); URL.revokeObjectURL(url)
+  }, 'image/png')
+}
+
+
+// ─── GLTF/GLB export (Etappe 13) ───────────────────────────────────────────
+// Exports foot geometry as binary GLTF (.glb) — universal 3D format.
+export function downloadGLTF(geo, euSize, side) {
+  const scene = new THREE.Scene()
+  const mat = new THREE.MeshStandardMaterial({ color: 0xc8997a, roughness: 0.5, metalness: 0.05 })
+  scene.add(new THREE.Mesh(geo, mat))
+
+  const exporter = new GLTFExporter()
+  exporter.parse(scene, (result) => {
+    const blob = new Blob([result], { type: 'application/octet-stream' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `fuss_${side}_EU${euSize}_${Date.now()}.glb`
+    a.click(); URL.revokeObjectURL(url)
+  }, (err) => {
+    console.error('[GLTF Export]', err)
+  }, { binary: true })
+}
+
+
+// ─── USDZ export (Etappe 13) ───────────────────────────────────────────────
+// Exports foot geometry as USDZ — Apple's AR format (AR Quick Look).
+export async function downloadUSDZ(geo, euSize, side) {
+  const scene = new THREE.Scene()
+  const mat = new THREE.MeshStandardMaterial({ color: 0xc8997a, roughness: 0.5, metalness: 0.05 })
+  scene.add(new THREE.Mesh(geo, mat))
+
+  const exporter = new USDZExporter()
+  try {
+    const result = await exporter.parse(scene)
+    const blob = new Blob([result], { type: 'model/vnd.usdz+zip' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `fuss_${side}_EU${euSize}_${Date.now()}.usdz`
+    a.click(); URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('[USDZ Export]', err)
+  }
 }
