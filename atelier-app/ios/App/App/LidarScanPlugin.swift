@@ -1417,6 +1417,7 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         let pointCount = continuousPoints.count
         let anglesCovered = continuousAngles.count
         let currentFootPts = footPointCount
+        let currentBinCounts = continuousBinCounts  // Etappe 10: copy for heatmap
         continuousLock.unlock()
 
         // Coverage: use footPointCount when floor detected (cleaner signal)
@@ -1444,7 +1445,9 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             "calibrationResidualMM": calibrationDone ? calibrationResidualMM : NSNull(),
             "arucoDetections":   arucoDetectionCount,
             // ── Etappe 8: Photo capture progress ─────────────────────────
-            "rgbFrameCount":     capturedFrames.count
+            "rgbFrameCount":     capturedFrames.count,
+            // ── Etappe 10: Per-bin point counts for quality heatmap ───────
+            "binCounts":         currentBinCounts
         ]
 
         if let reason = currentTrackingReason {

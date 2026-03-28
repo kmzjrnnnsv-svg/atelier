@@ -260,9 +260,9 @@ function FootMini3D({ length, width, arch, label }) {
 // Each sector materialises as the corresponding bin is covered: wireframe first,
 // then semi-transparent teal fill — mimicking Apple's RoomPlan scanning UX.
 
-function ScanMeshPreview({ progress, side }) {
+function ScanMeshPreview({ progress, side, binCounts = {} }) {
   const mountRef = useRef(null)
-  const stateRef = useRef({ sectors: [], scene: null, renderer: null, camera: null, raf: 0, coveredBins: 0 })
+  const stateRef = useRef({ sectors: [], scene: null, renderer: null, camera: null, raf: 0, coveredBins: 0, binCounts: {} })
 
   // Build scene once on mount
   useEffect(() => {
@@ -375,11 +375,29 @@ function ScanMeshPreview({ progress, side }) {
       camera.position.set(Math.sin(t) * dist * 0.3, -Math.cos(t) * dist, 180 + Math.sin(t * 0.5) * 30)
       camera.lookAt(0, 0, 20)
 
-      // Smooth opacity transitions every frame (not just on React re-render)
+      // Smooth opacity transitions + heatmap coloring (Etappe 10)
       const covered = stateRef.current.coveredBins
+      const bc = stateRef.current.binCounts
       for (const sec of sectors) {
-        sec.target = sec.bin < covered ? 1 : 0
-        sec.revealed += (sec.target - sec.revealed) * 0.06  // smooth ease per frame (~60fps)
+        const count = bc[sec.bin] ?? bc[String(sec.bin)] ?? 0
+        sec.target = (sec.bin < covered || count > 0) ? 1 : 0
+        sec.revealed += (sec.target - sec.revealed) * 0.06
+
+        // Heatmap color: green (≥200 pts = good), yellow (50-199), red (<50)
+        if (count >= 200) {
+          sec.fillMat.color.setHex(0x30D158)  // green — well scanned
+          sec.wireMat.color.setHex(0x30D158)
+        } else if (count >= 50) {
+          sec.fillMat.color.setHex(0xFFD60A)  // yellow — needs more
+          sec.wireMat.color.setHex(0xFFD60A)
+        } else if (count > 0) {
+          sec.fillMat.color.setHex(0xFF453A)  // red — insufficient
+          sec.wireMat.color.setHex(0xFF6B6B)
+        } else {
+          sec.fillMat.color.setHex(0x2dd4bf)  // teal — default unrevealed
+          sec.wireMat.color.setHex(0x30D158)
+        }
+
         sec.wireMat.opacity = Math.min(0.35, sec.revealed * 0.35)
         sec.fillMat.opacity = Math.max(0, (sec.revealed - 0.3) * 0.4)
       }
@@ -403,10 +421,11 @@ function ScanMeshPreview({ progress, side }) {
     }
   }, [side])
 
-  // Update covered bin count (read by animation loop each frame)
+  // Update covered bin count + heatmap data (read by animation loop each frame)
   useEffect(() => {
     stateRef.current.coveredBins = Math.round(progress * 12 / 100)
-  }, [progress])
+    stateRef.current.binCounts = binCounts
+  }, [progress, binCounts])
 
   return <div ref={mountRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }} />
 }
@@ -860,6 +879,7 @@ export default function FootScan() {
   const [trackingReason, setTrackingReason] = useState(null)
   const [floorDetected, setFloorDetected] = useState(false)   // Etappe 2: floor RANSAC
   const [calibrationDone, setCalibrationDone] = useState(false)  // Etappe 7: ArUco calibration
+  const [binCounts, setBinCounts] = useState({})  // Etappe 10: per-bin point counts for heatmap
   const lastLightWarnTime = useRef(0)
   const lastTrackingWarnTime = useRef(0)
   const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
@@ -1133,6 +1153,7 @@ export default function FootScan() {
             setTrackingReason(tr)
             setFloorDetected(prog.floorDetected ?? false)
             setCalibrationDone(prog.calibrationDone ?? false)
+            setBinCounts(prog.binCounts ?? {})
 
             // Use native tracking state for stability (replaces DeviceMotion for native)
             if (ts === 'limited' && tr === 'excessiveMotion') {
@@ -1950,7 +1971,7 @@ export default function FootScan() {
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center relative">
               {/* Progressive 3D foot mesh (RoomPlan-style) */}
               <div className="relative w-72 h-72 flex items-center justify-center mb-4">
-                <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} />
+                <ScanMeshPreview progress={walkProgress} side={phase === 'lidar-left' ? 'left' : 'right'} binCounts={binCounts} />
 
                 {/* Progress overlay on top of 3D scene */}
                 <div className="absolute inset-0 flex flex-col items-center justify-end z-10 pointer-events-none pb-2">
