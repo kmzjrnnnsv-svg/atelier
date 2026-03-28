@@ -528,7 +528,7 @@ function ScanMeshPreview({ progress, side, binCounts = {} }) {
 
     geo.dispose()
 
-    stateRef.current = { sectors, scene, renderer, camera, raf: 0, coveredBins: 0 }
+    stateRef.current = { sectors, scene, renderer, camera, raf: 0, coveredBins: 0, binCounts: {} }
 
     // Animation loop — also drives smooth opacity transitions per frame
     let frame = 0
@@ -544,7 +544,7 @@ function ScanMeshPreview({ progress, side, binCounts = {} }) {
 
       // Smooth opacity transitions + heatmap coloring (Etappe 10)
       const covered = stateRef.current.coveredBins
-      const bc = stateRef.current.binCounts
+      const bc = stateRef.current.binCounts || {}
       for (const sec of sectors) {
         const count = bc[sec.bin] ?? bc[String(sec.bin)] ?? 0
         sec.target = (sec.bin < covered || count > 0) ? 1 : 0
