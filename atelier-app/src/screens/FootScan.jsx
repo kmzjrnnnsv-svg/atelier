@@ -1246,8 +1246,6 @@ export default function FootScan() {
       setWalkProgress(0)
       setWalkPoints(0)
       setAiStatus(null)
-      setScanStatus('idle')
-      setLidarSubPhase('intro')
     }
   }, []) // eslint-disable-line
 
@@ -1788,7 +1786,7 @@ export default function FootScan() {
 
   // ════════════════════════════════════════════════════════════════════════════
   return (
-    <div className="relative h-full overflow-hidden bg-black">
+    <div className="relative min-h-[100dvh] overflow-hidden bg-black">
 
       {/* Camera error */}
       {showCamError && (
