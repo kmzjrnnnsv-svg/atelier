@@ -2406,6 +2406,48 @@ export default function FootScan() {
                   </div>
                 )}
 
+                {/* Etappe 4: Plausibility warnings */}
+                {(() => {
+                  const warnings = []
+                  const r = result.right, l = result.left
+                  // Joint Girth / Foot Length ratio: 0.85–1.10
+                  for (const [side, m, name] of [['R', r, 'Rechts'], ['L', l, 'Links']]) {
+                    if (!m) continue
+                    if (m.length && (m.length < 180 || m.length > 340))
+                      warnings.push(`${name}: Fußlänge (${Number(m.length).toFixed(0)}mm) außerhalb des Normalbereichs`)
+                    if (m.ball_girth && m.length) {
+                      const ratio = m.ball_girth / m.length
+                      if (ratio < 0.85 || ratio > 1.10)
+                        warnings.push(`${name}: Ballen/Länge-Verhältnis (${ratio.toFixed(2)}) ungewöhnlich`)
+                    }
+                    if (m.instep_girth && m.ball_girth && m.instep_girth > m.ball_girth * 1.05)
+                      warnings.push(`${name}: Spannumfang > Ballenumfang — bitte prüfen`)
+                    if (m.long_heel_girth && m.short_heel_girth && m.short_heel_girth >= m.long_heel_girth)
+                      warnings.push(`${name}: Kurzer Fersenumfang ≥ Langer Fersenumfang — Messfehler?`)
+                    if (m.long_heel_girth && m.length) {
+                      const r2 = m.long_heel_girth / m.length
+                      if (r2 < 1.05 || r2 > 1.40)
+                        warnings.push(`${name}: Langer Fersenumfang/Länge (${r2.toFixed(2)}) ungewöhnlich`)
+                    }
+                  }
+                  // Left/right comparison
+                  if (r && l) {
+                    if (r.length && l.length && Math.abs(r.length - l.length) > 8)
+                      warnings.push(`Längendifferenz ${Math.abs(r.length - l.length).toFixed(1)}mm — eventuell nochmal scannen`)
+                    if (r.ball_girth && l.ball_girth && Math.abs(r.ball_girth - l.ball_girth) > 12)
+                      warnings.push(`Ballenumfang-Differenz ${Math.abs(r.ball_girth - l.ball_girth).toFixed(1)}mm — bitte prüfen`)
+                  }
+                  if (warnings.length === 0) return null
+                  return (
+                    <div className="p-3.5 bg-amber-50 border border-amber-200/50 space-y-1.5">
+                      <p className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">Hinweise</p>
+                      {warnings.map((w, i) => (
+                        <p key={i} className="text-[10px] text-amber-600 leading-relaxed">• {w}</p>
+                      ))}
+                    </div>
+                  )
+                })()}
+
                 {/* Measurements — editable by user */}
                 <div>
                   <div className="flex items-center justify-between mb-2 px-1">
