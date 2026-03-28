@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import useAtelierStore from '../store/atelierStore'
 import { buildFootGeoAsync, buildFootGeo, downloadSTL } from '../utils/footSTL'
 import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadOBJ, generateMassblatt } from '../utils/footLast'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import LidarScanNative, { lidarAvailable } from '../plugins/lidarScan'
 import DepthSensing, { depthCapabilities } from '../plugins/depthSensing'
 import { speak, stopSpeaking, hapticLight, hapticMedium, hapticStrong, hapticSuccess, hapticWarning, SCAN_MESSAGES, setVoiceEnabled, isVoiceEnabled } from '../utils/scanVoice'
@@ -252,6 +253,172 @@ function FootMini3D({ length, width, arch, label }) {
     return () => { cancelled = true; renderer.dispose(); if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement) }
   }, [length, width, arch, label])
   return <div ref={mountRef} className="w-full" style={{ height: 160 }} />
+}
+
+
+// ─── Etappe 11: Interactive 3D result viewer with measurement paths ──────────
+// Shows point cloud (if available) or OBJ mesh, with measurement lines drawn.
+// Supports touch orbit, pinch zoom. Used in result screen after scan.
+
+function FootScan3DResult({ measurements, side = 'right' }) {
+  const mountRef = useRef(null)
+  useEffect(() => {
+    const el = mountRef.current
+    if (!el) return
+    const w = el.clientWidth || 300, h = 280
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x111111)
+
+    const camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 3000)
+    camera.up.set(0, 0, 1)
+    const isLeft = side === 'left'
+    camera.position.set(0, isLeft ? 350 : -350, 150)
+    camera.lookAt(0, 0, 0)
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true })
+    renderer.setSize(w, h)
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    el.appendChild(renderer.domElement)
+
+    // Orbit controls for interactive rotation
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.dampingFactor = 0.08
+    controls.minDistance = 100
+    controls.maxDistance = 800
+    controls.target.set(0, 0, 20)
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5))
+    const key = new THREE.DirectionalLight(0xffffff, 0.9)
+    key.position.set(100, -200, 300); scene.add(key)
+    const rim = new THREE.DirectionalLight(0x2dd4bf, 0.4)
+    rim.position.set(-80, 200, -50); scene.add(rim)
+
+    let cancelled = false
+    const m = measurements
+    const len = m?.length ?? 260
+    const wid = m?.width ?? 95
+
+    // Try point cloud first, fall back to OBJ mesh
+    const pointCloud = m?.pointCloud
+    if (pointCloud && Array.isArray(pointCloud) && pointCloud.length > 100) {
+      // Render point cloud as THREE.Points
+      const positions = new Float32Array(pointCloud.length * 3)
+      for (let i = 0; i < pointCloud.length; i++) {
+        const p = pointCloud[i]
+        // pointCloud is in mm (aligned), X=length, Y=width, Z=height
+        if (Array.isArray(p)) {
+          positions[i * 3] = p[0]; positions[i * 3 + 1] = p[1]; positions[i * 3 + 2] = p[2]
+        } else {
+          positions[i * 3] = p.x ?? p[0] ?? 0
+          positions[i * 3 + 1] = p.y ?? p[1] ?? 0
+          positions[i * 3 + 2] = p.z ?? p[2] ?? 0
+        }
+      }
+      const pcGeo = new THREE.BufferGeometry()
+      pcGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+      pcGeo.center()
+      const pcMat = new THREE.PointsMaterial({ color: 0xc8997a, size: 1.5, sizeAttenuation: true })
+      scene.add(new THREE.Points(pcGeo, pcMat))
+
+      // Add measurement lines
+      addMeasurementLines(scene, pcGeo, m)
+    } else {
+      // Fallback: render OBJ mesh
+      buildFootGeoAsync(len, wid, m?.arch ?? 14, side).then(geo => {
+        if (cancelled) { geo.dispose(); return }
+        scene.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xc8997a, roughness: 0.5, metalness: 0.05, transparent: true, opacity: 0.85 })))
+        scene.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x2dd4bf, wireframe: true, transparent: true, opacity: 0.06 })))
+        addMeasurementLines(scene, geo, m)
+      })
+    }
+
+    // Animation loop
+    let raf = 0
+    const animate = () => {
+      raf = requestAnimationFrame(animate)
+      controls.update()
+      renderer.render(scene, camera)
+    }
+    animate()
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf)
+      controls.dispose()
+      scene.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose()
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(mt => mt.dispose())
+          else obj.material.dispose()
+        }
+      })
+      renderer.dispose()
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement)
+    }
+  }, [measurements, side])
+
+  return <div ref={mountRef} className="w-full" style={{ height: 280, touchAction: 'none' }} />
+}
+
+// Add measurement lines to a 3D scene (foot length line + girth rings)
+function addMeasurementLines(scene, geo, m) {
+  if (!geo?.attributes?.position) return
+  const pos = geo.attributes.position.array
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x2dd4bf, linewidth: 2 })
+  const labelMat = new THREE.LineBasicMaterial({ color: 0xFFD60A, linewidth: 2 })
+
+  // Compute bounding box for reference
+  geo.computeBoundingBox()
+  const bb = geo.boundingBox
+  if (!bb) return
+  const xMin = bb.min.x, xMax = bb.max.x
+  const footLen = xMax - xMin
+
+  // Foot length line (along X axis)
+  const lengthLine = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(xMin, 0, 2),
+    new THREE.Vector3(xMax, 0, 2),
+  ])
+  scene.add(new THREE.Line(lengthLine, lineMat))
+
+  // Small end markers
+  for (const x of [xMin, xMax]) {
+    const marker = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x, -5, 2), new THREE.Vector3(x, 5, 2),
+    ])
+    scene.add(new THREE.Line(marker, lineMat))
+  }
+
+  // Girth rings at key positions (40% = ball, 60% = instep)
+  const girthPositions = [
+    { frac: 0.40, label: 'Ball' },
+    { frac: 0.60, label: 'Instep' },
+  ]
+
+  for (const { frac } of girthPositions) {
+    const xPos = xMin + frac * footLen
+    // Find approximate cross-section width and height at this position
+    let minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity
+    for (let i = 0; i < pos.length; i += 3) {
+      if (Math.abs(pos[i] - xPos) < footLen * 0.03) {
+        minY = Math.min(minY, pos[i + 1]); maxY = Math.max(maxY, pos[i + 1])
+        minZ = Math.min(minZ, pos[i + 2]); maxZ = Math.max(maxZ, pos[i + 2])
+      }
+    }
+    if (!isFinite(minY)) continue
+
+    // Draw elliptical ring
+    const ry = (maxY - minY) / 2, rz = (maxZ - minZ) / 2
+    const cy = (minY + maxY) / 2, cz = (minZ + maxZ) / 2
+    const ringPts = []
+    for (let a = 0; a <= 64; a++) {
+      const theta = (a / 64) * Math.PI * 2
+      ringPts.push(new THREE.Vector3(xPos, cy + Math.cos(theta) * ry, cz + Math.sin(theta) * rz))
+    }
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ringPts), labelMat))
+  }
 }
 
 
@@ -2597,18 +2764,34 @@ export default function FootScan() {
 
                 {/* 3D Preview + Shoe Last Export */}
                 <div>
-                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>3D-Vorschau</p>
+                  <p className="text-[9px] font-medium text-black/30 uppercase tracking-widest mb-2 px-1" style={{ letterSpacing: '0.15em' }}>
+                    {(result.right.pointCloud || result.left.pointCloud) ? '3D-Modell (drehbar)' : '3D-Vorschau'}
+                  </p>
                   <div className="overflow-hidden" style={{ background: '#111111' }}>
-                    <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
-                      <div>
-                        <FootMini3D length={result.right.length} width={result.right.width} arch={result.right.arch ?? 14} label="Right" />
-                        <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                    {/* Etappe 11: Interactive 3D viewer when point cloud available */}
+                    {(result.right.pointCloud || result.left.pointCloud) ? (
+                      <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
+                        <div>
+                          <FootScan3DResult measurements={result.right} side="right" />
+                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                        </div>
+                        <div>
+                          <FootScan3DResult measurements={result.left} side="left" />
+                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
+                        </div>
                       </div>
-                      <div>
-                        <FootMini3D length={result.left.length} width={result.left.width} arch={result.left.arch ?? 13} label="Left" />
-                        <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-px" style={{ background: '#222' }}>
+                        <div>
+                          <FootMini3D length={result.right.length} width={result.right.width} arch={result.right.arch ?? 14} label="Right" />
+                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Rechts</p>
+                        </div>
+                        <div>
+                          <FootMini3D length={result.left.length} width={result.left.width} arch={result.left.arch ?? 13} label="Left" />
+                          <p className="text-center text-[9px] text-white/40 py-2 uppercase tracking-widest" style={{ letterSpacing: '0.15em' }}>Links</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Shoe type selector — visible to all users */}
                     <div className="p-3 border-t border-white/5 space-y-2">
