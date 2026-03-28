@@ -858,6 +858,7 @@ export default function FootScan() {
   const [lightQuality, setLightQuality] = useState('good')     // "good" | "low" | "critical"
   const [trackingQuality, setTrackingQuality] = useState('normal') // "normal" | "limited" | "notAvailable"
   const [trackingReason, setTrackingReason] = useState(null)
+  const [floorDetected, setFloorDetected] = useState(false)   // Etappe 2: floor RANSAC
   const lastLightWarnTime = useRef(0)
   const lastTrackingWarnTime = useRef(0)
   const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
@@ -1086,6 +1087,7 @@ export default function FootScan() {
     setTrackingReason(null)
     lastLightWarnTime.current = 0
     lastTrackingWarnTime.current = 0
+    setFloorDetected(false)
 
     // Voice: announce scan start
     speak(SCAN_MESSAGES.startScan)
@@ -1128,6 +1130,7 @@ export default function FootScan() {
             setLightQuality(lq)
             setTrackingQuality(ts)
             setTrackingReason(tr)
+            setFloorDetected(prog.floorDetected ?? false)
 
             // Use native tracking state for stability (replaces DeviceMotion for native)
             if (ts === 'limited' && tr === 'excessiveMotion') {
@@ -1201,8 +1204,10 @@ export default function FootScan() {
 
       const raw = await LidarScanNative.finishContinuousCapture()
 
-      // Quality check: ensure enough data for ±1mm accuracy
-      if (raw.pointCount < 2000) {
+      // Quality check: use footPointCount when floor was detected (cleaner metric)
+      const effectiveCount = raw.floorDetected ? (raw.footPointCount ?? raw.pointCount) : raw.pointCount
+      const minPoints = raw.floorDetected ? 1500 : 2000  // lower threshold since floor noise removed
+      if (effectiveCount < minPoints) {
         speak(SCAN_MESSAGES.lowQuality, { urgent: true })
         hapticStrong()
         throw new Error('Zu wenige Daten erfasst. Bewege das Gerät langsamer und führe es einmal komplett um den Fuß herum.')
@@ -2049,6 +2054,14 @@ export default function FootScan() {
                         </span>
                       </div>
                     )}
+                    {/* Floor detection indicator (Etappe 2) */}
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}>
+                      <div className={`w-2 h-2 rounded-full ${floorDetected ? 'bg-[#30D158]' : 'bg-white/20'}`} />
+                      <span className="text-[10px] text-white/60 font-medium">
+                        {floorDetected ? 'Boden ✓' : 'Boden…'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Stability / tracking warning */}

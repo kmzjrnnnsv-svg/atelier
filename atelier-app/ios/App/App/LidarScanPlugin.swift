@@ -125,6 +125,20 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
     /// Number of depth frames processed in current continuous session
     private var continuousFrameCount: Int = 0
 
+    // ── Floor Detection & Foot Isolation (Etappe 2) ────────────────────────
+    /// Detected floor plane equation (a,b,c,d) where ax+by+cz+d=0
+    private var floorPlane: SIMD4<Float>? = nil
+    /// Whether floor has been successfully detected
+    private var floorDetected: Bool = false
+    /// Accumulated world-space points for RANSAC floor detection (first ~2s)
+    private var floorCandidatePoints: [SIMD3<Float>] = []
+    /// Timestamp when continuous capture started (for floor detection window)
+    private var continuousStartTime: TimeInterval = 0
+    /// How long to collect points before running RANSAC (seconds)
+    private let floorDetectionWindow: TimeInterval = 2.0
+    /// Count of points classified as foot (above floor, below 200mm)
+    private var footPointCount: Int = 0
+
     // ─────────────────────────────────────────────────────────────────────────
     // MARK: – Capability check
     // ─────────────────────────────────────────────────────────────────────────
@@ -260,6 +274,88 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // MARK: – Floor Detection via RANSAC (Etappe 2)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// Run RANSAC on accumulated candidate points to find the dominant
+    /// horizontal floor plane. Returns plane equation (a,b,c,d) or nil.
+    ///
+    /// Algorithm: 300 iterations, pick 3 random points, fit plane, count
+    /// inliers within 8mm. Only accept if normal is roughly vertical
+    /// (Y component ≥ 0.85 since ARKit Y is up).
+    private func detectFloorRANSAC(_ points: [SIMD3<Float>]) -> SIMD4<Float>? {
+        guard points.count >= 50 else { return nil }
+
+        let iterations = 300
+        let threshold: Float = 0.008  // 8mm inlier distance
+        let minNormalY: Float = 0.85  // must be roughly horizontal
+
+        var bestPlane: SIMD4<Float>? = nil
+        var bestInlierCount = 0
+
+        for _ in 0..<iterations {
+            // Pick 3 random distinct points
+            let i0 = Int.random(in: 0..<points.count)
+            var i1 = Int.random(in: 0..<points.count)
+            while i1 == i0 { i1 = Int.random(in: 0..<points.count) }
+            var i2 = Int.random(in: 0..<points.count)
+            while i2 == i0 || i2 == i1 { i2 = Int.random(in: 0..<points.count) }
+
+            let p0 = points[i0], p1 = points[i1], p2 = points[i2]
+
+            // Compute plane normal via cross product
+            let v1 = p1 - p0
+            let v2 = p2 - p0
+            var normal = simd_cross(v1, v2)
+            let len = simd_length(normal)
+            guard len > 1e-6 else { continue }
+            normal /= len
+
+            // Ensure normal points upward (positive Y)
+            if normal.y < 0 { normal = -normal }
+
+            // Horizontal bias: skip if not roughly horizontal
+            guard normal.y >= minNormalY else { continue }
+
+            // Plane equation: ax + by + cz + d = 0
+            let d = -simd_dot(normal, p0)
+
+            // Count inliers
+            var inlierCount = 0
+            for pt in points {
+                let dist = abs(simd_dot(normal, pt) + d)
+                if dist < threshold { inlierCount += 1 }
+            }
+
+            if inlierCount > bestInlierCount {
+                bestInlierCount = inlierCount
+                bestPlane = SIMD4<Float>(normal.x, normal.y, normal.z, d)
+            }
+        }
+
+        // Accept if at least 20% of points are inliers (it's a real floor)
+        guard let plane = bestPlane,
+              bestInlierCount >= points.count / 5
+        else { return nil }
+
+        print("[LiDAR] Floor detected: normal=(\(plane.x), \(plane.y), \(plane.z)), d=\(plane.w), inliers=\(bestInlierCount)/\(points.count)")
+        return plane
+    }
+
+    /// Compute signed distance from a point to the floor plane.
+    /// Positive = above floor, negative = below floor.
+    private func distanceToFloor(_ point: SIMD3<Float>) -> Float {
+        guard let plane = floorPlane else { return 0 }
+        return plane.x * point.x + plane.y * point.y + plane.z * point.z + plane.w
+    }
+
+    /// Check if a world-space point is in the foot region (5–200mm above floor).
+    private func isFootPoint(_ point: SIMD3<Float>) -> Bool {
+        let dist = distanceToFloor(point)
+        return dist >= 0.005 && dist <= 0.200
+    }
+
     /// Process a depth frame during continuous capture: extract points,
     /// transform to world space, and track angular coverage.
     private func processContinuousDepthFrame(_ frame: ARFrame) {
@@ -282,13 +378,49 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         // Transform camera-relative points into world space
         let transform = frame.camera.transform
         var worldPts: [[String: Double]] = []
+        var worldPtsRaw: [SIMD3<Float>] = []  // for floor detection
         worldPts.reserveCapacity(pts.count)
+        worldPtsRaw.reserveCapacity(pts.count)
+
         for p in pts {
             let world = transform * SIMD4<Float>(p.x, p.y, p.z, 1)
+            let wp = SIMD3<Float>(world.x, world.y, world.z)
+            worldPtsRaw.append(wp)
+        }
+
+        // ── Etappe 2: Floor detection in first ~2 seconds ───────────────
+        if !floorDetected && (now - continuousStartTime) < floorDetectionWindow {
+            // Accumulate points for RANSAC (subsample to keep memory low)
+            let step = max(1, worldPtsRaw.count / 200)
+            for i in stride(from: 0, to: worldPtsRaw.count, by: step) {
+                floorCandidatePoints.append(worldPtsRaw[i])
+            }
+        } else if !floorDetected && floorCandidatePoints.count >= 50 {
+            // Time's up — run RANSAC once
+            if let plane = detectFloorRANSAC(floorCandidatePoints) {
+                floorPlane = plane
+                floorDetected = true
+            } else {
+                // Mark as attempted so we don't retry
+                floorDetected = false
+                floorCandidatePoints = []  // free memory
+                print("[LiDAR] Floor detection failed — continuing without floor filtering")
+            }
+            floorCandidatePoints = []  // free memory regardless
+        }
+
+        // ── Build point cloud, optionally filtering by floor ────────────
+        var footPtsThisFrame = 0
+        for wp in worldPtsRaw {
+            // If floor detected, only keep foot points (5–200mm above floor)
+            if floorDetected && floorPlane != nil {
+                if !isFootPoint(wp) { continue }
+                footPtsThisFrame += 1
+            }
             worldPts.append([
-                "x": Double(world.x),
-                "y": Double(world.y),
-                "z": Double(world.z)
+                "x": Double(wp.x),
+                "y": Double(wp.y),
+                "z": Double(wp.z)
             ])
         }
 
@@ -299,6 +431,7 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
 
         continuousLock.lock()
         continuousPoints.append(contentsOf: worldPts)
+        footPointCount += (floorDetected ? footPtsThisFrame : worldPts.count)
         // Track per-bin point density; only mark as covered when >= minBinPoints
         let newCount = (continuousBinCounts[bin] ?? 0) + worldPts.count
         continuousBinCounts[bin] = newCount
@@ -893,6 +1026,14 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         currentTrackingReason = nil
         continuousFrameCount = 0
 
+        // Reset floor detection state (Etappe 2)
+        floorPlane = nil
+        floorDetected = false
+        floorCandidatePoints = []
+        floorCandidatePoints.reserveCapacity(2000)
+        continuousStartTime = CACurrentMediaTime()
+        footPointCount = 0
+
         DispatchQueue.main.async { [weak self] in
             let config = ARWorldTrackingConfiguration()
             config.frameSemantics = [.smoothedSceneDepth]
@@ -920,10 +1061,12 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         continuousLock.lock()
         let pointCount = continuousPoints.count
         let anglesCovered = continuousAngles.count
+        let currentFootPts = footPointCount
         continuousLock.unlock()
 
-        // Coverage = weighted mix: points (40%) + angles (60%)
-        let pointScore = min(1.0, Double(pointCount) / 15000.0)
+        // Coverage: use footPointCount when floor detected (cleaner signal)
+        let effectivePoints = floorDetected ? currentFootPts : pointCount
+        let pointScore = min(1.0, Double(effectivePoints) / (floorDetected ? 12000.0 : 15000.0))
         let angleScore = min(1.0, Double(anglesCovered) / 8.0)
         let coverage = Int(min(100, (pointScore * 40.0 + angleScore * 60.0)))
 
@@ -936,7 +1079,10 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
             "lightLevel":        Int(lightLevelEMA),
             "lightQuality":      currentLightQuality,
             "trackingState":     currentTrackingState,
-            "frameCount":        continuousFrameCount
+            "frameCount":        continuousFrameCount,
+            // ── Etappe 2: Floor detection ────────────────────────────────
+            "floorDetected":     floorDetected,
+            "footPointCount":    currentFootPts
         ]
 
         if let reason = currentTrackingReason {
@@ -975,7 +1121,10 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
                 "pointCloud":    points,
                 "pointCount":    points.count,
                 "anglesCovered": angles.count,
-                "capturedImages": bestImages
+                "capturedImages": bestImages,
+                // ── Etappe 2: Floor detection info ───────────────────────
+                "floorDetected":  self.floorDetected,
+                "footPointCount": self.footPointCount
             ]
 
             if let error = self.sessionError {
@@ -1014,6 +1163,10 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         continuousBinCounts = [:]
         continuousLock.unlock()
         continuousFrameCount = 0
+        floorPlane = nil
+        floorDetected = false
+        floorCandidatePoints = []
+        footPointCount = 0
     }
 
     /// Cleanly tears down any active walk-around session and resets state.
