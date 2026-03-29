@@ -1075,6 +1075,17 @@ export default function FootScan() {
     }
   }, [phase])
 
+  // ── Start/stop native camera preview when entering/leaving LiDAR phases ──
+  useEffect(() => {
+    const isLidar = LIDAR_PHASES.includes(phase)
+    if (isLidar) {
+      LidarScanNative.startCameraPreview().catch(e => console.warn('[LiDAR] Camera preview:', e))
+    } else {
+      LidarScanNative.stopCameraPreview().catch(() => {})
+    }
+    return () => { LidarScanNative.stopCameraPreview().catch(() => {}) }
+  }, [phase])
+
   // ── Shoe last export state ──
   const [lastShoeType, setLastShoeType] = useState('oxford')
   const [lastFormat,   setLastFormat]   = useState('stl')
@@ -1266,8 +1277,6 @@ export default function FootScan() {
   const startScanWithCountdown = useCallback((side, { isRetry = false } = {}) => {
     setLidarError(null)
     if (!isRetry) { setAutoRetryCount(0); autoRetryRef.current = 0 }
-    // Start camera preview early so user sees feed during countdown
-    LidarScanNative.startCameraPreview().catch(e => console.warn('[LiDAR] Camera preview:', e))
     speak(SCAN_MESSAGES.ready(side))
     hapticMedium()
     setCountdown(3)
@@ -1421,7 +1430,6 @@ export default function FootScan() {
       hapticSuccess()
 
       const raw = await LidarScanNative.finishContinuousCapture()
-      try { await LidarScanNative.stopCameraPreview() } catch {}
 
       // Quality check: use footPointCount when floor was detected (cleaner metric)
       const effectiveCount = raw.floorDetected ? (raw.footPointCount ?? raw.pointCount) : raw.pointCount
@@ -1477,7 +1485,6 @@ export default function FootScan() {
     } catch (e) {
       // Clean up native session on error
       try { await LidarScanNative.finishContinuousCapture() } catch {}
-      try { await LidarScanNative.stopCameraPreview() } catch {}
 
       // apiFetch now throws Error instances with .message
       const msg = e?.message ?? e?.error ?? e?.detail ?? 'Unbekannter Fehler'
@@ -2125,11 +2132,15 @@ export default function FootScan() {
               0%, 100% { opacity: 0.3 }
               50% { opacity: 0.7 }
             }
+            @keyframes footOutlinePulse {
+              0%, 100% { opacity: 0.7 }
+              50% { opacity: 0.45 }
+            }
           `}</style>
 
           {/* Minimal header — backdrop blur for readability over camera */}
           <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0" style={{ backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' }}>
-            <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking(); LidarScanNative.stopCameraPreview().catch(() => {}) }}
+            <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking() }}
               aria-label="Scan abbrechen"
               className="w-11 h-11 rounded-lg bg-white/10 flex items-center justify-center border-0">
               <X size={18} className="text-white/80" strokeWidth={2} />
@@ -2200,17 +2211,26 @@ export default function FootScan() {
                 {walkProgress === 0 && countdown === 0 && !lidarError && (
                   <div className="absolute inset-0 flex items-center justify-center z-5 pointer-events-none"
                     style={{ animation: 'fadeInSoft 0.6s ease' }}>
-                    <svg width="140" height="220" viewBox="0 0 140 220" fill="none" opacity="0.35"
-                      style={phase === 'lidar-left' ? { transform: 'scaleX(-1)' } : undefined}>
+                    <svg width="160" height="250" viewBox="0 0 140 220" fill="none"
+                      style={{ opacity: 0.7, animation: 'footOutlinePulse 3s ease-in-out infinite', ...(phase === 'lidar-left' ? { transform: 'scaleX(-1)' } : {}) }}>
+                      <defs>
+                        <filter id="footGlow" x="-30%" y="-30%" width="160%" height="160%">
+                          <feGaussianBlur stdDeviation="3" result="blur" />
+                          <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                          </feMerge>
+                        </filter>
+                      </defs>
                       {/* Anatomical foot outline — right foot default */}
                       <path d="M70 10 C50 10 35 18 30 35 C25 52 22 70 20 90 C18 110 16 130 18 150 C20 170 25 185 35 195 C45 205 55 210 70 212 C85 210 95 205 105 195 C115 185 120 170 122 150 C124 130 122 110 120 90 C118 70 115 52 110 35 C105 18 90 10 70 10 Z"
-                        stroke="white" strokeWidth="1.5" strokeDasharray="6,4" />
+                        stroke="white" strokeWidth="2" strokeDasharray="6,4" filter="url(#footGlow)" />
                       {/* Toe bumps */}
-                      <ellipse cx="45" cy="15" rx="8" ry="6" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
-                      <ellipse cx="60" cy="8" rx="7" ry="7" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
-                      <ellipse cx="75" cy="10" rx="7" ry="6" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
-                      <ellipse cx="88" cy="16" rx="6" ry="5" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
-                      <ellipse cx="98" cy="25" rx="5" ry="5" stroke="white" strokeWidth="1" strokeDasharray="4,3" />
+                      <ellipse cx="45" cy="15" rx="8" ry="6" stroke="white" strokeWidth="1.2" strokeDasharray="4,3" filter="url(#footGlow)" />
+                      <ellipse cx="60" cy="8" rx="7" ry="7" stroke="white" strokeWidth="1.2" strokeDasharray="4,3" filter="url(#footGlow)" />
+                      <ellipse cx="75" cy="10" rx="7" ry="6" stroke="white" strokeWidth="1.2" strokeDasharray="4,3" filter="url(#footGlow)" />
+                      <ellipse cx="88" cy="16" rx="6" ry="5" stroke="white" strokeWidth="1.2" strokeDasharray="4,3" filter="url(#footGlow)" />
+                      <ellipse cx="98" cy="25" rx="5" ry="5" stroke="white" strokeWidth="1.2" strokeDasharray="4,3" filter="url(#footGlow)" />
                     </svg>
                   </div>
                 )}
