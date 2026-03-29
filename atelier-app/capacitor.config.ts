@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   ios: {
     contentInset: 'never',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#00000000',  // Transparent — native ARSCNView camera shows through
     preferredContentMode: 'mobile',
     // Allow WKWebView to send cookies cross-origin to the API server
     allowsLinkPreview: false,

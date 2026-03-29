@@ -1834,7 +1834,16 @@ public class LidarScanPlugin: CAPPlugin, CAPBridgedPlugin, ARSessionDelegate {
         // Insert behind the webview (index 0)
         vc.view.insertSubview(arView, at: 0)
         self.cameraPreviewView = arView
-        print("[LiDAR] ✅ Camera preview inserted behind webview")
+
+        // Force webview transparency (belt-and-suspenders — Capacitor config may override)
+        if let webView = self.webView {
+            webView.isOpaque = false
+            webView.backgroundColor = .clear
+            webView.scrollView.backgroundColor = .clear
+            print("[LiDAR] ✅ Camera preview inserted + webView forced transparent")
+        } else {
+            print("[LiDAR] ✅ Camera preview inserted (webView not available for transparency)")
+        }
     }
 
     @objc func stopCameraPreview(_ call: CAPPluginCall) {

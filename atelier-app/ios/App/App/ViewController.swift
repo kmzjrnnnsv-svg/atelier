@@ -12,9 +12,10 @@ class ViewController: CAPBridgeViewController {
         print("[LiDAR] Registered plugin jsName: \(registered?.pluginId ?? "nil")")
     }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Make webview transparent so native ARSCNView camera preview shows through
+    // Set webview transparent AFTER Capacitor has fully initialized
+    // (viewDidLoad is too early — Capacitor overrides backgroundColor)
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         webView?.isOpaque = false
         webView?.backgroundColor = .clear
         webView?.scrollView.backgroundColor = .clear
