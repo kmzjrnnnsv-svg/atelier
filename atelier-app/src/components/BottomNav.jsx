@@ -47,7 +47,7 @@ function IconBag({ active, count }) {
         <path d="M16 10a4 4 0 01-8 0" />
       </svg>
       {count > 0 && (
-        <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[8px] font-bold rounded-lg min-w-[14px] h-3.5 flex items-center justify-center px-0.5 leading-none">
+        <span className="absolute -top-1.5 -right-2 bg-[#19110B] text-white text-[8px] font-bold rounded-lg min-w-[14px] h-3.5 flex items-center justify-center px-0.5 leading-none">
           {count > 99 ? '99+' : count}
         </span>
       )}
@@ -93,10 +93,11 @@ export default function BottomNav() {
         <div
           className="flex items-center justify-around flex-1 rounded-xl px-1 py-1"
           style={{
-            background: 'rgba(45,45,48,0.92)',
+            background: 'rgba(255,255,255,0.92)',
             backdropFilter: 'blur(40px)',
             WebkitBackdropFilter: 'blur(40px)',
             maxWidth: '380px',
+            boxShadow: '0 -1px 0 rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.06)',
           }}
         >
           {PILL_ITEMS.map(({ id, icon: Icon, label, path }) => {
@@ -111,7 +112,7 @@ export default function BottomNav() {
                 onPointerEnter={() => prefetchRoute(path)}
                 onTouchStart={() => prefetchRoute(path)}
                 className={`relative flex flex-col items-center gap-0 bg-transparent border-0 py-1.5 px-2 min-w-0 flex-1 transition-colors ${
-                  isActive ? 'text-[#007AFF]' : 'text-white/60'
+                  isActive ? 'text-[#19110B]' : 'text-black/35'
                 } ${isPending ? 'opacity-70' : ''}`}
               >
                 <Icon active={isActive} count={id === 'bag' ? cartCount : 0} />
