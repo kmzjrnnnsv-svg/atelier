@@ -12,10 +12,27 @@ class ViewController: CAPBridgeViewController {
         print("[LiDAR] Registered plugin jsName: \(registered?.pluginId ?? "nil")")
     }
 
-    // Set webview transparent AFTER Capacitor has fully initialized
-    // (viewDidLoad is too early — Capacitor overrides backgroundColor)
+    override func viewDidLoad() {
+        // CAPBridgeViewController.loadView() sets self.view = webView directly.
+        // We must wrap the webView in a container so ARSCNView can be inserted BEHIND it.
+        let webView = self.view!  // This IS the WKWebView (set by loadView())
+
+        let container = UIView(frame: webView.bounds)
+        container.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        container.backgroundColor = .clear
+
+        webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        container.addSubview(webView)
+
+        // Replace VC's root view with the container (before UIKit adds it to window)
+        self.view = container
+
+        super.viewDidLoad()
+    }
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        // Force webview transparency after Capacitor fully initialized
         webView?.isOpaque = false
         webView?.backgroundColor = .clear
         webView?.scrollView.backgroundColor = .clear
