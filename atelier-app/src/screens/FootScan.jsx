@@ -1053,6 +1053,28 @@ export default function FootScan() {
   const lastTrackingWarnTime = useRef(0)
   const reduceMotion = useRef(typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
 
+  // ── Make html/body transparent during LiDAR scan so native camera shows through ──
+  useEffect(() => {
+    const isLidar = LIDAR_PHASES.includes(phase)
+    const html = document.documentElement
+    const body = document.body
+    const root = document.getElementById('root')
+    if (isLidar) {
+      html.style.background = 'transparent'
+      body.style.background = 'transparent'
+      if (root) root.style.background = 'transparent'
+    } else {
+      html.style.background = ''
+      body.style.background = ''
+      if (root) root.style.background = ''
+    }
+    return () => {
+      html.style.background = ''
+      body.style.background = ''
+      if (root) root.style.background = ''
+    }
+  }, [phase])
+
   // ── Shoe last export state ──
   const [lastShoeType, setLastShoeType] = useState('oxford')
   const [lastFormat,   setLastFormat]   = useState('stl')
@@ -2036,7 +2058,7 @@ export default function FootScan() {
 
   // ════════════════════════════════════════════════════════════════════════════
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-black">
+    <div className={`relative min-h-[100dvh] overflow-hidden ${LIDAR_PHASES.includes(phase) ? 'bg-transparent' : 'bg-black'}`}>
 
       {/* Camera error */}
       {showCamError && (
