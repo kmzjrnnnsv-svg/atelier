@@ -8,7 +8,7 @@
 
 set -e
 
-APP_DIR="$HOME/artisan-sole"
+APP_DIR="$HOME/as"
 LOG="$HOME/deploy.log"
 BRANCH="website"
 

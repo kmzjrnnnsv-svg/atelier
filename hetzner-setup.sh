@@ -15,7 +15,7 @@ set -euo pipefail
 
 # ── Konfiguration ──────────────────────────────────────────────────────────
 APP_USER="nrply"
-APP_DIR="/home/$APP_USER/artisan-sole"
+APP_DIR="/home/$APP_USER/as"
 REPO_URL="https://github.com/DEIN_USERNAME/artisan-sole.git"  # ← ANPASSEN!
 NODE_VERSION=22
 PYTHON_VERSION="3.12"
@@ -178,7 +178,7 @@ server {
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     # Frontend (statische Dateien aus Vite Build)
-    root /home/nrply/artisan-sole/artisan-sole-app/dist;
+    root /home/nrply/as/artisan-sole-app/dist;
     index index.html;
 
     # API Backend
@@ -271,7 +271,7 @@ DEPLOY_SCRIPT="/home/$APP_USER/deploy.sh"
 sudo -u $APP_USER cat > "$DEPLOY_SCRIPT" <<'DEPLOY'
 #!/bin/bash
 set -e
-APP_DIR="$HOME/artisan-sole"
+APP_DIR="$HOME/as"
 LOG="$HOME/deploy.log"
 
 echo "$(date) — Deploy gestartet" >> "$LOG"
