@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 import { HEROES, SHOES } from '../lib/editorialImages'
 
-const CATEGORIES = [
+const BASE_CATEGORIES = [
   { label: 'Alle Modelle', value: 'ALL' },
   { label: 'Oxford',       value: 'OXFORD' },
   { label: 'Derby',        value: 'DERBY' },
@@ -97,12 +97,18 @@ export default function ShoeCollection() {
       .catch(() => {})
   }, [])
 
+  const CATEGORIES = isPromo
+    ? [{ label: 'Promo', value: 'PROMO' }, ...BASE_CATEGORIES]
+    : BASE_CATEGORIES
+
   const enriched = shoes.map(s => ({
     ...s,
     match: s.match || (scanAccuracy ? `${Math.min(99.9, scanAccuracy + ((s.id * 13 + 7) % 17) * 0.03).toFixed(1)}%` : null),
   }))
 
-  const filtered = activeCategory === 'ALL' ? enriched : enriched.filter(p => p.category === activeCategory)
+  const filtered = activeCategory === 'PROMO'
+    ? enriched.filter(p => p.promotion_price)
+    : activeCategory === 'ALL' ? enriched : enriched.filter(p => p.category === activeCategory)
   const selectShoe = (product) => navigate('/customize', { state: { product } })
 
   return (
@@ -123,7 +129,9 @@ export default function ShoeCollection() {
       <div className="px-5 lg:px-16 pb-5 lg:pb-8 border-b border-black/[0.06]">
         <div className="flex gap-0 lg:gap-1 overflow-x-auto justify-center" style={{ scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => {
-            const count = cat.value === 'ALL' ? enriched.length : enriched.filter(p => p.category === cat.value).length
+            const count = cat.value === 'ALL' ? enriched.length
+              : cat.value === 'PROMO' ? enriched.filter(p => p.promotion_price).length
+              : enriched.filter(p => p.category === cat.value).length
             return (
               <button
                 key={cat.value}

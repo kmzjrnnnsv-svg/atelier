@@ -42,7 +42,7 @@ function issueTokens(res, user) {
 
   // Return refreshToken in body too — Capacitor native apps can't rely on
   // cross-origin cookies in WKWebView, so they store it in memory instead.
-  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion } }
+  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion, promotion_discount_pct: user.promotion_discount_pct || 0 } }
 }
 
 // POST /api/auth/register

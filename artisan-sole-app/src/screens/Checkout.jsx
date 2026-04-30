@@ -4,6 +4,7 @@ import { isNative } from '../App'
 import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
+import { useAuth } from '../context/AuthContext'
 
 // Accessories are loaded from the DB via shoeAccessoryMap in the store
 
@@ -133,7 +134,10 @@ function fmtPrice(n) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
+  const { user } = useAuth()
   const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, shoeAccessoryMap, accessories: storeAccessories, shoes } = useStore()
+  const isPromo = !!user?.is_promotion
+  const promoDiscountPct = user?.promotion_discount_pct || 0
 
   const product = location.state?.product || {}
   const incomingAccessories = location.state?.accessories || []
@@ -208,7 +212,8 @@ export default function Checkout() {
   const shoePrice = parsePrice(product.price)
   const cartTotal = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.qty, 0)
   const accTotal  = chosenAccessories.reduce((sum, a) => sum + a.priceNum, 0)
-  const subtotal  = (product.id ? shoePrice : cartTotal) + accTotal
+  const accPromoDiscount = isPromo && promoDiscountPct > 0 ? Math.round(accTotal * promoDiscountPct / 100) : 0
+  const subtotal  = (product.id ? shoePrice : cartTotal) + accTotal - accPromoDiscount
   const discountAmount = couponResult?.valid ? couponResult.discount_amount : 0
   const shippingOpt = shippingOptions.find(o => o.id === selectedShipping)
   const isFreeShipping = (couponResult?.valid && couponResult.type === 'free_shipping') ||
@@ -537,13 +542,26 @@ export default function Checkout() {
             {/* Accessories */}
             {chosenAccessories.length > 0 && (
               <div className="bg-white p-4 border border-black/[0.06]">
-                <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">Zubehör</p>
-                {chosenAccessories.map(a => (
-                  <div key={a.id} className="flex justify-between items-center py-1.5 border-b border-black/5 last:border-0">
-                    <span className="text-[13px] text-black/60">{a.name}</span>
-                    <span className="text-[13px] font-semibold text-black">{a.price}</span>
-                  </div>
-                ))}
+                <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">
+                  Zubehör
+                  {accPromoDiscount > 0 && <span className="text-[9px] text-black/40 normal-case ml-2">({promoDiscountPct}% Promo-Rabatt)</span>}
+                </p>
+                {chosenAccessories.map(a => {
+                  const discounted = accPromoDiscount > 0 ? Math.round(a.priceNum * (1 - promoDiscountPct / 100)) : null
+                  return (
+                    <div key={a.id} className="flex justify-between items-center py-1.5 border-b border-black/5 last:border-0">
+                      <span className="text-[13px] text-black/60">{a.name}</span>
+                      {discounted !== null ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] text-black/25 line-through">{a.price}</span>
+                          <span className="text-[13px] font-semibold text-black">€ {discounted}</span>
+                        </div>
+                      ) : (
+                        <span className="text-[13px] font-semibold text-black">{a.price}</span>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
 
@@ -631,12 +649,18 @@ export default function Checkout() {
 
             {/* Total */}
             <div className="bg-white p-4 border border-black/[0.06]">
-              {(couponResult?.valid || shippingCost > 0 || isFreeShipping) && (
+              {(couponResult?.valid || shippingCost > 0 || isFreeShipping || accPromoDiscount > 0) && (
                 <>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-[13px] text-black/40">Zwischensumme</span>
-                    <span className="text-[13px] text-black/40">€ {fmtPrice(subtotal)}</span>
+                    <span className="text-[13px] text-black/40">€ {fmtPrice(subtotal + accPromoDiscount)}</span>
                   </div>
+                  {accPromoDiscount > 0 && (
+                    <div className="flex justify-between mb-1.5">
+                      <span className="text-[13px] text-black/40">Promo-Rabatt ({promoDiscountPct}% auf Zubehör)</span>
+                      <span className="text-[13px] text-[#34C759]">- € {fmtPrice(accPromoDiscount)}</span>
+                    </div>
+                  )}
                   {shippingOpt && (
                     <div className="flex justify-between mb-1.5">
                       <span className="text-[13px] text-black/40">Versand ({shippingOpt.label})</span>
