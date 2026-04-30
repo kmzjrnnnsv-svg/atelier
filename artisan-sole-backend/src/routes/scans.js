@@ -1001,6 +1001,71 @@ router.post('/assign', authenticate, requireRole('admin', 'curator'), (req, res)
   res.json({ ok: true, message: 'Scan zugewiesen' })
 })
 
+// POST /api/scans/admin-create — admin/curator creates scan for any user (manual measurements)
+router.post('/admin-create', authenticate, requireRole('admin', 'curator'),
+  body('user_id').isInt().withMessage('User-ID erforderlich'),
+  body('right_length').isFloat({ min: 150, max: 380 }).withMessage('Rechte Fußlänge erforderlich (150-380mm)'),
+  body('right_width').isFloat({ min: 50, max: 160 }).withMessage('Rechte Fußbreite erforderlich (50-160mm)'),
+  body('left_length').isFloat({ min: 150, max: 380 }).withMessage('Linke Fußlänge erforderlich (150-380mm)'),
+  body('left_width').isFloat({ min: 50, max: 160 }).withMessage('Linke Fußbreite erforderlich (50-160mm)'),
+  body('eu_size').optional().isString(),
+  body('notes').optional().isString(),
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const db = getDb()
+    const { user_id, right_length, right_width, left_length, left_width,
+            right_ball_girth, right_instep_girth, right_heel_girth,
+            right_long_heel_girth, right_short_heel_girth,
+            left_ball_girth, left_instep_girth, left_heel_girth,
+            left_long_heel_girth, left_short_heel_girth,
+            eu_size, notes } = req.body
+
+    const targetUser = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id)
+    if (!targetUser) return res.status(404).json({ error: 'Benutzer nicht gefunden' })
+
+    // Calculate EU size from foot length if not provided
+    const calcEU = (len) => {
+      if (len <= 240) return '38'
+      if (len <= 247) return '39'
+      if (len <= 253) return '40'
+      if (len <= 260) return '41'
+      if (len <= 267) return '42'
+      if (len <= 273) return '43'
+      if (len <= 280) return '44'
+      if (len <= 287) return '45'
+      if (len <= 293) return '46'
+      return '47'
+    }
+    const maxLen = Math.max(right_length, left_length)
+    const finalEU = eu_size || calcEU(maxLen)
+
+    const result = db.prepare(`
+      INSERT INTO foot_scans (
+        user_id, reference_type,
+        right_length, right_width, left_length, left_width,
+        right_ball_girth, right_instep_girth, right_heel_girth,
+        right_long_heel_girth, right_short_heel_girth,
+        left_ball_girth, left_instep_girth, left_heel_girth,
+        left_long_heel_girth, left_short_heel_girth,
+        eu_size, accuracy, notes
+      ) VALUES (?, 'manual', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 100, ?)
+    `).run(
+      user_id,
+      right_length, right_width, left_length, left_width,
+      right_ball_girth || null, right_instep_girth || null, right_heel_girth || null,
+      right_long_heel_girth || null, right_short_heel_girth || null,
+      left_ball_girth || null, left_instep_girth || null, left_heel_girth || null,
+      left_long_heel_girth || null, left_short_heel_girth || null,
+      finalEU, notes || `Manuell erfasst von ${req.user.name}`
+    )
+
+    const scan = db.prepare('SELECT * FROM foot_scans WHERE id = ?').get(result.lastInsertRowid)
+    res.status(201).json(scan)
+  }
+)
+
 router.post('/', authenticate, ...saveValidators, async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
