@@ -139,21 +139,24 @@ export default function Customize() {
   // On desktop: lock parent scroll container so panels scroll independently
   useEffect(() => {
     if (window.innerWidth < 1024) return
-    // Lock the App-level scroller and all ancestors in the chain
+    const restored = []
     let el = outerRef.current?.parentElement
     while (el) {
       const style = getComputedStyle(el)
+      // Make every intermediate wrapper fill its parent height
+      if (!el.style.height || el.style.height === 'auto') {
+        el.style.height = '100%'
+        const ref = el
+        restored.push(() => { ref.style.height = '' })
+      }
       if (style.overflow === 'auto' || style.overflowY === 'auto') {
         el.style.overflow = 'hidden'
-        const lockedEl = el
-        // Also make the intermediate wrapper fill height
-        if (outerRef.current?.parentElement && outerRef.current.parentElement !== el) {
-          outerRef.current.parentElement.style.height = '100%'
-        }
-        return () => { lockedEl.style.overflow = '' }
+        const ref = el
+        restored.push(() => { ref.style.overflow = '' })
       }
       el = el.parentElement
     }
+    return () => restored.forEach(fn => fn())
   }, [])
 
   // Sequenced scroll handler — captures wheel/touch anywhere on the page
