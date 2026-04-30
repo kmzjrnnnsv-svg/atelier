@@ -45,8 +45,10 @@ const allowedOrigins = [
   'capacitor://localhost',   // Capacitor iOS
   'ionic://localhost',       // Capacitor iOS (legacy)
   'https://localhost',       // Capacitor iOS (HTTPS mode)
-  'https://raza.work',      // Production
-  'https://www.raza.work',  // Production (www)
+  'https://raza.work',          // Production (legacy)
+  'https://www.raza.work',      // Production (legacy www)
+  'https://artisansole.com',    // Production
+  'https://www.artisansole.com', // Production (www)
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ]
 app.use(cors({
