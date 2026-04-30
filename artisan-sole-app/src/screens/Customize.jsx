@@ -159,32 +159,27 @@ export default function Customize() {
     return () => restored.forEach(fn => fn())
   }, [])
 
-  // Sequential scroll: right panel first, then left panel
+  // Sequential scroll: right panel scrolls first, then left panel
   useEffect(() => {
     if (window.innerWidth < 1024) return
     const wrapper = outerRef.current
     if (!wrapper) return
 
+    const atBottom = (el) => el.scrollHeight - el.scrollTop - el.clientHeight < 5
+    const atTop = (el) => el.scrollTop < 1
+
     const onWheel = (e) => {
       const rp = rightPanelRef.current
       const lp = leftPanelRef.current
       if (!rp || !lp) return
+      e.preventDefault()
 
-      const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
-      const rpAtTop = rp.scrollTop <= 0
-      const lpAtTop = lp.scrollTop <= 0
-      const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
-
-      let target = null
       if (e.deltaY > 0) {
-        target = !rpAtBottom ? rp : !lpAtBottom ? lp : null
+        if (!atBottom(rp)) { rp.scrollTop += e.deltaY }
+        else { lp.scrollTop += e.deltaY }
       } else {
-        target = !lpAtTop ? lp : !rpAtTop ? rp : null
-      }
-
-      if (target) {
-        e.preventDefault()
-        target.scrollBy({ top: e.deltaY, behavior: 'auto' })
+        if (!atTop(lp)) { lp.scrollTop += e.deltaY }
+        else { rp.scrollTop += e.deltaY }
       }
     }
 
@@ -196,19 +191,15 @@ export default function Customize() {
       if (!rp || !lp) return
       const deltaY = touchY0 - e.touches[0].clientY
       touchY0 = e.touches[0].clientY
+      e.preventDefault()
 
-      const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
-      const rpAtTop = rp.scrollTop <= 0
-      const lpAtTop = lp.scrollTop <= 0
-      const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
-
-      let target = null
       if (deltaY > 0) {
-        target = !rpAtBottom ? rp : !lpAtBottom ? lp : null
+        if (!atBottom(rp)) { rp.scrollTop += deltaY }
+        else { lp.scrollTop += deltaY }
       } else {
-        target = !lpAtTop ? lp : !rpAtTop ? rp : null
+        if (!atTop(lp)) { lp.scrollTop += deltaY }
+        else { rp.scrollTop += deltaY }
       }
-      if (target) { target.scrollTop += deltaY; e.preventDefault() }
     }
 
     wrapper.addEventListener('wheel', onWheel, { passive: false, capture: true })
