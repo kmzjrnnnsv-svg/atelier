@@ -437,7 +437,6 @@ export default function Customize() {
           className="z-10 lg:w-4/6 lg:top-0 lg:self-stretch lg:min-h-0 lg:overflow-y-auto lg:px-6"
           style={{
             scrollbarWidth: 'none',
-            scrollBehavior: 'smooth',
           }}
         >
           <div
@@ -602,7 +601,7 @@ export default function Customize() {
         <div
           ref={rightPanelRef}
           className="flex-1 flex flex-col lg:flex-initial lg:w-2/6 lg:overflow-y-auto lg:min-h-0 lg:border-l lg:border-black/5 lg:px-6"
-          style={{ scrollbarWidth: 'none', scrollBehavior: 'smooth' }}
+          style={{ scrollbarWidth: 'none' }}
         >
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
