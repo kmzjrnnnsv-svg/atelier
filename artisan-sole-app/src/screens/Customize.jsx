@@ -159,80 +159,65 @@ export default function Customize() {
     return () => restored.forEach(fn => fn())
   }, [])
 
-  // Sequenced scroll handler — captures wheel/touch anywhere on the page
+  // Sequential scroll: right panel first, then left panel
   useEffect(() => {
     if (window.innerWidth < 1024) return
     const wrapper = outerRef.current
     if (!wrapper) return
 
-    let velocity = 0
-    let rafId = null
-    const FRICTION = 0.92
-    const MIN_VELOCITY = 0.5
-
-    const getTargetPanel = (direction) => {
+    const onWheel = (e) => {
       const rp = rightPanelRef.current
       const lp = leftPanelRef.current
-      if (!rp || !lp) return null
+      if (!rp || !lp) return
 
       const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
       const rpAtTop = rp.scrollTop <= 0
       const lpAtTop = lp.scrollTop <= 0
       const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
 
-      if (direction > 0) {
-        if (!rpAtBottom) return rp
-        if (!lpAtBottom) return lp
+      let target = null
+      if (e.deltaY > 0) {
+        target = !rpAtBottom ? rp : !lpAtBottom ? lp : null
       } else {
-        if (!lpAtTop) return lp
-        if (!rpAtTop) return rp
+        target = !lpAtTop ? lp : !rpAtTop ? rp : null
       }
-      return null
-    }
 
-    const tick = () => {
-      if (Math.abs(velocity) < MIN_VELOCITY) { rafId = null; return }
-      const panel = getTargetPanel(velocity)
-      if (panel) {
-        panel.scrollTop += velocity
+      if (target) {
+        e.preventDefault()
+        target.scrollBy({ top: e.deltaY, behavior: 'auto' })
       }
-      velocity *= FRICTION
-      rafId = requestAnimationFrame(tick)
-    }
-
-    const onWheel = (e) => {
-      e.preventDefault()
-      velocity += e.deltaY * 0.4
-      if (!rafId) rafId = requestAnimationFrame(tick)
     }
 
     let touchY0 = 0
-    let touchActive = false
-    const onTouchStart = (e) => {
-      touchY0 = e.touches[0].clientY
-      touchActive = true
-      velocity = 0
-    }
+    const onTouchStart = (e) => { touchY0 = e.touches[0].clientY }
     const onTouchMove = (e) => {
-      if (!touchActive) return
-      const y = e.touches[0].clientY
-      const deltaY = touchY0 - y
-      touchY0 = y
-      const panel = getTargetPanel(deltaY)
-      if (panel) { panel.scrollTop += deltaY; e.preventDefault() }
+      const rp = rightPanelRef.current
+      const lp = leftPanelRef.current
+      if (!rp || !lp) return
+      const deltaY = touchY0 - e.touches[0].clientY
+      touchY0 = e.touches[0].clientY
+
+      const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
+      const rpAtTop = rp.scrollTop <= 0
+      const lpAtTop = lp.scrollTop <= 0
+      const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
+
+      let target = null
+      if (deltaY > 0) {
+        target = !rpAtBottom ? rp : !lpAtBottom ? lp : null
+      } else {
+        target = !lpAtTop ? lp : !rpAtTop ? rp : null
+      }
+      if (target) { target.scrollTop += deltaY; e.preventDefault() }
     }
-    const onTouchEnd = () => { touchActive = false }
 
     wrapper.addEventListener('wheel', onWheel, { passive: false, capture: true })
     wrapper.addEventListener('touchstart', onTouchStart, { passive: true, capture: true })
     wrapper.addEventListener('touchmove', onTouchMove, { passive: false, capture: true })
-    wrapper.addEventListener('touchend', onTouchEnd, { passive: true, capture: true })
     return () => {
-      if (rafId) cancelAnimationFrame(rafId)
       wrapper.removeEventListener('wheel', onWheel, { capture: true })
       wrapper.removeEventListener('touchstart', onTouchStart, { capture: true })
       wrapper.removeEventListener('touchmove', onTouchMove, { capture: true })
-      wrapper.removeEventListener('touchend', onTouchEnd, { capture: true })
     }
   }, [])
 
@@ -452,6 +437,7 @@ export default function Customize() {
           className="z-10 lg:w-4/6 lg:top-0 lg:self-stretch lg:min-h-0 lg:overflow-y-auto lg:px-6"
           style={{
             scrollbarWidth: 'none',
+            scrollBehavior: 'smooth',
           }}
         >
           <div
@@ -616,7 +602,7 @@ export default function Customize() {
         <div
           ref={rightPanelRef}
           className="flex-1 flex flex-col lg:flex-initial lg:w-2/6 lg:overflow-y-auto lg:min-h-0 lg:border-l lg:border-black/5 lg:px-6"
-          style={{ scrollbarWidth: 'none' }}
+          style={{ scrollbarWidth: 'none', scrollBehavior: 'smooth' }}
         >
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
