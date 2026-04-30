@@ -33,7 +33,29 @@ const PORT = process.env.PORT || 3001
 app.set('trust proxy', 1)
 
 // Security headers
-app.use(helmet())
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc:  ["'self'"],
+      styleSrc:   ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc:    ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc:     ["'self'", 'data:', 'blob:', 'https:'],
+      connectSrc: ["'self'", 'https://artisansole.com', 'https://www.artisansole.com'],
+      frameSrc:   ["'none'"],
+      objectSrc:  ["'none'"],
+      baseUri:    ["'self'"],
+      formAction: ["'self'"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  crossOriginEmbedderPolicy: false,
+}))
 
 // CORS — allow Vite dev server + Capacitor iOS WKWebView + production
 const isDev = process.env.NODE_ENV !== 'production'
@@ -64,11 +86,19 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-MFA-Code'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-MFA-Code', 'X-Requested-With'],
 }))
 
 app.use(cookieParser())
 app.use(express.json({ limit: '25mb' })) // LiDAR point clouds (~2MB) + photogrammetry 16 images (~20MB)
+
+// CSRF protection — require X-Requested-With header on state-changing requests
+// Browsers block cross-origin custom headers via CORS preflight
+app.use('/api', (req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next()
+  if (!req.get('Origin') || req.get('X-Requested-With')) return next()
+  res.status(403).json({ error: 'Missing CSRF header' })
+})
 
 // Static file serving for uploaded media
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')))

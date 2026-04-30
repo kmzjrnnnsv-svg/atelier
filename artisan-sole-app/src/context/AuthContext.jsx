@@ -68,9 +68,10 @@ export function AuthProvider({ children }) {
         const fetchOpts = {
           method: 'POST',
           credentials: 'include',
+          headers: { 'X-Requested-With': 'ArtisanSole' },
         }
         if (isNativePlatform && _refreshToken) {
-          fetchOpts.headers = { 'Content-Type': 'application/json' }
+          fetchOpts.headers = { ...fetchOpts.headers, 'Content-Type': 'application/json' }
           fetchOpts.body = JSON.stringify({ refreshToken: _refreshToken })
         }
         const res = await fetch(`${API_BASE}/api/auth/refresh`, fetchOpts)
@@ -112,7 +113,7 @@ export function AuthProvider({ children }) {
     try {
       res = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'ArtisanSole' },
         credentials: 'include',
         body: JSON.stringify({ name, email, password }),
       })
@@ -137,7 +138,7 @@ export function AuthProvider({ children }) {
     try {
       res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'ArtisanSole' },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       })
@@ -165,7 +166,7 @@ export function AuthProvider({ children }) {
 
   function logout() {
     const body = isNativePlatform && _refreshToken ? JSON.stringify({ refreshToken: _refreshToken }) : undefined
-    const headers = body ? { 'Content-Type': 'application/json' } : undefined
+    const headers = { 'X-Requested-With': 'ArtisanSole', ...(body ? { 'Content-Type': 'application/json' } : {}) }
     _accessToken = null
     _refreshToken = null
     setNativeRefreshToken(null)
