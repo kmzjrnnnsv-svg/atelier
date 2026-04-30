@@ -23,7 +23,7 @@ export default function CMSLayout() {
 
         {/* Logo */}
         <div className="px-7 pt-8 pb-6">
-          <p className="text-[11px] font-extralight tracking-[0.35em] uppercase text-white/90">ATELIER</p>
+          <p className="font-brand text-[11px] text-white/90">ARTISAN SOLE</p>
           <p className="text-[9px] text-white/20 tracking-[0.2em] uppercase mt-1 font-light">Content Studio</p>
         </div>
 

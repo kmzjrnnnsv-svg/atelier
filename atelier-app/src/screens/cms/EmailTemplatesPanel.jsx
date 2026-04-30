@@ -19,7 +19,7 @@ const VARIABLES = [
  { key: '{{price}}', desc: 'Preis' },
  { key: '{{eu_size}}', desc: 'EU-Größe' },
  { key: '{{user_order_number}}',desc: 'Bestellnummer des Kunden' },
- { key: '{{reference}}', desc: 'Zahlungsreferenz (ATELIER-ID)' },
+ { key: '{{reference}}', desc: 'Zahlungsreferenz (ARTISAN SOLE-ID)' },
  { key: '{{bank_iban}}', desc: 'Bank IBAN' },
  { key: '{{bank_bic}}', desc: 'Bank BIC' },
  { key: '{{bank_holder}}', desc: 'Kontoinhaber' },

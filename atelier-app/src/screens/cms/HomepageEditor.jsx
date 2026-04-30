@@ -7,7 +7,7 @@ import ImagePicker from '../../components/ImagePicker'
 import { apiFetch } from '../../hooks/useApi'
 
 const DEFAULT_SECTIONS = [
-  { key: 'hero', label: 'Atelier Kollektion', title: '', description: '', image: '', button: 'Entdecken', link: '' },
+  { key: 'hero', label: 'Artisan Sole Kollektion', title: '', description: '', image: '', button: 'Entdecken', link: '' },
   { key: 'featured', label: 'Herren', title: 'Empfohlen für Sie', description: '', image: '', button: 'Kollektion entdecken', link: '/collection' },
   { key: 'editorial', label: '', title: '', description: '', image: '', image2: '', button: '', link: '' },
   { key: 'savoir_faire', label: 'Savoir-Faire', title: 'Handwerkskunst erleben', description: '', image: '', button: 'Entdecken', link: '/explore' },
@@ -15,7 +15,7 @@ const DEFAULT_SECTIONS = [
   { key: 'favorites', label: 'Herren', title: 'Ihre Favoriten', description: '', image: '', button: 'Alle Favoriten', link: '/wishlist' },
   { key: 'accessories', label: 'Zubehör & Pflege', title: 'Das Beste für Ihre Schuhe', description: '', image: '', button: 'Alle Produkte', link: '/accessories' },
   { key: 'orders', label: 'Bestellungen', title: 'Ihre Bestellungen', description: '', image: '', button: 'Alle anzeigen', link: '/orders' },
-  { key: 'journal', label: 'Atelier Journal', title: '', description: '', image: '', button: '', link: '/explore' },
+  { key: 'journal', label: 'Artisan Sole Journal', title: '', description: '', image: '', button: '', link: '/explore' },
   { key: 'scan', label: '', title: 'Ihr 3D-Fußscan', description: 'Jetzt scannen für perfekte Passform', image: '', button: '', link: '/scan' },
   { key: 'service_1', label: 'Handgefertigt', title: 'Jeder Schuh ein Unikat', description: 'Von Hand gefertigt aus erlesenen Materialien in über 200 Arbeitsschritten.', image: '', button: '', link: '' },
   { key: 'service_2', label: '3D-Fußscan', title: 'Perfekte Passform', description: 'Millimetergenau vermessen für maximalen Komfort und Langlebigkeit.', image: '', button: '', link: '' },

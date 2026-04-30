@@ -2525,7 +2525,7 @@ export default function FootScan() {
                 <>
                   {/* Hero */}
                   <div className="px-5 pt-6 pb-8">
-                    <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3 font-light">Atelier</p>
+                    <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3 font-light">Artisan Sole</p>
                     <h1 className="text-[28px] font-extralight text-black tracking-tight leading-tight">3D Fußvermessung</h1>
                     <p className="text-[12px] text-black/40 font-light mt-3 leading-relaxed max-w-[300px]">
                       {lidarAvail

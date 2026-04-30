@@ -318,7 +318,7 @@ export default function Checkout() {
               <div>
                 <p className="text-[10px] text-black/30 uppercase tracking-wider mb-2">Verwendungszweck</p>
                 <div className="bg-black px-4 py-2.5 text-center">
-                  <span className="text-white font-mono font-bold tracking-widest text-[14px]">ATELIER-{placed.id}</span>
+                  <span className="text-white font-mono font-bold tracking-widest text-[14px]">AS-{placed.id}</span>
                 </div>
               </div>
             </div>
@@ -348,7 +348,7 @@ export default function Checkout() {
     return (
       <div className="min-h-full bg-white">
         <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-1">
-          <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Atelier</p>
+          <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Artisan Sole</p>
           <p className="text-[28px] lg:text-[36px] font-extralight text-black tracking-tight">Einkaufstasche</p>
         </div>
         <div className="flex flex-col items-center justify-center py-20 text-center px-5">

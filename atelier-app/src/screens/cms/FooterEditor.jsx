@@ -16,7 +16,7 @@ const DEFAULT_CONFIG = {
 
   // Contact column
   contact_phone: '+49 123 456 789',
-  contact_email: 'service@atelier.de',
+  contact_email: 'service@artisansole.de',
 
   // Shop links
   shop_links: [
@@ -49,13 +49,13 @@ const DEFAULT_CONFIG = {
   newsletter_placeholder: 'IHRE E-MAIL ADRESSE',
 
   // Copyright
-  copyright: 'Atelier',
+  copyright: 'Artisan Sole',
 
   // Explore service section
   service_sections: [
     { label: 'Editorials', title: 'Geschichten hinter der Kollektion', text: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Saison.' },
     { label: 'Handwerk', title: 'Vom Leisten bis zur Naht', text: 'Kurz-Dokumentationen über die Herstellung jedes Modells in über 200 Schritten.' },
-    { label: 'Community', title: 'Atelier-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
+    { label: 'Community', title: 'Artisan Sole-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
   ],
 }
 

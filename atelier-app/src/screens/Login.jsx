@@ -37,8 +37,8 @@ export default function Login() {
       <div className="flex-1 flex flex-col justify-center px-5">
         {/* Header */}
         <div className="text-center mb-8">
-          <span className="font-playfair text-xl font-semibold tracking-[0.3em] uppercase text-black">
-            ATELIER
+          <span className="font-brand text-xl text-black">
+            ARTISAN SOLE
           </span>
         </div>
 
@@ -46,7 +46,7 @@ export default function Login() {
         <div className="text-center px-3 mb-8">
           <h1 className="text-3xl text-black leading-tight uppercase tracking-[0.15em] font-semibold">Welcome Back</h1>
           <p className="text-xs text-black/40 mt-2 leading-relaxed" style={{ letterSpacing: '0.15em' }}>
-            Sign in to your personal atelier studio
+            Sign in to your personal studio
           </p>
         </div>
 

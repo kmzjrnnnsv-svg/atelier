@@ -49,7 +49,7 @@ export default function ForYou() {
             <img src={c('hero', 'image', '') || heroShoe.image || HEROES.foryou} alt={heroShoe.name} className="w-full h-full object-cover" />
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-14" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.5) 100%)' }}>
-            <p className="text-[9px] lg:text-[10px] text-white/40 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{c('hero', 'label', 'Atelier Kollektion')}</p>
+            <p className="text-[9px] lg:text-[10px] text-white/40 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{c('hero', 'label', 'Artisan Sole Kollektion')}</p>
             <h2 className="text-[22px] lg:text-[38px] font-extralight text-white leading-[1.05] tracking-tight">{heroShoe.name}</h2>
             <p className="text-[11px] lg:text-[13px] text-white/35 mt-1 lg:mt-2 font-light">{heroShoe.material}</p>
             <button
@@ -307,7 +307,7 @@ export default function ForYou() {
               <img src={publishedArticles[0].image_data || CRAFT.leather} alt={publishedArticles[0].title} className="w-full h-full object-cover" />
             </div>
             <div className="px-4 lg:px-16 xl:px-24 pt-5 lg:pt-8 pb-6 lg:pb-10">
-              <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">{c('journal', 'label', 'Atelier Journal')}</p>
+              <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">{c('journal', 'label', 'Artisan Sole Journal')}</p>
               <h2 className="text-[18px] lg:text-[26px] font-extralight text-black leading-[1.1] tracking-tight">{publishedArticles[0].title}</h2>
             </div>
           </div>

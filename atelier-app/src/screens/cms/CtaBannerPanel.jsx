@@ -56,7 +56,7 @@ export default function CtaBannerPanel() {
           <div>
             <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Titel</label>
             <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" placeholder="Besuchen Sie das Atelier" />
+              className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" placeholder="Besuchen Sie Artisan Sole" />
           </div>
           <div>
             <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Text</label>

@@ -15,7 +15,7 @@ const DEFAULTS = {
   help_button: 'Kontakt',
   help_image: '',
   contact_phone: '+49 123 456 789',
-  contact_email: 'service@atelier.de',
+  contact_email: 'service@artisansole.de',
   shop_links: [
     { label: 'Für dich', path: '/foryou' },
     { label: 'Kollektion', path: '/collection' },
@@ -38,7 +38,7 @@ const DEFAULTS = {
   newsletter_title: 'Newsletter',
   newsletter_text: 'Erhalten Sie als Erster exklusive Neuigkeiten und Angebote.',
   newsletter_placeholder: 'IHRE E-MAIL ADRESSE',
-  copyright: 'Atelier',
+  copyright: 'Artisan Sole',
 }
 
 export default function Footer() {

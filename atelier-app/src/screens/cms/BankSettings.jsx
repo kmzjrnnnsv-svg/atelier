@@ -95,7 +95,7 @@ export default function BankSettings() {
  </div>
  <div>
  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Kontoinhaber</label>
- <input className={inp} style={{ fontFamily: 'inherit' }} placeholder="ATELIER GmbH" value={form.bank_holder} onChange={e => f('bank_holder', e.target.value)} />
+ <input className={inp} style={{ fontFamily: 'inherit' }} placeholder="Artisan Sole GmbH" value={form.bank_holder} onChange={e => f('bank_holder', e.target.value)} />
  </div>
  <div>
  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Bank</label>

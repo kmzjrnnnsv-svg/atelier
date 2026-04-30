@@ -232,7 +232,7 @@ function HeroEditor({ hero, onSave }) {
           {form.image && <img src={form.image} alt="" className="absolute inset-0 w-full h-full object-cover" />}
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative h-full flex flex-col justify-end p-4">
-            <p className="text-[7px] text-white/50" style={{ letterSpacing: '0.2em', textTransform: 'uppercase' }}>ATELIER</p>
+            <p className="text-[7px] text-white/50" style={{ letterSpacing: '0.2em', textTransform: 'uppercase' }}>ARTISAN SOLE</p>
             <p className="text-[13px] text-white font-light" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>{form.title || 'EXPLORE'}</p>
             {form.subtitle && <p className="text-[9px] text-white/50 mt-0.5">{form.subtitle}</p>}
           </div>
@@ -253,9 +253,9 @@ const labelCls = 'text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-
 const PAGE_TEXT_FIELDS = [
   { key: 'topics_label', label: 'Themen — Label', placeholder: 'Entdecken' },
   { key: 'topics_title', label: 'Themen — Titel', placeholder: 'Themen' },
-  { key: 'articles_label', label: 'Artikel — Label', placeholder: 'Atelier Journal' },
+  { key: 'articles_label', label: 'Artikel — Label', placeholder: 'Artisan Sole Journal' },
   { key: 'articles_title', label: 'Artikel — Titel', placeholder: 'Alle Artikel' },
-  { key: 'journal_cta_label', label: 'Journal-CTA — Label', placeholder: 'Atelier Journal' },
+  { key: 'journal_cta_label', label: 'Journal-CTA — Label', placeholder: 'Artisan Sole Journal' },
   { key: 'journal_cta_title', label: 'Journal-CTA — Titel', placeholder: 'Die Welt hinter jedem Schuh' },
   { key: 'journal_cta_description', label: 'Journal-CTA — Beschreibung', placeholder: 'Editorials, Handwerkskunst und Inspirationen...' },
 ]

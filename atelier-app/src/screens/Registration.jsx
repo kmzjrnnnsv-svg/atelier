@@ -60,7 +60,7 @@ export default function Registration() {
         <button className="w-8 h-8 flex items-center justify-center bg-transparent border-0" onClick={() => navigate('/login')}>
           <X size={20} strokeWidth={1.5} className="text-black/70" />
         </button>
-        <span className="font-playfair text-lg font-semibold tracking-[0.25em] uppercase text-black">ATELIER</span>
+        <span className="font-brand text-[15px] text-black">ARTISAN SOLE</span>
         <div className="w-8" />
       </div>
 

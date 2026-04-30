@@ -267,7 +267,7 @@ export function downloadSTL(geo, euSize, side) {
     ? i => { const j = geo.index.getX(i); return new THREE.Vector3(pos.getX(j), pos.getY(j), pos.getZ(j)) }
     : i => new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i))
 
-  let stl = `solid atelier_${side}_foot\n`
+  let stl = `solid artisansole_${side}_foot\n`
   for (let i = 0; i < total; i += 3) {
     const [a, b, c] = [getV(i), getV(i + 1), getV(i + 2)]
     const n = new THREE.Vector3()
@@ -279,12 +279,12 @@ export function downloadSTL(geo, euSize, side) {
     })
     stl += '    endloop\n  endfacet\n'
   }
-  stl += `endsolid atelier_${side}_foot\n`
+  stl += `endsolid artisansole_${side}_foot\n`
 
   const blob = new Blob([stl], { type: 'model/stl' })
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
-  a.href = url; a.download = `atelier_${side}_foot_EU${euSize}_${Date.now()}.stl`
+  a.href = url; a.download = `artisansole_${side}_foot_EU${euSize}_${Date.now()}.stl`
   a.click(); URL.revokeObjectURL(url)
 }
 
@@ -324,7 +324,7 @@ export function downloadMassblattPDF(result, euSize) {
   // Header
   ctx.fillStyle = '#111111'
   ctx.font = 'bold 18px sans-serif'
-  ctx.fillText('Atelier — Maßblatt', 40, 50)
+  ctx.fillText('Artisan Sole — Maßblatt', 40, 50)
   ctx.font = '10px sans-serif'
   ctx.fillStyle = '#666666'
   ctx.fillText(`Erstellt: ${new Date().toLocaleDateString('de-DE')}  |  EU ${euSize}`, 40, 70)
@@ -390,7 +390,7 @@ export function downloadMassblattPDF(result, euSize) {
   // Footer
   ctx.fillStyle = '#aaaaaa'
   ctx.font = '8px sans-serif'
-  ctx.fillText('Generiert mit Atelier LiDAR Foot Scanner  |  Alle Maße in Millimeter', 40, 820)
+  ctx.fillText('Generiert mit Artisan Sole LiDAR Foot Scanner  |  Alle Maße in Millimeter', 40, 820)
 
   // Convert canvas to PDF-like image and download
   canvas.toBlob(blob => {

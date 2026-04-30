@@ -445,7 +445,7 @@ export function downloadSTL(geo, euSize, side, prefix = 'leisten') {
   const view = new DataView(buffer)
 
   // Header (80 bytes)
-  const header = `Atelier Schuhleisten ${side} EU${euSize}`
+  const header = `Artisan Sole Schuhleisten ${side} EU${euSize}`
   for (let i = 0; i < 80; i++) {
     view.setUint8(i, i < header.length ? header.charCodeAt(i) : 0)
   }
@@ -495,7 +495,7 @@ export function downloadOBJ(geo, euSize, side, prefix = 'leisten') {
   const normal = geo.attributes.normal
   const indexed = !!geo.index
 
-  let obj = `# Atelier Schuhleisten - ${side} Fuß EU ${euSize}\n`
+  let obj = `# Artisan Sole Schuhleisten - ${side} Fuß EU ${euSize}\n`
   obj += `# Generiert am ${new Date().toISOString()}\n`
   obj += `# Einheit: mm\n`
   obj += `o ${prefix}_${side}_EU${euSize}\n\n`

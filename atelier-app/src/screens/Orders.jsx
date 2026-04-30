@@ -219,7 +219,7 @@ export default function Orders() {
 
       {/* ── Hero header ─────────────────────────────────────────── */}
       <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-6 lg:pb-10">
-        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Atelier Kollektion</p>
+        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Artisan Sole Kollektion</p>
         <h1 className="text-[32px] lg:text-[44px] font-extralight text-black leading-[1.1] tracking-tight">
           Bestellungen
         </h1>

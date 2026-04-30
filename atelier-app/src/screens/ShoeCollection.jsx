@@ -113,7 +113,7 @@ export default function ShoeCollection() {
         <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
       </div>
       <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-6 lg:pb-8">
-        <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Atelier Kollektion</p>
+        <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Artisan Sole Kollektion</p>
         <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.05] tracking-tight">
           Maßschuhe
         </h1>

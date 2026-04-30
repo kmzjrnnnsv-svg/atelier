@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
 
 @import "tailwindcss";
 
@@ -55,6 +55,13 @@ html.mobile-web body {
 
 .font-playfair {
   font-family: 'Playfair Display', serif;
+}
+
+.font-brand {
+  font-family: 'Jost', 'Futura', 'Century Gothic', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
 }
 
 ::-webkit-scrollbar {

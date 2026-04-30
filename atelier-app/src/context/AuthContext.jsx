@@ -10,7 +10,7 @@ let _accessToken = null
 let _refreshToken = null
 
 const isNativePlatform = Capacitor.isNativePlatform()
-const RT_STORAGE_KEY = '__atelier_rt'
+const RT_STORAGE_KEY = '__artisansole_rt'
 
 // Persist refresh token for native builds so force-close doesn't log out
 function persistRefreshToken(token) {

@@ -104,8 +104,8 @@ export default function TopBar() {
           onClick={() => navigate('/foryou')}
           className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60"
         >
-          <span className="text-[16px] lg:text-[17px] font-normal tracking-[0.18em] text-black">
-            ATELIER
+          <span className="font-brand text-[15px] lg:text-[16px] text-black" style={{ letterSpacing: '0.3em' }}>
+            ARTISAN SOLE
           </span>
         </button>
 

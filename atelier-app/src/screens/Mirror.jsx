@@ -50,7 +50,7 @@ const CLOTHING_CATS = [
   { id: 'shoes', label: 'Schuhe',    icon: '👟' },
 ]
 
-const LOCAL_STORAGE_KEY = 'atelier_local_clothing'
+const LOCAL_STORAGE_KEY = 'artisansole_local_clothing'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -455,7 +455,7 @@ export default function Settings() {
         <div className="w-7 h-7 bg-[#19110B] flex items-center justify-center">
           <span className="text-white font-extralight text-[11px]" style={{ fontFamily: 'Georgia, serif' }}>A</span>
         </div>
-        <p className="text-[10px] uppercase tracking-[0.25em] text-black/20 font-light">ATELIER v1.0.0</p>
+        <p className="font-brand text-[10px] text-black/20">ARTISAN SOLE v1.0.0</p>
         <p className="text-[9px] text-black/15 font-light">Made with precision, crafted with care.</p>
       </div>
 

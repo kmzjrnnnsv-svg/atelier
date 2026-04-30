@@ -16,7 +16,7 @@ const DEFAULT_SECTIONS = [
   { id: 'styleguide', label: 'Style Guide', title: 'Outfit-Inspirationen', description: 'Kuratierte Kombinationsvorschläge auf Basis Ihrer Garderobe und Ihres Stils.', previewItems: ['Oxford trifft Flanell', 'Derby & Chino', 'Loafer im Business-Look'], visible: true },
   { id: 'trends', label: 'Trends', title: 'Material- & Stil-Trends', description: 'Saisonale Reports zu Lederarten, Sohlenformen und den Farbtönen der Saison.', previewItems: ['Patina als Statement', 'Crepe Soles 2026', 'Naturfarben dominieren'], visible: true },
   { id: 'collabs', label: 'Kollaborationen', title: 'Limited Editions', description: 'Exklusive Capsule Collections mit Designern, Architekten und Künstlern.', previewItems: ['× Mailänder Architekt', '× Toskana Tannery', 'Member Exclusive Drop'], visible: true },
-  { id: 'community', label: 'Community', title: 'Style Community', description: 'ATELIER-Träger weltweit zeigen ihre Kombinationen und teilen ihre Erfahrungen.', previewItems: ['Riviera Loafer in Tokyo', 'Oxford in New York', 'Derby im Alltag'], visible: true },
+  { id: 'community', label: 'Community', title: 'Style Community', description: 'ARTISAN SOLE-Träger weltweit zeigen ihre Kombinationen und teilen ihre Erfahrungen.', previewItems: ['Riviera Loafer in Tokyo', 'Oxford in New York', 'Derby im Alltag'], visible: true },
 ]
 
 // ── Article Detail ───────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ export default function Explore() {
   const [serviceSections, setServiceSections] = useState([
     { label: 'Editorials', title: 'Geschichten hinter der Kollektion', text: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Saison.' },
     { label: 'Handwerk', title: 'Vom Leisten bis zur Naht', text: 'Kurz-Dokumentationen über die Herstellung jedes Modells in über 200 Schritten.' },
-    { label: 'Community', title: 'Atelier-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
+    { label: 'Community', title: 'Artisan Sole-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
   ])
 
   // CMS helper — returns CMS value or fallback
@@ -167,7 +167,7 @@ export default function Explore() {
       {regularArticles.length > 0 && (
         <div className="py-10 lg:py-20">
           <div className="px-4 lg:px-16 xl:px-24 mb-6 lg:mb-10">
-            <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">{c('articles_label', 'Atelier Journal')}</p>
+            <p className="text-[9px] lg:text-[10px] text-black/20 uppercase tracking-[0.3em] mb-1.5">{c('articles_label', 'Artisan Sole Journal')}</p>
             <h2 className="text-[18px] lg:text-[26px] font-extralight text-black tracking-tight">{c('articles_title', 'Alle Artikel')}</h2>
           </div>
           <div className="px-4 lg:px-16 xl:px-24">
@@ -200,7 +200,7 @@ export default function Explore() {
           <div className="absolute inset-0 bg-black/55" />
         </div>
         <div className="absolute bottom-0 left-0 p-5 lg:p-14">
-          <p className="text-[9px] lg:text-[10px] text-white/30 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{c('journal_cta_label', 'Atelier Journal')}</p>
+          <p className="text-[9px] lg:text-[10px] text-white/30 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{c('journal_cta_label', 'Artisan Sole Journal')}</p>
           <h2 className="text-[20px] lg:text-[32px] font-extralight text-white leading-[1.1] tracking-tight">
             {c('journal_cta_title', 'Die Welt hinter jedem Schuh')}
           </h2>

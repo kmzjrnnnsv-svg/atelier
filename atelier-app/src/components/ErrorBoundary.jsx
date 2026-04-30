@@ -18,8 +18,8 @@ export default class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-white px-8 text-center">
-          <span className="font-playfair text-lg font-semibold tracking-[0.3em] uppercase text-black mb-10">
-            ATELIER
+          <span className="font-brand text-lg text-black mb-10">
+            ARTISAN SOLE
           </span>
           <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center mb-6">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">

@@ -53,7 +53,7 @@ export default function RegisterPromotion() {
     <div className="min-h-screen bg-black flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <p className="text-[11px] font-bold text-white/90" style={{ letterSpacing: '0.35em' }}>ATELIER</p>
+          <p className="font-brand text-[11px] text-white/90">ARTISAN SOLE</p>
           <div className="mt-3 inline-block px-3 py-1 bg-amber-600/20">
             <p className="text-[9px] text-amber-400" style={{ letterSpacing: '0.2em', textTransform: 'uppercase' }}>Promotion-Zugang</p>
           </div>

@@ -4,8 +4,8 @@ export default function NotFound() {
   const navigate = useNavigate()
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white px-8 text-center">
-      <span className="font-playfair text-lg font-semibold tracking-[0.3em] uppercase text-black mb-10">
-        ATELIER
+      <span className="font-brand text-lg text-black mb-10">
+        ARTISAN SOLE
       </span>
       <p className="text-7xl font-playfair text-black/10 font-bold mb-2">404</p>
       <h1 className="font-playfair text-2xl text-black mb-3">Seite nicht gefunden</h1>
