@@ -282,7 +282,7 @@ export async function generateSTL(sessionId, outputPath) {
     scale:          1.0,
     // Metadaten werden im STL-Header gespeichert
     metadata: {
-      generatedBy:  'ATELIER App v1.0',
+      generatedBy:  'Artisan Sole App v1.0',
       timestamp:    new Date().toISOString(),
       sdkVersion:   SnugFitSDK.getVersion(),
     },

@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Hetzner VPS Setup Script für Atelier
+# Hetzner VPS Setup Script für Artisan Sole
 #
 # Dieses Script als root auf einem frischen Ubuntu 24.04 Server ausführen:
 #   ssh root@DEINE_IP
@@ -15,13 +15,13 @@ set -euo pipefail
 
 # ── Konfiguration ──────────────────────────────────────────────────────────
 APP_USER="nrply"
-APP_DIR="/home/$APP_USER/atelier"
-REPO_URL="https://github.com/DEIN_USERNAME/atelier.git"  # ← ANPASSEN!
+APP_DIR="/home/$APP_USER/artisan-sole"
+REPO_URL="https://github.com/DEIN_USERNAME/artisan-sole.git"  # ← ANPASSEN!
 NODE_VERSION=22
 PYTHON_VERSION="3.12"
 
 echo "============================================="
-echo "  Atelier — Hetzner Server Setup"
+echo "  Artisan Sole — Hetzner Server Setup"
 echo "============================================="
 echo ""
 
@@ -79,7 +79,7 @@ sudo -u $APP_USER bash -c "
   python3 -m venv $ML_VENV
   source $ML_VENV/bin/activate
   pip install --upgrade pip
-  pip install -r $APP_DIR/atelier-ml/requirements.txt
+  pip install -r $APP_DIR/artisan-sole-ml/requirements.txt
 "
 echo "  Python venv + alle ML-Pakete aus requirements.txt installiert"
 echo "  venv: $ML_VENV/bin/python3"
@@ -96,13 +96,13 @@ fi
 # ── 8. Backend einrichten ─────────────────────────────────────────────────
 echo "→ Backend einrichten..."
 sudo -u $APP_USER bash -c "
-  cd $APP_DIR/atelier-backend
+  cd $APP_DIR/artisan-sole-backend
   npm install
 "
 echo "  npm install abgeschlossen"
 
 # ── 9. .env Datei erstellen ───────────────────────────────────────────────
-ENV_FILE="$APP_DIR/atelier-backend/.env"
+ENV_FILE="$APP_DIR/artisan-sole-backend/.env"
 if [ ! -f "$ENV_FILE" ]; then
   # Zufällige Secrets generieren
   ACCESS_SECRET=$(openssl rand -hex 32)
@@ -111,7 +111,7 @@ if [ ! -f "$ENV_FILE" ]; then
   sudo -u $APP_USER bash -c "cat > $ENV_FILE" <<EOF
 NODE_ENV=production
 PORT=3001
-DB_PATH=/home/$APP_USER/atelier-data/atelier.db
+DB_PATH=/home/$APP_USER/artisan-sole-data/artisan-sole.db
 
 JWT_ACCESS_SECRET=$ACCESS_SECRET
 JWT_REFRESH_SECRET=$REFRESH_SECRET
@@ -134,14 +134,14 @@ else
 fi
 
 # Daten-Verzeichnis erstellen
-sudo -u $APP_USER mkdir -p /home/$APP_USER/atelier-data
+sudo -u $APP_USER mkdir -p /home/$APP_USER/artisan-sole-data
 echo "  Daten-Verzeichnis erstellt"
 
 # ── 10. PM2 Prozess starten ───────────────────────────────────────────────
 echo "→ Backend mit PM2 starten..."
 sudo -u $APP_USER bash -c "
-  cd $APP_DIR/atelier-backend
-  pm2 start src/index.js --name atelier -- --env production
+  cd $APP_DIR/artisan-sole-backend
+  pm2 start src/index.js --name artisan-sole -- --env production
   pm2 save
 "
 echo "  Backend läuft auf Port 3001"
@@ -158,7 +158,7 @@ echo "  Firewall aktiv (SSH + HTTP + HTTPS)"
 
 # ── 12. Nginx Reverse Proxy ───────────────────────────────────────────────
 echo "→ Nginx konfigurieren..."
-cat > /etc/nginx/sites-available/atelier <<'NGINX'
+cat > /etc/nginx/sites-available/artisan-sole <<'NGINX'
 # HTTP → HTTPS Redirect
 server {
     listen 80;
@@ -178,7 +178,7 @@ server {
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     # Frontend (statische Dateien aus Vite Build)
-    root /home/nrply/atelier/atelier-app/dist;
+    root /home/nrply/artisan-sole/artisan-sole-app/dist;
     index index.html;
 
     # API Backend
@@ -219,7 +219,7 @@ server {
 }
 NGINX
 
-ln -sf /etc/nginx/sites-available/atelier /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/artisan-sole /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
 echo "  Nginx Reverse Proxy aktiv"
@@ -227,11 +227,11 @@ echo "  Nginx Reverse Proxy aktiv"
 # ── 12b. Frontend bauen ──────────────────────────────────────────────────
 echo "→ Frontend bauen..."
 sudo -u $APP_USER bash -c "
-  cd $APP_DIR/atelier-app
+  cd $APP_DIR/artisan-sole-app
   npm install
   npm run build
 "
-echo "  Frontend gebaut → $APP_DIR/atelier-app/dist"
+echo "  Frontend gebaut → $APP_DIR/artisan-sole-app/dist"
 
 # ── 12c. SSL-Zertifikat mit Certbot ─────────────────────────────────────
 echo "→ SSL-Zertifikat einrichten..."
@@ -243,7 +243,7 @@ echo ""
 echo "  Versuche Certbot jetzt automatisch..."
 
 # Temporäre HTTP-only Nginx Config für Certbot Challenge
-cat > /etc/nginx/sites-available/atelier-certbot <<'CERTBOT_NGINX'
+cat > /etc/nginx/sites-available/artisan-sole-certbot <<'CERTBOT_NGINX'
 server {
     listen 80;
     server_name raza.work www.raza.work;
@@ -252,7 +252,7 @@ server {
     location / { return 301 https://$host$request_uri; }
 }
 CERTBOT_NGINX
-ln -sf /etc/nginx/sites-available/atelier-certbot /etc/nginx/sites-enabled/atelier
+ln -sf /etc/nginx/sites-available/artisan-sole-certbot /etc/nginx/sites-enabled/artisan-sole
 nginx -t && systemctl reload nginx
 
 certbot --nginx -d raza.work -d www.raza.work --non-interactive --agree-tos -m admin@raza.work || {
@@ -261,7 +261,7 @@ certbot --nginx -d raza.work -d www.raza.work --non-interactive --agree-tos -m a
 }
 
 # Richtige Nginx Config wiederherstellen
-ln -sf /etc/nginx/sites-available/atelier /etc/nginx/sites-enabled/atelier
+ln -sf /etc/nginx/sites-available/artisan-sole /etc/nginx/sites-enabled/artisan-sole
 nginx -t && systemctl reload nginx
 echo "  SSL-Konfiguration abgeschlossen"
 
@@ -271,22 +271,22 @@ DEPLOY_SCRIPT="/home/$APP_USER/deploy.sh"
 sudo -u $APP_USER cat > "$DEPLOY_SCRIPT" <<'DEPLOY'
 #!/bin/bash
 set -e
-APP_DIR="$HOME/atelier"
+APP_DIR="$HOME/artisan-sole"
 LOG="$HOME/deploy.log"
 
 echo "$(date) — Deploy gestartet" >> "$LOG"
 cd "$APP_DIR"
 git pull origin main >> "$LOG" 2>&1
-cd "$APP_DIR/atelier-app"
+cd "$APP_DIR/artisan-sole-app"
 npm install >> "$LOG" 2>&1
 npm run build >> "$LOG" 2>&1
-cd "$APP_DIR/atelier-backend"
+cd "$APP_DIR/artisan-sole-backend"
 npm install >> "$LOG" 2>&1
 # Update Python ML dependencies if requirements changed
 if [ -f "$HOME/ml-venv/bin/pip" ]; then
-  "$HOME/ml-venv/bin/pip" install -q -r "$APP_DIR/atelier-ml/requirements.txt" >> "$LOG" 2>&1
+  "$HOME/ml-venv/bin/pip" install -q -r "$APP_DIR/artisan-sole-ml/requirements.txt" >> "$LOG" 2>&1
 fi
-pm2 restart atelier >> "$LOG" 2>&1
+pm2 restart artisan-sole >> "$LOG" 2>&1
 echo "$(date) — Deploy abgeschlossen" >> "$LOG"
 DEPLOY
 chmod +x "$DEPLOY_SCRIPT"
@@ -309,9 +309,9 @@ echo ""
 echo "  Server:     http://$SERVER_IP"
 echo "  API:        http://$SERVER_IP/api/health"
 echo "  User:       $APP_USER (SSH: ssh $APP_USER@$SERVER_IP)"
-echo "  Backend:    pm2 status / pm2 logs atelier"
+echo "  Backend:    pm2 status / pm2 logs artisan-sole"
 echo "  Deploy:     /home/$APP_USER/deploy.sh"
-echo "  Daten:      /home/$APP_USER/atelier-data/"
+echo "  Daten:      /home/$APP_USER/artisan-sole-data/"
 echo "  Logs:       /home/$APP_USER/deploy.log"
 echo ""
 echo "  Nächste Schritte:"

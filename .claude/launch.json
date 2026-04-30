@@ -2,15 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "atelier-app",
+      "name": "artisan-sole-app",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "atelier-app", "run", "dev"],
+      "runtimeArgs": ["--prefix", "artisan-sole-app", "run", "dev"],
       "port": 5173
     },
     {
-      "name": "atelier-backend",
+      "name": "artisan-sole-backend",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "atelier-backend", "run", "dev"],
+      "runtimeArgs": ["--prefix", "artisan-sole-backend", "run", "dev"],
       "port": 3001
     }
   ]

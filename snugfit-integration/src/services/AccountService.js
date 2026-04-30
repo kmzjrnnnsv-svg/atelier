@@ -7,7 +7,7 @@
  *   - Vorhandene Modelle abrufen
  *   - Upload-Status tracken
  *
- * API-Basis: ATELIER Backend (Express / Node.js)
+ * API-Basis: ARTISAN SOLE Backend (Express / Node.js)
  * Auth:      JWT Bearer Token (in Memory, kein LocalStorage)
  * ─────────────────────────────────────────────────────────────────────────────
  */

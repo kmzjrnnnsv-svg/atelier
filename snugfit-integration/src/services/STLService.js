@@ -128,7 +128,7 @@ export async function validateSTL(filePath) {
  * Liest Basis-Metadaten aus dem STL-Header.
  *
  * Binary STL Header = 80 ASCII-Bytes
- * Gute SDKs schreiben Metadaten (z.B. "ATELIER left_foot 2024-01-15") hinein.
+ * Gute SDKs schreiben Metadaten (z.B. "ARTISAN_SOLE left_foot 2024-01-15") hinein.
  *
  * @param {string} filePath
  * @returns {Promise<{ headerText: string, triangleCount: number }>}

@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Atelier — Deploy Script
+# Artisan Sole — Deploy Script
 # Zieht den neuesten Code und startet das Backend neu.
 #
 # Nutzung:  bash ~/deploy.sh
@@ -8,12 +8,12 @@
 
 set -e
 
-APP_DIR="$HOME/atelier"
+APP_DIR="$HOME/artisan-sole"
 LOG="$HOME/deploy.log"
 BRANCH="website"
 
 echo "──────────────────────────────────────"
-echo "  Atelier Deploy — $(date '+%Y-%m-%d %H:%M:%S')"
+echo "  Artisan Sole Deploy — $(date '+%Y-%m-%d %H:%M:%S')"
 echo "──────────────────────────────────────"
 
 # 1. Neuesten Code holen
@@ -24,20 +24,20 @@ echo "  Code aktualisiert"
 
 # 2. Frontend bauen
 echo "→ Frontend bauen..."
-cd "$APP_DIR/atelier-app"
+cd "$APP_DIR/artisan-sole-app"
 npm install
 npm run build
 echo "  Frontend gebaut"
 
 # 3. Backend Dependencies prüfen
 echo "→ npm install (Backend)..."
-cd "$APP_DIR/atelier-backend"
+cd "$APP_DIR/artisan-sole-backend"
 npm install --production
 echo "  Dependencies aktuell"
 
 # 4. Backend neustarten
 echo "→ Backend neustarten..."
-pm2 restart atelier
+pm2 restart artisan-sole
 echo "  Backend neu gestartet"
 
 # 4. Status prüfen
@@ -50,5 +50,5 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') — Deploy erfolgreich" >> "$LOG"
 
 echo ""
 echo "  Deploy abgeschlossen!"
-echo "  Logs: pm2 logs atelier"
+echo "  Logs: pm2 logs artisan-sole"
 echo "──────────────────────────────────────"

@@ -45,7 +45,7 @@ import {
   SNUGFIT_CONFIG,
   POSITION_FEEDBACK,
 } from '../constants/scanConfig'
-import LidarScanNative, { lidarAvailable } from '../../../atelier-app/src/plugins/lidarScan'
+import LidarScanNative, { lidarAvailable } from '../../../artisan-sole-app/src/plugins/lidarScan'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typen-Dokumentation (JSDoc für IDE-Unterstützung)

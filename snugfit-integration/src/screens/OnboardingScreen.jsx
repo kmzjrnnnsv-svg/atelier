@@ -26,7 +26,7 @@ const SLIDES = [
     id:          '1',
     emoji:       '🦶',
     title:       'Dein Fuß.\nDein Schuh.',
-    description: 'ATELIER scannt deinen Fuß in 3D und erstellt daraus maßgefertigte Schuhe, die perfekt passen — auf den halben Millimeter genau.',
+    description: 'ARTISAN SOLE scannt deinen Fuß in 3D und erstellt daraus maßgefertigte Schuhe, die perfekt passen — auf den halben Millimeter genau.',
     color:       '#0f172a',
     accent:      '#10b981',
   },

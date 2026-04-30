@@ -1,0 +1,9 @@
+{
+  "id": "artisan-sole-plugin",
+  "name": "Artisan Sole",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Verbindet Obsidian mit dem Artisan Sole-Backend: Fußscans, Bestellungen, Kunden, Schuhe & CMS-Inhalte synchronisieren.",
+  "author": "Artisan Sole",
+  "isDesktopOnly": false
+}
