@@ -277,6 +277,8 @@ export function runMigrations(db) {
     // accessories — shoe recommendations (JSON arrays of category strings)
     `ALTER TABLE accessories ADD COLUMN recommended_for TEXT DEFAULT '[]'`,
     `ALTER TABLE accessories ADD COLUMN not_recommended_for TEXT DEFAULT '[]'`,
+    // orders — size type (standard = EU 39-46, custom = 3D scan)
+    `ALTER TABLE orders ADD COLUMN size_type TEXT DEFAULT 'standard'`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }

@@ -62,6 +62,7 @@ router.post('/',
       shoe_id, shoe_name, material, color, price, eu_size,
       delivery_address, billing_address, accessories, scan_id,
       foot_notes, shipping_method, shipping_cost, coupon_code,
+      size_type,
     } = req.body
 
     // Translate foot notes to English for manufacturer
@@ -121,8 +122,9 @@ router.post('/',
       INSERT INTO orders
         (user_id, shoe_id, shoe_name, material, color, price, eu_size,
          delivery_address, billing_address, accessories, scan_id, user_order_number, status, order_ref,
-         foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price,
+         size_type)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).run(
       uid,
       shoe_id    || null,
@@ -145,6 +147,7 @@ router.post('/',
       couponRow ? coupon_code.toUpperCase() : null,
       discount_amount || null,
       original_price || null,
+      size_type || 'standard',
     )
 
     // Record coupon usage + increment promotion orders
