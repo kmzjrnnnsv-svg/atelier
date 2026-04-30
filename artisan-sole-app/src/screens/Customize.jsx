@@ -269,6 +269,7 @@ export default function Customize() {
 
   // Preis: Basispreis aus DB + Sohle-Aufpreis + Zubehör
   const isPromo = !!user?.is_promotion
+  const promoDiscountPct = user?.promotion_discount_pct || 0
   const effectivePrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   const basePrice = parseFloat(String(effectivePrice).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
   const soleExtra = sole?.price_extra || 0
@@ -276,7 +277,8 @@ export default function Customize() {
     const acc = accessories.find(a => a.id === id)
     return sum + (acc?.price || 0)
   }, 0)
-  const totalPrice = basePrice + soleExtra + accessoryTotal
+  const accDiscount = isPromo && promoDiscountPct > 0 ? Math.round(accessoryTotal * promoDiscountPct / 100) : 0
+  const totalPrice = basePrice + soleExtra + accessoryTotal - accDiscount
   const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
   const displayPrice = formatPrice(totalPrice)
 
@@ -591,7 +593,14 @@ export default function Customize() {
 
                     {/* Info below */}
                     <p className="text-[12px] text-black/70 font-light mt-2 px-0.5">{acc.name}</p>
-                    <p className="text-[11px] text-black/35 px-0.5">€{acc.price}</p>
+                    {isPromo && promoDiscountPct > 0 ? (
+                      <div className="flex items-center gap-1.5 px-0.5">
+                        <span className="text-[11px] text-black/25 line-through">€{acc.price}</span>
+                        <span className="text-[11px] text-black/60">€{Math.round(acc.price * (1 - promoDiscountPct / 100))}</span>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-black/35 px-0.5">€{acc.price}</p>
+                    )}
                   </button>
                 )
               })}
@@ -622,10 +631,12 @@ export default function Customize() {
                 <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
                 <span className="text-[11px] lg:text-[12px] font-medium text-black">{product.match || '98.4%'}</span>
               </div>
-              {chosenEU && (
+              {(sizeType === 'custom' || selectedSize) && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Größe</span>
-                  <span className="text-[11px] lg:text-[12px] font-medium text-black">EU {chosenEU}{sizeType === 'custom' ? ' · Maß' : ''}</span>
+                  <span className="text-[11px] lg:text-[12px] font-medium text-black">
+                    {sizeType === 'custom' ? 'Maßanfertigung' : `EU ${selectedSize}`}
+                  </span>
                 </div>
               )}
             </div>
@@ -866,7 +877,7 @@ export default function Customize() {
                   </div>
                   <div className="flex-1">
                     <p className="text-[12px] text-black font-medium">Maßanfertigung</p>
-                    <p className="text-[10px] text-black/35 mt-0.5">EU {latestScan.eu_size} — basierend auf Ihrem 3D-Fußprofil</p>
+                    <p className="text-[10px] text-black/35 mt-0.5">Basierend auf Ihrem individuellen Fußprofil</p>
                   </div>
                   <ScanLine size={16} className="text-black/25 flex-shrink-0" strokeWidth={1.5} />
                 </button>
@@ -1006,10 +1017,10 @@ export default function Customize() {
                     <span className="text-[11px] text-black/50">Sohle</span>
                     <span className="text-[11px] text-black">{sole?.label}{soleExtra > 0 ? ` (+€${soleExtra})` : ''}</span>
                   </div>
-                  {(sizeType === 'custom' && latestScan) && (
+                  {sizeType === 'custom' && (
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-black/50">Größe</span>
-                      <span className="text-[11px] text-black">EU {latestScan.eu_size} · Maßanfertigung</span>
+                      <span className="text-[11px] text-black">Maßanfertigung</span>
                     </div>
                   )}
                   {(sizeType === 'standard' && selectedSize) && (
@@ -1022,7 +1033,11 @@ export default function Customize() {
                     <div className="flex items-center justify-between pt-1 mt-1 border-t border-black/5">
                       <span className="text-[11px] text-black/50">Zubehör</span>
                       <span className="text-[11px] text-black">
-                        {selectedAccessories.length}× (+€{accessoryTotal})
+                        {selectedAccessories.length}×
+                        {accDiscount > 0
+                          ? <> <span className="line-through text-black/25">€{accessoryTotal}</span> €{accessoryTotal - accDiscount}</>
+                          : <> (+€{accessoryTotal})</>
+                        }
                       </span>
                     </div>
                   )}
