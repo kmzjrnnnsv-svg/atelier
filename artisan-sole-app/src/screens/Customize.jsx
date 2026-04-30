@@ -159,53 +159,56 @@ export default function Customize() {
     return () => restored.forEach(fn => fn())
   }, [])
 
-  // Sequential scroll: right panel scrolls first, then left panel
+  // Sequential scroll: right panel first, then left panel.
+  // Both panels are set to overflow:hidden so we have full control.
   useEffect(() => {
     if (window.innerWidth < 1024) return
     const wrapper = outerRef.current
-    if (!wrapper) return
+    const rp = rightPanelRef.current
+    const lp = leftPanelRef.current
+    if (!wrapper || !rp || !lp) return
 
-    const atBottom = (el) => el.scrollHeight - el.scrollTop - el.clientHeight < 5
-    const atTop = (el) => el.scrollTop < 1
+    rp.style.overflowY = 'hidden'
+    lp.style.overflowY = 'hidden'
+
+    const clamp = (el, delta) => {
+      const max = el.scrollHeight - el.clientHeight
+      el.scrollTop = Math.max(0, Math.min(max, el.scrollTop + delta))
+    }
+
+    const scroll = (delta) => {
+      const rpMax = rp.scrollHeight - rp.clientHeight
+      const lpMax = lp.scrollHeight - lp.clientHeight
+
+      if (delta > 0) {
+        if (rp.scrollTop < rpMax - 1) { clamp(rp, delta) }
+        else { clamp(lp, delta) }
+      } else {
+        if (lp.scrollTop > 1) { clamp(lp, delta) }
+        else { clamp(rp, delta) }
+      }
+    }
 
     const onWheel = (e) => {
-      const rp = rightPanelRef.current
-      const lp = leftPanelRef.current
-      if (!rp || !lp) return
       e.preventDefault()
-
-      if (e.deltaY > 0) {
-        if (!atBottom(rp)) { rp.scrollTop += e.deltaY }
-        else { lp.scrollTop += e.deltaY }
-      } else {
-        if (!atTop(lp)) { lp.scrollTop += e.deltaY }
-        else { rp.scrollTop += e.deltaY }
-      }
+      scroll(e.deltaY)
     }
 
     let touchY0 = 0
     const onTouchStart = (e) => { touchY0 = e.touches[0].clientY }
     const onTouchMove = (e) => {
-      const rp = rightPanelRef.current
-      const lp = leftPanelRef.current
-      if (!rp || !lp) return
-      const deltaY = touchY0 - e.touches[0].clientY
-      touchY0 = e.touches[0].clientY
       e.preventDefault()
-
-      if (deltaY > 0) {
-        if (!atBottom(rp)) { rp.scrollTop += deltaY }
-        else { lp.scrollTop += deltaY }
-      } else {
-        if (!atTop(lp)) { lp.scrollTop += deltaY }
-        else { rp.scrollTop += deltaY }
-      }
+      const y = e.touches[0].clientY
+      scroll(touchY0 - y)
+      touchY0 = y
     }
 
     wrapper.addEventListener('wheel', onWheel, { passive: false, capture: true })
     wrapper.addEventListener('touchstart', onTouchStart, { passive: true, capture: true })
     wrapper.addEventListener('touchmove', onTouchMove, { passive: false, capture: true })
     return () => {
+      rp.style.overflowY = ''
+      lp.style.overflowY = ''
       wrapper.removeEventListener('wheel', onWheel, { capture: true })
       wrapper.removeEventListener('touchstart', onTouchStart, { capture: true })
       wrapper.removeEventListener('touchmove', onTouchMove, { capture: true })
