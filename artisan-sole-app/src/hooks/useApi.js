@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { getAccessToken, setAccessToken } from '../context/AuthContext'
 
 // In Capacitor iOS production builds, relative URLs don't reach the backend.
-// VITE_API_URL should be set to the production server (e.g. https://raza.work).
+// VITE_API_URL should be set to the production server (e.g. https://artisansole.com).
 // Empty string in dev — Vite proxy handles /api/* → localhost:3001.
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
 const isNativePlatform = Capacitor.isNativePlatform()
@@ -20,9 +20,9 @@ async function refreshAccessToken() {
   }
   isRefreshing = true
   try {
-    const fetchOpts = { method: 'POST', credentials: 'include' }
+    const fetchOpts = { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'ArtisanSole' } }
     if (isNativePlatform && _nativeRefreshToken) {
-      fetchOpts.headers = { 'Content-Type': 'application/json' }
+      fetchOpts.headers = { ...fetchOpts.headers, 'Content-Type': 'application/json' }
       fetchOpts.body = JSON.stringify({ refreshToken: _nativeRefreshToken })
     }
     const res = await fetch(`${API_BASE}/api/auth/refresh`, fetchOpts)
@@ -47,6 +47,7 @@ export async function apiFetch(url, options = {}) {
   const token = getAccessToken()
   const headers = {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'ArtisanSole',
     ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }

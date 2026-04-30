@@ -8,7 +8,7 @@ import {
   signAccessToken, generateRefreshToken, hashToken,
   refreshExpiresAt, COOKIE_OPTIONS
 } from '../utils/tokens.js'
-import { authLimiter, refreshLimiter } from '../middleware/rateLimiter.js'
+import { authLimiter, refreshLimiter, strictLimiter } from '../middleware/rateLimiter.js'
 import { authenticate } from '../middleware/auth.js'
 
 const router = Router()
@@ -46,7 +46,7 @@ function issueTokens(res, user) {
 }
 
 // POST /api/auth/register
-router.post('/register', authLimiter, validateRegister, (req, res) => {
+router.post('/register', strictLimiter, authLimiter, validateRegister, (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
 
