@@ -10,7 +10,7 @@ REMOTE=$(git rev-parse origin/website)
 
 if [ "$LOCAL" != "$REMOTE" ]; then
   git pull origin website
-  cd atelier-app && npm run build
+  cd artisan-sole-app && npm run build
   pm2 restart all
   echo "$(date): Updated to $(git rev-parse --short HEAD)" >> ~/app/sync.log
 else

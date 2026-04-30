@@ -3,7 +3,7 @@ const crypto = require('crypto')
 const { execSync } = require('child_process')
 
 const PORT = 9000
-const SECRET = process.env.WEBHOOK_SECRET || 'atelier-webhook-secret-change-me'
+const SECRET = process.env.WEBHOOK_SECRET || 'artisan-sole-webhook-secret-change-me'
 const APP_DIR = '/home/nrply/app'
 
 function verifySignature(req, body) {
@@ -42,11 +42,11 @@ const server = http.createServer((req, res) => {
 
     try {
       execSync(`cd ${APP_DIR} && git pull origin website`, { stdio: 'inherit' })
-      execSync(`cd ${APP_DIR}/atelier-app && npm install && npm run build`, { stdio: 'inherit' })
-      execSync(`cd ${APP_DIR}/atelier-backend && npm install --production`, { stdio: 'inherit' })
+      execSync(`cd ${APP_DIR}/artisan-sole-app && npm install && npm run build`, { stdio: 'inherit' })
+      execSync(`cd ${APP_DIR}/artisan-sole-backend && npm install --production`, { stdio: 'inherit' })
       // Restart backend — adjust to your process manager (pm2/systemd)
-      try { execSync('pm2 restart atelier', { stdio: 'inherit' }) } catch (_) {}
-      try { execSync('systemctl restart atelier-backend', { stdio: 'inherit' }) } catch (_) {}
+      try { execSync('pm2 restart artisan-sole', { stdio: 'inherit' }) } catch (_) {}
+      try { execSync('systemctl restart artisan-sole-backend', { stdio: 'inherit' }) } catch (_) {}
       console.log('Deploy successful!')
     } catch (err) {
       console.error('Deploy failed:', err.message)

@@ -1,0 +1,153 @@
+import 'dotenv/config'
+import express from 'express'
+import path from 'path'
+import helmet from 'helmet'
+import cors from 'cors'
+import cookieParser from 'cookie-parser'
+import crypto from 'crypto'
+import { execFile } from 'child_process'
+import { getDb } from './db/database.js'
+import { seedDatabase } from './db/seed.js'
+import { apiLimiter } from './middleware/rateLimiter.js'
+import authRouter from './routes/auth.js'
+import usersRouter from './routes/users.js'
+import { shoesRouter, curatedRouter, wardrobeRouter, outfitsRouter, articlesRouter, materialsRouter, colorsRouter, solesRouter, exploreSectionsRouter, accessoriesRouter } from './routes/content.js'
+import scansRouter      from './routes/scans.js'
+import favoritesRouter  from './routes/favorites.js'
+import ordersRouter     from './routes/orders.js'
+import reviewsRouter    from './routes/reviews.js'
+import faqsRouter       from './routes/faqs.js'
+import legalRouter      from './routes/legal.js'
+import settingsRouter   from './routes/settings.js'
+import emailTemplatesRouter from './routes/emailTemplates.js'
+import loyaltyRouter from './routes/loyalty.js'
+import feedbackRouter from './routes/feedback.js'
+import shippingRouter from './routes/shipping.js'
+import couponsRouter from './routes/coupons.js'
+import mediaRouter from './routes/media.js'
+
+const app = express()
+const PORT = process.env.PORT || 3001
+
+// Trust the Vite dev proxy so rate limiters see the real client IP
+app.set('trust proxy', 1)
+
+// Security headers
+app.use(helmet())
+
+// CORS — allow Vite dev server + Capacitor iOS WKWebView + production
+const isDev = process.env.NODE_ENV !== 'production'
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://localhost:5173',  // Vite with basicSsl()
+  'http://127.0.0.1:5173',
+  'https://127.0.0.1:5173',
+  'capacitor://localhost',   // Capacitor iOS
+  'ionic://localhost',       // Capacitor iOS (legacy)
+  'https://localhost',       // Capacitor iOS (HTTPS mode)
+  'https://raza.work',      // Production
+  'https://www.raza.work',  // Production (www)
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+]
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow requests with no origin (native mobile, curl, Postman)
+    if (!origin) return cb(null, true)
+    if (allowedOrigins.includes(origin)) return cb(null, true)
+    // In dev, allow any localhost/IP origin (iPhone Simulator, LAN access)
+    if (isDev && (origin.includes('localhost') || /^https?:\/\/(\d+\.){3}\d+/.test(origin))) {
+      return cb(null, true)
+    }
+    cb(new Error(`CORS: origin ${origin} not allowed`))
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-MFA-Code'],
+}))
+
+app.use(cookieParser())
+app.use(express.json({ limit: '25mb' })) // LiDAR point clouds (~2MB) + photogrammetry 16 images (~20MB)
+
+// Static file serving for uploaded media
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')))
+
+// Global rate limit
+app.use('/api', apiLimiter)
+
+// Routes
+app.use('/api/auth',     authRouter)
+app.use('/api/users',    usersRouter)
+app.use('/api/shoes',    shoesRouter)
+app.use('/api/curated',  curatedRouter)
+app.use('/api/wardrobe', wardrobeRouter)
+app.use('/api/outfits',  outfitsRouter)
+app.use('/api/scans',     scansRouter)
+app.use('/api/articles',   articlesRouter)
+app.use('/api/materials',  materialsRouter)
+app.use('/api/colors',     colorsRouter)
+app.use('/api/soles',      solesRouter)
+app.use('/api/favorites', favoritesRouter)
+app.use('/api/orders',    ordersRouter)
+app.use('/api/reviews',   reviewsRouter)
+app.use('/api/faqs',      faqsRouter)
+app.use('/api/legal',     legalRouter)
+app.use('/api/settings',  settingsRouter)
+app.use('/api/email-templates', emailTemplatesRouter)
+app.use('/api/explore-sections', exploreSectionsRouter)
+app.use('/api/loyalty', loyaltyRouter)
+app.use('/api/feedback', feedbackRouter)
+app.use('/api/accessories', accessoriesRouter)
+app.use('/api/shipping', shippingRouter)
+app.use('/api/coupons', couponsRouter)
+app.use('/api/media', mediaRouter)
+
+// GitHub Webhook — auto-deploy on push to website
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const secret = process.env.WEBHOOK_SECRET
+  if (secret) {
+    const sig = req.headers['x-hub-signature-256']
+    const hmac = crypto.createHmac('sha256', secret).update(req.body).digest('hex')
+    if (sig !== `sha256=${hmac}`) {
+      return res.status(401).json({ error: 'Invalid signature' })
+    }
+  }
+
+  const payload = JSON.parse(req.body)
+  if (payload.ref !== 'refs/heads/website') {
+    return res.json({ status: 'ignored', ref: payload.ref })
+  }
+
+  console.log('Webhook: deploying website branch...')
+  execFile('/home/nrply/app/deploy.sh', (err, stdout, stderr) => {
+    if (err) console.error('Deploy failed:', stderr)
+    else console.log('Deploy done:', stdout)
+  })
+
+  res.json({ status: 'deploying' })
+})
+
+// Health check
+app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }))
+
+// Serve frontend dist (production)
+const distPath = path.resolve(process.cwd(), '../artisan-sole-app/dist')
+app.use(express.static(distPath))
+app.get('/{*splat}', (req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) return next()
+  res.sendFile(path.join(distPath, 'index.html'))
+})
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err)
+  res.status(500).json({ error: 'Internal server error' })
+})
+
+// Init
+const db = getDb()
+await seedDatabase(db)
+
+app.listen(PORT, () => {
+  console.log(`🚀 Artisan Sole Backend running on http://localhost:${PORT}`)
+  console.log(`   ENV: ${process.env.NODE_ENV}`)
+})

@@ -4,7 +4,7 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # ── Frontend .env ────────────────────────────────────────────────────
-ENV_FILE="$SCRIPT_DIR/atelier-app/.env"
+ENV_FILE="$SCRIPT_DIR/artisan-sole-app/.env"
 if [ ! -f "$ENV_FILE" ]; then
   cat > "$ENV_FILE" <<'EOF'
 VITE_API_URL=http://localhost:3001
@@ -15,8 +15,8 @@ else
 fi
 
 # ── Backend .env (from .env.example if available) ────────────────────
-BACKEND_ENV="$SCRIPT_DIR/atelier-backend/.env"
-BACKEND_EXAMPLE="$SCRIPT_DIR/atelier-backend/.env.example"
+BACKEND_ENV="$SCRIPT_DIR/artisan-sole-backend/.env"
+BACKEND_EXAMPLE="$SCRIPT_DIR/artisan-sole-backend/.env.example"
 if [ ! -f "$BACKEND_ENV" ] && [ -f "$BACKEND_EXAMPLE" ]; then
   cp "$BACKEND_EXAMPLE" "$BACKEND_ENV"
   echo "✅ Created $BACKEND_ENV (from .env.example — please edit secrets!)"
@@ -27,4 +27,4 @@ else
 fi
 
 echo ""
-echo "Done. Run 'cd atelier-app && npm run build && npx cap sync ios' to rebuild."
+echo "Done. Run 'cd artisan-sole-app && npm run build && npx cap sync ios' to rebuild."

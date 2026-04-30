@@ -1,6 +1,6 @@
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- * ATELIER × SnugFit – Scan Configuration
+ * Artisan Sole × SnugFit – Scan Configuration
  * ─────────────────────────────────────────────────────────────────────────────
  * Zentrale Konfigurationsdatei für alle Scan-Parameter, Schwellenwerte und
  * API-Endpunkte. Alle veränderbaren Werte an einem Ort.
@@ -115,7 +115,7 @@ export const STL_CONFIG = {
 
 // ── API-Endpunkte ─────────────────────────────────────────────────────────────
 export const API_CONFIG = {
-  baseUrl: process.env.API_BASE_URL ?? 'https://api.atelier-shoes.com/v1',
+  baseUrl: process.env.API_BASE_URL ?? 'https://api.artisansole.com/v1',
   endpoints: {
     uploadSTL:    '/users/me/foot-models',
     getSTLModels: '/users/me/foot-models',

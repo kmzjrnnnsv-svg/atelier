@@ -1,0 +1,11 @@
+{
+  "name": "ARTISAN SOLE — Maßgeschneiderte Luxusschuhe",
+  "short_name": "Artisan Sole",
+  "start_url": "/collection",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
