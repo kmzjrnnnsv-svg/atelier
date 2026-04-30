@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus } from 'lucide-react'
+import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler } from 'lucide-react'
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -93,6 +93,11 @@ export default function Customize() {
   const [selCol,  setSelCol]  = useState('')
   const [selSole, setSelSole] = useState('')
   const [added,   setAdded]   = useState(false)
+
+  // Size selection: 'custom' (3D scan) or EU size string like '42'
+  const [sizeType, setSizeType] = useState(latestScan ? 'custom' : '')
+  const [selectedSize, setSelectedSize] = useState('')
+  const EU_SIZES = ['39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46']
 
   // Step-by-step guided flow: 0=nothing, 1=leather chosen, 2=color chosen, 3=sole chosen
   const configStep = selSole ? 3 : selCol ? 2 : selMat ? 1 : 0
@@ -316,6 +321,7 @@ export default function Customize() {
     })
   }
 
+  const chosenEU = sizeType === 'custom' ? latestScan?.eu_size : selectedSize
   const addShoeToCart = () => {
     addToCart({
       shoeId: product.id, name: product.name,
@@ -323,6 +329,7 @@ export default function Customize() {
       color, price: formatPrice(basePrice + soleExtra),
       sole: sole?.label || 'Sohle',
       image: product.image,
+      sizeType, euSize: chosenEU,
     })
   }
 
@@ -379,6 +386,7 @@ export default function Customize() {
           material: mat?.label || product.material,
           color, price: formatPrice(basePrice + soleExtra),
           sole: sole?.label || 'Sohle',
+          sizeType, euSize: chosenEU,
         },
         accessories: cartAccessories,
       },
@@ -614,10 +622,10 @@ export default function Customize() {
                 <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
                 <span className="text-[11px] lg:text-[12px] font-medium text-black">{product.match || '98.4%'}</span>
               </div>
-              {latestScan && (
+              {chosenEU && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Größe</span>
-                  <span className="text-[11px] lg:text-[12px] font-medium text-black">EU {latestScan.eu_size}</span>
+                  <span className="text-[11px] lg:text-[12px] font-medium text-black">EU {chosenEU}{sizeType === 'custom' ? ' · Maß' : ''}</span>
                 </div>
               )}
             </div>
@@ -837,21 +845,79 @@ export default function Customize() {
 
             {/* ── Remaining sections (visible after all steps) ── */}
 
-            {/* Scan-Hinweis */}
-            {!latestScan && (
+            {/* ── Größenauswahl ─────────────────────────────── */}
+            <div className="px-5 lg:px-0">
+              <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Größe wählen</p>
+
+              {/* Option: Maßanfertigung (wenn Scan vorhanden) */}
+              {latestScan && (
+                <button
+                  onClick={() => { setSizeType('custom'); setSelectedSize('') }}
+                  className={`w-full p-3.5 mb-2 flex items-center gap-3 text-left transition-all border ${
+                    sizeType === 'custom'
+                      ? 'border-black bg-black/[0.02]'
+                      : 'border-black/10 hover:border-black/20'
+                  }`}
+                >
+                  <div className={`w-5 h-5 flex items-center justify-center flex-shrink-0 transition-all ${
+                    sizeType === 'custom' ? 'bg-black' : 'border border-black/15'
+                  }`}>
+                    {sizeType === 'custom' && <Check size={11} strokeWidth={3} className="text-white" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[12px] text-black font-medium">Maßanfertigung</p>
+                    <p className="text-[10px] text-black/35 mt-0.5">EU {latestScan.eu_size} — basierend auf Ihrem 3D-Fußprofil</p>
+                  </div>
+                  <ScanLine size={16} className="text-black/25 flex-shrink-0" strokeWidth={1.5} />
+                </button>
+              )}
+
+              {/* Option: Standardgröße */}
               <button
-                onClick={() => navigate('/scan')}
-                className="w-full p-4 border-y lg:border lg:rounded-sm border-dashed border-black/15 bg-transparent flex items-center gap-3 text-left"
+                onClick={() => { setSizeType('standard'); if (!selectedSize) setSelectedSize('42') }}
+                className={`w-full p-3.5 flex items-center gap-3 text-left transition-all border ${
+                  sizeType === 'standard'
+                    ? 'border-black bg-black/[0.02]'
+                    : 'border-black/10 hover:border-black/20'
+                }`}
               >
-                <div className="w-10 h-10 bg-black flex items-center justify-center flex-shrink-0">
-                  <ScanLine size={18} className="text-white" strokeWidth={1.5} />
+                <div className={`w-5 h-5 flex items-center justify-center flex-shrink-0 transition-all ${
+                  sizeType === 'standard' ? 'bg-black' : 'border border-black/15'
+                }`}>
+                  {sizeType === 'standard' && <Check size={11} strokeWidth={3} className="text-white" />}
                 </div>
-                <div>
-                  <p className="text-[11px] text-black" style={{ letterSpacing: '0.05em' }}>Fuß scannen</p>
-                  <p className="text-[10px] text-black/35">Für die perfekte Größe</p>
+                <div className="flex-1">
+                  <p className="text-[12px] text-black font-medium">Standardgröße</p>
+                  <p className="text-[10px] text-black/35 mt-0.5">EU 39 – 46</p>
                 </div>
+                <Ruler size={16} className="text-black/25 flex-shrink-0" strokeWidth={1.5} />
               </button>
-            )}
+
+              {/* Größen-Grid (nur wenn Standardgröße gewählt) */}
+              {sizeType === 'standard' && (
+                <div className="grid grid-cols-7 gap-1.5 mt-3">
+                  {EU_SIZES.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setSelectedSize(s)}
+                      className={`h-10 flex items-center justify-center text-[12px] transition-all ${
+                        selectedSize === s
+                          ? 'bg-black text-white font-medium'
+                          : 'bg-black/[0.03] text-black/60 hover:bg-black/[0.06]'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!latestScan && sizeType !== 'standard' && (
+                <p className="text-[10px] text-black/25 mt-2 text-center">
+                  Für eine Maßanfertigung benötigen Sie einen Fußscan — kontaktieren Sie uns.
+                </p>
+              )}
+            </div>
 
             {/* Reviews (kompakt) */}
             <div className="px-5 lg:px-0">
@@ -940,10 +1006,16 @@ export default function Customize() {
                     <span className="text-[11px] text-black/50">Sohle</span>
                     <span className="text-[11px] text-black">{sole?.label}{soleExtra > 0 ? ` (+€${soleExtra})` : ''}</span>
                   </div>
-                  {latestScan && (
+                  {(sizeType === 'custom' && latestScan) && (
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-black/50">Größe</span>
-                      <span className="text-[11px] text-black">EU {latestScan.eu_size}</span>
+                      <span className="text-[11px] text-black">EU {latestScan.eu_size} · Maßanfertigung</span>
+                    </div>
+                  )}
+                  {(sizeType === 'standard' && selectedSize) && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-black/50">Größe</span>
+                      <span className="text-[11px] text-black">EU {selectedSize}</span>
                     </div>
                   )}
                   {selectedAccessories.length > 0 && (
