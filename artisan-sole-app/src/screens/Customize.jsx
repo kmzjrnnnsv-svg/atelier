@@ -165,57 +165,70 @@ export default function Customize() {
     const wrapper = outerRef.current
     if (!wrapper) return
 
-    // Helper: route a vertical delta to the correct panel
-    const routeScroll = (deltaY) => {
+    let velocity = 0
+    let rafId = null
+    const FRICTION = 0.92
+    const MIN_VELOCITY = 0.5
+
+    const getTargetPanel = (direction) => {
       const rp = rightPanelRef.current
       const lp = leftPanelRef.current
-      if (!rp || !lp) return false
+      if (!rp || !lp) return null
 
       const rpAtBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
       const rpAtTop = rp.scrollTop <= 0
       const lpAtTop = lp.scrollTop <= 0
       const lpAtBottom = lp.scrollHeight - lp.scrollTop - lp.clientHeight < 2
 
-      if (deltaY > 0) {
-        // DOWN: right first, then left
-        if (!rpAtBottom) { rp.scrollTop += deltaY; return true }
-        if (!lpAtBottom) { lp.scrollTop += deltaY; return true }
+      if (direction > 0) {
+        if (!rpAtBottom) return rp
+        if (!lpAtBottom) return lp
       } else {
-        // UP: left first, then right
-        if (!lpAtTop) { lp.scrollTop += deltaY; return true }
-        if (!rpAtTop) { rp.scrollTop += deltaY; return true }
+        if (!lpAtTop) return lp
+        if (!rpAtTop) return rp
       }
-      return false // both panels at boundary
+      return null
     }
 
-    // ── Wheel (MacBook trackpad / mouse) — always prevent default on desktop ──
+    const tick = () => {
+      if (Math.abs(velocity) < MIN_VELOCITY) { rafId = null; return }
+      const panel = getTargetPanel(velocity)
+      if (panel) {
+        panel.scrollTop += velocity
+      }
+      velocity *= FRICTION
+      rafId = requestAnimationFrame(tick)
+    }
+
     const onWheel = (e) => {
       e.preventDefault()
-      routeScroll(e.deltaY)
+      velocity += e.deltaY * 0.4
+      if (!rafId) rafId = requestAnimationFrame(tick)
     }
 
-    // ── Touch (iPad) ──
     let touchY0 = 0
     let touchActive = false
     const onTouchStart = (e) => {
       touchY0 = e.touches[0].clientY
       touchActive = true
+      velocity = 0
     }
     const onTouchMove = (e) => {
       if (!touchActive) return
       const y = e.touches[0].clientY
-      const deltaY = touchY0 - y  // positive = finger moves up = scroll down
+      const deltaY = touchY0 - y
       touchY0 = y
-      if (routeScroll(deltaY)) e.preventDefault()
+      const panel = getTargetPanel(deltaY)
+      if (panel) { panel.scrollTop += deltaY; e.preventDefault() }
     }
     const onTouchEnd = () => { touchActive = false }
 
-    // Use capture phase so we intercept before child panels scroll natively
     wrapper.addEventListener('wheel', onWheel, { passive: false, capture: true })
     wrapper.addEventListener('touchstart', onTouchStart, { passive: true, capture: true })
     wrapper.addEventListener('touchmove', onTouchMove, { passive: false, capture: true })
     wrapper.addEventListener('touchend', onTouchEnd, { passive: true, capture: true })
     return () => {
+      if (rafId) cancelAnimationFrame(rafId)
       wrapper.removeEventListener('wheel', onWheel, { capture: true })
       wrapper.removeEventListener('touchstart', onTouchStart, { capture: true })
       wrapper.removeEventListener('touchmove', onTouchMove, { capture: true })
