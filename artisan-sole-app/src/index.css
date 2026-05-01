@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
@@ -33,8 +33,24 @@ html:not(.mobile-web), html:not(.mobile-web) body, html:not(.mobile-web) #root {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   background: #F2F2F7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+button, input, select, textarea {
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', sans-serif;
+  letter-spacing: 0.04em;
 }
 
 html:not(.mobile-web) #root {
@@ -53,14 +69,32 @@ html.mobile-web body {
   overscroll-behavior-y: none;
 }
 
+/* Legacy alias — Louis-Vuitton-Stil ist Sans-Serif (Futura), kein Playfair mehr */
 .font-playfair {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .font-brand {
-  font-family: 'Jost', 'Futura', 'Century Gothic', sans-serif;
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', sans-serif;
   font-weight: 400;
   letter-spacing: 0.35em;
+  text-transform: uppercase;
+}
+
+.font-lv {
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.font-lv-display {
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
 }
 

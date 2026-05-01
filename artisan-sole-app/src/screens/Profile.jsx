@@ -109,7 +109,7 @@ export default function Profile() {
         {/* Profile info */}
         <div className="flex items-center gap-5">
           <div className="w-20 h-20 bg-[#f6f5f3] flex items-center justify-center flex-shrink-0">
-            <span className="text-[28px] font-extralight text-black/30" style={{ fontFamily: 'Georgia, serif' }}>{initials}</span>
+            <span className="text-[28px] font-extralight text-black/30 tracking-[0.08em]" style={{ fontFamily: "'Jost', 'Futura', 'Century Gothic', sans-serif" }}>{initials}</span>
           </div>
           <div>
             <h1 className="text-[24px] lg:text-[32px] font-extralight text-black tracking-tight">{user?.name || 'Alex Sterling'}</h1>

@@ -2699,7 +2699,7 @@ export default function FootScan() {
               {/* Foot profile header */}
               <div className="bg-black px-5 py-7 text-center">
                 <p className="text-[10px] text-white/30 uppercase tracking-[0.25em] font-light mb-2">Scan-Ergebnis</p>
-                <p className="text-[20px] font-extralight text-white tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Dein individuelles Fußprofil</p>
+                <p className="text-[20px] font-extralight text-white tracking-[0.18em] uppercase" style={{ fontFamily: "'Jost', 'Futura', 'Century Gothic', sans-serif" }}>Dein individuelles Fußprofil</p>
                 <p className="text-[11px] text-white/35 font-light tracking-[0.1em] mt-3">EU {result.sizes.eu} · UK {result.sizes.uk} · US {result.sizes.us}</p>
                 {result.isDemo ? (
                   <div className="inline-flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] px-3 py-1.5 mt-3">
