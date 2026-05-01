@@ -242,7 +242,7 @@ export default function Settings() {
       <div className="px-5 lg:px-16 pb-6 border-b border-black/[0.06]">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-[#f6f5f3] flex items-center justify-center flex-shrink-0">
-            <span className="text-[20px] font-extralight text-black/40" style={{ fontFamily: 'Georgia, serif' }}>
+            <span className="text-[20px] font-extralight text-black/40 tracking-[0.08em]" style={{ fontFamily: "'Jost', 'Futura', 'Century Gothic', sans-serif" }}>
               {user?.name?.[0]?.toUpperCase() ?? '?'}
             </span>
           </div>
@@ -453,7 +453,7 @@ export default function Settings() {
       {/* ── Version ──────────────────────────────────────────────── */}
       <div className="mt-10 mb-4 flex flex-col items-center gap-2">
         <div className="w-7 h-7 bg-[#19110B] flex items-center justify-center">
-          <span className="text-white font-extralight text-[11px]" style={{ fontFamily: 'Georgia, serif' }}>A</span>
+          <span className="text-white font-extralight text-[11px] tracking-[0.1em]" style={{ fontFamily: "'Jost', 'Futura', 'Century Gothic', sans-serif" }}>A</span>
         </div>
         <p className="font-brand text-[10px] text-black/20">ARTISAN SOLE v1.0.0</p>
         <p className="text-[9px] text-black/15 font-light">Made with precision, crafted with care.</p>
