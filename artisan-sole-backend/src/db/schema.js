@@ -192,7 +192,8 @@ export function runMigrations(db) {
       ('shipping_to_customer', '0'),
       ('packaging_cost', '0'),
       ('customs_cost', '0'),
-      ('promotion_scan_tolerance_pct', '10');
+      ('promotion_scan_tolerance_pct', '10'),
+      ('whatsapp_business_number', '');
   `)
 
   // ── Checkout columns (added after initial schema) ─────────────────────────
@@ -768,5 +769,33 @@ export function runMigrations(db) {
       created_by  INTEGER REFERENCES users(id),
       created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
+
+    -- ── Custom-fit shoe requests (Maßanfertigung) ───────────────────────────
+    -- Guests can submit; user_id is optional. Phone is required for
+    -- WhatsApp-Business follow-up by admin / curator.
+    CREATE TABLE IF NOT EXISTS custom_requests (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      customer_name   TEXT    NOT NULL,
+      customer_email  TEXT    NOT NULL,
+      customer_phone  TEXT    NOT NULL,
+      shoe_id         INTEGER REFERENCES shoes(id) ON DELETE SET NULL,
+      shoe_name       TEXT,
+      material        TEXT,
+      color           TEXT,
+      sole            TEXT,
+      eu_size         TEXT,
+      scan_id         INTEGER REFERENCES foot_scans(id) ON DELETE SET NULL,
+      accessories     TEXT,                              -- JSON string
+      notes           TEXT,
+      status          TEXT    NOT NULL DEFAULT 'open'
+                      CHECK(status IN ('open','contacted','in_progress','quoted','accepted','declined','closed')),
+      admin_notes     TEXT,
+      assigned_to     INTEGER REFERENCES users(id),
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_custom_requests_status ON custom_requests(status);
+    CREATE INDEX IF NOT EXISTS idx_custom_requests_user   ON custom_requests(user_id);
   `)
 }
