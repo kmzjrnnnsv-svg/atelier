@@ -19,6 +19,9 @@ echo "────────────────────────�
 # 1. Neuesten Code holen
 echo "→ Git pull..."
 cd "$APP_DIR"
+# Lockfiles werden auf dem Server bei jedem `npm install` neu erzeugt und blockieren
+# sonst den Pull. Sie sind im Repo gepflegt — lokale Diffs hier sind Wegwerf.
+git checkout -- artisan-sole-app/package-lock.json artisan-sole-backend/package-lock.json 2>/dev/null || true
 git pull origin "$BRANCH"
 echo "  Code aktualisiert"
 

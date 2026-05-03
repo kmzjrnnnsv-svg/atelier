@@ -39,10 +39,12 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">
-      {/* Top bar — Zurück zum Shop (Window Shopping ohne Login) */}
+      {/* Top bar — Zurück zum Shop (Window Shopping ohne Login).
+          IMMER /foryou: redirectTo kann eine geschützte Seite sein, die uns
+          sofort wieder zu /login schickt. */}
       <div className="w-full flex items-center justify-between px-5 lg:px-10 py-4">
         <button
-          onClick={() => navigate(redirectTo || '/foryou', { replace: true })}
+          onClick={() => navigate('/foryou', { replace: true })}
           className="flex items-center gap-1.5 bg-transparent border-0 text-black/55 hover:text-black active:opacity-50 text-[12px] tracking-[0.15em] uppercase"
         >
           <ArrowLeft size={16} strokeWidth={1.4} />
@@ -135,7 +137,7 @@ export default function Login() {
           <Link to="/register" className="text-black font-semibold no-underline">Registrieren</Link>
         </p>
         <button
-          onClick={() => navigate(redirectTo || '/foryou', { replace: true })}
+          onClick={() => navigate('/foryou', { replace: true })}
           className="text-[11px] text-black/40 hover:text-black tracking-[0.2em] uppercase bg-transparent border-0"
         >
           Weiter ohne Anmeldung
