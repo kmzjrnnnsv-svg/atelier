@@ -79,13 +79,39 @@ export default function Customize() {
   const category = product.category || 'OXFORD'
   const availableSoles = getSolesForCategory(shoeSoles, category)
 
+  // Per-Schuh konfigurierte Farben/Materialien (vom CMS gepflegt). Sind sie
+  // gesetzt, ersetzen sie die globalen Listen — der Konfigurator zeigt nur
+  // genau das, was der Admin für DIESEN Schuh freigegeben hat.
+  const [perShoeMaterialKeys, setPerShoeMaterialKeys] = useState(null)   // null=loading, []=keine Beschränkung
+  const [perShoeColorVariants, setPerShoeColorVariants] = useState(null) // null=loading
+  useEffect(() => {
+    if (!product?.id) return
+    apiFetch(`/api/shoes/${product.id}/materials`)
+      .then(keys => setPerShoeMaterialKeys(Array.isArray(keys) ? keys : []))
+      .catch(() => setPerShoeMaterialKeys([]))
+    apiFetch(`/api/shoes/${product.id}/colors`)
+      .then(rows => setPerShoeColorVariants(Array.isArray(rows) ? rows : []))
+      .catch(() => setPerShoeColorVariants([]))
+  }, [product?.id])
+
   // Daten aus dem Store (mit Fallback)
-  const matList = shoeMaterials.length ? shoeMaterials : [
+  const globalMatList = shoeMaterials.length ? shoeMaterials : [
     { id: 1, key: 'calfskin', label: 'Kalbsleder', sub: 'Full-Grain', color: '#b45309', available: 1, tip: 'Robust und langlebig.', rating: 'good' },
   ]
-  const colList = shoeColors.length ? shoeColors : [
-    { id: 1, key: 'schwarz', hex: '#000000', name: 'Schwarz', available: 1, rating: 'good' },
-  ]
+  const matList = perShoeMaterialKeys && perShoeMaterialKeys.length > 0
+    ? globalMatList.filter(m => perShoeMaterialKeys.includes(m.key))
+    : globalMatList
+
+  // Per-Schuh Farb-Varianten haben Vorrang. Sie tragen eigene Bilder, die im
+  // Hauptbild gezeigt werden, sobald die Farbe ausgewählt ist.
+  const colList = perShoeColorVariants && perShoeColorVariants.length > 0
+    ? perShoeColorVariants.map((v, i) => ({
+        id: v.id, key: `cms-${v.id}`, hex: v.hex, name: v.name,
+        available: 1, rating: 'good', images: v.images || [],
+      }))
+    : (shoeColors.length ? shoeColors : [
+        { id: 1, key: 'schwarz', hex: '#000000', name: 'Schwarz', available: 1, rating: 'good' },
+      ])
   const soleList = availableSoles.length ? availableSoles : [
     { id: 1, key: 'rubber-grip', label: 'Anti-Rutsch', sub: 'Gummi', description: 'Profilsohle mit Grip.', price_extra: 35, rating: 'good', recommended: 1 },
   ]
@@ -477,8 +503,8 @@ export default function Customize() {
                 transition: drag.current.on ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             >
-              {product.image ? (
-                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+              {(col?.images?.[0] || product.image) ? (
+                <img src={col?.images?.[0] || product.image} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
                   <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />

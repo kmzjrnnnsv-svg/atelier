@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, X, Check, Upload, Gift, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Upload, Gift, ChevronDown, ChevronUp, Palette, Layers, AlertCircle } from 'lucide-react'
 import useStore from '../../store/store'
 import { apiFetch } from '../../hooks/useApi'
 
@@ -197,6 +197,253 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  )
 }
 
+// ── Material-Assigner: Mehrfachauswahl aus globaler shoe_materials-Liste ──
+function MaterialAssigner({ shoeId }) {
+  const { shoeMaterials } = useStore()
+  const [selected, setSelected] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [savedAt, setSavedAt] = useState(0)
+
+  useEffect(() => {
+    apiFetch(`/api/shoes/${shoeId}/materials`)
+      .then(keys => { setSelected(Array.isArray(keys) ? keys : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [shoeId])
+
+  const toggle = (key) => {
+    setSelected(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
+  }
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await apiFetch(`/api/shoes/${shoeId}/materials`, {
+        method: 'PUT',
+        body: JSON.stringify({ material_keys: selected }),
+      })
+      setSavedAt(Date.now())
+    } catch {} finally { setSaving(false) }
+  }
+
+  if (loading) return <p className="text-[10px] text-black/25 py-2 font-light">Laden…</p>
+  if (!shoeMaterials.length) return (
+    <p className="text-[10px] text-black/35 py-2 font-light">
+      Keine globalen Materialien definiert. Lege sie unter „Produkt-Konfig" an.
+    </p>
+  )
+
+  return (
+    <div className="pt-3 pb-2 space-y-3">
+      <p className="text-[10px] text-black/35 font-light leading-relaxed">
+        Wähle aus, welche Lederarten für diesen Schuh im Konfigurator angezeigt werden.
+        Wenn nichts ausgewählt ist, werden alle globalen Materialien angezeigt.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {shoeMaterials.map(m => {
+          const on = selected.includes(m.key)
+          return (
+            <button
+              key={m.key}
+              onClick={() => toggle(m.key)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 text-[10px] tracking-wider transition-all font-light ${
+                on ? 'bg-black text-white border-0' : 'text-black/30 hover:text-black/70 bg-transparent border border-black/[0.08]'
+              }`}
+            >
+              {on && <Check size={11} strokeWidth={1.5} />}
+              {m.label}
+              {m.sub && <span className="opacity-60">· {m.sub}</span>}
+            </button>
+          )
+        })}
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30"
+        >
+          {saving ? 'Speichern…' : 'Materialien speichern'}
+        </button>
+        {savedAt > 0 && Date.now() - savedAt < 3000 && (
+          <span className="text-[10px] text-green-700 tracking-[0.18em] uppercase">Gespeichert</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Color-Variant-Editor: pro Farbe Pflicht-Bild + optionale Zusatzbilder ──
+function ColorVariantEditor({ shoeId }) {
+  const [variants, setVariants] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [savedAt, setSavedAt] = useState(0)
+
+  useEffect(() => {
+    apiFetch(`/api/shoes/${shoeId}/colors`)
+      .then(rows => { setVariants(Array.isArray(rows) ? rows : []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [shoeId])
+
+  const addVariant = () => {
+    setVariants(prev => [...prev, { hex: '#1f2937', name: '', images: [] }])
+    setError(null)
+  }
+
+  const updateVariant = (idx, patch) => {
+    setVariants(prev => prev.map((v, i) => i === idx ? { ...v, ...patch } : v))
+    setError(null)
+  }
+
+  const removeVariant = (idx) => {
+    setVariants(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const handleImage = async (idx, files) => {
+    const list = Array.from(files || [])
+    if (!list.length) return
+    const dataUrls = await Promise.all(list.map(file => new Promise(resolve => {
+      const reader = new FileReader()
+      reader.onload = e => resolve(e.target.result)
+      reader.readAsDataURL(file)
+    })))
+    updateVariant(idx, { images: [...(variants[idx].images || []), ...dataUrls] })
+  }
+
+  const removeImage = (idx, imgIdx) => {
+    updateVariant(idx, { images: variants[idx].images.filter((_, i) => i !== imgIdx) })
+  }
+
+  const validate = () => {
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i]
+      if (!v.name?.trim()) return `Farbe ${i + 1}: Name fehlt`
+      if (!v.images?.length)  return `Farbe „${v.name}": mindestens 1 Bild erforderlich`
+    }
+    return null
+  }
+
+  const save = async () => {
+    const err = validate()
+    if (err) { setError(err); return }
+    setSaving(true); setError(null)
+    try {
+      const rows = await apiFetch(`/api/shoes/${shoeId}/colors`, {
+        method: 'PUT',
+        body: JSON.stringify({ variants: variants.map(v => ({ hex: v.hex, name: v.name.trim(), images: v.images })) }),
+      })
+      setVariants(Array.isArray(rows) ? rows : [])
+      setSavedAt(Date.now())
+    } catch (e) {
+      setError(e?.error || 'Speichern fehlgeschlagen')
+    } finally { setSaving(false) }
+  }
+
+  if (loading) return <p className="text-[10px] text-black/25 py-2 font-light">Laden…</p>
+
+  return (
+    <div className="pt-3 pb-2 space-y-4">
+      <p className="text-[10px] text-black/35 font-light leading-relaxed">
+        Füge Farbvarianten hinzu. Jede Farbe braucht mindestens 1 Bild — das erste Bild wird im
+        Konfigurator als Hauptansicht verwendet, weitere als zusätzliche Ansichten.
+      </p>
+
+      {error && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-2">
+          <AlertCircle size={13} className="text-red-500" />
+          <p className="text-[11px] text-red-700">{error}</p>
+        </div>
+      )}
+
+      {variants.map((v, idx) => {
+        const hasImage = (v.images?.length || 0) > 0
+        return (
+          <div key={idx} className="border border-black/[0.08] p-4 space-y-3 bg-white">
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={v.hex}
+                onChange={e => updateVariant(idx, { hex: e.target.value })}
+                className="w-9 h-9 border border-black/10 bg-transparent cursor-pointer p-0"
+              />
+              <input
+                value={v.name}
+                onChange={e => updateVariant(idx, { name: e.target.value })}
+                placeholder="Farbname (z. B. Cognac)"
+                className="flex-1 h-9 px-3 border-b border-black/[0.1] text-[12px] bg-transparent outline-none focus:border-black/40 font-light"
+              />
+              <input
+                value={v.hex}
+                onChange={e => updateVariant(idx, { hex: e.target.value })}
+                className="w-24 h-9 px-2 border-b border-black/[0.1] text-[11px] font-mono bg-transparent outline-none"
+              />
+              <button
+                onClick={() => removeVariant(idx)}
+                className="w-8 h-8 flex items-center justify-center text-black/30 hover:text-red-600 bg-transparent border-0"
+                title="Variante entfernen"
+              >
+                <Trash2 size={13} strokeWidth={1.4} />
+              </button>
+            </div>
+
+            {/* Image gallery */}
+            <div className="flex flex-wrap gap-2">
+              {v.images?.map((img, i) => (
+                <div key={i} className="relative w-20 h-20 group">
+                  <img src={img} alt="" className="w-full h-full object-cover border border-black/10" />
+                  <button
+                    onClick={() => removeImage(idx, i)}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-black/20 text-black/60 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Bild entfernen"
+                  >
+                    <X size={11} strokeWidth={1.5} />
+                  </button>
+                  {i === 0 && (
+                    <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[8px] tracking-[0.2em] uppercase text-center py-0.5">
+                      Hauptbild
+                    </span>
+                  )}
+                </div>
+              ))}
+              <label className={`w-20 h-20 flex flex-col items-center justify-center border border-dashed cursor-pointer transition-colors ${
+                hasImage ? 'border-black/15 text-black/30 hover:border-black/40 hover:text-black/60' : 'border-red-300 text-red-500 bg-red-50/40'
+              }`}>
+                <Upload size={14} strokeWidth={1.4} />
+                <span className="text-[8px] tracking-[0.18em] uppercase mt-1">{hasImage ? 'Mehr' : 'Pflicht'}</span>
+                <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleImage(idx, e.target.files)} />
+              </label>
+            </div>
+            {!hasImage && (
+              <p className="text-[10px] text-red-500 font-light">Mindestens 1 Bild ist erforderlich, sonst kann diese Farbe nicht gespeichert werden.</p>
+            )}
+          </div>
+        )
+      })}
+
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          onClick={addVariant}
+          className="flex items-center gap-2 px-5 h-9 border border-black/15 text-black/55 hover:border-black hover:text-black text-[11px] bg-transparent uppercase tracking-[0.18em] font-light"
+        >
+          <Plus size={13} strokeWidth={1.4} /> Farbe hinzufügen
+        </button>
+        <button
+          onClick={save}
+          disabled={saving}
+          className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30"
+        >
+          {saving ? 'Speichern…' : 'Farben speichern'}
+        </button>
+        {savedAt > 0 && Date.now() - savedAt < 3000 && (
+          <span className="text-[10px] text-green-700 tracking-[0.18em] uppercase">Gespeichert</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function AccessoryAssigner({ shoeId }) {
  const { accessories } = useStore()
  const [assigned, setAssigned] = useState([])
@@ -262,7 +509,9 @@ export default function ShoeEditor() {
  const { shoes, addShoe, updateShoe, deleteShoe } = useStore()
  const [mode, setMode] = useState(null)
  const [filterCat, setFilterCat] = useState('ALL')
- const [expandedAcc, setExpandedAcc] = useState(null)
+ const [expandedPanel, setExpandedPanel] = useState(null) // { id, panel: 'acc'|'mat'|'col' }
+ const togglePanel = (id, panel) =>
+   setExpandedPanel(p => (p?.id === id && p?.panel === panel) ? null : { id, panel })
 
  const filtered = filterCat === 'ALL' ? shoes : shoes.filter((s) => s.category === filterCat)
 
@@ -363,8 +612,22 @@ export default function ShoeEditor() {
  {/* Actions */}
  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
  <button
- onClick={() => setExpandedAcc(expandedAcc === shoe.id ? null : shoe.id)}
- className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
+ onClick={() => togglePanel(shoe.id, 'mat')}
+ className={`w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent ${expandedPanel?.id === shoe.id && expandedPanel?.panel === 'mat' ? 'bg-black/[0.05]' : ''}`}
+ title="Materialien zuweisen"
+ >
+ <Layers size={12} strokeWidth={1.25} className="text-black/30" />
+ </button>
+ <button
+ onClick={() => togglePanel(shoe.id, 'col')}
+ className={`w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent ${expandedPanel?.id === shoe.id && expandedPanel?.panel === 'col' ? 'bg-black/[0.05]' : ''}`}
+ title="Farben & Bilder verwalten"
+ >
+ <Palette size={12} strokeWidth={1.25} className="text-black/30" />
+ </button>
+ <button
+ onClick={() => togglePanel(shoe.id, 'acc')}
+ className={`w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent ${expandedPanel?.id === shoe.id && expandedPanel?.panel === 'acc' ? 'bg-black/[0.05]' : ''}`}
  title="Zubehör zuweisen"
  >
  <Gift size={12} strokeWidth={1.25} className="text-black/30" />
@@ -383,13 +646,35 @@ export default function ShoeEditor() {
  </button>
  </div>
  </div>
- {expandedAcc === shoe.id && (
+ {expandedPanel?.id === shoe.id && (
  <div className="bg-white px-6 py-5 border-b border-black/[0.04]">
+ {expandedPanel.panel === 'acc' && (
+ <>
  <div className="flex items-center gap-2 mb-3">
  <Gift size={12} className="text-black/30" strokeWidth={1.25} />
  <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Zubehör für {shoe.name}</p>
  </div>
  <AccessoryAssigner shoeId={shoe.id} />
+ </>
+ )}
+ {expandedPanel.panel === 'mat' && (
+ <>
+ <div className="flex items-center gap-2 mb-3">
+ <Layers size={12} className="text-black/30" strokeWidth={1.25} />
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Materialien für {shoe.name}</p>
+ </div>
+ <MaterialAssigner shoeId={shoe.id} />
+ </>
+ )}
+ {expandedPanel.panel === 'col' && (
+ <>
+ <div className="flex items-center gap-2 mb-3">
+ <Palette size={12} className="text-black/30" strokeWidth={1.25} />
+ <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Farben für {shoe.name}</p>
+ </div>
+ <ColorVariantEditor shoeId={shoe.id} />
+ </>
+ )}
  </div>
  )}
  </React.Fragment>
