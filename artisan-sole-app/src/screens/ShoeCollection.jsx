@@ -4,7 +4,7 @@
  * Modeled after LV's collection pages
  */
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
@@ -85,8 +85,19 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo }) {
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ShoeCollection() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { shoes, favorites, toggleFavorite } = useStore()
   const { user } = useAuth()
+  const handleToggleFav = async (shoeId) => {
+    if (!user) {
+      navigate('/login', { state: { from: location.pathname + location.search } })
+      return
+    }
+    const result = await toggleFavorite(shoeId)
+    if (result === 'unauthenticated') {
+      navigate('/login', { state: { from: location.pathname + location.search } })
+    }
+  }
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy, setScanAccuracy] = useState(null)
   const isPromo = !!user?.is_promotion
@@ -174,7 +185,7 @@ export default function ShoeCollection() {
                 product={product}
                 onSelect={selectShoe}
                 isFav={favorites.includes(String(product.id))}
-                onToggleFav={() => toggleFavorite(product.id)}
+                onToggleFav={() => handleToggleFav(product.id)}
                 isPromo={isPromo}
               />
             ))}
