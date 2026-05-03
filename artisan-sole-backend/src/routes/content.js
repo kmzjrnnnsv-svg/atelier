@@ -193,6 +193,95 @@ shoesRouter.put('/:id/accessories', ...canWrite, param('id').isInt(), (req, res)
   res.json(rows)
 })
 
+// ── Per-Shoe Material-Optionen ────────────────────────────────────────────
+// GET /api/shoes/:id/materials — public
+shoesRouter.get('/:id/materials', param('id').isInt(), (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT material_key FROM shoe_material_options
+    WHERE shoe_id = ? ORDER BY sort_order ASC
+  `).all(req.params.id)
+  res.json(rows.map(r => r.material_key))
+})
+
+// PUT /api/shoes/:id/materials — admin/curator (Vollersatz)
+shoesRouter.put('/:id/materials', ...canWrite, param('id').isInt(), (req, res) => {
+  const db = getDb()
+  const shoeId = parseInt(req.params.id)
+  if (!db.prepare('SELECT id FROM shoes WHERE id = ?').get(shoeId)) {
+    return res.status(404).json({ error: 'Shoe not found' })
+  }
+  const keys = Array.isArray(req.body.material_keys) ? req.body.material_keys : []
+  db.transaction(() => {
+    db.prepare('DELETE FROM shoe_material_options WHERE shoe_id = ?').run(shoeId)
+    const ins = db.prepare('INSERT INTO shoe_material_options (shoe_id, material_key, sort_order) VALUES (?, ?, ?)')
+    keys.forEach((k, i) => { if (typeof k === 'string' && k) ins.run(shoeId, k, i) })
+  })()
+  res.json({ material_keys: keys })
+})
+
+// ── Per-Shoe Farb-Varianten (mit Bildern, mind. 1 Bild Pflicht) ───────────
+// GET /api/shoes/:id/colors — public
+shoesRouter.get('/:id/colors', param('id').isInt(), (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT id, hex, name, images, sort_order
+    FROM shoe_color_variants WHERE shoe_id = ?
+    ORDER BY sort_order ASC, id ASC
+  `).all(req.params.id)
+  res.json(rows.map(r => ({
+    id: r.id, hex: r.hex, name: r.name, sort_order: r.sort_order,
+    images: safeJsonArray(r.images),
+  })))
+})
+
+// PUT /api/shoes/:id/colors — admin/curator (Vollersatz). Jede Variante
+// muss mind. 1 Bild haben.
+shoesRouter.put('/:id/colors', ...canWrite, param('id').isInt(), (req, res) => {
+  const db = getDb()
+  const shoeId = parseInt(req.params.id)
+  if (!db.prepare('SELECT id FROM shoes WHERE id = ?').get(shoeId)) {
+    return res.status(404).json({ error: 'Shoe not found' })
+  }
+  const variants = Array.isArray(req.body.variants) ? req.body.variants : []
+
+  // Validate: every variant must have name + at least one image
+  for (let i = 0; i < variants.length; i++) {
+    const v = variants[i]
+    if (!v?.name || typeof v.name !== 'string' || !v.name.trim()) {
+      return res.status(400).json({ error: `Variante ${i + 1}: Name fehlt` })
+    }
+    if (!Array.isArray(v.images) || v.images.length === 0) {
+      return res.status(400).json({ error: `Variante "${v.name}": mindestens 1 Bild erforderlich` })
+    }
+    if (v.images.some(img => typeof img !== 'string' || !img)) {
+      return res.status(400).json({ error: `Variante "${v.name}": ungültiges Bild` })
+    }
+  }
+
+  db.transaction(() => {
+    db.prepare('DELETE FROM shoe_color_variants WHERE shoe_id = ?').run(shoeId)
+    const ins = db.prepare(`
+      INSERT INTO shoe_color_variants (shoe_id, hex, name, images, sort_order)
+      VALUES (?, ?, ?, ?, ?)
+    `)
+    variants.forEach((v, i) => {
+      ins.run(shoeId, v.hex || '#000000', v.name.trim(), JSON.stringify(v.images), i)
+    })
+  })()
+
+  const rows = db.prepare(`
+    SELECT id, hex, name, images, sort_order FROM shoe_color_variants
+    WHERE shoe_id = ? ORDER BY sort_order ASC, id ASC
+  `).all(shoeId)
+  res.json(rows.map(r => ({
+    id: r.id, hex: r.hex, name: r.name, sort_order: r.sort_order,
+    images: safeJsonArray(r.images),
+  })))
+})
+
+function safeJsonArray(s) {
+  try { const v = JSON.parse(s); return Array.isArray(v) ? v : [] } catch { return [] }
+}
+
 // GET /api/accessories/by-shoe — public: bulk fetch all shoe→accessory mappings
 accessoriesRouter.get('/by-shoe', (req, res) => {
   const rows = getDb().prepare(`

@@ -808,5 +808,30 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_custom_requests_status ON custom_requests(status);
     CREATE INDEX IF NOT EXISTS idx_custom_requests_user   ON custom_requests(user_id);
+
+    -- ── Per-shoe Material- und Farb-Optionen ────────────────────────────────
+    -- Wenn der Admin im CMS Materialien/Farben für einen Schuh setzt, zeigt
+    -- der Konfigurator nur diese. Sonst Fallback auf alle globalen Werte.
+    CREATE TABLE IF NOT EXISTS shoe_material_options (
+      shoe_id      INTEGER NOT NULL REFERENCES shoes(id) ON DELETE CASCADE,
+      material_key TEXT    NOT NULL,
+      sort_order   INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (shoe_id, material_key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_shoe_material_options_shoe ON shoe_material_options(shoe_id);
+
+    -- Farb-Varianten pro Schuh inkl. Bilder. Mind. 1 Bild Pflicht
+    -- (Backend lehnt PUT ab, wenn images leer ist).
+    CREATE TABLE IF NOT EXISTS shoe_color_variants (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      shoe_id     INTEGER NOT NULL REFERENCES shoes(id) ON DELETE CASCADE,
+      hex         TEXT    NOT NULL DEFAULT '#000000',
+      name        TEXT    NOT NULL,
+      images      TEXT    NOT NULL DEFAULT '[]',  -- JSON Array von base64-Strings
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_shoe_color_variants_shoe ON shoe_color_variants(shoe_id);
   `)
 }
