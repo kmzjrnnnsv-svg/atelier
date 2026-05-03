@@ -5,6 +5,7 @@ import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Sen
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
+import CustomRequestModal from '../components/CustomRequestModal'
 
 // ── Swipe: wische links/rechts um Option zu wechseln ────────────────────────
 function useSwipe(items, selectedId, onSelect) {
@@ -97,6 +98,8 @@ export default function Customize() {
   // Size selection: 'custom' (3D scan) or EU size string like '42'
   const [sizeType, setSizeType] = useState(latestScan ? 'custom' : '')
   const [selectedSize, setSelectedSize] = useState('')
+  // Maßanfertigungs-Anfragemodal (Pflicht: Telefon + WhatsApp Business)
+  const [customRequestOpen, setCustomRequestOpen] = useState(false)
   const EU_SIZES = ['39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46']
 
   // Step-by-step guided flow: 0=nothing, 1=leather chosen, 2=color chosen, 3=sole chosen
@@ -933,9 +936,12 @@ export default function Customize() {
               )}
 
               {!latestScan && sizeType !== 'standard' && (
-                <p className="text-[10px] text-black/25 mt-2 text-center">
-                  Für eine Maßanfertigung benötigen Sie einen Fußscan — kontaktieren Sie uns.
-                </p>
+                <button
+                  onClick={() => { setSizeType('custom'); setCustomRequestOpen(true) }}
+                  className="block w-full mt-2 text-[10px] text-black/45 hover:text-black text-center bg-transparent border-0 underline underline-offset-4 decoration-black/15"
+                >
+                  Maßanfertigung ohne Fußscan? Persönliche Anfrage stellen
+                </button>
               )}
             </div>
 
@@ -1061,27 +1067,43 @@ export default function Customize() {
                 )}
               </p>
               <div className="flex gap-3">
-                <button
-                  onClick={handleAddToCart}
-                  className={`flex-1 h-14 flex items-center justify-center gap-2.5 transition-all border ${
-                    added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 hover:bg-black/5 active:bg-black/10'
-                  }`}
-                  style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
-                >
-                  {added
-                    ? <><Check size={16} strokeWidth={1.5} /> Hinzugefügt</>
-                    : <><ShoppingBag size={16} strokeWidth={1.5} /> Warenkorb</>
-                  }
-                </button>
-                <button
-                  onClick={handleBuyNow}
-                  className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85"
-                  style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
-                >
-                  Jetzt kaufen
-                </button>
+                {sizeType === 'custom' ? (
+                  <button
+                    onClick={() => setCustomRequestOpen(true)}
+                    className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85"
+                    style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
+                  >
+                    <Send size={16} strokeWidth={1.5} /> Maßanfertigung anfragen
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleAddToCart}
+                      className={`flex-1 h-14 flex items-center justify-center gap-2.5 transition-all border ${
+                        added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 hover:bg-black/5 active:bg-black/10'
+                      }`}
+                      style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
+                    >
+                      {added
+                        ? <><Check size={16} strokeWidth={1.5} /> Hinzugefügt</>
+                        : <><ShoppingBag size={16} strokeWidth={1.5} /> Warenkorb</>
+                      }
+                    </button>
+                    <button
+                      onClick={handleBuyNow}
+                      className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85"
+                      style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
+                    >
+                      Jetzt kaufen
+                    </button>
+                  </>
+                )}
               </div>
-              <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Kostenlose Lieferung</p>
+              <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>
+                {sizeType === 'custom'
+                  ? 'Maßanfertigung · persönliche Beratung über WhatsApp Business'
+                  : 'Handgefertigt · Kostenlose Lieferung'}
+              </p>
             </div>
           </div>
         </div>
@@ -1111,27 +1133,43 @@ export default function Customize() {
           {accessoryTotal > 0 && <span className="text-[9px] text-black/35 ml-1">(inkl. {selectedAccessories.length}× Zubehör)</span>}
         </p>
         <div className="flex gap-2">
-          <button
-            onClick={handleAddToCart}
-            className={`flex-1 h-12 flex items-center justify-center gap-2 transition-all border ${
-              added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 active:bg-black/5'
-            }`}
-            style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
-          >
-            {added
-              ? <><Check size={14} strokeWidth={1.5} /> Hinzugefügt</>
-              : <><ShoppingBag size={14} strokeWidth={1.5} /> Warenkorb</>
-            }
-          </button>
-          <button
-            onClick={handleBuyNow}
-            className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85"
-            style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
-          >
-            Jetzt kaufen
-          </button>
+          {sizeType === 'custom' ? (
+            <button
+              onClick={() => setCustomRequestOpen(true)}
+              className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85"
+              style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
+            >
+              <Send size={14} strokeWidth={1.5} /> Maßanfertigung anfragen
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleAddToCart}
+                className={`flex-1 h-12 flex items-center justify-center gap-2 transition-all border ${
+                  added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 active:bg-black/5'
+                }`}
+                style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
+              >
+                {added
+                  ? <><Check size={14} strokeWidth={1.5} /> Hinzugefügt</>
+                  : <><ShoppingBag size={14} strokeWidth={1.5} /> Warenkorb</>
+                }
+              </button>
+              <button
+                onClick={handleBuyNow}
+                className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85"
+                style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
+              >
+                Jetzt kaufen
+              </button>
+            </>
+          )}
         </div>
-        <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>Handgefertigt · Kostenlose Lieferung</p>
+        <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>
+          {sizeType === 'custom'
+            ? 'Maßanfertigung · WhatsApp Business'
+            : 'Handgefertigt · Kostenlose Lieferung'}
+        </p>
       </div>
 
       {/* ── Duplikat-Dialog ────────────────────────────────────── */}
@@ -1169,6 +1207,23 @@ export default function Customize() {
           </div>
         </div>
       )}
+
+      <CustomRequestModal
+        open={customRequestOpen}
+        onClose={() => setCustomRequestOpen(false)}
+        product={product}
+        config={{
+          material: mat?.label || product.material,
+          color:    col?.name || color,
+          sole:     sole?.label,
+          euSize:   chosenEU,
+          scanId:   sizeType === 'custom' ? latestScan?.id : null,
+          accessories: selectedAccessories.map(id => {
+            const acc = accessories.find(a => a.id === id)
+            return acc ? { id: acc.id, name: acc.name, price: acc.price } : null
+          }).filter(Boolean),
+        }}
+      />
     </div>
   )
 }

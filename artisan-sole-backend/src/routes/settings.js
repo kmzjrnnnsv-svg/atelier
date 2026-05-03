@@ -228,4 +228,26 @@ router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res)
   res.json({ message: 'Explore-Einstellungen gespeichert' })
 })
 
+// ─── GET /api/settings/whatsapp — public (used by Maßanfertigungs-Anfrage) ──
+router.get('/whatsapp', (req, res) => {
+  const db = getDb()
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'whatsapp_business_number'").get()
+  res.json({ number: row?.value || '' })
+})
+
+// ─── PUT /api/settings/whatsapp — admin only ────────────────────────────────
+router.put('/whatsapp', authenticate, requireRole('admin'), (req, res) => {
+  const number = String(req.body.number ?? '').trim()
+  if (number && !/^\+?[0-9 ()/-]{6,}$/.test(number)) {
+    return res.status(400).json({ error: 'Ungültige Telefonnummer' })
+  }
+  const db = getDb()
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES ('whatsapp_business_number', ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = datetime('now')
+  `).run(number, req.user.id)
+  res.json({ number })
+})
+
 export default router

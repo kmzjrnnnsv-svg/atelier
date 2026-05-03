@@ -23,6 +23,22 @@ export function authenticate(req, res, next) {
   }
 }
 
+// Soft auth: attaches req.user when a valid token is sent, but never rejects.
+// Used for endpoints that work for both guests and signed-in users.
+export function authenticateOptional(req, res, next) {
+  const header = req.headers.authorization
+  if (!header?.startsWith('Bearer ')) return next()
+  const token = header.slice(7)
+  try {
+    const payload = verifyAccessToken(token)
+    const user = getDb().prepare('SELECT id, name, email, role, is_active FROM users WHERE id = ?').get(payload.sub)
+    if (user && user.is_active) req.user = user
+  } catch {
+    /* ignore — guest */
+  }
+  next()
+}
+
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' })

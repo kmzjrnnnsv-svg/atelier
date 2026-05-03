@@ -25,6 +25,7 @@ import feedbackRouter from './routes/feedback.js'
 import shippingRouter from './routes/shipping.js'
 import couponsRouter from './routes/coupons.js'
 import mediaRouter from './routes/media.js'
+import customRequestsRouter from './routes/customRequests.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -132,6 +133,7 @@ app.use('/api/accessories', accessoriesRouter)
 app.use('/api/shipping', shippingRouter)
 app.use('/api/coupons', couponsRouter)
 app.use('/api/media', mediaRouter)
+app.use('/api/custom-requests', customRequestsRouter)
 
 // GitHub Webhook — auto-deploy on push to website
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
