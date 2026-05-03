@@ -188,9 +188,11 @@ function AppRoutes() {
     }
   }, [])
 
-  // Load store data from DB whenever a user session is active
+  // Load store data from DB — public catalog runs always (Window Shopping),
+  // user-bound endpoints (favorites, orders, scans, cart) gracefully fall back
+  // to empty arrays for guests.
   useEffect(() => {
-    if (user) initStore()
+    initStore()
   }, [user])
 
   if (isCMS) {
@@ -256,25 +258,27 @@ function AppRoutes() {
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
-              <Route path="/foryou"    element={<ProtectedRoute><ForYou /></ProtectedRoute>} />
-              <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
-              <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
-              <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
-              <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
-
-              <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
-              <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-              <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
+              {/* Public — Window Shopping ohne Login */}
+              <Route path="/foryou"    element={<ForYou />} />
+              <Route path="/collection" element={<ShoeCollection />} />
+              <Route path="/customize"  element={<Customize />} />
+              <Route path="/welcome"    element={<Welcome />} />
+              <Route path="/explore"    element={<Explore />} />
+              <Route path="/accessories" element={<Accessories />} />
+              <Route path="/help"        element={<HelpSupport />} />
+              <Route path="/legal/:type" element={<LegalDoc />} />
               <Route path="/learn"      element={<Navigate to="/explore" replace />} />
+
+              {/* Geschützt — Bestellung & persönliche Daten */}
+              <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
+              <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
+              <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
               <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
               <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
               <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-              <Route path="/accessories" element={<ProtectedRoute><Accessories /></ProtectedRoute>} />
-              <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
               <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
-              <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
               <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
 
               <Route path="*"            element={<NotFound />} />
@@ -293,24 +297,27 @@ function AppRoutes() {
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />
-      <Route path="/foryou"    element={<ProtectedRoute><ForYou /></ProtectedRoute>} />
-      <Route path="/collection" element={<ProtectedRoute><ShoeCollection /></ProtectedRoute>} />
-      <Route path="/customize"  element={<ProtectedRoute><Customize /></ProtectedRoute>} />
+      {/* Public — Window Shopping ohne Login */}
+      <Route path="/foryou"     element={<ForYou />} />
+      <Route path="/collection" element={<ShoeCollection />} />
+      <Route path="/customize"  element={<Customize />} />
+      <Route path="/welcome"    element={<Welcome />} />
+      <Route path="/explore"    element={<Explore />} />
+      <Route path="/accessories" element={<Accessories />} />
+      <Route path="/help"        element={<HelpSupport />} />
+      <Route path="/legal/:type" element={<LegalDoc />} />
+      <Route path="/learn"      element={<Navigate to="/explore" replace />} />
+
+      {/* Geschützt — Bestellung & persönliche Daten */}
       <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-      <Route path="/welcome"    element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
       <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
       <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
-      <Route path="/explore"    element={<ProtectedRoute><Explore /></ProtectedRoute>} />
       <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
-      <Route path="/learn"      element={<Navigate to="/explore" replace />} />
       <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
       <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
       <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-      <Route path="/accessories" element={<ProtectedRoute><Accessories /></ProtectedRoute>} />
-      <Route path="/help"        element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
       <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
-      <Route path="/legal/:type" element={<ProtectedRoute><LegalDoc /></ProtectedRoute>} />
       <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
       <Route path="*"            element={<NotFound />} />
     </Routes>

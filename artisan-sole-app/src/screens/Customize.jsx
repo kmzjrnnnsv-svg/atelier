@@ -424,7 +424,16 @@ export default function Customize() {
             <Share2 size={17} className="text-black" strokeWidth={1.5} />
           </button>
           <button
-            onClick={() => toggleFavorite(product.id)}
+            onClick={async () => {
+              if (!user) {
+                navigate('/login', { state: { from: location.pathname + location.search } })
+                return
+              }
+              const result = await toggleFavorite(product.id)
+              if (result === 'unauthenticated') {
+                navigate('/login', { state: { from: location.pathname + location.search } })
+              }
+            }}
             className="w-10 h-10 flex items-center justify-center border-0 bg-transparent"
           >
             <Heart size={17} className={isFav ? 'text-black fill-black' : 'text-black'} strokeWidth={1.5} />

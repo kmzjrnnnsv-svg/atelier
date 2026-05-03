@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPw, setShowPw] = useState(false)
@@ -12,6 +13,9 @@ export default function Login() {
   const [error, setError] = useState(null)
 
   const isValid = form.email && form.password
+
+  // Where the user wanted to go before being redirected to /login
+  const redirectTo = location.state?.from || null
 
   const handleSubmit = async () => {
     if (!isValid || loading) return
@@ -21,6 +25,8 @@ export default function Login() {
       const user = await login(form.email, form.password)
       if (user.role === 'admin' || user.role === 'curator') {
         navigate('/cms', { replace: true })
+      } else if (redirectTo) {
+        navigate(redirectTo, { replace: true })
       } else {
         navigate('/foryou', { replace: true })
       }

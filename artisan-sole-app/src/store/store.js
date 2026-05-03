@@ -167,15 +167,21 @@ const useStore = create((set, get) => ({
   },
 
   // --- FAVORITES ---
+  // Returns 'unauthenticated' if no session; call sites should redirect to /login.
   async toggleFavorite(shoeId) {
     const id = String(shoeId)
     const isFav = get().favorites.includes(id)
-    if (isFav) {
-      await apiFetch(`/api/favorites/${id}`, { method: 'DELETE' })
-      set(s => ({ favorites: s.favorites.filter(f => f !== id) }))
-    } else {
-      await apiFetch(`/api/favorites/${id}`, { method: 'POST' })
-      set(s => ({ favorites: [...s.favorites, id] }))
+    try {
+      if (isFav) {
+        await apiFetch(`/api/favorites/${id}`, { method: 'DELETE' })
+        set(s => ({ favorites: s.favorites.filter(f => f !== id) }))
+      } else {
+        await apiFetch(`/api/favorites/${id}`, { method: 'POST' })
+        set(s => ({ favorites: [...s.favorites, id] }))
+      }
+    } catch (err) {
+      if (err?.status === 401) return 'unauthenticated'
+      throw err
     }
   },
 

@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 // Spinner shown while session is being restored on page load
@@ -10,19 +10,27 @@ function Spinner() {
   )
 }
 
-// General: requires any authenticated user
+// General: requires any authenticated user — preserves intended destination
 export function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return <Spinner />
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) {
+    const from = location.pathname + location.search + location.hash
+    return <Navigate to="/login" replace state={{ from }} />
+  }
   return children
 }
 
 // CMS: requires admin or curator role
 export function CMSRoute({ children }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return <Spinner />
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) {
+    const from = location.pathname + location.search + location.hash
+    return <Navigate to="/login" replace state={{ from }} />
+  }
   if (user.role !== 'admin' && user.role !== 'curator') {
     return <Navigate to="/collection" replace />
   }
@@ -32,8 +40,12 @@ export function CMSRoute({ children }) {
 // Admin only
 export function AdminRoute({ children }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return <Spinner />
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) {
+    const from = location.pathname + location.search + location.hash
+    return <Navigate to="/login" replace state={{ from }} />
+  }
   if (user.role !== 'admin') return <Navigate to="/cms" replace />
   return children
 }
