@@ -23,12 +23,12 @@ export default function CustomRequestModal({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [waNumber, setWaNumber] = useState('')
+  const [waNumber, setWaNumber] = useState('+4915126936500')
 
   useEffect(() => {
     if (!open) return
     apiFetch('/api/settings/whatsapp')
-      .then(r => setWaNumber(r?.number || ''))
+      .then(r => { if (r?.number) setWaNumber(r.number) })
       .catch(() => {})
   }, [open])
 

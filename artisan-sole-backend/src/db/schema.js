@@ -193,7 +193,7 @@ export function runMigrations(db) {
       ('packaging_cost', '0'),
       ('customs_cost', '0'),
       ('promotion_scan_tolerance_pct', '10'),
-      ('whatsapp_business_number', '');
+      ('whatsapp_business_number', '+4915126936500');
   `)
 
   // ── Checkout columns (added after initial schema) ─────────────────────────
@@ -284,6 +284,17 @@ export function runMigrations(db) {
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
+
+  // ── Backfill default WhatsApp Business number when empty ─────────────────
+  try {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'whatsapp_business_number'").get()
+    if (!row || !row.value) {
+      db.prepare(`
+        INSERT INTO settings (key, value, updated_at) VALUES ('whatsapp_business_number', ?, datetime('now'))
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')
+      `).run('+4915126936500')
+    }
+  } catch (e) { console.error('[migrate whatsapp_business_number]', e.message) }
 
   // ── Ensure accessories exist with full data (upsert) ─────────────────────
   try {
