@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
@@ -39,6 +39,20 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">
+      {/* Top bar — Zurück zum Shop (Window Shopping ohne Login) */}
+      <div className="w-full flex items-center justify-between px-5 lg:px-10 py-4">
+        <button
+          onClick={() => navigate(redirectTo || '/foryou', { replace: true })}
+          className="flex items-center gap-1.5 bg-transparent border-0 text-black/55 hover:text-black active:opacity-50 text-[12px] tracking-[0.15em] uppercase"
+        >
+          <ArrowLeft size={16} strokeWidth={1.4} />
+          Zurück zum Shop
+        </button>
+        <span className="text-[10px] text-black/30 tracking-[0.2em] uppercase hidden sm:block">
+          Window Shopping ohne Login
+        </span>
+      </div>
+
       {/* Top section - vertically centered */}
       <div className="flex-1 flex flex-col justify-center px-5">
         {/* Header */}
@@ -115,11 +129,17 @@ export default function Login() {
       </div>
 
       {/* Footer - pinned to bottom */}
-      <div className="text-center py-8 flex-shrink-0">
+      <div className="text-center py-8 flex-shrink-0 space-y-3">
         <p className="text-xs text-black/50">
           Noch kein Account?{' '}
           <Link to="/register" className="text-black font-semibold no-underline">Registrieren</Link>
         </p>
+        <button
+          onClick={() => navigate(redirectTo || '/foryou', { replace: true })}
+          className="text-[11px] text-black/40 hover:text-black tracking-[0.2em] uppercase bg-transparent border-0"
+        >
+          Weiter ohne Anmeldung
+        </button>
       </div>
     </div>
   )

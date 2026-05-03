@@ -65,9 +65,10 @@ export async function apiFetch(url, options = {}) {
         credentials: 'include',
       })
     } catch {
-      // Redirect to login
-      window.location.href = '/login'
-      throw new Error('Session expired')
+      // Refresh failed — let the caller handle the 401. ProtectedRoute will
+      // redirect logged-out users when they hit a guarded page; public pages
+      // (Window-Shopping) just see the empty/fallback data via .catch().
+      // No forced window.location redirect — that would block guest browsing.
     }
   }
 
