@@ -249,12 +249,16 @@ const useStore = create((set, get) => ({
   // --- SHOES ---
   async addShoe(shoe) {
     const row = await apiFetch('/api/shoes', { method: 'POST', body: JSON.stringify(shoeToApi(shoe)) })
-    set(s => ({ shoes: [...s.shoes, normalizeShoe(row)] }))
+    const normalized = normalizeShoe(row)
+    set(s => ({ shoes: [...s.shoes, normalized] }))
+    return normalized
   },
   async updateShoe(id, updates) {
     const existing = get().shoes.find(s => s.id == id)
     const row = await apiFetch(`/api/shoes/${id}`, { method: 'PUT', body: JSON.stringify(shoeToApi({ ...existing, ...updates })) })
-    set(s => ({ shoes: s.shoes.map(sh => sh.id == id ? normalizeShoe(row) : sh) }))
+    const normalized = normalizeShoe(row)
+    set(s => ({ shoes: s.shoes.map(sh => sh.id == id ? normalized : sh) }))
+    return normalized
   },
   async deleteShoe(id) {
     await apiFetch(`/api/shoes/${id}`, { method: 'DELETE' })
