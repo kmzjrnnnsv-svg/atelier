@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, X, Check, Upload, Gift, ChevronDown, ChevronUp, Palette, Layers, AlertCircle } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Upload, Gift, ChevronDown, ChevronUp, Layers, AlertCircle } from 'lucide-react'
 import useStore from '../../store/store'
 import { apiFetch } from '../../hooks/useApi'
 
@@ -22,7 +22,53 @@ const emptyForm = {
 function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  const [form, setForm] = useState(initial)
  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
- const valid = form.name && form.price && form.material
+ const { shoeColors } = useStore()
+
+ // Per-Schuh Farbvarianten: aus globaler Palette + Bild-Upload pro Farbe
+ const [variants, setVariants] = useState([]) // [{ key, hex, name, images: [], _existingId? }]
+ const [variantsLoaded, setVariantsLoaded] = useState(!initial.id) // bei „neu“ direkt bereit
+ const [variantError, setVariantError] = useState(null)
+ const [saving, setSaving] = useState(false)
+
+ // Bei „bearbeiten“: bestehende Varianten laden
+ useEffect(() => {
+   if (!initial.id) return
+   apiFetch(`/api/shoes/${initial.id}/colors`)
+     .then(rows => {
+       setVariants((rows || []).map(r => ({
+         _existingId: r.id, key: r.name, hex: r.hex, name: r.name, images: r.images || [],
+       })))
+       setVariantsLoaded(true)
+     })
+     .catch(() => setVariantsLoaded(true))
+ }, [initial.id])
+
+ const variantsValid = variants.every(v => v.name && Array.isArray(v.images) && v.images.length > 0)
+ const valid = form.name && form.price && form.material && variantsValid
+
+ const togglePaletteColor = (palette) => {
+   setVariantError(null)
+   setVariants(prev => {
+     const existing = prev.findIndex(v => v.key === palette.key)
+     if (existing >= 0) return prev.filter((_, i) => i !== existing)
+     return [...prev, { key: palette.key, hex: palette.hex, name: palette.name, images: [] }]
+   })
+ }
+
+ const updateVariant = (idx, patch) =>
+   setVariants(prev => prev.map((v, i) => i === idx ? { ...v, ...patch } : v))
+
+ const addVariantImages = async (idx, files) => {
+   const list = Array.from(files || [])
+   if (!list.length) return
+   const dataUrls = await Promise.all(list.map(file => new Promise(resolve => {
+     const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(file)
+   })))
+   setVariants(prev => prev.map((v, i) => i === idx ? { ...v, images: [...(v.images || []), ...dataUrls] } : v))
+ }
+
+ const removeVariantImage = (idx, imgIdx) =>
+   setVariants(prev => prev.map((v, i) => i === idx ? { ...v, images: v.images.filter((_, j) => j !== imgIdx) } : v))
 
  const handleImageUpload = (e) => {
  const file = e.target.files[0]
@@ -30,6 +76,38 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  const reader = new FileReader()
  reader.onload = (ev) => set('image', ev.target.result)
  reader.readAsDataURL(file)
+ }
+
+ const persistVariants = async (shoeId) => {
+   await apiFetch(`/api/shoes/${shoeId}/colors`, {
+     method: 'PUT',
+     body: JSON.stringify({
+       variants: variants.map(v => ({ hex: v.hex, name: v.name, images: v.images })),
+     }),
+   })
+ }
+
+ const handleSave = async () => {
+   if (!valid || saving) return
+   if (variants.length > 0 && !variantsValid) {
+     setVariantError('Jede ausgewählte Farbe braucht mindestens 1 Bild.')
+     return
+   }
+   setSaving(true); setVariantError(null)
+   try {
+     // Erstes Variant-Hex als Vorschau-Farbe übernehmen (für die Listen-Kachel),
+     // ansonsten unverändert lassen.
+     const preview = variants[0]?.hex || form.color
+     await onSave({ ...form, color: preview }, async (savedShoe) => {
+       const shoeId = savedShoe?.id || initial.id
+       if (!shoeId) return
+       if (variants.length > 0) await persistVariants(shoeId)
+     })
+   } catch (e) {
+     setVariantError(e?.error || 'Speichern fehlgeschlagen')
+   } finally {
+     setSaving(false)
+   }
  }
 
  return (
@@ -130,23 +208,95 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  />
  </div>
 
- {/* Color */}
- <div className="mb-5">
- <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Schuh-Farbe</label>
- <div className="flex items-center gap-3">
- <input
- type="color"
- value={form.color}
- onChange={(e) => set('color', e.target.value)}
- className="w-10 h-10 border-b border-black/[0.08] bg-transparent cursor-pointer"
- />
- <input
- value={form.color}
- onChange={(e) => set('color', e.target.value)}
- className="flex-1 h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 font-mono"
- />
- <div className="w-10 h-10 flex-shrink-0" style={{ backgroundColor: form.color }} />
+ {/* Farben — Auswahl aus globaler Palette + Bild-Pflicht pro Farbe */}
+ <div className="mb-5 border-t border-black/[0.04] pt-5">
+ <div className="flex items-center justify-between mb-1.5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light">Farben & Bilder</label>
+ <span className="text-[9px] text-black/25 tracking-wider font-light">
+ {variants.length > 0 ? `${variants.length} ausgewählt` : 'Keine Farbe gewählt'}
+ </span>
  </div>
+ <p className="text-[10px] text-black/35 mb-3 font-light">
+ Wähle Farben aus der globalen Palette (Produkt-Konfig). Pro Farbe muss mindestens 1 Bild hochgeladen werden.
+ </p>
+
+ {/* Palette */}
+ <div className="flex flex-wrap gap-2 mb-4">
+ {(shoeColors || []).filter(c => c.available !== 0).map(c => {
+ const on = variants.some(v => v.key === c.key)
+ return (
+ <button
+ key={c.key}
+ type="button"
+ onClick={() => togglePaletteColor(c)}
+ className={`flex items-center gap-2 px-3 h-9 transition-all text-[11px] tracking-wider font-light border ${
+ on ? 'bg-black text-white border-black' : 'bg-transparent text-black/55 border-black/10 hover:border-black/40'
+ }`}
+ >
+ <span className="w-3.5 h-3.5 border border-black/15" style={{ backgroundColor: c.hex }} />
+ {c.name}
+ {on && <Check size={11} strokeWidth={1.6} />}
+ </button>
+ )
+ })}
+ {(shoeColors || []).length === 0 && (
+ <p className="text-[10px] text-black/30 font-light">Keine globalen Farben definiert. Lege sie unter „Produkt-Konfig" → Farben an.</p>
+ )}
+ </div>
+
+ {/* Pro ausgewählte Farbe: Bild-Galerie */}
+ {variants.length > 0 && (
+ <div className="space-y-3">
+ {variants.map((v, idx) => {
+ const hasImage = (v.images?.length || 0) > 0
+ return (
+ <div key={v.key + idx} className={`border p-3 ${hasImage ? 'border-black/[0.08]' : 'border-red-200 bg-red-50/30'}`}>
+ <div className="flex items-center gap-2 mb-2">
+ <span className="w-4 h-4 border border-black/15 flex-shrink-0" style={{ backgroundColor: v.hex }} />
+ <p className="text-[12px] font-light text-black/75">{v.name}</p>
+ <span className="text-[9px] text-black/30 ml-auto tracking-wider uppercase">
+ {hasImage ? `${v.images.length} Bild${v.images.length === 1 ? '' : 'er'}` : 'Bild fehlt'}
+ </span>
+ </div>
+ <div className="flex flex-wrap gap-2">
+ {v.images?.map((img, i) => (
+ <div key={i} className="relative w-16 h-16 group">
+ <img src={img} alt="" className="w-full h-full object-cover border border-black/10" />
+ <button
+ type="button"
+ onClick={() => removeVariantImage(idx, i)}
+ className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-black/20 text-black/60 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+ title="Bild entfernen"
+ >
+ <X size={10} strokeWidth={1.6} />
+ </button>
+ {i === 0 && (
+ <span className="absolute bottom-0 left-0 right-0 bg-black/65 text-white text-[7px] tracking-[0.18em] uppercase text-center py-0.5">
+ Haupt
+ </span>
+ )}
+ </div>
+ ))}
+ <label className={`w-16 h-16 flex flex-col items-center justify-center border border-dashed cursor-pointer transition-colors ${
+ hasImage ? 'border-black/15 text-black/30 hover:border-black/40 hover:text-black/60' : 'border-red-300 text-red-500 bg-white'
+ }`}>
+ <Upload size={13} strokeWidth={1.4} />
+ <span className="text-[7px] tracking-[0.18em] uppercase mt-0.5">{hasImage ? 'Mehr' : 'Pflicht'}</span>
+ <input type="file" accept="image/*" multiple className="hidden" onChange={e => addVariantImages(idx, e.target.files)} />
+ </label>
+ </div>
+ </div>
+ )
+ })}
+ </div>
+ )}
+
+ {variantError && (
+ <div className="mt-3 flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-2">
+ <AlertCircle size={13} className="text-red-500" />
+ <p className="text-[11px] text-red-700">{variantError}</p>
+ </div>
+ )}
  </div>
 
  {/* Cost & Promotion pricing */}
@@ -176,15 +326,15 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </div>
 
  {/* Actions */}
- <div className="flex gap-3 pt-6">
+ <div className="flex gap-3 pt-6 items-center">
  <button
- onClick={() => valid && onSave(form)}
- disabled={!valid}
+ onClick={handleSave}
+ disabled={!valid || saving || !variantsLoaded}
  className={`px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light flex items-center justify-center gap-2 ${
- !valid ? 'disabled:opacity-30 cursor-not-allowed' : ''
+ (!valid || saving || !variantsLoaded) ? 'opacity-30 cursor-not-allowed' : ''
  }`}
  >
- <Check size={14} strokeWidth={1.25} /> Speichern
+ <Check size={14} strokeWidth={1.25} /> {saving ? 'Speichert…' : 'Speichern'}
  </button>
  <button
  onClick={onCancel}
@@ -192,6 +342,11 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  >
  Abbrechen
  </button>
+ {!variantsValid && variants.length > 0 && (
+ <span className="text-[10px] text-red-500 tracking-wider font-light ml-2">
+ Bild für jede Farbe erforderlich
+ </span>
+ )}
  </div>
  </div>
  )
@@ -264,177 +419,6 @@ function MaterialAssigner({ shoeId }) {
           className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30"
         >
           {saving ? 'Speichern…' : 'Materialien speichern'}
-        </button>
-        {savedAt > 0 && Date.now() - savedAt < 3000 && (
-          <span className="text-[10px] text-green-700 tracking-[0.18em] uppercase">Gespeichert</span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Color-Variant-Editor: pro Farbe Pflicht-Bild + optionale Zusatzbilder ──
-function ColorVariantEditor({ shoeId }) {
-  const [variants, setVariants] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
-  const [savedAt, setSavedAt] = useState(0)
-
-  useEffect(() => {
-    apiFetch(`/api/shoes/${shoeId}/colors`)
-      .then(rows => { setVariants(Array.isArray(rows) ? rows : []); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [shoeId])
-
-  const addVariant = () => {
-    setVariants(prev => [...prev, { hex: '#1f2937', name: '', images: [] }])
-    setError(null)
-  }
-
-  const updateVariant = (idx, patch) => {
-    setVariants(prev => prev.map((v, i) => i === idx ? { ...v, ...patch } : v))
-    setError(null)
-  }
-
-  const removeVariant = (idx) => {
-    setVariants(prev => prev.filter((_, i) => i !== idx))
-  }
-
-  const handleImage = async (idx, files) => {
-    const list = Array.from(files || [])
-    if (!list.length) return
-    const dataUrls = await Promise.all(list.map(file => new Promise(resolve => {
-      const reader = new FileReader()
-      reader.onload = e => resolve(e.target.result)
-      reader.readAsDataURL(file)
-    })))
-    updateVariant(idx, { images: [...(variants[idx].images || []), ...dataUrls] })
-  }
-
-  const removeImage = (idx, imgIdx) => {
-    updateVariant(idx, { images: variants[idx].images.filter((_, i) => i !== imgIdx) })
-  }
-
-  const validate = () => {
-    for (let i = 0; i < variants.length; i++) {
-      const v = variants[i]
-      if (!v.name?.trim()) return `Farbe ${i + 1}: Name fehlt`
-      if (!v.images?.length)  return `Farbe „${v.name}": mindestens 1 Bild erforderlich`
-    }
-    return null
-  }
-
-  const save = async () => {
-    const err = validate()
-    if (err) { setError(err); return }
-    setSaving(true); setError(null)
-    try {
-      const rows = await apiFetch(`/api/shoes/${shoeId}/colors`, {
-        method: 'PUT',
-        body: JSON.stringify({ variants: variants.map(v => ({ hex: v.hex, name: v.name.trim(), images: v.images })) }),
-      })
-      setVariants(Array.isArray(rows) ? rows : [])
-      setSavedAt(Date.now())
-    } catch (e) {
-      setError(e?.error || 'Speichern fehlgeschlagen')
-    } finally { setSaving(false) }
-  }
-
-  if (loading) return <p className="text-[10px] text-black/25 py-2 font-light">Laden…</p>
-
-  return (
-    <div className="pt-3 pb-2 space-y-4">
-      <p className="text-[10px] text-black/35 font-light leading-relaxed">
-        Füge Farbvarianten hinzu. Jede Farbe braucht mindestens 1 Bild — das erste Bild wird im
-        Konfigurator als Hauptansicht verwendet, weitere als zusätzliche Ansichten.
-      </p>
-
-      {error && (
-        <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-2">
-          <AlertCircle size={13} className="text-red-500" />
-          <p className="text-[11px] text-red-700">{error}</p>
-        </div>
-      )}
-
-      {variants.map((v, idx) => {
-        const hasImage = (v.images?.length || 0) > 0
-        return (
-          <div key={idx} className="border border-black/[0.08] p-4 space-y-3 bg-white">
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={v.hex}
-                onChange={e => updateVariant(idx, { hex: e.target.value })}
-                className="w-9 h-9 border border-black/10 bg-transparent cursor-pointer p-0"
-              />
-              <input
-                value={v.name}
-                onChange={e => updateVariant(idx, { name: e.target.value })}
-                placeholder="Farbname (z. B. Cognac)"
-                className="flex-1 h-9 px-3 border-b border-black/[0.1] text-[12px] bg-transparent outline-none focus:border-black/40 font-light"
-              />
-              <input
-                value={v.hex}
-                onChange={e => updateVariant(idx, { hex: e.target.value })}
-                className="w-24 h-9 px-2 border-b border-black/[0.1] text-[11px] font-mono bg-transparent outline-none"
-              />
-              <button
-                onClick={() => removeVariant(idx)}
-                className="w-8 h-8 flex items-center justify-center text-black/30 hover:text-red-600 bg-transparent border-0"
-                title="Variante entfernen"
-              >
-                <Trash2 size={13} strokeWidth={1.4} />
-              </button>
-            </div>
-
-            {/* Image gallery */}
-            <div className="flex flex-wrap gap-2">
-              {v.images?.map((img, i) => (
-                <div key={i} className="relative w-20 h-20 group">
-                  <img src={img} alt="" className="w-full h-full object-cover border border-black/10" />
-                  <button
-                    onClick={() => removeImage(idx, i)}
-                    className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-black/20 text-black/60 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Bild entfernen"
-                  >
-                    <X size={11} strokeWidth={1.5} />
-                  </button>
-                  {i === 0 && (
-                    <span className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[8px] tracking-[0.2em] uppercase text-center py-0.5">
-                      Hauptbild
-                    </span>
-                  )}
-                </div>
-              ))}
-              <label className={`w-20 h-20 flex flex-col items-center justify-center border border-dashed cursor-pointer transition-colors ${
-                hasImage ? 'border-black/15 text-black/30 hover:border-black/40 hover:text-black/60' : 'border-red-300 text-red-500 bg-red-50/40'
-              }`}>
-                <Upload size={14} strokeWidth={1.4} />
-                <span className="text-[8px] tracking-[0.18em] uppercase mt-1">{hasImage ? 'Mehr' : 'Pflicht'}</span>
-                <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleImage(idx, e.target.files)} />
-              </label>
-            </div>
-            {!hasImage && (
-              <p className="text-[10px] text-red-500 font-light">Mindestens 1 Bild ist erforderlich, sonst kann diese Farbe nicht gespeichert werden.</p>
-            )}
-          </div>
-        )
-      })}
-
-      <div className="flex items-center gap-3 pt-1">
-        <button
-          onClick={addVariant}
-          className="flex items-center gap-2 px-5 h-9 border border-black/15 text-black/55 hover:border-black hover:text-black text-[11px] bg-transparent uppercase tracking-[0.18em] font-light"
-        >
-          <Plus size={13} strokeWidth={1.4} /> Farbe hinzufügen
-        </button>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="px-8 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30"
-        >
-          {saving ? 'Speichern…' : 'Farben speichern'}
         </button>
         {savedAt > 0 && Date.now() - savedAt < 3000 && (
           <span className="text-[10px] text-green-700 tracking-[0.18em] uppercase">Gespeichert</span>
@@ -537,7 +521,11 @@ export default function ShoeEditor() {
  {mode === 'add' && (
  <div className="mb-8">
  <ShoeForm
- onSave={(f) => { addShoe(f); setMode(null) }}
+ onSave={async (f, afterSave) => {
+   const saved = await addShoe(f)
+   if (afterSave) await afterSave(saved)
+   setMode(null)
+ }}
  onCancel={() => setMode(null)}
  />
  </div>
@@ -566,7 +554,11 @@ export default function ShoeEditor() {
  <ShoeForm
  key={shoe.id}
  initial={shoe}
- onSave={(f) => { updateShoe(shoe.id, f); setMode(null) }}
+ onSave={async (f, afterSave) => {
+   const saved = await updateShoe(shoe.id, f)
+   if (afterSave) await afterSave(saved || { id: shoe.id })
+   setMode(null)
+ }}
  onCancel={() => setMode(null)}
  />
  ) : (
@@ -619,13 +611,6 @@ export default function ShoeEditor() {
  <Layers size={12} strokeWidth={1.25} className="text-black/30" />
  </button>
  <button
- onClick={() => togglePanel(shoe.id, 'col')}
- className={`w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent ${expandedPanel?.id === shoe.id && expandedPanel?.panel === 'col' ? 'bg-black/[0.05]' : ''}`}
- title="Farben & Bilder verwalten"
- >
- <Palette size={12} strokeWidth={1.25} className="text-black/30" />
- </button>
- <button
  onClick={() => togglePanel(shoe.id, 'acc')}
  className={`w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent ${expandedPanel?.id === shoe.id && expandedPanel?.panel === 'acc' ? 'bg-black/[0.05]' : ''}`}
  title="Zubehör zuweisen"
@@ -664,15 +649,6 @@ export default function ShoeEditor() {
  <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Materialien für {shoe.name}</p>
  </div>
  <MaterialAssigner shoeId={shoe.id} />
- </>
- )}
- {expandedPanel.panel === 'col' && (
- <>
- <div className="flex items-center gap-2 mb-3">
- <Palette size={12} className="text-black/30" strokeWidth={1.25} />
- <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Farben für {shoe.name}</p>
- </div>
- <ColorVariantEditor shoeId={shoe.id} />
  </>
  )}
  </div>

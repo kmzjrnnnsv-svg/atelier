@@ -77,7 +77,7 @@ export default function UsersPanel() {
  if (!promoForm.email || !promoForm.name) return
  setPromoSaving(true)
  try {
- const res = await apiFetch('/api/users/promotion', {
+ const newUser = await apiFetch('/api/users/promotion', {
  method: 'POST',
  body: JSON.stringify({
  email: promoForm.email,
@@ -86,7 +86,12 @@ export default function UsersPanel() {
  max_orders: promoForm.max_orders ? parseInt(promoForm.max_orders) : null,
  }),
  })
- setUsers(prev => [...prev, res.user])
+ // Backend liefert das User-Objekt direkt zurück, nicht { user }.
+ if (newUser && typeof newUser === 'object' && newUser.id) {
+   setUsers(prev => [...prev, newUser])
+ } else {
+   await load() // Fallback: Liste neu laden
+ }
  setShowPromoForm(false)
  setPromoForm({ email: '', name: '', discount_pct: '', max_orders: '' })
  alert('Einladung gesendet!')
@@ -107,7 +112,8 @@ export default function UsersPanel() {
  } catch (e) { alert(e?.error || 'Fehler') }
  }
 
- const filtered = tab === 'promo' ? users.filter(u => u.is_promotion) : users
+ const safeUsers = users.filter(u => u && typeof u === 'object' && u.id != null)
+ const filtered = tab === 'promo' ? safeUsers.filter(u => u.is_promotion) : safeUsers
 
  return (
  <div className="px-10 py-10 lg:px-14 lg:py-12">
@@ -121,8 +127,8 @@ export default function UsersPanel() {
  <div className="flex items-center gap-3 mb-6">
  <div className="flex gap-1.5">
  {[
- { key: 'all', label: `Alle (${users.length})` },
- { key: 'promo', label: `Promotion (${users.filter(u => u.is_promotion).length})` },
+ { key: 'all', label: `Alle (${safeUsers.length})` },
+ { key: 'promo', label: `Promotion (${safeUsers.filter(u => u.is_promotion).length})` },
  ].map(t => (
  <button
  key={t.key}
