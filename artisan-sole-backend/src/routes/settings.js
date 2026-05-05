@@ -133,7 +133,7 @@ router.put('/featured-shoes', authenticate, requireRole('admin', 'curator'), (re
 })
 
 // ─── GET /api/settings/cta-banner — public ──────────────────────────────
-const CTA_KEYS = ['cta_label', 'cta_title', 'cta_text', 'cta_button', 'cta_link', 'cta_pages']
+const CTA_KEYS = ['cta_label', 'cta_title', 'cta_text', 'cta_button', 'cta_link', 'cta_pages', 'cta_image']
 router.get('/cta-banner', (req, res) => {
   const db = getDb()
   const rows = db.prepare(`SELECT key, value FROM settings WHERE key IN (${CTA_KEYS.map(() => '?').join(',')})`)
@@ -146,6 +146,7 @@ router.get('/cta-banner', (req, res) => {
     button: result.cta_button || 'Termin vereinbaren',
     link:   result.cta_link   || '/scan',
     pages:  result.cta_pages  ? JSON.parse(result.cta_pages) : ['explore', 'collection', 'accessories'],
+    image:  result.cta_image  || '',
   })
 })
 
@@ -158,13 +159,14 @@ router.put('/cta-banner', authenticate, requireRole('admin', 'curator'), (req, r
     VALUES (?, ?, ?, datetime('now'))
     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
   `)
-  const { label, title, text, button, link, pages } = req.body
+  const { label, title, text, button, link, pages, image } = req.body
   if (label !== undefined) upsert.run('cta_label', label, uid)
   if (title !== undefined) upsert.run('cta_title', title, uid)
   if (text !== undefined)  upsert.run('cta_text', text, uid)
   if (button !== undefined) upsert.run('cta_button', button, uid)
   if (link !== undefined) upsert.run('cta_link', link, uid)
   if (pages !== undefined) upsert.run('cta_pages', JSON.stringify(pages), uid)
+  if (image !== undefined) upsert.run('cta_image', image, uid)
   res.json({ message: 'CTA-Banner gespeichert' })
 })
 

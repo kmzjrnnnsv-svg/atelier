@@ -53,6 +53,7 @@ export default function CMSLayout() {
               { to: '/cms/articles', label: 'Artikel',          icon: BookOpen },
               { to: '/cms/cta-banner', label: 'CTA-Banner',     icon: Megaphone },
               { to: '/cms/footer',     label: 'Footer & Service', icon: FileText },
+              { to: '/cms/website-images', label: 'Website-Bilder',  icon: Image },
               { to: '/cms/media',      label: 'Mediathek',        icon: ImagePlus },
             ]},
             { heading: 'Kunden', items: [
