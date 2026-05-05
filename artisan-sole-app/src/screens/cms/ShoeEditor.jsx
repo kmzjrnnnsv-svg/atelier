@@ -22,41 +22,83 @@ const emptyForm = {
 function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  const [form, setForm] = useState(initial)
  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
- const { shoeColors } = useStore()
+ const { shoeColors, shoeMaterials } = useStore()
 
- // Per-Schuh Farbvarianten: aus globaler Palette + Bild-Upload pro Farbe
- const [variants, setVariants] = useState([]) // [{ key, hex, name, images: [], _existingId? }]
- const [variantsLoaded, setVariantsLoaded] = useState(!initial.id) // bei „neu“ direkt bereit
+ // Per-Schuh Farbvarianten — flach gespeichert: ein Eintrag pro
+ // (Farbe × Material). material_key=null = Default für alle Materialien.
+ const [variants, setVariants] = useState([])
+ // Welche Materialien sind diesem Schuh zugewiesen?
+ const [assignedMaterials, setAssignedMaterials] = useState([]) // string[] (keys)
+ const [variantsLoaded, setVariantsLoaded] = useState(!initial.id)
  const [variantError, setVariantError] = useState(null)
  const [saving, setSaving] = useState(false)
+ // Aktiver Tab pro Farbe: { [colorKey]: material_key|null }
+ const [activeTab, setActiveTab] = useState({})
 
- // Bei „bearbeiten“: bestehende Varianten laden
  useEffect(() => {
    if (!initial.id) return
-   apiFetch(`/api/shoes/${initial.id}/colors`)
-     .then(rows => {
-       setVariants((rows || []).map(r => ({
-         _existingId: r.id, key: r.name, hex: r.hex, name: r.name, images: r.images || [],
-       })))
-       setVariantsLoaded(true)
-     })
-     .catch(() => setVariantsLoaded(true))
+   Promise.all([
+     apiFetch(`/api/shoes/${initial.id}/colors`).catch(() => []),
+     apiFetch(`/api/shoes/${initial.id}/materials`).catch(() => []),
+   ]).then(([cols, mats]) => {
+     setVariants((cols || []).map(r => ({
+       _existingId: r.id, hex: r.hex, name: r.name,
+       material_key: r.material_key || null,
+       images: r.images || [],
+     })))
+     setAssignedMaterials(Array.isArray(mats) ? mats : [])
+     setVariantsLoaded(true)
+   })
  }, [initial.id])
+
+ // Gruppiere Varianten nach Farbe (Name+Hex). Jede Gruppe hat 1..n Buckets.
+ const colorGroups = (() => {
+   const map = new Map()
+   variants.forEach((v, idx) => {
+     const key = `${v.name}::${v.hex}`
+     if (!map.has(key)) map.set(key, { key, hex: v.hex, name: v.name, buckets: [] })
+     map.get(key).buckets.push({ ...v, _idx: idx })
+   })
+   return [...map.values()]
+ })()
 
  const variantsValid = variants.every(v => v.name && Array.isArray(v.images) && v.images.length > 0)
  const valid = form.name && form.price && form.material && variantsValid
 
+ // Material-Liste für die Tabs einer Farbe: nur wenn der Schuh ≥1 Material
+ // zugewiesen hat. Sonst kein Material-Override sinnvoll.
+ const materialOptions = assignedMaterials.length > 0
+   ? shoeMaterials.filter(m => assignedMaterials.includes(m.key))
+   : []
+
  const togglePaletteColor = (palette) => {
    setVariantError(null)
    setVariants(prev => {
-     const existing = prev.findIndex(v => v.key === palette.key)
-     if (existing >= 0) return prev.filter((_, i) => i !== existing)
-     return [...prev, { key: palette.key, hex: palette.hex, name: palette.name, images: [] }]
+     const existsAny = prev.some(v => v.name === palette.name && v.hex === palette.hex)
+     if (existsAny) {
+       return prev.filter(v => !(v.name === palette.name && v.hex === palette.hex))
+     }
+     return [...prev, { hex: palette.hex, name: palette.name, material_key: null, images: [] }]
    })
+   setActiveTab(prev => ({ ...prev, [palette.name]: null }))
  }
 
- const updateVariant = (idx, patch) =>
-   setVariants(prev => prev.map((v, i) => i === idx ? { ...v, ...patch } : v))
+ const findVariantIdx = (name, hex, material_key) =>
+   variants.findIndex(v => v.name === name && v.hex === hex && (v.material_key || null) === (material_key || null))
+
+ const ensureBucket = (group, material_key) => {
+   const idx = findVariantIdx(group.name, group.hex, material_key)
+   if (idx >= 0) return idx
+   setVariants(prev => [...prev, { hex: group.hex, name: group.name, material_key, images: [] }])
+   return -1
+ }
+
+ const removeBucket = (idx) => {
+   const v = variants[idx]
+   if (v.material_key === null) return // Default kann nicht via Tab entfernt werden
+   setVariants(prev => prev.filter((_, i) => i !== idx))
+   setActiveTab(prev => ({ ...prev, [v.name]: null }))
+ }
 
  const addVariantImages = async (idx, files) => {
    const list = Array.from(files || [])
@@ -82,7 +124,11 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
    await apiFetch(`/api/shoes/${shoeId}/colors`, {
      method: 'PUT',
      body: JSON.stringify({
-       variants: variants.map(v => ({ hex: v.hex, name: v.name, images: v.images })),
+       variants: variants.map(v => ({
+         hex: v.hex, name: v.name,
+         material_key: v.material_key || null,
+         images: v.images,
+       })),
      }),
    })
  }
@@ -223,7 +269,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  {/* Palette */}
  <div className="flex flex-wrap gap-2 mb-4">
  {(shoeColors || []).filter(c => c.available !== 0).map(c => {
- const on = variants.some(v => v.key === c.key)
+ const on = variants.some(v => v.name === c.name && v.hex === c.hex)
  return (
  <button
  key={c.key}
@@ -244,29 +290,88 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  )}
  </div>
 
- {/* Pro ausgewählte Farbe: Bild-Galerie */}
- {variants.length > 0 && (
+ {/* Pro Farbe: Tabs (Default + pro Material) → Bild-Galerie */}
+ {colorGroups.length > 0 && (
  <div className="space-y-3">
- {variants.map((v, idx) => {
- const hasImage = (v.images?.length || 0) > 0
+ {colorGroups.map(group => {
+ const tab = activeTab[group.name] ?? null
+ // Bucket des aktiven Tabs
+ const activeBucket = group.buckets.find(b => (b.material_key || null) === tab)
+ const activeIdx = activeBucket?._idx ?? -1
+ const hasImage = (activeBucket?.images?.length || 0) > 0
+ const groupValid = group.buckets.some(b => (b.images?.length || 0) > 0)
+ const showMaterialTabs = materialOptions.length >= 2
+
  return (
- <div key={v.key + idx} className={`border p-3 ${hasImage ? 'border-black/[0.08]' : 'border-red-200 bg-red-50/30'}`}>
+ <div key={group.key} className={`border p-3 ${groupValid ? 'border-black/[0.08]' : 'border-red-200 bg-red-50/30'}`}>
+ {/* Header */}
  <div className="flex items-center gap-2 mb-2">
- <span className="w-4 h-4 border border-black/15 flex-shrink-0" style={{ backgroundColor: v.hex }} />
- <p className="text-[12px] font-light text-black/75">{v.name}</p>
+ <span className="w-4 h-4 border border-black/15 flex-shrink-0" style={{ backgroundColor: group.hex }} />
+ <p className="text-[12px] font-light text-black/75">{group.name}</p>
  <span className="text-[9px] text-black/30 ml-auto tracking-wider uppercase">
- {hasImage ? `${v.images.length} Bild${v.images.length === 1 ? '' : 'er'}` : 'Bild fehlt'}
+ {hasImage ? `${activeBucket.images.length} Bild${activeBucket.images.length === 1 ? '' : 'er'}` : 'Bild fehlt'}
  </span>
  </div>
+
+ {/* Material-Tabs (nur wenn der Schuh ≥2 Materialien hat) */}
+ {showMaterialTabs && (
+ <div className="flex flex-wrap gap-1 mb-3 border-b border-black/[0.05] pb-2">
+ <button
+ type="button"
+ onClick={() => setActiveTab(prev => ({ ...prev, [group.name]: null }))}
+ className={`px-2.5 py-1 text-[9px] tracking-wider transition-all border-0 ${
+ tab === null ? 'bg-black text-white' : 'bg-transparent text-black/40 hover:text-black/70'
+ }`}
+ >
+ Alle Materialien
+ {group.buckets.some(b => b.material_key === null && b.images?.length > 0) &&
+   <Check size={9} strokeWidth={1.8} className="inline ml-1 -mt-0.5" />}
+ </button>
+ {materialOptions.map(m => {
+ const has = group.buckets.some(b => b.material_key === m.key && b.images?.length > 0)
+ const active = tab === m.key
+ return (
+ <button
+ key={m.key}
+ type="button"
+ onClick={() => {
+   setActiveTab(prev => ({ ...prev, [group.name]: m.key }))
+   if (!group.buckets.find(b => b.material_key === m.key)) {
+     setVariants(prev => [...prev, { hex: group.hex, name: group.name, material_key: m.key, images: [] }])
+   }
+ }}
+ className={`flex items-center gap-1 px-2.5 py-1 text-[9px] tracking-wider transition-all border-0 ${
+ active ? 'bg-black text-white' : 'bg-transparent text-black/40 hover:text-black/70'
+ }`}
+ title={`Bilder spezifisch für ${m.label}`}
+ >
+ {m.label}
+ {has && <Check size={9} strokeWidth={1.8} />}
+ </button>
+ )
+ })}
+ {tab !== null && activeIdx >= 0 && (
+ <button
+ type="button"
+ onClick={() => removeBucket(activeIdx)}
+ className="ml-auto px-2 py-1 text-[9px] text-red-500 tracking-wider hover:text-red-700 bg-transparent border-0"
+ >
+ Override löschen
+ </button>
+ )}
+ </div>
+ )}
+
+ {/* Bild-Galerie für aktiven Bucket */}
+ {activeIdx >= 0 ? (
  <div className="flex flex-wrap gap-2">
- {v.images?.map((img, i) => (
+ {activeBucket.images?.map((img, i) => (
  <div key={i} className="relative w-16 h-16 group">
  <img src={img} alt="" className="w-full h-full object-cover border border-black/10" />
  <button
  type="button"
- onClick={() => removeVariantImage(idx, i)}
+ onClick={() => removeVariantImage(activeIdx, i)}
  className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-black/20 text-black/60 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
- title="Bild entfernen"
  >
  <X size={10} strokeWidth={1.6} />
  </button>
@@ -282,9 +387,14 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  }`}>
  <Upload size={13} strokeWidth={1.4} />
  <span className="text-[7px] tracking-[0.18em] uppercase mt-0.5">{hasImage ? 'Mehr' : 'Pflicht'}</span>
- <input type="file" accept="image/*" multiple className="hidden" onChange={e => addVariantImages(idx, e.target.files)} />
+ <input type="file" accept="image/*" multiple className="hidden" onChange={e => addVariantImages(activeIdx, e.target.files)} />
  </label>
  </div>
+ ) : (
+ <p className="text-[10px] text-black/30 font-light italic">
+ Wähle einen Tab, um Bilder hochzuladen.
+ </p>
+ )}
  </div>
  )
  })}

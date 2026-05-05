@@ -280,6 +280,8 @@ export function runMigrations(db) {
     `ALTER TABLE accessories ADD COLUMN not_recommended_for TEXT DEFAULT '[]'`,
     // orders — size type (standard = EU 39-46, custom = 3D scan)
     `ALTER TABLE orders ADD COLUMN size_type TEXT DEFAULT 'standard'`,
+    // shoe_color_variants — optional Material-Bindung (suede, calfskin, …)
+    `ALTER TABLE shoe_color_variants ADD COLUMN material_key TEXT`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }

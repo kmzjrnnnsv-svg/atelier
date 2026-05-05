@@ -102,13 +102,24 @@ export default function Customize() {
     ? globalMatList.filter(m => perShoeMaterialKeys.includes(m.key))
     : globalMatList
 
-  // Per-Schuh Farb-Varianten haben Vorrang. Sie tragen eigene Bilder, die im
-  // Hauptbild gezeigt werden, sobald die Farbe ausgewählt ist.
+  // Per-Schuh Farb-Varianten haben Vorrang. Mehrere Varianten können denselben
+  // Farbnamen haben (eine pro Material). Wir gruppieren nach (name, hex), und
+  // wählen pro Farbe später dynamisch die Bilder anhand des selektierten
+  // Materials (selMat).
   const colList = perShoeColorVariants && perShoeColorVariants.length > 0
-    ? perShoeColorVariants.map((v, i) => ({
-        id: v.id, key: `cms-${v.id}`, hex: v.hex, name: v.name,
-        available: 1, rating: 'good', images: v.images || [],
-      }))
+    ? (() => {
+        const groups = new Map()
+        perShoeColorVariants.forEach(v => {
+          const key = `${v.name}::${v.hex}`
+          if (!groups.has(key)) groups.set(key, {
+            id: v.id, key: `cms-${key}`, hex: v.hex, name: v.name,
+            available: 1, rating: 'good',
+            buckets: [],
+          })
+          groups.get(key).buckets.push({ material_key: v.material_key || null, images: v.images || [] })
+        })
+        return [...groups.values()]
+      })()
     : (shoeColors.length ? shoeColors : [
         { id: 1, key: 'schwarz', hex: '#000000', name: 'Schwarz', available: 1, rating: 'good' },
       ])
@@ -290,6 +301,22 @@ export default function Customize() {
 
   const mat      = matList.find(m => m.key === selMat) || matList[0]
   const col      = colList.find(c => c.key === selCol) || colList[0]
+
+  // Aktive Bild-Galerie für die Farbe, abhängig vom gewählten Material:
+  // 1) Material-spezifischer Bucket (material_key === mat.key)
+  // 2) Fallback: Default-Bucket (material_key === null)
+  // 3) Fallback: legacy `col.images` (wenn keine Buckets vorhanden)
+  const currentImages = (() => {
+    if (!col) return []
+    if (col.buckets) {
+      const matBucket = col.buckets.find(b => b.material_key === mat?.key)
+      if (matBucket?.images?.length) return matBucket.images
+      const defBucket = col.buckets.find(b => b.material_key === null)
+      if (defBucket?.images?.length) return defBucket.images
+      return col.buckets[0]?.images || []
+    }
+    return col.images || []
+  })()
   const sole     = soleList.find(s => s.key === selSole) || soleList[0]
   const color    = col?.hex || product.color
   const isFav    = favorites.includes(String(product.id))
@@ -503,8 +530,8 @@ export default function Customize() {
                 transition: drag.current.on ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             >
-              {(col?.images?.[0] || product.image) ? (
-                <img src={col?.images?.[0] || product.image} alt={product.name} className="w-full h-full object-cover" />
+              {(currentImages[0] || product.image) ? (
+                <img src={currentImages[0] || product.image} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
                   <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />

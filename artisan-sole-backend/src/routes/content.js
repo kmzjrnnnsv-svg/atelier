@@ -220,21 +220,24 @@ shoesRouter.put('/:id/materials', ...canWrite, param('id').isInt(), (req, res) =
 })
 
 // ── Per-Shoe Farb-Varianten (mit Bildern, mind. 1 Bild Pflicht) ───────────
+// material_key (optional): bindet eine Variante an ein bestimmtes Material
+// (z. B. „suede", „calfskin"). null = gilt für alle Materialien (Fallback).
 // GET /api/shoes/:id/colors — public
 shoesRouter.get('/:id/colors', param('id').isInt(), (req, res) => {
   const rows = getDb().prepare(`
-    SELECT id, hex, name, images, sort_order
+    SELECT id, hex, name, images, sort_order, material_key
     FROM shoe_color_variants WHERE shoe_id = ?
     ORDER BY sort_order ASC, id ASC
   `).all(req.params.id)
   res.json(rows.map(r => ({
     id: r.id, hex: r.hex, name: r.name, sort_order: r.sort_order,
+    material_key: r.material_key || null,
     images: safeJsonArray(r.images),
   })))
 })
 
 // PUT /api/shoes/:id/colors — admin/curator (Vollersatz). Jede Variante
-// muss mind. 1 Bild haben.
+// muss mind. 1 Bild haben. material_key ist optional.
 shoesRouter.put('/:id/colors', ...canWrite, param('id').isInt(), (req, res) => {
   const db = getDb()
   const shoeId = parseInt(req.params.id)
@@ -243,7 +246,6 @@ shoesRouter.put('/:id/colors', ...canWrite, param('id').isInt(), (req, res) => {
   }
   const variants = Array.isArray(req.body.variants) ? req.body.variants : []
 
-  // Validate: every variant must have name + at least one image
   for (let i = 0; i < variants.length; i++) {
     const v = variants[i]
     if (!v?.name || typeof v.name !== 'string' || !v.name.trim()) {
@@ -260,20 +262,21 @@ shoesRouter.put('/:id/colors', ...canWrite, param('id').isInt(), (req, res) => {
   db.transaction(() => {
     db.prepare('DELETE FROM shoe_color_variants WHERE shoe_id = ?').run(shoeId)
     const ins = db.prepare(`
-      INSERT INTO shoe_color_variants (shoe_id, hex, name, images, sort_order)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO shoe_color_variants (shoe_id, hex, name, images, sort_order, material_key)
+      VALUES (?, ?, ?, ?, ?, ?)
     `)
     variants.forEach((v, i) => {
-      ins.run(shoeId, v.hex || '#000000', v.name.trim(), JSON.stringify(v.images), i)
+      ins.run(shoeId, v.hex || '#000000', v.name.trim(), JSON.stringify(v.images), i, v.material_key || null)
     })
   })()
 
   const rows = db.prepare(`
-    SELECT id, hex, name, images, sort_order FROM shoe_color_variants
+    SELECT id, hex, name, images, sort_order, material_key FROM shoe_color_variants
     WHERE shoe_id = ? ORDER BY sort_order ASC, id ASC
   `).all(shoeId)
   res.json(rows.map(r => ({
     id: r.id, hex: r.hex, name: r.name, sort_order: r.sort_order,
+    material_key: r.material_key || null,
     images: safeJsonArray(r.images),
   })))
 })
@@ -281,6 +284,42 @@ shoesRouter.put('/:id/colors', ...canWrite, param('id').isInt(), (req, res) => {
 function safeJsonArray(s) {
   try { const v = JSON.parse(s); return Array.isArray(v) ? v : [] } catch { return [] }
 }
+
+// ── Per-Accessory: Schuh-Zuweisung (Zubehör → Schuhe) ─────────────────────
+// GET /api/accessories/:id/shoes — admin/curator
+accessoriesRouter.get('/:id/shoes', ...canWrite, param('id').isInt(), (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT s.id, s.name, s.category, sa.sort_order
+    FROM shoe_accessories sa
+    JOIN shoes s ON s.id = sa.shoe_id
+    WHERE sa.accessory_id = ?
+    ORDER BY sa.sort_order ASC, s.id ASC
+  `).all(req.params.id)
+  res.json(rows)
+})
+
+// PUT /api/accessories/:id/shoes — admin/curator (Vollersatz)
+accessoriesRouter.put('/:id/shoes', ...canWrite, param('id').isInt(), (req, res) => {
+  const db = getDb()
+  const accId = parseInt(req.params.id)
+  if (!db.prepare('SELECT id FROM accessories WHERE id = ?').get(accId)) {
+    return res.status(404).json({ error: 'Accessory not found' })
+  }
+  const shoeIds = Array.isArray(req.body.shoe_ids) ? req.body.shoe_ids : []
+  db.transaction(() => {
+    db.prepare('DELETE FROM shoe_accessories WHERE accessory_id = ?').run(accId)
+    const ins = db.prepare('INSERT INTO shoe_accessories (shoe_id, accessory_id, sort_order) VALUES (?, ?, ?)')
+    shoeIds.forEach((sid, i) => { if (Number.isInteger(sid)) ins.run(sid, accId, i) })
+  })()
+  const rows = db.prepare(`
+    SELECT s.id, s.name, s.category, sa.sort_order
+    FROM shoe_accessories sa
+    JOIN shoes s ON s.id = sa.shoe_id
+    WHERE sa.accessory_id = ?
+    ORDER BY sa.sort_order ASC, s.id ASC
+  `).all(accId)
+  res.json(rows)
+})
 
 // GET /api/accessories/by-shoe — public: bulk fetch all shoe→accessory mappings
 accessoriesRouter.get('/by-shoe', (req, res) => {
