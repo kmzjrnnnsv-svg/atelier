@@ -182,15 +182,7 @@ export default function WebsiteImagesPanel() {
         })}
       </Section>
 
-      {/* Footer */}
-      <Section title="Footer & Service" subtitle="Seitenfuß auf allen Seiten">
-        <ImageSlot
-          label="Hilfe-Banner"
-          sub={footer.help_title || 'Wir sind für Sie da'}
-          value={footer.help_image || ''}
-          onChange={val => setFooter(prev => ({ ...prev, help_image: val }))}
-        />
-      </Section>
+      {/* Footer hat im Lemaire-Stil kein Banner-Bild mehr — Abschnitt entfällt. */}
 
       {/* CTA-Banner */}
       <Section title="CTA-Banner" subtitle="Aktions-Banner auf Listenseiten">
