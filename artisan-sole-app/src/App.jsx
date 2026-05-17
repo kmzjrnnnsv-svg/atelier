@@ -42,7 +42,6 @@ import NotFound from './screens/NotFound'
 
 // Lazy import factories — used both by lazy() and prefetchRoute()
 const lazyImports = {
-  '/foryou':     () => import('./screens/ForYou'),
   '/collection': () => import('./screens/ShoeCollection'),
   '/customize':  () => import('./screens/Customize'),
   '/profile':    () => import('./screens/Profile'),
@@ -72,7 +71,6 @@ export function prefetchRoute(path) {
 }
 
 // Lazy: loaded on demand per route
-const ForYou            = lazy(lazyImports['/foryou'])
 const ShoeCollection    = lazy(lazyImports['/collection'])
 const Customize         = lazy(lazyImports['/customize'])
 const Profile           = lazy(lazyImports['/profile'])
@@ -176,7 +174,7 @@ function AppRoutes() {
   const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
-  const FOOTER_PATHS = ['/foryou', '/collection', '/accessories', '/explore']
+  const FOOTER_PATHS = ['/collection', '/accessories', '/explore']
   const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
 
@@ -257,12 +255,11 @@ function AppRoutes() {
           <Suspense fallback={<DelayedSpinner />}>
             <PageTransition>
             <Routes>
-              <Route path="/"           element={<Navigate to="/foryou" replace />} />
+              <Route path="/"           element={<Navigate to="/collection" replace />} />
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
               {/* Public — Window Shopping ohne Login */}
-              <Route path="/foryou"    element={<ForYou />} />
               <Route path="/collection" element={<ShoeCollection />} />
               <Route path="/customize"  element={<Customize />} />
               <Route path="/welcome"    element={<Welcome />} />
@@ -296,12 +293,11 @@ function AppRoutes() {
 
   const routes = (
     <Routes>
-      <Route path="/"           element={<Navigate to="/foryou" replace />} />
+      <Route path="/"           element={<Navigate to="/collection" replace />} />
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />
       {/* Public — Window Shopping ohne Login */}
-      <Route path="/foryou"     element={<ForYou />} />
       <Route path="/collection" element={<ShoeCollection />} />
       <Route path="/customize"  element={<Customize />} />
       <Route path="/welcome"    element={<Welcome />} />

@@ -6,7 +6,6 @@ import useStore from '../store/store'
 
 // ── Navigation structure (LV-style) ─────────────────────────────────────────
 const NAV_ITEMS = [
-  { label: 'Für dich',       path: '/foryou' },
   { label: 'Kollektion',     path: '/collection' },
   { label: 'Zubehör',        path: '/accessories' },
   { label: 'Entdecken',      path: '/explore' },
@@ -20,7 +19,7 @@ const SECONDARY_ITEMS = [
 ]
 
 // Pages that are "main" tabs — show burger. Others show back arrow.
-const MAIN_PAGES = new Set(['/foryou', '/collection', '/accessories', '/explore', '/checkout'])
+const MAIN_PAGES = new Set(['/collection', '/accessories', '/explore', '/checkout'])
 
 const ANIM_DURATION = 280 // ms — must match CSS
 
@@ -101,7 +100,7 @@ export default function TopBar() {
 
         {/* Center: Brand */}
         <button
-          onClick={() => navigate('/foryou')}
+          onClick={() => navigate('/collection')}
           className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60"
         >
           <span className="font-brand text-[15px] lg:text-[16px] text-black" style={{ letterSpacing: '0.3em' }}>
