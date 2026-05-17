@@ -7,6 +7,7 @@ import TopBar from './components/TopBar'
 import Footer from './components/Footer'
 import useStore from './store/store'
 import ErrorBoundary from './components/ErrorBoundary'
+import LogoSplash from './components/LogoSplash'
 import { Capacitor } from '@capacitor/core'
 import useDeviceInfo from './hooks/useDeviceInfo'
 
@@ -357,6 +358,7 @@ export default function App() {
         <BrowserRouter>
           <ScrollToTop />
           <AppRoutes />
+          <LogoSplash />
         </BrowserRouter>
       </AuthProvider>
     </ErrorBoundary>
