@@ -21,12 +21,12 @@ export default function LogoSplash() {
 
   useEffect(() => {
     if (shown) return
-    // Reveal-Phase startet sofort nach Mount
-    const startFade = setTimeout(() => setFadingOut(true), 2100)
+    // Phasen: AS in (1.2s) → Reveal (2.0s) → Hold (1.0s) → Fade-Out (1.1s)
+    const startFade = setTimeout(() => setFadingOut(true), 4200)
     const done = setTimeout(() => {
       try { sessionStorage.setItem(SESSION_KEY, '1') } catch { /* ignore */ }
       setShown(true)
-    }, 2800)
+    }, 5300)
     return () => { clearTimeout(startFade); clearTimeout(done) }
   }, [shown])
 
