@@ -18,9 +18,13 @@ export const refreshLimiter = rateLimit({
   message: { error: 'Zu viele Refresh-Anfragen' },
 })
 
+// 60/min war zu eng: initStore feuert ~15 parallele Calls je Seitenaufruf,
+// dazu kommen prefetch + Re-Tries. Bei Multi-User-NAT vermehrt sich das.
+// 600/min (10/s) gibt normalen Nutzern Luft, schützt aber weiterhin
+// gegen aggressives Scraping.
 export const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: isDev ? 200 : 60,
+  max: isDev ? 1000 : 600,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Zu viele Anfragen, bitte warte kurz' },
