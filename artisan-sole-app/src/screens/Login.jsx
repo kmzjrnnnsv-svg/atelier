@@ -44,6 +44,7 @@ export default function Login() {
           uns sofort wieder zu /login schickt. */}
       <div className="w-full flex items-center justify-between px-5 lg:px-10 py-4">
         <button
+          type="button"
           onClick={() => navigate('/collection', { replace: true })}
           className="flex items-center gap-1.5 bg-transparent border-0 text-black/55 hover:text-black active:opacity-50 text-[12px] tracking-[0.15em] uppercase"
         >
@@ -73,7 +74,11 @@ export default function Login() {
         </div>
 
         {/* Form */}
-        <div className="space-y-4">
+        <form
+          className="space-y-4"
+          onSubmit={(e) => { e.preventDefault(); handleSubmit() }}
+          noValidate
+        >
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-4 py-3">
               <AlertCircle size={15} className="text-red-500 flex-shrink-0" />
@@ -85,9 +90,9 @@ export default function Login() {
             <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1.5 block" style={{ letterSpacing: '0.15em' }}>Email Address</label>
             <input
               type="email"
+              autoComplete="email"
               value={form.email}
               onChange={(e) => { setForm({ ...form, email: e.target.value }); setError(null) }}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder="ihre@email.com"
               className="w-full h-12 border border-black/10 px-3 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black transition-colors"
             />
@@ -98,9 +103,9 @@ export default function Login() {
             <div className="relative">
               <input
                 type={showPw ? 'text' : 'password'}
+                autoComplete="current-password"
                 value={form.password}
                 onChange={(e) => { setForm({ ...form, password: e.target.value }); setError(null) }}
-                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                 placeholder="••••••••"
                 className="w-full h-12 border border-black/10 px-3 pr-10 text-sm text-black/90 placeholder-black/20 focus:outline-none focus:border-black transition-colors"
               />
@@ -115,7 +120,7 @@ export default function Login() {
           </div>
 
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={!isValid || loading}
             style={{ height: '52px', letterSpacing: '0.18em' }}
             className={`w-full flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-widest transition-all mt-2 ${
@@ -127,7 +132,7 @@ export default function Login() {
               : <><span>Sign In</span><ArrowRight size={16} /></>
             }
           </button>
-        </div>
+        </form>
       </div>
 
       {/* Footer - pinned to bottom */}
@@ -137,6 +142,7 @@ export default function Login() {
           <Link to="/register" className="text-black font-semibold no-underline">Registrieren</Link>
         </p>
         <button
+          type="button"
           onClick={() => navigate('/collection', { replace: true })}
           className="text-[11px] text-black/40 hover:text-black tracking-[0.2em] uppercase bg-transparent border-0"
         >
