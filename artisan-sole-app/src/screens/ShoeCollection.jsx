@@ -100,12 +100,33 @@ export default function ShoeCollection() {
   }
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy, setScanAccuracy] = useState(null)
+  // Backend-Status: 'loading' (Initial-Pull läuft) | 'ok' | 'error'
+  const [backendStatus, setBackendStatus] = useState(shoes.length ? 'ok' : 'loading')
+  const [backendError, setBackendError]   = useState(null)
   const isPromo = !!user?.is_promotion
 
   useEffect(() => {
     apiFetch('/api/scans/mine')
       .then(scans => { if (scans?.length) setScanAccuracy(scans[0].accuracy) })
       .catch(() => {})
+  }, [])
+
+  // Eigener Probe-Fetch, damit wir explizit zwischen „Backend down“
+  // und „Backend antwortet mit leerer Liste“ unterscheiden können.
+  useEffect(() => {
+    let cancelled = false
+    apiFetch('/api/shoes')
+      .then(rows => {
+        if (cancelled) return
+        setBackendStatus('ok')
+        setBackendError(null)
+      })
+      .catch(err => {
+        if (cancelled) return
+        setBackendStatus('error')
+        setBackendError(err?.error || err?.message || 'Verbindung zum Server fehlgeschlagen')
+      })
+    return () => { cancelled = true }
   }, [])
 
   const CATEGORIES = isPromo
@@ -174,8 +195,31 @@ export default function ShoeCollection() {
       <div className="px-8 lg:px-24 xl:px-32 pb-16">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <p className="text-[14px] font-light text-black/40">Diese Kategorie wird gerade kuratiert.</p>
-            <p className="text-[12px] text-black/20 mt-2 font-light">Bald verfügbar.</p>
+            {backendStatus === 'loading' && (
+              <>
+                <div className="w-6 h-6 border border-black/15 border-t-black/50 rounded-full animate-spin-custom mb-4" />
+                <p className="text-[14px] font-light text-black/40">Produkte werden geladen …</p>
+              </>
+            )}
+            {backendStatus === 'error' && (
+              <>
+                <p className="text-[14px] font-light text-red-700/80">Produkte können aktuell nicht geladen werden.</p>
+                <p className="text-[12px] text-black/40 mt-2 font-light max-w-md">{backendError}</p>
+                <button
+                  type="button"
+                  onClick={() => { setBackendStatus('loading'); setBackendError(null); window.location.reload() }}
+                  className="mt-5 px-6 h-10 border border-black text-black text-[11px] tracking-[0.18em] uppercase font-light hover:bg-black hover:text-white transition-all"
+                >
+                  Erneut versuchen
+                </button>
+              </>
+            )}
+            {backendStatus === 'ok' && (
+              <>
+                <p className="text-[14px] font-light text-black/40">Diese Kategorie wird gerade kuratiert.</p>
+                <p className="text-[12px] text-black/20 mt-2 font-light">Bald verfügbar.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-8 lg:gap-y-12">
