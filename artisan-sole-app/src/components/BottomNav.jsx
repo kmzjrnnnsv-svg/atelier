@@ -8,17 +8,6 @@ function hapticSelection() {
 }
 
 // Apple Store tab bar icons — matching the real app exactly
-function IconForYou({ active }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <line x1="4" y1="6" x2="20" y2="6" />
-      <line x1="4" y1="12" x2="14" y2="12" />
-      <line x1="4" y1="18" x2="18" y2="18" />
-      <path d="M18 4v4M16 6h4" strokeWidth={active ? 2.2 : 1.8} />
-    </svg>
-  )
-}
-
 function IconProducts({ active }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -56,10 +45,9 @@ function IconBag({ active, count }) {
 }
 
 const PILL_ITEMS = [
-  { id: 'foryou',  icon: IconForYou,   label: 'Für dich',          path: '/foryou' },
-  { id: 'shop',    icon: IconProducts,  label: 'Produkte',          path: '/collection' },
-  { id: 'explore', icon: IconExplore,   label: 'Mehr machen',       path: '/explore' },
-  { id: 'bag',     icon: IconBag,       label: 'Einkaufstasche',    path: '/checkout' },
+  { id: 'shop',    icon: IconProducts,  label: 'Produkte',       path: '/collection' },
+  { id: 'explore', icon: IconExplore,   label: 'Entdecken',      path: '/explore' },
+  { id: 'bag',     icon: IconBag,       label: 'Einkaufstasche', path: '/checkout' },
 ]
 
 

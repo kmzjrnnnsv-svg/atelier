@@ -40,7 +40,7 @@ export default function Welcome() {
     }
   }
 
-  const skip = () => navigate('/foryou', { replace: true })
+  const skip = () => navigate('/collection', { replace: true })
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">

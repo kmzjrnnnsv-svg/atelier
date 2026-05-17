@@ -8,7 +8,6 @@ const ALL_PAGES = [
   { key: 'explore', label: 'Entdecken' },
   { key: 'collection', label: 'Kollektion' },
   { key: 'accessories', label: 'Zubeh\u00f6r' },
-  { key: 'foryou', label: 'F\u00fcr dich' },
 ]
 
 export default function CtaBannerPanel() {
