@@ -97,13 +97,20 @@ function getDefaultSole(soles) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, shoeAccessoryMap } = useStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, shoeAccessoryMap, shoes } = useStore()
   const { user } = useAuth()
 
-  const product = location.state?.product || {
-    name: 'The Heritage Oxford', price: '€ 1.450', material: 'Full-Grain Calfskin',
-    match: '99.4%', color: '#1f2937', image: null,
-  }
+  // Schuh aus location.state (Navigation) ODER — falls verloren (Reload,
+  // Direktlink) — über die ?id=-URL aus dem Store nachladen. Verhindert,
+  // dass der Konfigurator ohne product.id landet (dann fehlten Whitelist
+  // und Optionsschritte).
+  const urlShoeId = new URLSearchParams(location.search).get('id')
+  const product = location.state?.product
+    || (urlShoeId && shoes?.find(s => String(s.id) === String(urlShoeId)))
+    || {
+      name: 'The Heritage Oxford', price: '€ 1.450', material: 'Full-Grain Calfskin',
+      match: '99.4%', color: '#1f2937', image: null,
+    }
   const category = product.category || 'OXFORD'
   const availableSoles = getSolesForCategory(shoeSoles, category)
 

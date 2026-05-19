@@ -27,7 +27,7 @@ export default function Search() {
     )
   }, [query, shoes])
 
-  const selectShoe = (shoe) => navigate('/customize', { state: { product: shoe } })
+  const selectShoe = (shoe) => navigate(`/customize?id=${shoe.id}`, { state: { product: shoe } })
 
   return (
     <div className="min-h-full bg-white">

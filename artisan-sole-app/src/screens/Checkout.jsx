@@ -382,7 +382,7 @@ export default function Checkout() {
             if (lastShoe) {
               const product = shoes.find(s => s.id === lastShoe.shoeId)
               if (product) {
-                navigate('/customize', { state: { product } })
+                navigate(`/customize?id=${product.id}`, { state: { product } })
                 return
               }
             }

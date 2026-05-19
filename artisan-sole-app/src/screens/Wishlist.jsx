@@ -58,7 +58,7 @@ export default function Wishlist() {
                 <div
                   className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-3 lg:mb-4 relative cursor-pointer transition-all duration-500 group-hover:bg-[#efeee9]"
                   style={{ aspectRatio: '3 / 4' }}
-                  onClick={() => navigate('/customize', { state: { product } })}
+                  onClick={() => navigate(`/customize?id=${product.id}`, { state: { product } })}
                 >
                   {product.image ? (
                     <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
@@ -80,7 +80,7 @@ export default function Wishlist() {
                 </div>
 
                 {/* Info */}
-                <div className="cursor-pointer" onClick={() => navigate('/customize', { state: { product } })}>
+                <div className="cursor-pointer" onClick={() => navigate(`/customize?id=${product.id}`, { state: { product } })}>
                   <p className="text-[10px] text-black/25 uppercase tracking-[0.15em] font-light">{product.category}</p>
                   <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug mt-1">{product.name}</p>
                   {product.material && (
@@ -91,7 +91,7 @@ export default function Wishlist() {
 
                 {/* Configure button */}
                 <button
-                  onClick={() => navigate('/customize', { state: { product } })}
+                  onClick={() => navigate(`/customize?id=${product.id}`, { state: { product } })}
                   className="mt-3 w-full h-10 lg:h-11 flex items-center justify-center gap-2 text-[11px] lg:text-[12px] bg-white text-black border border-black/15 hover:bg-black hover:text-white hover:border-black transition-all duration-300"
                   style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
                 >
