@@ -279,6 +279,48 @@ router.get('/category-templates/:cat', param('cat').isString(), (req, res) => {
   res.json(rows)
 })
 
+// GET /api/category-templates/:cat/config — gruppiertes Konfigurator-Format
+// (gleiche Struktur wie /api/shoes/:id/options). Frontend-Fallback, wenn ein
+// Schuh keine eigenen shoe_options hat oder keine product.id vorhanden ist.
+router.get('/category-templates/:cat/config', param('cat').isString(), (req, res) => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT g.id as group_id, g.key as group_key, g.label as group_label,
+           g.description as group_description, g.helper_text as group_helper,
+           g.icon as group_icon, g.ui_type, g.required, g.sort_order as group_sort,
+           o.id as option_id, o.key as option_key, o.label as option_label,
+           o.description as option_description, o.image_data, o.color_hex, o.icon,
+           o.recommended, o.recommendation_reason, o.default_price_extra,
+           ct.is_default, ct.sort_order as shoe_sort
+    FROM category_templates ct
+    JOIN options o ON o.id = ct.option_id
+    JOIN option_groups g ON g.id = o.group_id
+    WHERE ct.category = ?
+    ORDER BY g.sort_order, g.id, ct.sort_order, o.sort_order
+  `).all(req.params.cat.toUpperCase())
+
+  const byGroup = new Map()
+  for (const r of rows) {
+    if (!byGroup.has(r.group_id)) {
+      byGroup.set(r.group_id, {
+        id: r.group_id, key: r.group_key, label: r.group_label,
+        description: r.group_description, helper_text: r.group_helper,
+        icon: r.group_icon, ui_type: r.ui_type, required: !!r.required,
+        sort_order: r.group_sort, values: [],
+      })
+    }
+    byGroup.get(r.group_id).values.push({
+      id: r.option_id, key: r.option_key, label: r.option_label,
+      description: r.option_description, image: r.image_data,
+      color_hex: r.color_hex, icon: r.icon,
+      recommended: !!r.recommended, recommendation_reason: r.recommendation_reason,
+      price_extra: r.default_price_extra, is_default: !!r.is_default,
+      sort_order: r.shoe_sort,
+    })
+  }
+  res.json([...byGroup.values()])
+})
+
 // PUT /api/category-templates/:cat — Vorlage neu setzen (admin)
 router.put('/category-templates/:cat', ...adminOnly, param('cat').isString(), (req, res) => {
   const db = getDb()

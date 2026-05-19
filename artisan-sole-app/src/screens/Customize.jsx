@@ -100,18 +100,44 @@ export default function Customize() {
   const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, shoeAccessoryMap, shoes } = useStore()
   const { user } = useAuth()
 
-  // Schuh aus location.state (Navigation) ODER — falls verloren (Reload,
-  // Direktlink) — über die ?id=-URL aus dem Store nachladen. Verhindert,
-  // dass der Konfigurator ohne product.id landet (dann fehlten Whitelist
-  // und Optionsschritte).
+  // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
+  // id + category hat (sonst fehlen Whitelist und Optionsschritte):
+  //  1) location.state.product (normale Navigation)
+  //  2) ?id=-URL → Schuh aus dem Store
+  //  3) erster echter Schuh aus dem Store (z. B. Direktaufruf /customize)
+  //  4) Fake-Default nur, solange der Store noch leer ist
   const urlShoeId = new URLSearchParams(location.search).get('id')
   const product = location.state?.product
     || (urlShoeId && shoes?.find(s => String(s.id) === String(urlShoeId)))
+    || (shoes && shoes.length > 0 ? shoes[0] : null)
     || {
       name: 'The Heritage Oxford', price: '€ 1.450', material: 'Full-Grain Calfskin',
       match: '99.4%', color: '#1f2937', image: null,
     }
   const category = product.category || 'OXFORD'
+
+  // Frontend-Whitelist nach Kategorie — greift auch ohne Backend-Daten,
+  // damit z. B. Oxford nie Patina/Velvet zeigt.
+  const MATRIX_MATERIALS_BY_CAT = {
+    OXFORD:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    WHOLECUT:         ['lux_calf', 'lux_suede', 'painted_full_grain', 'patina', 'box_calf', 'urban_suede', 'painted_calf'],
+    LOAFER:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    DERBY:            ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    DOUBLE_MONK:      ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    MONK:             ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    CHELSEA:          ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BOOT:             ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BALMORAL:         ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    JODHPUR:          ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    CHUKKA:           ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BELGIAN_SLIPPER:  ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    WELLINGTON:       ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    DRAKE:            ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    SNEAKER:          ['lux_suede'],
+    SNEAKER_LACED:    ['lux_suede'],
+    SNEAKER_BOOT:     ['lux_suede'],
+    LACELESS_TRAINER: ['lux_suede'],
+  }
   const availableSoles = getSolesForCategory(shoeSoles, category)
 
   // Per-Schuh konfigurierte Farben/Materialien (vom CMS gepflegt). Sind sie
@@ -125,29 +151,38 @@ export default function Customize() {
   const [selectedExtras, setSelectedExtras] = useState({}) // { group_key: option_id }
 
   useEffect(() => {
-    if (!product?.id) return
-    apiFetch(`/api/shoes/${product.id}/materials`)
-      .then(keys => setPerShoeMaterialKeys(Array.isArray(keys) ? keys : []))
-      .catch(() => setPerShoeMaterialKeys([]))
-    apiFetch(`/api/shoes/${product.id}/colors`)
-      .then(rows => setPerShoeColorVariants(Array.isArray(rows) ? rows : []))
-      .catch(() => setPerShoeColorVariants([]))
-    apiFetch(`/api/shoes/${product.id}/options`)
-      .then(groups => {
-        // Nur Material/Color filtern — diese haben eigene Spezial-UIs.
-        // `sole` (Sohle Unten) DARF erscheinen: laut Matrix gibt es das
-        // nur für Whole Cut, Derby, Monk — die Vorlage entscheidet.
-        const list = (Array.isArray(groups) ? groups : []).filter(
-          g => !['material', 'color'].includes(g.key)
-        )
-        setExtraOptionGroups(list)
-        // KEINE Auto-Defaults: der User soll jeden Schritt aktiv anklicken.
-        // Folgeschritte bleiben dadurch greyed-out, bis der vorherige
-        // explizit gewählt wurde. Empfehlungen werden als ★ markiert.
-        setSelectedExtras({})
-      })
-      .catch(() => setExtraOptionGroups([]))
-  }, [product?.id])
+    if (product?.id) {
+      apiFetch(`/api/shoes/${product.id}/materials`)
+        .then(keys => setPerShoeMaterialKeys(Array.isArray(keys) ? keys : []))
+        .catch(() => setPerShoeMaterialKeys([]))
+      apiFetch(`/api/shoes/${product.id}/colors`)
+        .then(rows => setPerShoeColorVariants(Array.isArray(rows) ? rows : []))
+        .catch(() => setPerShoeColorVariants([]))
+    } else {
+      setPerShoeMaterialKeys([])
+      setPerShoeColorVariants([])
+    }
+
+    // Nur Material/Color filtern — diese haben eigene Spezial-UIs.
+    const filterGroups = (groups) =>
+      (Array.isArray(groups) ? groups : []).filter(g => !['material', 'color'].includes(g.key))
+
+    // Optionen laden: zuerst per-Schuh, bei leer → Kategorie-Vorlage.
+    const loadOptions = async () => {
+      let list = []
+      if (product?.id) {
+        const perShoe = await apiFetch(`/api/shoes/${product.id}/options`).catch(() => [])
+        list = filterGroups(perShoe)
+      }
+      if (list.length === 0 && category) {
+        const tpl = await apiFetch(`/api/category-templates/${category}/config`).catch(() => [])
+        list = filterGroups(tpl)
+      }
+      setExtraOptionGroups(list)
+      setSelectedExtras({})  // keine Auto-Defaults: User klickt jeden Schritt
+    }
+    loadOptions()
+  }, [product?.id, category])
 
   // Summe der Extra-Aufpreise
   const extrasPriceTotal = extraOptionGroups.reduce((sum, g) => {
@@ -163,9 +198,13 @@ export default function Customize() {
     : [{ id: 1, key: 'calfskin', label: 'Kalbsleder', sub: 'Full-Grain', color: '#b45309', available: 1, tip: 'Robust und langlebig.', rating: 'good' }]
   // Schritt 0 (neu): Familie wählen — Aesthetic vs. Durable.
   // Die Materialliste wird nach dieser Wahl gefiltert.
+  // Backend-Whitelist hat Vorrang; sonst greift die Kategorie-Whitelist.
+  const catWhitelist = MATRIX_MATERIALS_BY_CAT[category]
   const baseMatList = perShoeMaterialKeys && perShoeMaterialKeys.length > 0
     ? globalMatList.filter(m => perShoeMaterialKeys.includes(m.key))
-    : globalMatList
+    : (catWhitelist
+        ? globalMatList.filter(m => catWhitelist.includes(m.key))
+        : globalMatList)
 
   // Per-Schuh Farb-Varianten haben Vorrang. Mehrere Varianten können denselben
   // Farbnamen haben (eine pro Material). Wir gruppieren nach (name, hex), und
