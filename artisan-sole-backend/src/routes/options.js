@@ -28,7 +28,7 @@ function loadAllGroups(db) {
     FROM option_groups ORDER BY sort_order ASC, id ASC
   `).all()
   const options = db.prepare(`
-    SELECT id, group_id, key, label, description, image_data,
+    SELECT id, group_id, key, label, description, image_data, color_hex, icon,
            default_price_extra, applicable_categories, sort_order
     FROM options ORDER BY sort_order ASC, id ASC
   `).all()
@@ -108,13 +108,14 @@ router.post('/options', ...adminOnly,
   (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
-    const { group_id, key, label, description, image_data, default_price_extra, applicable_categories, sort_order } = req.body
+    const { group_id, key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order } = req.body
     const db = getDb()
     try {
       const r = db.prepare(`
-        INSERT INTO options (group_id, key, label, description, image_data, default_price_extra, applicable_categories, sort_order)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO options (group_id, key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(group_id, key, label, description || null, image_data || null,
+             color_hex || null, icon || null,
              parseFloat(default_price_extra) || 0, applicable_categories || '*', parseInt(sort_order) || 0)
       res.status(201).json(db.prepare('SELECT * FROM options WHERE id = ?').get(r.lastInsertRowid))
     } catch (e) {
@@ -130,13 +131,15 @@ router.put('/options/:id', ...adminOnly, param('id').isInt(), (req, res) => {
   if (!db.prepare('SELECT id FROM options WHERE id = ?').get(id)) {
     return res.status(404).json({ error: 'Option not found' })
   }
-  const { key, label, description, image_data, default_price_extra, applicable_categories, sort_order, group_id } = req.body
+  const { key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order, group_id } = req.body
   const updates = []
   const vals = []
   if (key !== undefined)         { updates.push('key = ?');         vals.push(key) }
   if (label !== undefined)       { updates.push('label = ?');       vals.push(label) }
   if (description !== undefined) { updates.push('description = ?'); vals.push(description) }
   if (image_data !== undefined)  { updates.push('image_data = ?');  vals.push(image_data) }
+  if (color_hex !== undefined)   { updates.push('color_hex = ?');   vals.push(color_hex || null) }
+  if (icon !== undefined)        { updates.push('icon = ?');        vals.push(icon || null) }
   if (default_price_extra !== undefined) { updates.push('default_price_extra = ?'); vals.push(parseFloat(default_price_extra) || 0) }
   if (applicable_categories !== undefined) { updates.push('applicable_categories = ?'); vals.push(applicable_categories) }
   if (sort_order !== undefined)  { updates.push('sort_order = ?');  vals.push(parseInt(sort_order) || 0) }
@@ -168,7 +171,7 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
     SELECT g.id as group_id, g.key as group_key, g.label as group_label,
            g.description as group_description, g.ui_type, g.required, g.sort_order as group_sort,
            o.id as option_id, o.key as option_key, o.label as option_label,
-           o.description as option_description, o.image_data,
+           o.description as option_description, o.image_data, o.color_hex, o.icon,
            o.default_price_extra, o.applicable_categories, o.sort_order as option_sort,
            so.price_override, so.is_default, so.sort_order as shoe_sort
     FROM shoe_options so
@@ -191,6 +194,7 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
     byGroup.get(r.group_id).values.push({
       id: r.option_id, key: r.option_key, label: r.option_label,
       description: r.option_description, image: r.image_data,
+      color_hex: r.color_hex, icon: r.icon,
       price_extra: r.price_override !== null ? r.price_override : r.default_price_extra,
       is_default: !!r.is_default,
       sort_order: r.shoe_sort,

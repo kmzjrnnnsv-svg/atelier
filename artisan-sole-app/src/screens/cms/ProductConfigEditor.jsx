@@ -49,7 +49,7 @@ const labelCls = 'text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-
 // ═══════════════════════════════════════════════════════════════════════════
 // MATERIAL FORM
 // ═══════════════════════════════════════════════════════════════════════════
-const emptyMat = { key: '', label: '', sub: '', color: '#b45309', available: 1, tip: '', season: '', rating: 'neutral', sort_order: 0 }
+const emptyMat = { key: '', label: '', sub: '', color: '#b45309', available: 1, tip: '', season: '', rating: 'neutral', sort_order: 0, family: '' }
 
 function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
  const [f, setF] = useState(initial)
@@ -93,9 +93,19 @@ function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
  </button>
  </div>
  </div>
+ <div className="grid grid-cols-2 gap-3">
+ <div>
+ <label className={labelCls}>Familie</label>
+ <select value={f.family || ''} onChange={e => s('family', e.target.value)} className={inp}>
+   <option value="">— Keine Familie —</option>
+   <option value="aesthetic">Aesthetic</option>
+   <option value="durable">Durable</option>
+ </select>
+ </div>
  <div>
  <label className={labelCls}>Ampel-Bewertung</label>
  <RatingPicker value={f.rating} onChange={v => s('rating', v)} />
+ </div>
  </div>
  <div>
  <label className={labelCls}>Empfehlungstext (Info-Box in der App)</label>
@@ -115,12 +125,23 @@ function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // COLOR FORM
 // ═══════════════════════════════════════════════════════════════════════════
-const emptyCol = { key: '', hex: '#000000', name: '', available: 1, tip: '', pairs_with: '', rating: 'neutral', sort_order: 0 }
+const emptyCol = { key: '', hex: '#000000', name: '', available: 1, tip: '', pairs_with: '', rating: 'neutral', sort_order: 0, applicable_materials: '*' }
 
 function ColorForm({ initial = emptyCol, onSave, onCancel }) {
  const [f, setF] = useState(initial)
  const s = (k, v) => setF(p => ({ ...p, [k]: v }))
  const valid = f.key.trim() && f.name.trim()
+ const { shoeMaterials } = useStore()
+ const applicableList = f.applicable_materials === '*' || !f.applicable_materials
+   ? '*'
+   : f.applicable_materials.split(',').map(x => x.trim()).filter(Boolean)
+ const isAll = applicableList === '*'
+ const toggleMat = (mkey) => {
+   if (mkey === '*') return s('applicable_materials', '*')
+   const current = isAll ? [] : applicableList
+   const next = current.includes(mkey) ? current.filter(x => x !== mkey) : [...current, mkey]
+   s('applicable_materials', next.length ? next.join(',') : '*')
+ }
 
  return (
  <div className="bg-white p-7 space-y-4">
@@ -162,6 +183,29 @@ function ColorForm({ initial = emptyCol, onSave, onCancel }) {
  <div>
  <label className={labelCls}>Passt zu (Outfit-Empfehlung)</label>
  <input value={f.pairs_with || ''} onChange={e => s('pairs_with', e.target.value)} placeholder="Grau, Navy, Beige" className={inp} />
+ </div>
+ <div>
+ <label className={labelCls}>Verfügbar bei welchen Material-Typen?</label>
+ <p className="text-[10px] text-black/35 mb-2 font-light">
+   Wähle die Lederarten, für die diese Farbe angeboten werden soll. „Alle" = bei jedem Material verfügbar.
+ </p>
+ <div className="flex flex-wrap gap-1.5">
+   <button type="button" onClick={() => toggleMat('*')}
+     className={`px-3 h-8 text-[10px] tracking-wider border transition-all ${isAll ? 'bg-black text-white border-black' : 'border-black/10 text-black/55 hover:border-black/40 bg-transparent'}`}>
+     Alle
+   </button>
+   {(shoeMaterials || []).map(m => {
+     const on = !isAll && applicableList.includes(m.key)
+     return (
+       <button key={m.key} type="button" onClick={() => toggleMat(m.key)}
+         className={`flex items-center gap-1.5 px-3 h-8 text-[10px] tracking-wider border transition-all ${on ? 'bg-black text-white border-black' : 'border-black/10 text-black/55 hover:border-black/40 bg-transparent'}`}>
+         <span className="w-3 h-3 border border-white/30" style={{ backgroundColor: m.color }} />
+         {m.label}
+         {m.family && <span className="opacity-50">· {m.family === 'aesthetic' ? 'Aesth.' : 'Dur.'}</span>}
+       </button>
+     )
+   })}
+ </div>
  </div>
  <div className="flex gap-3">
  <button onClick={() => valid && onSave(f)} disabled={!valid}

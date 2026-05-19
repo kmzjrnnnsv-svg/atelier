@@ -286,6 +286,10 @@ export function runMigrations(db) {
     `ALTER TABLE shoe_materials ADD COLUMN family TEXT`,
     // shoe_colors — auf welche Materialien anwendbar (CSV der material_keys)
     `ALTER TABLE shoe_colors ADD COLUMN applicable_materials TEXT NOT NULL DEFAULT '*'`,
+    // options — Hex-Farbe für visuelle Vorschau (Innen-/Unter-/Sohlen-/Buckle-Farben)
+    `ALTER TABLE options ADD COLUMN color_hex TEXT`,
+    // options — Icon-Name (Lucide), für visuelle Akzente in der Liste
+    `ALTER TABLE options ADD COLUMN icon TEXT`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }

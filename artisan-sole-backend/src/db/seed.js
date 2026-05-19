@@ -783,5 +783,70 @@ export function seedExtendedCatalog(db) {
     if (oid) insTpl.run(cat, oid, isDefault ? 1 : 0, i)
   })
 
-  console.log(`✅ Seeded: extended catalog (${MATERIALS.length} materials, ${COLORS.length} colors, ${NEW_GROUPS.length} option groups, ${NEW_OPTIONS.length} options, ${TEMPLATES.length} template entries)`)
+  // ── 6) Hex-Farben für Farb-Options (Innen, Unterseite, Sohlenfarbe, Buckle) ──
+  // Damit die Picker echte Swatches zeigen statt Buchstaben-Platzhalter.
+  const COLOR_HEX_MAP = {
+    // inner_color
+    'inner_color:black':  '#0a0a0a',
+    'inner_color:brown':  '#5b3a1d',
+    'inner_color:tan':    '#a0734a',
+    'inner_color:beige':  '#d4c4a0',
+    'inner_color:red':    '#a01c1c',
+    'inner_color:orange': '#d97706',
+    'inner_color:navy':   '#1e3a5f',
+    'inner_color:white':  '#f5f5f0',
+    'inner_color:lila':   '#5a2d6d',
+    'inner_color:ochre':  '#b8860b',
+    // sole_bottom_color
+    'sole_bottom_color:black':        '#0a0a0a',
+    'sole_bottom_color:brown':        '#5b3a1d',
+    'sole_bottom_color:cognac':       '#92400e',
+    'sole_bottom_color:dark_red':     '#5a1818',
+    'sole_bottom_color:forest_green': '#1f3d1f',
+    'sole_bottom_color:lila':         '#5a2d6d',
+    'sole_bottom_color:natural':      '#d4b896',
+    'sole_bottom_color:orange':       '#d97706',
+    'sole_bottom_color:white':        '#f5f5f0',
+    // sole_color (Außenrand)
+    'sole_color:black':   '#0a0a0a',
+    'sole_color:brown':   '#5b3a1d',
+    'sole_color:brick':   '#8b3a2a',
+    'sole_color:natural': '#d4b896',
+    // buckle_color (Metall-Töne)
+    'buckle_color:gold':     '#c9a85e',
+    'buckle_color:graphite': '#3a3a3a',
+    'buckle_color:nickel':   '#a8a8a8',
+    'buckle_color:copper':   '#b5704c',
+  }
+  // Icons pro Gruppe (Lucide-Names) — für visuelle Akzente
+  const ICON_MAP = {
+    last:               'Footprints',
+    sole:               'Layers',
+    welt:               'CircleDashed',
+    heel:               'ChevronUp',
+    toe:                'Diamond',
+    wholecut_base:      'CircleDot',
+    buckle:             'Square',
+    buckle_color:       'Gem',
+    inner_color:        'Palette',
+    sole_color:         'Palette',
+    sole_bottom_color:  'Palette',
+    loafer_decoration:  'Sparkles',
+    beveled_waist:      'ArrowRightLeft',
+  }
+  const upHex = db.prepare(`
+    UPDATE options SET color_hex = ?, updated_at = datetime('now')
+    WHERE id = (SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id WHERE g.key = ? AND o.key = ?)
+  `)
+  Object.entries(COLOR_HEX_MAP).forEach(([k, hex]) => {
+    const [gk, ok] = k.split(':')
+    upHex.run(hex, gk, ok)
+  })
+  const upIcon = db.prepare(`
+    UPDATE options SET icon = ?, updated_at = datetime('now')
+    WHERE group_id = (SELECT id FROM option_groups WHERE key = ?) AND (icon IS NULL OR icon = '')
+  `)
+  Object.entries(ICON_MAP).forEach(([gk, icon]) => upIcon.run(icon, gk))
+
+  console.log(`✅ Seeded: extended catalog (${MATERIALS.length} materials, ${COLORS.length} colors, ${NEW_GROUPS.length} option groups, ${NEW_OPTIONS.length} options, ${TEMPLATES.length} template entries, ${Object.keys(COLOR_HEX_MAP).length} hex codes)`)
 }

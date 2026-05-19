@@ -156,10 +156,15 @@ export default function OptionsEditor() {
                 <ul className="space-y-2">
                   {activeGroup.values?.map(v => (
                     <li key={v.id} className="flex items-center gap-3 p-2 border border-black/[0.06] bg-white">
-                      <div className="w-12 h-12 bg-[#fafaf9] flex items-center justify-center overflow-hidden border border-black/[0.04] flex-shrink-0">
+                      <div
+                        className="w-12 h-12 flex items-center justify-center overflow-hidden border border-black/[0.04] flex-shrink-0"
+                        style={{ backgroundColor: v.color_hex || '#fafaf9' }}
+                      >
                         {v.image_data
                           ? <img src={v.image_data} alt="" className="w-full h-full object-cover" />
-                          : <Sliders size={14} strokeWidth={1.2} className="text-black/15" />}
+                          : v.color_hex
+                            ? null
+                            : <Sliders size={14} strokeWidth={1.2} className="text-black/15" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-light text-black/80">{v.label}</p>
@@ -250,7 +255,7 @@ function GroupForm({ initial, onSave, onCancel }) {
 // ── Optionen-Formular ───────────────────────────────────────────────────────
 function OptionForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || {
-    key: '', label: '', description: '', image_data: '',
+    key: '', label: '', description: '', image_data: '', color_hex: '', icon: '',
     default_price_extra: 0, applicable_categories: '*', sort_order: 0,
   })
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -278,6 +283,41 @@ function OptionForm({ initial, onSave, onCancel }) {
       </div>
       <Field label="Beschreibung" value={form.description} onChange={v => set('description', v)} placeholder="Kurze Erläuterung für Tooltip" />
       <ImagePicker label="Bild" value={form.image_data || ''} onChange={v => set('image_data', v)} />
+      <div className="grid grid-cols-2 gap-5 mt-4">
+        <div>
+          <Label>Farbe (Hex)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={form.color_hex || '#000000'}
+              onChange={e => set('color_hex', e.target.value)}
+              className="w-10 h-10 border border-black/10 bg-transparent cursor-pointer p-0"
+            />
+            <input
+              value={form.color_hex || ''}
+              onChange={e => set('color_hex', e.target.value)}
+              placeholder="z. B. #5b3a1d (für Farb-Picker)"
+              className="flex-1 h-10 px-2 border-b border-black/[0.1] text-[13px] bg-transparent outline-none font-mono font-light"
+            />
+            {form.color_hex && (
+              <button type="button" onClick={() => set('color_hex', '')} className="text-[10px] text-black/30 hover:text-red-600 bg-transparent border-0 px-2">
+                ✕
+              </button>
+            )}
+          </div>
+          <p className="text-[10px] text-black/35 mt-1 font-light">Optional — zeigt Farb-Vorschau statt Buchstaben.</p>
+        </div>
+        <div>
+          <Label>Icon (Lucide-Name)</Label>
+          <input
+            value={form.icon || ''}
+            onChange={e => set('icon', e.target.value)}
+            placeholder="z. B. Footprints, Layers, Palette"
+            className="w-full h-10 px-2 border-b border-black/[0.1] text-[13px] bg-transparent outline-none font-light"
+          />
+          <p className="text-[10px] text-black/35 mt-1 font-light">Optional — siehe lucide.dev/icons.</p>
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-5 mt-4">
         <div>
           <Label>Aufpreis (€)</Label>
