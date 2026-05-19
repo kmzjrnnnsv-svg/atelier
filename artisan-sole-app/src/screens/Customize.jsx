@@ -371,13 +371,14 @@ export default function Customize() {
     if (shoeColors.length && selCol && !shoeColors.find(c => c.key === selCol)) setSelCol('')
   }, [shoeColors])
   useEffect(() => {
-    // Sohle ist nicht mehr user-selectable: automatisch erste verfügbare Sohle
-    // setzen, damit Cart-Payload und Preis korrekt befüllt sind.
+    // Sohle ist nicht mehr user-selectable: automatisch die KOSTENLOSE Sohle
+    // wählen (price_extra 0), damit kein versteckter +35€-Aufpreis entsteht.
+    // Die eigentliche Sohlen-Konfiguration läuft über „Sohle Unten" (Matrix).
     if (availableSoles.length && !selSole) {
-      const defaultSole = availableSoles.find(s => s.recommended === 1) || availableSoles[0]
-      if (defaultSole?.key) setSelSole(defaultSole.key)
+      const freeSole = availableSoles.find(s => (s.price_extra || 0) === 0) || availableSoles[0]
+      if (freeSole?.key) setSelSole(freeSole.key)
     } else if (availableSoles.length && selSole && !availableSoles.find(s => s.key === selSole)) {
-      const fallback = availableSoles[0]
+      const fallback = availableSoles.find(s => (s.price_extra || 0) === 0) || availableSoles[0]
       if (fallback?.key) setSelSole(fallback.key)
     }
   }, [shoeSoles, category])
@@ -1092,7 +1093,16 @@ export default function Customize() {
                 Schritt ein Helper-Text; eine Option kann als „EMPFOHLEN"
                 markiert sein, dann erscheint über der Auswahl ein Banner. */}
             {extraOptionGroups.map((group, gIdx) => {
-              const recValue = group.values.find(v => v.recommended)
+              // Farb-Gruppen: passend zum gewählten Oberleder eine Farbe
+              // empfehlen (z. B. schwarzes Oberleder → schwarze Sohlenfarbe).
+              const isColorGroup = ['sole_color', 'inner_color', 'sole_bottom_color'].includes(group.key)
+              const colorMatchRec = isColorGroup && col?.name
+                ? group.values.find(v => {
+                    const l = col.name.toLowerCase(), o = v.label.toLowerCase()
+                    return l === o || l.includes(o) || o.includes(l)
+                  })
+                : null
+              const recValue = colorMatchRec || group.values.find(v => v.recommended)
               const currentSelection = group.values.find(v => v.id === selectedExtras[group.key])
               // Step ist aktiv, wenn alle vorherigen Extras gewählt sind.
               const allBefore = extraOptionGroups.slice(0, gIdx).every(g => selectedExtras[g.key])
@@ -1125,7 +1135,9 @@ export default function Customize() {
                   <div className="flex items-start gap-2 mb-3 px-3 py-2 bg-green-50/60 border border-green-200/60">
                     <span className="text-[9px] text-green-700 tracking-wider uppercase font-medium flex-shrink-0">Empfohlen</span>
                     <span className="text-[10px] text-green-900/70 font-light leading-relaxed">
-                      {recValue.recommendation_reason || `${recValue.label} ist unsere Empfehlung.`}
+                      {colorMatchRec && colorMatchRec.id === recValue.id
+                        ? `Passend zu Ihrem Oberleder „${col.name}" empfehlen wir ${recValue.label}.`
+                        : (recValue.recommendation_reason || `${recValue.label} ist unsere Empfehlung.`)}
                     </span>
                     <button
                       type="button"
