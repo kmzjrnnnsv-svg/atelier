@@ -835,5 +835,58 @@ export function runMigrations(db) {
       updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_shoe_color_variants_shoe ON shoe_color_variants(shoe_id);
+
+    -- ── Generisches Konfigurator-Options-System ─────────────────────────────
+    -- option_groups: Konfigurator-Schritte (Last, Sohle, Welt, Heel, Toe, …)
+    CREATE TABLE IF NOT EXISTS option_groups (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      key           TEXT    NOT NULL UNIQUE,
+      label         TEXT    NOT NULL,
+      description   TEXT,
+      ui_type       TEXT    NOT NULL DEFAULT 'single'
+                    CHECK(ui_type IN ('single','toggle','multi')),
+      required      INTEGER NOT NULL DEFAULT 1,
+      sort_order    INTEGER NOT NULL DEFAULT 0,
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    -- options: konkrete Werte innerhalb einer Gruppe (z. B. Zurigo, Monti, …)
+    CREATE TABLE IF NOT EXISTS options (
+      id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      group_id              INTEGER NOT NULL REFERENCES option_groups(id) ON DELETE CASCADE,
+      key                   TEXT    NOT NULL,
+      label                 TEXT    NOT NULL,
+      description           TEXT,
+      image_data            TEXT,
+      default_price_extra   REAL    NOT NULL DEFAULT 0,
+      applicable_categories TEXT    NOT NULL DEFAULT '*',  -- '*' oder 'OXFORD,DERBY,…'
+      sort_order            INTEGER NOT NULL DEFAULT 0,
+      created_at            TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at            TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(group_id, key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_options_group ON options(group_id);
+
+    -- shoe_options: pro Schuh aktivierte Werte + ggf. Preis-Override
+    CREATE TABLE IF NOT EXISTS shoe_options (
+      shoe_id        INTEGER NOT NULL REFERENCES shoes(id) ON DELETE CASCADE,
+      option_id      INTEGER NOT NULL REFERENCES options(id) ON DELETE CASCADE,
+      price_override REAL,
+      is_default     INTEGER NOT NULL DEFAULT 0,
+      sort_order     INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (shoe_id, option_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_shoe_options_shoe ON shoe_options(shoe_id);
+
+    -- category_templates: pro Schuh-Kategorie welche Optionen typisch sind
+    CREATE TABLE IF NOT EXISTS category_templates (
+      category    TEXT    NOT NULL,
+      option_id   INTEGER NOT NULL REFERENCES options(id) ON DELETE CASCADE,
+      is_default  INTEGER NOT NULL DEFAULT 0,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (category, option_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_category_templates_cat ON category_templates(category);
   `)
 }

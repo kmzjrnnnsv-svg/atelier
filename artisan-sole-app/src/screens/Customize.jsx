@@ -84,6 +84,11 @@ export default function Customize() {
   // genau das, was der Admin für DIESEN Schuh freigegeben hat.
   const [perShoeMaterialKeys, setPerShoeMaterialKeys] = useState(null)   // null=loading, []=keine Beschränkung
   const [perShoeColorVariants, setPerShoeColorVariants] = useState(null) // null=loading
+  // Dynamische Konfigurator-Gruppen (Last, Welt, Heel, Toe, Schnalle, …)
+  // Mit eigenem System verwaltet — Material/Color/Sole bleiben separat.
+  const [extraOptionGroups, setExtraOptionGroups] = useState([])
+  const [selectedExtras, setSelectedExtras] = useState({}) // { group_key: option_id }
+
   useEffect(() => {
     if (!product?.id) return
     apiFetch(`/api/shoes/${product.id}/materials`)
@@ -92,7 +97,29 @@ export default function Customize() {
     apiFetch(`/api/shoes/${product.id}/colors`)
       .then(rows => setPerShoeColorVariants(Array.isArray(rows) ? rows : []))
       .catch(() => setPerShoeColorVariants([]))
+    apiFetch(`/api/shoes/${product.id}/options`)
+      .then(groups => {
+        // Schluck Gruppen, deren key sich mit Material/Color/Sole überschneidet
+        const list = (Array.isArray(groups) ? groups : []).filter(
+          g => !['material', 'color', 'sole'].includes(g.key)
+        )
+        setExtraOptionGroups(list)
+        // Defaults setzen
+        const defs = {}
+        list.forEach(g => {
+          const def = g.values.find(v => v.is_default) || g.values[0]
+          if (def) defs[g.key] = def.id
+        })
+        setSelectedExtras(defs)
+      })
+      .catch(() => setExtraOptionGroups([]))
   }, [product?.id])
+
+  // Summe der Extra-Aufpreise
+  const extrasPriceTotal = extraOptionGroups.reduce((sum, g) => {
+    const sel = g.values.find(v => v.id === selectedExtras[g.key])
+    return sum + (sel?.price_extra || 0)
+  }, 0)
 
   // Daten aus dem Store (mit Fallback)
   const globalMatList = shoeMaterials.length ? shoeMaterials : [
@@ -380,14 +407,23 @@ export default function Customize() {
   }
 
   const chosenEU = sizeType === 'custom' ? latestScan?.eu_size : selectedSize
+  // Extras als lesbare Liste mit Aufpreissumme — wird in der Bestellung
+  // mitgeführt, damit Admin & Manufaktur die Spezifikation sehen.
+  const extrasForCart = extraOptionGroups
+    .map(g => {
+      const sel = g.values.find(v => v.id === selectedExtras[g.key])
+      return sel ? { group: g.label, key: g.key, value: sel.label, price: sel.price_extra || 0 } : null
+    })
+    .filter(Boolean)
   const addShoeToCart = () => {
     addToCart({
       shoeId: product.id, name: product.name,
       material: mat?.label || product.material,
-      color, price: formatPrice(basePrice + soleExtra),
+      color, price: formatPrice(basePrice + soleExtra + extrasPriceTotal),
       sole: sole?.label || 'Sohle',
       image: product.image,
       sizeType, euSize: chosenEU,
+      extras: extrasForCart,
     })
   }
 
@@ -920,6 +956,44 @@ export default function Customize() {
             </div>
 
             {/* ── Remaining sections (visible after all steps) ── */}
+
+            {/* ── Konfigurator-Extras (Last, Welt, Heel, Toe, Schnalle, …) ── */}
+            {extraOptionGroups.map(group => (
+              <div key={group.id} className="px-5 lg:px-0 mb-6">
+                <div className="flex items-baseline justify-between mb-3">
+                  <p className="text-[10px] text-black/30 uppercase" style={{ letterSpacing: '0.18em' }}>{group.label}</p>
+                  {group.description && (
+                    <p className="text-[9px] text-black/30 font-light hidden lg:block max-w-[60%] text-right">{group.description}</p>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {group.values.map(v => {
+                    const isSel = selectedExtras[group.key] === v.id
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setSelectedExtras(prev => ({ ...prev, [group.key]: v.id }))}
+                        className={`flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border ${
+                          isSel ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30 bg-white'
+                        }`}
+                        title={v.description || ''}
+                      >
+                        <div className="w-12 h-12 mb-2 flex items-center justify-center overflow-hidden bg-[#fafaf9]">
+                          {v.image
+                            ? <img src={v.image} alt="" className="w-full h-full object-cover" />
+                            : <span className="text-[9px] text-black/20 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
+                        </div>
+                        <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
+                        {v.price_extra > 0 && (
+                          <p className="text-[9px] text-black/35 font-light mt-0.5">+{v.price_extra.toFixed(2).replace('.', ',')} €</p>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
 
             {/* ── Größenauswahl ─────────────────────────────── */}
             <div className="px-5 lg:px-0">

@@ -119,6 +119,7 @@ const HomepageEditor       = lazy(() => import('./screens/cms/HomepageEditor'))
 const FooterEditor         = lazy(() => import('./screens/cms/FooterEditor'))
 const MediaLibrary         = lazy(() => import('./screens/cms/MediaLibrary'))
 const WebsiteImagesPanel   = lazy(() => import('./screens/cms/WebsiteImagesPanel'))
+const OptionsEditor        = lazy(() => import('./screens/cms/OptionsEditor'))
 const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 
@@ -239,6 +240,7 @@ function AppRoutes() {
               <Route path="footer" element={<FooterEditor />} />
               <Route path="media" element={<MediaLibrary />} />
               <Route path="website-images" element={<WebsiteImagesPanel />} />
+              <Route path="options"        element={<OptionsEditor />} />
             </Route>
           </Routes>
         </Suspense>

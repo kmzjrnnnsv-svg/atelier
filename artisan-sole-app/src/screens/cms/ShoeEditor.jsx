@@ -35,21 +35,95 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  // Aktiver Tab pro Farbe: { [colorKey]: material_key|null }
  const [activeTab, setActiveTab] = useState({})
 
+ // Globale Options-Gruppen + Werte (für die Konfigurator-Matrix)
+ const [allGroups, setAllGroups] = useState([])
+ // Aktive Auswahl: Map<option_id, { price_override, is_default, sort_order }>
+ const [selectedOpts, setSelectedOpts] = useState(new Map())
+
  useEffect(() => {
-   if (!initial.id) return
+   // Globale Optionen laden — egal ob neu oder bearbeiten
+   apiFetch('/api/option-groups')
+     .then(rows => setAllGroups(Array.isArray(rows) ? rows : []))
+     .catch(() => {})
+ }, [])
+
+ useEffect(() => {
+   if (!initial.id) {
+     // Neuer Schuh: keine Farben/Materialien laden, aber Vorlage aus Kategorie laden
+     return
+   }
    Promise.all([
      apiFetch(`/api/shoes/${initial.id}/colors`).catch(() => []),
      apiFetch(`/api/shoes/${initial.id}/materials`).catch(() => []),
-   ]).then(([cols, mats]) => {
+     apiFetch(`/api/shoes/${initial.id}/options`).catch(() => []),
+   ]).then(([cols, mats, optGroups]) => {
      setVariants((cols || []).map(r => ({
        _existingId: r.id, hex: r.hex, name: r.name,
        material_key: r.material_key || null,
        images: r.images || [],
      })))
      setAssignedMaterials(Array.isArray(mats) ? mats : [])
+     // optGroups ist die per-Schuh Konfigurator-Struktur — wir flachen die
+     // Auswahl in eine Map<option_id, …>.
+     const m = new Map()
+     if (Array.isArray(optGroups)) {
+       optGroups.forEach(g => g.values?.forEach(v => {
+         // price_extra ist hier schon der effektive Preis; wir wollen aber
+         // wissen, ob es ein Override war. Vereinfacht: speichern als-is.
+         m.set(v.id, { is_default: !!v.is_default, price_override: null, sort_order: v.sort_order })
+       }))
+     }
+     setSelectedOpts(m)
      setVariantsLoaded(true)
    })
  }, [initial.id])
+
+ // Vorlage anwenden — überschreibt die aktuelle Auswahl mit den Empfehlungen
+ // für die gewählte Kategorie. Aufruf manuell, nicht automatisch beim
+ // Kategoriewechsel (sonst frustrierende Datenverluste).
+ const applyTemplate = async () => {
+   if (!form.category) return
+   try {
+     const rows = await apiFetch(`/api/category-templates/${form.category}`)
+     const m = new Map(selectedOpts)
+     ;(rows || []).forEach(r => {
+       m.set(r.option_id, { is_default: !!r.is_default, price_override: null, sort_order: r.sort_order })
+     })
+     setSelectedOpts(m)
+   } catch (e) { alert(e?.error || 'Vorlage konnte nicht geladen werden') }
+ }
+
+ const toggleOption = (optionId, groupId) => {
+   setSelectedOpts(prev => {
+     const m = new Map(prev)
+     if (m.has(optionId)) m.delete(optionId)
+     else m.set(optionId, { is_default: false, price_override: null, sort_order: 0 })
+     return m
+   })
+ }
+ const setDefault = (optionId, groupId) => {
+   setSelectedOpts(prev => {
+     const m = new Map(prev)
+     // Bei single-Auswahl-Gruppe: alle anderen Defaults der Gruppe zurücksetzen
+     const group = allGroups.find(g => g.id === groupId)
+     if (group?.ui_type === 'single' || group?.ui_type === 'toggle') {
+       group.values?.forEach(v => {
+         if (m.has(v.id)) m.set(v.id, { ...m.get(v.id), is_default: v.id === optionId })
+       })
+     } else if (m.has(optionId)) {
+       m.set(optionId, { ...m.get(optionId), is_default: !m.get(optionId).is_default })
+     }
+     return m
+   })
+ }
+ const setPriceOverride = (optionId, value) => {
+   setSelectedOpts(prev => {
+     const m = new Map(prev)
+     if (!m.has(optionId)) return m
+     m.set(optionId, { ...m.get(optionId), price_override: value === '' ? null : parseFloat(value) })
+     return m
+   })
+ }
 
  // Gruppiere Varianten nach Farbe (Name+Hex). Jede Gruppe hat 1..n Buckets.
  const colorGroups = (() => {
@@ -133,6 +207,19 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
    })
  }
 
+ const persistOptions = async (shoeId) => {
+   const selections = [...selectedOpts.entries()].map(([option_id, meta], i) => ({
+     option_id,
+     price_override: meta.price_override,
+     is_default: meta.is_default,
+     sort_order: meta.sort_order ?? i,
+   }))
+   await apiFetch(`/api/shoes/${shoeId}/options`, {
+     method: 'PUT',
+     body: JSON.stringify({ selections }),
+   })
+ }
+
  const handleSave = async () => {
    if (!valid || saving) return
    if (variants.length > 0 && !variantsValid) {
@@ -148,6 +235,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
        const shoeId = savedShoe?.id || initial.id
        if (!shoeId) return
        if (variants.length > 0) await persistVariants(shoeId)
+       if (selectedOpts.size > 0)  await persistOptions(shoeId)
      })
    } catch (e) {
      setVariantError(e?.error || 'Speichern fehlgeschlagen')
@@ -407,6 +495,98 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  <p className="text-[11px] text-red-700">{variantError}</p>
  </div>
  )}
+ </div>
+
+ {/* Konfigurator-Optionen — Matrix mit Vorlagen-Anwendung */}
+ <div className="border-t border-black/[0.04] pt-5 mt-2 mb-5">
+   <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+     <div>
+       <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">Konfigurator</p>
+       <p className="text-[11px] text-black/40 mt-1 font-light max-w-md">
+         Welche Optionen darf der Kunde bei diesem Schuh wählen? Klick = aktiviert. Stern = Vorbelegung.
+       </p>
+     </div>
+     <button
+       type="button"
+       onClick={applyTemplate}
+       className="text-[10px] text-black/55 hover:text-black tracking-[0.18em] uppercase font-light border border-black/15 hover:border-black bg-transparent px-4 h-9"
+     >
+       Vorlage „{form.category}" anwenden
+     </button>
+   </div>
+   <div className="space-y-3">
+     {allGroups.map(group => {
+       // Werte filtern: nur die, die zur Kategorie passen
+       const cat = (form.category || '').toUpperCase()
+       const groupValues = (group.values || []).filter(v => {
+         if (!v.applicable_categories || v.applicable_categories === '*') return true
+         return v.applicable_categories.split(',').map(s => s.trim()).includes(cat)
+       })
+       if (groupValues.length === 0) return null
+       const anySelected = groupValues.some(v => selectedOpts.has(v.id))
+       return (
+         <div key={group.id} className={`border ${anySelected ? 'border-black/[0.08]' : 'border-black/[0.04] opacity-70'} bg-white p-3`}>
+           <div className="flex items-center justify-between mb-2">
+             <div>
+               <p className="text-[11px] text-black/70 font-light">{group.label}</p>
+               <p className="text-[9px] text-black/30 tracking-wider uppercase mt-0.5">
+                 {group.ui_type === 'single' ? 'Einzelauswahl' : group.ui_type === 'toggle' ? 'Ja/Nein' : 'Mehrfach'}
+                 {group.required ? ' · Pflicht' : ' · Optional'}
+               </p>
+             </div>
+           </div>
+           <div className="flex flex-wrap gap-1.5">
+             {groupValues.map(v => {
+               const sel = selectedOpts.get(v.id)
+               const isOn = !!sel
+               const effectivePrice = sel?.price_override !== null && sel?.price_override !== undefined
+                 ? sel.price_override
+                 : v.default_price_extra
+               return (
+                 <div key={v.id} className={`flex items-stretch border ${isOn ? 'border-black' : 'border-black/10'} bg-white`}>
+                   <button
+                     type="button"
+                     onClick={() => toggleOption(v.id, group.id)}
+                     className={`flex items-center gap-1.5 px-2.5 h-8 text-[10px] tracking-wider transition-all bg-transparent border-0 ${
+                       isOn ? 'text-black font-medium' : 'text-black/45 hover:text-black/70'
+                     }`}
+                   >
+                     {v.image_data && <img src={v.image_data} alt="" className="w-4 h-4 object-cover border border-black/10" />}
+                     {v.label}
+                     {effectivePrice > 0 && <span className="opacity-60">+{effectivePrice.toFixed(2).replace('.', ',')}€</span>}
+                   </button>
+                   {isOn && (
+                     <>
+                       <button
+                         type="button"
+                         onClick={() => setDefault(v.id, group.id)}
+                         className={`px-2 border-l border-black/10 ${sel.is_default ? 'text-yellow-600' : 'text-black/25 hover:text-black/50'} bg-transparent`}
+                         title="Als Vorbelegung markieren"
+                       >
+                         ★
+                       </button>
+                       <input
+                         type="number" step="0.01" placeholder={`${v.default_price_extra}`}
+                         value={sel.price_override ?? ''}
+                         onChange={e => setPriceOverride(v.id, e.target.value)}
+                         className="w-14 px-1 border-l border-black/10 text-[10px] text-black/70 bg-transparent outline-none text-right font-light"
+                         title="Preis-Override (leer = Default)"
+                       />
+                     </>
+                   )}
+                 </div>
+               )
+             })}
+           </div>
+         </div>
+       )
+     })}
+     {allGroups.length === 0 && (
+       <p className="text-[11px] text-black/30 font-light text-center py-4">
+         Keine Konfigurator-Optionen definiert. Lege sie unter „Produkt-Konfig" → „Konfigurator-Optionen" an.
+       </p>
+     )}
+   </div>
  </div>
 
  {/* Cost & Promotion pricing */}

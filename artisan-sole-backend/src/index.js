@@ -26,6 +26,7 @@ import shippingRouter from './routes/shipping.js'
 import couponsRouter from './routes/coupons.js'
 import mediaRouter from './routes/media.js'
 import customRequestsRouter from './routes/customRequests.js'
+import optionsRouter from './routes/options.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -134,6 +135,9 @@ app.use('/api/shipping', shippingRouter)
 app.use('/api/coupons', couponsRouter)
 app.use('/api/media', mediaRouter)
 app.use('/api/custom-requests', customRequestsRouter)
+// Konfigurator-Optionen — mountet sowohl /api/option-groups als auch
+// /api/shoes/:id/options und /api/category-templates/:cat
+app.use('/api', optionsRouter)
 
 // GitHub Webhook — auto-deploy on push to website
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {

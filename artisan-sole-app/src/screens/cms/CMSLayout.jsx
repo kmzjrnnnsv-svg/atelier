@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, ImagePlus, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone, Home, ExternalLink } from 'lucide-react'
+import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, ImagePlus, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone, Home, ExternalLink, Sliders } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 
@@ -36,6 +36,7 @@ export default function CMSLayout() {
             { heading: 'Produkte', items: [
               { to: '/cms/shoes',          label: 'Schuhe',           icon: Footprints },
               { to: '/cms/product-config', label: 'Produkt-Konfig',   icon: Palette },
+              { to: '/cms/options',        label: 'Konfigurator-Optionen', icon: Sliders },
               { to: '/cms/leisten',        label: 'Leisten-Parameter', icon: Ruler },
               { to: '/cms/accessories',    label: 'Zubehör',          icon: Gift },
             ]},

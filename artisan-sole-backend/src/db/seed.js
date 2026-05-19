@@ -6,6 +6,7 @@ export async function seedDatabase(db) {
   seedEmailTemplates(db)
   seedArticles(db)
   seedShoeAccessories(db)
+  seedConfiguratorOptions(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -393,4 +394,164 @@ function seedShoeAccessories(db) {
   })()
 
   console.log(`✅ Seeded: shoe-accessory assignments for ${shoes.length} shoes`)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Konfigurator-Optionen — Last, Sohle, Welt, Heel, Toe, Schnalle,
+// Loafer-Dekor, Beveled Waist + Vorlagen pro Kategorie.
+// Idempotent: läuft bei jedem Start, fügt nur fehlende Einträge ein.
+// ─────────────────────────────────────────────────────────────────────
+function seedConfiguratorOptions(db) {
+  // 1) Option-Gruppen
+  const GROUPS = [
+    { key: 'last',              label: 'Leisten',        ui_type: 'single', required: 1, sort_order: 0, description: 'Leistenform — bestimmt Zehenform, Taille und Proportion.' },
+    { key: 'sole',              label: 'Sohle',          ui_type: 'single', required: 1, sort_order: 1, description: 'Sohlentyp.' },
+    { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 2, description: 'Rahmen — City für glatten Look, Country/Storm für robusten Auftritt.' },
+    { key: 'heel',              label: 'Absatz',         ui_type: 'single', required: 1, sort_order: 3, description: 'Standard- oder erhöhter Absatz.' },
+    { key: 'toe',               label: 'Zehenkappe',     ui_type: 'single', required: 0, sort_order: 4, description: 'Zehenkappenform.' },
+    { key: 'buckle',            label: 'Schnalle',       ui_type: 'single', required: 1, sort_order: 5, description: 'Schnallenform (für Monk-Modelle).' },
+    { key: 'loafer_decoration', label: 'Loafer-Dekor',   ui_type: 'single', required: 0, sort_order: 6, description: 'Dekoration bei Loafer-Modellen.' },
+    { key: 'beveled_waist',     label: 'Beveled Waist',  ui_type: 'toggle', required: 0, sort_order: 7, description: 'Schlanke Taille für eleganteren Look.' },
+  ]
+  const insGroup = db.prepare(`
+    INSERT OR IGNORE INTO option_groups (key, label, description, ui_type, required, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  GROUPS.forEach(g => insGroup.run(g.key, g.label, g.description, g.ui_type, g.required, g.sort_order))
+
+  const groupId = (key) => db.prepare('SELECT id FROM option_groups WHERE key = ?').get(key)?.id
+
+  // 2) Werte pro Gruppe (alles, was du in den Screenshots gezeigt hast)
+  const OPTIONS = [
+    // Leisten (Last)
+    { group: 'last', key: 'zurigo',    label: 'Zurigo',    description: 'Runde Zehenform für klassisch-englischen Look.',            price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'monti',     label: 'Monti',     description: 'Klassische Eleganz mit leicht quadratischer Zehe.',         price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'savile',    label: 'Savile',    description: 'Schlanker Look mit leichter Chisel-Zehe.',                  price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'belgravia', label: 'Belgravia', description: 'Chisel-Zehe, schmale Taille und kubanischer Absatz.',       price: 0,  cats: 'OXFORD,WHOLECUT,CHELSEA' },
+
+    // Sohle
+    { group: 'sole', key: 'leather',          label: 'Leather',          description: 'Klassische Ledersohle.',                                price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_mountain', label: 'Leather Mountain', description: 'Leder mit Bergprofil für mehr Grip.',                   price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_buttons',  label: 'Leather Buttons',  description: 'Leder mit Noppen-Einsatz.',                             price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_rubber',   label: 'Leather + Rubber', description: 'Leder mit Gummi-Mittelsteg.',                           price: 0,  cats: '*' },
+    { group: 'sole', key: 'dainite',          label: 'Dainite',          description: 'Klassische Stollen-Gummisohle.',                        price: 5,  cats: '*' },
+    { group: 'sole', key: 'commando',         label: 'Commando',         description: 'Grobes Profil — maximaler Grip.',                       price: 0,  cats: '*' },
+    { group: 'sole', key: 'crepe',            label: 'Crepe',            description: 'Naturkautschuk, sehr komfortabel.',                     price: 5,  cats: 'LOAFER,DERBY,SNEAKER' },
+    { group: 'sole', key: 'rubber',           label: 'Rubber',           description: 'Glatte Gummisohle.',                                    price: 0,  cats: '*' },
+    { group: 'sole', key: 'dots',             label: 'Dots',             description: 'Gummi mit feinen Noppen.',                              price: 0,  cats: '*' },
+    { group: 'sole', key: 'rocky',            label: 'Rocky',            description: 'Robuste Outdoor-Sohle.',                                price: 0,  cats: 'CHELSEA,BOOT,DERBY' },
+    { group: 'sole', key: 'beveled_waist',    label: 'Beveled Waist',    description: 'Schlanke, gewölbte Taille.',                            price: 35, cats: 'OXFORD,WHOLECUT,DERBY,MONK,DOUBLE_MONK' },
+    { group: 'sole', key: 'art',              label: 'Art',              description: 'Handbemalte Spezialsohle.',                             price: 17, cats: '*' },
+
+    // Welt (Rahmen)
+    { group: 'welt', key: 'city',    label: 'City',    description: 'Schmaler Rahmen für eleganten Look.', price: 0, cats: '*' },
+    { group: 'welt', key: 'country', label: 'Country', description: 'Breiterer Rahmen, robuster Look.',     price: 0, cats: '*' },
+    { group: 'welt', key: 'storm',   label: 'Storm',   description: 'Wasserdichter Rahmen für Outdoor.',    price: 0, cats: '*' },
+
+    // Heel (Absatz)
+    { group: 'heel', key: 'standard',    label: 'Standard',    description: 'Klassische Absatzhöhe.',  price: 0, cats: '*' },
+    { group: 'heel', key: 'higher_heel', label: 'Higher Heel', description: 'Erhöhter Absatz.',         price: 0, cats: '*' },
+
+    // Toe (Zehenkappe)
+    { group: 'toe', key: 'plain_toe',  label: 'Plain Toe', description: 'Glatte Zehenkappe ohne Verzierung.', price: 0, cats: '*' },
+    { group: 'toe', key: 'punch_cap',  label: 'Punch Cap', description: 'Klassische Punch-Cap-Lochung.',     price: 0, cats: 'OXFORD,DERBY' },
+    { group: 'toe', key: 'cap_toe',    label: 'Cap Toe',   description: 'Aufgesetzte Zehenkappe mit Naht.',  price: 0, cats: 'OXFORD,DERBY,CHELSEA' },
+    { group: 'toe', key: 'bare',       label: 'Bare',      description: 'Komplett unverziert.',               price: 0, cats: 'OXFORD,WHOLECUT' },
+
+    // Schnalle (für Monk)
+    { group: 'buckle', key: 'round_buckle',  label: 'Round Buckle',  description: 'Klassisch runde Schnalle.',    price: 0, cats: 'MONK,DOUBLE_MONK' },
+    { group: 'buckle', key: 'square_buckle', label: 'Square Buckle', description: 'Eckige Schnalle, modern.',     price: 0, cats: 'MONK,DOUBLE_MONK' },
+
+    // Loafer-Dekor
+    { group: 'loafer_decoration', key: 'tassels',      label: 'Tassels',      description: 'Klassische Quasten.',           price: 0, cats: 'LOAFER' },
+    { group: 'loafer_decoration', key: 'albert_mask',  label: 'Albert Mask',  description: 'Verzierte Maske auf dem Spann.', price: 0, cats: 'LOAFER' },
+    { group: 'loafer_decoration', key: 'metal_bit',    label: 'Metal Bit',   description: 'Pferdetrense aus Metall.',       price: 0, cats: 'LOAFER' },
+    { group: 'loafer_decoration', key: 'bow',          label: 'Bow',          description: 'Schleife auf dem Spann.',        price: 0, cats: 'LOAFER' },
+    { group: 'loafer_decoration', key: 'bare',         label: 'Bare',         description: 'Ohne Dekoration.',               price: 0, cats: 'LOAFER' },
+
+    // Beveled Waist (Yes/No-Toggle)
+    { group: 'beveled_waist', key: 'no',  label: 'Nein', description: 'Standard-Taille.',                    price: 0,  cats: '*' },
+    { group: 'beveled_waist', key: 'yes', label: 'Ja',   description: 'Schlanke Taille (+19 €).',           price: 19, cats: '*' },
+  ]
+  const insOpt = db.prepare(`
+    INSERT OR IGNORE INTO options (group_id, key, label, description, default_price_extra, applicable_categories, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  OPTIONS.forEach((o, i) => {
+    const gid = groupId(o.group)
+    if (!gid) return
+    insOpt.run(gid, o.key, o.label, o.description, o.price, o.cats, i)
+  })
+
+  const optId = (groupKey, optKey) => db.prepare(`
+    SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+    WHERE g.key = ? AND o.key = ?
+  `).get(groupKey, optKey)?.id
+
+  // 3) Vorlagen pro Kategorie: welche Optionen werden bei einem neuen
+  //    Schuh dieser Kategorie automatisch aktiviert, was ist Default?
+  const TEMPLATES = [
+    // category, group/option, is_default
+    // OXFORD
+    ['OXFORD', 'last:zurigo', 1], ['OXFORD', 'last:monti'], ['OXFORD', 'last:savile'], ['OXFORD', 'last:belgravia'],
+    ['OXFORD', 'sole:leather', 1], ['OXFORD', 'sole:dainite'], ['OXFORD', 'sole:beveled_waist'], ['OXFORD', 'sole:commando'],
+    ['OXFORD', 'welt:city', 1], ['OXFORD', 'welt:country'],
+    ['OXFORD', 'heel:standard', 1], ['OXFORD', 'heel:higher_heel'],
+    ['OXFORD', 'toe:punch_cap', 1], ['OXFORD', 'toe:plain_toe'], ['OXFORD', 'toe:bare'],
+    ['OXFORD', 'beveled_waist:no', 1], ['OXFORD', 'beveled_waist:yes'],
+    // WHOLECUT
+    ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'], ['WHOLECUT', 'last:savile'], ['WHOLECUT', 'last:belgravia'],
+    ['WHOLECUT', 'sole:leather', 1], ['WHOLECUT', 'sole:dainite'], ['WHOLECUT', 'sole:beveled_waist'],
+    ['WHOLECUT', 'welt:city', 1], ['WHOLECUT', 'welt:country'],
+    ['WHOLECUT', 'heel:standard', 1], ['WHOLECUT', 'heel:higher_heel'],
+    ['WHOLECUT', 'beveled_waist:no', 1], ['WHOLECUT', 'beveled_waist:yes'],
+    // DERBY
+    ['DERBY', 'last:zurigo', 1], ['DERBY', 'last:monti'], ['DERBY', 'last:savile'],
+    ['DERBY', 'sole:leather', 1], ['DERBY', 'sole:dainite'], ['DERBY', 'sole:commando'], ['DERBY', 'sole:rocky'],
+    ['DERBY', 'welt:city', 1], ['DERBY', 'welt:country'], ['DERBY', 'welt:storm'],
+    ['DERBY', 'heel:standard', 1], ['DERBY', 'heel:higher_heel'],
+    ['DERBY', 'toe:plain_toe', 1], ['DERBY', 'toe:punch_cap'], ['DERBY', 'toe:cap_toe'],
+    // LOAFER
+    ['LOAFER', 'last:zurigo', 1], ['LOAFER', 'last:monti'], ['LOAFER', 'last:savile'],
+    ['LOAFER', 'sole:leather', 1], ['LOAFER', 'sole:dainite'], ['LOAFER', 'sole:crepe'], ['LOAFER', 'sole:commando'],
+    ['LOAFER', 'welt:city', 1], ['LOAFER', 'welt:country'],
+    ['LOAFER', 'heel:standard', 1], ['LOAFER', 'heel:higher_heel'],
+    ['LOAFER', 'loafer_decoration:bare', 1], ['LOAFER', 'loafer_decoration:tassels'], ['LOAFER', 'loafer_decoration:metal_bit'], ['LOAFER', 'loafer_decoration:bow'], ['LOAFER', 'loafer_decoration:albert_mask'],
+    // CHELSEA (Boot)
+    ['CHELSEA', 'last:zurigo', 1], ['CHELSEA', 'last:savile'], ['CHELSEA', 'last:belgravia'],
+    ['CHELSEA', 'sole:leather', 1], ['CHELSEA', 'sole:dainite'], ['CHELSEA', 'sole:commando'], ['CHELSEA', 'sole:rocky'],
+    ['CHELSEA', 'welt:city'], ['CHELSEA', 'welt:country', 1], ['CHELSEA', 'welt:storm'],
+    ['CHELSEA', 'heel:standard', 1], ['CHELSEA', 'heel:higher_heel'],
+    ['CHELSEA', 'toe:plain_toe', 1], ['CHELSEA', 'toe:cap_toe'],
+    // MONK / DOUBLE_MONK
+    ['MONK', 'last:zurigo', 1], ['MONK', 'last:monti'], ['MONK', 'last:savile'],
+    ['MONK', 'sole:leather', 1], ['MONK', 'sole:dainite'], ['MONK', 'sole:beveled_waist'],
+    ['MONK', 'welt:city', 1], ['MONK', 'welt:country'],
+    ['MONK', 'heel:standard', 1], ['MONK', 'heel:higher_heel'],
+    ['MONK', 'buckle:square_buckle', 1], ['MONK', 'buckle:round_buckle'],
+    ['DOUBLE_MONK', 'last:zurigo', 1], ['DOUBLE_MONK', 'last:monti'], ['DOUBLE_MONK', 'last:savile'],
+    ['DOUBLE_MONK', 'sole:leather', 1], ['DOUBLE_MONK', 'sole:dainite'], ['DOUBLE_MONK', 'sole:beveled_waist'],
+    ['DOUBLE_MONK', 'welt:city', 1], ['DOUBLE_MONK', 'welt:country'],
+    ['DOUBLE_MONK', 'heel:standard', 1], ['DOUBLE_MONK', 'heel:higher_heel'],
+    ['DOUBLE_MONK', 'buckle:square_buckle', 1], ['DOUBLE_MONK', 'buckle:round_buckle'],
+    // BOOT (Allzweck-Stiefel)
+    ['BOOT', 'last:zurigo', 1], ['BOOT', 'last:savile'],
+    ['BOOT', 'sole:commando', 1], ['BOOT', 'sole:dainite'], ['BOOT', 'sole:rocky'], ['BOOT', 'sole:rubber'],
+    ['BOOT', 'welt:country', 1], ['BOOT', 'welt:storm'],
+    ['BOOT', 'heel:standard', 1], ['BOOT', 'heel:higher_heel'],
+    // SNEAKER
+    ['SNEAKER', 'sole:rubber', 1], ['SNEAKER', 'sole:crepe'], ['SNEAKER', 'sole:dots'],
+  ]
+  const insTpl = db.prepare(`
+    INSERT OR IGNORE INTO category_templates (category, option_id, is_default, sort_order)
+    VALUES (?, ?, ?, ?)
+  `)
+  TEMPLATES.forEach((tpl, i) => {
+    const [cat, ref, isDefault] = tpl
+    const [gk, ok] = ref.split(':')
+    const oid = optId(gk, ok)
+    if (oid) insTpl.run(cat, oid, isDefault ? 1 : 0, i)
+  })
+
+  console.log(`✅ Seeded: configurator options (${GROUPS.length} groups, ${OPTIONS.length} options, ${TEMPLATES.length} template entries)`)
 }
