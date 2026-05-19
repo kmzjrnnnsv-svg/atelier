@@ -8,6 +8,28 @@ const GROUP_ICONS = {
   Footprints, Layers, CircleDashed, ChevronUp, Diamond, CircleDot, Square, Gem,
   Palette, Sparkles, ArrowRightLeft,
 }
+
+// Leisten-Zehenform als Draufsicht-Silhouette. Visualisiert die Unterschiede
+// zwischen Zurigo (rund), Monti (leicht eckig), Savile (Chisel) und
+// Belgravia (scharfe Chisel). Wird angezeigt, wenn kein echtes Foto
+// hochgeladen wurde.
+const LAST_SHAPES = {
+  zurigo:    'M9 56 L9 24 Q9 6 21 6 Q33 6 33 24 L33 56 Z',          // runde Spitze
+  monti:     'M9 56 L9 22 Q9 9 15 8 L27 8 Q33 9 33 22 L33 56 Z',     // leicht eckig
+  savile:    'M10 56 L10 18 L16 7 L26 7 L32 18 L32 56 Z',           // Chisel
+  belgravia: 'M12 56 L12 17 L17 5 L25 5 L30 17 L30 56 Z',           // scharfe Chisel
+}
+function LastShapeIcon({ shapeKey, active }) {
+  const path = LAST_SHAPES[shapeKey]
+  if (!path) return null
+  return (
+    <svg viewBox="0 0 42 62" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      <path d={path} fill={active ? '#1a1a1a' : '#d4cfc7'} stroke={active ? '#1a1a1a' : '#b8b2a8'} strokeWidth="1" />
+      {/* feine Naht-Andeutung an der Spitze */}
+      <path d={path} fill="none" stroke={active ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.4)'} strokeWidth="0.5" transform="scale(0.82) translate(4.5 6)" />
+    </svg>
+  )
+}
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -371,13 +393,14 @@ export default function Customize() {
     if (shoeColors.length && selCol && !shoeColors.find(c => c.key === selCol)) setSelCol('')
   }, [shoeColors])
   useEffect(() => {
-    // Sohle ist nicht mehr user-selectable: automatisch erste verfügbare Sohle
-    // setzen, damit Cart-Payload und Preis korrekt befüllt sind.
+    // Sohle ist nicht mehr user-selectable: automatisch die KOSTENLOSE Sohle
+    // wählen (price_extra 0), damit kein versteckter +35€-Aufpreis entsteht.
+    // Die eigentliche Sohlen-Konfiguration läuft über „Sohle Unten" (Matrix).
     if (availableSoles.length && !selSole) {
-      const defaultSole = availableSoles.find(s => s.recommended === 1) || availableSoles[0]
-      if (defaultSole?.key) setSelSole(defaultSole.key)
+      const freeSole = availableSoles.find(s => (s.price_extra || 0) === 0) || availableSoles[0]
+      if (freeSole?.key) setSelSole(freeSole.key)
     } else if (availableSoles.length && selSole && !availableSoles.find(s => s.key === selSole)) {
-      const fallback = availableSoles[0]
+      const fallback = availableSoles.find(s => (s.price_extra || 0) === 0) || availableSoles[0]
       if (fallback?.key) setSelSole(fallback.key)
     }
   }, [shoeSoles, category])
@@ -1092,7 +1115,16 @@ export default function Customize() {
                 Schritt ein Helper-Text; eine Option kann als „EMPFOHLEN"
                 markiert sein, dann erscheint über der Auswahl ein Banner. */}
             {extraOptionGroups.map((group, gIdx) => {
-              const recValue = group.values.find(v => v.recommended)
+              // Farb-Gruppen: passend zum gewählten Oberleder eine Farbe
+              // empfehlen (z. B. schwarzes Oberleder → schwarze Sohlenfarbe).
+              const isColorGroup = ['sole_color', 'inner_color', 'sole_bottom_color'].includes(group.key)
+              const colorMatchRec = isColorGroup && col?.name
+                ? group.values.find(v => {
+                    const l = col.name.toLowerCase(), o = v.label.toLowerCase()
+                    return l === o || l.includes(o) || o.includes(l)
+                  })
+                : null
+              const recValue = colorMatchRec || group.values.find(v => v.recommended)
               const currentSelection = group.values.find(v => v.id === selectedExtras[group.key])
               // Step ist aktiv, wenn alle vorherigen Extras gewählt sind.
               const allBefore = extraOptionGroups.slice(0, gIdx).every(g => selectedExtras[g.key])
@@ -1125,7 +1157,9 @@ export default function Customize() {
                   <div className="flex items-start gap-2 mb-3 px-3 py-2 bg-green-50/60 border border-green-200/60">
                     <span className="text-[9px] text-green-700 tracking-wider uppercase font-medium flex-shrink-0">Empfohlen</span>
                     <span className="text-[10px] text-green-900/70 font-light leading-relaxed">
-                      {recValue.recommendation_reason || `${recValue.label} ist unsere Empfehlung.`}
+                      {colorMatchRec && colorMatchRec.id === recValue.id
+                        ? `Passend zu Ihrem Oberleder „${col.name}" empfehlen wir ${recValue.label}.`
+                        : (recValue.recommendation_reason || `${recValue.label} ist unsere Empfehlung.`)}
                     </span>
                     <button
                       type="button"
@@ -1158,9 +1192,11 @@ export default function Customize() {
                         >
                           {v.image
                             ? <img src={v.image} alt="" className="w-full h-full object-cover" />
-                            : v.color_hex
-                              ? null
-                              : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
+                            : group.key === 'last' && LAST_SHAPES[v.key]
+                              ? <div className="w-9 h-11"><LastShapeIcon shapeKey={v.key} active={isSel} /></div>
+                              : v.color_hex
+                                ? null
+                                : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
                         </div>
                         <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
                         {v.price_extra > 0 && (
