@@ -1258,5 +1258,32 @@ export function seedMatrixTemplatesV2(db) {
     matFillCount++
   }
 
-  console.log(`✅ Seeded: matrix templates V2 — ${inserted} tpl rows, ${resetCount} matrix shoes reset, ${fillCount} empty shoes filled, ${matResetCount} matrix material whitelists reset, ${matFillCount} empty material whitelists filled`)
+  // 5) AGGRESSIVES FORCE-RESET: alle Schuhe, deren Kategorie in der Matrix
+  //    steht, bekommen ihre shoe_options + shoe_material_options KOMPLETT
+  //    neu aus der Matrix gesetzt. Wischt vorherige (falsche) Einträge
+  //    weg. Notwendig, weil ältere Seed-Läufe schon falsche Templates
+  //    angewendet haben können. Admin-Customizations werden überschrieben
+  //    (User-Wunsch: Matrix ist Single Source of Truth).
+  const matrixCats = Object.keys(MATRIX_MATERIALS_V2)
+  const matrixCatsPlaceholders = matrixCats.map(() => '?').join(',')
+  const shoesWithMatrixCat = db.prepare(
+    `SELECT id, category, name FROM shoes WHERE category IN (${matrixCatsPlaceholders})`
+  ).all(...matrixCats)
+
+  let forceResetCount = 0
+  for (const s of shoesWithMatrixCat) {
+    // shoe_options reset
+    clearOpts.run(s.id)
+    const tpl = tplsForCat(s.category)
+    tpl.forEach(r => { try { insSO.run(s.id, r.option_id, r.is_default, r.sort_order) } catch {} })
+    // material whitelist reset
+    const keys = MATRIX_MATERIALS_V2[s.category]
+    if (keys) {
+      clearMatOpt.run(s.id)
+      keys.forEach((k, i) => { try { insMatOptV2.run(s.id, k, i) } catch {} })
+    }
+    forceResetCount++
+  }
+
+  console.log(`✅ Seeded: matrix templates V2 — ${inserted} tpl rows, ${resetCount} matrix shoes reset, ${fillCount} empty shoes filled, ${matResetCount} matrix material whitelists reset, ${matFillCount} empty material whitelists filled, ${forceResetCount} TOTAL force-reset by category`)
 }
