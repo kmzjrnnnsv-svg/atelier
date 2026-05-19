@@ -848,5 +848,40 @@ export function seedExtendedCatalog(db) {
   `)
   Object.entries(ICON_MAP).forEach(([gk, icon]) => upIcon.run(icon, gk))
 
-  console.log(`✅ Seeded: extended catalog (${MATERIALS.length} materials, ${COLORS.length} colors, ${NEW_GROUPS.length} option groups, ${NEW_OPTIONS.length} options, ${TEMPLATES.length} template entries, ${Object.keys(COLOR_HEX_MAP).length} hex codes)`)
+  // ── 7) Helper-Texte pro Optionsgruppe (Schritt-für-Schritt-Erklärung) ──
+  const HELPER_TEXT = {
+    last:              'Die Leistenform bestimmt das Profil des Schuhs. Sie entscheidet über Zehenform, Schmalheit der Taille und Proportion. Wählen Sie eine Form, die zu Ihrem Stil und Anlass passt.',
+    sole:              'Die Sohle prägt Tragekomfort und Outdoor-Tauglichkeit. Ledersohle für klassisches Auftreten, Dainite oder Commando für mehr Grip und Wetterfestigkeit.',
+    welt:              'Der Rahmen (Welt) verbindet Schaft und Sohle. City ist schmal und elegant, Country breiter und robuster, Storm zusätzlich wassergeschützt.',
+    heel:              'Standard-Absatz für die meisten Anlässe. Higher Heel gibt mehr Höhe und einen markanteren Auftritt.',
+    toe:               'Die Zehenkappe ist das prägende Detail vorne. Punch Cap mit klassischer Lochung, Plain Toe für minimalistischen Look, Cap Toe mit aufgesetzter Naht.',
+    wholecut_base:     'Verarbeitung der Vorderkappe für den nahtlosen Whole-Cut-Schuh.',
+    buckle:            'Schnallenform: Rund für klassische Eleganz, eckig für modernen Akzent.',
+    buckle_color:      'Metall-Finish der Schnalle. Nickel ist der Klassiker, Gold setzt warme Akzente, Graphite ist diskret-modern, Copper auffällig.',
+    inner_color:       'Farbe des Futters — sichtbar nur beim Anziehen. Klassisch farblich abgestimmt oder bewusst kontrastreich.',
+    sole_color:        'Farbe des Sohlenrands (außen sichtbar). Natural ist neutral, Black diskret, Brick & Brown setzen Akzente.',
+    sole_bottom_color: 'Farbe der Sohlen-Unterseite. Wird nur beim Sitzen oder Übereinanderschlagen der Beine sichtbar — ein subtiles Detail für Kenner.',
+    loafer_decoration: 'Dekoration auf dem Spann: Tassels & Albert klassisch, Horsebit als Statement, Bow elegant, Ohne für puristischen Look.',
+    beveled_waist:     'Schlanke, geschwungene Taille zwischen Ballen und Absatz. Subtil sichtbar, aber Markenzeichen feinster Maßschuhmacherei (+€19).',
+  }
+  const upHelper = db.prepare(`
+    UPDATE option_groups SET helper_text = ?, updated_at = datetime('now') WHERE key = ?
+  `)
+  Object.entries(HELPER_TEXT).forEach(([k, t]) => upHelper.run(t, k))
+
+  // ── 8) Empfehlungen (Badge „EMPFOHLEN" im Konfigurator) ────────────────
+  const RECOMMENDATIONS = [
+    // [group_key, option_key, reason]
+    ['welt',  'city',     'Klassischer Allrounder — für Business und elegante Anlässe ideal.'],
+    ['heel',  'standard', 'Klassische Höhe — passt zu allen Outfits und Anlässen.'],
+    ['sole',  'dainite',  'Unser Allwetter-Favorit — sicherer Halt bei Regen und Schnee.'],
+    ['toe',   'plain_toe', 'Zeitlos und vielseitig — passt zu jedem Anlass.'],
+  ]
+  const upRec = db.prepare(`
+    UPDATE options SET recommended = 1, recommendation_reason = ?, updated_at = datetime('now')
+    WHERE id = (SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id WHERE g.key = ? AND o.key = ?)
+  `)
+  RECOMMENDATIONS.forEach(([gk, ok, reason]) => upRec.run(reason, gk, ok))
+
+  console.log(`✅ Seeded: extended catalog (${MATERIALS.length} materials, ${COLORS.length} colors, ${NEW_GROUPS.length} option groups, ${NEW_OPTIONS.length} options, ${TEMPLATES.length} template entries, ${Object.keys(COLOR_HEX_MAP).length} hex codes, ${Object.keys(HELPER_TEXT).length} helper texts, ${RECOMMENDATIONS.length} recommendations)`)
 }

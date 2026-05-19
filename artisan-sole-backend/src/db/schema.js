@@ -290,6 +290,11 @@ export function runMigrations(db) {
     `ALTER TABLE options ADD COLUMN color_hex TEXT`,
     // options — Icon-Name (Lucide), für visuelle Akzente in der Liste
     `ALTER TABLE options ADD COLUMN icon TEXT`,
+    // option_groups — Helper-Text für Schritt-für-Schritt-Erklärung
+    `ALTER TABLE option_groups ADD COLUMN helper_text TEXT`,
+    // options — Empfehlung (Badge „EMPFOHLEN" + optionaler Grund)
+    `ALTER TABLE options ADD COLUMN recommended INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE options ADD COLUMN recommendation_reason TEXT`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }

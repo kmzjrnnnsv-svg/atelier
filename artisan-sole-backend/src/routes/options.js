@@ -24,11 +24,12 @@ const adminOnly = [authenticate, requireRole('admin')]
 // ── Helper: lade alle Gruppen mit ihren Optionen ───────────────────────────
 function loadAllGroups(db) {
   const groups = db.prepare(`
-    SELECT id, key, label, description, ui_type, required, sort_order
+    SELECT id, key, label, description, helper_text, ui_type, required, sort_order
     FROM option_groups ORDER BY sort_order ASC, id ASC
   `).all()
   const options = db.prepare(`
     SELECT id, group_id, key, label, description, image_data, color_hex, icon,
+           recommended, recommendation_reason,
            default_price_extra, applicable_categories, sort_order
     FROM options ORDER BY sort_order ASC, id ASC
   `).all()
@@ -169,9 +170,11 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
 
   const rows = db.prepare(`
     SELECT g.id as group_id, g.key as group_key, g.label as group_label,
-           g.description as group_description, g.ui_type, g.required, g.sort_order as group_sort,
+           g.description as group_description, g.helper_text as group_helper,
+           g.ui_type, g.required, g.sort_order as group_sort,
            o.id as option_id, o.key as option_key, o.label as option_label,
            o.description as option_description, o.image_data, o.color_hex, o.icon,
+           o.recommended, o.recommendation_reason,
            o.default_price_extra, o.applicable_categories, o.sort_order as option_sort,
            so.price_override, so.is_default, so.sort_order as shoe_sort
     FROM shoe_options so
@@ -186,7 +189,8 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
     if (!byGroup.has(r.group_id)) {
       byGroup.set(r.group_id, {
         id: r.group_id, key: r.group_key, label: r.group_label,
-        description: r.group_description, ui_type: r.ui_type, required: !!r.required,
+        description: r.group_description, helper_text: r.group_helper,
+        ui_type: r.ui_type, required: !!r.required,
         sort_order: r.group_sort,
         values: [],
       })
@@ -195,6 +199,8 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
       id: r.option_id, key: r.option_key, label: r.option_label,
       description: r.option_description, image: r.image_data,
       color_hex: r.color_hex, icon: r.icon,
+      recommended: !!r.recommended,
+      recommendation_reason: r.recommendation_reason,
       price_extra: r.price_override !== null ? r.price_override : r.default_price_extra,
       is_default: !!r.is_default,
       sort_order: r.shoe_sort,

@@ -180,7 +180,10 @@ export default function Customize() {
   const EU_SIZES = ['39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46']
 
   // Step-by-step guided flow: 0=nothing, 1=leather chosen, 2=color chosen, 3=sole chosen
-  const configStep = selSole ? 3 : selCol ? 2 : selMat ? 1 : 0
+  // Sohle ist pro Schuhmodell vorkonfiguriert (kein User-Step mehr).
+  // selSole wird automatisch beim Laden gesetzt, configStep richtet sich
+  // nach Material + Farbe + Extra-Konfigurator.
+  const configStep = selCol ? 3 : selMat ? 1 : 0
 
   // Refs for scroll forwarding between panels
   const outerRef = useRef(null)
@@ -336,7 +339,15 @@ export default function Customize() {
     if (shoeColors.length && selCol && !shoeColors.find(c => c.key === selCol)) setSelCol('')
   }, [shoeColors])
   useEffect(() => {
-    if (availableSoles.length && selSole && !availableSoles.find(s => s.key === selSole)) setSelSole('')
+    // Sohle ist nicht mehr user-selectable: automatisch erste verfügbare Sohle
+    // setzen, damit Cart-Payload und Preis korrekt befüllt sind.
+    if (availableSoles.length && !selSole) {
+      const defaultSole = availableSoles.find(s => s.recommended === 1) || availableSoles[0]
+      if (defaultSole?.key) setSelSole(defaultSole.key)
+    } else if (availableSoles.length && selSole && !availableSoles.find(s => s.key === selSole)) {
+      const fallback = availableSoles[0]
+      if (fallback?.key) setSelSole(fallback.key)
+    }
   }, [shoeSoles, category])
 
   const mat      = matList.find(m => m.key === selMat) || matList[0]
@@ -904,7 +915,9 @@ export default function Customize() {
               {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2 px-5 lg:px-0">Passt zu: {col.pairs_with}</p>}
             </div>
 
-            {/* 3. Sohle */}
+            {/* 3. Sohle — DEPRECATED (Sohle wird pro Schuhmodell vorkonfiguriert).
+                Legacy-Picker bleibt im DOM, ist aber komplett ausgeblendet. */}
+            {false && (
             <div
               {...(configStep >= 2 ? soleSwipe : {})}
               className="transition-all duration-700 ease-out"
@@ -967,18 +980,55 @@ export default function Customize() {
                 )
               })()}
             </div>
+            )}
 
             {/* ── Remaining sections (visible after all steps) ── */}
 
-            {/* ── Konfigurator-Extras (Last, Welt, Heel, Toe, Schnalle, …) ── */}
-            {extraOptionGroups.map(group => (
-              <div key={group.id} className="px-5 lg:px-0 mb-6">
-                <div className="flex items-baseline justify-between mb-3">
-                  <p className="text-[10px] text-black/30 uppercase" style={{ letterSpacing: '0.18em' }}>{group.label}</p>
-                  {group.description && (
-                    <p className="text-[9px] text-black/30 font-light hidden lg:block max-w-[60%] text-right">{group.description}</p>
+            {/* ── Konfigurator-Extras (Schritt-für-Schritt) ─────────────
+                Erst sichtbar, wenn Material+Farbe gewählt sind. Vor jedem
+                Schritt ein Helper-Text; eine Option kann als „EMPFOHLEN"
+                markiert sein, dann erscheint über der Auswahl ein Banner. */}
+            {extraOptionGroups.map((group, gIdx) => {
+              const recValue = group.values.find(v => v.recommended)
+              const currentSelection = group.values.find(v => v.id === selectedExtras[group.key])
+              // Step ist aktiv, wenn alle vorherigen Extras gewählt sind.
+              const allBefore = extraOptionGroups.slice(0, gIdx).every(g => selectedExtras[g.key])
+              const isActive = allBefore && configStep >= 3
+              return (
+              <div
+                key={group.id}
+                className="px-5 lg:px-0 mb-6 transition-all duration-500"
+                style={{ opacity: isActive ? 1 : 0.3, pointerEvents: isActive ? 'auto' : 'none' }}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10px] text-black/45 uppercase flex items-center gap-2" style={{ letterSpacing: '0.18em' }}>
+                    <span className="inline-flex items-center justify-center w-4 h-4 border border-black/30 text-[8px] font-normal">
+                      {gIdx + 1}
+                    </span>
+                    {group.label}
+                  </p>
+                  {currentSelection && (
+                    <span className="text-[10px] text-black/60 font-light tracking-wider">{currentSelection.label}</span>
                   )}
                 </div>
+                {group.helper_text && (
+                  <p className="text-[10px] text-black/40 font-light leading-relaxed mb-3 max-w-2xl">{group.helper_text}</p>
+                )}
+                {recValue && (!currentSelection || currentSelection.id !== recValue.id) && (
+                  <div className="flex items-start gap-2 mb-3 px-3 py-2 bg-green-50/60 border border-green-200/60">
+                    <span className="text-[9px] text-green-700 tracking-wider uppercase font-medium flex-shrink-0">Empfohlen</span>
+                    <span className="text-[10px] text-green-900/70 font-light leading-relaxed">
+                      {recValue.recommendation_reason || `${recValue.label} ist unsere Empfehlung.`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedExtras(prev => ({ ...prev, [group.key]: recValue.id }))}
+                      className="ml-auto text-[9px] text-green-800 underline tracking-wider uppercase bg-transparent border-0"
+                    >
+                      Übernehmen
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-2">
                   {group.values.map(v => {
                     const isSel = selectedExtras[group.key] === v.id
@@ -987,11 +1037,14 @@ export default function Customize() {
                         key={v.id}
                         type="button"
                         onClick={() => setSelectedExtras(prev => ({ ...prev, [group.key]: v.id }))}
-                        className={`flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border ${
+                        className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border ${
                           isSel ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30 bg-white'
                         }`}
                         title={v.description || ''}
                       >
+                        {v.recommended && !isSel && (
+                          <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-white" />
+                        )}
                         <div
                           className="w-12 h-12 mb-2 flex items-center justify-center overflow-hidden border border-black/[0.06]"
                           style={{ backgroundColor: v.color_hex || (v.image ? 'transparent' : '#fafaf9') }}
@@ -999,7 +1052,7 @@ export default function Customize() {
                           {v.image
                             ? <img src={v.image} alt="" className="w-full h-full object-cover" />
                             : v.color_hex
-                              ? null /* echte Farb-Vorschau über Background */
+                              ? null
                               : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
                         </div>
                         <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
@@ -1011,7 +1064,8 @@ export default function Customize() {
                   })}
                 </div>
               </div>
-            ))}
+              )
+            })}
 
             {/* ── Größenauswahl ─────────────────────────────── */}
             <div className="px-5 lg:px-0">
