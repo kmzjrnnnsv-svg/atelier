@@ -8,6 +8,28 @@ const GROUP_ICONS = {
   Footprints, Layers, CircleDashed, ChevronUp, Diamond, CircleDot, Square, Gem,
   Palette, Sparkles, ArrowRightLeft,
 }
+
+// Leisten-Zehenform als Draufsicht-Silhouette. Visualisiert die Unterschiede
+// zwischen Zurigo (rund), Monti (leicht eckig), Savile (Chisel) und
+// Belgravia (scharfe Chisel). Wird angezeigt, wenn kein echtes Foto
+// hochgeladen wurde.
+const LAST_SHAPES = {
+  zurigo:    'M9 56 L9 24 Q9 6 21 6 Q33 6 33 24 L33 56 Z',          // runde Spitze
+  monti:     'M9 56 L9 22 Q9 9 15 8 L27 8 Q33 9 33 22 L33 56 Z',     // leicht eckig
+  savile:    'M10 56 L10 18 L16 7 L26 7 L32 18 L32 56 Z',           // Chisel
+  belgravia: 'M12 56 L12 17 L17 5 L25 5 L30 17 L30 56 Z',           // scharfe Chisel
+}
+function LastShapeIcon({ shapeKey, active }) {
+  const path = LAST_SHAPES[shapeKey]
+  if (!path) return null
+  return (
+    <svg viewBox="0 0 42 62" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      <path d={path} fill={active ? '#1a1a1a' : '#d4cfc7'} stroke={active ? '#1a1a1a' : '#b8b2a8'} strokeWidth="1" />
+      {/* feine Naht-Andeutung an der Spitze */}
+      <path d={path} fill="none" stroke={active ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.4)'} strokeWidth="0.5" transform="scale(0.82) translate(4.5 6)" />
+    </svg>
+  )
+}
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -1170,9 +1192,11 @@ export default function Customize() {
                         >
                           {v.image
                             ? <img src={v.image} alt="" className="w-full h-full object-cover" />
-                            : v.color_hex
-                              ? null
-                              : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
+                            : group.key === 'last' && LAST_SHAPES[v.key]
+                              ? <div className="w-9 h-11"><LastShapeIcon shapeKey={v.key} active={isSel} /></div>
+                              : v.color_hex
+                                ? null
+                                : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
                         </div>
                         <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
                         {v.price_extra > 0 && (
