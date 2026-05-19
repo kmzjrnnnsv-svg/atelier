@@ -404,19 +404,35 @@ function seedShoeAccessories(db) {
 // ─────────────────────────────────────────────────────────────────────
 function seedConfiguratorOptions(db) {
   // 1) Option-Gruppen
+  // Reihenfolge gemäß User-Vorgabe (Schritt-für-Schritt im Konfigurator):
+  //   Schuhform → Base → Heel → Accessoires → Sohle Unten → Sohlen Color
+  //   → Welt → Buckle → Buckel Farbe → Farbe innen → Sohle Farbe Unten
+  // Color (Außenfarbe) bleibt eigenes Picker-UI vor diesen Gruppen.
   const GROUPS = [
-    { key: 'last',              label: 'Leisten',        ui_type: 'single', required: 1, sort_order: 0, description: 'Leistenform — bestimmt Zehenform, Taille und Proportion.' },
-    { key: 'sole',              label: 'Sohle',          ui_type: 'single', required: 1, sort_order: 1, description: 'Sohlentyp.' },
-    { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 2, description: 'Rahmen — City für glatten Look, Country/Storm für robusten Auftritt.' },
-    { key: 'heel',              label: 'Absatz',         ui_type: 'single', required: 1, sort_order: 3, description: 'Standard- oder erhöhter Absatz.' },
-    { key: 'toe',               label: 'Zehenkappe',     ui_type: 'single', required: 0, sort_order: 4, description: 'Zehenkappenform.' },
-    { key: 'buckle',            label: 'Schnalle',       ui_type: 'single', required: 1, sort_order: 5, description: 'Schnallenform (für Monk-Modelle).' },
-    { key: 'loafer_decoration', label: 'Loafer-Dekor',   ui_type: 'single', required: 0, sort_order: 6, description: 'Dekoration bei Loafer-Modellen.' },
-    { key: 'beveled_waist',     label: 'Beveled Waist',  ui_type: 'toggle', required: 0, sort_order: 7, description: 'Schlanke Taille für eleganteren Look.' },
+    { key: 'last',              label: 'Schuhform',      ui_type: 'single', required: 1, sort_order: 1,  description: 'Leistenform — bestimmt Zehenform, Taille und Proportion.' },
+    { key: 'wholecut_base',     label: 'Base',           ui_type: 'single', required: 1, sort_order: 2,  description: 'Vorderkappen-Verarbeitung (nur Whole Cut).' },
+    { key: 'heel',              label: 'Absatz',         ui_type: 'single', required: 1, sort_order: 3,  description: 'Standard- oder erhöhter Absatz.' },
+    { key: 'loafer_decoration', label: 'Accessoires',    ui_type: 'single', required: 0, sort_order: 4,  description: 'Dekoration bei Loafer-Modellen.' },
+    { key: 'sole',              label: 'Sohle Unten',    ui_type: 'single', required: 1, sort_order: 5,  description: 'Sohlentyp.' },
+    { key: 'sole_color',        label: 'Sohlen Color',   ui_type: 'single', required: 0, sort_order: 6,  description: 'Farbe der Außensohle (sichtbarer Rand).' },
+    { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 7,  description: 'Rahmen — City für glatten Look, Country/Storm für robusten Auftritt.' },
+    { key: 'buckle',            label: 'Buckle',         ui_type: 'single', required: 1, sort_order: 8,  description: 'Schnallenform (für Monk-Modelle).' },
+    { key: 'buckle_color',      label: 'Buckle Farbe',   ui_type: 'single', required: 0, sort_order: 9,  description: 'Material der Schnalle (nur Monk).' },
+    { key: 'inner_color',       label: 'Farbe Innen',    ui_type: 'single', required: 0, sort_order: 10, description: 'Farbe des Futters.' },
+    { key: 'sole_bottom_color', label: 'Sohle Farbe Unten', ui_type: 'single', required: 0, sort_order: 11, description: 'Farbe der Sohlen-Unterseite.' },
+    { key: 'toe',               label: 'Zehenkappe',     ui_type: 'single', required: 0, sort_order: 12, description: 'Zehenkappenform.' },
+    { key: 'beveled_waist',     label: 'Beveled Waist',  ui_type: 'toggle', required: 0, sort_order: 13, description: 'Schlanke Taille für eleganteren Look.' },
   ]
   const insGroup = db.prepare(`
-    INSERT OR IGNORE INTO option_groups (key, label, description, ui_type, required, sort_order)
+    INSERT INTO option_groups (key, label, description, ui_type, required, sort_order)
     VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(key) DO UPDATE SET
+      label = excluded.label,
+      description = excluded.description,
+      ui_type = excluded.ui_type,
+      required = excluded.required,
+      sort_order = excluded.sort_order,
+      updated_at = datetime('now')
   `)
   GROUPS.forEach(g => insGroup.run(g.key, g.label, g.description, g.ui_type, g.required, g.sort_order))
 

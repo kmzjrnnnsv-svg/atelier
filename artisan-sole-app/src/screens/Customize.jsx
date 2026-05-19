@@ -332,9 +332,14 @@ export default function Customize() {
   const [submitting, setSubmitting] = useState(false)
 
   // Store-Daten aktualisieren (only reset if current value is invalid, not if empty)
+  // Wenn nur ein Material verfügbar ist: automatisch wählen (Leder-Sektion entfällt).
   useEffect(() => {
-    if (shoeMaterials.length && selMat && !shoeMaterials.find(m => m.key === selMat)) setSelMat('')
-  }, [shoeMaterials])
+    if (matList.length === 1 && !selMat) {
+      setSelMat(matList[0].key)
+    } else if (matList.length > 1 && selMat && !matList.find(m => m.key === selMat)) {
+      setSelMat('')
+    }
+  }, [matList])
   useEffect(() => {
     if (shoeColors.length && selCol && !shoeColors.find(c => c.key === selCol)) setSelCol('')
   }, [shoeColors])
@@ -794,7 +799,11 @@ export default function Customize() {
           {/* ── Auswahl (step-by-step guided flow) ────────────── */}
           <div className="pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0">
 
-            {/* Step indicator */}
+            {/* Step-Indicator (Leder/Farbe/Sohle) entfernt — der Konfigurator
+                ist jetzt vollständig durch die dynamischen Optionsgruppen
+                gesteuert; die Sektion „Leder" bleibt erhalten, aber ohne
+                Top-Bar. */}
+            {false && (
             <div className="flex items-center gap-0 px-5 lg:px-0">
               {['Leder', 'Farbe', 'Sohle'].map((label, i) => {
                 const done = configStep > i
@@ -829,8 +838,12 @@ export default function Customize() {
                 )
               })}
             </div>
+            )}
 
-            {/* 1. Leder */}
+            {/* 1. Leder (Material) — nur sichtbar, wenn mehr als 1 Material
+                verfügbar. Bei einer einzigen Auswahl wird Material auto-
+                gesetzt und der Block ausgeblendet. */}
+            {matList.length > 1 && (
             <div {...matSwipe}>
               <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
               <div className="flex gap-2 overflow-x-auto flex-nowrap lg:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
@@ -865,6 +878,7 @@ export default function Customize() {
                 <p className="text-[10px] text-black/35 mt-2 leading-relaxed px-5 lg:px-0">{mat.tip}</p>
               )}
             </div>
+            )}
 
             {/* 2. Farbe */}
             <div
