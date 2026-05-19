@@ -141,7 +141,7 @@ export default function ShoeCollection() {
   const filtered = activeCategory === 'PROMO'
     ? enriched.filter(p => p.promotion_price)
     : activeCategory === 'ALL' ? enriched : enriched.filter(p => p.category === activeCategory)
-  const selectShoe = (product) => navigate('/customize', { state: { product } })
+  const selectShoe = (product) => navigate(`/customize?id=${product.id}`, { state: { product } })
 
   return (
     <div className="min-h-full bg-white">
