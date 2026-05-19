@@ -1195,5 +1195,68 @@ export function seedMatrixTemplatesV2(db) {
     resetCount++
   }
 
-  console.log(`✅ Seeded: matrix templates V2 — ${inserted} template rows, ${resetCount}/${MATRIX_NAMES.length} matrix-named shoes re-applied`)
+  // 3) ALLE Schuhe ohne shoe_options bekommen jetzt — mit den korrigierten
+  //    Matrix-Templates — automatisch eine Konfiguration anhand ihrer
+  //    Kategorie. So profitieren auch User-Schuhe wie „The Heritage Oxford"
+  //    von der Matrix.
+  const allShoes = db.prepare('SELECT id, category FROM shoes').all()
+  const hasShoeOpts = db.prepare('SELECT COUNT(*) c FROM shoe_options WHERE shoe_id = ?')
+  let fillCount = 0
+  for (const s of allShoes) {
+    if (hasShoeOpts.get(s.id).c > 0) continue
+    const rows = tplsForCat(s.category)
+    if (!rows.length) continue
+    rows.forEach(r => { try { insSO.run(s.id, r.option_id, r.is_default, r.sort_order) } catch {} })
+    fillCount++
+  }
+
+  // 4) Material-Whitelist: alle Schuhe mit leerer shoe_material_options
+  //    bekommen die Matrix-Whitelist gemäß Kategorie. Existierende
+  //    Whitelists bleiben unangetastet (Admin-Customization respektiert).
+  const MATRIX_MATERIALS_V2 = {
+    OXFORD:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    WHOLECUT:         ['lux_calf', 'lux_suede', 'painted_full_grain', 'patina', 'box_calf', 'urban_suede', 'painted_calf'],
+    LOAFER:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    DERBY:            ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    DOUBLE_MONK:      ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    MONK:             ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    CHELSEA:          ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BOOT:             ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BALMORAL:         ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    JODHPUR:          ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    CHUKKA:           ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BELGIAN_SLIPPER:  ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    WELLINGTON:       ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    DRAKE:            ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    SNEAKER:          ['lux_suede'],
+    SNEAKER_LACED:    ['lux_suede'],
+    SNEAKER_BOOT:     ['lux_suede'],
+    LACELESS_TRAINER: ['lux_suede'],
+  }
+  // Force-Reset Material-Whitelist auch für MATRIX_NAMES-Schuhe, damit
+  // falsche Velvet/Patina-Einträge auf Oxford raus sind.
+  const clearMatOpt = db.prepare('DELETE FROM shoe_material_options WHERE shoe_id = ?')
+  const insMatOptV2 = db.prepare('INSERT INTO shoe_material_options (shoe_id, material_key, sort_order) VALUES (?, ?, ?)')
+  let matResetCount = 0
+  for (const name of MATRIX_NAMES) {
+    const shoe = findShoe.get(name)
+    if (!shoe) continue
+    const keys = MATRIX_MATERIALS_V2[shoe.category]
+    if (!keys) continue
+    clearMatOpt.run(shoe.id)
+    keys.forEach((k, i) => { try { insMatOptV2.run(shoe.id, k, i) } catch {} })
+    matResetCount++
+  }
+  // Fill-if-empty für alle anderen Schuhe
+  const hasMatOpts = db.prepare('SELECT COUNT(*) c FROM shoe_material_options WHERE shoe_id = ?')
+  let matFillCount = 0
+  for (const s of allShoes) {
+    if (hasMatOpts.get(s.id).c > 0) continue
+    const keys = MATRIX_MATERIALS_V2[s.category]
+    if (!keys) continue
+    keys.forEach((k, i) => { try { insMatOptV2.run(s.id, k, i) } catch {} })
+    matFillCount++
+  }
+
+  console.log(`✅ Seeded: matrix templates V2 — ${inserted} tpl rows, ${resetCount} matrix shoes reset, ${fillCount} empty shoes filled, ${matResetCount} matrix material whitelists reset, ${matFillCount} empty material whitelists filled`)
 }
