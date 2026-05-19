@@ -295,6 +295,8 @@ export function runMigrations(db) {
     // options — Empfehlung (Badge „EMPFOHLEN" + optionaler Grund)
     `ALTER TABLE options ADD COLUMN recommended INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE options ADD COLUMN recommendation_reason TEXT`,
+    // option_groups — Icon (Lucide-Name) für visuelle Akzente im Konfigurator
+    `ALTER TABLE option_groups ADD COLUMN icon TEXT`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }

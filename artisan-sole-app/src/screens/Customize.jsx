@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler } from 'lucide-react'
+import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler, Footprints, Layers, CircleDashed, Diamond, CircleDot, Square, Gem, Palette, Sparkles, ArrowRightLeft } from 'lucide-react'
+
+// Lucide-Icon-Lookup pro option_groups.icon (Lucide-Komponentenname)
+const GROUP_ICONS = {
+  Footprints, Layers, CircleDashed, ChevronUp, Diamond, CircleDot, Square, Gem,
+  Palette, Sparkles, ArrowRightLeft,
+}
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -106,13 +112,10 @@ export default function Customize() {
           g => !['material', 'color'].includes(g.key)
         )
         setExtraOptionGroups(list)
-        // Defaults setzen
-        const defs = {}
-        list.forEach(g => {
-          const def = g.values.find(v => v.is_default) || g.values[0]
-          if (def) defs[g.key] = def.id
-        })
-        setSelectedExtras(defs)
+        // KEINE Auto-Defaults: der User soll jeden Schritt aktiv anklicken.
+        // Folgeschritte bleiben dadurch greyed-out, bis der vorherige
+        // explizit gewählt wurde. Empfehlungen werden als ★ markiert.
+        setSelectedExtras({})
       })
       .catch(() => setExtraOptionGroups([]))
   }, [product?.id])
@@ -1105,6 +1108,10 @@ export default function Customize() {
                     <span className="inline-flex items-center justify-center w-4 h-4 border border-black/30 text-[8px] font-normal">
                       {gIdx + 1}
                     </span>
+                    {(() => {
+                      const Icon = GROUP_ICONS[group.icon]
+                      return Icon ? <Icon size={12} strokeWidth={1.5} className="text-black/55" /> : null
+                    })()}
                     {group.label}
                   </p>
                   {currentSelection && (
