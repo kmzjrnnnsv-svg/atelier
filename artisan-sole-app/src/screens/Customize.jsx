@@ -31,6 +31,15 @@ function LastShapeIcon({ shapeKey, active }) {
   )
 }
 import useStore from '../store/store'
+
+// Relative Bild-URLs (/uploads/…) gegen die API-Base auflösen, base64/http
+// bleiben unverändert.
+const IMG_API_BASE = import.meta.env.VITE_API_URL || ''
+const resolveImg = (url) => {
+  if (!url) return url
+  if (url.startsWith('http') || url.startsWith('data:')) return url
+  return `${IMG_API_BASE}${url}`
+}
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import CustomRequestModal from '../components/CustomRequestModal'
@@ -1237,7 +1246,7 @@ export default function Customize() {
                           style={{ backgroundColor: v.color_hex || (v.image ? 'transparent' : '#fafaf9') }}
                         >
                           {v.image
-                            ? <img src={v.image} alt="" className="w-full h-full object-cover" />
+                            ? <img src={resolveImg(v.image)} alt="" className="w-full h-full object-cover" />
                             : group.key === 'last' && LAST_SHAPES[v.key]
                               ? <div className="w-9 h-11"><LastShapeIcon shapeKey={v.key} active={isSel} /></div>
                               : v.color_hex
