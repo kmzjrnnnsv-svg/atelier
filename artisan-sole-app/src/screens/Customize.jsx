@@ -125,7 +125,9 @@ export default function Customize() {
   const globalMatList = shoeMaterials.length ? shoeMaterials : [
     { id: 1, key: 'calfskin', label: 'Kalbsleder', sub: 'Full-Grain', color: '#b45309', available: 1, tip: 'Robust und langlebig.', rating: 'good' },
   ]
-  const matList = perShoeMaterialKeys && perShoeMaterialKeys.length > 0
+  // Schritt 0 (neu): Familie wählen — Aesthetic vs. Durable.
+  // Die Materialliste wird nach dieser Wahl gefiltert.
+  const baseMatList = perShoeMaterialKeys && perShoeMaterialKeys.length > 0
     ? globalMatList.filter(m => perShoeMaterialKeys.includes(m.key))
     : globalMatList
 
@@ -135,10 +137,28 @@ export default function Customize() {
   // Materials (selMat).
   // Auswahl-States müssen vor den Listen deklariert werden, damit der
   // Material-basierte Farb-Filter sie referenzieren kann.
+  // Familie (Schritt 0) — Aesthetic vs. Durable. Pre-Filter für matList.
+  const [selFamily, setSelFamily] = useState('')
   const [selMat,  setSelMat]  = useState('')
   const [selCol,  setSelCol]  = useState('')
   const [selSole, setSelSole] = useState('')
   const [added,   setAdded]   = useState(false)
+
+  // Materialien nach Familie filtern. Wenn ein Schuh nur Materialien einer
+  // Familie hat (z. B. Sneaker → nur Lux Suede), wird die Familie automatisch
+  // gesetzt und die Familienwahl entfällt.
+  const familiesPresent = [...new Set(baseMatList.map(m => m.family).filter(Boolean))]
+  const matList = selFamily
+    ? baseMatList.filter(m => m.family === selFamily)
+    : baseMatList
+
+  useEffect(() => {
+    if (familiesPresent.length === 1 && !selFamily) {
+      setSelFamily(familiesPresent[0])
+    } else if (familiesPresent.length > 1 && selFamily && !familiesPresent.includes(selFamily)) {
+      setSelFamily('')
+    }
+  }, [familiesPresent.join(',')])
 
   // Globale Farben können per `applicable_materials` an einzelne Material-
   // Typen gebunden sein (z. B. Velvet-Farben nur bei Material 'velvet').
@@ -837,6 +857,65 @@ export default function Customize() {
                   </div>
                 )
               })}
+            </div>
+            )}
+
+            {/* 0. Familie — Aesthetic vs. Durable. Nur sichtbar, wenn der
+                Schuh beide Familien anbietet. */}
+            {familiesPresent.length > 1 && (
+            <div className="px-5 lg:px-0">
+              <p className="text-[10px] lg:text-[11px] text-black/40 mb-2 flex items-center gap-2" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                <span className="inline-flex items-center justify-center w-4 h-4 border border-black/30 text-[8px] font-normal">1</span>
+                Qualitäts-Familie wählen
+              </p>
+              <p className="text-[10px] text-black/40 font-light leading-relaxed mb-4 max-w-2xl">
+                Beide Familien genügen höchsten Qualitätsansprüchen und werden in der gleichen Manufaktur gefertigt.
+                Sie unterscheiden sich nur in Charakter und Einsatzbereich.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {familiesPresent.includes('aesthetic') && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelFamily('aesthetic'); setSelMat(''); setSelCol('') }}
+                    className={`text-left p-4 transition-all border ${
+                      selFamily === 'aesthetic'
+                        ? 'border-black bg-black/[0.02]'
+                        : 'border-black/10 hover:border-black/30 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[12px] tracking-[0.18em] uppercase font-medium text-black">Aesthetic</p>
+                      {selFamily === 'aesthetic' && <Check size={14} strokeWidth={2} className="text-black" />}
+                    </div>
+                    <p className="text-[11px] text-black/55 leading-relaxed font-light">
+                      Edelste Leder — Lux Calf, Lux Suede, Painted Full Grain, Patina und Samt.
+                      Maximale optische Veredelung mit handpatinierten Oberflächen. Ideal für
+                      formelle Anlässe und besondere Momente.
+                    </p>
+                  </button>
+                )}
+                {familiesPresent.includes('durable') && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelFamily('durable'); setSelMat(''); setSelCol('') }}
+                    className={`text-left p-4 transition-all border ${
+                      selFamily === 'durable'
+                        ? 'border-black bg-black/[0.02]'
+                        : 'border-black/10 hover:border-black/30 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[12px] tracking-[0.18em] uppercase font-medium text-black">Durable</p>
+                      {selFamily === 'durable' && <Check size={14} strokeWidth={2} className="text-black" />}
+                    </div>
+                    <p className="text-[11px] text-black/55 leading-relaxed font-light">
+                      Robuste Leder — Box Calf, Urban Suede, Painted Calf und Painted Full Grain.
+                      Wetterfest, alltagstauglich und langlebig. Ideal für täglichen Einsatz und
+                      anspruchsvolle Bedingungen.
+                    </p>
+                  </button>
+                )}
+              </div>
             </div>
             )}
 

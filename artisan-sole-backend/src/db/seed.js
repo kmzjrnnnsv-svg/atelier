@@ -8,6 +8,7 @@ export async function seedDatabase(db) {
   seedShoeAccessories(db)
   seedConfiguratorOptions(db)
   seedExtendedCatalog(db)
+  seedMatrixModels(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -900,4 +901,48 @@ export function seedExtendedCatalog(db) {
   RECOMMENDATIONS.forEach(([gk, ok, reason]) => upRec.run(reason, gk, ok))
 
   console.log(`✅ Seeded: extended catalog (${MATERIALS.length} materials, ${COLORS.length} colors, ${NEW_GROUPS.length} option groups, ${NEW_OPTIONS.length} options, ${TEMPLATES.length} template entries, ${Object.keys(COLOR_HEX_MAP).length} hex codes, ${Object.keys(HELPER_TEXT).length} helper texts, ${RECOMMENDATIONS.length} recommendations)`)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// seedMatrixModels — stellt sicher, dass für jedes Modell aus der
+// Konfigurator-Matrix mindestens ein Schuh in der Datenbank existiert.
+// Idempotent: legt nur fehlende Modelle an, vorhandene bleiben unangetastet.
+// ─────────────────────────────────────────────────────────────────────
+export function seedMatrixModels(db) {
+  // Modelle gemäß User-Matrix mit passender Kategorie
+  const MATRIX_MODELS = [
+    { name: 'Oxford',             category: 'OXFORD',          price: '€ 1.450', material: 'Lux Calf' },
+    { name: 'Whole Cut',          category: 'WHOLECUT',        price: '€ 1.580', material: 'Lux Calf' },
+    { name: 'Loafer',             category: 'LOAFER',          price: '€ 1.280', material: 'Lux Calf' },
+    { name: 'Derby',              category: 'DERBY',           price: '€ 1.350', material: 'Lux Calf' },
+    { name: 'Double Monk',        category: 'DOUBLE_MONK',     price: '€ 1.490', material: 'Lux Calf' },
+    { name: 'Chelsea Boot',       category: 'CHELSEA',         price: '€ 1.720', material: 'Lux Calf' },
+    { name: 'Balmoral Boot',      category: 'BALMORAL',        price: '€ 1.780', material: 'Lux Calf' },
+    { name: 'Jodhpur Boot',       category: 'JODHPUR',         price: '€ 1.620', material: 'Lux Calf' },
+    { name: 'Chukka',             category: 'CHUKKA',          price: '€ 1.420', material: 'Lux Calf' },
+    { name: 'Belgian Slipper',    category: 'BELGIAN_SLIPPER', price: '€ 1.180', material: 'Lux Calf' },
+    { name: 'Wellington',         category: 'WELLINGTON',      price: '€ 1.220', material: 'Lux Calf' },
+    { name: 'Drake',              category: 'DRAKE',           price: '€ 1.190', material: 'Lux Calf' },
+    { name: 'Mov Flex Sport',     category: 'SNEAKER',         price: '€ 890',   material: 'Lux Suede' },
+    { name: 'Mov Flex Sport Laced Boot', category: 'SNEAKER_LACED', price: '€ 950', material: 'Lux Suede' },
+    { name: 'Mov Flex Sport Boot', category: 'SNEAKER_BOOT',   price: '€ 920',   material: 'Lux Suede' },
+    { name: 'Laceless Trainer',   category: 'LACELESS_TRAINER', price: '€ 850',  material: 'Lux Suede' },
+  ]
+
+  // Nur einfügen, was nicht schon (per Name) existiert.
+  const exists = db.prepare('SELECT 1 FROM shoes WHERE name = ?')
+  const insert = db.prepare(`
+    INSERT INTO shoes (name, category, price, material, color, tag, image_data)
+    VALUES (?, ?, ?, ?, '#1f2937', NULL, NULL)
+  `)
+  let added = 0
+  for (const m of MATRIX_MODELS) {
+    if (!exists.get(m.name)) {
+      insert.run(m.name, m.category, m.price, m.material)
+      added++
+    }
+  }
+  if (added > 0) {
+    console.log(`✅ Seeded: ${added} matrix model(s) added (16 total in matrix)`)
+  }
 }
