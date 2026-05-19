@@ -99,9 +99,11 @@ export default function Customize() {
       .catch(() => setPerShoeColorVariants([]))
     apiFetch(`/api/shoes/${product.id}/options`)
       .then(groups => {
-        // Schluck Gruppen, deren key sich mit Material/Color/Sole überschneidet
+        // Nur Material/Color filtern — diese haben eigene Spezial-UIs.
+        // `sole` (Sohle Unten) DARF erscheinen: laut Matrix gibt es das
+        // nur für Whole Cut, Derby, Monk — die Vorlage entscheidet.
         const list = (Array.isArray(groups) ? groups : []).filter(
-          g => !['material', 'color', 'sole'].includes(g.key)
+          g => !['material', 'color'].includes(g.key)
         )
         setExtraOptionGroups(list)
         // Defaults setzen
