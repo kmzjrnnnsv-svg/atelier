@@ -37,6 +37,7 @@ export default function CMSLayout() {
               { to: '/cms/shoes',          label: 'Schuhe',           icon: Footprints },
               { to: '/cms/product-config', label: 'Produkt-Konfig',   icon: Palette },
               { to: '/cms/options',        label: 'Konfigurator-Optionen', icon: Sliders },
+              { to: '/cms/matrix',         label: 'Modell-Matrix',        icon: LayoutDashboard },
               { to: '/cms/leisten',        label: 'Leisten-Parameter', icon: Ruler },
               { to: '/cms/accessories',    label: 'Zubehör',          icon: Gift },
             ]},

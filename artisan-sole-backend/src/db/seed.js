@@ -586,14 +586,14 @@ export function seedExtendedCatalog(db) {
     // Aesthetic
     { key: 'lux_calf',            label: 'Lux Calf',            sub: 'Aesthetic', family: 'aesthetic', color: '#3b1f0a', tip: 'Hochglanz-Kalbsleder.',                          rating: 'good',    sort: 0 },
     { key: 'lux_suede',           label: 'Lux Suede',           sub: 'Aesthetic', family: 'aesthetic', color: '#7c3a1e', tip: 'Premium-Veloursleder.',                          rating: 'good',    sort: 1 },
-    { key: 'painted_full_grain',  label: 'Painted Full Grain',  sub: 'Aesthetic', family: 'aesthetic', color: '#5b2c0e', tip: 'Patinierungs-Vollnarbenleder.',                 rating: 'good',    sort: 2 },
+    { key: 'painted_full_grain',  label: 'Painted Full Grain',  sub: 'Aesthetic', family: 'aesthetic', color: '#5b2c0e', tip: 'Patinierungs-Vollnarbenleder. Robust UND optisch veredelt — die Allzweckwahl.', rating: 'good', sort: 2 },
     { key: 'patina',              label: 'Patina',              sub: 'Aesthetic', family: 'aesthetic', color: '#1c1c1e', tip: 'Speziell handpatiniert.',                        rating: 'neutral', sort: 3 },
     { key: 'velvet',              label: 'Velvet',              sub: 'Aesthetic', family: 'aesthetic', color: '#2d1b3d', tip: 'Samt — exklusiv für Slipper, Boots, Drake.',     rating: 'neutral', sort: 4 },
     // Durable
     { key: 'box_calf',            label: 'Box Calf',            sub: 'Durable',   family: 'durable',   color: '#1c1c1e', tip: 'Klassisches Box-Calf — robust und matt.',        rating: 'good',    sort: 10 },
     { key: 'urban_suede',         label: 'Urban Suede',         sub: 'Durable',   family: 'durable',   color: '#7c3a1e', tip: 'Wetterbeständiges Veloursleder.',                rating: 'good',    sort: 11 },
     { key: 'painted_calf',        label: 'Painted Calf',        sub: 'Durable',   family: 'durable',   color: '#5b2c0e', tip: 'Patinierungs-Kalbleder, alltagstauglich.',       rating: 'good',    sort: 12 },
-    { key: 'painted_full_grain_durable', label: 'Painted Full Grain (Durable)', sub: 'Durable', family: 'durable', color: '#5b2c0e', tip: 'Robuste Vollnarben-Patina.', rating: 'good', sort: 13 },
+    // Painted Full Grain (Durable) wurde mit Aesthetic-Variante zusammengeführt
   ]
   const insMat = db.prepare(`
     INSERT INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
@@ -603,6 +603,23 @@ export function seedExtendedCatalog(db) {
       updated_at = datetime('now')
   `)
   MATERIALS.forEach(m => insMat.run(m.key, m.label, m.sub, m.color, m.tip, m.rating, m.sort, m.family))
+
+  // Alte/Legacy-Materialien (calfskin, suede, patent, cordovan, exotic,
+  // scotch_grain, …) auf available=0 setzen → tauchen nicht mehr in der
+  // User-UI auf. Nur Matrix-Materialien sind aktiv.
+  const MATRIX_KEYS = MATERIALS.map(m => m.key)
+  const placeholders = MATRIX_KEYS.map(() => '?').join(',')
+  db.prepare(`UPDATE shoe_materials SET available = 0 WHERE key NOT IN (${placeholders})`).run(...MATRIX_KEYS)
+
+  // Painted Full Grain (Durable) entfernen: Farben, die darauf zeigten,
+  // jetzt auf 'painted_full_grain' (Aesthetic) umleiten.
+  db.prepare(`
+    UPDATE shoe_colors
+       SET applicable_materials = REPLACE(applicable_materials, 'painted_full_grain_durable', 'painted_full_grain')
+     WHERE applicable_materials LIKE '%painted_full_grain_durable%'
+  `).run()
+  // ggf. Material selber löschen (CASCADE löscht abhängige shoe_material_options)
+  db.prepare(`DELETE FROM shoe_materials WHERE key = 'painted_full_grain_durable'`).run()
 
   // ── 2) Farben mit Material-Verknüpfung ──────────────────────────
   // Format: { key, name, hex, materials: [keys], rating, sort }
@@ -945,4 +962,69 @@ export function seedMatrixModels(db) {
   if (added > 0) {
     console.log(`✅ Seeded: ${added} matrix model(s) added (16 total in matrix)`)
   }
+
+  // ── Material-Whitelist pro Kategorie (gemäß Matrix) ────────────────
+  const MATRIX_MATERIALS = {
+    OXFORD:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    WHOLECUT:         ['lux_calf', 'lux_suede', 'painted_full_grain', 'patina', 'box_calf', 'urban_suede', 'painted_calf'],
+    LOAFER:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    DERBY:            ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    DOUBLE_MONK:      ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    MONK:             ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    CHELSEA:          ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BOOT:             ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BALMORAL:         ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    JODHPUR:          ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    CHUKKA:           ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    BELGIAN_SLIPPER:  ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    WELLINGTON:       ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    DRAKE:            ['lux_calf', 'box_calf', 'velvet', 'painted_full_grain', 'urban_suede', 'painted_calf'],
+    SNEAKER:          ['lux_suede'],
+    SNEAKER_LACED:    ['lux_suede'],
+    SNEAKER_BOOT:     ['lux_suede'],
+    LACELESS_TRAINER: ['lux_suede'],
+  }
+
+  // Für jeden Schuh ohne shoe_material_options-Einträge die Matrix-
+  // Whitelist anwenden. Vorhandene Whitelists bleiben unangetastet
+  // (Admin kann pro Schuh feinjustieren).
+  const allShoes = db.prepare('SELECT id, category FROM shoes').all()
+  const hasOptions = db.prepare('SELECT COUNT(*) c FROM shoe_material_options WHERE shoe_id = ?')
+  const insMatOpt = db.prepare('INSERT INTO shoe_material_options (shoe_id, material_key, sort_order) VALUES (?, ?, ?)')
+  let matApplied = 0
+  for (const s of allShoes) {
+    if (hasOptions.get(s.id).c > 0) continue
+    const matKeys = MATRIX_MATERIALS[s.category]
+    if (!matKeys) continue
+    matKeys.forEach((k, i) => { try { insMatOpt.run(s.id, k, i) } catch {} })
+    matApplied++
+  }
+
+  // Konfigurator-Optionen aus category_templates auf Schuhe übertragen,
+  // wenn der Schuh noch keine shoe_options hat. Toe-Gruppe wird
+  // bewusst übersprungen (steht nicht in der Matrix).
+  const hasShoeOpts = db.prepare('SELECT COUNT(*) c FROM shoe_options WHERE shoe_id = ?')
+  const tplRows = db.prepare(`
+    SELECT ct.category, ct.option_id, ct.is_default, ct.sort_order, g.key as group_key
+    FROM category_templates ct
+    JOIN options o ON o.id = ct.option_id
+    JOIN option_groups g ON g.id = o.group_id
+    WHERE g.key NOT IN ('toe', 'beveled_waist')
+  `).all()
+  const tplByCat = {}
+  for (const r of tplRows) {
+    if (!tplByCat[r.category]) tplByCat[r.category] = []
+    tplByCat[r.category].push(r)
+  }
+  const insShoeOpt = db.prepare('INSERT INTO shoe_options (shoe_id, option_id, price_override, is_default, sort_order) VALUES (?, ?, NULL, ?, ?)')
+  let optApplied = 0
+  for (const s of allShoes) {
+    if (hasShoeOpts.get(s.id).c > 0) continue
+    const rows = tplByCat[s.category]
+    if (!rows) continue
+    rows.forEach((r, i) => { try { insShoeOpt.run(s.id, r.option_id, r.is_default, i) } catch {} })
+    optApplied++
+  }
+
+  console.log(`✅ Seeded: matrix mappings — ${matApplied} shoes got material whitelists, ${optApplied} shoes got option configs`)
 }
