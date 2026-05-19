@@ -992,10 +992,15 @@ export default function Customize() {
                         }`}
                         title={v.description || ''}
                       >
-                        <div className="w-12 h-12 mb-2 flex items-center justify-center overflow-hidden bg-[#fafaf9]">
+                        <div
+                          className="w-12 h-12 mb-2 flex items-center justify-center overflow-hidden border border-black/[0.06]"
+                          style={{ backgroundColor: v.color_hex || (v.image ? 'transparent' : '#fafaf9') }}
+                        >
                           {v.image
                             ? <img src={v.image} alt="" className="w-full h-full object-cover" />
-                            : <span className="text-[9px] text-black/20 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
+                            : v.color_hex
+                              ? null /* echte Farb-Vorschau über Background */
+                              : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
                         </div>
                         <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
                         {v.price_extra > 0 && (
@@ -1172,6 +1177,25 @@ export default function Customize() {
                     <span className="text-[11px] text-black/50">Sohle</span>
                     <span className="text-[11px] text-black">{sole?.label}{soleExtra > 0 ? ` (+€${soleExtra})` : ''}</span>
                   </div>
+                  {/* Dynamische Extras (Last, Welt, Heel, Toe, Schnalle, …) */}
+                  {extraOptionGroups.map(group => {
+                    const sel = group.values.find(v => v.id === selectedExtras[group.key])
+                    if (!sel) return null
+                    return (
+                      <div key={group.id} className="flex items-center justify-between">
+                        <span className="text-[11px] text-black/50">{group.label}</span>
+                        <div className="flex items-center gap-2">
+                          {sel.color_hex && (
+                            <div className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: sel.color_hex }} />
+                          )}
+                          <span className="text-[11px] text-black">
+                            {sel.label}
+                            {sel.price_extra > 0 && ` (+€${sel.price_extra})`}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
                   {sizeType === 'custom' && (
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-black/50">Größe</span>
