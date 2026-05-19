@@ -6,6 +6,8 @@ export async function seedDatabase(db) {
   seedEmailTemplates(db)
   seedArticles(db)
   seedShoeAccessories(db)
+  seedConfiguratorOptions(db)
+  seedExtendedCatalog(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -393,4 +395,393 @@ function seedShoeAccessories(db) {
   })()
 
   console.log(`✅ Seeded: shoe-accessory assignments for ${shoes.length} shoes`)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Konfigurator-Optionen — Last, Sohle, Welt, Heel, Toe, Schnalle,
+// Loafer-Dekor, Beveled Waist + Vorlagen pro Kategorie.
+// Idempotent: läuft bei jedem Start, fügt nur fehlende Einträge ein.
+// ─────────────────────────────────────────────────────────────────────
+function seedConfiguratorOptions(db) {
+  // 1) Option-Gruppen
+  const GROUPS = [
+    { key: 'last',              label: 'Leisten',        ui_type: 'single', required: 1, sort_order: 0, description: 'Leistenform — bestimmt Zehenform, Taille und Proportion.' },
+    { key: 'sole',              label: 'Sohle',          ui_type: 'single', required: 1, sort_order: 1, description: 'Sohlentyp.' },
+    { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 2, description: 'Rahmen — City für glatten Look, Country/Storm für robusten Auftritt.' },
+    { key: 'heel',              label: 'Absatz',         ui_type: 'single', required: 1, sort_order: 3, description: 'Standard- oder erhöhter Absatz.' },
+    { key: 'toe',               label: 'Zehenkappe',     ui_type: 'single', required: 0, sort_order: 4, description: 'Zehenkappenform.' },
+    { key: 'buckle',            label: 'Schnalle',       ui_type: 'single', required: 1, sort_order: 5, description: 'Schnallenform (für Monk-Modelle).' },
+    { key: 'loafer_decoration', label: 'Loafer-Dekor',   ui_type: 'single', required: 0, sort_order: 6, description: 'Dekoration bei Loafer-Modellen.' },
+    { key: 'beveled_waist',     label: 'Beveled Waist',  ui_type: 'toggle', required: 0, sort_order: 7, description: 'Schlanke Taille für eleganteren Look.' },
+  ]
+  const insGroup = db.prepare(`
+    INSERT OR IGNORE INTO option_groups (key, label, description, ui_type, required, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  GROUPS.forEach(g => insGroup.run(g.key, g.label, g.description, g.ui_type, g.required, g.sort_order))
+
+  const groupId = (key) => db.prepare('SELECT id FROM option_groups WHERE key = ?').get(key)?.id
+
+  // 2) Werte pro Gruppe (alles, was du in den Screenshots gezeigt hast)
+  const OPTIONS = [
+    // Leisten (Last)
+    { group: 'last', key: 'zurigo',    label: 'Zurigo',    description: 'Runde Zehenform für klassisch-englischen Look.',            price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'monti',     label: 'Monti',     description: 'Klassische Eleganz mit leicht quadratischer Zehe.',         price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'savile',    label: 'Savile',    description: 'Schlanker Look mit leichter Chisel-Zehe.',                  price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'belgravia', label: 'Belgravia', description: 'Chisel-Zehe, schmale Taille und kubanischer Absatz.',       price: 0,  cats: 'OXFORD,WHOLECUT,CHELSEA' },
+
+    // Sohle
+    { group: 'sole', key: 'leather',          label: 'Leather',          description: 'Klassische Ledersohle.',                                price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_mountain', label: 'Leather Mountain', description: 'Leder mit Bergprofil für mehr Grip.',                   price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_buttons',  label: 'Leather Buttons',  description: 'Leder mit Noppen-Einsatz.',                             price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_rubber',   label: 'Leather + Rubber', description: 'Leder mit Gummi-Mittelsteg.',                           price: 0,  cats: '*' },
+    { group: 'sole', key: 'dainite',          label: 'Dainite',          description: 'Klassische Stollen-Gummisohle.',                        price: 5,  cats: '*' },
+    { group: 'sole', key: 'commando',         label: 'Commando',         description: 'Grobes Profil — maximaler Grip.',                       price: 0,  cats: '*' },
+    { group: 'sole', key: 'crepe',            label: 'Crepe',            description: 'Naturkautschuk, sehr komfortabel.',                     price: 5,  cats: 'LOAFER,DERBY,SNEAKER' },
+    { group: 'sole', key: 'rubber',           label: 'Rubber',           description: 'Glatte Gummisohle.',                                    price: 0,  cats: '*' },
+    { group: 'sole', key: 'dots',             label: 'Dots',             description: 'Gummi mit feinen Noppen.',                              price: 0,  cats: '*' },
+    { group: 'sole', key: 'rocky',            label: 'Rocky',            description: 'Robuste Outdoor-Sohle.',                                price: 0,  cats: 'CHELSEA,BOOT,DERBY' },
+    { group: 'sole', key: 'beveled_waist',    label: 'Beveled Waist',    description: 'Schlanke, gewölbte Taille.',                            price: 35, cats: 'OXFORD,WHOLECUT,DERBY,MONK,DOUBLE_MONK' },
+    { group: 'sole', key: 'art',              label: 'Art',              description: 'Handbemalte Spezialsohle.',                             price: 17, cats: '*' },
+
+    // Welt (Rahmen)
+    { group: 'welt', key: 'city',    label: 'City',    description: 'Schmaler Rahmen für eleganten Look.', price: 0, cats: '*' },
+    { group: 'welt', key: 'country', label: 'Country', description: 'Breiterer Rahmen, robuster Look.',     price: 0, cats: '*' },
+    { group: 'welt', key: 'storm',   label: 'Storm',   description: 'Wasserdichter Rahmen für Outdoor.',    price: 0, cats: '*' },
+
+    // Heel (Absatz)
+    { group: 'heel', key: 'standard',    label: 'Standard',    description: 'Klassische Absatzhöhe.',  price: 0, cats: '*' },
+    { group: 'heel', key: 'higher_heel', label: 'Higher Heel', description: 'Erhöhter Absatz.',         price: 0, cats: '*' },
+
+    // Toe (Zehenkappe)
+    { group: 'toe', key: 'plain_toe',  label: 'Plain Toe', description: 'Glatte Zehenkappe ohne Verzierung.', price: 0, cats: '*' },
+    { group: 'toe', key: 'punch_cap',  label: 'Punch Cap', description: 'Klassische Punch-Cap-Lochung.',     price: 0, cats: 'OXFORD,DERBY' },
+    { group: 'toe', key: 'cap_toe',    label: 'Cap Toe',   description: 'Aufgesetzte Zehenkappe mit Naht.',  price: 0, cats: 'OXFORD,DERBY,CHELSEA' },
+    { group: 'toe', key: 'bare',       label: 'Bare',      description: 'Komplett unverziert.',               price: 0, cats: 'OXFORD,WHOLECUT' },
+
+    // Schnalle (für Monk)
+    { group: 'buckle', key: 'round_buckle',  label: 'Round Buckle',  description: 'Klassisch runde Schnalle.',    price: 0, cats: 'MONK,DOUBLE_MONK' },
+    { group: 'buckle', key: 'square_buckle', label: 'Square Buckle', description: 'Eckige Schnalle, modern.',     price: 0, cats: 'MONK,DOUBLE_MONK' },
+
+    // Loafer-Dekor
+    { group: 'loafer_decoration', key: 'tassels',      label: 'Tassels',      description: 'Klassische Quasten.',           price: 0, cats: 'LOAFER' },
+    { group: 'loafer_decoration', key: 'albert_mask',  label: 'Albert Mask',  description: 'Verzierte Maske auf dem Spann.', price: 0, cats: 'LOAFER' },
+    { group: 'loafer_decoration', key: 'metal_bit',    label: 'Metal Bit',   description: 'Pferdetrense aus Metall.',       price: 0, cats: 'LOAFER' },
+    { group: 'loafer_decoration', key: 'bow',          label: 'Bow',          description: 'Schleife auf dem Spann.',        price: 0, cats: 'LOAFER' },
+    { group: 'loafer_decoration', key: 'bare',         label: 'Bare',         description: 'Ohne Dekoration.',               price: 0, cats: 'LOAFER' },
+
+    // Beveled Waist (Yes/No-Toggle)
+    { group: 'beveled_waist', key: 'no',  label: 'Nein', description: 'Standard-Taille.',                    price: 0,  cats: '*' },
+    { group: 'beveled_waist', key: 'yes', label: 'Ja',   description: 'Schlanke Taille (+19 €).',           price: 19, cats: '*' },
+  ]
+  const insOpt = db.prepare(`
+    INSERT OR IGNORE INTO options (group_id, key, label, description, default_price_extra, applicable_categories, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  OPTIONS.forEach((o, i) => {
+    const gid = groupId(o.group)
+    if (!gid) return
+    insOpt.run(gid, o.key, o.label, o.description, o.price, o.cats, i)
+  })
+
+  const optId = (groupKey, optKey) => db.prepare(`
+    SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+    WHERE g.key = ? AND o.key = ?
+  `).get(groupKey, optKey)?.id
+
+  // 3) Vorlagen pro Kategorie: welche Optionen werden bei einem neuen
+  //    Schuh dieser Kategorie automatisch aktiviert, was ist Default?
+  const TEMPLATES = [
+    // category, group/option, is_default
+    // OXFORD
+    ['OXFORD', 'last:zurigo', 1], ['OXFORD', 'last:monti'], ['OXFORD', 'last:savile'], ['OXFORD', 'last:belgravia'],
+    ['OXFORD', 'sole:leather', 1], ['OXFORD', 'sole:dainite'], ['OXFORD', 'sole:beveled_waist'], ['OXFORD', 'sole:commando'],
+    ['OXFORD', 'welt:city', 1], ['OXFORD', 'welt:country'],
+    ['OXFORD', 'heel:standard', 1], ['OXFORD', 'heel:higher_heel'],
+    ['OXFORD', 'toe:punch_cap', 1], ['OXFORD', 'toe:plain_toe'], ['OXFORD', 'toe:bare'],
+    ['OXFORD', 'beveled_waist:no', 1], ['OXFORD', 'beveled_waist:yes'],
+    // WHOLECUT
+    ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'], ['WHOLECUT', 'last:savile'], ['WHOLECUT', 'last:belgravia'],
+    ['WHOLECUT', 'sole:leather', 1], ['WHOLECUT', 'sole:dainite'], ['WHOLECUT', 'sole:beveled_waist'],
+    ['WHOLECUT', 'welt:city', 1], ['WHOLECUT', 'welt:country'],
+    ['WHOLECUT', 'heel:standard', 1], ['WHOLECUT', 'heel:higher_heel'],
+    ['WHOLECUT', 'beveled_waist:no', 1], ['WHOLECUT', 'beveled_waist:yes'],
+    // DERBY
+    ['DERBY', 'last:zurigo', 1], ['DERBY', 'last:monti'], ['DERBY', 'last:savile'],
+    ['DERBY', 'sole:leather', 1], ['DERBY', 'sole:dainite'], ['DERBY', 'sole:commando'], ['DERBY', 'sole:rocky'],
+    ['DERBY', 'welt:city', 1], ['DERBY', 'welt:country'], ['DERBY', 'welt:storm'],
+    ['DERBY', 'heel:standard', 1], ['DERBY', 'heel:higher_heel'],
+    ['DERBY', 'toe:plain_toe', 1], ['DERBY', 'toe:punch_cap'], ['DERBY', 'toe:cap_toe'],
+    // LOAFER
+    ['LOAFER', 'last:zurigo', 1], ['LOAFER', 'last:monti'], ['LOAFER', 'last:savile'],
+    ['LOAFER', 'sole:leather', 1], ['LOAFER', 'sole:dainite'], ['LOAFER', 'sole:crepe'], ['LOAFER', 'sole:commando'],
+    ['LOAFER', 'welt:city', 1], ['LOAFER', 'welt:country'],
+    ['LOAFER', 'heel:standard', 1], ['LOAFER', 'heel:higher_heel'],
+    ['LOAFER', 'loafer_decoration:bare', 1], ['LOAFER', 'loafer_decoration:tassels'], ['LOAFER', 'loafer_decoration:metal_bit'], ['LOAFER', 'loafer_decoration:bow'], ['LOAFER', 'loafer_decoration:albert_mask'],
+    // CHELSEA (Boot)
+    ['CHELSEA', 'last:zurigo', 1], ['CHELSEA', 'last:savile'], ['CHELSEA', 'last:belgravia'],
+    ['CHELSEA', 'sole:leather', 1], ['CHELSEA', 'sole:dainite'], ['CHELSEA', 'sole:commando'], ['CHELSEA', 'sole:rocky'],
+    ['CHELSEA', 'welt:city'], ['CHELSEA', 'welt:country', 1], ['CHELSEA', 'welt:storm'],
+    ['CHELSEA', 'heel:standard', 1], ['CHELSEA', 'heel:higher_heel'],
+    ['CHELSEA', 'toe:plain_toe', 1], ['CHELSEA', 'toe:cap_toe'],
+    // MONK / DOUBLE_MONK
+    ['MONK', 'last:zurigo', 1], ['MONK', 'last:monti'], ['MONK', 'last:savile'],
+    ['MONK', 'sole:leather', 1], ['MONK', 'sole:dainite'], ['MONK', 'sole:beveled_waist'],
+    ['MONK', 'welt:city', 1], ['MONK', 'welt:country'],
+    ['MONK', 'heel:standard', 1], ['MONK', 'heel:higher_heel'],
+    ['MONK', 'buckle:square_buckle', 1], ['MONK', 'buckle:round_buckle'],
+    ['DOUBLE_MONK', 'last:zurigo', 1], ['DOUBLE_MONK', 'last:monti'], ['DOUBLE_MONK', 'last:savile'],
+    ['DOUBLE_MONK', 'sole:leather', 1], ['DOUBLE_MONK', 'sole:dainite'], ['DOUBLE_MONK', 'sole:beveled_waist'],
+    ['DOUBLE_MONK', 'welt:city', 1], ['DOUBLE_MONK', 'welt:country'],
+    ['DOUBLE_MONK', 'heel:standard', 1], ['DOUBLE_MONK', 'heel:higher_heel'],
+    ['DOUBLE_MONK', 'buckle:square_buckle', 1], ['DOUBLE_MONK', 'buckle:round_buckle'],
+    // BOOT (Allzweck-Stiefel)
+    ['BOOT', 'last:zurigo', 1], ['BOOT', 'last:savile'],
+    ['BOOT', 'sole:commando', 1], ['BOOT', 'sole:dainite'], ['BOOT', 'sole:rocky'], ['BOOT', 'sole:rubber'],
+    ['BOOT', 'welt:country', 1], ['BOOT', 'welt:storm'],
+    ['BOOT', 'heel:standard', 1], ['BOOT', 'heel:higher_heel'],
+    // SNEAKER
+    ['SNEAKER', 'sole:rubber', 1], ['SNEAKER', 'sole:crepe'], ['SNEAKER', 'sole:dots'],
+  ]
+  const insTpl = db.prepare(`
+    INSERT OR IGNORE INTO category_templates (category, option_id, is_default, sort_order)
+    VALUES (?, ?, ?, ?)
+  `)
+  TEMPLATES.forEach((tpl, i) => {
+    const [cat, ref, isDefault] = tpl
+    const [gk, ok] = ref.split(':')
+    const oid = optId(gk, ok)
+    if (oid) insTpl.run(cat, oid, isDefault ? 1 : 0, i)
+  })
+
+  console.log(`✅ Seeded: configurator options (${GROUPS.length} groups, ${OPTIONS.length} options, ${TEMPLATES.length} template entries)`)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// seedExtendedCatalog — vollständiges Material/Farb/Konfig-Setup
+// gemäß Matrix mit Familie (Aesthetic/Durable), Material-Typen und
+// allen Optionsgruppen für jedes Schuhmodell.
+// Idempotent: aktualisiert nur fehlende Datensätze.
+// ─────────────────────────────────────────────────────────────────────
+export function seedExtendedCatalog(db) {
+  // ── 1) Material-Familien + Typen ────────────────────────────────
+  const MATERIALS = [
+    // Aesthetic
+    { key: 'lux_calf',            label: 'Lux Calf',            sub: 'Aesthetic', family: 'aesthetic', color: '#3b1f0a', tip: 'Hochglanz-Kalbsleder.',                          rating: 'good',    sort: 0 },
+    { key: 'lux_suede',           label: 'Lux Suede',           sub: 'Aesthetic', family: 'aesthetic', color: '#7c3a1e', tip: 'Premium-Veloursleder.',                          rating: 'good',    sort: 1 },
+    { key: 'painted_full_grain',  label: 'Painted Full Grain',  sub: 'Aesthetic', family: 'aesthetic', color: '#5b2c0e', tip: 'Patinierungs-Vollnarbenleder.',                 rating: 'good',    sort: 2 },
+    { key: 'patina',              label: 'Patina',              sub: 'Aesthetic', family: 'aesthetic', color: '#1c1c1e', tip: 'Speziell handpatiniert.',                        rating: 'neutral', sort: 3 },
+    { key: 'velvet',              label: 'Velvet',              sub: 'Aesthetic', family: 'aesthetic', color: '#2d1b3d', tip: 'Samt — exklusiv für Slipper, Boots, Drake.',     rating: 'neutral', sort: 4 },
+    // Durable
+    { key: 'box_calf',            label: 'Box Calf',            sub: 'Durable',   family: 'durable',   color: '#1c1c1e', tip: 'Klassisches Box-Calf — robust und matt.',        rating: 'good',    sort: 10 },
+    { key: 'urban_suede',         label: 'Urban Suede',         sub: 'Durable',   family: 'durable',   color: '#7c3a1e', tip: 'Wetterbeständiges Veloursleder.',                rating: 'good',    sort: 11 },
+    { key: 'painted_calf',        label: 'Painted Calf',        sub: 'Durable',   family: 'durable',   color: '#5b2c0e', tip: 'Patinierungs-Kalbleder, alltagstauglich.',       rating: 'good',    sort: 12 },
+    { key: 'painted_full_grain_durable', label: 'Painted Full Grain (Durable)', sub: 'Durable', family: 'durable', color: '#5b2c0e', tip: 'Robuste Vollnarben-Patina.', rating: 'good', sort: 13 },
+  ]
+  const insMat = db.prepare(`
+    INSERT INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
+    VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
+    ON CONFLICT(key) DO UPDATE SET label=excluded.label, sub=excluded.sub, color=excluded.color,
+      tip=excluded.tip, rating=excluded.rating, sort_order=excluded.sort_order, family=excluded.family,
+      updated_at = datetime('now')
+  `)
+  MATERIALS.forEach(m => insMat.run(m.key, m.label, m.sub, m.color, m.tip, m.rating, m.sort, m.family))
+
+  // ── 2) Farben mit Material-Verknüpfung ──────────────────────────
+  // Format: { key, name, hex, materials: [keys], rating, sort }
+  const COLORS = [
+    // Grundfarben (für die meisten Aesthetic + Durable Leder verfügbar)
+    { key: 'black',         name: 'Black',          hex: '#000000', materials: 'lux_calf,lux_suede,painted_full_grain,patina,box_calf,urban_suede,painted_calf,painted_full_grain_durable,velvet', rating: 'good',    sort: 0 },
+    { key: 'dark_brown',    name: 'Dark Brown',     hex: '#3b1f0a', materials: 'lux_calf,lux_suede,painted_full_grain,box_calf,urban_suede,painted_calf,painted_full_grain_durable',                rating: 'good',    sort: 1 },
+    { key: 'medium_brown',  name: 'Medium Brown',   hex: '#5b3a1d', materials: 'lux_calf,lux_suede,painted_full_grain,urban_suede,painted_calf,painted_full_grain_durable',                          rating: 'good',    sort: 2 },
+    { key: 'light_brown',   name: 'Light Brown',    hex: '#a0734a', materials: 'lux_calf,lux_suede',                                                                                                  rating: 'neutral', sort: 3 },
+    { key: 'cognac',        name: 'Cognac',         hex: '#92400e', materials: 'lux_calf,lux_suede,painted_full_grain,box_calf,urban_suede,painted_calf,painted_full_grain_durable',                rating: 'good',    sort: 4 },
+    { key: 'oxblood',       name: 'Oxblood',        hex: '#7b1e1e', materials: 'lux_calf,lux_suede',                                                                                                  rating: 'good',    sort: 5 },
+    { key: 'burgundy',      name: 'Burgundy',       hex: '#4f1d24', materials: 'lux_calf,lux_suede,painted_full_grain,box_calf,urban_suede,painted_calf,painted_full_grain_durable',                rating: 'good',    sort: 6 },
+    { key: 'red',           name: 'Red',            hex: '#a01c1c', materials: 'lux_calf,lux_suede,painted_full_grain,painted_calf,painted_full_grain_durable,velvet',                              rating: 'neutral', sort: 7 },
+    { key: 'navy',          name: 'Navy',           hex: '#1e3a5f', materials: 'painted_full_grain,box_calf,urban_suede,painted_calf,painted_full_grain_durable,velvet',                            rating: 'good',    sort: 8 },
+    { key: 'olive',         name: 'Olive',          hex: '#3d3c1f', materials: 'painted_full_grain,painted_calf,painted_full_grain_durable',                                                         rating: 'neutral', sort: 9 },
+    { key: 'sand',          name: 'Sand',           hex: '#d4b896', materials: 'lux_suede',                                                                                                          rating: 'neutral', sort: 10 },
+    { key: 'camel',         name: 'Camel',          hex: '#c8a97e', materials: 'lux_suede',                                                                                                          rating: 'neutral', sort: 11 },
+    { key: 'taupe',         name: 'Taupe',          hex: '#705c4a', materials: 'urban_suede',                                                                                                        rating: 'neutral', sort: 12 },
+    // Velvet-only
+    { key: 'velvet_beige',     name: 'Beige',       hex: '#c8b89a', materials: 'velvet', rating: 'neutral', sort: 20 },
+    { key: 'velvet_darkgrey',  name: 'Dark Grey',   hex: '#3a3a3a', materials: 'velvet', rating: 'neutral', sort: 21 },
+    { key: 'velvet_khaki',     name: 'Khaki',       hex: '#8a8a4a', materials: 'velvet', rating: 'neutral', sort: 22 },
+    { key: 'velvet_makeup',    name: 'MakeUp',      hex: '#d6b4a0', materials: 'velvet', rating: 'neutral', sort: 23 },
+    { key: 'velvet_mustard',   name: 'Mustard',     hex: '#c8a020', materials: 'velvet', rating: 'neutral', sort: 24 },
+    { key: 'velvet_purple',    name: 'Purple',      hex: '#5a2d6d', materials: 'velvet', rating: 'neutral', sort: 25 },
+    { key: 'velvet_royal',     name: 'Royal Blue',  hex: '#1d3d9d', materials: 'velvet', rating: 'neutral', sort: 26 },
+  ]
+  const insCol = db.prepare(`
+    INSERT INTO shoe_colors (key, hex, name, available, rating, sort_order, applicable_materials)
+    VALUES (?, ?, ?, 1, ?, ?, ?)
+    ON CONFLICT(key) DO UPDATE SET hex=excluded.hex, name=excluded.name, rating=excluded.rating,
+      sort_order=excluded.sort_order, applicable_materials=excluded.applicable_materials,
+      updated_at = datetime('now')
+  `)
+  COLORS.forEach(c => insCol.run(c.key, c.hex, c.name, c.rating, c.sort, c.materials))
+
+  // ── 3) Erweiterte Option-Gruppen ────────────────────────────────
+  const NEW_GROUPS = [
+    { key: 'wholecut_base',     label: 'Base',                 ui_type: 'single', required: 1, sort_order: 4, description: 'Vorderkappen-Verarbeitung (nur Whole Cut).' },
+    { key: 'sole_color',        label: 'Sohlenfarbe',          ui_type: 'single', required: 0, sort_order: 8, description: 'Farbe der Außensohle (sichtbarer Rand).' },
+    { key: 'buckle_color',      label: 'Schnallen-Farbe',      ui_type: 'single', required: 0, sort_order: 9, description: 'Material der Schnalle (nur Monk).' },
+    { key: 'inner_color',       label: 'Innen­farbe',          ui_type: 'single', required: 0, sort_order: 10, description: 'Farbe des Futters.' },
+    { key: 'sole_bottom_color', label: 'Sohle Unterseite',     ui_type: 'single', required: 0, sort_order: 11, description: 'Farbe der Sohlen-Unterseite.' },
+  ]
+  const insGroup = db.prepare(`
+    INSERT INTO option_groups (key, label, description, ui_type, required, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(key) DO UPDATE SET label=excluded.label, description=excluded.description,
+      ui_type=excluded.ui_type, required=excluded.required, sort_order=excluded.sort_order,
+      updated_at = datetime('now')
+  `)
+  NEW_GROUPS.forEach(g => insGroup.run(g.key, g.label, g.description, g.ui_type, g.required, g.sort_order))
+
+  const groupIdOf = (key) => db.prepare('SELECT id FROM option_groups WHERE key = ?').get(key)?.id
+
+  // ── 4) Werte der neuen Gruppen ─────────────────────────────────
+  const NEW_OPTIONS = [
+    // Whole-Cut Base
+    { group: 'wholecut_base', key: 'punched_cap',  label: 'Punched Cap',   description: 'Klassische Lochkappe.',              price: 0, cats: 'WHOLECUT' },
+    { group: 'wholecut_base', key: 'full_punched', label: 'Full Punched',  description: 'Komplette Vorderkappen-Lochung.',     price: 0, cats: 'WHOLECUT' },
+    { group: 'wholecut_base', key: 'plain',        label: 'Plain',          description: 'Glatte Vorderkappe.',                price: 0, cats: 'WHOLECUT' },
+
+    // Sohlenfarbe (Außenrand)
+    { group: 'sole_color', key: 'black',   label: 'Black',   description: '',  price: 0, cats: '*' },
+    { group: 'sole_color', key: 'brown',   label: 'Brown',   description: '',  price: 0, cats: '*' },
+    { group: 'sole_color', key: 'brick',   label: 'Brick',   description: '',  price: 0, cats: 'MONK,DOUBLE_MONK' },
+    { group: 'sole_color', key: 'natural', label: 'Natural', description: '',  price: 0, cats: '*' },
+
+    // Buckle-Farbe
+    { group: 'buckle_color', key: 'gold',     label: 'Gold',     description: '', price: 0, cats: 'MONK,DOUBLE_MONK' },
+    { group: 'buckle_color', key: 'graphite', label: 'Graphite', description: '', price: 0, cats: 'MONK,DOUBLE_MONK' },
+    { group: 'buckle_color', key: 'nickel',   label: 'Nickel',   description: '', price: 0, cats: 'MONK,DOUBLE_MONK' },
+    { group: 'buckle_color', key: 'copper',   label: 'Copper',   description: '', price: 0, cats: 'MONK,DOUBLE_MONK' },
+
+    // Innenfarbe
+    { group: 'inner_color', key: 'black',  label: 'Black',  description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'brown',  label: 'Brown',  description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'tan',    label: 'Tan',    description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'beige',  label: 'Beige',  description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'red',    label: 'Red',    description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'orange', label: 'Orange', description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'navy',   label: 'Navy',   description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'white',  label: 'White',  description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'lila',   label: 'Lila',   description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'ochre',  label: 'Ochre',  description: '', price: 0, cats: '*' },
+
+    // Sohle Unterseite
+    { group: 'sole_bottom_color', key: 'black',         label: 'Black',         description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'brown',         label: 'Brown',         description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'cognac',        label: 'Cognac',        description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'dark_red',      label: 'Dark Red',      description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'forest_green',  label: 'Forest Green',  description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'lila',          label: 'Lila',          description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'natural',       label: 'Natural',       description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'orange',        label: 'Orange',        description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'white',         label: 'Weiß',          description: 'Klassisch weiß (Sneaker).', price: 0, cats: 'SNEAKER,SNEAKER_LACED,SNEAKER_BOOT' },
+
+    // Erweiterte Sohlen aus Matrix (falls noch nicht vorhanden)
+    { group: 'sole', key: 'gummy_sole',     label: 'Gummy Sole',      description: 'Glatte Gummisohle (Loafer-Stil).', price: 0,  cats: '*' },
+
+    // Erweiterte Loafer-Accessoires
+    { group: 'loafer_decoration', key: 'albert_tassels', label: 'Albert Tassels', description: 'Tasseln im Albert-Stil.',  price: 0, cats: 'LOAFER,BELGIAN_SLIPPER,WELLINGTON,DRAKE' },
+    { group: 'loafer_decoration', key: 'horsebit',       label: 'Horsebit',        description: 'Pferdetrense (Metal Bit).', price: 0, cats: 'LOAFER,BELGIAN_SLIPPER,WELLINGTON,DRAKE' },
+    { group: 'loafer_decoration', key: 'ohne',           label: 'Ohne',           description: 'Ohne Dekoration.',          price: 0, cats: 'LOAFER,BELGIAN_SLIPPER,WELLINGTON,DRAKE' },
+    { group: 'loafer_decoration', key: 'bow',            label: 'Bow',             description: 'Schleife.',                 price: 0, cats: 'LOAFER,BELGIAN_SLIPPER' },
+  ]
+  const insOpt = db.prepare(`
+    INSERT INTO options (group_id, key, label, description, default_price_extra, applicable_categories, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(group_id, key) DO UPDATE SET label=excluded.label, description=excluded.description,
+      default_price_extra=excluded.default_price_extra, applicable_categories=excluded.applicable_categories,
+      sort_order=excluded.sort_order, updated_at = datetime('now')
+  `)
+  NEW_OPTIONS.forEach((o, i) => {
+    const gid = groupIdOf(o.group)
+    if (gid) insOpt.run(gid, o.key, o.label, o.description, o.price, o.cats, i)
+  })
+
+  // Existing sole options auf Matrix-Preise aktualisieren
+  const SOLE_PRICE_UPDATES = [
+    { key: 'dainite',        price: 10 },
+    { key: 'crepe',          price: 10 },
+    { key: 'beveled_waist',  price: 50 },
+  ]
+  const upSole = db.prepare(`
+    UPDATE options SET default_price_extra = ?, updated_at = datetime('now')
+    WHERE group_id = (SELECT id FROM option_groups WHERE key='sole') AND key = ?
+  `)
+  SOLE_PRICE_UPDATES.forEach(s => upSole.run(s.price, s.key))
+
+  // ── 5) Erweiterte Kategorie-Vorlagen ───────────────────────────
+  const optIdOf = (groupKey, optKey) => db.prepare(`
+    SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+    WHERE g.key = ? AND o.key = ?
+  `).get(groupKey, optKey)?.id
+
+  const TEMPLATES = [
+    // WHOLECUT
+    ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'], ['WHOLECUT', 'last:savile'], ['WHOLECUT', 'last:belgravia'],
+    ['WHOLECUT', 'wholecut_base:plain', 1], ['WHOLECUT', 'wholecut_base:punched_cap'], ['WHOLECUT', 'wholecut_base:full_punched'],
+    ['WHOLECUT', 'sole:leather', 1], ['WHOLECUT', 'sole:dainite'], ['WHOLECUT', 'sole:leather_mountain'], ['WHOLECUT', 'sole:leather_buttons'], ['WHOLECUT', 'sole:leather_rubber'], ['WHOLECUT', 'sole:commando'], ['WHOLECUT', 'sole:crepe'], ['WHOLECUT', 'sole:gummy_sole'], ['WHOLECUT', 'sole:beveled_waist'],
+    ['WHOLECUT', 'welt:city', 1], ['WHOLECUT', 'welt:country'], ['WHOLECUT', 'welt:storm'],
+    ['WHOLECUT', 'heel:standard', 1], ['WHOLECUT', 'heel:higher_heel'],
+    ['WHOLECUT', 'inner_color:black', 1], ['WHOLECUT', 'inner_color:brown'], ['WHOLECUT', 'inner_color:tan'], ['WHOLECUT', 'inner_color:cognac'],
+    ['WHOLECUT', 'sole_bottom_color:natural', 1], ['WHOLECUT', 'sole_bottom_color:black'], ['WHOLECUT', 'sole_bottom_color:brown'], ['WHOLECUT', 'sole_bottom_color:cognac'],
+    // DOUBLE_MONK — Sohle Color + Buckle Color
+    ['DOUBLE_MONK', 'sole_color:natural', 1], ['DOUBLE_MONK', 'sole_color:black'], ['DOUBLE_MONK', 'sole_color:brown'], ['DOUBLE_MONK', 'sole_color:brick'],
+    ['DOUBLE_MONK', 'buckle_color:nickel', 1], ['DOUBLE_MONK', 'buckle_color:gold'], ['DOUBLE_MONK', 'buckle_color:graphite'], ['DOUBLE_MONK', 'buckle_color:copper'],
+    ['DOUBLE_MONK', 'inner_color:black', 1], ['DOUBLE_MONK', 'inner_color:brown'], ['DOUBLE_MONK', 'inner_color:tan'],
+    ['DOUBLE_MONK', 'sole_bottom_color:natural', 1], ['DOUBLE_MONK', 'sole_bottom_color:black'], ['DOUBLE_MONK', 'sole_bottom_color:brown'],
+    // MONK — gleich wie Double Monk
+    ['MONK', 'sole_color:natural', 1], ['MONK', 'sole_color:black'], ['MONK', 'sole_color:brown'],
+    ['MONK', 'buckle_color:nickel', 1], ['MONK', 'buckle_color:gold'], ['MONK', 'buckle_color:graphite'],
+    ['MONK', 'inner_color:black', 1], ['MONK', 'inner_color:brown'],
+    ['MONK', 'sole_bottom_color:natural', 1], ['MONK', 'sole_bottom_color:black'],
+    // OXFORD + DERBY + LOAFER — Innen + Unterseite
+    ['OXFORD', 'inner_color:black', 1], ['OXFORD', 'inner_color:brown'], ['OXFORD', 'inner_color:tan'], ['OXFORD', 'inner_color:cognac'], ['OXFORD', 'inner_color:navy'],
+    ['OXFORD', 'sole_bottom_color:natural', 1], ['OXFORD', 'sole_bottom_color:black'], ['OXFORD', 'sole_bottom_color:brown'], ['OXFORD', 'sole_bottom_color:cognac'],
+    ['DERBY', 'welt:city', 1], ['DERBY', 'welt:storm'],
+    ['DERBY', 'inner_color:brown', 1], ['DERBY', 'inner_color:black'], ['DERBY', 'inner_color:tan'],
+    ['DERBY', 'sole_bottom_color:natural', 1], ['DERBY', 'sole_bottom_color:brown'],
+    ['LOAFER', 'inner_color:brown', 1], ['LOAFER', 'inner_color:black'], ['LOAFER', 'inner_color:tan'],
+    ['LOAFER', 'sole_bottom_color:natural', 1], ['LOAFER', 'sole_bottom_color:brown'],
+    ['LOAFER', 'loafer_decoration:ohne', 1], ['LOAFER', 'loafer_decoration:tassels'], ['LOAFER', 'loafer_decoration:albert_tassels'], ['LOAFER', 'loafer_decoration:horsebit'], ['LOAFER', 'loafer_decoration:albert_mask'],
+    // CHELSEA / BALMORAL / JODHPUR / CHUKKA — nur Style + Color
+    ['CHELSEA',  'inner_color:black', 1], ['CHELSEA',  'inner_color:brown'], ['CHELSEA',  'sole_bottom_color:black', 1], ['CHELSEA',  'sole_bottom_color:brown'],
+    ['BALMORAL', 'last:zurigo', 1], ['BALMORAL', 'last:monti'], ['BALMORAL', 'last:savile'], ['BALMORAL', 'last:belgravia'],
+    ['BALMORAL', 'inner_color:black', 1], ['BALMORAL', 'inner_color:brown'],
+    ['JODHPUR',  'last:zurigo', 1], ['JODHPUR',  'last:monti'], ['JODHPUR',  'last:savile'], ['JODHPUR',  'last:belgravia'],
+    ['JODHPUR',  'inner_color:black', 1], ['JODHPUR',  'inner_color:brown'],
+    ['CHUKKA',   'last:zurigo', 1], ['CHUKKA',   'last:monti'], ['CHUKKA',   'last:savile'], ['CHUKKA',   'last:belgravia'],
+    ['CHUKKA',   'inner_color:brown', 1], ['CHUKKA',   'inner_color:black'],
+    // Slipper-Familie: Belgian Slipper, Wellington, Drake
+    ['BELGIAN_SLIPPER', 'loafer_decoration:ohne', 1], ['BELGIAN_SLIPPER', 'loafer_decoration:tassels'], ['BELGIAN_SLIPPER', 'loafer_decoration:bow'],
+    ['BELGIAN_SLIPPER', 'inner_color:black', 1], ['BELGIAN_SLIPPER', 'inner_color:brown'],
+    ['WELLINGTON', 'loafer_decoration:ohne', 1], ['WELLINGTON', 'loafer_decoration:tassels'], ['WELLINGTON', 'loafer_decoration:albert_tassels'], ['WELLINGTON', 'loafer_decoration:albert_mask'], ['WELLINGTON', 'loafer_decoration:horsebit'],
+    ['WELLINGTON', 'inner_color:black', 1], ['WELLINGTON', 'inner_color:brown'],
+    ['DRAKE', 'loafer_decoration:ohne', 1], ['DRAKE', 'loafer_decoration:tassels'], ['DRAKE', 'loafer_decoration:albert_tassels'], ['DRAKE', 'loafer_decoration:albert_mask'], ['DRAKE', 'loafer_decoration:horsebit'],
+    ['DRAKE', 'inner_color:black', 1], ['DRAKE', 'inner_color:brown'],
+    // Sneaker-Familie (Mov Flex, Laceless Trainer)
+    ['SNEAKER_LACED', 'inner_color:black', 1], ['SNEAKER_LACED', 'inner_color:white'], ['SNEAKER_LACED', 'inner_color:brown'],
+    ['SNEAKER_LACED', 'sole_bottom_color:white', 1],
+    ['SNEAKER_BOOT',  'inner_color:black', 1], ['SNEAKER_BOOT',  'inner_color:white'],
+    ['SNEAKER_BOOT',  'sole_bottom_color:white', 1],
+  ]
+  const insTpl = db.prepare(`
+    INSERT INTO category_templates (category, option_id, is_default, sort_order)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(category, option_id) DO UPDATE SET is_default=excluded.is_default, sort_order=excluded.sort_order
+  `)
+  TEMPLATES.forEach((tpl, i) => {
+    const [cat, ref, isDefault] = tpl
+    const [gk, ok] = ref.split(':')
+    const oid = optIdOf(gk, ok)
+    if (oid) insTpl.run(cat, oid, isDefault ? 1 : 0, i)
+  })
+
+  console.log(`✅ Seeded: extended catalog (${MATERIALS.length} materials, ${COLORS.length} colors, ${NEW_GROUPS.length} option groups, ${NEW_OPTIONS.length} options, ${TEMPLATES.length} template entries)`)
 }
