@@ -1170,6 +1170,13 @@ export default function Customize() {
                     )
                   })}
                 </div>
+                {/* Beschreibung der aktuell gewählten Option (z. B. Leisten-
+                    Erklärung „Runde Zehenform …") */}
+                {currentSelection?.description && (
+                  <p className="text-[10px] text-black/45 font-light leading-relaxed mt-2.5">
+                    {currentSelection.description}
+                  </p>
+                )}
               </div>
               )
             })}

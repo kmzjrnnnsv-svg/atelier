@@ -446,10 +446,10 @@ function seedConfiguratorOptions(db) {
   // 2) Werte pro Gruppe (alles, was du in den Screenshots gezeigt hast)
   const OPTIONS = [
     // Leisten (Last)
-    { group: 'last', key: 'zurigo',    label: 'Zurigo',    description: 'Runde Zehenform für klassisch-englischen Look.',            price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
-    { group: 'last', key: 'monti',     label: 'Monti',     description: 'Klassische Eleganz mit leicht quadratischer Zehe.',         price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,MONK,DOUBLE_MONK' },
-    { group: 'last', key: 'savile',    label: 'Savile',    description: 'Schlanker Look mit leichter Chisel-Zehe.',                  price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
-    { group: 'last', key: 'belgravia', label: 'Belgravia', description: 'Chisel-Zehe, schmale Taille und kubanischer Absatz.',       price: 0,  cats: 'OXFORD,WHOLECUT,CHELSEA' },
+    { group: 'last', key: 'zurigo',    label: 'Zurigo',    description: 'Runde Zehenform für traditionell-englischen Look. Bietet am meisten Platz im Zehenbereich — ideal für breitere Füße oder hohen Spann.', price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'monti',     label: 'Monti',     description: 'Klassische Eleganz mit leicht quadratischer Zehe. Der vielseitige Allrounder — passt zu den meisten Fußformen und jedem Anlass.',     price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'savile',    label: 'Savile',    description: 'Schlanker Look mit leichter Chisel-Zehe. Elegant für normale bis schmale Füße.',                                                       price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'belgravia', label: 'Belgravia', description: 'Chisel-Zehe, schmale Taille und kubanischer Absatz. Markantes Statement — am besten für schlanke Füße.',                                price: 0,  cats: 'OXFORD,WHOLECUT,CHELSEA' },
 
     // Sohle
     { group: 'sole', key: 'leather',          label: 'Leather',          description: 'Klassische Ledersohle.',                                price: 0,  cats: '*' },
@@ -911,6 +911,7 @@ export function seedExtendedCatalog(db) {
   // ── 8) Empfehlungen (Badge „EMPFOHLEN" im Konfigurator) ────────────────
   const RECOMMENDATIONS = [
     // [group_key, option_key, reason]
+    ['last',  'monti',    'Für die meisten Füße die beste Wahl — die leicht quadratische Zehe ist vielseitig und elegant. Breite Füße: lieber Zurigo (mehr Platz). Schmale Füße: Savile oder Belgravia.'],
     ['welt',  'city',     'Klassischer Allrounder — für Business und elegante Anlässe ideal.'],
     ['heel',  'standard', 'Klassische Höhe — passt zu allen Outfits und Anlässen.'],
     ['sole',  'dainite',  'Unser Allwetter-Favorit — sicherer Halt bei Regen und Schnee.'],
