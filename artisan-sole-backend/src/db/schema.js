@@ -298,9 +298,6 @@ export function runMigrations(db) {
     // option_groups — Icon (Lucide-Name) für visuelle Akzente im Konfigurator
     `ALTER TABLE option_groups ADD COLUMN icon TEXT`,
   ]
-  for (const sql of colMigrations) {
-    try { db.exec(sql) } catch { /* column already exists */ }
-  }
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────
   try {
@@ -904,4 +901,14 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_category_templates_cat ON category_templates(category);
   `)
+
+  // ── Spalten-Migrationen GANZ AM ENDE ausführen ───────────────────────────
+  // Erst hier existieren ALLE Tabellen (auch shoe_materials, options,
+  // option_groups, category_templates aus den späteren db.exec-Blöcken).
+  // Vorher liefen diese ALTERs ins Leere („no such table") und Spalten wie
+  // family/applicable_materials/color_hex/icon/helper_text/recommended
+  // wurden NIE angelegt — was den Seed crashen ließ.
+  for (const sql of colMigrations) {
+    try { db.exec(sql) } catch { /* column already exists */ }
+  }
 }
