@@ -168,7 +168,7 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
   const shoe = db.prepare('SELECT id, category FROM shoes WHERE id = ?').get(shoeId)
   if (!shoe) return res.status(404).json({ error: 'Shoe not found' })
 
-  const rows = db.prepare(`
+  let rows = db.prepare(`
     SELECT g.id as group_id, g.key as group_key, g.label as group_label,
            g.description as group_description, g.helper_text as group_helper,
            g.icon as group_icon,
@@ -184,6 +184,29 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
     WHERE so.shoe_id = ?
     ORDER BY g.sort_order, g.id, so.sort_order, o.sort_order
   `).all(shoeId)
+
+  // FALLBACK: Wenn der Schuh keine eigenen shoe_options hat, automatisch
+  // die Kategorie-Vorlage (category_templates) verwenden. So zeigt der
+  // Konfigurator immer die richtigen Schritte — auch ohne expliziten
+  // per-Schuh-Eintrag.
+  if (rows.length === 0) {
+    rows = db.prepare(`
+      SELECT g.id as group_id, g.key as group_key, g.label as group_label,
+             g.description as group_description, g.helper_text as group_helper,
+             g.icon as group_icon,
+             g.ui_type, g.required, g.sort_order as group_sort,
+             o.id as option_id, o.key as option_key, o.label as option_label,
+             o.description as option_description, o.image_data, o.color_hex, o.icon,
+             o.recommended, o.recommendation_reason,
+             o.default_price_extra, o.applicable_categories, o.sort_order as option_sort,
+             NULL as price_override, ct.is_default as is_default, ct.sort_order as shoe_sort
+      FROM category_templates ct
+      JOIN options o ON o.id = ct.option_id
+      JOIN option_groups g ON g.id = o.group_id
+      WHERE ct.category = ?
+      ORDER BY g.sort_order, g.id, ct.sort_order, o.sort_order
+    `).all(shoe.category)
+  }
 
   const byGroup = new Map()
   for (const r of rows) {
