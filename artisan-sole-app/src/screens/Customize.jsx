@@ -923,8 +923,11 @@ export default function Customize() {
 
             {/* 1. Leder (Material) — nur sichtbar, wenn mehr als 1 Material
                 verfügbar. Bei einer einzigen Auswahl wird Material auto-
-                gesetzt und der Block ausgeblendet. */}
-            {matList.length > 1 && (
+                gesetzt und der Block ausgeblendet.
+                Zusätzlich: solange noch keine Qualitäts-Familie gewählt
+                ist (und der Schuh beide anbietet), bleibt der Leder-Block
+                samt allen Folgeschritten verborgen. */}
+            {matList.length > 1 && (familiesPresent.length <= 1 || selFamily) && (
             <div {...matSwipe}>
               <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
               <div className="flex gap-2 overflow-x-auto flex-nowrap lg:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
