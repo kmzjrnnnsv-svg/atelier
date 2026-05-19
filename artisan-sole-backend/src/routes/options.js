@@ -24,7 +24,7 @@ const adminOnly = [authenticate, requireRole('admin')]
 // ── Helper: lade alle Gruppen mit ihren Optionen ───────────────────────────
 function loadAllGroups(db) {
   const groups = db.prepare(`
-    SELECT id, key, label, description, helper_text, ui_type, required, sort_order
+    SELECT id, key, label, description, helper_text, icon, ui_type, required, sort_order
     FROM option_groups ORDER BY sort_order ASC, id ASC
   `).all()
   const options = db.prepare(`
@@ -171,6 +171,7 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
   const rows = db.prepare(`
     SELECT g.id as group_id, g.key as group_key, g.label as group_label,
            g.description as group_description, g.helper_text as group_helper,
+           g.icon as group_icon,
            g.ui_type, g.required, g.sort_order as group_sort,
            o.id as option_id, o.key as option_key, o.label as option_label,
            o.description as option_description, o.image_data, o.color_hex, o.icon,
@@ -190,6 +191,7 @@ router.get('/shoes/:id/options', param('id').isInt(), (req, res) => {
       byGroup.set(r.group_id, {
         id: r.group_id, key: r.group_key, label: r.group_label,
         description: r.group_description, helper_text: r.group_helper,
+        icon: r.group_icon,
         ui_type: r.ui_type, required: !!r.required,
         sort_order: r.group_sort,
         values: [],

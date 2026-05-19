@@ -880,11 +880,12 @@ export function seedExtendedCatalog(db) {
     const [gk, ok] = k.split(':')
     upHex.run(hex, gk, ok)
   })
-  const upIcon = db.prepare(`
-    UPDATE options SET icon = ?, updated_at = datetime('now')
-    WHERE group_id = (SELECT id FROM option_groups WHERE key = ?) AND (icon IS NULL OR icon = '')
+  // Icon auf option_groups (eine pro Gruppe, wird neben dem Step-Label
+  // im Konfigurator gerendert)
+  const upGroupIcon = db.prepare(`
+    UPDATE option_groups SET icon = ?, updated_at = datetime('now') WHERE key = ?
   `)
-  Object.entries(ICON_MAP).forEach(([gk, icon]) => upIcon.run(icon, gk))
+  Object.entries(ICON_MAP).forEach(([gk, icon]) => upGroupIcon.run(icon, gk))
 
   // ── 7) Helper-Texte pro Optionsgruppe (Schritt-für-Schritt-Erklärung) ──
   const HELPER_TEXT = {
