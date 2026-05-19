@@ -122,9 +122,11 @@ export default function Customize() {
   }, 0)
 
   // Daten aus dem Store (mit Fallback)
-  const globalMatList = shoeMaterials.length ? shoeMaterials : [
-    { id: 1, key: 'calfskin', label: 'Kalbsleder', sub: 'Full-Grain', color: '#b45309', available: 1, tip: 'Robust und langlebig.', rating: 'good' },
-  ]
+  // Nur als verfügbar markierte Materialien (available !== 0) anzeigen —
+  // Legacy-Einträge wie CALFSKIN/SUEDE/PATENT sind im Seed deaktiviert.
+  const globalMatList = shoeMaterials.length
+    ? shoeMaterials.filter(m => m.available !== 0)
+    : [{ id: 1, key: 'calfskin', label: 'Kalbsleder', sub: 'Full-Grain', color: '#b45309', available: 1, tip: 'Robust und langlebig.', rating: 'good' }]
   // Schritt 0 (neu): Familie wählen — Aesthetic vs. Durable.
   // Die Materialliste wird nach dieser Wahl gefiltert.
   const baseMatList = perShoeMaterialKeys && perShoeMaterialKeys.length > 0
