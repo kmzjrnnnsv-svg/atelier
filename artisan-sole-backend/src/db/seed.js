@@ -9,6 +9,10 @@ export async function seedDatabase(db) {
   seedConfiguratorOptions(db)
   seedExtendedCatalog(db)
   seedMatrixModels(db)
+  // V2 LÄUFT ZULETZT — räumt veraltete Templates auf und richtet
+  // sie exakt nach der User-Matrix aus, plus force-reset für die
+  // 16 Standardmodelle.
+  seedMatrixTemplatesV2(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -1027,4 +1031,169 @@ export function seedMatrixModels(db) {
   }
 
   console.log(`✅ Seeded: matrix mappings — ${matApplied} shoes got material whitelists, ${optApplied} shoes got option configs`)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// seedMatrixTemplatesV2 — Hard-Reset der Konfigurator-Vorlagen exakt
+// gemäß User-Matrix. Bereinigt veraltete Templates UND wendet sie auf
+// alle Schuhe an, deren Name aus den 16 Matrix-Standardmodellen kommt.
+// User-spezifische Schuhe (z. B. „The Heritage Oxford") bleiben
+// unangetastet.
+// ─────────────────────────────────────────────────────────────────────
+export function seedMatrixTemplatesV2(db) {
+  // Hilfsfunktion: option_id aus (group_key, option_key) holen
+  const optId = (gk, ok) => db.prepare(`
+    SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+    WHERE g.key = ? AND o.key = ?
+  `).get(gk, ok)?.id
+
+  // Helper für vollständige Farb-Sets (Matrix)
+  const INNER_FULL  = ['black', 'brown', 'tan', 'beige', 'red', 'orange', 'navy', 'white', 'lila', 'ochre']
+  const BOTTOM_FULL = ['black', 'brown', 'cognac', 'dark_red', 'forest_green', 'lila', 'natural', 'orange']
+  const SOLE_COLOR_FULL = ['black', 'brown', 'brick', 'natural']
+  const SOLE_TYPES = ['leather', 'leather_mountain', 'leather_buttons', 'leather_rubber', 'commando', 'crepe', 'gummy_sole', 'dainite', 'beveled_waist']
+  const LAST_FULL  = ['zurigo', 'monti', 'savile', 'belgravia']
+  const HEEL_FULL  = ['standard', 'higher_heel']
+  const BUCKLE     = ['square_buckle', 'round_buckle']
+  const BUCKLE_COL = ['nickel', 'gold', 'graphite', 'copper']
+
+  // Hilfsfunktion: Liste in TEMPLATES-Entries umwandeln mit Default beim 1.
+  const mk = (cat, group, keys) => keys.map((k, i) => [cat, `${group}:${k}`, i === 0 ? 1 : 0])
+
+  // Vollständige Matrix-Templates pro Schuhkategorie
+  const M = {
+    OXFORD: [
+      ...mk('OXFORD', 'last', LAST_FULL),
+      ...mk('OXFORD', 'heel', HEEL_FULL),
+      ...mk('OXFORD', 'welt', ['city', 'country', 'storm']),
+      ...mk('OXFORD', 'sole_color', SOLE_COLOR_FULL),
+      ...mk('OXFORD', 'inner_color', INNER_FULL),
+      ...mk('OXFORD', 'sole_bottom_color', BOTTOM_FULL),
+    ],
+    WHOLECUT: [
+      ...mk('WHOLECUT', 'last', LAST_FULL),
+      ...mk('WHOLECUT', 'wholecut_base', ['plain', 'punched_cap', 'full_punched']),
+      ...mk('WHOLECUT', 'heel', HEEL_FULL),
+      ...mk('WHOLECUT', 'sole', SOLE_TYPES),
+      ...mk('WHOLECUT', 'sole_color', SOLE_COLOR_FULL),
+      ...mk('WHOLECUT', 'welt', ['city', 'country', 'storm']),
+      ...mk('WHOLECUT', 'inner_color', INNER_FULL),
+      ...mk('WHOLECUT', 'sole_bottom_color', BOTTOM_FULL),
+    ],
+    LOAFER: [
+      ...mk('LOAFER', 'last', LAST_FULL),
+      ...mk('LOAFER', 'heel', HEEL_FULL),
+      ...mk('LOAFER', 'loafer_decoration', ['ohne', 'tassels', 'albert_tassels', 'albert_mask', 'horsebit']),
+      ...mk('LOAFER', 'sole_color', SOLE_COLOR_FULL),
+      ...mk('LOAFER', 'welt', ['city', 'country', 'storm']),
+      ...mk('LOAFER', 'inner_color', INNER_FULL),
+      ...mk('LOAFER', 'sole_bottom_color', BOTTOM_FULL),
+    ],
+    DERBY: [
+      ...mk('DERBY', 'last', LAST_FULL),
+      ...mk('DERBY', 'heel', HEEL_FULL),
+      ...mk('DERBY', 'sole', SOLE_TYPES),
+      ...mk('DERBY', 'sole_color', SOLE_COLOR_FULL),
+      ...mk('DERBY', 'welt', ['city', 'storm']), // Matrix: nur City + Storm
+      ...mk('DERBY', 'inner_color', INNER_FULL),
+      ...mk('DERBY', 'sole_bottom_color', BOTTOM_FULL),
+    ],
+    DOUBLE_MONK: [
+      ...mk('DOUBLE_MONK', 'last', LAST_FULL),
+      ...mk('DOUBLE_MONK', 'heel', HEEL_FULL),
+      ...mk('DOUBLE_MONK', 'sole', SOLE_TYPES.filter(s => s !== 'beveled_waist')), // Matrix: ohne Beveled Waist
+      ...mk('DOUBLE_MONK', 'sole_color', SOLE_COLOR_FULL),
+      ...mk('DOUBLE_MONK', 'welt', ['city', 'country', 'storm']),
+      ...mk('DOUBLE_MONK', 'buckle', BUCKLE),
+      ...mk('DOUBLE_MONK', 'buckle_color', BUCKLE_COL),
+      ...mk('DOUBLE_MONK', 'inner_color', INNER_FULL),
+      ...mk('DOUBLE_MONK', 'sole_bottom_color', BOTTOM_FULL),
+    ],
+    // Monk identisch zu Double Monk (eine Schnalle, sonst gleich)
+    MONK: [
+      ...mk('MONK', 'last', LAST_FULL),
+      ...mk('MONK', 'heel', HEEL_FULL),
+      ...mk('MONK', 'sole', SOLE_TYPES.filter(s => s !== 'beveled_waist')),
+      ...mk('MONK', 'sole_color', SOLE_COLOR_FULL),
+      ...mk('MONK', 'welt', ['city', 'country', 'storm']),
+      ...mk('MONK', 'buckle', BUCKLE),
+      ...mk('MONK', 'buckle_color', BUCKLE_COL),
+      ...mk('MONK', 'inner_color', INNER_FULL),
+      ...mk('MONK', 'sole_bottom_color', BOTTOM_FULL),
+    ],
+    // Stiefel-Familie (nur Last + Farben pro Matrix)
+    CHELSEA:  [...mk('CHELSEA',  'last', LAST_FULL), ...mk('CHELSEA',  'inner_color', INNER_FULL), ...mk('CHELSEA',  'sole_bottom_color', INNER_FULL)],
+    BOOT:     [...mk('BOOT',     'last', LAST_FULL), ...mk('BOOT',     'inner_color', INNER_FULL), ...mk('BOOT',     'sole_bottom_color', INNER_FULL)],
+    BALMORAL: [...mk('BALMORAL', 'last', LAST_FULL), ...mk('BALMORAL', 'inner_color', INNER_FULL), ...mk('BALMORAL', 'sole_bottom_color', INNER_FULL)],
+    JODHPUR:  [...mk('JODHPUR',  'last', LAST_FULL), ...mk('JODHPUR',  'inner_color', INNER_FULL), ...mk('JODHPUR',  'sole_bottom_color', INNER_FULL)],
+    CHUKKA:   [...mk('CHUKKA',   'last', LAST_FULL), ...mk('CHUKKA',   'inner_color', INNER_FULL), ...mk('CHUKKA',   'sole_bottom_color', INNER_FULL)],
+    // Slipper-Familie (Accessoires + Innen)
+    BELGIAN_SLIPPER: [
+      ...mk('BELGIAN_SLIPPER', 'loafer_decoration', ['ohne', 'tassels', 'bow']),
+      ...mk('BELGIAN_SLIPPER', 'inner_color', INNER_FULL),
+    ],
+    WELLINGTON: [
+      ...mk('WELLINGTON', 'loafer_decoration', ['ohne', 'tassels', 'albert_tassels', 'albert_mask', 'horsebit']),
+      ...mk('WELLINGTON', 'inner_color', INNER_FULL),
+    ],
+    DRAKE: [
+      ...mk('DRAKE', 'loafer_decoration', ['ohne', 'tassels', 'albert_tassels', 'albert_mask', 'horsebit']),
+      ...mk('DRAKE', 'inner_color', INNER_FULL),
+    ],
+    // Sneaker-Familie (nur Farbe innen + Sohle weiß)
+    SNEAKER:          [...mk('SNEAKER',          'inner_color', INNER_FULL), ['SNEAKER',          'sole_bottom_color:white', 1]],
+    SNEAKER_LACED:    [...mk('SNEAKER_LACED',    'inner_color', INNER_FULL), ['SNEAKER_LACED',    'sole_bottom_color:white', 1]],
+    SNEAKER_BOOT:     [...mk('SNEAKER_BOOT',     'inner_color', INNER_FULL), ['SNEAKER_BOOT',     'sole_bottom_color:white', 1]],
+    LACELESS_TRAINER: [...mk('LACELESS_TRAINER', 'inner_color', INNER_FULL), ['LACELESS_TRAINER', 'sole_bottom_color:white', 1]],
+  }
+
+  // 1) Templates komplett ersetzen
+  db.prepare('DELETE FROM category_templates').run()
+  const insTpl = db.prepare(`
+    INSERT INTO category_templates (category, option_id, is_default, sort_order)
+    VALUES (?, ?, ?, ?)
+  `)
+  let inserted = 0
+  for (const [cat, rows] of Object.entries(M)) {
+    rows.forEach((entry, i) => {
+      const [c, ref, isDef] = entry
+      const [gk, ok] = ref.split(':')
+      const oid = optId(gk, ok)
+      if (oid) {
+        insTpl.run(c, oid, isDef ? 1 : 0, i)
+        inserted++
+      }
+    })
+  }
+
+  // 2) Für alle 16 Matrix-Standardmodelle (exakter Name) Force-Re-Apply
+  const MATRIX_NAMES = [
+    'Oxford', 'Whole Cut', 'Loafer', 'Derby', 'Double Monk',
+    'Chelsea Boot', 'Balmoral Boot', 'Jodhpur Boot', 'Chukka',
+    'Belgian Slipper', 'Wellington', 'Drake',
+    'Mov Flex Sport', 'Mov Flex Sport Laced Boot', 'Mov Flex Sport Boot', 'Laceless Trainer',
+  ]
+  const findShoe = db.prepare('SELECT id, category FROM shoes WHERE name = ?')
+  const clearOpts = db.prepare('DELETE FROM shoe_options WHERE shoe_id = ?')
+  const tplsForCat = (cat) => db.prepare(`
+    SELECT option_id, is_default, sort_order
+    FROM category_templates
+    WHERE category = ?
+    ORDER BY sort_order ASC
+  `).all(cat)
+  const insSO = db.prepare(`
+    INSERT INTO shoe_options (shoe_id, option_id, price_override, is_default, sort_order)
+    VALUES (?, ?, NULL, ?, ?)
+  `)
+  let resetCount = 0
+  for (const name of MATRIX_NAMES) {
+    const shoe = findShoe.get(name)
+    if (!shoe) continue
+    clearOpts.run(shoe.id)
+    const tpl = tplsForCat(shoe.category)
+    tpl.forEach(r => { try { insSO.run(shoe.id, r.option_id, r.is_default, r.sort_order) } catch {} })
+    resetCount++
+  }
+
+  console.log(`✅ Seeded: matrix templates V2 — ${inserted} template rows, ${resetCount}/${MATRIX_NAMES.length} matrix-named shoes re-applied`)
 }
