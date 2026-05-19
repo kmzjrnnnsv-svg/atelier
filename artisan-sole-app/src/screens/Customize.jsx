@@ -133,6 +133,24 @@ export default function Customize() {
   // Farbnamen haben (eine pro Material). Wir gruppieren nach (name, hex), und
   // wählen pro Farbe später dynamisch die Bilder anhand des selektierten
   // Materials (selMat).
+  // Auswahl-States müssen vor den Listen deklariert werden, damit der
+  // Material-basierte Farb-Filter sie referenzieren kann.
+  const [selMat,  setSelMat]  = useState('')
+  const [selCol,  setSelCol]  = useState('')
+  const [selSole, setSelSole] = useState('')
+  const [added,   setAdded]   = useState(false)
+
+  // Globale Farben können per `applicable_materials` an einzelne Material-
+  // Typen gebunden sein (z. B. Velvet-Farben nur bei Material 'velvet').
+  // Wir filtern, sobald der Nutzer ein Material gewählt hat.
+  const colorMatchesMaterial = (c, matKey) => {
+    if (!c.applicable_materials || c.applicable_materials === '*') return true
+    if (!matKey) return true
+    return c.applicable_materials.split(',').map(s => s.trim()).includes(matKey)
+  }
+
+  const filteredGlobalColors = shoeColors.filter(c => colorMatchesMaterial(c, selMat))
+
   const colList = perShoeColorVariants && perShoeColorVariants.length > 0
     ? (() => {
         const groups = new Map()
@@ -147,17 +165,12 @@ export default function Customize() {
         })
         return [...groups.values()]
       })()
-    : (shoeColors.length ? shoeColors : [
+    : (filteredGlobalColors.length ? filteredGlobalColors : [
         { id: 1, key: 'schwarz', hex: '#000000', name: 'Schwarz', available: 1, rating: 'good' },
       ])
   const soleList = availableSoles.length ? availableSoles : [
     { id: 1, key: 'rubber-grip', label: 'Anti-Rutsch', sub: 'Gummi', description: 'Profilsohle mit Grip.', price_extra: 35, rating: 'good', recommended: 1 },
   ]
-
-  const [selMat,  setSelMat]  = useState('')
-  const [selCol,  setSelCol]  = useState('')
-  const [selSole, setSelSole] = useState('')
-  const [added,   setAdded]   = useState(false)
 
   // Size selection: 'custom' (3D scan) or EU size string like '42'
   const [sizeType, setSizeType] = useState(latestScan ? 'custom' : '')

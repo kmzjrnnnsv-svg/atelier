@@ -282,6 +282,10 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN size_type TEXT DEFAULT 'standard'`,
     // shoe_color_variants — optional Material-Bindung (suede, calfskin, …)
     `ALTER TABLE shoe_color_variants ADD COLUMN material_key TEXT`,
+    // shoe_materials — Familie (Aesthetic / Durable)
+    `ALTER TABLE shoe_materials ADD COLUMN family TEXT`,
+    // shoe_colors — auf welche Materialien anwendbar (CSV der material_keys)
+    `ALTER TABLE shoe_colors ADD COLUMN applicable_materials TEXT NOT NULL DEFAULT '*'`,
   ]
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
