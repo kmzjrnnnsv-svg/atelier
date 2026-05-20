@@ -233,7 +233,7 @@ router.get('/me/foot-measurements', authenticate, (req, res) => {
 
 // PUT /api/auth/me/foot-measurements — Maße (+ optional fit_adjust/saved_fit) speichern
 router.put('/me/foot-measurements', authenticate, (req, res) => {
-  const { foot_length_mm, ball_girth_mm, fit_adjust, saved_fit } = req.body || {}
+  const { foot_length_mm, ball_girth_mm, fit_adjust, saved_fit, feet } = req.body || {}
   const len = Number(foot_length_mm)
   const girth = Number(ball_girth_mm)
   if (!Number.isFinite(len) || len < 150 || len > 350) {
@@ -242,6 +242,11 @@ router.put('/me/foot-measurements', authenticate, (req, res) => {
   if (!Number.isFinite(girth) || girth < 150 || girth > 340) {
     return res.status(400).json({ error: 'ball_girth_mm muss zwischen 150 und 340 mm liegen' })
   }
+  // Optionale Links/Rechts-Maße. Gespeichert wird beides; fürs Matching zählt
+  // der größere Fuß (vom Client als foot_length_mm/ball_girth_mm übergeben).
+  const cleanFoot = (f) => f && typeof f === 'object'
+    ? { length_mm: Number(f.length_mm) || null, girth_mm: Number(f.girth_mm) || null }
+    : null
   const db = getDb()
   const existing = readMeasurements(db.prepare('SELECT foot_measurements FROM users WHERE id = ?').get(req.user.id)) || {}
   const next = {
@@ -252,6 +257,9 @@ router.put('/me/foot-measurements', authenticate, (req, res) => {
       ? { length_mm: Number(fit_adjust.length_mm) || 0, girth_mm: Number(fit_adjust.girth_mm) || 0 }
       : (existing.fit_adjust || { length_mm: 0, girth_mm: 0 }),
     saved_fit: saved_fit && typeof saved_fit === 'object' ? saved_fit : (existing.saved_fit || null),
+    feet: feet && typeof feet === 'object'
+      ? { left: cleanFoot(feet.left), right: cleanFoot(feet.right) }
+      : (existing.feet || null),
   }
   db.prepare("UPDATE users SET foot_measurements = ?, updated_at = datetime('now') WHERE id = ?")
     .run(JSON.stringify(next), req.user.id)

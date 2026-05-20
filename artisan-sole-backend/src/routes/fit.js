@@ -95,4 +95,54 @@ router.get('/match', (req, res) => {
   res.json({ matches: candidates, tolerance })
 })
 
+// GET /api/fit/feasible?length=270&girth=260&tolerance=5
+// Ermittelt, welche Leisten & Kategorien zu den Maßen passen. Für die
+// Collection-Filterung: breite Füße lassen z. B. Belgravia (max Weite EE)
+// wegfallen. „Größerer Fuß zählt" wird vom Client vorab berechnet.
+router.get('/feasible', (req, res) => {
+  const db = getDb()
+  const length = Number(req.query.length)
+  const girth = Number(req.query.girth)
+  const tolerance = Number.isFinite(Number(req.query.tolerance)) ? Number(req.query.tolerance) : 5
+
+  if (!Number.isFinite(length) || !Number.isFinite(girth)) {
+    return res.status(400).json({ error: 'length und girth (mm) erforderlich' })
+  }
+
+  const rows = db.prepare(
+    `SELECT last_key, width, size_system, size_label, foot_length_mm, ball_girth_mm FROM last_size_chart`
+  ).all()
+
+  // Pro (last,width,system) die nächste Größe nach Länge snappen, dann Umfang prüfen.
+  const byProfile = new Map()
+  for (const r of rows) {
+    const k = `${r.last_key}|${r.width}|${r.size_system}`
+    if (!byProfile.has(k)) byProfile.set(k, [])
+    byProfile.get(k).push(r)
+  }
+  const feasibleLasts = new Set()
+  for (const profileRows of byProfile.values()) {
+    let best = null, bestDLen = Infinity
+    for (const r of profileRows) {
+      const dLen = Math.abs(r.foot_length_mm - length)
+      if (dLen < bestDLen) { bestDLen = dLen; best = r }
+    }
+    if (!best || bestDLen > tolerance) continue
+    if (Math.abs(best.ball_girth_mm - girth) > tolerance) continue
+    feasibleLasts.add(best.last_key)
+  }
+
+  const knownCategories = Object.keys(CATEGORY_LASTS)
+  const categories = knownCategories.filter(cat =>
+    CATEGORY_LASTS[cat].some(lk => feasibleLasts.has(lk))
+  )
+
+  res.json({
+    lasts: [...feasibleLasts],
+    categories,
+    knownCategories,
+    tolerance,
+  })
+})
+
 export default router

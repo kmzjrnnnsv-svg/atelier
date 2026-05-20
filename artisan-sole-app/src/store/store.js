@@ -228,6 +228,13 @@ const useStore = create((set, get) => ({
     return Array.isArray(res?.matches) ? res.matches : []
   },
 
+  // Welche Leisten/Kategorien passen zu den Maßen (für Collection-Filter).
+  async fitFeasibility({ length, girth, tolerance = 5 }) {
+    const q = new URLSearchParams({ length: String(length), girth: String(girth), tolerance: String(tolerance) })
+    return apiFetch(`/api/fit/feasible?${q.toString()}`)
+      .catch(() => ({ lasts: [], categories: [], knownCategories: [] }))
+  },
+
   async sendFitFeedback(verdict, nudge) {
     const body = nudge ? nudge : { verdict }
     const res = await apiFetch('/api/auth/me/fit-feedback', {
