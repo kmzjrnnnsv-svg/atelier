@@ -11,6 +11,16 @@ function debouncedSyncCart(getFn) {
   }, 300)
 }
 
+// Fußmaße lokal persistieren — damit sie auch für Gäste (ohne Login) über
+// Reloads und Seitenwechsel erhalten bleiben.
+const FM_KEY = 'as_foot_measurements'
+function readLocalMeasurements() {
+  try { return JSON.parse(localStorage.getItem(FM_KEY)) || null } catch { return null }
+}
+function writeLocalMeasurements(m) {
+  try { m ? localStorage.setItem(FM_KEY, JSON.stringify(m)) : localStorage.removeItem(FM_KEY) } catch {}
+}
+
 // Client-side cache — source of truth is the backend DB
 const useStore = create((set, get) => ({
   shoes:      [],
@@ -158,7 +168,7 @@ const useStore = create((set, get) => ({
         loyaltyTiers: Array.isArray(loyaltyTiers) ? loyaltyTiers.map(normalizeLoyaltyTier) : [],
         loyaltyStatus: loyaltyStatus || { points: 0, tier: 'bronze' },
         footNotes: footNotesData?.foot_notes || '',
-        footMeasurements: footMeasData?.foot_measurements || null,
+        footMeasurements: footMeasData?.foot_measurements || readLocalMeasurements(),
         savedDeliveryAddress: addressData?.delivery || null,
         savedBillingAddress:  addressData?.billing  || null,
         cart: Array.isArray(cartData?.cart) && cartData.cart.length > 0 ? cartData.cart : get().cart,
@@ -208,12 +218,26 @@ const useStore = create((set, get) => ({
 
   // --- FOOT MEASUREMENTS & FIT ---
   async saveFootMeasurements(m) {
-    const res = await apiFetch('/api/auth/me/foot-measurements', {
-      method: 'PUT',
-      body: JSON.stringify(m),
-    })
-    set({ footMeasurements: res.foot_measurements || null })
-    return res.foot_measurements || null
+    // Leeres Maß-Paar → Passform zurücksetzen (lokal + Konto).
+    const clearing = m == null || m.foot_length_mm == null || m.foot_length_mm === ''
+    if (clearing) {
+      writeLocalMeasurements(null)
+      apiFetch('/api/auth/me/foot-measurements', { method: 'PUT', body: JSON.stringify({ foot_length_mm: null, ball_girth_mm: null }) }).catch(() => {})
+      set({ footMeasurements: null })
+      return null
+    }
+    // Immer lokal sichern (Gast + Reload), dann versuchen aufs Konto zu speichern.
+    writeLocalMeasurements(m)
+    let saved = m
+    try {
+      const res = await apiFetch('/api/auth/me/foot-measurements', {
+        method: 'PUT',
+        body: JSON.stringify(m),
+      })
+      if (res?.foot_measurements) { saved = res.foot_measurements; writeLocalMeasurements(saved) }
+    } catch { /* Gast oder offline — lokale Persistenz genügt */ }
+    set({ footMeasurements: saved })
+    return saved
   },
 
   // Ermittelt die best-passende Leisten×Weite×Größe. Transient (kein State).
