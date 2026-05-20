@@ -257,10 +257,12 @@ export default function Checkout() {
         lastRow = await placeOrder({
           shoe_id: product.id, shoe_name: product.name || product.shoe_name,
           material: product.material, color: product.color || product.selectedColor || '',
-          price: `€ ${fmtPrice(total)}`, eu_size: latestScan?.eu_size || null,
+          price: `€ ${fmtPrice(total)}`, eu_size: product.euSize || latestScan?.eu_size || null,
           scan_id: latestScan?.id || null, delivery_address: delivery,
           billing_address: billingAddr, accessories: accList,
           foot_notes: footNotes || null, coupon_code: appliedCoupon,
+          last_key: product.last || null, last_label: product.lastLabel || null,
+          last_width: product.width || null, fit_measurements: product.footMeasurementsUsed || null,
           ...shippingData,
         })
       } else {
@@ -270,10 +272,12 @@ export default function Checkout() {
           lastRow = await placeOrder({
             shoe_id: item.shoeId || null, shoe_name: item.name,
             material: item.material || '', color: item.color || '',
-            price: `€ ${fmtPrice(itemTotal)}`, eu_size: latestScan?.eu_size || null,
+            price: `€ ${fmtPrice(itemTotal)}`, eu_size: item.euSize || latestScan?.eu_size || null,
             scan_id: latestScan?.id || null, delivery_address: delivery,
             billing_address: billingAddr, accessories: accList,
             foot_notes: footNotes || null, coupon_code: i === 0 ? appliedCoupon : null,
+            last_key: item.last || null, last_label: item.lastLabel || null,
+            last_width: item.width || null, fit_measurements: item.footMeasurementsUsed || null,
             ...shippingData,
           })
         }
@@ -418,6 +422,15 @@ export default function Checkout() {
                         <div className="min-w-0">
                           <p className="text-[14px] font-semibold text-black leading-tight truncate">{item.name}</p>
                           {item.material && <p className="text-[11px] text-black/40 mt-0.5">{item.material}</p>}
+                          {(item.lastLabel || item.euSize) && (
+                            <p className="text-[10px] text-black/30 mt-0.5 font-light">
+                              Passform: {[
+                                item.lastLabel,
+                                item.euSize && `${item.sizeSystem || 'EU'} ${item.euSize}`,
+                                item.width && `Weite ${item.width}`,
+                              ].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center justify-between mt-2">
@@ -524,6 +537,15 @@ export default function Checkout() {
                   <div>
                     <p className="text-[14px] font-semibold text-black">{product.name || product.shoe_name}</p>
                     <p className="text-[11px] text-black/40 mt-0.5">{product.material}{product.sole ? ` · ${product.sole}` : ''}</p>
+                    {(product.lastLabel || product.euSize) && (
+                      <p className="text-[10px] text-black/30 mt-0.5 font-light">
+                        Passform: {[
+                          product.lastLabel,
+                          product.euSize && `${product.sizeSystem || 'EU'} ${product.euSize}`,
+                          product.width && `Weite ${product.width}`,
+                        ].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
                     {latestScan && <p className="text-[11px] text-[#007AFF] mt-0.5">EU {latestScan.eu_size} — 3D-Scan</p>}
                   </div>
                   <p className="text-[14px] font-bold text-black">{product.price}</p>

@@ -13,6 +13,10 @@ export async function seedDatabase(db) {
   // sie exakt nach der User-Matrix aus, plus force-reset für die
   // 16 Standardmodelle.
   seedMatrixTemplatesV2(db)
+  // Passform-Maßtabelle (Leisten × Weite × Größe → Fußlänge + Ballenumfang).
+  // Unabhängig & idempotent (INSERT OR IGNORE) — NICHT an V2 koppeln, das
+  // category_templates leert.
+  seedLastSizeChart(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -1288,4 +1292,97 @@ export function seedMatrixTemplatesV2(db) {
   }
 
   console.log(`✅ Seeded: matrix templates V2 — ${inserted} tpl rows, ${resetCount} matrix shoes reset, ${fillCount} empty shoes filled, ${matResetCount} matrix material whitelists reset, ${matFillCount} empty material whitelists filled, ${forceResetCount} TOTAL force-reset by category`)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// seedLastSizeChart — Passform-Maßtabelle (Leisten × Weite × EU-Größe →
+// Fußlänge + Ballenumfang in mm). Werte aus den Hersteller-Tabellen.
+//
+// Datenstruktur: Fußlänge ist je EU-Größe über ALLE Leisten identisch
+// (lineare Reihe ~+3,33 mm/Halbgröße, EU42 = 265,0 mm). Der Ballenumfang
+// unterscheidet sich je Leisten×Weite und steigt ~+2,25 mm/Halbgröße.
+// Daher generieren wir aus einem Anker-Umfang bei EU42 — exakt wie die
+// Tabelle, aber ohne fehleranfälliges Abtippen von 25×N Zellen.
+// Idempotent (INSERT OR IGNORE auf UNIQUE-Key).
+// ─────────────────────────────────────────────────────────────────────
+function seedLastSizeChart(db) {
+  // EU-Größen 38…50 in Halbschritten. index 8 == EU42 (Ankergröße).
+  const EU_SIZES = ['38','38.5','39','39.5','40','40.5','41','41.5','42','42.5','43','43.5','44','44.5','45','45.5','46','46.5','47','47.5','48','48.5','49','49.5','50']
+  const LEN_AT_42 = 265.0
+  const LEN_STEP  = 10 / 3        // ≈3.333 mm pro Halbgröße
+  const GIRTH_STEP = 2.25         // mm pro Halbgröße
+  const idx42 = EU_SIZES.indexOf('42')
+  const round1 = (n) => Math.round(n * 10) / 10
+  const lenAt   = (i) => round1(LEN_AT_42 + (i - idx42) * LEN_STEP)
+  const girthAt = (anchor42, i) => round1(anchor42 + (i - idx42) * GIRTH_STEP)
+
+  // Anker-Ballenumfang bei EU42 je Leisten×Weite (aus den Tabellen-Bildern).
+  // [last_key, width, girth@EU42]
+  const ANCHORS = [
+    // Dress-Leisten (Oxford/WholeCut/Derby/Monk/Chelsea)
+    ['monti',     'D',   246.0], ['monti',     'EE', 255.0], ['monti',     'EEE', 268.5],
+    ['zurigo',    'D',   250.0], ['zurigo',    'EE', 259.0], ['zurigo',    'EEE', 272.5],
+    ['savile',    'D',   244.5], ['savile',    'EE', 253.5], ['savile',    'EEE', 267.0],
+    ['belgravia', 'D',   248.0], ['belgravia', 'EE', 257.0],
+    // Modell-spezifische Leisten
+    ['wellington','D',   244.0], ['wellington','EE', 253.0],
+    ['drake',     'D',   245.0],
+    ['sneaker',   'D',   248.0], ['sneaker',   'EE', 257.0],
+    ['moc_sport', 'D',   244.0],
+    ['chunky',    'D',   250.0], ['chunky',    'EE', 259.0],
+    ['drivers',   'D',   246.0],
+    ['venetian',  'D',   247.0],
+  ]
+
+  const ins = db.prepare(`
+    INSERT OR IGNORE INTO last_size_chart
+      (last_key, width, size_system, size_label, foot_length_mm, ball_girth_mm)
+    VALUES (?, ?, 'EU', ?, ?, ?)
+  `)
+  let rows = 0
+  for (const [lastKey, width, anchor] of ANCHORS) {
+    EU_SIZES.forEach((label, i) => {
+      ins.run(lastKey, width, label, lenAt(i), girthAt(anchor, i))
+      rows++
+    })
+  }
+
+  // Penny Loafer — nur US-Größen (keine EU-Korrelation laut Tabelle).
+  // [US-Label, foot_length, ball_girth]
+  const PENNY_US = [
+    ['7', 256.5, 242.7], ['8', 260.8, 245.9], ['9', 265.0, 249.1],
+    ['10', 273.5, 255.5], ['11', 282.0, 261.8], ['12', 290.4, 268.2],
+    ['13', 298.9, 274.5], ['14', 307.4, 280.9], ['15', 315.9, 287.3],
+  ]
+  const insUS = db.prepare(`
+    INSERT OR IGNORE INTO last_size_chart
+      (last_key, width, size_system, size_label, foot_length_mm, ball_girth_mm)
+    VALUES ('penny_loafer', 'D', 'US', ?, ?, ?)
+  `)
+  PENNY_US.forEach(([label, len, girth]) => { insUS.run(label, len, girth); rows++ })
+
+  console.log(`✅ Seeded: last_size_chart (${ANCHORS.length} last×width profiles + Penny US, ${rows} rows)`)
+}
+
+// Kategorie → verfügbare Leisten (für den Matcher). Dress-Modelle nutzen die
+// 4 Dress-Leisten; Modell-spezifische Kategorien ihre eigenen.
+export const CATEGORY_LASTS = {
+  OXFORD:           ['monti', 'zurigo', 'savile', 'belgravia'],
+  WHOLECUT:         ['monti', 'zurigo', 'savile', 'belgravia'],
+  DERBY:            ['monti', 'zurigo', 'savile'],
+  MONK:             ['monti', 'zurigo', 'savile'],
+  DOUBLE_MONK:      ['monti', 'zurigo', 'savile'],
+  CHELSEA:          ['zurigo', 'savile', 'belgravia'],
+  BOOT:             ['zurigo', 'savile'],
+  BALMORAL:         ['zurigo', 'savile', 'belgravia'],
+  JODHPUR:          ['zurigo', 'savile'],
+  CHUKKA:           ['zurigo', 'savile'],
+  LOAFER:           ['venetian', 'penny_loafer', 'drivers'],
+  BELGIAN_SLIPPER:  ['drivers', 'venetian'],
+  WELLINGTON:       ['wellington'],
+  DRAKE:            ['drake'],
+  SNEAKER:          ['sneaker', 'moc_sport', 'chunky'],
+  SNEAKER_LACED:    ['sneaker', 'chunky'],
+  SNEAKER_BOOT:     ['sneaker', 'chunky'],
+  LACELESS_TRAINER: ['moc_sport', 'sneaker'],
 }

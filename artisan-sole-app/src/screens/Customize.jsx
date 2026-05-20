@@ -106,7 +106,7 @@ function getDefaultSole(soles) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, shoeAccessoryMap, shoes } = useStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, shoeAccessoryMap, shoes, footMeasurements, saveFootMeasurements, matchFit } = useStore()
   const { user } = useAuth()
 
   // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
@@ -172,9 +172,11 @@ export default function Customize() {
       setPerShoeColorVariants([])
     }
 
-    // Nur Material/Color filtern — diese haben eigene Spezial-UIs.
+    // Material/Color haben eigene Spezial-UIs. `last` (Schuhform) entfällt als
+    // manueller Schritt — die Leistenform wird über die Fußmaße automatisch
+    // ermittelt (Auto-Match) und nur dezent im Checkout gezeigt.
     const filterGroups = (groups) =>
-      (Array.isArray(groups) ? groups : []).filter(g => !['material', 'color'].includes(g.key))
+      (Array.isArray(groups) ? groups : []).filter(g => !['material', 'color', 'last'].includes(g.key))
 
     // Optionen laden: zuerst per-Schuh, bei leer → Kategorie-Vorlage.
     const loadOptions = async () => {
@@ -276,12 +278,70 @@ export default function Customize() {
     { id: 1, key: 'rubber-grip', label: 'Anti-Rutsch', sub: 'Gummi', description: 'Profilsohle mit Grip.', price_extra: 35, rating: 'good', recommended: 1 },
   ]
 
-  // Size selection: 'custom' (3D scan) or EU size string like '42'
-  const [sizeType, setSizeType] = useState(latestScan ? 'custom' : '')
+  // Size selection: 'fit' (auto-match via Fußmaße), 'standard' (manueller
+  // Notausgang), 'custom' (3D scan, Legacy)
+  const [sizeType, setSizeType] = useState('')
   const [selectedSize, setSelectedSize] = useState('')
   // Maßanfertigungs-Anfragemodal (Pflicht: Telefon + WhatsApp Business)
   const [customRequestOpen, setCustomRequestOpen] = useState(false)
   const EU_SIZES = ['39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46']
+
+  // ── Passform (Auto-Match) ────────────────────────────────────────────────
+  // Aus den gespeicherten Fußmaßen + fit_adjust ermittelt das System still die
+  // best-passende Leisten×Weite×Größe. KEIN sichtbarer Auswahlschritt.
+  const [selectedFit, setSelectedFit] = useState(null) // { last_key, last_label, width, size_label, ... }
+  const [fitState, setFitState] = useState('idle')      // 'idle'|'matching'|'matched'|'nomatch'
+  const [showSizeEscape, setShowSizeEscape] = useState(false) // versteckter EU-Grid-Notausgang
+  // Lokale Maß-Eingabe (falls noch keine Maße gespeichert)
+  const [measLen, setMeasLen] = useState('')
+  const [measGirth, setMeasGirth] = useState('')
+  const [measSaving, setMeasSaving] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!footMeasurements?.foot_length_mm || !footMeasurements?.ball_girth_mm) {
+      setSelectedFit(null); setFitState('idle')
+      return
+    }
+    const adj = footMeasurements.fit_adjust || { length_mm: 0, girth_mm: 0 }
+    const effLen = footMeasurements.foot_length_mm + (adj.length_mm || 0)
+    const effGirth = footMeasurements.ball_girth_mm + (adj.girth_mm || 0)
+    setFitState('matching')
+    matchFit({ category, length: effLen, girth: effGirth, tolerance: 5 })
+      .then(matches => {
+        if (cancelled) return
+        const top = matches[0]
+        if (!top) { setSelectedFit(null); setFitState('nomatch'); return }
+        setSelectedFit(top)
+        setSizeType('fit')
+        setSelectedSize(top.size_label)
+        setFitState('matched')
+        // Ermittelte Passform still im Profil als saved_fit hinterlegen.
+        saveFootMeasurements({
+          foot_length_mm: footMeasurements.foot_length_mm,
+          ball_girth_mm: footMeasurements.ball_girth_mm,
+          fit_adjust: adj,
+          saved_fit: {
+            last_key: top.last_key, last_label: top.last_label,
+            width: top.width, size_system: top.size_system, size_label: top.size_label,
+            set_at: new Date().toISOString(),
+          },
+        }).catch(() => {})
+      })
+      .catch(() => { if (!cancelled) { setSelectedFit(null); setFitState('nomatch') } })
+    return () => { cancelled = true }
+  }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm, footMeasurements?.fit_adjust?.length_mm, footMeasurements?.fit_adjust?.girth_mm, category])
+
+  const saveMeasurements = async () => {
+    const len = parseFloat(String(measLen).replace(',', '.'))
+    const girth = parseFloat(String(measGirth).replace(',', '.'))
+    if (!Number.isFinite(len) || !Number.isFinite(girth)) return
+    setMeasSaving(true)
+    try {
+      await saveFootMeasurements({ foot_length_mm: len, ball_girth_mm: girth })
+      setMeasLen(''); setMeasGirth('')
+    } catch {} finally { setMeasSaving(false) }
+  }
 
   // Step-by-step guided flow: 0=nothing, 1=leather chosen, 2=color chosen, 3=sole chosen
   // Sohle ist pro Schuhmodell vorkonfiguriert (kein User-Step mehr).
@@ -540,7 +600,21 @@ export default function Customize() {
     })
   }
 
-  const chosenEU = sizeType === 'custom' ? latestScan?.eu_size : selectedSize
+  const chosenEU = sizeType === 'fit'
+    ? selectedFit?.size_label
+    : sizeType === 'custom'
+      ? latestScan?.eu_size
+      : selectedSize
+  // Maße, die fürs Auto-Matching verwendet wurden (für Bestellung/Manufaktur)
+  const footMeasurementsUsed = footMeasurements?.foot_length_mm
+    ? { foot_length_mm: footMeasurements.foot_length_mm, ball_girth_mm: footMeasurements.ball_girth_mm }
+    : null
+  // Steht eine Größe fest? (Auto-Match, manueller Notausgang oder Legacy-Scan)
+  const fitReady = (sizeType === 'fit' && !!selectedFit)
+    || (sizeType === 'standard' && !!selectedSize)
+    || sizeType === 'custom'
+  // Maße vorhanden, aber kein Treffer & kein manueller Override → Maßanfertigung
+  const needsCustomRequest = (fitState === 'nomatch' && sizeType !== 'standard') || sizeType === 'custom'
   // Extras als lesbare Liste mit Aufpreissumme — wird in der Bestellung
   // mitgeführt, damit Admin & Manufaktur die Spezifikation sehen.
   const extrasForCart = extraOptionGroups
@@ -557,6 +631,11 @@ export default function Customize() {
       sole: sole?.label || 'Sohle',
       image: product.image,
       sizeType, euSize: chosenEU,
+      last: selectedFit?.last_key || null,
+      lastLabel: selectedFit?.last_label || null,
+      width: selectedFit?.width || null,
+      sizeSystem: selectedFit?.size_system || 'EU',
+      footMeasurementsUsed,
       extras: extrasForCart,
     })
   }
@@ -615,6 +694,11 @@ export default function Customize() {
           color, price: formatPrice(basePrice + soleExtra),
           sole: sole?.label || 'Sohle',
           sizeType, euSize: chosenEU,
+          last: selectedFit?.last_key || null,
+          lastLabel: selectedFit?.last_label || null,
+          width: selectedFit?.width || null,
+          sizeSystem: selectedFit?.size_system || 'EU',
+          footMeasurementsUsed,
         },
         accessories: cartAccessories,
       },
@@ -1272,80 +1356,103 @@ export default function Customize() {
               )
             })}
 
-            {/* ── Größenauswahl ─────────────────────────────── */}
+            {/* ── Passform ──────────────────────────────────────────────
+                Die richtige Größe + Leistenform wird aus den Fußmaßen
+                automatisch ermittelt — kein manueller Größen-Schritt. */}
             <div className="px-5 lg:px-0">
-              <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Größe wählen</p>
+              <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Passform</p>
 
-              {/* Option: Maßanfertigung (wenn Scan vorhanden) */}
-              {latestScan && (
-                <button
-                  onClick={() => { setSizeType('custom'); setSelectedSize('') }}
-                  className={`w-full p-3.5 mb-2 flex items-center gap-3 text-left transition-all border ${
-                    sizeType === 'custom'
-                      ? 'border-black bg-black/[0.02]'
-                      : 'border-black/10 hover:border-black/20'
-                  }`}
-                >
-                  <div className={`w-5 h-5 flex items-center justify-center flex-shrink-0 transition-all ${
-                    sizeType === 'custom' ? 'bg-black' : 'border border-black/15'
-                  }`}>
-                    {sizeType === 'custom' && <Check size={11} strokeWidth={3} className="text-white" />}
+              {/* Keine Maße gespeichert → schlanke Eingabe */}
+              {!footMeasurements?.foot_length_mm ? (
+                <div className="border border-black/10 p-4">
+                  <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
+                    Für die perfekte Passform messen wir Ihren Fuß statt zu raten.
+                    Bitte Fußlänge und Ballenumfang eingeben — die richtige Größe
+                    bestimmen wir automatisch.
+                  </p>
+                  <div className="flex gap-2">
+                    <label className="flex-1">
+                      <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Fußlänge (mm)</span>
+                      <input
+                        type="number" inputMode="decimal" value={measLen}
+                        onChange={e => setMeasLen(e.target.value)} placeholder="z. B. 270"
+                        className="w-full border border-black/15 px-2.5 py-2 text-[13px] focus:outline-none focus:border-black/40"
+                      />
+                    </label>
+                    <label className="flex-1">
+                      <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Ballenumfang (mm)</span>
+                      <input
+                        type="number" inputMode="decimal" value={measGirth}
+                        onChange={e => setMeasGirth(e.target.value)} placeholder="z. B. 255"
+                        className="w-full border border-black/15 px-2.5 py-2 text-[13px] focus:outline-none focus:border-black/40"
+                      />
+                    </label>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-[12px] text-black font-medium">Maßanfertigung</p>
-                    <p className="text-[10px] text-black/35 mt-0.5">Basierend auf Ihrem individuellen Fußprofil</p>
-                  </div>
-                  <ScanLine size={16} className="text-black/25 flex-shrink-0" strokeWidth={1.5} />
-                </button>
+                  <button
+                    onClick={saveMeasurements}
+                    disabled={measSaving || !measLen || !measGirth}
+                    className="mt-3 w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase disabled:opacity-40 border-0"
+                  >
+                    {measSaving ? 'Speichern…' : 'Passform ermitteln'}
+                  </button>
+                </div>
+              ) : fitState === 'matching' ? (
+                <p className="text-[11px] text-black/40 font-light">Passform wird ermittelt…</p>
+              ) : fitState === 'matched' ? (
+                <div className="flex items-center gap-2 text-[11px] text-black/45 font-light">
+                  <Check size={13} strokeWidth={2} className="text-black/40" />
+                  <span>Passform automatisch ermittelt — keine Größenwahl nötig.</span>
+                </div>
+              ) : (
+                /* Maße vorhanden, aber kein Treffer → Maßanfertigung */
+                <div className="border border-black/10 p-4">
+                  <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
+                    Für Ihre Maße finden wir keine Standard-Passform. Wir fertigen
+                    diesen Schuh gerne als Maßanfertigung für Sie an.
+                  </p>
+                  <button
+                    onClick={() => setCustomRequestOpen(true)}
+                    className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0"
+                  >
+                    Maßanfertigung anfragen
+                  </button>
+                </div>
               )}
 
-              {/* Option: Standardgröße */}
-              <button
-                onClick={() => { setSizeType('standard'); if (!selectedSize) setSelectedSize('42') }}
-                className={`w-full p-3.5 flex items-center gap-3 text-left transition-all border ${
-                  sizeType === 'standard'
-                    ? 'border-black bg-black/[0.02]'
-                    : 'border-black/10 hover:border-black/20'
-                }`}
-              >
-                <div className={`w-5 h-5 flex items-center justify-center flex-shrink-0 transition-all ${
-                  sizeType === 'standard' ? 'bg-black' : 'border border-black/15'
-                }`}>
-                  {sizeType === 'standard' && <Check size={11} strokeWidth={3} className="text-white" />}
-                </div>
-                <div className="flex-1">
-                  <p className="text-[12px] text-black font-medium">Standardgröße</p>
-                  <p className="text-[10px] text-black/35 mt-0.5">EU 39 – 46</p>
-                </div>
-                <Ruler size={16} className="text-black/25 flex-shrink-0" strokeWidth={1.5} />
-              </button>
-
-              {/* Größen-Grid (nur wenn Standardgröße gewählt) */}
-              {sizeType === 'standard' && (
-                <div className="grid grid-cols-7 gap-1.5 mt-3">
-                  {EU_SIZES.map(s => (
+              {/* Versteckter Notausgang: Größe manuell wählen */}
+              {!showSizeEscape ? (
+                <button
+                  onClick={() => { setShowSizeEscape(true); setSizeType('standard'); if (!selectedSize) setSelectedSize('42') }}
+                  className="block w-full mt-3 text-[9px] text-black/25 hover:text-black/50 text-center bg-transparent border-0 underline underline-offset-4 decoration-black/10"
+                >
+                  Größe manuell wählen
+                </button>
+              ) : (
+                <div className="mt-3">
+                  <div className="grid grid-cols-7 gap-1.5">
+                    {EU_SIZES.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => { setSizeType('standard'); setSelectedSize(s) }}
+                        className={`h-10 flex items-center justify-center text-[12px] transition-all ${
+                          sizeType === 'standard' && selectedSize === s
+                            ? 'bg-black text-white font-medium'
+                            : 'bg-black/[0.03] text-black/60 hover:bg-black/[0.06]'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  {fitState === 'matched' && (
                     <button
-                      key={s}
-                      onClick={() => setSelectedSize(s)}
-                      className={`h-10 flex items-center justify-center text-[12px] transition-all ${
-                        selectedSize === s
-                          ? 'bg-black text-white font-medium'
-                          : 'bg-black/[0.03] text-black/60 hover:bg-black/[0.06]'
-                      }`}
+                      onClick={() => { setShowSizeEscape(false); setSizeType('fit'); setSelectedSize(selectedFit?.size_label || '') }}
+                      className="block w-full mt-2 text-[9px] text-black/30 hover:text-black/55 text-center bg-transparent border-0 underline underline-offset-4 decoration-black/10"
                     >
-                      {s}
+                      Zurück zur automatischen Passform
                     </button>
-                  ))}
+                  )}
                 </div>
-              )}
-
-              {!latestScan && sizeType !== 'standard' && (
-                <button
-                  onClick={() => { setSizeType('custom'); setCustomRequestOpen(true) }}
-                  className="block w-full mt-2 text-[10px] text-black/45 hover:text-black text-center bg-transparent border-0 underline underline-offset-4 decoration-black/15"
-                >
-                  Maßanfertigung ohne Fußscan? Persönliche Anfrage stellen
-                </button>
               )}
             </div>
 
@@ -1490,7 +1597,7 @@ export default function Customize() {
                 )}
               </p>
               <div className="flex gap-3">
-                {sizeType === 'custom' ? (
+                {needsCustomRequest ? (
                   <button
                     onClick={() => setCustomRequestOpen(true)}
                     className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85"
@@ -1502,7 +1609,8 @@ export default function Customize() {
                   <>
                     <button
                       onClick={handleAddToCart}
-                      className={`flex-1 h-14 flex items-center justify-center gap-2.5 transition-all border ${
+                      disabled={!fitReady}
+                      className={`flex-1 h-14 flex items-center justify-center gap-2.5 transition-all border disabled:opacity-30 ${
                         added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 hover:bg-black/5 active:bg-black/10'
                       }`}
                       style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
@@ -1514,7 +1622,8 @@ export default function Customize() {
                     </button>
                     <button
                       onClick={handleBuyNow}
-                      className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85"
+                      disabled={!fitReady}
+                      className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85 disabled:opacity-30"
                       style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
                     >
                       Jetzt kaufen
@@ -1523,9 +1632,11 @@ export default function Customize() {
                 )}
               </div>
               <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>
-                {sizeType === 'custom'
+                {needsCustomRequest
                   ? 'Maßanfertigung · persönliche Beratung über WhatsApp Business'
-                  : 'Handgefertigt · Kostenlose Lieferung'}
+                  : !fitReady
+                    ? 'Bitte zuerst die Passform ermitteln'
+                    : 'Handgefertigt · Kostenlose Lieferung'}
               </p>
             </div>
           </div>
@@ -1556,7 +1667,7 @@ export default function Customize() {
           {accessoryTotal > 0 && <span className="text-[9px] text-black/35 ml-1">(inkl. {selectedAccessories.length}× Zubehör)</span>}
         </p>
         <div className="flex gap-2">
-          {sizeType === 'custom' ? (
+          {needsCustomRequest ? (
             <button
               onClick={() => setCustomRequestOpen(true)}
               className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85"
@@ -1568,7 +1679,8 @@ export default function Customize() {
             <>
               <button
                 onClick={handleAddToCart}
-                className={`flex-1 h-12 flex items-center justify-center gap-2 transition-all border ${
+                disabled={!fitReady}
+                className={`flex-1 h-12 flex items-center justify-center gap-2 transition-all border disabled:opacity-30 ${
                   added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 active:bg-black/5'
                 }`}
                 style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
@@ -1580,7 +1692,8 @@ export default function Customize() {
               </button>
               <button
                 onClick={handleBuyNow}
-                className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85"
+                disabled={!fitReady}
+                className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85 disabled:opacity-30"
                 style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
               >
                 Jetzt kaufen
@@ -1589,9 +1702,11 @@ export default function Customize() {
           )}
         </div>
         <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>
-          {sizeType === 'custom'
+          {needsCustomRequest
             ? 'Maßanfertigung · WhatsApp Business'
-            : 'Handgefertigt · Kostenlose Lieferung'}
+            : !fitReady
+              ? 'Bitte zuerst die Passform ermitteln'
+              : 'Handgefertigt · Kostenlose Lieferung'}
         </p>
       </div>
 
@@ -1640,6 +1755,7 @@ export default function Customize() {
           color:    col?.name || color,
           sole:     sole?.label,
           euSize:   chosenEU,
+          footMeasurements: footMeasurementsUsed,
           scanId:   sizeType === 'custom' ? latestScan?.id : null,
           accessories: selectedAccessories.map(id => {
             const acc = accessories.find(a => a.id === id)

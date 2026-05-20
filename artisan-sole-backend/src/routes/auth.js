@@ -209,6 +209,87 @@ router.put('/me/foot-notes', authenticate, (req, res) => {
   res.json({ foot_notes: foot_notes ?? '' })
 })
 
+// ── Fußmaße & Passform ──────────────────────────────────────────────────────────
+// Kategorisches Feedback → mm-Anpassung auf fit_adjust. Zentral im Backend,
+// damit Konfigurator & Profil dieselbe Logik teilen.
+const FIT_FEEDBACK_MAP = {
+  fit:        { length_mm: 0,  girth_mm: 0  },
+  too_narrow: { length_mm: 0,  girth_mm: 4  },
+  too_wide:   { length_mm: 0,  girth_mm: -4 },
+  too_short:  { length_mm: 4,  girth_mm: 0  },
+  too_long:   { length_mm: -4, girth_mm: 0  },
+}
+
+function readMeasurements(row) {
+  if (!row?.foot_measurements) return null
+  try { return JSON.parse(row.foot_measurements) } catch { return null }
+}
+
+// GET /api/auth/me/foot-measurements — Maße + fit_adjust + saved_fit
+router.get('/me/foot-measurements', authenticate, (req, res) => {
+  const row = getDb().prepare('SELECT foot_measurements FROM users WHERE id = ?').get(req.user.id)
+  res.json({ foot_measurements: readMeasurements(row) })
+})
+
+// PUT /api/auth/me/foot-measurements — Maße (+ optional fit_adjust/saved_fit) speichern
+router.put('/me/foot-measurements', authenticate, (req, res) => {
+  const { foot_length_mm, ball_girth_mm, fit_adjust, saved_fit } = req.body || {}
+  const len = Number(foot_length_mm)
+  const girth = Number(ball_girth_mm)
+  if (!Number.isFinite(len) || len < 150 || len > 350) {
+    return res.status(400).json({ error: 'foot_length_mm muss zwischen 150 und 350 mm liegen' })
+  }
+  if (!Number.isFinite(girth) || girth < 150 || girth > 340) {
+    return res.status(400).json({ error: 'ball_girth_mm muss zwischen 150 und 340 mm liegen' })
+  }
+  const db = getDb()
+  const existing = readMeasurements(db.prepare('SELECT foot_measurements FROM users WHERE id = ?').get(req.user.id)) || {}
+  const next = {
+    foot_length_mm: Math.round(len * 10) / 10,
+    ball_girth_mm: Math.round(girth * 10) / 10,
+    updated_at: new Date().toISOString(),
+    fit_adjust: fit_adjust && typeof fit_adjust === 'object'
+      ? { length_mm: Number(fit_adjust.length_mm) || 0, girth_mm: Number(fit_adjust.girth_mm) || 0 }
+      : (existing.fit_adjust || { length_mm: 0, girth_mm: 0 }),
+    saved_fit: saved_fit && typeof saved_fit === 'object' ? saved_fit : (existing.saved_fit || null),
+  }
+  db.prepare("UPDATE users SET foot_measurements = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(JSON.stringify(next), req.user.id)
+  res.json({ foot_measurements: next })
+})
+
+// POST /api/auth/me/fit-feedback — kategorisches Feedback ODER direkte Nudges
+router.post('/me/fit-feedback', authenticate, (req, res) => {
+  const { verdict, length_mm, girth_mm } = req.body || {}
+  const db = getDb()
+  const existing = readMeasurements(db.prepare('SELECT foot_measurements FROM users WHERE id = ?').get(req.user.id))
+  if (!existing) {
+    return res.status(400).json({ error: 'Bitte zuerst Fußmaße speichern' })
+  }
+  const adj = existing.fit_adjust || { length_mm: 0, girth_mm: 0 }
+  let dLen = 0, dGirth = 0
+  if (verdict && FIT_FEEDBACK_MAP[verdict]) {
+    dLen = FIT_FEEDBACK_MAP[verdict].length_mm
+    dGirth = FIT_FEEDBACK_MAP[verdict].girth_mm
+  } else if (Number.isFinite(Number(length_mm)) || Number.isFinite(Number(girth_mm))) {
+    dLen = Number(length_mm) || 0
+    dGirth = Number(girth_mm) || 0
+  } else {
+    return res.status(400).json({ error: 'Ungültiges Feedback' })
+  }
+  const next = {
+    ...existing,
+    fit_adjust: {
+      length_mm: Math.round((adj.length_mm + dLen) * 10) / 10,
+      girth_mm: Math.round((adj.girth_mm + dGirth) * 10) / 10,
+    },
+    updated_at: new Date().toISOString(),
+  }
+  db.prepare("UPDATE users SET foot_measurements = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(JSON.stringify(next), req.user.id)
+  res.json({ foot_measurements: next })
+})
+
 // ── Saved addresses ───────────────────────────────────────────────────────────
 
 // GET /api/auth/me/addresses — get saved delivery & billing addresses
