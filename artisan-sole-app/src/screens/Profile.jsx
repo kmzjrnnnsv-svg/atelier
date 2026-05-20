@@ -2,7 +2,7 @@
  * Profile.jsx — LV-inspired profile page
  * Warm tones, elegant typography, generous whitespace
  */
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, ChevronRight, BookOpen, Footprints, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3, Package, Settings, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -72,7 +72,7 @@ function useSwipeTabs(items, activeKey, setActiveKey) {
 export default function Profile() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
-  const { favorites, orders, loyaltyTiers, loyaltyStatus, latestScan, averagedScan, refreshScan, footNotes, saveFootNotes } = useStore()
+  const { favorites, orders, loyaltyTiers, loyaltyStatus, latestScan, averagedScan, refreshScan, footNotes, saveFootNotes, footMeasurements, saveFootMeasurements, sendFitFeedback } = useStore()
   const [activeTab, setActiveTab] = useState('SIZE')
   const [showLoyalty, setShowLoyalty] = useState(false)
   const [editingNotes, setEditingNotes] = useState(false)
@@ -80,6 +80,29 @@ export default function Profile() {
   const [editMode, setEditMode] = useState(false)
   const [editedValues, setEditedValues] = useState({})
   const [savingEdits, setSavingEdits] = useState(false)
+  const [fmLen, setFmLen] = useState('')
+  const [fmGirth, setFmGirth] = useState('')
+  const [fmSaving, setFmSaving] = useState(false)
+  const [fbBusy, setFbBusy] = useState(false)
+
+  useEffect(() => {
+    if (footMeasurements?.foot_length_mm) setFmLen(String(footMeasurements.foot_length_mm))
+    if (footMeasurements?.ball_girth_mm) setFmGirth(String(footMeasurements.ball_girth_mm))
+  }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm])
+
+  const saveMeasurements = async () => {
+    const len = parseFloat(String(fmLen).replace(',', '.'))
+    const girth = parseFloat(String(fmGirth).replace(',', '.'))
+    if (!Number.isFinite(len) || !Number.isFinite(girth)) return
+    setFmSaving(true)
+    try { await saveFootMeasurements({ foot_length_mm: len, ball_girth_mm: girth, fit_adjust: footMeasurements?.fit_adjust, saved_fit: footMeasurements?.saved_fit }) }
+    catch {} finally { setFmSaving(false) }
+  }
+
+  const giveFeedback = async (verdict, nudge) => {
+    setFbBusy(true)
+    try { await sendFitFeedback(verdict, nudge) } catch {} finally { setFbBusy(false) }
+  }
 
   const tabKeys = tabs.map(t => t.id)
   const swipeHandlers = useSwipeTabs(tabKeys, activeTab, setActiveTab)
@@ -506,6 +529,110 @@ export default function Profile() {
           </div>
         </div>
       ) : null}
+
+      {/* ── Fußmaße & Passform ──────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pt-8">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-black/25 font-light mb-1">Fußmaße & Passform</p>
+        <p className="text-[12px] text-black/30 mb-4 font-light">
+          Wir bestimmen Ihre Größe und Leistenform aus zwei Maßen — statt zu raten.
+        </p>
+        <div className="border border-black/[0.06] p-5 space-y-4">
+          {/* Maß-Eingabe */}
+          <div className="flex gap-3">
+            <label className="flex-1">
+              <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1.5">Fußlänge (mm)</span>
+              <input
+                type="number" inputMode="decimal" value={fmLen}
+                onChange={e => setFmLen(e.target.value)} placeholder="z. B. 270"
+                className="w-full border border-black/15 px-3 py-2.5 text-[13px] focus:outline-none focus:border-black/40"
+              />
+            </label>
+            <label className="flex-1">
+              <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1.5">Ballenumfang (mm)</span>
+              <input
+                type="number" inputMode="decimal" value={fmGirth}
+                onChange={e => setFmGirth(e.target.value)} placeholder="z. B. 255"
+                className="w-full border border-black/15 px-3 py-2.5 text-[13px] focus:outline-none focus:border-black/40"
+              />
+            </label>
+          </div>
+          <button
+            onClick={saveMeasurements}
+            disabled={fmSaving || !fmLen || !fmGirth}
+            className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase disabled:opacity-30 border-0"
+          >
+            {fmSaving ? 'Speichern…' : 'Maße speichern'}
+          </button>
+
+          {/* Gespeicherte Passform */}
+          {footMeasurements?.saved_fit && (
+            <div className="border-t border-black/[0.06] pt-4">
+              <p className="text-[10px] text-black/30 uppercase tracking-wider mb-1">Ihre Passform</p>
+              <p className="text-[13px] text-black/70 font-light">
+                {[
+                  footMeasurements.saved_fit.last_label,
+                  footMeasurements.saved_fit.size_label && `${footMeasurements.saved_fit.size_system || 'EU'} ${footMeasurements.saved_fit.size_label}`,
+                  footMeasurements.saved_fit.width && `Weite ${footMeasurements.saved_fit.width}`,
+                ].filter(Boolean).join(' · ')}
+              </p>
+            </div>
+          )}
+
+          {/* Aktuelle Anpassung */}
+          {footMeasurements?.fit_adjust && (footMeasurements.fit_adjust.length_mm || footMeasurements.fit_adjust.girth_mm) ? (
+            <p className="text-[11px] text-black/35 font-light">
+              Anpassung:&nbsp;
+              {[
+                footMeasurements.fit_adjust.length_mm && `${footMeasurements.fit_adjust.length_mm > 0 ? '+' : ''}${footMeasurements.fit_adjust.length_mm} mm Länge`,
+                footMeasurements.fit_adjust.girth_mm && `${footMeasurements.fit_adjust.girth_mm > 0 ? '+' : ''}${footMeasurements.fit_adjust.girth_mm} mm Umfang`,
+              ].filter(Boolean).join(' · ')}
+            </p>
+          ) : null}
+
+          {/* Feedback nach Erhalt */}
+          {footMeasurements?.foot_length_mm && (
+            <div className="border-t border-black/[0.06] pt-4">
+              <p className="text-[10px] text-black/30 uppercase tracking-wider mb-2.5">Wie hat es gepasst?</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { v: 'fit', label: 'Hat gepasst' },
+                  { v: 'too_narrow', label: 'Zu schmal' },
+                  { v: 'too_wide', label: 'Zu breit' },
+                  { v: 'too_short', label: 'Zu kurz' },
+                  { v: 'too_long', label: 'Zu lang' },
+                ].map(b => (
+                  <button
+                    key={b.v}
+                    onClick={() => giveFeedback(b.v)}
+                    disabled={fbBusy}
+                    className="px-3 py-1.5 text-[11px] border border-black/12 text-black/55 font-light hover:border-black/35 disabled:opacity-40 bg-transparent"
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-black/25 uppercase tracking-wider mt-3 mb-2">Feinjustierung (±2 mm)</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'Schmaler', nudge: { girth_mm: -2 } },
+                  { label: 'Breiter', nudge: { girth_mm: 2 } },
+                  { label: 'Kürzer', nudge: { length_mm: -2 } },
+                  { label: 'Länger', nudge: { length_mm: 2 } },
+                ].map(b => (
+                  <button
+                    key={b.label}
+                    onClick={() => giveFeedback(null, b.nudge)}
+                    disabled={fbBusy}
+                    className="px-3 py-1.5 text-[11px] border border-black/12 text-black/55 font-light hover:border-black/35 disabled:opacity-40 bg-transparent"
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ── Aesthetic Profile ───────────────────────────────────── */}
       <div className="px-5 lg:px-16 pt-8">

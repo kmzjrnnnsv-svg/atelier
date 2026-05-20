@@ -297,10 +297,14 @@ export function runMigrations(db) {
     `ALTER TABLE options ADD COLUMN recommendation_reason TEXT`,
     // option_groups — Icon (Lucide-Name) für visuelle Akzente im Konfigurator
     `ALTER TABLE option_groups ADD COLUMN icon TEXT`,
+    // users — Fußmaße + Passform-Anpassung + gespeicherte Passform (JSON)
+    `ALTER TABLE users ADD COLUMN foot_measurements TEXT`,
+    // orders — automatisch ermittelte Passform (Leisten/Weite) + verwendete Maße
+    `ALTER TABLE orders ADD COLUMN last_key   TEXT`,
+    `ALTER TABLE orders ADD COLUMN last_label TEXT`,
+    `ALTER TABLE orders ADD COLUMN last_width TEXT`,
+    `ALTER TABLE orders ADD COLUMN fit_measurements TEXT`,
   ]
-  for (const sql of colMigrations) {
-    try { db.exec(sql) } catch { /* column already exists */ }
-  }
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────
   try {
@@ -903,5 +907,29 @@ export function runMigrations(db) {
       PRIMARY KEY (category, option_id)
     );
     CREATE INDEX IF NOT EXISTS idx_category_templates_cat ON category_templates(category);
+
+    -- ── Passform-Maßtabelle (Leisten × Weite × Größe → Länge + Ballenumfang) ──
+    CREATE TABLE IF NOT EXISTS last_size_chart (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      last_key       TEXT    NOT NULL,
+      width          TEXT    NOT NULL DEFAULT 'D',     -- D | EE | EEE
+      size_system    TEXT    NOT NULL DEFAULT 'EU',    -- EU | US
+      size_label     TEXT    NOT NULL,                 -- '42','42.5',… bzw. US
+      foot_length_mm REAL    NOT NULL,
+      ball_girth_mm  REAL    NOT NULL,
+      created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(last_key, width, size_system, size_label)
+    );
+    CREATE INDEX IF NOT EXISTS idx_last_size_chart_lk ON last_size_chart(last_key);
   `)
+
+  // ── Spalten-Migrationen GANZ AM ENDE ausführen ───────────────────────────
+  // Erst hier existieren ALLE Tabellen (auch shoe_materials, options,
+  // option_groups, category_templates aus den späteren db.exec-Blöcken).
+  // Vorher liefen diese ALTERs ins Leere („no such table") und Spalten wie
+  // family/applicable_materials/color_hex/icon/helper_text/recommended
+  // wurden NIE angelegt — was den Seed crashen ließ.
+  for (const sql of colMigrations) {
+    try { db.exec(sql) } catch { /* column already exists */ }
+  }
 }

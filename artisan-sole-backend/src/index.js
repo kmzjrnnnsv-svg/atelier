@@ -27,6 +27,7 @@ import couponsRouter from './routes/coupons.js'
 import mediaRouter from './routes/media.js'
 import customRequestsRouter from './routes/customRequests.js'
 import optionsRouter from './routes/options.js'
+import fitRouter from './routes/fit.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -138,6 +139,7 @@ app.use('/api/custom-requests', customRequestsRouter)
 // Konfigurator-Optionen — mountet sowohl /api/option-groups als auch
 // /api/shoes/:id/options und /api/category-templates/:cat
 app.use('/api', optionsRouter)
+app.use('/api/fit', fitRouter)
 
 // GitHub Webhook — auto-deploy on push to website
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {

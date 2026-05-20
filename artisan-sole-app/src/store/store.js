@@ -25,6 +25,7 @@ const useStore = create((set, get) => ({
   latestScan:  null, // most recent foot scan for this user
   averagedScan: null, // Bayesian-weighted average of all user scans
   footNotes:   '',   // user-level persistent foot notes
+  footMeasurements: null, // { foot_length_mm, ball_girth_mm, fit_adjust, saved_fit }
   shoeMaterials: [],
   shoeColors:   [],
   shoeSoles:    [],
@@ -108,7 +109,7 @@ const useStore = create((set, get) => ({
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData] = await Promise.all([
+      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData, footMeasData] = await Promise.all([
         apiFetch('/api/shoes').catch(() => []),
         apiFetch('/api/curated').catch(() => []),
         apiFetch('/api/wardrobe').catch(() => []),
@@ -130,6 +131,7 @@ const useStore = create((set, get) => ({
         apiFetch('/api/auth/me/foot-notes').catch(() => ({ foot_notes: '' })),
         apiFetch('/api/auth/me/addresses').catch(() => ({ delivery: null, billing: null })),
         apiFetch('/api/auth/me/cart').catch(() => ({ cart: [] })),
+        apiFetch('/api/auth/me/foot-measurements').catch(() => ({ foot_measurements: null })),
       ])
       const settingsMap = settings || {}
       set({
@@ -156,6 +158,7 @@ const useStore = create((set, get) => ({
         loyaltyTiers: Array.isArray(loyaltyTiers) ? loyaltyTiers.map(normalizeLoyaltyTier) : [],
         loyaltyStatus: loyaltyStatus || { points: 0, tier: 'bronze' },
         footNotes: footNotesData?.foot_notes || '',
+        footMeasurements: footMeasData?.foot_measurements || null,
         savedDeliveryAddress: addressData?.delivery || null,
         savedBillingAddress:  addressData?.billing  || null,
         cart: Array.isArray(cartData?.cart) && cartData.cart.length > 0 ? cartData.cart : get().cart,
@@ -201,6 +204,45 @@ const useStore = create((set, get) => ({
       body: JSON.stringify({ foot_notes: notes }),
     })
     set({ footNotes: res.foot_notes || '' })
+  },
+
+  // --- FOOT MEASUREMENTS & FIT ---
+  async saveFootMeasurements(m) {
+    const res = await apiFetch('/api/auth/me/foot-measurements', {
+      method: 'PUT',
+      body: JSON.stringify(m),
+    })
+    set({ footMeasurements: res.foot_measurements || null })
+    return res.foot_measurements || null
+  },
+
+  // Ermittelt die best-passende Leisten×Weite×Größe. Transient (kein State).
+  async matchFit({ category, length, girth, tolerance = 5 }) {
+    const q = new URLSearchParams({
+      category: category || '',
+      length: String(length),
+      girth: String(girth),
+      tolerance: String(tolerance),
+    })
+    const res = await apiFetch(`/api/fit/match?${q.toString()}`).catch(() => ({ matches: [] }))
+    return Array.isArray(res?.matches) ? res.matches : []
+  },
+
+  // Welche Leisten/Kategorien passen zu den Maßen (für Collection-Filter).
+  async fitFeasibility({ length, girth, tolerance = 5 }) {
+    const q = new URLSearchParams({ length: String(length), girth: String(girth), tolerance: String(tolerance) })
+    return apiFetch(`/api/fit/feasible?${q.toString()}`)
+      .catch(() => ({ lasts: [], categories: [], knownCategories: [] }))
+  },
+
+  async sendFitFeedback(verdict, nudge) {
+    const body = nudge ? nudge : { verdict }
+    const res = await apiFetch('/api/auth/me/fit-feedback', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    set({ footMeasurements: res.foot_measurements || null })
+    return res.foot_measurements || null
   },
 
   // --- SAVED ADDRESSES ---
