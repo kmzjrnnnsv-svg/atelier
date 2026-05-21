@@ -16,6 +16,7 @@ const LAST_LABELS = {
   wellington: 'Wellington', drake: 'Drake', sneaker: 'Sneaker',
   moc_sport: 'Moc Sport', chunky: 'Chunky', drivers: 'Drivers',
   venetian: 'Venetian', penny_loafer: 'Penny Loafer',
+  audrey_rose: 'Audrey & Rose', chenoa: 'Chenoa', carola: 'Carola B',
 }
 
 // GET /api/fit/match?category=OXFORD&length=270&girth=260&tolerance=5

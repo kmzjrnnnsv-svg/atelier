@@ -1295,73 +1295,115 @@ export function seedMatrixTemplatesV2(db) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// seedLastSizeChart — Passform-Maßtabelle (Leisten × Weite × EU-Größe →
-// Fußlänge + Ballenumfang in mm). Werte aus den Hersteller-Tabellen.
+// seedLastSizeChart — Passform-Maßtabelle (Leisten × Weite × Größe →
+// Fußlänge + Ballenumfang in mm), 1:1 aus den Hersteller-Tabellen.
 //
-// Datenstruktur: Fußlänge ist je EU-Größe über ALLE Leisten identisch
-// (lineare Reihe ~+3,33 mm/Halbgröße, EU42 = 265,0 mm). Der Ballenumfang
-// unterscheidet sich je Leisten×Weite und steigt ~+2,25 mm/Halbgröße.
-// Daher generieren wir aus einem Anker-Umfang bei EU42 — exakt wie die
-// Tabelle, aber ohne fehleranfälliges Abtippen von 25×N Zellen.
-// Idempotent (INSERT OR IGNORE auf UNIQUE-Key).
+// Aufbau (alle Reihen sind arithmetisch):
+//  • Fußlänge je Größe ist über alle Herren-Leisten identisch (eigene Reihe für
+//    Damen) — daher als exakte Arrays hinterlegt (FOOT_MEN/FOOT_LADIES).
+//  • Ballenumfang steigt +2,25 mm je Halbgröße (= +4,5 je ganze Größe); je
+//    Leisten×Weite ist nur der Anker an der Referenzgröße nötig
+//    (Herren-Ref = EU42, Damen-Ref = EU39).
+//  • Penny Loafer: nur US-Größen, eigene Werte.
+//
+// Versioniert: bei Versionssprung wird die Tabelle einmalig autoritativ neu
+// aufgebaut (DELETE + Insert); danach bleiben CMS-Edits über Deploys erhalten.
 // ─────────────────────────────────────────────────────────────────────
-function seedLastSizeChart(db) {
-  // EU-Größen 38…50 in Halbschritten. index 8 == EU42 (Ankergröße).
-  const EU_SIZES = ['38','38.5','39','39.5','40','40.5','41','41.5','42','42.5','43','43.5','44','44.5','45','45.5','46','46.5','47','47.5','48','48.5','49','49.5','50']
-  const LEN_AT_42 = 265.0
-  const LEN_STEP  = 10 / 3        // ≈3.333 mm pro Halbgröße
-  const GIRTH_STEP = 2.25         // mm pro Halbgröße
-  const idx42 = EU_SIZES.indexOf('42')
-  const round1 = (n) => Math.round(n * 10) / 10
-  const lenAt   = (i) => round1(LEN_AT_42 + (i - idx42) * LEN_STEP)
-  const girthAt = (anchor42, i) => round1(anchor42 + (i - idx42) * GIRTH_STEP)
+export const LAST_SIZE_CHART_VERSION = '2'
+const GIRTH_STEP = 2.25
+const round1 = (n) => Math.round(n * 10) / 10
 
-  // Anker-Ballenumfang bei EU42 je Leisten×Weite (aus den Tabellen-Bildern).
-  // [last_key, width, girth@EU42]
-  const ANCHORS = [
-    // Dress-Leisten (Oxford/WholeCut/Derby/Monk/Chelsea)
-    ['monti',     'D',   246.0], ['monti',     'EE', 255.0], ['monti',     'EEE', 268.5],
-    ['zurigo',    'D',   250.0], ['zurigo',    'EE', 259.0], ['zurigo',    'EEE', 272.5],
-    ['savile',    'D',   244.5], ['savile',    'EE', 253.5], ['savile',    'EEE', 267.0],
-    ['belgravia', 'D',   248.0], ['belgravia', 'EE', 257.0],
-    // Modell-spezifische Leisten
-    ['wellington','D',   244.0], ['wellington','EE', 253.0],
-    ['drake',     'D',   245.0],
-    ['sneaker',   'D',   248.0], ['sneaker',   'EE', 257.0],
-    ['moc_sport', 'D',   244.0],
-    ['chunky',    'D',   250.0], ['chunky',    'EE', 259.0],
-    ['drivers',   'D',   246.0],
-    ['venetian',  'D',   247.0],
-  ]
+// EU-Halbgrößen-Raster + exakte Fußlängen (mm) aus der Tabelle.
+const EU_MEN = ['38','38.5','39','39.5','40','40.5','41','41.5','42','42.5','43','43.5','44','44.5','45','45.5','46','46.5','47','47.5','48','48.5','49','49.5','50']
+const FOOT_MEN = [238.4,241.7,245.0,248.4,251.7,255.0,258.3,261.7,265.0,268.3,271.7,275.0,278.3,281.7,285.0,288.3,291.6,295.0,298.3,301.6,305.0,308.3,311.6,315.0,318.3]
+const EU_LADIES = ['35','35.5','36','36.5','37','37.5','38','38.5','39','39.5','40','40.5','41','41.5','42']
+const FOOT_LADIES = [226.7,230.0,233.3,236.7,240.0,243.3,246.7,250.0,253.3,256.7,260.0,263.3,266.6,270.0,273.3]
 
-  const ins = db.prepare(`
-    INSERT OR IGNORE INTO last_size_chart
-      (last_key, width, size_system, size_label, foot_length_mm, ball_girth_mm)
-    VALUES (?, ?, 'EU', ?, ?, ?)
-  `)
-  let rows = 0
-  for (const [lastKey, width, anchor] of ANCHORS) {
-    EU_SIZES.forEach((label, i) => {
-      ins.run(lastKey, width, label, lenAt(i), girthAt(anchor, i))
-      rows++
-    })
+// Penny Loafer — nur US-Größen. [US-Label, foot_length, ball_girth]
+const PENNY_US = [
+  ['7', 256.5, 242.7], ['8', 260.8, 245.9], ['9', 265.0, 249.1],
+  ['10', 273.5, 255.5], ['11', 282.0, 261.8], ['12', 290.4, 268.2],
+  ['13', 298.9, 274.5], ['14', 307.4, 280.9], ['15', 315.9, 287.3],
+]
+
+// Spec je Leiste. widths: [width, anchorGirthAtRef, optionalRange]
+// optionalRange überschreibt den Default-Bereich (Herren 38–50, Damen 35–42).
+const LAST_CHART_SPEC = [
+  // Herren — Dress-Leisten (D/EE/EEE)
+  { key: 'monti',     gender: 'men', widths: [['D', 246.0], ['EE', 255.0], ['EEE', 268.5]] },
+  { key: 'zurigo',    gender: 'men', widths: [['D', 250.0], ['EE', 259.0], ['EEE', 272.5]] },
+  { key: 'savile',    gender: 'men', widths: [['D', 244.5], ['EE', 253.5], ['EEE', 267.0]] },
+  { key: 'belgravia', gender: 'men', widths: [['D', 248.0], ['EE', 257.0]] },
+  // Herren — Modell-spezifische Leisten
+  { key: 'wellington', gender: 'men', widths: [['D', 244.0], ['EE', 253.0]] },
+  { key: 'drake',      gender: 'men', widths: [['D', 245.0]] },
+  { key: 'venetian',   gender: 'men', widths: [['D', 247.0]] },
+  { key: 'drivers',    gender: 'men', range: ['38', '48'], widths: [['D', 246.0]] },
+  { key: 'sneaker',    gender: 'men', fullOnly: true, widths: [['D', 248.0, ['38', '49']], ['EE', 257.0, ['39', '49']]] },
+  { key: 'moc_sport',  gender: 'men', range: ['39', '46'], widths: [['D', 244.0]] },
+  { key: 'chunky',     gender: 'men', range: ['39', '48'], widths: [['D', 250.0], ['EE', 259.0]] },
+  // Damen-Leisten (noch keiner Kategorie zugeordnet — nur Daten/CMS)
+  { key: 'audrey_rose', gender: 'ladies', widths: [['D', 224.0]] },
+  { key: 'chenoa',      gender: 'ladies', widths: [['D', 225.0]] },
+  { key: 'carola',      gender: 'ladies', fullOnly: true, widths: [['D', 230.0]] },
+]
+
+// Baut alle Zeilen exakt nach Spec (deterministisch, für Seed + Reset).
+export function buildLastSizeChartRows() {
+  const rows = []
+  for (const spec of LAST_CHART_SPEC) {
+    const ladies = spec.gender === 'ladies'
+    const grid = ladies ? EU_LADIES : EU_MEN
+    const foot = ladies ? FOOT_LADIES : FOOT_MEN
+    const refIdx = grid.indexOf(ladies ? '39' : '42')
+    const defRange = spec.range || (ladies ? ['35', '42'] : ['38', '50'])
+    for (const [width, anchor, wRange] of spec.widths) {
+      const range = wRange || defRange
+      const startIdx = grid.indexOf(range[0])
+      const endIdx = grid.indexOf(range[1])
+      for (let i = startIdx; i <= endIdx; i++) {
+        const label = grid[i]
+        if (spec.fullOnly && label.includes('.5')) continue
+        rows.push({
+          last_key: spec.key, width, size_system: 'EU', size_label: label,
+          foot_length_mm: foot[i], ball_girth_mm: round1(anchor + (i - refIdx) * GIRTH_STEP),
+        })
+      }
+    }
   }
+  for (const [label, len, girth] of PENNY_US) {
+    rows.push({ last_key: 'penny_loafer', width: 'D', size_system: 'US', size_label: label, foot_length_mm: len, ball_girth_mm: girth })
+  }
+  return rows
+}
 
-  // Penny Loafer — nur US-Größen (keine EU-Korrelation laut Tabelle).
-  // [US-Label, foot_length, ball_girth]
-  const PENNY_US = [
-    ['7', 256.5, 242.7], ['8', 260.8, 245.9], ['9', 265.0, 249.1],
-    ['10', 273.5, 255.5], ['11', 282.0, 261.8], ['12', 290.4, 268.2],
-    ['13', 298.9, 274.5], ['14', 307.4, 280.9], ['15', 315.9, 287.3],
-  ]
-  const insUS = db.prepare(`
-    INSERT OR IGNORE INTO last_size_chart
+// Autoritativer (Re-)Aufbau: leert die Tabelle und spielt alle Zeilen neu ein.
+// Wird vom Seed (Versionssprung) und vom CMS-Reset-Endpoint genutzt.
+export function applyLastSizeChartSeed(db) {
+  const rows = buildLastSizeChartRows()
+  const del = db.prepare('DELETE FROM last_size_chart')
+  const ins = db.prepare(`
+    INSERT INTO last_size_chart
       (last_key, width, size_system, size_label, foot_length_mm, ball_girth_mm)
-    VALUES ('penny_loafer', 'D', 'US', ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?)
   `)
-  PENNY_US.forEach(([label, len, girth]) => { insUS.run(label, len, girth); rows++ })
+  db.transaction(() => {
+    del.run()
+    for (const r of rows) ins.run(r.last_key, r.width, r.size_system, r.size_label, r.foot_length_mm, r.ball_girth_mm)
+  })()
+  return rows.length
+}
 
-  console.log(`✅ Seeded: last_size_chart (${ANCHORS.length} last×width profiles + Penny US, ${rows} rows)`)
+function seedLastSizeChart(db) {
+  const cur = db.prepare("SELECT value FROM settings WHERE key = 'last_size_chart_seed_version'").get()
+  if (cur?.value === LAST_SIZE_CHART_VERSION) return  // aktuell — CMS-Edits bewahren
+  const n = applyLastSizeChartSeed(db)
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_at)
+    VALUES ('last_size_chart_seed_version', ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+  `).run(LAST_SIZE_CHART_VERSION)
+  console.log(`✅ Seeded: last_size_chart autoritativ neu aufgebaut → v${LAST_SIZE_CHART_VERSION} (${n} Zeilen)`)
 }
 
 // Kategorie → verfügbare Leisten (für den Matcher). Dress-Modelle nutzen die
