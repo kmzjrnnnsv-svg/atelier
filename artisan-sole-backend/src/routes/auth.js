@@ -234,6 +234,11 @@ router.get('/me/foot-measurements', authenticate, (req, res) => {
 // PUT /api/auth/me/foot-measurements — Maße (+ optional fit_adjust/saved_fit) speichern
 router.put('/me/foot-measurements', authenticate, (req, res) => {
   const { foot_length_mm, ball_girth_mm, fit_adjust, saved_fit, feet } = req.body || {}
+  // Leeres/null Maß-Paar → Passform zurücksetzen.
+  if ((foot_length_mm == null || foot_length_mm === '') && (ball_girth_mm == null || ball_girth_mm === '')) {
+    getDb().prepare("UPDATE users SET foot_measurements = NULL, updated_at = datetime('now') WHERE id = ?").run(req.user.id)
+    return res.json({ foot_measurements: null })
+  }
   const len = Number(foot_length_mm)
   const girth = Number(ball_girth_mm)
   if (!Number.isFinite(len) || len < 150 || len > 350) {

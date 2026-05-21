@@ -5,7 +5,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Heart, Footprints, X } from 'lucide-react'
+import { Heart, Footprints, ChevronDown, ChevronUp } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
@@ -22,17 +22,27 @@ const BASE_CATEGORIES = [
   { label: 'Monk',         value: 'MONK' },
 ]
 
-// ── Passform-Overlay — charmant, überspringbar, beim Einstieg ───────────
+// ── Passform-Leiste — inline unter den Reitern, kein Overlay ────────────
 // Fragt Länge + Ballenumfang für beide Füße. Der größere Fuß zählt fürs
-// Matching (Schuh-Standard). Funktioniert auch für Gäste (kein Login nötig).
-function FitOverlay({ initial, onSave, onSkip }) {
-  const [ll, setLL] = useState(initial?.feet?.left?.length_mm || '')
-  const [lg, setLG] = useState(initial?.feet?.left?.girth_mm || '')
-  const [rl, setRL] = useState(initial?.feet?.right?.length_mm || '')
-  const [rg, setRG] = useState(initial?.feet?.right?.girth_mm || '')
+// Matching (Schuh-Standard). Werte werden persistiert (Konto + lokal), sind
+// jederzeit auf-/zuklappbar und leicht änderbar. Auch für Gäste nutzbar.
+function FitBar({ value, open, onToggle, onSave, onReset }) {
+  const [ll, setLL] = useState('')
+  const [lg, setLG] = useState('')
+  const [rl, setRL] = useState('')
+  const [rg, setRG] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // Felder aus gespeicherten Werten vorbefüllen, wenn das Panel geöffnet wird.
+  useEffect(() => {
+    if (!open) return
+    setLL(value?.feet?.left?.length_mm ?? value?.foot_length_mm ?? '')
+    setLG(value?.feet?.left?.girth_mm ?? value?.ball_girth_mm ?? '')
+    setRL(value?.feet?.right?.length_mm ?? value?.foot_length_mm ?? '')
+    setRG(value?.feet?.right?.girth_mm ?? value?.ball_girth_mm ?? '')
+  }, [open])
+
   const num = (v) => parseFloat(String(v).replace(',', '.'))
-  // Mindestens ein vollständiger Fuß genügt; fehlt einer, wird der andere gespiegelt.
   const leftOk = Number.isFinite(num(ll)) && Number.isFinite(num(lg))
   const rightOk = Number.isFinite(num(rl)) && Number.isFinite(num(rg))
   const canSave = leftOk || rightOk
@@ -57,62 +67,80 @@ function FitOverlay({ initial, onSave, onSkip }) {
   const lblCls = "block text-[9px] text-black/35 uppercase tracking-wider mb-1"
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4" onClick={onSkip}>
-      <div className="bg-white w-full max-w-md p-7 relative" onClick={e => e.stopPropagation()}>
-        <button onClick={onSkip} className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center bg-transparent border-0 text-black/30 hover:text-black/60">
-          <X size={16} strokeWidth={1.5} />
-        </button>
-        <div className="flex items-center gap-2 mb-2">
-          <Footprints size={16} strokeWidth={1.5} className="text-black/50" />
-          <p className="text-[10px] text-black/30 uppercase tracking-[0.22em]">Ihre Passform</p>
-        </div>
-        <p className="text-[18px] font-extralight text-black tracking-tight leading-snug mb-2">
-          Zeigen wir Ihnen, was wirklich passt
-        </p>
-        <p className="text-[12px] text-black/40 font-light leading-relaxed mb-5">
-          Zwei Maße genügen — wir finden Größe und Leistenform automatisch und
-          blenden Modelle aus, die Ihrem Fuß nicht schmeicheln. Kein Raten mehr.
-        </p>
-
-        <div className="space-y-4">
-          <div>
-            <p className="text-[10px] text-black/40 uppercase tracking-wider mb-1.5">Linker Fuß</p>
-            <div className="flex gap-2">
-              <label className="flex-1"><span className={lblCls}>Länge (mm)</span>
-                <input type="number" inputMode="decimal" value={ll} onChange={e => setLL(e.target.value)} placeholder="z. B. 270" className={inputCls} />
-              </label>
-              <label className="flex-1"><span className={lblCls}>Ballenumfang (mm)</span>
-                <input type="number" inputMode="decimal" value={lg} onChange={e => setLG(e.target.value)} placeholder="z. B. 255" className={inputCls} />
-              </label>
-            </div>
-          </div>
-          <div>
-            <p className="text-[10px] text-black/40 uppercase tracking-wider mb-1.5">Rechter Fuß</p>
-            <div className="flex gap-2">
-              <label className="flex-1"><span className={lblCls}>Länge (mm)</span>
-                <input type="number" inputMode="decimal" value={rl} onChange={e => setRL(e.target.value)} placeholder="z. B. 271" className={inputCls} />
-              </label>
-              <label className="flex-1"><span className={lblCls}>Ballenumfang (mm)</span>
-                <input type="number" inputMode="decimal" value={rg} onChange={e => setRG(e.target.value)} placeholder="z. B. 256" className={inputCls} />
-              </label>
-            </div>
-          </div>
-        </div>
-
+    <div className="border-b border-black/[0.06]">
+      {/* Zusammenfassungs-/Toggle-Zeile */}
+      <div className="px-5 lg:px-16 py-3 flex items-center justify-center gap-3">
         <button
-          onClick={handleSave}
-          disabled={!canSave || saving}
-          className="mt-6 w-full py-3 bg-black text-white text-[11px] tracking-[0.18em] uppercase disabled:opacity-30 border-0"
+          onClick={onToggle}
+          className="flex items-center gap-2 bg-transparent border-0 text-[11px] lg:text-[12px] text-black/45 hover:text-black/75 transition-colors"
         >
-          {saving ? 'Einen Moment …' : 'Passende Modelle zeigen'}
-        </button>
-        <button
-          onClick={onSkip}
-          className="mt-2 w-full py-2 text-[11px] text-black/35 hover:text-black/60 bg-transparent border-0 font-light tracking-wider"
-        >
-          Später — erst stöbern
+          <Footprints size={14} strokeWidth={1.5} />
+          {value?.foot_length_mm ? (
+            <span className="font-light tracking-wide">
+              Passform: {value.foot_length_mm}/{value.ball_girth_mm} mm
+              <span className="text-black/30 ml-1.5 underline underline-offset-2">ändern</span>
+            </span>
+          ) : (
+            <span className="font-light tracking-wide">
+              Für die richtige Passform: Maße eingeben
+            </span>
+          )}
+          {open ? <ChevronUp size={13} strokeWidth={1.5} /> : <ChevronDown size={13} strokeWidth={1.5} />}
         </button>
       </div>
+
+      {/* Ausklappbares Eingabe-Panel */}
+      {open && (
+        <div className="px-5 lg:px-16 pb-5 pt-1">
+          <div className="max-w-2xl mx-auto">
+            <p className="text-[11px] text-black/40 font-light leading-relaxed mb-4 text-center">
+              Zwei Maße genügen — wir finden Größe und Leistenform automatisch und
+              blenden Modelle aus, die Ihrem Fuß nicht schmeicheln.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <p className="text-[10px] text-black/40 uppercase tracking-wider mb-1.5">Linker Fuß</p>
+                <div className="flex gap-2">
+                  <label className="flex-1"><span className={lblCls}>Länge (mm)</span>
+                    <input type="number" inputMode="decimal" value={ll} onChange={e => setLL(e.target.value)} placeholder="z. B. 270" className={inputCls} />
+                  </label>
+                  <label className="flex-1"><span className={lblCls}>Ballenumfang (mm)</span>
+                    <input type="number" inputMode="decimal" value={lg} onChange={e => setLG(e.target.value)} placeholder="z. B. 255" className={inputCls} />
+                  </label>
+                </div>
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] text-black/40 uppercase tracking-wider mb-1.5">Rechter Fuß</p>
+                <div className="flex gap-2">
+                  <label className="flex-1"><span className={lblCls}>Länge (mm)</span>
+                    <input type="number" inputMode="decimal" value={rl} onChange={e => setRL(e.target.value)} placeholder="z. B. 271" className={inputCls} />
+                  </label>
+                  <label className="flex-1"><span className={lblCls}>Ballenumfang (mm)</span>
+                    <input type="number" inputMode="decimal" value={rg} onChange={e => setRG(e.target.value)} placeholder="z. B. 256" className={inputCls} />
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mt-4 justify-center">
+              <button
+                onClick={handleSave}
+                disabled={!canSave || saving}
+                className="px-8 py-2.5 bg-black text-white text-[11px] tracking-[0.18em] uppercase disabled:opacity-30 border-0"
+              >
+                {saving ? 'Einen Moment …' : 'Übernehmen'}
+              </button>
+              {value?.foot_length_mm && (
+                <button
+                  onClick={onReset}
+                  className="px-4 py-2.5 text-[11px] text-black/35 hover:text-black/60 bg-transparent border-0 font-light tracking-wider"
+                >
+                  Zurücksetzen
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -208,39 +236,26 @@ export default function ShoeCollection() {
   const [scanAccuracy, setScanAccuracy] = useState(null)
 
   // ── Passform-Filter ──────────────────────────────────────────────────────
-  // Maße können vom Account kommen (footMeasurements) oder transient von Gästen
-  // (localMeas). Der größere Fuß zählt — bereits in foot_length_mm/ball_girth_mm.
-  const [localMeas, setLocalMeas] = useState(null) // { foot_length_mm, ball_girth_mm, feet }
-  const [overlayOpen, setOverlayOpen] = useState(false)
+  // Maße kommen aus dem Store (footMeasurements) — für eingeloggte Nutzer vom
+  // Konto, für Gäste aus localStorage (beides via saveFootMeasurements). Der
+  // größere Fuß zählt — bereits in foot_length_mm/ball_girth_mm.
+  const [fitOpen, setFitOpen] = useState(false)
   const [feasible, setFeasible] = useState(null)    // { categories:Set, known:Set }
-
-  const effMeas = localMeas
-    || (footMeasurements?.foot_length_mm
-        ? { foot_length_mm: footMeasurements.foot_length_mm, ball_girth_mm: footMeasurements.ball_girth_mm, feet: footMeasurements.feet }
-        : null)
-
-  // Overlay einmalig beim Einstieg, wenn noch keine Maße vorliegen.
-  useEffect(() => {
-    if (effMeas) return
-    if (sessionStorage.getItem('fitOverlayDismissed')) return
-    const t = setTimeout(() => setOverlayOpen(true), 600)
-    return () => clearTimeout(t)
-  }, [effMeas?.foot_length_mm])
 
   // Feasibility laden, sobald Maße vorhanden sind.
   useEffect(() => {
-    if (!effMeas?.foot_length_mm) { setFeasible(null); return }
+    if (!footMeasurements?.foot_length_mm) { setFeasible(null); return }
     let cancelled = false
     const adj = footMeasurements?.fit_adjust || { length_mm: 0, girth_mm: 0 }
     fitFeasibility({
-      length: effMeas.foot_length_mm + (adj.length_mm || 0),
-      girth: effMeas.ball_girth_mm + (adj.girth_mm || 0),
+      length: footMeasurements.foot_length_mm + (adj.length_mm || 0),
+      girth: footMeasurements.ball_girth_mm + (adj.girth_mm || 0),
     }).then(r => {
       if (cancelled) return
       setFeasible({ categories: new Set(r.categories || []), known: new Set(r.knownCategories || []) })
     })
     return () => { cancelled = true }
-  }, [effMeas?.foot_length_mm, effMeas?.ball_girth_mm])
+  }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm, footMeasurements?.fit_adjust?.length_mm, footMeasurements?.fit_adjust?.girth_mm])
 
   // Schuh passt, wenn: keine Maße, Kategorie unbekannt (keine Chart-Daten),
   // oder Kategorie unter den passenden.
@@ -248,14 +263,11 @@ export default function ShoeCollection() {
     !feasible || !feasible.known.has(cat) || feasible.categories.has(cat)
 
   const handleSaveMeasurements = async (m) => {
-    setLocalMeas(m)
-    setOverlayOpen(false)
-    sessionStorage.setItem('fitOverlayDismissed', '1')
-    if (user) { try { await saveFootMeasurements(m) } catch {} }
+    await saveFootMeasurements(m)  // persistiert Konto + localStorage
+    setFitOpen(false)
   }
-  const dismissOverlay = () => {
-    setOverlayOpen(false)
-    sessionStorage.setItem('fitOverlayDismissed', '1')
+  const handleResetMeasurements = async () => {
+    await saveFootMeasurements({ foot_length_mm: null, ball_girth_mm: null }).catch(() => {})
   }
   // Backend-Status: 'loading' (Initial-Pull läuft) | 'ok' | 'error'
   const [backendStatus, setBackendStatus] = useState(shoes.length ? 'ok' : 'loading')
@@ -315,7 +327,7 @@ export default function ShoeCollection() {
       </div>
 
       {/* ── Category navigation (LV underline tabs) ────────────── */}
-      <div className="px-5 lg:px-16 pb-5 lg:pb-8 border-b border-black/[0.06]">
+      <div className="px-5 lg:px-16 pb-5 lg:pb-8">
         <div className="flex gap-0 lg:gap-1 overflow-x-auto justify-center" style={{ scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => {
             const count = cat.value === 'ALL' ? enriched.length
@@ -343,26 +355,18 @@ export default function ShoeCollection() {
         </div>
       </div>
 
-      {/* ── Product count + Passform-Status ─────────────────────── */}
-      <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2 flex items-center justify-between gap-3">
+      {/* ── Passform-Leiste (inline, unter den Reitern) ─────────── */}
+      <FitBar
+        value={footMeasurements}
+        open={fitOpen}
+        onToggle={() => setFitOpen(o => !o)}
+        onSave={handleSaveMeasurements}
+        onReset={handleResetMeasurements}
+      />
+
+      {/* ── Product count ───────────────────────────────────────── */}
+      <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2">
         <p className="text-[11px] text-black/20 font-light">{filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}</p>
-        {effMeas ? (
-          <button
-            onClick={() => setOverlayOpen(true)}
-            className="flex items-center gap-1.5 bg-transparent border-0 text-[11px] text-black/40 hover:text-black/70 font-light"
-          >
-            <Footprints size={13} strokeWidth={1.5} />
-            <span>Passform aktiv · {effMeas.foot_length_mm}/{effMeas.ball_girth_mm} mm</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => setOverlayOpen(true)}
-            className="flex items-center gap-1.5 bg-transparent border-0 text-[11px] text-black/40 hover:text-black/70 font-light"
-          >
-            <Footprints size={13} strokeWidth={1.5} />
-            <span>Nach meiner Passform filtern</span>
-          </button>
-        )}
       </div>
 
       {/* ── Product Grid (LV style — 4-col, compact cards) ────── */}
@@ -416,14 +420,6 @@ export default function ShoeCollection() {
       <div className="px-5 lg:px-16 pb-16">
         <CtaBanner page="collection" />
       </div>
-
-      {overlayOpen && (
-        <FitOverlay
-          initial={footMeasurements || localMeas}
-          onSave={handleSaveMeasurements}
-          onSkip={dismissOverlay}
-        />
-      )}
     </div>
   )
 }
