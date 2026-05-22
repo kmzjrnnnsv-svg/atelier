@@ -117,28 +117,28 @@ export default function CorporateGifting() {
       <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-8">
         <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Artisan Sole · für Unternehmen</p>
         <h1 className="text-[26px] lg:text-[38px] font-extralight text-black leading-[1.08] tracking-tight max-w-3xl mx-auto">
-          Schenken Sie Ihrem Team einen Schuh, der bleibt.
+          Wertschätzung, die man trägt.
         </h1>
         <p className="text-[13px] lg:text-[15px] text-black/45 font-light max-w-2xl mx-auto mt-5 leading-relaxed">
-          Maßgefertigt in Spanien, aus feinstem Leder, perfekt für jeden Fuß.
-          Als Willkommensgeschenk für neue Gesichter oder als Dankeschön an die,
-          die schon lange dabei sind — ab {MIN_PER_DESIGN} Paar pro Design.
+          Maßgefertigte Schuhe aus spanischer Manufaktur — feinstes Leder, für jeden Fuß
+          gemacht. Ein Willkommensgruß für neue Gesichter, ein Dank an langjährige
+          Weggefährten. Ab {MIN_PER_DESIGN} Paar pro Design.
         </p>
         <button
           onClick={scrollToForm}
           className="mt-8 px-9 h-12 bg-black text-white border-0 hover:bg-black/90 transition-all"
           style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
         >
-          Tun Sie Ihrem Team etwas Gutes
+          Ihr Team verdient es
         </button>
       </div>
 
       {/* Emotionaler Zwischensatz */}
       <div className="px-5 lg:px-16 pb-12 lg:pb-16">
         <p className="text-center text-[18px] lg:text-[22px] font-extralight text-black/70 leading-snug max-w-3xl mx-auto tracking-tight">
-          Manche Geschenke verschwinden in der Schublade.
+          Die meisten Geschenke sind bis zum Jahresende vergessen.
           <br className="hidden sm:block" />
-          <span className="text-black"> Ein Schuh, der perfekt sitzt, begleitet jeden Schritt.</span>
+          <span className="text-black"> Ein Schuh, der perfekt sitzt, ist jeden Morgen aufs Neue da.</span>
         </p>
       </div>
 
