@@ -123,6 +123,7 @@ const OptionsEditor        = lazy(() => import('./screens/cms/OptionsEditor'))
 const ConfiguratorMatrix   = lazy(() => import('./screens/cms/ConfiguratorMatrix'))
 const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
+const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -146,6 +147,10 @@ export const isNative = Capacitor.isNativePlatform()
 
 // Detect mobile web (iOS/Android browser, not Capacitor)
 export const isMobileWeb = !isNative && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+// business.artisansole.com → Corporate-Gifting-Bereich als Einstieg
+export const isBusiness = !isNative && typeof window !== 'undefined' && /^business\./i.test(window.location.hostname)
+const HOME_PATH = isBusiness ? '/business' : '/collection'
 
 // Add class to <html> so CSS can differentiate
 if (isNative) document.documentElement.classList.add('native')
@@ -176,7 +181,7 @@ function AppRoutes() {
   const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
   const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
-  const FOOTER_PATHS = ['/collection', '/accessories', '/explore']
+  const FOOTER_PATHS = ['/collection', '/accessories', '/explore', '/business']
   const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
 
@@ -264,6 +269,7 @@ function AppRoutes() {
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
               {/* Public — Window Shopping ohne Login */}
+              <Route path="/business"   element={<CorporateGifting />} />
               <Route path="/collection" element={<ShoeCollection />} />
               <Route path="/customize"  element={<Customize />} />
               <Route path="/welcome"    element={<Welcome />} />
@@ -297,11 +303,12 @@ function AppRoutes() {
 
   const routes = (
     <Routes>
-      <Route path="/"           element={<Navigate to="/collection" replace />} />
+      <Route path="/"           element={<Navigate to={HOME_PATH} replace />} />
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />
       {/* Public — Window Shopping ohne Login */}
+      <Route path="/business"   element={<CorporateGifting />} />
       <Route path="/collection" element={<ShoeCollection />} />
       <Route path="/customize"  element={<Customize />} />
       <Route path="/welcome"    element={<Welcome />} />
