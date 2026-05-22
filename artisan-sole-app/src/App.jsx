@@ -106,7 +106,7 @@ const MFASetup             = lazy(() => import('./screens/cms/MFASetup'))
 const BankSettings         = lazy(() => import('./screens/cms/BankSettings'))
 const EmailSettings        = lazy(() => import('./screens/cms/EmailSettings'))
 const EmailTemplatesPanel  = lazy(() => import('./screens/cms/EmailTemplatesPanel'))
-const LastSettings         = lazy(() => import('./screens/cms/LastSettings'))
+const LastSizeChartEditor  = lazy(() => import('./screens/cms/LastSizeChartEditor'))
 const ProductConfigEditor  = lazy(() => import('./screens/cms/ProductConfigEditor'))
 const ExploreEditor        = lazy(() => import('./screens/cms/ExploreEditor'))
 const LoyaltyEditor        = lazy(() => import('./screens/cms/LoyaltyEditor'))
@@ -230,7 +230,7 @@ function AppRoutes() {
               <Route path="bank"     element={<AdminRoute><BankSettings /></AdminRoute>} />
               <Route path="email"    element={<AdminRoute><EmailSettings /></AdminRoute>} />
               <Route path="email-templates" element={<EmailTemplatesPanel />} />
-              <Route path="leisten"       element={<LastSettings />} />
+              <Route path="leisten"       element={<LastSizeChartEditor />} />
               <Route path="product-config" element={<ProductConfigEditor />} />
               <Route path="feedback" element={<FeedbackPanel />} />
               <Route path="accessories" element={<AccessoriesPanel />} />

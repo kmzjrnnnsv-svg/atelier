@@ -28,6 +28,7 @@ import mediaRouter from './routes/media.js'
 import customRequestsRouter from './routes/customRequests.js'
 import optionsRouter from './routes/options.js'
 import fitRouter from './routes/fit.js'
+import lastChartRouter from './routes/lastChart.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -140,6 +141,7 @@ app.use('/api/custom-requests', customRequestsRouter)
 // /api/shoes/:id/options und /api/category-templates/:cat
 app.use('/api', optionsRouter)
 app.use('/api/fit', fitRouter)
+app.use('/api/last-size-chart', lastChartRouter)
 
 // GitHub Webhook — auto-deploy on push to website
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
