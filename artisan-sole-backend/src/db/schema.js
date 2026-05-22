@@ -304,6 +304,8 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN last_label TEXT`,
     `ALTER TABLE orders ADD COLUMN last_width TEXT`,
     `ALTER TABLE orders ADD COLUMN fit_measurements TEXT`,
+    // accessories — Zuordnung nach Lederart (CSV der material_keys; '*'/NULL = alle)
+    `ALTER TABLE accessories ADD COLUMN material_keys TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

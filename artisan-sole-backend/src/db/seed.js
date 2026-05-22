@@ -6,6 +6,7 @@ export async function seedDatabase(db) {
   seedEmailTemplates(db)
   seedArticles(db)
   seedShoeAccessories(db)
+  seedAccessoryMaterials(db)
   seedConfiguratorOptions(db)
   seedExtendedCatalog(db)
   seedMatrixModels(db)
@@ -404,6 +405,40 @@ function seedShoeAccessories(db) {
   })()
 
   console.log(`✅ Seeded: shoe-accessory assignments for ${shoes.length} shoes`)
+}
+
+// seedAccessoryMaterials — ordnet jedes Zubehör seiner passenden Lederart zu
+// (Pflege nach Material statt nach Schuhmodell). Im Konfigurator wird Zubehör
+// gezeigt, dessen material_keys '*' ist ODER das gewählte Material enthält.
+// Idempotent + nicht-destruktiv: setzt NUR Zeilen, deren material_keys noch
+// NULL ist — manuelle CMS-Zuordnungen bleiben erhalten.
+function seedAccessoryMaterials(db) {
+  // Material-Gruppen (aktive + Legacy-Keys).
+  const SMOOTH = 'lux_calf,painted_full_grain,patina,box_calf,painted_calf,calfskin'
+  const SUEDE  = 'lux_suede,urban_suede,suede'
+  const SUEDE_VELVET = 'lux_suede,urban_suede,suede,velvet'
+
+  // Zubehör-Key → material_keys. '*' = bei jedem Material zeigen (universell).
+  const MAP = {
+    // universell (Formerhalt, Aufbewahrung, Hardware, Sohlenpflege)
+    shoetrees: '*', dustbag: '*', shoehorn: '*', belt: '*',
+    boot_jack: '*', waxed_laces: '*', buckle_cloth: '*', sole_oil: '*',
+    sneaker_kit: '*',
+    // Glattleder-Pflege
+    carekit: SMOOTH, horsehair_brush: SMOOTH, cream_dark: SMOOTH,
+    cream_cognac: SMOOTH, cordovan_balm: SMOOTH, polishing_cloth: SMOOTH,
+    // Wildleder/Velours
+    suede_brush: SUEDE, suede_eraser: SUEDE, suede_spray: SUEDE_VELVET,
+    // Spezialleder ohne aktuelles Material → bleibt verborgen, bis es existiert
+    patent_care: 'patent', exotic_care: 'exotic',
+  }
+
+  const upd = db.prepare('UPDATE accessories SET material_keys = ? WHERE key = ? AND material_keys IS NULL')
+  let n = 0
+  db.transaction(() => {
+    for (const [key, mk] of Object.entries(MAP)) n += upd.run(mk, key).changes
+  })()
+  if (n) console.log(`✅ Seeded: accessory→material defaults (${n} gesetzt)`)
 }
 
 // ─────────────────────────────────────────────────────────────────────
