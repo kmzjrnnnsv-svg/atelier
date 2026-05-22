@@ -357,35 +357,6 @@ export default function Customize() {
   const [selectedAccessories, setSelectedAccessories] = useState([])
   const [duplicateDialog, setDuplicateDialog] = useState(false)
 
-  // Zubehör wird nach gewählter Lederart empfohlen (nicht mehr pro Schuhmodell):
-  // material_keys '*'/leer = universell; sonst muss das gewählte Material (selMat)
-  // enthalten sein.
-  const matMatchesAccessory = (a) => {
-    const mk = (a.material_keys || '').trim()
-    if (!mk || mk === '*') return true
-    if (!selMat) return false
-    return mk.split(',').map(s => s.trim()).includes(selMat)
-  }
-  const accessories = (Array.isArray(allAccessories) ? allAccessories : [])
-    .filter(a => a.is_active !== 0 && matMatchesAccessory(a))
-    .map(a => ({
-      id: a.id,
-      name: a.name,
-      price: parseFloat(a.price) || 0,
-      image: a.image_data || null,
-      color: a.color || '#888',
-    }))
-
-  // Auswahl bereinigen, wenn nach Materialwechsel ein gewähltes Zubehör nicht
-  // mehr passt.
-  useEffect(() => {
-    const visible = new Set(accessories.map(a => a.id))
-    setSelectedAccessories(prev => {
-      const next = prev.filter(id => visible.has(id))
-      return next.length === prev.length ? prev : next
-    })
-  }, [selMat])
-
   const toggleAccessory = (id) => {
     setSelectedAccessories(prev =>
       prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
@@ -530,6 +501,43 @@ export default function Customize() {
 
   const mat      = matList.find(m => m.key === selMat) || matList[0]
   const col      = colList.find(c => c.key === selCol) || colList[0]
+
+  // Zubehör wird nach gewählter Lederart empfohlen (nicht mehr pro Schuhmodell):
+  // material_keys '*'/leer = universell; sonst muss das gewählte Material (selMat)
+  // enthalten sein. Zusätzlich optionale Farb-Zuordnung (z. B. schwarzer Spanner
+  // nur bei schwarzen Schuhen).
+  const matMatchesAccessory = (a) => {
+    const mk = (a.material_keys || '').trim()
+    if (!mk || mk === '*') return true
+    if (!selMat) return false
+    return mk.split(',').map(s => s.trim()).includes(selMat)
+  }
+  const colorMatchesAccessory = (a) => {
+    const cm = (a.color_match || '').trim()
+    if (!cm) return true
+    const name = (col?.name || '').toLowerCase()
+    if (!name) return false
+    return cm.split(',').map(s => s.trim().toLowerCase()).filter(Boolean).some(kw => name.includes(kw))
+  }
+  const accessories = (Array.isArray(allAccessories) ? allAccessories : [])
+    .filter(a => a.is_active !== 0 && matMatchesAccessory(a) && colorMatchesAccessory(a))
+    .map(a => ({
+      id: a.id,
+      name: a.name,
+      price: parseFloat(a.price) || 0,
+      image: a.image_data || null,
+      color: a.color || '#888',
+    }))
+
+  // Auswahl bereinigen, wenn nach Material-/Farbwechsel ein gewähltes Zubehör
+  // nicht mehr angezeigt wird.
+  useEffect(() => {
+    const visible = new Set(accessories.map(a => a.id))
+    setSelectedAccessories(prev => {
+      const next = prev.filter(id => visible.has(id))
+      return next.length === prev.length ? prev : next
+    })
+  }, [selMat, selCol])
 
   // Aktive Bild-Galerie für die Farbe, abhängig vom gewählten Material:
   // 1) Material-spezifischer Bucket (material_key === mat.key)

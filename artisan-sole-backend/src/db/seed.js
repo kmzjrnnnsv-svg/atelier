@@ -418,6 +418,9 @@ function seedAccessoryMaterials(db) {
   const SUEDE  = 'lux_suede,urban_suede,suede'
   const SUEDE_VELVET = 'lux_suede,urban_suede,suede,velvet'
 
+  const PATINA = 'patina,painted_full_grain,painted_calf'
+  const CALF   = 'lux_calf,box_calf,painted_calf'
+
   // Zubehör-Key → material_keys. '*' = bei jedem Material zeigen (universell).
   const MAP = {
     // universell (Formerhalt, Aufbewahrung, Hardware, Sohlenpflege)
@@ -431,12 +434,24 @@ function seedAccessoryMaterials(db) {
     suede_brush: SUEDE, suede_eraser: SUEDE, suede_spray: SUEDE_VELVET,
     // Spezialleder ohne aktuelles Material → bleibt verborgen, bis es existiert
     patent_care: 'patent', exotic_care: 'exotic',
+    // Neu: Spanner (universell) + Pflege-Kits je Lederart
+    shoe_tree_black: '*', shoe_tree_cedar: '*', boot_tree_cedar: '*',
+    care_kit_saphir_patina: PATINA, care_kit_suede: SUEDE,
+    care_kit_leather: SMOOTH, calf_care_cream: CALF, shoe_cream_black: SMOOTH,
+  }
+
+  // Zubehör-Key → color_match (CSV Schlüsselwörter). Nur farb-spezifische Artikel.
+  const COLOR_MAP = {
+    shoe_tree_black: 'schwarz,black',
+    shoe_cream_black: 'schwarz,black',
   }
 
   const upd = db.prepare('UPDATE accessories SET material_keys = ? WHERE key = ? AND material_keys IS NULL')
+  const updColor = db.prepare('UPDATE accessories SET color_match = ? WHERE key = ? AND color_match IS NULL')
   let n = 0
   db.transaction(() => {
     for (const [key, mk] of Object.entries(MAP)) n += upd.run(mk, key).changes
+    for (const [key, cm] of Object.entries(COLOR_MAP)) updColor.run(cm, key)
   })()
   if (n) console.log(`✅ Seeded: accessory→material defaults (${n} gesetzt)`)
 }

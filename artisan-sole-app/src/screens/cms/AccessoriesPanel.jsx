@@ -228,6 +228,7 @@ function MaterialAssigner({ accessory }) {
   const initial = parse(accessory.material_keys)
   const [universal, setUniversal] = useState(initial.length === 0 || initial.includes('*'))
   const [keys, setKeys] = useState(initial.filter(k => k !== '*'))
+  const [colorMatch, setColorMatch] = useState(accessory.color_match || '')
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState(0)
 
@@ -240,7 +241,7 @@ function MaterialAssigner({ accessory }) {
       const material_keys = universal ? '*' : keys.join(',')
       await apiFetch(`/api/accessories/${accessory.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ material_keys }),
+        body: JSON.stringify({ material_keys, color_match: colorMatch.trim() || null }),
       })
       setSavedAt(Date.now())
     } catch (e) { alert(e?.error || 'Fehler') }
@@ -290,6 +291,23 @@ function MaterialAssigner({ accessory }) {
             </button>
           )
         })}
+      </div>
+
+      {/* Optionale Farb-Zuordnung */}
+      <div>
+        <label className="text-[9px] text-black/35 uppercase tracking-[0.2em] block mb-1.5 font-light">
+          Nur bei Farbe (optional)
+        </label>
+        <input
+          type="text"
+          value={colorMatch}
+          onChange={e => setColorMatch(e.target.value)}
+          placeholder="z. B. schwarz,black — leer = jede Farbe"
+          className="w-full max-w-md h-9 px-3 border border-black/[0.12] text-[12px] bg-white outline-none focus:border-black/30 transition-colors font-light text-black/70"
+        />
+        <p className="text-[9px] text-black/25 mt-1 font-light">
+          Schlüsselwörter (kommagetrennt) — Zubehör wird nur empfohlen, wenn der gewählte Farbname eines davon enthält.
+        </p>
       </div>
 
       <div className="flex items-center gap-3 pt-2">

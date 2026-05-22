@@ -306,6 +306,8 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN fit_measurements TEXT`,
     // accessories — Zuordnung nach Lederart (CSV der material_keys; '*'/NULL = alle)
     `ALTER TABLE accessories ADD COLUMN material_keys TEXT`,
+    // accessories — optionale Farb-Zuordnung (CSV Schlüsselwörter, z. B. 'schwarz,black')
+    `ALTER TABLE accessories ADD COLUMN color_match TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────
@@ -342,6 +344,15 @@ export function runMigrations(db) {
       { key: 'sole_oil',        name: 'Ledersohlen-Balsam',          desc: 'Pflegt & imprägniert offenporige Ledersohlen. Verlängert die Lebensdauer der Sohle erheblich.',                  price: 18,  sort: 17, rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
       { key: 'exotic_care',     name: 'Exotenleder-Pflege',          desc: 'Spezialcreme für Kroko-Prägung & strukturierte Leder. Erhält die einzigartige Textur.',                          price: 42,  sort: 18, rec: '["OXFORD","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
       { key: 'polishing_cloth', name: 'Poliertuch',                  desc: 'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                  price: 12,  sort: 19, rec: '["OXFORD","DERBY","MONK","LOAFER"]', not: '["SNEAKER"]' },
+      // ── Neu: Spanner & Pflege-Kits (Zuordnung nach Lederart bzw. Farbe) ──
+      { key: 'shoe_tree_black',       name: 'Schuhspanner Schwarz (Labeled)',        desc: 'Eleganter lackierter Schuhspanner in Schwarz — passend zu schwarzen Schuhen. Formerhalt & Feuchtigkeitskontrolle.', price: 22.0,  sort: 20, rec: '[]', not: '["SNEAKER"]' },
+      { key: 'shoe_tree_cedar',       name: 'Zedernholz-Schuhspanner (Labeled)',     desc: 'Schuhspanner aus aromatischem Zedernholz. Absorbiert Feuchtigkeit und hält den Schuh in perfekter Form.',          price: 21.0,  sort: 21, rec: '[]', not: '["SNEAKER"]' },
+      { key: 'boot_tree_cedar',       name: 'Zedernholz-Stiefelspanner (Private Labeled)', desc: 'Hoher Spanner aus Zedernholz, speziell für Stiefel & Boots. Bewahrt Schaft und Form.',                       price: 29.0,  sort: 22, rec: '["BOOT"]', not: '["SNEAKER"]' },
+      { key: 'care_kit_saphir_patina', name: 'Schuhpflege-Set Saphir Patina',        desc: 'Premium-Set von Saphir Médaille d’Or für patinierte Leder: Creme, Bürste & Applikator. Erhält Tiefe und Glanz der Patina.', price: 38.0, sort: 23, rec: '[]', not: '["SNEAKER"]' },
+      { key: 'care_kit_suede',        name: 'Schuhpflege-Set Wildleder (1 Unit)',    desc: 'Komplett-Set für Velours & Nubuk: Krepp-/Messingbürste, Imprägnierung & Radierer. Richtet das Flor auf und schützt.', price: 25.25, sort: 24, rec: '[]', not: '[]' },
+      { key: 'care_kit_leather',      name: 'Schuhpflege-Set Glattleder (1 Unit)',   desc: 'Komplett-Set für Glattleder: Creme, Bürsten & Poliertuch. Nährt, schützt und bringt den Glanz zurück.',           price: 23.7,  sort: 25, rec: '[]', not: '["SNEAKER"]' },
+      { key: 'calf_care_cream',       name: 'Luxe Calf Leather Care Cream',          desc: 'Hochwertige Pflegecreme für feines Kalbsleder. Spendet Feuchtigkeit und frischt die Farbe schonend auf.',          price: 6.9,   sort: 26, rec: '[]', not: '["SNEAKER"]' },
+      { key: 'shoe_cream_black',      name: 'Schuhcreme-Set Schwarz',                desc: 'Pigmentierte Pflegecreme-Set in Schwarz für schwarzes Glattleder. Nährt das Leder und vertieft die Farbe.',        price: 6.9,   sort: 27, rec: '[]', not: '["SNEAKER"]' },
     ]
     const upsert = db.prepare(`
       INSERT INTO accessories (key, name, description, price, sort_order, is_active, recommended_for, not_recommended_for)
@@ -685,7 +696,15 @@ export function runMigrations(db) {
       ('buckle_cloth',    'Schnallen-Poliertuch',        'Anti-Anlauf-Tuch für Messing- & Silberschnallen. Hält Schnallen und Metallteile glänzend.',                         15,  16),
       ('sole_oil',        'Ledersohlen-Balsam',          'Pflegt & imprägniert offenporige Ledersohlen. Verlängert die Lebensdauer der Sohle erheblich.',                    18,  17),
       ('exotic_care',     'Exotenleder-Pflege',          'Spezialcreme für Kroko-Prägung & strukturierte Leder. Erhält die einzigartige Textur.',                            42,  18),
-      ('polishing_cloth', 'Poliertuch',                  'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                    12,  19);
+      ('polishing_cloth', 'Poliertuch',                  'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                    12,  19),
+      ('shoe_tree_black',        'Schuhspanner Schwarz (Labeled)',                'Eleganter lackierter Schuhspanner in Schwarz — passend zu schwarzen Schuhen. Formerhalt & Feuchtigkeitskontrolle.',           22.0,  20),
+      ('shoe_tree_cedar',        'Zedernholz-Schuhspanner (Labeled)',             'Schuhspanner aus aromatischem Zedernholz. Absorbiert Feuchtigkeit und hält den Schuh in perfekter Form.',                    21.0,  21),
+      ('boot_tree_cedar',        'Zedernholz-Stiefelspanner (Private Labeled)',   'Hoher Spanner aus Zedernholz, speziell für Stiefel & Boots. Bewahrt Schaft und Form.',                                      29.0,  22),
+      ('care_kit_saphir_patina', 'Schuhpflege-Set Saphir Patina',                 'Premium-Set von Saphir Médaille d''Or für patinierte Leder: Creme, Bürste & Applikator. Erhält Tiefe und Glanz der Patina.', 38.0,  23),
+      ('care_kit_suede',         'Schuhpflege-Set Wildleder (1 Unit)',            'Komplett-Set für Velours & Nubuk: Krepp-/Messingbürste, Imprägnierung & Radierer. Richtet das Flor auf und schützt.',        25.25, 24),
+      ('care_kit_leather',       'Schuhpflege-Set Glattleder (1 Unit)',           'Komplett-Set für Glattleder: Creme, Bürsten & Poliertuch. Nährt, schützt und bringt den Glanz zurück.',                      23.7,  25),
+      ('calf_care_cream',        'Luxe Calf Leather Care Cream',                  'Hochwertige Pflegecreme für feines Kalbsleder. Spendet Feuchtigkeit und frischt die Farbe schonend auf.',                    6.9,   26),
+      ('shoe_cream_black',       'Schuhcreme-Set Schwarz',                        'Pigmentierte Pflegecreme-Set in Schwarz für schwarzes Glattleder. Nährt das Leder und vertieft die Farbe.',                  6.9,   27);
 
     -- ── Shipping configuration ──────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS shipping_config (
