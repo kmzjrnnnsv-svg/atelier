@@ -148,9 +148,18 @@ export const isNative = Capacitor.isNativePlatform()
 // Detect mobile web (iOS/Android browser, not Capacitor)
 export const isMobileWeb = !isNative && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
-// business.artisansole.com → Corporate-Gifting-Bereich als Einstieg
-export const isBusiness = !isNative && typeof window !== 'undefined' && /^business\./i.test(window.location.hostname)
-const HOME_PATH = isBusiness ? '/business' : '/collection'
+// Domains: business.artisansole.com zeigt den Corporate-Gifting-Bereich,
+// die Hauptdomain (artisansole.com) leitet /business dorthin um.
+const HOSTNAME = typeof window !== 'undefined' ? window.location.hostname : ''
+export const isBusiness = !isNative && /^business\./i.test(HOSTNAME)
+const isProdApex = !isNative && /^(www\.)?artisansole\.com$/i.test(HOSTNAME)
+const BUSINESS_URL = 'https://business.artisansole.com/'
+
+// Externe Weiterleitung (zur Subdomain)
+function ExternalRedirect({ to }) {
+  useEffect(() => { window.location.replace(to) }, [to])
+  return null
+}
 
 // Add class to <html> so CSS can differentiate
 if (isNative) document.documentElement.classList.add('native')
@@ -303,12 +312,14 @@ function AppRoutes() {
 
   const routes = (
     <Routes>
-      <Route path="/"           element={<Navigate to={HOME_PATH} replace />} />
+      <Route path="/"           element={isBusiness ? <CorporateGifting /> : <Navigate to="/collection" replace />} />
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />
       {/* Public — Window Shopping ohne Login */}
-      <Route path="/business"   element={<CorporateGifting />} />
+      {/* Corporate Gifting lebt auf business.artisansole.com; auf der Hauptdomain
+          leitet /business dorthin um (Subdomain = kanonisch). */}
+      <Route path="/business"   element={isProdApex ? <ExternalRedirect to={BUSINESS_URL} /> : <CorporateGifting />} />
       <Route path="/collection" element={<ShoeCollection />} />
       <Route path="/customize"  element={<Customize />} />
       <Route path="/welcome"    element={<Welcome />} />
