@@ -207,111 +207,107 @@ function ItemRow({ item, onEdit, onDelete, isLinkOpen, onToggleLink }) {
           <div className="flex items-center gap-2 mb-3">
             <Footprints size={12} className="text-black/30" strokeWidth={1.25} />
             <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] font-light">
-              Schuhe für „{item.name}"
+              Lederarten für „{item.name}"
             </p>
           </div>
-          <ShoeAssigner accessoryId={item.id} />
+          <MaterialAssigner accessory={item} />
         </div>
       )}
     </>
   )
 }
 
-// ── Schuh-Auswahl: zeigt alle Schuhe als Chips mit Vorschau ────────────────
-function ShoeAssigner({ accessoryId }) {
-  const { shoes } = useStore()
-  const [assigned, setAssigned] = useState([])   // Array von shoe_ids
-  const [loading, setLoading] = useState(true)
+// ── Lederart-Zuordnung: zeigt alle Materialien als Chips ───────────────────
+// Zubehör wird im Konfigurator gezeigt, wenn das gewählte Material zutrifft.
+// '*' (Universell) = bei jedem Material zeigen.
+function MaterialAssigner({ accessory }) {
+  const { shoeMaterials } = useStore()
+  const materials = (shoeMaterials || []).filter(m => m.available !== 0)
+  const parse = (csv) => (csv || '').split(',').map(s => s.trim()).filter(Boolean)
+
+  const initial = parse(accessory.material_keys)
+  const [universal, setUniversal] = useState(initial.length === 0 || initial.includes('*'))
+  const [keys, setKeys] = useState(initial.filter(k => k !== '*'))
+  const [colorMatch, setColorMatch] = useState(accessory.color_match || '')
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState(0)
-  const [filterCat, setFilterCat] = useState('ALL')
 
-  useEffect(() => {
-    apiFetch(`/api/accessories/${accessoryId}/shoes`)
-      .then(rows => { setAssigned((rows || []).map(r => r.id)); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [accessoryId])
-
-  const toggle = (shoeId) =>
-    setAssigned(prev => prev.includes(shoeId) ? prev.filter(id => id !== shoeId) : [...prev, shoeId])
-
-  const selectAll = () => setAssigned(filteredShoes.map(s => s.id))
-  const clearAll  = () => setAssigned([])
+  const toggle = (key) =>
+    setKeys(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
 
   const save = async () => {
     setSaving(true)
     try {
-      await apiFetch(`/api/accessories/${accessoryId}/shoes`, {
+      const material_keys = universal ? '*' : keys.join(',')
+      await apiFetch(`/api/accessories/${accessory.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ shoe_ids: assigned }),
+        body: JSON.stringify({ material_keys, color_match: colorMatch.trim() || null }),
       })
       setSavedAt(Date.now())
     } catch (e) { alert(e?.error || 'Fehler') }
     finally { setSaving(false) }
   }
 
-  if (loading) return <p className="text-[10px] text-black/25 py-2 font-light">Laden…</p>
-  if (!shoes?.length) return <p className="text-[10px] text-black/35 py-2 font-light">Keine Schuhe vorhanden.</p>
-
-  const categories = ['ALL', ...new Set(shoes.map(s => s.category).filter(Boolean))]
-  const filteredShoes = filterCat === 'ALL' ? shoes : shoes.filter(s => s.category === filterCat)
+  if (!materials.length) return <p className="text-[10px] text-black/35 py-2 font-light">Keine Materialien vorhanden.</p>
 
   return (
     <div className="space-y-3">
       <p className="text-[10px] text-black/40 font-light leading-relaxed">
-        Wähle alle Schuhe aus, bei denen dieses Zubehör im Konfigurator angezeigt werden soll.
+        Wähle die Lederarten, bei denen dieses Pflege-Zubehör im Konfigurator empfohlen
+        werden soll. „Universell" zeigt es bei jedem Material.
       </p>
 
-      {/* Kategorie-Filter + Bulk-Aktionen */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex gap-1">
-          {categories.map(c => (
-            <button
-              key={c}
-              onClick={() => setFilterCat(c)}
-              className={filterCat === c
-                ? 'px-2.5 py-1 text-[9px] bg-black text-white border-0 tracking-wider font-light'
-                : 'px-2.5 py-1 text-[9px] text-black/35 hover:text-black/60 bg-transparent border-0 tracking-wider font-light'
-              }
-            >
-              {c === 'ALL' ? 'Alle' : c}
-            </button>
-          ))}
+      {/* Universell-Schalter */}
+      <button
+        onClick={() => setUniversal(v => !v)}
+        className={`flex items-center gap-2.5 px-3 py-2 border transition-all ${
+          universal ? 'border-black bg-white' : 'border-black/[0.08] bg-white/60 hover:border-black/30'
+        }`}
+      >
+        <div className={`w-4 h-4 flex items-center justify-center ${universal ? 'bg-black' : 'border border-black/20'}`}>
+          {universal && <Check size={10} strokeWidth={2.5} className="text-white" />}
         </div>
-        <div className="ml-auto flex gap-2">
-          <button onClick={selectAll} className="text-[10px] text-black/45 hover:text-black tracking-[0.15em] uppercase bg-transparent border-0">
-            Alle wählen
-          </button>
-          <span className="text-black/15">·</span>
-          <button onClick={clearAll} className="text-[10px] text-black/45 hover:text-black tracking-[0.15em] uppercase bg-transparent border-0">
-            Auswahl leeren
-          </button>
-        </div>
-      </div>
+        <span className="text-[11px] font-light text-black/75">Universell · bei jedem Material zeigen</span>
+      </button>
 
-      {/* Schuh-Karten als Toggle */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-        {filteredShoes.map(s => {
-          const on = assigned.includes(s.id)
+      {/* Material-Chips */}
+      <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 transition-opacity ${universal ? 'opacity-30 pointer-events-none' : ''}`}>
+        {materials.map(m => {
+          const on = keys.includes(m.key)
           return (
             <button
-              key={s.id}
-              onClick={() => toggle(s.id)}
+              key={m.key}
+              onClick={() => toggle(m.key)}
               className={`flex items-center gap-2.5 px-3 py-2 transition-all border text-left ${
                 on ? 'border-black bg-white' : 'border-black/[0.08] bg-white/60 hover:border-black/30'
               }`}
             >
-              <div className="w-9 h-9 flex-shrink-0 overflow-hidden flex items-center justify-center" style={{ backgroundColor: s.color || '#f6f5f3' }}>
-                {s.image && <img src={s.image} alt={s.name} className="w-full h-full object-cover" />}
-              </div>
+              <div className="w-7 h-7 flex-shrink-0 rounded-sm" style={{ backgroundColor: m.color || '#f6f5f3' }} />
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-light text-black/80 truncate">{s.name}</p>
-                <p className="text-[9px] text-black/35 tracking-wider uppercase">{s.category}</p>
+                <p className="text-[11px] font-light text-black/80 truncate">{m.label}</p>
+                <p className="text-[9px] text-black/35 tracking-wider">{m.family || m.key}</p>
               </div>
               {on && <Check size={12} strokeWidth={1.6} className="text-black flex-shrink-0" />}
             </button>
           )
         })}
+      </div>
+
+      {/* Optionale Farb-Zuordnung */}
+      <div>
+        <label className="text-[9px] text-black/35 uppercase tracking-[0.2em] block mb-1.5 font-light">
+          Nur bei Farbe (optional)
+        </label>
+        <input
+          type="text"
+          value={colorMatch}
+          onChange={e => setColorMatch(e.target.value)}
+          placeholder="z. B. schwarz,black — leer = jede Farbe"
+          className="w-full max-w-md h-9 px-3 border border-black/[0.12] text-[12px] bg-white outline-none focus:border-black/30 transition-colors font-light text-black/70"
+        />
+        <p className="text-[9px] text-black/25 mt-1 font-light">
+          Schlüsselwörter (kommagetrennt) — Zubehör wird nur empfohlen, wenn der gewählte Farbname eines davon enthält.
+        </p>
       </div>
 
       <div className="flex items-center gap-3 pt-2">
@@ -320,7 +316,7 @@ function ShoeAssigner({ accessoryId }) {
           disabled={saving}
           className="px-7 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30"
         >
-          {saving ? 'Speichern…' : `Zuweisung speichern (${assigned.length})`}
+          {saving ? 'Speichern…' : `Zuweisung speichern (${universal ? 'Universell' : keys.length})`}
         </button>
         {savedAt > 0 && Date.now() - savedAt < 3000 && (
           <span className="text-[10px] text-green-700 tracking-[0.18em] uppercase">Gespeichert</span>
