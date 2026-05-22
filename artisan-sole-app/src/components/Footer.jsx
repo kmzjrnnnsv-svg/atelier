@@ -14,6 +14,7 @@ const DEFAULTS = {
   about_label: 'Über uns',
   about_links: [
     { label: 'Artisan Sole', path: '/legal/about' },
+    { label: 'Für Unternehmen', path: '/business' },
     { label: 'Boutiquen',    path: '/help' },
   ],
 
@@ -92,12 +93,20 @@ export default function Footer() {
       .catch(() => {})
   }, [])
 
+  // „Für Unternehmen" (Corporate Gifting) immer in der „Über uns"-Spalte zeigen,
+  // auch wenn der Footer im CMS angepasst wurde.
+  const aboutLinks = (() => {
+    const links = cfg.about_links?.length ? [...cfg.about_links] : DEFAULTS.about_links
+    if (!links.some(l => l.path === '/business')) links.push({ label: 'Für Unternehmen', path: '/business' })
+    return links
+  })()
+
   return (
     <footer className="bg-[#f7f5f0] text-black">
       <div className="px-6 lg:px-16 xl:px-24 pt-16 lg:pt-20 pb-10">
         {/* Spalten */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-8 lg:gap-x-16">
-          <Column label={cfg.about_label || 'Über uns'}   links={cfg.about_links}  navigate={navigate} />
+          <Column label={cfg.about_label || 'Über uns'}   links={aboutLinks}  navigate={navigate} />
           <Column label={cfg.help_label  || 'Hilfe'}      links={cfg.help_links}   navigate={navigate} />
           <Column label={cfg.social_label || 'Social'}    links={cfg.social_links} navigate={navigate} />
           <Column label={cfg.legal_label || 'Rechtliches'} links={cfg.legal_links} navigate={navigate} />

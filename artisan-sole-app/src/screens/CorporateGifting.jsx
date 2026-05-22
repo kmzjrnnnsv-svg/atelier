@@ -6,8 +6,8 @@
  * Anfrage läuft über das bestehende custom_requests-System (kein Login nötig)
  * und erscheint im CMS unter den Anfragen.
  */
-import { useState, useRef } from 'react'
-import { Check, Send, MapPin, Gem, Footprints, Users, PenTool, Package } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Check, Send, MapPin, Gem, Footprints, Users, PenTool, Package, MessageCircle } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import { HEROES } from '../lib/editorialImages'
 import useStore from '../store/store'
@@ -40,8 +40,31 @@ export default function CorporateGifting() {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState(null)
+  const [waNumber, setWaNumber] = useState('+4915126936500')
+
+  useEffect(() => {
+    apiFetch('/api/settings/whatsapp')
+      .then(r => { if (r?.number) setWaNumber(r.number) })
+      .catch(() => {})
+  }, [])
 
   const officeShoes = (Array.isArray(shoes) ? shoes : []).filter(s => OFFICE_CATEGORIES.includes(s.category))
+
+  // WhatsApp-Direktanfrage mit den bereits ausgefüllten Infos (Formular optional).
+  const buildWhatsAppLink = () => {
+    if (!waNumber) return null
+    const normalized = waNumber.replace(/[^0-9+]/g, '').replace(/^\+/, '')
+    const lines = [
+      'Hallo Artisan Sole, ich interessiere mich für Office-Schuhe als Corporate Gifting.',
+      form.company.trim() && `Firma: ${form.company.trim()}`,
+      selectedDesign && `Wunsch-Design: ${selectedDesign}`,
+      form.quantity.trim() && `Stückzahl: ${form.quantity.trim()}`,
+      form.occasion.trim() && `Anlass: ${form.occasion.trim()}`,
+      form.message.trim() && `\n${form.message.trim()}`,
+    ].filter(Boolean).join('\n')
+    return `https://wa.me/${normalized}?text=${encodeURIComponent(lines)}`
+  }
+  const waLink = buildWhatsAppLink()
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const valid = form.company.trim() && form.name.trim() && /\S+@\S+\.\S+/.test(form.email) && form.phone.trim()
@@ -243,6 +266,31 @@ export default function CorporateGifting() {
               >
                 <Send size={15} strokeWidth={1.5} /> {sending ? 'Einen Moment …' : 'Anfrage senden'}
               </button>
+
+              {/* Alternative: direkt per WhatsApp */}
+              {waLink && (
+                <>
+                  <div className="flex items-center gap-3 py-1">
+                    <span className="flex-1 h-px bg-black/10" />
+                    <span className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light">oder</span>
+                    <span className="flex-1 h-px bg-black/10" />
+                  </div>
+                  <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full h-14 flex items-center justify-center gap-2.5 bg-white text-black border border-black/20 hover:border-black hover:bg-black/[0.02] transition-all no-underline"
+                    style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+                  >
+                    <MessageCircle size={15} strokeWidth={1.5} /> Direkt per WhatsApp fragen
+                  </a>
+                  <p className="text-center text-[10px] text-black/35 font-light leading-relaxed">
+                    Lieber kurz schreiben? Stellen Sie Ihre Fragen direkt per WhatsApp —
+                    Ihre bereits eingegebenen Angaben nehmen wir mit.
+                  </p>
+                </>
+              )}
+
               <p className="text-center text-[10px] text-black/30 font-light tracking-wide">
                 Persönliche Beratung · unverbindlich · mit Liebe in Spanien gefertigt
               </p>
