@@ -25,8 +25,8 @@ const MIN_PER_DESIGN = 10
 
 const VALUES = [
   { icon: Users,      title: 'Eine Geste, die bleibt',  desc: 'Ob Willkommensgeschenk für neue Kolleginnen und Kollegen oder Dankeschön an Ihr Team — ein Schuh, der jeden Tag begleitet, sagt mehr als jede Karte.' },
-  { icon: Footprints, title: 'Passt. Wirklich jedem.',   desc: 'Über zwei einfache Maße finden wir für jeden Fuß die richtige Größe und Weite. Kein Rätselraten, keine Rückläufer — nur Schuhe, die sitzen.' },
-  { icon: MapPin,     title: 'Aus spanischer Hand',      desc: 'Gefertigt in kleinen Manufakturen in Spanien, wo Schuhmacherkunst noch ein Handwerk ist — Paar für Paar, mit Liebe zum Detail.' },
+  { icon: Footprints, title: 'Passt. Wirklich jedem.',   desc: 'Zwei Maße genügen — Länge und Ballenumfang. Daraus wählen wir aus unseren Leistenformen den Schuh, der am besten sitzt: in Länge und Weite auf wenige Millimeter genau. Kein Rätselraten, keine Rückläufer.' },
+  { icon: MapPin,     title: 'Made-to-Order aus Spanien', desc: 'Jedes Paar wird eigens auf Bestellung gefertigt — in kleinen spanischen Manufakturen, wo Schuhmacherei noch Handwerk ist. Paar für Paar, mit Liebe zum Detail.' },
   { icon: Gem,        title: 'Leder, das man fühlt',     desc: 'Ausschließlich feinste Kalbs- und Premiumleder: edel im Griff, langlebig im Tragen und mit jedem Jahr schöner.' },
   { icon: PenTool,    title: 'Ihre Handschrift',         desc: 'Auf Wunsch mit Monogramm, Initialen oder einer dezenten firmeneigenen Veredelung — ganz persönlich, in feiner Handarbeit.' },
   { icon: Package,    title: 'Schon ab 10 Paar',         desc: `Ab ${MIN_PER_DESIGN} Paar pro Design begleiten wir Sie persönlich — mit fairen Konditionen, die zu Ihrem Unternehmen passen.` },
@@ -120,8 +120,8 @@ export default function CorporateGifting() {
           Wertschätzung, die man trägt.
         </h1>
         <p className="text-[13px] lg:text-[15px] text-black/45 font-light max-w-2xl mx-auto mt-5 leading-relaxed">
-          Maßgefertigte Schuhe aus spanischer Manufaktur — feinstes Leder, für jeden Fuß
-          gemacht. Ein Willkommensgruß für neue Gesichter, ein Dank an langjährige
+          Made-to-Order aus spanischer Manufaktur — feinstes Leder, für jeden Fuß passend
+          ausgewählt. Ein Willkommensgruß für neue Gesichter, ein Dank an langjährige
           Weggefährten. Ab {MIN_PER_DESIGN} Paar pro Design.
         </p>
         <button
@@ -140,6 +140,37 @@ export default function CorporateGifting() {
           <br className="hidden sm:block" />
           <span className="text-black"> Ein Schuh, der perfekt sitzt, ist jeden Morgen aufs Neue da.</span>
         </p>
+      </div>
+
+      {/* So funktioniert's — das Passform-System */}
+      <div className="px-5 lg:px-16 pb-12 lg:pb-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">So passt jeder Schuh</p>
+            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Made-to-Order, ohne Aufwand für Ihr Team</h2>
+            <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-3 max-w-2xl mx-auto leading-relaxed">
+              Keine Termine beim Schuhmacher, kein aufwendiges Vermessen. Ihr Team gibt nur
+              zwei Werte an — unser System findet den Rest.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-black/[0.06] border border-black/[0.06]">
+            {[
+              { n: '01', t: 'Füße messen', d: 'Länge und Ballenumfang — in zwei Minuten erledigt, ganz ohne Spezialwerkzeug.' },
+              { n: '02', t: 'Passform finden', d: 'Aus unserer Vielfalt an Leistenformen wählen wir für jeden Fuß den passenden Schuh — in Länge und Weite auf wenige Millimeter genau.' },
+              { n: '03', t: 'In Spanien gefertigt', d: 'Jedes Paar wird eigens auf Bestellung produziert und direkt an Ihr Team geliefert.' },
+            ].map(s => (
+              <div key={s.n} className="bg-white p-7">
+                <p className="text-[11px] text-black/25 font-light tracking-[0.2em] mb-3">{s.n}</p>
+                <p className="text-[14px] text-black font-normal mb-1.5">{s.t}</p>
+                <p className="text-[11px] text-black/45 font-light leading-relaxed">{s.d}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-[12px] text-black/40 font-light mt-8 max-w-2xl mx-auto leading-relaxed">
+            So nah an einer echten Maßanfertigung wie möglich — minimale Abweichungen, die
+            der Fuß im Tragen nicht spürt. Auch die Weite (D/EE/EEE) stimmt so für jeden.
+          </p>
+        </div>
       </div>
 
       {/* Value props */}
