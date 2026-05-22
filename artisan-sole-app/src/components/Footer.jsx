@@ -14,7 +14,7 @@ const DEFAULTS = {
   about_label: 'Über uns',
   about_links: [
     { label: 'Artisan Sole', path: '/legal/about' },
-    { label: 'Für Unternehmen', path: '/business' },
+    { label: 'Für Unternehmen', path: 'https://business.artisansole.com/' },
     { label: 'Boutiquen',    path: '/help' },
   ],
 
@@ -95,9 +95,12 @@ export default function Footer() {
 
   // „Für Unternehmen" (Corporate Gifting) immer in der „Über uns"-Spalte zeigen,
   // auch wenn der Footer im CMS angepasst wurde.
+  const BUSINESS_URL = 'https://business.artisansole.com/'
   const aboutLinks = (() => {
     const links = cfg.about_links?.length ? [...cfg.about_links] : DEFAULTS.about_links
-    if (!links.some(l => l.path === '/business')) links.push({ label: 'Für Unternehmen', path: '/business' })
+    if (!links.some(l => l.path === BUSINESS_URL || l.path === '/business')) {
+      links.push({ label: 'Für Unternehmen', path: BUSINESS_URL })
+    }
     return links
   })()
 
