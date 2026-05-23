@@ -4,6 +4,7 @@ import { getDb } from '../db/database.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification } from '../utils/email.js'
 import { totpVerify } from '../utils/totp.js'
+import { validateBusinessCode } from './business.js'
 import Anthropic from '@anthropic-ai/sdk'
 
 async function translateToEnglish(text) {
@@ -61,7 +62,7 @@ router.post('/',
     const {
       shoe_id, shoe_name, material, color, price, eu_size,
       delivery_address, billing_address, accessories, scan_id,
-      foot_notes, shipping_method, shipping_cost, coupon_code,
+      foot_notes, shipping_method, shipping_cost, coupon_code, business_code,
       size_type, last_key, last_label, last_width, fit_measurements,
     } = req.body
 
@@ -104,6 +105,14 @@ router.post('/',
       }
     }
 
+    // Validate business code (B2B-Einmal-Code) if provided — authoritative gate
+    let bizCode = null
+    if (business_code) {
+      const r = validateBusinessCode(db, business_code, shoe_id != null ? Number(shoe_id) : null)
+      if (!r.valid) return res.status(400).json({ error: r.reason || 'Firmencode ungültig' })
+      bizCode = r.code
+    }
+
     // Sequential order number for this user
     const { count } = db
       .prepare('SELECT COUNT(*) as count FROM orders WHERE user_id = ?')
@@ -118,14 +127,16 @@ router.post('/',
     for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)]
     const order_ref = `ATL-${date}-${suffix}`
 
-    const result = db.prepare(`
+    const insertOrder = db.prepare(`
       INSERT INTO orders
         (user_id, shoe_id, shoe_name, material, color, price, eu_size,
          delivery_address, billing_address, accessories, scan_id, user_order_number, status, order_ref,
          foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price,
-         size_type, last_key, last_label, last_width, fit_measurements)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    `).run(
+         size_type, last_key, last_label, last_width, fit_measurements,
+         business_id, business_code_id, business_coverage)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `)
+    const insertParams = [
       uid,
       shoe_id    || null,
       shoe_name,
@@ -152,7 +163,32 @@ router.post('/',
       last_label || null,
       last_width || null,
       fit_measurements ? JSON.stringify(fit_measurements) : null,
-    )
+      bizCode ? bizCode.business_id : null,
+      bizCode ? bizCode.id : null,
+      bizCode ? bizCode.coverage_type : null,
+    ]
+
+    let result
+    if (bizCode) {
+      // Bestellung + Code-Einlösung atomar — verhindert Doppeleinlösung (Race).
+      try {
+        result = db.transaction(() => {
+          const r = insertOrder.run(...insertParams)
+          const upd = db.prepare(`
+            UPDATE business_codes
+            SET status = 'redeemed', redeemed_by = ?, redeemed_order_id = ?, redeemed_at = datetime('now')
+            WHERE id = ? AND status = 'issued'
+          `).run(uid, r.lastInsertRowid, bizCode.id)
+          if (upd.changes === 0) throw new Error('REDEEM_RACE')
+          return r
+        })()
+      } catch (e) {
+        if (e.message === 'REDEEM_RACE') return res.status(409).json({ error: 'Dieser Code wurde bereits eingelöst' })
+        throw e
+      }
+    } else {
+      result = insertOrder.run(...insertParams)
+    }
 
     // Record coupon usage + increment promotion orders
     if (couponRow) {

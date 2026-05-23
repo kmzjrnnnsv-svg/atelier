@@ -308,6 +308,10 @@ export function runMigrations(db) {
     `ALTER TABLE accessories ADD COLUMN material_keys TEXT`,
     // accessories — optionale Farb-Zuordnung (CSV Schlüsselwörter, z. B. 'schwarz,black')
     `ALTER TABLE accessories ADD COLUMN color_match TEXT`,
+    // orders — B2B-Firmencode-Einlösung
+    `ALTER TABLE orders ADD COLUMN business_id        INTEGER REFERENCES businesses(id)`,
+    `ALTER TABLE orders ADD COLUMN business_code_id   INTEGER REFERENCES business_codes(id)`,
+    `ALTER TABLE orders ADD COLUMN business_coverage  TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

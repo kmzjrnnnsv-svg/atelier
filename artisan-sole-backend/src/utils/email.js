@@ -423,6 +423,16 @@ export async function sendManufacturerNotification(order, user, scan) {
   const addr        = order.delivery_address ? JSON.parse(order.delivery_address) : null
   const accessories = order.accessories ? JSON.parse(order.accessories) : []
 
+  // B2B-Firmencode-Bestellung: Firma, Logo (für die Sohle) und Code beilegen.
+  let biz = null, bizCode = null
+  if (order.business_id) {
+    try {
+      biz = getDb().prepare('SELECT name, logo_data FROM businesses WHERE id = ?').get(order.business_id)
+      if (order.business_code_id) bizCode = getDb().prepare('SELECT code FROM business_codes WHERE id = ?').get(order.business_code_id)
+    } catch { /* ignore */ }
+  }
+  const coverageLabel = order.business_coverage === 'full' ? 'Voll gedeckt (Firma)' : (order.business_coverage === 'discount' ? 'Firmen-Rabatt' : '—')
+
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   body{font-family:'Georgia',serif;background:#f8f7f5;margin:0;padding:0}
   .wrap{max-width:620px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,.08)}
@@ -469,6 +479,16 @@ export async function sendManufacturerNotification(order, user, scan) {
         <div class="item"><div class="label">EU-Größe</div><div class="val">${order.eu_size || '—'}</div></div>
       </div>
     </div>
+    ${biz ? `
+    <div class="section">
+      <div class="section-title">Firmenbestellung · Branding</div>
+      <div class="grid">
+        <div class="item"><div class="label">Unternehmen</div><div class="val">${biz.name}</div></div>
+        <div class="item"><div class="label">Deckung</div><div class="val">${coverageLabel}</div></div>
+        ${bizCode ? `<div class="item"><div class="label">Einmal-Code</div><div class="val">${bizCode.code}</div></div>` : ''}
+      </div>
+      ${biz.logo_data ? `<div style="margin-top:14px"><div class="label" style="font-size:10px;color:#aaa;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Logo für die Sohle</div><img src="${biz.logo_data}" alt="Firmenlogo" style="max-width:200px;max-height:90px;background:#f8f7f5;padding:8px;border-radius:6px" /></div>` : ''}
+    </div>` : ''}
     ${scan ? `
     <div class="section">
       <div class="section-title">3D-Fußmaße (Scan-ID: ${scan.id})</div>

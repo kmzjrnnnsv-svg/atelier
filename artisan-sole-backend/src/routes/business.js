@@ -55,6 +55,26 @@ function effectiveStatus(row) {
   return row.status
 }
 
+// Prüft einen Einmal-Code für die Einlösung. Wird von der Validate-Route und
+// vom Bestell-Endpoint (orders.js) geteilt — eine Quelle der Wahrheit.
+export function validateBusinessCode(db, code, shoeId) {
+  if (!code) return { valid: false, reason: 'Kein Code angegeben' }
+  const row = db.prepare('SELECT * FROM business_codes WHERE code = ?').get(String(code).trim())
+  if (!row) return { valid: false, reason: 'Code nicht gefunden' }
+  if (row.status === 'redeemed') return { valid: false, reason: 'Dieser Code wurde bereits eingelöst' }
+  if (row.status === 'revoked') return { valid: false, reason: 'Dieser Code wurde gesperrt' }
+  if (row.expires_at) {
+    const today = new Date().toISOString().slice(0, 10)
+    if (String(row.expires_at).slice(0, 10) < today) return { valid: false, reason: 'Dieser Code ist abgelaufen' }
+  }
+  if (row.status !== 'issued') return { valid: false, reason: 'Code nicht einlösbar' }
+  if (row.design_scope === 'fixed' && shoeId != null) {
+    const ids = row.allowed_shoe_ids ? JSON.parse(row.allowed_shoe_ids) : []
+    if (!ids.includes(Number(shoeId))) return { valid: false, reason: 'Code gilt nicht für dieses Design' }
+  }
+  return { valid: true, code: row }
+}
+
 const shapeCode = (c) => ({
   id: c.id,
   code: c.code,
@@ -109,6 +129,28 @@ router.put('/me', authenticate, loadOwnBusiness, (req, res) => {
 
   const updated = db.prepare('SELECT * FROM businesses WHERE id = ?').get(req.business.id)
   res.json(publicShape(updated))
+})
+
+// ── Code-Einlösung (Empfänger im Checkout) ──────────────────────────────────
+
+// GET /api/business/codes/validate?code=&shoe_id= — Code im Checkout prüfen
+router.get('/codes/validate', authenticate, (req, res) => {
+  const { code, shoe_id } = req.query
+  const db = getDb()
+  const r = validateBusinessCode(db, code, shoe_id != null && shoe_id !== '' ? Number(shoe_id) : null)
+  if (!r.valid) return res.json({ valid: false, reason: r.reason })
+  const c = r.code
+  const biz = db.prepare('SELECT name FROM businesses WHERE id = ?').get(c.business_id)
+  res.json({
+    valid: true,
+    business_name: biz?.name || null,
+    coverage_type: c.coverage_type,
+    discount_type: c.discount_type || null,
+    discount_value: c.discount_value ?? null,
+    design_scope: c.design_scope,
+    allowed_shoe_ids: c.allowed_shoe_ids ? JSON.parse(c.allowed_shoe_ids) : null,
+    max_value: c.max_value ?? null,
+  })
 })
 
 // ── Einmal-Codes (Firmenkonto-Inhaber) ──────────────────────────────────────
