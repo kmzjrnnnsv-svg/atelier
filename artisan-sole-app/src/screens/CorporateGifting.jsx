@@ -1,10 +1,10 @@
 /**
  * CorporateGifting.jsx — business.artisansole.com Einstieg.
  *
- * Öffentliche B2B-Seite: Office-Schuhe als Corporate Benefit / Einstellungs-
- * geschenk (ab 10 Paar pro Design), inkl. Katalog und Anfrageformular. Die
- * Anfrage läuft über das bestehende custom_requests-System (kein Login nötig)
- * und erscheint im CMS unter den Anfragen.
+ * Öffentliche B2B-Seite: Schuhe nach Maß (Made-to-Measure) als Mitarbeiter-
+ * geschenk / Corporate Benefit (ab 10 Paar pro Design), inkl. Katalog und
+ * Anfrage (Formular oder WhatsApp). Anfragen laufen über das bestehende
+ * custom_requests-System (kein Login nötig) und erscheinen im CMS.
  */
 import { useState, useRef, useEffect } from 'react'
 import { Check, Send, MapPin, Gem, Footprints, Users, PenTool, Package, MessageCircle } from 'lucide-react'
@@ -24,12 +24,12 @@ const OFFICE_CATEGORIES = ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK',
 const MIN_PER_DESIGN = 10
 
 const VALUES = [
-  { icon: Users,      title: 'Eine Geste, die bleibt',  desc: 'Ob Willkommensgeschenk für neue Kolleginnen und Kollegen oder Dankeschön an Ihr Team — ein Schuh, der jeden Tag begleitet, sagt mehr als jede Karte.' },
-  { icon: Footprints, title: 'Passt. Wirklich jedem.',   desc: 'Zwei Maße genügen — Länge und Ballenumfang. Daraus wählen wir aus unseren Leistenformen den Schuh, der am besten sitzt: in Länge und Weite auf wenige Millimeter genau. Kein Rätselraten, keine Rückläufer.' },
-  { icon: MapPin,     title: 'Made-to-Order aus Spanien', desc: 'Jedes Paar wird eigens auf Bestellung gefertigt — in kleinen spanischen Manufakturen, wo Schuhmacherei noch Handwerk ist. Paar für Paar, mit Liebe zum Detail.' },
-  { icon: Gem,        title: 'Leder, das man fühlt',     desc: 'Ausschließlich feinste Kalbs- und Premiumleder: edel im Griff, langlebig im Tragen und mit jedem Jahr schöner.' },
-  { icon: PenTool,    title: 'Ihre Handschrift',         desc: 'Auf Wunsch mit Monogramm, Initialen oder einer dezenten firmeneigenen Veredelung — ganz persönlich, in feiner Handarbeit.' },
-  { icon: Package,    title: 'Schon ab 10 Paar',         desc: `Ab ${MIN_PER_DESIGN} Paar pro Design begleiten wir Sie persönlich — mit fairen Konditionen, die zu Ihrem Unternehmen passen.` },
+  { icon: Footprints, title: 'Präzise Passform',        desc: 'Aus Fußlänge und Ballenumfang fertigen wir jeden Schuh in der passenden Länge und Weite — auf wenige Millimeter genau. Kein Schätzen, kein Umtausch.' },
+  { icon: MapPin,     title: 'Spanische Manufaktur',    desc: 'Jedes Paar entsteht einzeln auf Bestellung in einer traditionsreichen Manufaktur in Spanien — Schuhmacherhandwerk, wie es sein soll.' },
+  { icon: Gem,        title: 'Feinste Leder',           desc: 'Ausschließlich hochwertige Kalbs- und Premiumleder: edel im Griff, langlebig im Tragen und mit den Jahren nur schöner.' },
+  { icon: PenTool,    title: 'Persönliche Veredelung',  desc: 'Auf Wunsch mit Monogramm, Initialen oder einer dezenten firmeneigenen Note — in feiner Handarbeit ausgeführt.' },
+  { icon: Users,      title: 'Anerkennung mit Bestand', desc: 'Ob Willkommen für neue Kolleginnen und Kollegen oder Dank an langjährige Mitarbeitende — ein Paar, das täglich getragen wird, wirkt länger als jede Geste auf Papier.' },
+  { icon: Package,    title: `Ab ${MIN_PER_DESIGN} Paar pro Design`, desc: 'Wir begleiten Ihr Projekt persönlich — mit transparenten Konditionen, die zur Größe Ihres Vorhabens passen.' },
 ]
 
 export default function CorporateGifting() {
@@ -50,14 +50,13 @@ export default function CorporateGifting() {
 
   const officeShoes = (Array.isArray(shoes) ? shoes : []).filter(s => OFFICE_CATEGORIES.includes(s.category))
 
-  // WhatsApp-Direktanfrage mit den bereits ausgefüllten Infos (Formular optional).
   const buildWhatsAppLink = () => {
     if (!waNumber) return null
     const normalized = waNumber.replace(/[^0-9+]/g, '').replace(/^\+/, '')
     const lines = [
-      'Hallo Artisan Sole, ich interessiere mich für Office-Schuhe als Corporate Gifting.',
+      'Guten Tag Artisan Sole, wir interessieren uns für Schuhe nach Maß als Mitarbeitergeschenk.',
       form.company.trim() && `Firma: ${form.company.trim()}`,
-      selectedDesign && `Wunsch-Design: ${selectedDesign}`,
+      selectedDesign && `Design: ${selectedDesign}`,
       form.quantity.trim() && `Stückzahl: ${form.quantity.trim()}`,
       form.occasion.trim() && `Anlass: ${form.occasion.trim()}`,
       form.message.trim() && `\n${form.message.trim()}`,
@@ -100,7 +99,7 @@ export default function CorporateGifting() {
       })
       setSent(true)
     } catch (e) {
-      setError(e?.error || 'Da ist etwas schiefgelaufen. Versuchen Sie es bitte noch einmal.')
+      setError(e?.error || 'Ihre Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.')
     } finally { setSending(false) }
   }
 
@@ -120,44 +119,45 @@ export default function CorporateGifting() {
           Wertschätzung, die man trägt.
         </h1>
         <p className="text-[13px] lg:text-[15px] text-black/45 font-light max-w-2xl mx-auto mt-5 leading-relaxed">
-          Made-to-Order aus spanischer Manufaktur — feinstes Leder, für jeden Fuß passend
-          ausgewählt. Ein Willkommensgruß für neue Gesichter, ein Dank an langjährige
-          Weggefährten. Ab {MIN_PER_DESIGN} Paar pro Design.
+          Lederschuhe nach Maß für Ihr Team — auf den Fuß jeder Trägerin und jedes Trägers
+          abgestimmt und in spanischer Manufaktur gefertigt. Als Willkommen für neue
+          Kolleginnen und Kollegen oder als Anerkennung für langjährige Weggefährten.
+          Ab {MIN_PER_DESIGN} Paar pro Design.
         </p>
         <button
           onClick={scrollToForm}
           className="mt-8 px-9 h-12 bg-black text-white border-0 hover:bg-black/90 transition-all"
           style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
         >
-          Ihr Team verdient es
+          Angebot anfragen
         </button>
       </div>
 
-      {/* Emotionaler Zwischensatz */}
+      {/* Leitsatz */}
       <div className="px-5 lg:px-16 pb-12 lg:pb-16">
         <p className="text-center text-[18px] lg:text-[22px] font-extralight text-black/70 leading-snug max-w-3xl mx-auto tracking-tight">
           Die meisten Geschenke sind bis zum Jahresende vergessen.
           <br className="hidden sm:block" />
-          <span className="text-black"> Ein Schuh, der perfekt sitzt, ist jeden Morgen aufs Neue da.</span>
+          <span className="text-black"> Ein Schuh, der perfekt sitzt, begleitet jeden Tag.</span>
         </p>
       </div>
 
-      {/* So funktioniert's — das Passform-System */}
+      {/* Made-to-Measure — das Verfahren */}
       <div className="px-5 lg:px-16 pb-12 lg:pb-16">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
-            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">So passt jeder Schuh</p>
-            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Made-to-Order, ohne Aufwand für Ihr Team</h2>
+            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Schuhe nach Maß</p>
+            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Die Präzision von Maßschuhen — ohne den Aufwand</h2>
             <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-3 max-w-2xl mx-auto leading-relaxed">
-              Keine Termine beim Schuhmacher, kein aufwendiges Vermessen. Ihr Team gibt nur
-              zwei Werte an — unser System findet den Rest.
+              Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben Ihres
+              Teams genügen — den Rest übernehmen wir.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-black/[0.06] border border-black/[0.06]">
             {[
-              { n: '01', t: 'Füße messen', d: 'Länge und Ballenumfang — in zwei Minuten erledigt, ganz ohne Spezialwerkzeug.' },
-              { n: '02', t: 'Passform finden', d: 'Aus unserer Vielfalt an Leistenformen wählen wir für jeden Fuß den passenden Schuh — in Länge und Weite auf wenige Millimeter genau.' },
-              { n: '03', t: 'In Spanien gefertigt', d: 'Jedes Paar wird eigens auf Bestellung produziert und direkt an Ihr Team geliefert.' },
+              { n: '01', t: 'Maße nehmen', d: 'Fußlänge und Ballenumfang — in wenigen Augenblicken erfasst, ganz ohne Spezialwerkzeug.' },
+              { n: '02', t: 'Auf den Fuß abgestimmt', d: 'Auf Grundlage dieser Maße bestimmen wir die ideale Leistenform und stimmen Länge und Weite präzise auf den individuellen Fuß ab.' },
+              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird daraufhin einzeln in spanischer Manufaktur produziert und an Ihr Team geliefert.' },
             ].map(s => (
               <div key={s.n} className="bg-white p-7">
                 <p className="text-[11px] text-black/25 font-light tracking-[0.2em] mb-3">{s.n}</p>
@@ -167,8 +167,8 @@ export default function CorporateGifting() {
             ))}
           </div>
           <p className="text-center text-[12px] text-black/40 font-light mt-8 max-w-2xl mx-auto leading-relaxed">
-            So nah an einer echten Maßanfertigung wie möglich — minimale Abweichungen, die
-            der Fuß im Tragen nicht spürt. Auch die Weite (D/EE/EEE) stimmt so für jeden.
+            Das Ergebnis: Schuhe, die sich anfühlen, als wären sie für genau diesen Fuß
+            gemacht. Auch die Weite (D/EE/EEE) sitzt — für jede und jeden.
           </p>
         </div>
       </div>
@@ -189,15 +189,15 @@ export default function CorporateGifting() {
         </div>
       </div>
 
-      {/* Office-Katalog */}
+      {/* Katalog */}
       {officeShoes.length > 0 && (
         <div className="px-5 lg:px-16 py-12">
           <div className="text-center mb-8">
-            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Zur Inspiration</p>
-            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Finden Sie ein Lieblingsstück</h2>
+            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Kollektion</p>
+            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Designs für das Büro</h2>
             <p className="text-[12px] text-black/40 font-light mt-3 max-w-xl mx-auto leading-relaxed">
-              Jedes Design fertigen wir individuell für jeden Mitarbeitenden — in seiner
-              Größe, seiner Weite. Wählen Sie ein Modell, der Rest ist unsere Aufgabe.
+              Jedes Modell fertigen wir individuell — in der Größe und Weite jedes
+              Mitarbeitenden. Wählen Sie ein Design; um die perfekte Passform kümmern wir uns.
             </p>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-8">
@@ -222,19 +222,20 @@ export default function CorporateGifting() {
             ))}
           </div>
           <p className="text-center text-[11px] text-black/30 font-light mt-9">
-            Sie haben ein bestimmtes Modell im Kopf? Schreiben Sie es uns einfach — wir machen es möglich.
+            Ein bestimmtes Modell im Sinn? Nennen Sie es uns — wir setzen es um.
           </p>
         </div>
       )}
 
-      {/* Anfrageformular */}
+      {/* Anfrage */}
       <div ref={formRef} className="px-5 lg:px-16 py-12 lg:py-16 bg-[#fafaf9] border-t border-black/[0.06] scroll-mt-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Lernen wir uns kennen</p>
-            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Erzählen Sie uns von Ihrem Team</h2>
+            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Anfrage</p>
+            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Ihr Vorhaben, unser Vorschlag</h2>
             <p className="text-[12px] text-black/40 font-light mt-3 leading-relaxed">
-              Ein paar Zeilen genügen. Wir melden uns persönlich mit einer Idee, die zu Ihnen passt — unverbindlich und in Ruhe.
+              Schildern Sie uns kurz Ihr Vorhaben. Wir melden uns persönlich mit einem
+              passenden Vorschlag — unverbindlich.
             </p>
           </div>
 
@@ -243,16 +244,16 @@ export default function CorporateGifting() {
               <div className="w-12 h-12 bg-black flex items-center justify-center mx-auto mb-4">
                 <Check size={20} className="text-white" strokeWidth={1.5} />
               </div>
-              <p className="text-[18px] font-extralight text-black tracking-tight">Wie schön, von Ihnen zu hören.</p>
+              <p className="text-[18px] font-extralight text-black tracking-tight">Vielen Dank für Ihre Anfrage.</p>
               <p className="text-[12px] text-black/45 font-light mt-2.5 leading-relaxed max-w-sm mx-auto">
-                Ihre Anfrage ist bei uns angekommen. Unser Business-Team meldet sich in Kürze ganz persönlich bei Ihnen.
+                Ihre Anfrage ist bei uns eingegangen. Unser Business-Team meldet sich in Kürze persönlich bei Ihnen.
               </p>
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-4">
               {selectedDesign && (
                 <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white border border-black/10">
-                  <span className="text-[12px] text-black/60 font-light">Ihr Wunsch-Design: <span className="text-black">{selectedDesign}</span></span>
+                  <span className="text-[12px] text-black/60 font-light">Gewähltes Design: <span className="text-black">{selectedDesign}</span></span>
                   <button type="button" onClick={() => setSelectedDesign('')} className="text-[10px] text-black/30 hover:text-black/60 bg-transparent border-0 uppercase tracking-wider">Ändern</button>
                 </div>
               )}
@@ -262,7 +263,7 @@ export default function CorporateGifting() {
                   <input className={inputCls} value={form.company} onChange={e => set('company', e.target.value)} placeholder="Ihr Unternehmen" />
                 </div>
                 <div>
-                  <label className={labelCls}>Ihr Name *</label>
+                  <label className={labelCls}>Ansprechpartner *</label>
                   <input className={inputCls} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Vor- und Nachname" />
                 </div>
                 <div>
@@ -278,13 +279,13 @@ export default function CorporateGifting() {
                   <input className={inputCls} value={form.occasion} onChange={e => set('occasion', e.target.value)} placeholder="z. B. Onboarding, Jubiläum, Weihnachten" />
                 </div>
                 <div>
-                  <label className={labelCls}>Wie viele dürfen es sein?</label>
-                  <input className={inputCls} value={form.quantity} onChange={e => set('quantity', e.target.value)} placeholder={`ab ${MIN_PER_DESIGN} pro Design`} />
+                  <label className={labelCls}>Stückzahl (ab {MIN_PER_DESIGN}/Design)</label>
+                  <input className={inputCls} value={form.quantity} onChange={e => set('quantity', e.target.value)} placeholder={`z. B. ${MIN_PER_DESIGN}`} />
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Ihre Nachricht</label>
-                <textarea rows={4} className={`${inputCls} resize-none`} value={form.message} onChange={e => set('message', e.target.value)} placeholder="Worum geht es? Teamgröße, Wünsche, Zeitrahmen — erzählen Sie einfach drauflos." />
+                <label className={labelCls}>Nachricht</label>
+                <textarea rows={4} className={`${inputCls} resize-none`} value={form.message} onChange={e => set('message', e.target.value)} placeholder="Teamgröße, Wünsche, Zeitrahmen, Budget …" />
               </div>
 
               {error && <p className="text-[12px] text-red-600/80 font-light">{error}</p>}
@@ -295,10 +296,9 @@ export default function CorporateGifting() {
                 className="w-full h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 disabled:opacity-30 transition-all"
                 style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
               >
-                <Send size={15} strokeWidth={1.5} /> {sending ? 'Einen Moment …' : 'Anfrage senden'}
+                <Send size={15} strokeWidth={1.5} /> {sending ? 'Wird gesendet …' : 'Anfrage senden'}
               </button>
 
-              {/* Alternative: direkt per WhatsApp */}
               {waLink && (
                 <>
                   <div className="flex items-center gap-3 py-1">
@@ -313,17 +313,17 @@ export default function CorporateGifting() {
                     className="w-full h-14 flex items-center justify-center gap-2.5 bg-white text-black border border-black/20 hover:border-black hover:bg-black/[0.02] transition-all no-underline"
                     style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
                   >
-                    <MessageCircle size={15} strokeWidth={1.5} /> Direkt per WhatsApp fragen
+                    <MessageCircle size={15} strokeWidth={1.5} /> Direkt per WhatsApp
                   </a>
                   <p className="text-center text-[10px] text-black/35 font-light leading-relaxed">
-                    Lieber kurz schreiben? Stellen Sie Ihre Fragen direkt per WhatsApp —
-                    Ihre bereits eingegebenen Angaben nehmen wir mit.
+                    Lieber direkt schreiben? Stellen Sie Ihre Fragen per WhatsApp —
+                    Ihre Angaben übernehmen wir.
                   </p>
                 </>
               )}
 
               <p className="text-center text-[10px] text-black/30 font-light tracking-wide">
-                Persönliche Beratung · unverbindlich · mit Liebe in Spanien gefertigt
+                Persönliche Beratung · unverbindlich · gefertigt in Spanien
               </p>
             </form>
           )}
