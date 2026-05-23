@@ -40,9 +40,14 @@ function issueTokens(res, user) {
 
   res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS)
 
+  // Firmenkonto-Kontext (business.artisansole.com): treibt Login-Redirect &
+  // BusinessRoute im Frontend. Lookup per owner, damit es auf allen Token-
+  // Pfaden (login/register/refresh) konsistent ist.
+  const biz = getDb().prepare('SELECT id, name FROM businesses WHERE owner_user_id = ?').get(user.id)
+
   // Return refreshToken in body too — Capacitor native apps can't rely on
   // cross-origin cookies in WKWebView, so they store it in memory instead.
-  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion, promotion_discount_pct: user.promotion_discount_pct || 0 } }
+  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion, promotion_discount_pct: user.promotion_discount_pct || 0, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null } }
 }
 
 // POST /api/auth/register
@@ -134,7 +139,8 @@ router.post('/logout', (req, res) => {
 router.get('/me', authenticate, (req, res) => {
   const { id, name, email, role } = req.user
   const row = getDb().prepare('SELECT is_promotion, promotion_discount_pct, promotion_max_orders, promotion_orders_used FROM users WHERE id = ?').get(id)
-  res.json({ id, name, email, role, is_promotion: !!(row?.is_promotion), promotion_discount_pct: row?.promotion_discount_pct, promotion_max_orders: row?.promotion_max_orders, promotion_orders_used: row?.promotion_orders_used })
+  const biz = getDb().prepare('SELECT id, name FROM businesses WHERE owner_user_id = ?').get(id)
+  res.json({ id, name, email, role, is_promotion: !!(row?.is_promotion), promotion_discount_pct: row?.promotion_discount_pct, promotion_max_orders: row?.promotion_max_orders, promotion_orders_used: row?.promotion_orders_used, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null })
 })
 
 // PATCH /api/auth/me  –  Update own profile (name / email / password)
@@ -368,6 +374,37 @@ router.post('/register-promotion',
     `).run(name, hash, user.id)
 
     const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id)
+    const result = issueTokens(res, updated)
+    res.status(201).json(result)
+  }
+)
+
+// POST /api/auth/register-business — set password & activate a business login via invite token
+router.post('/register-business',
+  body('token').trim().notEmpty().withMessage('Token erforderlich'),
+  body('name').trim().isLength({ min: 2 }).withMessage('Name min 2 Zeichen'),
+  body('password')
+    .isLength({ min: 8 }).withMessage('Passwort min 8 Zeichen')
+    .matches(/[0-9]/).withMessage('Passwort muss eine Zahl enthalten')
+    .matches(/[^a-zA-Z0-9]/).withMessage('Passwort muss ein Sonderzeichen enthalten'),
+  async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const { token, name, password } = req.body
+    const db = getDb()
+
+    const biz = db.prepare('SELECT * FROM businesses WHERE invite_token = ?').get(token)
+    if (!biz) return res.status(404).json({ error: 'Ungültiger oder abgelaufener Einladungslink' })
+
+    const hash = await bcrypt.hash(password, 12)
+    db.prepare(`
+      UPDATE users SET name = ?, password_hash = ?, is_active = 1, updated_at = datetime('now')
+      WHERE id = ?
+    `).run(name, hash, biz.owner_user_id)
+    db.prepare("UPDATE businesses SET invite_token = NULL, status = 'active', updated_at = datetime('now') WHERE id = ?").run(biz.id)
+
+    const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(biz.owner_user_id)
     const result = issueTokens(res, updated)
     res.status(201).json(result)
   }

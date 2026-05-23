@@ -944,6 +944,29 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_last_size_chart_lk ON last_size_chart(last_key);
   `)
 
+  // ── B2B-Firmenkonten (business.artisansole.com) ──────────────────────────
+  // Ein Firmenkonto gehört genau einem Login (owner_user_id, role 'user',
+  // is_active=0 bis zur Registrierung über den Einladungslink). Das Logo wird
+  // als base64 (data:-URL) gespeichert und später auf der Sohle verwendet.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS businesses (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_user_id     INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      name              TEXT    NOT NULL,
+      contact_email     TEXT,
+      contact_phone     TEXT,
+      logo_data         TEXT,
+      status            TEXT    NOT NULL DEFAULT 'pending'
+                        CHECK(status IN ('pending','active','suspended')),
+      source_request_id INTEGER REFERENCES custom_requests(id) ON DELETE SET NULL,
+      invite_token      TEXT,
+      created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at        TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_businesses_owner  ON businesses(owner_user_id);
+    CREATE INDEX IF NOT EXISTS idx_businesses_invite ON businesses(invite_token);
+  `)
+
   // ── Spalten-Migrationen GANZ AM ENDE ausführen ───────────────────────────
   // Erst hier existieren ALLE Tabellen (auch shoe_materials, options,
   // option_groups, category_templates aus den späteren db.exec-Blöcken).

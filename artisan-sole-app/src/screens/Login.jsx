@@ -25,6 +25,8 @@ export default function Login() {
       const user = await login(form.email, form.password)
       if (user.role === 'admin' || user.role === 'curator') {
         navigate('/cms', { replace: true })
+      } else if (user.is_business) {
+        navigate('/business/dashboard', { replace: true })
       } else if (redirectTo) {
         navigate(redirectTo, { replace: true })
       } else {

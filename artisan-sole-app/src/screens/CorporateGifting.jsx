@@ -1,13 +1,16 @@
 /**
  * CorporateGifting.jsx — business.artisansole.com Einstieg.
  *
- * Öffentliche B2B-Seite: Schuhe nach Maß (Made-to-Measure) als Mitarbeiter-
- * geschenk / Corporate Benefit (ab 10 Paar pro Design), inkl. Katalog und
- * Anfrage (Formular oder WhatsApp). Anfragen laufen über das bestehende
+ * Öffentliche B2B-Seite (use-case-neutral): Schuhe nach Maß als Corporate
+ * Benefit, Mitarbeiter-, Kunden- oder Partnergeschenk oder für sonstige
+ * Anlässe. Unternehmen senden eine Anfrage (Formular oder WhatsApp) und
+ * erhalten ein Firmenkonto, in dem sie ihr Logo (für die Sohle) hinterlegen
+ * und künftig Einmal-Codes verwalten. Anfragen laufen über das bestehende
  * custom_requests-System (kein Login nötig) und erscheinen im CMS.
  */
 import { useState, useRef, useEffect } from 'react'
-import { Check, Send, MapPin, Gem, Footprints, Users, PenTool, Package, MessageCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Check, Send, MapPin, Gem, Footprints, PenTool, Package, MessageCircle, ArrowRight, LogIn, Gift, Heart, Handshake, Award, Building2 } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import { HEROES } from '../lib/editorialImages'
 import useStore from '../store/store'
@@ -23,13 +26,20 @@ const resolveImg = (url) => {
 const OFFICE_CATEGORIES = ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK', 'LOAFER', 'BALMORAL']
 const MIN_PER_DESIGN = 10
 
+const USE_CASES = [
+  { icon: Award,     title: 'Corporate Benefit',          desc: 'Ein Benefit, der jeden Tag getragen wird — hochwertiger als jeder Gutschein und persönlicher als jede Prämie.' },
+  { icon: Gift,      title: 'Mitarbeitergeschenke',        desc: 'Willkommen für neue Kolleginnen und Kollegen, Dank für langjährige Weggefährten, Jubiläum oder Jahresende.' },
+  { icon: Handshake, title: 'Kunden- & Partnergeschenke',  desc: 'Wertschätzung, die in Erinnerung bleibt — für Schlüsselkunden, Partner und Wegbegleiter Ihres Unternehmens.' },
+  { icon: Heart,     title: 'Weitere Anlässe',             desc: 'Auszeichnungen, Meilensteine, Events oder Incentives. Sie bestimmen den Anlass — wir liefern das Handwerk.' },
+]
+
 const VALUES = [
-  { icon: Footprints, title: 'Präzise Passform',        desc: 'Aus Fußlänge und Ballenumfang fertigen wir jeden Schuh in der passenden Länge und Weite — auf wenige Millimeter genau. Kein Schätzen, kein Umtausch.' },
-  { icon: MapPin,     title: 'Spanische Manufaktur',    desc: 'Jedes Paar entsteht einzeln auf Bestellung in einer traditionsreichen Manufaktur in Spanien — Schuhmacherhandwerk, wie es sein soll.' },
-  { icon: Gem,        title: 'Feinste Leder',           desc: 'Ausschließlich hochwertige Kalbs- und Premiumleder: edel im Griff, langlebig im Tragen und mit den Jahren nur schöner.' },
-  { icon: PenTool,    title: 'Persönliche Veredelung',  desc: 'Auf Wunsch mit Monogramm, Initialen oder einer dezenten firmeneigenen Note — in feiner Handarbeit ausgeführt.' },
-  { icon: Users,      title: 'Anerkennung mit Bestand', desc: 'Ob Willkommen für neue Kolleginnen und Kollegen oder Dank an langjährige Mitarbeitende — ein Paar, das täglich getragen wird, wirkt länger als jede Geste auf Papier.' },
-  { icon: Package,    title: `Ab ${MIN_PER_DESIGN} Paar pro Design`, desc: 'Wir begleiten Ihr Projekt persönlich — mit transparenten Konditionen, die zur Größe Ihres Vorhabens passen.' },
+  { icon: Footprints, title: 'Präzise Passform',       desc: 'Aus Fußlänge und Ballenumfang fertigen wir jeden Schuh in der passenden Länge und Weite — auf wenige Millimeter genau. Kein Schätzen, kein Umtausch.' },
+  { icon: MapPin,     title: 'Spanische Manufaktur',   desc: 'Jedes Paar entsteht einzeln auf Bestellung in einer traditionsreichen Manufaktur in Spanien — Schuhmacherhandwerk, wie es sein soll.' },
+  { icon: Gem,        title: 'Feinste Leder',          desc: 'Ausschließlich hochwertige Kalbs- und Premiumleder: edel im Griff, langlebig im Tragen und mit den Jahren nur schöner.' },
+  { icon: PenTool,    title: 'Ihr Logo, dezent veredelt', desc: 'Auf Wunsch mit Ihrem Firmenlogo, Initialen oder Monogramm — etwa auf der Sohle, in feiner Handarbeit ausgeführt.' },
+  { icon: Building2,  title: 'Eigenes Firmenkonto',     desc: 'Logo hinterlegen, Profil pflegen und künftig Einmal-Codes verwalten, die Ihre Empfänger selbst einlösen.' },
+  { icon: Package,    title: `Ab ${MIN_PER_DESIGN} Paar pro Design`, desc: 'Wir begleiten Ihr Vorhaben persönlich — mit transparenten Konditionen, die zu seiner Größe passen.' },
 ]
 
 export default function CorporateGifting() {
@@ -54,7 +64,7 @@ export default function CorporateGifting() {
     if (!waNumber) return null
     const normalized = waNumber.replace(/[^0-9+]/g, '').replace(/^\+/, '')
     const lines = [
-      'Guten Tag Artisan Sole, wir interessieren uns für Schuhe nach Maß als Mitarbeitergeschenk.',
+      'Guten Tag Artisan Sole, wir interessieren uns für Schuhe nach Maß für unser Unternehmen.',
       form.company.trim() && `Firma: ${form.company.trim()}`,
       selectedDesign && `Design: ${selectedDesign}`,
       form.quantity.trim() && `Stückzahl: ${form.quantity.trim()}`,
@@ -108,38 +118,71 @@ export default function CorporateGifting() {
 
   return (
     <div className="min-h-full bg-white">
-      {/* Hero */}
-      <div className="w-full overflow-hidden relative" style={{ aspectRatio: '16 / 6' }}>
-        <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 35%, rgba(0,0,0,0.5) 100%)' }} />
-      </div>
-      <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-8">
-        <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Artisan Sole · für Unternehmen</p>
-        <h1 className="text-[26px] lg:text-[38px] font-extralight text-black leading-[1.08] tracking-tight max-w-3xl mx-auto">
-          Wertschätzung, die man trägt.
-        </h1>
-        <p className="text-[13px] lg:text-[15px] text-black/45 font-light max-w-2xl mx-auto mt-5 leading-relaxed">
-          Lederschuhe nach Maß für Ihr Team — auf den Fuß jeder Trägerin und jedes Trägers
-          abgestimmt und in spanischer Manufaktur gefertigt. Als Willkommen für neue
-          Kolleginnen und Kollegen oder als Anerkennung für langjährige Weggefährten.
-          Ab {MIN_PER_DESIGN} Paar pro Design.
-        </p>
-        <button
-          onClick={scrollToForm}
-          className="mt-8 px-9 h-12 bg-black text-white border-0 hover:bg-black/90 transition-all"
-          style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+      {/* Slim top bar — Brand + Firmen-Login */}
+      <div className="flex items-center justify-between px-5 lg:px-16 py-4 border-b border-black/[0.06]">
+        <span className="font-brand text-[15px] text-black tracking-wide">ARTISAN SOLE</span>
+        <Link
+          to="/login"
+          className="flex items-center gap-1.5 text-[11px] text-black/55 hover:text-black no-underline uppercase tracking-[0.15em] transition-colors"
         >
-          Angebot anfragen
-        </button>
+          <LogIn size={15} strokeWidth={1.4} /> Firmen-Login
+        </Link>
+      </div>
+
+      {/* Hero — image with overlaid headline */}
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16 / 8' }}>
+        <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%)' }} />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+          <p className="text-[10px] text-white/70 uppercase tracking-[0.35em] mb-4">Artisan Sole · für Unternehmen</p>
+          <h1 className="text-[28px] lg:text-[46px] font-extralight text-white leading-[1.05] tracking-tight max-w-3xl">
+            Ein Geschenk, das man jeden Tag trägt.
+          </h1>
+          <p className="text-[13px] lg:text-[16px] text-white/80 font-light max-w-2xl mt-5 leading-relaxed">
+            Lederschuhe nach Maß — für Mitarbeitende, Kunden und Partner. Auf den
+            Fuß jeder Trägerin und jedes Trägers abgestimmt, in spanischer
+            Manufaktur gefertigt. Auf Wunsch mit Ihrem Logo.
+          </p>
+          <button
+            onClick={scrollToForm}
+            className="mt-8 px-9 h-12 bg-white text-black border-0 hover:bg-white/90 transition-all flex items-center gap-2"
+            style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+          >
+            Angebot anfragen <ArrowRight size={15} strokeWidth={1.6} />
+          </button>
+        </div>
       </div>
 
       {/* Leitsatz */}
-      <div className="px-5 lg:px-16 pb-12 lg:pb-16">
-        <p className="text-center text-[18px] lg:text-[22px] font-extralight text-black/70 leading-snug max-w-3xl mx-auto tracking-tight">
+      <div className="px-5 lg:px-16 pt-12 lg:pt-16 pb-10 lg:pb-14">
+        <p className="text-center text-[18px] lg:text-[24px] font-extralight text-black/70 leading-snug max-w-3xl mx-auto tracking-tight">
           Die meisten Geschenke sind bis zum Jahresende vergessen.
           <br className="hidden sm:block" />
           <span className="text-black"> Ein Schuh, der perfekt sitzt, begleitet jeden Tag.</span>
         </p>
+      </div>
+
+      {/* Anwendungsfälle */}
+      <div className="px-5 lg:px-16 pb-12 lg:pb-16">
+        <div className="text-center mb-10">
+          <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Für jeden Anlass</p>
+          <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Ein Geschenk, viele Anlässe</h2>
+          <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-3 max-w-2xl mx-auto leading-relaxed">
+            Wofür Sie unsere Maßschuhe einsetzen, bleibt ganz Ihnen überlassen.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-black/[0.06] border border-black/[0.06]">
+          {USE_CASES.map(u => {
+            const Icon = u.icon
+            return (
+              <div key={u.title} className="bg-white p-7">
+                <Icon size={22} strokeWidth={1.25} className="text-black/55 mb-3.5" />
+                <p className="text-[14px] text-black font-normal mb-1.5">{u.title}</p>
+                <p className="text-[11px] text-black/45 font-light leading-relaxed">{u.desc}</p>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Made-to-Measure — das Verfahren */}
@@ -149,15 +192,15 @@ export default function CorporateGifting() {
             <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Schuhe nach Maß</p>
             <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Die Präzision von Maßschuhen — ohne den Aufwand</h2>
             <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-3 max-w-2xl mx-auto leading-relaxed">
-              Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben Ihres
-              Teams genügen — den Rest übernehmen wir.
+              Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben
+              der Empfänger genügen — den Rest übernehmen wir.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-black/[0.06] border border-black/[0.06]">
             {[
               { n: '01', t: 'Maße nehmen', d: 'Fußlänge und Ballenumfang — in wenigen Augenblicken erfasst, ganz ohne Spezialwerkzeug.' },
               { n: '02', t: 'Auf den Fuß abgestimmt', d: 'Auf Grundlage dieser Maße bestimmen wir die ideale Leistenform und stimmen Länge und Weite präzise auf den individuellen Fuß ab.' },
-              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird daraufhin einzeln in spanischer Manufaktur produziert und an Ihr Team geliefert.' },
+              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird daraufhin einzeln in spanischer Manufaktur produziert und direkt an die Empfänger geliefert.' },
             ].map(s => (
               <div key={s.n} className="bg-white p-7">
                 <p className="text-[11px] text-black/25 font-light tracking-[0.2em] mb-3">{s.n}</p>
@@ -167,8 +210,8 @@ export default function CorporateGifting() {
             ))}
           </div>
           <p className="text-center text-[12px] text-black/40 font-light mt-8 max-w-2xl mx-auto leading-relaxed">
-            Das Ergebnis: Schuhe, die sich anfühlen, als wären sie für genau diesen Fuß
-            gemacht. Auch die Weite (D/EE/EEE) sitzt — für jede und jeden.
+            Das Ergebnis: Schuhe, die sich anfühlen, als wären sie für genau diesen
+            Fuß gemacht. Auch die Weite (D/EE/EEE) sitzt — für jede und jeden.
           </p>
         </div>
       </div>
@@ -194,10 +237,10 @@ export default function CorporateGifting() {
         <div className="px-5 lg:px-16 py-12">
           <div className="text-center mb-8">
             <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Kollektion</p>
-            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Designs für das Büro</h2>
+            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Eine Auswahl unserer Designs</h2>
             <p className="text-[12px] text-black/40 font-light mt-3 max-w-xl mx-auto leading-relaxed">
               Jedes Modell fertigen wir individuell — in der Größe und Weite jedes
-              Mitarbeitenden. Wählen Sie ein Design; um die perfekte Passform kümmern wir uns.
+              Empfängers. Wählen Sie ein Design; um die perfekte Passform kümmern wir uns.
             </p>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-8">
@@ -227,6 +270,29 @@ export default function CorporateGifting() {
         </div>
       )}
 
+      {/* Firmenkonto / Login */}
+      <div className="px-5 lg:px-16 pb-12 lg:pb-16">
+        <div className="max-w-3xl mx-auto bg-[#111] text-white px-7 lg:px-12 py-10 lg:py-12 text-center">
+          <Building2 size={26} strokeWidth={1.25} className="text-white/70 mx-auto mb-4" />
+          <h2 className="text-[20px] lg:text-[24px] font-extralight tracking-tight">Bereits Firmenkunde?</h2>
+          <p className="text-[12px] lg:text-[13px] text-white/55 font-light mt-3 max-w-xl mx-auto leading-relaxed">
+            In Ihrem Firmenkonto hinterlegen Sie Ihr Logo für die Sohle, pflegen
+            Ihr Profil und verwalten künftig die Einmal-Codes, die Ihre Empfänger
+            selbst einlösen.
+          </p>
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-2 mt-7 px-8 h-12 bg-white text-black no-underline hover:bg-white/90 transition-all"
+            style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+          >
+            <LogIn size={15} strokeWidth={1.6} /> Zum Firmen-Login
+          </Link>
+          <p className="text-[10px] text-white/35 font-light mt-5">
+            Noch kein Konto? Senden Sie uns einfach eine Anfrage — wir richten es für Sie ein.
+          </p>
+        </div>
+      </div>
+
       {/* Anfrage */}
       <div ref={formRef} className="px-5 lg:px-16 py-12 lg:py-16 bg-[#fafaf9] border-t border-black/[0.06] scroll-mt-4">
         <div className="max-w-2xl mx-auto">
@@ -234,8 +300,8 @@ export default function CorporateGifting() {
             <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Anfrage</p>
             <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Ihr Vorhaben, unser Vorschlag</h2>
             <p className="text-[12px] text-black/40 font-light mt-3 leading-relaxed">
-              Schildern Sie uns kurz Ihr Vorhaben. Wir melden uns persönlich mit einem
-              passenden Vorschlag — unverbindlich.
+              Schildern Sie uns kurz Ihr Vorhaben. Wir melden uns persönlich mit
+              einem passenden Vorschlag — unverbindlich.
             </p>
           </div>
 
@@ -276,7 +342,7 @@ export default function CorporateGifting() {
                 </div>
                 <div>
                   <label className={labelCls}>Anlass</label>
-                  <input className={inputCls} value={form.occasion} onChange={e => set('occasion', e.target.value)} placeholder="z. B. Onboarding, Jubiläum, Weihnachten" />
+                  <input className={inputCls} value={form.occasion} onChange={e => set('occasion', e.target.value)} placeholder="z. B. Benefit, Onboarding, Jubiläum, Kundengeschenk" />
                 </div>
                 <div>
                   <label className={labelCls}>Stückzahl (ab {MIN_PER_DESIGN}/Design)</label>
@@ -285,7 +351,7 @@ export default function CorporateGifting() {
               </div>
               <div>
                 <label className={labelCls}>Nachricht</label>
-                <textarea rows={4} className={`${inputCls} resize-none`} value={form.message} onChange={e => set('message', e.target.value)} placeholder="Teamgröße, Wünsche, Zeitrahmen, Budget …" />
+                <textarea rows={4} className={`${inputCls} resize-none`} value={form.message} onChange={e => set('message', e.target.value)} placeholder="Anzahl Empfänger, Wünsche, Zeitrahmen, Budget …" />
               </div>
 
               {error && <p className="text-[12px] text-red-600/80 font-light">{error}</p>}

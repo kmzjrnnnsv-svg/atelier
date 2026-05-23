@@ -578,3 +578,31 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
 
   await send({ to: email, subject, html })
 }
+
+export async function sendBusinessInvitation(email, companyName, inviteToken) {
+  const cfg = getEmailConfig()
+  const link = `${cfg.appUrl}/register-business?token=${inviteToken}`
+
+  const subject = 'Artisan Sole für Unternehmen — Ihr Firmenkonto'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <h1>ARTISAN SOLE</h1>
+    <p>FÜR UNTERNEHMEN</p>
+  </div>
+  <div class="body" style="text-align:center">
+    <div class="badge" style="background:#111;color:#fff">FIRMENKONTO</div>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Willkommen${companyName ? `, ${companyName}` : ''}!</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">
+      Wir haben ein Firmenkonto für Sie eingerichtet. Hier verwalten Sie Ihr
+      Profil, Ihr Logo und Ihre Einmal-Codes. Legen Sie jetzt Ihr Passwort fest.
+    </p>
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto aktivieren</a>
+    <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
+  </div>
+  <div class="footer">Artisan Sole Bespoke Footwear · Vertrauliche Einladung</div>
+</div>
+</body></html>`
+
+  await send({ to: email, subject, html })
+}
