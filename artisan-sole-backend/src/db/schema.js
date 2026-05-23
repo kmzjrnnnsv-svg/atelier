@@ -967,6 +967,35 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_businesses_invite ON businesses(invite_token);
   `)
 
+  // ── Einmal-Codes pro Firmenkonto ─────────────────────────────────────────
+  // Pro Code konfigurierbar: Deckung (voll vs. Rabatt) und Einlösbarkeit
+  // (festgelegtes Design vs. freie Katalogwahl). Jeder Code ist genau einmal
+  // einlösbar (status issued → redeemed).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS business_codes (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      business_id       INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      code              TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+      coverage_type     TEXT    NOT NULL DEFAULT 'full'
+                        CHECK(coverage_type IN ('full','discount')),
+      discount_type     TEXT    CHECK(discount_type IN ('percentage','fixed')),
+      discount_value    REAL,
+      design_scope      TEXT    NOT NULL DEFAULT 'catalog'
+                        CHECK(design_scope IN ('fixed','catalog')),
+      allowed_shoe_ids  TEXT,                            -- JSON-Array von shoe-ids (design_scope='fixed')
+      max_value         REAL,                            -- Wert-Obergrenze (optional)
+      status            TEXT    NOT NULL DEFAULT 'issued'
+                        CHECK(status IN ('issued','redeemed','revoked','expired')),
+      redeemed_by       INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      redeemed_order_id INTEGER REFERENCES orders(id) ON DELETE SET NULL,
+      redeemed_at       TEXT,
+      expires_at        TEXT,
+      created_at        TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_business_codes_biz  ON business_codes(business_id);
+    CREATE INDEX IF NOT EXISTS idx_business_codes_code ON business_codes(code);
+  `)
+
   // ── Spalten-Migrationen GANZ AM ENDE ausführen ───────────────────────────
   // Erst hier existieren ALLE Tabellen (auch shoe_materials, options,
   // option_groups, category_templates aus den späteren db.exec-Blöcken).

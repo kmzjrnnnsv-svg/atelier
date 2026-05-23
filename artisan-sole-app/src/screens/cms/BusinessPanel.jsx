@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Building2, Mail, Phone, Plus, Copy, Check, UserPlus, Clock, X } from 'lucide-react'
+import { Building2, Mail, Phone, Plus, Copy, Check, UserPlus, Clock, X, Ticket, ChevronDown } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 
 const APP_ORIGIN = (import.meta.env.VITE_API_URL ?? '') || (typeof window !== 'undefined' ? window.location.origin : '')
@@ -21,6 +21,25 @@ export default function BusinessPanel() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [copied, setCopied] = useState(null)
+  const [expanded, setExpanded] = useState(null)   // account id whose codes are shown
+  const [codesById, setCodesById] = useState({})   // { [id]: codes[] }
+
+  const toggleCodes = async (id) => {
+    if (expanded === id) { setExpanded(null); return }
+    setExpanded(id)
+    if (!codesById[id]) {
+      try {
+        const codes = await apiFetch(`/api/business/${id}/codes`)
+        setCodesById(m => ({ ...m, [id]: Array.isArray(codes) ? codes : [] }))
+      } catch { setCodesById(m => ({ ...m, [id]: [] })) }
+    }
+  }
+
+  const codeSummary = (codes) => {
+    const by = { issued: 0, redeemed: 0, revoked: 0, expired: 0 }
+    for (const c of codes) by[c.status] = (by[c.status] || 0) + 1
+    return by
+  }
 
   const load = async () => {
     try {
@@ -148,14 +167,41 @@ export default function BusinessPanel() {
                     <span>{a.owner_name}</span>
                   </p>
                 </div>
-                {a.pending && a.invite_token && (
-                  <button onClick={() => copyInvite(a.invite_token, a.id)} className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/60 hover:text-black border border-black/15 px-3 py-2 bg-white shrink-0">
-                    {copied === a.id ? <><Check size={13} strokeWidth={2} /> Kopiert</> : <><Copy size={13} strokeWidth={1.6} /> Einladungslink</>}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => toggleCodes(a.id)} className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/60 hover:text-black border border-black/15 px-3 py-2 bg-white">
+                    <Ticket size={13} strokeWidth={1.6} /> Codes <ChevronDown size={13} className={`transition-transform ${expanded === a.id ? 'rotate-180' : ''}`} />
                   </button>
-                )}
+                  {a.pending && a.invite_token && (
+                    <button onClick={() => copyInvite(a.invite_token, a.id)} className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/60 hover:text-black border border-black/15 px-3 py-2 bg-white">
+                      {copied === a.id ? <><Check size={13} strokeWidth={2} /> Kopiert</> : <><Copy size={13} strokeWidth={1.6} /> Einladungslink</>}
+                    </button>
+                  )}
+                </div>
               </div>
               {a.pending && (
                 <p className="text-[10px] text-amber-700/80 font-light mt-2 flex items-center gap-1.5"><Clock size={11} /> Wartet auf Aktivierung durch das Unternehmen.</p>
+              )}
+              {expanded === a.id && (
+                <div className="mt-3 border-t border-black/[0.06] pt-3">
+                  {!codesById[a.id] ? (
+                    <p className="text-[11px] text-black/40 font-light">Laden …</p>
+                  ) : codesById[a.id].length === 0 ? (
+                    <p className="text-[11px] text-black/40 font-light">Noch keine Codes erstellt.</p>
+                  ) : (
+                    <>
+                      {(() => { const s = codeSummary(codesById[a.id]); return (
+                        <p className="text-[11px] text-black/55 font-light mb-2">
+                          {codesById[a.id].length} Codes · {s.issued} offen · {s.redeemed} eingelöst · {s.revoked} gesperrt · {s.expired} abgelaufen
+                        </p>
+                      )})()}
+                      <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                        {codesById[a.id].map(c => (
+                          <span key={c.id} className="font-mono text-[11px] text-black/70 bg-black/[0.04] border border-black/10 px-2 py-0.5">{c.code} · {c.status}</span>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           ))}

@@ -37,6 +37,39 @@ const publicShape = (b) => ({
   status: b.status,
 })
 
+// Ohne mehrdeutige Zeichen (0/O, 1/I/L), damit Codes gut vorlesbar/abtippbar sind.
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+function genCode(len = 8) {
+  const bytes = crypto.randomBytes(len)
+  let out = ''
+  for (let i = 0; i < len; i++) out += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length]
+  return out
+}
+
+// Effektiver Status: abgelaufene, noch nicht eingelöste Codes als 'expired' zeigen.
+function effectiveStatus(row) {
+  if (row.status === 'issued' && row.expires_at) {
+    const today = new Date().toISOString().slice(0, 10)
+    if (String(row.expires_at).slice(0, 10) < today) return 'expired'
+  }
+  return row.status
+}
+
+const shapeCode = (c) => ({
+  id: c.id,
+  code: c.code,
+  coverage_type: c.coverage_type,
+  discount_type: c.discount_type || null,
+  discount_value: c.discount_value ?? null,
+  design_scope: c.design_scope,
+  allowed_shoe_ids: c.allowed_shoe_ids ? JSON.parse(c.allowed_shoe_ids) : null,
+  max_value: c.max_value ?? null,
+  status: effectiveStatus(c),
+  redeemed_at: c.redeemed_at || null,
+  expires_at: c.expires_at || null,
+  created_at: c.created_at,
+})
+
 // ── Firmenkonto-Inhaber ─────────────────────────────────────────────────────
 
 // GET /api/business/me
@@ -78,6 +111,108 @@ router.put('/me', authenticate, loadOwnBusiness, (req, res) => {
   res.json(publicShape(updated))
 })
 
+// ── Einmal-Codes (Firmenkonto-Inhaber) ──────────────────────────────────────
+
+// GET /api/business/me/codes — eigene Codes auflisten
+router.get('/me/codes', authenticate, loadOwnBusiness, (req, res) => {
+  const rows = getDb()
+    .prepare('SELECT * FROM business_codes WHERE business_id = ? ORDER BY created_at DESC, id DESC')
+    .all(req.business.id)
+  res.json(rows.map(shapeCode))
+})
+
+// POST /api/business/me/codes — Code-Batch erzeugen
+router.post('/me/codes', authenticate, loadOwnBusiness, (req, res) => {
+  const { count, coverage_type, discount_type, discount_value, design_scope, allowed_shoe_ids, max_value, expires_at } = req.body || {}
+  const db = getDb()
+
+  const n = parseInt(count, 10)
+  if (!Number.isInteger(n) || n < 1 || n > 500) {
+    return res.status(400).json({ error: 'Anzahl muss zwischen 1 und 500 liegen' })
+  }
+  if (!['full', 'discount'].includes(coverage_type)) {
+    return res.status(400).json({ error: 'Ungültige Deckungsart' })
+  }
+
+  let dType = null, dValue = null
+  if (coverage_type === 'discount') {
+    if (!['percentage', 'fixed'].includes(discount_type)) {
+      return res.status(400).json({ error: 'Rabattart erforderlich' })
+    }
+    dValue = Number(discount_value)
+    if (!Number.isFinite(dValue) || dValue <= 0) {
+      return res.status(400).json({ error: 'Rabattwert muss größer als 0 sein' })
+    }
+    if (discount_type === 'percentage' && dValue > 100) {
+      return res.status(400).json({ error: 'Prozent-Rabatt max. 100' })
+    }
+    dType = discount_type
+  }
+
+  if (!['fixed', 'catalog'].includes(design_scope)) {
+    return res.status(400).json({ error: 'Ungültige Design-Auswahl' })
+  }
+  let shoeIdsJson = null
+  if (design_scope === 'fixed') {
+    const ids = Array.isArray(allowed_shoe_ids)
+      ? [...new Set(allowed_shoe_ids.map(Number).filter(Number.isInteger))]
+      : []
+    if (ids.length === 0) {
+      return res.status(400).json({ error: 'Bitte mindestens ein Design festlegen' })
+    }
+    const placeholders = ids.map(() => '?').join(',')
+    const found = db.prepare(`SELECT COUNT(*) AS c FROM shoes WHERE id IN (${placeholders})`).get(...ids).c
+    if (found !== ids.length) {
+      return res.status(400).json({ error: 'Mindestens ein Design ist unbekannt' })
+    }
+    shoeIdsJson = JSON.stringify(ids)
+  }
+
+  let mv = null
+  if (max_value != null && max_value !== '') {
+    mv = Number(max_value)
+    if (!Number.isFinite(mv) || mv <= 0) return res.status(400).json({ error: 'Wert-Obergrenze ungültig' })
+  }
+  const exp = expires_at ? String(expires_at).slice(0, 10) : null
+
+  const insert = db.prepare(`
+    INSERT INTO business_codes
+      (business_id, code, coverage_type, discount_type, discount_value, design_scope, allowed_shoe_ids, max_value, expires_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  const created = []
+  try {
+    db.transaction(() => {
+      for (let i = 0; i < n; i++) {
+        let ok = false, tries = 0
+        while (!ok && tries < 12) {
+          const code = genCode(8)
+          try {
+            insert.run(req.business.id, code, coverage_type, dType, dValue, design_scope, shoeIdsJson, mv, exp)
+            created.push(code)
+            ok = true
+          } catch { tries++ }   // UNIQUE-Kollision → neuer Versuch
+        }
+        if (!ok) throw new Error('code generation failed')
+      }
+    })()
+  } catch {
+    return res.status(500).json({ error: 'Codes konnten nicht erzeugt werden' })
+  }
+
+  res.status(201).json({ created: created.length, codes: created })
+})
+
+// POST /api/business/me/codes/:id/revoke — Code sperren (nicht eingelöste)
+router.post('/me/codes/:id/revoke', authenticate, loadOwnBusiness, (req, res) => {
+  const db = getDb()
+  const row = db.prepare('SELECT * FROM business_codes WHERE id = ? AND business_id = ?').get(req.params.id, req.business.id)
+  if (!row) return res.status(404).json({ error: 'Code nicht gefunden' })
+  if (row.status === 'redeemed') return res.status(409).json({ error: 'Eingelöste Codes können nicht gesperrt werden' })
+  db.prepare("UPDATE business_codes SET status = 'revoked' WHERE id = ?").run(row.id)
+  res.json({ ok: true })
+})
+
 // ── Admin / Curator ─────────────────────────────────────────────────────────
 const canManage = [authenticate, requireRole('admin', 'curator')]
 
@@ -105,6 +240,14 @@ router.get('/', ...canManage, (req, res) => {
     source_request_id: r.source_request_id || null,
     created_at: r.created_at,
   })))
+})
+
+// GET /api/business/:id/codes — Codes eines Kontos einsehen (Admin/Curator)
+router.get('/:id/codes', ...canManage, (req, res) => {
+  const rows = getDb()
+    .prepare('SELECT * FROM business_codes WHERE business_id = ? ORDER BY created_at DESC, id DESC')
+    .all(req.params.id)
+  res.json(rows.map(shapeCode))
 })
 
 // POST /api/business — Firmenkonto anlegen (typ. aus einer Anfrage heraus)

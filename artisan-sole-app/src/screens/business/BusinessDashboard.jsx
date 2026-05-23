@@ -8,7 +8,7 @@ export default function BusinessDashboard() {
 
   const cards = [
     { icon: ImageIcon, title: 'Profil & Logo', desc: 'Firmendaten pflegen und Ihr Logo für die Schuhsohle hinterlegen.', to: '/business/profile', active: true },
-    { icon: Ticket, title: 'Einmal-Codes', desc: 'Codes erstellen und verwalten, die Ihre Empfänger einlösen.', to: null, active: false },
+    { icon: Ticket, title: 'Einmal-Codes', desc: 'Codes erstellen und verwalten, die Ihre Empfänger einlösen.', to: '/business/codes', active: true },
   ]
 
   return (

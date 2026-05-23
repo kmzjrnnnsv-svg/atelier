@@ -127,6 +127,7 @@ const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
 const RegisterBusiness     = lazy(() => import('./screens/RegisterBusiness'))
 const BusinessDashboard    = lazy(() => import('./screens/business/BusinessDashboard'))
 const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfile'))
+const BusinessCodes        = lazy(() => import('./screens/business/BusinessCodes'))
 const BusinessPanel        = lazy(() => import('./screens/cms/BusinessPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
@@ -145,7 +146,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/codes']
 
 export const isNative = Capacitor.isNativePlatform()
 
@@ -327,6 +328,7 @@ function AppRoutes() {
       {/* Firmenkonto-Bereich (business.artisansole.com) */}
       <Route path="/business/dashboard" element={<BusinessRoute><BusinessDashboard /></BusinessRoute>} />
       <Route path="/business/profile"   element={<BusinessRoute><BusinessProfile /></BusinessRoute>} />
+      <Route path="/business/codes"     element={<BusinessRoute><BusinessCodes /></BusinessRoute>} />
       {/* Public — Window Shopping ohne Login */}
       {/* Corporate Gifting lebt auf business.artisansole.com; auf der Hauptdomain
           leitet /business dorthin um (Subdomain = kanonisch). */}
