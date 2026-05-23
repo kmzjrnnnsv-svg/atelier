@@ -29,6 +29,7 @@ import customRequestsRouter from './routes/customRequests.js'
 import optionsRouter from './routes/options.js'
 import fitRouter from './routes/fit.js'
 import lastChartRouter from './routes/lastChart.js'
+import businessRouter from './routes/business.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -142,6 +143,7 @@ app.use('/api/custom-requests', customRequestsRouter)
 app.use('/api', optionsRouter)
 app.use('/api/fit', fitRouter)
 app.use('/api/last-size-chart', lastChartRouter)
+app.use('/api/business', businessRouter)
 
 // GitHub Webhook — auto-deploy on push to website
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {

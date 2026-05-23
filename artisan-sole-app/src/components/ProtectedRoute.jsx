@@ -37,6 +37,19 @@ export function CMSRoute({ children }) {
   return children
 }
 
+// Business: requires an authenticated user who owns a Firmenkonto
+export function BusinessRoute({ children }) {
+  const { user, loading } = useAuth()
+  const location = useLocation()
+  if (loading) return <Spinner />
+  if (!user) {
+    const from = location.pathname + location.search + location.hash
+    return <Navigate to="/login" replace state={{ from }} />
+  }
+  if (!user.is_business) return <Navigate to="/collection" replace />
+  return children
+}
+
 // Admin only
 export function AdminRoute({ children }) {
   const { user, loading } = useAuth()

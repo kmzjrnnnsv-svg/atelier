@@ -292,6 +292,12 @@ const useStore = create((set, get) => ({
     })
   },
 
+  async validateBusinessCode(code, shoeId) {
+    const q = new URLSearchParams({ code })
+    if (shoeId != null) q.set('shoe_id', String(shoeId))
+    return apiFetch(`/api/business/codes/validate?${q.toString()}`)
+  },
+
   // --- FAQS (CMS) ---
   async fetchFaqs() {
     const rows = await apiFetch('/api/faqs')

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { ProtectedRoute, CMSRoute, AdminRoute } from './components/ProtectedRoute'
+import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
@@ -124,6 +124,11 @@ const ConfiguratorMatrix   = lazy(() => import('./screens/cms/ConfiguratorMatrix
 const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
+const RegisterBusiness     = lazy(() => import('./screens/RegisterBusiness'))
+const BusinessDashboard    = lazy(() => import('./screens/business/BusinessDashboard'))
+const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfile'))
+const BusinessCodes        = lazy(() => import('./screens/business/BusinessCodes'))
+const BusinessPanel        = lazy(() => import('./screens/cms/BusinessPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -141,7 +146,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/codes']
 
 export const isNative = Capacitor.isNativePlatform()
 
@@ -189,7 +194,9 @@ function AppRoutes() {
   const { initStore } = useStore()
   const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
-  const showNav = !isCMS && !NO_NAV_PATHS.includes(location.pathname)
+  // Corporate-Onepager bringt eine eigene Kopfzeile mit — globale Shop-Nav ausblenden.
+  const isCorporateLanding = location.pathname === '/business' || (isBusiness && location.pathname === '/')
+  const showNav = !isCMS && !isCorporateLanding && !NO_NAV_PATHS.includes(location.pathname)
   const FOOTER_PATHS = ['/collection', '/accessories', '/explore', '/business']
   const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
@@ -232,6 +239,7 @@ function AppRoutes() {
               <Route path="wardrobe" element={<WardrobeEditor />} />
               <Route path="outfits"  element={<OutfitEditor />} />
               <Route path="users"    element={<AdminRoute><UsersPanel /></AdminRoute>} />
+              <Route path="business" element={<BusinessPanel />} />
               <Route path="scans"    element={<ScansPanel />} />
               <Route path="explore"  element={<ExploreEditor />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />
@@ -316,6 +324,11 @@ function AppRoutes() {
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />
+      <Route path="/register-business"  element={<RegisterBusiness />} />
+      {/* Firmenkonto-Bereich (business.artisansole.com) */}
+      <Route path="/business/dashboard" element={<BusinessRoute><BusinessDashboard /></BusinessRoute>} />
+      <Route path="/business/profile"   element={<BusinessRoute><BusinessProfile /></BusinessRoute>} />
+      <Route path="/business/codes"     element={<BusinessRoute><BusinessCodes /></BusinessRoute>} />
       {/* Public — Window Shopping ohne Login */}
       {/* Corporate Gifting lebt auf business.artisansole.com; auf der Hauptdomain
           leitet /business dorthin um (Subdomain = kanonisch). */}

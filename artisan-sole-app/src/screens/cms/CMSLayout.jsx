@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, ImagePlus, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone, Home, ExternalLink, Sliders } from 'lucide-react'
+import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, ImagePlus, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone, Home, ExternalLink, Sliders, Building2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 
@@ -60,6 +60,7 @@ export default function CMSLayout() {
             ]},
             { heading: 'Kunden', items: [
               { to: '/cms/scans',    label: 'Foot Scans',   icon: ScanLine },
+              { to: '/cms/business', label: 'Firmenkonten', icon: Building2 },
               { to: '/cms/loyalty',  label: 'Loyalty & Tiers', icon: Award },
               { to: '/cms/feedback', label: 'Feedback & Tickets', icon: MessageSquare },
             ]},

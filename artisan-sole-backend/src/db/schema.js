@@ -308,6 +308,10 @@ export function runMigrations(db) {
     `ALTER TABLE accessories ADD COLUMN material_keys TEXT`,
     // accessories — optionale Farb-Zuordnung (CSV Schlüsselwörter, z. B. 'schwarz,black')
     `ALTER TABLE accessories ADD COLUMN color_match TEXT`,
+    // orders — B2B-Firmencode-Einlösung
+    `ALTER TABLE orders ADD COLUMN business_id        INTEGER REFERENCES businesses(id)`,
+    `ALTER TABLE orders ADD COLUMN business_code_id   INTEGER REFERENCES business_codes(id)`,
+    `ALTER TABLE orders ADD COLUMN business_coverage  TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────
@@ -942,6 +946,58 @@ export function runMigrations(db) {
       UNIQUE(last_key, width, size_system, size_label)
     );
     CREATE INDEX IF NOT EXISTS idx_last_size_chart_lk ON last_size_chart(last_key);
+  `)
+
+  // ── B2B-Firmenkonten (business.artisansole.com) ──────────────────────────
+  // Ein Firmenkonto gehört genau einem Login (owner_user_id, role 'user',
+  // is_active=0 bis zur Registrierung über den Einladungslink). Das Logo wird
+  // als base64 (data:-URL) gespeichert und später auf der Sohle verwendet.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS businesses (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_user_id     INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      name              TEXT    NOT NULL,
+      contact_email     TEXT,
+      contact_phone     TEXT,
+      logo_data         TEXT,
+      status            TEXT    NOT NULL DEFAULT 'pending'
+                        CHECK(status IN ('pending','active','suspended')),
+      source_request_id INTEGER REFERENCES custom_requests(id) ON DELETE SET NULL,
+      invite_token      TEXT,
+      created_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at        TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_businesses_owner  ON businesses(owner_user_id);
+    CREATE INDEX IF NOT EXISTS idx_businesses_invite ON businesses(invite_token);
+  `)
+
+  // ── Einmal-Codes pro Firmenkonto ─────────────────────────────────────────
+  // Pro Code konfigurierbar: Deckung (voll vs. Rabatt) und Einlösbarkeit
+  // (festgelegtes Design vs. freie Katalogwahl). Jeder Code ist genau einmal
+  // einlösbar (status issued → redeemed).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS business_codes (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      business_id       INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      code              TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+      coverage_type     TEXT    NOT NULL DEFAULT 'full'
+                        CHECK(coverage_type IN ('full','discount')),
+      discount_type     TEXT    CHECK(discount_type IN ('percentage','fixed')),
+      discount_value    REAL,
+      design_scope      TEXT    NOT NULL DEFAULT 'catalog'
+                        CHECK(design_scope IN ('fixed','catalog')),
+      allowed_shoe_ids  TEXT,                            -- JSON-Array von shoe-ids (design_scope='fixed')
+      max_value         REAL,                            -- Wert-Obergrenze (optional)
+      status            TEXT    NOT NULL DEFAULT 'issued'
+                        CHECK(status IN ('issued','redeemed','revoked','expired')),
+      redeemed_by       INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      redeemed_order_id INTEGER REFERENCES orders(id) ON DELETE SET NULL,
+      redeemed_at       TEXT,
+      expires_at        TEXT,
+      created_at        TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_business_codes_biz  ON business_codes(business_id);
+    CREATE INDEX IF NOT EXISTS idx_business_codes_code ON business_codes(code);
   `)
 
   // ── Spalten-Migrationen GANZ AM ENDE ausführen ───────────────────────────

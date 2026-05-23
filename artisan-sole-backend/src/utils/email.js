@@ -423,6 +423,16 @@ export async function sendManufacturerNotification(order, user, scan) {
   const addr        = order.delivery_address ? JSON.parse(order.delivery_address) : null
   const accessories = order.accessories ? JSON.parse(order.accessories) : []
 
+  // B2B-Firmencode-Bestellung: Firma, Logo (für die Sohle) und Code beilegen.
+  let biz = null, bizCode = null
+  if (order.business_id) {
+    try {
+      biz = getDb().prepare('SELECT name, logo_data FROM businesses WHERE id = ?').get(order.business_id)
+      if (order.business_code_id) bizCode = getDb().prepare('SELECT code FROM business_codes WHERE id = ?').get(order.business_code_id)
+    } catch { /* ignore */ }
+  }
+  const coverageLabel = order.business_coverage === 'full' ? 'Voll gedeckt (Firma)' : (order.business_coverage === 'discount' ? 'Firmen-Rabatt' : '—')
+
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   body{font-family:'Georgia',serif;background:#f8f7f5;margin:0;padding:0}
   .wrap{max-width:620px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,.08)}
@@ -469,6 +479,16 @@ export async function sendManufacturerNotification(order, user, scan) {
         <div class="item"><div class="label">EU-Größe</div><div class="val">${order.eu_size || '—'}</div></div>
       </div>
     </div>
+    ${biz ? `
+    <div class="section">
+      <div class="section-title">Firmenbestellung · Branding</div>
+      <div class="grid">
+        <div class="item"><div class="label">Unternehmen</div><div class="val">${biz.name}</div></div>
+        <div class="item"><div class="label">Deckung</div><div class="val">${coverageLabel}</div></div>
+        ${bizCode ? `<div class="item"><div class="label">Einmal-Code</div><div class="val">${bizCode.code}</div></div>` : ''}
+      </div>
+      ${biz.logo_data ? `<div style="margin-top:14px"><div class="label" style="font-size:10px;color:#aaa;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Logo für die Sohle</div><img src="${biz.logo_data}" alt="Firmenlogo" style="max-width:200px;max-height:90px;background:#f8f7f5;padding:8px;border-radius:6px" /></div>` : ''}
+    </div>` : ''}
     ${scan ? `
     <div class="section">
       <div class="section-title">3D-Fußmaße (Scan-ID: ${scan.id})</div>
@@ -570,6 +590,34 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
       Sie wurden eingeladen, ein Artisan Sole Promotion-Konto mit ${discountText} zu erstellen.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto erstellen</a>
+    <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
+  </div>
+  <div class="footer">Artisan Sole Bespoke Footwear · Vertrauliche Einladung</div>
+</div>
+</body></html>`
+
+  await send({ to: email, subject, html })
+}
+
+export async function sendBusinessInvitation(email, companyName, inviteToken) {
+  const cfg = getEmailConfig()
+  const link = `${cfg.appUrl}/register-business?token=${inviteToken}`
+
+  const subject = 'Artisan Sole für Unternehmen — Ihr Firmenkonto'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <h1>ARTISAN SOLE</h1>
+    <p>FÜR UNTERNEHMEN</p>
+  </div>
+  <div class="body" style="text-align:center">
+    <div class="badge" style="background:#111;color:#fff">FIRMENKONTO</div>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Willkommen${companyName ? `, ${companyName}` : ''}!</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">
+      Wir haben ein Firmenkonto für Sie eingerichtet. Hier verwalten Sie Ihr
+      Profil, Ihr Logo und Ihre Einmal-Codes. Legen Sie jetzt Ihr Passwort fest.
+    </p>
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto aktivieren</a>
     <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
   </div>
   <div class="footer">Artisan Sole Bespoke Footwear · Vertrauliche Einladung</div>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck, Building2 } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
 import { useAuth } from '../context/AuthContext'
@@ -135,7 +135,7 @@ export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user } = useAuth()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, shoeAccessoryMap, accessories: storeAccessories, shoes } = useStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, shoeAccessoryMap, accessories: storeAccessories, shoes } = useStore()
   const isPromo = !!user?.is_promotion
   const promoDiscountPct = user?.promotion_discount_pct || 0
 
@@ -157,6 +157,10 @@ export default function Checkout() {
   const [couponResult,  setCouponResult]  = useState(null)
   const [couponLoading, setCouponLoading] = useState(false)
   const [couponError,   setCouponError]   = useState(null)
+  const [bizCode,       setBizCode]       = useState('')
+  const [bizResult,     setBizResult]     = useState(null)
+  const [bizLoading,    setBizLoading]    = useState(false)
+  const [bizError,      setBizError]      = useState(null)
   const [shippingOptions, setShippingOptions] = useState([])
   const [selectedShipping, setSelectedShipping] = useState(null)
 
@@ -215,11 +219,22 @@ export default function Checkout() {
   const accPromoDiscount = isPromo && promoDiscountPct > 0 ? Math.round(accTotal * promoDiscountPct / 100) : 0
   const subtotal  = (product.id ? shoePrice : cartTotal) + accTotal - accPromoDiscount
   const discountAmount = couponResult?.valid ? couponResult.discount_amount : 0
+  // Firmencode deckt den Schuhpreis (voll) oder gewährt einen Rabatt darauf.
+  const bizDiscount = (() => {
+    if (!bizResult?.valid || !product.id) return 0
+    if (bizResult.coverage_type === 'full') return shoePrice
+    if (bizResult.coverage_type === 'discount') {
+      return bizResult.discount_type === 'percentage'
+        ? Math.round(shoePrice * (bizResult.discount_value / 100))
+        : Math.min(bizResult.discount_value, shoePrice)
+    }
+    return 0
+  })()
   const shippingOpt = shippingOptions.find(o => o.id === selectedShipping)
   const isFreeShipping = (couponResult?.valid && couponResult.type === 'free_shipping') ||
     (shippingOpt?.free_above && subtotal >= shippingOpt.free_above)
   const shippingCost = isFreeShipping ? 0 : (shippingOpt?.price || 0)
-  const total     = Math.max(0, subtotal + shippingCost - discountAmount)
+  const total     = Math.max(0, subtotal + shippingCost - discountAmount - bizDiscount)
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return
@@ -234,6 +249,19 @@ export default function Checkout() {
   }
 
   const handleRemoveCoupon = () => { setCouponResult(null); setCouponCode(''); setCouponError(null) }
+
+  const handleApplyBizCode = async () => {
+    if (!bizCode.trim()) return
+    setBizLoading(true)
+    setBizError(null)
+    try {
+      const res = await validateBusinessCode(bizCode.trim(), product.id || null)
+      if (res.valid) { setBizResult(res); setBizError(null) }
+      else { setBizResult(null); setBizError(res.reason || 'Code ungültig') }
+    } catch { setBizError('Fehler bei der Code-Prüfung') }
+    finally { setBizLoading(false) }
+  }
+  const handleRemoveBizCode = () => { setBizResult(null); setBizCode(''); setBizError(null) }
 
   const canNext = step === 0 ? cart.length > 0
     : step === 1 ? isAddrComplete(delivery)
@@ -250,6 +278,7 @@ export default function Checkout() {
       const accList = chosenAccessories.map(a => ({ name: a.name, price: a.price }))
       let lastRow
       const appliedCoupon = couponResult?.valid ? couponCode.trim().toUpperCase() : null
+      const appliedBizCode = bizResult?.valid && product.id ? bizCode.trim() : null
 
       const shippingData = shippingOpt ? { shipping_method: shippingOpt.key, shipping_cost: `€ ${fmtPrice(shippingCost)}` } : {}
 
@@ -260,7 +289,7 @@ export default function Checkout() {
           price: `€ ${fmtPrice(total)}`, eu_size: product.euSize || latestScan?.eu_size || null,
           scan_id: latestScan?.id || null, delivery_address: delivery,
           billing_address: billingAddr, accessories: accList,
-          foot_notes: footNotes || null, coupon_code: appliedCoupon,
+          foot_notes: footNotes || null, coupon_code: appliedCoupon, business_code: appliedBizCode,
           last_key: product.last || null, last_label: product.lastLabel || null,
           last_width: product.width || null, fit_measurements: product.footMeasurementsUsed || null,
           ...shippingData,
@@ -669,9 +698,43 @@ export default function Checkout() {
               {couponError && <p className="text-[11px] text-red-500 mt-2">{couponError}</p>}
             </div>
 
+            {/* Firmencode (Einmal-Code) — nur bei Einzelprodukt */}
+            {product.id && (
+              <div className="bg-white p-4 border border-black/[0.06]">
+                <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Building2 size={11} /> Firmencode
+                </p>
+                {bizResult?.valid ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[13px] font-bold text-[#34C759]">{bizCode.toUpperCase()}</span>
+                      <span className="text-[11px] text-[#34C759] ml-2">
+                        {bizResult.coverage_type === 'full' ? 'Voll gedeckt' : `Rabatt ${bizResult.discount_value}${bizResult.discount_type === 'percentage' ? ' %' : ' €'}`}
+                        {bizResult.business_name ? ` · ${bizResult.business_name}` : ''}
+                      </span>
+                    </div>
+                    <button onClick={handleRemoveBizCode} className="text-black/25 border-0 bg-transparent"><X size={14} /></button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      className="flex-1 bg-black/[0.03] border-0 px-3 py-2.5 text-[14px] uppercase placeholder-black/25 focus:outline-none"
+                      placeholder="Code Ihres Unternehmens" value={bizCode}
+                      onChange={e => setBizCode(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleApplyBizCode()} />
+                    <button onClick={handleApplyBizCode} disabled={bizLoading || !bizCode.trim()}
+                      className="px-4 py-2.5 bg-black text-white text-[12px] font-semibold border-0 disabled:opacity-30">
+                      {bizLoading ? '…' : 'Einlösen'}
+                    </button>
+                  </div>
+                )}
+                {bizError && <p className="text-[11px] text-red-500 mt-2">{bizError}</p>}
+              </div>
+            )}
+
             {/* Total */}
             <div className="bg-white p-4 border border-black/[0.06]">
-              {(couponResult?.valid || shippingCost > 0 || isFreeShipping || accPromoDiscount > 0) && (
+              {(couponResult?.valid || bizDiscount > 0 || shippingCost > 0 || isFreeShipping || accPromoDiscount > 0) && (
                 <>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-[13px] text-black/40">Zwischensumme</span>
@@ -697,6 +760,12 @@ export default function Checkout() {
                     <div className="flex justify-between mb-2">
                       <span className="text-[13px] text-[#34C759]">Gutschein</span>
                       <span className="text-[13px] text-[#34C759]">- € {fmtPrice(discountAmount)}</span>
+                    </div>
+                  )}
+                  {bizDiscount > 0 && (
+                    <div className="flex justify-between mb-2">
+                      <span className="text-[13px] text-[#34C759]">Firmencode{bizResult?.coverage_type === 'full' ? ' (voll gedeckt)' : ''}</span>
+                      <span className="text-[13px] text-[#34C759]">- € {fmtPrice(bizDiscount)}</span>
                     </div>
                   )}
                   <div className="h-px bg-black/5 mb-2" />
