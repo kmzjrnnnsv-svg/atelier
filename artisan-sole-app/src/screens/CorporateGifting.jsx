@@ -76,7 +76,16 @@ export default function CorporateGifting() {
   const waLink = buildWhatsAppLink()
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const valid = form.company.trim() && form.name.trim() && /\S+@\S+\.\S+/.test(form.email) && form.phone.trim()
+  const emailValid = /\S+@\S+\.\S+/.test(form.email)
+  const valid = form.company.trim() && form.name.trim() && emailValid && form.phone.trim()
+  // Was fehlt noch? (für den Hinweis am deaktivierten Button)
+  const missing = [
+    !form.company.trim() && 'Firma',
+    !form.name.trim() && 'Ansprechpartner',
+    !form.email.trim() ? 'E-Mail' : (!emailValid && 'gültige E-Mail'),
+    !form.phone.trim() && 'Telefon',
+  ].filter(Boolean)
+  const started = !!(form.company || form.name || form.email || form.phone)
 
   const scrollToForm = () => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const chooseDesign = (name) => {
@@ -362,6 +371,12 @@ export default function CorporateGifting() {
               </div>
 
               {error && <p className="text-[12px] text-red-600/80 font-light">{error}</p>}
+
+              {!valid && started && (
+                <p className="text-[11px] text-stone-400 font-light text-center">
+                  Bitte noch ausfüllen: {missing.join(', ')}
+                </p>
+              )}
 
               <button
                 type="submit"
