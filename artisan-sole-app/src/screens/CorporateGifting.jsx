@@ -113,214 +113,221 @@ export default function CorporateGifting() {
     } finally { setSending(false) }
   }
 
-  const inputCls = 'w-full border border-black/15 px-3.5 py-2.5 text-[14px] bg-white outline-none focus:border-black/40 transition-colors font-light'
-  const labelCls = 'block text-[10px] text-black/40 uppercase tracking-[0.15em] mb-1.5 font-light'
+  const inputCls = 'w-full border border-stone-300 px-3.5 py-3 text-[14px] bg-white outline-none focus:border-stone-900 transition-colors font-light text-stone-900 placeholder-stone-400'
+  const labelCls = 'block text-[10px] text-stone-400 uppercase tracking-[0.18em] mb-1.5 font-light'
+  const eyebrow  = 'text-[10px] uppercase tracking-[0.32em] text-stone-400'
+  const h2cls    = 'text-[23px] lg:text-[30px] font-extralight text-stone-900 tracking-tight leading-[1.12]'
+  const lead     = 'text-[13px] lg:text-[14px] text-stone-500 font-light leading-relaxed'
+  const card     = 'bg-white border border-stone-200/80 p-7 lg:p-8 transition-colors duration-300 hover:border-stone-300'
 
   return (
-    <div className="min-h-full bg-white">
-      {/* Slim top bar — Brand + Firmen-Login */}
-      <div className="flex items-center justify-between px-5 lg:px-16 py-4 border-b border-black/[0.06]">
-        <span className="font-brand text-[15px] text-black tracking-wide">ARTISAN SOLE</span>
+    <div className="min-h-full bg-white text-stone-900">
+      {/* Top bar — Brand + Firmen-Login */}
+      <div className="sticky top-0 z-30 flex items-center justify-between px-5 lg:px-10 py-4 bg-white/85 backdrop-blur-md border-b border-stone-200/70">
+        <span className="font-brand text-[15px] tracking-[0.04em]">ARTISAN SOLE</span>
         <Link
           to="/login"
-          className="flex items-center gap-1.5 text-[11px] text-black/55 hover:text-black no-underline uppercase tracking-[0.15em] transition-colors"
+          className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-900 no-underline uppercase tracking-[0.18em] transition-colors"
         >
           <LogIn size={15} strokeWidth={1.4} /> Firmen-Login
         </Link>
       </div>
 
-      {/* Hero — image with overlaid headline */}
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16 / 8' }}>
+      {/* Hero */}
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16 / 9', maxHeight: '78vh' }}>
         <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(rgba(28,25,23,0.12) 0%, rgba(28,25,23,0.30) 45%, rgba(28,25,23,0.66) 100%)' }} />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-          <p className="text-[10px] text-white/70 uppercase tracking-[0.35em] mb-4">Artisan Sole · für Unternehmen</p>
-          <h1 className="text-[28px] lg:text-[46px] font-extralight text-white leading-[1.05] tracking-tight max-w-3xl">
+          <p className="text-[10px] text-white/70 uppercase tracking-[0.4em] mb-5">Artisan Sole · für Unternehmen</p>
+          <h1 className="text-[30px] lg:text-[52px] font-extralight text-white leading-[1.04] tracking-tight max-w-3xl">
             Ein Geschenk, das man jeden Tag trägt.
           </h1>
-          <p className="text-[13px] lg:text-[16px] text-white/80 font-light max-w-2xl mt-5 leading-relaxed">
-            Lederschuhe nach Maß — für Mitarbeitende, Kunden und Partner. Auf den
-            Fuß jeder Trägerin und jedes Trägers abgestimmt, in spanischer
-            Manufaktur gefertigt. Auf Wunsch mit Ihrem Logo.
+          <p className="text-[13px] lg:text-[16px] text-white/80 font-light max-w-xl mt-6 leading-relaxed">
+            Lederschuhe nach Maß — für Mitarbeitende, Kunden und Partner. In
+            spanischer Manufaktur gefertigt, auf Wunsch mit Ihrem Logo.
           </p>
           <button
             onClick={scrollToForm}
-            className="mt-8 px-9 h-12 bg-white text-black border-0 hover:bg-white/90 transition-all flex items-center gap-2"
-            style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+            className="group mt-9 px-9 h-12 bg-white text-stone-900 border-0 hover:bg-stone-100 transition-colors flex items-center gap-2.5"
+            style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
           >
-            Angebot anfragen <ArrowRight size={15} strokeWidth={1.6} />
+            Angebot anfragen <ArrowRight size={15} strokeWidth={1.6} className="transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
       </div>
 
       {/* Leitsatz */}
-      <div className="px-5 lg:px-16 pt-12 lg:pt-16 pb-10 lg:pb-14">
-        <p className="text-center text-[18px] lg:text-[24px] font-extralight text-black/70 leading-snug max-w-3xl mx-auto tracking-tight">
-          Die meisten Geschenke sind bis zum Jahresende vergessen.
-          <br className="hidden sm:block" />
-          <span className="text-black"> Ein Schuh, der perfekt sitzt, begleitet jeden Tag.</span>
-        </p>
-      </div>
-
-      {/* Anwendungsfälle */}
-      <div className="px-5 lg:px-16 pb-12 lg:pb-16">
-        <div className="text-center mb-10">
-          <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Für jeden Anlass</p>
-          <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Ein Geschenk, viele Anlässe</h2>
-          <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-3 max-w-2xl mx-auto leading-relaxed">
-            Wofür Sie unsere Maßschuhe einsetzen, bleibt ganz Ihnen überlassen.
+      <section className="px-5 lg:px-8 py-16 lg:py-24">
+        <div className="max-w-3xl mx-auto text-center">
+          <span className="block w-10 h-px bg-stone-300 mx-auto mb-8" />
+          <p className="text-[20px] lg:text-[27px] font-extralight text-stone-500 leading-[1.4] tracking-tight">
+            Die meisten Geschenke sind bis zum Jahresende vergessen.
+            <span className="text-stone-900"> Ein Schuh, der perfekt sitzt, begleitet jeden Tag.</span>
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-black/[0.06] border border-black/[0.06]">
-          {USE_CASES.map(u => {
-            const Icon = u.icon
-            return (
-              <div key={u.title} className="bg-white p-7">
-                <Icon size={22} strokeWidth={1.25} className="text-black/55 mb-3.5" />
-                <p className="text-[14px] text-black font-normal mb-1.5">{u.title}</p>
-                <p className="text-[11px] text-black/45 font-light leading-relaxed">{u.desc}</p>
-              </div>
-            )
-          })}
+      </section>
+
+      {/* Anwendungsfälle */}
+      <section className="px-5 lg:px-8 py-16 lg:py-24 bg-stone-50 border-y border-stone-200/70">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12 lg:mb-14">
+            <p className={`${eyebrow} mb-3`}>Für jeden Anlass</p>
+            <h2 className={h2cls}>Ein Geschenk, viele Anlässe</h2>
+            <p className={`${lead} mt-4 max-w-xl mx-auto`}>Wofür Sie unsere Maßschuhe einsetzen, bleibt ganz Ihnen überlassen.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+            {USE_CASES.map(u => {
+              const Icon = u.icon
+              return (
+                <div key={u.title} className={card}>
+                  <Icon size={22} strokeWidth={1.25} className="text-stone-500 mb-4" />
+                  <p className="text-[14px] text-stone-900 font-normal mb-2">{u.title}</p>
+                  <p className="text-[11.5px] text-stone-500 font-light leading-relaxed">{u.desc}</p>
+                </div>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Made-to-Measure — das Verfahren */}
-      <div className="px-5 lg:px-16 pb-12 lg:pb-16">
+      <section className="px-5 lg:px-8 py-16 lg:py-24">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Schuhe nach Maß</p>
-            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Die Präzision von Maßschuhen — ohne den Aufwand</h2>
-            <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-3 max-w-2xl mx-auto leading-relaxed">
-              Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben
-              der Empfänger genügen — den Rest übernehmen wir.
+          <div className="text-center mb-12 lg:mb-16">
+            <p className={`${eyebrow} mb-3`}>Schuhe nach Maß</p>
+            <h2 className={h2cls}>Die Präzision von Maßschuhen — ohne den Aufwand</h2>
+            <p className={`${lead} mt-4 max-w-xl mx-auto`}>
+              Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben der Empfänger genügen — den Rest übernehmen wir.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-black/[0.06] border border-black/[0.06]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
             {[
               { n: '01', t: 'Maße nehmen', d: 'Fußlänge und Ballenumfang — in wenigen Augenblicken erfasst, ganz ohne Spezialwerkzeug.' },
-              { n: '02', t: 'Auf den Fuß abgestimmt', d: 'Auf Grundlage dieser Maße bestimmen wir die ideale Leistenform und stimmen Länge und Weite präzise auf den individuellen Fuß ab.' },
-              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird daraufhin einzeln in spanischer Manufaktur produziert und direkt an die Empfänger geliefert.' },
+              { n: '02', t: 'Auf den Fuß abgestimmt', d: 'Wir bestimmen die ideale Leistenform und stimmen Länge und Weite präzise auf den individuellen Fuß ab.' },
+              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird einzeln in spanischer Manufaktur produziert und direkt an die Empfänger geliefert.' },
             ].map(s => (
-              <div key={s.n} className="bg-white p-7">
-                <p className="text-[11px] text-black/25 font-light tracking-[0.2em] mb-3">{s.n}</p>
-                <p className="text-[14px] text-black font-normal mb-1.5">{s.t}</p>
-                <p className="text-[11px] text-black/45 font-light leading-relaxed">{s.d}</p>
+              <div key={s.n} className="text-center sm:text-left">
+                <p className="text-[34px] font-extralight text-stone-300 leading-none mb-4">{s.n}</p>
+                <p className="text-[14px] text-stone-900 font-normal mb-2">{s.t}</p>
+                <p className="text-[11.5px] text-stone-500 font-light leading-relaxed">{s.d}</p>
               </div>
             ))}
           </div>
-          <p className="text-center text-[12px] text-black/40 font-light mt-8 max-w-2xl mx-auto leading-relaxed">
-            Das Ergebnis: Schuhe, die sich anfühlen, als wären sie für genau diesen
-            Fuß gemacht. Auch die Weite (D/EE/EEE) sitzt — für jede und jeden.
+          <p className="text-center text-[12px] text-stone-400 font-light mt-14 max-w-2xl mx-auto leading-relaxed">
+            Das Ergebnis: Schuhe, die sich anfühlen, als wären sie für genau diesen Fuß gemacht. Auch die Weite (D/EE/EEE) sitzt — für jede und jeden.
           </p>
         </div>
-      </div>
+      </section>
 
       {/* Value props */}
-      <div className="px-5 lg:px-16 pb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-black/[0.06] border border-black/[0.06]">
-          {VALUES.map(v => {
-            const Icon = v.icon
-            return (
-              <div key={v.title} className="bg-white p-7">
-                <Icon size={20} strokeWidth={1.25} className="text-black/55 mb-3" />
-                <p className="text-[13px] text-black font-normal mb-1.5">{v.title}</p>
-                <p className="text-[11px] text-black/45 font-light leading-relaxed">{v.desc}</p>
-              </div>
-            )
-          })}
+      <section className="px-5 lg:px-8 py-16 lg:py-24 bg-stone-50 border-y border-stone-200/70">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12 lg:mb-14">
+            <p className={`${eyebrow} mb-3`}>Warum Artisan Sole</p>
+            <h2 className={h2cls}>Handwerk, das Eindruck hinterlässt</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
+            {VALUES.map(v => {
+              const Icon = v.icon
+              return (
+                <div key={v.title} className={card}>
+                  <Icon size={20} strokeWidth={1.25} className="text-stone-500 mb-4" />
+                  <p className="text-[13.5px] text-stone-900 font-normal mb-2">{v.title}</p>
+                  <p className="text-[11.5px] text-stone-500 font-light leading-relaxed">{v.desc}</p>
+                </div>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Katalog */}
       {officeShoes.length > 0 && (
-        <div className="px-5 lg:px-16 py-12">
-          <div className="text-center mb-8">
-            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Kollektion</p>
-            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Eine Auswahl unserer Designs</h2>
-            <p className="text-[12px] text-black/40 font-light mt-3 max-w-xl mx-auto leading-relaxed">
-              Jedes Modell fertigen wir individuell — in der Größe und Weite jedes
-              Empfängers. Wählen Sie ein Design; um die perfekte Passform kümmern wir uns.
+        <section className="px-5 lg:px-8 py-16 lg:py-24">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <p className={`${eyebrow} mb-3`}>Kollektion</p>
+              <h2 className={h2cls}>Eine Auswahl unserer Designs</h2>
+              <p className={`${lead} mt-4 max-w-xl mx-auto`}>
+                Jedes Modell fertigen wir individuell — in Größe und Weite jedes Empfängers. Wählen Sie ein Design; um die perfekte Passform kümmern wir uns.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-10">
+              {officeShoes.map(s => (
+                <div key={s.id} className="group">
+                  <div className="w-full overflow-hidden bg-stone-100 flex items-center justify-center transition-colors duration-500 group-hover:bg-stone-200/70" style={{ aspectRatio: '3 / 4' }}>
+                    {s.image
+                      ? <img src={resolveImg(s.image)} alt={s.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+                      : <span className="text-[10px] text-stone-400 tracking-wider uppercase">{s.name}</span>}
+                  </div>
+                  <div className="pt-3.5">
+                    <p className="text-[12px] lg:text-[13px] text-stone-900 font-normal leading-snug">{s.name}</p>
+                    <p className="text-[10px] text-stone-400 tracking-wider uppercase mt-0.5">{s.category}</p>
+                    <button
+                      onClick={() => chooseDesign(s.name)}
+                      className="mt-2.5 text-[10px] tracking-[0.16em] uppercase text-stone-500 hover:text-stone-900 bg-transparent border-0 underline underline-offset-4 decoration-stone-300 transition-colors"
+                    >
+                      Dieses Design wählen
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-[11px] text-stone-400 font-light mt-12">
+              Ein bestimmtes Modell im Sinn? Nennen Sie es uns — wir setzen es um.
             </p>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-8">
-            {officeShoes.map(s => (
-              <div key={s.id} className="group">
-                <div className="w-full overflow-hidden bg-[#f6f5f3] flex items-center justify-center transition-colors duration-500 group-hover:bg-[#efeee9]" style={{ aspectRatio: '3 / 4' }}>
-                  {s.image
-                    ? <img src={resolveImg(s.image)} alt={s.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
-                    : <span className="text-[10px] text-black/20 tracking-wider uppercase">{s.name}</span>}
-                </div>
-                <div className="pt-3">
-                  <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{s.name}</p>
-                  <p className="text-[10px] text-black/30 tracking-wider uppercase mt-0.5">{s.category}</p>
-                  <button
-                    onClick={() => chooseDesign(s.name)}
-                    className="mt-2 text-[10px] tracking-[0.15em] uppercase text-black/55 hover:text-black bg-transparent border-0 underline underline-offset-4 decoration-black/20"
-                  >
-                    Dieses Design wählen
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-[11px] text-black/30 font-light mt-9">
-            Ein bestimmtes Modell im Sinn? Nennen Sie es uns — wir setzen es um.
-          </p>
-        </div>
+        </section>
       )}
 
       {/* Firmenkonto / Login */}
-      <div className="px-5 lg:px-16 pb-12 lg:pb-16">
-        <div className="max-w-3xl mx-auto bg-[#111] text-white px-7 lg:px-12 py-10 lg:py-12 text-center">
-          <Building2 size={26} strokeWidth={1.25} className="text-white/70 mx-auto mb-4" />
-          <h2 className="text-[20px] lg:text-[24px] font-extralight tracking-tight">Bereits Firmenkunde?</h2>
-          <p className="text-[12px] lg:text-[13px] text-white/55 font-light mt-3 max-w-xl mx-auto leading-relaxed">
-            In Ihrem Firmenkonto hinterlegen Sie Ihr Logo für die Sohle, pflegen
-            Ihr Profil und verwalten künftig die Einmal-Codes, die Ihre Empfänger
-            selbst einlösen.
+      <section className="px-5 lg:px-8 py-16 lg:py-24 bg-stone-900 text-white">
+        <div className="max-w-2xl mx-auto text-center">
+          <Building2 size={26} strokeWidth={1.25} className="text-white/60 mx-auto mb-5" />
+          <h2 className="text-[22px] lg:text-[28px] font-extralight tracking-tight">Bereits Firmenkunde?</h2>
+          <p className="text-[13px] text-white/55 font-light mt-4 max-w-lg mx-auto leading-relaxed">
+            In Ihrem Firmenkonto hinterlegen Sie Ihr Logo für die Sohle, pflegen Ihr Profil und verwalten die Einmal-Codes, die Ihre Empfänger selbst einlösen.
           </p>
           <Link
             to="/login"
-            className="inline-flex items-center gap-2 mt-7 px-8 h-12 bg-white text-black no-underline hover:bg-white/90 transition-all"
-            style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+            className="inline-flex items-center gap-2.5 mt-8 px-8 h-12 bg-white text-stone-900 no-underline hover:bg-stone-100 transition-colors"
+            style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
           >
             <LogIn size={15} strokeWidth={1.6} /> Zum Firmen-Login
           </Link>
-          <p className="text-[10px] text-white/35 font-light mt-5">
+          <p className="text-[10px] text-white/35 font-light mt-6">
             Noch kein Konto? Senden Sie uns einfach eine Anfrage — wir richten es für Sie ein.
           </p>
         </div>
-      </div>
+      </section>
 
       {/* Anfrage */}
-      <div ref={formRef} className="px-5 lg:px-16 py-12 lg:py-16 bg-[#fafaf9] border-t border-black/[0.06] scroll-mt-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Anfrage</p>
-            <h2 className="text-[22px] lg:text-[26px] font-extralight text-black tracking-tight">Ihr Vorhaben, unser Vorschlag</h2>
-            <p className="text-[12px] text-black/40 font-light mt-3 leading-relaxed">
-              Schildern Sie uns kurz Ihr Vorhaben. Wir melden uns persönlich mit
-              einem passenden Vorschlag — unverbindlich.
+      <section ref={formRef} className="px-5 lg:px-8 py-16 lg:py-24 bg-stone-50 border-t border-stone-200/70 scroll-mt-16">
+        <div className="max-w-xl mx-auto">
+          <div className="text-center mb-10">
+            <p className={`${eyebrow} mb-3`}>Anfrage</p>
+            <h2 className={h2cls}>Ihr Vorhaben, unser Vorschlag</h2>
+            <p className={`${lead} mt-4`}>
+              Schildern Sie uns kurz Ihr Vorhaben. Wir melden uns persönlich mit einem passenden Vorschlag — unverbindlich.
             </p>
           </div>
 
           {sent ? (
-            <div className="border border-black/10 p-10 text-center bg-white">
-              <div className="w-12 h-12 bg-black flex items-center justify-center mx-auto mb-4">
+            <div className="border border-stone-200 p-10 text-center bg-white">
+              <div className="w-12 h-12 bg-stone-900 flex items-center justify-center mx-auto mb-4">
                 <Check size={20} className="text-white" strokeWidth={1.5} />
               </div>
-              <p className="text-[18px] font-extralight text-black tracking-tight">Vielen Dank für Ihre Anfrage.</p>
-              <p className="text-[12px] text-black/45 font-light mt-2.5 leading-relaxed max-w-sm mx-auto">
+              <p className="text-[18px] font-extralight text-stone-900 tracking-tight">Vielen Dank für Ihre Anfrage.</p>
+              <p className="text-[12px] text-stone-500 font-light mt-2.5 leading-relaxed max-w-sm mx-auto">
                 Ihre Anfrage ist bei uns eingegangen. Unser Business-Team meldet sich in Kürze persönlich bei Ihnen.
               </p>
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-4">
               {selectedDesign && (
-                <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-white border border-black/10">
-                  <span className="text-[12px] text-black/60 font-light">Gewähltes Design: <span className="text-black">{selectedDesign}</span></span>
-                  <button type="button" onClick={() => setSelectedDesign('')} className="text-[10px] text-black/30 hover:text-black/60 bg-transparent border-0 uppercase tracking-wider">Ändern</button>
+                <div className="flex items-center justify-between gap-3 px-4 py-3 bg-white border border-stone-200">
+                  <span className="text-[12px] text-stone-500 font-light">Gewähltes Design: <span className="text-stone-900">{selectedDesign}</span></span>
+                  <button type="button" onClick={() => setSelectedDesign('')} className="text-[10px] text-stone-400 hover:text-stone-700 bg-transparent border-0 uppercase tracking-wider">Ändern</button>
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -342,7 +349,7 @@ export default function CorporateGifting() {
                 </div>
                 <div>
                   <label className={labelCls}>Anlass</label>
-                  <input className={inputCls} value={form.occasion} onChange={e => set('occasion', e.target.value)} placeholder="z. B. Benefit, Onboarding, Jubiläum, Kundengeschenk" />
+                  <input className={inputCls} value={form.occasion} onChange={e => set('occasion', e.target.value)} placeholder="z. B. Benefit, Onboarding, Jubiläum" />
                 </div>
                 <div>
                   <label className={labelCls}>Stückzahl (ab {MIN_PER_DESIGN}/Design)</label>
@@ -359,8 +366,8 @@ export default function CorporateGifting() {
               <button
                 type="submit"
                 disabled={!valid || sending}
-                className="w-full h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 disabled:opacity-30 transition-all"
-                style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+                className="w-full h-14 flex items-center justify-center gap-2.5 bg-stone-900 text-white border-0 hover:bg-stone-800 disabled:opacity-30 transition-colors"
+                style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
               >
                 <Send size={15} strokeWidth={1.5} /> {sending ? 'Wird gesendet …' : 'Anfrage senden'}
               </button>
@@ -368,33 +375,40 @@ export default function CorporateGifting() {
               {waLink && (
                 <>
                   <div className="flex items-center gap-3 py-1">
-                    <span className="flex-1 h-px bg-black/10" />
-                    <span className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light">oder</span>
-                    <span className="flex-1 h-px bg-black/10" />
+                    <span className="flex-1 h-px bg-stone-200" />
+                    <span className="text-[10px] text-stone-400 uppercase tracking-[0.2em] font-light">oder</span>
+                    <span className="flex-1 h-px bg-stone-200" />
                   </div>
                   <a
                     href={waLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full h-14 flex items-center justify-center gap-2.5 bg-white text-black border border-black/20 hover:border-black hover:bg-black/[0.02] transition-all no-underline"
-                    style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+                    className="w-full h-14 flex items-center justify-center gap-2.5 bg-white text-stone-900 border border-stone-300 hover:border-stone-900 transition-colors no-underline"
+                    style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
                   >
                     <MessageCircle size={15} strokeWidth={1.5} /> Direkt per WhatsApp
                   </a>
-                  <p className="text-center text-[10px] text-black/35 font-light leading-relaxed">
-                    Lieber direkt schreiben? Stellen Sie Ihre Fragen per WhatsApp —
-                    Ihre Angaben übernehmen wir.
+                  <p className="text-center text-[10px] text-stone-400 font-light leading-relaxed">
+                    Lieber direkt schreiben? Stellen Sie Ihre Fragen per WhatsApp — Ihre Angaben übernehmen wir.
                   </p>
                 </>
               )}
 
-              <p className="text-center text-[10px] text-black/30 font-light tracking-wide">
+              <p className="text-center text-[10px] text-stone-400 font-light tracking-wide">
                 Persönliche Beratung · unverbindlich · gefertigt in Spanien
               </p>
             </form>
           )}
         </div>
-      </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="px-5 lg:px-8 py-9 bg-white border-t border-stone-200/70">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <span className="font-brand text-[13px] tracking-[0.04em] text-stone-900">ARTISAN SOLE</span>
+          <p className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">Bespoke Footwear · Made in Spain</p>
+        </div>
+      </footer>
     </div>
   )
 }
