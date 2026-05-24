@@ -373,13 +373,13 @@ export default function ShoeCollection() {
       <div className="px-8 lg:px-24 xl:px-32 pb-16">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            {backendStatus === 'loading' && (
+            {shoes.length === 0 && backendStatus === 'loading' && (
               <>
                 <div className="w-6 h-6 border border-black/15 border-t-black/50 rounded-full animate-spin-custom mb-4" />
                 <p className="text-[14px] font-light text-black/40">Produkte werden geladen …</p>
               </>
             )}
-            {backendStatus === 'error' && (
+            {shoes.length === 0 && backendStatus === 'error' && (
               <>
                 <p className="text-[14px] font-light text-red-700/80">Produkte können aktuell nicht geladen werden.</p>
                 <p className="text-[12px] text-black/40 mt-2 font-light max-w-md">{backendError}</p>
@@ -392,7 +392,9 @@ export default function ShoeCollection() {
                 </button>
               </>
             )}
-            {backendStatus === 'ok' && (
+            {/* Schuhe sind geladen, diese Kategorie ist nur (noch) leer —
+                niemals als Fehler darstellen. */}
+            {(shoes.length > 0 || backendStatus === 'ok') && (
               <>
                 <p className="text-[14px] font-light text-black/40">Diese Kategorie wird gerade kuratiert.</p>
                 <p className="text-[12px] text-black/20 mt-2 font-light">Bald verfügbar.</p>
