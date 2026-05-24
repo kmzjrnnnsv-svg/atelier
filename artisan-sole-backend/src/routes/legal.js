@@ -7,8 +7,9 @@ const router = Router()
 const TYPES    = ['datenschutz', 'agb', 'impressum']
 const canWrite = [authenticate, requireRole('admin', 'curator')]
 
-// GET /api/legal/:type
-router.get('/:type', authenticate, (req, res) => {
+// GET /api/legal/:type — öffentlich (Impressum/Datenschutz/AGB müssen ohne
+// Login erreichbar sein).
+router.get('/:type', (req, res) => {
   if (!TYPES.includes(req.params.type)) {
     return res.status(400).json({ error: 'Invalid type. Must be: datenschutz, agb, impressum' })
   }

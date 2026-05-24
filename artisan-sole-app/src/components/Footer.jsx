@@ -13,7 +13,7 @@ const DEFAULTS = {
   // „Über uns“-Spalte
   about_label: 'Über uns',
   about_links: [
-    { label: 'Artisan Sole', path: '/legal/about' },
+    { label: 'Artisan Sole', path: '/explore' },
     { label: 'Für Unternehmen', path: 'https://business.artisansole.com/' },
     { label: 'Boutiquen',    path: '/help' },
   ],
@@ -21,10 +21,10 @@ const DEFAULTS = {
   // „Hilfe“-Spalte
   help_label: 'Hilfe',
   help_links: [
-    { label: 'Versand & Lieferung', path: '/legal/shipping' },
+    { label: 'Versand & Lieferung', path: '/help' },
     { label: 'Kundenbetreuung',     path: '/help' },
     { label: 'FAQ',                 path: '/help' },
-    { label: 'Rückgabeanfrage',     path: '/legal/withdrawal' },
+    { label: 'Rückgabeanfrage',     path: '/feedback' },
     { label: 'Rückverfolgbarkeit',  path: '/orders' },
   ],
 
@@ -37,14 +37,12 @@ const DEFAULTS = {
     { label: 'YouTube',   path: 'https://youtube.com' },
   ],
 
-  // „Rechtliches“-Spalte
+  // „Rechtliches“-Spalte — nur Typen, die das Backend kennt (agb/datenschutz/impressum)
   legal_label: 'Rechtliches',
   legal_links: [
-    { label: 'Allgemeine Geschäftsbedingungen', path: '/legal/terms' },
-    { label: 'Datenschutzerklärung',           path: '/legal/privacy' },
-    { label: 'Impressum',                       path: '/legal/imprint' },
-    { label: 'Widerrufsbelehrung',              path: '/legal/withdrawal' },
-    { label: 'Cookie-Einstellungen',            path: '/legal/cookies' },
+    { label: 'Allgemeine Geschäftsbedingungen', path: '/legal/agb' },
+    { label: 'Datenschutzerklärung',           path: '/legal/datenschutz' },
+    { label: 'Impressum',                       path: '/legal/impressum' },
   ],
 
   // Land + Sprache
