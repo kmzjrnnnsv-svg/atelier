@@ -181,7 +181,7 @@ app.use(express.static(distPath, {
     if (/[\\/]assets[\\/]/.test(filePath)) {
       // Vite-Assets sind content-hash-benannt → unbegrenzt cachebar
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
-    } else if (/(index\.html|sw\.js)$/i.test(filePath)) {
+    } else if (/(index\.html|sw\.js|boot-check\.js)$/i.test(filePath)) {
       // Einstiegspunkt + Service-Worker immer revalidieren, damit zurück-
       // kehrende Besucher nach einem Deploy nie auf veraltete Chunk-Hashes zeigen.
       res.setHeader('Cache-Control', 'no-cache')
