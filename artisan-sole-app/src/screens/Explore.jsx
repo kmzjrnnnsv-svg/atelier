@@ -1,5 +1,5 @@
 /**
- * Explore.jsx — LV-style angular editorial & discovery page
+ * Explore.jsx, LV-style angular editorial & discovery page
  * Sharp edges, product-grid-style layout, minimal editorial
  */
 import { useState, useEffect } from 'react'
@@ -12,7 +12,7 @@ import { isMobileWeb } from '../App'
 
 const DEFAULT_SECTIONS = [
   { id: 'editorial', label: 'Editorial', title: 'Saisonale Editorials', description: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Kollektion.', previewItems: ['Herbst / Winter 2025', 'The Riviera Collection', 'Made in Florence'], visible: true },
-  { id: 'craft', label: 'Handwerk', title: 'Handwerk trifft Technologie', description: 'Kurz-Dokumentationen über die Herstellung jedes Modells — vom Leisten bis zur letzten Naht.', previewItems: ['Wie ein Leisten entsteht', 'Das Leder von Bontoni', 'Stitching mit Gefühl'], visible: true },
+  { id: 'craft', label: 'Handwerk', title: 'Handwerk trifft Technologie', description: 'Kurz-Dokumentationen über die Herstellung jedes Modells, vom Leisten bis zur letzten Naht.', previewItems: ['Wie ein Leisten entsteht', 'Das Leder von Bontoni', 'Stitching mit Gefühl'], visible: true },
   { id: 'styleguide', label: 'Style Guide', title: 'Outfit-Inspirationen', description: 'Kuratierte Kombinationsvorschläge auf Basis Ihrer Garderobe und Ihres Stils.', previewItems: ['Oxford trifft Flanell', 'Derby & Chino', 'Loafer im Business-Look'], visible: true },
   { id: 'trends', label: 'Trends', title: 'Material- & Stil-Trends', description: 'Saisonale Reports zu Lederarten, Sohlenformen und den Farbtönen der Saison.', previewItems: ['Patina als Statement', 'Crepe Soles 2026', 'Naturfarben dominieren'], visible: true },
   { id: 'collabs', label: 'Kollaborationen', title: 'Limited Editions', description: 'Exklusive Capsule Collections mit Designern, Architekten und Künstlern.', previewItems: ['× Mailänder Architekt', '× Toskana Tannery', 'Member Exclusive Drop'], visible: true },
@@ -62,7 +62,7 @@ export default function Explore() {
     { label: 'Community', title: 'Artisan Sole-Träger weltweit', text: 'Erfahrungen, Kombinationen und Stilinspirationen unserer Community.' },
   ])
 
-  // CMS helper — returns CMS value or fallback
+  // CMS helper, returns CMS value or fallback
   const c = (key, fallback) => cms?.[key] || fallback
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export default function Explore() {
     <div className="min-h-full bg-white">
 
       {/* ══════════════════════════════════════════════════════════
-          1. HERO — Full-bleed angular banner
+          1. HERO, Full-bleed angular banner
           ══════════════════════════════════════════════════════════ */}
       {featuredSection && (
         <div className="relative cursor-pointer group">
@@ -112,7 +112,7 @@ export default function Explore() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          2. TOPICS — Angular grid with 1px gaps
+          2. TOPICS, Angular grid with 1px gaps
           ══════════════════════════════════════════════════════════ */}
       {moreSections.length > 0 && (
         <div className="py-10 lg:py-20">
@@ -143,7 +143,7 @@ export default function Explore() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          3. FEATURED ARTICLES — Two-column angular split
+          3. FEATURED ARTICLES, Two-column angular split
           ══════════════════════════════════════════════════════════ */}
       {featuredArticles.length > 0 && (
         <div className="grid grid-cols-2 gap-[1px] bg-black/[0.04]">
@@ -162,7 +162,7 @@ export default function Explore() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          4. ALL ARTICLES — Angular grid
+          4. ALL ARTICLES, Angular grid
           ══════════════════════════════════════════════════════════ */}
       {regularArticles.length > 0 && (
         <div className="py-10 lg:py-20">
@@ -192,7 +192,7 @@ export default function Explore() {
       )}
 
       {/* ══════════════════════════════════════════════════════════
-          5. JOURNAL CTA — Angular full-bleed banner
+          5. JOURNAL CTA, Angular full-bleed banner
           ══════════════════════════════════════════════════════════ */}
       <div className="relative">
         <div className="w-full overflow-hidden" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '21 / 9' }}>
@@ -205,7 +205,7 @@ export default function Explore() {
             {c('journal_cta_title', 'Die Welt hinter jedem Schuh')}
           </h2>
           <p className="text-[11px] lg:text-[13px] text-white/25 mt-1.5 lg:mt-2 font-light max-w-md">
-            {c('journal_cta_description', 'Editorials, Handwerkskunst und Inspirationen — entdecken Sie die Geschichten.')}
+            {c('journal_cta_description', 'Editorials, Handwerkskunst und Inspirationen, entdecken Sie die Geschichten.')}
           </p>
         </div>
       </div>

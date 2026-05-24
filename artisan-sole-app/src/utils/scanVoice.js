@@ -102,7 +102,7 @@ export const SCAN_MESSAGES = {
   ready: (side) => `Stelle deinen ${side === 'right' ? 'rechten' : 'linken'} Fuß auf den Boden. Halte das iPhone etwa 30 Zentimeter darüber.`,
   startScan: 'Der Scan beginnt. Bewege das iPhone langsam im Kreis um deinen Fuß.',
 
-  // During scan — progressive guidance
+  // During scan, progressive guidance
   phase1: 'Gut. Halte das iPhone ruhig über dem Fuß.',
   phase2: 'Jetzt langsam zur Seite bewegen. Kamera auf den Fuß gerichtet halten.',
   phase3: 'Weiter um den Fuß herum. Auch die Ferse erfassen.',
@@ -125,8 +125,8 @@ export const SCAN_MESSAGES = {
   processingHalf: 'Berechnung läuft noch. Gleich geschafft.',
   done: 'Fertig! Deine Fußmaße wurden gespeichert. Du kannst das Ergebnis jetzt auf dem Bildschirm sehen.',
 
-  // Errors (reassuring tone — user shouldn't panic)
-  error: 'Das hat leider nicht geklappt. Kein Problem — versuche es einfach nochmal.',
+  // Errors (reassuring tone, user shouldn't panic)
+  error: 'Das hat leider nicht geklappt. Kein Problem, versuche es einfach nochmal.',
   lowQuality: 'Nicht genug erfasst. Bitte nochmal mit etwas mehr Licht versuchen.',
   autoRetry: 'Kleiner Fehler. Neuer Versuch startet gleich automatisch.',
 }

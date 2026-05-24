@@ -1,5 +1,5 @@
 /**
- * FooterEditor — CMS-Panel für den Lemaire-Style Footer
+ * FooterEditor, CMS-Panel für den Lemaire-Style Footer
  * Vier Link-Spalten (Über uns / Hilfe / Social / Rechtliches) +
  * Copyright + Land/Sprache.
  */

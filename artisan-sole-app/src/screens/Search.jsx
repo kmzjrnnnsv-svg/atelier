@@ -1,5 +1,5 @@
 /**
- * Search.jsx — "Suche" tab (Apple Store Search style)
+ * Search.jsx, "Suche" tab (Apple Store Search style)
  * Large title, rounded search bar, suggestions, results grid
  */
 import { useState, useMemo, useRef, useEffect } from 'react'

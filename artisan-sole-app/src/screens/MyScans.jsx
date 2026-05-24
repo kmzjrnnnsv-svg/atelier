@@ -1,5 +1,5 @@
 /**
- * MyScans.jsx — Eigene Fuß-Scan-Übersicht für alle User
+ * MyScans.jsx, Eigene Fuß-Scan-Übersicht für alle User
  *
  * Zeigt die gespeicherten Fußscans des eingeloggten Users.
  * Jeder Scan zeigt: Datum, EU-Größe, Genauigkeit, Messwerte (0,1 mm)
@@ -23,7 +23,7 @@ import { SHOE_TYPES, buildShoeLastGeo, downloadSTL as downloadLastSTL, downloadO
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(dateStr) {
-  if (!dateStr) return '—'
+  if (!dateStr) return '·'
   const d = new Date(dateStr.replace(' ', 'T') + 'Z')
   return d.toLocaleString('de-DE', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -32,7 +32,7 @@ function fmt(dateStr) {
 }
 
 function refLabel(type) {
-  return type === 'card' ? 'Bankkarte' : type === 'a4' ? 'A4-Blatt' : type || '—'
+  return type === 'card' ? 'Bankkarte' : type === 'a4' ? 'A4-Blatt' : type || '·'
 }
 
 // ─── Mini 3D Foot Viewer ──────────────────────────────────────────────────────
@@ -146,7 +146,7 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
       {/* Expanded detail */}
       {expanded && (
         <div className="px-4 pb-4 border-t border-black/5">
-          {/* Measurements table — basic dimensions */}
+          {/* Measurements table, basic dimensions */}
           <div className="bg-white border border-black/5 overflow-hidden mt-3 mb-1">
             <div className="grid grid-cols-4 px-3 py-2 border-b border-black/5 bg-black">
               {['', 'Breite', 'Gewölbe', 'Fußhöhe'].map(h => (
@@ -170,7 +170,7 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
                   <span className="text-[7px] text-black/20 block">±4 mm</span>
                 </span>
                 <span className="text-[10px] text-black/45 text-center">
-                  {fh != null ? Number(fh).toFixed(1) : '—'}
+                  {fh != null ? Number(fh).toFixed(1) : '·'}
                   {fh != null && <span className="text-[7px] text-black/20 block">±4 mm</span>}
                 </span>
               </div>
@@ -197,7 +197,7 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
                     ].map(({ name, v, acc }) => (
                       <div key={name} className="text-center">
                         <span className="text-[7px] uppercase tracking-widest text-black/30 block" style={{ letterSpacing: '0.15em' }}>{name}</span>
-                        <span className="text-[10px] text-black/50">{v != null ? Number(v).toFixed(1) : '—'}</span>
+                        <span className="text-[10px] text-black/50">{v != null ? Number(v).toFixed(1) : '·'}</span>
                         {v != null && <span className="text-[7px] text-black/20 block">{acc}</span>}
                       </div>
                     ))}
@@ -270,7 +270,7 @@ function ScanCard({ scan, canDownload, onNotesUpdate }) {
             </div>
           </div>
 
-          {/* Shoe Last Export — nur Admin/Curator */}
+          {/* Shoe Last Export, nur Admin/Curator */}
           {canDownload && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">

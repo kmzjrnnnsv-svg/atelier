@@ -118,7 +118,7 @@ export default function BusinessPanel() {
           <h1 className="text-[22px] font-extralight text-black tracking-tight flex items-center gap-2">
             <Building2 size={20} strokeWidth={1.3} /> Firmenkonten
           </h1>
-          <p className="text-[12px] text-black/45 font-light mt-1">B2B-Konten für business.artisansole.com — anlegen, einladen, verwalten.</p>
+          <p className="text-[12px] text-black/45 font-light mt-1">B2B-Konten für business.artisansole.com, anlegen, einladen, verwalten.</p>
         </div>
         <button onClick={() => { setError(null); setForm({ ...emptyForm }) }} className="flex items-center gap-1.5 text-[11px] tracking-[0.12em] uppercase text-white bg-black px-4 py-2.5 border-0">
           <Plus size={14} strokeWidth={1.6} /> Konto anlegen

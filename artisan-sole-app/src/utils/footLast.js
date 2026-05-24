@@ -1,5 +1,5 @@
 /**
- * footLast.js — Shoe Last (Schuhleisten) Generation from Foot Scan Data
+ * footLast.js, Shoe Last (Schuhleisten) Generation from Foot Scan Data
  *
  * Transforms foot measurements + cross-section contours into a shoe last geometry
  * using industry-standard Leisten parameters:
@@ -11,9 +11,9 @@
  *   - Fersensprengung (heel pitch): heel elevation angle
  *
  * Coordinate system (same as footSTL.js):
- *   X — foot length (heel = −L/2, toe = +L/2)
- *   Y — mediolateral (big-toe side = positive for right foot)
- *   Z — height (plantar plane = 0, dorsal = positive)
+ *   X, foot length (heel = −L/2, toe = +L/2)
+ *   Y, mediolateral (big-toe side = positive for right foot)
+ *   Z, height (plantar plane = 0, dorsal = positive)
  *
  * Exports:
  *   SHOE_TYPES                          → available shoe type presets
@@ -28,7 +28,7 @@ import * as THREE from 'three'
 // ─── Shoe Type Presets ──────────────────────────────────────────────────────
 
 // Industry-standard Leisten presets (values from German Schuhmacher-Handwerk)
-// CMS can override these — these are sensible defaults for production.
+// CMS can override these, these are sensible defaults for production.
 //
 // HINWEIS: Scan erfolgt MIT Socken (dünn, ~2mm Umfang).
 // girth_ease = reine Material-/Bewegungszugabe (Socke bereits im Scanmaß enthalten).
@@ -86,13 +86,13 @@ export const SHOE_TYPES = {
   },
   sandale: {
     name: 'Sandale / Pantolette',
-    zugabe_mm: 5,            // minimal — open shoe
+    zugabe_mm: 5,            // minimal, open shoe
     toe_extension_mm: 3,
     heel_pitch_mm: 10,       // low heel
     instep_raise_mm: 2,
     shank_spring_mm: 2,
     width_ease_mm: 1,        // foot visible, close fit desired
-    girth_ease_mm: 0,        // barfuß getragen — Socke im Scan muss kompensiert werden
+    girth_ease_mm: 0,        // barfuß getragen, Socke im Scan muss kompensiert werden
   },
 }
 
@@ -229,10 +229,10 @@ export function buildShoeLastGeo(scanData, options = {}) {
       plantarZ *= toeFrac * 0.5
     }
 
-    // Heel pitch (Fersensprengung) — elevate heel region
+    // Heel pitch (Fersensprengung), elevate heel region
     const heelLift = preset.heel_pitch_mm * ss(0.75, 1.0, tFoot)
 
-    // Shank spring (Gelenkfeder) — bottom curvature at midfoot
+    // Shank spring (Gelenkfeder), bottom curvature at midfoot
     const shankLift = preset.shank_spring_mm * Math.sin(
       ss(0.30, 0.65, tFoot) * Math.PI
     )
@@ -346,12 +346,12 @@ function _interpolateContour(csLookup, tFoot) {
     }
   }
 
-  // Only one side available — use it if close enough (within 8% of foot length)
+  // Only one side available, use it if close enough (within 8% of foot length)
   if (!below && above) return Math.abs(tFoot - above.frac) < 0.08 ? above.cs : null
   if (!above && below) return Math.abs(tFoot - below.frac) < 0.08 ? below.cs : null
   if (!below || !above) return null
 
-  // Both sides available — linear interpolation
+  // Both sides available, linear interpolation
   const span = above.frac - below.frac
   if (span < 0.001) return below.cs
   const t = (tFoot - below.frac) / span
@@ -362,7 +362,7 @@ function _interpolateContour(csLookup, tFoot) {
     girth_mm: (below.cs.girth_mm && above.cs.girth_mm)
       ? lerp(below.cs.girth_mm, above.cs.girth_mm, t)
       : null,
-    contour: null,  // Interpolated — no raw contour points
+    contour: null,  // Interpolated, no raw contour points
     _interpolated: true,
   }
 }
@@ -579,7 +579,7 @@ export function generateMassblatt(scanData, options = {}) {
   const sockWidthCorr = (scanned_with_socks && preset.width_ease_mm <= 1) ? -SOCK_WIDTH_MM : 0
 
   return {
-    title: `Maßblatt Schuhleisten — ${side === 'right' ? 'Rechter' : 'Linker'} Fuß`,
+    title: `Maßblatt Schuhleisten, ${side === 'right' ? 'Rechter' : 'Linker'} Fuß`,
     schuhtyp: preset.name,
     datum: new Date().toLocaleDateString('de-DE'),
 
@@ -608,7 +608,7 @@ export function generateMassblatt(scanData, options = {}) {
     leisten_masse: {
       gesamtlaenge_mm: rnd(length + preset.zugabe_mm + preset.toe_extension_mm),
       breite_mm: rnd(width + preset.width_ease_mm + sockWidthCorr),
-      // Only include girth values that were actually measured — no guessing
+      // Only include girth values that were actually measured, no guessing
       ballen_umfang_mm: ball_girth != null ? rnd(ball_girth + preset.girth_ease_mm + sockCorr) : null,
       rist_umfang_mm: instep_girth != null ? rnd(instep_girth + preset.girth_ease_mm + sockCorr) : null,
       taillen_umfang_mm: waist_girth != null ? rnd(waist_girth + preset.girth_ease_mm + sockCorr) : null,

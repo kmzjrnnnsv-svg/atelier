@@ -1,13 +1,13 @@
 /**
- * LastSizeChartEditor.jsx — CMS-Panel für die Leisten-Maßtabelle.
+ * LastSizeChartEditor.jsx, CMS-Panel für die Leisten-Maßtabelle.
  *
  * Zeigt je Leiste × Weite eine Größentabelle (Größen als Spalten, Fußlänge +
- * Ballenumfang als editierbare Zeilen) — im Format der Hersteller-Tabelle.
+ * Ballenumfang als editierbare Zeilen), im Format der Hersteller-Tabelle.
  * Aus diesen Werten ermittelt das Auto-Matching die passende Leisten/Weite/Größe.
  *
- * GET  /api/last-size-chart        — alle Zeilen
- * PUT  /api/last-size-chart        — Bulk-Update geänderter Werte
- * POST /api/last-size-chart/reset  — zurück auf die Tabellen-Werte (admin)
+ * GET  /api/last-size-chart       , alle Zeilen
+ * PUT  /api/last-size-chart       , Bulk-Update geänderter Werte
+ * POST /api/last-size-chart/reset , zurück auf die Tabellen-Werte (admin)
  */
 import { useState, useEffect, useMemo } from 'react'
 import { Save, RefreshCw, RotateCcw } from 'lucide-react'

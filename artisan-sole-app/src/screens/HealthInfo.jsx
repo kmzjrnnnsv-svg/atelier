@@ -13,7 +13,7 @@ const sections = [
     items: [
       { icon: AlertTriangle, title: 'Blasen & Druckstellen', desc: 'Enger Zehenraum oder harter Absatz verursacht Reibung und schmerzhafte Hautverletzungen.' },
       { icon: Activity,      title: 'Muskelermüdung',       desc: 'Falsche Dämpfung zwingt die Bein- und Fußmuskeln zur Überkompensation und ermüdet schneller.' },
-      { icon: Zap,           title: 'Akute Schmerzen',       desc: 'Sofortige Schmerzen in Ferse, Spann oder Zehen — besonders bei flachen Sohlen ohne Stütze.' },
+      { icon: Zap,           title: 'Akute Schmerzen',       desc: 'Sofortige Schmerzen in Ferse, Spann oder Zehen, besonders bei flachen Sohlen ohne Stütze.' },
     ],
   },
   {
@@ -26,7 +26,7 @@ const sections = [
     icon: TrendingUp,
     items: [
       { icon: Bone,     title: 'Fehlstellungen',    desc: 'Hallux valgus, Hammerzehen und Spreizfuß entstehen durch dauerhaften Druck auf die falsche Stelle.' },
-      { icon: Activity, title: 'Gelenkschmerzen',   desc: 'Knie und Sprunggelenk passen ihre Mechanik an — das führt zu Entzündungen und chronischen Schmerzen.' },
+      { icon: Activity, title: 'Gelenkschmerzen',   desc: 'Knie und Sprunggelenk passen ihre Mechanik an, das führt zu Entzündungen und chronischen Schmerzen.' },
       { icon: Heart,    title: 'Haltungsschäden',   desc: 'Die Wirbelsäule kompensiert eine veränderte Fußstellung und verschiebt schrittweise das gesamte Körpergleichgewicht.' },
     ],
   },
@@ -47,12 +47,12 @@ const sections = [
 ]
 
 const tips = [
-  'Fußlänge regelmäßig nachmessen — Füße können sich im Laufe des Lebens verändern.',
+  'Fußlänge regelmäßig nachmessen, Füße können sich im Laufe des Lebens verändern.',
   'Mindestens 1 cm Spielraum vor der großen Zehe sicherstellen.',
   'Schuhwerk dem Zweck anpassen: Büro, Sport, Freizeit.',
   'Täglich Schuhe wechseln, damit das Material Zeit zum Lüften hat.',
   'Hochhackige Schuhe max. 2–3 Stunden täglich tragen.',
-  '3D-Fußscan für präzise Maßfertigung — exakte Passform, keine Kompromisse.',
+  '3D-Fußscan für präzise Maßfertigung, exakte Passform, keine Kompromisse.',
 ]
 
 export default function HealthInfo() {
@@ -79,7 +79,7 @@ export default function HealthInfo() {
       {/* Scrollable content */}
       <div className="flex-1">
 
-        {/* Intro card — section-style header */}
+        {/* Intro card, section-style header */}
         <div className="flex items-center gap-3 px-5 py-4" style={{ background: '#0f172a' }}>
           <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(45,212,191,0.15)' }}>
             <Activity size={17} className="text-teal-400" strokeWidth={1.5} />
@@ -92,11 +92,11 @@ export default function HealthInfo() {
         <div className="px-5 pt-3 pb-4 border-b border-black/5">
           <p className="text-[10px] text-black/45 leading-relaxed">
             Über 26 Knochen, 33 Gelenke und 100 Muskeln, Sehnen und Bänder arbeiten täglich zusammen.
-            Falsches Schuhwerk stört dieses präzise System — mit Folgen weit über den Fuß hinaus.
+            Falsches Schuhwerk stört dieses präzise System, mit Folgen weit über den Fuß hinaus.
           </p>
         </div>
 
-        {/* Timeline sections — explore section card style */}
+        {/* Timeline sections, explore section card style */}
         {sections.map((sec) => {
           const HeaderIcon = sec.icon
           return (
@@ -135,7 +135,7 @@ export default function HealthInfo() {
           )
         })}
 
-        {/* Prevention tips — preview pills style */}
+        {/* Prevention tips, preview pills style */}
         <div className="border-b border-black/5">
           <div className="flex items-center gap-3 px-5 py-4" style={{ background: '#14532d' }}>
             <div className="w-9 h-9 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
@@ -159,7 +159,7 @@ export default function HealthInfo() {
           </div>
         </div>
 
-        {/* CTA — foot scan */}
+        {/* CTA, foot scan */}
         <button
           className="w-full p-5 flex items-center justify-between bg-black border-0 text-left active:opacity-80"
           onClick={() => navigate('/scan')}
@@ -167,7 +167,7 @@ export default function HealthInfo() {
           <div>
             <p className="text-[8px] text-teal-400" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Die Lösung</p>
             <p className="text-[13px] text-white leading-tight mt-0.5">3D Foot Scan starten</p>
-            <p className="text-[9px] text-white/35 mt-1">Maßgefertigte Schuhe — perfekte Passform garantiert.</p>
+            <p className="text-[9px] text-white/35 mt-1">Maßgefertigte Schuhe, perfekte Passform garantiert.</p>
           </div>
           <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(45,212,191,0.15)' }}>
             <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-teal-400" fill="none" stroke="currentColor" strokeWidth="1.5">

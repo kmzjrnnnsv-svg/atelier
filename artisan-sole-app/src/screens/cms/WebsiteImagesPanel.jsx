@@ -1,11 +1,11 @@
 /**
- * WebsiteImagesPanel — Zentrale Stelle für alle Website-Bilder
+ * WebsiteImagesPanel, Zentrale Stelle für alle Website-Bilder
  * (kein Produktbild, keine Schuh-Variant-Bilder).
  *
  * Aggregiert alle benannten Bild-Slots der öffentlichen Seiten:
  * Homepage-Sektionen, CTA-Banner, Footer-Help, Explore-Hero & Journal.
  * Lese-/Schreibvorgänge gehen direkt auf die bestehenden Settings-
- * Endpoints — keine Doppel-Datenhaltung.
+ * Endpoints, keine Doppel-Datenhaltung.
  */
 import { useState, useEffect } from 'react'
 import { Loader2, Save, Check } from 'lucide-react'
@@ -138,7 +138,7 @@ export default function WebsiteImagesPanel() {
           <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Inhalte</p>
           <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Website-Bilder</h1>
           <p className="text-[13px] text-black/30 mt-2 font-light max-w-xl">
-            Alle Bilder der öffentlichen Seiten zentral verwalten — Homepage, Footer, CTA-Banner und
+            Alle Bilder der öffentlichen Seiten zentral verwalten, Homepage, Footer, CTA-Banner und
             Entdecken. Produktbilder bleiben im jeweiligen Schuh-Editor.
           </p>
         </div>
@@ -173,7 +173,7 @@ export default function WebsiteImagesPanel() {
           return def.fields.map(field => (
             <ImageSlot
               key={`${section.key}.${field}`}
-              label={def.label + (def.fields.length > 1 ? ` — ${FIELD_LABEL[field] || field}` : '')}
+              label={def.label + (def.fields.length > 1 ? `, ${FIELD_LABEL[field] || field}` : '')}
               sub={section.title || section.label || null}
               value={section[field] || ''}
               onChange={val => updateHomepageImage(section.key, field, val)}
@@ -182,7 +182,7 @@ export default function WebsiteImagesPanel() {
         })}
       </Section>
 
-      {/* Footer hat im Lemaire-Stil kein Banner-Bild mehr — Abschnitt entfällt. */}
+      {/* Footer hat im Lemaire-Stil kein Banner-Bild mehr, Abschnitt entfällt. */}
 
       {/* CTA-Banner */}
       <Section title="CTA-Banner" subtitle="Aktions-Banner auf Listenseiten">

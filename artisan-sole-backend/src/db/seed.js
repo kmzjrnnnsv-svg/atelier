@@ -18,6 +18,7 @@ export async function seedDatabase(db) {
   // Unabhängig & idempotent (INSERT OR IGNORE) — NICHT an V2 koppeln, das
   // category_templates leert.
   seedLastSizeChart(db)
+  seedFaqs(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -1477,4 +1478,35 @@ export const CATEGORY_LASTS = {
   SNEAKER_LACED:    ['sneaker', 'chunky'],
   SNEAKER_BOOT:     ['sneaker', 'chunky'],
   LACELESS_TRAINER: ['moc_sport', 'sneaker'],
+}
+
+// ── FAQ-Standardeinträge ──────────────────────────────────────────────────
+// Idempotent: fügt jede Frage nur ein, wenn sie noch nicht existiert.
+// Erklärt die Passform (Fußlänge + Ballenumfang) sowie Produktion/Umtausch,
+// damit diese Details nicht prominent auf jeder Seite stehen müssen.
+function seedFaqs(db) {
+  const FAQS = [
+    { q: 'Woher wisst ihr, welche Größe und Passform ich brauche?',
+      a: 'Wir fertigen jeden Schuh anhand von zwei Maßen: Ihrer Fußlänge und Ihrem Ballenumfang. Daraus bestimmen wir Länge und Weite automatisch, sodass der Schuh dem Fuß ein passendes Bett gibt. Sie wählen keine Konfektionsgröße; die richtige Passform ermitteln wir für Sie.',
+      category: 'Passform', sort_order: 0 },
+    { q: 'Wie messe ich Fußlänge und Ballenumfang richtig?',
+      a: 'Fußlänge: Stellen Sie sich auf ein Blatt Papier und messen Sie vom äußersten Fersenpunkt bis zur längsten Zehe. Ballenumfang: Legen Sie ein Maßband einmal um den breitesten Teil des Vorfußes (über den Ballen). Messen Sie beide Füße und geben Sie die Werte in Millimetern in der Kollektion unter „Passform" ein.',
+      category: 'Passform', sort_order: 1 },
+    { q: 'Was ist, wenn meine Füße unterschiedlich groß sind?',
+      a: 'Das ist völlig normal. Geben Sie beide Füße getrennt an. Für die Fertigung verwenden wir den jeweils größeren Wert, damit nichts drückt.',
+      category: 'Passform', sort_order: 2 },
+    { q: 'Wie lange dauert die Produktion?',
+      a: 'Da wir jedes Paar einzeln auf Bestellung in unserer Manufaktur in Spanien fertigen, dauert die Herstellung in der Regel mehrere Wochen. Die genaue Lieferzeit nennen wir Ihnen mit der Bestellbestätigung.',
+      category: 'Bestellung & Produktion', sort_order: 3 },
+    { q: 'Kann ich umtauschen, wenn die Passform nicht stimmt?',
+      a: 'Da jeder Schuh individuell nach Ihren Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, melden Sie sich bei uns; wir finden gemeinsam eine Lösung.',
+      category: 'Bestellung & Produktion', sort_order: 4 },
+  ]
+  const exists = db.prepare('SELECT 1 FROM faqs WHERE question = ? LIMIT 1')
+  const ins = db.prepare('INSERT INTO faqs (question, answer, category, sort_order) VALUES (?, ?, ?, ?)')
+  let added = 0
+  for (const f of FAQS) {
+    if (!exists.get(f.q)) { ins.run(f.q, f.a, f.category, f.sort_order); added++ }
+  }
+  if (added) console.log(`✅ Seeded: ${added} FAQ-Einträge`)
 }

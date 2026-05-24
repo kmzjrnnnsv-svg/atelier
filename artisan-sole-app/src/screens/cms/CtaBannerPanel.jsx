@@ -1,5 +1,5 @@
 /**
- * CtaBannerPanel — CMS panel to configure the CTA banner
+ * CtaBannerPanel, CMS panel to configure the CTA banner
  */
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../../hooks/useApi'

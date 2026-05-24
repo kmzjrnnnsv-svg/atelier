@@ -1,10 +1,10 @@
 /**
- * footSTL.js — 3D foot geometry (all measurements in mm)
+ * footSTL.js, 3D foot geometry (all measurements in mm)
  *
  * Coordinate system:
- *   X  — foot length  (heel = −L/2, toe = +L/2)
- *   Y  — mediolateral (big-toe side = positive for right foot)
- *   Z  — height       (plantar plane = 0, dorsal = positive)
+ *   X , foot length  (heel = −L/2, toe = +L/2)
+ *   Y , mediolateral (big-toe side = positive for right foot)
+ *   Z , height       (plantar plane = 0, dorsal = positive)
  *
  * Exports:
  *   buildFootGeoAsync(length, width, arch, side)  → Promise<THREE.BufferGeometry>
@@ -57,7 +57,7 @@ export async function buildFootGeoAsync(length = 265, width = 95, _arch = 13, si
   try {
     base = await _loadBase()
   } catch {
-    // OBJ failed to load (offline, missing file) — fall back to procedural mesh
+    // OBJ failed to load (offline, missing file), fall back to procedural mesh
     return buildFootGeo(length, width, _arch, side)
   }
   const geo  = base.clone()
@@ -324,7 +324,7 @@ export function downloadMassblattPDF(result, euSize) {
   // Header
   ctx.fillStyle = '#111111'
   ctx.font = 'bold 18px sans-serif'
-  ctx.fillText('Artisan Sole — Maßblatt', 40, 50)
+  ctx.fillText('Artisan Sole, Maßblatt', 40, 50)
   ctx.font = '10px sans-serif'
   ctx.fillStyle = '#666666'
   ctx.fillText(`Erstellt: ${new Date().toLocaleDateString('de-DE')}  |  EU ${euSize}`, 40, 70)
@@ -404,7 +404,7 @@ export function downloadMassblattPDF(result, euSize) {
 
 
 // ─── GLTF/GLB export (Etappe 13) ───────────────────────────────────────────
-// Exports foot geometry as binary GLTF (.glb) — universal 3D format.
+// Exports foot geometry as binary GLTF (.glb), universal 3D format.
 export function downloadGLTF(geo, euSize, side) {
   const scene = new THREE.Scene()
   const mat = new THREE.MeshStandardMaterial({ color: 0xc8997a, roughness: 0.5, metalness: 0.05 })
@@ -424,7 +424,7 @@ export function downloadGLTF(geo, euSize, side) {
 
 
 // ─── USDZ export (Etappe 13) ───────────────────────────────────────────────
-// Exports foot geometry as USDZ — Apple's AR format (AR Quick Look).
+// Exports foot geometry as USDZ, Apple's AR format (AR Quick Look).
 export async function downloadUSDZ(geo, euSize, side) {
   const scene = new THREE.Scene()
   const mat = new THREE.MeshStandardMaterial({ color: 0xc8997a, roughness: 0.5, metalness: 0.05 })

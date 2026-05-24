@@ -129,7 +129,7 @@ export default function Feedback() {
                 <option value="">Keine Bestellung</option>
                 {orders.map(o => (
                   <option key={o.id} value={o.id}>
-                    {o.shoe_name} — {o.order_ref || `#${o.id}`}
+                    {o.shoe_name}, {o.order_ref || `#${o.id}`}
                   </option>
                 ))}
               </select>

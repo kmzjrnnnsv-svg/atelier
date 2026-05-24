@@ -251,13 +251,13 @@ const inputCls = 'w-full h-10 px-0 border-b border-black/[0.08] text-[13px] bg-t
 const labelCls = 'text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light'
 
 const PAGE_TEXT_FIELDS = [
-  { key: 'topics_label', label: 'Themen — Label', placeholder: 'Entdecken' },
-  { key: 'topics_title', label: 'Themen — Titel', placeholder: 'Themen' },
-  { key: 'articles_label', label: 'Artikel — Label', placeholder: 'Artisan Sole Journal' },
-  { key: 'articles_title', label: 'Artikel — Titel', placeholder: 'Alle Artikel' },
-  { key: 'journal_cta_label', label: 'Journal-CTA — Label', placeholder: 'Artisan Sole Journal' },
-  { key: 'journal_cta_title', label: 'Journal-CTA — Titel', placeholder: 'Die Welt hinter jedem Schuh' },
-  { key: 'journal_cta_description', label: 'Journal-CTA — Beschreibung', placeholder: 'Editorials, Handwerkskunst und Inspirationen...' },
+  { key: 'topics_label', label: 'Themen, Label', placeholder: 'Entdecken' },
+  { key: 'topics_title', label: 'Themen, Titel', placeholder: 'Themen' },
+  { key: 'articles_label', label: 'Artikel, Label', placeholder: 'Artisan Sole Journal' },
+  { key: 'articles_title', label: 'Artikel, Titel', placeholder: 'Alle Artikel' },
+  { key: 'journal_cta_label', label: 'Journal-CTA, Label', placeholder: 'Artisan Sole Journal' },
+  { key: 'journal_cta_title', label: 'Journal-CTA, Titel', placeholder: 'Die Welt hinter jedem Schuh' },
+  { key: 'journal_cta_description', label: 'Journal-CTA, Beschreibung', placeholder: 'Editorials, Handwerkskunst und Inspirationen...' },
 ]
 
 function PageTextsEditor() {
@@ -336,7 +336,7 @@ function PageTextsEditor() {
           <ImagePicker
             value={texts.journal_cta_image || ''}
             onChange={(val) => setTexts(prev => ({ ...prev, journal_cta_image: val }))}
-            label="Journal-CTA — Bild"
+            label="Journal-CTA, Bild"
           />
         </div>
       </div>

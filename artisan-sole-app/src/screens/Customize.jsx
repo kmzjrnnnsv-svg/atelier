@@ -125,7 +125,7 @@ export default function Customize() {
     }
   const category = product.category || 'OXFORD'
 
-  // Frontend-Whitelist nach Kategorie — greift auch ohne Backend-Daten,
+  // Frontend-Whitelist nach Kategorie, greift auch ohne Backend-Daten,
   // damit z. B. Oxford nie Patina/Velvet zeigt.
   const MATRIX_MATERIALS_BY_CAT = {
     OXFORD:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
@@ -150,12 +150,12 @@ export default function Customize() {
   const availableSoles = getSolesForCategory(shoeSoles, category)
 
   // Per-Schuh konfigurierte Farben/Materialien (vom CMS gepflegt). Sind sie
-  // gesetzt, ersetzen sie die globalen Listen — der Konfigurator zeigt nur
+  // gesetzt, ersetzen sie die globalen Listen, der Konfigurator zeigt nur
   // genau das, was der Admin für DIESEN Schuh freigegeben hat.
   const [perShoeMaterialKeys, setPerShoeMaterialKeys] = useState(null)   // null=loading, []=keine Beschränkung
   const [perShoeColorVariants, setPerShoeColorVariants] = useState(null) // null=loading
   // Dynamische Konfigurator-Gruppen (Last, Welt, Heel, Toe, Schnalle, …)
-  // Mit eigenem System verwaltet — Material/Color/Sole bleiben separat.
+  // Mit eigenem System verwaltet, Material/Color/Sole bleiben separat.
   const [extraOptionGroups, setExtraOptionGroups] = useState([])
   const [selectedExtras, setSelectedExtras] = useState({}) // { group_key: option_id }
 
@@ -173,7 +173,7 @@ export default function Customize() {
     }
 
     // Material/Color haben eigene Spezial-UIs. `last` (Schuhform) entfällt als
-    // manueller Schritt — die Leistenform wird über die Fußmaße automatisch
+    // manueller Schritt, die Leistenform wird über die Fußmaße automatisch
     // ermittelt (Auto-Match) und nur dezent im Checkout gezeigt.
     const filterGroups = (groups) =>
       (Array.isArray(groups) ? groups : []).filter(g => !['material', 'color', 'last'].includes(g.key))
@@ -202,12 +202,12 @@ export default function Customize() {
   }, 0)
 
   // Daten aus dem Store (mit Fallback)
-  // Nur als verfügbar markierte Materialien (available !== 0) anzeigen —
+  // Nur als verfügbar markierte Materialien (available !== 0) anzeigen,
   // Legacy-Einträge wie CALFSKIN/SUEDE/PATENT sind im Seed deaktiviert.
   const globalMatList = shoeMaterials.length
     ? shoeMaterials.filter(m => m.available !== 0)
     : [{ id: 1, key: 'calfskin', label: 'Kalbsleder', sub: 'Full-Grain', color: '#b45309', available: 1, tip: 'Robust und langlebig.', rating: 'good' }]
-  // Schritt 0 (neu): Familie wählen — Aesthetic vs. Durable.
+  // Schritt 0 (neu): Familie wählen, Aesthetic vs. Durable.
   // Die Materialliste wird nach dieser Wahl gefiltert.
   // Backend-Whitelist hat Vorrang; sonst greift die Kategorie-Whitelist.
   const catWhitelist = MATRIX_MATERIALS_BY_CAT[category]
@@ -223,7 +223,7 @@ export default function Customize() {
   // Materials (selMat).
   // Auswahl-States müssen vor den Listen deklariert werden, damit der
   // Material-basierte Farb-Filter sie referenzieren kann.
-  // Familie (Schritt 0) — Aesthetic vs. Durable. Pre-Filter für matList.
+  // Familie (Schritt 0), Aesthetic vs. Durable. Pre-Filter für matList.
   const [selFamily, setSelFamily] = useState('')
   const [selMat,  setSelMat]  = useState('')
   const [selCol,  setSelCol]  = useState('')
@@ -631,7 +631,7 @@ export default function Customize() {
     || sizeType === 'custom'
   // Maße vorhanden, aber kein Treffer & kein manueller Override → Maßanfertigung
   const needsCustomRequest = (fitState === 'nomatch' && sizeType !== 'standard') || sizeType === 'custom'
-  // Extras als lesbare Liste mit Aufpreissumme — wird in der Bestellung
+  // Extras als lesbare Liste mit Aufpreissumme, wird in der Bestellung
   // mitgeführt, damit Admin & Manufaktur die Spezifikation sehen.
   const extrasForCart = extraOptionGroups
     .map(g => {
@@ -984,7 +984,7 @@ export default function Customize() {
             <p className="text-[11px] lg:text-[12px] text-black/50 leading-[1.8]" style={{ letterSpacing: '0.02em' }}>
               {product.description || (
                 <>
-                  Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> wird in unserer Manufaktur von Hand gefertigt — mit über 200 präzisen Arbeitsschritten.
+                  Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> wird in unserer Manufaktur von Hand gefertigt, mit über 200 präzisen Arbeitsschritten.
                   Dank unserer <span className="text-black/70">3D-Fußvermessung</span> wird jedes Paar exakt auf Ihre Fußform zugeschnitten.
                   Ausgesuchtes europäisches Leder, durchgenähte Konstruktion und eine ergonomische Passform, die Sie vom ersten Schritt an spüren.
                 </>
@@ -1004,7 +1004,7 @@ export default function Customize() {
           {/* ── Auswahl (step-by-step guided flow) ────────────── */}
           <div className="pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0">
 
-            {/* Step-Indicator (Leder/Farbe/Sohle) entfernt — der Konfigurator
+            {/* Step-Indicator (Leder/Farbe/Sohle) entfernt, der Konfigurator
                 ist jetzt vollständig durch die dynamischen Optionsgruppen
                 gesteuert; die Sektion „Leder" bleibt erhalten, aber ohne
                 Top-Bar. */}
@@ -1045,7 +1045,7 @@ export default function Customize() {
             </div>
             )}
 
-            {/* 0. Familie — Aesthetic vs. Durable. Nur sichtbar, wenn der
+            {/* 0. Familie, Aesthetic vs. Durable. Nur sichtbar, wenn der
                 Schuh beide Familien anbietet. */}
             {familiesPresent.length > 1 && (
             <div className="px-5 lg:px-0">
@@ -1073,7 +1073,7 @@ export default function Customize() {
                       {selFamily === 'aesthetic' && <Check size={14} strokeWidth={2} className="text-black" />}
                     </div>
                     <p className="text-[11px] text-black/55 leading-relaxed font-light">
-                      Edelste Leder — Lux Calf, Lux Suede, Painted Full Grain, Patina und Samt.
+                      Edelste Leder, Lux Calf, Lux Suede, Painted Full Grain, Patina und Samt.
                       Maximale optische Veredelung mit handpatinierten Oberflächen. Ideal für
                       formelle Anlässe und besondere Momente.
                     </p>
@@ -1094,7 +1094,7 @@ export default function Customize() {
                       {selFamily === 'durable' && <Check size={14} strokeWidth={2} className="text-black" />}
                     </div>
                     <p className="text-[11px] text-black/55 leading-relaxed font-light">
-                      Robuste Leder — Box Calf, Urban Suede, Painted Calf und Painted Full Grain.
+                      Robuste Leder, Box Calf, Urban Suede, Painted Calf und Painted Full Grain.
                       Wetterfest, alltagstauglich und langlebig. Ideal für täglichen Einsatz und
                       anspruchsvolle Bedingungen.
                     </p>
@@ -1104,7 +1104,7 @@ export default function Customize() {
             </div>
             )}
 
-            {/* 1. Leder (Material) — nur sichtbar, wenn mehr als 1 Material
+            {/* 1. Leder (Material), nur sichtbar, wenn mehr als 1 Material
                 verfügbar. Bei einer einzigen Auswahl wird Material auto-
                 gesetzt und der Block ausgeblendet.
                 Zusätzlich: solange noch keine Qualitäts-Familie gewählt
@@ -1196,7 +1196,7 @@ export default function Customize() {
               {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2 px-5 lg:px-0">Passt zu: {col.pairs_with}</p>}
             </div>
 
-            {/* 3. Sohle — DEPRECATED (Sohle wird pro Schuhmodell vorkonfiguriert).
+            {/* 3. Sohle, DEPRECATED (Sohle wird pro Schuhmodell vorkonfiguriert).
                 Legacy-Picker bleibt im DOM, ist aber komplett ausgeblendet. */}
             {false && (
             <div
@@ -1374,7 +1374,7 @@ export default function Customize() {
 
             {/* ── Passform ──────────────────────────────────────────────
                 Die richtige Größe + Leistenform wird aus den Fußmaßen
-                automatisch ermittelt — kein manueller Größen-Schritt. */}
+                automatisch ermittelt, kein manueller Größen-Schritt. */}
             <div className="px-5 lg:px-0">
               <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Passform</p>
 
@@ -1383,7 +1383,7 @@ export default function Customize() {
                 <div className="border border-black/10 p-4">
                   <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
                     Für die perfekte Passform messen wir Ihren Fuß statt zu raten.
-                    Bitte Fußlänge und Ballenumfang eingeben — die richtige Größe
+                    Bitte Fußlänge und Ballenumfang eingeben, die richtige Größe
                     bestimmen wir automatisch.
                   </p>
                   <div className="flex gap-2">
@@ -1417,7 +1417,7 @@ export default function Customize() {
               ) : fitState === 'matched' ? (
                 <div className="flex items-center gap-2 text-[11px] text-black/45 font-light">
                   <Check size={13} strokeWidth={2} className="text-black/40" />
-                  <span>Passform automatisch ermittelt — keine Größenwahl nötig.</span>
+                  <span>Passform automatisch ermittelt, keine Größenwahl nötig.</span>
                 </div>
               ) : (
                 /* Maße vorhanden, aber kein Treffer → Maßanfertigung */

@@ -1,5 +1,5 @@
 /**
- * LogoSplash — Markeneinblendung beim Cold-Start.
+ * LogoSplash, Markeneinblendung beim Cold-Start.
  *
  * Animation:
  *  1. „AS“ erscheint mittig (A und S direkt nebeneinander)

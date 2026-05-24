@@ -383,7 +383,7 @@ export default function ArticleEditor() {
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <BookOpen size={36} className="text-black/10 mb-4" strokeWidth={1} />
               <p className="text-[13px] text-black/30 font-light">
-                {search || filterCat !== 'Alle' ? 'Keine Artikel gefunden' : 'Noch keine Artikel — erstelle den ersten!'}
+                {search || filterCat !== 'Alle' ? 'Keine Artikel gefunden' : 'Noch keine Artikel, erstelle den ersten!'}
               </p>
             </div>
           ) : (

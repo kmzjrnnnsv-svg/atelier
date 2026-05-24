@@ -425,7 +425,7 @@ function addMeasurementLines(scene, geo, m) {
 // ─── RoomPlan-style progressive 3D foot mesh during LiDAR scan ──────────────
 // Divides a foot mesh into 12 angular sectors (matching LiDAR angle bins).
 // Each sector materialises as the corresponding bin is covered: wireframe first,
-// then semi-transparent teal fill — mimicking Apple's RoomPlan scanning UX.
+// then semi-transparent teal fill, mimicking Apple's RoomPlan scanning UX.
 
 function ScanMeshPreview({ progress, side, binCounts = {} }) {
   const mountRef = useRef(null)
@@ -437,7 +437,7 @@ function ScanMeshPreview({ progress, side, binCounts = {} }) {
     if (!el) return
     const w = el.clientWidth || 280, h = el.clientHeight || 280
     const scene = new THREE.Scene()
-    scene.background = null  // transparent — CSS handles bg
+    scene.background = null  // transparent, CSS handles bg
     const camera = new THREE.PerspectiveCamera(32, w / h, 1, 2000)
     camera.up.set(0, 0, 1)
     camera.position.set(0, -420, 180)
@@ -455,7 +455,7 @@ function ScanMeshPreview({ progress, side, binCounts = {} }) {
     const rimLight = new THREE.DirectionalLight(0x2dd4bf, 0.5)
     rimLight.position.set(-80, 200, -50); scene.add(rimLight)
 
-    // Floor grid (subtle, like RoomPlan) — lies in XY plane at Z=0
+    // Floor grid (subtle, like RoomPlan), lies in XY plane at Z=0
     const gridGeo = new THREE.PlaneGeometry(400, 400, 20, 20)
     const gridMat = new THREE.MeshBasicMaterial({ color: 0x2dd4bf, wireframe: true, transparent: true, opacity: 0.04 })
     scene.add(new THREE.Mesh(gridGeo, gridMat))
@@ -530,7 +530,7 @@ function ScanMeshPreview({ progress, side, binCounts = {} }) {
 
     stateRef.current = { sectors, scene, renderer, camera, raf: 0, coveredBins: 0, binCounts: {} }
 
-    // Animation loop — also drives smooth opacity transitions per frame
+    // Animation loop, also drives smooth opacity transitions per frame
     let frame = 0
     const animate = () => {
       stateRef.current.raf = requestAnimationFrame(animate)
@@ -552,16 +552,16 @@ function ScanMeshPreview({ progress, side, binCounts = {} }) {
 
         // Heatmap color: green (≥200 pts = good), yellow (50-199), red (<50)
         if (count >= 200) {
-          sec.fillMat.color.setHex(0x30D158)  // green — well scanned
+          sec.fillMat.color.setHex(0x30D158)  // green, well scanned
           sec.wireMat.color.setHex(0x30D158)
         } else if (count >= 50) {
-          sec.fillMat.color.setHex(0xFFD60A)  // yellow — needs more
+          sec.fillMat.color.setHex(0xFFD60A)  // yellow, needs more
           sec.wireMat.color.setHex(0xFFD60A)
         } else if (count > 0) {
-          sec.fillMat.color.setHex(0xFF453A)  // red — insufficient
+          sec.fillMat.color.setHex(0xFF453A)  // red, insufficient
           sec.wireMat.color.setHex(0xFF6B6B)
         } else {
-          sec.fillMat.color.setHex(0x2dd4bf)  // teal — default unrevealed
+          sec.fillMat.color.setHex(0x2dd4bf)  // teal, default unrevealed
           sec.wireMat.color.setHex(0x30D158)
         }
 
@@ -648,7 +648,7 @@ function GuideOverlay({ phase }) {
             stroke="white" strokeWidth="2.5" fill="rgba(255,255,255,0.07)" strokeDasharray="12 6">
             <animate attributeName="opacity" values="1;0.35;1" dur="2s" repeatCount="indefinite" />
           </path>
-          {/* Arch curve — visible from medial side */}
+          {/* Arch curve, visible from medial side */}
           <path d="M -90 95 C -60 55 -20 50 20 95"
             stroke="rgba(45,212,191,0.7)" strokeWidth="2.5" fill="none" strokeDasharray="6 4" />
           <text x="0" y="-35" textAnchor="middle" fill="rgba(255,255,255,0.85)"
@@ -746,14 +746,14 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
   const handleTap = () => { if (!ready) return; setFlash(true); setTimeout(() => setFlash(false), 160); onCapture() }
 
   const INFO = {
-    'right-top':     { emoji: '📄', title: 'Rechter Fuß — von oben',      sub: 'A4-Blatt neben den Fuß legen · Handy von oben draufhalten' },
-    'right-medial':  { emoji: '🦶', title: 'Rechter Fuß — Innenseite',    sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Innenseite fotografieren' },
-    'right-lateral': { emoji: '🦶', title: 'Rechter Fuß — Außenseite',    sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Außenseite fotografieren' },
-    'right-side':    { emoji: '📐', title: 'Rechter Fuß — Seite',         sub: 'A4-Blatt aufrecht daneben halten · Handy auf den Boden stellen' },
-    'left-top':      { emoji: '📄', title: 'Linker Fuß — von oben',       sub: 'A4-Blatt neben den Fuß legen · Handy von oben draufhalten' },
-    'left-medial':   { emoji: '🦶', title: 'Linker Fuß — Innenseite',     sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Innenseite fotografieren' },
-    'left-lateral':  { emoji: '🦶', title: 'Linker Fuß — Außenseite',     sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Außenseite fotografieren' },
-    'left-side':     { emoji: '📐', title: 'Linker Fuß — Seite',          sub: 'A4-Blatt aufrecht daneben halten · Handy auf den Boden stellen' },
+    'right-top':     { emoji: '📄', title: 'Rechter Fuß, von oben',      sub: 'A4-Blatt neben den Fuß legen · Handy von oben draufhalten' },
+    'right-medial':  { emoji: '🦶', title: 'Rechter Fuß, Innenseite',    sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Innenseite fotografieren' },
+    'right-lateral': { emoji: '🦶', title: 'Rechter Fuß, Außenseite',    sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Außenseite fotografieren' },
+    'right-side':    { emoji: '📐', title: 'Rechter Fuß, Seite',         sub: 'A4-Blatt aufrecht daneben halten · Handy auf den Boden stellen' },
+    'left-top':      { emoji: '📄', title: 'Linker Fuß, von oben',       sub: 'A4-Blatt neben den Fuß legen · Handy von oben draufhalten' },
+    'left-medial':   { emoji: '🦶', title: 'Linker Fuß, Innenseite',     sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Innenseite fotografieren' },
+    'left-lateral':  { emoji: '🦶', title: 'Linker Fuß, Außenseite',     sub: 'A4-Blatt hinter den Fuß · Handy auf den Boden, Außenseite fotografieren' },
+    'left-side':     { emoji: '📐', title: 'Linker Fuß, Seite',          sub: 'A4-Blatt aufrecht daneben halten · Handy auf den Boden stellen' },
   }
   const { emoji, title, sub } = INFO[phase] || { emoji: '📷', title: 'Foto aufnehmen', sub: '' }
 
@@ -831,7 +831,7 @@ function CamStep({ videoRef, canvasRef, phase, onCapture, onBack, stepNum, total
         <div className="w-11" />
       </div>
 
-      {/* Bottom sheet — dark translucent overlay for immersive camera feel */}
+      {/* Bottom sheet, dark translucent overlay for immersive camera feel */}
       <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/60 backdrop-blur-xl px-5 pt-5 pb-10"
         style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)' }}>
         {/* Progress dots */}
@@ -926,7 +926,7 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
         <div className="w-11" />
       </div>
 
-      {/* Bottom sheet — dark translucent overlay for immersive camera feel */}
+      {/* Bottom sheet, dark translucent overlay for immersive camera feel */}
       <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/60 backdrop-blur-xl px-5 pt-5 pb-10"
         style={{ borderTop: '0.5px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center justify-between mb-4">
@@ -1317,7 +1317,7 @@ export default function FootScan() {
     hapticMedium()
 
     try {
-      // Use Continuous Depth Capture (Mode 3) — more reliable than mesh reconstruction
+      // Use Continuous Depth Capture (Mode 3), more reliable than mesh reconstruction
       await LidarScanNative.startContinuousCapture()
 
       // Poll real coverage-based progress with voice guidance
@@ -1459,7 +1459,7 @@ export default function FootScan() {
       const jsonStr = JSON.stringify(payload)
       const payloadMB = jsonStr.length / (1024 * 1024)
       if (payloadMB > 23) {
-        // Trim point cloud to fit — keep most recent/best points
+        // Trim point cloud to fit, keep most recent/best points
         console.warn(`[LiDAR] Payload ${payloadMB.toFixed(1)}MB exceeds safe limit, trimming point cloud`)
         payload.pointCloud = raw.pointCloud.slice(-40000)
       }
@@ -1507,7 +1507,7 @@ export default function FootScan() {
           ? 'Bewege das Handy etwas langsamer. Wir versuchen es gleich nochmal.'
           : msg.includes('Winkel') || msg.includes('anglesCovered')
           ? 'Bewege das Gerät mehr um den Fuß herum. Wir versuchen es gleich nochmal.'
-          : 'Kleiner Fehler — wir versuchen es gleich nochmal.'
+          : 'Kleiner Fehler, wir versuchen es gleich nochmal.'
         speak(retryMsg, { urgent: true })
         hapticStrong()
         setWalkProgress(0)
@@ -1661,7 +1661,7 @@ export default function FootScan() {
       } catch (err) {
         if (!cancelled) {
           setAiStatus('Die Auswertung hat leider nicht geklappt')
-          setResult({ error: 'Dein Fuß konnte nicht vermessen werden. Bitte versuche es nochmal — achte auf gutes Licht und lege das A4-Blatt gut sichtbar daneben.' })
+          setResult({ error: 'Dein Fuß konnte nicht vermessen werden. Bitte versuche es nochmal, achte auf gutes Licht und lege das A4-Blatt gut sichtbar daneben.' })
           setProgress(100)
         }
       }
@@ -1822,9 +1822,9 @@ export default function FootScan() {
 
       if (!usedAI) {
         clearInterval(ambientTimer)
-        // No AI/CV measurement succeeded — report error instead of random values
+        // No AI/CV measurement succeeded, report error instead of random values
         setAiStatus('Hat leider nicht geklappt')
-        setResult({ error: 'Dein Fuß konnte nicht vermessen werden. Bitte versuche es nochmal — lege das weiße A4-Blatt gut sichtbar neben den Fuß.' })
+        setResult({ error: 'Dein Fuß konnte nicht vermessen werden. Bitte versuche es nochmal, lege das weiße A4-Blatt gut sichtbar neben den Fuß.' })
         setProgress(100)
         return
       }
@@ -1942,7 +1942,7 @@ export default function FootScan() {
             }
           }
         }
-      } catch { setSaveErr('Keine Internetverbindung — Scan konnte nicht gespeichert werden.') }
+      } catch { setSaveErr('Keine Internetverbindung, Scan konnte nicht gespeichert werden.') }
     }
     save()
   }, [phase, result, saved]) // eslint-disable-line
@@ -1995,9 +1995,9 @@ export default function FootScan() {
   // ── Voice: announce phase changes ──
   useEffect(() => {
     if (phase === 'lidar-right') {
-      // Don't speak ready here — startScanWithCountdown handles it
+      // Don't speak ready here, startScanWithCountdown handles it
     } else if (phase === 'lidar-left') {
-      // Don't speak ready here — startScanWithCountdown handles it
+      // Don't speak ready here, startScanWithCountdown handles it
     } else if (phase === 'processing' || phase === 'pg-processing') {
       speak(SCAN_MESSAGES.processing)
     } else if (phase === 'result') {
@@ -2138,7 +2138,7 @@ export default function FootScan() {
             }
           `}</style>
 
-          {/* Minimal header — backdrop blur for readability over camera */}
+          {/* Minimal header, backdrop blur for readability over camera */}
           <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0" style={{ backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' }}>
             <button onClick={() => { setPhase('start'); setWalkProgress(0); stopSpeaking() }}
               aria-label="Scan abbrechen"
@@ -2182,7 +2182,7 @@ export default function FootScan() {
           ) : (
             /* ── Scan screen with live camera feed + overlay ── */
             <div className="flex-1 flex flex-col items-center justify-center px-8 text-center relative">
-              {/* Foot detection status — large, prominent */}
+              {/* Foot detection status, large, prominent */}
               {walkProgress > 0 && walkProgress < 100 && (
                 <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-20 px-5 py-2.5 rounded-2xl transition-all duration-500 ${
                   floorDetected && footSegmented
@@ -2197,9 +2197,9 @@ export default function FootScan() {
                 </div>
               )}
 
-              {/* Camera feed shows through transparent bg — 3D mesh overlaid */}
+              {/* Camera feed shows through transparent bg, 3D mesh overlaid */}
               <div className="relative w-72 h-72 flex items-center justify-center mb-4">
-                {/* Live 3D foot mesh with colored sectors — semi-transparent during scan, opaque at completion */}
+                {/* Live 3D foot mesh with colored sectors, semi-transparent during scan, opaque at completion */}
                 {walkProgress > 0 && (
                   <div className="absolute inset-0 pointer-events-none transition-opacity duration-500"
                     style={{ opacity: walkProgress >= 100 ? 1 : 0.55 }}>
@@ -2207,7 +2207,7 @@ export default function FootScan() {
                   </div>
                 )}
 
-                {/* FaceID-style foot outline guide — visible before scan starts */}
+                {/* FaceID-style foot outline guide, visible before scan starts */}
                 {walkProgress === 0 && countdown === 0 && !lidarError && (
                   <div className="absolute inset-0 flex items-center justify-center z-5 pointer-events-none"
                     style={{ animation: 'fadeInSoft 0.6s ease' }}>
@@ -2222,7 +2222,7 @@ export default function FootScan() {
                           </feMerge>
                         </filter>
                       </defs>
-                      {/* Anatomical foot outline — right foot default */}
+                      {/* Anatomical foot outline, right foot default */}
                       <path d="M70 10 C50 10 35 18 30 35 C25 52 22 70 20 90 C18 110 16 130 18 150 C20 170 25 185 35 195 C45 205 55 210 70 212 C85 210 95 205 105 195 C115 185 120 170 122 150 C124 130 122 110 120 90 C118 70 115 52 110 35 C105 18 90 10 70 10 Z"
                         stroke="white" strokeWidth="2" strokeDasharray="6,4" filter="url(#footGlow)" />
                       {/* Toe bumps */}
@@ -2286,7 +2286,7 @@ export default function FootScan() {
                         aria-label={`Scan-Fortschritt ${walkProgress} Prozent`}>
                         {walkProgress}<span className="text-[12px] font-normal text-white/60">%</span>
                       </span>
-                      {/* Directional arrow — points toward weakest bin */}
+                      {/* Directional arrow, points toward weakest bin */}
                       {(() => {
                         const entries = Object.keys(binCounts).length
                         if (entries < 1 || walkProgress >= 95) return null
@@ -2310,7 +2310,7 @@ export default function FootScan() {
                 </div>
               </div>
 
-              {/* Instructions — big, readable, glanceable */}
+              {/* Instructions, big, readable, glanceable */}
               {walkProgress === 0 && !lidarError && countdown === 0 && (
                 <div className="mt-2 rounded-2xl px-5 py-4" style={{ animation: 'fadeInSoft 0.4s ease', backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.35)' }}>
                   <p className="text-[20px] font-extralight text-white mb-4 leading-snug tracking-tight" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
@@ -2420,15 +2420,15 @@ export default function FootScan() {
                   {/* Distance warning */}
                   {cameraHeight != null && cameraHeight < 200 && deviceStable && (
                     <p className="text-[13px] text-[#FF453A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                      Zu nah — Handy weiter weg halten
+                      Zu nah, Handy weiter weg halten
                     </p>
                   )}
                   {cameraHeight != null && cameraHeight > 600 && deviceStable && (
                     <p className="text-[13px] text-[#FF9F0A] font-medium mb-2" style={{ animation: 'fadeInSoft 0.3s ease' }}>
-                      Zu weit — Handy näher halten
+                      Zu weit, Handy näher halten
                     </p>
                   )}
-                  {/* Big, readable instruction — user glances at screen briefly */}
+                  {/* Big, readable instruction, user glances at screen briefly */}
                   <p className="text-[20px] font-bold text-white mb-2 leading-snug" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>
                     {walkProgress < 20 ? '↓  Von oben draufhalten'
                       : walkProgress < 45 ? '↻  Zur Seite bewegen'
@@ -2439,7 +2439,7 @@ export default function FootScan() {
                     {walkProgress < 20 ? 'Handy ruhig über dem Fuß halten'
                       : walkProgress < 45 ? 'Langsam zur Seite bewegen'
                       : walkProgress < 70 ? 'Weiter um den Fuß herum, auch die Ferse'
-                      : 'Gleich fertig — noch kurz so halten'}
+                      : 'Gleich fertig, noch kurz so halten'}
                   </p>
                 </div>
               )}
@@ -2451,7 +2451,7 @@ export default function FootScan() {
               {lidarError && (
                 <div className="w-full p-5 bg-white/[0.06] border border-white/[0.1] rounded-2xl" role="alert" aria-live="assertive"
                   style={{ animation: 'shakeError 0.4s ease, fadeInSoft 0.3s ease', backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.5)' }}>
-                  <p className="text-[15px] text-white font-light mb-2">Nicht geklappt — kein Problem!</p>
+                  <p className="text-[15px] text-white font-light mb-2">Nicht geklappt, kein Problem!</p>
                   <p className="text-[13px] text-white/60 font-light mb-4 leading-relaxed">{lidarError}</p>
                   <div className="flex gap-3">
                     <button onClick={() => { setLidarError(null); setWalkProgress(0); startScanWithCountdown(phase === 'lidar-right' ? 'right' : 'left') }}
@@ -2496,7 +2496,7 @@ export default function FootScan() {
       {['start', 'processing', 'pg-processing', 'result'].includes(phase) && (
         <div className="absolute inset-0 flex flex-col bg-white overflow-hidden">
 
-          {/* Shared header — LV style */}
+          {/* Shared header, LV style */}
           <div className="px-5 lg:px-16 pt-4 pb-2 flex items-center gap-3 flex-shrink-0">
             <button onClick={() => { stopCam(); navigate(-1) }}
               className="w-8 h-8 bg-transparent flex items-center justify-center border-0 active:opacity-60 flex-shrink-0">
@@ -2520,7 +2520,7 @@ export default function FootScan() {
                 </div>
               )}
 
-              {/* Device detected — show scan options */}
+              {/* Device detected, show scan options */}
               {deviceDetected && (
                 <>
                   {/* Hero */}
@@ -2581,7 +2581,7 @@ export default function FootScan() {
                       {/* A4 hint */}
                       <div className="mt-2 p-4 bg-[#f6f5f3] border border-black/[0.04]">
                         <p className="text-[10px] text-black/40 font-light leading-relaxed">
-                          Lege ein weißes A4-Blatt neben deinen Fuß — es dient als Größenreferenz und muss auf jedem Foto sichtbar sein.
+                          Lege ein weißes A4-Blatt neben deinen Fuß, es dient als Größenreferenz und muss auf jedem Foto sichtbar sein.
                         </p>
                       </div>
                     </div>
@@ -2621,7 +2621,7 @@ export default function FootScan() {
               </div>
 
               <p className="text-[9px] text-black/20 font-light text-center px-4">
-                Dein Fuß wird aus mehreren Fotos vermessen — Länge, Breite, Umfang und mehr
+                Dein Fuß wird aus mehreren Fotos vermessen, Länge, Breite, Umfang und mehr
               </p>
             </div>
           )}
@@ -2707,7 +2707,7 @@ export default function FootScan() {
                   </div>
                 ) : result.sizes?.outOfRange ? (
                   <div className="inline-flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] px-3 py-1.5 mt-3">
-                    <span className="text-[9px] text-white/40 font-light">Deine Fußlänge liegt außerhalb der Standard-Größentabelle — die angezeigte Größe ist ein Richtwert</span>
+                    <span className="text-[9px] text-white/40 font-light">Deine Fußlänge liegt außerhalb der Standard-Größentabelle, die angezeigte Größe ist ein Richtwert</span>
                   </div>
                 ) : result.usedAI && (
                   <div className="inline-flex items-center gap-1.5 bg-white/[0.06] border border-white/[0.08] px-3 py-1.5 mt-3">
@@ -2727,7 +2727,7 @@ export default function FootScan() {
                       <p className="text-[10px] text-black/40 font-light leading-relaxed">
                         Deine Fußdaten sind sicher in deinem Profil gespeichert.
                         Wenn du einen Schuh bestellst, werden die Maße automatisch
-                        an den Hersteller übermittelt — so wird der Schuh genau auf deinen Fuß angepasst.
+                        an den Hersteller übermittelt, so wird der Schuh genau auf deinen Fuß angepasst.
                       </p>
                     </div>
                   </>
@@ -2770,9 +2770,9 @@ export default function FootScan() {
                         warnings.push(`${name}: Ballen/Länge-Verhältnis (${ratio.toFixed(2)}) ungewöhnlich`)
                     }
                     if (m.instep_girth && m.ball_girth && m.instep_girth > m.ball_girth * 1.05)
-                      warnings.push(`${name}: Spannumfang > Ballenumfang — bitte prüfen`)
+                      warnings.push(`${name}: Spannumfang > Ballenumfang, bitte prüfen`)
                     if (m.long_heel_girth && m.short_heel_girth && m.short_heel_girth >= m.long_heel_girth)
-                      warnings.push(`${name}: Kurzer Fersenumfang ≥ Langer Fersenumfang — Messfehler?`)
+                      warnings.push(`${name}: Kurzer Fersenumfang ≥ Langer Fersenumfang, Messfehler?`)
                     if (m.long_heel_girth && m.length) {
                       const r2 = m.long_heel_girth / m.length
                       if (r2 < 1.05 || r2 > 1.40)
@@ -2782,9 +2782,9 @@ export default function FootScan() {
                   // Left/right comparison
                   if (r && l) {
                     if (r.length && l.length && Math.abs(r.length - l.length) > 8)
-                      warnings.push(`Längendifferenz ${Math.abs(r.length - l.length).toFixed(1)}mm — eventuell nochmal scannen`)
+                      warnings.push(`Längendifferenz ${Math.abs(r.length - l.length).toFixed(1)}mm, eventuell nochmal scannen`)
                     if (r.ball_girth && l.ball_girth && Math.abs(r.ball_girth - l.ball_girth) > 12)
-                      warnings.push(`Ballenumfang-Differenz ${Math.abs(r.ball_girth - l.ball_girth).toFixed(1)}mm — bitte prüfen`)
+                      warnings.push(`Ballenumfang-Differenz ${Math.abs(r.ball_girth - l.ball_girth).toFixed(1)}mm, bitte prüfen`)
                   }
                   if (warnings.length === 0) return null
                   return (
@@ -2797,7 +2797,7 @@ export default function FootScan() {
                   )
                 })()}
 
-                {/* Measurements — editable by user */}
+                {/* Measurements, editable by user */}
                 <div>
                   <div className="flex items-center justify-between mb-3 px-1">
                     <p className="text-[10px] font-light text-black/25 uppercase tracking-[0.25em]">Messwerte</p>
@@ -2847,7 +2847,7 @@ export default function FootScan() {
                                   step="0.1"
                                   value={displayVal}
                                   onChange={e => setEditedValues(v => ({ ...v, [editKey]: e.target.value }))}
-                                  placeholder="—"
+                                  placeholder=""
                                   className={`w-16 text-right text-[13px] font-light bg-transparent border-0 border-b p-0 py-0.5 focus:outline-none ${
                                     edited !== undefined ? 'text-black border-black/20' : 'text-black border-transparent'
                                   }`}
@@ -2899,7 +2899,7 @@ export default function FootScan() {
                           }
                           setEditedValues({})
                         } catch (err) {
-                          setSaveErr('Speichern hat nicht geklappt — bitte versuche es nochmal.')
+                          setSaveErr('Speichern hat nicht geklappt, bitte versuche es nochmal.')
                         }
                         setSavingEdits(false)
                       }}
@@ -2984,7 +2984,7 @@ export default function FootScan() {
                       </div>
                     )}
 
-                    {/* Shoe type selector — visible to all users */}
+                    {/* Shoe type selector, visible to all users */}
                     <div className="p-3 border-t border-white/5 space-y-2">
                         <div className="flex items-center gap-2 mb-2">
                           <label className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-light">Schuhtyp:</label>
@@ -3000,7 +3000,7 @@ export default function FootScan() {
 
                         <p className="text-[10px] text-white/25 font-light leading-relaxed px-0.5">
                           Dein Fußprofil und der gewählte Schuhtyp werden bei der Bestellung
-                          automatisch an die Werkstatt übermittelt — so entsteht ein Leisten,
+                          automatisch an die Werkstatt übermittelt, so entsteht ein Leisten,
                           der exakt zu deinem Fuß passt.
                         </p>
 
@@ -3015,7 +3015,7 @@ export default function FootScan() {
                           </div>
                         )}
 
-                        {/* Export tools — admin/curator only */}
+                        {/* Export tools, admin/curator only */}
                         {(user?.role === 'admin' || user?.role === 'curator') && (<>
                         {/* Export format selector */}
                         <div className="flex items-center gap-2 mb-2 pt-3 border-t border-white/[0.06]">
@@ -3142,10 +3142,10 @@ export default function FootScan() {
                   </div>
                 </div>
 
-                {/* Notes input — saves to user profile */}
+                {/* Notes input, saves to user profile */}
                 <div>
                   <p className="text-[10px] font-light text-black/25 uppercase tracking-[0.25em] mb-3 px-1">
-                    {footNotes && !notesConfirmed ? 'Deine hinterlegten Notizen — bestätigen oder anpassen' : 'Notizen'}
+                    {footNotes && !notesConfirmed ? 'Deine hinterlegten Notizen, bestätigen oder anpassen' : 'Notizen'}
                   </p>
                   <textarea
                     value={scanNotes}

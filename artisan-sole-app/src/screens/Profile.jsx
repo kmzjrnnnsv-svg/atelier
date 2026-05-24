@@ -1,5 +1,5 @@
 /**
- * Profile.jsx — LV-inspired profile page
+ * Profile.jsx, LV-inspired profile page
  * Warm tones, elegant typography, generous whitespace
  */
 import { useState, useRef, useCallback, useEffect } from 'react'
@@ -117,7 +117,7 @@ export default function Profile() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero banner — subtle, compact ─────────────────────────── */}
+      {/* ── Hero banner, subtle, compact ─────────────────────────── */}
       <div className="relative">
         <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 3' }}>
           <img src={HEROES.profile} alt="" className="w-full h-full object-cover" />
@@ -394,7 +394,7 @@ export default function Profile() {
                                     step="0.1"
                                     value={edited !== undefined ? edited : (rawVal != null ? Number(rawVal).toFixed(1) : '')}
                                     onChange={e => setEditedValues(v => ({ ...v, [key]: e.target.value }))}
-                                    placeholder="—"
+                                    placeholder=""
                                     className={`w-16 text-right text-[12px] bg-transparent border-0 border-b p-0 py-0.5 focus:outline-none font-light ${
                                       edited !== undefined ? 'text-black border-black/20' : 'text-black/50 border-black/[0.06]'
                                     }`}
@@ -403,7 +403,7 @@ export default function Profile() {
                                 </div>
                               ) : (
                                 <span className="text-[12px] text-black/60 font-light">
-                                  {rawVal != null ? `${Number(rawVal).toFixed(1)} mm` : '—'}
+                                  {rawVal != null ? `${Number(rawVal).toFixed(1)} mm` : '·'}
                                 </span>
                               )}
                             </div>
@@ -451,12 +451,12 @@ export default function Profile() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] uppercase tracking-[0.15em] text-black/25 font-light">Fußtyp</span>
-                    <span className="text-[13px] text-black font-light">{scanArchInfo?.label || '—'}</span>
+                    <span className="text-[13px] text-black font-light">{scanArchInfo?.label || '·'}</span>
                   </div>
                   <p className="text-[11px] text-black/30 leading-relaxed font-light -mt-2">{scanArchInfo?.desc}</p>
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] uppercase tracking-[0.15em] text-black/25 font-light">Gewölbe</span>
-                    <span className="text-[13px] text-black font-light">{scanArchLabel || '—'}</span>
+                    <span className="text-[13px] text-black font-light">{scanArchLabel || '·'}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] uppercase tracking-[0.15em] text-black/25 font-light">Genauigkeit</span>
@@ -534,7 +534,7 @@ export default function Profile() {
       <div className="px-5 lg:px-16 pt-8">
         <p className="text-[10px] uppercase tracking-[0.25em] text-black/25 font-light mb-1">Fußmaße & Passform</p>
         <p className="text-[12px] text-black/30 mb-4 font-light">
-          Wir bestimmen Ihre Größe und Leistenform aus zwei Maßen — statt zu raten.
+          Wir bestimmen Ihre Größe und Leistenform aus zwei Maßen, statt zu raten.
         </p>
         <div className="border border-black/[0.06] p-5 space-y-4">
           {/* Maß-Eingabe */}

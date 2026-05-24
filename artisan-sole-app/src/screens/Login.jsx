@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { isBusiness } from '../App'
+
+// Auf der Business-Subdomain ist die Startseite der Onepager (/),
+// im Hauptshop die Kollektion.
+const HOME = isBusiness ? '/' : '/collection'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -30,7 +35,7 @@ export default function Login() {
       } else if (redirectTo) {
         navigate(redirectTo, { replace: true })
       } else {
-        navigate('/collection', { replace: true })
+        navigate(HOME, { replace: true })
       }
     } catch (err) {
       setError(err?.error || 'Login fehlgeschlagen')
@@ -41,17 +46,17 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">
-      {/* Top bar — Zurück zum Shop (Window Shopping ohne Login).
+      {/* Top bar, Zurück zum Shop (Window Shopping ohne Login).
           IMMER /collection: redirectTo kann eine geschützte Seite sein, die
           uns sofort wieder zu /login schickt. */}
       <div className="w-full flex items-center justify-between px-5 lg:px-10 py-4">
         <button
           type="button"
-          onClick={() => navigate('/collection', { replace: true })}
+          onClick={() => navigate(HOME, { replace: true })}
           className="flex items-center gap-1.5 bg-transparent border-0 text-black/55 hover:text-black active:opacity-50 text-[12px] tracking-[0.15em] uppercase"
         >
           <ArrowLeft size={16} strokeWidth={1.4} />
-          Zurück zum Shop
+          {isBusiness ? 'Zurück' : 'Zurück zum Shop'}
         </button>
         <span className="text-[10px] text-black/30 tracking-[0.2em] uppercase hidden sm:block">
           Window Shopping ohne Login
@@ -145,7 +150,7 @@ export default function Login() {
         </p>
         <button
           type="button"
-          onClick={() => navigate('/collection', { replace: true })}
+          onClick={() => navigate(HOME, { replace: true })}
           className="text-[11px] text-black/40 hover:text-black tracking-[0.2em] uppercase bg-transparent border-0"
         >
           Weiter ohne Anmeldung

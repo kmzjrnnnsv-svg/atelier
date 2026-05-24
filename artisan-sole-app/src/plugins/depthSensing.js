@@ -1,5 +1,5 @@
 /**
- * depthSensing.js — Cross-platform depth sensing (WebXR for Android, LiDAR for iOS)
+ * depthSensing.js, Cross-platform depth sensing (WebXR for Android, LiDAR for iOS)
  *
  * Provides depth data alongside regular camera captures:
  *  - iOS: Uses native LiDAR via Capacitor plugin

@@ -1,5 +1,5 @@
 /**
- * CtaBanner — CMS-controlled call-to-action banner
+ * CtaBanner, CMS-controlled call-to-action banner
  * Shows at the bottom of pages configured in CMS settings
  */
 import { useState, useEffect } from 'react'

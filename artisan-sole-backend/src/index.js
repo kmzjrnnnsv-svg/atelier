@@ -46,7 +46,7 @@ app.use(helmet({
       styleSrc:   ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc:    ["'self'", 'https://fonts.gstatic.com'],
       imgSrc:     ["'self'", 'data:', 'blob:', 'https:'],
-      connectSrc: ["'self'", 'https://artisansole.com', 'https://www.artisansole.com'],
+      connectSrc: ["'self'", 'https://artisansole.com', 'https://www.artisansole.com', 'https://business.artisansole.com'],
       frameSrc:   ["'none'"],
       objectSrc:  ["'none'"],
       baseUri:    ["'self'"],
@@ -76,6 +76,7 @@ const allowedOrigins = [
   'https://www.raza.work',      // Production (legacy www)
   'https://artisansole.com',    // Production
   'https://www.artisansole.com', // Production (www)
+  'https://business.artisansole.com', // Production (B2B-Subdomain)
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ]
 app.use(cors({

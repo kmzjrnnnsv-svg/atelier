@@ -1,5 +1,5 @@
 /**
- * HomepageEditor — CMS panel to configure ForYou page section headers
+ * HomepageEditor, CMS panel to configure ForYou page section headers
  * Each section has: image URL, label (small caps), title, description, button text, link
  */
 import { useState, useEffect } from 'react'

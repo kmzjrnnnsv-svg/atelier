@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { apiFetch } from '../hooks/useApi'
 
-// Debounced cart sync — avoids race conditions when removing items quickly
+// Debounced cart sync, avoids race conditions when removing items quickly
 let _syncTimer = null
 function debouncedSyncCart(getFn) {
   clearTimeout(_syncTimer)
@@ -11,7 +11,7 @@ function debouncedSyncCart(getFn) {
   }, 300)
 }
 
-// Fußmaße lokal persistieren — damit sie auch für Gäste (ohne Login) über
+// Fußmaße lokal persistieren, damit sie auch für Gäste (ohne Login) über
 // Reloads und Seitenwechsel erhalten bleiben.
 const FM_KEY = 'as_foot_measurements'
 function readLocalMeasurements() {
@@ -21,7 +21,7 @@ function writeLocalMeasurements(m) {
   try { m ? localStorage.setItem(FM_KEY, JSON.stringify(m)) : localStorage.removeItem(FM_KEY) } catch {}
 }
 
-// Client-side cache — source of truth is the backend DB
+// Client-side cache, source of truth is the backend DB
 const useStore = create((set, get) => ({
   shoes:      [],
   curated:    [],
@@ -235,7 +235,7 @@ const useStore = create((set, get) => ({
         body: JSON.stringify(m),
       })
       if (res?.foot_measurements) { saved = res.foot_measurements; writeLocalMeasurements(saved) }
-    } catch { /* Gast oder offline — lokale Persistenz genügt */ }
+    } catch { /* Gast oder offline, lokale Persistenz genügt */ }
     set({ footMeasurements: saved })
     return saved
   },

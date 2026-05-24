@@ -4,9 +4,9 @@ import { setNativeRefreshToken } from '../hooks/useApi'
 
 const AuthContext = createContext(null)
 
-// Access token lives only in memory — never localStorage
+// Access token lives only in memory, never localStorage
 let _accessToken = null
-// Refresh token — only used in Capacitor native mode (WKWebView can't do cross-origin cookies)
+// Refresh token, only used in Capacitor native mode (WKWebView can't do cross-origin cookies)
 let _refreshToken = null
 
 const isNativePlatform = Capacitor.isNativePlatform()
@@ -76,7 +76,7 @@ export function AuthProvider({ children }) {
         }
         const res = await fetch(`${API_BASE}/api/auth/refresh`, fetchOpts)
         if (!res.ok) {
-          // Don't call logout() — it would destroy the DB token permanently.
+          // Don't call logout(), it would destroy the DB token permanently.
           storeTokens({ accessToken: null })
           _refreshToken = null
           setNativeRefreshToken(null)
@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
         setUser(data.user)
         scheduleRefresh()
       } catch {
-        // Network error — just clear local state, keep the cookie
+        // Network error, just clear local state, keep the cookie
         _accessToken = null
         setUser(null)
         if (refreshTimer.current) clearTimeout(refreshTimer.current)

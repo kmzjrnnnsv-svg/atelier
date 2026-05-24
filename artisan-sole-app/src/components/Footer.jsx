@@ -1,5 +1,5 @@
 /**
- * Footer.jsx — Lemaire-Style Global Footer
+ * Footer.jsx, Lemaire-Style Global Footer
  * Heller Hintergrund, dunkle minimale Typografie, vier Spalten
  * (Über uns / Hilfe / Social / Rechtliches), Land + Sprache rechts unten.
  * Inhalte sind weiterhin CMS-editierbar über /api/settings/footer.

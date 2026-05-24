@@ -61,7 +61,7 @@ export default function BusinessDashboard() {
           <p className="text-[12px] text-black/50 font-light leading-relaxed">
             Hinterlegen Sie Ihr Logo und Ihre Firmendaten im Profil. In Kürze
             können Sie hier Einmal-Codes erstellen, die Ihre Empfänger einlösen,
-            um ihren passgenauen Schuh nach Maß zu bestellen — auf Wunsch mit
+            um ihren passgenauen Schuh nach Maß zu bestellen, auf Wunsch mit
             Ihrem Logo auf der Sohle.
           </p>
         </div>

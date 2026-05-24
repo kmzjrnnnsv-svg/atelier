@@ -1,5 +1,5 @@
 /**
- * ScansPanel.jsx — Benutzer-Scan-Datenbank
+ * ScansPanel.jsx, Benutzer-Scan-Datenbank
  *
  * Zeigt alle Fußscans gruppiert nach Benutzer.
  * Admin/Curator können STL-Modelle herunterladen und Scans löschen.
@@ -19,7 +19,7 @@ import { buildFootGeo, estimateSTLSizeKB, downloadSTL } from '../../utils/footST
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(dateStr) {
- if (!dateStr) return '—'
+ if (!dateStr) return '·'
  const d = new Date(dateStr.replace(' ', 'T') + 'Z')
  return d.toLocaleString('de-DE', {
  day: '2-digit', month: '2-digit', year: 'numeric',
@@ -28,7 +28,7 @@ function fmt(dateStr) {
 }
 
 function fmtDate(dateStr) {
- if (!dateStr) return '—'
+ if (!dateStr) return '·'
  const d = new Date(dateStr.replace(' ', 'T') + 'Z')
  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
@@ -293,7 +293,7 @@ function UserCard({ group, onDelete, canDownload, canDelete }) {
  {expanded && (
  <div className="border-t border-black/[0.04] p-5 space-y-2">
  <p className="text-[10px] font-light text-black/30 px-1 mb-2">
- {group.scans.length} Scan{group.scans.length > 1 ? 's' : ''} — neueste zuerst
+ {group.scans.length} Scan{group.scans.length > 1 ? 's' : ''}, neueste zuerst
  </p>
  {group.scans.map(scan => (
  <ScanRow
@@ -516,7 +516,7 @@ function TrainingScanCard({ row, onSave }) {
  ].map(([lbl, val]) => (
  <div key={lbl} className="flex items-center justify-between py-1.5 border-b border-black/[0.04]">
  <span className="text-[11px] font-light text-black/30">{lbl}</span>
- <span className="text-[11px] font-light text-black/60">{val || '—'} {val ? 'mm' : ''}</span>
+ <span className="text-[11px] font-light text-black/60">{val || '·'} {val ? 'mm' : ''}</span>
  </div>
  ))}
  </div>
@@ -773,11 +773,11 @@ export default function ScansPanel() {
  const totalUsers = new Set(scans.map(s => s.user_id)).size
  const avgEU = totalScans
  ? Math.round(scans.map(s => +s.eu_size).reduce((a, b) => a + b, 0) / totalScans)
- : '—'
+ : '·'
  const euDist = scans.reduce((acc, s) => {
  acc[s.eu_size] = (acc[s.eu_size] || 0) + 1; return acc
  }, {})
- const mostCommonEU = Object.keys(euDist).sort((a, b) => euDist[b] - euDist[a])[0] ?? '—'
+ const mostCommonEU = Object.keys(euDist).sort((a, b) => euDist[b] - euDist[a])[0] ?? '·'
 
  return (
  <div className="px-10 py-10 lg:px-14 lg:py-12 min-h-full">
@@ -828,8 +828,8 @@ export default function ScansPanel() {
  {[
  { label: 'Benutzer', value: totalUsers, icon: Users },
  { label: 'Scans gesamt', value: totalScans, icon: Footprints },
- { label: 'Ø EU-Größe', value: avgEU ? `EU ${avgEU}` : '—', icon: Ruler },
- { label: 'Häufigste Größe', value: mostCommonEU ? `EU ${mostCommonEU}` : '—', icon: TrendingUp },
+ { label: 'Ø EU-Größe', value: avgEU ? `EU ${avgEU}` : '·', icon: Ruler },
+ { label: 'Häufigste Größe', value: mostCommonEU ? `EU ${mostCommonEU}` : '·', icon: TrendingUp },
  ].map(({ label, value, icon: Icon }) => (
  <div key={label} className="bg-white p-5">
  <div className="flex items-center gap-2 mb-3">
