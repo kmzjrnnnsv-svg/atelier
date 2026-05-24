@@ -175,9 +175,25 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().t
 
 // Serve frontend dist (production)
 const distPath = path.resolve(process.cwd(), '../artisan-sole-app/dist')
-app.use(express.static(distPath))
+app.use(express.static(distPath, {
+  setHeaders: (res, filePath) => {
+    if (/[\\/]assets[\\/]/.test(filePath)) {
+      // Vite-Assets sind content-hash-benannt → unbegrenzt cachebar
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    } else if (/(index\.html|sw\.js)$/i.test(filePath)) {
+      // Einstiegspunkt + Service-Worker immer revalidieren, damit zurück-
+      // kehrende Besucher nach einem Deploy nie auf veraltete Chunk-Hashes zeigen.
+      res.setHeader('Cache-Control', 'no-cache')
+    }
+  },
+}))
 app.get('/{*splat}', (req, res, next) => {
   if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) return next()
+  // Fehlende Asset-Datei (mit Endung, z. B. ein altes JS-Chunk) → echtes 404.
+  // Niemals index.html als Modul ausliefern — sonst „Failed to fetch
+  // dynamically imported module" statt eines sauberen Chunk-Load-Fehlers.
+  if (/\.[a-z0-9]+$/i.test(req.path)) return res.status(404).send('Not found')
+  res.set('Cache-Control', 'no-cache')
   res.sendFile(path.join(distPath, 'index.html'))
 })
 
