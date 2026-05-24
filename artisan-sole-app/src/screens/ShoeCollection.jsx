@@ -5,7 +5,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Heart, Footprints, ChevronDown, ChevronUp } from 'lucide-react'
+import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
@@ -150,8 +150,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   return (
     <div
-      className="group cursor-pointer transition-opacity duration-500"
-      style={{ opacity: dimmed ? 0.4 : 1 }}
+      className="group cursor-pointer"
       onClick={() => onSelect(product)}
     >
       {/* Image */}
@@ -159,25 +158,30 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
         className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] relative transition-all duration-500 group-hover:bg-[#efeee9]"
         style={{ aspectRatio: '3 / 4' }}
       >
-        {dimmed && (
-          <div className="absolute top-3 left-3 z-10">
-            <span className="text-[9px] text-black/55 bg-white/85 backdrop-blur-sm px-2 py-1 font-light tracking-wide" style={{ letterSpacing: '0.04em' }}>
-              Passt evtl. nicht zu Ihren Maßen
-            </span>
-          </div>
-        )}
+        {/* Schuhbild leicht ausgegraut, wenn nicht passend — bleibt klar sichtbar */}
         {product.image ? (
           <img
             src={product.image}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+            style={{ opacity: dimmed ? 0.6 : 1 }}
           />
         ) : (
-          <svg viewBox="0 0 260 130" className="w-3/5 opacity-50">
+          <svg viewBox="0 0 260 130" className="w-3/5" style={{ opacity: dimmed ? 0.3 : 0.5 }}>
             <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
             <path d="M20 100 Q17 108 38 112 L222 112 Q238 112 238 100 L232 80 Q226 62 210 60 L72 60 Q47 60 42 68 Z" fill={product.color || '#374151'} />
             <path d="M42 68 Q37 48 62 36 L120 30 Q155 27 178 42 Q198 54 232 80 L210 60 Q180 50 148 52 L90 53 Q60 55 42 68 Z" fill={product.color || '#374151'} opacity="0.85" />
           </svg>
+        )}
+
+        {/* Passform-Warnung — gut lesbar, volle Deckkraft */}
+        {dimmed && (
+          <div className="absolute top-3 left-3 right-3 z-10 flex">
+            <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-900 bg-amber-50/95 border border-amber-300/70 backdrop-blur-sm px-2.5 py-1 font-normal" style={{ letterSpacing: '0.02em' }}>
+              <AlertTriangle size={12} strokeWidth={1.8} className="text-amber-600 flex-shrink-0" />
+              Passt nicht zu Ihren Maßen
+            </span>
+          </div>
         )}
 
         {/* Wishlist — appears on hover */}
@@ -188,8 +192,8 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
           <Heart size={16} strokeWidth={1.5} className={isFav ? 'text-black fill-black' : 'text-black/25'} />
         </button>
 
-        {/* Match badge */}
-        {product.match && (
+        {/* Match badge — nur wenn der Schuh passt (sonst widersprüchlich) */}
+        {product.match && !dimmed && (
           <div className="absolute bottom-3 left-3">
             <span className="text-[10px] text-black/40 bg-white/80 backdrop-blur-sm px-2 py-1 font-light" style={{ letterSpacing: '0.05em' }}>
               {product.match} Passform
@@ -199,7 +203,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
       </div>
 
       {/* Info — minimal, LV style */}
-      <div className="pt-3">
+      <div className="pt-3" style={{ opacity: dimmed ? 0.7 : 1 }}>
         <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{product.name}</p>
         <div className="flex items-center gap-2 mt-1">
           {isPromo && product.promotion_price ? (
@@ -209,6 +213,9 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
             </p>
           ) : (
             <p className="text-[12px] lg:text-[13px] text-black/45 font-light">{displayPrice}</p>
+          )}
+          {dimmed && (
+            <span className="text-[10px] text-amber-700/90 font-light">· andere Passform</span>
           )}
         </div>
       </div>
