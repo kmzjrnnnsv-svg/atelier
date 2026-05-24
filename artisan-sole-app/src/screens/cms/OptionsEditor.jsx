@@ -1,5 +1,5 @@
 /**
- * OptionsEditor — Globale Konfigurator-Optionen.
+ * OptionsEditor, Globale Konfigurator-Optionen.
  * Drei Spalten: Gruppen-Liste · Werte der ausgewählten Gruppe · Detail.
  */
 import { useState, useEffect } from 'react'
@@ -71,7 +71,7 @@ export default function OptionsEditor() {
         <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Produkt-Konfig</p>
         <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Konfigurator-Optionen</h1>
         <p className="text-[13px] text-black/30 mt-2 font-light max-w-2xl">
-          Globale Optionen für den Schuh-Konfigurator. Hier einmal pflegen — jede Gruppe und jeder Wert kann
+          Globale Optionen für den Schuh-Konfigurator. Hier einmal pflegen, jede Gruppe und jeder Wert kann
           pro Schuh aktiviert oder mit eigenem Preis überschrieben werden.
         </p>
       </div>
@@ -305,7 +305,7 @@ function OptionForm({ initial, onSave, onCancel }) {
               </button>
             )}
           </div>
-          <p className="text-[10px] text-black/35 mt-1 font-light">Optional — zeigt Farb-Vorschau statt Buchstaben.</p>
+          <p className="text-[10px] text-black/35 mt-1 font-light">Optional, zeigt Farb-Vorschau statt Buchstaben.</p>
         </div>
         <div>
           <Label>Icon (Lucide-Name)</Label>
@@ -315,7 +315,7 @@ function OptionForm({ initial, onSave, onCancel }) {
             placeholder="z. B. Footprints, Layers, Palette"
             className="w-full h-10 px-2 border-b border-black/[0.1] text-[13px] bg-transparent outline-none font-light"
           />
-          <p className="text-[10px] text-black/35 mt-1 font-light">Optional — siehe lucide.dev/icons.</p>
+          <p className="text-[10px] text-black/35 mt-1 font-light">Optional, siehe lucide.dev/icons.</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-5 mt-4">

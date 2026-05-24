@@ -24,7 +24,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
  const { shoeColors, shoeMaterials } = useStore()
 
- // Per-Schuh Farbvarianten — flach gespeichert: ein Eintrag pro
+ // Per-Schuh Farbvarianten, flach gespeichert: ein Eintrag pro
  // (Farbe × Material). material_key=null = Default für alle Materialien.
  const [variants, setVariants] = useState([])
  // Welche Materialien sind diesem Schuh zugewiesen?
@@ -41,7 +41,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  const [selectedOpts, setSelectedOpts] = useState(new Map())
 
  useEffect(() => {
-   // Globale Optionen laden — egal ob neu oder bearbeiten
+   // Globale Optionen laden, egal ob neu oder bearbeiten
    apiFetch('/api/option-groups')
      .then(rows => setAllGroups(Array.isArray(rows) ? rows : []))
      .catch(() => {})
@@ -63,7 +63,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
        images: r.images || [],
      })))
      setAssignedMaterials(Array.isArray(mats) ? mats : [])
-     // optGroups ist die per-Schuh Konfigurator-Struktur — wir flachen die
+     // optGroups ist die per-Schuh Konfigurator-Struktur, wir flachen die
      // Auswahl in eine Map<option_id, …>.
      const m = new Map()
      if (Array.isArray(optGroups)) {
@@ -78,7 +78,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
    })
  }, [initial.id])
 
- // Vorlage anwenden — überschreibt die aktuelle Auswahl mit den Empfehlungen
+ // Vorlage anwenden, überschreibt die aktuelle Auswahl mit den Empfehlungen
  // für die gewählte Kategorie. Aufruf manuell, nicht automatisch beim
  // Kategoriewechsel (sonst frustrierende Datenverluste).
  const applyTemplate = async () => {
@@ -342,7 +342,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  />
  </div>
 
- {/* Farben — Auswahl aus globaler Palette + Bild-Pflicht pro Farbe */}
+ {/* Farben, Auswahl aus globaler Palette + Bild-Pflicht pro Farbe */}
  <div className="mb-5 border-t border-black/[0.04] pt-5">
  <div className="flex items-center justify-between mb-1.5">
  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light">Farben & Bilder</label>
@@ -497,7 +497,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  )}
  </div>
 
- {/* Konfigurator-Optionen — Matrix mit Vorlagen-Anwendung */}
+ {/* Konfigurator-Optionen, Matrix mit Vorlagen-Anwendung */}
  <div className="border-t border-black/[0.04] pt-5 mt-2 mb-5">
    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
      <div>

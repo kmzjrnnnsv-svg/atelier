@@ -7,12 +7,12 @@ const STEPS = [
   {
     icon: Footprints,
     title: 'Präzise Fußvermessung',
-    desc: 'Scanne deine Füße mit der Kamera — unsere KI berechnet millimetergenaue Maße für den perfekten Sitz.',
+    desc: 'Scanne deine Füße mit der Kamera, unsere KI berechnet millimetergenaue Maße für den perfekten Sitz.',
   },
   {
     icon: Sparkles,
     title: 'Individuelle Schuhleisten',
-    desc: 'Auf Basis deiner Maße erstellen wir einen digitalen Leisten — die Grundlage für maßgefertigte Schuhe.',
+    desc: 'Auf Basis deiner Maße erstellen wir einen digitalen Leisten, die Grundlage für maßgefertigte Schuhe.',
   },
   {
     icon: Ruler,

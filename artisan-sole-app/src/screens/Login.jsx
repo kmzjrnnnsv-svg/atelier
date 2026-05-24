@@ -41,7 +41,7 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-white">
-      {/* Top bar — Zurück zum Shop (Window Shopping ohne Login).
+      {/* Top bar, Zurück zum Shop (Window Shopping ohne Login).
           IMMER /collection: redirectTo kann eine geschützte Seite sein, die
           uns sofort wieder zu /login schickt. */}
       <div className="w-full flex items-center justify-between px-5 lg:px-10 py-4">

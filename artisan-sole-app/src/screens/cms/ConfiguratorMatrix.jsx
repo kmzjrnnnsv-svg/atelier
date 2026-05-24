@@ -1,5 +1,5 @@
 /**
- * ConfiguratorMatrix — Tabellen-Ansicht analog der User-Excel-Matrix.
+ * ConfiguratorMatrix, Tabellen-Ansicht analog der User-Excel-Matrix.
  *
  *  Zeilen   = Schuhmodelle
  *  Spalten  = Optionsgruppen (Style, Base, Heel, Accessoires, Sohle Unten,

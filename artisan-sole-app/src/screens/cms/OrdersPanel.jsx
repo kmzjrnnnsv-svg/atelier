@@ -55,7 +55,7 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  const delivery = order.delivery_address ? JSON.parse(order.delivery_address) : null
  const accessories = order.accessories ? JSON.parse(order.accessories) : []
 
- // Build visible actions — payment confirmation is admin-only
+ // Build visible actions, payment confirmation is admin-only
  const nextOptions = (NEXT_STATUSES[order.status] || []).filter(s => {
  if (s === 'processing' && order.status === 'pending_payment') return isAdmin
  return true

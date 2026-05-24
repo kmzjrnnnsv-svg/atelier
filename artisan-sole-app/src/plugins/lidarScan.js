@@ -19,7 +19,7 @@ export function isCapacitorNative() {
 export async function lidarAvailable() {
   const isNative = isCapacitorNative()
 
-  // Try native plugin first (most reliable — detects iPhone 12 Pro+)
+  // Try native plugin first (most reliable, detects iPhone 12 Pro+)
   if (isNative) {
     try {
       const result = await LidarScanNative.isLidarSupported()

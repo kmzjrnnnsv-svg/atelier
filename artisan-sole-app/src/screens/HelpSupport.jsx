@@ -1,5 +1,5 @@
 /**
- * HelpSupport.jsx — LV-inspired FAQ & help page
+ * HelpSupport.jsx, LV-inspired FAQ & help page
  * Warm tones, elegant typography, generous whitespace
  */
 import { useState, useEffect } from 'react'
@@ -25,7 +25,7 @@ export default function HelpSupport() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero — image then text below (LV-style) ──────────────── */}
+      {/* ── Hero, image then text below (LV-style) ──────────────── */}
       <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
         <img src={HEROES.help} alt="" className="w-full h-full object-cover" />
       </div>

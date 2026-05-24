@@ -1,5 +1,5 @@
 /**
- * Settings.jsx — LV-inspired settings page
+ * Settings.jsx, LV-inspired settings page
  * Warm tones, elegant typography, generous whitespace
  */
 import { useState } from 'react'
@@ -317,7 +317,7 @@ export default function Settings() {
               </div>
               <p className="text-[10px] text-black/25 font-light">
                 {[pwNew.length >= 8, /[0-9]/.test(pwNew), /[^a-zA-Z0-9]/.test(pwNew)].filter(Boolean).length < 2
-                  ? 'Schwach — min. 8 Zeichen, Zahl und Sonderzeichen'
+                  ? 'Schwach, min. 8 Zeichen, Zahl und Sonderzeichen'
                   : pwNew.length >= 12 ? 'Stark' : 'Gut'}
               </p>
             </div>

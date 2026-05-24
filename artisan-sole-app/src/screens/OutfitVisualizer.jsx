@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, SlidersHorizontal, RotateCcw, EyeOff, Bookmark, ShoppingBag, Check } from 'lucide-react'
 import useStore from '../store/store'
 
-// Garment catalogue — enriched beyond what the store provides
+// Garment catalogue, enriched beyond what the store provides
 const GARMENT_SECTIONS = [
   {
     label: 'Sakkos & Outerwear',

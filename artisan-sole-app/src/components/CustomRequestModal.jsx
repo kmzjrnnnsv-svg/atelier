@@ -4,7 +4,7 @@ import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 
 /**
- * Maßanfertigungs-Anfrage — geht ohne Login als Anfrage an Admin/Curator,
+ * Maßanfertigungs-Anfrage, geht ohne Login als Anfrage an Admin/Curator,
  * Telefonnummer ist Pflicht, weiterer Austausch über WhatsApp Business.
  */
 export default function CustomRequestModal({

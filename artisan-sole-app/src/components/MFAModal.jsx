@@ -2,15 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { ShieldCheck, X, Loader } from 'lucide-react'
 
 /**
- * MFAModal — prompts admin for 6-digit TOTP code before a sensitive action.
+ * MFAModal, prompts admin for 6-digit TOTP code before a sensitive action.
  *
  * Props:
- *   open      {bool}    — whether the modal is visible
- *   onClose   {fn}      — called when cancelled
- *   onConfirm {fn(code)} — called with the 6-digit code string when user submits
- *   loading   {bool}    — show spinner on confirm button
- *   error     {string}  — error message from the last attempt
- *   title     {string}  — modal title
+ *   open      {bool}   , whether the modal is visible
+ *   onClose   {fn}     , called when cancelled
+ *   onConfirm {fn(code)}, called with the 6-digit code string when user submits
+ *   loading   {bool}   , show spinner on confirm button
+ *   error     {string} , error message from the last attempt
+ *   title     {string} , modal title
  */
 export default function MFAModal({ open, onClose, onConfirm, loading, error, title = 'MFA bestätigen' }) {
   const [code, setCode] = useState('')

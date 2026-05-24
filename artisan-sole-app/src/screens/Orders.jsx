@@ -1,5 +1,5 @@
 /**
- * Orders.jsx — LV-inspired orders page
+ * Orders.jsx, LV-inspired orders page
  * Warm tones, elegant typography, generous whitespace
  */
 import { useState } from 'react'

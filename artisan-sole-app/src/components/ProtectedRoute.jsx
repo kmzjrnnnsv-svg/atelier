@@ -10,7 +10,7 @@ function Spinner() {
   )
 }
 
-// General: requires any authenticated user — preserves intended destination
+// General: requires any authenticated user, preserves intended destination
 export function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   const location = useLocation()

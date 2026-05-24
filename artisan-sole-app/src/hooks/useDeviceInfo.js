@@ -89,7 +89,7 @@ function detect() {
 
 /**
  * Async LiDAR detection:
- * 1. Native Capacitor plugin (most reliable — detects iPhone 12 Pro+)
+ * 1. Native Capacitor plugin (most reliable, detects iPhone 12 Pro+)
  * 2. iPad Pro heuristic (MacIntel + touch)
  * 3. WebXR depth sensing check (Android ARCore)
  */

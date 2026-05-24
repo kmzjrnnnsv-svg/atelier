@@ -1,5 +1,5 @@
 /**
- * Mirror.jsx — Realistic Avatar Mirror & Outfit Studio
+ * Mirror.jsx, Realistic Avatar Mirror & Outfit Studio
  *
  * Features:
  *  • Realistic human SVG avatar with detailed face, hair, body
@@ -41,7 +41,7 @@ const SCAN_STEPS = [
   { id: 1, label: 'Vorderseite',   instruction: 'Halte dein Gesicht mittig in den Rahmen',            shapeType: 'face'  },
   { id: 2, label: 'Linke Seite',   instruction: 'Drehe deinen Kopf langsam zur linken Seite',         shapeType: 'left'  },
   { id: 3, label: 'Rechte Seite',  instruction: 'Drehe deinen Kopf zur rechten Seite',                shapeType: 'right' },
-  { id: 4, label: 'Ganzer Körper', instruction: 'Tritt einen Meter zurück — voller Körper sichtbar',  shapeType: 'body', optional: true },
+  { id: 4, label: 'Ganzer Körper', instruction: 'Tritt einen Meter zurück, voller Körper sichtbar',  shapeType: 'body', optional: true },
 ]
 
 const CLOTHING_CATS = [
@@ -165,7 +165,7 @@ function AvatarSVG({ skinColor, hairColor, shapeIdx, topPhoto, pantsPhoto, topCo
       <path d={`M${cx+2} ${headCy-8.5} Q${cx+7} ${headCy-11} ${cx+12} ${headCy-8}`}
         stroke={hair} strokeWidth="1.4" fill="none" strokeLinecap="round" />
 
-      {/* Eyes — white sclera */}
+      {/* Eyes, white sclera */}
       <ellipse cx={cx-6.5} cy={headCy-4} rx={4.5} ry={3.2} fill="white" />
       <ellipse cx={cx+6.5} cy={headCy-4} rx={4.5} ry={3.2} fill="white" />
       {/* Iris */}
@@ -623,7 +623,7 @@ export default function Mirror() {
 
         <h2 className="text-2xl font-bold text-white leading-tight mb-2">Dein virtueller Spiegel</h2>
         <p className="text-sm text-black/40 leading-relaxed mb-8">
-          Erstelle einen realistischen Avatar mit deinen Körpermassen. Probiere Outfits an — auch mit abfotografierten Kleidungsstücken.
+          Erstelle einen realistischen Avatar mit deinen Körpermassen. Probiere Outfits an, auch mit abfotografierten Kleidungsstücken.
         </p>
 
         <div className="w-full space-y-3 mb-8">
@@ -813,7 +813,7 @@ export default function Mirror() {
 
         {/* Height slider */}
         <p className="text-[9px] uppercase tracking-[0.16em] text-black/40 font-semibold mb-2">
-          Körpergröße — {bodyHeight} cm
+          Körpergröße, {bodyHeight} cm
         </p>
         <input type="range" min="150" max="210" value={bodyHeight}
           onChange={e => setBodyHeight(Number(e.target.value))}
@@ -821,7 +821,7 @@ export default function Mirror() {
 
         {/* Weight slider */}
         <p className="text-[9px] uppercase tracking-[0.16em] text-black/40 font-semibold mb-2">
-          Gewicht — {bodyWeight} kg
+          Gewicht, {bodyWeight} kg
         </p>
         <input type="range" min="45" max="130" value={bodyWeight}
           onChange={e => setBodyWeight(Number(e.target.value))}
@@ -1030,7 +1030,7 @@ export default function Mirror() {
             <p className="text-[9px] text-teal-700 font-semibold uppercase tracking-wide">STL-Fußmodell verbunden</p>
           </div>
           <p className="text-[9px] text-teal-600 mt-1 leading-relaxed">
-            Ausgewählte Schuhe werden mit deinen 3D-Fußdaten kombiniert — exakte Passform garantiert.
+            Ausgewählte Schuhe werden mit deinen 3D-Fußdaten kombiniert, exakte Passform garantiert.
           </p>
         </div>
 

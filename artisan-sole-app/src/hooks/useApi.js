@@ -3,7 +3,7 @@ import { getAccessToken, setAccessToken } from '../context/AuthContext'
 
 // In Capacitor iOS production builds, relative URLs don't reach the backend.
 // VITE_API_URL should be set to the production server (e.g. https://artisansole.com).
-// Empty string in dev — Vite proxy handles /api/* → localhost:3001.
+// Empty string in dev, Vite proxy handles /api/* → localhost:3001.
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
 const isNativePlatform = Capacitor.isNativePlatform()
 
@@ -55,7 +55,7 @@ export async function apiFetch(url, options = {}) {
   const fullUrl = `${API_BASE}${url}`
   let res = await fetch(fullUrl, { ...options, headers, credentials: 'include' })
 
-  // Token expired — try refresh once
+  // Token expired, try refresh once
   if (res.status === 401) {
     try {
       const newToken = await refreshAccessToken()
@@ -65,10 +65,10 @@ export async function apiFetch(url, options = {}) {
         credentials: 'include',
       })
     } catch {
-      // Refresh failed — let the caller handle the 401. ProtectedRoute will
+      // Refresh failed, let the caller handle the 401. ProtectedRoute will
       // redirect logged-out users when they hit a guarded page; public pages
       // (Window-Shopping) just see the empty/fallback data via .catch().
-      // No forced window.location redirect — that would block guest browsing.
+      // No forced window.location redirect, that would block guest browsing.
     }
   }
 

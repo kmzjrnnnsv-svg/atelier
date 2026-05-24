@@ -7,7 +7,7 @@ function hapticSelection() {
   if (navigator.vibrate) navigator.vibrate(10)
 }
 
-// Apple Store tab bar icons — matching the real app exactly
+// Apple Store tab bar icons, matching the real app exactly
 function IconProducts({ active }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">

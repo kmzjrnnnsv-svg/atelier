@@ -1,5 +1,5 @@
 /**
- * Wishlist.jsx — LV-inspired wishlist page
+ * Wishlist.jsx, LV-inspired wishlist page
  * Warm tones, elegant typography, generous whitespace
  */
 import { useNavigate } from 'react-router-dom'
@@ -17,7 +17,7 @@ export default function Wishlist() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero — image then text below (LV-style) ──────────────── */}
+      {/* ── Hero, image then text below (LV-style) ──────────────── */}
       <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
         <img src={SHOES.hero} alt="" className="w-full h-full object-cover" />
       </div>

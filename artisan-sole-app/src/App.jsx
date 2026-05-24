@@ -27,7 +27,7 @@ function ScrollToTop() {
   return null
 }
 
-// Page transition wrapper — re-triggers fade-in animation on route change
+// Page transition wrapper, re-triggers fade-in animation on route change
 function PageTransition({ children }) {
   const { pathname } = useLocation()
   const [key, setKey] = useState(pathname)
@@ -40,7 +40,7 @@ import Login from './screens/Login'
 import Registration from './screens/Registration'
 import NotFound from './screens/NotFound'
 
-// Lazy import factories — used both by lazy() and prefetchRoute()
+// Lazy import factories, used both by lazy() and prefetchRoute()
 const lazyImports = {
   '/collection': () => import('./screens/ShoeCollection'),
   '/customize':  () => import('./screens/Customize'),
@@ -62,7 +62,7 @@ const lazyImports = {
   '/welcome':    () => import('./screens/Welcome'),
 }
 
-// Prefetch a route's chunk on hover/touch — safe to call multiple times
+// Prefetch a route's chunk on hover/touch, safe to call multiple times
 const prefetched = new Set()
 export function prefetchRoute(path) {
   if (prefetched.has(path) || !lazyImports[path]) return
@@ -170,7 +170,7 @@ function ExternalRedirect({ to }) {
 if (isNative) document.documentElement.classList.add('native')
 if (isMobileWeb) document.documentElement.classList.add('mobile-web')
 
-// Track window.innerHeight for browser mode — this is the only value
+// Track window.innerHeight for browser mode, this is the only value
 // that dynamically follows Safari's toolbar resize (shrink on scroll).
 function useViewportHeight() {
   const [vh, setVh] = useState(window.innerHeight)
@@ -194,7 +194,7 @@ function AppRoutes() {
   const { initStore } = useStore()
   const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
-  // Corporate-Onepager bringt eine eigene Kopfzeile mit — globale Shop-Nav ausblenden.
+  // Corporate-Onepager bringt eine eigene Kopfzeile mit, globale Shop-Nav ausblenden.
   const isCorporateLanding = location.pathname === '/business' || (isBusiness && location.pathname === '/')
   const showNav = !isCMS && !isCorporateLanding && !NO_NAV_PATHS.includes(location.pathname)
   const FOOTER_PATHS = ['/collection', '/accessories', '/explore', '/business']
@@ -211,7 +211,7 @@ function AppRoutes() {
     }
   }, [])
 
-  // Load store data from DB — public catalog runs always (Window Shopping),
+  // Load store data from DB, public catalog runs always (Window Shopping),
   // user-bound endpoints (favorites, orders, scans, cart) gracefully fall back
   // to empty arrays for guests.
   useEffect(() => {
@@ -285,7 +285,7 @@ function AppRoutes() {
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
-              {/* Public — Window Shopping ohne Login */}
+              {/* Public, Window Shopping ohne Login */}
               <Route path="/business"   element={<CorporateGifting />} />
               <Route path="/collection" element={<ShoeCollection />} />
               <Route path="/customize"  element={<Customize />} />
@@ -296,7 +296,7 @@ function AppRoutes() {
               <Route path="/legal/:type" element={<LegalDoc />} />
               <Route path="/learn"      element={<Navigate to="/explore" replace />} />
 
-              {/* Geschützt — Bestellung & persönliche Daten */}
+              {/* Geschützt, Bestellung & persönliche Daten */}
               <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
               <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
@@ -329,7 +329,7 @@ function AppRoutes() {
       <Route path="/business/dashboard" element={<BusinessRoute><BusinessDashboard /></BusinessRoute>} />
       <Route path="/business/profile"   element={<BusinessRoute><BusinessProfile /></BusinessRoute>} />
       <Route path="/business/codes"     element={<BusinessRoute><BusinessCodes /></BusinessRoute>} />
-      {/* Public — Window Shopping ohne Login */}
+      {/* Public, Window Shopping ohne Login */}
       {/* Corporate Gifting lebt auf business.artisansole.com; auf der Hauptdomain
           leitet /business dorthin um (Subdomain = kanonisch). */}
       <Route path="/business"   element={isProdApex ? <ExternalRedirect to={BUSINESS_URL} /> : <CorporateGifting />} />
@@ -342,7 +342,7 @@ function AppRoutes() {
       <Route path="/legal/:type" element={<LegalDoc />} />
       <Route path="/learn"      element={<Navigate to="/explore" replace />} />
 
-      {/* Geschützt — Bestellung & persönliche Daten */}
+      {/* Geschützt, Bestellung & persönliche Daten */}
       <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
       <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />

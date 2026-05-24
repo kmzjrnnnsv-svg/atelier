@@ -97,7 +97,7 @@ function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
  <div>
  <label className={labelCls}>Familie</label>
  <select value={f.family || ''} onChange={e => s('family', e.target.value)} className={inp}>
-   <option value="">— Keine Familie —</option>
+   <option value="">Keine Familie</option>
    <option value="aesthetic">Aesthetic</option>
    <option value="durable">Durable</option>
  </select>
@@ -254,7 +254,7 @@ function SoleForm({ initial = emptySole, onSave, onCancel }) {
  <label className={labelCls}>Empfohlen?</label>
  <button onClick={() => s('recommended', f.recommended ? 0 : 1)}
  className={`w-full h-10 text-[11px] font-light border-b border-black/[0.08] bg-transparent ${f.recommended ? 'text-black/50' : 'text-black/30'}`}>
- {f.recommended ? 'Ja — Empfohlen' : 'Nein'}
+ {f.recommended ? 'Ja, Empfohlen' : 'Nein'}
  </button>
  </div>
  <div>
@@ -361,7 +361,7 @@ export default function ProductConfigEditor() {
  <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Configuration</p>
  <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Produkt-Konfiguration</h1>
  <p className="text-[13px] text-black/30 mt-2 font-light">
- Materialien, Farben und Sohlen verwalten — inkl. Ampelbewertung und Empfehlungstexte für die App.
+ Materialien, Farben und Sohlen verwalten, inkl. Ampelbewertung und Empfehlungstexte für die App.
  </p>
  <div className="flex gap-4 mt-3">
  {Object.entries(ratingConfig).map(([key, cfg]) => (

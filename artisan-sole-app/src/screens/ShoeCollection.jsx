@@ -1,5 +1,5 @@
 /**
- * ShoeCollection.jsx — Louis Vuitton-style product listing
+ * ShoeCollection.jsx, Louis Vuitton-style product listing
  * Clean grid, generous whitespace, minimal product cards
  * Modeled after LV's collection pages
  */
@@ -22,7 +22,7 @@ const BASE_CATEGORIES = [
   { label: 'Monk',         value: 'MONK' },
 ]
 
-// ── Passform-Leiste — inline unter den Reitern, kein Overlay ────────────
+// ── Passform-Leiste, inline unter den Reitern, kein Overlay ────────────
 // Fragt Länge + Ballenumfang für beide Füße. Der größere Fuß zählt fürs
 // Matching (Schuh-Standard). Werte werden persistiert (Konto + lokal), sind
 // jederzeit auf-/zuklappbar und leicht änderbar. Auch für Gäste nutzbar.
@@ -94,7 +94,7 @@ function FitBar({ value, open, onToggle, onSave, onReset }) {
         <div className="px-5 lg:px-16 pb-5 pt-1">
           <div className="max-w-2xl mx-auto">
             <p className="text-[11px] text-black/40 font-light leading-relaxed mb-4 text-center">
-              Zwei Maße genügen — wir finden Größe und Leistenform automatisch und
+              Zwei Maße genügen, wir finden Größe und Leistenform automatisch und
               blenden Modelle aus, die Ihrem Fuß nicht schmeicheln.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -145,7 +145,7 @@ function FitBar({ value, open, onToggle, onSave, onReset }) {
   )
 }
 
-// ── Product Card (LV style — image + name + price, nothing more) ─────────
+// ── Product Card (LV style, image + name + price, nothing more) ─────────
 function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed }) {
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   return (
@@ -158,7 +158,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
         className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] relative transition-all duration-500 group-hover:bg-[#efeee9]"
         style={{ aspectRatio: '3 / 4' }}
       >
-        {/* Schuhbild leicht ausgegraut, wenn nicht passend — bleibt klar sichtbar */}
+        {/* Schuhbild leicht ausgegraut, wenn nicht passend, bleibt klar sichtbar */}
         {product.image ? (
           <img
             src={product.image}
@@ -174,7 +174,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
           </svg>
         )}
 
-        {/* Passform-Warnung — gut lesbar, volle Deckkraft */}
+        {/* Passform-Warnung, gut lesbar, volle Deckkraft */}
         {dimmed && (
           <div className="absolute top-3 left-3 right-3 z-10 flex">
             <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-900 bg-amber-50/95 border border-amber-300/70 backdrop-blur-sm px-2.5 py-1 font-normal" style={{ letterSpacing: '0.02em' }}>
@@ -184,7 +184,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
           </div>
         )}
 
-        {/* Wishlist — appears on hover */}
+        {/* Wishlist, appears on hover */}
         <button
           className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center border-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           onClick={e => { e.stopPropagation(); onToggleFav() }}
@@ -192,7 +192,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
           <Heart size={16} strokeWidth={1.5} className={isFav ? 'text-black fill-black' : 'text-black/25'} />
         </button>
 
-        {/* Match badge — nur wenn der Schuh passt (sonst widersprüchlich) */}
+        {/* Match badge, nur wenn der Schuh passt (sonst widersprüchlich) */}
         {product.match && !dimmed && (
           <div className="absolute bottom-3 left-3">
             <span className="text-[10px] text-black/40 bg-white/80 backdrop-blur-sm px-2 py-1 font-light" style={{ letterSpacing: '0.05em' }}>
@@ -202,7 +202,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
         )}
       </div>
 
-      {/* Info — minimal, LV style */}
+      {/* Info, minimal, LV style */}
       <div className="pt-3" style={{ opacity: dimmed ? 0.7 : 1 }}>
         <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{product.name}</p>
         <div className="flex items-center gap-2 mt-1">
@@ -243,9 +243,9 @@ export default function ShoeCollection() {
   const [scanAccuracy, setScanAccuracy] = useState(null)
 
   // ── Passform-Filter ──────────────────────────────────────────────────────
-  // Maße kommen aus dem Store (footMeasurements) — für eingeloggte Nutzer vom
+  // Maße kommen aus dem Store (footMeasurements), für eingeloggte Nutzer vom
   // Konto, für Gäste aus localStorage (beides via saveFootMeasurements). Der
-  // größere Fuß zählt — bereits in foot_length_mm/ball_girth_mm.
+  // größere Fuß zählt, bereits in foot_length_mm/ball_girth_mm.
   const [fitOpen, setFitOpen] = useState(false)
   const [feasible, setFeasible] = useState(null)    // { categories:Set, known:Set }
 
@@ -322,7 +322,7 @@ export default function ShoeCollection() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero — image then text below (LV-style) ──────────────── */}
+      {/* ── Hero, image then text below (LV-style) ──────────────── */}
       <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
         <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
       </div>
@@ -376,7 +376,7 @@ export default function ShoeCollection() {
         <p className="text-[11px] text-black/20 font-light">{filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}</p>
       </div>
 
-      {/* ── Product Grid (LV style — 4-col, compact cards) ────── */}
+      {/* ── Product Grid (LV style, 4-col, compact cards) ────── */}
       <div className="px-8 lg:px-24 xl:px-32 pb-16">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -399,7 +399,7 @@ export default function ShoeCollection() {
                 </button>
               </>
             )}
-            {/* Schuhe sind geladen, diese Kategorie ist nur (noch) leer —
+            {/* Schuhe sind geladen, diese Kategorie ist nur (noch) leer,
                 niemals als Fehler darstellen. */}
             {(shoes.length > 0 || backendStatus === 'ok') && (
               <>

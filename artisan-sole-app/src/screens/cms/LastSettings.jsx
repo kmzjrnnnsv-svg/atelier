@@ -1,14 +1,14 @@
 /**
- * LastSettings.jsx — CMS-Panel für Leisten-Parameter (Schuhtyp-Einstellungen)
+ * LastSettings.jsx, CMS-Panel für Leisten-Parameter (Schuhtyp-Einstellungen)
  *
  * Admin/Curator kann hier für jeden Schuhtyp die Zugabe-Werte konfigurieren:
- * - Zugabe (mm) — Längen-Zugabe
- * - Spitzenverlängerung (mm) — Verlängerung über Zehen hinaus
- * - Fersensprengung (mm) — Fersenerhöhung
- * - Spannhöhen-Zuschlag (mm) — Instep-Erhöhung
- * - Gelenkfeder (mm) — Bodenkrümmung im Mittelfuß
- * - Breiten-Zugabe (mm) — Breiten-Komfortzugabe
- * - Umfangs-Zugabe (mm) — Umfangs-Komfortzugabe
+ * - Zugabe (mm), Längen-Zugabe
+ * - Spitzenverlängerung (mm), Verlängerung über Zehen hinaus
+ * - Fersensprengung (mm), Fersenerhöhung
+ * - Spannhöhen-Zuschlag (mm), Instep-Erhöhung
+ * - Gelenkfeder (mm), Bodenkrümmung im Mittelfuß
+ * - Breiten-Zugabe (mm), Breiten-Komfortzugabe
+ * - Umfangs-Zugabe (mm), Umfangs-Komfortzugabe
  */
 
 import { useState, useEffect } from 'react'

@@ -381,7 +381,7 @@ export default function Checkout() {
     )
   }
 
-  // ── Empty cart — simple, clean ──
+  // ── Empty cart, simple, clean ──
   if (step === 0 && cart.length === 0 && !product.id) {
     return (
       <div className="min-h-full bg-white">
@@ -575,7 +575,7 @@ export default function Checkout() {
                         ].filter(Boolean).join(' · ')}
                       </p>
                     )}
-                    {latestScan && <p className="text-[11px] text-[#007AFF] mt-0.5">EU {latestScan.eu_size} — 3D-Scan</p>}
+                    {latestScan && <p className="text-[11px] text-[#007AFF] mt-0.5">EU {latestScan.eu_size}, 3D-Scan</p>}
                   </div>
                   <p className="text-[14px] font-bold text-black">{product.price}</p>
                 </div>
@@ -698,7 +698,7 @@ export default function Checkout() {
               {couponError && <p className="text-[11px] text-red-500 mt-2">{couponError}</p>}
             </div>
 
-            {/* Firmencode (Einmal-Code) — nur bei Einzelprodukt */}
+            {/* Firmencode (Einmal-Code), nur bei Einzelprodukt */}
             {product.id && (
               <div className="bg-white p-4 border border-black/[0.06]">
                 <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -798,7 +798,7 @@ export default function Checkout() {
             {placing ? (
               <><div className="w-4 h-4 border border-white/30 border-t-white rounded-full animate-spin" /> Wird verarbeitet…</>
             ) : (
-              <>Bestellen — € {fmtPrice(total)}</>
+              <>Bestellen, € {fmtPrice(total)}</>
             )}
           </button>
         )}

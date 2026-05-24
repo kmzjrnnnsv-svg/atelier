@@ -177,7 +177,7 @@ function ItemRow({ item, onEdit, onDelete, isLinkOpen, onToggleLink }) {
         </div>
         <div className="min-w-0">
           <p className="text-[13px] font-light text-black/85">{item.name}</p>
-          <p className="text-[10px] text-black/30 font-light mt-0.5">{item.key} — {item.description || '–'}</p>
+          <p className="text-[10px] text-black/30 font-light mt-0.5">{item.key}, {item.description || '–'}</p>
         </div>
         <p className="text-[13px] font-light text-black/70">€ {item.price}</p>
         <span className={item.is_active ? 'text-[9px] text-black/40 uppercase tracking-wider font-light' : 'text-[9px] text-black/15 uppercase tracking-wider font-light'}>
@@ -302,11 +302,11 @@ function MaterialAssigner({ accessory }) {
           type="text"
           value={colorMatch}
           onChange={e => setColorMatch(e.target.value)}
-          placeholder="z. B. schwarz,black — leer = jede Farbe"
+          placeholder="z. B. schwarz,black, leer = jede Farbe"
           className="w-full max-w-md h-9 px-3 border border-black/[0.12] text-[12px] bg-white outline-none focus:border-black/30 transition-colors font-light text-black/70"
         />
         <p className="text-[9px] text-black/25 mt-1 font-light">
-          Schlüsselwörter (kommagetrennt) — Zubehör wird nur empfohlen, wenn der gewählte Farbname eines davon enthält.
+          Schlüsselwörter (kommagetrennt), Zubehör wird nur empfohlen, wenn der gewählte Farbname eines davon enthält.
         </p>
       </div>
 

@@ -18,10 +18,10 @@ const SECONDARY_ITEMS = [
   { label: 'Einstellungen',   path: '/settings' },
 ]
 
-// Pages that are "main" tabs — show burger. Others show back arrow.
+// Pages that are "main" tabs, show burger. Others show back arrow.
 const MAIN_PAGES = new Set(['/collection', '/accessories', '/explore', '/checkout'])
 
-const ANIM_DURATION = 280 // ms — must match CSS
+const ANIM_DURATION = 280 // ms, must match CSS
 
 export default function TopBar() {
   const [open, setOpen] = useState(false)
@@ -144,7 +144,7 @@ export default function TopBar() {
               animation: `${closing ? 'menuSlideOut' : 'menuSlideIn'} ${ANIM_DURATION}ms ease both`,
             }}
           >
-            {/* Panel header — X + Schließen */}
+            {/* Panel header, X + Schließen */}
             <div
               className="flex items-center gap-2 flex-shrink-0"
               style={{

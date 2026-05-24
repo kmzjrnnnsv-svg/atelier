@@ -162,7 +162,7 @@ export default function EmailTemplatesPanel() {
  {/* Variables reference */}
  {showVars && (
  <div className="mb-5 py-4 border-b border-black/[0.04]">
- <p className="text-[10px] text-black/25 font-light mb-3">Verfügbare Variablen — klicken zum Einfügen in Body:</p>
+ <p className="text-[10px] text-black/25 font-light mb-3">Verfügbare Variablen, klicken zum Einfügen in Body:</p>
  <div className="flex flex-wrap gap-2">
  {VARIABLES.map(({ key, desc }) => (
  <button
@@ -250,7 +250,7 @@ export default function EmailTemplatesPanel() {
  >
  <div className="flex items-center gap-2.5">
  <ShoppingBag size={12} strokeWidth={1.25} className="text-black/25" />
- <span className="text-[11px] text-black/50 font-light">Bestellungen — Referenz</span>
+ <span className="text-[11px] text-black/50 font-light">Bestellungen, Referenz</span>
  <span className="text-[10px] text-black/25 font-light">({orders.length} neueste)</span>
  </div>
  {showOrders ? <ChevronUp size={12} strokeWidth={1.25} className="text-black/25" /> : <ChevronDown size={12} strokeWidth={1.25} className="text-black/25" />}

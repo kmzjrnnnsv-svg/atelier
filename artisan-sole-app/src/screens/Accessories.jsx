@@ -1,5 +1,5 @@
 /**
- * Accessories.jsx — LV-inspired accessories browsing page
+ * Accessories.jsx, LV-inspired accessories browsing page
  * Clean, luxurious grid with warm tones and elegant typography
  */
 import { useState, useEffect } from 'react'
@@ -68,7 +68,7 @@ export default function Accessories() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero — image then text below (LV-style) ──────────────── */}
+      {/* ── Hero, image then text below (LV-style) ──────────────── */}
       <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
         <img src={HEROES.accessories} alt="" className="w-full h-full object-cover" />
       </div>

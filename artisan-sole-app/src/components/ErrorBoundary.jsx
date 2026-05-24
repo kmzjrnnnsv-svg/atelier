@@ -5,11 +5,11 @@ import { Component } from 'react'
  *
  * Strategie für Chunk-Load-Fehler (stale HTML zeigt auf Hashes, die nach
  * einem Deploy nicht mehr existieren):
- *   1. SOFORT hart neu laden — niemals eine Zwischenseite anzeigen.
+ *   1. SOFORT hart neu laden, niemals eine Zwischenseite anzeigen.
  *   2. Reload nutzt einen Cache-Bust-Query, damit auch hartnäckige CDN-/
  *      Browser-Caches der index.html umgangen werden.
  *   3. Reload-Counter pro Session: bei mehr als 2 Reloads in 30 s gilt der
- *      Fehler als persistent — dann zeigen wir EINMAL einen Hinweis und
+ *      Fehler als persistent, dann zeigen wir EINMAL einen Hinweis und
  *      schicken den User zur Startseite. Verhindert Infinite-Reload-Loops
  *      OHNE den User mit der Zwischenseite zu belästigen.
  */
@@ -48,11 +48,11 @@ function recordReload() {
   } catch { /* ignore */ }
 }
 
-// Cache-Bust-Reload — hängt einen Zeitstempel an, damit Browser-Cache,
+// Cache-Bust-Reload, hängt einen Zeitstempel an, damit Browser-Cache,
 // CDN-Cache und etwaige Service-Worker-Caches die index.html neu holen.
 function reloadWithBust() {
   try {
-    // ServiceWorker-Caches leeren (falls vorhanden) — non-blocking
+    // ServiceWorker-Caches leeren (falls vorhanden), non-blocking
     if ('caches' in window) {
       caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {})
     }
@@ -69,7 +69,7 @@ function reloadWithBust() {
   window.location.replace(u.toString())
 }
 
-// Hard reload bei Chunk-Fehler — nichts anzeigen, sofort.
+// Hard reload bei Chunk-Fehler, nichts anzeigen, sofort.
 // Gibt true zurück, wenn Reload ausgeführt wurde, false wenn Limit erreicht.
 function tryHardReload() {
   if (recentReloadCount() >= RELOAD_LIMIT) return false
@@ -128,7 +128,7 @@ export default class ErrorBoundary extends Component {
               try { sessionStorage.removeItem(RELOAD_COUNT_KEY) } catch {}
               // window.location.href = '/' funktioniert nicht, wenn die URL
               // bereits '/' ist (same-doc-Navigation wird unterdrückt).
-              // Daher replace() mit Cache-Bust — erzwingt vollständigen Reload.
+              // Daher replace() mit Cache-Bust, erzwingt vollständigen Reload.
               const u = new URL('/', window.location.origin)
               u.searchParams.set('_v', String(Date.now()))
               window.location.replace(u.toString())

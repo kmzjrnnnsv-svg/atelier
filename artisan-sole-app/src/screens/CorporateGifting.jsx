@@ -1,5 +1,5 @@
 /**
- * CorporateGifting.jsx — business.artisansole.com Einstieg.
+ * CorporateGifting.jsx, business.artisansole.com Einstieg.
  *
  * Öffentliche B2B-Seite (use-case-neutral): Schuhe nach Maß als Corporate
  * Benefit, Mitarbeiter-, Kunden- oder Partnergeschenk oder für sonstige
@@ -27,19 +27,19 @@ const OFFICE_CATEGORIES = ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK',
 const MIN_PER_DESIGN = 10
 
 const USE_CASES = [
-  { icon: Award,     title: 'Corporate Benefit',          desc: 'Ein Benefit, der jeden Tag getragen wird — hochwertiger als jeder Gutschein und persönlicher als jede Prämie.' },
+  { icon: Award,     title: 'Corporate Benefit',          desc: 'Ein Benefit, der jeden Tag getragen wird, hochwertiger als jeder Gutschein und persönlicher als jede Prämie.' },
   { icon: Gift,      title: 'Mitarbeitergeschenke',        desc: 'Willkommen für neue Kolleginnen und Kollegen, Dank für langjährige Weggefährten, Jubiläum oder Jahresende.' },
-  { icon: Handshake, title: 'Kunden- & Partnergeschenke',  desc: 'Wertschätzung, die in Erinnerung bleibt — für Schlüsselkunden, Partner und Wegbegleiter Ihres Unternehmens.' },
-  { icon: Heart,     title: 'Weitere Anlässe',             desc: 'Auszeichnungen, Meilensteine, Events oder Incentives. Sie bestimmen den Anlass — wir liefern das Handwerk.' },
+  { icon: Handshake, title: 'Kunden- & Partnergeschenke',  desc: 'Wertschätzung, die in Erinnerung bleibt, für Schlüsselkunden, Partner und Wegbegleiter Ihres Unternehmens.' },
+  { icon: Heart,     title: 'Weitere Anlässe',             desc: 'Auszeichnungen, Meilensteine, Events oder Incentives. Sie bestimmen den Anlass, wir liefern das Handwerk.' },
 ]
 
 const VALUES = [
-  { icon: Footprints, title: 'Präzise Passform',       desc: 'Aus Fußlänge und Ballenumfang fertigen wir jeden Schuh in der passenden Länge und Weite — auf wenige Millimeter genau. Kein Schätzen, kein Umtausch.' },
-  { icon: MapPin,     title: 'Spanische Manufaktur',   desc: 'Jedes Paar entsteht einzeln auf Bestellung in einer traditionsreichen Manufaktur in Spanien — Schuhmacherhandwerk, wie es sein soll.' },
+  { icon: Footprints, title: 'Präzise Passform',       desc: 'Aus Fußlänge und Ballenumfang fertigen wir jeden Schuh in der passenden Länge und Weite, auf wenige Millimeter genau. Kein Schätzen, kein Umtausch.' },
+  { icon: MapPin,     title: 'Spanische Manufaktur',   desc: 'Jedes Paar entsteht einzeln auf Bestellung in einer traditionsreichen Manufaktur in Spanien, Schuhmacherhandwerk, wie es sein soll.' },
   { icon: Gem,        title: 'Feinste Leder',          desc: 'Ausschließlich hochwertige Kalbs- und Premiumleder: edel im Griff, langlebig im Tragen und mit den Jahren nur schöner.' },
-  { icon: PenTool,    title: 'Ihr Logo, dezent veredelt', desc: 'Auf Wunsch mit Ihrem Firmenlogo, Initialen oder Monogramm — etwa auf der Sohle, in feiner Handarbeit ausgeführt.' },
+  { icon: PenTool,    title: 'Ihr Logo, dezent veredelt', desc: 'Auf Wunsch mit Ihrem Firmenlogo, Initialen oder Monogramm, etwa auf der Sohle, in feiner Handarbeit ausgeführt.' },
   { icon: Building2,  title: 'Eigenes Firmenkonto',     desc: 'Logo hinterlegen, Profil pflegen und künftig Einmal-Codes verwalten, die Ihre Empfänger selbst einlösen.' },
-  { icon: Package,    title: `Ab ${MIN_PER_DESIGN} Paar pro Design`, desc: 'Wir begleiten Ihr Vorhaben persönlich — mit transparenten Konditionen, die zu seiner Größe passen.' },
+  { icon: Package,    title: `Ab ${MIN_PER_DESIGN} Paar pro Design`, desc: 'Wir begleiten Ihr Vorhaben persönlich, mit transparenten Konditionen, die zu seiner Größe passen.' },
 ]
 
 export default function CorporateGifting() {
@@ -122,7 +122,7 @@ export default function CorporateGifting() {
 
   return (
     <div className="min-h-full bg-white text-stone-900">
-      {/* Top bar — Brand + Firmen-Login */}
+      {/* Top bar, Brand + Firmen-Login */}
       <div className="sticky top-0 z-30 flex items-center justify-between px-5 lg:px-10 py-4 bg-white/85 backdrop-blur-md border-b border-stone-200/70">
         <span className="font-brand text-[15px] tracking-[0.04em]">ARTISAN SOLE</span>
         <Link
@@ -143,7 +143,7 @@ export default function CorporateGifting() {
             Ein Geschenk, das man jeden Tag trägt.
           </h1>
           <p className="text-[13px] lg:text-[16px] text-white/80 font-light max-w-xl mt-6 leading-relaxed">
-            Lederschuhe nach Maß — für Mitarbeitende, Kunden und Partner. In
+            Lederschuhe nach Maß, für Mitarbeitende, Kunden und Partner. In
             spanischer Manufaktur gefertigt, auf Wunsch mit Ihrem Logo.
           </p>
           <button
@@ -190,19 +190,19 @@ export default function CorporateGifting() {
         </div>
       </section>
 
-      {/* Made-to-Measure — das Verfahren */}
+      {/* Made-to-Measure, das Verfahren */}
       <section className="px-5 lg:px-8 py-16 lg:py-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 lg:mb-16">
             <p className={`${eyebrow} mb-3`}>Schuhe nach Maß</p>
-            <h2 className={h2cls}>Die Präzision von Maßschuhen — ohne den Aufwand</h2>
+            <h2 className={h2cls}>Die Präzision von Maßschuhen, ohne den Aufwand</h2>
             <p className={`${lead} mt-4 max-w-xl mx-auto`}>
-              Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben der Empfänger genügen — den Rest übernehmen wir.
+              Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben der Empfänger genügen, den Rest übernehmen wir.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-8">
             {[
-              { n: '01', t: 'Maße nehmen', d: 'Fußlänge und Ballenumfang — in wenigen Augenblicken erfasst, ganz ohne Spezialwerkzeug.' },
+              { n: '01', t: 'Maße nehmen', d: 'Fußlänge und Ballenumfang, in wenigen Augenblicken erfasst, ganz ohne Spezialwerkzeug.' },
               { n: '02', t: 'Auf den Fuß abgestimmt', d: 'Wir bestimmen die ideale Leistenform und stimmen Länge und Weite präzise auf den individuellen Fuß ab.' },
               { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird einzeln in spanischer Manufaktur produziert und direkt an die Empfänger geliefert.' },
             ].map(s => (
@@ -214,7 +214,7 @@ export default function CorporateGifting() {
             ))}
           </div>
           <p className="text-center text-[12px] text-stone-400 font-light mt-14 max-w-2xl mx-auto leading-relaxed">
-            Das Ergebnis: Schuhe, die sich anfühlen, als wären sie für genau diesen Fuß gemacht. Auch die Weite (D/EE/EEE) sitzt — für jede und jeden.
+            Das Ergebnis: Schuhe, die sich anfühlen, als wären sie für genau diesen Fuß gemacht, sodass jeder Fuß sein passendes Bett findet.
           </p>
         </div>
       </section>
@@ -249,7 +249,7 @@ export default function CorporateGifting() {
               <p className={`${eyebrow} mb-3`}>Kollektion</p>
               <h2 className={h2cls}>Eine Auswahl unserer Designs</h2>
               <p className={`${lead} mt-4 max-w-xl mx-auto`}>
-                Jedes Modell fertigen wir individuell — in Größe und Weite jedes Empfängers. Wählen Sie ein Design; um die perfekte Passform kümmern wir uns.
+                Jedes Modell fertigen wir individuell, in Größe und Weite jedes Empfängers. Wählen Sie ein Design; um die perfekte Passform kümmern wir uns.
               </p>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-10">
@@ -274,7 +274,7 @@ export default function CorporateGifting() {
               ))}
             </div>
             <p className="text-center text-[11px] text-stone-400 font-light mt-12">
-              Ein bestimmtes Modell im Sinn? Nennen Sie es uns — wir setzen es um.
+              Ein bestimmtes Modell im Sinn? Nennen Sie es uns, wir setzen es um.
             </p>
           </div>
         </section>
@@ -296,7 +296,7 @@ export default function CorporateGifting() {
             <LogIn size={15} strokeWidth={1.6} /> Zum Firmen-Login
           </Link>
           <p className="text-[10px] text-white/35 font-light mt-6">
-            Noch kein Konto? Senden Sie uns einfach eine Anfrage — wir richten es für Sie ein.
+            Noch kein Konto? Senden Sie uns einfach eine Anfrage, wir richten es für Sie ein.
           </p>
         </div>
       </section>
@@ -308,7 +308,7 @@ export default function CorporateGifting() {
             <p className={`${eyebrow} mb-3`}>Anfrage</p>
             <h2 className={h2cls}>Ihr Vorhaben, unser Vorschlag</h2>
             <p className={`${lead} mt-4`}>
-              Schildern Sie uns kurz Ihr Vorhaben. Wir melden uns persönlich mit einem passenden Vorschlag — unverbindlich.
+              Schildern Sie uns kurz Ihr Vorhaben. Wir melden uns persönlich mit einem passenden Vorschlag, unverbindlich.
             </p>
           </div>
 
@@ -389,7 +389,7 @@ export default function CorporateGifting() {
                     <MessageCircle size={15} strokeWidth={1.5} /> Direkt per WhatsApp
                   </a>
                   <p className="text-center text-[10px] text-stone-400 font-light leading-relaxed">
-                    Lieber direkt schreiben? Stellen Sie Ihre Fragen per WhatsApp — Ihre Angaben übernehmen wir.
+                    Lieber direkt schreiben? Stellen Sie Ihre Fragen per WhatsApp, Ihre Angaben übernehmen wir.
                   </p>
                 </>
               )}
