@@ -1496,7 +1496,7 @@ function seedFaqs(db) {
       a: 'Das ist völlig normal. Geben Sie beide Füße getrennt an. Für die Fertigung verwenden wir den jeweils größeren Wert, damit nichts drückt.',
       category: 'Passform', sort_order: 2 },
     { q: 'Wie lange dauert die Produktion?',
-      a: 'Da wir jedes Paar einzeln auf Bestellung in unserer Manufaktur in Spanien fertigen, dauert die Herstellung in der Regel mehrere Wochen. Die genaue Lieferzeit nennen wir Ihnen mit der Bestellbestätigung.',
+      a: 'Da wir jedes Paar einzeln auf Bestellung in unserer Manufaktur in Spanien fertigen, dauert die Produktion bei Firmenbestellungen rund 8 Wochen. Die genaue Lieferzeit nennen wir Ihnen mit der Bestellbestätigung.',
       category: 'Bestellung & Produktion', sort_order: 3 },
     { q: 'Kann ich umtauschen, wenn die Passform nicht stimmt?',
       a: 'Da jeder Schuh individuell nach Ihren Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, melden Sie sich bei uns; wir finden gemeinsam eine Lösung.',

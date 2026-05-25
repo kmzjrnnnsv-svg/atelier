@@ -105,7 +105,8 @@
       "Bash(kill 60771)",
       "Bash(pip install opencv-python-headless)",
       "Bash(grep -n \"phase !== ''processing''\\\\|pg-processing\\\\|if \\(phase !== ''processing''\\)\" \"/Users/qasimraza/Desktop/Claude Code/atelier-app/src/screens/FootScan.jsx\")",
-      "WebFetch(domain:www.ibv.org)"
+      "WebFetch(domain:www.ibv.org)",
+      "Bash(mkdir -p /root/.claude/plans 2>/dev/null; echo ok)"
     ]
   }
 }

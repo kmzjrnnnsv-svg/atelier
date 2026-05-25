@@ -213,7 +213,7 @@ export default function CorporateGifting() {
             {[
               { n: '01', t: 'Maße nehmen', d: 'Fußlänge und Ballenumfang, in wenigen Augenblicken erfasst, ganz ohne Spezialwerkzeug.' },
               { n: '02', t: 'Auf den Fuß abgestimmt', d: 'Wir bestimmen die ideale Leistenform und stimmen Länge und Weite präzise auf den individuellen Fuß ab.' },
-              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird einzeln in spanischer Manufaktur produziert und direkt an die Empfänger geliefert.' },
+              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird einzeln in spanischer Manufaktur produziert, in rund 8 Wochen, und direkt an die Empfänger geliefert.' },
             ].map(s => (
               <div key={s.n} className="text-center sm:text-left">
                 <p className="text-[34px] font-extralight text-stone-300 leading-none mb-4">{s.n}</p>
