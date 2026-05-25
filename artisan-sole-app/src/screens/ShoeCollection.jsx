@@ -11,6 +11,7 @@ import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 import { HEROES, SHOES } from '../lib/editorialImages'
+import ShoeName from '../lib/shoeName'
 
 const BASE_CATEGORIES = [
   { label: 'Alle Modelle', value: 'ALL' },
@@ -218,7 +219,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
 
       {/* Info, minimal, LV style */}
       <div className="pt-3" style={{ opacity: dimmed ? 0.7 : 1 }}>
-        <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{product.name}</p>
+        <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug"><ShoeName name={product.name} /></p>
         <div className="flex items-center gap-2 mt-1">
           {campaign ? (
             <p className="text-[12px] lg:text-[13px] text-black/45 font-light">
