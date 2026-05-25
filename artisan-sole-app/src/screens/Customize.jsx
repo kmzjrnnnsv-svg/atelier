@@ -987,14 +987,6 @@ export default function Customize() {
                   </button>
                 )}
               </div>
-              {(sizeType === 'custom' || selectedSize) && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Größe</span>
-                  <span className="text-[11px] lg:text-[12px] font-medium text-black">
-                    {sizeType === 'custom' ? 'Maßanfertigung' : `EU ${selectedSize}`}
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
