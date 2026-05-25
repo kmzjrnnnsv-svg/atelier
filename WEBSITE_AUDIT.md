@@ -1,5 +1,20 @@
 # Artisan Sole — Website-Audit (Funktionen, Links, Prozesse)
 
+> **Nachtrag Link-Test (2026-05-25):** Gezielte Prüfung aller Linkziele. Gefunden:
+> tote Rechts-Links im Footer. Die `/legal/<typ>`-Seiten funktionieren nur für
+> `agb`, `datenschutz`, `impressum` (API 200). Die Footer-Defaults verwendeten
+> zusätzlich `about`, `shipping`, `withdrawal`, `terms`, `privacy`, `imprint`,
+> `cookies` → API 400 → Seite zeigt „Noch nicht verfügbar". Behoben in
+> `Footer.jsx` UND `cms/FooterEditor.jsx` (nur noch gültige Typen bzw. echte
+> Routen `/explore`, `/help`, `/feedback`, `/orders`). **Achtung:** Ist im CMS
+> bereits ein Footer mit den alten Typen gespeichert, muss er einmal neu
+> gespeichert werden (oder per Migration korrigiert). Externe Social-Links zeigen
+> auf Plattform-Startseiten (instagram.com …), nicht auf echte Profile — kein
+> Fehler, aber bitte echte Profil-URLs eintragen. (Externe Links ließen sich aus
+> der Testumgebung nicht real aufrufen — Egress geblockt/403.)
+>
+> Detailtabelle siehe Abschnitt **E. Link-Test**.
+
 **Stand:** 2026-05-25  
 **Branch:** `claude/preview-3d-shoe-viewer-ZCZdv`  
 **Getestet durch:** automatisierter HTTP-End-to-End-Lauf gegen das Backend
@@ -153,3 +168,36 @@ Rechtsseiten sind ohne Login abrufbar.
 - [ ] B2B: Kampagne anlegen, Join-Link `business.artisansole.com/c/<slug>` öffnen,
       mit Firmen-E-Mail anmelden, bestätigen, bestellen → Fortschritt im Dashboard
 - [ ] Footer-Links (Impressum/Datenschutz/AGB) ohne Login öffnen
+
+---
+
+## E. Link-Test (Detail)
+
+### Interne Routen
+Alle `Link`/`navigate`/`Navigate`-Ziele zeigen auf definierte Routen — kein
+„NotFound". (Statisch geprüft gegen die Routen in `App.jsx`, inkl. neuer
+`/business/campaigns`, `/c/:slug`, `/verify-email`.)
+
+### Rechts-Links `/legal/<typ>` (API-Test)
+| Pfad | API | Ergebnis |
+|---|---|---|
+| /legal/agb | 200 | ✅ funktioniert |
+| /legal/datenschutz | 200 | ✅ funktioniert |
+| /legal/impressum | 200 | ✅ funktioniert |
+| /legal/about | 400 | ❌ behoben (Footer → /explore) |
+| /legal/shipping | 400 | ❌ behoben (Footer → /help) |
+| /legal/withdrawal | 400 | ❌ behoben (Footer → /feedback) |
+| /legal/terms | 400 | ❌ behoben (→ /legal/agb) |
+| /legal/privacy | 400 | ❌ behoben (→ /legal/datenschutz) |
+| /legal/imprint | 400 | ❌ behoben (→ /legal/impressum) |
+| /legal/cookies | 400 | ❌ behoben (entfernt) |
+
+Hinweis: Auch die gültigen Rechtsseiten zeigen „Noch nicht verfügbar", solange im
+CMS unter Rechtliches kein Inhalt (Text) hinterlegt ist — das ist ein **Inhalts-**,
+kein Link-Problem.
+
+### Externe Links
+| Link | Status |
+|---|---|
+| https://business.artisansole.com/ | aus Testumgebung nicht prüfbar (Egress 403) |
+| https://instagram.com / facebook.com / pinterest.com / youtube.com | erreichbar, aber **Plattform-Startseite statt echtem Profil** — bitte echte URLs eintragen |

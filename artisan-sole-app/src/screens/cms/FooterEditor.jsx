@@ -9,15 +9,15 @@ import { apiFetch } from '../../hooks/useApi'
 const DEFAULT_CONFIG = {
   about_label: 'Über uns',
   about_links: [
-    { label: 'Artisan Sole', path: '/legal/about' },
+    { label: 'Artisan Sole', path: '/explore' },
     { label: 'Boutiquen',    path: '/help' },
   ],
   help_label: 'Hilfe',
   help_links: [
-    { label: 'Versand & Lieferung', path: '/legal/shipping' },
+    { label: 'Versand & Lieferung', path: '/help' },
     { label: 'Kundenbetreuung',     path: '/help' },
     { label: 'FAQ',                 path: '/help' },
-    { label: 'Rückgabeanfrage',     path: '/legal/withdrawal' },
+    { label: 'Rückgabeanfrage',     path: '/feedback' },
     { label: 'Rückverfolgbarkeit',  path: '/orders' },
   ],
   social_label: 'Social',
@@ -28,12 +28,11 @@ const DEFAULT_CONFIG = {
     { label: 'YouTube',   path: 'https://youtube.com' },
   ],
   legal_label: 'Rechtliches',
+  // Nur Typen, die das Backend kennt: agb / datenschutz / impressum.
   legal_links: [
-    { label: 'Allgemeine Geschäftsbedingungen', path: '/legal/terms' },
-    { label: 'Datenschutzerklärung',           path: '/legal/privacy' },
-    { label: 'Impressum',                       path: '/legal/imprint' },
-    { label: 'Widerrufsbelehrung',              path: '/legal/withdrawal' },
-    { label: 'Cookie-Einstellungen',            path: '/legal/cookies' },
+    { label: 'Allgemeine Geschäftsbedingungen', path: '/legal/agb' },
+    { label: 'Datenschutzerklärung',           path: '/legal/datenschutz' },
+    { label: 'Impressum',                       path: '/legal/impressum' },
   ],
   country: 'Deutschland',
   language: 'Deutsch',
