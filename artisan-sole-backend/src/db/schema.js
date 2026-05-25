@@ -272,6 +272,9 @@ export function runMigrations(db) {
     `ALTER TABLE users ADD COLUMN promotion_orders_used   INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE users ADD COLUMN promotion_invited_by    INTEGER REFERENCES users(id)`,
     `ALTER TABLE users ADD COLUMN promotion_invite_token  TEXT`,
+    // shoes — Produktseiten-Texte (pro Schuh)
+    `ALTER TABLE shoes ADD COLUMN tagline     TEXT`,
+    `ALTER TABLE shoes ADD COLUMN description TEXT`,
     // shoes — cost pricing
     `ALTER TABLE shoes ADD COLUMN cost_price       REAL DEFAULT NULL`,
     `ALTER TABLE shoes ADD COLUMN promotion_price   TEXT DEFAULT NULL`,

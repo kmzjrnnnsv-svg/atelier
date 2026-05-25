@@ -11,6 +11,8 @@ const emptyForm = {
  category: 'OXFORD',
  price: '',
  material: '',
+ tagline: '',
+ description: '',
  match: '',
  color: '#1f2937',
  tag: null,
@@ -339,6 +341,29 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  onChange={(e) => set('material', e.target.value)}
  placeholder="Full-Grain Calfskin"
  className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
+ />
+ </div>
+
+ {/* Tagline (kurzer Satz unter dem Namen) */}
+ <div className="mb-5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Tagline (kurzer Satz)</label>
+ <input
+ value={form.tagline}
+ onChange={(e) => set('tagline', e.target.value)}
+ placeholder="z. B. Der zeitlose Begleiter für jeden Anlass."
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
+ />
+ </div>
+
+ {/* Beschreibung (langer Text auf der Produktseite) */}
+ <div className="mb-5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Beschreibung</label>
+ <textarea
+ value={form.description}
+ onChange={(e) => set('description', e.target.value)}
+ rows={4}
+ placeholder="Frei lassen für den Standardtext. Eigener Text überschreibt diesen."
+ className="w-full px-4 py-2.5 border border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 resize-none"
  />
  </div>
 

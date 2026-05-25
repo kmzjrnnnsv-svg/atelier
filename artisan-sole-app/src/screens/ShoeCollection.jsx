@@ -279,7 +279,7 @@ export default function ShoeCollection() {
       girth: footMeasurements.ball_girth_mm + (adj.girth_mm || 0),
     }).then(r => {
       if (cancelled) return
-      setFeasible({ categories: new Set(r.categories || []), known: new Set(r.knownCategories || []) })
+      setFeasible({ categories: new Set(r.categories || []), known: new Set(r.knownCategories || []), percent: r.percentByCategory || {} })
     })
     return () => { cancelled = true }
   }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm, footMeasurements?.fit_adjust?.length_mm, footMeasurements?.fit_adjust?.girth_mm])
@@ -341,10 +341,11 @@ export default function ShoeCollection() {
     ? shoes.filter(s => activeCampaign.allowed_shoe_ids.includes(s.id))
     : shoes
 
-  const enriched = scopedShoes.map(s => ({
-    ...s,
-    match: s.match || (scanAccuracy ? `${Math.min(99.9, scanAccuracy + ((s.id * 13 + 7) % 17) * 0.03).toFixed(1)}%` : null),
-  }))
+  // Echte Passgenauigkeit aus den Leisten-Maßen (nur wenn Fußmaße vorliegen).
+  const enriched = scopedShoes.map(s => {
+    const pct = feasible?.percent?.[s.category]
+    return { ...s, match: pct != null ? `${String(pct).replace('.', ',')} %` : null }
+  })
 
   const filtered = activeCategory === 'PROMO'
     ? enriched.filter(p => p.promotion_price)

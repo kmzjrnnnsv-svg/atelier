@@ -210,6 +210,24 @@ router.put('/footer', authenticate, requireRole('admin', 'curator'), (req, res) 
   res.json({ message: 'Footer-Einstellungen gespeichert' })
 })
 
+// ─── GET /api/settings/product-texts — public (Produktseiten-Texte) ─────────
+router.get('/product-texts', (req, res) => {
+  const db = getDb()
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'product_page_texts'").get()
+  res.json(row?.value ? JSON.parse(row.value) : null)
+})
+
+// ─── PUT /api/settings/product-texts — admin/curator ───────────────────────
+router.put('/product-texts', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db = getDb()
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES ('product_page_texts', ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `).run(JSON.stringify(req.body.config), req.user.id)
+  res.json({ message: 'Produktseiten-Texte gespeichert' })
+})
+
 // ─── GET /api/settings/explore — public (explore page service section) ──────
 router.get('/explore', (req, res) => {
   const db = getDb()
