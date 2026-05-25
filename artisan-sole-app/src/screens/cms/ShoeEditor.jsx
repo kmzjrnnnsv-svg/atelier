@@ -281,9 +281,12 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  <input
  value={form.name}
  onChange={(e) => set('name', e.target.value)}
- placeholder="The Heritage Oxford"
+ placeholder={'Boardroom "Oxford"'}
  className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
+ <p className="text-[10px] text-black/35 font-light mt-1.5 leading-relaxed">
+ Tipp: Teil in <span className="text-black/55">"Anführungszeichen"</span> wird auf der Seite GROSSGESCHRIEBEN hervorgehoben, der Rest erscheint gedämpft. Beispiel: <span className="text-black/55">Boardroom "Oxford"</span> → Boardroom <span className="uppercase tracking-wide">Oxford</span>. Die Anführungszeichen selbst werden nie angezeigt.
+ </p>
  </div>
 
  {/* Category + Tag row */}

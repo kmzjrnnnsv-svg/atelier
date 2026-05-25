@@ -42,6 +42,7 @@ const resolveImg = (url) => {
 }
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
+import ShoeName, { cleanShoeName } from '../lib/shoeName'
 import CustomRequestModal from '../components/CustomRequestModal'
 
 // ── Swipe: wische links/rechts um Option zu wechseln ────────────────────────
@@ -674,7 +675,7 @@ export default function Customize() {
     .filter(Boolean)
   const addShoeToCart = () => {
     addToCart({
-      shoeId: product.id, name: product.name,
+      shoeId: product.id, name: cleanShoeName(product.name),
       material: mat?.label || product.material,
       color, price: formatPrice(basePrice + soleExtra + extrasPriceTotal),
       sole: sole?.label || 'Sohle',
@@ -738,7 +739,7 @@ export default function Customize() {
     navigate('/checkout', {
       state: {
         product: {
-          id: product.id, name: product.name,
+          id: product.id, name: cleanShoeName(product.name),
           material: mat?.label || product.material,
           color, price: formatPrice(basePrice + soleExtra),
           sole: sole?.label || 'Sohle',
@@ -776,7 +777,7 @@ export default function Customize() {
           <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
         </button>
         <div className="text-center flex-1 px-2">
-          <p className="text-[11px] lg:text-[13px] font-normal text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>{product.name}</p>
+          <p className="text-[11px] lg:text-[13px] font-normal text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>{cleanShoeName(product.name)}</p>
         </div>
         <div className="flex items-center gap-1">
           <button className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
@@ -985,7 +986,7 @@ export default function Customize() {
 
           {/* ── Produkt-Info ─────────────────────────────────────── */}
           <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
-            <p className="text-[13px] lg:text-[22px] font-light text-black leading-tight">{product.name}</p>
+            <p className="text-[13px] lg:text-[22px] font-light text-black leading-tight"><ShoeName name={product.name} /></p>
             {product.tagline && (
               <p className="text-[11px] lg:text-[13px] text-black/45 font-light mt-1 leading-snug">{product.tagline}</p>
             )}
