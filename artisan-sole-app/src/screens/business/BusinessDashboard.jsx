@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Building2, ImageIcon, Ticket, LogOut, ChevronRight } from 'lucide-react'
+import { Building2, ImageIcon, Megaphone, LogOut, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 export default function BusinessDashboard() {
@@ -7,8 +7,8 @@ export default function BusinessDashboard() {
   const { user, logout } = useAuth()
 
   const cards = [
+    { icon: Megaphone, title: 'Kampagnen', desc: 'Sammelbestellungen anlegen, Beitritts-Link teilen und den Fortschritt je Modell verfolgen.', to: '/business/campaigns', active: true },
     { icon: ImageIcon, title: 'Profil & Logo', desc: 'Firmendaten pflegen und Ihr Logo für die Schuhsohle hinterlegen.', to: '/business/profile', active: true },
-    { icon: Ticket, title: 'Einmal-Codes', desc: 'Codes erstellen und verwalten, die Ihre Empfänger einlösen.', to: '/business/codes', active: true },
   ]
 
   return (
@@ -59,10 +59,11 @@ export default function BusinessDashboard() {
             <p className="text-[12px] text-black font-normal uppercase tracking-[0.15em]">So funktioniert es</p>
           </div>
           <p className="text-[12px] text-black/50 font-light leading-relaxed">
-            Hinterlegen Sie Ihr Logo und Ihre Firmendaten im Profil. In Kürze
-            können Sie hier Einmal-Codes erstellen, die Ihre Empfänger einlösen,
-            um ihren passgenauen Schuh nach Maß zu bestellen, auf Wunsch mit
-            Ihrem Logo auf der Sohle.
+            Legen Sie eine Kampagne an und teilen Sie den Beitritts-Link mit Ihrem
+            Team. Mitarbeitende melden sich mit ihrer Firmen-E-Mail an und bestellen
+            ihren passgenauen Schuh nach Maß, auf Wunsch mit Ihrem Logo auf der Sohle.
+            Ab 10 Paar pro Modell greift der Mengenrabatt, den Fortschritt sehen Sie
+            live je Modell.
           </p>
         </div>
       </div>

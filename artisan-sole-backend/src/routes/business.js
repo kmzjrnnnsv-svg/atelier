@@ -460,7 +460,14 @@ router.post('/campaigns/:slug/join', authenticate, (req, res) => {
 
   let eligible = false
   if ((c.access_mode === 'domain' || c.access_mode === 'both') && c.allowed_email_domain) {
-    if (emailDomain(req.user.email) === c.allowed_email_domain.toLowerCase()) eligible = true
+    if (emailDomain(req.user.email) === c.allowed_email_domain.toLowerCase()) {
+      // Domain-Zugang erfordert eine bestätigte E-Mail (gegen Spoofing).
+      const v = db.prepare('SELECT email_verified FROM users WHERE id = ?').get(req.user.id)
+      if (!v?.email_verified) {
+        return res.status(403).json({ error: 'Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.', code: 'EMAIL_UNVERIFIED' })
+      }
+      eligible = true
+    }
   }
   let inviteRow = null
   if (!eligible && (c.access_mode === 'list' || c.access_mode === 'both')) {

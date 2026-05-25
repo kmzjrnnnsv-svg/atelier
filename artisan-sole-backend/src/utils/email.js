@@ -599,6 +599,25 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
   await send({ to: email, subject, html })
 }
 
+export async function sendEmailVerification(email, name, token) {
+  const cfg = getEmailConfig()
+  const link = `${cfg.appUrl}/verify-email?token=${token}`
+  const subject = 'Artisan Sole — E-Mail bestätigen'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>E-MAIL BESTÄTIGEN</p></div>
+  <div class="body" style="text-align:center">
+    <p style="font-size:15px;color:#111;margin:0 0 8px;font-weight:600">Hallo${name ? ` ${name}` : ''},</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">bitte bestätigen Sie Ihre E-Mail-Adresse, um an Firmen-Aktionen teilnehmen zu können.</p>
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">E-Mail bestätigen</a>
+    <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
+  </div>
+  <div class="footer">Artisan Sole Bespoke Footwear</div>
+</div>
+</body></html>`
+  await send({ to: email, subject, html })
+}
+
 export async function sendBusinessInvitation(email, companyName, inviteToken) {
   const cfg = getEmailConfig()
   const link = `${cfg.appUrl}/register-business?token=${inviteToken}`

@@ -4,14 +4,15 @@ import { Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { isBusiness } from '../App'
 
-// Auf der Business-Subdomain ist die Startseite der Onepager (/),
-// im Hauptshop die Kollektion.
-const HOME = isBusiness ? '/' : '/collection'
-
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
+  // Auf der Business-Subdomain ist die Startseite der Onepager (/),
+  // im Hauptshop die Kollektion. (Innerhalb der Komponente, NICHT auf Modul-
+  // ebene — Login wird statisch in App.jsx importiert; ein Modul-Top-Level-
+  // Zugriff auf isBusiness löst sonst einen TDZ-/Zirkularimport-Fehler aus.)
+  const HOME = isBusiness ? '/' : '/collection'
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)

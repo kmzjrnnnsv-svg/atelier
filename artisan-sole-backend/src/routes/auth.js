@@ -10,6 +10,8 @@ import {
 } from '../utils/tokens.js'
 import { authLimiter, refreshLimiter, strictLimiter } from '../middleware/rateLimiter.js'
 import { authenticate } from '../middleware/auth.js'
+import { sendEmailVerification } from '../utils/email.js'
+import crypto from 'crypto'
 
 const router = Router()
 
@@ -44,10 +46,11 @@ function issueTokens(res, user) {
   // BusinessRoute im Frontend. Lookup per owner, damit es auf allen Token-
   // Pfaden (login/register/refresh) konsistent ist.
   const biz = getDb().prepare('SELECT id, name FROM businesses WHERE owner_user_id = ?').get(user.id)
+  const vrow = getDb().prepare('SELECT email_verified FROM users WHERE id = ?').get(user.id)
 
   // Return refreshToken in body too — Capacitor native apps can't rely on
   // cross-origin cookies in WKWebView, so they store it in memory instead.
-  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion, promotion_discount_pct: user.promotion_discount_pct || 0, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null } }
+  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion, promotion_discount_pct: user.promotion_discount_pct || 0, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null, email_verified: !!vrow?.email_verified } }
 }
 
 // POST /api/auth/register
@@ -64,13 +67,38 @@ router.post('/register', strictLimiter, authLimiter, validateRegister, (req, res
   }
 
   const hash = bcrypt.hashSync(password, 12)
+  const verifyToken = crypto.randomBytes(32).toString('hex')
   const result = db.prepare(`
-    INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'user')
-  `).run(name, email, hash)
+    INSERT INTO users (name, email, password_hash, role, email_verify_token) VALUES (?, ?, ?, 'user', ?)
+  `).run(name, email, hash, verifyToken)
+
+  sendEmailVerification(email, name, verifyToken).catch(e => console.error('[email verify]', e.message))
 
   const user = db.prepare('SELECT id, name, email, role FROM users WHERE id = ?').get(result.lastInsertRowid)
   const payload = issueTokens(res, user)
   res.status(201).json(payload)
+})
+
+// POST /api/auth/verify-email — E-Mail per Token bestätigen (öffentlich)
+router.post('/verify-email', (req, res) => {
+  const { token } = req.body || {}
+  if (!token) return res.status(400).json({ error: 'Token erforderlich' })
+  const db = getDb()
+  const row = db.prepare('SELECT id FROM users WHERE email_verify_token = ?').get(String(token))
+  if (!row) return res.status(404).json({ error: 'Ungültiger oder bereits verwendeter Link' })
+  db.prepare("UPDATE users SET email_verified = 1, email_verify_token = NULL, updated_at = datetime('now') WHERE id = ?").run(row.id)
+  res.json({ ok: true })
+})
+
+// POST /api/auth/resend-verification — neuen Bestätigungslink anfordern
+router.post('/resend-verification', authenticate, (req, res) => {
+  const db = getDb()
+  const row = db.prepare('SELECT email_verified, name FROM users WHERE id = ?').get(req.user.id)
+  if (row?.email_verified) return res.json({ ok: true, already: true })
+  const verifyToken = crypto.randomBytes(32).toString('hex')
+  db.prepare('UPDATE users SET email_verify_token = ? WHERE id = ?').run(verifyToken, req.user.id)
+  sendEmailVerification(req.user.email, row?.name, verifyToken).catch(e => console.error('[email verify resend]', e.message))
+  res.json({ ok: true })
 })
 
 // POST /api/auth/login
@@ -140,7 +168,8 @@ router.get('/me', authenticate, (req, res) => {
   const { id, name, email, role } = req.user
   const row = getDb().prepare('SELECT is_promotion, promotion_discount_pct, promotion_max_orders, promotion_orders_used FROM users WHERE id = ?').get(id)
   const biz = getDb().prepare('SELECT id, name FROM businesses WHERE owner_user_id = ?').get(id)
-  res.json({ id, name, email, role, is_promotion: !!(row?.is_promotion), promotion_discount_pct: row?.promotion_discount_pct, promotion_max_orders: row?.promotion_max_orders, promotion_orders_used: row?.promotion_orders_used, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null })
+  const vrow = getDb().prepare('SELECT email_verified FROM users WHERE id = ?').get(id)
+  res.json({ id, name, email, role, is_promotion: !!(row?.is_promotion), promotion_discount_pct: row?.promotion_discount_pct, promotion_max_orders: row?.promotion_max_orders, promotion_orders_used: row?.promotion_orders_used, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null, email_verified: !!vrow?.email_verified })
 })
 
 // PATCH /api/auth/me  –  Update own profile (name / email / password)

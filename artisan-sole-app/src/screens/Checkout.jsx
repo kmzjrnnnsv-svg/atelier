@@ -135,7 +135,7 @@ export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user } = useAuth()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, shoeAccessoryMap, accessories: storeAccessories, shoes } = useStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, shoeAccessoryMap, accessories: storeAccessories, shoes } = useStore()
   const isPromo = !!user?.is_promotion
   const promoDiscountPct = user?.promotion_discount_pct || 0
 
@@ -163,6 +163,13 @@ export default function Checkout() {
   const [bizError,      setBizError]      = useState(null)
   const [shippingOptions, setShippingOptions] = useState([])
   const [selectedShipping, setSelectedShipping] = useState(null)
+  const [campaigns, setCampaigns] = useState([])
+
+  // Kampagnen des Mitarbeiters laden (für automatischen Kampagnen-Rabatt).
+  useEffect(() => {
+    if (!user) return
+    fetchMyCampaigns().then(rows => setCampaigns(Array.isArray(rows) ? rows : [])).catch(() => {})
+  }, [user])
 
   useEffect(() => {
     apiFetch('/api/shipping').then(opts => {
@@ -230,11 +237,20 @@ export default function Checkout() {
     }
     return 0
   })()
+  // Aktive Kampagne für dieses Produkt (kein Firmencode aktiv → Kampagne greift).
+  const activeCampaign = (!bizResult?.valid && product.id)
+    ? campaigns.find(c => !c.allowed_shoe_ids || c.allowed_shoe_ids.includes(product.id)) || null
+    : null
+  const campaignDiscount = activeCampaign
+    ? (activeCampaign.payment_mode === 'company'
+        ? shoePrice
+        : Math.round(shoePrice * (activeCampaign.discount_pct / 100)))
+    : 0
   const shippingOpt = shippingOptions.find(o => o.id === selectedShipping)
   const isFreeShipping = (couponResult?.valid && couponResult.type === 'free_shipping') ||
     (shippingOpt?.free_above && subtotal >= shippingOpt.free_above)
   const shippingCost = isFreeShipping ? 0 : (shippingOpt?.price || 0)
-  const total     = Math.max(0, subtotal + shippingCost - discountAmount - bizDiscount)
+  const total     = Math.max(0, subtotal + shippingCost - discountAmount - bizDiscount - campaignDiscount)
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return
@@ -279,6 +295,7 @@ export default function Checkout() {
       let lastRow
       const appliedCoupon = couponResult?.valid ? couponCode.trim().toUpperCase() : null
       const appliedBizCode = bizResult?.valid && product.id ? bizCode.trim() : null
+      const appliedCampaignId = activeCampaign?.id || null
 
       const shippingData = shippingOpt ? { shipping_method: shippingOpt.key, shipping_cost: `€ ${fmtPrice(shippingCost)}` } : {}
 
@@ -289,7 +306,7 @@ export default function Checkout() {
           price: `€ ${fmtPrice(total)}`, eu_size: product.euSize || latestScan?.eu_size || null,
           scan_id: latestScan?.id || null, delivery_address: delivery,
           billing_address: billingAddr, accessories: accList,
-          foot_notes: footNotes || null, coupon_code: appliedCoupon, business_code: appliedBizCode,
+          foot_notes: footNotes || null, coupon_code: appliedCoupon, business_code: appliedBizCode, business_campaign_id: appliedCampaignId,
           last_key: product.last || null, last_label: product.lastLabel || null,
           last_width: product.width || null, fit_measurements: product.footMeasurementsUsed || null,
           ...shippingData,
@@ -734,7 +751,7 @@ export default function Checkout() {
 
             {/* Total */}
             <div className="bg-white p-4 border border-black/[0.06]">
-              {(couponResult?.valid || bizDiscount > 0 || shippingCost > 0 || isFreeShipping || accPromoDiscount > 0) && (
+              {(couponResult?.valid || bizDiscount > 0 || campaignDiscount > 0 || shippingCost > 0 || isFreeShipping || accPromoDiscount > 0) && (
                 <>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-[13px] text-black/40">Zwischensumme</span>
@@ -766,6 +783,12 @@ export default function Checkout() {
                     <div className="flex justify-between mb-2">
                       <span className="text-[13px] text-[#34C759]">Firmencode{bizResult?.coverage_type === 'full' ? ' (voll gedeckt)' : ''}</span>
                       <span className="text-[13px] text-[#34C759]">- € {fmtPrice(bizDiscount)}</span>
+                    </div>
+                  )}
+                  {campaignDiscount > 0 && (
+                    <div className="flex justify-between mb-2">
+                      <span className="text-[13px] text-[#34C759]">{activeCampaign?.name || 'Firmenkampagne'}{activeCampaign?.payment_mode === 'company' ? ' (Firma zahlt)' : ` (-${activeCampaign?.discount_pct}%)`}</span>
+                      <span className="text-[13px] text-[#34C759]">- € {fmtPrice(campaignDiscount)}</span>
                     </div>
                   )}
                   <div className="h-px bg-black/5 mb-2" />

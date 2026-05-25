@@ -145,9 +145,17 @@ function FitBar({ value, open, onToggle, onSave, onReset }) {
   )
 }
 
+// Preis-Helfer (deutsches Format "€ 1.485").
+function parsePrice(str) {
+  if (!str) return 0
+  return parseFloat(String(str).replace(/[^0-9.,]/g, '').replace(/\./g, '').replace(',', '.')) || 0
+}
+const fmtPrice = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+
 // ── Product Card (LV style, image + name + price, nothing more) ─────────
-function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed }) {
+function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, campaign }) {
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
+  const campPriceNum = campaign ? (campaign.payment_mode === 'company' ? 0 : Math.round(parsePrice(product.price) * (1 - campaign.discount_pct / 100))) : null
   return (
     <div
       className="group cursor-pointer"
@@ -192,8 +200,14 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
           <Heart size={16} strokeWidth={1.5} className={isFav ? 'text-black fill-black' : 'text-black/25'} />
         </button>
 
-        {/* Match badge, nur wenn der Schuh passt (sonst widersprüchlich) */}
-        {product.match && !dimmed && (
+        {/* Kampagnen-Badge hat Vorrang vor dem Match-Badge */}
+        {campaign ? (
+          <div className="absolute bottom-3 left-3">
+            <span className="text-[10px] text-white bg-stone-900/90 backdrop-blur-sm px-2 py-1 font-normal" style={{ letterSpacing: '0.05em' }}>
+              {campaign.payment_mode === 'company' ? 'Firma zahlt' : `-${campaign.discount_pct}%`}
+            </span>
+          </div>
+        ) : product.match && !dimmed && (
           <div className="absolute bottom-3 left-3">
             <span className="text-[10px] text-black/40 bg-white/80 backdrop-blur-sm px-2 py-1 font-light" style={{ letterSpacing: '0.05em' }}>
               {product.match} Passform
@@ -206,7 +220,12 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
       <div className="pt-3" style={{ opacity: dimmed ? 0.7 : 1 }}>
         <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{product.name}</p>
         <div className="flex items-center gap-2 mt-1">
-          {isPromo && product.promotion_price ? (
+          {campaign ? (
+            <p className="text-[12px] lg:text-[13px] text-black/45 font-light">
+              <span className="line-through text-black/20 mr-1.5">{product.price}</span>
+              {campaign.payment_mode === 'company' ? 'von Ihrer Firma übernommen' : `€ ${fmtPrice(campPriceNum)}`}
+            </p>
+          ) : isPromo && product.promotion_price ? (
             <p className="text-[12px] lg:text-[13px] text-black/45 font-light">
               <span className="line-through text-black/20 mr-1.5">{product.price}</span>
               {product.promotion_price}
@@ -227,8 +246,9 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed })
 export default function ShoeCollection() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { shoes, favorites, toggleFavorite, footMeasurements, saveFootMeasurements, fitFeasibility } = useStore()
+  const { shoes, favorites, toggleFavorite, footMeasurements, saveFootMeasurements, fitFeasibility, fetchMyCampaigns } = useStore()
   const { user } = useAuth()
+  const [campaigns, setCampaigns] = useState([])
   const handleToggleFav = async (shoeId) => {
     if (!user) {
       navigate('/login', { state: { from: location.pathname + location.search } })
@@ -305,11 +325,23 @@ export default function ShoeCollection() {
     return () => { cancelled = true }
   }, [])
 
+  // Aktive Firmen-Kampagne des Mitarbeiters laden.
+  useEffect(() => {
+    if (!user) { setCampaigns([]); return }
+    fetchMyCampaigns().then(rows => setCampaigns(Array.isArray(rows) ? rows : [])).catch(() => {})
+  }, [user])
+  const activeCampaign = campaigns[0] || null
+
   const CATEGORIES = isPromo
     ? [{ label: 'Promo', value: 'PROMO' }, ...BASE_CATEGORIES]
     : BASE_CATEGORIES
 
-  const enriched = shoes.map(s => ({
+  // Bei aktiver Kampagne mit festen Designs den Katalog darauf beschränken.
+  const scopedShoes = activeCampaign?.allowed_shoe_ids?.length
+    ? shoes.filter(s => activeCampaign.allowed_shoe_ids.includes(s.id))
+    : shoes
+
+  const enriched = scopedShoes.map(s => ({
     ...s,
     match: s.match || (scanAccuracy ? `${Math.min(99.9, scanAccuracy + ((s.id * 13 + 7) % 17) * 0.03).toFixed(1)}%` : null),
   }))
@@ -371,6 +403,25 @@ export default function ShoeCollection() {
         onReset={handleResetMeasurements}
       />
 
+      {/* ── Kampagnen-Banner (Firmen-Aktion) ─────────────────────── */}
+      {activeCampaign && (
+        <div className="px-5 lg:px-16 pt-5">
+          <div className="max-w-3xl mx-auto bg-stone-900 text-white px-5 py-3.5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[12px] lg:text-[13px] font-normal">
+                {activeCampaign.business_name ? `${activeCampaign.business_name} · ` : ''}{activeCampaign.name}
+              </p>
+              <p className="text-[11px] text-white/60 font-light mt-0.5">
+                {activeCampaign.payment_mode === 'company'
+                  ? 'Ihr Schuh wird von Ihrer Firma übernommen.'
+                  : `${activeCampaign.discount_pct}% Firmenrabatt auf Ihren Maßschuh.`}
+                {activeCampaign.allowed_shoe_ids?.length ? ' Auswahl auf die Aktionsmodelle beschränkt.' : ''}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Product count ───────────────────────────────────────── */}
       <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2">
         <p className="text-[11px] text-black/20 font-light">{filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}</p>
@@ -419,6 +470,7 @@ export default function ShoeCollection() {
                 onToggleFav={() => handleToggleFav(product.id)}
                 isPromo={isPromo}
                 dimmed={!fitsMeasurements(product.category)}
+                campaign={activeCampaign}
               />
             ))}
           </div>
