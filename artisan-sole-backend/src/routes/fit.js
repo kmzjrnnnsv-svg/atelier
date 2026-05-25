@@ -11,12 +11,13 @@ import { CATEGORY_LASTS } from '../db/seed.js'
 
 const router = Router()
 
-// Ehrliche, aber durch Bestauswahl praktisch immer hohe Passgenauigkeit aus den
-// mm-Abweichungen der best passenden Leiste×Weite×Größe. Untergrenze 90 %.
-// Konstante 1.2 = Strafpunkte pro mm Gesamtabweichung (Länge + Umfang).
+// Passgenauigkeit aus den mm-Abweichungen der best passenden Leiste×Weite×Größe.
+// Vorgabe: ±0,5 cm (5 mm) in Länge UND Breite gelten als gute Passform → der
+// gesamte Toleranzbereich (max. 5+5 = 10 mm Gesamtabweichung) bleibt ≥ 95 %.
+// 0 mm → 99,9 %, 10 mm → 95,0 %. Faktor 0.49 = Strafpunkte pro mm Gesamtabweichung.
 export function fitPercent(dLenMm, dGirthMm) {
-  const pct = 99.9 - (Math.abs(dLenMm) + Math.abs(dGirthMm)) * 1.2
-  return Math.round(Math.max(90, Math.min(99.9, pct)) * 10) / 10
+  const pct = 99.9 - (Math.abs(dLenMm) + Math.abs(dGirthMm)) * 0.49
+  return Math.round(Math.max(95, Math.min(99.9, pct)) * 10) / 10
 }
 
 
