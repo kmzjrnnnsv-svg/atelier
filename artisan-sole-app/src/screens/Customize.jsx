@@ -366,6 +366,13 @@ export default function Customize() {
     }
   }, [fitState, availableLasts.map(v => v.key).join(','), chosenLast])
 
+  // Maßeingabe öffnen, mit gespeicherten Werten vorbefüllen (zum Ändern).
+  const openMeasEdit = () => {
+    setMeasLen(footMeasurements?.foot_length_mm ? String(footMeasurements.foot_length_mm) : '')
+    setMeasGirth(footMeasurements?.ball_girth_mm ? String(footMeasurements.ball_girth_mm) : '')
+    setMeasOpen(true)
+  }
+
   const saveMeasurements = async () => {
     const len = parseFloat(String(measLen).replace(',', '.'))
     const girth = parseFloat(String(measGirth).replace(',', '.'))
@@ -1002,13 +1009,16 @@ export default function Customize() {
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
                 {fitState === 'matched' && selectedFit?.fitPercent != null ? (
-                  <span className="text-[11px] lg:text-[12px] font-medium text-black">{String(selectedFit.fitPercent).replace('.', ',')} %</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-[11px] lg:text-[12px] font-medium text-black">{String(selectedFit.fitPercent).replace('.', ',')} %</span>
+                    <button type="button" onClick={openMeasEdit} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">ändern</button>
+                  </span>
                 ) : fitState === 'matching' ? (
                   <span className="text-[11px] lg:text-[12px] text-black/35">wird berechnet …</span>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setMeasOpen(o => !o)}
+                    onClick={openMeasEdit}
                     className="text-[11px] lg:text-[12px] text-black/55 underline underline-offset-2 bg-transparent border-0 p-0"
                   >
                     Maße eingeben
@@ -1018,7 +1028,7 @@ export default function Customize() {
             </div>
 
             {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
-            {measOpen && fitState !== 'matched' && (
+            {measOpen && (
               <div className="mt-3 border border-black/10 p-3 max-w-md">
                 <p className="text-[10px] text-black/40 font-light mb-2 leading-relaxed">
                   Zwei Maße genügen, ±0,5 cm sind völlig in Ordnung. Den passenden Leisten ermitteln wir automatisch.
@@ -1049,6 +1059,11 @@ export default function Customize() {
                     {measSaving ? '…' : 'Übernehmen'}
                   </button>
                 </div>
+                {footMeasurements?.foot_length_mm && (
+                  <button type="button" onClick={() => setMeasOpen(false)} className="mt-2 text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">
+                    Abbrechen
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1458,33 +1473,11 @@ export default function Customize() {
                 <div className="border border-black/10 p-4">
                   <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
                     Für die perfekte Passform messen wir Ihren Fuß statt zu raten.
-                    Bitte Fußlänge und Ballenumfang eingeben, die richtige Größe
-                    bestimmen wir automatisch.
+                    Geben Sie Fußlänge und Ballenumfang ein, die passende Schuhform
+                    und Größe ermitteln wir automatisch.
                   </p>
-                  <div className="flex gap-2">
-                    <label className="flex-1">
-                      <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Fußlänge (mm)</span>
-                      <input
-                        type="number" inputMode="decimal" value={measLen}
-                        onChange={e => setMeasLen(e.target.value)} placeholder="z. B. 270"
-                        className="w-full border border-black/15 px-2.5 py-2 text-[13px] focus:outline-none focus:border-black/40"
-                      />
-                    </label>
-                    <label className="flex-1">
-                      <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Ballenumfang (mm)</span>
-                      <input
-                        type="number" inputMode="decimal" value={measGirth}
-                        onChange={e => setMeasGirth(e.target.value)} placeholder="z. B. 255"
-                        className="w-full border border-black/15 px-2.5 py-2 text-[13px] focus:outline-none focus:border-black/40"
-                      />
-                    </label>
-                  </div>
-                  <button
-                    onClick={saveMeasurements}
-                    disabled={measSaving || !measLen || !measGirth}
-                    className="mt-3 w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase disabled:opacity-40 border-0"
-                  >
-                    {measSaving ? 'Speichern…' : 'Passform ermitteln'}
+                  <button onClick={openMeasEdit} className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0">
+                    Maße eingeben
                   </button>
                 </div>
               ) : fitState === 'matching' ? (
@@ -1529,6 +1522,7 @@ export default function Customize() {
                   ) : availableLasts.length === 1 ? (
                     <p className="text-[10px] text-black/40 font-light">Schuhform: <span className="text-black/70">{availableLasts[0].label}</span></p>
                   ) : null}
+                  <button type="button" onClick={openMeasEdit} className="text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : (
                 /* Maße vorhanden, aber kein Treffer → Maßanfertigung */
@@ -1543,42 +1537,7 @@ export default function Customize() {
                   >
                     Maßanfertigung anfragen
                   </button>
-                </div>
-              )}
-
-              {/* Versteckter Notausgang: Größe manuell wählen */}
-              {!showSizeEscape ? (
-                <button
-                  onClick={() => { setShowSizeEscape(true); setSizeType('standard'); if (!selectedSize) setSelectedSize('42') }}
-                  className="block w-full mt-3 text-[9px] text-black/25 hover:text-black/50 text-center bg-transparent border-0 underline underline-offset-4 decoration-black/10"
-                >
-                  Größe manuell wählen
-                </button>
-              ) : (
-                <div className="mt-3">
-                  <div className="grid grid-cols-7 gap-1.5">
-                    {EU_SIZES.map(s => (
-                      <button
-                        key={s}
-                        onClick={() => { setSizeType('standard'); setSelectedSize(s) }}
-                        className={`h-10 flex items-center justify-center text-[12px] transition-all ${
-                          sizeType === 'standard' && selectedSize === s
-                            ? 'bg-black text-white font-medium'
-                            : 'bg-black/[0.03] text-black/60 hover:bg-black/[0.06]'
-                        }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                  {fitState === 'matched' && (
-                    <button
-                      onClick={() => { setShowSizeEscape(false); setSizeType('fit'); setSelectedSize(selectedFit?.size_label || '') }}
-                      className="block w-full mt-2 text-[9px] text-black/30 hover:text-black/55 text-center bg-transparent border-0 underline underline-offset-4 decoration-black/10"
-                    >
-                      Zurück zur automatischen Passform
-                    </button>
-                  )}
+                  <button type="button" onClick={openMeasEdit} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               )}
             </div>
