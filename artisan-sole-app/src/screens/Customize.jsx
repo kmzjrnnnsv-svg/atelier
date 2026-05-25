@@ -180,15 +180,15 @@ export default function Customize() {
 
     // Optionen laden: zuerst per-Schuh, bei leer → Kategorie-Vorlage.
     const loadOptions = async () => {
-      let list = []
-      if (product?.id) {
-        const perShoe = await apiFetch(`/api/shoes/${product.id}/options`).catch(() => [])
-        list = filterGroups(perShoe)
-      }
+      let raw = []
+      if (product?.id) raw = await apiFetch(`/api/shoes/${product.id}/options`).catch(() => [])
+      let list = filterGroups(raw)
       if (list.length === 0 && category) {
-        const tpl = await apiFetch(`/api/category-templates/${category}/config`).catch(() => [])
-        list = filterGroups(tpl)
+        raw = await apiFetch(`/api/category-templates/${category}/config`).catch(() => [])
+        list = filterGroups(raw)
       }
+      // 'last' (Schuhform) separat halten — wird fit-gesteuert eingeblendet.
+      setLastGroup((Array.isArray(raw) ? raw : []).find(g => g.key === 'last') || null)
       setExtraOptionGroups(list)
       setSelectedExtras({})  // keine Auto-Defaults: User klickt jeden Schritt
     }
@@ -289,7 +289,9 @@ export default function Customize() {
   // ── Passform (Auto-Match) ────────────────────────────────────────────────
   // Aus den gespeicherten Fußmaßen + fit_adjust ermittelt das System still die
   // best-passende Leisten×Weite×Größe. KEIN sichtbarer Auswahlschritt.
-  const [selectedFit, setSelectedFit] = useState(null) // { last_key, last_label, width, size_label, fitPercent, ... }
+  const [fitMatches, setFitMatches] = useState([])      // alle passenden Leisten (gerankt)
+  const [chosenLast, setChosenLast] = useState(null)    // vom Nutzer/Auto gewählter last_key
+  const [lastGroup, setLastGroup]   = useState(null)    // 'last'-Optionsgruppe des Schuhs (Schuhform)
   const [fitState, setFitState] = useState('idle')      // 'idle'|'matching'|'matched'|'nomatch'
   // Global im CMS gepflegte Produktseiten-Texte (Familien, Lieferumfang, Badges).
   const [pageTexts, setPageTexts] = useState(null)
@@ -306,7 +308,7 @@ export default function Customize() {
   useEffect(() => {
     let cancelled = false
     if (!footMeasurements?.foot_length_mm || !footMeasurements?.ball_girth_mm) {
-      setSelectedFit(null); setFitState('idle')
+      setFitMatches([]); setChosenLast(null); setFitState('idle')
       return
     }
     const adj = footMeasurements.fit_adjust || { length_mm: 0, girth_mm: 0 }
@@ -317,8 +319,9 @@ export default function Customize() {
       .then(matches => {
         if (cancelled) return
         const top = matches[0]
-        if (!top) { setSelectedFit(null); setFitState('nomatch'); return }
-        setSelectedFit(top)
+        if (!top) { setFitMatches([]); setChosenLast(null); setFitState('nomatch'); return }
+        setFitMatches(matches)
+        setChosenLast(top.last_key)
         setSizeType('fit')
         setSelectedSize(top.size_label)
         setFitState('matched')
@@ -334,9 +337,33 @@ export default function Customize() {
           },
         }).catch(() => {})
       })
-      .catch(() => { if (!cancelled) { setSelectedFit(null); setFitState('nomatch') } })
+      .catch(() => { if (!cancelled) { setFitMatches([]); setChosenLast(null); setFitState('nomatch') } })
     return () => { cancelled = true }
   }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm, footMeasurements?.fit_adjust?.length_mm, footMeasurements?.fit_adjust?.girth_mm, category])
+
+  // Abgeleitet: beste Leiste je last_key, verfügbare (passende) Schuhformen,
+  // und der aktuell gewählte Fit. selectedFit folgt der gewählten Schuhform.
+  const bestPerLast = (() => { const m = new Map(); for (const x of fitMatches) if (!m.has(x.last_key)) m.set(x.last_key, x); return m })()
+  const availableLasts = (() => {
+    const vals = lastGroup?.values || []
+    const fromShoe = vals
+      .filter(v => bestPerLast.has(v.key))
+      .map(v => ({ id: v.id, key: v.key, label: v.label, description: v.description, image: v.image, match: bestPerLast.get(v.key) }))
+    const list = fromShoe.length
+      ? fromShoe
+      : [...bestPerLast.values()].map(mt => ({ id: 'last-' + mt.last_key, key: mt.last_key, label: mt.last_label, description: '', image: null, match: mt }))
+    return list.sort((a, b) => (b.match.fitPercent || 0) - (a.match.fitPercent || 0))
+  })()
+  const selectedFit = chosenLast ? (bestPerLast.get(chosenLast) || null) : null
+
+  // Falls die automatisch gewählte Leiste nicht unter den (Schuh-)verfügbaren ist,
+  // auf die best-passende verfügbare umschalten.
+  useEffect(() => {
+    if (fitState !== 'matched') return
+    if (availableLasts.length && !availableLasts.some(v => v.key === chosenLast)) {
+      setChosenLast(availableLasts[0].key)
+    }
+  }, [fitState, availableLasts.map(v => v.key).join(','), chosenLast])
 
   const saveMeasurements = async () => {
     const len = parseFloat(String(measLen).replace(',', '.'))
@@ -1462,9 +1489,45 @@ export default function Customize() {
               ) : fitState === 'matching' ? (
                 <p className="text-[11px] text-black/40 font-light">Passform wird ermittelt…</p>
               ) : fitState === 'matched' ? (
-                <div className="flex items-center gap-2 text-[11px] text-black/45 font-light">
-                  <Check size={13} strokeWidth={2} className="text-black/40" />
-                  <span>Passform automatisch ermittelt, keine Größenwahl nötig.</span>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-[11px] text-black/45 font-light">
+                    <Check size={13} strokeWidth={2} className="text-black/40" />
+                    <span>Passform automatisch ermittelt, keine Größenwahl nötig.</span>
+                  </div>
+                  {availableLasts.length >= 2 ? (
+                    <div>
+                      <p className="text-[9px] text-black/35 uppercase tracking-wider mb-2">Schuhform · mehrere passen zu Ihren Maßen</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {availableLasts.map(v => {
+                          const isSel = chosenLast === v.key
+                          return (
+                            <button
+                              key={v.key} type="button" onClick={() => setChosenLast(v.key)}
+                              title={v.description || ''}
+                              className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border ${isSel ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30 bg-white'}`}
+                            >
+                              <div className="w-12 h-12 mb-2 flex items-center justify-center overflow-hidden border border-black/[0.06]" style={{ backgroundColor: v.image ? 'transparent' : '#fafaf9' }}>
+                                {v.image
+                                  ? <img src={resolveImg(v.image)} alt="" className="w-full h-full object-cover" />
+                                  : LAST_SHAPES[v.key]
+                                    ? <div className="w-9 h-11"><LastShapeIcon shapeKey={v.key} active={isSel} /></div>
+                                    : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
+                              </div>
+                              <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
+                              {v.match?.fitPercent != null && (
+                                <p className="text-[9px] text-black/35 font-light mt-0.5">{String(v.match.fitPercent).replace('.', ',')} %</p>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {availableLasts.find(v => v.key === chosenLast)?.description && (
+                        <p className="text-[10px] text-black/45 font-light leading-relaxed mt-2.5">{availableLasts.find(v => v.key === chosenLast).description}</p>
+                      )}
+                    </div>
+                  ) : availableLasts.length === 1 ? (
+                    <p className="text-[10px] text-black/40 font-light">Schuhform: <span className="text-black/70">{availableLasts[0].label}</span></p>
+                  ) : null}
                 </div>
               ) : (
                 /* Maße vorhanden, aber kein Treffer → Maßanfertigung */
