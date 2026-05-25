@@ -129,8 +129,8 @@ export function runMigrations(db) {
       material   TEXT NOT NULL,
       color      TEXT NOT NULL,
       price      TEXT NOT NULL,
-      status     TEXT NOT NULL DEFAULT 'pending'
-                 CHECK(status IN ('pending','processing','shipped','delivered','cancelled')),
+      status     TEXT NOT NULL DEFAULT 'pending_payment'
+                 CHECK(status IN ('pending_payment','pending','processing','quality_check','shipped','delivered','cancelled')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -1065,4 +1065,31 @@ export function runMigrations(db) {
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
+
+  // ── Footer-Migration: veraltete /legal-Typen auf gültige Ziele umschreiben ──
+  // Frühere Footer-Defaults nutzten Rechtstypen, die das Backend nicht kennt
+  // (terms/privacy/imprint/about/shipping/withdrawal/cookies) → 400 / tote Links.
+  // Bereits gespeicherte Footer-Konfigurationen werden hier idempotent korrigiert.
+  try {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'footer_config'").get()
+    if (row?.value) {
+      const map = {
+        '/legal/terms': '/legal/agb',
+        '/legal/privacy': '/legal/datenschutz',
+        '/legal/imprint': '/legal/impressum',
+        '/legal/about': '/explore',
+        '/legal/shipping': '/help',
+        '/legal/withdrawal': '/feedback',
+        '/legal/cookies': '/legal/datenschutz',
+      }
+      let v = row.value, changed = false
+      for (const [bad, good] of Object.entries(map)) {
+        if (v.includes(bad)) { v = v.split(bad).join(good); changed = true }
+      }
+      if (changed) {
+        db.prepare("UPDATE settings SET value = ?, updated_at = datetime('now') WHERE key = 'footer_config'").run(v)
+        console.log('[migrate footer legal links] veraltete /legal-Typen korrigiert')
+      }
+    }
+  } catch (e) { console.error('[migrate footer legal links]', e.message) }
 }

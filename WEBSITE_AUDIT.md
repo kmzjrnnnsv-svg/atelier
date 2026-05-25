@@ -137,12 +137,11 @@ Rechtsseiten sind ohne Login abrufbar.
 
 ## C. Bekannte Einschränkungen / Hinweise
 
-1. **Frische Datenbank & Bestellstatus:** Auf einer komplett neuen DB fehlt dem
-   `orders`-Status der Wert `pending_payment` (eine Migration läuft vor dem
-   Hinzufügen einer Spalte und wird still übersprungen). Produktions-DBs sind
-   nicht betroffen (inkrementell migriert). Für diesen Test wurde die DB einmal
-   angeglichen. **Empfehlung:** Migrations-Reihenfolge fixen, falls je eine
-   Neuinstallation erfolgt.
+1. **Frische Datenbank & Bestellstatus — BEHOBEN:** Die initiale `orders`-Tabelle
+   enthält jetzt `pending_payment`/`quality_check` im Status-CHECK; Bestellungen
+   funktionieren auf einer komplett frischen DB (verifiziert: POST /api/orders →
+   201 ohne manuellen Eingriff). Die alten Rebuild-Migrationen bleiben für
+   Bestands-DBs als harmlose No-Ops.
 2. **E-Mail-Verifizierung / SMTP:** Der Kampagnen-Beitritt per Domain verlangt
    eine bestätigte E-Mail → SMTP muss in Produktion konfiguriert sein (sonst nur
    Invite-Listen-Zugang oder Link aus dem Server-Log).
