@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, X, Check, Upload, Gift, ChevronDown, ChevronUp, L
 import useStore from '../../store/store'
 import { apiFetch } from '../../hooks/useApi'
 
-const CATEGORIES = ['OXFORD', 'LOAFER', 'DERBY', 'BOOT', 'SNEAKER', 'MONK']
+const CATEGORIES = ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK', 'LOAFER', 'BALMORAL', 'BOOT', 'CHELSEA', 'CHUKKA', 'SNEAKER']
 const TAGS = [null, 'BESTSELLER', 'NEW', 'LIMITED']
 
 const emptyForm = {
@@ -293,7 +293,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  onChange={(e) => set('category', e.target.value)}
  className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70"
  >
- {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+ {[...new Set([...CATEGORIES, form.category].filter(Boolean))].map((c) => <option key={c} value={c}>{c}</option>)}
  </select>
  </div>
  <div>
