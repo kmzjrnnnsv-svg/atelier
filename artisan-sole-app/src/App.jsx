@@ -117,6 +117,7 @@ const CouponsPanel         = lazy(() => import('./screens/cms/CouponsPanel'))
 const FeaturedShoesPanel   = lazy(() => import('./screens/cms/FeaturedShoesPanel'))
 const HomepageEditor       = lazy(() => import('./screens/cms/HomepageEditor'))
 const FooterEditor         = lazy(() => import('./screens/cms/FooterEditor'))
+const ProductTextsEditor   = lazy(() => import('./screens/cms/ProductTextsEditor'))
 const MediaLibrary         = lazy(() => import('./screens/cms/MediaLibrary'))
 const WebsiteImagesPanel   = lazy(() => import('./screens/cms/WebsiteImagesPanel'))
 const OptionsEditor        = lazy(() => import('./screens/cms/OptionsEditor'))
@@ -266,6 +267,7 @@ function AppRoutes() {
               <Route path="featured" element={<FeaturedShoesPanel />} />
               <Route path="homepage" element={<HomepageEditor />} />
               <Route path="footer" element={<FooterEditor />} />
+              <Route path="product-texts" element={<ProductTextsEditor />} />
               <Route path="media" element={<MediaLibrary />} />
               <Route path="website-images" element={<WebsiteImagesPanel />} />
               <Route path="options"        element={<OptionsEditor />} />

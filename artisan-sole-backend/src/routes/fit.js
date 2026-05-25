@@ -11,6 +11,15 @@ import { CATEGORY_LASTS } from '../db/seed.js'
 
 const router = Router()
 
+// Ehrliche, aber durch Bestauswahl praktisch immer hohe Passgenauigkeit aus den
+// mm-Abweichungen der best passenden Leiste×Weite×Größe. Untergrenze 90 %.
+// Konstante 1.2 = Strafpunkte pro mm Gesamtabweichung (Länge + Umfang).
+export function fitPercent(dLenMm, dGirthMm) {
+  const pct = 99.9 - (Math.abs(dLenMm) + Math.abs(dGirthMm)) * 1.2
+  return Math.round(Math.max(90, Math.min(99.9, pct)) * 10) / 10
+}
+
+
 const LAST_LABELS = {
   monti: 'Monti', zurigo: 'Zurigo', savile: 'Savile', belgravia: 'Belgravia',
   wellington: 'Wellington', drake: 'Drake', sneaker: 'Sneaker',
@@ -87,6 +96,7 @@ router.get('/match', (req, res) => {
       deltaLength: Math.round((best.foot_length_mm - length) * 10) / 10,
       deltaGirth: Math.round((best.ball_girth_mm - girth) * 10) / 10,
       score: Math.round(Math.sqrt(bestDLen * bestDLen + dGirth * dGirth) * 100) / 100,
+      fitPercent: fitPercent(best.foot_length_mm - length, best.ball_girth_mm - girth),
     })
   }
 
@@ -122,6 +132,7 @@ router.get('/feasible', (req, res) => {
     byProfile.get(k).push(r)
   }
   const feasibleLasts = new Set()
+  const bestPctByLast = new Map()   // last_key → höchste fitPercent
   for (const profileRows of byProfile.values()) {
     let best = null, bestDLen = Infinity
     for (const r of profileRows) {
@@ -131,17 +142,28 @@ router.get('/feasible', (req, res) => {
     if (!best || bestDLen > tolerance) continue
     if (Math.abs(best.ball_girth_mm - girth) > tolerance) continue
     feasibleLasts.add(best.last_key)
+    const pct = fitPercent(best.foot_length_mm - length, best.ball_girth_mm - girth)
+    if (!bestPctByLast.has(best.last_key) || pct > bestPctByLast.get(best.last_key)) {
+      bestPctByLast.set(best.last_key, pct)
+    }
   }
 
   const knownCategories = Object.keys(CATEGORY_LASTS)
   const categories = knownCategories.filter(cat =>
     CATEGORY_LASTS[cat].some(lk => feasibleLasts.has(lk))
   )
+  // Beste Passgenauigkeit je machbarer Kategorie (für Kollektions-Badges).
+  const percentByCategory = {}
+  for (const cat of categories) {
+    const pcts = CATEGORY_LASTS[cat].map(lk => bestPctByLast.get(lk)).filter(Number.isFinite)
+    if (pcts.length) percentByCategory[cat] = Math.max(...pcts)
+  }
 
   res.json({
     lasts: [...feasibleLasts],
     categories,
     knownCategories,
+    percentByCategory,
     tolerance,
   })
 })

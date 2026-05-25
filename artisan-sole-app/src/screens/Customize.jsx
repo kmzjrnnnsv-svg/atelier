@@ -289,8 +289,13 @@ export default function Customize() {
   // ── Passform (Auto-Match) ────────────────────────────────────────────────
   // Aus den gespeicherten Fußmaßen + fit_adjust ermittelt das System still die
   // best-passende Leisten×Weite×Größe. KEIN sichtbarer Auswahlschritt.
-  const [selectedFit, setSelectedFit] = useState(null) // { last_key, last_label, width, size_label, ... }
+  const [selectedFit, setSelectedFit] = useState(null) // { last_key, last_label, width, size_label, fitPercent, ... }
   const [fitState, setFitState] = useState('idle')      // 'idle'|'matching'|'matched'|'nomatch'
+  // Global im CMS gepflegte Produktseiten-Texte (Familien, Lieferumfang, Badges).
+  const [pageTexts, setPageTexts] = useState(null)
+  useEffect(() => {
+    apiFetch('/api/settings/product-texts').then(t => setPageTexts(t || null)).catch(() => {})
+  }, [])
   const [showSizeEscape, setShowSizeEscape] = useState(false) // versteckter EU-Grid-Notausgang
   // Lokale Maß-Eingabe (falls noch keine Maße gespeichert)
   const [measLen, setMeasLen] = useState('')
@@ -865,12 +870,12 @@ export default function Customize() {
           <div className="hidden lg:block pt-6 px-1">
             <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Lieferumfang</p>
             <div className="flex flex-col gap-1.5">
-              {[
+              {(pageTexts?.delivery_items?.length ? pageTexts.delivery_items : [
                 'Handgefertigte Schuhe',
                 'Schuhbeutel aus Baumwolle',
                 'Schuhspanner aus Zedernholz',
                 'Pflegeanleitung',
-              ].map((item) => (
+              ]).map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <div className="w-1 h-1 rounded-full bg-black/15" />
                   <span className="text-[11px] text-black/40">{item}</span>
@@ -953,6 +958,9 @@ export default function Customize() {
           {/* ── Produkt-Info ─────────────────────────────────────── */}
           <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
             <p className="text-[13px] lg:text-[22px] font-light text-black leading-tight">{product.name}</p>
+            {product.tagline && (
+              <p className="text-[11px] lg:text-[13px] text-black/45 font-light mt-1 leading-snug">{product.tagline}</p>
+            )}
             <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
               {displayPrice}
               {(soleExtra > 0 || accessoryTotal > 0) && (
@@ -964,7 +972,19 @@ export default function Customize() {
             <div className="flex items-center gap-4 mt-2 lg:mt-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
-                <span className="text-[11px] lg:text-[12px] font-medium text-black">{product.match || '98.4%'}</span>
+                {fitState === 'matched' && selectedFit?.fitPercent != null ? (
+                  <span className="text-[11px] lg:text-[12px] font-medium text-black">{String(selectedFit.fitPercent).replace('.', ',')} %</span>
+                ) : fitState === 'matching' ? (
+                  <span className="text-[11px] lg:text-[12px] text-black/35">wird berechnet …</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/collection')}
+                    className="text-[11px] lg:text-[12px] text-black/55 underline underline-offset-2 bg-transparent border-0 p-0"
+                  >
+                    Maße eingeben
+                  </button>
+                )}
               </div>
               {(sizeType === 'custom' || selectedSize) && (
                 <div className="flex items-center gap-1.5">
@@ -991,11 +1011,12 @@ export default function Customize() {
               )}
             </p>
             <div className="flex items-center gap-4 mt-3">
-              <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Handgenäht</span>
-              <span className="text-black/10">·</span>
-              <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Maßgefertigt</span>
-              <span className="text-black/10">·</span>
-              <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>200+ Schritte</span>
+              {(pageTexts?.badges?.length ? pageTexts.badges : ['Handgenäht', 'Maßgefertigt', '200+ Schritte']).map((b, i, arr) => (
+                <span key={b} className="flex items-center gap-4">
+                  <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>{b}</span>
+                  {i < arr.length - 1 && <span className="text-black/10">·</span>}
+                </span>
+              ))}
             </div>
           </div>
 
@@ -1054,8 +1075,8 @@ export default function Customize() {
                 Qualitäts-Familie wählen
               </p>
               <p className="text-[10px] text-black/40 font-light leading-relaxed mb-4 max-w-2xl">
-                Beide Familien genügen höchsten Qualitätsansprüchen und werden in der gleichen Manufaktur gefertigt.
-                Sie unterscheiden sich nur in Charakter und Einsatzbereich.
+                {pageTexts?.family_intro ||
+                  'Beide Familien genügen höchsten Qualitätsansprüchen und werden in der gleichen Manufaktur gefertigt. Sie unterscheiden sich nur in Charakter und Einsatzbereich.'}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {familiesPresent.includes('aesthetic') && (
@@ -1069,13 +1090,12 @@ export default function Customize() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-[12px] tracking-[0.18em] uppercase font-medium text-black">Aesthetic</p>
+                      <p className="text-[12px] tracking-[0.18em] uppercase font-medium text-black">{pageTexts?.aesthetic_title || 'Aesthetic'}</p>
                       {selFamily === 'aesthetic' && <Check size={14} strokeWidth={2} className="text-black" />}
                     </div>
                     <p className="text-[11px] text-black/55 leading-relaxed font-light">
-                      Edelste Leder, Lux Calf, Lux Suede, Painted Full Grain, Patina und Samt.
-                      Maximale optische Veredelung mit handpatinierten Oberflächen. Ideal für
-                      formelle Anlässe und besondere Momente.
+                      {pageTexts?.aesthetic_text ||
+                        'Edelste Leder, Lux Calf, Lux Suede, Painted Full Grain, Patina und Samt. Maximale optische Veredelung mit handpatinierten Oberflächen. Ideal für formelle Anlässe und besondere Momente.'}
                     </p>
                   </button>
                 )}
@@ -1090,13 +1110,12 @@ export default function Customize() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-[12px] tracking-[0.18em] uppercase font-medium text-black">Durable</p>
+                      <p className="text-[12px] tracking-[0.18em] uppercase font-medium text-black">{pageTexts?.durable_title || 'Durable'}</p>
                       {selFamily === 'durable' && <Check size={14} strokeWidth={2} className="text-black" />}
                     </div>
                     <p className="text-[11px] text-black/55 leading-relaxed font-light">
-                      Robuste Leder, Box Calf, Urban Suede, Painted Calf und Painted Full Grain.
-                      Wetterfest, alltagstauglich und langlebig. Ideal für täglichen Einsatz und
-                      anspruchsvolle Bedingungen.
+                      {pageTexts?.durable_text ||
+                        'Robuste Leder, Box Calf, Urban Suede, Painted Calf und Painted Full Grain. Wetterfest, alltagstauglich und langlebig. Ideal für täglichen Einsatz und anspruchsvolle Bedingungen.'}
                     </p>
                   </button>
                 )}
