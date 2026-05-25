@@ -298,6 +298,18 @@ const useStore = create((set, get) => ({
     return apiFetch(`/api/business/codes/validate?${q.toString()}`)
   },
 
+  // ── B2B-Kampagnen ──────────────────────────────────────────────────────────
+  // Mitglieder-Sicht
+  async fetchMyCampaigns() { return apiFetch('/api/business/campaigns/mine') },
+  async fetchCampaignBySlug(slug) { return apiFetch(`/api/business/campaigns/by-slug/${encodeURIComponent(slug)}`) },
+  async joinCampaign(slug) { return apiFetch(`/api/business/campaigns/${encodeURIComponent(slug)}/join`, { method: 'POST' }) },
+  // Inhaber-Sicht
+  async fetchOwnerCampaigns() { return apiFetch('/api/business/me/campaigns') },
+  async createCampaign(data) { return apiFetch('/api/business/me/campaigns', { method: 'POST', body: JSON.stringify(data) }) },
+  async updateCampaign(id, data) { return apiFetch(`/api/business/me/campaigns/${id}`, { method: 'PUT', body: JSON.stringify(data) }) },
+  async fetchCampaignDashboard(id) { return apiFetch(`/api/business/me/campaigns/${id}/dashboard`) },
+  async addCampaignInvites(id, emails) { return apiFetch(`/api/business/me/campaigns/${id}/invites`, { method: 'POST', body: JSON.stringify({ emails }) }) },
+
   // --- FAQS (CMS) ---
   async fetchFaqs() {
     const rows = await apiFetch('/api/faqs')

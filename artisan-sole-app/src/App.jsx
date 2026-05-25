@@ -127,7 +127,9 @@ const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
 const RegisterBusiness     = lazy(() => import('./screens/RegisterBusiness'))
 const BusinessDashboard    = lazy(() => import('./screens/business/BusinessDashboard'))
 const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfile'))
-const BusinessCodes        = lazy(() => import('./screens/business/BusinessCodes'))
+const BusinessCampaigns    = lazy(() => import('./screens/business/BusinessCampaigns'))
+const CampaignDashboard    = lazy(() => import('./screens/business/CampaignDashboard'))
+const CampaignJoin         = lazy(() => import('./screens/business/CampaignJoin'))
 const BusinessPanel        = lazy(() => import('./screens/cms/BusinessPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
@@ -146,7 +148,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/codes']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns']
 
 export const isNative = Capacitor.isNativePlatform()
 
@@ -196,7 +198,9 @@ function AppRoutes() {
   const isCMS = location.pathname.startsWith('/cms')
   // Corporate-Onepager bringt eine eigene Kopfzeile mit, globale Shop-Nav ausblenden.
   const isCorporateLanding = location.pathname === '/business' || (isBusiness && location.pathname === '/')
-  const showNav = !isCMS && !isCorporateLanding && !NO_NAV_PATHS.includes(location.pathname)
+  // Eigenständige Vollbild-Seiten (Firmenbereich, Kampagnen-Beitritt) ohne Shop-Nav.
+  const isStandalone = location.pathname.startsWith('/business/') || location.pathname.startsWith('/c/')
+  const showNav = !isCMS && !isCorporateLanding && !isStandalone && !NO_NAV_PATHS.includes(location.pathname)
   const FOOTER_PATHS = ['/collection', '/accessories', '/explore', '/business']
   const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
@@ -328,7 +332,10 @@ function AppRoutes() {
       {/* Firmenkonto-Bereich (business.artisansole.com) */}
       <Route path="/business/dashboard" element={<BusinessRoute><BusinessDashboard /></BusinessRoute>} />
       <Route path="/business/profile"   element={<BusinessRoute><BusinessProfile /></BusinessRoute>} />
-      <Route path="/business/codes"     element={<BusinessRoute><BusinessCodes /></BusinessRoute>} />
+      <Route path="/business/campaigns" element={<BusinessRoute><BusinessCampaigns /></BusinessRoute>} />
+      <Route path="/business/campaigns/:id" element={<BusinessRoute><CampaignDashboard /></BusinessRoute>} />
+      {/* Öffentliche Kampagnen-Beitrittsseite (Mitarbeitende) */}
+      <Route path="/c/:slug"            element={<CampaignJoin />} />
       {/* Public, Window Shopping ohne Login */}
       {/* Corporate Gifting lebt auf business.artisansole.com; auf der Hauptdomain
           leitet /business dorthin um (Subdomain = kanonisch). */}
