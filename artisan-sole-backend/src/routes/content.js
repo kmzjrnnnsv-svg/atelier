@@ -82,7 +82,11 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false } =
 // Shoes validators
 const shoeValidators = [
   body('name').trim().notEmpty().withMessage('Name required'),
-  body('category').isIn(['OXFORD','LOAFER','DERBY','BOOT','SNEAKER','MONK']),
+  // Kategorie ist Admin-Inhalt (Seed nutzt u. a. WHOLECUT, DOUBLE_MONK, BALMORAL,
+  // CHELSEA, CHUKKA …). Keine enge Whitelist — sonst scheitert das Speichern
+  // bestehender Schuhe mit HTTP 400. Nur Format prüfen.
+  body('category').trim().notEmpty().withMessage('Category required')
+    .matches(/^[A-Z][A-Z_]*$/).withMessage('Category muss GROSSBUCHSTABEN/Unterstrich sein'),
   body('price').trim().notEmpty().withMessage('Price required'),
   body('material').trim().notEmpty().withMessage('Material required'),
   body('image_data').optional().custom(v => {
