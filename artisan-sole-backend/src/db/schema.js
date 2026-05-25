@@ -309,9 +309,10 @@ export function runMigrations(db) {
     // accessories — optionale Farb-Zuordnung (CSV Schlüsselwörter, z. B. 'schwarz,black')
     `ALTER TABLE accessories ADD COLUMN color_match TEXT`,
     // orders — B2B-Firmencode-Einlösung
-    `ALTER TABLE orders ADD COLUMN business_id        INTEGER REFERENCES businesses(id)`,
-    `ALTER TABLE orders ADD COLUMN business_code_id   INTEGER REFERENCES business_codes(id)`,
-    `ALTER TABLE orders ADD COLUMN business_coverage  TEXT`,
+    `ALTER TABLE orders ADD COLUMN business_id          INTEGER REFERENCES businesses(id)`,
+    `ALTER TABLE orders ADD COLUMN business_code_id     INTEGER REFERENCES business_codes(id)`,
+    `ALTER TABLE orders ADD COLUMN business_coverage    TEXT`,
+    `ALTER TABLE orders ADD COLUMN business_campaign_id INTEGER REFERENCES business_campaigns(id)`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────
@@ -998,6 +999,58 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_business_codes_biz  ON business_codes(business_id);
     CREATE INDEX IF NOT EXISTS idx_business_codes_code ON business_codes(code);
+  `)
+
+  // ── B2B-Kampagnen (MOQ-Sammelbestellung) ─────────────────────────────────
+  // Eine Kampagne gehört einem Firmenkonto. Mitarbeitende treten über einen
+  // Join-Link (E-Mail-Domain) oder eine E-Mail-Allow-Liste bei und bestellen
+  // zum Kampagnen-Rabatt. MOQ (moq_per_model) ist ein Richtwert fürs Dashboard,
+  // KEIN harter Checkout-Gate (optimistisch; Admin schließt manuell).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS business_campaigns (
+      id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+      business_id          INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      name                 TEXT    NOT NULL,
+      slug                 TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+      payment_mode         TEXT    NOT NULL DEFAULT 'employee'
+                           CHECK(payment_mode IN ('employee','company')),
+      discount_pct         REAL    NOT NULL DEFAULT 25,
+      moq_per_model        INTEGER NOT NULL DEFAULT 10,
+      allowed_shoe_ids     TEXT,                       -- JSON-Array; NULL = ganzer Office-Katalog
+      access_mode          TEXT    NOT NULL DEFAULT 'domain'
+                           CHECK(access_mode IN ('domain','list','both')),
+      allowed_email_domain TEXT,                       -- z. B. 'firma.com'
+      status               TEXT    NOT NULL DEFAULT 'draft'
+                           CHECK(status IN ('draft','open','closed')),
+      deadline             TEXT,                       -- optionales ISO-Datum
+      created_at           TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at           TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaigns_biz  ON business_campaigns(business_id);
+    CREATE INDEX IF NOT EXISTS idx_campaigns_slug ON business_campaigns(slug);
+
+    CREATE TABLE IF NOT EXISTS business_campaign_members (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      campaign_id INTEGER NOT NULL REFERENCES business_campaigns(id) ON DELETE CASCADE,
+      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      joined_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(campaign_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_members_user ON business_campaign_members(user_id);
+    CREATE INDEX IF NOT EXISTS idx_campaign_members_camp ON business_campaign_members(campaign_id);
+
+    CREATE TABLE IF NOT EXISTS business_campaign_invites (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      campaign_id    INTEGER NOT NULL REFERENCES business_campaigns(id) ON DELETE CASCADE,
+      email          TEXT    NOT NULL COLLATE NOCASE,
+      token          TEXT    UNIQUE,
+      status         TEXT    NOT NULL DEFAULT 'pending'
+                     CHECK(status IN ('pending','joined','revoked')),
+      joined_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(campaign_id, email)
+    );
+    CREATE INDEX IF NOT EXISTS idx_campaign_invites_camp ON business_campaign_invites(campaign_id);
   `)
 
   // ── Spalten-Migrationen GANZ AM ENDE ausführen ───────────────────────────

@@ -4,7 +4,7 @@ import { getDb } from '../db/database.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification } from '../utils/email.js'
 import { totpVerify } from '../utils/totp.js'
-import { validateBusinessCode } from './business.js'
+import { validateBusinessCode, validateCampaignForUser } from './business.js'
 import Anthropic from '@anthropic-ai/sdk'
 
 async function translateToEnglish(text) {
@@ -62,7 +62,7 @@ router.post('/',
     const {
       shoe_id, shoe_name, material, color, price, eu_size,
       delivery_address, billing_address, accessories, scan_id,
-      foot_notes, shipping_method, shipping_cost, coupon_code, business_code,
+      foot_notes, shipping_method, shipping_cost, coupon_code, business_code, business_campaign_id,
       size_type, last_key, last_label, last_width, fit_measurements,
     } = req.body
 
@@ -113,6 +113,19 @@ router.post('/',
       bizCode = r.code
     }
 
+    // Validate B2B-Kampagne (Mitgliedschaft + Modell-Scope) — autoritatives Gate.
+    // Verhindert, dass Nicht-Mitglieder den Kampagnen-Rabatt erhalten.
+    let bizCampaign = null
+    if (business_campaign_id) {
+      const r = validateCampaignForUser(db, Number(business_campaign_id), uid, shoe_id != null ? Number(shoe_id) : null)
+      if (!r.valid) return res.status(400).json({ error: r.reason || 'Kampagne ungültig' })
+      bizCampaign = r.campaign
+    }
+    // Order-Business-Felder: Code hat Vorrang, sonst Kampagne.
+    const orderBusinessId = bizCode ? bizCode.business_id : (bizCampaign ? bizCampaign.business_id : null)
+    const orderCoverage   = bizCode ? bizCode.coverage_type
+      : (bizCampaign ? (bizCampaign.payment_mode === 'company' ? 'campaign_full' : 'campaign_discount') : null)
+
     // Sequential order number for this user
     const { count } = db
       .prepare('SELECT COUNT(*) as count FROM orders WHERE user_id = ?')
@@ -133,8 +146,8 @@ router.post('/',
          delivery_address, billing_address, accessories, scan_id, user_order_number, status, order_ref,
          foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price,
          size_type, last_key, last_label, last_width, fit_measurements,
-         business_id, business_code_id, business_coverage)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         business_id, business_code_id, business_coverage, business_campaign_id)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `)
     const insertParams = [
       uid,
@@ -163,9 +176,10 @@ router.post('/',
       last_label || null,
       last_width || null,
       fit_measurements ? JSON.stringify(fit_measurements) : null,
-      bizCode ? bizCode.business_id : null,
+      orderBusinessId,
       bizCode ? bizCode.id : null,
-      bizCode ? bizCode.coverage_type : null,
+      orderCoverage,
+      bizCampaign ? bizCampaign.id : null,
     ]
 
     let result

@@ -90,6 +90,67 @@ const shapeCode = (c) => ({
   created_at: c.created_at,
 })
 
+// ── Kampagnen-Helfer ─────────────────────────────────────────────────────────
+function slugify(s) {
+  return String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'kampagne'
+}
+function genUniqueSlug(db, name) {
+  const base = slugify(name)
+  for (let i = 0; i < 12; i++) {
+    const slug = i === 0 ? base : `${base}-${genCode(4).toLowerCase()}`
+    if (!db.prepare('SELECT 1 FROM business_campaigns WHERE slug = ?').get(slug)) return slug
+  }
+  return `${base}-${Date.now().toString(36)}`
+}
+const emailDomain = (email) => String(email || '').split('@')[1]?.toLowerCase() || ''
+
+const shapeCampaign = (c) => ({
+  id: c.id,
+  name: c.name,
+  slug: c.slug,
+  payment_mode: c.payment_mode,
+  discount_pct: c.discount_pct,
+  moq_per_model: c.moq_per_model,
+  allowed_shoe_ids: c.allowed_shoe_ids ? JSON.parse(c.allowed_shoe_ids) : null,
+  access_mode: c.access_mode,
+  allowed_email_domain: c.allowed_email_domain || null,
+  status: c.status,
+  deadline: c.deadline || null,
+  created_at: c.created_at,
+})
+
+// Autoritative Prüfung, ob ein User in einer Kampagne ein Modell bestellen darf.
+// Geteilt von der Order-Route (orders.js) und dem Member-Endpoint.
+export function validateCampaignForUser(db, campaignId, userId, shoeId) {
+  const c = db.prepare('SELECT * FROM business_campaigns WHERE id = ?').get(campaignId)
+  if (!c) return { valid: false, reason: 'Kampagne nicht gefunden' }
+  if (c.status !== 'open') return { valid: false, reason: 'Diese Kampagne ist nicht aktiv' }
+  if (c.deadline) {
+    const today = new Date().toISOString().slice(0, 10)
+    if (String(c.deadline).slice(0, 10) < today) return { valid: false, reason: 'Die Kampagne ist abgelaufen' }
+  }
+  const member = db.prepare('SELECT 1 FROM business_campaign_members WHERE campaign_id = ? AND user_id = ?').get(campaignId, userId)
+  if (!member) return { valid: false, reason: 'Kein Zugang zu dieser Kampagne' }
+  if (c.allowed_shoe_ids && shoeId != null) {
+    const ids = JSON.parse(c.allowed_shoe_ids)
+    if (ids.length && !ids.includes(Number(shoeId))) return { valid: false, reason: 'Dieses Modell ist nicht Teil der Kampagne' }
+  }
+  return { valid: true, campaign: c }
+}
+
+// Validiert allowed_shoe_ids gegen existierende Schuhe; gibt JSON oder null.
+function validateShoeIds(db, allowed_shoe_ids) {
+  if (allowed_shoe_ids == null) return { json: null }
+  if (!Array.isArray(allowed_shoe_ids)) return { error: 'Ungültige Design-Liste' }
+  const ids = [...new Set(allowed_shoe_ids.map(Number).filter(Number.isInteger))]
+  if (ids.length === 0) return { json: null }   // leer = ganzer Katalog
+  const ph = ids.map(() => '?').join(',')
+  const found = db.prepare(`SELECT COUNT(*) AS c FROM shoes WHERE id IN (${ph})`).get(...ids).c
+  if (found !== ids.length) return { error: 'Mindestens ein Design ist unbekannt' }
+  return { json: JSON.stringify(ids) }
+}
+
 // ── Firmenkonto-Inhaber ─────────────────────────────────────────────────────
 
 // GET /api/business/me
@@ -255,6 +316,169 @@ router.post('/me/codes/:id/revoke', authenticate, loadOwnBusiness, (req, res) =>
   res.json({ ok: true })
 })
 
+// ── Kampagnen: Firmenkonto-Inhaber ──────────────────────────────────────────
+
+// GET /api/business/me/campaigns — eigene Kampagnen + leichte Fortschritts-Info
+router.get('/me/campaigns', authenticate, loadOwnBusiness, (req, res) => {
+  const rows = getDb().prepare('SELECT * FROM business_campaigns WHERE business_id = ? ORDER BY created_at DESC, id DESC').all(req.business.id)
+  const db = getDb()
+  res.json(rows.map(c => {
+    const stats = db.prepare('SELECT COUNT(*) AS units, COUNT(DISTINCT user_id) AS participants FROM orders WHERE business_campaign_id = ?').get(c.id)
+    const members = db.prepare('SELECT COUNT(*) AS c FROM business_campaign_members WHERE campaign_id = ?').get(c.id).c
+    return { ...shapeCampaign(c), units: stats.units, participants: stats.participants, members }
+  }))
+})
+
+// POST /api/business/me/campaigns — Kampagne anlegen
+router.post('/me/campaigns', authenticate, loadOwnBusiness, (req, res) => {
+  const db = getDb()
+  const { name, payment_mode, discount_pct, moq_per_model, allowed_shoe_ids, access_mode, allowed_email_domain, deadline, status } = req.body || {}
+
+  if (typeof name !== 'string' || name.trim().length < 2) return res.status(400).json({ error: 'Kampagnen-Name min. 2 Zeichen' })
+  const pay = payment_mode === 'company' ? 'company' : 'employee'
+  let pct = Number(discount_pct)
+  if (!Number.isFinite(pct) || pct < 0 || pct > 100) pct = 25
+  let moq = parseInt(moq_per_model, 10); if (!Number.isInteger(moq) || moq < 1) moq = 10
+  const access = ['domain', 'list', 'both'].includes(access_mode) ? access_mode : 'domain'
+  const domain = (access === 'domain' || access === 'both')
+    ? String(allowed_email_domain || '').trim().toLowerCase().replace(/^@/, '')
+    : null
+  if ((access === 'domain' || access === 'both') && !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain || '')) {
+    return res.status(400).json({ error: 'Bitte eine gültige E-Mail-Domain angeben (z. B. firma.com)' })
+  }
+  const shoeRes = validateShoeIds(db, allowed_shoe_ids)
+  if (shoeRes.error) return res.status(400).json({ error: shoeRes.error })
+  const dl = deadline ? String(deadline).slice(0, 10) : null
+  const st = ['draft', 'open', 'closed'].includes(status) ? status : 'draft'
+  const slug = genUniqueSlug(db, name)
+
+  const r = db.prepare(`
+    INSERT INTO business_campaigns
+      (business_id, name, slug, payment_mode, discount_pct, moq_per_model, allowed_shoe_ids, access_mode, allowed_email_domain, status, deadline)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(req.business.id, name.trim(), slug, pay, pct, moq, shoeRes.json, access, domain, st, dl)
+
+  res.status(201).json(shapeCampaign(db.prepare('SELECT * FROM business_campaigns WHERE id = ?').get(r.lastInsertRowid)))
+})
+
+// PUT /api/business/me/campaigns/:id — aktualisieren (inkl. Status öffnen/schließen)
+router.put('/me/campaigns/:id', authenticate, loadOwnBusiness, (req, res) => {
+  const db = getDb()
+  const c = db.prepare('SELECT * FROM business_campaigns WHERE id = ? AND business_id = ?').get(req.params.id, req.business.id)
+  if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
+  const b = req.body || {}
+  const cols = [], params = []
+  if (b.name != null) { if (String(b.name).trim().length < 2) return res.status(400).json({ error: 'Name min. 2 Zeichen' }); cols.push('name = ?'); params.push(String(b.name).trim()) }
+  if (b.payment_mode != null) { cols.push('payment_mode = ?'); params.push(b.payment_mode === 'company' ? 'company' : 'employee') }
+  if (b.discount_pct != null) { const p = Number(b.discount_pct); if (!Number.isFinite(p) || p < 0 || p > 100) return res.status(400).json({ error: 'Rabatt 0–100' }); cols.push('discount_pct = ?'); params.push(p) }
+  if (b.moq_per_model != null) { const m = parseInt(b.moq_per_model, 10); if (!Number.isInteger(m) || m < 1) return res.status(400).json({ error: 'MOQ min. 1' }); cols.push('moq_per_model = ?'); params.push(m) }
+  if (b.allowed_shoe_ids !== undefined) { const sr = validateShoeIds(db, b.allowed_shoe_ids); if (sr.error) return res.status(400).json({ error: sr.error }); cols.push('allowed_shoe_ids = ?'); params.push(sr.json) }
+  if (b.access_mode != null && ['domain', 'list', 'both'].includes(b.access_mode)) { cols.push('access_mode = ?'); params.push(b.access_mode) }
+  if (b.allowed_email_domain !== undefined) { cols.push('allowed_email_domain = ?'); params.push(b.allowed_email_domain ? String(b.allowed_email_domain).trim().toLowerCase().replace(/^@/, '') : null) }
+  if (b.status != null && ['draft', 'open', 'closed'].includes(b.status)) { cols.push('status = ?'); params.push(b.status) }
+  if (b.deadline !== undefined) { cols.push('deadline = ?'); params.push(b.deadline ? String(b.deadline).slice(0, 10) : null) }
+  if (cols.length === 0) return res.status(400).json({ error: 'Keine Änderungen' })
+  cols.push("updated_at = datetime('now')"); params.push(c.id)
+  db.prepare(`UPDATE business_campaigns SET ${cols.join(', ')} WHERE id = ?`).run(...params)
+  res.json(shapeCampaign(db.prepare('SELECT * FROM business_campaigns WHERE id = ?').get(c.id)))
+})
+
+// GET /api/business/me/campaigns/:id/dashboard — Fortschritt je Modell (Wolt-Style)
+router.get('/me/campaigns/:id/dashboard', authenticate, loadOwnBusiness, (req, res) => {
+  const db = getDb()
+  const c = db.prepare('SELECT * FROM business_campaigns WHERE id = ? AND business_id = ?').get(req.params.id, req.business.id)
+  if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
+  const perModel = db.prepare(`
+    SELECT shoe_id, shoe_name, COUNT(*) AS units
+    FROM orders WHERE business_campaign_id = ?
+    GROUP BY shoe_id, shoe_name ORDER BY units DESC
+  `).all(c.id)
+  const totals = db.prepare('SELECT COUNT(*) AS orders, COUNT(DISTINCT user_id) AS participants FROM orders WHERE business_campaign_id = ?').get(c.id)
+  const members = db.prepare('SELECT COUNT(*) AS c FROM business_campaign_members WHERE campaign_id = ?').get(c.id).c
+  res.json({
+    campaign: shapeCampaign(c),
+    moq_per_model: c.moq_per_model,
+    per_model: perModel.map(m => ({ shoe_id: m.shoe_id, shoe_name: m.shoe_name, units: m.units, reached: m.units >= c.moq_per_model })),
+    totals: { orders: totals.orders, participants: totals.participants, members },
+  })
+})
+
+// POST /api/business/me/campaigns/:id/invites — E-Mail-Allow-Liste ergänzen
+router.post('/me/campaigns/:id/invites', authenticate, loadOwnBusiness, (req, res) => {
+  const db = getDb()
+  const c = db.prepare('SELECT * FROM business_campaigns WHERE id = ? AND business_id = ?').get(req.params.id, req.business.id)
+  if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
+  const emails = Array.isArray(req.body?.emails) ? req.body.emails : []
+  const clean = [...new Set(emails.map(e => String(e || '').trim().toLowerCase()).filter(e => /\S+@\S+\.\S+/.test(e)))]
+  if (clean.length === 0) return res.status(400).json({ error: 'Keine gültigen E-Mail-Adressen' })
+  const ins = db.prepare("INSERT OR IGNORE INTO business_campaign_invites (campaign_id, email, token) VALUES (?, ?, ?)")
+  let added = 0
+  db.transaction(() => { for (const e of clean) { const r = ins.run(c.id, e, crypto.randomBytes(24).toString('hex')); added += r.changes } })()
+  const all = db.prepare('SELECT email, status FROM business_campaign_invites WHERE campaign_id = ? ORDER BY email').all(c.id)
+  res.status(201).json({ added, invites: all })
+})
+
+// ── Kampagnen: öffentlich + Mitglieder ──────────────────────────────────────
+
+// GET /api/business/campaigns/by-slug/:slug — öffentliche Join-Landing-Daten
+router.get('/campaigns/by-slug/:slug', (req, res) => {
+  const db = getDb()
+  const c = db.prepare('SELECT * FROM business_campaigns WHERE slug = ?').get(req.params.slug)
+  if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
+  const biz = db.prepare('SELECT name, logo_data FROM businesses WHERE id = ?').get(c.business_id)
+  res.json({
+    name: c.name, slug: c.slug, status: c.status,
+    payment_mode: c.payment_mode, discount_pct: c.discount_pct,
+    access_mode: c.access_mode, allowed_email_domain: c.allowed_email_domain || null,
+    business_name: biz?.name || null, business_logo: biz?.logo_data || null,
+  })
+})
+
+// GET /api/business/campaigns/mine — offene Kampagnen, in denen der User Mitglied ist
+router.get('/campaigns/mine', authenticate, (req, res) => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT c.*, b.name AS business_name, b.logo_data AS business_logo
+    FROM business_campaign_members m
+    JOIN business_campaigns c ON c.id = m.campaign_id
+    JOIN businesses b ON b.id = c.business_id
+    WHERE m.user_id = ? AND c.status = 'open'
+    ORDER BY m.joined_at DESC
+  `).all(req.user.id)
+  res.json(rows.map(c => ({ ...shapeCampaign(c), business_name: c.business_name, business_logo: c.business_logo || null })))
+})
+
+// POST /api/business/campaigns/:slug/join — Kampagne beitreten (Domain oder Invite)
+router.post('/campaigns/:slug/join', authenticate, (req, res) => {
+  const db = getDb()
+  const c = db.prepare('SELECT * FROM business_campaigns WHERE slug = ?').get(req.params.slug)
+  if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
+  if (c.status !== 'open') return res.status(403).json({ error: 'Diese Kampagne ist nicht aktiv' })
+
+  const already = db.prepare('SELECT 1 FROM business_campaign_members WHERE campaign_id = ? AND user_id = ?').get(c.id, req.user.id)
+  if (already) return res.json({ ok: true, joined: true })
+
+  let eligible = false
+  if ((c.access_mode === 'domain' || c.access_mode === 'both') && c.allowed_email_domain) {
+    if (emailDomain(req.user.email) === c.allowed_email_domain.toLowerCase()) eligible = true
+  }
+  let inviteRow = null
+  if (!eligible && (c.access_mode === 'list' || c.access_mode === 'both')) {
+    inviteRow = db.prepare("SELECT * FROM business_campaign_invites WHERE campaign_id = ? AND email = ? AND status != 'revoked'").get(c.id, req.user.email)
+    if (inviteRow) eligible = true
+  }
+  if (!eligible) {
+    const hint = c.allowed_email_domain ? ` Bitte mit einer @${c.allowed_email_domain}-Adresse anmelden.` : ''
+    return res.status(403).json({ error: `Kein Zugang zu dieser Kampagne.${hint}` })
+  }
+
+  db.transaction(() => {
+    db.prepare('INSERT OR IGNORE INTO business_campaign_members (campaign_id, user_id) VALUES (?, ?)').run(c.id, req.user.id)
+    if (inviteRow) db.prepare("UPDATE business_campaign_invites SET status = 'joined', joined_user_id = ? WHERE id = ?").run(req.user.id, inviteRow.id)
+  })()
+  res.json({ ok: true, joined: true })
+})
+
 // ── Admin / Curator ─────────────────────────────────────────────────────────
 const canManage = [authenticate, requireRole('admin', 'curator')]
 
@@ -290,6 +514,16 @@ router.get('/:id/codes', ...canManage, (req, res) => {
     .prepare('SELECT * FROM business_codes WHERE business_id = ? ORDER BY created_at DESC, id DESC')
     .all(req.params.id)
   res.json(rows.map(shapeCode))
+})
+
+// GET /api/business/:id/campaigns — Kampagnen eines Kontos (Admin/Curator)
+router.get('/:id/campaigns', ...canManage, (req, res) => {
+  const db = getDb()
+  const rows = db.prepare('SELECT * FROM business_campaigns WHERE business_id = ? ORDER BY created_at DESC, id DESC').all(req.params.id)
+  res.json(rows.map(c => {
+    const stats = db.prepare('SELECT COUNT(*) AS units, COUNT(DISTINCT user_id) AS participants FROM orders WHERE business_campaign_id = ?').get(c.id)
+    return { ...shapeCampaign(c), units: stats.units, participants: stats.participants }
+  }))
 })
 
 // POST /api/business — Firmenkonto anlegen (typ. aus einer Anfrage heraus)
