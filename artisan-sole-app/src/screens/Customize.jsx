@@ -301,6 +301,7 @@ export default function Customize() {
   const [measLen, setMeasLen] = useState('')
   const [measGirth, setMeasGirth] = useState('')
   const [measSaving, setMeasSaving] = useState(false)
+  const [measOpen, setMeasOpen] = useState(false)   // Inline-Maßeingabe an der Passgenauigkeit
 
   useEffect(() => {
     let cancelled = false
@@ -344,7 +345,7 @@ export default function Customize() {
     setMeasSaving(true)
     try {
       await saveFootMeasurements({ foot_length_mm: len, ball_girth_mm: girth })
-      setMeasLen(''); setMeasGirth('')
+      setMeasLen(''); setMeasGirth(''); setMeasOpen(false)
     } catch {} finally { setMeasSaving(false) }
   }
 
@@ -979,7 +980,7 @@ export default function Customize() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => navigate('/collection')}
+                    onClick={() => setMeasOpen(o => !o)}
                     className="text-[11px] lg:text-[12px] text-black/55 underline underline-offset-2 bg-transparent border-0 p-0"
                   >
                     Maße eingeben
@@ -995,6 +996,41 @@ export default function Customize() {
                 </div>
               )}
             </div>
+
+            {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
+            {measOpen && fitState !== 'matched' && (
+              <div className="mt-3 border border-black/10 p-3 max-w-md">
+                <p className="text-[10px] text-black/40 font-light mb-2 leading-relaxed">
+                  Zwei Maße genügen, ±0,5 cm sind völlig in Ordnung. Den passenden Leisten ermitteln wir automatisch.
+                </p>
+                <div className="flex items-end gap-2">
+                  <label className="flex-1">
+                    <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Fußlänge (mm)</span>
+                    <input
+                      type="number" inputMode="decimal" value={measLen}
+                      onChange={(e) => setMeasLen(e.target.value)} placeholder="z. B. 270"
+                      className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
+                    />
+                  </label>
+                  <label className="flex-1">
+                    <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Ballenumfang (mm)</span>
+                    <input
+                      type="number" inputMode="decimal" value={measGirth}
+                      onChange={(e) => setMeasGirth(e.target.value)} placeholder="z. B. 255"
+                      className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={saveMeasurements}
+                    disabled={measSaving || !measLen || !measGirth}
+                    className="h-9 px-4 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0 disabled:opacity-30"
+                  >
+                    {measSaving ? '…' : 'Übernehmen'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="h-px bg-black/8 lg:my-4" />
