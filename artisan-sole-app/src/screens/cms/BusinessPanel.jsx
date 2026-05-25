@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Building2, Mail, Phone, Plus, Copy, Check, UserPlus, Clock, X, Ticket, ChevronDown } from 'lucide-react'
+import { Building2, Mail, Phone, Plus, Copy, Check, UserPlus, Clock, X, Ticket, ChevronDown, Megaphone } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 
 const APP_ORIGIN = (import.meta.env.VITE_API_URL ?? '') || (typeof window !== 'undefined' ? window.location.origin : '')
@@ -39,6 +39,19 @@ export default function BusinessPanel() {
     const by = { issued: 0, redeemed: 0, revoked: 0, expired: 0 }
     for (const c of codes) by[c.status] = (by[c.status] || 0) + 1
     return by
+  }
+
+  const [campExpanded, setCampExpanded] = useState(null)
+  const [campsById, setCampsById] = useState({})
+  const toggleCamps = async (id) => {
+    if (campExpanded === id) { setCampExpanded(null); return }
+    setCampExpanded(id)
+    if (!campsById[id]) {
+      try {
+        const camps = await apiFetch(`/api/business/${id}/campaigns`)
+        setCampsById(m => ({ ...m, [id]: Array.isArray(camps) ? camps : [] }))
+      } catch { setCampsById(m => ({ ...m, [id]: [] })) }
+    }
   }
 
   const load = async () => {
@@ -168,6 +181,9 @@ export default function BusinessPanel() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => toggleCamps(a.id)} className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/60 hover:text-black border border-black/15 px-3 py-2 bg-white">
+                    <Megaphone size={13} strokeWidth={1.6} /> Kampagnen <ChevronDown size={13} className={`transition-transform ${campExpanded === a.id ? 'rotate-180' : ''}`} />
+                  </button>
                   <button onClick={() => toggleCodes(a.id)} className="flex items-center gap-1.5 text-[11px] tracking-[0.1em] uppercase text-black/60 hover:text-black border border-black/15 px-3 py-2 bg-white">
                     <Ticket size={13} strokeWidth={1.6} /> Codes <ChevronDown size={13} className={`transition-transform ${expanded === a.id ? 'rotate-180' : ''}`} />
                   </button>
@@ -180,6 +196,24 @@ export default function BusinessPanel() {
               </div>
               {a.pending && (
                 <p className="text-[10px] text-amber-700/80 font-light mt-2 flex items-center gap-1.5"><Clock size={11} /> Wartet auf Aktivierung durch das Unternehmen.</p>
+              )}
+              {campExpanded === a.id && (
+                <div className="mt-3 border-t border-black/[0.06] pt-3">
+                  {!campsById[a.id] ? (
+                    <p className="text-[11px] text-black/40 font-light">Laden …</p>
+                  ) : campsById[a.id].length === 0 ? (
+                    <p className="text-[11px] text-black/40 font-light">Noch keine Kampagnen.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {campsById[a.id].map(c => (
+                        <div key={c.id} className="flex items-center justify-between gap-3 text-[11px] bg-black/[0.03] border border-black/10 px-2.5 py-1.5">
+                          <span className="text-black/80 truncate">{c.name} <span className="text-black/35">· {c.status}</span></span>
+                          <span className="text-black/45 shrink-0">{c.payment_mode === 'company' ? 'Firma zahlt' : `${c.discount_pct}%`} · {c.units || 0} Best. · {c.participants || 0} TN</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
               {expanded === a.id && (
                 <div className="mt-3 border-t border-black/[0.06] pt-3">

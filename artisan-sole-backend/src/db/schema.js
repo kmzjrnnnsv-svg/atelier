@@ -313,6 +313,9 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN business_code_id     INTEGER REFERENCES business_codes(id)`,
     `ALTER TABLE orders ADD COLUMN business_coverage    TEXT`,
     `ALTER TABLE orders ADD COLUMN business_campaign_id INTEGER REFERENCES business_campaigns(id)`,
+    // users — E-Mail-Verifizierung (für Kampagnen-Beitritt per Domain)
+    `ALTER TABLE users ADD COLUMN email_verified     INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE users ADD COLUMN email_verify_token TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

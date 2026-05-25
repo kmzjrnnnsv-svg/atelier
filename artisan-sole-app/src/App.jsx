@@ -130,6 +130,7 @@ const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfi
 const BusinessCampaigns    = lazy(() => import('./screens/business/BusinessCampaigns'))
 const CampaignDashboard    = lazy(() => import('./screens/business/CampaignDashboard'))
 const CampaignJoin         = lazy(() => import('./screens/business/CampaignJoin'))
+const VerifyEmail          = lazy(() => import('./screens/VerifyEmail'))
 const BusinessPanel        = lazy(() => import('./screens/cms/BusinessPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
@@ -148,7 +149,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email']
 
 export const isNative = Capacitor.isNativePlatform()
 
@@ -336,6 +337,7 @@ function AppRoutes() {
       <Route path="/business/campaigns/:id" element={<BusinessRoute><CampaignDashboard /></BusinessRoute>} />
       {/* Öffentliche Kampagnen-Beitrittsseite (Mitarbeitende) */}
       <Route path="/c/:slug"            element={<CampaignJoin />} />
+      <Route path="/verify-email"       element={<VerifyEmail />} />
       {/* Public, Window Shopping ohne Login */}
       {/* Corporate Gifting lebt auf business.artisansole.com; auf der Hauptdomain
           leitet /business dorthin um (Subdomain = kanonisch). */}

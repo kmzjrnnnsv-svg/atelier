@@ -303,6 +303,7 @@ const useStore = create((set, get) => ({
   async fetchMyCampaigns() { return apiFetch('/api/business/campaigns/mine') },
   async fetchCampaignBySlug(slug) { return apiFetch(`/api/business/campaigns/by-slug/${encodeURIComponent(slug)}`) },
   async joinCampaign(slug) { return apiFetch(`/api/business/campaigns/${encodeURIComponent(slug)}/join`, { method: 'POST' }) },
+  async resendVerification() { return apiFetch('/api/auth/resend-verification', { method: 'POST' }) },
   // Inhaber-Sicht
   async fetchOwnerCampaigns() { return apiFetch('/api/business/me/campaigns') },
   async createCampaign(data) { return apiFetch('/api/business/me/campaigns', { method: 'POST', body: JSON.stringify(data) }) },

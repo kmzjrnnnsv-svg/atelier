@@ -9,13 +9,15 @@ export default function CampaignJoin() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
-  const { fetchCampaignBySlug, joinCampaign } = useStore()
+  const { fetchCampaignBySlug, joinCampaign, resendVerification } = useStore()
 
   const [camp, setCamp] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [joining, setJoining] = useState(false)
   const [joined, setJoined] = useState(false)
+  const [needVerify, setNeedVerify] = useState(false)
+  const [resent, setResent] = useState(false)
 
   useEffect(() => {
     fetchCampaignBySlug(slug)
@@ -32,8 +34,13 @@ export default function CampaignJoin() {
       setJoined(true)
       setTimeout(() => navigate('/collection'), 900)
     } catch (e) {
+      if (e?.code === 'EMAIL_UNVERIFIED') setNeedVerify(true)
       setError(e?.error || 'Beitritt nicht möglich.')
     } finally { setJoining(false) }
+  }
+
+  const doResend = async () => {
+    try { await resendVerification(); setResent(true) } catch { /* ignore */ }
   }
 
   // Eingeloggt und Kampagne offen → automatisch beitreten.
@@ -77,6 +84,13 @@ export default function CampaignJoin() {
           <p className="text-[12px] text-amber-700 font-light mt-6">Diese Kampagne ist derzeit nicht aktiv.</p>
         ) : joined ? (
           <div className="mt-7 inline-flex items-center gap-2 text-[13px] text-green-700"><Check size={16} /> Beigetreten, weiter zum Shop …</div>
+        ) : needVerify ? (
+          <div className="mt-7">
+            <p className="text-[12px] text-stone-600 font-light leading-relaxed">Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse. Wir haben Ihnen einen Link gesendet{camp.allowed_email_domain ? ` (an Ihre @${camp.allowed_email_domain}-Adresse)` : ''}.</p>
+            {resent
+              ? <p className="text-[12px] text-green-700 mt-3 inline-flex items-center gap-1.5"><Check size={14} /> Erneut gesendet.</p>
+              : <button onClick={doResend} className="mt-4 text-[12px] text-stone-900 underline underline-offset-4 bg-transparent border-0">Bestätigungs-E-Mail erneut senden</button>}
+          </div>
         ) : user ? (
           <button onClick={doJoin} disabled={joining} className="mt-7 w-full h-12 inline-flex items-center justify-center gap-2 bg-stone-900 text-white border-0 disabled:opacity-40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}>
             {joining ? 'Einen Moment …' : <>Teilnehmen <ArrowRight size={15} /></>}
