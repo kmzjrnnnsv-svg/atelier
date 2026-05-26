@@ -643,7 +643,7 @@ export default function Customize() {
     return sum + (acc?.price || 0)
   }, 0)
   const accDiscount = isPromo && promoDiscountPct > 0 ? Math.round(accessoryTotal * promoDiscountPct / 100) : 0
-  const totalPrice = basePrice + soleExtra + accessoryTotal - accDiscount
+  const totalPrice = basePrice + soleExtra + extrasPriceTotal + accessoryTotal - accDiscount
   const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
   const displayPrice = formatPrice(totalPrice)
 
@@ -826,7 +826,7 @@ export default function Customize() {
         product: {
           id: product.id, name: cleanShoeName(product.name),
           material: mat?.label || product.material,
-          color, price: formatPrice(basePrice + soleExtra),
+          color, price: formatPrice(basePrice + soleExtra + extrasPriceTotal),
           sole: sole?.label || 'Sohle',
           sizeType, euSize: chosenEU,
           last: selectedFit?.last_key || null,
@@ -1082,9 +1082,9 @@ export default function Customize() {
             )}
             <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
               {displayPrice}
-              {(soleExtra > 0 || accessoryTotal > 0) && (
+              {(soleExtra > 0 || extrasPriceTotal > 0 || accessoryTotal > 0) && (
                 <span className="text-[10px] text-black/35 ml-2">
-                  ({[soleExtra > 0 && `+€${soleExtra} Sohle`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
+                  ({[soleExtra > 0 && `+€${soleExtra} Sohle`, extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
                 </span>
               )}
             </p>
@@ -1830,9 +1830,9 @@ export default function Customize() {
               </div>
               <p className="text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
                 {displayPrice}
-                {(soleExtra > 0 || accessoryTotal > 0) && (
+                {(soleExtra > 0 || extrasPriceTotal > 0 || accessoryTotal > 0) && (
                   <span className="text-[11px] text-black/35 ml-2">
-                    ({[soleExtra > 0 && `+€${soleExtra} Sohle`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
+                    ({[soleExtra > 0 && `+€${soleExtra} Sohle`, extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
                   </span>
                 )}
               </p>
