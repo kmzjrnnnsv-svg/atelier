@@ -14,6 +14,10 @@ export function setNativeRefreshToken(t) { _nativeRefreshToken = t }
 let isRefreshing = false
 let refreshQueue = []
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+// Exponentielles Backoff mit Jitter (300ms, 600ms, 1200ms …, gekappt bei 8s).
+const backoff = (attempt) => Math.min(8000, 300 * 2 ** attempt + Math.random() * 250)
+
 async function refreshAccessToken() {
   if (isRefreshing) {
     return new Promise((resolve, reject) => refreshQueue.push({ resolve, reject }))
@@ -25,7 +29,15 @@ async function refreshAccessToken() {
       fetchOpts.headers = { ...fetchOpts.headers, 'Content-Type': 'application/json' }
       fetchOpts.body = JSON.stringify({ refreshToken: _nativeRefreshToken })
     }
-    const res = await fetch(`${API_BASE}/api/auth/refresh`, fetchOpts)
+    // Bei schnellem mehrfachem Neuladen kann der Refresh-Endpunkt kurzzeitig
+    // rate-limitet sein (429). Einmal mit kurzem Backoff erneut versuchen,
+    // statt die ganze Sitzung scheitern zu lassen.
+    let res = await fetch(`${API_BASE}/api/auth/refresh`, fetchOpts)
+    if (res.status === 429) {
+      const ra = Number(res.headers.get('Retry-After'))
+      await sleep(Number.isFinite(ra) && ra > 0 ? Math.min(ra * 1000, 4000) : 800)
+      res = await fetch(`${API_BASE}/api/auth/refresh`, fetchOpts)
+    }
     if (!res.ok) throw new Error('refresh_failed')
     const data = await res.json()
     setAccessToken(data.accessToken)
@@ -43,7 +55,7 @@ async function refreshAccessToken() {
   }
 }
 
-export async function apiFetch(url, options = {}) {
+export async function apiFetch(url, options = {}, _attempt = 0) {
   const token = getAccessToken()
   const headers = {
     'Content-Type': 'application/json',
@@ -53,7 +65,21 @@ export async function apiFetch(url, options = {}) {
   }
 
   const fullUrl = `${API_BASE}${url}`
-  let res = await fetch(fullUrl, { ...options, headers, credentials: 'include' })
+  const method = (options.method || 'GET').toUpperCase()
+  const idempotent = method === 'GET' || method === 'HEAD'
+
+  let res
+  try {
+    res = await fetch(fullUrl, { ...options, headers, credentials: 'include' })
+  } catch (netErr) {
+    // Netzwerk-Blip (häufig bei schnellem Neuladen): idempotente Requests
+    // ein paar Mal mit Backoff wiederholen, bevor wir aufgeben.
+    if (idempotent && _attempt < 3) {
+      await sleep(backoff(_attempt))
+      return apiFetch(url, options, _attempt + 1)
+    }
+    throw netErr
+  }
 
   // Token expired, try refresh once
   if (res.status === 401) {
@@ -70,6 +96,16 @@ export async function apiFetch(url, options = {}) {
       // (Window-Shopping) just see the empty/fallback data via .catch().
       // No forced window.location redirect, that would block guest browsing.
     }
+  }
+
+  // Transiente Server-/Rate-Limit-Antworten abfedern. 429 bedeutet, der
+  // Request wurde NICHT verarbeitet → für jede Methode sicher wiederholbar.
+  // 502/503/504 nur für idempotente Requests wiederholen.
+  if ((res.status === 429 || (idempotent && [502, 503, 504].includes(res.status))) && _attempt < 3) {
+    const ra = Number(res.headers.get('Retry-After'))
+    const wait = Number.isFinite(ra) && ra > 0 ? Math.min(ra * 1000, 8000) : backoff(_attempt)
+    await sleep(wait)
+    return apiFetch(url, options, _attempt + 1)
   }
 
   if (!res.ok) {

@@ -311,7 +311,8 @@ export default function Customize() {
   const [fitMatches, setFitMatches] = useState([])      // alle passenden Leisten (gerankt)
   const [chosenLast, setChosenLast] = useState(null)    // vom Nutzer/Auto gewählter last_key
   const [lastGroup, setLastGroup]   = useState(null)    // 'last'-Optionsgruppe des Schuhs (Schuhform)
-  const [fitState, setFitState] = useState('idle')      // 'idle'|'matching'|'matched'|'nomatch'
+  const [fitState, setFitState] = useState('idle')      // 'idle'|'matching'|'matched'|'nomatch'|'error'
+  const [fitRetryKey, setFitRetryKey] = useState(0)     // manuelles Erneut-Versuchen
   // Global im CMS gepflegte Produktseiten-Texte (Familien, Lieferumfang, Badges).
   const [pageTexts, setPageTexts] = useState(null)
   useEffect(() => {
@@ -334,31 +335,43 @@ export default function Customize() {
     const effLen = footMeasurements.foot_length_mm + (adj.length_mm || 0)
     const effGirth = footMeasurements.ball_girth_mm + (adj.girth_mm || 0)
     setFitState('matching')
-    matchFit({ category, length: effLen, girth: effGirth, tolerance: 5 })
-      .then(matches => {
+
+    const applyMatches = (matches) => {
+      const top = matches[0]
+      if (!top) { setFitMatches([]); setChosenLast(null); setFitState('nomatch'); return }
+      setFitMatches(matches)
+      setChosenLast(top.last_key)
+      setSizeType('fit')
+      setSelectedSize(top.size_label)
+      setFitState('matched')
+      // Ermittelte Passform still im Profil als saved_fit hinterlegen.
+      saveFootMeasurements({
+        foot_length_mm: footMeasurements.foot_length_mm,
+        ball_girth_mm: footMeasurements.ball_girth_mm,
+        fit_adjust: adj,
+        saved_fit: {
+          last_key: top.last_key, last_label: top.last_label,
+          width: top.width, size_system: top.size_system, size_label: top.size_label,
+          set_at: new Date().toISOString(),
+        },
+      }).catch(() => {})
+    }
+
+    // Transiente Fehler (z. B. Rate-Limit bei schnellem Neuladen) dürfen NICHT
+    // als „keine Passform" erscheinen. Mehrfach versuchen; erst bei dauerhaftem
+    // Fehler in den neutralen 'error'-Zustand wechseln (kein Maßanfertigungs-CTA).
+    ;(async () => {
+      for (let attempt = 0; attempt < 3 && !cancelled; attempt++) {
+        const { ok, matches } = await matchFit({ category, length: effLen, girth: effGirth, tolerance: 5 })
         if (cancelled) return
-        const top = matches[0]
-        if (!top) { setFitMatches([]); setChosenLast(null); setFitState('nomatch'); return }
-        setFitMatches(matches)
-        setChosenLast(top.last_key)
-        setSizeType('fit')
-        setSelectedSize(top.size_label)
-        setFitState('matched')
-        // Ermittelte Passform still im Profil als saved_fit hinterlegen.
-        saveFootMeasurements({
-          foot_length_mm: footMeasurements.foot_length_mm,
-          ball_girth_mm: footMeasurements.ball_girth_mm,
-          fit_adjust: adj,
-          saved_fit: {
-            last_key: top.last_key, last_label: top.last_label,
-            width: top.width, size_system: top.size_system, size_label: top.size_label,
-            set_at: new Date().toISOString(),
-          },
-        }).catch(() => {})
-      })
-      .catch(() => { if (!cancelled) { setFitMatches([]); setChosenLast(null); setFitState('nomatch') } })
+        if (ok) { applyMatches(matches); return }
+        await new Promise(r => setTimeout(r, 600 * (attempt + 1)))
+      }
+      if (!cancelled) setFitState('error')
+    })()
+
     return () => { cancelled = true }
-  }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm, footMeasurements?.fit_adjust?.length_mm, footMeasurements?.fit_adjust?.girth_mm, category])
+  }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm, footMeasurements?.fit_adjust?.length_mm, footMeasurements?.fit_adjust?.girth_mm, category, fitRetryKey])
 
   // Abgeleitet: beste Leiste je last_key, verfügbare (passende) Schuhformen,
   // und der aktuell gewählte Fit. selectedFit folgt der gewählten Schuhform.
@@ -1085,6 +1098,11 @@ export default function Customize() {
                   </span>
                 ) : fitState === 'matching' ? (
                   <span className="text-[11px] lg:text-[12px] text-black/35">wird berechnet …</span>
+                ) : fitState === 'error' ? (
+                  <span className="flex items-center gap-2">
+                    <span className="text-[11px] lg:text-[12px] text-black/55">konnte nicht geladen werden</span>
+                    <button type="button" onClick={() => setFitRetryKey(k => k + 1)} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">erneut versuchen</button>
+                  </span>
                 ) : fitState === 'nomatch' && footMeasurements?.foot_length_mm ? (
                   <span className="flex items-center gap-2">
                     <span className="text-[11px] lg:text-[12px] text-black/55">keine Standard-Passform</span>
@@ -1644,6 +1662,21 @@ export default function Customize() {
                     <p className="text-[10px] text-black/40 font-light">Schuhform: <span className="text-black/70">{availableLasts[0].label}</span></p>
                   ) : null}
                   <button type="button" onClick={openMeasEdit} className="text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                </div>
+              ) : fitState === 'error' ? (
+                /* Transienter Fehler — KEINE Maßanfertigung vorschnell anbieten */
+                <div className="border border-black/10 p-4">
+                  <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
+                    Die Passform konnte gerade nicht geladen werden. Bitte versuchen
+                    Sie es noch einmal — Ihre gespeicherten Maße bleiben erhalten.
+                  </p>
+                  <button
+                    onClick={() => setFitRetryKey(k => k + 1)}
+                    className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0"
+                  >
+                    Erneut versuchen
+                  </button>
+                  <button type="button" onClick={openMeasEdit} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : (
                 /* Maße vorhanden, aber kein Treffer → Maßanfertigung */
