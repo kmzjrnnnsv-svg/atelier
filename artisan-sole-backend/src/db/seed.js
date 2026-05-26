@@ -476,7 +476,7 @@ function seedConfiguratorOptions(db) {
     { key: 'wholecut_base',     label: 'Base',           ui_type: 'single', required: 1, sort_order: 2,  description: 'Vorderkappen-Verarbeitung (nur Whole Cut).' },
     { key: 'heel',              label: 'Absatz',         ui_type: 'single', required: 1, sort_order: 3,  description: 'Standard- oder erhöhter Absatz.' },
     { key: 'loafer_decoration', label: 'Accessoires',    ui_type: 'single', required: 0, sort_order: 4,  description: 'Dekoration bei Loafer-Modellen.' },
-    { key: 'sole',              label: 'Sohle Unten',    ui_type: 'single', required: 1, sort_order: 5,  description: 'Sohlentyp.' },
+    { key: 'sole',              label: 'Sohlen-Art',     ui_type: 'single', required: 1, sort_order: 5,  description: 'Art der Sohle — z. B. Leder, Gummi, Dainite oder Crepe.' },
     { key: 'sole_color',        label: 'Sohlen Color',   ui_type: 'single', required: 0, sort_order: 6,  description: 'Farbe der Außensohle (sichtbarer Rand).' },
     { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 7,  description: 'Rahmen — City für glatten Look, Country/Storm für robusten Auftritt.' },
     { key: 'buckle',            label: 'Buckle',         ui_type: 'single', required: 1, sort_order: 8,  description: 'Schnallenform (für Monk-Modelle).' },
@@ -1151,7 +1151,6 @@ export function seedMatrixTemplatesV2(db) {
   const INNER_FULL  = ['black', 'brown', 'tan', 'beige', 'red', 'orange', 'navy', 'white', 'lila', 'ochre']
   const BOTTOM_FULL = ['black', 'brown', 'cognac', 'dark_red', 'forest_green', 'lila', 'natural', 'orange']
   const SOLE_COLOR_FULL = ['black', 'brown', 'brick', 'natural']
-  const SOLE_TYPES = ['leather', 'leather_mountain', 'leather_buttons', 'leather_rubber', 'commando', 'crepe', 'gummy_sole', 'dainite', 'beveled_waist']
   const LAST_FULL  = ['zurigo', 'monti', 'savile', 'belgravia']
   const HEEL_FULL  = ['standard', 'higher_heel']
   const BUCKLE     = ['square_buckle', 'round_buckle']
@@ -1160,12 +1159,30 @@ export function seedMatrixTemplatesV2(db) {
   // Hilfsfunktion: Liste in TEMPLATES-Entries umwandeln mit Default beim 1.
   const mk = (cat, group, keys) => keys.map((k, i) => [cat, `${group}:${k}`, i === 0 ? 1 : 0])
 
+  // Sohlen-Art (group 'sole') je Kategorie DATENGETRIEBEN aus
+  // options.applicable_categories ableiten: eine Sohle gilt, wenn sie '*'
+  // ist oder die Kategorie explizit nennt. So bietet jede Kategorie genau
+  // die Sohlen-Arten an, die das System für sie freigibt. Erste = Default.
+  const soleRows = db.prepare(`
+    SELECT o.key, o.applicable_categories AS cats
+    FROM options o JOIN option_groups g ON g.id = o.group_id
+    WHERE g.key = 'sole'
+    ORDER BY o.sort_order ASC, o.id ASC
+  `).all()
+  const soleForCat = (cat) => {
+    const keys = soleRows
+      .filter(r => r.cats === '*' || r.cats.split(',').map(s => s.trim()).includes(cat))
+      .map(r => r.key)
+    return keys.map((k, i) => [cat, `sole:${k}`, i === 0 ? 1 : 0])
+  }
+
   // Vollständige Matrix-Templates pro Schuhkategorie
   const M = {
     OXFORD: [
       ...mk('OXFORD', 'last', LAST_FULL),
       ...mk('OXFORD', 'heel', HEEL_FULL),
       ...mk('OXFORD', 'welt', ['city', 'country', 'storm']),
+      ...soleForCat('OXFORD'),
       ...mk('OXFORD', 'sole_color', SOLE_COLOR_FULL),
       ...mk('OXFORD', 'inner_color', INNER_FULL),
       ...mk('OXFORD', 'sole_bottom_color', BOTTOM_FULL),
@@ -1174,7 +1191,7 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('WHOLECUT', 'last', LAST_FULL),
       ...mk('WHOLECUT', 'wholecut_base', ['plain', 'punched_cap', 'full_punched']),
       ...mk('WHOLECUT', 'heel', HEEL_FULL),
-      ...mk('WHOLECUT', 'sole', SOLE_TYPES),
+      ...soleForCat('WHOLECUT'),
       ...mk('WHOLECUT', 'sole_color', SOLE_COLOR_FULL),
       ...mk('WHOLECUT', 'welt', ['city', 'country', 'storm']),
       ...mk('WHOLECUT', 'inner_color', INNER_FULL),
@@ -1184,6 +1201,7 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('LOAFER', 'last', LAST_FULL),
       ...mk('LOAFER', 'heel', HEEL_FULL),
       ...mk('LOAFER', 'loafer_decoration', ['ohne', 'tassels', 'albert_tassels', 'albert_mask', 'horsebit']),
+      ...soleForCat('LOAFER'),
       ...mk('LOAFER', 'sole_color', SOLE_COLOR_FULL),
       ...mk('LOAFER', 'welt', ['city', 'country', 'storm']),
       ...mk('LOAFER', 'inner_color', INNER_FULL),
@@ -1192,7 +1210,7 @@ export function seedMatrixTemplatesV2(db) {
     DERBY: [
       ...mk('DERBY', 'last', LAST_FULL),
       ...mk('DERBY', 'heel', HEEL_FULL),
-      ...mk('DERBY', 'sole', SOLE_TYPES),
+      ...soleForCat('DERBY'),
       ...mk('DERBY', 'sole_color', SOLE_COLOR_FULL),
       ...mk('DERBY', 'welt', ['city', 'storm']), // Matrix: nur City + Storm
       ...mk('DERBY', 'inner_color', INNER_FULL),
@@ -1201,7 +1219,7 @@ export function seedMatrixTemplatesV2(db) {
     DOUBLE_MONK: [
       ...mk('DOUBLE_MONK', 'last', LAST_FULL),
       ...mk('DOUBLE_MONK', 'heel', HEEL_FULL),
-      ...mk('DOUBLE_MONK', 'sole', SOLE_TYPES.filter(s => s !== 'beveled_waist')), // Matrix: ohne Beveled Waist
+      ...soleForCat('DOUBLE_MONK'),
       ...mk('DOUBLE_MONK', 'sole_color', SOLE_COLOR_FULL),
       ...mk('DOUBLE_MONK', 'welt', ['city', 'country', 'storm']),
       ...mk('DOUBLE_MONK', 'buckle', BUCKLE),
@@ -1213,7 +1231,7 @@ export function seedMatrixTemplatesV2(db) {
     MONK: [
       ...mk('MONK', 'last', LAST_FULL),
       ...mk('MONK', 'heel', HEEL_FULL),
-      ...mk('MONK', 'sole', SOLE_TYPES.filter(s => s !== 'beveled_waist')),
+      ...soleForCat('MONK'),
       ...mk('MONK', 'sole_color', SOLE_COLOR_FULL),
       ...mk('MONK', 'welt', ['city', 'country', 'storm']),
       ...mk('MONK', 'buckle', BUCKLE),
@@ -1221,23 +1239,26 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('MONK', 'inner_color', INNER_FULL),
       ...mk('MONK', 'sole_bottom_color', BOTTOM_FULL),
     ],
-    // Stiefel-Familie (nur Last + Farben pro Matrix)
-    CHELSEA:  [...mk('CHELSEA',  'last', LAST_FULL), ...mk('CHELSEA',  'inner_color', INNER_FULL), ...mk('CHELSEA',  'sole_bottom_color', INNER_FULL)],
-    BOOT:     [...mk('BOOT',     'last', LAST_FULL), ...mk('BOOT',     'inner_color', INNER_FULL), ...mk('BOOT',     'sole_bottom_color', INNER_FULL)],
-    BALMORAL: [...mk('BALMORAL', 'last', LAST_FULL), ...mk('BALMORAL', 'inner_color', INNER_FULL), ...mk('BALMORAL', 'sole_bottom_color', INNER_FULL)],
-    JODHPUR:  [...mk('JODHPUR',  'last', LAST_FULL), ...mk('JODHPUR',  'inner_color', INNER_FULL), ...mk('JODHPUR',  'sole_bottom_color', INNER_FULL)],
-    CHUKKA:   [...mk('CHUKKA',   'last', LAST_FULL), ...mk('CHUKKA',   'inner_color', INNER_FULL), ...mk('CHUKKA',   'sole_bottom_color', INNER_FULL)],
-    // Slipper-Familie (Accessoires + Innen)
+    // Stiefel-Familie (Last + Sohlen-Art + Farben pro Matrix)
+    CHELSEA:  [...mk('CHELSEA',  'last', LAST_FULL), ...soleForCat('CHELSEA'),  ...mk('CHELSEA',  'inner_color', INNER_FULL), ...mk('CHELSEA',  'sole_bottom_color', INNER_FULL)],
+    BOOT:     [...mk('BOOT',     'last', LAST_FULL), ...soleForCat('BOOT'),     ...mk('BOOT',     'inner_color', INNER_FULL), ...mk('BOOT',     'sole_bottom_color', INNER_FULL)],
+    BALMORAL: [...mk('BALMORAL', 'last', LAST_FULL), ...soleForCat('BALMORAL'), ...mk('BALMORAL', 'inner_color', INNER_FULL), ...mk('BALMORAL', 'sole_bottom_color', INNER_FULL)],
+    JODHPUR:  [...mk('JODHPUR',  'last', LAST_FULL), ...soleForCat('JODHPUR'),  ...mk('JODHPUR',  'inner_color', INNER_FULL), ...mk('JODHPUR',  'sole_bottom_color', INNER_FULL)],
+    CHUKKA:   [...mk('CHUKKA',   'last', LAST_FULL), ...soleForCat('CHUKKA'),   ...mk('CHUKKA',   'inner_color', INNER_FULL), ...mk('CHUKKA',   'sole_bottom_color', INNER_FULL)],
+    // Slipper-Familie (Accessoires + Sohlen-Art + Innen)
     BELGIAN_SLIPPER: [
       ...mk('BELGIAN_SLIPPER', 'loafer_decoration', ['ohne', 'tassels', 'bow']),
+      ...soleForCat('BELGIAN_SLIPPER'),
       ...mk('BELGIAN_SLIPPER', 'inner_color', INNER_FULL),
     ],
     WELLINGTON: [
       ...mk('WELLINGTON', 'loafer_decoration', ['ohne', 'tassels', 'albert_tassels', 'albert_mask', 'horsebit']),
+      ...soleForCat('WELLINGTON'),
       ...mk('WELLINGTON', 'inner_color', INNER_FULL),
     ],
     DRAKE: [
       ...mk('DRAKE', 'loafer_decoration', ['ohne', 'tassels', 'albert_tassels', 'albert_mask', 'horsebit']),
+      ...soleForCat('DRAKE'),
       ...mk('DRAKE', 'inner_color', INNER_FULL),
     ],
     // Sneaker-Familie (nur Farbe innen + Sohle weiß)
