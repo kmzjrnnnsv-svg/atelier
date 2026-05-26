@@ -22,6 +22,7 @@ export async function seedDatabase(db) {
   // category_templates leert.
   seedLastSizeChart(db)
   seedFaqs(db)
+  cleanupLegacyWording(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -1576,4 +1577,55 @@ function seedFaqs(db) {
     if (!exists.get(f.q)) { ins.run(f.q, f.a, f.category, f.sort_order); added++ }
   }
   if (added) console.log(`✅ Seeded: ${added} FAQ-Einträge`)
+}
+
+// ── Einmalige, idempotente Bereinigung bestehender DB-Texte ────────────────
+// Stellt bereits geseedete Inhalte (E-Mail-Templates, Konfigurator-Optionen,
+// Artikel, FAQ, Material-/Farb-Tipps) auf die neue Sprache um: "Maßschuh/
+// Maßanfertigung/Bespoke" → "Custom Made", Lieferzeit → "ca. 4 Wochen nach
+// Zahlungseingang" und entfernt Gedankenstriche. "maßgefertigt" bleibt.
+// Achtung: überschreibt entsprechende Stellen auch bei manuellen CMS-Edits.
+function cleanLegacyText(s, isSubject) {
+  if (s == null) return s
+  return String(s)
+    .replace(/Maßschuhmacherei/g, 'Schuhmacherkunst')
+    .replace(/Maßschuhen/g, 'Schuhen')
+    .replace(/Maßschuhe/g, 'Schuhe')
+    .replace(/Maßschuh\b/g, 'Custom-made Schuh')
+    .replace(/Maßanfertigungen/g, 'Custom-Made-Anfertigungen')
+    .replace(/Maßanfertigung/g, 'Custom Made')
+    .replace(/Bespoke Footwear/g, 'Custom Made Footwear')
+    .replace(/Bespoke/g, 'Custom Made')
+    .replace(/6\s*[–-]\s*8\s*Wochen/g, 'ca. 4 Wochen nach Zahlungseingang')
+    .replace(/(\d)\s*–\s*(\d)/g, '$1 bis $2')
+    .replace(/\s[–—]\s/g, isSubject ? ' · ' : ', ')
+}
+
+function cleanupLegacyWording(db) {
+  const TARGETS = [
+    { table: 'email_templates', pk: 'type', cols: ['name', 'description', 'subject', 'intro', 'body'], subjectCols: ['subject'] },
+    { table: 'faqs',            pk: 'id',   cols: ['question', 'answer'] },
+    { table: 'articles',        pk: 'id',   cols: ['title', 'excerpt', 'content'] },
+    { table: 'options',         pk: 'id',   cols: ['label', 'description'] },
+    { table: 'shoe_materials',  pk: 'id',   cols: ['label', 'sub', 'tip'] },
+    { table: 'shoe_colors',     pk: 'id',   cols: ['name', 'tip', 'pairs_with'] },
+  ]
+  let changed = 0
+  const tableExists = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
+  for (const t of TARGETS) {
+    if (!tableExists.get(t.table)) continue
+    const rows = db.prepare(`SELECT ${t.pk}, ${t.cols.join(', ')} FROM ${t.table}`).all()
+    const setSql = t.cols.map(c => `${c} = ?`).join(', ')
+    const upd = db.prepare(`UPDATE ${t.table} SET ${setSql} WHERE ${t.pk} = ?`)
+    db.transaction(() => {
+      for (const row of rows) {
+        const next = t.cols.map(c => cleanLegacyText(row[c], (t.subjectCols || []).includes(c)))
+        if (next.some((v, i) => v !== row[t.cols[i]])) {
+          upd.run(...next, row[t.pk])
+          changed++
+        }
+      }
+    })()
+  }
+  if (changed) console.log(`✅ Bereinigt: ${changed} DB-Texte (Custom-Made-Wording, keine Gedankenstriche)`)
 }

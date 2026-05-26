@@ -198,19 +198,19 @@ export function runMigrations(db) {
 
   // ── Checkout columns (added after initial schema) ─────────────────────────
   const colMigrations = [
-    // users — MFA
+    // users, MFA
     `ALTER TABLE users ADD COLUMN mfa_secret  TEXT`,
     `ALTER TABLE users ADD COLUMN mfa_enabled INTEGER NOT NULL DEFAULT 0`,
-    // orders — checkout
+    // orders, checkout
     `ALTER TABLE orders ADD COLUMN user_order_number INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE orders ADD COLUMN delivery_address  TEXT`,
     `ALTER TABLE orders ADD COLUMN billing_address   TEXT`,
     `ALTER TABLE orders ADD COLUMN accessories       TEXT NOT NULL DEFAULT '[]'`,
     `ALTER TABLE orders ADD COLUMN scan_id           INTEGER REFERENCES foot_scans(id)`,
     `ALTER TABLE orders ADD COLUMN eu_size           TEXT`,
-    // orders — human-readable reference (ATL-YYYYMMDD-XXXXXX)
+    // orders, human-readable reference (ATL-YYYYMMDD-XXXXXX)
     `ALTER TABLE orders ADD COLUMN order_ref         TEXT`,
-    // foot_scans — extended girth measurements (v2 model)
+    // foot_scans, extended girth measurements (v2 model)
     `ALTER TABLE foot_scans ADD COLUMN right_ball_girth   REAL`,
     `ALTER TABLE foot_scans ADD COLUMN right_instep_girth REAL`,
     `ALTER TABLE foot_scans ADD COLUMN right_heel_girth   REAL`,
@@ -221,33 +221,33 @@ export function runMigrations(db) {
     `ALTER TABLE foot_scans ADD COLUMN left_heel_girth    REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_waist_girth   REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_ankle_girth   REAL`,
-    // foot_scans — foot height (needed for accurate girth recomputation)
+    // foot_scans, foot height (needed for accurate girth recomputation)
     `ALTER TABLE foot_scans ADD COLUMN right_foot_height  REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_foot_height   REAL`,
-    // users — loyalty points
+    // users, loyalty points
     `ALTER TABLE users ADD COLUMN loyalty_points INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE users ADD COLUMN loyalty_tier   TEXT NOT NULL DEFAULT 'bronze'`,
-    // users — persistent foot notes (user-level, not per-scan)
+    // users, persistent foot notes (user-level, not per-scan)
     `ALTER TABLE users ADD COLUMN foot_notes TEXT`,
-    // orders — translated foot notes included with order
+    // orders, translated foot notes included with order
     `ALTER TABLE orders ADD COLUMN foot_notes    TEXT`,
     `ALTER TABLE orders ADD COLUMN foot_notes_en TEXT`,
-    // foot_scans — long heel + short heel girth (manufacturer-required measurements)
+    // foot_scans, long heel + short heel girth (manufacturer-required measurements)
     `ALTER TABLE foot_scans ADD COLUMN right_long_heel_girth  REAL`,
     `ALTER TABLE foot_scans ADD COLUMN right_short_heel_girth REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_long_heel_girth   REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_short_heel_girth  REAL`,
-    // users — track last order date for loyalty point expiration
+    // users, track last order date for loyalty point expiration
     `ALTER TABLE users ADD COLUMN last_order_at TEXT`,
-    // foot_scans — scan with socks (measurements include sock thickness)
+    // foot_scans, scan with socks (measurements include sock thickness)
     `ALTER TABLE foot_scans ADD COLUMN scanned_with_socks INTEGER NOT NULL DEFAULT 1`,
-    // scan_training_data — track which user uploaded the training images
+    // scan_training_data, track which user uploaded the training images
     `ALTER TABLE scan_training_data ADD COLUMN user_id INTEGER REFERENCES users(id)`,
-    // users — saved addresses & cart (JSON)
+    // users, saved addresses & cart (JSON)
     `ALTER TABLE users ADD COLUMN saved_delivery_address TEXT`,
     `ALTER TABLE users ADD COLUMN saved_billing_address  TEXT`,
     `ALTER TABLE users ADD COLUMN saved_cart             TEXT`,
-    // foot_scans — extended LiDAR girth measurements (toe, preball, midinstep, upper instep)
+    // foot_scans, extended LiDAR girth measurements (toe, preball, midinstep, upper instep)
     `ALTER TABLE foot_scans ADD COLUMN right_toe_girth          REAL`,
     `ALTER TABLE foot_scans ADD COLUMN right_preball_girth      REAL`,
     `ALTER TABLE foot_scans ADD COLUMN right_midinstep_girth    REAL`,
@@ -256,72 +256,72 @@ export function runMigrations(db) {
     `ALTER TABLE foot_scans ADD COLUMN left_preball_girth       REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_midinstep_girth     REAL`,
     `ALTER TABLE foot_scans ADD COLUMN left_upper_instep_girth  REAL`,
-    // foot_scans — preferred shoe type for last generation
+    // foot_scans, preferred shoe type for last generation
     `ALTER TABLE foot_scans ADD COLUMN shoe_type TEXT DEFAULT 'oxford'`,
-    // orders — shipping
+    // orders, shipping
     `ALTER TABLE orders ADD COLUMN shipping_method TEXT`,
     `ALTER TABLE orders ADD COLUMN shipping_cost   TEXT`,
-    // orders — coupons
+    // orders, coupons
     `ALTER TABLE orders ADD COLUMN coupon_code      TEXT`,
     `ALTER TABLE orders ADD COLUMN discount_amount   TEXT`,
     `ALTER TABLE orders ADD COLUMN original_price    TEXT`,
-    // users — promotion accounts
+    // users, promotion accounts
     `ALTER TABLE users ADD COLUMN is_promotion            INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE users ADD COLUMN promotion_discount_pct  REAL DEFAULT NULL`,
     `ALTER TABLE users ADD COLUMN promotion_max_orders    INTEGER DEFAULT NULL`,
     `ALTER TABLE users ADD COLUMN promotion_orders_used   INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE users ADD COLUMN promotion_invited_by    INTEGER REFERENCES users(id)`,
     `ALTER TABLE users ADD COLUMN promotion_invite_token  TEXT`,
-    // shoes — Produktseiten-Texte (pro Schuh)
+    // shoes, Produktseiten-Texte (pro Schuh)
     `ALTER TABLE shoes ADD COLUMN tagline     TEXT`,
     `ALTER TABLE shoes ADD COLUMN description TEXT`,
-    // shoes — cost pricing
+    // shoes, cost pricing
     `ALTER TABLE shoes ADD COLUMN cost_price       REAL DEFAULT NULL`,
     `ALTER TABLE shoes ADD COLUMN promotion_price   TEXT DEFAULT NULL`,
-    // accessories — shoe recommendations (JSON arrays of category strings)
+    // accessories, shoe recommendations (JSON arrays of category strings)
     `ALTER TABLE accessories ADD COLUMN recommended_for TEXT DEFAULT '[]'`,
     `ALTER TABLE accessories ADD COLUMN not_recommended_for TEXT DEFAULT '[]'`,
-    // orders — size type (standard = EU 39-46, custom = 3D scan)
+    // orders, size type (standard = EU 39-46, custom = 3D scan)
     `ALTER TABLE orders ADD COLUMN size_type TEXT DEFAULT 'standard'`,
-    // shoe_color_variants — optional Material-Bindung (suede, calfskin, …)
+    // shoe_color_variants, optional Material-Bindung (suede, calfskin, …)
     `ALTER TABLE shoe_color_variants ADD COLUMN material_key TEXT`,
-    // shoe_materials — Familie (Aesthetic / Durable)
+    // shoe_materials, Familie (Aesthetic / Durable)
     `ALTER TABLE shoe_materials ADD COLUMN family TEXT`,
-    // shoe_colors — auf welche Materialien anwendbar (CSV der material_keys)
+    // shoe_colors, auf welche Materialien anwendbar (CSV der material_keys)
     `ALTER TABLE shoe_colors ADD COLUMN applicable_materials TEXT NOT NULL DEFAULT '*'`,
-    // options — Hex-Farbe für visuelle Vorschau (Innen-/Unter-/Sohlen-/Buckle-Farben)
+    // options, Hex-Farbe für visuelle Vorschau (Innen-/Unter-/Sohlen-/Buckle-Farben)
     `ALTER TABLE options ADD COLUMN color_hex TEXT`,
-    // options — Icon-Name (Lucide), für visuelle Akzente in der Liste
+    // options, Icon-Name (Lucide), für visuelle Akzente in der Liste
     `ALTER TABLE options ADD COLUMN icon TEXT`,
-    // option_groups — Helper-Text für Schritt-für-Schritt-Erklärung
+    // option_groups, Helper-Text für Schritt-für-Schritt-Erklärung
     `ALTER TABLE option_groups ADD COLUMN helper_text TEXT`,
-    // options — Empfehlung (Badge „EMPFOHLEN" + optionaler Grund)
+    // options, Empfehlung (Badge „EMPFOHLEN" + optionaler Grund)
     `ALTER TABLE options ADD COLUMN recommended INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE options ADD COLUMN recommendation_reason TEXT`,
-    // option_groups — Icon (Lucide-Name) für visuelle Akzente im Konfigurator
+    // option_groups, Icon (Lucide-Name) für visuelle Akzente im Konfigurator
     `ALTER TABLE option_groups ADD COLUMN icon TEXT`,
-    // users — Fußmaße + Passform-Anpassung + gespeicherte Passform (JSON)
+    // users, Fußmaße + Passform-Anpassung + gespeicherte Passform (JSON)
     `ALTER TABLE users ADD COLUMN foot_measurements TEXT`,
-    // orders — automatisch ermittelte Passform (Leisten/Weite) + verwendete Maße
+    // orders, automatisch ermittelte Passform (Leisten/Weite) + verwendete Maße
     `ALTER TABLE orders ADD COLUMN last_key   TEXT`,
     `ALTER TABLE orders ADD COLUMN last_label TEXT`,
     `ALTER TABLE orders ADD COLUMN last_width TEXT`,
     `ALTER TABLE orders ADD COLUMN fit_measurements TEXT`,
-    // accessories — Zuordnung nach Lederart (CSV der material_keys; '*'/NULL = alle)
+    // accessories, Zuordnung nach Lederart (CSV der material_keys; '*'/NULL = alle)
     `ALTER TABLE accessories ADD COLUMN material_keys TEXT`,
-    // accessories — optionale Farb-Zuordnung (CSV Schlüsselwörter, z. B. 'schwarz,black')
+    // accessories, optionale Farb-Zuordnung (CSV Schlüsselwörter, z. B. 'schwarz,black')
     `ALTER TABLE accessories ADD COLUMN color_match TEXT`,
-    // orders — B2B-Firmencode-Einlösung
+    // orders, B2B-Firmencode-Einlösung
     `ALTER TABLE orders ADD COLUMN business_id          INTEGER REFERENCES businesses(id)`,
     `ALTER TABLE orders ADD COLUMN business_code_id     INTEGER REFERENCES business_codes(id)`,
     `ALTER TABLE orders ADD COLUMN business_coverage    TEXT`,
     `ALTER TABLE orders ADD COLUMN business_campaign_id INTEGER REFERENCES business_campaigns(id)`,
-    // users — E-Mail-Verifizierung (für Kampagnen-Beitritt per Domain)
+    // users, E-Mail-Verifizierung (für Kampagnen-Beitritt per Domain)
     `ALTER TABLE users ADD COLUMN email_verified     INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE users ADD COLUMN email_verify_token TEXT`,
-    // users — gespeicherte Schuh-Konfigurationen (JSON-Array, nur eingeloggt)
+    // users, gespeicherte Schuh-Konfigurationen (JSON-Array, nur eingeloggt)
     `ALTER TABLE users ADD COLUMN saved_configurations TEXT`,
-    // shoes — fest gesetzte Loafer-Ausfuehrung (option_key), blendet den
+    // shoes, fest gesetzte Loafer-Ausfuehrung (option_key), blendet den
     // Ausfuehrungs-Selektor fuer eigenstaendige Stil-Produkte aus
     `ALTER TABLE shoes ADD COLUMN locked_decoration TEXT`,
   ]
@@ -361,7 +361,7 @@ export function runMigrations(db) {
       { key: 'exotic_care',     name: 'Exotenleder-Pflege',          desc: 'Spezialcreme für Kroko-Prägung & strukturierte Leder. Erhält die einzigartige Textur.',                          price: 42,  sort: 18, rec: '["OXFORD","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
       { key: 'polishing_cloth', name: 'Poliertuch',                  desc: 'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                  price: 12,  sort: 19, rec: '["OXFORD","DERBY","MONK","LOAFER"]', not: '["SNEAKER"]' },
       // ── Neu: Spanner & Pflege-Kits (Zuordnung nach Lederart bzw. Farbe) ──
-      { key: 'shoe_tree_black',       name: 'Schuhspanner Schwarz (Labeled)',        desc: 'Eleganter lackierter Schuhspanner in Schwarz — passend zu schwarzen Schuhen. Formerhalt & Feuchtigkeitskontrolle.', price: 22.0,  sort: 20, rec: '[]', not: '["SNEAKER"]' },
+      { key: 'shoe_tree_black',       name: 'Schuhspanner Schwarz (Labeled)',        desc: 'Eleganter lackierter Schuhspanner in Schwarz, passend zu schwarzen Schuhen. Formerhalt & Feuchtigkeitskontrolle.', price: 22.0,  sort: 20, rec: '[]', not: '["SNEAKER"]' },
       { key: 'shoe_tree_cedar',       name: 'Zedernholz-Schuhspanner (Labeled)',     desc: 'Schuhspanner aus aromatischem Zedernholz. Absorbiert Feuchtigkeit und hält den Schuh in perfekter Form.',          price: 21.0,  sort: 21, rec: '[]', not: '["SNEAKER"]' },
       { key: 'boot_tree_cedar',       name: 'Zedernholz-Stiefelspanner (Private Labeled)', desc: 'Hoher Spanner aus Zedernholz, speziell für Stiefel & Boots. Bewahrt Schaft und Form.',                       price: 29.0,  sort: 22, rec: '["BOOT"]', not: '["SNEAKER"]' },
       { key: 'care_kit_saphir_patina', name: 'Schuhpflege-Set Saphir Patina',        desc: 'Premium-Set von Saphir Médaille d’Or für patinierte Leder: Creme, Bürste & Applikator. Erhält Tiefe und Glanz der Patina.', price: 38.0, sort: 23, rec: '[]', not: '["SNEAKER"]' },
@@ -470,7 +470,7 @@ export function runMigrations(db) {
     }
   } catch (e) { console.error('[migrate orders quality_check]', e.message) }
 
-  // ── ML Training data — foot scan images ──────────────────────────────────
+  // ── ML Training data, foot scan images ──────────────────────────────────
   // Stores compressed images for each scan to build a training dataset.
   // Admin validates measurements → validated=1 → used for model training.
   db.exec(`
@@ -713,7 +713,7 @@ export function runMigrations(db) {
       ('sole_oil',        'Ledersohlen-Balsam',          'Pflegt & imprägniert offenporige Ledersohlen. Verlängert die Lebensdauer der Sohle erheblich.',                    18,  17),
       ('exotic_care',     'Exotenleder-Pflege',          'Spezialcreme für Kroko-Prägung & strukturierte Leder. Erhält die einzigartige Textur.',                            42,  18),
       ('polishing_cloth', 'Poliertuch',                  'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                    12,  19),
-      ('shoe_tree_black',        'Schuhspanner Schwarz (Labeled)',                'Eleganter lackierter Schuhspanner in Schwarz — passend zu schwarzen Schuhen. Formerhalt & Feuchtigkeitskontrolle.',           22.0,  20),
+      ('shoe_tree_black',        'Schuhspanner Schwarz (Labeled)',                'Eleganter lackierter Schuhspanner in Schwarz, passend zu schwarzen Schuhen. Formerhalt & Feuchtigkeitskontrolle.',           22.0,  20),
       ('shoe_tree_cedar',        'Zedernholz-Schuhspanner (Labeled)',             'Schuhspanner aus aromatischem Zedernholz. Absorbiert Feuchtigkeit und hält den Schuh in perfekter Form.',                    21.0,  21),
       ('boot_tree_cedar',        'Zedernholz-Stiefelspanner (Private Labeled)',   'Hoher Spanner aus Zedernholz, speziell für Stiefel & Boots. Bewahrt Schaft und Form.',                                      29.0,  22),
       ('care_kit_saphir_patina', 'Schuhpflege-Set Saphir Patina',                 'Premium-Set von Saphir Médaille d''Or für patinierte Leder: Creme, Bürste & Applikator. Erhält Tiefe und Glanz der Patina.', 38.0,  23),
@@ -736,8 +736,8 @@ export function runMigrations(db) {
       updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
     INSERT OR IGNORE INTO shipping_config (key, label, description, price, free_above, is_default, is_active) VALUES
-      ('standard', 'Standardversand', 'Lieferung in 3–5 Werktagen', 9.90, 500, 1, 1),
-      ('express',  'Expressversand',  'Lieferung in 1–2 Werktagen', 19.90, NULL, 0, 1);
+      ('standard', 'Standardversand', 'Lieferung in 3 bis 5 Werktagen', 9.90, 500, 1, 1),
+      ('express',  'Expressversand',  'Lieferung in 1 bis 2 Werktagen', 19.90, NULL, 0, 1);
 
     -- ── Coupons ──────────────────────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS coupons (
@@ -781,8 +781,8 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_sa_acc  ON shoe_accessories(accessory_id);
 
     INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, season, rating, sort_order) VALUES
-      ('calfskin', 'CALFSKIN', 'Full-Grain', '#b45309', 1, 'Robust und langlebig — entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.', 'Ganzjährig', 'good', 0),
-      ('suede', 'SUEDE', 'Nubuck', '#78716c', 1, 'Samtig-weiche Oberfläche für lässig-elegante Looks. Empfindlich bei Nässe — am besten für trockene Tage und Indoor-Anlässe.', 'Frühling / Sommer', 'warn', 1),
+      ('calfskin', 'CALFSKIN', 'Full-Grain', '#b45309', 1, 'Robust und langlebig, entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.', 'Ganzjährig', 'good', 0),
+      ('suede', 'SUEDE', 'Nubuck', '#78716c', 1, 'Samtig-weiche Oberfläche für lässig-elegante Looks. Empfindlich bei Nässe, am besten für trockene Tage und Indoor-Anlässe.', 'Frühling / Sommer', 'warn', 1),
       ('patent', 'PATENT', 'High-Gloss', '#111827', 0, 'Hochglanz-Finish für formelle Anlässe, Galas und Abendveranstaltungen. Pflegeleicht, aber empfindlich gegen Kratzer.', 'Events', 'neutral', 2);
 
     CREATE TABLE IF NOT EXISTS shoe_colors (
@@ -801,13 +801,13 @@ export function runMigrations(db) {
       updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
     );
     INSERT OR IGNORE INTO shoe_colors (key, hex, name, available, tip, pairs_with, rating, sort_order) VALUES
-      ('schwarz',  '#000000', 'Schwarz',        1, 'Der Klassiker — passt zu jedem Outfit und jedem Anlass. Business, Formal, Casual — Schwarz geht immer.', 'Grau, Navy, alle dunklen Anzüge', 'good', 0),
-      ('black',    '#111827', 'Midnight Black',  1, 'Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz — perfekt für Smart Casual und kreative Berufe.', 'Dunkle Jeans, Navy Blazer, Charcoal Suits', 'good', 1),
-      ('cognac',   '#92400e', 'Cognac',          1, 'Warmes Braun mit Tiefe — der ideale Business-Casual-Begleiter. Passt hervorragend zu Beige, Navy und Erdtönen.', 'Beige Chinos, Navy Blazer, Jeans', 'good', 2),
-      ('oxblood',  '#7b1e1e', 'Oxblood',         1, 'Sattes Bordeaux-Rot — ein Herbst- und Winter-Statement. Elegant zum dunklen Anzug, lässig zur Jeans.', 'Charcoal, Navy, Dunkelgrün, Tweed', 'neutral', 3),
-      ('tan',      '#b45309', 'Tan',             1, 'Helles Karamell-Braun — die perfekte Sommerfarbe. Strahlt bei Sonnenlicht und passt zu hellen, leichten Outfits.', 'Weiß, Hellblau, Leinen, Beige', 'neutral', 4),
-      ('navy',     '#1e3a5f', 'Navy',            0, 'Der moderne Gentleman-Ton — elegant und unkonventionell zugleich. Perfekt zu grauen und hellbraunen Outfits.', 'Grau, Beige, helle Jeans, Tweed', 'good', 5),
-      ('forest',   '#14532d', 'Forest',          0, 'Tiefes Waldgrün — für den mutigen Stilbewussten. Ein Herbst-Highlight zu Cord, Tweed und Erdtönen.', 'Braun, Beige, Senfgelb, Cord', 'neutral', 6);
+      ('schwarz',  '#000000', 'Schwarz',        1, 'Der Klassiker, passt zu jedem Outfit und jedem Anlass. Business, Formal, Casual, Schwarz geht immer.', 'Grau, Navy, alle dunklen Anzüge', 'good', 0),
+      ('black',    '#111827', 'Midnight Black',  1, 'Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz, perfekt für Smart Casual und kreative Berufe.', 'Dunkle Jeans, Navy Blazer, Charcoal Suits', 'good', 1),
+      ('cognac',   '#92400e', 'Cognac',          1, 'Warmes Braun mit Tiefe, der ideale Business-Casual-Begleiter. Passt hervorragend zu Beige, Navy und Erdtönen.', 'Beige Chinos, Navy Blazer, Jeans', 'good', 2),
+      ('oxblood',  '#7b1e1e', 'Oxblood',         1, 'Sattes Bordeaux-Rot, ein Herbst- und Winter-Statement. Elegant zum dunklen Anzug, lässig zur Jeans.', 'Charcoal, Navy, Dunkelgrün, Tweed', 'neutral', 3),
+      ('tan',      '#b45309', 'Tan',             1, 'Helles Karamell-Braun, die perfekte Sommerfarbe. Strahlt bei Sonnenlicht und passt zu hellen, leichten Outfits.', 'Weiß, Hellblau, Leinen, Beige', 'neutral', 4),
+      ('navy',     '#1e3a5f', 'Navy',            0, 'Der moderne Gentleman-Ton, elegant und unkonventionell zugleich. Perfekt zu grauen und hellbraunen Outfits.', 'Grau, Beige, helle Jeans, Tweed', 'good', 5),
+      ('forest',   '#14532d', 'Forest',          0, 'Tiefes Waldgrün, für den mutigen Stilbewussten. Ein Herbst-Highlight zu Cord, Tweed und Erdtönen.', 'Braun, Beige, Senfgelb, Cord', 'neutral', 6);
 
     CREATE TABLE IF NOT EXISTS shoe_soles (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -827,9 +827,9 @@ export function runMigrations(db) {
       updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
     );
     INSERT OR IGNORE INTO shoe_soles (key, label, sub, description, tip, price_extra, rating, recommended, categories, sort_order) VALUES
-      ('leather',     'LEDERSOHLE',    'Klassisch',    'Handgenähte Ledersohle — elegant und atmungsaktiv.', 'Nur für trockene Bedingungen empfohlen. Ideal im Sommer und für Indoor-Anlässe. Bei Nässe wird es rutschig.', 0, 'warn', 0, 'OXFORD,LOAFER,DERBY,MONK', 0),
-      ('rubber-grip', 'ANTI-RUTSCH',   'Gummi-Profil', 'Gummibeschichtete Profilsohle — maximale Rutschfestigkeit auf allen Oberflächen.', 'Unsere Empfehlung für den Alltag. Sicherer Halt bei Regen, Schnee und nassen Böden. Ganzjährig einsetzbar.', 35, 'good', 1, 'OXFORD,LOAFER,DERBY,MONK,BOOT', 1),
-      ('sneaker',     'SNEAKER-SOHLE', 'EVA-Komfort',  'Leichte EVA-Komfortsohle mit Dämpfung — für maximalen Gehkomfort den ganzen Tag.', 'Speziell für Sneaker entwickelt. Stoßdämpfend, flexibel und ultraleicht.', 0, 'good', 0, 'SNEAKER', 2);
+      ('leather',     'LEDERSOHLE',    'Klassisch',    'Handgenähte Ledersohle, elegant und atmungsaktiv.', 'Nur für trockene Bedingungen empfohlen. Ideal im Sommer und für Indoor-Anlässe. Bei Nässe wird es rutschig.', 0, 'warn', 0, 'OXFORD,LOAFER,DERBY,MONK', 0),
+      ('rubber-grip', 'ANTI-RUTSCH',   'Gummi-Profil', 'Gummibeschichtete Profilsohle, maximale Rutschfestigkeit auf allen Oberflächen.', 'Unsere Empfehlung für den Alltag. Sicherer Halt bei Regen, Schnee und nassen Böden. Ganzjährig einsetzbar.', 35, 'good', 1, 'OXFORD,LOAFER,DERBY,MONK,BOOT', 1),
+      ('sneaker',     'SNEAKER-SOHLE', 'EVA-Komfort',  'Leichte EVA-Komfortsohle mit Dämpfung, für maximalen Gehkomfort den ganzen Tag.', 'Speziell für Sneaker entwickelt. Stoßdämpfend, flexibel und ultraleicht.', 0, 'good', 0, 'SNEAKER', 2);
 
     CREATE TABLE IF NOT EXISTS cms_media (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1069,7 +1069,7 @@ export function runMigrations(db) {
   // option_groups, category_templates aus den späteren db.exec-Blöcken).
   // Vorher liefen diese ALTERs ins Leere („no such table") und Spalten wie
   // family/applicable_materials/color_hex/icon/helper_text/recommended
-  // wurden NIE angelegt — was den Seed crashen ließ.
+  // wurden NIE angelegt, was den Seed crashen ließ.
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
