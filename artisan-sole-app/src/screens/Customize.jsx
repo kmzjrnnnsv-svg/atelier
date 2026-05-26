@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, ShieldCheck, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler, Footprints, Layers, CircleDashed, Diamond, CircleDot, Square, Gem, Palette, Sparkles, ArrowRightLeft } from 'lucide-react'
+import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler, Footprints, Layers, CircleDashed, Diamond, CircleDot, Square, Gem, Palette, Sparkles, ArrowRightLeft } from 'lucide-react'
 
 // Lucide-Icon-Lookup pro option_groups.icon (Lucide-Komponentenname)
 const GROUP_ICONS = {
@@ -83,31 +83,12 @@ function Stars({ value, size = 14 }) {
   )
 }
 
-// ── Ampel-Punkt: grün / gelb / rot ─────────────────────────────────────────
-function Dot({ rating }) {
-  const c = rating === 'good' ? 'bg-green-400' : rating === 'warn' ? 'bg-red-400' : 'bg-amber-300'
-  return <div className={`w-2 h-2 rounded-full ${c}`} />
-}
-
-// ── Sohlen für Kategorie filtern ────────────────────────────────────────────
-function getSolesForCategory(allSoles, category) {
-  if (!allSoles.length) return []
-  return allSoles.filter(s => {
-    if (!s.categories || s.categories === '*') return true
-    return s.categories.split(',').map(c => c.trim().toUpperCase()).includes(category)
-  })
-}
-
-function getDefaultSole(soles) {
-  const rec = soles.find(s => s.recommended === 1 || s.recommended === true)
-  return rec ? (rec.key || String(rec.id)) : (soles[0]?.key || String(soles[0]?.id) || '')
-}
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, accessories: allAccessories, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
   const { user } = useAuth()
 
   // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
@@ -148,8 +129,6 @@ export default function Customize() {
     SNEAKER_BOOT:     ['lux_suede'],
     LACELESS_TRAINER: ['lux_suede'],
   }
-  const availableSoles = getSolesForCategory(shoeSoles, category)
-
   // Per-Schuh konfigurierte Farben/Materialien (vom CMS gepflegt). Sind sie
   // gesetzt, ersetzen sie die globalen Listen, der Konfigurator zeigt nur
   // genau das, was der Admin für DIESEN Schuh freigegeben hat.
@@ -253,7 +232,6 @@ export default function Customize() {
   const [selFamily, setSelFamily] = useState('')
   const [selMat,  setSelMat]  = useState('')
   const [selCol,  setSelCol]  = useState('')
-  const [selSole, setSelSole] = useState('')
   const [added,   setAdded]   = useState(false)
 
   // Materialien nach Familie filtern. Wenn ein Schuh nur Materialien einer
@@ -300,10 +278,6 @@ export default function Customize() {
     : (filteredGlobalColors.length ? filteredGlobalColors : [
         { id: 1, key: 'schwarz', hex: '#000000', name: 'Schwarz', available: 1, rating: 'good' },
       ])
-  // Legacy-Sohlensystem (CMS-gepflegt, standardmäßig leer). Die Sohlen-Art
-  // wird heute über die Optionsgruppe 'sole' ("Sohlen-Art") gewählt. KEIN
-  // Platzhalter mehr — sonst entsteht ein Phantom-Aufpreis (Anti-Rutsch +€35).
-  const soleList = availableSoles
 
   // Size selection: 'fit' (auto-match via Fußmaße), 'standard' (manueller
   // Notausgang), 'custom' (3D scan, Legacy)
@@ -423,10 +397,8 @@ export default function Customize() {
     } catch {} finally { setMeasSaving(false) }
   }
 
-  // Step-by-step guided flow: 0=nothing, 1=leather chosen, 2=color chosen, 3=sole chosen
-  // Sohle ist pro Schuhmodell vorkonfiguriert (kein User-Step mehr).
-  // selSole wird automatisch beim Laden gesetzt, configStep richtet sich
-  // nach Material + Farbe + Extra-Konfigurator.
+  // Step-by-step guided flow: 0=nichts, 1=Leder gewählt, 3=Farbe gewählt.
+  // Ab Stufe 3 werden die Extra-Konfigurator-Gruppen aktiv.
   const configStep = selCol ? 3 : selMat ? 1 : 0
 
   // Refs for scroll forwarding between panels
@@ -566,18 +538,6 @@ export default function Customize() {
   useEffect(() => {
     if (shoeColors.length && selCol && !shoeColors.find(c => c.key === selCol)) setSelCol('')
   }, [shoeColors])
-  useEffect(() => {
-    // Sohle ist nicht mehr user-selectable: automatisch die KOSTENLOSE Sohle
-    // wählen (price_extra 0), damit kein versteckter +35€-Aufpreis entsteht.
-    // Die eigentliche Sohlen-Konfiguration läuft über „Sohle Unten" (Matrix).
-    if (availableSoles.length && !selSole) {
-      const freeSole = availableSoles.find(s => (s.price_extra || 0) === 0) || availableSoles[0]
-      if (freeSole?.key) setSelSole(freeSole.key)
-    } else if (availableSoles.length && selSole && !availableSoles.find(s => s.key === selSole)) {
-      const fallback = availableSoles.find(s => (s.price_extra || 0) === 0) || availableSoles[0]
-      if (fallback?.key) setSelSole(fallback.key)
-    }
-  }, [shoeSoles, category])
 
   const mat      = matList.find(m => m.key === selMat) || matList[0]
   const col      = colList.find(c => c.key === selCol) || colList[0]
@@ -634,31 +594,28 @@ export default function Customize() {
     }
     return col.images || []
   })()
-  const sole     = soleList.find(s => s.key === selSole) || soleList[0]
   const color    = col?.hex || product.color
   const isFav    = favorites.includes(String(product.id))
   const avg      = reviews.length ? reviews.reduce((s,r) => s + r.rating, 0) / reviews.length : 0
   const myRev    = reviews.find(r => r.user_id === user?.id)
 
-  // Preis: Basispreis aus DB + Sohle-Aufpreis + Zubehör
+  // Preis: Basispreis aus DB + Options-Aufpreise (inkl. Sohlen-Art) + Zubehör
   const isPromo = !!user?.is_promotion
   const promoDiscountPct = user?.promotion_discount_pct || 0
   const effectivePrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   const basePrice = parseFloat(String(effectivePrice).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
-  const soleExtra = sole?.price_extra || 0
   const accessoryTotal = selectedAccessories.reduce((sum, id) => {
     const acc = accessories.find(a => a.id === id)
     return sum + (acc?.price || 0)
   }, 0)
   const accDiscount = isPromo && promoDiscountPct > 0 ? Math.round(accessoryTotal * promoDiscountPct / 100) : 0
-  const totalPrice = basePrice + soleExtra + extrasPriceTotal + accessoryTotal - accDiscount
+  const totalPrice = basePrice + extrasPriceTotal + accessoryTotal - accDiscount
   const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
   const displayPrice = formatPrice(totalPrice)
 
   // Swipe
   const matSwipe  = useSwipe(matList, selMat, setSelMat)
   const colSwipe  = useSwipe(colList, selCol, setSelCol)
-  const soleSwipe = useSwipe(soleList, selSole, setSelSole)
 
   // ── Konfiguration speichern / geladene Konfiguration anwenden ───────────────
   const [savedToast, setSavedToast]   = useState('')   // '', 'saved', 'login'
@@ -677,7 +634,6 @@ export default function Customize() {
     if (fam) setSelFamily(fam)
     if (cfg.material) setSelMat(cfg.material)
     if (cfg.color) setSelCol(cfg.color)
-    if (cfg.sole) setSelSole(cfg.sole)
     if (Array.isArray(cfg.accessories)) setSelectedAccessories(cfg.accessories)
     if (cfg.extras && typeof cfg.extras === 'object') setSelectedExtras(cfg.extras)
   }, [location.state, product.id, matList.length])
@@ -696,7 +652,6 @@ export default function Customize() {
         label: [cleanShoeName(product.name), mat?.name, col?.name].filter(Boolean).join(' · '),
         material: selMat, materialName: mat?.name || '',
         color: selCol, colorName: col?.name || '', colorHex: col?.hex || product.color || null,
-        sole: selSole,
         accessories: selectedAccessories,
         extras: selectedExtras,
         price: displayPrice,
@@ -770,7 +725,7 @@ export default function Customize() {
     addToCart({
       shoeId: product.id, name: cleanShoeName(product.name),
       material: mat?.label || product.material,
-      color, price: formatPrice(basePrice + soleExtra + extrasPriceTotal),
+      color, price: formatPrice(basePrice + extrasPriceTotal),
       sole: soleArt?.label || 'Standard',
       image: product.image,
       sizeType, euSize: chosenEU,
@@ -834,7 +789,7 @@ export default function Customize() {
         product: {
           id: product.id, name: cleanShoeName(product.name),
           material: mat?.label || product.material,
-          color, price: formatPrice(basePrice + soleExtra + extrasPriceTotal),
+          color, price: formatPrice(basePrice + extrasPriceTotal),
           sole: soleArt?.label || 'Standard',
           sizeType, euSize: chosenEU,
           last: selectedFit?.last_key || null,
@@ -1090,9 +1045,9 @@ export default function Customize() {
             )}
             <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
               {displayPrice}
-              {(soleExtra > 0 || extrasPriceTotal > 0 || accessoryTotal > 0) && (
+              {(extrasPriceTotal > 0 || accessoryTotal > 0) && (
                 <span className="text-[10px] text-black/35 ml-2">
-                  ({[soleExtra > 0 && `+€${soleExtra} Sohle`, extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
+                  ({[extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
                 </span>
               )}
             </p>
@@ -1431,92 +1386,14 @@ export default function Customize() {
               {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2 px-5 lg:px-0">Passt zu: {col.pairs_with}</p>}
             </div>
 
-            {/* 3. Sohle, DEPRECATED (Sohle wird pro Schuhmodell vorkonfiguriert).
-                Legacy-Picker bleibt im DOM, ist aber komplett ausgeblendet. */}
-            {false && (
-            <div
-              {...(configStep >= 2 ? soleSwipe : {})}
-              className="transition-all duration-700 ease-out"
-              style={{
-                opacity: configStep >= 2 ? 1 : 0.25,
-                transform: configStep >= 2 ? 'translateY(0)' : 'translateY(8px)',
-                pointerEvents: configStep >= 2 ? 'auto' : 'none',
-                filter: configStep >= 2 ? 'none' : 'grayscale(1)',
-              }}
-            >
-              <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sohle wählen</p>
-
-              {soleList.length === 1 && (category === 'BOOT' || category === 'SNEAKER') && (
-                <p className="text-[10px] text-black/35 mb-2 px-5 lg:px-0">
-                  {category === 'BOOT' ? 'Boots haben immer die Gummi-Profilsohle.' : 'Sneaker haben immer ihre eigene Sohle.'}
-                </p>
-              )}
-
-              <div className="space-y-2">
-                {soleList.map(s => {
-                  const id = s.key || String(s.id)
-                  const sel = selSole === id
-                  return (
-                    <button key={id}
-                      onClick={() => setSelSole(id)}
-                      className={`w-full flex items-center gap-3 p-3.5 transition-all bg-transparent text-left border-y lg:border lg:rounded-sm ${
-                        sel ? 'border-black' : 'border-black/8'
-                      }`}
-                    >
-                      <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${sel ? 'bg-black' : 'bg-black/5'}`}>
-                        <ShieldCheck size={18} className={sel ? 'text-white' : 'text-black/30'} strokeWidth={1.5} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] text-black" style={{ letterSpacing: '0.03em' }}>{s.label}</span>
-                          {s.rating && <Dot rating={s.rating} />}
-                          {(s.recommended === 1 || s.recommended === true) && soleList.length > 1 && (
-                            <span className="text-[9px] text-black/40 border border-black/15 px-1.5 py-0.5" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Empfohlen</span>
-                          )}
-                        </div>
-                        {s.description && <p className="text-[10px] text-black/35 mt-0.5">{s.description}</p>}
-                      </div>
-                      {s.price_extra > 0 && <span className="text-[10px] text-black/50">+€{s.price_extra}</span>}
-                      {sel && <Check size={14} className="text-black" strokeWidth={2} />}
-                    </button>
-                  )
-                })}
-              </div>
-              {sole?.rating === 'warn' && soleList.length > 1 && (() => {
-                const rec = soleList.find(s => s.recommended === 1 || s.recommended === true)
-                if (!rec || (rec.key || String(rec.id)) === selSole) return null
-                return (
-                  <button
-                    onClick={() => setSelSole(rec.key || String(rec.id))}
-                    className="mt-2 w-full text-center text-[10px] text-black/50 border border-black/10 py-2 bg-transparent"
-                    style={{ letterSpacing: '0.05em' }}
-                  >
-                    Lieber die {rec.label}? Besser bei Regen und Schnee.
-                  </button>
-                )
-              })()}
-            </div>
-            )}
-
             {/* ── Remaining sections (visible after all steps) ── */}
 
             {/* ── Konfigurator-Extras (Schritt-für-Schritt) ─────────────
                 Erst sichtbar, wenn Material+Farbe gewählt sind. Vor jedem
-                Schritt ein Helper-Text; eine Option kann als „EMPFOHLEN"
-                markiert sein, dann erscheint über der Auswahl ein Banner. */}
+                Schritt ein Helper-Text mit Anwendungs-Hinweisen. */}
             {extraOptionGroups
               .filter(g => !(product?.locked_decoration && g.key === 'loafer_decoration'))
               .map((group, gIdx, renderGroups) => {
-              // Farb-Gruppen: passend zum gewählten Oberleder eine Farbe
-              // empfehlen (z. B. schwarzes Oberleder → schwarze Sohlenfarbe).
-              const isColorGroup = ['sole_color', 'inner_color', 'sole_bottom_color'].includes(group.key)
-              const colorMatchRec = isColorGroup && col?.name
-                ? group.values.find(v => {
-                    const l = col.name.toLowerCase(), o = v.label.toLowerCase()
-                    return l === o || l.includes(o) || o.includes(l)
-                  })
-                : null
-              const recValue = colorMatchRec || group.values.find(v => v.recommended)
               const currentSelection = group.values.find(v => v.id === selectedExtras[group.key])
               // Step ist aktiv, wenn alle vorherigen Extras gewählt sind.
               const allBefore = renderGroups.slice(0, gIdx).every(g => selectedExtras[g.key])
@@ -1545,23 +1422,6 @@ export default function Customize() {
                 {group.helper_text && (
                   <p className="text-[10px] text-black/40 font-light leading-relaxed mb-3 max-w-2xl">{group.helper_text}</p>
                 )}
-                {recValue && (!currentSelection || currentSelection.id !== recValue.id) && (
-                  <div className="flex items-start gap-2 mb-3 px-3 py-2 bg-green-50/60 border border-green-200/60">
-                    <span className="text-[9px] text-green-700 tracking-wider uppercase font-medium flex-shrink-0">Empfohlen</span>
-                    <span className="text-[10px] text-green-900/70 font-light leading-relaxed">
-                      {colorMatchRec && colorMatchRec.id === recValue.id
-                        ? `Passend zu Ihrem Oberleder „${col.name}" empfehlen wir ${recValue.label}.`
-                        : (recValue.recommendation_reason || `${recValue.label} ist unsere Empfehlung.`)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedExtras(prev => ({ ...prev, [group.key]: recValue.id }))}
-                      className="ml-auto text-[9px] text-green-800 underline tracking-wider uppercase bg-transparent border-0"
-                    >
-                      Übernehmen
-                    </button>
-                  </div>
-                )}
                 <div className="flex flex-wrap gap-2">
                   {group.values.map(v => {
                     const isSel = selectedExtras[group.key] === v.id
@@ -1575,9 +1435,6 @@ export default function Customize() {
                         }`}
                         title={v.description || ''}
                       >
-                        {v.recommended && !isSel && (
-                          <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-green-500 rounded-full border border-white" />
-                        )}
                         <div
                           className="w-12 h-12 mb-2 flex items-center justify-center overflow-hidden border border-black/[0.06]"
                           style={{ backgroundColor: v.color_hex || (v.image ? 'transparent' : '#fafaf9') }}
@@ -1835,9 +1692,9 @@ export default function Customize() {
               </div>
               <p className="text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
                 {displayPrice}
-                {(soleExtra > 0 || extrasPriceTotal > 0 || accessoryTotal > 0) && (
+                {(extrasPriceTotal > 0 || accessoryTotal > 0) && (
                   <span className="text-[11px] text-black/35 ml-2">
-                    ({[soleExtra > 0 && `+€${soleExtra} Sohle`, extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
+                    ({[extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
                   </span>
                 )}
               </p>

@@ -509,24 +509,24 @@ function seedConfiguratorOptions(db) {
     { group: 'last', key: 'savile',    label: 'Savile',    description: 'Schlanker Look mit leichter Chisel-Zehe. Elegant für normale bis schmale Füße.',                                                       price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
     { group: 'last', key: 'belgravia', label: 'Belgravia', description: 'Chisel-Zehe, schmale Taille und kubanischer Absatz. Markantes Statement — am besten für schlanke Füße.',                                price: 0,  cats: 'OXFORD,WHOLECUT,CHELSEA' },
 
-    // Sohle
-    { group: 'sole', key: 'leather',          label: 'Leather',          description: 'Klassische Ledersohle.',                                price: 0,  cats: '*' },
-    { group: 'sole', key: 'leather_mountain', label: 'Leather Mountain', description: 'Leder mit Bergprofil für mehr Grip.',                   price: 0,  cats: '*' },
-    { group: 'sole', key: 'leather_buttons',  label: 'Leather Buttons',  description: 'Leder mit Noppen-Einsatz.',                             price: 0,  cats: '*' },
-    { group: 'sole', key: 'leather_rubber',   label: 'Leather + Rubber', description: 'Leder mit Gummi-Mittelsteg.',                           price: 0,  cats: '*' },
-    { group: 'sole', key: 'dainite',          label: 'Dainite',          description: 'Klassische Stollen-Gummisohle.',                        price: 5,  cats: '*' },
-    { group: 'sole', key: 'commando',         label: 'Commando',         description: 'Grobes Profil — maximaler Grip.',                       price: 0,  cats: '*' },
-    { group: 'sole', key: 'crepe',            label: 'Crepe',            description: 'Naturkautschuk, sehr komfortabel.',                     price: 5,  cats: 'LOAFER,DERBY,SNEAKER' },
-    { group: 'sole', key: 'rubber',           label: 'Rubber',           description: 'Glatte Gummisohle.',                                    price: 0,  cats: '*' },
-    { group: 'sole', key: 'dots',             label: 'Dots',             description: 'Gummi mit feinen Noppen.',                              price: 0,  cats: '*' },
-    { group: 'sole', key: 'rocky',            label: 'Rocky',            description: 'Robuste Outdoor-Sohle.',                                price: 0,  cats: 'CHELSEA,BOOT,DERBY' },
-    { group: 'sole', key: 'beveled_waist',    label: 'Beveled Waist',    description: 'Schlanke, gewölbte Taille.',                            price: 35, cats: 'OXFORD,WHOLECUT,DERBY,MONK,DOUBLE_MONK' },
-    { group: 'sole', key: 'art',              label: 'Art',              description: 'Handbemalte Spezialsohle.',                             price: 17, cats: '*' },
+    // Sohle — Beschreibungen mit Anwendungs-Hinweis (wann was sinnvoll ist)
+    { group: 'sole', key: 'leather',          label: 'Leather',          description: 'Klassische Ledersohle — elegant für Business, Anzug und drinnen. Die richtige Wahl für die meisten Anlässe.', price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_mountain', label: 'Leather Mountain', description: 'Leder mit Bergprofil — etwas mehr Grip bei trockenem Wetter, behält den eleganten Charakter.',              price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_buttons',  label: 'Leather Buttons',  description: 'Leder mit eingelassenen Noppen — dezent griffiger als glattes Leder, gut für den Alltag.',                  price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_rubber',   label: 'Leather + Rubber', description: 'Leder mit Gummi-Mittelsteg — eleganter Look mit alltagstauglichem Halt. Guter Mittelweg.',                  price: 0,  cats: '*' },
+    { group: 'sole', key: 'dainite',          label: 'Dainite',          description: 'Stollen-Gummisohle — robust und rutschsicher bei Nässe. Ideal für draußen und Regenwetter.',               price: 5,  cats: '*' },
+    { group: 'sole', key: 'commando',         label: 'Commando',         description: 'Grobes Profil — maximaler Grip. Für Outdoor, Winter und raues Gelände.',                                   price: 0,  cats: '*' },
+    { group: 'sole', key: 'crepe',            label: 'Crepe',            description: 'Naturkautschuk — weich, leise und leger. Perfekt für entspannte, sommerliche Anlässe.',                     price: 5,  cats: 'LOAFER,DERBY,SNEAKER' },
+    { group: 'sole', key: 'rubber',           label: 'Rubber',           description: 'Glatte Gummisohle — unauffälliger Allrounder mit etwas Grip für den Alltag.',                              price: 0,  cats: '*' },
+    { group: 'sole', key: 'dots',             label: 'Dots',             description: 'Gummi mit feinen Noppen — dezenter Grip, unauffällig im Alltag.',                                          price: 0,  cats: '*' },
+    { group: 'sole', key: 'rocky',            label: 'Rocky',            description: 'Robuste Outdoor-Sohle — für Stiefel und raues Gelände bei jedem Wetter.',                                  price: 0,  cats: 'CHELSEA,BOOT,DERBY' },
+    { group: 'sole', key: 'beveled_waist',    label: 'Beveled Waist',    description: 'Schlanke, geschwungene Taille — Markenzeichen feinster Maßschuhmacherei, rein optisch.',                    price: 35, cats: 'OXFORD,WHOLECUT,DERBY,MONK,DOUBLE_MONK' },
+    { group: 'sole', key: 'art',              label: 'Art',              description: 'Handbemalte Spezialsohle — auffälliges Einzelstück für Individualisten.',                                  price: 17, cats: '*' },
 
-    // Welt (Rahmen)
-    { group: 'welt', key: 'city',    label: 'City',    description: 'Schmaler Rahmen für eleganten Look.', price: 0, cats: '*' },
-    { group: 'welt', key: 'country', label: 'Country', description: 'Breiterer Rahmen, robuster Look.',     price: 0, cats: '*' },
-    { group: 'welt', key: 'storm',   label: 'Storm',   description: 'Wasserdichter Rahmen für Outdoor.',    price: 0, cats: '*' },
+    // Welt (Rahmen) — in den meisten Fällen reicht City
+    { group: 'welt', key: 'city',    label: 'City',    description: 'Schmaler, eleganter Rahmen — für Business, Anzug und Alltag. Für die meisten Anlässe die richtige Wahl.', price: 0, cats: '*' },
+    { group: 'welt', key: 'country', label: 'Country', description: 'Breiterer, robusterer Rahmen — für legere Outfits und kräftigere Schuhe.',                              price: 0, cats: '*' },
+    { group: 'welt', key: 'storm',   label: 'Storm',   description: 'Wasserabweisender Rahmen — schützt bei Regen und Outdoor.',                                            price: 0, cats: '*' },
 
     // Heel (Absatz)
     { group: 'heel', key: 'standard',    label: 'Standard',    description: 'Klassische Absatzhöhe.',  price: 0, cats: '*' },
@@ -947,10 +947,10 @@ export function seedExtendedCatalog(db) {
 
   // ── 7) Helper-Texte pro Optionsgruppe (Schritt-für-Schritt-Erklärung) ──
   const HELPER_TEXT = {
-    last:              'Die Leistenform bestimmt das Profil des Schuhs. Sie entscheidet über Zehenform, Schmalheit der Taille und Proportion. Wählen Sie eine Form, die zu Ihrem Stil und Anlass passt.',
-    sole:              'Die Sohle prägt Tragekomfort und Outdoor-Tauglichkeit. Ledersohle für klassisches Auftreten, Dainite oder Commando für mehr Grip und Wetterfestigkeit.',
-    welt:              'Der Rahmen (Welt) verbindet Schaft und Sohle. City ist schmal und elegant, Country breiter und robuster, Storm zusätzlich wassergeschützt.',
-    heel:              'Standard-Absatz für die meisten Anlässe. Higher Heel gibt mehr Höhe und einen markanteren Auftritt.',
+    last:              'Die Leistenform bestimmt das Profil des Schuhs (Zehenform, Taille, Proportion). Monti ist vielseitig und passt den meisten Füßen; Zurigo gibt breiten Füßen mehr Platz; Savile und Belgravia sind schlanker für schmale Füße.',
+    sole:              'Die Sohle bestimmt Anlass und Wetter-Tauglichkeit. Leder (Leather/Buttons) ist klassisch-elegant für Business und drinnen. Dainite & Commando sind griffig und wetterfest für draußen. Crepe ist weich und leger. Leather + Rubber ist der elegante Mittelweg.',
+    welt:              'Der Rahmen (Welt) verbindet Schaft und Sohle. In den meisten Fällen genügt die schmale, elegante City-Naht (Business, Anzug, Alltag). Country ist breiter und robuster für legere Outfits, Storm zusätzlich wasserabweisend für Regen und Outdoor.',
+    heel:              'Standard-Absatz passt zu allen Outfits und Anlässen. Higher Heel gibt etwas mehr Höhe und einen markanteren Auftritt.',
     toe:               'Die Zehenkappe ist das prägende Detail vorne. Punch Cap mit klassischer Lochung, Plain Toe für minimalistischen Look, Cap Toe mit aufgesetzter Naht.',
     wholecut_base:     'Verarbeitung der Vorderkappe für den nahtlosen Whole-Cut-Schuh.',
     buckle:            'Schnallenform: Rund für klassische Eleganz, eckig für modernen Akzent.',
@@ -966,22 +966,13 @@ export function seedExtendedCatalog(db) {
   `)
   Object.entries(HELPER_TEXT).forEach(([k, t]) => upHelper.run(t, k))
 
-  // ── 8) Empfehlungen (Badge „EMPFOHLEN" im Konfigurator) ────────────────
-  const RECOMMENDATIONS = [
-    // [group_key, option_key, reason]
-    ['last',  'monti',    'Für die meisten Füße die beste Wahl — die leicht quadratische Zehe ist vielseitig und elegant. Breite Füße: lieber Zurigo (mehr Platz). Schmale Füße: Savile oder Belgravia.'],
-    ['welt',  'city',     'Klassischer Allrounder — für Business und elegante Anlässe ideal.'],
-    ['heel',  'standard', 'Klassische Höhe — passt zu allen Outfits und Anlässen.'],
-    ['sole',  'dainite',  'Unser Allwetter-Favorit — sicherer Halt bei Regen und Schnee.'],
-    ['toe',   'plain_toe', 'Zeitlos und vielseitig — passt zu jedem Anlass.'],
-  ]
-  const upRec = db.prepare(`
-    UPDATE options SET recommended = 1, recommendation_reason = ?, updated_at = datetime('now')
-    WHERE id = (SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id WHERE g.key = ? AND o.key = ?)
-  `)
-  RECOMMENDATIONS.forEach(([gk, ok, reason]) => upRec.run(reason, gk, ok))
+  // ── 8) Empfehlungen entfernt (User-Wunsch) ─────────────────────────────
+  // Statt „EMPFOHLEN"-Badges erklären jetzt die Helper-Texte je Gruppe und die
+  // Options-Beschreibungen, wann welche Wahl sinnvoll ist. Bestehende DBs
+  // bereinigen, damit keine alten Empfehlungs-Flags zurückbleiben.
+  db.prepare(`UPDATE options SET recommended = 0, recommendation_reason = NULL WHERE recommended = 1 OR recommendation_reason IS NOT NULL`).run()
 
-  console.log(`✅ Seeded: extended catalog (${MATERIALS.length} materials, ${COLORS.length} colors, ${NEW_GROUPS.length} option groups, ${NEW_OPTIONS.length} options, ${TEMPLATES.length} template entries, ${Object.keys(COLOR_HEX_MAP).length} hex codes, ${Object.keys(HELPER_TEXT).length} helper texts, ${RECOMMENDATIONS.length} recommendations)`)
+  console.log(`✅ Seeded: extended catalog (${MATERIALS.length} materials, ${COLORS.length} colors, ${NEW_GROUPS.length} option groups, ${NEW_OPTIONS.length} options, ${TEMPLATES.length} template entries, ${Object.keys(COLOR_HEX_MAP).length} hex codes, ${Object.keys(HELPER_TEXT).length} helper texts)`)
 }
 
 // ─────────────────────────────────────────────────────────────────────
