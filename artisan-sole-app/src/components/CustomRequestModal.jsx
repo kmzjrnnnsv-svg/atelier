@@ -4,7 +4,7 @@ import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 
 /**
- * Maßanfertigungs-Anfrage, geht ohne Login als Anfrage an Admin/Curator,
+ * Custom-Anfrage, geht ohne Login als Anfrage an Admin/Curator,
  * Telefonnummer ist Pflicht, weiterer Austausch über WhatsApp Business.
  */
 export default function CustomRequestModal({
@@ -79,7 +79,7 @@ export default function CustomRequestModal({
     const normalized = waNumber.replace(/[^0-9+]/g, '').replace(/^\+/, '')
     const ref = success?.id ? `#${success.id}` : ''
     const lines = [
-      `Hallo Artisan Sole, ich habe eine Maßanfertigungs-Anfrage ${ref} gestellt.`,
+      `Hallo Artisan Sole, ich habe eine Custom-Anfrage ${ref} gestellt.`,
       product?.name && `Modell: ${product.name}`,
       config?.material && `Material: ${config.material}`,
       config?.color && `Farbe: ${config.color}`,
@@ -98,7 +98,7 @@ export default function CustomRequestModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-black/[0.06] px-5 py-4 flex items-center justify-between z-10">
           <div>
-            <p className="text-[9px] text-black/30 uppercase" style={{ letterSpacing: '0.25em' }}>Maßanfertigung</p>
+            <p className="text-[9px] text-black/30 uppercase" style={{ letterSpacing: '0.25em' }}>Custom Made</p>
             <h2 className="text-[16px] font-light text-black tracking-[0.12em] uppercase mt-0.5">Anfrage senden</h2>
           </div>
           <button
@@ -119,7 +119,7 @@ export default function CustomRequestModal({
             <p className="text-[10px] text-black/30 uppercase mb-2" style={{ letterSpacing: '0.25em' }}>Anfrage #{success.id}</p>
             <h3 className="text-[18px] font-light tracking-[0.12em] uppercase text-black mb-3">Vielen Dank</h3>
             <p className="text-[13px] text-black/55 font-light leading-relaxed max-w-md mx-auto">
-              Ihre Anfrage zur Maßanfertigung ist eingegangen. Unser Atelier meldet sich
+              Ihre Custom-Anfrage ist eingegangen. Unser Atelier meldet sich
               {waNumber ? ' in Kürze über WhatsApp Business' : ' in Kürze bei Ihnen'} unter
               <span className="text-black"> {form.phone}</span>.
             </p>
@@ -149,7 +149,7 @@ export default function CustomRequestModal({
             {/* Konfiguration-Übersicht */}
             <div className="bg-[#f6f5f3] p-4 mb-5 text-[12px] text-black/70 font-light">
               <p className="text-[9px] text-black/35 uppercase mb-2" style={{ letterSpacing: '0.2em' }}>Ihre Konfiguration</p>
-              <p className="text-[13px] text-black mb-1">{product?.name || '–'}</p>
+              <p className="text-[13px] text-black mb-1">{product?.name || 'Ihr Modell'}</p>
               <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                 {config?.material && <span>{config.material}</span>}
                 {config?.color    && <span>· {config.color}</span>}

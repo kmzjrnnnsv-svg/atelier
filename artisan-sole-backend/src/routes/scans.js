@@ -346,7 +346,7 @@ Links:  Länge=${cvData.left_length  ?? '?'}mm, Breite=${cvData.left_width  ?? '
       content: [
         {
           type: 'text',
-          text: `Du bist ein präzises Fußvermessungs-System für die Maßschuh-Fertigung. Analysiere diese ${hasLateral ? '6' : '4'} Bilder.
+          text: `Du bist ein präzises Fußvermessungs-System für die Custom-Made-Fertigung. Analysiere diese ${hasLateral ? '6' : '4'} Bilder.
 
 KALIBRIER-VALIDIERUNG (KRITISCH — mache dies ZUERST):
 Jedes Bild enthält ein A4-Papier (exakt 297.0 × 210.0 mm).

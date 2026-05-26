@@ -6,7 +6,7 @@ const sections = [
     id: 'short',
     title: 'Kurzfristig',
     subtitle: 'Sofortige Auswirkungen',
-    timeframe: '0–4 Wochen',
+    timeframe: '0 bis 4 Wochen',
     color: '#d97706',
     accent: '#f59e0b',
     icon: Zap,
@@ -20,7 +20,7 @@ const sections = [
     id: 'mid',
     title: 'Mittelfristig',
     subtitle: 'Schleichende Schäden',
-    timeframe: '1–12 Monate',
+    timeframe: '1 bis 12 Monate',
     color: '#dc2626',
     accent: '#ef4444',
     icon: TrendingUp,
@@ -51,7 +51,7 @@ const tips = [
   'Mindestens 1 cm Spielraum vor der großen Zehe sicherstellen.',
   'Schuhwerk dem Zweck anpassen: Büro, Sport, Freizeit.',
   'Täglich Schuhe wechseln, damit das Material Zeit zum Lüften hat.',
-  'Hochhackige Schuhe max. 2–3 Stunden täglich tragen.',
+  'Hochhackige Schuhe max. 2 bis 3 Stunden täglich tragen.',
   '3D-Fußscan für präzise Maßfertigung, exakte Passform, keine Kompromisse.',
 ]
 

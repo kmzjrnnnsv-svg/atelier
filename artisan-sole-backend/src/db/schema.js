@@ -839,7 +839,7 @@ export function runMigrations(db) {
       created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
 
-    -- ── Custom-fit shoe requests (Maßanfertigung) ───────────────────────────
+    -- ── Custom-fit shoe requests (Custom-Anfrage) ───────────────────────────
     -- Guests can submit; user_id is optional. Phone is required for
     -- WhatsApp-Business follow-up by admin / curator.
     CREATE TABLE IF NOT EXISTS custom_requests (

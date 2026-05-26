@@ -7,7 +7,7 @@ import useStore from '../store/store'
 const GARMENT_SECTIONS = [
   {
     label: 'Sakkos & Outerwear',
-    badge: 'Bespoke Line',
+    badge: 'Custom Line',
     items: [
       { id: 'g1', name: 'Navy Midnight Wool', price: '€ 1.250', color: '#1e3a5f', selected: true,
         image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80&fit=crop' },

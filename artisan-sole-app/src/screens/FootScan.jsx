@@ -885,7 +885,7 @@ function PgCamStep({ videoRef, canvasRef, pgStep, pgImgs, viewInfo, onCapture, o
   }
 
   const totalDone = pgImgs.right.length + pgImgs.left.length
-  const info = viewInfo[pgStep] || { side: 'right', label: '–', sub: '' }
+  const info = viewInfo[pgStep] || { side: 'right', label: '', sub: '' }
 
   return (
     <div className="absolute inset-0">
@@ -1550,22 +1550,22 @@ export default function FootScan() {
   // ── Photogrammetrie: 8 Ansichten je Fuß ──────────────────────────────────────
   // Ansichten: top, front, front_left, left, back_left, back, back_right, right
   const PG_VIEW_INFO = [
-    { side: 'right', label: 'Rechts – von oben',             sub: 'Von oben fotografieren, A4-Blatt daneben legen' },
-    { side: 'right', label: 'Rechts – von vorne',            sub: 'Auf Zehenhöhe, leicht schräg nach unten' },
-    { side: 'right', label: 'Rechts – schräg vorne links',   sub: 'Schräg von vorne, Zehen sollen sichtbar sein' },
-    { side: 'right', label: 'Rechts – Innenseite',           sub: 'Von der Innenseite fotografieren' },
-    { side: 'right', label: 'Rechts – schräg hinten links',  sub: 'Schräg von hinten, Ferse soll sichtbar sein' },
-    { side: 'right', label: 'Rechts – von hinten',           sub: 'Direkt von hinten, Ferse in der Mitte' },
-    { side: 'right', label: 'Rechts – schräg hinten rechts', sub: 'Schräg von hinten, Außenseite sichtbar' },
-    { side: 'right', label: 'Rechts – Außenseite',           sub: 'Von der Außenseite fotografieren' },
-    { side: 'left',  label: 'Links – von oben',              sub: 'Von oben fotografieren, A4-Blatt daneben legen' },
-    { side: 'left',  label: 'Links – von vorne',             sub: 'Auf Zehenhöhe, leicht schräg nach unten' },
-    { side: 'left',  label: 'Links – schräg vorne rechts',   sub: 'Schräg von vorne, Zehen sollen sichtbar sein' },
-    { side: 'left',  label: 'Links – Außenseite',            sub: 'Von der Außenseite fotografieren' },
-    { side: 'left',  label: 'Links – schräg hinten rechts',  sub: 'Schräg von hinten, Ferse soll sichtbar sein' },
-    { side: 'left',  label: 'Links – von hinten',            sub: 'Direkt von hinten, Ferse in der Mitte' },
-    { side: 'left',  label: 'Links – schräg hinten links',   sub: 'Schräg von hinten, Innenseite sichtbar' },
-    { side: 'left',  label: 'Links – Innenseite',            sub: 'Von der Innenseite fotografieren' },
+    { side: 'right', label: 'Rechts: von oben',             sub: 'Von oben fotografieren, A4-Blatt daneben legen' },
+    { side: 'right', label: 'Rechts: von vorne',            sub: 'Auf Zehenhöhe, leicht schräg nach unten' },
+    { side: 'right', label: 'Rechts: schräg vorne links',   sub: 'Schräg von vorne, Zehen sollen sichtbar sein' },
+    { side: 'right', label: 'Rechts: Innenseite',           sub: 'Von der Innenseite fotografieren' },
+    { side: 'right', label: 'Rechts: schräg hinten links',  sub: 'Schräg von hinten, Ferse soll sichtbar sein' },
+    { side: 'right', label: 'Rechts: von hinten',           sub: 'Direkt von hinten, Ferse in der Mitte' },
+    { side: 'right', label: 'Rechts: schräg hinten rechts', sub: 'Schräg von hinten, Außenseite sichtbar' },
+    { side: 'right', label: 'Rechts: Außenseite',           sub: 'Von der Außenseite fotografieren' },
+    { side: 'left',  label: 'Links: von oben',              sub: 'Von oben fotografieren, A4-Blatt daneben legen' },
+    { side: 'left',  label: 'Links: von vorne',             sub: 'Auf Zehenhöhe, leicht schräg nach unten' },
+    { side: 'left',  label: 'Links: schräg vorne rechts',   sub: 'Schräg von vorne, Zehen sollen sichtbar sein' },
+    { side: 'left',  label: 'Links: Außenseite',            sub: 'Von der Außenseite fotografieren' },
+    { side: 'left',  label: 'Links: schräg hinten rechts',  sub: 'Schräg von hinten, Ferse soll sichtbar sein' },
+    { side: 'left',  label: 'Links: von hinten',            sub: 'Direkt von hinten, Ferse in der Mitte' },
+    { side: 'left',  label: 'Links: schräg hinten links',   sub: 'Schräg von hinten, Innenseite sichtbar' },
+    { side: 'left',  label: 'Links: Innenseite',            sub: 'Von der Innenseite fotografieren' },
   ]
 
   const handlePgCapture = useCallback(() => {

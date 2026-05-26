@@ -283,7 +283,7 @@ export default function Customize() {
   // Notausgang), 'custom' (3D scan, Legacy)
   const [sizeType, setSizeType] = useState('')
   const [selectedSize, setSelectedSize] = useState('')
-  // Maßanfertigungs-Anfragemodal (Pflicht: Telefon + WhatsApp Business)
+  // Custom-Anfrage-Modal (Pflicht: Telefon + WhatsApp Business)
   const [customRequestOpen, setCustomRequestOpen] = useState(false)
   const EU_SIZES = ['39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', '43', '43.5', '44', '44.5', '45', '46']
 
@@ -341,7 +341,7 @@ export default function Customize() {
 
     // Transiente Fehler (z. B. Rate-Limit bei schnellem Neuladen) dürfen NICHT
     // als „keine Passform" erscheinen. Mehrfach versuchen; erst bei dauerhaftem
-    // Fehler in den neutralen 'error'-Zustand wechseln (kein Maßanfertigungs-CTA).
+    // Fehler in den neutralen 'error'-Zustand wechseln (kein Custom-CTA).
     ;(async () => {
       for (let attempt = 0; attempt < 3 && !cancelled; attempt++) {
         const { ok, matches } = await matchFit({ category, length: effLen, girth: effGirth, tolerance: 5 })
@@ -728,7 +728,7 @@ export default function Customize() {
   const fitReady = (sizeType === 'fit' && !!selectedFit)
     || (sizeType === 'standard' && !!selectedSize)
     || sizeType === 'custom'
-  // Maße vorhanden, aber kein Treffer & kein manueller Override → Maßanfertigung
+  // Maße vorhanden, aber kein Treffer & kein manueller Override → Custom-Anfrage
   const needsCustomRequest = (fitState === 'nomatch' && sizeType !== 'standard') || sizeType === 'custom'
   // Extras als lesbare Liste mit Aufpreissumme, wird in der Bestellung
   // mitgeführt, damit Admin & Manufaktur die Spezifikation sehen.
@@ -1140,7 +1140,7 @@ export default function Customize() {
             {fitState === 'nomatch' && footMeasurements?.foot_length_mm && (
               <p className="text-[10px] text-black/40 font-light mt-1.5 leading-relaxed">
                 Ihre gespeicherten Maße: {footMeasurements.foot_length_mm} mm Länge · {footMeasurements.ball_girth_mm} mm Ballenumfang.
-                {' '}Für dieses Modell liegt keine Standard-Leiste in Ihrem Bereich — wir fertigen es als Maßanfertigung.
+                {' '}Für dieses Modell liegt keine Standard-Leiste in Ihrem Bereich vor, wir fertigen es custom-made auf Bestellung.
               </p>
             )}
 
@@ -1546,11 +1546,11 @@ export default function Customize() {
                   <button type="button" onClick={openMeasEdit} className="text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : fitState === 'error' ? (
-                /* Transienter Fehler — KEINE Maßanfertigung vorschnell anbieten */
+                /* Transienter Fehler, KEINE Custom-Anfrage vorschnell anbieten */
                 <div className="border border-black/10 p-4">
                   <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
                     Die Passform konnte gerade nicht geladen werden. Bitte versuchen
-                    Sie es noch einmal — Ihre gespeicherten Maße bleiben erhalten.
+                    Sie es noch einmal, Ihre gespeicherten Maße bleiben erhalten.
                   </p>
                   <button
                     onClick={() => setFitRetryKey(k => k + 1)}
@@ -1561,17 +1561,17 @@ export default function Customize() {
                   <button type="button" onClick={openMeasEdit} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : (
-                /* Maße vorhanden, aber kein Treffer → Maßanfertigung */
+                /* Maße vorhanden, aber kein Treffer, Custom-Anfrage */
                 <div className="border border-black/10 p-4">
                   <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
                     Für Ihre Maße finden wir keine Standard-Passform. Wir fertigen
-                    diesen Schuh gerne als Maßanfertigung für Sie an.
+                    diesen Schuh gerne custom-made für Sie an.
                   </p>
                   <button
                     onClick={() => setCustomRequestOpen(true)}
                     className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0"
                   >
-                    Maßanfertigung anfragen
+                    Custom Made anfragen
                   </button>
                   <button type="button" onClick={openMeasEdit} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
@@ -1685,7 +1685,7 @@ export default function Customize() {
                   {sizeType === 'custom' && (
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-black/50">Größe</span>
-                      <span className="text-[11px] text-black">Maßanfertigung</span>
+                      <span className="text-[11px] text-black">Custom Made</span>
                     </div>
                   )}
                   {(sizeType === 'standard' && selectedSize) && (
@@ -1723,7 +1723,7 @@ export default function Customize() {
                     className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85"
                     style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
                   >
-                    <Send size={16} strokeWidth={1.5} /> Maßanfertigung anfragen
+                    <Send size={16} strokeWidth={1.5} /> Custom Made anfragen
                   </button>
                 ) : (
                   <>
@@ -1773,7 +1773,7 @@ export default function Customize() {
               </div>
               <p className="hidden lg:block text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>
                 {needsCustomRequest
-                  ? 'Maßanfertigung · persönliche Beratung über WhatsApp Business'
+                  ? 'Custom Made · persönliche Beratung über WhatsApp Business'
                   : !fitReady
                     ? 'Bitte zuerst die Passform ermitteln'
                     : 'Handgefertigt · Kostenlose Lieferung'}
@@ -1814,7 +1814,7 @@ export default function Customize() {
               className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85"
               style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
             >
-              <Send size={14} strokeWidth={1.5} /> Maßanfertigung anfragen
+              <Send size={14} strokeWidth={1.5} /> Custom Made anfragen
             </button>
           ) : (
             <>
@@ -1844,7 +1844,7 @@ export default function Customize() {
         </div>
         <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>
           {needsCustomRequest
-            ? 'Maßanfertigung · WhatsApp Business'
+            ? 'Custom Made · WhatsApp Business'
             : !fitReady
               ? 'Bitte zuerst die Passform ermitteln'
               : 'Handgefertigt · Kostenlose Lieferung'}

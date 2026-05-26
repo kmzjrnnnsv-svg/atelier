@@ -1,7 +1,7 @@
 /**
  * CorporateGifting.jsx, business.artisansole.com Einstieg.
  *
- * Öffentliche B2B-Seite (use-case-neutral): Schuhe nach Maß als Corporate
+ * Öffentliche B2B-Seite (use-case-neutral): Custom-made Schuhe als Corporate
  * Benefit, Mitarbeiter-, Kunden- oder Partnergeschenk oder für sonstige
  * Anlässe. Unternehmen senden eine Anfrage (Formular oder WhatsApp) und
  * erhalten ein Firmenkonto, in dem sie ihr Logo (für die Sohle) hinterlegen
@@ -63,7 +63,7 @@ export default function CorporateGifting() {
     if (!waNumber) return null
     const normalized = waNumber.replace(/[^0-9+]/g, '').replace(/^\+/, '')
     const lines = [
-      'Guten Tag Artisan Sole, wir interessieren uns für Schuhe nach Maß für unser Unternehmen.',
+      'Guten Tag Artisan Sole, wir interessieren uns für Custom-made Schuhe für unser Unternehmen.',
       form.company.trim() && `Firma: ${form.company.trim()}`,
       selectedDesign && `Design: ${selectedDesign}`,
       form.quantity.trim() && `Stückzahl: ${form.quantity.trim()}`,
@@ -150,7 +150,7 @@ export default function CorporateGifting() {
             Ein Geschenk, das man jeden Tag trägt.
           </h1>
           <p className="text-[13px] lg:text-[16px] text-white/80 font-light max-w-xl mt-6 leading-relaxed">
-            Lederschuhe nach Maß, für Mitarbeitende, Kunden und Partner. In
+            Custom-made Lederschuhe, für Mitarbeitende, Kunden und Partner. In
             spanischer Manufaktur gefertigt, auf Wunsch mit Ihrem Logo.
           </p>
           <button
@@ -180,7 +180,7 @@ export default function CorporateGifting() {
           <div className="text-center mb-12 lg:mb-14">
             <p className={`${eyebrow} mb-3`}>Für jeden Anlass</p>
             <h2 className={h2cls}>Ein Geschenk, viele Anlässe</h2>
-            <p className={`${lead} mt-4 max-w-xl mx-auto`}>Wofür Sie unsere Maßschuhe einsetzen, bleibt ganz Ihnen überlassen.</p>
+            <p className={`${lead} mt-4 max-w-xl mx-auto`}>Wofür Sie unsere Custom-made Schuhe einsetzen, bleibt ganz Ihnen überlassen.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
             {USE_CASES.map(u => {
@@ -197,12 +197,12 @@ export default function CorporateGifting() {
         </div>
       </section>
 
-      {/* Made-to-Measure, das Verfahren */}
+      {/* Custom Made, das Verfahren */}
       <section className="px-5 lg:px-8 py-16 lg:py-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 lg:mb-16">
-            <p className={`${eyebrow} mb-3`}>Schuhe nach Maß</p>
-            <h2 className={h2cls}>Die Präzision von Maßschuhen, ohne den Aufwand</h2>
+            <p className={`${eyebrow} mb-3`}>Custom Made</p>
+            <h2 className={h2cls}>Die Präzision maßgefertigter Schuhe, ohne den Aufwand</h2>
             <p className={`${lead} mt-4 max-w-xl mx-auto`}>
               Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben der Empfänger genügen, den Rest übernehmen wir.
             </p>
@@ -405,7 +405,7 @@ export default function CorporateGifting() {
             >
               <LogIn size={13} strokeWidth={1.4} /> Bereits Firmenkunde? Zum Firmen-Login
             </Link>
-            <p className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">Bespoke Footwear · Made in Spain</p>
+            <p className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">Custom Made Footwear · Made in Spain</p>
           </div>
         </div>
       </footer>

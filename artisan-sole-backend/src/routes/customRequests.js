@@ -9,7 +9,7 @@ const canManage = [authenticate, requireRole('admin', 'curator')]
 
 const VALID_STATUS = ['open', 'contacted', 'in_progress', 'quoted', 'accepted', 'declined', 'closed']
 
-// POST /api/custom-requests — guests + users may submit a Maßanfertigung request
+// POST /api/custom-requests, guests + users may submit a Custom-Anfrage
 router.post('/',
   authenticateOptional,
   body('customer_name').trim().notEmpty().withMessage('Name erforderlich'),

@@ -1,5 +1,5 @@
 /**
- * email.js — Nodemailer transporter + DB-driven order email templates
+ * email.js · Nodemailer transporter + DB-driven order email templates
  *
  * Config via environment variables OR settings table in DB:
  *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
@@ -57,7 +57,7 @@ async function send(options) {
   const cfg         = getEmailConfig()
   const transporter = createTransporter(cfg)
   if (!transporter) {
-    console.log('\n📧 [EMAIL — dev mode, SMTP not configured]')
+    console.log('\n📧 [EMAIL · dev mode, SMTP not configured]')
     console.log('  To:     ', options.to)
     console.log('  Subject:', options.subject)
     return
@@ -68,32 +68,32 @@ async function send(options) {
 // ─── Template engine ──────────────────────────────────────────────────────────
 const DEFAULTS = {
   order_confirmation: {
-    subject: 'Artisan Sole — Bestellbestätigung {{order_ref}}',
+    subject: 'Artisan Sole · Bestellbestätigung {{order_ref}}',
     intro:   'Vielen Dank, {{name}}. Ihre Bestellung wurde aufgenommen und wird individuell für Sie angefertigt.',
-    body:    'Ihre Maßschuhe werden in 6–8 Wochen handgefertigt und direkt zu Ihnen geliefert.\nDen aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.',
+    body:    'Ihre Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu Ihnen geliefert.\nDen aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.',
   },
   payment: {
-    subject: 'Artisan Sole — Zahlungsinformationen {{order_ref}}',
+    subject: 'Artisan Sole · Zahlungsinformationen {{order_ref}}',
     intro:   'Vielen Dank, {{name}}. Ihre Bestellung wurde erfasst und wartet auf Ihre Zahlung.\nBitte überweisen Sie den folgenden Betrag an das unten angegebene Konto. Verwenden Sie dabei zwingend den angegebenen Verwendungszweck, damit wir Ihre Zahlung korrekt zuordnen können.',
-    body:    'Nach Zahlungseingang werden Ihre Maßschuhe umgehend in die Fertigung gegeben.\nSie erhalten eine Bestätigung, sobald Ihre Zahlung bei uns eingegangen ist.',
+    body:    'Nach Zahlungseingang werden Ihre Schuhe umgehend in die Fertigung gegeben.\nSie erhalten eine Bestätigung, sobald Ihre Zahlung bei uns eingegangen ist.',
   },
   order_confirmed: {
-    subject: 'Artisan Sole — Zahlung bestätigt & Bestellung in Fertigung {{order_ref}}',
-    intro:   'Ihre Zahlung wurde bestätigt. Ihre Maßschuhe {{shoe_name}} sind nun in der Fertigung.',
+    subject: 'Artisan Sole · Zahlung bestätigt & Bestellung in Fertigung {{order_ref}}',
+    intro:   'Ihre Zahlung wurde bestätigt. Ihre Schuhe {{shoe_name}} sind nun in der Fertigung.',
     body:    'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.',
   },
   shipping: {
-    subject: 'Artisan Sole — Ihre Maßschuhe sind unterwegs! {{order_ref}}',
+    subject: 'Artisan Sole · Ihre Schuhe sind unterwegs! {{order_ref}}',
     intro:   '{{shoe_name}} wurden soeben versandt und befinden sich auf dem Weg zu Ihnen.',
-    body:    'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.\nBei Fragen wenden Sie sich an unser Team — wir sind gerne für Sie da.',
+    body:    'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.\nBei Fragen wenden Sie sich an unser Team, wir sind gerne für Sie da.',
   },
   quality_check: {
-    subject: 'Artisan Sole — Ihre Maßschuhe in der Qualitätskontrolle {{order_ref}}',
-    intro:   'Ihre Maßschuhe {{shoe_name}} wurden erfolgreich gefertigt und befinden sich jetzt in unserer Qualitätskontrolle.',
-    body:    'Jedes Detail wird geprüft — von der Nahtführung bis zur Passform. Nach bestandener Kontrolle werden Ihre Schuhe umgehend versandt.\nDen aktuellen Status finden Sie jederzeit in der Artisan Sole App.',
+    subject: 'Artisan Sole · Ihre Schuhe in der Qualitätskontrolle {{order_ref}}',
+    intro:   'Ihre Schuhe {{shoe_name}} wurden erfolgreich gefertigt und befinden sich jetzt in unserer Qualitätskontrolle.',
+    body:    'Jedes Detail wird geprüft, von der Nahtführung bis zur Passform. Nach bestandener Kontrolle werden Ihre Schuhe umgehend versandt.\nDen aktuellen Status finden Sie jederzeit in der Artisan Sole App.',
   },
   manufacturer: {
-    subject: '[Artisan Sole] Neue Bestellung {{order_ref}} — USER-{{user_id_padded}} — {{shoe_name}}',
+    subject: '[Artisan Sole] Neue Bestellung {{order_ref}} · USER-{{user_id_padded}} · {{shoe_name}}',
     intro:   'Neue Bestellung eingegangen. Bitte Fertigung vorbereiten.',
     body:    'STL-Dateien mit Kennung U{{user_id_padded}} im Admin-Panel herunterladen.',
   },
@@ -144,7 +144,7 @@ export async function sendOrderConfirmation(order, user) {
   const vars = {
     name: user.name, order_id: order.id, order_ref: ref, shoe_name: order.shoe_name,
     material: order.material, color: order.color, price: order.price,
-    eu_size: order.eu_size || '—', user_order_number: order.user_order_number,
+    eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
   }
   const subject = render(tmpl.subject, vars)
   const intro   = nl2br(render(tmpl.intro, vars))
@@ -171,7 +171,7 @@ export async function sendOrderConfirmation(order, user) {
     <div class="label">Material · Farbe</div>
     <div class="val">${order.material} · ${order.color}</div>
     <div class="label">Ihre Größe (aus 3D-Scan)</div>
-    <div class="val">EU ${order.eu_size || '—'}</div>
+    <div class="val">EU ${order.eu_size || '-'}</div>
     <hr class="divider">
     <table>
       <tr>
@@ -189,7 +189,7 @@ export async function sendOrderConfirmation(order, user) {
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0">${closing}</p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear · Alle Schuhe sind Einzelanfertigungen</div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Alle Schuhe sind Einzelanfertigungen</div>
 </div>
 </body></html>`
 
@@ -260,7 +260,7 @@ export async function sendPaymentInstructions(order, user) {
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0">${closing}</p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear · Alle Schuhe sind Einzelanfertigungen</div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Alle Schuhe sind Einzelanfertigungen</div>
 </div>
 </body></html>`
 
@@ -274,7 +274,7 @@ export async function sendOrderConfirmed(order, user) {
   const vars = {
     name: user.name, order_id: order.id, order_ref: ref, shoe_name: order.shoe_name,
     material: order.material, color: order.color, price: order.price,
-    eu_size: order.eu_size || '—', user_order_number: order.user_order_number,
+    eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
   }
   const subject = render(tmpl.subject, vars)
   const intro   = nl2br(render(tmpl.intro, vars))
@@ -295,12 +295,12 @@ export async function sendOrderConfirmed(order, user) {
       <div class="label">Ihr ${order.user_order_number}. Schuh bei Artisan Sole</div>
       <div class="val">${order.shoe_name} · ${order.material} · ${order.color}</div>
       <div class="label">Geschätzte Lieferzeit</div>
-      <div class="val">6–8 Wochen</div>
+      <div class="val">ca. 4 Wochen nach Zahlungseingang</div>
     </div>
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">${closing}</p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear · Alle Schuhe sind Einzelanfertigungen</div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Alle Schuhe sind Einzelanfertigungen</div>
 </div>
 </body></html>`
 
@@ -314,7 +314,7 @@ export async function sendQualityCheckNotification(order, user) {
   const vars = {
     name: user.name, order_id: order.id, order_ref: ref, shoe_name: order.shoe_name,
     material: order.material, color: order.color, price: order.price,
-    eu_size: order.eu_size || '—', user_order_number: order.user_order_number,
+    eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
   }
   const subject = render(tmpl.subject, vars)
   const intro   = nl2br(render(tmpl.intro, vars))
@@ -328,7 +328,7 @@ export async function sendQualityCheckNotification(order, user) {
   </div>
   <div class="body" style="text-align:center">
     <div class="badge" style="background:#8b5cf6;color:#fff">✓ QUALITÄTSKONTROLLE</div>
-    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Ihre Maßschuhe werden geprüft.</p>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Ihre Schuhe werden geprüft.</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">${intro}</p>
     <div style="text-align:left">
       <div class="label">Bestellnummer</div>
@@ -339,7 +339,7 @@ export async function sendQualityCheckNotification(order, user) {
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">${closing}</p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear · Alle Schuhe sind Einzelanfertigungen</div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Alle Schuhe sind Einzelanfertigungen</div>
 </div>
 </body></html>`
 
@@ -353,7 +353,7 @@ export async function sendShippingNotification(order, user) {
   const vars = {
     name: user.name, order_id: order.id, order_ref: ref, shoe_name: order.shoe_name,
     material: order.material, color: order.color, price: order.price,
-    eu_size: order.eu_size || '—', user_order_number: order.user_order_number,
+    eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
   }
   const subject = render(tmpl.subject, vars)
   const intro   = nl2br(render(tmpl.intro, vars))
@@ -371,7 +371,7 @@ export async function sendShippingNotification(order, user) {
   </div>
   <div class="body" style="text-align:center">
     <div class="badge" style="background:#3b82f6;color:#fff">✈ AUF DEM WEG ZU IHNEN</div>
-    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Ihre Maßschuhe sind unterwegs.</p>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Ihre Schuhe sind unterwegs.</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">${intro}</p>
     <div style="text-align:left">
       <div class="label">Bestellnummer</div>
@@ -390,7 +390,7 @@ export async function sendShippingNotification(order, user) {
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">${closing}</p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear · Alle Schuhe sind Einzelanfertigungen</div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Alle Schuhe sind Einzelanfertigungen</div>
 </div>
 </body></html>`
 
@@ -421,7 +421,7 @@ export async function sendManufacturerNotification(order, user, scan) {
   const vars = {
     name: user.name, order_id: order.id, order_ref: ref, shoe_name: order.shoe_name,
     material: order.material, color: order.color, price: order.price,
-    eu_size: order.eu_size || '—', user_order_number: order.user_order_number,
+    eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
     user_id_padded: userIdPadded,
   }
   const subject = render(tmpl.subject, vars)
@@ -439,7 +439,7 @@ export async function sendManufacturerNotification(order, user, scan) {
       if (order.business_code_id) bizCode = getDb().prepare('SELECT code FROM business_codes WHERE id = ?').get(order.business_code_id)
     } catch { /* ignore */ }
   }
-  const coverageLabel = order.business_coverage === 'full' ? 'Voll gedeckt (Firma)' : (order.business_coverage === 'discount' ? 'Firmen-Rabatt' : '—')
+  const coverageLabel = order.business_coverage === 'full' ? 'Voll gedeckt (Firma)' : (order.business_coverage === 'discount' ? 'Firmen-Rabatt' : '-')
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   body{font-family:'Georgia',serif;background:#f8f7f5;margin:0;padding:0}
@@ -484,7 +484,7 @@ export async function sendManufacturerNotification(order, user, scan) {
         <div class="item"><div class="label">Preis</div><div class="val">${order.price}</div></div>
         <div class="item"><div class="label">Material</div><div class="val">${order.material}</div></div>
         <div class="item"><div class="label">Farbe</div><div class="val">${order.color}</div></div>
-        <div class="item"><div class="label">EU-Größe</div><div class="val">${order.eu_size || '—'}</div></div>
+        <div class="item"><div class="label">EU-Größe</div><div class="val">${order.eu_size || '-'}</div></div>
       </div>
     </div>
     ${biz ? `
@@ -540,7 +540,7 @@ export async function sendManufacturerNotification(order, user, scan) {
       if (!entries.length) return ''
       return `
     <div class="section">
-      <div class="section-title">Kundenhistorie — Bestellte vs. Behaltene Schuhe</div>
+      <div class="section-title">Kundenhistorie: Bestellte vs. Behaltene Schuhe</div>
       <table style="width:100%;border-collapse:collapse;margin-top:8px">
         <thead><tr>
           <th style="font-size:10px;color:#aaa;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:6px 8px;border-bottom:1px solid #ede9e2">Modell</th>
@@ -584,7 +584,7 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
   const link = `${cfg.appUrl}/register-promotion?token=${inviteToken}`
   const discountText = discountPct ? `${discountPct}% Sonderkonditionen` : 'exklusive Sonderkonditionen'
 
-  const subject = 'Artisan Sole — Ihr exklusiver Promotion-Zugang'
+  const subject = 'Artisan Sole · Ihr exklusiver Promotion-Zugang'
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
   <div class="header">
@@ -600,7 +600,7 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto erstellen</a>
     <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear · Vertrauliche Einladung</div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Vertrauliche Einladung</div>
 </div>
 </body></html>`
 
@@ -610,7 +610,7 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
 export async function sendEmailVerification(email, name, token) {
   const cfg = getEmailConfig()
   const link = `${cfg.appUrl}/verify-email?token=${token}`
-  const subject = 'Artisan Sole — E-Mail bestätigen'
+  const subject = 'Artisan Sole · E-Mail bestätigen'
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
   <div class="header"><h1>ARTISAN SOLE</h1><p>E-MAIL BESTÄTIGEN</p></div>
@@ -620,7 +620,7 @@ export async function sendEmailVerification(email, name, token) {
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">E-Mail bestätigen</a>
     <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear</div>
+  <div class="footer">Artisan Sole Custom Made Footwear</div>
 </div>
 </body></html>`
   await send({ to: email, subject, html })
@@ -630,7 +630,7 @@ export async function sendBusinessInvitation(email, companyName, inviteToken) {
   const cfg = getEmailConfig()
   const link = `${cfg.appUrl}/register-business?token=${inviteToken}`
 
-  const subject = 'Artisan Sole für Unternehmen — Ihr Firmenkonto'
+  const subject = 'Artisan Sole für Unternehmen · Ihr Firmenkonto'
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
   <div class="header">
@@ -647,7 +647,7 @@ export async function sendBusinessInvitation(email, companyName, inviteToken) {
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto aktivieren</a>
     <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear · Vertrauliche Einladung</div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Vertrauliche Einladung</div>
 </div>
 </body></html>`
 
@@ -673,7 +673,7 @@ export async function sendInquiryNotification(request) {
   const to  = cfg.inquiryEmail || cfg.mfgEmail || cfg.user
   if (!to) { console.log('📧 [Anfrage] kein Empfänger konfiguriert, übersprungen'); return }
 
-  const subject = `Neue Anfrage${request.shoe_name ? ` — ${request.shoe_name}` : ''}`
+  const subject = `Neue Anfrage${request.shoe_name ? ` · ${request.shoe_name}` : ''}`
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
   <div class="header"><h1>ARTISAN SOLE</h1><p>NEUE ANFRAGE</p></div>
@@ -684,7 +684,7 @@ export async function sendInquiryNotification(request) {
     <hr class="divider">
     <p style="font-size:12px;color:#999;margin:0">Details und Status verwalten Sie im CMS unter <strong>Anfragen</strong> (<a href="${cfg.appUrl}/cms" style="color:#666">${cfg.appUrl}/cms</a>).</p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear</div>
+  <div class="footer">Artisan Sole Custom Made Footwear</div>
 </div>
 </body></html>`
 
@@ -694,7 +694,7 @@ export async function sendInquiryNotification(request) {
 export async function sendInquiryAck(request) {
   if (!request.customer_email) return
   const name = request.customer_name ? ` ${escapeHtml(request.customer_name)}` : ''
-  const subject = 'Artisan Sole — Ihre Anfrage ist eingegangen'
+  const subject = 'Artisan Sole · Ihre Anfrage ist eingegangen'
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
   <div class="header"><h1>ARTISAN SOLE</h1><p>ANFRAGE EINGEGANGEN</p></div>
@@ -705,7 +705,7 @@ export async function sendInquiryAck(request) {
       einem passenden Vorschlag bei Ihnen, unverbindlich.
     </p>
   </div>
-  <div class="footer">Artisan Sole Bespoke Footwear · Made in Spain</div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Made in Spain</div>
 </div>
 </body></html>`
 

@@ -68,7 +68,7 @@ export default function CampaignJoin() {
   const logo = resolveLogo(camp.business_logo)
   const benefit = camp.payment_mode === 'company'
     ? 'Ihr Schuh wird vom Unternehmen übernommen.'
-    : `Sie erhalten ${camp.discount_pct}% Rabatt auf Ihren Maßschuh.`
+    : `Sie erhalten ${camp.discount_pct}% Rabatt auf Ihren Custom-made Schuh.`
 
   return (
     <div className="min-h-[100dvh] bg-stone-50 flex flex-col items-center justify-center px-5 py-12">

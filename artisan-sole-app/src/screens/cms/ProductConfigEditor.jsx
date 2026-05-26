@@ -392,7 +392,7 @@ export default function ProductConfigEditor() {
  <RatingBadge rating={item.rating} />
  {!item.available && <span className="text-[10px] text-black/30 font-light">Nicht verfügbar</span>}
  </div>
- <p className="text-[10px] text-black/30 mt-0.5 font-light">{item.sub} · {item.season || '–'}</p>
+ <p className="text-[10px] text-black/30 mt-0.5 font-light">{item.sub} · {item.season || 'ganzjährig'}</p>
  {item.tip && <p className="text-[10px] text-black/25 mt-1 line-clamp-1 font-light">{item.tip}</p>}
  </div>
  </>

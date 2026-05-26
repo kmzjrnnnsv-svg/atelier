@@ -251,7 +251,7 @@ router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res)
   res.json({ message: 'Explore-Einstellungen gespeichert' })
 })
 
-// ─── GET /api/settings/whatsapp — public (used by Maßanfertigungs-Anfrage) ──
+// ─── GET /api/settings/whatsapp, public (used by Custom-Anfrage) ────────────
 router.get('/whatsapp', (req, res) => {
   const db = getDb()
   const row = db.prepare("SELECT value FROM settings WHERE key = 'whatsapp_business_number'").get()

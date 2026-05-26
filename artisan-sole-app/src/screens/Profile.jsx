@@ -23,7 +23,7 @@ const tabs = [
 // ── Foot Archetypes ────────────────────────────────────────────────────────
 const ARCHETYPES = [
   { key: 'egyptian',    label: 'Ägyptischer Fuß',   desc: 'Großer Zeh ist der längste. Häufigster Fußtyp.' },
-  { key: 'roman',       label: 'Römischer Fuß',     desc: 'Die ersten 2–3 Zehen sind gleich lang. Breiter Vorfuß.' },
+  { key: 'roman',       label: 'Römischer Fuß',     desc: 'Die ersten 2 bis 3 Zehen sind gleich lang. Breiter Vorfuß.' },
   { key: 'greek',       label: 'Griechischer Fuß',  desc: 'Zweiter Zeh ist länger als der große Zeh.' },
   { key: 'germanic',    label: 'Germanischer Fuß',  desc: 'Alle Zehen ähnlich lang. Sehr breiter Vorfuß.' },
   { key: 'celtic',      label: 'Keltischer Fuß',    desc: 'Großer Zeh kurz, zweiter lang, restliche absteigend.' },
@@ -175,7 +175,7 @@ export default function Profile() {
           {[
             { label: 'Bestellungen', value: orders.length,    path: '/orders' },
             { label: 'Favoriten',    value: favorites.length, path: '/wishlist' },
-            { label: 'Bewertungen',  value: '–',              path: null },
+            { label: 'Bewertungen',  value: '0',              path: null },
           ].map(({ label, value, path }) => (
             <button
               key={label}

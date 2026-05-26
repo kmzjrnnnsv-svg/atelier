@@ -61,7 +61,7 @@ export default function BusinessDashboard() {
           <p className="text-[12px] text-black/50 font-light leading-relaxed">
             Legen Sie eine Kampagne an und teilen Sie den Beitritts-Link mit Ihrem
             Team. Mitarbeitende melden sich mit ihrer Firmen-E-Mail an und bestellen
-            ihren passgenauen Schuh nach Maß, auf Wunsch mit Ihrem Logo auf der Sohle.
+            ihren passgenauen Custom-made Schuh, auf Wunsch mit Ihrem Logo auf der Sohle.
             Ab 10 Paar pro Modell greift der Mengenrabatt, den Fortschritt sehen Sie
             live je Modell.
           </p>

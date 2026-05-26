@@ -224,7 +224,7 @@ export default function Orders() {
           Bestellungen
         </h1>
         <p className="text-[13px] lg:text-[15px] text-black/40 mt-3 lg:mt-4 max-w-lg leading-[1.7] font-light">
-          Verfolgen Sie den Status Ihrer Maßanfertigungen.
+          Verfolgen Sie den Status Ihrer Bestellungen.
         </p>
       </div>
 
@@ -259,7 +259,7 @@ export default function Orders() {
           <ShoppingBag size={32} className="text-black/10 mb-4" strokeWidth={1} />
           <p className="text-[14px] font-light text-black/60">Noch keine Bestellungen</p>
           <p className="text-[12px] text-black/30 mt-2 max-w-[260px] leading-relaxed font-light">
-            Ihre Maßschuhe erscheinen hier nach der Bestellung.
+            Ihre Custom-made Schuhe erscheinen hier nach der Bestellung.
           </p>
           <button
             onClick={() => navigate('/collection')}

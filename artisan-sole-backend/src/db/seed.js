@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 
 export async function seedDatabase(db) {
-  // Always run article seeding — independent of user seeding so it
+  // Always run article seeding, independent of user seeding so it
   // also populates articles in existing databases on upgrade.
   seedEmailTemplates(db)
   seedArticles(db)
@@ -10,15 +10,15 @@ export async function seedDatabase(db) {
   seedConfiguratorOptions(db)
   seedExtendedCatalog(db)
   seedMatrixModels(db)
-  // Eigenstaendige Loafer-Stilmodelle (feste Ausfuehrung) — vor V2, damit
+  // Eigenstaendige Loafer-Stilmodelle (feste Ausfuehrung), vor V2, damit
   // der Force-Reset ihnen die vollstaendige Loafer-Konfiguration zuweist.
   seedLoaferVariants(db)
-  // V2 LÄUFT ZULETZT — räumt veraltete Templates auf und richtet
+  // V2 LÄUFT ZULETZT, räumt veraltete Templates auf und richtet
   // sie exakt nach der User-Matrix aus, plus force-reset für die
   // 16 Standardmodelle.
   seedMatrixTemplatesV2(db)
   // Passform-Maßtabelle (Leisten × Weite × Größe → Fußlänge + Ballenumfang).
-  // Unabhängig & idempotent (INSERT OR IGNORE) — NICHT an V2 koppeln, das
+  // Unabhängig & idempotent (INSERT OR IGNORE), NICHT an V2 koppeln, das
   // category_templates leert.
   seedLastSizeChart(db)
   seedFaqs(db)
@@ -46,7 +46,7 @@ export async function seedDatabase(db) {
       VALUES (?, ?, ?, 'curator')
     `).run('Curator', 'curator@artisansole.com', curatorHash)
 
-    // Demo / guest user — for trying the app without a real account
+    // Demo / guest user, for trying the app without a real account
     const demoHash = bcrypt.hashSync('Demo@2026!', 12)
     db.prepare(`
       INSERT INTO users (name, email, password_hash, role)
@@ -58,7 +58,7 @@ export async function seedDatabase(db) {
       INSERT INTO shoes (name, category, price, material, match_pct, color, tag, image_data)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `)
-    // Oxford — verified free CDN photos
+    // Oxford, verified free CDN photos
     shoeStmt.run('The Heritage Oxford',    'OXFORD',  '€ 1.450', 'Full-Grain Calfskin',    '99.4%', '#1f2937', 'BESTSELLER',
       'https://images.unsplash.com/photo-1653868250450-b83e6263d427?w=600&q=85&fit=crop&auto=format')
     shoeStmt.run('The Balmoral Cap-Toe',   'OXFORD',  '€ 1.680', 'Shell Cordovan',         '97.8%', '#3b1f0a', null,
@@ -145,14 +145,14 @@ function seedArticles(db) {
     stmt.run(
       'Kurzfristige Folgen falschen Schuhwerks',
       'kurzfristige-folgen',
-      'Falsch sitzende Schuhe verursachen schon nach wenigen Wochen spürbare Beschwerden — von Blasen bis zu akuten Schmerzen.',
-      `Was passiert in den ersten 0–4 Wochen?
+      'Falsch sitzende Schuhe verursachen schon nach wenigen Wochen spürbare Beschwerden, von Blasen bis zu akuten Schmerzen.',
+      `Was passiert in den ersten 0 bis 4 Wochen?
 
 Blasen & Druckstellen
 Enger Zehenraum oder ein harter Absatz erzeugt Reibung an empfindlichen Stellen. Das Ergebnis: schmerzhafte Hautschäden, die sich schnell zu offenen Wunden entwickeln können.
 
 Muskelermüdung
-Fehlt die richtige Dämpfung, müssen Bein- und Fußmuskeln permanent überkompensieren. Die Folge ist eine deutlich schnellere Erschöpfung — besonders bei langen Gehstrecken.
+Fehlt die richtige Dämpfung, müssen Bein- und Fußmuskeln permanent überkompensieren. Die Folge ist eine deutlich schnellere Erschöpfung, besonders bei langen Gehstrecken.
 
 Akute Schmerzen
 Schuhe ohne ausreichende Stütze belasten Ferse, Spann und Zehen direkt. Der Schmerz setzt oft schon nach wenigen Stunden ein und verschwindet erst nach dem Ausziehen der Schuhe.
@@ -164,19 +164,19 @@ Fazit: Der Körper sendet klare Warnsignale. Wer sie ignoriert, riskiert dauerha
     stmt.run(
       'Mittelfristige Schäden: Schleichende Veränderungen',
       'mittelfristige-schaeden',
-      'Nach 1–12 Monaten dauerhafter Fehlbelastung beginnen sich Gelenke und die Körperhaltung nachweislich zu verändern.',
+      'Nach 1 bis 12 Monaten dauerhafter Fehlbelastung beginnen sich Gelenke und die Körperhaltung nachweislich zu verändern.',
       `Was passiert zwischen 1 und 12 Monaten?
 
 Fehlstellungen
 Dauerhafter Druck auf die falschen Stellen führt zu strukturellen Veränderungen: Hallux valgus (Ballenzeh), Hammerzehen und Spreizfuß entstehen nicht über Nacht, sondern durch anhaltende Fehlbelastung.
 
 Gelenkschmerzen
-Knie und Sprunggelenk passen ihre Bewegungsmechanik an die veränderte Fußbelastung an — ein Prozess, der Entzündungen auslöst und chronische Schmerzen fördert.
+Knie und Sprunggelenk passen ihre Bewegungsmechanik an die veränderte Fußbelastung an, ein Prozess, der Entzündungen auslöst und chronische Schmerzen fördert.
 
 Haltungsschäden
-Die Wirbelsäule kompensiert jede Veränderung der Fußstellung. Was klein beginnt, verschiebt schrittweise das gesamte Körpergleichgewicht — mit weitreichenden Folgen für Rücken und Schultern.
+Die Wirbelsäule kompensiert jede Veränderung der Fußstellung. Was klein beginnt, verschiebt schrittweise das gesamte Körpergleichgewicht, mit weitreichenden Folgen für Rücken und Schultern.
 
-Gut zu wissen: Viele dieser Veränderungen sind in diesem Stadium noch reversibel — wenn man rechtzeitig handelt.`,
+Gut zu wissen: Viele dieser Veränderungen sind in diesem Stadium noch reversibel, wenn man rechtzeitig handelt.`,
       'Gesundheit', 1, 1
     )
 
@@ -195,21 +195,21 @@ Arthrose in Knie und Hüfte sowie Bandscheibenvorfälle entstehen nicht zufälli
 Systemische Haltungsschäden
 Skoliose, Beckenschiefstand und chronische Rückenschmerzen können direkte Langzeitfolgen dauerhafter Fußfehlstellungen sein.
 
-Der einzige echte Schutz: passgenaues Schuhwerk — gefertigt nach deinen individuellen Maßen.`,
+Der einzige echte Schutz: passgenaues Schuhwerk, gefertigt nach deinen individuellen Maßen.`,
       'Gesundheit', 0, 2
     )
 
     stmt.run(
       'Tipps für die richtige Schuhwahl',
       'tipps-schuhwahl',
-      'Sechs praktische Regeln, die du sofort umsetzen kannst — für gesündere Füße und mehr Wohlbefinden.',
+      'Sechs praktische Regeln, die du sofort umsetzen kannst, für gesündere Füße und mehr Wohlbefinden.',
       `6 Regeln für gesundes Schuhwerk
 
 1. Fußlänge regelmäßig nachmessen
-Füße verändern sich im Laufe des Lebens — besonders durch Schwangerschaft, Gewichtsveränderungen oder das Alter. Lass deine Füße mindestens einmal jährlich nachmessen.
+Füße verändern sich im Laufe des Lebens, besonders durch Schwangerschaft, Gewichtsveränderungen oder das Alter. Lass deine Füße mindestens einmal jährlich nachmessen.
 
 2. Ausreichend Spielraum
-Mindestens 1 cm Platz vor der großen Zehe — beim Stehen, nicht beim Sitzen. Schuhe, die im Geschäft "gerade noch passen", werden spätestens am Nachmittag zu eng.
+Mindestens 1 cm Platz vor der großen Zehe, beim Stehen, nicht beim Sitzen. Schuhe, die im Geschäft "gerade noch passen", werden spätestens am Nachmittag zu eng.
 
 3. Schuhwerk dem Zweck anpassen
 Ein Oxford-Derby ist kein Joggingschuh. Für Sport, Büro und Freizeit braucht es unterschiedliche Schuhe mit passendem Support.
@@ -218,33 +218,33 @@ Ein Oxford-Derby ist kein Joggingschuh. Für Sport, Büro und Freizeit braucht e
 Material braucht Zeit zum Lüften und Zurückformen. Wer täglich in denselben Schuhen läuft, beschleunigt den Verschleiß und reduziert die Stützwirkung.
 
 5. Hochhackige Schuhe begrenzen
-High Heels oder stark erhöhte Absätze sollten maximal 2–3 Stunden täglich getragen werden. Danach: flache, stützende Schuhe.
+High Heels oder stark erhöhte Absätze sollten maximal 2 bis 3 Stunden täglich getragen werden. Danach: flache, stützende Schuhe.
 
 6. 3D-Fußscan für Maßfertigung
-Die präziseste Lösung: ein digitaler Fußscan, der deine exakten Maße erfasst. Maßgefertigte Schuhe eliminieren Kompromisse bei der Passform — für maximalen Komfort und langfristige Gesundheit.`,
+Die präziseste Lösung: ein digitaler Fußscan, der deine exakten Maße erfasst. Maßgefertigte Schuhe eliminieren Kompromisse bei der Passform, für maximalen Komfort und langfristige Gesundheit.`,
       'Tipps', 0, 3
     )
 
     stmt.run(
       'Woraus bestehen hochwertige Schuhe?',
       'materialien-hochwertige-schuhe',
-      'Full-Grain Leder, Shell Cordovan, Suede — was steckt wirklich in einem Qualitätsschuh? Ein Überblick für anspruchsvolle Träger.',
+      'Full-Grain Leder, Shell Cordovan, Suede, was steckt wirklich in einem Qualitätsschuh? Ein Überblick für anspruchsvolle Träger.',
       `Materialien, die den Unterschied machen
 
 Full-Grain Calfskin (Vollnarbiges Kalbsleder)
-Das hochwertigste konventionelle Leder — die Narbenschicht ist vollständig erhalten, was maximale Festigkeit und Atmungsaktivität garantiert. Mit der Zeit entwickelt es eine charakteristische Patina.
+Das hochwertigste konventionelle Leder, die Narbenschicht ist vollständig erhalten, was maximale Festigkeit und Atmungsaktivität garantiert. Mit der Zeit entwickelt es eine charakteristische Patina.
 
 Shell Cordovan
 Aus der Rumpfschicht des Pferdes gefertigt, ist Cordovan das Edelste der Lederwelt. Seine dichte Faserstruktur macht es extrem langlebig, wasserabweisend und nahezu unverwüstlich.
 
 Suede & Nubuck
-Suede entsteht durch Schleifen der Fleischseite, Nubuck durch Schleifen der Narbenseite. Beide Materialien sind weicher und mattierter — erfordern aber mehr Pflege als glatte Leder.
+Suede entsteht durch Schleifen der Fleischseite, Nubuck durch Schleifen der Narbenseite. Beide Materialien sind weicher und mattierter, erfordern aber mehr Pflege als glatte Leder.
 
 Burnished Leather
 Durch maschinelles oder handwerkliches Bürsten entsteht ein charakteristischer Zweiton-Effekt, der vintage-inspirierte Eleganz verleiht.
 
 Was schlechte Schuhe verrät
-Synthetische Innensohlen, Klebverbindungen statt Welt- oder Rahmennähtung und dünne Laufsohlen aus Plastik sind klassische Zeichen eines minderwertigen Schuhs — unabhängig vom Preis.`,
+Synthetische Innensohlen, Klebverbindungen statt Welt- oder Rahmennähtung und dünne Laufsohlen aus Plastik sind klassische Zeichen eines minderwertigen Schuhs, unabhängig vom Preis.`,
       'Wissen', 0, 4
     )
   })()
@@ -265,39 +265,39 @@ function seedEmailTemplates(db) {
       'order_confirmation',
       'Bestellbestätigung',
       'Wird direkt nach Aufgabe der Bestellung an den Kunden gesendet.',
-      'Artisan Sole — Bestellbestätigung #{{order_id}}',
+      'Artisan Sole ·Bestellbestätigung #{{order_id}}',
       'Vielen Dank, {{name}}. Ihre Bestellung wurde aufgenommen und wird individuell für Sie angefertigt.',
-      'Ihre Maßschuhe werden in 6–8 Wochen handgefertigt und direkt zu Ihnen geliefert.\nDen aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.'
+      'Ihre Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu Ihnen geliefert.\nDen aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.'
     )
     stmt.run(
       'payment',
       'Zahlungsanweisung',
-      'Enthält Bankdaten und Verwendungszweck — wird gleichzeitig mit der Bestellbestätigung gesendet.',
-      'Artisan Sole — Zahlungsinformationen Bestellung #{{order_id}}',
+      'Enthält Bankdaten und Verwendungszweck, wird gleichzeitig mit der Bestellbestätigung gesendet.',
+      'Artisan Sole ·Zahlungsinformationen Bestellung #{{order_id}}',
       'Vielen Dank, {{name}}. Ihre Bestellung wurde erfasst und wartet auf Ihre Zahlung.\nBitte überweisen Sie den folgenden Betrag an das unten angegebene Konto. Verwenden Sie dabei zwingend den angegebenen Verwendungszweck, damit wir Ihre Zahlung korrekt zuordnen können.',
-      'Nach Zahlungseingang werden Ihre Maßschuhe umgehend in die Fertigung gegeben.\nSie erhalten eine Bestätigung, sobald Ihre Zahlung bei uns eingegangen ist.'
+      'Nach Zahlungseingang werden Ihre Schuhe umgehend in die Fertigung gegeben.\nSie erhalten eine Bestätigung, sobald Ihre Zahlung bei uns eingegangen ist.'
     )
     stmt.run(
       'order_confirmed',
       'Zahlung bestätigt',
       'Wird gesendet, wenn der Admin den Zahlungseingang bestätigt und die Fertigung startet.',
-      'Artisan Sole — Zahlung bestätigt & Bestellung in Fertigung #{{order_id}}',
-      'Ihre Zahlung wurde bestätigt. Ihre Maßschuhe {{shoe_name}} sind nun in der Fertigung.',
+      'Artisan Sole ·Zahlung bestätigt & Bestellung in Fertigung #{{order_id}}',
+      'Ihre Zahlung wurde bestätigt. Ihre Schuhe {{shoe_name}} sind nun in der Fertigung.',
       'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.'
     )
     stmt.run(
       'shipping',
       'Versandbestätigung',
       'Wird gesendet, wenn Admin oder Curator die Bestellung als versandt markiert.',
-      'Artisan Sole — Ihre Maßschuhe sind unterwegs! Bestellung #{{order_id}}',
+      'Artisan Sole ·Ihre Schuhe sind unterwegs! Bestellung #{{order_id}}',
       '{{shoe_name}} wurden soeben versandt und befinden sich auf dem Weg zu Ihnen.',
-      'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.\nBei Fragen wenden Sie sich an unser Team — wir sind gerne für Sie da.'
+      'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.\nBei Fragen wenden Sie sich an unser Team, wir sind gerne für Sie da.'
     )
     stmt.run(
       'manufacturer',
       'Hersteller-Benachrichtigung',
       'Interne E-Mail an den Hersteller mit Bestelldetails und 3D-Fußmaßen.',
-      '[Artisan Sole] Neue Bestellung #{{order_id}} — USER-{{user_id_padded}} — {{shoe_name}}',
+      '[Artisan Sole] Neue Bestellung #{{order_id}} · USER-{{user_id_padded}} · {{shoe_name}}',
       'Neue Bestellung eingegangen. Bitte Fertigung vorbereiten.',
       'STL-Dateien mit Kennung U{{user_id_padded}} im Admin-Panel herunterladen.'
     )
@@ -305,7 +305,7 @@ function seedEmailTemplates(db) {
 }
 
 // ── SHOE ↔ ACCESSORY ASSIGNMENTS ────────────────────────────────────────────
-// Runs independently — assigns accessories to shoes based on material & category.
+// Runs independently, assigns accessories to shoes based on material & category.
 function seedShoeAccessories(db) {
   const existing = db.prepare('SELECT COUNT(*) as count FROM shoe_accessories').get()
   if (existing.count > 0) return
@@ -411,11 +411,11 @@ function seedShoeAccessories(db) {
   console.log(`✅ Seeded: shoe-accessory assignments for ${shoes.length} shoes`)
 }
 
-// seedAccessoryMaterials — ordnet jedes Zubehör seiner passenden Lederart zu
+// seedAccessoryMaterials, ordnet jedes Zubehör seiner passenden Lederart zu
 // (Pflege nach Material statt nach Schuhmodell). Im Konfigurator wird Zubehör
 // gezeigt, dessen material_keys '*' ist ODER das gewählte Material enthält.
 // Idempotent + nicht-destruktiv: setzt NUR Zeilen, deren material_keys noch
-// NULL ist — manuelle CMS-Zuordnungen bleiben erhalten.
+// NULL ist, manuelle CMS-Zuordnungen bleiben erhalten.
 function seedAccessoryMaterials(db) {
   // Material-Gruppen (aktive + Legacy-Keys).
   const SMOOTH = 'lux_calf,painted_full_grain,patina,box_calf,painted_calf,calfskin'
@@ -461,7 +461,7 @@ function seedAccessoryMaterials(db) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Konfigurator-Optionen — Last, Sohle, Welt, Heel, Toe, Schnalle,
+// Konfigurator-Optionen, Last, Sohle, Welt, Heel, Toe, Schnalle,
 // Loafer-Dekor, Beveled Waist + Vorlagen pro Kategorie.
 // Idempotent: läuft bei jedem Start, fügt nur fehlende Einträge ein.
 // ─────────────────────────────────────────────────────────────────────
@@ -472,13 +472,13 @@ function seedConfiguratorOptions(db) {
   //   → Welt → Buckle → Buckel Farbe → Farbe innen → Sohle Farbe Unten
   // Color (Außenfarbe) bleibt eigenes Picker-UI vor diesen Gruppen.
   const GROUPS = [
-    { key: 'last',              label: 'Schuhform',      ui_type: 'single', required: 1, sort_order: 1,  description: 'Leistenform — bestimmt Zehenform, Taille und Proportion.' },
+    { key: 'last',              label: 'Schuhform',      ui_type: 'single', required: 1, sort_order: 1,  description: 'Leistenform, bestimmt Zehenform, Taille und Proportion.' },
     { key: 'wholecut_base',     label: 'Base',           ui_type: 'single', required: 1, sort_order: 2,  description: 'Vorderkappen-Verarbeitung (nur Whole Cut).' },
     { key: 'heel',              label: 'Absatz',         ui_type: 'single', required: 1, sort_order: 3,  description: 'Standard- oder erhöhter Absatz.' },
     { key: 'loafer_decoration', label: 'Accessoires',    ui_type: 'single', required: 0, sort_order: 4,  description: 'Dekoration bei Loafer-Modellen.' },
-    { key: 'sole',              label: 'Sohlen-Art',     ui_type: 'single', required: 1, sort_order: 5,  description: 'Art der Sohle — z. B. Leder, Gummi, Dainite oder Crepe.' },
+    { key: 'sole',              label: 'Sohlen-Art',     ui_type: 'single', required: 1, sort_order: 5,  description: 'Art der Sohle, z. B. Leder, Gummi, Dainite oder Crepe.' },
     { key: 'sole_color',        label: 'Sohlen Color',   ui_type: 'single', required: 0, sort_order: 6,  description: 'Farbe der Außensohle (sichtbarer Rand).' },
-    { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 7,  description: 'Rahmen — City für glatten Look, Country/Storm für robusten Auftritt.' },
+    { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 7,  description: 'Rahmen, City für glatten Look, Country/Storm für robusten Auftritt.' },
     { key: 'buckle',            label: 'Buckle',         ui_type: 'single', required: 1, sort_order: 8,  description: 'Schnallenform (für Monk-Modelle).' },
     { key: 'buckle_color',      label: 'Buckle Farbe',   ui_type: 'single', required: 0, sort_order: 9,  description: 'Material der Schnalle (nur Monk).' },
     { key: 'inner_color',       label: 'Farbe Innen',    ui_type: 'single', required: 0, sort_order: 10, description: 'Farbe des Futters.' },
@@ -504,29 +504,29 @@ function seedConfiguratorOptions(db) {
   // 2) Werte pro Gruppe (alles, was du in den Screenshots gezeigt hast)
   const OPTIONS = [
     // Leisten (Last)
-    { group: 'last', key: 'zurigo',    label: 'Zurigo',    description: 'Runde Zehenform für traditionell-englischen Look. Bietet am meisten Platz im Zehenbereich — ideal für breitere Füße oder hohen Spann.', price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
-    { group: 'last', key: 'monti',     label: 'Monti',     description: 'Klassische Eleganz mit leicht quadratischer Zehe. Der vielseitige Allrounder — passt zu den meisten Fußformen und jedem Anlass.',     price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'zurigo',    label: 'Zurigo',    description: 'Runde Zehenform für traditionell-englischen Look. Bietet am meisten Platz im Zehenbereich, ideal für breitere Füße oder hohen Spann.', price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
+    { group: 'last', key: 'monti',     label: 'Monti',     description: 'Klassische Eleganz mit leicht quadratischer Zehe. Der vielseitige Allrounder, passt zu den meisten Fußformen und jedem Anlass.',     price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,MONK,DOUBLE_MONK' },
     { group: 'last', key: 'savile',    label: 'Savile',    description: 'Schlanker Look mit leichter Chisel-Zehe. Elegant für normale bis schmale Füße.',                                                       price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
-    { group: 'last', key: 'belgravia', label: 'Belgravia', description: 'Chisel-Zehe, schmale Taille und kubanischer Absatz. Markantes Statement — am besten für schlanke Füße.',                                price: 0,  cats: 'OXFORD,WHOLECUT,CHELSEA' },
+    { group: 'last', key: 'belgravia', label: 'Belgravia', description: 'Chisel-Zehe, schmale Taille und kubanischer Absatz. Markantes Statement, am besten für schlanke Füße.',                                price: 0,  cats: 'OXFORD,WHOLECUT,CHELSEA' },
 
-    // Sohle — Beschreibungen mit Anwendungs-Hinweis (wann was sinnvoll ist)
-    { group: 'sole', key: 'leather',          label: 'Leather',          description: 'Klassische Ledersohle — elegant für Business, Anzug und drinnen. Die richtige Wahl für die meisten Anlässe.', price: 0,  cats: '*' },
-    { group: 'sole', key: 'leather_mountain', label: 'Leather Mountain', description: 'Leder mit Bergprofil — etwas mehr Grip bei trockenem Wetter, behält den eleganten Charakter.',              price: 0,  cats: '*' },
-    { group: 'sole', key: 'leather_buttons',  label: 'Leather Buttons',  description: 'Leder mit eingelassenen Noppen — dezent griffiger als glattes Leder, gut für den Alltag.',                  price: 0,  cats: '*' },
-    { group: 'sole', key: 'leather_rubber',   label: 'Leather + Rubber', description: 'Leder mit Gummi-Mittelsteg — eleganter Look mit alltagstauglichem Halt. Guter Mittelweg.',                  price: 0,  cats: '*' },
-    { group: 'sole', key: 'dainite',          label: 'Dainite',          description: 'Stollen-Gummisohle — robust und rutschsicher bei Nässe. Ideal für draußen und Regenwetter.',               price: 5,  cats: '*' },
-    { group: 'sole', key: 'commando',         label: 'Commando',         description: 'Grobes Profil — maximaler Grip. Für Outdoor, Winter und raues Gelände.',                                   price: 0,  cats: '*' },
-    { group: 'sole', key: 'crepe',            label: 'Crepe',            description: 'Naturkautschuk — weich, leise und leger. Perfekt für entspannte, sommerliche Anlässe.',                     price: 5,  cats: 'LOAFER,DERBY,SNEAKER' },
-    { group: 'sole', key: 'rubber',           label: 'Rubber',           description: 'Glatte Gummisohle — unauffälliger Allrounder mit etwas Grip für den Alltag.',                              price: 0,  cats: '*' },
-    { group: 'sole', key: 'dots',             label: 'Dots',             description: 'Gummi mit feinen Noppen — dezenter Grip, unauffällig im Alltag.',                                          price: 0,  cats: '*' },
-    { group: 'sole', key: 'rocky',            label: 'Rocky',            description: 'Robuste Outdoor-Sohle — für Stiefel und raues Gelände bei jedem Wetter.',                                  price: 0,  cats: 'CHELSEA,BOOT,DERBY' },
-    { group: 'sole', key: 'beveled_waist',    label: 'Beveled Waist',    description: 'Schlanke, geschwungene Taille — Markenzeichen feinster Maßschuhmacherei, rein optisch.',                    price: 35, cats: 'OXFORD,WHOLECUT,DERBY,MONK,DOUBLE_MONK' },
-    { group: 'sole', key: 'art',              label: 'Art',              description: 'Handbemalte Spezialsohle — auffälliges Einzelstück für Individualisten.',                                  price: 17, cats: '*' },
+    // Sohle, Beschreibungen mit Anwendungs-Hinweis (wann was sinnvoll ist)
+    { group: 'sole', key: 'leather',          label: 'Leather',          description: 'Klassische Ledersohle, elegant für Business, Anzug und drinnen. Die richtige Wahl für die meisten Anlässe.', price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_mountain', label: 'Leather Mountain', description: 'Leder mit Bergprofil, etwas mehr Grip bei trockenem Wetter, behält den eleganten Charakter.',              price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_buttons',  label: 'Leather Buttons',  description: 'Leder mit eingelassenen Noppen, dezent griffiger als glattes Leder, gut für den Alltag.',                  price: 0,  cats: '*' },
+    { group: 'sole', key: 'leather_rubber',   label: 'Leather + Rubber', description: 'Leder mit Gummi-Mittelsteg, eleganter Look mit alltagstauglichem Halt. Guter Mittelweg.',                  price: 0,  cats: '*' },
+    { group: 'sole', key: 'dainite',          label: 'Dainite',          description: 'Stollen-Gummisohle, robust und rutschsicher bei Nässe. Ideal für draußen und Regenwetter.',               price: 5,  cats: '*' },
+    { group: 'sole', key: 'commando',         label: 'Commando',         description: 'Grobes Profil, maximaler Grip. Für Outdoor, Winter und raues Gelände.',                                   price: 0,  cats: '*' },
+    { group: 'sole', key: 'crepe',            label: 'Crepe',            description: 'Naturkautschuk, weich, leise und leger. Perfekt für entspannte, sommerliche Anlässe.',                     price: 5,  cats: 'LOAFER,DERBY,SNEAKER' },
+    { group: 'sole', key: 'rubber',           label: 'Rubber',           description: 'Glatte Gummisohle, unauffälliger Allrounder mit etwas Grip für den Alltag.',                              price: 0,  cats: '*' },
+    { group: 'sole', key: 'dots',             label: 'Dots',             description: 'Gummi mit feinen Noppen, dezenter Grip, unauffällig im Alltag.',                                          price: 0,  cats: '*' },
+    { group: 'sole', key: 'rocky',            label: 'Rocky',            description: 'Robuste Outdoor-Sohle, für Stiefel und raues Gelände bei jedem Wetter.',                                  price: 0,  cats: 'CHELSEA,BOOT,DERBY' },
+    { group: 'sole', key: 'beveled_waist',    label: 'Beveled Waist',    description: 'Schlanke, geschwungene Taille, Markenzeichen feinster Schuhmacherkunst, rein optisch.',                    price: 35, cats: 'OXFORD,WHOLECUT,DERBY,MONK,DOUBLE_MONK' },
+    { group: 'sole', key: 'art',              label: 'Art',              description: 'Handbemalte Spezialsohle, auffälliges Einzelstück für Individualisten.',                                  price: 17, cats: '*' },
 
-    // Welt (Rahmen) — in den meisten Fällen reicht City
-    { group: 'welt', key: 'city',    label: 'City',    description: 'Schmaler, eleganter Rahmen — für Business, Anzug und Alltag. Für die meisten Anlässe die richtige Wahl.', price: 0, cats: '*' },
-    { group: 'welt', key: 'country', label: 'Country', description: 'Breiterer, robusterer Rahmen — für legere Outfits und kräftigere Schuhe.',                              price: 0, cats: '*' },
-    { group: 'welt', key: 'storm',   label: 'Storm',   description: 'Wasserabweisender Rahmen — schützt bei Regen und Outdoor.',                                            price: 0, cats: '*' },
+    // Welt (Rahmen), in den meisten Fällen reicht City
+    { group: 'welt', key: 'city',    label: 'City',    description: 'Schmaler, eleganter Rahmen, für Business, Anzug und Alltag. Für die meisten Anlässe die richtige Wahl.', price: 0, cats: '*' },
+    { group: 'welt', key: 'country', label: 'Country', description: 'Breiterer, robusterer Rahmen, für legere Outfits und kräftigere Schuhe.',                              price: 0, cats: '*' },
+    { group: 'welt', key: 'storm',   label: 'Storm',   description: 'Wasserabweisender Rahmen, schützt bei Regen und Outdoor.',                                            price: 0, cats: '*' },
 
     // Heel (Absatz)
     { group: 'heel', key: 'standard',    label: 'Standard',    description: 'Klassische Absatzhöhe.',  price: 0, cats: '*' },
@@ -637,7 +637,7 @@ function seedConfiguratorOptions(db) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// seedExtendedCatalog — vollständiges Material/Farb/Konfig-Setup
+// seedExtendedCatalog, vollständiges Material/Farb/Konfig-Setup
 // gemäß Matrix mit Familie (Aesthetic/Durable), Material-Typen und
 // allen Optionsgruppen für jedes Schuhmodell.
 // Idempotent: aktualisiert nur fehlende Datensätze.
@@ -648,11 +648,11 @@ export function seedExtendedCatalog(db) {
     // Aesthetic
     { key: 'lux_calf',            label: 'Lux Calf',            sub: 'Aesthetic', family: 'aesthetic', color: '#3b1f0a', tip: 'Hochglanz-Kalbsleder.',                          rating: 'good',    sort: 0 },
     { key: 'lux_suede',           label: 'Lux Suede',           sub: 'Aesthetic', family: 'aesthetic', color: '#7c3a1e', tip: 'Premium-Veloursleder.',                          rating: 'good',    sort: 1 },
-    { key: 'painted_full_grain',  label: 'Painted Full Grain',  sub: 'Aesthetic', family: 'aesthetic', color: '#5b2c0e', tip: 'Patinierungs-Vollnarbenleder. Robust UND optisch veredelt — die Allzweckwahl.', rating: 'good', sort: 2 },
+    { key: 'painted_full_grain',  label: 'Painted Full Grain',  sub: 'Aesthetic', family: 'aesthetic', color: '#5b2c0e', tip: 'Patinierungs-Vollnarbenleder. Robust UND optisch veredelt, die Allzweckwahl.', rating: 'good', sort: 2 },
     { key: 'patina',              label: 'Patina',              sub: 'Aesthetic', family: 'aesthetic', color: '#1c1c1e', tip: 'Speziell handpatiniert.',                        rating: 'neutral', sort: 3 },
-    { key: 'velvet',              label: 'Velvet',              sub: 'Aesthetic', family: 'aesthetic', color: '#2d1b3d', tip: 'Samt — exklusiv für Slipper, Boots, Drake.',     rating: 'neutral', sort: 4 },
+    { key: 'velvet',              label: 'Velvet',              sub: 'Aesthetic', family: 'aesthetic', color: '#2d1b3d', tip: 'Samt, exklusiv für Slipper, Boots, Drake.',     rating: 'neutral', sort: 4 },
     // Durable
-    { key: 'box_calf',            label: 'Box Calf',            sub: 'Durable',   family: 'durable',   color: '#1c1c1e', tip: 'Klassisches Box-Calf — robust und matt.',        rating: 'good',    sort: 10 },
+    { key: 'box_calf',            label: 'Box Calf',            sub: 'Durable',   family: 'durable',   color: '#1c1c1e', tip: 'Klassisches Box-Calf, robust und matt.',        rating: 'good',    sort: 10 },
     { key: 'urban_suede',         label: 'Urban Suede',         sub: 'Durable',   family: 'durable',   color: '#7c3a1e', tip: 'Wetterbeständiges Veloursleder.',                rating: 'good',    sort: 11 },
     { key: 'painted_calf',        label: 'Painted Calf',        sub: 'Durable',   family: 'durable',   color: '#5b2c0e', tip: 'Patinierungs-Kalbleder, alltagstauglich.',       rating: 'good',    sort: 12 },
     // Painted Full Grain (Durable) wurde mit Aesthetic-Variante zusammengeführt
@@ -827,17 +827,17 @@ export function seedExtendedCatalog(db) {
     ['WHOLECUT', 'heel:standard', 1], ['WHOLECUT', 'heel:higher_heel'],
     ['WHOLECUT', 'inner_color:black', 1], ['WHOLECUT', 'inner_color:brown'], ['WHOLECUT', 'inner_color:tan'], ['WHOLECUT', 'inner_color:cognac'],
     ['WHOLECUT', 'sole_bottom_color:natural', 1], ['WHOLECUT', 'sole_bottom_color:black'], ['WHOLECUT', 'sole_bottom_color:brown'], ['WHOLECUT', 'sole_bottom_color:cognac'],
-    // DOUBLE_MONK — Sohle Color + Buckle Color
+    // DOUBLE_MONK, Sohle Color + Buckle Color
     ['DOUBLE_MONK', 'sole_color:natural', 1], ['DOUBLE_MONK', 'sole_color:black'], ['DOUBLE_MONK', 'sole_color:brown'], ['DOUBLE_MONK', 'sole_color:brick'],
     ['DOUBLE_MONK', 'buckle_color:nickel', 1], ['DOUBLE_MONK', 'buckle_color:gold'], ['DOUBLE_MONK', 'buckle_color:graphite'], ['DOUBLE_MONK', 'buckle_color:copper'],
     ['DOUBLE_MONK', 'inner_color:black', 1], ['DOUBLE_MONK', 'inner_color:brown'], ['DOUBLE_MONK', 'inner_color:tan'],
     ['DOUBLE_MONK', 'sole_bottom_color:natural', 1], ['DOUBLE_MONK', 'sole_bottom_color:black'], ['DOUBLE_MONK', 'sole_bottom_color:brown'],
-    // MONK — gleich wie Double Monk
+    // MONK, gleich wie Double Monk
     ['MONK', 'sole_color:natural', 1], ['MONK', 'sole_color:black'], ['MONK', 'sole_color:brown'],
     ['MONK', 'buckle_color:nickel', 1], ['MONK', 'buckle_color:gold'], ['MONK', 'buckle_color:graphite'],
     ['MONK', 'inner_color:black', 1], ['MONK', 'inner_color:brown'],
     ['MONK', 'sole_bottom_color:natural', 1], ['MONK', 'sole_bottom_color:black'],
-    // OXFORD + DERBY + LOAFER — Innen + Unterseite
+    // OXFORD + DERBY + LOAFER, Innen + Unterseite
     ['OXFORD', 'inner_color:black', 1], ['OXFORD', 'inner_color:brown'], ['OXFORD', 'inner_color:tan'], ['OXFORD', 'inner_color:cognac'], ['OXFORD', 'inner_color:navy'],
     ['OXFORD', 'sole_bottom_color:natural', 1], ['OXFORD', 'sole_bottom_color:black'], ['OXFORD', 'sole_bottom_color:brown'], ['OXFORD', 'sole_bottom_color:cognac'],
     ['DERBY', 'welt:city', 1], ['DERBY', 'welt:storm'],
@@ -846,7 +846,7 @@ export function seedExtendedCatalog(db) {
     ['LOAFER', 'inner_color:brown', 1], ['LOAFER', 'inner_color:black'], ['LOAFER', 'inner_color:tan'],
     ['LOAFER', 'sole_bottom_color:natural', 1], ['LOAFER', 'sole_bottom_color:brown'],
     ['LOAFER', 'loafer_decoration:ohne', 1], ['LOAFER', 'loafer_decoration:tassels'], ['LOAFER', 'loafer_decoration:albert_tassels'], ['LOAFER', 'loafer_decoration:horsebit'], ['LOAFER', 'loafer_decoration:albert_mask'],
-    // CHELSEA / BALMORAL / JODHPUR / CHUKKA — nur Style + Color
+    // CHELSEA / BALMORAL / JODHPUR / CHUKKA, nur Style + Color
     ['CHELSEA',  'inner_color:black', 1], ['CHELSEA',  'inner_color:brown'], ['CHELSEA',  'sole_bottom_color:black', 1], ['CHELSEA',  'sole_bottom_color:brown'],
     ['BALMORAL', 'last:zurigo', 1], ['BALMORAL', 'last:monti'], ['BALMORAL', 'last:savile'], ['BALMORAL', 'last:belgravia'],
     ['BALMORAL', 'inner_color:black', 1], ['BALMORAL', 'inner_color:brown'],
@@ -914,7 +914,7 @@ export function seedExtendedCatalog(db) {
     'buckle_color:nickel':   '#a8a8a8',
     'buckle_color:copper':   '#b5704c',
   }
-  // Icons pro Gruppe (Lucide-Names) — für visuelle Akzente
+  // Icons pro Gruppe (Lucide-Names), für visuelle Akzente
   const ICON_MAP = {
     last:               'Footprints',
     sole:               'Layers',
@@ -955,11 +955,11 @@ export function seedExtendedCatalog(db) {
     wholecut_base:     'Verarbeitung der Vorderkappe für den nahtlosen Whole-Cut-Schuh.',
     buckle:            'Schnallenform: Rund für klassische Eleganz, eckig für modernen Akzent.',
     buckle_color:      'Metall-Finish der Schnalle. Nickel ist der Klassiker, Gold setzt warme Akzente, Graphite ist diskret-modern, Copper auffällig.',
-    inner_color:       'Farbe des Futters — sichtbar nur beim Anziehen. Klassisch farblich abgestimmt oder bewusst kontrastreich.',
+    inner_color:       'Farbe des Futters, sichtbar nur beim Anziehen. Klassisch farblich abgestimmt oder bewusst kontrastreich.',
     sole_color:        'Farbe des Sohlenrands (außen sichtbar). Natural ist neutral, Black diskret, Brick & Brown setzen Akzente.',
-    sole_bottom_color: 'Farbe der Sohlen-Unterseite. Wird nur beim Sitzen oder Übereinanderschlagen der Beine sichtbar — ein subtiles Detail für Kenner.',
+    sole_bottom_color: 'Farbe der Sohlen-Unterseite. Wird nur beim Sitzen oder Übereinanderschlagen der Beine sichtbar, ein subtiles Detail für Kenner.',
     loafer_decoration: 'Dekoration auf dem Spann: Tassels & Albert klassisch, Horsebit als Statement, Bow elegant, Ohne für puristischen Look.',
-    beveled_waist:     'Schlanke, geschwungene Taille zwischen Ballen und Absatz. Subtil sichtbar, aber Markenzeichen feinster Maßschuhmacherei (+€19).',
+    beveled_waist:     'Schlanke, geschwungene Taille zwischen Ballen und Absatz. Subtil sichtbar, aber Markenzeichen feinster Schuhmacherkunst (+€19).',
   }
   const upHelper = db.prepare(`
     UPDATE option_groups SET helper_text = ?, updated_at = datetime('now') WHERE key = ?
@@ -976,7 +976,7 @@ export function seedExtendedCatalog(db) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// seedMatrixModels — stellt sicher, dass für jedes Modell aus der
+// seedMatrixModels, stellt sicher, dass für jedes Modell aus der
 // Konfigurator-Matrix mindestens ein Schuh in der Datenbank existiert.
 // Idempotent: legt nur fehlende Modelle an, vorhandene bleiben unangetastet.
 // ─────────────────────────────────────────────────────────────────────
@@ -1081,11 +1081,11 @@ export function seedMatrixModels(db) {
     optApplied++
   }
 
-  console.log(`✅ Seeded: matrix mappings — ${matApplied} shoes got material whitelists, ${optApplied} shoes got option configs`)
+  console.log(`✅ Seeded: matrix mappings, ${matApplied} shoes got material whitelists, ${optApplied} shoes got option configs`)
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// seedLoaferVariants — eigenstaendige Loafer-Stilmodelle (Horsebit,
+// seedLoaferVariants, eigenstaendige Loafer-Stilmodelle (Horsebit,
 // Tassel, Albert) mit fest gesetzter Ausfuehrung. Der Ausfuehrungs-
 // Selektor wird im Frontend ueber shoes.locked_decoration ausgeblendet.
 // Idempotent: legt nur an, was per Name noch fehlt; vorhandene Modelle
@@ -1121,11 +1121,11 @@ export function seedLoaferVariants(db) {
       created++
     } catch { /* z. B. fehlende tagline/description-Spalte auf altem Schema */ }
   }
-  console.log(`✅ Seeded: Loafer-Stilmodelle — ${created} neu angelegt, ${VARIANTS.length - created} bereits vorhanden`)
+  console.log(`✅ Seeded: Loafer-Stilmodelle, ${created} neu angelegt, ${VARIANTS.length - created} bereits vorhanden`)
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// seedMatrixTemplatesV2 — Hard-Reset der Konfigurator-Vorlagen exakt
+// seedMatrixTemplatesV2, Hard-Reset der Konfigurator-Vorlagen exakt
 // gemäß User-Matrix. Bereinigt veraltete Templates UND wendet sie auf
 // alle Schuhe an, deren Name aus den 16 Matrix-Standardmodellen kommt.
 // User-spezifische Schuhe (z. B. „The Heritage Oxford") bleiben
@@ -1307,8 +1307,8 @@ export function seedMatrixTemplatesV2(db) {
     resetCount++
   }
 
-  // 3) ALLE Schuhe ohne shoe_options bekommen jetzt — mit den korrigierten
-  //    Matrix-Templates — automatisch eine Konfiguration anhand ihrer
+  // 3) ALLE Schuhe ohne shoe_options bekommen jetzt, mit den korrigierten
+  //    Matrix-Templates, automatisch eine Konfiguration anhand ihrer
   //    Kategorie. So profitieren auch User-Schuhe wie „The Heritage Oxford"
   //    von der Matrix.
   const allShoes = db.prepare('SELECT id, category FROM shoes').all()
@@ -1397,16 +1397,16 @@ export function seedMatrixTemplatesV2(db) {
     forceResetCount++
   }
 
-  console.log(`✅ Seeded: matrix templates V2 — ${inserted} tpl rows, ${resetCount} matrix shoes reset, ${fillCount} empty shoes filled, ${matResetCount} matrix material whitelists reset, ${matFillCount} empty material whitelists filled, ${forceResetCount} TOTAL force-reset by category`)
+  console.log(`✅ Seeded: matrix templates V2, ${inserted} tpl rows, ${resetCount} matrix shoes reset, ${fillCount} empty shoes filled, ${matResetCount} matrix material whitelists reset, ${matFillCount} empty material whitelists filled, ${forceResetCount} TOTAL force-reset by category`)
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// seedLastSizeChart — Passform-Maßtabelle (Leisten × Weite × Größe →
+// seedLastSizeChart, Passform-Maßtabelle (Leisten × Weite × Größe →
 // Fußlänge + Ballenumfang in mm), 1:1 aus den Hersteller-Tabellen.
 //
 // Aufbau (alle Reihen sind arithmetisch):
 //  • Fußlänge je Größe ist über alle Herren-Leisten identisch (eigene Reihe für
-//    Damen) — daher als exakte Arrays hinterlegt (FOOT_MEN/FOOT_LADIES).
+//    Damen), daher als exakte Arrays hinterlegt (FOOT_MEN/FOOT_LADIES).
 //  • Ballenumfang steigt +2,25 mm je Halbgröße (= +4,5 je ganze Größe); je
 //    Leisten×Weite ist nur der Anker an der Referenzgröße nötig
 //    (Herren-Ref = EU42, Damen-Ref = EU39).
@@ -1425,7 +1425,7 @@ const FOOT_MEN = [238.4,241.7,245.0,248.4,251.7,255.0,258.3,261.7,265.0,268.3,27
 const EU_LADIES = ['35','35.5','36','36.5','37','37.5','38','38.5','39','39.5','40','40.5','41','41.5','42']
 const FOOT_LADIES = [226.7,230.0,233.3,236.7,240.0,243.3,246.7,250.0,253.3,256.7,260.0,263.3,266.6,270.0,273.3]
 
-// Penny Loafer — nur US-Größen. [US-Label, foot_length, ball_girth]
+// Penny Loafer, nur US-Größen. [US-Label, foot_length, ball_girth]
 const PENNY_US = [
   ['7', 256.5, 242.7], ['8', 260.8, 245.9], ['9', 265.0, 249.1],
   ['10', 273.5, 255.5], ['11', 282.0, 261.8], ['12', 290.4, 268.2],
@@ -1433,14 +1433,14 @@ const PENNY_US = [
 ]
 
 // Spec je Leiste. widths: [width, anchorGirthAtRef, optionalRange]
-// optionalRange überschreibt den Default-Bereich (Herren 38–50, Damen 35–42).
+// optionalRange überschreibt den Default-Bereich (Herren 38 bis 50, Damen 35 bis 42).
 const LAST_CHART_SPEC = [
-  // Herren — Dress-Leisten (D/EE/EEE)
+  // Herren, Dress-Leisten (D/EE/EEE)
   { key: 'monti',     gender: 'men', widths: [['D', 246.0], ['EE', 255.0], ['EEE', 268.5]] },
   { key: 'zurigo',    gender: 'men', widths: [['D', 250.0], ['EE', 259.0], ['EEE', 272.5]] },
   { key: 'savile',    gender: 'men', widths: [['D', 244.5], ['EE', 253.5], ['EEE', 267.0]] },
   { key: 'belgravia', gender: 'men', widths: [['D', 248.0], ['EE', 257.0]] },
-  // Herren — Modell-spezifische Leisten
+  // Herren, Modell-spezifische Leisten
   { key: 'wellington', gender: 'men', widths: [['D', 244.0], ['EE', 253.0]] },
   { key: 'drake',      gender: 'men', widths: [['D', 245.0]] },
   { key: 'venetian',   gender: 'men', widths: [['D', 247.0]] },
@@ -1448,7 +1448,7 @@ const LAST_CHART_SPEC = [
   { key: 'sneaker',    gender: 'men', fullOnly: true, widths: [['D', 248.0, ['38', '49']], ['EE', 257.0, ['39', '49']]] },
   { key: 'moc_sport',  gender: 'men', range: ['39', '46'], widths: [['D', 244.0]] },
   { key: 'chunky',     gender: 'men', range: ['39', '48'], widths: [['D', 250.0], ['EE', 259.0]] },
-  // Damen-Leisten (noch keiner Kategorie zugeordnet — nur Daten/CMS)
+  // Damen-Leisten (noch keiner Kategorie zugeordnet, nur Daten/CMS)
   { key: 'audrey_rose', gender: 'ladies', widths: [['D', 224.0]] },
   { key: 'chenoa',      gender: 'ladies', widths: [['D', 225.0]] },
   { key: 'carola',      gender: 'ladies', fullOnly: true, widths: [['D', 230.0]] },
@@ -1502,7 +1502,7 @@ export function applyLastSizeChartSeed(db) {
 
 function seedLastSizeChart(db) {
   const cur = db.prepare("SELECT value FROM settings WHERE key = 'last_size_chart_seed_version'").get()
-  if (cur?.value === LAST_SIZE_CHART_VERSION) return  // aktuell — CMS-Edits bewahren
+  if (cur?.value === LAST_SIZE_CHART_VERSION) return  // aktuell, CMS-Edits bewahren
   const n = applyLastSizeChartSeed(db)
   db.prepare(`
     INSERT INTO settings (key, value, updated_at)
@@ -1556,6 +1556,18 @@ function seedFaqs(db) {
     { q: 'Kann ich umtauschen, wenn die Passform nicht stimmt?',
       a: 'Da jeder Schuh individuell nach Ihren Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, melden Sie sich bei uns; wir finden gemeinsam eine Lösung.',
       category: 'Bestellung & Produktion', sort_order: 4 },
+    { q: 'Was bedeutet Custom Made bei Artisan Sole?',
+      a: 'Custom made heißt: kein Schuh von der Stange. Wir fertigen Ihr Paar custom-made und erst auf Bestellung, abgestimmt auf Ihre Maße und Ihre Konfiguration aus Leder, Farbe und Sohle.',
+      category: 'Bestellung & Produktion', sort_order: 5 },
+    { q: 'Wie nachhaltig wird produziert?',
+      a: 'Wir fertigen jedes Paar erst, nachdem Sie bestellt haben (made to order). Dadurch entsteht keine Überproduktion und kein Lagerüberschuss: Jeder Schuh wird gezielt für einen Kunden gefertigt.',
+      category: 'Bestellung & Produktion', sort_order: 6 },
+    { q: 'Wie lange dauert es, bis mein Schuh bei mir ist?',
+      a: 'In der Regel rund 4 Wochen nach Zahlungseingang, von der Produktion bis zur Lieferung zu Ihnen. Da wir custom-made und erst auf Bestellung fertigen, gibt es keine Lagerhaltung.',
+      category: 'Bestellung & Produktion', sort_order: 7 },
+    { q: 'Wie genau ist die Passform?',
+      a: 'Nach der Vermessung Ihres Fußes wählen wir aus hunderten Leisten die exakt passende aus. So erreichen wir eine Passform von bis zu 100 % auf den Fuß, ganz ohne klassische Konfektionsgröße.',
+      category: 'Passform', sort_order: 8 },
   ]
   const exists = db.prepare('SELECT 1 FROM faqs WHERE question = ? LIMIT 1')
   const ins = db.prepare('INSERT INTO faqs (question, answer, category, sort_order) VALUES (?, ?, ?, ?)')

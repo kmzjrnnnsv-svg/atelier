@@ -654,7 +654,7 @@ export default function Checkout() {
                     </button>
                   </div>
                 )}
-                <p className="text-[10px] text-black/30 mt-1.5 font-light">Bitte prüfen Sie, ob diese Maße stimmen — ±0,5 cm sind in Ordnung.</p>
+                <p className="text-[10px] text-black/30 mt-1.5 font-light">Bitte prüfen Sie, ob diese Maße stimmen, ±0,5 cm sind in Ordnung.</p>
               </div>
             )}
 

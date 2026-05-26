@@ -189,7 +189,7 @@ export default function EmailSettings() {
  onChange={e => f('business_inquiry_email', e.target.value)}
  />
  <p className="text-[10px] text-black/25 font-light mt-1">
- An diese Adresse gehen neue Anfragen (Firmen- &amp; Maßanfertigung). Leer = Hersteller-E-Mail.
+ An diese Adresse gehen neue Anfragen (Firmen- &amp; Custom-Anfragen). Leer = Hersteller-E-Mail.
  </p>
  </div>
 

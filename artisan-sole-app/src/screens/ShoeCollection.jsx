@@ -372,7 +372,7 @@ export default function ShoeCollection() {
       <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-6 lg:pb-8">
         <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Artisan Sole Kollektion</p>
         <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.05] tracking-tight">
-          Maßschuhe
+          Custom Made
         </h1>
       </div>
 
@@ -425,7 +425,7 @@ export default function ShoeCollection() {
               <p className="text-[11px] text-white/60 font-light mt-0.5">
                 {activeCampaign.payment_mode === 'company'
                   ? 'Ihr Schuh wird von Ihrer Firma übernommen.'
-                  : `${activeCampaign.discount_pct}% Firmenrabatt auf Ihren Maßschuh.`}
+                  : `${activeCampaign.discount_pct}% Firmenrabatt auf Ihren Custom-made Schuh.`}
                 {activeCampaign.allowed_shoe_ids?.length ? ' Auswahl auf die Aktionsmodelle beschränkt.' : ''}
               </p>
             </div>

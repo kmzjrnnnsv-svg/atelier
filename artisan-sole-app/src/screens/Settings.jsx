@@ -292,7 +292,7 @@ export default function Settings() {
       <SettingsRow
         icon={Lock}
         label="Passwort ändern"
-        sub="Letztes Update: –"
+        sub="Sicherheit Ihres Kontos"
         onPress={() => { setPwOpen(o => !o); setProfileOpen(false) }}
         rightEl={
           <ChevronRight size={15} className={`text-black/15 flex-shrink-0 transition-transform ${pwOpen ? 'rotate-90' : ''}`} />
