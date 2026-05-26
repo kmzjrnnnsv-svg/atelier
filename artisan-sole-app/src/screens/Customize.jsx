@@ -220,6 +220,13 @@ export default function Customize() {
     return sum + (sel?.price_extra || 0)
   }, 0)
 
+  // Gewählte Sohlen-Art (Optionsgruppe 'sole') — ersetzt das Legacy-Sohlenfeld
+  // in Warenkorb/Bestellung/Sticky-Bar.
+  const soleArt = (() => {
+    const g = extraOptionGroups.find(x => x.key === 'sole')
+    return g ? (g.values.find(v => v.id === selectedExtras['sole']) || null) : null
+  })()
+
   // Daten aus dem Store (mit Fallback)
   // Nur als verfügbar markierte Materialien (available !== 0) anzeigen,
   // Legacy-Einträge wie CALFSKIN/SUEDE/PATENT sind im Seed deaktiviert.
@@ -293,9 +300,10 @@ export default function Customize() {
     : (filteredGlobalColors.length ? filteredGlobalColors : [
         { id: 1, key: 'schwarz', hex: '#000000', name: 'Schwarz', available: 1, rating: 'good' },
       ])
-  const soleList = availableSoles.length ? availableSoles : [
-    { id: 1, key: 'rubber-grip', label: 'Anti-Rutsch', sub: 'Gummi', description: 'Profilsohle mit Grip.', price_extra: 35, rating: 'good', recommended: 1 },
-  ]
+  // Legacy-Sohlensystem (CMS-gepflegt, standardmäßig leer). Die Sohlen-Art
+  // wird heute über die Optionsgruppe 'sole' ("Sohlen-Art") gewählt. KEIN
+  // Platzhalter mehr — sonst entsteht ein Phantom-Aufpreis (Anti-Rutsch +€35).
+  const soleList = availableSoles
 
   // Size selection: 'fit' (auto-match via Fußmaße), 'standard' (manueller
   // Notausgang), 'custom' (3D scan, Legacy)
@@ -763,7 +771,7 @@ export default function Customize() {
       shoeId: product.id, name: cleanShoeName(product.name),
       material: mat?.label || product.material,
       color, price: formatPrice(basePrice + soleExtra + extrasPriceTotal),
-      sole: sole?.label || 'Sohle',
+      sole: soleArt?.label || 'Standard',
       image: product.image,
       sizeType, euSize: chosenEU,
       last: selectedFit?.last_key || null,
@@ -782,7 +790,7 @@ export default function Customize() {
       c.shoeId === product.id &&
       c.material === (mat?.label || product.material) &&
       c.color === color &&
-      c.sole === (sole?.label || 'Sohle')
+      c.sole === (soleArt?.label || 'Standard')
     )
 
     if (sameConfig && selectedAccessories.length > 0) {
@@ -827,7 +835,7 @@ export default function Customize() {
           id: product.id, name: cleanShoeName(product.name),
           material: mat?.label || product.material,
           color, price: formatPrice(basePrice + soleExtra + extrasPriceTotal),
-          sole: sole?.label || 'Sohle',
+          sole: soleArt?.label || 'Standard',
           sizeType, euSize: chosenEU,
           last: selectedFit?.last_key || null,
           lastLabel: selectedFit?.last_label || null,
@@ -1779,10 +1787,7 @@ export default function Customize() {
                       <span className="text-[11px] text-black">{col?.name}</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-black/50">Sohle</span>
-                    <span className="text-[11px] text-black">{sole?.label}{soleExtra > 0 ? ` (+€${soleExtra})` : ''}</span>
-                  </div>
+                  {/* Sohle wird als Optionsgruppe "Sohlen-Art" unten gelistet. */}
                   {/* Dynamische Extras (Last, Welt, Heel, Toe, Schnalle, …) */}
                   {extraOptionGroups.map(group => {
                     const sel = group.values.find(v => v.id === selectedExtras[group.key])
@@ -1920,7 +1925,7 @@ export default function Customize() {
             <span className="text-[9px] text-black/40">{col?.name}</span>
           </div>
           <span className="text-black/15">·</span>
-          <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{sole?.label}</span>
+          <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{soleArt?.label}</span>
         </div>
         <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>
           {displayPrice}
@@ -2013,7 +2018,7 @@ export default function Customize() {
         config={{
           material: mat?.label || product.material,
           color:    col?.name || color,
-          sole:     sole?.label,
+          sole:     soleArt?.label,
           euSize:   chosenEU,
           footMeasurements: footMeasurementsUsed,
           scanId:   sizeType === 'custom' ? latestScan?.id : null,
