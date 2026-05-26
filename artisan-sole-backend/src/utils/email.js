@@ -17,6 +17,7 @@ function getEmailConfig() {
   try {
     const db   = getDb()
     const keys = ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_manufacturer_email', 'app_url',
+                  'business_inquiry_email',
                   'bank_iban', 'bank_bic', 'bank_holder', 'bank_name']
     const rows = db.prepare(`SELECT key, value FROM settings WHERE key IN (${keys.map(() => '?').join(',')})`)
       .all(...keys)
@@ -27,6 +28,7 @@ function getEmailConfig() {
       user:       s.smtp_user               || process.env.SMTP_USER               || '',
       pass:       s.smtp_pass               || process.env.SMTP_PASS               || '',
       mfgEmail:   s.smtp_manufacturer_email || process.env.MANUFACTURER_EMAIL      || '',
+      inquiryEmail: s.business_inquiry_email || process.env.BUSINESS_INQUIRY_EMAIL || '',
       appUrl:     s.app_url                 || process.env.APP_URL                 || 'http://localhost:5173',
       bankIban:   s.bank_iban   || process.env.BANK_IBAN   || 'DE00 0000 0000 0000 0000 00',
       bankBic:    s.bank_bic    || process.env.BANK_BIC    || 'XXXXXXXX',
@@ -35,7 +37,7 @@ function getEmailConfig() {
     }
   } catch {
     return {
-      host: 'smtp.gmail.com', port: '587', user: '', pass: '', mfgEmail: '', appUrl: 'http://localhost:5173',
+      host: 'smtp.gmail.com', port: '587', user: '', pass: '', mfgEmail: '', inquiryEmail: '', appUrl: 'http://localhost:5173',
       bankIban: 'DE00 0000 0000 0000 0000 00', bankBic: 'XXXXXXXX', bankHolder: 'Artisan Sole GmbH', bankName: 'Musterbank',
     }
   }
@@ -111,6 +113,12 @@ function render(text, vars) {
 
 function nl2br(text) {
   return (text || '').replace(/\n/g, '<br>')
+}
+
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
 // ─── Shared HTML chrome ────────────────────────────────────────────────────────
@@ -644,4 +652,62 @@ export async function sendBusinessInvitation(email, companyName, inviteToken) {
 </body></html>`
 
   await send({ to: email, subject, html })
+}
+
+// ─── Anfrage (custom_requests): Benachrichtigung an Betreiber + Bestätigung ─────
+function inquiryRows(request) {
+  const rows = [
+    ['Name', request.customer_name],
+    ['E-Mail', request.customer_email],
+    ['Telefon', request.customer_phone],
+    ['Betreff', request.shoe_name],
+  ]
+  return rows
+    .filter(([, v]) => v)
+    .map(([label, v]) => `<div class="label">${label}</div><div class="val">${escapeHtml(v)}</div>`)
+    .join('')
+}
+
+export async function sendInquiryNotification(request) {
+  const cfg = getEmailConfig()
+  const to  = cfg.inquiryEmail || cfg.mfgEmail || cfg.user
+  if (!to) { console.log('📧 [Anfrage] kein Empfänger konfiguriert, übersprungen'); return }
+
+  const subject = `Neue Anfrage${request.shoe_name ? ` — ${request.shoe_name}` : ''}`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>NEUE ANFRAGE</p></div>
+  <div class="body">
+    <p style="font-size:14px;color:#555;margin:0 0 24px">Es ist eine neue Anfrage eingegangen.</p>
+    ${inquiryRows(request)}
+    ${request.notes ? `<hr class="divider"><div class="label">Nachricht</div><div style="font-size:14px;color:#333;line-height:1.6">${nl2br(escapeHtml(request.notes))}</div>` : ''}
+    <hr class="divider">
+    <p style="font-size:12px;color:#999;margin:0">Details und Status verwalten Sie im CMS unter <strong>Anfragen</strong> (<a href="${cfg.appUrl}/cms" style="color:#666">${cfg.appUrl}/cms</a>).</p>
+  </div>
+  <div class="footer">Artisan Sole Bespoke Footwear</div>
+</div>
+</body></html>`
+
+  await send({ to, subject, html })
+}
+
+export async function sendInquiryAck(request) {
+  if (!request.customer_email) return
+  const name = request.customer_name ? ` ${escapeHtml(request.customer_name)}` : ''
+  const subject = 'Artisan Sole — Ihre Anfrage ist eingegangen'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>ANFRAGE EINGEGANGEN</p></div>
+  <div class="body" style="text-align:center">
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Vielen Dank${name}!</p>
+    <p style="font-size:14px;color:#555;margin:0 0 8px;line-height:1.6">
+      Ihre Anfrage ist bei uns eingegangen. Wir melden uns in Kürze persönlich mit
+      einem passenden Vorschlag bei Ihnen, unverbindlich.
+    </p>
+  </div>
+  <div class="footer">Artisan Sole Bespoke Footwear · Made in Spain</div>
+</div>
+</body></html>`
+
+  await send({ to: request.customer_email, subject, html })
 }
