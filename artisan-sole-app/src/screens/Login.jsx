@@ -22,6 +22,9 @@ export default function Login() {
 
   // Where the user wanted to go before being redirected to /login
   const redirectTo = location.state?.from || null
+  // Optionale Konfiguration (z. B. aus dem Konfigurator), die nach dem Login
+  // auf der Zielseite wiederhergestellt werden soll.
+  const loadConfig = location.state?.loadConfig || null
 
   const handleSubmit = async () => {
     if (!isValid || loading) return
@@ -34,7 +37,7 @@ export default function Login() {
       } else if (user.is_business) {
         navigate('/business/dashboard', { replace: true })
       } else if (redirectTo) {
-        navigate(redirectTo, { replace: true })
+        navigate(redirectTo, { replace: true, state: loadConfig ? { loadConfig } : undefined })
       } else {
         navigate(HOME, { replace: true })
       }

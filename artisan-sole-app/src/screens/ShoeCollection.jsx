@@ -13,15 +13,24 @@ import { apiFetch } from '../hooks/useApi'
 import { HEROES, SHOES } from '../lib/editorialImages'
 import ShoeName from '../lib/shoeName'
 
+// Anlass-basierte Kategorien. Jeder Anlass bildet auf mehrere Schuh-Typen ab
+// (ein Modell kann in mehreren Anlässen erscheinen). `cats` = enthaltene
+// shoe.category-Werte; ohne `cats` (nur ALL) zählt alles.
 const BASE_CATEGORIES = [
-  { label: 'Alle Modelle', value: 'ALL' },
-  { label: 'Oxford',       value: 'OXFORD' },
-  { label: 'Derby',        value: 'DERBY' },
-  { label: 'Loafer',       value: 'LOAFER' },
-  { label: 'Chelsea Boot', value: 'BOOT' },
-  { label: 'Sneaker',      value: 'SNEAKER' },
-  { label: 'Monk',         value: 'MONK' },
+  { label: 'Alle Modelle',    value: 'ALL' },
+  { label: 'Büro & Business', value: 'BUSINESS',     cats: ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK'] },
+  { label: 'Smart Casual',    value: 'SMART_CASUAL', cats: ['LOAFER', 'MONK', 'DOUBLE_MONK', 'DERBY', 'CHELSEA'] },
+  { label: 'Freizeit',        value: 'LEISURE',      cats: ['SNEAKER', 'SNEAKER_LACED', 'SNEAKER_BOOT', 'LACELESS_TRAINER', 'LOAFER', 'CHUKKA', 'BOOT', 'JODHPUR'] },
+  { label: 'Abend & Gala',    value: 'EVENING',      cats: ['WHOLECUT', 'OXFORD', 'BELGIAN_SLIPPER', 'WELLINGTON', 'DRAKE'] },
+  { label: 'Outdoor',         value: 'OUTDOOR',      cats: ['BOOT', 'CHELSEA', 'BALMORAL', 'JODHPUR', 'CHUKKA'] },
 ]
+const CATEGORY_CAT_MAP = Object.fromEntries(BASE_CATEGORIES.filter(c => c.cats).map(c => [c.value, c.cats]))
+// Trifft ein Schuh (shoe.category) auf die gewählte Anlass-Kategorie zu?
+const shoeInCategory = (catValue, shoeCategory) => {
+  if (catValue === 'ALL') return true
+  const cats = CATEGORY_CAT_MAP[catValue]
+  return cats ? cats.includes(shoeCategory) : shoeCategory === catValue
+}
 
 // ── Passform-Leiste, inline unter den Reitern, kein Overlay ────────────
 // Fragt Länge + Ballenumfang für beide Füße. Der größere Fuß zählt fürs
@@ -350,7 +359,7 @@ export default function ShoeCollection() {
 
   const filtered = activeCategory === 'PROMO'
     ? enriched.filter(p => p.promotion_price)
-    : activeCategory === 'ALL' ? enriched : enriched.filter(p => p.category === activeCategory)
+    : enriched.filter(p => shoeInCategory(activeCategory, p.category))
   const selectShoe = (product) => navigate(`/customize?id=${product.id}`, { state: { product } })
 
   return (
@@ -373,7 +382,7 @@ export default function ShoeCollection() {
           {CATEGORIES.map(cat => {
             const count = cat.value === 'ALL' ? enriched.length
               : cat.value === 'PROMO' ? enriched.filter(p => p.promotion_price).length
-              : enriched.filter(p => p.category === cat.value).length
+              : enriched.filter(p => shoeInCategory(cat.value, p.category)).length
             return (
               <button
                 key={cat.value}
