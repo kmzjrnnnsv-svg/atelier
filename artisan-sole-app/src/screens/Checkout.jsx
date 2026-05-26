@@ -135,7 +135,7 @@ export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user } = useAuth()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, shoeAccessoryMap, accessories: storeAccessories, shoes } = useStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, footMeasurements, saveFootMeasurements, shoeAccessoryMap, accessories: storeAccessories, shoes } = useStore()
   const isPromo = !!user?.is_promotion
   const promoDiscountPct = user?.promotion_discount_pct || 0
 
@@ -164,6 +164,24 @@ export default function Checkout() {
   const [shippingOptions, setShippingOptions] = useState([])
   const [selectedShipping, setSelectedShipping] = useState(null)
   const [campaigns, setCampaigns] = useState([])
+  // Passform-Maße auf der Bestellseite bestätigen/ändern
+  const [fitEdit, setFitEdit] = useState(false)
+  const [fLen, setFLen] = useState('')
+  const [fGirth, setFGirth] = useState('')
+  const [fSaving, setFSaving] = useState(false)
+  const openFitEdit = () => {
+    setFLen(footMeasurements?.foot_length_mm ? String(footMeasurements.foot_length_mm) : '')
+    setFGirth(footMeasurements?.ball_girth_mm ? String(footMeasurements.ball_girth_mm) : '')
+    setFitEdit(true)
+  }
+  const saveFit = async () => {
+    const len = parseFloat(String(fLen).replace(',', '.'))
+    const girth = parseFloat(String(fGirth).replace(',', '.'))
+    if (!Number.isFinite(len) || !Number.isFinite(girth)) return
+    setFSaving(true)
+    try { await saveFootMeasurements({ foot_length_mm: len, ball_girth_mm: girth }); setFitEdit(false) }
+    catch {} finally { setFSaving(false) }
+  }
 
   // Kampagnen des Mitarbeiters laden (für automatischen Kampagnen-Rabatt).
   useEffect(() => {
@@ -606,6 +624,39 @@ export default function Checkout() {
                 </div>
               ))}
             </div>
+
+            {/* Passform bestätigen/ändern (nur Einzelprodukt) */}
+            {product.id && (
+              <div className="bg-white p-4 border border-black/[0.06]">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider">Passform</p>
+                  <button onClick={fitEdit ? () => setFitEdit(false) : openFitEdit} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">
+                    {fitEdit ? 'Abbrechen' : 'Ändern'}
+                  </button>
+                </div>
+                {footMeasurements?.foot_length_mm ? (
+                  <p className="text-[12px] text-black/60 mt-1">Ihre Maße: {footMeasurements.foot_length_mm} mm Länge · {footMeasurements.ball_girth_mm} mm Ballenumfang</p>
+                ) : (
+                  <p className="text-[12px] text-black/45 mt-1">Noch keine Maße hinterlegt.</p>
+                )}
+                {fitEdit && (
+                  <div className="mt-3 flex items-end gap-2">
+                    <label className="flex-1">
+                      <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Fußlänge (mm)</span>
+                      <input type="number" inputMode="decimal" value={fLen} onChange={e => setFLen(e.target.value)} placeholder="z. B. 270" className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40" />
+                    </label>
+                    <label className="flex-1">
+                      <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Ballenumfang (mm)</span>
+                      <input type="number" inputMode="decimal" value={fGirth} onChange={e => setFGirth(e.target.value)} placeholder="z. B. 255" className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40" />
+                    </label>
+                    <button onClick={saveFit} disabled={fSaving || !fLen || !fGirth} className="h-9 px-4 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0 disabled:opacity-30">
+                      {fSaving ? '…' : 'Übernehmen'}
+                    </button>
+                  </div>
+                )}
+                <p className="text-[10px] text-black/30 mt-1.5 font-light">Bitte prüfen Sie, ob diese Maße stimmen — ±0,5 cm sind in Ordnung.</p>
+              </div>
+            )}
 
             {/* Accessories */}
             {chosenAccessories.length > 0 && (
