@@ -251,6 +251,9 @@ const useStore = create((set, get) => ({
   },
 
   // Ermittelt die best-passende Leisten×Weite×Größe. Transient (kein State).
+  // Gibt { ok, matches } zurück: ok=false signalisiert einen Übertragungs-
+  // fehler (z. B. Rate-Limit), der NICHT mit „keine Passform" verwechselt
+  // werden darf — ein leeres matches bei ok=true ist die echte Absage.
   async matchFit({ category, length, girth, tolerance = 5 }) {
     const q = new URLSearchParams({
       category: category || '',
@@ -258,8 +261,12 @@ const useStore = create((set, get) => ({
       girth: String(girth),
       tolerance: String(tolerance),
     })
-    const res = await apiFetch(`/api/fit/match?${q.toString()}`).catch(() => ({ matches: [] }))
-    return Array.isArray(res?.matches) ? res.matches : []
+    try {
+      const res = await apiFetch(`/api/fit/match?${q.toString()}`)
+      return { ok: true, matches: Array.isArray(res?.matches) ? res.matches : [] }
+    } catch {
+      return { ok: false, matches: [] }
+    }
   },
 
   // Welche Leisten/Kategorien passen zu den Maßen (für Collection-Filter).

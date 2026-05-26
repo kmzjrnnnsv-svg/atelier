@@ -10,9 +10,13 @@ export const authLimiter = rateLimit({
   message: { error: 'Zu viele Login-Versuche, bitte in 15 Minuten erneut versuchen' },
 })
 
+// Jeder volle Seiten-Reload verliert das In-Memory-Access-Token und braucht
+// genau einen Refresh. 20/15min trifft daher Nutzer, die schnell mehrfach
+// neu laden, fälschlich → Sitzungsabbrüche. 100/15min lässt normales
+// (auch hektisches) Neuladen zu, bremst aber Brute-Force weiterhin aus.
 export const refreshLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isDev ? 200 : 20,
+  max: isDev ? 400 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Zu viele Refresh-Anfragen' },
