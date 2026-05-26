@@ -1035,13 +1035,32 @@ export default function Customize() {
 
             {/* Test-Detail: Leisten-Sollmaße vs. Fußmaße (zur Überprüfung) */}
             {fitState === 'matched' && selectedFit?.foot_length_mm != null && footMeasurements?.foot_length_mm && (
-              <p className="text-[10px] text-black/35 font-light mt-1.5 leading-relaxed">
-                Leisten-Maß ({selectedFit.last_label} {selectedFit.width}, Gr. {selectedFit.size_label}):
-                {' '}{selectedFit.foot_length_mm} mm Länge · {selectedFit.ball_girth_mm} mm Ballenumfang
-                {' '}· Abweichung Länge {selectedFit.deltaLength > 0 ? '+' : ''}{String(selectedFit.deltaLength).replace('.', ',')} mm,
-                {' '}Ballen {selectedFit.deltaGirth > 0 ? '+' : ''}{String(selectedFit.deltaGirth).replace('.', ',')} mm
-                {' '}(Ihre Maße: {footMeasurements.foot_length_mm}/{footMeasurements.ball_girth_mm} mm)
-              </p>
+              <div className="mt-2 max-w-md">
+                <table className="w-full text-[10px] text-black/45 font-light border-collapse">
+                  <thead>
+                    <tr className="text-black/35" style={{ letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                      <th className="text-left font-normal py-1 pr-2"></th>
+                      <th className="text-right font-normal py-1 px-2">Ihre Maße</th>
+                      <th className="text-right font-normal py-1 px-2">Leiste {selectedFit.last_label} {selectedFit.width}</th>
+                      <th className="text-right font-normal py-1 pl-2">Abweichung</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-black/10">
+                      <td className="text-left py-1 pr-2">Länge</td>
+                      <td className="text-right py-1 px-2 tabular-nums">{footMeasurements.foot_length_mm} mm</td>
+                      <td className="text-right py-1 px-2 tabular-nums">{selectedFit.foot_length_mm} mm</td>
+                      <td className="text-right py-1 pl-2 tabular-nums">{selectedFit.deltaLength > 0 ? '+' : ''}{String(selectedFit.deltaLength).replace('.', ',')} mm</td>
+                    </tr>
+                    <tr className="border-t border-black/10">
+                      <td className="text-left py-1 pr-2">Ballenumfang</td>
+                      <td className="text-right py-1 px-2 tabular-nums">{footMeasurements.ball_girth_mm} mm</td>
+                      <td className="text-right py-1 px-2 tabular-nums">{selectedFit.ball_girth_mm} mm</td>
+                      <td className="text-right py-1 pl-2 tabular-nums">{selectedFit.deltaGirth > 0 ? '+' : ''}{String(selectedFit.deltaGirth).replace('.', ',')} mm</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             )}
 
             {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
