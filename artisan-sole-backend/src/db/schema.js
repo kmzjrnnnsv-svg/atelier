@@ -321,6 +321,9 @@ export function runMigrations(db) {
     `ALTER TABLE users ADD COLUMN email_verify_token TEXT`,
     // users — gespeicherte Schuh-Konfigurationen (JSON-Array, nur eingeloggt)
     `ALTER TABLE users ADD COLUMN saved_configurations TEXT`,
+    // shoes — fest gesetzte Loafer-Ausfuehrung (option_key), blendet den
+    // Ausfuehrungs-Selektor fuer eigenstaendige Stil-Produkte aus
+    `ALTER TABLE shoes ADD COLUMN locked_decoration TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

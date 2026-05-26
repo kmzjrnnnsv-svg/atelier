@@ -10,6 +10,9 @@ export async function seedDatabase(db) {
   seedConfiguratorOptions(db)
   seedExtendedCatalog(db)
   seedMatrixModels(db)
+  // Eigenstaendige Loafer-Stilmodelle (feste Ausfuehrung) — vor V2, damit
+  // der Force-Reset ihnen die vollstaendige Loafer-Konfiguration zuweist.
+  seedLoaferVariants(db)
   // V2 LÄUFT ZULETZT — räumt veraltete Templates auf und richtet
   // sie exakt nach der User-Matrix aus, plus force-reset für die
   // 16 Standardmodelle.
@@ -1088,6 +1091,46 @@ export function seedMatrixModels(db) {
   }
 
   console.log(`✅ Seeded: matrix mappings — ${matApplied} shoes got material whitelists, ${optApplied} shoes got option configs`)
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// seedLoaferVariants — eigenstaendige Loafer-Stilmodelle (Horsebit,
+// Tassel, Albert) mit fest gesetzter Ausfuehrung. Der Ausfuehrungs-
+// Selektor wird im Frontend ueber shoes.locked_decoration ausgeblendet.
+// Idempotent: legt nur an, was per Name noch fehlt; vorhandene Modelle
+// werden nur um eine fehlende locked_decoration ergaenzt.
+// ─────────────────────────────────────────────────────────────────────
+export function seedLoaferVariants(db) {
+  const VARIANTS = [
+    { name: 'The Horsebit Loafer', deco: 'horsebit', price: '€ 1.320', color: '#3b1f0a', tag: 'NEW',
+      material: 'Lux Calf', image: 'https://images.unsplash.com/photo-1616406432452-07bc5938759d?w=600&q=85&fit=crop&auto=format',
+      tagline: 'Ikonische Metalltrense.',
+      description: 'Der Horsebit-Loafer vereint italienische Lässigkeit mit klassischer Eleganz. Die handgesetzte Metalltrense ist das unverwechselbare Detail, der Rest folgt Ihrer Konfiguration: Leder, Farbe, Sohle und Innenfutter.' },
+    { name: 'The Tassel Loafer', deco: 'tassels', price: '€ 1.290', color: '#78350f', tag: null,
+      material: 'Lux Calf', image: 'https://images.unsplash.com/photo-1615979474401-8a6a344de5bd?w=600&q=85&fit=crop&auto=format',
+      tagline: 'Quasten mit Charakter.',
+      description: 'Ein Klassiker der gehobenen Garderobe: der Tassel-Loafer mit fein gearbeiteten Quasten. Zeitlos zum Anzug wie zur Chino, gefertigt aus Ihrem Wunschleder mit durchgenähter Konstruktion.' },
+    { name: 'The Albert Loafer', deco: 'albert_mask', price: '€ 1.350', color: '#1c1c1e', tag: null,
+      material: 'Lux Calf', image: 'https://images.unsplash.com/photo-1616406432452-07bc5938759d?w=600&q=85&fit=crop&auto=format',
+      tagline: 'Verzierte Albert-Maske.',
+      description: 'Der Albert-Loafer mit dekorativer Maske auf dem Spann setzt ein elegantes Statement. Abendtauglich und dennoch alltagsfähig, individuell konfiguriert nach Ihren Vorstellungen.' },
+  ]
+  const findByName = db.prepare('SELECT id, locked_decoration FROM shoes WHERE name = ?')
+  const ins = db.prepare(`
+    INSERT INTO shoes (name, category, price, material, match_pct, color, tag, image_data, tagline, description, locked_decoration)
+    VALUES (?, 'LOAFER', ?, ?, '98.0%', ?, ?, ?, ?, ?, ?)
+  `)
+  const setDeco = db.prepare("UPDATE shoes SET locked_decoration = ? WHERE id = ? AND (locked_decoration IS NULL OR locked_decoration = '')")
+  let created = 0
+  for (const v of VARIANTS) {
+    const existing = findByName.get(v.name)
+    if (existing) { setDeco.run(v.deco, existing.id); continue }
+    try {
+      ins.run(v.name, v.price, v.material, v.color, v.tag, v.image, v.tagline, v.description, v.deco)
+      created++
+    } catch { /* z. B. fehlende tagline/description-Spalte auf altem Schema */ }
+  }
+  console.log(`✅ Seeded: Loafer-Stilmodelle — ${created} neu angelegt, ${VARIANTS.length - created} bereits vorhanden`)
 }
 
 // ─────────────────────────────────────────────────────────────────────

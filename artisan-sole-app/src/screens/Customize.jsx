@@ -196,6 +196,24 @@ export default function Customize() {
     loadOptions()
   }, [product?.id, category])
 
+  // Eigenstaendige Stil-Loafer: feste Ausfuehrung still vorbelegen (der
+  // Selektor selbst wird unten ausgeblendet), damit sie in Warenkorb/
+  // Bestellung mitgefuehrt wird.
+  useEffect(() => {
+    const lock = product?.locked_decoration
+    if (!lock) return
+    const grp = extraOptionGroups.find(g => g.key === 'loafer_decoration')
+    const opt = grp?.values?.find(v => v.key === lock)
+    if (opt && selectedExtras['loafer_decoration'] !== opt.id) {
+      setSelectedExtras(prev => ({ ...prev, loafer_decoration: opt.id }))
+    }
+  }, [extraOptionGroups, product?.locked_decoration])
+
+  // Label der fest gesetzten Ausfuehrung (fuer die Read-only-Anzeige).
+  const lockedDecoLabel = product?.locked_decoration
+    ? extraOptionGroups.find(g => g.key === 'loafer_decoration')?.values?.find(v => v.key === product.locked_decoration)?.label || null
+    : null
+
   // Summe der Extra-Aufpreise
   const extrasPriceTotal = extraOptionGroups.reduce((sum, g) => {
     const sel = g.values.find(v => v.id === selectedExtras[g.key])
@@ -1044,6 +1062,11 @@ export default function Customize() {
             {product.tagline && (
               <p className="text-[11px] lg:text-[13px] text-black/45 font-light mt-1 leading-snug">{product.tagline}</p>
             )}
+            {lockedDecoLabel && (
+              <p className="text-[10px] text-black/40 font-light mt-1" style={{ letterSpacing: '0.12em' }}>
+                <span className="uppercase text-black/30">Ausführung</span> · {lockedDecoLabel}
+              </p>
+            )}
             <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
               {displayPrice}
               {(soleExtra > 0 || accessoryTotal > 0) && (
@@ -1455,7 +1478,9 @@ export default function Customize() {
                 Erst sichtbar, wenn Material+Farbe gewählt sind. Vor jedem
                 Schritt ein Helper-Text; eine Option kann als „EMPFOHLEN"
                 markiert sein, dann erscheint über der Auswahl ein Banner. */}
-            {extraOptionGroups.map((group, gIdx) => {
+            {extraOptionGroups
+              .filter(g => !(product?.locked_decoration && g.key === 'loafer_decoration'))
+              .map((group, gIdx, renderGroups) => {
               // Farb-Gruppen: passend zum gewählten Oberleder eine Farbe
               // empfehlen (z. B. schwarzes Oberleder → schwarze Sohlenfarbe).
               const isColorGroup = ['sole_color', 'inner_color', 'sole_bottom_color'].includes(group.key)
@@ -1468,7 +1493,7 @@ export default function Customize() {
               const recValue = colorMatchRec || group.values.find(v => v.recommended)
               const currentSelection = group.values.find(v => v.id === selectedExtras[group.key])
               // Step ist aktiv, wenn alle vorherigen Extras gewählt sind.
-              const allBefore = extraOptionGroups.slice(0, gIdx).every(g => selectedExtras[g.key])
+              const allBefore = renderGroups.slice(0, gIdx).every(g => selectedExtras[g.key])
               const isActive = allBefore && configStep >= 3
               return (
               <div
