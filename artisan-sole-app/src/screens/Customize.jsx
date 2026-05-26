@@ -1015,6 +1015,11 @@ export default function Customize() {
                   </span>
                 ) : fitState === 'matching' ? (
                   <span className="text-[11px] lg:text-[12px] text-black/35">wird berechnet …</span>
+                ) : fitState === 'nomatch' && footMeasurements?.foot_length_mm ? (
+                  <span className="flex items-center gap-2">
+                    <span className="text-[11px] lg:text-[12px] text-black/55">keine Standard-Passform</span>
+                    <button type="button" onClick={openMeasEdit} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                  </span>
                 ) : (
                   <button
                     type="button"
@@ -1061,6 +1066,14 @@ export default function Customize() {
                   </tbody>
                 </table>
               </div>
+            )}
+
+            {/* Nomatch: gespeicherte Maße bleiben sichtbar (zur Kontrolle/Änderung) */}
+            {fitState === 'nomatch' && footMeasurements?.foot_length_mm && (
+              <p className="text-[10px] text-black/40 font-light mt-1.5 leading-relaxed">
+                Ihre gespeicherten Maße: {footMeasurements.foot_length_mm} mm Länge · {footMeasurements.ball_girth_mm} mm Ballenumfang.
+                {' '}Für dieses Modell liegt keine Standard-Leiste in Ihrem Bereich — wir fertigen es als Maßanfertigung.
+              </p>
             )}
 
             {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
