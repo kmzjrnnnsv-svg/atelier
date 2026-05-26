@@ -11,11 +11,18 @@ export default defineConfig({
     basicSsl(),
   ],
   build: {
-    // Workaround: explicit entry avoids Vite failing on "#" in path
+    // Spitzen-Speicherbedarf des Builds senken: weniger parallele Datei-/
+    // Transform-Operationen → der Build läuft auch auf kleinen Servern (wenig
+    // RAM) durch, statt mit "JavaScript heap out of memory" / OOM abzubrechen.
     rollupOptions: {
+      // Workaround: explicit entry avoids Vite failing on "#" in path
       input: fileURLToPath(new URL('./index.html', import.meta.url)),
       external: ['@capacitor/status-bar'],
+      maxParallelFileOps: 2,
     },
+    // three.js-Chunk (footSTL) ist bewusst groß und wird lazy geladen — die
+    // Größenwarnung ist nur Rauschen, daher Limit anheben.
+    chunkSizeWarningLimit: 700,
   },
   server: {
     host: true,

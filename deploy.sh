@@ -39,7 +39,9 @@ npm install
 rm -rf dist-new
 # set -e (oben) sorgt dafür, dass bei einem Build-Fehler das alte dist/
 # unangetastet bleibt und die Seite weiterläuft.
-npm run build -- --outDir dist-new --emptyOutDir
+# Höheres V8-Heap-Limit gegen "JavaScript heap out of memory" beim Bündeln des
+# schweren three.js-Bundles. Bei Bedarf an den Server-RAM anpassen.
+NODE_OPTIONS="--max-old-space-size=2048" npm run build -- --outDir dist-new --emptyOutDir
 # Assets des vorherigen Builds übernehmen, damit bereits geöffnete Tabs beim
 # Lazy-Laden alter Chunk-Hashes (während/kurz nach dem Deploy) nicht 404en.
 #   -n: niemals frisch gebaute Dateien überschreiben · -p: mtime erhalten (Prune)
