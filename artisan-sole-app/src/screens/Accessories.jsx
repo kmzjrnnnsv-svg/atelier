@@ -81,7 +81,7 @@ export default function Accessories() {
 
       {/* ── Filter navigation ───────────────────────────────────── */}
       <div className="px-5 lg:px-16 pb-6 lg:pb-8 border-b border-black/[0.06]">
-        <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex gap-1 overflow-x-auto justify-center" style={{ scrollbarWidth: 'none' }}>
           {FILTERS.map(f => (
             <button
               key={f.key}
