@@ -1303,7 +1303,7 @@ export default function Customize() {
             {matList.length > 1 && (familiesPresent.length <= 1 || selFamily) && (
             <div {...matSwipe}>
               <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
-              <div className="flex gap-2 overflow-x-auto flex-nowrap lg:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex flex-wrap gap-2 px-5 lg:px-0">
                 {matList.map((m, i) => {
                   const id = m.key || String(m.id)
                   const avail = m.available !== 0 && m.available !== false
@@ -1315,9 +1315,9 @@ export default function Customize() {
                         else if (!reminded) addReminder({ type: 'material', itemId: id, label: m.label })
                         else removeReminder('material', id)
                       }}
-                      className={`w-20 flex-shrink-0 lg:flex-shrink py-2 transition-all bg-transparent flex flex-col items-center gap-1.5 border ${
+                      className={`w-20 py-2 transition-all bg-transparent flex flex-col items-center gap-1.5 border ${
                         !avail ? 'border-black/5 opacity-40' : selMat === id ? 'border-black' : 'border-black/8'
-                      }${i === 0 ? ' ml-5 lg:ml-0' : ''}${i === matList.length - 1 ? ' mr-5 lg:mr-0' : ''}`}
+                      }`}
                     >
                       <div className="relative">
                         <div className="w-10 h-10 rounded-lg"
@@ -1352,7 +1352,7 @@ export default function Customize() {
                 <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe wählen</p>
                 {col && <span className="text-[10px] lg:text-[11px] text-black/50">{col.name}</span>}
               </div>
-              <div className="flex gap-2 overflow-x-auto flex-nowrap lg:flex-wrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex flex-wrap gap-2 px-5 lg:px-0">
                 {colList.map((c, i) => {
                   const id = c.key || String(c.id)
                   const avail = c.available !== 0 && c.available !== false
@@ -1360,9 +1360,9 @@ export default function Customize() {
                   const sel = avail && selCol === id
                   return (
                     <div key={id}
-                      className={`flex-shrink-0 w-12 h-12 flex items-center justify-center border-2 transition-all ${
+                      className={`w-12 h-12 flex items-center justify-center border-2 transition-all ${
                         sel ? 'border-black' : 'border-transparent'
-                      }${i === 0 ? ' ml-5 lg:ml-0' : ''}${i === colList.length - 1 ? ' mr-5 lg:mr-0' : ''}`}
+                      }`}
                     >
                       <button
                         onClick={() => {
@@ -1621,9 +1621,10 @@ export default function Customize() {
               )}
             </div>
 
-            {/* Desktop: Konfig-Zusammenfassung + Buttons */}
+            {/* Konfig-Zusammenfassung (alle Breiten) + Buttons (nur Desktop;
+                mobil übernimmt die Sticky-Kaufleiste). */}
             <div
-              className="hidden lg:block lg:pt-4 lg:pb-8 transition-all duration-700"
+              className="px-5 lg:px-0 pt-2 pb-5 lg:pt-4 lg:pb-8 transition-all duration-700"
               style={{
                 opacity: configStep >= 3 ? 1 : 0.15,
                 transform: configStep >= 3 ? 'translateY(0)' : 'translateY(8px)',
@@ -1690,7 +1691,7 @@ export default function Customize() {
                   )}
                 </div>
               </div>
-              <p className="text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
+              <p className="hidden lg:block text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
                 {displayPrice}
                 {(extrasPriceTotal > 0 || accessoryTotal > 0) && (
                   <span className="text-[11px] text-black/35 ml-2">
@@ -1698,7 +1699,7 @@ export default function Customize() {
                   </span>
                 )}
               </p>
-              <div className="flex gap-3">
+              <div className="hidden lg:flex gap-3">
                 {needsCustomRequest ? (
                   <button
                     onClick={() => setCustomRequestOpen(true)}
@@ -1753,7 +1754,7 @@ export default function Customize() {
                   </button>
                 )}
               </div>
-              <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>
+              <p className="hidden lg:block text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>
                 {needsCustomRequest
                   ? 'Maßanfertigung · persönliche Beratung über WhatsApp Business'
                   : !fitReady
