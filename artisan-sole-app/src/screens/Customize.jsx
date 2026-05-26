@@ -1033,6 +1033,17 @@ export default function Customize() {
               )}
             </div>
 
+            {/* Test-Detail: Leisten-Sollmaße vs. Fußmaße (zur Überprüfung) */}
+            {fitState === 'matched' && selectedFit?.foot_length_mm != null && footMeasurements?.foot_length_mm && (
+              <p className="text-[10px] text-black/35 font-light mt-1.5 leading-relaxed">
+                Leisten-Maß ({selectedFit.last_label} {selectedFit.width}, Gr. {selectedFit.size_label}):
+                {' '}{selectedFit.foot_length_mm} mm Länge · {selectedFit.ball_girth_mm} mm Ballenumfang
+                {' '}· Abweichung Länge {selectedFit.deltaLength > 0 ? '+' : ''}{String(selectedFit.deltaLength).replace('.', ',')} mm,
+                {' '}Ballen {selectedFit.deltaGirth > 0 ? '+' : ''}{String(selectedFit.deltaGirth).replace('.', ',')} mm
+                {' '}(Ihre Maße: {footMeasurements.foot_length_mm}/{footMeasurements.ball_girth_mm} mm)
+              </p>
+            )}
+
             {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
             {measOpen && (
               <div className="mt-3 border border-black/10 p-3 max-w-md">

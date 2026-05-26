@@ -12,13 +12,23 @@ function debouncedSyncCart(getFn) {
 }
 
 // Fußmaße lokal persistieren, damit sie auch für Gäste (ohne Login) über
-// Reloads und Seitenwechsel erhalten bleiben.
+// Reloads und Seitenwechsel erhalten bleiben. localStorage UND Cookie als
+// Fallback (manche Umgebungen/iframes blockieren localStorage).
 const FM_KEY = 'as_foot_measurements'
 function readLocalMeasurements() {
-  try { return JSON.parse(localStorage.getItem(FM_KEY)) || null } catch { return null }
+  try { const v = localStorage.getItem(FM_KEY); if (v) return JSON.parse(v) } catch {}
+  try {
+    const m = document.cookie.match(/(?:^|;\s*)as_fm=([^;]+)/)
+    if (m) return JSON.parse(decodeURIComponent(m[1]))
+  } catch {}
+  return null
 }
 function writeLocalMeasurements(m) {
   try { m ? localStorage.setItem(FM_KEY, JSON.stringify(m)) : localStorage.removeItem(FM_KEY) } catch {}
+  try {
+    if (m) document.cookie = `as_fm=${encodeURIComponent(JSON.stringify(m))}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
+    else document.cookie = 'as_fm=; path=/; max-age=0'
+  } catch {}
 }
 
 // Client-side cache, source of truth is the backend DB
