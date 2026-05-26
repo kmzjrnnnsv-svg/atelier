@@ -24,7 +24,6 @@ const resolveImg = (url) => {
 
 // Office-taugliche Kategorien für den Katalog.
 const OFFICE_CATEGORIES = ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK', 'LOAFER', 'BALMORAL']
-const MIN_PER_DESIGN = 10
 
 const USE_CASES = [
   { icon: Award,     title: 'Corporate Benefit',          desc: 'Ein Benefit, der jeden Tag getragen wird, hochwertiger als jeder Gutschein und persönlicher als jede Prämie.' },
@@ -38,8 +37,8 @@ const VALUES = [
   { icon: MapPin,     title: 'Spanische Manufaktur',   desc: 'Jedes Paar entsteht einzeln auf Bestellung in einer traditionsreichen Manufaktur in Spanien, Schuhmacherhandwerk, wie es sein soll.' },
   { icon: Gem,        title: 'Feinste Leder',          desc: 'Ausschließlich hochwertige Kalbs- und Premiumleder: edel im Griff, langlebig im Tragen und mit den Jahren nur schöner.' },
   { icon: PenTool,    title: 'Ihr Logo, dezent veredelt', desc: 'Auf Wunsch mit Ihrem Firmenlogo, Initialen oder Monogramm, etwa auf der Sohle, in feiner Handarbeit ausgeführt.' },
-  { icon: Building2,  title: 'Eigenes Firmenkonto',     desc: 'Logo hinterlegen, Profil pflegen und künftig Einmal-Codes verwalten, die Ihre Empfänger selbst einlösen.' },
-  { icon: Package,    title: `Ab ${MIN_PER_DESIGN} Paar pro Design`, desc: 'Wir begleiten Ihr Vorhaben persönlich, mit transparenten Konditionen, die zu seiner Größe passen.' },
+  { icon: Building2,  title: 'Auf Wunsch ein Firmenkonto', desc: 'Für wiederkehrende Vorhaben richten wir Ihnen ein Firmenkonto ein: Logo hinterlegen, Profil pflegen und Einlöse-Codes verwalten.' },
+  { icon: Package,    title: 'Für Teams jeder Größe',   desc: 'Vom kleinen Team bis zur großen Belegschaft, Konditionen und Ablauf stimmen wir individuell auf Ihr Vorhaben ab.' },
 ]
 
 export default function CorporateGifting() {
@@ -90,7 +89,6 @@ export default function CorporateGifting() {
   const scrollToForm = () => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const chooseDesign = (name) => {
     setSelectedDesign(name)
-    setForm(f => ({ ...f, quantity: f.quantity || String(MIN_PER_DESIGN) }))
     scrollToForm()
   }
 
@@ -289,27 +287,6 @@ export default function CorporateGifting() {
         </section>
       )}
 
-      {/* Firmenkonto / Login */}
-      <section className="px-5 lg:px-8 py-16 lg:py-24 bg-stone-900 text-white">
-        <div className="max-w-2xl mx-auto text-center">
-          <Building2 size={26} strokeWidth={1.25} className="text-white/60 mx-auto mb-5" />
-          <h2 className="text-[22px] lg:text-[28px] font-extralight tracking-tight">Bereits Firmenkunde?</h2>
-          <p className="text-[13px] text-white/55 font-light mt-4 max-w-lg mx-auto leading-relaxed">
-            In Ihrem Firmenkonto hinterlegen Sie Ihr Logo für die Sohle, pflegen Ihr Profil und verwalten die Einmal-Codes, die Ihre Empfänger selbst einlösen.
-          </p>
-          <Link
-            to="/login"
-            className="inline-flex items-center gap-2.5 mt-8 px-8 h-12 bg-white text-stone-900 no-underline hover:bg-stone-100 transition-colors"
-            style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
-          >
-            <LogIn size={15} strokeWidth={1.6} /> Zum Firmen-Login
-          </Link>
-          <p className="text-[10px] text-white/35 font-light mt-6">
-            Noch kein Konto? Senden Sie uns einfach eine Anfrage, wir richten es für Sie ein.
-          </p>
-        </div>
-      </section>
-
       {/* Anfrage */}
       <section ref={formRef} className="px-5 lg:px-8 py-16 lg:py-24 bg-stone-50 border-t border-stone-200/70 scroll-mt-16">
         <div className="max-w-xl mx-auto">
@@ -361,8 +338,8 @@ export default function CorporateGifting() {
                   <input className={inputCls} value={form.occasion} onChange={e => set('occasion', e.target.value)} placeholder="z. B. Benefit, Onboarding, Jubiläum" />
                 </div>
                 <div>
-                  <label className={labelCls}>Stückzahl (ab {MIN_PER_DESIGN}/Design)</label>
-                  <input className={inputCls} value={form.quantity} onChange={e => set('quantity', e.target.value)} placeholder={`z. B. ${MIN_PER_DESIGN}`} />
+                  <label className={labelCls}>Ungefähre Stückzahl</label>
+                  <input className={inputCls} value={form.quantity} onChange={e => set('quantity', e.target.value)} placeholder="z. B. 25" />
                 </div>
               </div>
               <div>
@@ -421,7 +398,15 @@ export default function CorporateGifting() {
       <footer className="px-5 lg:px-8 py-9 bg-white border-t border-stone-200/70">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="font-brand text-[13px] tracking-[0.04em] text-stone-900">ARTISAN SOLE</span>
-          <p className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">Bespoke Footwear · Made in Spain</p>
+          <div className="flex items-center gap-5">
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-1.5 text-[10px] text-stone-400 hover:text-stone-700 no-underline uppercase tracking-[0.2em] transition-colors"
+            >
+              <LogIn size={13} strokeWidth={1.4} /> Bereits Firmenkunde? Zum Firmen-Login
+            </Link>
+            <p className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">Bespoke Footwear · Made in Spain</p>
+          </div>
         </div>
       </footer>
     </div>

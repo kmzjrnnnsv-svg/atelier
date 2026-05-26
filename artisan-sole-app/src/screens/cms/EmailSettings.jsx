@@ -6,7 +6,7 @@ import MFAModal from '../../components/MFAModal'
 export default function EmailSettings() {
  const [form, setForm] = useState({
  smtp_host: '', smtp_port: '587', smtp_user: '',
- smtp_pass: '', smtp_manufacturer_email: '', app_url: '',
+ smtp_pass: '', smtp_manufacturer_email: '', business_inquiry_email: '', app_url: '',
  })
  const [passSet, setPassSet] = useState(false)
  const [showPass, setShowPass] = useState(false)
@@ -29,6 +29,7 @@ export default function EmailSettings() {
  smtp_user: data.smtp_user || '',
  smtp_pass: '',
  smtp_manufacturer_email: data.smtp_manufacturer_email || '',
+ business_inquiry_email: data.business_inquiry_email || '',
  app_url: data.app_url || '',
  })
  } catch { /* keep defaults */ }
@@ -174,6 +175,21 @@ export default function EmailSettings() {
  />
  <p className="text-[10px] text-black/25 font-light mt-1">
  An diese Adresse werden neue Bestellungen mit Fußmaßen und STL-Link gesendet.
+ </p>
+ </div>
+
+ {/* Inquiry email */}
+ <div>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Anfragen-E-Mail</label>
+ <input
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
+ type="email"
+ placeholder="anfragen@ihre-domain.de"
+ value={form.business_inquiry_email}
+ onChange={e => f('business_inquiry_email', e.target.value)}
+ />
+ <p className="text-[10px] text-black/25 font-light mt-1">
+ An diese Adresse gehen neue Anfragen (Firmen- &amp; Maßanfertigung). Leer = Hersteller-E-Mail.
  </p>
  </div>
 

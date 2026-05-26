@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, authenticateOptional, requireRole } from '../middleware/auth.js'
+import { sendInquiryNotification, sendInquiryAck } from '../utils/email.js'
 
 const router = Router()
 const canManage = [authenticate, requireRole('admin', 'curator')]
@@ -51,6 +52,16 @@ router.post('/',
     )
 
     const row = db.prepare('SELECT * FROM custom_requests WHERE id = ?').get(result.lastInsertRowid)
+
+    Promise.allSettled([
+      sendInquiryNotification(row),
+      sendInquiryAck(row),
+    ]).then(results => {
+      for (const r of results) {
+        if (r.status === 'rejected') console.error('Anfrage-Mail fehlgeschlagen:', r.reason)
+      }
+    })
+
     res.status(201).json(row)
   }
 )

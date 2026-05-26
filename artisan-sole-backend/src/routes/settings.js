@@ -6,7 +6,7 @@ import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 const router = Router()
 
 const BANK_KEYS  = ['bank_iban', 'bank_bic', 'bank_holder', 'bank_name']
-const EMAIL_KEYS = ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_manufacturer_email', 'app_url']
+const EMAIL_KEYS = ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_manufacturer_email', 'business_inquiry_email', 'app_url']
 
 // GET /api/settings/bank — admin + curator
 router.get('/bank', authenticate, requireRole('admin', 'curator'), (req, res) => {
@@ -65,6 +65,7 @@ router.get('/email', authenticate, requireRole('admin'), (req, res) => {
     smtp_user:               s.smtp_user               || process.env.SMTP_USER               || '',
     smtp_pass_set:           !!(s.smtp_pass             || process.env.SMTP_PASS),   // never send password
     smtp_manufacturer_email: s.smtp_manufacturer_email || process.env.MANUFACTURER_EMAIL      || '',
+    business_inquiry_email:  s.business_inquiry_email  || process.env.BUSINESS_INQUIRY_EMAIL  || '',
     app_url:                 s.app_url                 || process.env.APP_URL                 || '',
   })
 })
@@ -76,6 +77,7 @@ router.put('/email',
   requireMFA,
   body('smtp_user').optional({ checkFalsy: true }).isEmail().withMessage('Ungültige Absender-E-Mail'),
   body('smtp_manufacturer_email').optional({ checkFalsy: true }).isEmail().withMessage('Ungültige Hersteller-E-Mail'),
+  body('business_inquiry_email').optional({ checkFalsy: true }).isEmail().withMessage('Ungültige Anfrage-E-Mail'),
   (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
@@ -88,12 +90,13 @@ router.put('/email',
       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
     `)
 
-    const { smtp_host, smtp_port, smtp_user, smtp_pass, smtp_manufacturer_email, app_url } = req.body
+    const { smtp_host, smtp_port, smtp_user, smtp_pass, smtp_manufacturer_email, business_inquiry_email, app_url } = req.body
 
     if (smtp_host               !== undefined) upsert.run('smtp_host',               smtp_host               || '', uid)
     if (smtp_port               !== undefined) upsert.run('smtp_port',               smtp_port               || '587', uid)
     if (smtp_user               !== undefined) upsert.run('smtp_user',               smtp_user               || '', uid)
     if (smtp_manufacturer_email !== undefined) upsert.run('smtp_manufacturer_email', smtp_manufacturer_email || '', uid)
+    if (business_inquiry_email  !== undefined) upsert.run('business_inquiry_email',  business_inquiry_email  || '', uid)
     if (app_url                 !== undefined) upsert.run('app_url',                 app_url                 || '', uid)
     // Only overwrite password if a new one was explicitly provided
     if (smtp_pass && smtp_pass.trim()) upsert.run('smtp_pass', smtp_pass.trim(), uid)
