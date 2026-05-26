@@ -4,7 +4,7 @@
  */
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, ChevronRight, BookOpen, Footprints, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3, Package, Settings, LogOut } from 'lucide-react'
+import { CheckCircle, ChevronRight, BookOpen, Footprints, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3, Package, Settings, LogOut, Layers, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
@@ -72,7 +72,20 @@ function useSwipeTabs(items, activeKey, setActiveKey) {
 export default function Profile() {
   const navigate   = useNavigate()
   const { user }   = useAuth()
-  const { favorites, orders, loyaltyTiers, loyaltyStatus, latestScan, averagedScan, refreshScan, footNotes, saveFootNotes, footMeasurements, saveFootMeasurements, sendFitFeedback } = useStore()
+  const { favorites, orders, loyaltyTiers, loyaltyStatus, latestScan, averagedScan, refreshScan, footNotes, saveFootNotes, footMeasurements, saveFootMeasurements, sendFitFeedback, shoes, fetchConfigurations, deleteConfiguration } = useStore()
+  const [savedConfigs, setSavedConfigs] = useState([])
+  useEffect(() => {
+    if (!user) { setSavedConfigs([]); return }
+    fetchConfigurations().then(setSavedConfigs).catch(() => {})
+  }, [user])
+  const loadConfig = (cfg) => {
+    const shoe = shoes?.find(s => String(s.id) === String(cfg.shoeId))
+    navigate(`/customize?id=${cfg.shoeId}`, { state: { product: shoe || { id: cfg.shoeId, name: cfg.shoeName, category: cfg.category }, loadConfig: cfg } })
+  }
+  const removeConfig = async (id) => {
+    const next = await deleteConfiguration(id).catch(() => null)
+    if (next) setSavedConfigs(next)
+  }
   const [activeTab, setActiveTab] = useState('SIZE')
   const [showLoyalty, setShowLoyalty] = useState(false)
   const [editingNotes, setEditingNotes] = useState(false)
@@ -665,6 +678,36 @@ export default function Profile() {
           ))}
         </div>
       </div>
+
+      {/* ── Meine Konfigurationen ──────────────────────────────── */}
+      {savedConfigs.length > 0 && (
+        <div className="px-5 lg:px-16 pt-8">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-black/25 font-light mb-4">Meine Konfigurationen</p>
+          <div className="space-y-px">
+            {savedConfigs.map(cfg => (
+              <div key={cfg.id} className="w-full flex items-center justify-between py-4 border-b border-black/[0.04]">
+                <button onClick={() => loadConfig(cfg)} className="flex items-center gap-3 flex-1 text-left bg-transparent border-0 min-w-0">
+                  <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center" style={{ background: cfg.colorHex || '#f6f5f3' }}>
+                    <Layers size={15} className="text-white/80 mix-blend-difference" strokeWidth={1.5} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] text-black font-light truncate">{cfg.shoeName || 'Schuh'}</p>
+                    <p className="text-[10px] text-black/35 font-light truncate">
+                      {[cfg.materialName, cfg.colorName, cfg.price].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                </button>
+                <div className="flex items-center gap-3 flex-shrink-0 pl-3">
+                  <button onClick={() => loadConfig(cfg)} className="text-[10px] uppercase tracking-[0.12em] text-black/45 hover:text-black/75 bg-transparent border-0">Öffnen</button>
+                  <button onClick={() => removeConfig(cfg.id)} aria-label="Löschen" className="text-black/25 hover:text-black/60 bg-transparent border-0 p-0">
+                    <Trash2 size={14} strokeWidth={1.5} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Quick links ────────────────────────────────────────── */}
       <div className="px-5 lg:px-16 pt-8">

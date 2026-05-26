@@ -378,6 +378,47 @@ router.put('/me/cart', authenticate, (req, res) => {
   res.json({ cart: cart || [] })
 })
 
+// ── Saved configurations (nur eingeloggt) ──────────────────────────────────────
+const MAX_SAVED_CONFIGS = 50
+const readConfigs = (row) => {
+  try { return row?.saved_configurations ? JSON.parse(row.saved_configurations) : [] } catch { return [] }
+}
+
+// GET /api/auth/me/configurations — gespeicherte Konfigurationen
+router.get('/me/configurations', authenticate, (req, res) => {
+  const row = getDb().prepare('SELECT saved_configurations FROM users WHERE id = ?').get(req.user.id)
+  res.json({ configurations: readConfigs(row) })
+})
+
+// POST /api/auth/me/configurations — eine Konfiguration speichern
+router.post('/me/configurations', authenticate, (req, res) => {
+  const { config } = req.body || {}
+  if (!config || typeof config !== 'object' || !config.shoeId) {
+    return res.status(400).json({ error: 'config (mit shoeId) erforderlich' })
+  }
+  const db = getDb()
+  const list = readConfigs(db.prepare('SELECT saved_configurations FROM users WHERE id = ?').get(req.user.id))
+  const entry = {
+    id: (globalThis.crypto?.randomUUID?.() || String(Date.now()) + Math.random().toString(36).slice(2)),
+    created_at: new Date().toISOString(),
+    ...config,
+  }
+  const next = [entry, ...list].slice(0, MAX_SAVED_CONFIGS)
+  db.prepare("UPDATE users SET saved_configurations = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(JSON.stringify(next), req.user.id)
+  res.status(201).json({ configuration: entry, configurations: next })
+})
+
+// DELETE /api/auth/me/configurations/:id — eine Konfiguration löschen
+router.delete('/me/configurations/:id', authenticate, (req, res) => {
+  const db = getDb()
+  const list = readConfigs(db.prepare('SELECT saved_configurations FROM users WHERE id = ?').get(req.user.id))
+  const next = list.filter(c => String(c.id) !== String(req.params.id))
+  db.prepare("UPDATE users SET saved_configurations = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(next.length ? JSON.stringify(next) : null, req.user.id)
+  res.json({ configurations: next })
+})
+
 // POST /api/auth/register-promotion — register via invite token
 router.post('/register-promotion',
   body('token').trim().notEmpty().withMessage('Token erforderlich'),
