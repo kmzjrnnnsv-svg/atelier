@@ -27,12 +27,32 @@ git checkout HEAD -- artisan-sole-app/package-lock.json artisan-sole-backend/pac
 git pull origin "$BRANCH"
 echo "  Code aktualisiert"
 
-# 2. Frontend bauen
+# 2. Frontend bauen (ATOMAR)
+# Bisher wurde direkt im live ausgelieferten dist/ gebaut. Vite leert dist/ aber
+# zu Beginn des (mehrere Sekunden langen) Builds → in diesem Fenster liefert der
+# laufende Server fehlende/halbe Chunks aus (404 → ChunkLoadError beim Nutzer),
+# und bei einem Build-Abbruch (z. B. OOM) bleibt die Seite dauerhaft kaputt.
+# Lösung: in dist-new/ bauen und erst nach erfolgreichem Build live schalten.
 echo "→ Frontend bauen..."
 cd "$APP_DIR/artisan-sole-app"
 npm install
-npm run build
-echo "  Frontend gebaut"
+rm -rf dist-new
+# set -e (oben) sorgt dafür, dass bei einem Build-Fehler das alte dist/
+# unangetastet bleibt und die Seite weiterläuft.
+npm run build -- --outDir dist-new --emptyOutDir
+# Assets des vorherigen Builds übernehmen, damit bereits geöffnete Tabs beim
+# Lazy-Laden alter Chunk-Hashes (während/kurz nach dem Deploy) nicht 404en.
+#   -n: niemals frisch gebaute Dateien überschreiben · -p: mtime erhalten (Prune)
+if [ -d dist/assets ]; then cp -rpn dist/assets/. dist-new/assets/ 2>/dev/null || true; fi
+# Atomarer Wechsel (zwei mv = Sub-Millisekunden-Fenster).
+rm -rf dist-old
+[ -d dist ] && mv dist dist-old
+mv dist-new dist
+# Verwaiste, mitgeschleppte Alt-Assets nach 7 Tagen aufräumen. Referenzierte
+# Chunks werden bei jedem Build frisch geschrieben (aktuelle mtime) und daher
+# nie getroffen — nur nicht mehr referenzierte Hashes werden entfernt.
+find dist/assets -type f -mtime +7 -delete 2>/dev/null || true
+echo "  Frontend gebaut & live geschaltet"
 
 # 3. Backend Dependencies prüfen
 echo "→ npm install (Backend)..."
