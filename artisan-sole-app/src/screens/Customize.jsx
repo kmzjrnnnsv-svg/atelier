@@ -1028,7 +1028,7 @@ export default function Customize() {
         {/* ── RIGHT: Konfiguration (2/6 der Breite, rechter Rand) ── */}
         <div
           ref={rightPanelRef}
-          className="flex-1 flex flex-col lg:flex-initial lg:w-2/6 lg:overflow-y-auto lg:min-h-0 lg:border-l lg:border-black/5 lg:px-6"
+          className="flex-1 flex flex-col w-full max-w-2xl mx-auto lg:max-w-none lg:mx-0 lg:flex-initial lg:w-2/6 lg:overflow-y-auto lg:min-h-0 lg:border-l lg:border-black/5 lg:px-6"
           style={{ scrollbarWidth: 'none' }}
         >
 
@@ -1774,6 +1774,7 @@ export default function Customize() {
           pointerEvents: configStep >= 3 ? 'auto' : 'none',
         }}
       >
+        <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-center gap-3 mb-1.5">
           <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{mat?.label}</span>
           <span className="text-black/15">·</span>
@@ -1830,6 +1831,7 @@ export default function Customize() {
               ? 'Bitte zuerst die Passform ermitteln'
               : 'Handgefertigt · Kostenlose Lieferung'}
         </p>
+        </div>
       </div>
 
       {/* ── Duplikat-Dialog ────────────────────────────────────── */}
