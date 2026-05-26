@@ -703,6 +703,23 @@ export default function Customize() {
     : sizeType === 'custom'
       ? latestScan?.eu_size
       : selectedSize
+  // Zum Login wechseln und die aktuelle Konfiguration mitgeben, damit sie
+  // nach erfolgreicher Anmeldung auf der Produktseite wiederhergestellt wird.
+  const goToLogin = () => {
+    navigate('/login', {
+      state: {
+        from: location.pathname + location.search,
+        loadConfig: {
+          shoeId: product.id,
+          material: selMat,
+          color: selCol,
+          accessories: selectedAccessories,
+          extras: selectedExtras,
+        },
+      },
+    })
+  }
+
   // Maße, die fürs Auto-Matching verwendet wurden (für Bestellung/Manufaktur)
   const footMeasurementsUsed = footMeasurements?.foot_length_mm
     ? { foot_length_mm: footMeasurements.foot_length_mm, ball_girth_mm: footMeasurements.ball_girth_mm }
@@ -834,12 +851,12 @@ export default function Customize() {
           <button
             onClick={async () => {
               if (!user) {
-                navigate('/login', { state: { from: location.pathname + location.search } })
+                goToLogin()
                 return
               }
               const result = await toggleFavorite(product.id)
               if (result === 'unauthenticated') {
-                navigate('/login', { state: { from: location.pathname + location.search } })
+                goToLogin()
               }
             }}
             className="w-10 h-10 flex items-center justify-center border-0 bg-transparent"
@@ -1748,7 +1765,7 @@ export default function Customize() {
                   <span className="text-[10px] text-black/55">Gespeichert · im Profil unter „Meine Konfigurationen"</span>
                 )}
                 {savedToast === 'login' && (
-                  <button type="button" onClick={() => navigate('/login', { state: { from: location.pathname + location.search } })}
+                  <button type="button" onClick={goToLogin}
                     className="text-[10px] text-black/55 underline underline-offset-2 bg-transparent border-0 p-0">
                     Zum Speichern bitte anmelden
                   </button>
