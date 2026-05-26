@@ -279,6 +279,23 @@ const useStore = create((set, get) => ({
     return res.foot_measurements || null
   },
 
+  // --- SAVED CONFIGURATIONS (nur eingeloggt) ---
+  async fetchConfigurations() {
+    const res = await apiFetch('/api/auth/me/configurations').catch(() => ({ configurations: [] }))
+    return Array.isArray(res?.configurations) ? res.configurations : []
+  },
+  async saveConfiguration(config) {
+    const res = await apiFetch('/api/auth/me/configurations', {
+      method: 'POST',
+      body: JSON.stringify({ config }),
+    })
+    return res
+  },
+  async deleteConfiguration(id) {
+    const res = await apiFetch(`/api/auth/me/configurations/${id}`, { method: 'DELETE' })
+    return Array.isArray(res?.configurations) ? res.configurations : []
+  },
+
   // --- SAVED ADDRESSES ---
   async saveAddresses(delivery, billing) {
     const res = await apiFetch('/api/auth/me/addresses', {

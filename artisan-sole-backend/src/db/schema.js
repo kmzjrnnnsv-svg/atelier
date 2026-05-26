@@ -319,6 +319,8 @@ export function runMigrations(db) {
     // users — E-Mail-Verifizierung (für Kampagnen-Beitritt per Domain)
     `ALTER TABLE users ADD COLUMN email_verified     INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE users ADD COLUMN email_verify_token TEXT`,
+    // users — gespeicherte Schuh-Konfigurationen (JSON-Array, nur eingeloggt)
+    `ALTER TABLE users ADD COLUMN saved_configurations TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

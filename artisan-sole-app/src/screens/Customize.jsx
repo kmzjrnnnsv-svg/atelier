@@ -107,7 +107,7 @@ function getDefaultSole(soles) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, accessories: allAccessories, shoes, footMeasurements, saveFootMeasurements, matchFit } = useStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, shoeSoles, addToCart, cart, accessories: allAccessories, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
   const { user } = useAuth()
 
   // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
@@ -620,6 +620,53 @@ export default function Customize() {
   const matSwipe  = useSwipe(matList, selMat, setSelMat)
   const colSwipe  = useSwipe(colList, selCol, setSelCol)
   const soleSwipe = useSwipe(soleList, selSole, setSelSole)
+
+  // ── Konfiguration speichern / geladene Konfiguration anwenden ───────────────
+  const [savedToast, setSavedToast]   = useState('')   // '', 'saved', 'login'
+  const [savingConfig, setSavingConfig] = useState(false)
+  const appliedConfigRef = useRef(false)
+
+  // Eine via Profil geladene Konfiguration einmalig auf die Auswahl anwenden,
+  // sobald die Material-/Farb-Listen dieses Schuhs bereitstehen.
+  useEffect(() => {
+    const cfg = location.state?.loadConfig
+    if (!cfg || appliedConfigRef.current) return
+    if (String(cfg.shoeId) !== String(product.id)) return
+    if (!matList.length) return
+    appliedConfigRef.current = true
+    const fam = baseMatList.find(m => m.key === cfg.material)?.family
+    if (fam) setSelFamily(fam)
+    if (cfg.material) setSelMat(cfg.material)
+    if (cfg.color) setSelCol(cfg.color)
+    if (cfg.sole) setSelSole(cfg.sole)
+    if (Array.isArray(cfg.accessories)) setSelectedAccessories(cfg.accessories)
+    if (cfg.extras && typeof cfg.extras === 'object') setSelectedExtras(cfg.extras)
+  }, [location.state, product.id, matList.length])
+
+  const handleSaveConfiguration = async () => {
+    if (!user) {
+      setSavedToast('login'); setTimeout(() => setSavedToast(''), 3500)
+      return
+    }
+    setSavingConfig(true)
+    try {
+      await saveConfiguration({
+        shoeId: product.id,
+        shoeName: cleanShoeName(product.name),
+        category,
+        label: [cleanShoeName(product.name), mat?.name, col?.name].filter(Boolean).join(' · '),
+        material: selMat, materialName: mat?.name || '',
+        color: selCol, colorName: col?.name || '', colorHex: col?.hex || product.color || null,
+        sole: selSole,
+        accessories: selectedAccessories,
+        extras: selectedExtras,
+        price: displayPrice,
+      })
+      setSavedToast('saved'); setTimeout(() => setSavedToast(''), 2500)
+    } catch {
+      setSavedToast('');
+    } finally { setSavingConfig(false) }
+  }
 
   // Reviews laden
   useEffect(() => {
@@ -1764,6 +1811,26 @@ export default function Customize() {
                       Jetzt kaufen
                     </button>
                   </>
+                )}
+              </div>
+              <div className="mt-3 flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleSaveConfiguration}
+                  disabled={savingConfig}
+                  className="inline-flex items-center gap-1.5 text-[10px] text-black/45 hover:text-black/75 underline underline-offset-2 bg-transparent border-0 p-0 disabled:opacity-40"
+                  style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
+                >
+                  <Heart size={12} strokeWidth={1.5} /> {savingConfig ? 'wird gespeichert …' : 'Konfiguration speichern'}
+                </button>
+                {savedToast === 'saved' && (
+                  <span className="text-[10px] text-black/55">Gespeichert · im Profil unter „Meine Konfigurationen"</span>
+                )}
+                {savedToast === 'login' && (
+                  <button type="button" onClick={() => navigate('/login', { state: { from: location.pathname + location.search } })}
+                    className="text-[10px] text-black/55 underline underline-offset-2 bg-transparent border-0 p-0">
+                    Zum Speichern bitte anmelden
+                  </button>
                 )}
               </div>
               <p className="text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>
