@@ -1025,6 +1025,12 @@ export default function Customize() {
                   </button>
                 )}
               </div>
+              {fitState === 'matched' && selectedFit?.last_label && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Leiste</span>
+                  <span className="text-[11px] lg:text-[12px] font-medium text-black">{selectedFit.last_label} {selectedFit.width}</span>
+                </div>
+              )}
             </div>
 
             {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
