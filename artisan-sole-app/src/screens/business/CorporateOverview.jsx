@@ -36,7 +36,7 @@ const PROZESS = [
   { n: '02', t: 'Persönliches Angebot', d: 'Wir melden uns mit einem passenden Vorschlag, abgestimmt auf Modell, Logo und Größe.' },
   { n: '03', t: 'Konfiguration',        d: 'Mitarbeitende konfigurieren ihren Schuh per Code oder werden zentral betreut.' },
   { n: '04', t: 'Produktion',           d: 'Jedes Paar wird custom-made und erst auf Bestellung in Spanien gefertigt.' },
-  { n: '05', t: 'Lieferung',            d: 'In der Regel rund 4 Wochen nach Zahlungseingang, an Empfänger oder zentral an Sie.' },
+  { n: '05', t: 'Lieferung',            d: 'Einzelbestellungen bis zu 4 Wochen, größere Sammelbestellungen bis zu 8 Wochen, jeweils nach Zahlungseingang. Lieferung an Empfänger oder zentral an Sie.' },
 ]
 
 const QUALITAET = [
