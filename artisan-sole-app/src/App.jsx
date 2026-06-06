@@ -125,6 +125,7 @@ const ConfiguratorMatrix   = lazy(() => import('./screens/cms/ConfiguratorMatrix
 const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
+const CorporateOverview    = lazy(() => import('./screens/business/CorporateOverview'))
 const RegisterBusiness     = lazy(() => import('./screens/RegisterBusiness'))
 const BusinessDashboard    = lazy(() => import('./screens/business/BusinessDashboard'))
 const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfile'))
@@ -294,6 +295,7 @@ function AppRoutes() {
               <Route path="/register-promotion" element={<RegisterPromotion />} />
               {/* Public, Window Shopping ohne Login */}
               <Route path="/business"   element={<CorporateGifting />} />
+              <Route path="/business/uebersicht" element={<CorporateOverview />} />
               <Route path="/collection" element={<ShoeCollection />} />
               <Route path="/customize"  element={<Customize />} />
               <Route path="/welcome"    element={<Welcome />} />
@@ -344,6 +346,7 @@ function AppRoutes() {
       {/* Corporate Gifting lebt auf business.artisansole.com; auf der Hauptdomain
           leitet /business dorthin um (Subdomain = kanonisch). */}
       <Route path="/business"   element={isProdApex ? <ExternalRedirect to={BUSINESS_URL} /> : <CorporateGifting />} />
+      <Route path="/business/uebersicht" element={isProdApex ? <ExternalRedirect to={`${BUSINESS_URL}uebersicht`} /> : <CorporateOverview />} />
       <Route path="/collection" element={<ShoeCollection />} />
       <Route path="/customize"  element={<Customize />} />
       <Route path="/welcome"    element={<Welcome />} />

@@ -160,6 +160,12 @@ export default function CorporateGifting() {
           >
             Angebot anfragen <ArrowRight size={15} strokeWidth={1.6} className="transition-transform group-hover:translate-x-0.5" />
           </button>
+          <Link
+            to="/business/uebersicht"
+            className="mt-4 inline-flex items-center gap-1.5 text-[10px] text-white/65 hover:text-white no-underline uppercase tracking-[0.22em] transition-colors"
+          >
+            Preise und Prozess auf einen Blick <ArrowRight size={12} strokeWidth={1.6} />
+          </Link>
         </div>
       </div>
 
@@ -288,7 +294,7 @@ export default function CorporateGifting() {
       )}
 
       {/* Anfrage */}
-      <section ref={formRef} className="px-5 lg:px-8 py-16 lg:py-24 bg-stone-50 border-t border-stone-200/70 scroll-mt-16">
+      <section id="anfrage" ref={formRef} className="px-5 lg:px-8 py-16 lg:py-24 bg-stone-50 border-t border-stone-200/70 scroll-mt-16">
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-10">
             <p className={`${eyebrow} mb-3`}>Anfrage</p>
