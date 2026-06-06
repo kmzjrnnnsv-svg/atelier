@@ -344,8 +344,9 @@ function AppRoutes() {
       <Route path="/verify-email"       element={<VerifyEmail />} />
       {/* Public, Window Shopping ohne Login */}
       {/* Corporate Gifting lebt auf business.artisansole.com; auf der Hauptdomain
-          leitet /business dorthin um (Subdomain = kanonisch). */}
-      <Route path="/business"   element={isProdApex ? <ExternalRedirect to={BUSINESS_URL} /> : <CorporateGifting />} />
+          leitet /business dorthin um (Subdomain = kanonisch). Auf der Subdomain
+          selbst ist / die kanonische URL, /business leitet intern dorthin um. */}
+      <Route path="/business"   element={isProdApex ? <ExternalRedirect to={BUSINESS_URL} /> : isBusiness ? <Navigate to="/" replace /> : <CorporateGifting />} />
       <Route path="/business/uebersicht" element={isProdApex ? <ExternalRedirect to={`${BUSINESS_URL}uebersicht`} /> : <CorporateOverview />} />
       <Route path="/collection" element={<ShoeCollection />} />
       <Route path="/customize"  element={<Customize />} />

@@ -1,5 +1,5 @@
 /**
- * CorporateOverview.jsx, öffentliche B2B-Unterseite zu /business.
+ * CorporateOverview.jsx, öffentliche B2B-Unterseite zur Corporate-Landing (/).
  * Kompakte einseitige Preis- und Prozessübersicht für Firmenkunden,
  * Custom-made-Wording, druckfreundlich.
  */
@@ -71,7 +71,7 @@ export default function CorporateOverview() {
     <div className="min-h-full bg-white text-stone-900">
       {/* Top bar */}
       <div className="sticky top-0 z-30 flex items-center justify-between px-5 lg:px-10 py-4 bg-white/85 backdrop-blur-md border-b border-stone-200/70 print:hidden">
-        <Link to="/business" className="font-brand text-[15px] tracking-[0.04em] no-underline text-stone-900">
+        <Link to="/" className="font-brand text-[15px] tracking-[0.04em] no-underline text-stone-900">
           ARTISAN SOLE
         </Link>
         <Link
@@ -243,7 +243,7 @@ export default function CorporateOverview() {
           </p>
           <div className="flex flex-col sm:flex-row items-stretch justify-center gap-3 mt-8 max-w-md mx-auto">
             <Link
-              to="/business#anfrage"
+              to="/#anfrage"
               className="flex-1 h-12 inline-flex items-center justify-center gap-2 bg-stone-900 text-white no-underline hover:bg-stone-800 transition-colors"
               style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
             >
