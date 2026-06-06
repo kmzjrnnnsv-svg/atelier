@@ -19,9 +19,9 @@ const LEISTUNG = [
 ]
 
 const PREISE = [
-  { tier: 'Sneaker',           price: 'ab € 750',   note: 'z. B. The Court Blanc, custom-made' },
-  { tier: 'Business-Modelle',  price: 'ab € 1.200', note: 'Oxford, Derby, Loafer, typisch bis € 1.700' },
-  { tier: 'Boots & Statement', price: 'ab € 1.550', note: 'Chelsea, Balmoral, Cordovan' },
+  { tier: 'Loafer',                price: 'ab € 280',  note: 'z. B. The Riviera Loafer, custom-made' },
+  { tier: 'Oxford, Derby & Monk',  price: 'ab € 380',  note: 'klassische Business-Modelle' },
+  { tier: 'Boots & Chelsea',       price: 'bis € 520', note: 'Chelsea, Balmoral, Statement-Stücke' },
 ]
 
 const ZUSATZ = [
