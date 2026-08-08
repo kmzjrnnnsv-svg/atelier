@@ -324,6 +324,12 @@ export function runMigrations(db) {
     // shoes, fest gesetzte Loafer-Ausfuehrung (option_key), blendet den
     // Ausfuehrungs-Selektor fuer eigenstaendige Stil-Produkte aus
     `ALTER TABLE shoes ADD COLUMN locked_decoration TEXT`,
+    // shoes, zweite Standardansicht. image_data ist das erste Bild auf der
+    // Kollektionsseite, dieses hier wird beim Überfahren eingeblendet.
+    // Bewusst nicht in GET /api/shoes: beide sind base64-Data-URLs, die
+    // Liste würde sich sonst verdoppeln. Auslieferung über
+    // GET /api/shoes/:id/hover-image, erst wenn eine Kachel berührt wird.
+    `ALTER TABLE shoes ADD COLUMN hover_image_data TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

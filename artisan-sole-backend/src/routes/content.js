@@ -7,14 +7,25 @@ const router = Router()
 const canWrite = [authenticate, requireRole('admin', 'curator')]
 const mustRead = [authenticate]
 
-function makeContentRouter(table, writeValidators = [], { publicRead = false } = {}) {
+// `listExclude` hält schwere Spalten aus der Listenantwort heraus, ohne sie
+// beim Einzelabruf zu verstecken. Nötig, seit Schuhe eine zweite Ansicht als
+// base64-Data-URL tragen: über alle Modelle summiert wäre das ein Vielfaches
+// der eigentlichen Nutzlast, und auf dem Telefon gäbe es dafür nicht einmal
+// eine Verwendung.
+function makeContentRouter(table, writeValidators = [], { publicRead = false, listExclude = [] } = {}) {
   const r = Router()
   const readGuard = publicRead ? [] : mustRead
 
   // GET all
   r.get('/', ...readGuard, (req, res) => {
     const rows = getDb().prepare(`SELECT * FROM ${table} ORDER BY id ASC`).all()
-    res.json(rows)
+    res.json(listExclude.length
+      ? rows.map(row => {
+          const copy = { ...row }
+          for (const col of listExclude) delete copy[col]
+          return copy
+        })
+      : rows)
   })
 
   // GET one
@@ -141,7 +152,7 @@ const exploreValidators = [
   body('sort_order').optional().isInt({ min: 0 }),
 ]
 
-export const shoesRouter      = makeContentRouter('shoes', shoeValidators, { publicRead: true })
+export const shoesRouter      = makeContentRouter('shoes', shoeValidators, { publicRead: true, listExclude: ['hover_image_data'] })
 export const curatedRouter    = makeContentRouter('curated_items')
 export const wardrobeRouter   = makeContentRouter('wardrobe_items')
 export const outfitsRouter    = makeContentRouter('outfits', outfitValidators)
@@ -229,7 +240,16 @@ shoeCardRouter.get('/color-summary', (req, res) => {
 // Zweitansicht für den Hover-Wechsel: bevorzugt das zweite Bild der ersten
 // Farbvariante, sonst das erste Bild der zweiten Variante.
 shoeCardRouter.get('/:id/hover-image', param('id').isInt(), (req, res) => {
-  const rows = getDb().prepare(`
+  const db = getDb()
+
+  // Das am Modell hinterlegte Standardbild hat Vorrang — es ist bewusst für
+  // die Kollektionsseite gewählt. Erst wenn keines gesetzt ist, wird aus den
+  // Farbvarianten abgeleitet, damit bestehende Modelle ohne Pflege trotzdem
+  // einen Wechsel zeigen.
+  const own = db.prepare('SELECT hover_image_data FROM shoes WHERE id = ?').get(req.params.id)
+  if (own?.hover_image_data) return res.json({ image: own.hover_image_data })
+
+  const rows = db.prepare(`
     SELECT images FROM shoe_color_variants WHERE shoe_id = ?
     ORDER BY sort_order ASC, id ASC
   `).all(req.params.id)
