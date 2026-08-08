@@ -64,7 +64,7 @@ function Section({ title, subtitle, children }) {
   )
 }
 
-function ImageSlot({ label, sub, value, onChange, position, onPositionChange }) {
+function ImageSlot({ label, sub, value, onChange, position, onPositionChange, tint, onTintChange }) {
   return (
     <div className="bg-white p-5 border border-black/[0.05]">
       <p className="text-[11px] font-light text-black/75 mb-1">{label}</p>
@@ -80,6 +80,23 @@ function ImageSlot({ label, sub, value, onChange, position, onPositionChange }) 
           >
             {HERO_POSITIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
+        </label>
+      )}
+      {onTintChange && (
+        <label className="flex items-start gap-2.5 mt-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={!!tint}
+            onChange={e => onTintChange(e.target.checked)}
+            className="mt-0.5 accent-black"
+          />
+          <span className="text-[10px] text-black/45 font-light leading-relaxed">
+            Freigestellt auf Weiß
+            <span className="block text-black/25">
+              Legt die Aufnahme auf den greigen Grund der Seite. Nur für Produktfotos
+              vor weißem Hintergrund, nicht für Lifestyle-Bilder.
+            </span>
+          </span>
         </label>
       )}
     </div>
@@ -222,6 +239,11 @@ export default function WebsiteImagesPanel() {
             onPositionChange={val => setHeroes(prev => ({
               ...prev,
               [h.key]: { ...(prev[h.key] || {}), position: val },
+            }))}
+            tint={heroes[h.key]?.tint || false}
+            onTintChange={val => setHeroes(prev => ({
+              ...prev,
+              [h.key]: { ...(prev[h.key] || {}), tint: val },
             }))}
           />
         ))}

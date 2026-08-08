@@ -256,9 +256,14 @@ router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res)
 // brauchte ein Deployment. Sie liegen jetzt wie alle anderen Website-Bilder
 // in den Settings und sind über /cms/website-images austauschbar.
 //
-// Form: { [slot]: { image: '/uploads/…', position: 'center' } }
+// Form: { [slot]: { image: '/uploads/…', position: 'center', tint: false } }
 // `position` ist die CSS object-position und entscheidet, welcher Ausschnitt
 // beim Zuschnitt stehen bleibt.
+// `tint` legt eine freigestellte Aufnahme multiplikativ auf die greige Fläche
+// der Kopfzeile. Weiß wird dadurch zum Greige, Schlagschatten bleiben als
+// getönte Schatten stehen — dieselbe Rechnung wie scripts/greige-bg.py, nur
+// im Browser statt vorab auf der Datei. Nur für Aufnahmen auf weißem Grund
+// sinnvoll; ein Lifestyle-Foto würde davon nur trüb.
 const HERO_SLOTS = ['collection', 'explore', 'accessories', 'profile', 'help', 'business', 'wishlist']
 const HERO_POSITIONS = ['top', 'center', 'bottom', 'left', 'right']
 
@@ -282,7 +287,8 @@ router.put('/page-heroes', authenticate, requireRole('admin', 'curator'), (req, 
     if (!entry || typeof entry !== 'object') continue
     const image = String(entry.image ?? '').trim()
     const position = HERO_POSITIONS.includes(entry.position) ? entry.position : 'center'
-    if (image) clean[slot] = { image, position }
+    const tint = entry.tint === true
+    if (image) clean[slot] = { image, position, tint }
   }
 
   const db = getDb()

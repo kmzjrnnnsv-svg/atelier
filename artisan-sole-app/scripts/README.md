@@ -1,5 +1,16 @@
 # Bilder für die Website vorbereiten
 
+> **In den meisten Fällen brauchst du dieses Skript nicht.**
+> Im CMS steht bei jedem Seiten-Header der Schalter „Freigestellt auf Weiß".
+> Er legt die Aufnahme im Browser multiplikativ auf den greigen Grund — das
+> ist dieselbe Rechnung wie hier, nur ohne Vorverarbeitung. Lade das weiße
+> Original hoch, setz den Haken, fertig.
+>
+> Das Skript lohnt sich in zwei Fällen: bei **hellen Schuhen** (Creme, helles
+> Kalbsleder), weil der Schalter das Produkt mit abdunkelt und das Skript es
+> per Maske ausspart — und wenn du ein Bild auf ein **Zielformat ergänzen**
+> willst, statt es zuschneiden zu lassen (`--aspect`).
+
 ## Warum
 
 Unsere Herstellerbilder stehen auf reinem Weiß. Nebeneinander auf einer Seite

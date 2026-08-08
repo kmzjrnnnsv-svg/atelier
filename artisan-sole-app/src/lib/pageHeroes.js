@@ -47,5 +47,8 @@ export function usePageHero(slot, fallback) {
   return {
     image: resolveMediaUrl(entry?.image) || fallback,
     position: entry?.position || 'center',
+    // Nur für hinterlegte Bilder — ein Fallback aus editorialImages.js steht
+    // nicht auf Weiß und würde durch das Multiplizieren nur trüb.
+    tint: !!entry?.image && entry?.tint === true,
   }
 }

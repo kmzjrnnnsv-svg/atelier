@@ -32,15 +32,17 @@ export default function PageHero({
   imgClassName = '',
   children,
 }) {
-  const { image, position } = usePageHero(slot, fallback)
+  const { image, position, tint } = usePageHero(slot, fallback)
 
   return (
-    <div className={`relative w-full overflow-hidden bg-[#EDEAE3] ${ratio}`}>
+    // `isolation` grenzt die Mischung auf diesen Kasten ein, sonst würde das
+    // Bild mit allem darunter auf der Seite verrechnet.
+    <div className={`relative w-full overflow-hidden bg-[#EDEAE3] ${ratio}`} style={{ isolation: 'isolate' }}>
       <img
         src={image}
         alt={alt}
         className={`w-full h-full object-cover ${imgClassName}`}
-        style={{ objectPosition: position }}
+        style={{ objectPosition: position, mixBlendMode: tint ? 'multiply' : undefined }}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}
         decoding="async"
