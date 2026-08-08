@@ -50,10 +50,17 @@ if [ -d dist/assets ]; then cp -rpn dist/assets/. dist-new/assets/ 2>/dev/null |
 rm -rf dist-old
 [ -d dist ] && mv dist dist-old
 mv dist-new dist
-# Verwaiste, mitgeschleppte Alt-Assets nach 7 Tagen aufräumen. Referenzierte
-# Chunks werden bei jedem Build frisch geschrieben (aktuelle mtime) und daher
-# nie getroffen — nur nicht mehr referenzierte Hashes werden entfernt.
-find dist/assets -type f -mtime +7 -delete 2>/dev/null || true
+# Verwaiste, mitgeschleppte Alt-Assets aufräumen. Referenzierte Chunks werden
+# bei jedem Build frisch geschrieben (aktuelle mtime) und daher nie getroffen —
+# nur nicht mehr referenzierte Hashes werden entfernt.
+#
+# Aufbewahrung 90 statt 7 Tage: Die Frist entscheidet, wie lange ein Besucher
+# wegbleiben darf, ohne dass seine gecachte index.html ins Leere zeigt. Zwischen
+# den Deploys vom 06.06. und 08.08. lagen zwei Monate; mit 7 Tagen waren die
+# Chunks der Juni-Fassung längst gelöscht, und jeder Browser, der noch die alte
+# index.html hielt, lief in einen Chunk-Fehler. Ein Build wiegt rund 4 MB, die
+# längere Frist kostet also wenig Platz und erspart genau diesen Fall.
+find dist/assets -type f -mtime +90 -delete 2>/dev/null || true
 echo "  Frontend gebaut & live geschaltet"
 
 # 3. Backend Dependencies prüfen
