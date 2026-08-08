@@ -14,6 +14,7 @@ import { Check, Send, MapPin, Gem, Footprints, PenTool, Package, MessageCircle, 
 import { apiFetch } from '../hooks/useApi'
 import { HEROES } from '../lib/editorialImages'
 import useStore from '../store/store'
+import PageHero from '../components/PageHero'
 
 const IMG_API_BASE = import.meta.env.VITE_API_URL || ''
 const resolveImg = (url) => {
@@ -141,8 +142,12 @@ export default function CorporateGifting() {
       </div>
 
       {/* Hero */}
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16 / 9', maxHeight: '78vh' }}>
-        <img src={HEROES.collection} alt="" className="w-full h-full object-cover" />
+      <PageHero
+        slot="business"
+        fallback={HEROES.business}
+        ratio="aspect-[4/5] sm:aspect-[3/2] lg:aspect-[16/9] max-h-[78vh]"
+        priority
+      >
         <div className="absolute inset-0" style={{ background: 'linear-gradient(rgba(28,25,23,0.12) 0%, rgba(28,25,23,0.30) 45%, rgba(28,25,23,0.66) 100%)' }} />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
           <p className="text-[10px] text-white/70 uppercase tracking-[0.4em] mb-5">Artisan Sole · für Unternehmen</p>
@@ -167,7 +172,7 @@ export default function CorporateGifting() {
             Preise und Prozess auf einen Blick <ArrowRight size={12} strokeWidth={1.6} />
           </Link>
         </div>
-      </div>
+      </PageHero>
 
       {/* Leitsatz */}
       <section className="px-5 lg:px-8 py-16 lg:py-24">

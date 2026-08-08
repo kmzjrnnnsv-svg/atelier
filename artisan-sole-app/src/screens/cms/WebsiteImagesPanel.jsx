@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react'
 import { Loader2, Save, Check } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import ImagePicker from '../../components/ImagePicker'
+import { invalidatePageHeroes } from '../../lib/pageHeroes'
 
 // Beschreibung aller Homepage-Sektionen mit Bildslot
 const HOMEPAGE_LABELS = {
@@ -28,6 +29,27 @@ const HOMEPAGE_LABELS = {
 
 const FIELD_LABEL = { image: 'Hauptbild', image2: 'Zweites Bild (rechts)' }
 
+// Kopfbilder der öffentlichen Seiten. Lagen bis dahin fest im Frontend-Code,
+// jeder Wechsel brauchte ein Deployment; sie sind jetzt hier austauschbar.
+const HERO_LABELS = [
+  { key: 'collection',  label: 'Kollektion',        sub: 'Kopf der Modellübersicht' },
+  { key: 'explore',     label: 'Entdecken',         sub: 'Kopf der Explore-Seite' },
+  { key: 'accessories', label: 'Zubehör & Pflege',  sub: 'Kopf der Zubehörseite' },
+  { key: 'profile',     label: 'Profil',            sub: 'Schmaler Streifen über dem Namen' },
+  { key: 'help',        label: 'Hilfe & Service',   sub: 'Kopf der Servicesseite' },
+  { key: 'business',    label: 'Für Unternehmen',   sub: 'Kopf der B2B-Seite' },
+  { key: 'wishlist',    label: 'Wunschliste',       sub: 'Kopf der Merkliste' },
+]
+
+// object-position: entscheidet, welcher Ausschnitt beim Zuschnitt stehen bleibt.
+const HERO_POSITIONS = [
+  { value: 'center', label: 'Mitte' },
+  { value: 'top',    label: 'Oben' },
+  { value: 'bottom', label: 'Unten' },
+  { value: 'left',   label: 'Links' },
+  { value: 'right',  label: 'Rechts' },
+]
+
 function Section({ title, subtitle, children }) {
   return (
     <div className="mb-12">
@@ -42,12 +64,24 @@ function Section({ title, subtitle, children }) {
   )
 }
 
-function ImageSlot({ label, sub, value, onChange }) {
+function ImageSlot({ label, sub, value, onChange, position, onPositionChange }) {
   return (
     <div className="bg-white p-5 border border-black/[0.05]">
       <p className="text-[11px] font-light text-black/75 mb-1">{label}</p>
       {sub && <p className="text-[10px] text-black/30 mb-3 font-light">{sub}</p>}
       <ImagePicker label="" value={value || ''} onChange={onChange} />
+      {onPositionChange && (
+        <label className="block mt-3">
+          <span className="block text-[9px] text-black/35 uppercase tracking-[0.2em] mb-1.5">Bildausschnitt</span>
+          <select
+            value={position || 'center'}
+            onChange={e => onPositionChange(e.target.value)}
+            className="w-full border border-black/15 px-2.5 py-2 text-[12px] bg-white focus:outline-none focus:border-black/40"
+          >
+            {HERO_POSITIONS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+          </select>
+        </label>
+      )}
     </div>
   )
 }
@@ -63,22 +97,25 @@ export default function WebsiteImagesPanel() {
   const [footer,   setFooter]   = useState({})  // Objekt
   const [cta,      setCta]      = useState({})  // Objekt
   const [explore,  setExplore]  = useState({})  // { hero_image, journal_cta_image, ... }
+  const [heroes,   setHeroes]   = useState({})  // { slot: { image, position } }
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       try {
-        const [hp, ft, ctaCfg, exp] = await Promise.all([
+        const [hp, ft, ctaCfg, exp, hero] = await Promise.all([
           apiFetch('/api/settings/homepage').catch(() => null),
           apiFetch('/api/settings/footer').catch(() => null),
           apiFetch('/api/settings/cta-banner').catch(() => null),
           apiFetch('/api/settings/explore').catch(() => null),
+          apiFetch('/api/settings/page-heroes').catch(() => null),
         ])
         if (cancelled) return
         setHomepage(Array.isArray(hp) ? hp : [])
         setFooter(ft || {})
         setCta(ctaCfg || {})
         setExplore(exp || {})
+        setHeroes(hero || {})
       } catch (e) {
         if (!cancelled) setError(e?.error || 'Laden fehlgeschlagen')
       } finally {
@@ -105,7 +142,11 @@ export default function WebsiteImagesPanel() {
         apiFetch('/api/settings/footer',   { method: 'PUT', body: JSON.stringify({ config: footer }) }),
         apiFetch('/api/settings/cta-banner', { method: 'PUT', body: JSON.stringify(cta) }),
         apiFetch('/api/settings/explore',  { method: 'PUT', body: JSON.stringify({ config: explore }) }),
+        apiFetch('/api/settings/page-heroes', { method: 'PUT', body: JSON.stringify({ heroes }) }),
       ])
+      // Der Header-Cache im Frontend hält die alte Fassung, sonst zeigt ein
+      // Seitenwechsel ohne Neuladen weiter das vorherige Bild.
+      invalidatePageHeroes()
       setSavedAt(Date.now())
     } catch (e) {
       setError(e?.error || 'Speichern fehlgeschlagen')
@@ -164,6 +205,27 @@ export default function WebsiteImagesPanel() {
       {error && (
         <div className="bg-red-50 border border-red-200 px-4 py-3 mb-6 text-[12px] text-red-700">{error}</div>
       )}
+
+      {/* Seiten-Header */}
+      <Section title="Seiten-Header" subtitle="Kopfbild je öffentlicher Seite">
+        {HERO_LABELS.map(h => (
+          <ImageSlot
+            key={h.key}
+            label={h.label}
+            sub={h.sub}
+            value={heroes[h.key]?.image || ''}
+            onChange={val => setHeroes(prev => ({
+              ...prev,
+              [h.key]: { ...(prev[h.key] || {}), image: val },
+            }))}
+            position={heroes[h.key]?.position || 'center'}
+            onPositionChange={val => setHeroes(prev => ({
+              ...prev,
+              [h.key]: { ...(prev[h.key] || {}), position: val },
+            }))}
+          />
+        ))}
+      </Section>
 
       {/* Homepage */}
       <Section title="Homepage" subtitle="Startseite (Für dich)">

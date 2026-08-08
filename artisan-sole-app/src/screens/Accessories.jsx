@@ -8,7 +8,8 @@ import { ShoppingBag, Plus, Check } from 'lucide-react'
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import CtaBanner from '../components/CtaBanner'
-import { HEROES, CARE } from '../lib/editorialImages'
+import { HEROES } from '../lib/editorialImages'
+import PageHero from '../components/PageHero'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
@@ -69,9 +70,7 @@ export default function Accessories() {
     <div className="min-h-full bg-white">
 
       {/* ── Hero, image then text below (LV-style) ──────────────── */}
-      <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 5' }}>
-        <img src={HEROES.accessories} alt="" className="w-full h-full object-cover" />
-      </div>
+      <PageHero slot="accessories" fallback={HEROES.accessories} priority />
       <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-6 lg:pb-8">
         <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">Artisan Sole Kollektion</p>
         <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.1] tracking-tight">

@@ -9,6 +9,7 @@ import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import { HEROES, EXPLORE, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import { isMobileWeb } from '../App'
+import PageHero from '../components/PageHero'
 
 const DEFAULT_SECTIONS = [
   { id: 'editorial', label: 'Editorial', title: 'Saisonale Editorials', description: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Kollektion.', previewItems: ['Herbst / Winter 2025', 'The Riviera Collection', 'Made in Florence'], visible: true },
@@ -24,7 +25,7 @@ function ArticleDetail({ article, onBack }) {
   return (
     <div className="flex-1 overflow-y-auto bg-white">
       <div className="w-full overflow-hidden" style={{ aspectRatio: isMobileWeb ? '4 / 3' : '21 / 9' }}>
-        <img src={article.image || CRAFT.hands} alt="" className="w-full h-full object-cover" />
+        <img src={article.image || CRAFT.workshop} alt="" className="w-full h-full object-cover" />
       </div>
       <div className="px-4 lg:px-16 xl:px-24 py-8 lg:py-14 max-w-3xl">
         <p className="text-[9px] text-black/20 uppercase tracking-[0.25em] mb-2">{article.category}</p>
@@ -100,14 +101,20 @@ export default function Explore() {
           ══════════════════════════════════════════════════════════ */}
       {featuredSection && (
         <div className="relative cursor-pointer group">
-          <div className="w-full overflow-hidden bg-[#f7f6f4]" style={{ aspectRatio: isMobileWeb ? '3 / 4' : '21 / 9' }}>
-            <img src={featuredSection.image || HEROES.explore} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-14" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.5) 100%)' }}>
-            <p className="text-[9px] lg:text-[10px] text-white/35 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{featuredSection.label}</p>
-            <h2 className="text-[22px] lg:text-[38px] font-extralight text-white leading-[1.05] tracking-tight">{featuredSection.title}</h2>
-            <p className="text-[11px] lg:text-[13px] text-white/30 mt-1.5 lg:mt-2 font-light max-w-lg">{featuredSection.description}</p>
-          </div>
+          {/* Ein im Explore-CMS gepflegtes Sektionsbild hat Vorrang vor dem
+              Header-Slot; erst danach greift der Fallback. */}
+          <PageHero
+            slot="explore"
+            fallback={featuredSection.image || HEROES.explore}
+            priority
+            imgClassName="transition-transform duration-700 group-hover:scale-[1.02]"
+          >
+            <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-14" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.5) 100%)' }}>
+              <p className="text-[9px] lg:text-[10px] text-white/35 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{featuredSection.label}</p>
+              <h2 className="text-[22px] lg:text-[38px] font-extralight text-white leading-[1.05] tracking-tight">{featuredSection.title}</h2>
+              <p className="text-[11px] lg:text-[13px] text-white/30 mt-1.5 lg:mt-2 font-light max-w-lg">{featuredSection.description}</p>
+            </div>
+          </PageHero>
         </div>
       )}
 
