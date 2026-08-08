@@ -197,6 +197,48 @@ shoesRouter.put('/:id/accessories', ...canWrite, param('id').isInt(), (req, res)
   res.json(rows)
 })
 
+// ── Zusatzdaten für die Übersichtskacheln ─────────────────────────────────
+// Muss in index.js VOR shoesRouter gemountet werden: dessen generisches
+// GET /:id würde '/color-summary' sonst als id verschlucken.
+//
+// Warum getrennt und nicht in der Schuhliste: Varianten- und Hauptbilder
+// liegen als base64-Data-URLs in der Datenbank. /api/shoes trägt davon
+// schon eines pro Schuh; ein zweites würde die Antwort etwa verdoppeln.
+// Farben (nur Hex + Name) sind dagegen winzig und kommen gebündelt vorab,
+// das Hover-Bild holt die Kachel einzeln beim ersten Überfahren.
+export const shoeCardRouter = Router()
+
+// GET /api/shoes/color-summary — public. { [shoeId]: [{ hex, name }] }
+shoeCardRouter.get('/color-summary', (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT shoe_id, hex, name FROM shoe_color_variants
+    ORDER BY shoe_id ASC, sort_order ASC, id ASC
+  `).all()
+
+  const out = {}
+  for (const r of rows) {
+    const list = (out[r.shoe_id] ||= [])
+    // Eine Farbe kann mehrfach vorkommen, einmal je Material. Für die
+    // Kachel zählt nur der Farbton, sonst stünden dort Dubletten.
+    if (!list.some(c => c.hex === r.hex)) list.push({ hex: r.hex, name: r.name })
+  }
+  res.json(out)
+})
+
+// GET /api/shoes/:id/hover-image — public. { image: <data-url|null> }
+// Zweitansicht für den Hover-Wechsel: bevorzugt das zweite Bild der ersten
+// Farbvariante, sonst das erste Bild der zweiten Variante.
+shoeCardRouter.get('/:id/hover-image', param('id').isInt(), (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT images FROM shoe_color_variants WHERE shoe_id = ?
+    ORDER BY sort_order ASC, id ASC
+  `).all(req.params.id)
+
+  const perVariant = rows.map(r => safeJsonArray(r.images)).filter(a => a.length)
+  const image = perVariant[0]?.[1] || perVariant[1]?.[0] || null
+  res.json({ image })
+})
+
 // ── Per-Shoe Material-Optionen ────────────────────────────────────────────
 // GET /api/shoes/:id/materials — public
 shoesRouter.get('/:id/materials', param('id').isInt(), (req, res) => {

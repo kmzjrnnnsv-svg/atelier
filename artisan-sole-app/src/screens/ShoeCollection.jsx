@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 import { HEROES, SHOES } from '../lib/editorialImages'
 import ShoeName from '../lib/shoeName'
+import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import PageHero from '../components/PageHero'
 
 // Anlass-basierte Kategorien. Jeder Anlass bildet auf mehrere Schuh-Typen ab
@@ -167,24 +168,68 @@ const fmtPrice = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 0, ma
 function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, campaign }) {
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   const campPriceNum = campaign ? (campaign.payment_mode === 'company' ? 0 : Math.round(parsePrice(product.price) * (1 - campaign.discount_pct / 100))) : null
+
+  // `touched` bleibt true, sobald der Zeiger die Kachel einmal berührt hat —
+  // die Zweitansicht wird also nur für tatsächlich betrachtete Modelle geholt,
+  // aber nach dem ersten Mal nicht erneut.
+  const [hovered, setHovered] = useState(false)
+  const [touched, setTouched] = useState(false)
+  const hoverImage = useHoverImage(product.id, touched)
+  const colors = useShoeColors(product.id)
+
+  const enter = () => { setHovered(true); setTouched(true) }
+  const leave = () => setHovered(false)
+
+  // Overlays nur zeigen, wenn es auch etwas zu wechseln gibt.
+  const showSecond = hovered && !!hoverImage
+
+  const priceLine = campaign ? (
+    <>
+      <span className="line-through opacity-50 mr-1.5">{product.price}</span>
+      {campaign.payment_mode === 'company' ? 'von Ihrer Firma übernommen' : `€ ${fmtPrice(campPriceNum)}`}
+    </>
+  ) : isPromo && product.promotion_price ? (
+    <>
+      <span className="line-through opacity-50 mr-1.5">{product.price}</span>
+      {product.promotion_price}
+    </>
+  ) : displayPrice
+
   return (
     <div
       className="group cursor-pointer"
       onClick={() => onSelect(product)}
+      onMouseEnter={enter}
+      onMouseLeave={leave}
+      onFocus={enter}
+      onBlur={leave}
     >
-      {/* Image */}
+      {/* Bildfläche. 3/4 hochkant wie bei den großen Häusern: der Schuh steht
+          im Bild, statt in einem breiten Streifen zu schwimmen. */}
       <div
-        className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] relative transition-all duration-500 group-hover:bg-[#efeee9]"
+        className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] relative transition-colors duration-500 group-hover:bg-[#efeee9]"
         style={{ aspectRatio: '3 / 4' }}
       >
-        {/* Schuhbild leicht ausgegraut, wenn nicht passend, bleibt klar sichtbar */}
         {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-            style={{ opacity: dimmed ? 0.6 : 1 }}
-          />
+          <>
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              style={{ opacity: dimmed ? 0.6 : 1 }}
+            />
+            {/* Zweitansicht liegt darüber und wird eingeblendet. Ein Wechsel
+                der src würde flackern, weil das neue Bild erst dekodiert wird. */}
+            {hoverImage && (
+              <img
+                src={hoverImage}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+                style={{ opacity: showSecond ? (dimmed ? 0.6 : 1) : 0 }}
+              />
+            )}
+          </>
         ) : (
           <svg viewBox="0 0 260 130" className="w-3/5" style={{ opacity: dimmed ? 0.3 : 0.5 }}>
             <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
@@ -195,7 +240,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
 
         {/* Passform-Warnung, gut lesbar, volle Deckkraft */}
         {dimmed && (
-          <div className="absolute top-3 left-3 right-3 z-10 flex">
+          <div className="absolute top-3 left-3 right-3 z-20 flex">
             <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-900 bg-amber-50/95 border border-amber-300/70 backdrop-blur-sm px-2.5 py-1 font-normal" style={{ letterSpacing: '0.02em' }}>
               <AlertTriangle size={12} strokeWidth={1.8} className="text-amber-600 flex-shrink-0" />
               Passt nicht zu Ihren Maßen
@@ -203,51 +248,70 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
           </div>
         )}
 
-        {/* Wishlist, appears on hover */}
+        {/* Wunschliste, erscheint beim Überfahren */}
         <button
-          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center border-0 bg-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center border-0 bg-transparent opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-300"
           onClick={e => { e.stopPropagation(); onToggleFav() }}
+          aria-label={isFav ? 'Von der Wunschliste entfernen' : 'Auf die Wunschliste'}
         >
           <Heart size={16} strokeWidth={1.5} className={isFav ? 'text-black fill-black' : 'text-black/25'} />
         </button>
 
-        {/* Kampagnen-Badge hat Vorrang vor dem Match-Badge */}
+        {/* Kampagnen- bzw. Passform-Hinweis, oberhalb der Namenszeile */}
         {campaign ? (
-          <div className="absolute bottom-3 left-3">
+          <div className="absolute bottom-16 left-4 z-20">
             <span className="text-[10px] text-white bg-stone-900/90 backdrop-blur-sm px-2 py-1 font-normal" style={{ letterSpacing: '0.05em' }}>
               {campaign.payment_mode === 'company' ? 'Firma zahlt' : `-${campaign.discount_pct}%`}
             </span>
           </div>
         ) : product.match && !dimmed && (
-          <div className="absolute bottom-3 left-3">
-            <span className="text-[10px] text-black/40 bg-white/80 backdrop-blur-sm px-2 py-1 font-light" style={{ letterSpacing: '0.05em' }}>
+          <div className="absolute bottom-16 left-4 z-20">
+            <span className="text-[10px] text-black/45 bg-white/80 backdrop-blur-sm px-2 py-1 font-light" style={{ letterSpacing: '0.05em' }}>
               {product.match} Passform
             </span>
           </div>
         )}
-      </div>
 
-      {/* Info, minimal, LV style */}
-      <div className="pt-3" style={{ opacity: dimmed ? 0.7 : 1 }}>
-        <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug"><ShoeName name={product.name} /></p>
-        <div className="flex items-center gap-2 mt-1">
-          {campaign ? (
-            <p className="text-[12px] lg:text-[13px] text-black/45 font-light">
-              <span className="line-through text-black/20 mr-1.5">{product.price}</span>
-              {campaign.payment_mode === 'company' ? 'von Ihrer Firma übernommen' : `€ ${fmtPrice(campPriceNum)}`}
-            </p>
-          ) : isPromo && product.promotion_price ? (
-            <p className="text-[12px] lg:text-[13px] text-black/45 font-light">
-              <span className="line-through text-black/20 mr-1.5">{product.price}</span>
-              {product.promotion_price}
-            </p>
-          ) : (
-            <p className="text-[12px] lg:text-[13px] text-black/45 font-light">{displayPrice}</p>
-          )}
-          {dimmed && (
-            <span className="text-[10px] text-amber-700/90 font-light">· andere Passform</span>
-          )}
+        {/* Name und Preis liegen auf dem Bild und weichen beim Überfahren der
+            Zweitansicht — nur dann, denn ohne Bildwechsel gäbe es sonst eine
+            leere Ecke. Der Verlauf hält die Schrift auch auf hellem Leder
+            lesbar. */}
+        <div
+          className="absolute inset-x-0 bottom-0 z-10 px-4 pb-3.5 pt-10 pointer-events-none transition-opacity duration-500"
+          style={{
+            opacity: showSecond ? 0 : (dimmed ? 0.75 : 1),
+            background: 'linear-gradient(transparent, rgba(255,255,255,0.82) 55%, rgba(255,255,255,0.95))',
+          }}
+        >
+          <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">
+            <ShoeName name={product.name} />
+          </p>
+          <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-0.5">
+            {priceLine}
+            {dimmed && <span className="text-amber-700/90"> · andere Passform</span>}
+          </p>
         </div>
+
+        {/* Farbtöne, rechts unten, erscheinen beim Überfahren. Sie zeigen, was
+            konfigurierbar ist, ohne die Kachel im Ruhezustand zu beladen. */}
+        {colors.length > 0 && (
+          <div
+            className="absolute bottom-3.5 right-4 z-20 flex items-center gap-1.5 transition-opacity duration-500"
+            style={{ opacity: showSecond ? 1 : 0 }}
+          >
+            {colors.slice(0, 4).map(c => (
+              <span
+                key={c.hex}
+                title={c.name}
+                className="w-3.5 h-3.5 rounded-full border border-black/15"
+                style={{ backgroundColor: c.hex }}
+              />
+            ))}
+            {colors.length > 4 && (
+              <span className="text-[10px] text-black/40 font-light ml-0.5">+{colors.length - 4}</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -470,7 +534,7 @@ export default function ShoeCollection() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 lg:gap-x-6 gap-y-8 lg:gap-y-12">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 lg:gap-x-5 gap-y-3 lg:gap-y-5">
             {filtered.map(product => (
               <ProductCard
                 key={product.id}
