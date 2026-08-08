@@ -4,7 +4,11 @@ const { execSync } = require('child_process')
 
 const PORT = 9000
 const SECRET = process.env.WEBHOOK_SECRET || 'artisan-sole-webhook-secret-change-me'
-const APP_DIR = '/home/nrply/app'
+// Muss auf dasselbe Verzeichnis zeigen wie deploy.sh ($HOME/as). Der frühere
+// Festwert '/home/nrply/app' zeigte woanders hin — ein Deploy über den Webhook
+// hätte dann ein anderes (oder gar kein) Arbeitsverzeichnis gebaut, während
+// ~/as unverändert blieb.
+const APP_DIR = process.env.APP_DIR || `${process.env.HOME || '/root'}/as`
 
 function verifySignature(req, body) {
   const sig = req.headers['x-hub-signature-256']
@@ -40,13 +44,20 @@ const server = http.createServer((req, res) => {
     res.writeHead(200)
     res.end('Deploying...')
 
+    // Ein einziger Deploy-Weg: deploy.sh. Der eigene Ablauf hier hatte drei
+    // Eigenschaften, die zusammen genau den Fehlerschirm „Seite kann nicht
+    // geladen werden" erzeugen:
+    //   • `npm run build` ohne erhöhtes Heap-Limit — auf einem 4-GB-Server
+    //     bricht das three.js-Bündel mit „heap out of memory" ab.
+    //   • Gebaut wurde direkt in das ausgelieferte dist/. Vite leert das
+    //     Verzeichnis zu Beginn, ein Abbruch lässt die Seite also dauerhaft
+    //     ohne ihre Chunks zurück — der Reload der ErrorBoundary kann das
+    //     nicht heilen, weil die Dateien wirklich fehlen.
+    //   • Die Assets des vorherigen Builds wurden nicht übernommen, offene
+    //     Tabs liefen beim Nachladen alter Hashes ins Leere.
+    // deploy.sh löst alle drei; hier nur noch anstoßen.
     try {
-      execSync(`cd ${APP_DIR} && git pull origin website`, { stdio: 'inherit' })
-      execSync(`cd ${APP_DIR}/artisan-sole-app && npm install && npm run build`, { stdio: 'inherit' })
-      execSync(`cd ${APP_DIR}/artisan-sole-backend && npm install --production`, { stdio: 'inherit' })
-      // Restart backend — adjust to your process manager (pm2/systemd)
-      try { execSync('pm2 restart artisan-sole', { stdio: 'inherit' }) } catch (_) {}
-      try { execSync('systemctl restart artisan-sole-backend', { stdio: 'inherit' }) } catch (_) {}
+      execSync(`bash ${APP_DIR}/deploy.sh`, { stdio: 'inherit' })
       console.log('Deploy successful!')
     } catch (err) {
       console.error('Deploy failed:', err.message)
