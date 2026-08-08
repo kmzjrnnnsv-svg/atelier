@@ -251,6 +251,50 @@ router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res)
   res.json({ message: 'Explore-Einstellungen gespeichert' })
 })
 
+// ─── Seiten-Header (Hero-Bilder der öffentlichen Seiten) ───────────────────
+// Bis hierher steckten diese Bilder fest im Frontend-Code, jeder Wechsel
+// brauchte ein Deployment. Sie liegen jetzt wie alle anderen Website-Bilder
+// in den Settings und sind über /cms/website-images austauschbar.
+//
+// Form: { [slot]: { image: '/uploads/…', position: 'center' } }
+// `position` ist die CSS object-position und entscheidet, welcher Ausschnitt
+// beim Zuschnitt stehen bleibt.
+const HERO_SLOTS = ['collection', 'explore', 'accessories', 'profile', 'help', 'business', 'wishlist']
+const HERO_POSITIONS = ['top', 'center', 'bottom', 'left', 'right']
+
+router.get('/page-heroes', (req, res) => {
+  const db = getDb()
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'page_heroes'").get()
+  res.json(row?.value ? JSON.parse(row.value) : null)
+})
+
+router.put('/page-heroes', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const incoming = req.body?.heroes
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+    return res.status(400).json({ error: 'heroes-Objekt erforderlich' })
+  }
+
+  // Nur bekannte Slots übernehmen, damit über diesen Endpoint keine
+  // beliebigen Schlüssel in den Settings landen.
+  const clean = {}
+  for (const slot of HERO_SLOTS) {
+    const entry = incoming[slot]
+    if (!entry || typeof entry !== 'object') continue
+    const image = String(entry.image ?? '').trim()
+    const position = HERO_POSITIONS.includes(entry.position) ? entry.position : 'center'
+    if (image) clean[slot] = { image, position }
+  }
+
+  const db = getDb()
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES ('page_heroes', ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+  `).run(JSON.stringify(clean), req.user.id)
+
+  res.json({ message: 'Seiten-Header gespeichert', heroes: clean })
+})
+
 // ─── GET /api/settings/whatsapp, public (used by Custom-Anfrage) ────────────
 router.get('/whatsapp', (req, res) => {
   const db = getDb()

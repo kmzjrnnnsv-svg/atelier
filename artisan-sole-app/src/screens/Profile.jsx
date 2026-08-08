@@ -11,6 +11,7 @@ import { apiFetch } from '../hooks/useApi'
 import { isMobileWeb } from '../App'
 import CtaBanner from '../components/CtaBanner'
 import { SHOES, HEROES } from '../lib/editorialImages'
+import PageHero from '../components/PageHero'
 
 const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
 
@@ -131,12 +132,16 @@ export default function Profile() {
     <div className="min-h-full bg-white">
 
       {/* ── Hero banner, subtle, compact ─────────────────────────── */}
-      <div className="relative">
-        <div className="w-full overflow-hidden" style={{ aspectRatio: '16 / 3' }}>
-          <img src={HEROES.profile} alt="" className="w-full h-full object-cover" />
-        </div>
+      {/* Flacher als die übrigen Header: darunter sitzt der Name und schiebt
+          sich mit -mt-16 ins Bild, ein hohes Format bräuchte hier nur Platz. */}
+      <PageHero
+        slot="profile"
+        fallback={HEROES.profile}
+        ratio="aspect-[16/7] sm:aspect-[16/5] lg:aspect-[16/4]"
+        priority
+      >
         <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 20%, rgba(255,255,255,0.95) 85%, white 100%)' }} />
-      </div>
+      </PageHero>
 
       {/* ── Hero header ─────────────────────────────────────────── */}
       <div className="px-5 lg:px-16 -mt-16 relative z-10 pb-6 lg:pb-8">
