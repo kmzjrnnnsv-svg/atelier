@@ -22,8 +22,12 @@ Verfahren
 
 Aufruf
 ------
-    python3 scripts/greige-bg.py IN.jpg [IN2.jpg ...] -o public/editorial/
-    python3 scripts/greige-bg.py IN.jpg -o out/ --aspect 4:5   # auf Format
+Braucht pillow, numpy und scipy. Auf Systemen nach PEP 668 (Ubuntu 24.04 und
+neuer) verweigert `pip install` die systemweite Installation — siehe
+scripts/README.md, dort steht der Weg über eine virtuelle Umgebung.
+
+    python3 scripts/greige-bg.py IN.jpg [IN2.jpg ...] -o aufbereitet/
+    python3 scripts/greige-bg.py IN.jpg -o out/ --aspect 21:9  # auf Format
     python3 scripts/greige-bg.py IN.jpg -o out/ --inspect      # Maske prüfen
 """
 import argparse
@@ -100,11 +104,16 @@ def recolor(img, greige=GREIGE):
     return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8)), soft
 
 
-def pad_to_aspect(img, aspect, greige=GREIGE):
+def pad_to_aspect(img, aspect):
     """Auf Zielformat bringen — durch Ergänzen, nie durch Beschneiden.
 
     Der Grund ist jetzt einfarbig, deshalb ist angesetzte Fläche unsichtbar.
     Der Schuh behält seine Größe und wird nicht angeschnitten.
+
+    Die Füllfarbe wird aus dem Bildrand *gemessen* statt auf den Sollwert
+    gesetzt: Nach dem Einfärben und der JPEG-Rundung liegt der Grund ein bis
+    zwei Stufen neben dem Zielton, und auf einer so großen ruhigen Fläche
+    zeichnet sich dieser Unterschied sonst als senkrechte Kante ab.
     """
     w, h = img.size
     tw, th = aspect
@@ -115,7 +124,12 @@ def pad_to_aspect(img, aspect, greige=GREIGE):
         new_w, new_h = w, round(w / target)
     else:
         new_w, new_h = round(h * target), h
-    canvas = Image.new("RGB", (new_w, new_h), greige)
+
+    a = np.asarray(img.convert("RGB"))
+    border = np.concatenate([a[0, :], a[-1, :], a[:, 0], a[:, -1]])
+    fill = tuple(int(v) for v in np.median(border, axis=0))
+
+    canvas = Image.new("RGB", (new_w, new_h), fill)
     canvas.paste(img, ((new_w - w) // 2, (new_h - h) // 2))
     return canvas
 
@@ -151,7 +165,7 @@ def main():
         img = Image.open(src)
         out, soft = recolor(img, greige)
         if args.aspect:
-            out = pad_to_aspect(out, args.aspect, greige)
+            out = pad_to_aspect(out, args.aspect)
         if args.max_width and out.width > args.max_width:
             h = round(out.height * args.max_width / out.width)
             out = out.resize((args.max_width, h), Image.LANCZOS)
