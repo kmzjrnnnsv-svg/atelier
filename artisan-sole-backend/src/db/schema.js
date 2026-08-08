@@ -1,3 +1,5 @@
+import { uniqueShoeSlug } from '../utils/slug.js'
+
 export function runMigrations(db) {
   db.exec(`
     PRAGMA journal_mode = WAL;
@@ -337,6 +339,12 @@ export function runMigrations(db) {
     // image_data und hover_image_data bleiben als Einzelfelder gespiegelt,
     // damit Warenkorb, Wunschliste und Bestellungen unverändert weiterlaufen.
     `ALTER TABLE shoes ADD COLUMN default_images TEXT`,
+    // shoes, sprechender URL-Bestandteil. /schuhe/heritage-oxford statt
+    // /customize?id=13 — lesbar, teilbar und für Suchmaschinen brauchbar.
+    // Kein UNIQUE-Index: SQLite kann das per ALTER TABLE nicht nachrüsten,
+    // die Eindeutigkeit stellt slugForShoe() beim Schreiben sicher.
+    `ALTER TABLE shoes ADD COLUMN slug TEXT`,
+    `CREATE INDEX IF NOT EXISTS idx_shoes_slug ON shoes(slug)`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────
@@ -1086,6 +1094,20 @@ export function runMigrations(db) {
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
+
+  // ── Slugs für bestehende Modelle nachtragen ──────────────────────────────
+  // Muss NACH der colMigrations-Schleife stehen: dort wird shoes.slug erst
+  // angelegt. Weiter oben lief der Nachtrag in „no such column: slug".
+  try {
+    const missing = db.prepare("SELECT id, name FROM shoes WHERE length(coalesce(slug, '')) = 0").all()
+    if (missing.length) {
+      const upd = db.prepare('UPDATE shoes SET slug = ? WHERE id = ?')
+      // Einzeln, nicht gesammelt: uniqueShoeSlug liest die bereits vergebenen
+      // Slugs, jeder Schritt muss den vorherigen also schon sehen.
+      for (const s of missing) upd.run(uniqueShoeSlug(db, s.name, s.id), s.id)
+      console.log(`✅ Slugs nachgetragen: ${missing.length} Modell(e)`)
+    }
+  } catch (e) { console.error('[migrate shoes.slug]', e.message) }
 
   // ── Footer-Migration: veraltete /legal-Typen auf gültige Ziele umschreiben ──
   // Frühere Footer-Defaults nutzten Rechtstypen, die das Backend nicht kennt

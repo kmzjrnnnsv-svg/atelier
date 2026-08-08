@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { isNative } from '../App'
 import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Send, ScanLine, BellRing, Lock, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler, Footprints, Layers, CircleDashed, Diamond, CircleDot, Square, Gem, Palette, Sparkles, ArrowRightLeft } from 'lucide-react'
 
@@ -98,7 +98,12 @@ export default function Customize() {
   //  3) erster echter Schuh aus dem Store (z. B. Direktaufruf /customize)
   //  4) Fake-Default nur, solange der Store noch leer ist
   const urlShoeId = new URLSearchParams(location.search).get('id')
+  // Sprechende Adresse: /schuhe/heritage-oxford. Die alte Form /customize?id=13
+  // bleibt gültig und wird unten auf die neue umgeschrieben, damit geteilte
+  // Links und Lesezeichen weiter funktionieren.
+  const { slug: urlSlug } = useParams()
   const product = location.state?.product
+    || (urlSlug && shoes?.find(s => s.slug === urlSlug))
     || (urlShoeId && shoes?.find(s => String(s.id) === String(urlShoeId)))
     || (shoes && shoes.length > 0 ? shoes[0] : null)
     || {
@@ -106,6 +111,27 @@ export default function Customize() {
       match: '99.4%', color: '#1f2937', image: null,
     }
   const category = product.category || 'OXFORD'
+
+  // Unbekannter Slug: Die Auflösungskette oben fällt sonst auf den ersten
+  // Schuh im Store zurück — der Besucher sähe unter /schuhe/gibt-es-nicht
+  // also klaglos irgendein Modell, und die Adresse schriebe sich auch noch
+  // darauf um. Erst prüfen, wenn die Liste wirklich geladen ist.
+  const slugUnknown = !!urlSlug
+    && !location.state?.product
+    && Array.isArray(shoes) && shoes.length > 0
+    && !shoes.some(s => s.slug === urlSlug)
+
+  useEffect(() => {
+    if (slugUnknown) navigate('/collection', { replace: true })
+  }, [slugUnknown])
+
+  // Alte Adresse auf die sprechende umschreiben. replace, damit der Zurück-
+  // Knopf nicht zwischen beiden Formen hin und her springt. Der Zustand
+  // (etwa eine geladene Konfiguration) wird dabei mitgenommen.
+  useEffect(() => {
+    if (urlSlug || slugUnknown || !product?.slug) return
+    navigate(`/schuhe/${product.slug}`, { replace: true, state: location.state })
+  }, [urlSlug, slugUnknown, product?.slug])
 
   // Frontend-Whitelist nach Kategorie, greift auch ohne Backend-Daten,
   // damit z. B. Oxford nie Patina/Velvet zeigt.
@@ -915,11 +941,13 @@ export default function Customize() {
             scrollbarWidth: 'none',
           }}
         >
+          {/* Auf dem Telefon vollflächiges Hochformat bis an beide Kanten.
+              Vorher stand hier eine feste Höhe von 380 px — ein flacher
+              Streifen, in dem vom Schuh nur die Mitte übrig blieb. Ab lg
+              wieder feste Höhe, dort steht die Konfiguration daneben. */}
           <div
-            className="relative overflow-hidden select-none lg:rounded-sm lg:min-h-[500px]"
+            className="relative overflow-hidden select-none aspect-[4/5] lg:aspect-square lg:max-w-[620px] lg:mx-auto lg:rounded-sm"
             style={{
-              height: 'clamp(240px, 40dvh, 380px)',
-              minHeight: '380px',
               cursor: is3D ? 'grab' : 'default',
               background: '#f6f5f3',
             }}
@@ -938,7 +966,7 @@ export default function Customize() {
               }}
             >
               {gallery[activeSlide] ? (
-                <img src={gallery[activeSlide]} alt={product.name} className="w-full h-full object-cover" />
+                <img src={gallery[activeSlide]} alt={product.name} className="w-full h-full object-contain" />
               ) : (
                 <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
                   <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />

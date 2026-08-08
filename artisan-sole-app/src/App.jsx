@@ -152,6 +152,10 @@ function DelayedSpinner() {
 
 // Routes where the global bottom nav should NOT appear
 const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email']
+// Pfade mit variablem Ende: hier zählt der Anfang, nicht die genaue Adresse.
+const NO_NAV_PREFIXES = ['/schuhe/']
+const hidesNav = (path) =>
+  NO_NAV_PATHS.includes(path) || NO_NAV_PREFIXES.some(p => path.startsWith(p))
 
 export const isNative = Capacitor.isNativePlatform()
 
@@ -203,7 +207,7 @@ function AppRoutes() {
   const isCorporateLanding = location.pathname === '/business' || (isBusiness && location.pathname === '/')
   // Eigenständige Vollbild-Seiten (Firmenbereich, Kampagnen-Beitritt) ohne Shop-Nav.
   const isStandalone = location.pathname.startsWith('/business/') || location.pathname.startsWith('/c/')
-  const showNav = !isCMS && !isCorporateLanding && !isStandalone && !NO_NAV_PATHS.includes(location.pathname)
+  const showNav = !isCMS && !isCorporateLanding && !isStandalone && !hidesNav(location.pathname)
   const FOOTER_PATHS = ['/collection', '/accessories', '/explore', '/business']
   const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
@@ -297,6 +301,10 @@ function AppRoutes() {
               <Route path="/business"   element={<CorporateGifting />} />
               <Route path="/business/uebersicht" element={<CorporateOverview />} />
               <Route path="/collection" element={<ShoeCollection />} />
+              {/* Sprechende Produktadresse. /customize?id=… bleibt gültig und
+                  schreibt sich auf diese Form um, damit geteilte Links und
+                  Lesezeichen weiter funktionieren. */}
+              <Route path="/schuhe/:slug" element={<Customize />} />
               <Route path="/customize"  element={<Customize />} />
               <Route path="/welcome"    element={<Welcome />} />
               <Route path="/explore"    element={<Explore />} />
@@ -349,6 +357,7 @@ function AppRoutes() {
       <Route path="/business"   element={isProdApex ? <ExternalRedirect to={BUSINESS_URL} /> : isBusiness ? <Navigate to="/" replace /> : <CorporateGifting />} />
       <Route path="/business/uebersicht" element={isProdApex ? <ExternalRedirect to={`${BUSINESS_URL}uebersicht`} /> : <CorporateOverview />} />
       <Route path="/collection" element={<ShoeCollection />} />
+      <Route path="/schuhe/:slug" element={<Customize />} />
       <Route path="/customize"  element={<Customize />} />
       <Route path="/welcome"    element={<Welcome />} />
       <Route path="/explore"    element={<Explore />} />
