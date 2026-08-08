@@ -7,14 +7,25 @@ const router = Router()
 const canWrite = [authenticate, requireRole('admin', 'curator')]
 const mustRead = [authenticate]
 
-function makeContentRouter(table, writeValidators = [], { publicRead = false } = {}) {
+// `listExclude` hält schwere Spalten aus der Listenantwort heraus, ohne sie
+// beim Einzelabruf zu verstecken. Nötig, seit Schuhe eine zweite Ansicht als
+// base64-Data-URL tragen: über alle Modelle summiert wäre das ein Vielfaches
+// der eigentlichen Nutzlast, und auf dem Telefon gäbe es dafür nicht einmal
+// eine Verwendung.
+function makeContentRouter(table, writeValidators = [], { publicRead = false, listExclude = [] } = {}) {
   const r = Router()
   const readGuard = publicRead ? [] : mustRead
 
   // GET all
   r.get('/', ...readGuard, (req, res) => {
     const rows = getDb().prepare(`SELECT * FROM ${table} ORDER BY id ASC`).all()
-    res.json(rows)
+    res.json(listExclude.length
+      ? rows.map(row => {
+          const copy = { ...row }
+          for (const col of listExclude) delete copy[col]
+          return copy
+        })
+      : rows)
   })
 
   // GET one
@@ -141,7 +152,7 @@ const exploreValidators = [
   body('sort_order').optional().isInt({ min: 0 }),
 ]
 
-export const shoesRouter      = makeContentRouter('shoes', shoeValidators, { publicRead: true })
+export const shoesRouter      = makeContentRouter('shoes', shoeValidators, { publicRead: true, listExclude: ['hover_image_data', 'default_images'] })
 export const curatedRouter    = makeContentRouter('curated_items')
 export const wardrobeRouter   = makeContentRouter('wardrobe_items')
 export const outfitsRouter    = makeContentRouter('outfits', outfitValidators)
@@ -195,6 +206,59 @@ shoesRouter.put('/:id/accessories', ...canWrite, param('id').isInt(), (req, res)
     ORDER BY sa.sort_order ASC
   `).all(shoeId)
   res.json(rows)
+})
+
+// ── Zusatzdaten für die Übersichtskacheln ─────────────────────────────────
+// Muss in index.js VOR shoesRouter gemountet werden: dessen generisches
+// GET /:id würde '/color-summary' sonst als id verschlucken.
+//
+// Warum getrennt und nicht in der Schuhliste: Varianten- und Hauptbilder
+// liegen als base64-Data-URLs in der Datenbank. /api/shoes trägt davon
+// schon eines pro Schuh; ein zweites würde die Antwort etwa verdoppeln.
+// Farben (nur Hex + Name) sind dagegen winzig und kommen gebündelt vorab,
+// das Hover-Bild holt die Kachel einzeln beim ersten Überfahren.
+export const shoeCardRouter = Router()
+
+// GET /api/shoes/color-summary — public. { [shoeId]: [{ hex, name }] }
+shoeCardRouter.get('/color-summary', (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT shoe_id, hex, name FROM shoe_color_variants
+    ORDER BY shoe_id ASC, sort_order ASC, id ASC
+  `).all()
+
+  const out = {}
+  for (const r of rows) {
+    const list = (out[r.shoe_id] ||= [])
+    // Eine Farbe kann mehrfach vorkommen, einmal je Material. Für die
+    // Kachel zählt nur der Farbton, sonst stünden dort Dubletten.
+    if (!list.some(c => c.hex === r.hex)) list.push({ hex: r.hex, name: r.name })
+  }
+  res.json(out)
+})
+
+// GET /api/shoes/:id/hover-image — public. { image: <data-url|null> }
+// Zweitansicht für den Hover-Wechsel: bevorzugt das zweite Bild der ersten
+// Farbvariante, sonst das erste Bild der zweiten Variante.
+shoeCardRouter.get('/:id/hover-image', param('id').isInt(), (req, res) => {
+  const db = getDb()
+
+  // Das am Modell hinterlegte Standardbild hat Vorrang — es ist bewusst für
+  // die Kollektionsseite gewählt. Erst wenn keines gesetzt ist, wird aus den
+  // Farbvarianten abgeleitet, damit bestehende Modelle ohne Pflege trotzdem
+  // einen Wechsel zeigen.
+  const own = db.prepare('SELECT hover_image_data, default_images FROM shoes WHERE id = ?').get(req.params.id)
+  const gallery = safeJsonArray(own?.default_images)
+  if (gallery[1]) return res.json({ image: gallery[1] })
+  if (own?.hover_image_data) return res.json({ image: own.hover_image_data })
+
+  const rows = db.prepare(`
+    SELECT images FROM shoe_color_variants WHERE shoe_id = ?
+    ORDER BY sort_order ASC, id ASC
+  `).all(req.params.id)
+
+  const perVariant = rows.map(r => safeJsonArray(r.images)).filter(a => a.length)
+  const image = perVariant[0]?.[1] || perVariant[1]?.[0] || null
+  res.json({ image })
 })
 
 // ── Per-Shoe Material-Optionen ────────────────────────────────────────────

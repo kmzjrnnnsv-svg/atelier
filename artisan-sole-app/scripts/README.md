@@ -1,5 +1,16 @@
 # Bilder für die Website vorbereiten
 
+> **In den meisten Fällen brauchst du dieses Skript nicht.**
+> Im CMS steht bei jedem Seiten-Header der Schalter „Freigestellt auf Weiß".
+> Er legt die Aufnahme im Browser multiplikativ auf den greigen Grund — das
+> ist dieselbe Rechnung wie hier, nur ohne Vorverarbeitung. Lade das weiße
+> Original hoch, setz den Haken, fertig.
+>
+> Das Skript lohnt sich in zwei Fällen: bei **hellen Schuhen** (Creme, helles
+> Kalbsleder), weil der Schalter das Produkt mit abdunkelt und das Skript es
+> per Maske ausspart — und wenn du ein Bild auf ein **Zielformat ergänzen**
+> willst, statt es zuschneiden zu lassen (`--aspect`).
+
 ## Warum
 
 Unsere Herstellerbilder stehen auf reinem Weiß. Nebeneinander auf einer Seite
@@ -14,18 +25,36 @@ dass das Foto als Rechteck auf der Seite klebt.
 
 ## Benutzung
 
-```bash
-# Abhängigkeiten (einmalig)
-pip install pillow numpy scipy
+### Einmalig: virtuelle Umgebung anlegen
 
-# Ein oder mehrere Bilder umfärben
-python3 scripts/greige-bg.py rohbilder/*.jpg -o aufbereitet/
+Ubuntu 24.04 (und jedes andere System nach PEP 668) lehnt ein systemweites
+`pip install` mit `error: externally-managed-environment` ab. Die Pakete
+kommen deshalb in eine eigene Umgebung — das ist auch sonst die bessere
+Wahl, weil sie nichts am System verändert:
+
+```bash
+python3 -m venv ~/.venvs/greige
+~/.venvs/greige/bin/pip install pillow numpy scipy
+```
+
+Scheitert der erste Befehl mit „ensurepip is not available":
+
+```bash
+sudo apt install python3-venv
+```
+
+### Bilder umfärben
+
+Immer das Python **aus der Umgebung** aufrufen, nicht das systemweite:
+
+```bash
+~/.venvs/greige/bin/python scripts/greige-bg.py rohbilder/*.jpg -o aufbereitet/
 ```
 
 Für Kopfbilder zusätzlich auf das Format des Bandes bringen:
 
 ```bash
-python3 scripts/greige-bg.py rohbilder/*.jpg -o aufbereitet/ --aspect 21:9
+~/.venvs/greige/bin/python scripts/greige-bg.py rohbilder/*.jpg -o aufbereitet/ --aspect 21:9
 ```
 
 `--aspect` **ergänzt** Fläche, es schneidet nicht. Ein quadratisches Produktfoto
