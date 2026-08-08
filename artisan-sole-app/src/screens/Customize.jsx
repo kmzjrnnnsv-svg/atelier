@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, Send, ScanLine, BellRing, Lock, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler, Footprints, Layers, CircleDashed, Diamond, CircleDot, Square, Gem, Palette, Sparkles, ArrowRightLeft } from 'lucide-react'
+import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Send, ScanLine, BellRing, Lock, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler, Footprints, Layers, CircleDashed, Diamond, CircleDot, Square, Gem, Palette, Sparkles, ArrowRightLeft } from 'lucide-react'
 
 // Lucide-Icon-Lookup pro option_groups.icon (Lucide-Komponentenname)
 const GROUP_ICONS = {
@@ -134,6 +134,10 @@ export default function Customize() {
   // genau das, was der Admin für DIESEN Schuh freigegeben hat.
   const [perShoeMaterialKeys, setPerShoeMaterialKeys] = useState(null)   // null=loading, []=keine Beschränkung
   const [perShoeColorVariants, setPerShoeColorVariants] = useState(null) // null=loading
+  // Standard-Bilderstrecke des Modells, greift solange die gewählte Farbe
+  // keine eigenen Bilder hat.
+  const [defaultImages, setDefaultImages] = useState([])
+  const [slide, setSlide] = useState(0)   // Index in der aktiven Strecke
   // Dynamische Konfigurator-Gruppen (Last, Welt, Heel, Toe, Schnalle, …)
   // Mit eigenem System verwaltet, Material/Color/Sole bleiben separat.
   const [extraOptionGroups, setExtraOptionGroups] = useState([])
@@ -147,9 +151,21 @@ export default function Customize() {
       apiFetch(`/api/shoes/${product.id}/colors`)
         .then(rows => setPerShoeColorVariants(Array.isArray(rows) ? rows : []))
         .catch(() => setPerShoeColorVariants([]))
+      // Die Standard-Bilderstrecke liegt nicht in der Schuhliste (sie wäre
+      // dort zu schwer), also einzeln nachladen. Sie greift, solange die
+      // gewählte Farbe keine eigenen Bilder mitbringt.
+      apiFetch(`/api/shoes/${product.id}`)
+        .then(row => {
+          let arr = []
+          try { arr = JSON.parse(row?.default_images || '[]') } catch { arr = [] }
+          if (!arr.length) arr = [row?.image_data, row?.hover_image_data].filter(Boolean)
+          setDefaultImages(arr)
+        })
+        .catch(() => setDefaultImages([]))
     } else {
       setPerShoeMaterialKeys([])
       setPerShoeColorVariants([])
+      setDefaultImages([])
     }
 
     // Material/Color haben eigene Spezial-UIs. `last` (Schuhform) entfällt als
@@ -594,6 +610,28 @@ export default function Customize() {
     }
     return col.images || []
   })()
+
+  // Die tatsächlich gezeigte Strecke: hat die gewählte Farbe eigene Bilder,
+  // zählen ausschließlich diese — sonst sähe man Aufnahmen in einer Farbe,
+  // die gerade gar nicht ausgewählt ist. Erst wenn sie keine mitbringt,
+  // greift die Standard-Strecke des Modells.
+  const gallery = currentImages.length
+    ? currentImages
+    : (defaultImages.length ? defaultImages : [product.image].filter(Boolean))
+
+  // Beim Wechsel von Farbe oder Material vorne beginnen, sonst zeigte die
+  // neue Strecke unvermittelt ihr drittes Bild.
+  useEffect(() => { setSlide(0) }, [selCol, selMat])
+
+  const slideCount = gallery.length
+  const activeSlide = Math.min(slide, Math.max(0, slideCount - 1))
+  const goSlide = (dir) => {
+    if (slideCount < 2) return
+    setSlide(prev => (prev + dir + slideCount) % slideCount)
+    setZoomed(false)
+    setIs3D(false)
+  }
+
   const color    = col?.hex || product.color
   const isFav    = favorites.includes(String(product.id))
   const avg      = reviews.length ? reviews.reduce((s,r) => s + r.rating, 0) / reviews.length : 0
@@ -899,8 +937,8 @@ export default function Customize() {
                 transition: drag.current.on ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             >
-              {(currentImages[0] || product.image) ? (
-                <img src={currentImages[0] || product.image} alt={product.name} className="w-full h-full object-cover" />
+              {gallery[activeSlide] ? (
+                <img src={gallery[activeSlide]} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
                   <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
@@ -912,6 +950,40 @@ export default function Customize() {
                 </svg>
               )}
             </div>
+
+            {/* Slideshow: Pfeile und Punkte. Nur wenn es wirklich mehr als
+                eine Ansicht gibt — bei einem einzelnen Bild wären die
+                Bedienelemente nur Dekoration. */}
+            {slideCount > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goSlide(-1) }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 flex items-center justify-center bg-white/85 backdrop-blur-sm border border-black/10 text-black/70 hover:text-black hover:bg-white transition-colors"
+                  aria-label="Vorheriges Bild"
+                >
+                  <ChevronLeft size={16} strokeWidth={1.5} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); goSlide(1) }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 flex items-center justify-center bg-white/85 backdrop-blur-sm border border-black/10 text-black/70 hover:text-black hover:bg-white transition-colors"
+                  aria-label="Nächstes Bild"
+                >
+                  <ChevronRight size={16} strokeWidth={1.5} />
+                </button>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+                  {gallery.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => { e.stopPropagation(); setSlide(i); setZoomed(false); setIs3D(false) }}
+                      className="w-1.5 h-1.5 rounded-full border-0 p-0 transition-colors"
+                      style={{ backgroundColor: i === activeSlide ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.18)' }}
+                      aria-label={`Bild ${i + 1} von ${slideCount}`}
+                      aria-current={i === activeSlide}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Steuerungs-Icons links unten */}
             <div className="absolute left-4 bottom-4 flex items-center gap-2">

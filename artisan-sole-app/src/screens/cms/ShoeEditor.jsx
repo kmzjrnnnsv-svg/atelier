@@ -18,6 +18,7 @@ const emptyForm = {
  tag: null,
  image: null,
  hover_image: null,
+ default_images: [],
  cost_price: '',
  promotion_price: '',
 }
@@ -65,8 +66,18 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
      // hinterlegte Bild löschen.
      apiFetch(`/api/shoes/${initial.id}`).catch(() => null),
    ]).then(([cols, mats, optGroups, full]) => {
-     if (full?.hover_image_data) {
-       setForm(f => (f.hover_image ? f : { ...f, hover_image: full.hover_image_data }))
+     // Die Strecke fehlt in der Schuhliste (listExclude im Backend). Ohne
+     // diesen Einzelabruf stünde sie im Formular leer und ein Speichern
+     // hätte die hinterlegten Bilder gelöscht.
+     if (full) {
+       let gallery = []
+       try { gallery = JSON.parse(full.default_images || '[]') } catch { gallery = [] }
+       // Ältere Modelle kennen die Strecke noch nicht — aus den beiden
+       // Einzelfeldern eine aufbauen, damit nichts verloren geht.
+       if (!gallery.length) {
+         gallery = [full.image_data, full.hover_image_data].filter(Boolean)
+       }
+       setForm(f => (f.default_images?.length ? f : { ...f, default_images: gallery }))
      }
      setVariants((cols || []).map(r => ({
        _existingId: r.id, hex: r.hex, name: r.name,
@@ -197,15 +208,31 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  const removeVariantImage = (idx, imgIdx) =>
    setVariants(prev => prev.map((v, i) => i === idx ? { ...v, images: v.images.filter((_, j) => j !== imgIdx) } : v))
 
- // Beide Standardbilder laufen über denselben Weg, nur das Zielfeld
- // unterscheidet sich.
- const handleImageUpload = (field) => (e) => {
- const file = e.target.files[0]
- if (!file) return
- const reader = new FileReader()
- reader.onload = (ev) => set(field, ev.target.result)
- reader.readAsDataURL(file)
+ // Bilder an die Standard-Strecke anhängen. Reihenfolge zählt: das erste
+ // steht in der Übersicht, das zweite erscheint beim Überfahren, alle
+ // zusammen bilden die Slideshow auf der Produktseite.
+ const addDefaultImages = async (files) => {
+ const list = Array.from(files || [])
+ if (!list.length) return
+ const dataUrls = await Promise.all(list.map(file => new Promise(resolve => {
+ const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(file)
+ })))
+ setForm(f => ({ ...f, default_images: [...(f.default_images || []), ...dataUrls] }))
  }
+
+ const removeDefaultImage = (idx) =>
+ setForm(f => ({ ...f, default_images: (f.default_images || []).filter((_, i) => i !== idx) }))
+
+ // Reihenfolge ändern, damit sich Titel- und Hover-Bild ohne erneutes
+ // Hochladen festlegen lassen.
+ const moveDefaultImage = (idx, dir) =>
+ setForm(f => {
+ const arr = [...(f.default_images || [])]
+ const to = idx + dir
+ if (to < 0 || to >= arr.length) return f
+ ;[arr[idx], arr[to]] = [arr[to], arr[idx]]
+ return { ...f, default_images: arr }
+ })
 
  const persistVariants = async (shoeId) => {
    await apiFetch(`/api/shoes/${shoeId}/colors`, {
@@ -261,51 +288,55 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  <div className="bg-white p-7">
  <h3 className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-5 font-light">{initial.id ? 'Schuh bearbeiten' : 'Neuer Schuh'}</h3>
 
- {/* Standardbilder für die Kollektionsseite */}
+ {/* Standard-Bilderstrecke des Modells */}
  <div className="mb-5">
  <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1 font-light">Standardbilder</label>
- <p className="text-[10px] text-black/25 font-light mb-3 leading-relaxed">
- Diese beiden zeigt die Kollektionsseite. Das zweite erscheint, sobald der
- Zeiger auf der Kachel liegt. Ohne zweites Bild wird das zweite Foto der
- ersten Farbvariante genommen.
+ <p className="text-[10px] text-black/25 font-light mb-3 leading-relaxed max-w-xl">
+ Die Reihenfolge bestimmt die Rolle: Das <strong className="font-normal">erste</strong> Bild steht
+ in der Übersicht, das <strong className="font-normal">zweite</strong> erscheint beim Überfahren,
+ alle zusammen bilden die Slideshow auf der Produktseite. Hat eine Farbvariante eigene Bilder,
+ gehen diese auf der Produktseite vor.
  </p>
- <div className="grid grid-cols-2 gap-3 max-w-[300px]">
- {[
- { field: 'image', label: 'Erstes Bild', hint: 'in der Übersicht sichtbar' },
- { field: 'hover_image', label: 'Zweites Bild', hint: 'beim Überfahren' },
- ].map(slot => (
- <div key={slot.field}>
- <div
- className="w-full aspect-[3/4] flex items-center justify-center overflow-hidden relative"
- style={{ backgroundColor: form[slot.field] ? undefined : form.color }}
- >
- {form[slot.field] ? (
- <>
- <img src={form[slot.field]} alt="" className="w-full h-full object-cover" />
+ <div className="flex flex-wrap gap-2">
+ {(form.default_images || []).map((img, i) => (
+ <div key={i} className="relative w-24 group">
+ <div className="w-24 h-32 overflow-hidden border border-black/10 bg-[#f6f5f3]">
+ <img src={img} alt="" className="w-full h-full object-cover" />
+ </div>
  <button
  type="button"
- onClick={() => set(slot.field, null)}
- className="absolute top-1.5 right-1.5 w-5 h-5 bg-white/90 border border-black/15 text-black/50 hover:text-red-600 flex items-center justify-center"
- aria-label={`${slot.label} entfernen`}
+ onClick={() => removeDefaultImage(i)}
+ className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-black/20 text-black/60 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+ aria-label="Bild entfernen"
  >
  <X size={10} strokeWidth={1.6} />
  </button>
- </>
- ) : (
- <svg viewBox="0 0 80 45" className="w-14">
- <path d="M5 36 Q3 39 13 41 L67 41 Q74 41 74 36 L72 28 Q70 22 65 21 L22 21 Q14 21 12 24 Z" fill="white" opacity="0.3" />
- <path d="M12 24 Q10 16 20 12 L40 10 Q52 9 60 15 Q68 20 72 28 L65 21 L22 21 Q14 21 12 24 Z" fill="white" opacity="0.2" />
- </svg>
+ {(i === 0 || i === 1) && (
+ <span className="absolute top-0 left-0 bg-black/70 text-white text-[7px] tracking-[0.16em] uppercase px-1.5 py-0.5">
+ {i === 0 ? 'Übersicht' : 'Hover'}
+ </span>
  )}
+ <div className="flex mt-1">
+ <button
+ type="button" disabled={i === 0}
+ onClick={() => moveDefaultImage(i, -1)}
+ className="flex-1 h-6 border border-black/10 bg-transparent text-[10px] text-black/40 hover:text-black disabled:opacity-25"
+ aria-label="nach vorne"
+ >←</button>
+ <button
+ type="button" disabled={i === (form.default_images || []).length - 1}
+ onClick={() => moveDefaultImage(i, 1)}
+ className="flex-1 h-6 border border-black/10 border-l-0 bg-transparent text-[10px] text-black/40 hover:text-black disabled:opacity-25"
+ aria-label="nach hinten"
+ >→</button>
  </div>
- <label className="mt-1.5 flex items-center justify-center gap-1.5 h-9 border border-black/15 text-black/50 hover:border-black hover:text-black text-[10px] transition-all bg-transparent uppercase tracking-[0.15em] font-light cursor-pointer">
- <Upload size={12} className="text-black/30" strokeWidth={1.25} />
- <span>{form[slot.field] ? 'Ersetzen' : 'Hochladen'}</span>
- <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload(slot.field)} />
- </label>
- <p className="text-[9px] text-black/25 font-light mt-1 text-center">{slot.label} · {slot.hint}</p>
  </div>
  ))}
+ <label className="w-24 h-32 flex flex-col items-center justify-center border border-dashed border-black/15 text-black/30 hover:border-black/40 hover:text-black/60 cursor-pointer transition-colors">
+ <Upload size={14} strokeWidth={1.4} />
+ <span className="text-[8px] tracking-[0.16em] uppercase mt-1">Hinzufügen</span>
+ <input type="file" accept="image/*" multiple className="hidden" onChange={e => addDefaultImages(e.target.files)} />
+ </label>
  </div>
  </div>
 

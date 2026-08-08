@@ -152,7 +152,7 @@ const exploreValidators = [
   body('sort_order').optional().isInt({ min: 0 }),
 ]
 
-export const shoesRouter      = makeContentRouter('shoes', shoeValidators, { publicRead: true, listExclude: ['hover_image_data'] })
+export const shoesRouter      = makeContentRouter('shoes', shoeValidators, { publicRead: true, listExclude: ['hover_image_data', 'default_images'] })
 export const curatedRouter    = makeContentRouter('curated_items')
 export const wardrobeRouter   = makeContentRouter('wardrobe_items')
 export const outfitsRouter    = makeContentRouter('outfits', outfitValidators)
@@ -246,7 +246,9 @@ shoeCardRouter.get('/:id/hover-image', param('id').isInt(), (req, res) => {
   // die Kollektionsseite gewählt. Erst wenn keines gesetzt ist, wird aus den
   // Farbvarianten abgeleitet, damit bestehende Modelle ohne Pflege trotzdem
   // einen Wechsel zeigen.
-  const own = db.prepare('SELECT hover_image_data FROM shoes WHERE id = ?').get(req.params.id)
+  const own = db.prepare('SELECT hover_image_data, default_images FROM shoes WHERE id = ?').get(req.params.id)
+  const gallery = safeJsonArray(own?.default_images)
+  if (gallery[1]) return res.json({ image: gallery[1] })
   if (own?.hover_image_data) return res.json({ image: own.hover_image_data })
 
   const rows = db.prepare(`

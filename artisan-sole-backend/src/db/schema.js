@@ -330,6 +330,13 @@ export function runMigrations(db) {
     // Liste würde sich sonst verdoppeln. Auslieferung über
     // GET /api/shoes/:id/hover-image, erst wenn eine Kachel berührt wird.
     `ALTER TABLE shoes ADD COLUMN hover_image_data TEXT`,
+    // shoes, Standard-Bilderstrecke des Modells (JSON-Array von Data-URLs).
+    // Gilt, solange die gewählte Farbe keine eigenen Bilder mitbringt.
+    // [0] steht auf der Kollektionsseite, [1] erscheint beim Überfahren,
+    // alle zusammen bilden die Slideshow auf der Produktseite.
+    // image_data und hover_image_data bleiben als Einzelfelder gespiegelt,
+    // damit Warenkorb, Wunschliste und Bestellungen unverändert weiterlaufen.
+    `ALTER TABLE shoes ADD COLUMN default_images TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

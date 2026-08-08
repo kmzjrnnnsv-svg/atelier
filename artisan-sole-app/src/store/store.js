@@ -625,11 +625,22 @@ function exploreSectionToApi(s) {
 }
 
 function shoeToApi(s) {
-  // hover_image_data nur mitschicken, wenn das Formular den Wert wirklich
-  // kennt — sonst überschriebe ein Speichern aus einem Kontext ohne dieses
-  // Feld das hinterlegte Bild mit null.
-  const hover = s.hover_image === undefined ? {} : { hover_image_data: s.hover_image || null }
-  return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, ...hover, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null, tagline: s.tagline || null, description: s.description || null }
+  // Bildfelder nur mitschicken, wenn das Formular sie wirklich kennt — sonst
+  // überschriebe ein Speichern aus einem Kontext ohne diese Felder (etwa aus
+  // der Schuhliste, die sie aus Gewichtsgründen nicht liefert) die
+  // hinterlegten Bilder mit null.
+  const imageFields = {}
+  if (s.default_images !== undefined) {
+    const gallery = Array.isArray(s.default_images) ? s.default_images : []
+    imageFields.default_images = JSON.stringify(gallery)
+    // Die beiden Einzelfelder bleiben gespiegelt: Kollektionskachel,
+    // Wunschliste, Warenkorb und Bestellungen lesen weiterhin von dort.
+    imageFields.image_data = gallery[0] || null
+    imageFields.hover_image_data = gallery[1] || null
+  } else if (s.hover_image !== undefined) {
+    imageFields.hover_image_data = s.hover_image || null
+  }
+  return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, ...imageFields, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null, tagline: s.tagline || null, description: s.description || null }
 }
 function outfitToApi(o) {
   return { style: o.style, description: o.description, top: o.top, bottom: o.bottom, shoe: o.shoe, shoe_color: o.shoeColor, bg_color: o.bgColor }
