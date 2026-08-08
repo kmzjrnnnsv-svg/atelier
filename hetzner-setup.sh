@@ -212,6 +212,22 @@ server {
         proxy_pass http://127.0.0.1:3001/api/health;
     }
 
+    # Assets tragen einen Inhalts-Hash im Dateinamen. Unter gleichem Namen
+    # ändert sich ihr Inhalt nie, sie dürfen also dauerhaft gecacht werden.
+    location /assets/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # index.html dagegen niemals ungeprüft aus dem Cache: Sie nennt die
+    # aktuellen Hashes. Eine veraltete Fassung verweist nach einem Deploy auf
+    # Chunks, die es nicht mehr gibt — der Browser bekommt 404 und die App
+    # zeigt "Seite kann nicht geladen werden". no-cache verbietet nicht das
+    # Speichern, erzwingt aber vor jeder Nutzung eine Rückfrage.
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
     # SPA Fallback — alle anderen Routen an index.html
     location / {
         try_files $uri $uri/ /index.html;
