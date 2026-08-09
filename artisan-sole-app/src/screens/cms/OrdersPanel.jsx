@@ -5,6 +5,7 @@ import { apiFetch } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 import MFAModal from '../../components/MFAModal'
 import { orderSpec } from '../../lib/orderSpec'
+import { streetLine } from '../../lib/address'
 
 const STATUS_CONFIG = {
  pending_payment: { label: 'Zahlung ausstehend', color: 'bg-black/[0.06] text-black/50', dot: 'bg-black/15' },
@@ -229,7 +230,7 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Lieferadresse</p>
  <p className="text-[10px] text-black/35 font-light leading-relaxed">
  {delivery.name}<br />
- {delivery.street}<br />
+ {streetLine(delivery)}<br />
  {delivery.postal_code || delivery.zip} {delivery.city}<br />
  {delivery.country}
  {delivery.phone && <><br />{delivery.phone}</>}

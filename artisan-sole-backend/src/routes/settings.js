@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
+import { verifyEmailSetup, sendTestEmail } from '../utils/email.js'
 
 const router = Router()
 
@@ -71,6 +72,29 @@ router.get('/email', authenticate, requireRole('admin'), (req, res) => {
 })
 
 // ─── PUT /api/settings/email — admin only + MFA ───────────────────────────────
+// ─── GET /api/settings/email/check — Verbindung prüfen, ohne zu senden ──────
+// Ohne das ließ sich nicht feststellen, ob der Versand funktioniert: Fehlte
+// die Zugangskennung, schrieb das System stillschweigend auf die Konsole und
+// meldete nach außen Erfolg.
+router.get('/email/check', authenticate, requireRole('admin'), async (req, res) => {
+  res.json(await verifyEmailSetup())
+})
+
+// ─── POST /api/settings/email/test — Testnachricht verschicken ─────────────
+router.post('/email/test', authenticate, requireRole('admin'),
+  body('to').trim().isEmail().withMessage('Gültige Empfängeradresse nötig'),
+  async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg })
+    try {
+      await sendTestEmail(req.body.to)
+      res.json({ ok: true })
+    } catch (e) {
+      res.status(502).json({ ok: false, error: e.message })
+    }
+  }
+)
+
 router.put('/email',
   authenticate,
   requireRole('admin'),

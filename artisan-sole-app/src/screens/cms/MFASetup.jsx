@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ShieldCheck, ShieldOff, QrCode, CheckCircle2, AlertCircle, Loader } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import MFAModal from '../../components/MFAModal'
+import PasskeyPanel from '../../components/PasskeyPanel'
 
 export default function MFASetup() {
  const [status, setStatus] = useState(null) // null | { enabled: bool }
@@ -86,6 +87,12 @@ export default function MFASetup() {
  ? <><ShieldCheck size={15} className="text-black/30" /><span className="text-[13px] text-black/60 font-light">MFA ist aktiviert</span></>
  : <><ShieldOff size={15} className="text-black/25" /><span className="text-[13px] text-black/40 font-light">MFA ist nicht aktiviert</span></>
  }
+ </div>
+
+ {/* Passkeys stehen vor dem Zweitfaktor: Sie sind der bequemere und der
+     sicherere Weg. TOTP bleibt als Rückfallebene darunter. */}
+ <div className="mb-10">
+ <PasskeyPanel />
  </div>
  </div>
 

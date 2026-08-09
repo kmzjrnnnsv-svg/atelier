@@ -26,6 +26,7 @@ import { apiFetch } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 import { HOME_PATH } from '../../lib/homePath'
 import { orderSpec } from '../../lib/orderSpec'
+import { formatAddress } from '../../lib/address'
 
 // ── Bausteine ───────────────────────────────────────────────────────────────
 
@@ -281,22 +282,6 @@ function Orders({ back }) {
   )
 }
 
-function formatAddress(raw) {
-  try {
-    const a = typeof raw === 'string' ? JSON.parse(raw) : raw
-    if (!a || typeof a !== 'object') return String(raw ?? '')
-    // Adressen liegen in zwei Schreibweisen vor: ältere Bestellungen nutzen
-    // zip, neuere postal_code. Beide gelten, sonst fehlt die Postleitzahl
-    // still — und eine Lieferadresse ohne PLZ ist keine.
-    return [
-      [a.first_name, a.last_name].filter(Boolean).join(' ') || a.name,
-      a.street,
-      [a.postal_code || a.zip, a.city].filter(Boolean).join(' '),
-      a.country,
-      a.phone,
-    ].filter(Boolean).join('\n')
-  } catch { return String(raw ?? '') }
-}
 
 // ── Versand (nur lesen) ─────────────────────────────────────────────────────
 

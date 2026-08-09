@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Package, ShoppingBag, Clock, Truck, CheckCircle2, XCircle, Banknote, CreditCard, Scissors, SearchCheck } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
+import { orderSpec } from '../lib/orderSpec'
 
 // ── Journey stages ────────────────────────────────────────────────────────────
 const JOURNEY_STAGES = [
@@ -39,7 +40,7 @@ function JourneyMap({ order, onBack }) {
   return (
     <div className="min-h-full bg-white">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 lg:px-16 pt-4 pb-4 border-b border-black/[0.06] flex-shrink-0">
+      <div className="flex items-center gap-3 w-full max-w-[680px] mx-auto px-5 pt-4 pb-4 flex-shrink-0">
         <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-transparent border-0">
           <ArrowLeft size={18} strokeWidth={1.5} className="text-black" />
         </button>
@@ -50,7 +51,7 @@ function JourneyMap({ order, onBack }) {
       </div>
 
       {/* Journey */}
-      <div className="px-5 lg:px-16 py-8 lg:py-12">
+      <div className="w-full max-w-[680px] mx-auto px-5 py-8 lg:py-12">
         {isCancelled ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <XCircle size={40} strokeWidth={0.8} className="text-black/10 mb-4" />
@@ -67,7 +68,11 @@ function JourneyMap({ order, onBack }) {
             </div>
 
             {/* Path */}
-            <div className="relative ml-5 max-w-lg mx-auto">
+            {/* ml-5 hob die Zentrierung auf: Ein fester linker Rand schlägt
+                die automatische Verteilung, deshalb klebte die Zeitleiste auf
+                breiten Schirmen ganz links, während die Überschrift mittig
+                stand. Der Abstand steckt jetzt im Innenabstand. */}
+            <div className="relative max-w-lg mx-auto pl-5">
               {/* Line */}
               <div className="absolute left-[11px] top-0 bottom-0 w-px">
                 <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
@@ -119,12 +124,31 @@ function JourneyMap({ order, onBack }) {
               })}
             </div>
 
-            {/* Order info */}
+            {/* Was gefertigt wird — dieselbe Aufstellung wie vor dem Absenden
+                und in der Bestellansicht des Betreibers. Ohne sie sah der Kunde
+                nach dem Bestellen weniger, als er beim Konfigurieren gewählt
+                hatte, und konnte nichts mehr nachprüfen. */}
             <div className="max-w-lg mx-auto mt-10 pt-6 border-t border-black/[0.06]">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-black/25 font-light mb-3">Ihre Konfiguration</p>
+              {orderSpec(order).map(([k, v]) => (
+                <div key={k} className="flex justify-between items-start gap-4 py-1.5">
+                  <span className="text-[11px] text-black/35 font-light flex-shrink-0">{k}</span>
+                  <span className="text-[12px] text-black/70 font-light text-right">{v}</span>
+                </div>
+              ))}
+              {order.foot_notes && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 px-3 py-2.5">
+                  <p className="text-[9px] text-amber-800 uppercase tracking-[0.18em] mb-1">Ihr Hinweis</p>
+                  <p className="text-[12px] text-amber-900 font-light leading-relaxed whitespace-pre-line">{order.foot_notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Order info */}
+            <div className="max-w-lg mx-auto mt-6 pt-6 border-t border-black/[0.06]">
               {[
                 { label: 'Bestellt am', value: new Date(order.created_at.replace(' ', 'T') + 'Z').toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) },
                 { label: 'Preis', value: order.price },
-                ...(order.eu_size ? [{ label: 'Größe', value: `EU ${order.eu_size}` }] : []),
               ].map(row => (
                 <div key={row.label} className="flex justify-between items-center py-2">
                   <span className="text-[10px] uppercase tracking-[0.2em] text-black/25 font-light">{row.label}</span>

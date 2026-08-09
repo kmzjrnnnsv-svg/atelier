@@ -1189,6 +1189,37 @@ export function runMigrations(db) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
 
+  // ── Passkeys ─────────────────────────────────────────────────────────────
+  // Ein Konto kann mehrere haben — Telefon und Rechner sollten getrennt
+  // hinterlegt sein, sonst sperrt ein verlorenes Gerät den Zugang aus.
+  // Der öffentliche Schlüssel liegt hier; er ist nicht geheim. Der private
+  // verlässt das Gerät nie, das ist der ganze Sinn der Sache.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS passkeys (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      credential_id  TEXT    NOT NULL UNIQUE,
+      public_key     TEXT    NOT NULL,
+      counter        INTEGER NOT NULL DEFAULT 0,
+      transports     TEXT,
+      label          TEXT,
+      created_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+      last_used_at   TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_passkeys_user ON passkeys(user_id);
+
+    -- Kurzlebige Aufgaben (Challenges). Sie dürfen genau einmal eingelöst
+    -- werden und verfallen nach fünf Minuten; ohne das ließe sich eine
+    -- abgefangene Antwort wiederverwenden.
+    CREATE TABLE IF NOT EXISTS webauthn_challenges (
+      id         TEXT    PRIMARY KEY,
+      user_id    INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      challenge  TEXT    NOT NULL,
+      purpose    TEXT    NOT NULL CHECK(purpose IN ('register','login')),
+      created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+  `)
+
   // ── Nicht mehr geführtes Zubehör entfernen ───────────────────────────────
   // Erst hier, nach allen Seed-Blöcken: Der Ausgangsbestand wird rund 500
   // Zeilen weiter oben per INSERT OR IGNORE angelegt. Stünde das Aufräumen

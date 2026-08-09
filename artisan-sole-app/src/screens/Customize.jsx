@@ -795,7 +795,7 @@ export default function Customize() {
     addToCart({
       shoeId: product.id, name: cleanShoeName(product.name),
       material: mat?.label || product.material,
-      color, price: formatPrice(basePrice + extrasPriceTotal),
+      color, colorName: col?.name || null, price: formatPrice(basePrice + extrasPriceTotal),
       sole: soleArt?.label || 'Standard',
       image: product.image,
       sizeType, euSize: chosenEU,
@@ -859,7 +859,7 @@ export default function Customize() {
         product: {
           id: product.id, name: cleanShoeName(product.name),
           material: mat?.label || product.material,
-          color, price: formatPrice(basePrice + extrasPriceTotal),
+          color, colorName: col?.name || null, price: formatPrice(basePrice + extrasPriceTotal),
           sole: soleArt?.label || 'Standard',
           sizeType, euSize: chosenEU,
           last: selectedFit?.last_key || null,
@@ -1776,6 +1776,27 @@ export default function Customize() {
                       </div>
                     )
                   })}
+                  {/* Leisten und Weite gehören sichtbar dazu: Sie bestimmen,
+                      wie der Schuh sitzt, und standen bisher nur in der
+                      Bestellansicht des Betreibers. */}
+                  {selectedFit?.last_label && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-black/50">Leisten</span>
+                      <span className="text-[11px] text-black">{selectedFit.last_label}</span>
+                    </div>
+                  )}
+                  {selectedFit?.width && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-black/50">Weite</span>
+                      <span className="text-[11px] text-black">{selectedFit.width}</span>
+                    </div>
+                  )}
+                  {sizeType === 'fit' && selectedFit?.size_label && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-black/50">Größe</span>
+                      <span className="text-[11px] text-black">EU {selectedFit.size_label}</span>
+                    </div>
+                  )}
                   {sizeType === 'custom' && (
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-black/50">Größe</span>

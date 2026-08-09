@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft, KeyRound } from 'lucide-react'
+import { startAuthentication } from '@simplewebauthn/browser'
+import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import { isBusiness } from '../App'
 import { HOME_PATH } from '../lib/homePath'
@@ -8,7 +10,7 @@ import { HOME_PATH } from '../lib/homePath'
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login } = useAuth()
+  const { login, loginWithTokenData } = useAuth()
   // Auf der Business-Subdomain ist die Startseite der Onepager (/),
   // im Hauptshop die Kollektion. (Innerhalb der Komponente, NICHT auf Modul-
   // ebene — Login wird statisch in App.jsx importiert; ein Modul-Top-Level-
@@ -23,6 +25,29 @@ export default function Login() {
 
   // Where the user wanted to go before being redirected to /login
   const redirectTo = location.state?.from || null
+  const [pkBusy, setPkBusy] = useState(false)
+  const [pkError, setPkError] = useState(null)
+  // Passkeys gibt es nur für Verwaltungszugänge, und nur wo der Browser sie
+  // kann. In der iOS-App fehlt die Domainbindung — dort bleibt das Passwort.
+  const passkeyPossible = typeof window !== 'undefined' && !!window.PublicKeyCredential
+
+  const signInWithPasskey = async () => {
+    setPkBusy(true); setPkError(null)
+    try {
+      const { challengeId, options } = await apiFetch('/api/auth/passkey/login/options', { method: 'POST' })
+      const response = await startAuthentication({ optionsJSON: options })
+      const data = await apiFetch('/api/auth/passkey/login/verify', {
+        method: 'POST',
+        body: JSON.stringify({ challengeId, response }),
+      })
+      loginWithTokenData(data)
+      navigate(data.user.role === 'admin' || data.user.role === 'curator' ? '/cms' : HOME_PATH, { replace: true })
+    } catch (e) {
+      const name = e?.name || ''
+      if (name === 'NotAllowedError' || name === 'AbortError') setPkError(null)
+      else setPkError(e?.error || 'Anmeldung mit Passkey fehlgeschlagen')
+    } finally { setPkBusy(false) }
+  }
   // Optionale Konfiguration (z. B. aus dem Konfigurator), die nach dem Login
   // auf der Zielseite wiederhergestellt werden soll.
   const loadConfig = location.state?.loadConfig || null
@@ -148,6 +173,27 @@ export default function Login() {
               : <><span>Sign In</span><ArrowRight size={16} /></>
             }
           </button>
+
+          {/* Passkey-Weg. Steht unter dem Passwort, nicht darüber: Kunden
+              melden sich weiterhin mit Passwort an, und nur wer einen Passkey
+              hinterlegt hat, braucht diesen Knopf überhaupt. */}
+          {passkeyPossible && (
+            <>
+              <button
+                type="button"
+                onClick={signInWithPasskey}
+                disabled={pkBusy}
+                style={{ height: '52px', letterSpacing: '0.14em' }}
+                className="w-full flex items-center justify-center gap-2 text-[12px] uppercase tracking-widest border border-black/20 bg-transparent text-black/70 hover:border-black hover:text-black transition-colors mt-3 disabled:opacity-40"
+              >
+                <KeyRound size={15} strokeWidth={1.5} />
+                {pkBusy ? 'Einen Moment…' : 'Mit Passkey anmelden'}
+              </button>
+              {pkError && (
+                <p className="text-[12px] text-red-700 font-light mt-2 text-center">{pkError}</p>
+              )}
+            </>
+          )}
         </form>
       </div>
 

@@ -23,6 +23,29 @@ const parse = (v) => {
   try { return JSON.parse(v) } catch { return null }
 }
 
+/**
+ * Dieselbe Aufstellung, aber aus einem Warenkorb-Eintrag — damit der Kunde
+ * vor dem Absenden genau das sieht, was später in der Bestellung steht und
+ * beim Betreiber ankommt. Vorher zeigte der Bestellvorgang nur Name, Leder
+ * und Sohle; erst in der Fertigung wäre aufgefallen, was alles fehlt.
+ */
+export function specFromCartItem(item) {
+  if (!item) return []
+  return orderSpec({
+    shoe_name: item.name,
+    material: item.material,
+    color: item.colorName || item.color,
+    sole: item.sole,
+    extras: item.extras,
+    eu_size: item.euSize,
+    size_type: item.sizeType,
+    last_label: item.lastLabel,
+    last_key: item.last,
+    last_width: item.width,
+    fit_measurements: item.footMeasurementsUsed,
+  })
+}
+
 export function orderSpec(order) {
   if (!order) return []
   const rows = []
@@ -31,16 +54,18 @@ export function orderSpec(order) {
   add('Modell', order.shoe_name)
   add('Leder', order.material)
   add('Farbe', order.color)
-  add('Sohle', order.sole)
+
+  const extras = parse(order.extras)
+  const extraList = Array.isArray(extras) ? extras.filter(e => e?.value) : []
+
+  // Die Sohle steckt meist schon als Optionsgruppe („Sohlen-Art") in den
+  // Extras. Das eigene Feld nur zeigen, wenn es etwas Zusätzliches sagt —
+  // sonst stünde derselbe Wert zweimal untereinander.
+  if (!extraList.some(e => String(e.value) === String(order.sole))) add('Sohle', order.sole)
 
   // Zusatzoptionen einzeln, mit ihrer Gruppe als Bezeichnung: „Kappe: Cap-Toe"
   // sagt der Fertigung mehr als eine Aufzählung ohne Zuordnung.
-  const extras = parse(order.extras)
-  if (Array.isArray(extras)) {
-    for (const e of extras) {
-      if (e?.value) add(e.group || e.key || 'Option', e.value)
-    }
-  }
+  for (const e of extraList) add(e.group || e.key || 'Option', e.value)
 
   const sizeLine = [
     order.eu_size ? `EU ${order.eu_size}` : null,

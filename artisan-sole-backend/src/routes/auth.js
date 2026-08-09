@@ -29,7 +29,7 @@ const validateLogin = [
   body('password').notEmpty(),
 ]
 
-function issueTokens(res, user) {
+export function issueTokens(res, user) {
   const accessToken  = signAccessToken(user)
   const refreshToken = generateRefreshToken()
   const tokenHash    = hashToken(refreshToken)
