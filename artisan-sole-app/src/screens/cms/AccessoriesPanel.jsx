@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, X, Check, Gift, Footprints } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Gift, Footprints, Upload } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
-import ImagePicker from '../../components/ImagePicker'
 import useStore from '../../store/store'
+import { accessoryImages } from '../../lib/accessoryImages'
 
-const emptyForm = { key: '', name: '', description: '', price: '', is_active: 1, sort_order: 0, image_data: '' }
+const emptyForm = { key: '', name: '', description: '', price: '', is_active: 1, sort_order: 0, images: [] }
 
 export default function AccessoriesPanel() {
   const [items, setItems] = useState([])
@@ -24,9 +24,45 @@ export default function AccessoriesPanel() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const valid = form.key && form.name && form.price
 
+  // Dateien als base64 anhängen — dasselbe Verfahren wie beim Schuh-Editor.
+  const addImages = async (files) => {
+    const list = Array.from(files || [])
+    if (!list.length) return
+    const dataUrls = await Promise.all(list.map(file => new Promise(resolve => {
+      const r = new FileReader()
+      r.onload = e => resolve(e.target.result)
+      r.readAsDataURL(file)
+    })))
+    setForm(f => ({ ...f, images: [...(f.images || []), ...dataUrls] }))
+  }
+
+  const removeImage = (idx) =>
+    setForm(f => ({ ...f, images: (f.images || []).filter((_, i) => i !== idx) }))
+
+  // Umsortieren, damit sich Titel- und Hover-Bild ohne erneutes Hochladen
+  // festlegen lassen.
+  const moveImage = (idx, dir) =>
+    setForm(f => {
+      const arr = [...(f.images || [])]
+      const to = idx + dir
+      if (to < 0 || to >= arr.length) return f
+      ;[arr[idx], arr[to]] = [arr[to], arr[idx]]
+      return { ...f, images: arr }
+    })
+
   const handleSave = async () => {
     if (!valid) return
-    const payload = { ...form, price: parseFloat(form.price) || 0, sort_order: parseInt(form.sort_order) || 0, is_active: form.is_active ? 1 : 0 }
+    // images trägt die Strecke, image_data bleibt gefüllt, damit ältere
+    // Ansichten und der Warenkorb weiterhin ein Bild finden.
+    const imgs = form.images || []
+    const payload = {
+      ...form,
+      images: JSON.stringify(imgs),
+      image_data: imgs[0] || '',
+      price: parseFloat(form.price) || 0,
+      sort_order: parseInt(form.sort_order) || 0,
+      is_active: form.is_active ? 1 : 0,
+    }
     try {
       if (mode === 'add') {
         const row = await apiFetch('/api/accessories', { method: 'POST', body: JSON.stringify(payload) })
@@ -52,7 +88,7 @@ export default function AccessoriesPanel() {
       key: item.key, name: item.name, description: item.description || '',
       price: String(item.price), is_active: item.is_active,
       sort_order: item.sort_order || 0,
-      image_data: item.image_data || '',
+      images: accessoryImages(item),
     })
     setMode({ editing: item })
   }
@@ -95,14 +131,59 @@ export default function AccessoriesPanel() {
           </div>
           <div>
             <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Beschreibung</label>
-            <input value={form.description} onChange={e => set('description', e.target.value)} placeholder="Kurze Beschreibung" className={inp} />
-          </div>
-          <div>
-            <ImagePicker
-              label="Produktbild"
-              value={form.image_data || ''}
-              onChange={(val) => set('image_data', val)}
+            {/* Mehrzeilig: Die Pflegesets führen auf, was in der Schachtel
+                liegt — in einer einzeiligen Eingabe ließe sich das nicht
+                vernünftig bearbeiten. Leerzeile trennt Absätze. */}
+            <textarea
+              value={form.description}
+              onChange={e => set('description', e.target.value)}
+              rows={6}
+              placeholder="Beschreibung. Eine Leerzeile beginnt einen neuen Absatz."
+              className="w-full px-4 py-3 border border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 leading-relaxed resize-y"
             />
+          </div>
+
+          {/* Bilderstrecke, gleiche Regeln wie beim Schuh */}
+          <div>
+            <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1 font-light">Produktbilder</label>
+            <p className="text-[10px] text-black/25 font-light mb-3 leading-relaxed max-w-xl">
+              Die Reihenfolge bestimmt die Rolle: Das <strong className="font-normal">erste</strong> Bild
+              steht in der Übersicht, das <strong className="font-normal">zweite</strong> erscheint beim
+              Überfahren. Mehrere Aufnahmen sind erlaubt.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(form.images || []).map((img, i) => (
+                <div key={i} className="relative w-24 group">
+                  <div className="w-24 h-32 overflow-hidden border border-black/10 bg-[#f6f5f3]">
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-black/20 text-black/60 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Bild entfernen"
+                  >
+                    <X size={10} strokeWidth={1.6} />
+                  </button>
+                  {(i === 0 || i === 1) && (
+                    <span className="absolute top-0 left-0 bg-black/70 text-white text-[7px] tracking-[0.16em] uppercase px-1.5 py-0.5">
+                      {i === 0 ? 'Übersicht' : 'Hover'}
+                    </span>
+                  )}
+                  <div className="flex mt-1">
+                    <button type="button" disabled={i === 0} onClick={() => moveImage(i, -1)}
+                      className="flex-1 h-6 border border-black/10 bg-transparent text-[10px] text-black/40 hover:text-black disabled:opacity-25" aria-label="nach vorne">←</button>
+                    <button type="button" disabled={i === (form.images || []).length - 1} onClick={() => moveImage(i, 1)}
+                      className="flex-1 h-6 border border-black/10 border-l-0 bg-transparent text-[10px] text-black/40 hover:text-black disabled:opacity-25" aria-label="nach hinten">→</button>
+                  </div>
+                </div>
+              ))}
+              <label className="w-24 h-32 flex flex-col items-center justify-center border border-dashed border-black/15 text-black/30 hover:border-black/40 hover:text-black/60 cursor-pointer transition-colors">
+                <Upload size={14} strokeWidth={1.4} />
+                <span className="text-[8px] tracking-[0.16em] uppercase mt-1">Hinzufügen</span>
+                <input type="file" accept="image/*" multiple className="hidden" onChange={e => addImages(e.target.files)} />
+              </label>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-5">
             <div>
@@ -169,8 +250,8 @@ function ItemRow({ item, onEdit, onDelete, isLinkOpen, onToggleLink }) {
       <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-4 px-6 py-4 items-center hover:bg-black/[0.01] transition-colors border-b border-black/[0.04]">
         {/* Vorschau */}
         <div className="w-12 h-12 bg-[#fafaf9] flex items-center justify-center overflow-hidden border border-black/[0.04]">
-          {item.image_data ? (
-            <img src={item.image_data} alt={item.name} className="w-full h-full object-cover" />
+          {accessoryImages(item)[0] ? (
+            <img src={accessoryImages(item)[0]} alt={item.name} className="w-full h-full object-cover" />
           ) : (
             <Gift size={16} strokeWidth={1.2} className="text-black/15" />
           )}

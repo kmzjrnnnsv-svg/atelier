@@ -8,6 +8,7 @@ import { ShoppingBag, Plus, Check } from 'lucide-react'
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import CtaBanner from '../components/CtaBanner'
+import { accessoryImages } from '../lib/accessoryImages'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
@@ -20,6 +21,7 @@ export default function Accessories() {
   const { cart, addToCart, removeFromCart } = useStore()
   const [accessoriesList, setAccessoriesList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -50,7 +52,7 @@ export default function Accessories() {
         name: acc.name,
         price: `€ ${parseFloat(acc.price) || 0}`,
         material: 'Zubehör',
-        image: acc.image_data || null,
+        image: accessoryImages(acc)[0] || null,
         isAccessory: true,
         shoeId: null,
       })
@@ -89,25 +91,39 @@ export default function Accessories() {
 
         /* ── Product Grid ──────────────────────────────────────── */
         <div className="px-5 lg:px-16 pb-16 pt-2">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-12">
             {filtered.map(acc => {
               const inCart = cartIds.includes(`acc-${acc.id}`)
               const recommended = JSON.parse(acc.recommended_for || '[]')
+              // Erstes Bild steht, zweites erscheint beim Überfahren — dieselbe
+              // Regel wie in der Schuhübersicht.
+              const imgs = accessoryImages(acc)
+              const hoverImg = imgs[1] || null
 
               return (
                 <div key={acc.id} className="group">
 
                   {/* Product image */}
                   <div
-                    className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-3 lg:mb-4 transition-all duration-500 group-hover:bg-[#efeee9]"
+                    className="relative w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] mb-3 lg:mb-4 transition-all duration-500 group-hover:bg-[#efeee9]"
                     style={{ aspectRatio: '3 / 4' }}
                   >
-                    {acc.image_data ? (
-                      <img
-                        src={acc.image_data}
-                        alt={acc.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                      />
+                    {imgs[0] ? (
+                      <>
+                        <img
+                          src={imgs[0]}
+                          alt={acc.name}
+                          className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-[1.03] ${hoverImg ? 'group-hover:opacity-0' : ''}`}
+                        />
+                        {hoverImg && (
+                          <img
+                            src={hoverImg}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+                          />
+                        )}
+                      </>
                     ) : (
                       <ShoppingBag size={32} strokeWidth={0.6} className="text-black/[0.07]" />
                     )}
@@ -115,8 +131,24 @@ export default function Accessories() {
 
                   {/* Product info */}
                   <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{acc.name}</p>
+                  {/* Zwei Zeilen als Anriss, der Rest auf Wunsch. Die
+                      Pflegesets führen auf, was in der Schachtel liegt — das
+                      gehört sichtbar, aber nicht in jede Kachel der Übersicht.
+                      whitespace-pre-line erhält die Absätze des Fließtextes. */}
                   {acc.description && (
-                    <p className="text-[11px] text-black/30 mt-1 leading-relaxed line-clamp-2 font-light">{acc.description}</p>
+                    <div className="mt-1">
+                      <p className={`text-[11px] text-black/30 leading-relaxed font-light whitespace-pre-line ${expanded === acc.id ? '' : 'line-clamp-2'}`}>
+                        {acc.description}
+                      </p>
+                      {acc.description.length > 110 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setExpanded(expanded === acc.id ? null : acc.id) }}
+                          className="mt-1 bg-transparent border-0 p-0 text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2"
+                        >
+                          {expanded === acc.id ? 'Weniger' : 'Details'}
+                        </button>
+                      )}
+                    </div>
                   )}
                   <p className="text-[12px] lg:text-[13px] text-black/60 mt-1.5 font-light">€ {parseFloat(acc.price) || 0}</p>
 

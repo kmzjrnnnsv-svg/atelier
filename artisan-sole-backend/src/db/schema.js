@@ -101,6 +101,14 @@ function ensureOrderStatusCheck(db) {
   }
 }
 
+// Produkttexte der beiden Pflegesets. Angaben vom Hersteller: Fertigung in
+// Italien, Schachtel 18 × 11 × 5 cm, Inhalt wie aufgeführt.
+const LEATHER_KIT_DESC =
+  'Alles für die Reinigung und Pflege glatter Leder. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm.\n\nInhalt: ein Tiegel natürliche Lederpflegecreme, ein Poliertuch aus 100 % Baumwolle, zwei kleine Rundbürsten, zwei große Bürsten. Eine Pflegeanleitung liegt bei.\n\nGedacht für weiche Leder wie Box Calf oder poliertes Kalbsleder. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.'
+
+const SUEDE_KIT_DESC =
+  'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich.\n\nInhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei.\n\nGedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.'
+
 // Zubehör, das früher aus diesem Seed stammte und nicht mehr geführt wird.
 // Bewusst als feste Liste und nicht als „alles, was nicht in accData steht":
 // Artikel, die im CMS von Hand angelegt wurden, sollen bleiben.
@@ -474,6 +482,10 @@ export function runMigrations(db) {
     // Ladenpreis. Beim Schuhspanner (45 € im Verkauf) läge der Ladenpreis über
     // der Provision selbst — der Vermittler zahlte drauf.
     `ALTER TABLE accessories ADD COLUMN cost_price REAL`,
+    // Bilderstrecke wie bei den Modellen: JSON-Feld, Reihenfolge trägt die
+    // Bedeutung — erstes Bild in der Übersicht, zweites beim Überfahren.
+    // image_data bleibt als Rückfall für Zubehör, das nur ein Bild hat.
+    `ALTER TABLE accessories ADD COLUMN images TEXT`,
     // orders, Rückgabe und Reklamation nach Zustellung. Der Statuswert
     // 'cancelled' meint eine Stornierung VOR Lieferung; was danach passiert,
     // ließ sich bisher nirgends festhalten.
@@ -511,8 +523,8 @@ export function runMigrations(db) {
   // nicht los, weil der Upsert nur anlegt und aktualisiert, nie löscht.
   try {
     const accData = [
-      { key: 'care_kit_leather', name: 'Lederpflege-Set',              desc: 'Komplett-Set für Glattleder: Creme, Bürsten und Poliertuch. Nährt das Leder, schützt es und bringt den Glanz zurück.',        price: 23.7,  sort: 0, rec: '[]',                                  not: '["SNEAKER"]' },
-      { key: 'care_kit_suede',   name: 'Wildlederpflege-Set',           desc: 'Komplett-Set für Velours und Nubuk: Krepp- und Messingbürste, Imprägnierung und Radierer. Richtet das Flor auf und schützt.', price: 25.25, sort: 1, rec: '[]',                                  not: '[]' },
+      { key: 'care_kit_leather', name: 'Lederpflege-Set',              desc: LEATHER_KIT_DESC,        price: 23.7,  sort: 0, rec: '[]',                                  not: '["SNEAKER"]' },
+      { key: 'care_kit_suede',   name: 'Wildlederpflege-Set',           desc: SUEDE_KIT_DESC, price: 25.25, sort: 1, rec: '[]',                                  not: '[]' },
       { key: 'shoe_tree_cedar',  name: 'Zedernholz-Schuhspanner',       desc: 'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    price: 21.0,  sort: 2, rec: '[]',                                  not: '["SNEAKER"]' },
       { key: 'shoe_tree_black',  name: 'Schuhspanner Schwarz',          desc: 'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.',                                        price: 22.0,  sort: 3, rec: '[]',                                  not: '["SNEAKER"]' },
       { key: 'boot_tree_cedar',  name: 'Zedernholz-Stiefelspanner',     desc: 'Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.',                                                price: 29.0,  sort: 4, rec: '["BOOT","CHELSEA","CHUKKA","JODHPUR"]', not: '["SNEAKER"]' },
@@ -770,8 +782,8 @@ export function runMigrations(db) {
     -- Ausgangsbestand einer frischen Datenbank. Muss zu accData weiter oben
     -- passen; dort werden bestehende Zeilen aktualisiert, hier nur angelegt.
     INSERT OR IGNORE INTO accessories (key, name, description, price, sort_order) VALUES
-      ('care_kit_leather', 'Lederpflege-Set',          'Komplett-Set für Glattleder: Creme, Bürsten und Poliertuch. Nährt das Leder, schützt es und bringt den Glanz zurück.',        23.7,  0),
-      ('care_kit_suede',   'Wildlederpflege-Set',      'Komplett-Set für Velours und Nubuk: Krepp- und Messingbürste, Imprägnierung und Radierer. Richtet das Flor auf und schützt.', 25.25, 1),
+      ('care_kit_leather', 'Lederpflege-Set',          'Alles für die Reinigung und Pflege glatter Leder. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Inhalt: ein Tiegel natürliche Lederpflegecreme, ein Poliertuch aus 100 % Baumwolle, zwei kleine Rundbürsten, zwei große Bürsten. Eine Pflegeanleitung liegt bei. Gedacht für weiche Leder wie Box Calf oder poliertes Kalbsleder. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.',        23.7,  0),
+      ('care_kit_suede',   'Wildlederpflege-Set',      'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich. Inhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei. Gedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.', 25.25, 1),
       ('shoe_tree_cedar',  'Zedernholz-Schuhspanner',  'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    21.0,  2),
       ('shoe_tree_black',  'Schuhspanner Schwarz',     'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.',                                        22.0,  3),
       ('boot_tree_cedar',  'Zedernholz-Stiefelspanner','Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.',                                                29.0,  4);
