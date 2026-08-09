@@ -1,0 +1,114 @@
+# Rechtstexte — Anleitung und Vorbehalte
+
+Drei Entwürfe für Artisan Sole, zugeschnitten auf **maßgefertigte Schuhe**:
+
+- `AGB.md`
+- `Impressum.md`
+- `Datenschutzerklaerung.md`
+
+## Das Wichtigste zuerst
+
+**Das ist keine Rechtsberatung.** Ich bin kein Anwalt. Diese Entwürfe sind
+sorgfältig auf euren konkreten Fall geschrieben, ersetzen aber keine Prüfung.
+
+Der Grund, warum ich darauf bestehe, ist wirtschaftlich, nicht formal: Eine
+fehlerhafte AGB-Klausel oder ein unvollständiges Impressum kostet bei einer
+Abmahnung schnell **mehrere hundert bis über tausend Euro** — deutlich mehr,
+als eine Erstprüfung kostet. Gerade wenn die Mittel knapp sind, ist das der
+falsche Posten zum Sparen.
+
+## So kommen die Texte auf die Seite
+
+1. Platzhalter `[…]` in allen drei Dateien ersetzen
+2. Die eckigen Hinweisblöcke (`[**Variante …**]`, `[**Nur behalten, wenn …**]`)
+   entscheiden und **restlos entfernen**
+3. Im CMS unter **Rechtliches** je Dokument einfügen — die Typen heißen
+   `agb`, `datenschutz`, `impressum`
+4. Prüfen, dass alle drei aus dem Footer heraus **ohne Anmeldung** erreichbar
+   sind. Ein Impressum hinter einem Login ist kein Impressum.
+
+## Was ich nicht so umsetzen konnte, wie du es beschrieben hast
+
+Drei deiner Wünsche gehen rechtlich nicht. Ich habe sie jeweils so nah wie
+möglich umgesetzt.
+
+### 1. Gewährleistung auf 14 Tage begrenzen — nicht möglich
+
+Bei neuer Ware an Verbraucher sind **zwei Jahre zwingend** (§ 438 Abs. 1
+Nr. 3 BGB). Eine Verkürzung ist nach § 476 Abs. 2 BGB unwirksam und ein
+klassischer Abmahngrund. Die Klausel wäre nicht nur wirkungslos, sondern
+gefährlich.
+
+**Stattdessen umgesetzt:** Die 14 Tage stehen als *Bitte* um zeitnahe Meldung
+(Ziffer 6 Abs. 4) und als *freiwillige Kulanzfrist* (Ziffer 7). Beides ist
+zulässig, weil es deine gesetzlichen Pflichten nicht beschneidet, sondern
+etwas obendrauf legt.
+
+### 2. „Bei Nichtgefallen Gegenwert gutschreiben" — geht, aber als Kulanz
+
+Umgesetzt in Ziffer 7: ausdrücklich freiwillig, ohne Rechtsanspruch, nur als
+Gutschrift auf ein künftiges Paar, keine Auszahlung in Geld, Entscheidung im
+Einzelfall. So bindet es dich nicht.
+
+**Wichtig:** Wenn du das dauerhaft und automatisch gewährst, kann daraus mit
+der Zeit eine betriebliche Übung werden. Die Klausel schließt das aus
+(Ziffer 7 Abs. 4) — halte dich in der Praxis auch daran.
+
+### 3. Datenschutz „ohne Gewähr" — nicht möglich
+
+Die DSGVO gilt zwingend. Es gibt keine Formulierung, die Pflichten abbedingt.
+Was schützt, ist Ehrlichkeit und Vollständigkeit: Wer korrekt beschreibt, was
+er tut, ist im Beschwerdefall in einer erheblich besseren Lage.
+
+## Deine stärkste Absicherung
+
+**Der Ausschluss des Widerrufsrechts** (AGB Ziffer 5) ist der wertvollste
+Punkt der gesamten AGB. Er greift, weil Maßanfertigung nach § 312g Abs. 2
+Nr. 1 BGB ausgenommen ist.
+
+Damit er hält, müssen zwei Dinge stimmen:
+
+1. **Die Schuhe müssen wirklich individuell sein.** Fußmaß, Leistenwahl,
+   Konfiguration — das trägt. Würdest du irgendwann Standardgrößen aus dem
+   Regal verkaufen, gilt der Ausschluss für diese Artikel **nicht**.
+2. **Der Hinweis muss im Bestellvorgang erscheinen**, nicht nur in den AGB.
+   Vor dem Absenden der Bestellung, deutlich sichtbar, mit Bestätigung.
+
+Der zweite Punkt fehlt in eurer Anwendung noch. Ein Kästchen im Checkout mit
+etwa diesem Text:
+
+> ☐ Mir ist bekannt, dass dieser Schuh nach meinen persönlichen Maßen
+> angefertigt wird und deshalb **kein Widerrufsrecht** besteht (§ 312g
+> Abs. 2 Nr. 1 BGB). Ich stimme zu, dass die Fertigung sofort beginnt.
+
+Ohne diesen Schritt kann der Ausschluss im Streitfall angreifbar sein. Sag
+Bescheid, dann baue ich ihn ein.
+
+## Zwei Punkte, die dein Anwalt prüfen sollte
+
+**Fußscans und Art. 9 DSGVO.** Ich habe in der Erklärung begründet, warum die
+Maße *keine* besonderen Daten sind: keine Identifizierung, keine medizinische
+Auswertung. Das halte ich für tragfähig, es ist aber der Punkt mit dem
+größten Diskussionsspielraum.
+
+**Scans für die Verbesserung der Messfunktion.** Eure Datenbank sieht das vor
+(`scan_training_data`). Dafür braucht es eine **aktive Einwilligung** im
+Scanvorgang — ein nicht vorangekreuztes Kästchen. Ein Absatz in der
+Datenschutzerklärung reicht dafür nicht. Solange das Kästchen fehlt, dürft
+ihr die Aufnahmen nicht zur Verbesserung auswerten. Auch das kann ich
+einbauen.
+
+## Vor dem Livegang
+
+- [ ] Alle `[…]` ersetzt, alle Hinweisblöcke entfernt
+- [ ] Impressum vollständig, mit **Telefonnummer**
+- [ ] Umsatzsteuer-Variante entschieden (Kleinunternehmer oder Regelbesteuerung)
+- [ ] Zuständige Landesdatenschutzbehörde eingetragen
+- [ ] Alle Dienstleister in der Empfängertabelle ergänzt
+- [ ] Auftragsverarbeitungsverträge mit Hoster und Versand abgeschlossen
+- [ ] Alle drei Seiten ohne Login erreichbar
+- [ ] Widerrufs-Hinweis im Checkout eingebaut
+- [ ] Einwilligung für die Scan-Auswertung eingebaut (oder Abschnitt 6.4 gestrichen)
+- [ ] Anwaltliche Prüfung
+
+Der letzte Punkt ist der wichtigste.
