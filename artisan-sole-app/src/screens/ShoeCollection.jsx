@@ -251,15 +251,46 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
           </svg>
         )}
 
-        {/* Passform-Warnung, gut lesbar, volle Deckkraft */}
-        {dimmed && (
-          <div className="absolute top-3 left-3 right-3 z-20 flex">
-            <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-900 bg-amber-50/95 border border-amber-300/70 backdrop-blur-sm px-2.5 py-1 font-normal" style={{ letterSpacing: '0.02em' }}>
-              <AlertTriangle size={12} strokeWidth={1.8} className="text-amber-600 flex-shrink-0" />
+        {/* Kopfzeile der Kachel: Name, Preis und der Passform-Hinweis liegen
+            oben auf dem Bild und weichen gemeinsam, sobald die Zweitansicht
+            einblendet. Vorher saß die Beschriftung unten und lag damit über
+            Sohle und Schlagschatten — genau dort, wo bei einer Produktaufnahme
+            das Motiv endet. Oben ist bei zentriert stehenden Schuhen Luft.
+            Der Verlauf trägt die Schrift auch auf hellem Leder. */}
+        <div
+          className="absolute inset-x-0 top-0 z-10 px-3.5 pt-3 pb-9 pointer-events-none transition-opacity duration-500"
+          style={{
+            opacity: showSecond ? 0 : (dimmed ? 0.8 : 1),
+            background: 'linear-gradient(rgba(255,255,255,0.96), rgba(255,255,255,0.84) 45%, transparent)',
+          }}
+        >
+          {/* pr-9 hält die Zeile frei von der Wunschlisten-Schaltfläche
+              rechts oben, die beim Überfahren an derselben Stelle erscheint. */}
+          <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug pr-9">
+            <ShoeName name={product.name} />
+          </p>
+          <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-0.5">
+            {priceLine}
+          </p>
+
+          {/* Hinweis direkt unter dem Preis, in derselben Fläche — so
+              verschwindet er beim Überfahren mit, statt allein stehen zu
+              bleiben. */}
+          {dimmed ? (
+            <span className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] text-amber-900 bg-amber-50/95 border border-amber-300/70 px-2 py-0.5 font-normal" style={{ letterSpacing: '0.02em' }}>
+              <AlertTriangle size={11} strokeWidth={1.8} className="text-amber-600 flex-shrink-0" />
               Passt nicht zu Ihren Maßen
             </span>
-          </div>
-        )}
+          ) : campaign ? (
+            <span className="mt-1.5 inline-block text-[10px] text-white bg-stone-900/90 px-2 py-0.5 font-normal" style={{ letterSpacing: '0.05em' }}>
+              {campaign.payment_mode === 'company' ? 'Firma zahlt' : `-${campaign.discount_pct}%`}
+            </span>
+          ) : product.match ? (
+            <span className="mt-1.5 inline-block text-[10px] text-black/45 font-light" style={{ letterSpacing: '0.05em' }}>
+              {product.match} Passform
+            </span>
+          ) : null}
+        </div>
 
         {/* Wunschliste, erscheint beim Überfahren */}
         <button
@@ -269,44 +300,6 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
         >
           <Heart size={16} strokeWidth={1.5} className={isFav ? 'text-black fill-black' : 'text-black/25'} />
         </button>
-
-        {/* Kampagnen- bzw. Passform-Hinweis, oberhalb der Namenszeile */}
-        {campaign ? (
-          <div className="absolute bottom-16 left-4 z-20">
-            <span className="text-[10px] text-white bg-stone-900/90 backdrop-blur-sm px-2 py-1 font-normal" style={{ letterSpacing: '0.05em' }}>
-              {campaign.payment_mode === 'company' ? 'Firma zahlt' : `-${campaign.discount_pct}%`}
-            </span>
-          </div>
-        ) : product.match && !dimmed && (
-          <div className="absolute bottom-16 left-4 z-20">
-            <span className="text-[10px] text-black/45 bg-white/80 backdrop-blur-sm px-2 py-1 font-light" style={{ letterSpacing: '0.05em' }}>
-              {product.match} Passform
-            </span>
-          </div>
-        )}
-
-        {/* Name und Preis liegen auf dem Bild und weichen beim Überfahren der
-            Zweitansicht — nur dann, denn ohne Bildwechsel gäbe es sonst eine
-            leere Ecke. Der Verlauf hält die Schrift auch auf hellem Leder
-            lesbar. */}
-        <div
-          className="absolute inset-x-0 bottom-0 z-10 px-3.5 pb-3 pt-6 pointer-events-none transition-opacity duration-500"
-          style={{
-            opacity: showSecond ? 0 : (dimmed ? 0.75 : 1),
-            // Enger als zuvor: Der Verlauf lief über die Sohle und nahm dem
-            // Schuh das untere Drittel. Er soll die Schrift tragen, nicht das
-            // Produkt überdecken.
-            background: 'linear-gradient(transparent, rgba(255,255,255,0.86) 62%, rgba(255,255,255,0.96))',
-          }}
-        >
-          <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">
-            <ShoeName name={product.name} />
-          </p>
-          <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-0.5">
-            {priceLine}
-            {dimmed && <span className="text-amber-700/90"> · andere Passform</span>}
-          </p>
-        </div>
 
         {/* Farbtöne, rechts unten, erscheinen beim Überfahren. Sie zeigen, was
             konfigurierbar ist, ohne die Kachel im Ruhezustand zu beladen. */}
