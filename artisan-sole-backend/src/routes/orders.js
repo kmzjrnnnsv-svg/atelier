@@ -406,4 +406,145 @@ router.put('/:id',
   }
 )
 
+
+// ── Rücksendungen ───────────────────────────────────────────────────────────
+//
+// Was zurückgehen kann und was nicht, ist keine Kulanzfrage: Der Schuh entsteht
+// auf Maß für einen bestimmten Fuß und ist danach für niemanden sonst zu
+// gebrauchen — vom Widerruf ausgenommen (§ 312g Abs. 2 Nr. 1 BGB). Zubehör ist
+// Lagerware und geht regulär zurück. Deshalb prüft der Server jede Position
+// gegen orders.accessories, statt sich auf das Formular zu verlassen.
+
+const WIDERRUF_TAGE = 14
+
+// Die zurückgebbaren Positionen einer Bestellung: das Zubehör, abzüglich
+// dessen, was in einer bestehenden Rücksendung schon steckt.
+function ruecksendbar(db, order) {
+  let acc = []
+  try { acc = JSON.parse(order.accessories || '[]') } catch { acc = [] }
+  if (!Array.isArray(acc)) acc = []
+
+  const schonAngemeldet = new Map()
+  const offene = db.prepare("SELECT items FROM return_requests WHERE order_id = ? AND status != 'rejected'").all(order.id)
+  for (const r of offene) {
+    let items = []
+    try { items = JSON.parse(r.items || '[]') } catch { items = [] }
+    for (const i of items) schonAngemeldet.set(i.name, (schonAngemeldet.get(i.name) || 0) + (Number(i.qty) || 1))
+  }
+
+  return acc
+    .map(a => {
+      const gekauft = Number(a.qty) || 1
+      const offen = gekauft - (schonAngemeldet.get(a.name) || 0)
+      return { name: a.name, price: Number(a.price) || 0, qty: offen }
+    })
+    .filter(a => a.qty > 0)
+}
+
+// Wie lange noch. Gerechnet ab Zustellung; ohne Zustelldatum läuft die Frist
+// noch nicht, die Rücksendung ist dann schlicht noch nicht fällig.
+function fristTageRest(order) {
+  if (!order.delivered_at) return null
+  const zugestellt = new Date(String(order.delivered_at).replace(' ', 'T') + 'Z')
+  const tage = Math.floor((Date.now() - zugestellt.getTime()) / 86400000)
+  return WIDERRUF_TAGE - tage
+}
+
+// GET /api/orders/:id/ruecksendung — was geht zurück, was nicht, und warum
+router.get('/:id/ruecksendung', authenticate, (req, res) => {
+  const db = getDb()
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
+  if (!order) return res.status(404).json({ error: 'Bestellung nicht gefunden' })
+  const darf = order.user_id === req.user.id || ['admin', 'curator'].includes(req.user.role)
+  if (!darf) return res.status(403).json({ error: 'Kein Zugriff auf diese Bestellung' })
+
+  const rest = fristTageRest(order)
+  res.json({
+    order_id: order.id,
+    items: ruecksendbar(db, order),
+    // Der Schuh steht bewusst mit dabei, mit Begründung — sonst sucht der
+    // Kunde die Schaltfläche, die es nicht gibt.
+    shoe: { name: order.shoe_name, returnable: false, reason: 'Maßanfertigung — vom Widerruf ausgenommen.' },
+    window_days: WIDERRUF_TAGE,
+    days_left: rest,
+    open: order.status === 'delivered' && rest != null && rest > 0,
+    requests: db.prepare('SELECT id, status, items, amount, reason, note, created_at, decided_at FROM return_requests WHERE order_id = ? ORDER BY created_at DESC').all(order.id)
+      .map(r => ({ ...r, items: JSON.parse(r.items || '[]') })),
+  })
+})
+
+// POST /api/orders/:id/ruecksendung — Zubehör zurückmelden
+router.post('/:id/ruecksendung', authenticate, (req, res) => {
+  const db = getDb()
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
+  if (!order) return res.status(404).json({ error: 'Bestellung nicht gefunden' })
+  if (order.user_id !== req.user.id) return res.status(403).json({ error: 'Kein Zugriff auf diese Bestellung' })
+  if (order.status !== 'delivered') {
+    return res.status(409).json({ error: 'Eine Rücksendung ist erst nach der Zustellung möglich.' })
+  }
+  const rest = fristTageRest(order)
+  if (rest != null && rest <= 0) {
+    return res.status(409).json({ error: `Die Rücksendefrist von ${WIDERRUF_TAGE} Tagen ist abgelaufen.` })
+  }
+
+  const verfuegbar = new Map(ruecksendbar(db, order).map(a => [a.name, a]))
+  const gewuenscht = Array.isArray(req.body?.items) ? req.body.items : []
+  if (!gewuenscht.length) return res.status(400).json({ error: 'Keine Position ausgewählt.' })
+
+  const items = []
+  for (const w of gewuenscht) {
+    const name = String(w?.name || '').trim()
+    const v = verfuegbar.get(name)
+    if (!v) {
+      // Der häufigste Fall: Jemand versucht den Schuh zurückzugeben.
+      if (name && name === order.shoe_name) {
+        return res.status(409).json({ error: 'Maßgefertigte Schuhe sind vom Widerruf ausgenommen. Passt etwas nicht, sehen wir uns das an — bitte melden Sie sich.' })
+      }
+      return res.status(400).json({ error: `„${name}" gehört nicht zu den rücksendbaren Positionen dieser Bestellung.` })
+    }
+    const qty = Math.min(Math.max(1, Number(w?.qty) || 1), v.qty)
+    items.push({ name: v.name, price: v.price, qty })
+  }
+
+  const amount = items.reduce((s, i) => s + i.price * i.qty, 0)
+  const info = db.prepare(`
+    INSERT INTO return_requests (order_id, user_id, status, items, amount, reason)
+    VALUES (?, ?, 'requested', ?, ?, ?)
+  `).run(order.id, req.user.id, JSON.stringify(items), amount, String(req.body?.reason || '').slice(0, 500) || null)
+
+  res.status(201).json({ id: info.lastInsertRowid, status: 'requested', items, amount })
+})
+
+// GET /api/orders/ruecksendungen/alle — Verwaltung
+router.get('/ruecksendungen/alle', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT r.*, o.order_ref, o.shoe_name, u.name AS user_name, u.email AS user_email
+    FROM return_requests r
+    JOIN orders o ON o.id = r.order_id
+    LEFT JOIN users u ON u.id = r.user_id
+    ORDER BY r.status = 'requested' DESC, r.created_at DESC
+  `).all()
+  res.json(rows.map(r => ({ ...r, items: JSON.parse(r.items || '[]') })))
+})
+
+// PUT /api/orders/ruecksendungen/:id — entscheiden
+router.put('/ruecksendungen/:id', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db = getDb()
+  const r = db.prepare('SELECT * FROM return_requests WHERE id = ?').get(req.params.id)
+  if (!r) return res.status(404).json({ error: 'Rücksendung nicht gefunden' })
+
+  const erlaubt = ['approved', 'rejected', 'received', 'refunded']
+  const status = erlaubt.includes(req.body?.status) ? req.body.status : null
+  if (!status) return res.status(400).json({ error: 'Ungültiger Status' })
+
+  db.prepare(`
+    UPDATE return_requests
+    SET status = ?, note = COALESCE(?, note), decided_at = datetime('now'), updated_at = datetime('now')
+    WHERE id = ?
+  `).run(status, req.body?.note ?? null, r.id)
+
+  const neu = db.prepare('SELECT * FROM return_requests WHERE id = ?').get(r.id)
+  res.json({ ...neu, items: JSON.parse(neu.items || '[]') })
+})
+
 export default router

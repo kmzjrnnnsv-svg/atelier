@@ -63,6 +63,7 @@ export default function CMSLayout() {
             { heading: 'Kunden', items: [
               { to: '/cms/scans',    label: 'Foot Scans',   icon: ScanLine },
               { to: '/cms/business', label: 'Firmenkonten', icon: Building2 },
+              { to: '/cms/vermittler', label: 'Vermittler',  icon: Users },
               { to: '/cms/loyalty',  label: 'Loyalty & Tiers', icon: Award },
               { to: '/cms/feedback', label: 'Feedback & Tickets', icon: MessageSquare },
             ]},

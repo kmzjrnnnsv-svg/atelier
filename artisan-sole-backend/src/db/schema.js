@@ -1003,6 +1003,30 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_aff_payouts_affiliate ON affiliate_payouts(affiliate_id);
 
+    -- ── Rücksendungen ───────────────────────────────────────────────────────
+    -- Der Schuh entsteht auf Maß für einen einzelnen Fuß und ist danach für
+    -- niemanden sonst zu gebrauchen — er ist vom Widerruf ausgenommen
+    -- (§ 312g Abs. 2 Nr. 1 BGB). Zubehör ist Lagerware und geht regulär zurück.
+    -- Deshalb hängt eine Rücksendung an einzelnen Positionen, nicht an der
+    -- Bestellung: items hält die zurückgehenden Zubehörzeilen als Kopie aus
+    -- Name, Preis und Menge, so wie orders.accessories sie führt.
+    CREATE TABLE IF NOT EXISTS return_requests (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id    INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      user_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      status      TEXT    NOT NULL DEFAULT 'requested'
+                          CHECK(status IN ('requested','approved','rejected','received','refunded')),
+      items       TEXT    NOT NULL DEFAULT '[]',
+      amount      REAL    NOT NULL DEFAULT 0,
+      reason      TEXT,
+      note        TEXT,
+      decided_at  TEXT,
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_return_requests_order ON return_requests(order_id);
+    CREATE INDEX IF NOT EXISTS idx_return_requests_status ON return_requests(status);
+
     CREATE TABLE IF NOT EXISTS deleted_seed_shoes (
       name       TEXT PRIMARY KEY,
       deleted_at TEXT NOT NULL DEFAULT (datetime('now'))
