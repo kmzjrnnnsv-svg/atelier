@@ -169,6 +169,7 @@ export const isBusiness = !isNative && /^business\./i.test(HOSTNAME)
 const isProdApex = !isNative && /^(www\.)?artisansole\.com$/i.test(HOSTNAME)
 const BUSINESS_URL = 'https://business.artisansole.com/'
 
+
 // Externe Weiterleitung (zur Subdomain)
 function ExternalRedirect({ to }) {
   useEffect(() => { window.location.replace(to) }, [to])

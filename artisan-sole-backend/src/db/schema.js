@@ -856,6 +856,17 @@ export function runMigrations(db) {
       ('rubber-grip', 'ANTI-RUTSCH',   'Gummi-Profil', 'Gummibeschichtete Profilsohle, maximale Rutschfestigkeit auf allen Oberflächen.', 'Unsere Empfehlung für den Alltag. Sicherer Halt bei Regen, Schnee und nassen Böden. Ganzjährig einsetzbar.', 35, 'good', 1, 'OXFORD,LOAFER,DERBY,MONK,BOOT', 1),
       ('sneaker',     'SNEAKER-SOHLE', 'EVA-Komfort',  'Leichte EVA-Komfortsohle mit Dämpfung, für maximalen Gehkomfort den ganzen Tag.', 'Speziell für Sneaker entwickelt. Stoßdämpfend, flexibel und ultraleicht.', 0, 'good', 0, 'SNEAKER', 2);
 
+    -- Im CMS gelöschte Seed-Modelle.
+    -- Der Seed legt seine Modelle bei jedem Start per Name neu an, wenn sie
+    -- fehlen. Ein im CMS gelöschter Schuh kam dadurch beim nächsten Neustart
+    -- zurück. Dieser Merkzettel hält fest, was bewusst entfernt wurde; der
+    -- Seed überspringt diese Namen. Wird der Schuh später von Hand wieder
+    -- angelegt, verschwindet der Eintrag.
+    CREATE TABLE IF NOT EXISTS deleted_seed_shoes (
+      name       TEXT PRIMARY KEY,
+      deleted_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS cms_media (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       name        TEXT    NOT NULL,
