@@ -439,6 +439,11 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN delivered_at   TEXT`,
     // orders, vermittelnder Code (Kleinschreibung, wie in affiliates.code)
     `ALTER TABLE orders ADD COLUMN affiliate_code TEXT`,
+    // Fertigungsspezifikation: Sohle und die gewählten Zusatzoptionen.
+    // Beides wurde im Warenkorb geführt, ging beim Bestellen aber verloren —
+    // in der Bestellung standen nur Modell, Leder und Farbe.
+    `ALTER TABLE orders ADD COLUMN sole   TEXT`,
+    `ALTER TABLE orders ADD COLUMN extras TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_orders_affiliate ON orders(affiliate_code)`,
     `ALTER TABLE shoes ADD COLUMN slug TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_slug ON shoes(slug)`,

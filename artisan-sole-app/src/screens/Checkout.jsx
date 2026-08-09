@@ -328,6 +328,9 @@ export default function Checkout() {
           foot_notes: footNotes || null, coupon_code: appliedCoupon, business_code: appliedBizCode, business_campaign_id: appliedCampaignId,
           last_key: product.last || null, last_label: product.lastLabel || null,
           last_width: product.width || null, fit_measurements: product.footMeasurementsUsed || null,
+          // Sohle und Zusatzoptionen gehören zur Fertigungsspezifikation. Sie
+          // wurden bislang im Warenkorb geführt und beim Bestellen verworfen.
+          sole: product.sole || null, extras: product.extras || null,
           ...shippingData,
         })
       } else {
@@ -343,6 +346,7 @@ export default function Checkout() {
             foot_notes: footNotes || null, coupon_code: i === 0 ? appliedCoupon : null,
             last_key: item.last || null, last_label: item.lastLabel || null,
             last_width: item.width || null, fit_measurements: item.footMeasurementsUsed || null,
+            sole: item.sole || null, extras: item.extras || null,
             ...shippingData,
           })
         }

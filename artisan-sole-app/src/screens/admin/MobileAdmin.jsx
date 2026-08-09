@@ -25,6 +25,7 @@ import {
 import { apiFetch } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 import { HOME_PATH } from '../../lib/homePath'
+import { orderSpec } from '../../lib/orderSpec'
 
 // ── Bausteine ───────────────────────────────────────────────────────────────
 
@@ -198,9 +199,26 @@ function Orders({ back }) {
       <Screen title={open.order_ref || `Bestellung ${open.id}`} onBack={() => { setOpen(null); setError(null) }}>
         <div className="bg-white border border-black/[0.06] p-4 mb-4">
           <p className="text-[15px] font-light text-black/80">{open.shoe_name}</p>
-          <p className="text-[12px] text-black/35 font-light mt-0.5">{open.material} · {open.color}</p>
-          <p className="text-[17px] font-light text-black/80 mt-3">€ {money(open.price)}</p>
-          <p className="text-[11px] text-black/30 font-light mt-2">{open.created_at?.slice(0, 16).replace('T', ' ')}</p>
+          <p className="text-[17px] font-light text-black/80 mt-2">€ {money(open.price)}</p>
+          <p className="text-[11px] text-black/30 font-light mt-1">{open.created_at?.slice(0, 16).replace('T', ' ')}</p>
+        </div>
+
+        {/* Dieselbe Aufstellung wie im CMS, aus derselben Quelle — was die
+            Manufaktur braucht, muss auch unterwegs ablesbar sein. */}
+        <div className="bg-white border border-black/[0.06] p-4 mb-4">
+          <p className="text-[10px] text-black/25 uppercase tracking-[0.2em] mb-2.5">Fertigung</p>
+          {orderSpec(open).map(([k, v]) => (
+            <div key={k} className="flex gap-3 py-[3px]">
+              <span className="text-[12px] text-black/35 font-light w-[104px] flex-shrink-0">{k}</span>
+              <span className="text-[12px] text-black/75 font-light flex-1 min-w-0">{v}</span>
+            </div>
+          ))}
+          {open.foot_notes && (
+            <div className="mt-3 bg-amber-50 border border-amber-200 px-3 py-2.5">
+              <p className="text-[9px] text-amber-800 uppercase tracking-[0.18em] mb-1">Hinweis des Kunden</p>
+              <p className="text-[12px] text-amber-900 font-light leading-relaxed whitespace-pre-line">{open.foot_notes}</p>
+            </div>
+          )}
         </div>
 
         {open.delivery_address && (
@@ -267,9 +285,15 @@ function formatAddress(raw) {
   try {
     const a = typeof raw === 'string' ? JSON.parse(raw) : raw
     if (!a || typeof a !== 'object') return String(raw ?? '')
+    // Adressen liegen in zwei Schreibweisen vor: ältere Bestellungen nutzen
+    // zip, neuere postal_code. Beide gelten, sonst fehlt die Postleitzahl
+    // still — und eine Lieferadresse ohne PLZ ist keine.
     return [
       [a.first_name, a.last_name].filter(Boolean).join(' ') || a.name,
-      a.street, [a.postal_code, a.city].filter(Boolean).join(' '), a.country,
+      a.street,
+      [a.postal_code || a.zip, a.city].filter(Boolean).join(' '),
+      a.country,
+      a.phone,
     ].filter(Boolean).join('\n')
   } catch { return String(raw ?? '') }
 }

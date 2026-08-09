@@ -4,6 +4,7 @@ import { ShoppingBag, RefreshCw, CheckCircle2, Clock, Package, Truck, XCircle, B
 import { apiFetch } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 import MFAModal from '../../components/MFAModal'
+import { orderSpec } from '../../lib/orderSpec'
 
 const STATUS_CONFIG = {
  pending_payment: { label: 'Zahlung ausstehend', color: 'bg-black/[0.06] text-black/50', dot: 'bg-black/15' },
@@ -54,6 +55,7 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
 
  const delivery = order.delivery_address ? JSON.parse(order.delivery_address) : null
  const accessories = order.accessories ? JSON.parse(order.accessories) : []
+ const spec = orderSpec(order)
 
  // Build visible actions, payment confirmation is admin-only
  const nextOptions = (NEXT_STATUSES[order.status] || []).filter(s => {
@@ -179,9 +181,32 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  <div>
  <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Bestellung</p>
  <p className="text-[12px] text-black/60 font-light">{order.shoe_name}</p>
- <p className="text-[10px] text-black/35 font-light">{order.material} · {order.color}</p>
- {order.eu_size && (
- <p className="text-[10px] text-black/40 mt-0.5 font-light">EU {order.eu_size} · 3D-Scan</p>
+ <p className="text-[10px] text-black/35 font-light">{order.order_ref || `#${order.id}`} · {order.price}</p>
+ </div>
+
+ {/* Fertigungsspezifikation — alles, was der Kunde gewählt hat.
+     Genau das braucht die Manufaktur; vorher standen hier nur Modell,
+     Leder und Farbe, und Sohle wie Zusatzoptionen fehlten ganz. */}
+ <div>
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Fertigung</p>
+ <table className="w-full">
+ <tbody>
+ {spec.map(([k, v]) => (
+ <tr key={k}>
+ <td className="text-[10px] text-black/35 font-light align-top pr-3 py-[1px] whitespace-nowrap">{k}</td>
+ <td className="text-[10px] text-black/60 font-light align-top py-[1px]">{v}</td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ {order.foot_notes && (
+ <div className="mt-2 bg-amber-50 border border-amber-200 px-2.5 py-2">
+ <p className="text-[9px] text-amber-800 uppercase tracking-[0.18em] mb-1">Hinweis des Kunden</p>
+ <p className="text-[10px] text-amber-900 font-light leading-relaxed whitespace-pre-line">{order.foot_notes}</p>
+ {order.foot_notes_en && order.foot_notes_en !== order.foot_notes && (
+ <p className="text-[10px] text-amber-700/70 font-light leading-relaxed mt-1 whitespace-pre-line">{order.foot_notes_en}</p>
+ )}
+ </div>
  )}
  </div>
 
@@ -205,7 +230,7 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  <p className="text-[10px] text-black/35 font-light leading-relaxed">
  {delivery.name}<br />
  {delivery.street}<br />
- {delivery.zip} {delivery.city}<br />
+ {delivery.postal_code || delivery.zip} {delivery.city}<br />
  {delivery.country}
  {delivery.phone && <><br />{delivery.phone}</>}
  </p>
