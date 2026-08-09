@@ -18,7 +18,25 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 // Exponentielles Backoff mit Jitter (300ms, 600ms, 1200ms …, gekappt bei 8s).
 const backoff = (attempt) => Math.min(8000, 300 * 2 ** attempt + Math.random() * 250)
 
-async function refreshAccessToken() {
+/**
+ * Einziger Weg, einen neuen Access-Token zu holen.
+ *
+ * Der Refresh-Token ist einmalig: /api/auth/refresh löscht den alten und gibt
+ * einen neuen aus. Zwei gleichzeitige Aufrufe entwerten sich deshalb
+ * gegenseitig — der erste rotiert, der zweite legt den bereits gelöschten
+ * Token vor und bekommt 401. Danach ist die Sitzung serverseitig weg, und
+ * jeder Schreibvorgang scheitert mit „No token provided", obwohl die
+ * Oberfläche noch angemeldet aussieht.
+ *
+ * Genau das passierte beim harten Neuladen: AuthContext erneuerte die Sitzung,
+ * und parallel liefen ein Dutzend Datenabrufe ohne Token in ihr 401 und
+ * erneuerten ein zweites Mal. Deshalb teilen sich jetzt beide Seiten diese
+ * eine Sperre; AuthContext ruft dieselbe Funktion auf.
+ *
+ * Liefert die vollständige Antwort ({ accessToken, user, … }), damit auch
+ * AuthContext den Benutzer daraus setzen kann.
+ */
+export async function refreshAccessToken() {
   if (isRefreshing) {
     return new Promise((resolve, reject) => refreshQueue.push({ resolve, reject }))
   }
@@ -42,8 +60,8 @@ async function refreshAccessToken() {
     const data = await res.json()
     setAccessToken(data.accessToken)
     if (isNativePlatform && data.refreshToken) _nativeRefreshToken = data.refreshToken
-    refreshQueue.forEach(p => p.resolve(data.accessToken))
-    return data.accessToken
+    refreshQueue.forEach(p => p.resolve(data))
+    return data
   } catch (err) {
     refreshQueue.forEach(p => p.reject(err))
     setAccessToken(null)
@@ -84,10 +102,10 @@ export async function apiFetch(url, options = {}, _attempt = 0) {
   // Token expired, try refresh once
   if (res.status === 401) {
     try {
-      const newToken = await refreshAccessToken()
+      const data = await refreshAccessToken()
       res = await fetch(fullUrl, {
         ...options,
-        headers: { ...headers, Authorization: `Bearer ${newToken}` },
+        headers: { ...headers, Authorization: `Bearer ${data.accessToken}` },
         credentials: 'include',
       })
     } catch {

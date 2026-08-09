@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { Capacitor } from '@capacitor/core'
-import { setNativeRefreshToken } from '../hooks/useApi'
+import { setNativeRefreshToken, refreshAccessToken } from '../hooks/useApi'
 
 const AuthContext = createContext(null)
 
@@ -64,19 +64,17 @@ export function AuthProvider({ children }) {
 
     refreshPromise.current = (async () => {
       try {
-        // In native mode: no cookie available, send refresh token in body
-        const fetchOpts = {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'X-Requested-With': 'ArtisanSole' },
-        }
-        if (isNativePlatform && _refreshToken) {
-          fetchOpts.headers = { ...fetchOpts.headers, 'Content-Type': 'application/json' }
-          fetchOpts.body = JSON.stringify({ refreshToken: _refreshToken })
-        }
-        const res = await fetch(`${API_BASE}/api/auth/refresh`, fetchOpts)
-        if (!res.ok) {
-          // Don't call logout(), it would destroy the DB token permanently.
+        // Bewusst über useApi statt mit eigenem fetch: Der Refresh-Token ist
+        // einmalig, zwei gleichzeitige Erneuerungen entwerten sich gegenseitig.
+        // Beim harten Neuladen lief hier eine Erneuerung, während ein Dutzend
+        // Datenabrufe ohne Token in ihr 401 liefen und ein zweites Mal
+        // erneuerten — die Sitzung war danach serverseitig weg, und jedes
+        // Speichern scheiterte mit „No token provided". Mit dem gemeinsamen
+        // Aufruf gibt es nur noch eine Erneuerung, alle warten auf dieselbe.
+        const data = await refreshAccessToken().catch(() => null)
+        if (!data) {
+          // Kein logout(): das würde den Token in der Datenbank endgültig
+          // löschen. Nur den lokalen Zustand räumen.
           storeTokens({ accessToken: null })
           _refreshToken = null
           setNativeRefreshToken(null)
@@ -85,7 +83,6 @@ export function AuthProvider({ children }) {
           if (refreshTimer.current) clearTimeout(refreshTimer.current)
           return
         }
-        const data = await res.json()
         storeTokens(data)
         setUser(data.user)
         scheduleRefresh()
