@@ -8,8 +8,9 @@ import { useAuth } from '../context/AuthContext'
 import { shoePath } from '../lib/shoePath'
 import { toFormAddress, streetLine } from '../lib/address'
 import { specFromCartItem } from '../lib/orderSpec'
+import { accessoryImages } from '../lib/accessoryImages'
 
-// Accessories are loaded from the DB via shoeAccessoryMap in the store
+// Zubehör kommt aus dem Store (dieselbe Quelle wie die Zubehörseite).
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 const STEPS = ['Warenkorb', 'Lieferung', 'Rechnung', 'Zubehör', 'Übersicht']
@@ -111,25 +112,45 @@ function isAddrComplete(a) {
 }
 
 // ── Accessory card ────────────────────────────────────────────────────────────
-function AccessoryCard({ item, selected, onToggle }) {
+/**
+ * Zubehör im Bestellvorgang — dieselben Artikel und Bilder wie auf der
+ * Zubehörseite. Vorher stand hier nur ein Pluszeichen in einem grauen Kasten,
+ * und Artikel, die schon im Warenkorb lagen, fehlten ganz; man konnte nicht
+ * sehen, was man bereits hatte.
+ */
+function AccessoryCard({ item, anzahl, onPlus, onMinus }) {
   return (
-    <button
-      onClick={onToggle}
-      className={`w-full flex items-center gap-3.5 p-4 transition-all text-left ${
-        selected ? 'bg-white border-l-2 border-l-black' : 'bg-white'
-      }`}
-    >
-      <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 transition-all ${
-        selected ? 'bg-black text-white' : 'bg-black/[0.03] text-black/30'
-      }`}>
-        {selected ? <Check size={14} strokeWidth={2.5} /> : <Plus size={14} strokeWidth={2} />}
+    <div className={`w-full flex items-center gap-3.5 p-3 bg-white transition-all ${anzahl > 0 ? 'border-l-2 border-l-black' : 'border-l-2 border-l-transparent'}`}>
+      {/* Bild wie auf der Zubehörseite, nur kleiner */}
+      <div className="w-14 h-[74px] flex-shrink-0 bg-[#f6f5f3] overflow-hidden flex items-center justify-center">
+        {item.image
+          ? <img src={item.image} alt="" className="w-full h-full object-cover" />
+          : <ShoppingBag size={16} strokeWidth={0.8} className="text-black/10" />}
       </div>
+
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-black leading-tight">{item.name}</p>
-        <p className="text-[10px] text-black/40 mt-0.5">{item.desc}</p>
+        <p className="text-[13px] font-medium text-black leading-tight">{item.name}</p>
+        {item.desc && <p className="text-[10px] text-black/40 mt-0.5 line-clamp-2 leading-relaxed">{item.desc}</p>}
+        <p className="text-[12px] text-black/70 mt-1">{item.price}</p>
       </div>
-      <span className="text-[13px] font-bold text-black flex-shrink-0">{item.price}</span>
-    </button>
+
+      {/* Anzahl statt eines bloßen Hakens: Wer zweimal hinzufügt, sieht die 2. */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {anzahl > 0 && (
+          <>
+            <button onClick={onMinus} aria-label="Eins weniger"
+              className="w-8 h-8 flex items-center justify-center border border-black/12 bg-white text-black/50">
+              <Minus size={13} strokeWidth={2} />
+            </button>
+            <span className="w-6 text-center text-[13px] font-medium text-black">{anzahl}</span>
+          </>
+        )}
+        <button onClick={onPlus} aria-label="Hinzufügen"
+          className={`w-8 h-8 flex items-center justify-center transition-all ${anzahl > 0 ? 'bg-black text-white' : 'bg-black/[0.04] text-black/40'}`}>
+          <Plus size={14} strokeWidth={2} />
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -151,7 +172,7 @@ export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user } = useAuth()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, footMeasurements, saveFootMeasurements, shoeAccessoryMap, accessories: storeAccessories, shoes } = useStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, accessories: storeAccessories, shoes } = useStore()
   const isPromo = !!user?.is_promotion
   const promoDiscountPct = user?.promotion_discount_pct || 0
 
@@ -218,35 +239,33 @@ export default function Checkout() {
     }).catch(() => {})
   }, [])
 
-  // Collect accessories for all shoes (single product OR cart items)
-  const cartShoeIds = cart.filter(c => !c.isAccessory).map(c => c.shoeId)
-  const cartAccessoryIds = new Set(cart.filter(c => c.isAccessory).map(c => {
-    const m = String(c.shoeId).match(/^acc-(\d+)$/)
-    return m ? Number(m[1]) : null
-  }).filter(Boolean))
 
-  const shoeIds = product.id ? [product.id] : cartShoeIds
-  const seen = new Set()
-  const dbAccessories = shoeIds.flatMap(sid => (shoeAccessoryMap[sid] || []))
-    .filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true })
-    .filter(a => !cartAccessoryIds.has(a.id))
+  // Immer der vollständige Katalog, in derselben Reihenfolge wie auf der
+  // Zubehörseite. Vorher wurde nach Modell gefiltert und alles ausgeblendet,
+  // was schon im Warenkorb lag — dadurch verschwanden Artikel aus der Liste,
+  // statt mit ihrer Anzahl dazustehen.
+  const allAccessories = (storeAccessories || [])
+    .filter(a => a.is_active !== 0)
+    .slice()
+    .sort((x, y) => (x.sort_order ?? 0) - (y.sort_order ?? 0))
     .map(a => ({
-      id: a.id, name: a.name, desc: a.description || '', price: `€ ${parseFloat(a.price) || 0}`, priceNum: parseFloat(a.price) || 0,
+      id: a.id,
+      name: a.name,
+      desc: a.description || '',
+      // Deutsche Schreibweise mit zwei Nachkommastellen: „€ 23.7" sah aus
+      // wie ein Tippfehler.
+      price: `€ ${(parseFloat(a.price) || 0).toFixed(2).replace('.', ',')}`,
+      priceNum: parseFloat(a.price) || 0,
+      image: accessoryImages(a)[0] || null,
     }))
 
-  // If no shoe-specific accessories, fall back to all store accessories
-  const fallbackAccessories = dbAccessories.length === 0
-    ? storeAccessories
-        .filter(a => !cartAccessoryIds.has(a.id) && !seen.has(a.id))
-        .map(a => ({
-          id: a.id, name: a.name, desc: a.description || '', price: `€ ${parseFloat(a.price) || 0}`, priceNum: parseFloat(a.price) || 0,
-        }))
-    : []
+  // Wie oft liegt dieser Artikel schon im Warenkorb?
+  const imWarenkorb = (id) => cart
+    .filter(c => c.isAccessory && String(c.id) === `acc-${id}`)
+    .reduce((n, c) => n + (c.qty || 1), 0)
 
-  const extraAccessories = incomingAccessories
-    .filter(a => !dbAccessories.find(x => x.id === a.id) && !cartAccessoryIds.has(a.id))
-    .map(a => ({ id: a.id, name: a.name, desc: '', price: `€ ${a.price}`, priceNum: a.price }))
-  const allAccessories = [...dbAccessories, ...fallbackAccessories, ...extraAccessories]
+  // Anzahl auf dieser Seite = im Warenkorb + hier gewählt.
+  const anzahlVon = (id) => imWarenkorb(id) + selectedAcc.filter(x => x === id).length
 
   const [initialized, setInitialized] = useState(false)
   if (!initialized && incomingAccessories.length > 0) {
@@ -254,10 +273,15 @@ export default function Checkout() {
     setInitialized(true)
   }
 
-  const toggleAcc = id =>
-    setSelectedAcc(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  // Mehrfach möglich: Der Eintrag darf mehrmals in der Liste stehen, sonst
+  // liesse sich „zweimal dasselbe" nicht abbilden.
+  const accPlus  = id => setSelectedAcc(prev => [...prev, id])
+  const accMinus = id => setSelectedAcc(prev => {
+    const i = prev.lastIndexOf(id)
+    return i === -1 ? prev : [...prev.slice(0, i), ...prev.slice(i + 1)]
+  })
 
-  const chosenAccessories = allAccessories.filter(a => selectedAcc.includes(a.id))
+  const chosenAccessories = selectedAcc.map(id => allAccessories.find(a => a.id === id)).filter(Boolean)
 
   const shoePrice = parsePrice(product.price)
   const cartTotal = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.qty, 0)
@@ -602,16 +626,10 @@ export default function Checkout() {
               <div className="space-y-px">
                 {allAccessories.map(item => (
                   <AccessoryCard key={item.id} item={item}
-                    selected={selectedAcc.includes(item.id)} onToggle={() => toggleAcc(item.id)} />
+                    anzahl={anzahlVon(item.id)}
+                    onPlus={() => accPlus(item.id)}
+                    onMinus={() => accMinus(item.id)} />
                 ))}
-              </div>
-            ) : cartAccessoryIds.size > 0 ? (
-              <div className="bg-white p-5 border border-black/[0.06] text-center">
-                <div className="w-10 h-10 bg-black/[0.03] flex items-center justify-center mx-auto mb-3">
-                  <Check size={18} strokeWidth={1.5} className="text-black/30" />
-                </div>
-                <p className="text-[13px] text-black/60 font-light">Alles Zubehör ist bereits im Warenkorb.</p>
-                <p className="text-[11px] text-black/25 mt-1 font-light">Sie können direkt zur Übersicht fortfahren.</p>
               </div>
             ) : (
               <div className="bg-white p-5 border border-black/[0.06] text-center">
