@@ -165,10 +165,14 @@ Scans einem Konto zuweisen, Beförderungen nachvollziehen.
 
 **Bankverbindung** — die Daten für die Vorkasse-Überweisung.
 
-**E-Mail / SMTP** — Zugangsdaten des Versandservers, mit Testversand.
+**E-Mail / SMTP** — Zugangsdaten des Versandservers. Zeigt beim Öffnen, ob
+die Verbindung steht, und warnt, wenn die Adresse der Anwendung noch auf
+localhost steht (dann führen Links in Mails beim Empfänger ins Leere).
+Mit Testversand.
 
-**MFA-Sicherheit** — Zweiter Faktor per TOTP: Einrichtung, Bestätigung,
-Statusabfrage, Abschaltung.
+**MFA-Sicherheit** — **Passkeys** (Fingerabdruck, Gesicht, Geräte-PIN) für
+Verwaltungszugänge, mit Geräteliste und Hinweis auf den zweiten Passkey.
+Darunter der zweite Faktor per TOTP als Rückfallebene.
 
 ---
 
