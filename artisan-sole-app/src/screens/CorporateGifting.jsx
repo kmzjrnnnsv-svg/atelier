@@ -12,9 +12,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, Send, MapPin, Gem, Footprints, PenTool, Package, MessageCircle, ArrowRight, LogIn, Gift, Heart, Handshake, Award, Building2 } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
-import { HEROES } from '../lib/editorialImages'
 import useStore from '../store/store'
-import PageHero from '../components/PageHero'
 
 const IMG_API_BASE = import.meta.env.VITE_API_URL || ''
 const resolveImg = (url) => {
@@ -141,38 +139,32 @@ export default function CorporateGifting() {
         </Link>
       </div>
 
-      {/* Hero */}
-      <PageHero
-        slot="business"
-        fallback={HEROES.business}
-        ratio="aspect-[4/5] sm:aspect-[3/2] lg:aspect-[16/9] max-h-[78vh]"
-        priority
-      >
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(rgba(28,25,23,0.12) 0%, rgba(28,25,23,0.30) 45%, rgba(28,25,23,0.66) 100%)' }} />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-          <p className="text-[10px] text-white/70 uppercase tracking-[0.4em] mb-5">Artisan Sole · für Unternehmen</p>
-          <h1 className="text-[30px] lg:text-[52px] font-extralight text-white leading-[1.04] tracking-tight max-w-3xl">
+      {/* Einstieg. Ohne Bannerbild: Die Aussage trägt sich selbst, und ein
+          Stockfoto hätte hier nur Platz zwischen Überschrift und Angebot
+          gekostet. Farben daher von Weiß auf Dunkel gedreht. */}
+      <section className="px-6 py-20 lg:py-28 flex flex-col items-center text-center bg-white">
+          <p className="text-[10px] text-stone-400 uppercase tracking-[0.4em] mb-5">Artisan Sole · für Unternehmen</p>
+          <h1 className="text-[30px] lg:text-[52px] font-extralight text-stone-900 leading-[1.04] tracking-tight max-w-3xl">
             Ein Geschenk, das man jeden Tag trägt.
           </h1>
-          <p className="text-[13px] lg:text-[16px] text-white/80 font-light max-w-xl mt-6 leading-relaxed">
+          <p className="text-[13px] lg:text-[16px] text-stone-500 font-light max-w-xl mt-6 leading-relaxed">
             Custom-made Lederschuhe, für Mitarbeitende, Kunden und Partner. In
             spanischer Manufaktur gefertigt, auf Wunsch mit Ihrem Logo.
           </p>
           <button
             onClick={scrollToForm}
-            className="group mt-9 px-9 h-12 bg-white text-stone-900 border-0 hover:bg-stone-100 transition-colors flex items-center gap-2.5"
+            className="group mt-9 px-9 h-12 bg-stone-900 text-white border-0 hover:bg-stone-800 transition-colors flex items-center gap-2.5"
             style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
           >
             Angebot anfragen <ArrowRight size={15} strokeWidth={1.6} className="transition-transform group-hover:translate-x-0.5" />
           </button>
           <Link
             to="/business/uebersicht"
-            className="mt-4 inline-flex items-center gap-1.5 text-[10px] text-white/65 hover:text-white no-underline uppercase tracking-[0.22em] transition-colors"
+            className="mt-4 inline-flex items-center gap-1.5 text-[10px] text-stone-400 hover:text-stone-900 no-underline uppercase tracking-[0.22em] transition-colors"
           >
             Preise und Prozess auf einen Blick <ArrowRight size={12} strokeWidth={1.6} />
           </Link>
-        </div>
-      </PageHero>
+      </section>
 
       {/* Leitsatz */}
       <section className="px-5 lg:px-8 py-16 lg:py-24">

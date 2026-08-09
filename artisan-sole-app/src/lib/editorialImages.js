@@ -1,9 +1,9 @@
 /**
  * Rückfallbilder für die redaktionellen Flächen der Website.
  *
- * Wichtig: Das hier sind *Fallbacks*. Die Header der öffentlichen Seiten und
- * die Explore-Kacheln kommen vorrangig aus dem CMS (/cms/website-images); nur
- * solange dort nichts hinterlegt ist, greifen die Bilder von hier.
+ * Wichtig: Das hier sind *Fallbacks* für die redaktionellen Kacheln. Die
+ * Kopfbilder der öffentlichen Seiten sind entfallen — die Seiten beginnen
+ * jetzt direkt mit ihrem Inhalt.
  *
  * Regel für neue Einträge — innerhalb einer Seite darf sich kein Foto
  * wiederholen. Vorher lag z. B. auf der Explore-Seite dreimal dasselbe Bild
@@ -45,18 +45,6 @@ export const LIFESTYLE = {
   detail:        UNS('photo-1449505278894-297fdb3edbc1', 1200),  // Leder, Detail
   darkLeather:   UNS('photo-1543163521-1bf539c55dd2', 1200),     // Dunkles Leder
   care:          UNS('photo-1582897085656-c636d006a246', 1200),  // Pflege
-}
-
-// ── Header der öffentlichen Seiten ──────────────────────────────────────────
-// Alle sieben sind untereinander verschieden.
-export const HEROES = {
-  collection:    UNS('photo-1614252235316-8c857d38b5f4', 1600),
-  business:      UNS('photo-1441986300917-64674bd600d8', 1600),
-  profile:       UNS('photo-1542291026-7eec264c27ff', 1600),
-  accessories:   UNS('photo-1582897085656-c636d006a246', 1600),
-  help:          UNS('photo-1560343090-f0409e92791a', 1600),
-  explore:       UNS('photo-1520639888713-7851133b1ed0', 1600),
-  wishlist:      UNS('photo-1472927321085-bce6a75e1025', 1600),
 }
 
 // ── Explore-Kacheln ─────────────────────────────────────────────────────────

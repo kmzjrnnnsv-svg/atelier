@@ -7,8 +7,6 @@ import { useNavigate } from 'react-router-dom'
 import { HelpCircle, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
-import { HEROES } from '../lib/editorialImages'
-import PageHero from '../components/PageHero'
 
 export default function HelpSupport() {
   const navigate = useNavigate()
@@ -27,7 +25,6 @@ export default function HelpSupport() {
     <div className="min-h-full bg-white">
 
       {/* ── Hero, image then text below (LV-style) ──────────────── */}
-      <PageHero slot="help" fallback={HEROES.help} priority />
       <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-6 lg:pb-8">
         <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">Artisan Sole Service</p>
         <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.1] tracking-tight">

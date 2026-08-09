@@ -7,9 +7,8 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
-import { HEROES, EXPLORE, CRAFT, LIFESTYLE } from '../lib/editorialImages'
+import { EXPLORE, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import { isMobileWeb } from '../App'
-import PageHero from '../components/PageHero'
 
 const DEFAULT_SECTIONS = [
   { id: 'editorial', label: 'Editorial', title: 'Saisonale Editorials', description: 'Inszenierte Lookbooks und fotografische Geschichten rund um jede neue Kollektion.', previewItems: ['Herbst / Winter 2025', 'The Riviera Collection', 'Made in Florence'], visible: true },
@@ -96,25 +95,13 @@ export default function Explore() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ══════════════════════════════════════════════════════════
-          1. HERO, Full-bleed angular banner
-          ══════════════════════════════════════════════════════════ */}
+      {/* Einstieg ohne Bannerbild. Die Kacheln darunter tragen die Seite;
+          ein weiteres großes Foto davor war nur Vorspann. */}
       {featuredSection && (
-        <div className="relative cursor-pointer group">
-          {/* Ein im Explore-CMS gepflegtes Sektionsbild hat Vorrang vor dem
-              Header-Slot; erst danach greift der Fallback. */}
-          <PageHero
-            slot="explore"
-            fallback={featuredSection.image || HEROES.explore}
-            priority
-            imgClassName="transition-transform duration-700 group-hover:scale-[1.02]"
-          >
-            <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-14" style={{ background: 'linear-gradient(transparent 0%, rgba(0,0,0,0.5) 100%)' }}>
-              <p className="text-[9px] lg:text-[10px] text-white/35 uppercase tracking-[0.3em] mb-1.5 lg:mb-2">{featuredSection.label}</p>
-              <h2 className="text-[22px] lg:text-[38px] font-extralight text-white leading-[1.05] tracking-tight">{featuredSection.title}</h2>
-              <p className="text-[11px] lg:text-[13px] text-white/30 mt-1.5 lg:mt-2 font-light max-w-lg">{featuredSection.description}</p>
-            </div>
-          </PageHero>
+        <div className="px-4 lg:px-16 xl:px-24 pt-10 lg:pt-16 pb-2">
+          <p className="text-[9px] lg:text-[10px] text-black/25 uppercase tracking-[0.3em] mb-2">{featuredSection.label}</p>
+          <h2 className="text-[22px] lg:text-[38px] font-extralight text-black leading-[1.05] tracking-tight">{featuredSection.title}</h2>
+          <p className="text-[11px] lg:text-[13px] text-black/40 mt-2 font-light max-w-lg">{featuredSection.description}</p>
         </div>
       )}
 

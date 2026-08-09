@@ -10,8 +10,7 @@ import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import { isMobileWeb } from '../App'
 import CtaBanner from '../components/CtaBanner'
-import { SHOES, HEROES } from '../lib/editorialImages'
-import PageHero from '../components/PageHero'
+import { SHOES } from '../lib/editorialImages'
 import { shoePath } from '../lib/shoePath'
 
 const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
@@ -132,20 +131,9 @@ export default function Profile() {
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero banner, subtle, compact ─────────────────────────── */}
-      {/* Flacher als die übrigen Header: darunter sitzt der Name und schiebt
-          sich mit -mt-16 ins Bild, ein hohes Format bräuchte hier nur Platz. */}
-      <PageHero
-        slot="profile"
-        fallback={HEROES.profile}
-        ratio="aspect-[16/7] sm:aspect-[16/5] lg:aspect-[16/4]"
-        priority
-      >
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(transparent 20%, rgba(255,255,255,0.95) 85%, white 100%)' }} />
-      </PageHero>
-
-      {/* ── Hero header ─────────────────────────────────────────── */}
-      <div className="px-5 lg:px-16 -mt-16 relative z-10 pb-6 lg:pb-8">
+      {/* Kopfbereich. Das frühere Bannerbild ist entfallen; mit ihm das
+          negative -mt-16, das den Namen zuvor ins Bild geschoben hat. */}
+      <div className="px-5 lg:px-16 pt-8 lg:pt-12 pb-6 lg:pb-8">
         <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Ihr Profil</p>
 
         {/* Profile info */}
