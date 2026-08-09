@@ -1,4 +1,6 @@
 import bcrypt from 'bcryptjs'
+import { katalogAnwenden } from './seedExport.js'
+import { frischeInstallationVerbrauchen } from './schema.js'
 
 // Im CMS gelöschte Modelle nicht wieder anlegen.
 // Der Seed kennt seine Modelle über den Namen und legte sie bei jedem Start
@@ -15,6 +17,26 @@ function deletedSeedNames(db) {
 
 
 export async function seedDatabase(db) {
+  // Die exportierte Vorlage (seed-data.json) ist der maßgebliche Katalog.
+  //
+  // Auf einer frischen Datenbank haben die Migrationen eben erst die Festwerte
+  // aus dem Quelltext angelegt — alte Preise, alte Texte. Die werden hier auf
+  // den zuletzt exportierten Stand gebracht. Auf einer laufenden Datenbank
+  // wird nichts angefasst, was schon da ist; dort entstehen nur fehlende
+  // Zeilen.
+  try {
+    const bilanz = katalogAnwenden(db, { ueberschreiben: frischeInstallationVerbrauchen(db) })
+    if (bilanz) {
+      const teile = Object.entries(bilanz)
+        .map(([t, z]) => {
+          const d = [z.neu && `${z.neu} neu`, z.angepasst && `${z.angepasst} angeglichen`, z.entfernt && `${z.entfernt} entfernt`]
+          return `${t}: ${d.filter(Boolean).join('/')}`
+        })
+        .join(', ')
+      console.log(`✅ Vorlage übernommen (${teile})`)
+    }
+  } catch (e) { console.error('[seed-data]', e.message) }
+
   seedEmailTemplates(db)
   seedShoeAccessories(db)
   seedAccessoryMaterials(db)

@@ -128,7 +128,32 @@ const RETIRED_ACCESSORIES = [
   'care_kit_saphir_patina', 'calf_care_cream', 'shoe_cream_black',
 ]
 
+/**
+ * War die Datenbank leer, als die Migrationen liefen?
+ *
+ * Wichtig für die Katalog-Vorlage (seedExport.js): Auf einer frischen
+ * Installation legt der Quelltext hier gleich seine alten Festwerte an — Preise
+ * von damals. Die Vorlage darf die dann überschreiben, weil es keine gepflegten
+ * Daten gibt, die verloren gehen könnten. Auf einer laufenden Datenbank darf sie
+ * das nicht.
+ *
+ * Die Auskunft gilt einmal: Wer sie abholt, verbraucht sie. Ein zweiter
+ * Seed-Lauf im selben Prozess arbeitet damit auf einer Datenbank, die
+ * mittlerweile gepflegte Daten enthält, und lässt sie in Ruhe.
+ */
+const frischeDbs = new WeakSet()
+export function frischeInstallationVerbrauchen(db) {
+  if (!frischeDbs.has(db)) return false
+  frischeDbs.delete(db)
+  return true
+}
+
 export function runMigrations(db) {
+  const leer = db.prepare(
+    "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+  ).get().n === 0
+  if (leer) frischeDbs.add(db)
+
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;
