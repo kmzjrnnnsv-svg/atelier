@@ -260,6 +260,19 @@ export function runMigrations(db) {
     `ALTER TABLE foot_scans ADD COLUMN left_upper_instep_girth  REAL`,
     // foot_scans, preferred shoe type for last generation
     `ALTER TABLE foot_scans ADD COLUMN shoe_type TEXT DEFAULT 'oxford'`,
+    // foot_scans, bespoke (Maßschuh) measurements from direct LiDAR 3D measurement
+    `ALTER TABLE foot_scans ADD COLUMN right_ball_width           REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_heel_width           REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_heel_height          REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_ankle_width          REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_ankle_height_medial  REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN right_ankle_height_lateral REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_ball_width            REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_heel_width            REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_heel_height           REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_ankle_width           REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_ankle_height_medial   REAL`,
+    `ALTER TABLE foot_scans ADD COLUMN left_ankle_height_lateral  REAL`,
     // orders, shipping
     `ALTER TABLE orders ADD COLUMN shipping_method TEXT`,
     `ALTER TABLE orders ADD COLUMN shipping_cost   TEXT`,

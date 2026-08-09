@@ -13,8 +13,13 @@ Pipeline:
   9.  Alpha-shape cross-section girths  (traces actual concave boundary)
   10. Optional PCA shape-model regularization
 
-Accuracy: ±0.5–1.5 mm  (single-pass, iPhone 14 Pro+)
-          ±0.1–0.3 mm  (20-second walk-around, iPhone 12 Pro+)
+Realistic accuracy (guided 15–20 s walk-around, iPhone 12 Pro+):
+  length / widths      ±1–2 mm  (direct measurement, multi-frame fusion)
+  girths               ±3–5 mm  (foot underside is occluded on the floor —
+                                 girths are partially model-closed)
+Single-pass 3 s captures are noticeably worse (±2–4 mm length); prefer the
+walk-around mode. Claims tighter than this must come from validation against
+tape/caliper ground truth, not from repeatability.
 
 Usage (CLI for testing):
   python3 process_lidar.py --cloud scan.json
@@ -48,6 +53,11 @@ def ransac_floor(pts, n_iter=300, thr=0.004):
     vertical (ARKit world-space has Y pointing up).  This prevents walls or
     the top of the foot from being mistakenly classified as the floor.
 
+    A candidate is additionally rejected when more than 2% of all points lie
+    clearly BELOW it (> 8 mm): nothing is scanned underneath the real floor,
+    but a slanted plane through the dense foot dorsum can collect more
+    inliers than the floor itself — this physical constraint kills those.
+
     Args:
         pts:    (N, 3) float64 array of world-space points (metres)
         n_iter: number of RANSAC trials
@@ -59,6 +69,8 @@ def ransac_floor(pts, n_iter=300, thr=0.004):
     best_inliers = 0
     best_normal  = np.array([0., 1., 0.])
     best_d       = 0.
+
+    max_below = max(1, int(0.02 * len(pts)))
 
     for _ in range(n_iter):
         idx = np.random.choice(len(pts), 3, replace=False)
@@ -77,10 +89,14 @@ def ransac_floor(pts, n_iter=300, thr=0.004):
         if n[1] < 0:
             n = -n
         d = -(n @ p0)
-        dist = np.abs(pts @ n + d)
-        inliers = int((dist < thr).sum())
-        if inliers > best_inliers:
-            best_inliers, best_normal, best_d = inliers, n, d
+        signed = pts @ n + d
+        inliers = int((np.abs(signed) < thr).sum())
+        if inliers <= best_inliers:
+            continue
+        # Physical floor constraint: (almost) no points below the plane
+        if int((signed < -0.008).sum()) > max_below:
+            continue
+        best_inliers, best_normal, best_d = inliers, n, d
 
     return best_normal, best_d
 
@@ -170,6 +186,57 @@ def align_foot(pts):
         aligned = pts_c @ R.T
 
     return aligned, R, centroid
+
+
+def align_foot_floor(pts, normal, d):
+    """
+    Align the foot using the known floor plane instead of full 3-D PCA.
+
+    Full 3-D PCA is unreliable here: the ankle column often carries more
+    variance than the foot width, so SVD can assign "height" to axis 1 and
+    "width" to axis 2 — silently corrupting every width and girth. The floor
+    normal from RANSAC is exact, so use it:
+
+      Z = height above the floor plane (floor at z = 0, guaranteed up)
+      X = dominant horizontal axis (2-D PCA in the floor plane) = length,
+          flipped so the heel (the end where the ankle rises) is at x_max
+          — matching the girth-fraction convention (0 = toe, 1 = heel)
+      Y = horizontal cross axis = width
+
+    Returns (N, 3) aligned points in metres.
+    """
+    n = normal / np.linalg.norm(normal)
+    heights = pts @ n + d
+    if np.median(heights) < 0:          # make the normal point toward the foot
+        n, heights = -n, -heights
+
+    # Orthonormal horizontal basis
+    ref = np.array([1., 0., 0.]) if abs(n[0]) < 0.9 else np.array([0., 1., 0.])
+    e1  = ref - (ref @ n) * n
+    e1 /= np.linalg.norm(e1)
+    e2  = np.cross(n, e1)
+
+    xy  = np.column_stack([pts @ e1, pts @ e2])
+    xy -= xy.mean(axis=0)
+
+    # 2-D PCA for the length direction within the floor plane
+    _, _, Vt = np.linalg.svd(xy, full_matrices=False)
+    len_dir  = Vt[0]
+    wid_dir  = np.array([-len_dir[1], len_dir[0]])
+    aligned  = np.column_stack([xy @ len_dir, xy @ wid_dir, heights])
+
+    # Heel at x_max: the heel end carries the ankle, which rises far higher
+    x = aligned[:, 0]
+    x_lo, x_hi = np.percentile(x, [0.5, 99.5])
+    length = x_hi - x_lo
+    front = aligned[x < x_lo + 0.25 * length]
+    back  = aligned[x > x_hi - 0.25 * length]
+    if len(front) > 20 and len(back) > 20:
+        if np.percentile(front[:, 2], 98) > np.percentile(back[:, 2], 98):
+            aligned[:, 0] = -aligned[:, 0]
+            aligned[:, 1] = -aligned[:, 1]    # keep the frame right-handed
+
+    return aligned
 
 
 # ─── 5. Robust bounding box (percentile-based) — NEW ──────────────────────────
@@ -538,6 +605,150 @@ def ellipse_girth_mm(a_mm, b_mm):
     return round(np.pi * (a_mm + b_mm) * (1 + 3 * h / (10 + np.sqrt(4 - 3 * h))), 1)
 
 
+# ─── 9b. Bespoke (Maßschuh) measurements ─────────────────────────────────────
+
+def convex_perimeter_mm(pts_2d_m):
+    """
+    Perimeter of the convex hull of 2D points (metres in, mm out).
+
+    Models a taut measuring tape: the tape bridges concavities (arch hollow,
+    heel-to-instep transition) exactly like a convex hull does, so this is
+    the physically correct model for tape girths on slanted sections.
+    """
+    if len(pts_2d_m) < 8:
+        return None
+    try:
+        hull  = ConvexHull(pts_2d_m)
+        verts = pts_2d_m[hull.vertices]
+        ring  = np.vstack([verts, verts[:1]])
+        return round(float(np.linalg.norm(np.diff(ring, axis=0), axis=1).sum()) * 1000, 1)
+    except Exception:
+        return None
+
+
+def measure_bespoke(aligned, side='right'):
+    """
+    Direct 3-D measurements for bespoke shoemaking (Maßschuh), beyond the
+    perpendicular cross-section girths:
+
+      ball_width            widest transverse extent in the metatarsal band
+      heel_width            widest heel extent below the malleoli
+      heel_height           height of the strongest posterior heel bulge
+                            (calcaneus rounding — drives heel-counter shape)
+      long_heel_girth       Fersen-Rist-Umfang (Schrägmaß): taut tape from
+                            under the heel diagonally over the instep,
+                            measured in the actual slanted plane
+      short_heel_girth      kurzer Fersenumfang: taut tape from under the
+                            heel over the ankle bend (Fußbeuge, ~74%)
+      ankle_width           outer distance between the two malleoli
+      ankle_height_medial   malleolus height above floor (inner side)
+      ankle_height_lateral  malleolus height above floor (outer side)
+
+    All values mm; individual keys are None when the scan region is too
+    sparse for a reliable direct measurement.
+    """
+    x, y, z = aligned[:, 0], aligned[:, 1], aligned[:, 2]
+    x_lo, x_hi = np.percentile(x, [0.5, 99.5])
+    length  = x_hi - x_lo
+    z_floor = np.percentile(z, 0.5)
+    height  = np.percentile(z, 99.5) - z_floor
+    out = {
+        'ball_width': None, 'heel_width': None, 'heel_height': None,
+        'long_heel_girth': None, 'short_heel_girth': None, 'ankle_width': None,
+        'ankle_height_medial': None, 'ankle_height_lateral': None,
+    }
+    if length < 0.10 or height < 0.02:
+        return out
+
+    fx   = lambda f: x_lo + f * length
+    band = max(0.004, 0.005 * length / 0.270)
+
+    # Ballenbreite — widest slice in the metatarsal band (30–45% from toe)
+    widths = []
+    for f in np.arange(0.30, 0.46, 0.025):
+        m = np.abs(x - fx(f)) < band
+        if m.sum() >= 15:
+            widths.append(robust_extent(y[m], 1, 99))
+    if widths:
+        out['ball_width'] = round(max(widths) * 1000, 1)
+
+    # Fersenbreite — heel band, below 40% of foot height (excludes malleoli)
+    hm = (x > fx(0.80)) & (x < fx(0.97)) & (z < z_floor + 0.40 * height)
+    if hm.sum() >= 25:
+        out['heel_width'] = round(robust_extent(y[hm], 1, 99) * 1000, 1)
+
+    # Fersenhöhe — z-level of the most posterior bulge (calcaneus rounding):
+    # scan 4mm height bins, the bin whose points reach furthest back wins.
+    hb = x > fx(0.82)
+    if hb.sum() >= 40:
+        hz, hx = z[hb] - z_floor, x[hb]
+        best_x, best_h = -np.inf, None
+        for lo in np.arange(0.008, min(0.080, 0.75 * height), 0.004):
+            bm = (hz >= lo) & (hz < lo + 0.004)
+            if bm.sum() >= 5:
+                px = np.percentile(hx[bm], 99)
+                if px > best_x:
+                    best_x, best_h = px, lo + 0.002
+        if best_h is not None:
+            out['heel_height'] = round(best_h * 1000, 1)
+
+    # Slanted tape girths — sections through the posterior heel bottom point
+    # and a dorsal top point, convex-hull tape in the actual slanted plane:
+    #   long  (Fersen-Rist / Schrägmaß): over the instep top    (~55% from toe)
+    #   short (kurzer Fersenumfang):     over the ankle bend    (~74% from toe)
+    heel_bottom = (x > fx(0.85)) & (z < z_floor + 0.25 * height)
+
+    def slanted_tape(front_frac):
+        front_band = np.abs(x - fx(front_frac)) < band
+        if heel_bottom.sum() < 10 or front_band.sum() < 10:
+            return None
+        heel_pt  = np.array([np.percentile(x[heel_bottom], 98), 0.0, z_floor])
+        front_pt = np.array([fx(front_frac), 0.0, np.percentile(z[front_band], 98)])
+        u = front_pt - heel_pt
+        un = np.linalg.norm(u)
+        if un < 0.05:
+            return None
+        u = u / un
+        n = np.array([-u[2], 0.0, u[0]])              # normal within sagittal plane
+        dist = (aligned - heel_pt) @ n
+        sl = np.abs(dist) < band * 1.2
+        if sl.sum() < 20:
+            return None
+        p = aligned[sl]
+        pts2 = np.column_stack([(p - heel_pt) @ u, p[:, 1]])
+        return convex_perimeter_mm(pts2)
+
+    out['long_heel_girth']  = slanted_tape(0.55)
+    out['short_heel_girth'] = slanted_tape(0.74)
+
+    # Knöchel — malleolus protrusions: height above floor + outer distance.
+    zk_lo = z_floor + max(0.030, 0.35 * height)
+    zk_hi = z_floor + min(0.115, height)
+    am = (x > fx(0.78)) & (z > zk_lo) & (z < zk_hi)
+    h_pos = h_neg = None
+    if am.sum() >= 40:
+        ay, az = y[am], z[am]
+        pos = ay > np.median(ay)
+        neg = ~pos
+        if pos.sum() >= 10 and neg.sum() >= 10:
+            y_pos = np.percentile(ay[pos], 99)
+            y_neg = np.percentile(ay[neg], 1)
+            out['ankle_width'] = round((y_pos - y_neg) * 1000, 1)
+            sel_p = pos & (ay > y_pos - 0.002)
+            sel_n = neg & (ay < y_neg + 0.002)
+            if sel_p.sum() >= 3:
+                h_pos = round((np.median(az[sel_p]) - z_floor) * 1000, 1)
+            if sel_n.sum() >= 3:
+                h_neg = round((np.median(az[sel_n]) - z_floor) * 1000, 1)
+    # Medial side: +y for right foot (same convention as the arch-height code)
+    if side == 'right':
+        out['ankle_height_medial'], out['ankle_height_lateral'] = h_pos, h_neg
+    else:
+        out['ankle_height_medial'], out['ankle_height_lateral'] = h_neg, h_pos
+
+    return out
+
+
 # ─── 10. Optional PCA shape-model regularization ──────────────────────────────
 
 def pca_regularize(meas: dict) -> dict:
@@ -617,6 +828,8 @@ def _quick_measure(aligned: np.ndarray, side: str) -> dict:
 def bootstrap_error_estimates(
     foot_pts: np.ndarray,
     side: str,
+    floor_normal: np.ndarray = None,
+    floor_d: float = 0.0,
     n_bootstrap: int = 50,
     confidence: float = 0.95
 ) -> dict:
@@ -644,9 +857,12 @@ def bootstrap_error_estimates(
         if len(sample) < 40:
             continue
 
-        # Align and measure
+        # Align and measure — same floor-anchored alignment as the main pass
         try:
-            aligned, _R, _c = align_foot(sample)
+            if floor_normal is not None:
+                aligned = align_foot_floor(sample, floor_normal, floor_d)
+            else:
+                aligned, _R, _c = align_foot(sample)
             m = _quick_measure(aligned, side)
             results.append(m)
         except Exception:
@@ -692,6 +908,12 @@ def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
             ball_girth, instep_girth,
             waist_girth, heel_girth,
             ankle_girth                 -- alpha-hull perimeters (mm)
+            long_heel_girth             -- Fersen-Rist Schrägmaß (slanted plane)
+            short_heel_girth            -- alias of heel_girth (heel-cup girth)
+            ball_width, heel_width,
+            heel_height, ankle_width,
+            ankle_height_medial,
+            ankle_height_lateral        -- bespoke (Maßschuh) measurements (mm)
             point_count                 -- foot points after voxel downsampling
             source                      -- always "lidar"
             pca_regularized             -- True if shape model was applied
@@ -727,8 +949,9 @@ def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
     if len(foot_pts) < 40:
         raise ValueError(f"Zu wenige Punkte nach Voxel-Normalisierung: {len(foot_pts)}. Bitte erneut scannen.")
 
-    # Step 6: PCA-based axis alignment
-    aligned, _R, _centroid = align_foot(foot_pts)
+    # Step 6: Floor-anchored axis alignment (z = height above floor, heel at
+    # x_max). Uses the RANSAC floor normal instead of fragile 3-D PCA.
+    aligned = align_foot_floor(foot_pts, normal, d)
 
     # Step 7: Robust bounding-box (0.5th/99.5th percentile) -- NEW
     length_mm = round(robust_extent(aligned[:, 0]) * 1000, 1)
@@ -797,6 +1020,9 @@ def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
     if heel_girth   is None: heel_girth   = ellipse_girth_mm(width_mm * 0.38,     height_mm * 0.48)
     if ankle_girth  is None: ankle_girth  = ellipse_girth_mm(width_mm * 0.35,     height_mm * 0.45)
 
+    # Step 9d: Bespoke (Maßschuh) measurements — direct 3-D, not regression
+    bespoke = measure_bespoke(aligned, side=side)
+
     # Step 10: Assemble raw result
     # Convert aligned point cloud to mm for storage (rounded to 0.1mm)
     aligned_mm = (aligned * 1000).round(1)
@@ -815,6 +1041,7 @@ def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
         "upper_instep_girth": upper_instep_girth,
         "heel_girth":      heel_girth,
         "ankle_girth":     ankle_girth,
+        **bespoke,
         "point_count":     len(foot_pts),
         "source":          "lidar",
         "pca_regularized": False,
@@ -825,7 +1052,7 @@ def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
     # Step 11: Bootstrap resampling for error estimates (Etappe 6)
     # Resample foot points N times, re-measure → 95% confidence intervals
     error_estimates = bootstrap_error_estimates(
-        foot_pts, side, n_bootstrap=50, confidence=0.95
+        foot_pts, side, floor_normal=normal, floor_d=d, n_bootstrap=50, confidence=0.95
     )
     result["error_estimates"] = error_estimates
 
@@ -834,6 +1061,11 @@ def measure_foot(point_cloud: list[dict], side: str = 'right') -> dict:
     if regularized is not result:
         regularized["pca_regularized"] = True
     result = regularized
+
+    # Kurzer Fersenumfang: prefer the direct slanted-tape measurement from
+    # measure_bespoke; fall back to the transverse heel girth if too sparse.
+    if not result.get("short_heel_girth"):
+        result["short_heel_girth"] = result.get("heel_girth")
 
     return result
 
