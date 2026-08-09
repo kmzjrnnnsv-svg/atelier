@@ -20,6 +20,7 @@ export default function Accessories() {
   const { cart, addToCart, removeFromCart } = useStore()
   const [accessoriesList, setAccessoriesList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -115,8 +116,24 @@ export default function Accessories() {
 
                   {/* Product info */}
                   <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">{acc.name}</p>
+                  {/* Zwei Zeilen als Anriss, der Rest auf Wunsch. Die
+                      Pflegesets führen auf, was in der Schachtel liegt — das
+                      gehört sichtbar, aber nicht in jede Kachel der Übersicht.
+                      whitespace-pre-line erhält die Absätze des Fließtextes. */}
                   {acc.description && (
-                    <p className="text-[11px] text-black/30 mt-1 leading-relaxed line-clamp-2 font-light">{acc.description}</p>
+                    <div className="mt-1">
+                      <p className={`text-[11px] text-black/30 leading-relaxed font-light whitespace-pre-line ${expanded === acc.id ? '' : 'line-clamp-2'}`}>
+                        {acc.description}
+                      </p>
+                      {acc.description.length > 110 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setExpanded(expanded === acc.id ? null : acc.id) }}
+                          className="mt-1 bg-transparent border-0 p-0 text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2"
+                        >
+                          {expanded === acc.id ? 'Weniger' : 'Details'}
+                        </button>
+                      )}
+                    </div>
                   )}
                   <p className="text-[12px] lg:text-[13px] text-black/60 mt-1.5 font-light">€ {parseFloat(acc.price) || 0}</p>
 
