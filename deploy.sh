@@ -16,6 +16,30 @@ echo "────────────────────────�
 echo "  Artisan Sole Deploy — $(date '+%Y-%m-%d %H:%M:%S')"
 echo "──────────────────────────────────────"
 
+# 0. Datenbank sichern, BEVOR neuer Code Migrationen darauf ausführt
+# Die gesamten Inhalte — Modelle, Bilder, Bestellungen, Konten — liegen in
+# einer einzigen SQLite-Datei. Bislang gab es davon keine Kopie: Ein
+# fehlgeschlagener Migrationsschritt oder ein versehentlicher Eingriff war
+# unwiederbringlich. `VACUUM INTO` erzeugt eine konsistente Kopie auch bei
+# laufendem Server (WAL-Modus), ohne ihn anzuhalten.
+DB="$APP_DIR/artisan-sole-backend/atelier.db"
+BACKUP_DIR="$HOME/db-backups"
+if [ -f "$DB" ]; then
+  mkdir -p "$BACKUP_DIR"
+  SNAP="$BACKUP_DIR/atelier-$(date '+%Y%m%d-%H%M%S').db"
+  if sqlite3 "$DB" "VACUUM INTO '$SNAP'" 2>/dev/null; then
+    echo "→ Datenbank gesichert: $SNAP"
+  else
+    # Ohne sqlite3-Binary bleibt das schlichte Kopieren. Weniger sauber,
+    # aber immer noch besser als keine Sicherung.
+    cp "$DB" "$SNAP" && echo "→ Datenbank kopiert: $SNAP"
+  fi
+  # Die letzten 20 Stände behalten, ältere entfernen.
+  ls -1t "$BACKUP_DIR"/atelier-*.db 2>/dev/null | tail -n +21 | xargs -r rm -f
+else
+  echo "→ Keine Datenbank unter $DB gefunden, Sicherung übersprungen"
+fi
+
 # 1. Neuesten Code holen
 echo "→ Git pull..."
 cd "$APP_DIR"
