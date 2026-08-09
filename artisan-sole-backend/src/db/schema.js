@@ -949,6 +949,11 @@ export function runMigrations(db) {
       commission_value REAL   NOT NULL DEFAULT 10,
       cap_per_shoe    REAL    NOT NULL DEFAULT 40,
       gift_shoetree   INTEGER NOT NULL DEFAULT 0,
+      -- Was der geworbene Kunde erhält, unabhängig von der Provision.
+      customer_discount_pct REAL NOT NULL DEFAULT 0,
+
+      -- Einladung ins eigene Konto (wie bei den Firmenkonten).
+      invite_token    TEXT,
 
       terms_accepted_at TEXT,
       note            TEXT,
@@ -1354,6 +1359,13 @@ export function runMigrations(db) {
     `ALTER TABLE shoe_configs ADD COLUMN in_cart INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE shoe_configs ADD COLUMN fit_profile_id INTEGER REFERENCES fit_profiles(id)`,
     `ALTER TABLE orders       ADD COLUMN fit_profile_id INTEGER REFERENCES fit_profiles(id)`,
+    // Einladung ins eigene Vermittler-Konto. Ohne Login sah ein angelegter
+    // Vermittler seinen Stand nie — die Zeile existierte, das Konto nicht.
+    `ALTER TABLE affiliates   ADD COLUMN invite_token TEXT`,
+    // Was der geworbene Kunde bekommt. Bislang gab es nur die Zugabe
+    // (gift_shoetree); zugesagt wird aber oft ein Nachlass, und der stand
+    // nirgends.
+    `ALTER TABLE affiliates   ADD COLUMN customer_discount_pct REAL NOT NULL DEFAULT 0`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }

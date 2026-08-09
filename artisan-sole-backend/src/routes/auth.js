@@ -566,6 +566,41 @@ router.post('/register-business',
   }
 )
 
+// POST /api/auth/register-affiliate — Vermittlerkonto aktivieren
+//
+// Derselbe Weg wie beim Firmenkonto: Der Datensatz besteht bereits, hier wird
+// nur das Passwort gesetzt und das Login scharfgeschaltet. Der Vermittler
+// landet danach in seinem Bereich, nicht im Laden.
+router.post('/register-affiliate',
+  body('token').trim().notEmpty().withMessage('Token erforderlich'),
+  body('name').trim().isLength({ min: 2 }).withMessage('Name min 2 Zeichen'),
+  body('password')
+    .isLength({ min: 8 }).withMessage('Passwort min 8 Zeichen')
+    .matches(/[0-9]/).withMessage('Passwort muss eine Zahl enthalten')
+    .matches(/[^a-zA-Z0-9]/).withMessage('Passwort muss ein Sonderzeichen enthalten'),
+  async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const { token, name, password } = req.body
+    const db = getDb()
+
+    const aff = db.prepare('SELECT * FROM affiliates WHERE invite_token = ?').get(token)
+    if (!aff) return res.status(404).json({ error: 'Ungültiger oder abgelaufener Einladungslink' })
+    if (!aff.user_id) return res.status(409).json({ error: 'Zu dieser Einladung fehlt das Benutzerkonto.' })
+
+    const hash = await bcrypt.hash(password, 12)
+    db.prepare(`
+      UPDATE users SET name = ?, password_hash = ?, is_active = 1, updated_at = datetime('now')
+      WHERE id = ?
+    `).run(name, hash, aff.user_id)
+    db.prepare("UPDATE affiliates SET invite_token = NULL, status = 'active', updated_at = datetime('now') WHERE id = ?").run(aff.id)
+
+    const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(aff.user_id)
+    res.status(201).json(issueTokens(res, updated))
+  }
+)
+
 // ── MFA Routes ────────────────────────────────────────────────────────────────
 
 // GET /api/auth/mfa/status

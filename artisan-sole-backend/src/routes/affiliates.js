@@ -1,4 +1,6 @@
 import { Router } from 'express'
+import crypto from 'crypto'
+import bcrypt from 'bcryptjs'
 import QRCode from 'qrcode'
 import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
@@ -7,6 +9,7 @@ import {
   affiliateStanding, matureCommissions, shoetreeCost,
   PAYOUT_BATCH_SIZE, PROTECTION_DAYS,
 } from '../utils/affiliate.js'
+import { sendAffiliateInvitation } from '../utils/email.js'
 
 const router = Router()
 const canAdmin = [authenticate, requireRole('admin', 'curator')]
@@ -16,8 +19,9 @@ const canAdmin = [authenticate, requireRole('admin', 'curator')]
 // und datenschutzrechtlich unnötiger Ballast.
 const selfFields = `
   id, code, status, full_name, email, phone, street, postal_code, city, country,
-  tax_status, tax_number, vat_id, iban, account_holder,
-  commission_type, commission_value, cap_per_shoe, gift_shoetree, created_at
+  tax_status, tax_number, vat_id, iban, account_holder, birth_date,
+  commission_type, commission_value, cap_per_shoe, gift_shoetree,
+  customer_discount_pct, created_at
 `
 
 const normCode = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
@@ -30,7 +34,7 @@ router.get('/validate/:code', (req, res) => {
   if (!code) return res.status(400).json({ valid: false, error: 'Code fehlt' })
 
   const db = getDb()
-  const a = db.prepare("SELECT code, gift_shoetree, commission_type FROM affiliates WHERE code = ? AND status = 'active'").get(code)
+  const a = db.prepare("SELECT code, gift_shoetree, commission_type, customer_discount_pct FROM affiliates WHERE code = ? AND status = 'active'").get(code)
   if (!a) return res.status(404).json({ valid: false, error: 'Dieser Code ist nicht gültig.' })
 
   res.json({
@@ -38,6 +42,9 @@ router.get('/validate/:code', (req, res) => {
     code: a.code,
     // Zugabe gibt es nur bei der Prozentwahl — siehe utils/affiliate.js
     gift: a.gift_shoetree === 1 && a.commission_type === 'percent' ? 'shoe_tree_cedar' : null,
+    // Was dem Geworbenen zugesagt wurde. Der Kunde soll sehen, was er bekommt;
+    // was der Vermittler dafür erhält, geht ihn nichts an.
+    customer_discount_pct: Number(a.customer_discount_pct) || 0,
   })
 })
 
@@ -177,7 +184,7 @@ router.post('/',
   body('full_name').trim().isLength({ min: 2 }).withMessage('Name erforderlich'),
   body('email').trim().isEmail().withMessage('Gültige E-Mail erforderlich'),
   body('code').trim().isLength({ min: 3, max: 24 }).withMessage('Code: 3 bis 24 Zeichen'),
-  (req, res) => {
+  async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg })
 
@@ -190,25 +197,73 @@ router.post('/',
     }
 
     const b = req.body
+    const email = String(b.email).trim()
     const type = b.commission_type === 'fixed' ? 'fixed' : 'percent'
-    const info = db.prepare(`
-      INSERT INTO affiliates
-        (code, status, full_name, email, phone, street, postal_code, city, country,
-         tax_status, tax_number, vat_id, iban, account_holder,
-         commission_type, commission_value, cap_per_shoe, gift_shoetree, terms_accepted_at)
-      VALUES (?, 'active', ?,?,?,?,?,?,?, ?,?,?,?,?, ?,?,?,?, datetime('now'))
-    `).run(
-      code,
-      String(b.full_name).trim(), String(b.email).trim(), b.phone || null,
-      b.street || null, b.postal_code || null, b.city || null, b.country || 'DE',
-      b.tax_status === 'vat_liable' ? 'vat_liable' : 'small_business',
-      b.tax_number || null, b.vat_id || null, b.iban || null, b.account_holder || null,
-      type,
-      Number(b.commission_value) || (type === 'fixed' ? 25 : 10),
-      Number(b.cap_per_shoe) || 40,
-      b.gift_shoetree ? 1 : 0,
-    )
-    res.status(201).json({ id: info.lastInsertRowid, code, status: 'active' })
+
+    // Ein Vermittler ist eine Person, kein Firmenkonto: Zum Datensatz gehört
+    // ein Login, sonst sieht er seinen Stand nie. Gibt es die Adresse schon
+    // als Benutzer, wird sie verknüpft statt ein zweites Konto anzulegen.
+    const bestehend = db.prepare('SELECT id, is_active FROM users WHERE email = ? COLLATE NOCASE').get(email)
+    if (bestehend && db.prepare('SELECT 1 FROM affiliates WHERE user_id = ?').get(bestehend.id)) {
+      return res.status(409).json({ error: 'Zu dieser Adresse besteht bereits ein Vermittlerkonto.' })
+    }
+
+    const inviteToken = bestehend ? null : crypto.randomBytes(32).toString('hex')
+    const tempHash = bestehend ? null : await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 12)
+
+    const tx = db.transaction(() => {
+      const userId = bestehend
+        ? bestehend.id
+        : db.prepare("INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, ?, 'user', 0)")
+            .run(String(b.full_name).trim(), email, tempHash).lastInsertRowid
+
+      const info = db.prepare(`
+        INSERT INTO affiliates
+          (user_id, code, status, full_name, email, phone, street, postal_code, city, country, birth_date,
+           tax_status, tax_number, vat_id, iban, account_holder,
+           commission_type, commission_value, cap_per_shoe, gift_shoetree, customer_discount_pct,
+           invite_token, note, terms_accepted_at)
+        VALUES (?, ?, 'active', ?,?,?,?,?,?,?,?, ?,?,?,?,?, ?,?,?,?,?, ?,?, datetime('now'))
+      `).run(
+        userId, code,
+        String(b.full_name).trim(), email, b.phone || null,
+        b.street || null, b.postal_code || null, b.city || null, b.country || 'DE', b.birth_date || null,
+        b.tax_status === 'vat_liable' ? 'vat_liable' : 'small_business',
+        b.tax_number || null, b.vat_id || null, b.iban || null, b.account_holder || null,
+        type,
+        Number(b.commission_value) || (type === 'fixed' ? 25 : 10),
+        Number(b.cap_per_shoe) || 40,
+        b.gift_shoetree ? 1 : 0,
+        Math.min(100, Math.max(0, Number(b.customer_discount_pct) || 0)),
+        inviteToken, b.note || null,
+      )
+      return { id: info.lastInsertRowid, userId }
+    })
+    const { id, userId } = tx()
+
+    // Abwarten und melden statt verschlucken: Eine Einladung, die nicht
+    // ankommt, ist ein angelegtes Konto, das niemand nutzen kann.
+    let emailSent = false
+    let emailError = null
+    if (inviteToken) {
+      try {
+        await sendAffiliateInvitation(email, String(b.full_name).trim(), inviteToken, code)
+        emailSent = true
+      } catch (e) {
+        emailError = e.message
+        console.error('[email affiliate invite]', e.message)
+      }
+    }
+
+    res.status(201).json({
+      id, code, status: 'active', user_id: userId,
+      pending: !!inviteToken,
+      invite_token: inviteToken,
+      // Bestehende Konten brauchen keine Einladung — sie melden sich wie bisher an.
+      email_sent: emailSent,
+      email_error: emailError,
+      existing_user: !!bestehend,
+    })
   }
 )
 
@@ -220,7 +275,8 @@ router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
 
   const allowed = ['status', 'full_name', 'email', 'phone', 'street', 'postal_code', 'city',
     'country', 'birth_date', 'tax_status', 'tax_number', 'vat_id', 'iban', 'account_holder',
-    'commission_type', 'commission_value', 'cap_per_shoe', 'gift_shoetree', 'note', 'user_id']
+    'commission_type', 'commission_value', 'cap_per_shoe', 'gift_shoetree',
+    'customer_discount_pct', 'note', 'user_id']
   const patch = {}
   for (const k of allowed) if (req.body[k] !== undefined) patch[k] = req.body[k]
   if (patch.gift_shoetree !== undefined) patch.gift_shoetree = patch.gift_shoetree ? 1 : 0
