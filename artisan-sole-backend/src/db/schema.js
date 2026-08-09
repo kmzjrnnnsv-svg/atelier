@@ -469,6 +469,10 @@ export function runMigrations(db) {
     // Ladenpreis. Beim Schuhspanner (45 € im Verkauf) läge der Ladenpreis über
     // der Provision selbst — der Vermittler zahlte drauf.
     `ALTER TABLE accessories ADD COLUMN cost_price REAL`,
+    // Bilderstrecke wie bei den Modellen: JSON-Feld, Reihenfolge trägt die
+    // Bedeutung — erstes Bild in der Übersicht, zweites beim Überfahren.
+    // image_data bleibt als Rückfall für Zubehör, das nur ein Bild hat.
+    `ALTER TABLE accessories ADD COLUMN images TEXT`,
     // orders, Rückgabe und Reklamation nach Zustellung. Der Statuswert
     // 'cancelled' meint eine Stornierung VOR Lieferung; was danach passiert,
     // ließ sich bisher nirgends festhalten.
