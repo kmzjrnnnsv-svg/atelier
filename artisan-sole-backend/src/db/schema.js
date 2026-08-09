@@ -1,5 +1,106 @@
 import { uniqueShoeSlug } from '../utils/slug.js'
 
+// Alle Zustände, die eine Bestellung annehmen darf. Einzige Quelle für die
+// CHECK-Bedingung — sowohl beim Anlegen der Tabelle als auch beim Nachrüsten.
+const ORDER_STATUS = [
+  'pending_payment', 'pending', 'processing',
+  'quality_check', 'shipped', 'delivered', 'cancelled',
+]
+
+/**
+ * Sorgt dafür, dass orders.status alle Zustände aus ORDER_STATUS zulässt.
+ *
+ * SQLite kann eine CHECK-Bedingung nicht ändern; die Tabelle muss neu gebaut
+ * werden. Drei Dinge, die die früheren Versuche falsch gemacht haben:
+ *
+ *  1. Sie schrieben die Spaltenliste ab. Jede später per ALTER TABLE ergänzte
+ *     Spalte fehlte damit im Neubau — samt Inhalt. Hier wird stattdessen die
+ *     vorhandene CREATE-Anweisung übernommen und nur die Statusliste ersetzt,
+ *     sodass Spalten, Vorgaben und Fremdschlüssel wortgleich erhalten bleiben.
+ *  2. Sie liefen ohne Transaktion. Ein Fehler in der Mitte ließ die
+ *     Zwischentabelle stehen, und deren bloße Existenz blockierte alle
+ *     folgenden Versuche.
+ *  3. Sie ließen die Fremdschlüssel eingeschaltet. `DROP TABLE orders` löst
+ *     dann die ON-DELETE-CASCADE-Regeln der Kindtabellen aus — coupon_usages
+ *     und affiliate_commissions wären mitgelöscht worden.
+ */
+function ensureOrderStatusCheck(db) {
+  // Leichen der alten Versuche wegräumen. orders_new2 liegt auf dem
+  // Produktivsystem seit Monaten herum und ließ dort jeden Start mit
+  // „table orders_new2 already exists" scheitern.
+  for (const t of ['orders_new', 'orders_new2']) {
+    try {
+      const stale = db.prepare(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?"
+      ).get(t)
+      if (stale) {
+        const { n } = db.prepare(`SELECT COUNT(*) AS n FROM "${t}"`).get()
+        db.exec(`DROP TABLE "${t}"`)
+        console.log(`🧹 Reste eines abgebrochenen orders-Umbaus entfernt: ${t} (${n} Zeilen)`)
+      }
+    } catch (e) { console.error(`[orders.status] ${t}`, e.message) }
+  }
+
+  const row = db.prepare(
+    "SELECT sql FROM sqlite_master WHERE type='table' AND name='orders'"
+  ).get()
+  if (!row?.sql) return
+
+  const missing = ORDER_STATUS.filter(s => !row.sql.includes(`'${s}'`))
+  if (!missing.length) return
+
+  const check = /CHECK\s*\(\s*status\s+IN\s*\([^)]*\)\s*\)/i
+  if (!check.test(row.sql)) {
+    console.error('[orders.status] CHECK-Bedingung nicht gefunden — übersprungen')
+    return
+  }
+
+  const createTmp = row.sql
+    .replace(/^\s*CREATE\s+TABLE\s+(?:"orders"|'orders'|`orders`|\[orders\]|orders)/i,
+             'CREATE TABLE orders_rebuild')
+    .replace(check, `CHECK(status IN (${ORDER_STATUS.map(s => `'${s}'`).join(',')}))`)
+
+  if (!createTmp.startsWith('CREATE TABLE orders_rebuild')) {
+    console.error('[orders.status] Tabellenname nicht ersetzbar — übersprungen')
+    return
+  }
+
+  // Spalten namentlich kopieren statt SELECT *: Reihenfolge ist so garantiert
+  // unerheblich.
+  const cols = db.prepare('PRAGMA table_info(orders)').all()
+    .map(c => `"${c.name}"`).join(',')
+
+  // Indizes gehen beim DROP verloren und werden danach wiederhergestellt.
+  const indexes = db.prepare(
+    "SELECT sql FROM sqlite_master WHERE type='index' AND tbl_name='orders' AND sql IS NOT NULL"
+  ).all().map(r => r.sql)
+
+  // PRAGMA foreign_keys wirkt innerhalb einer Transaktion nicht — deshalb hier,
+  // außerhalb. Ohne das Abschalten löscht DROP TABLE die Kindzeilen mit.
+  db.pragma('foreign_keys = OFF')
+  try {
+    db.transaction(() => {
+      db.exec('DROP TABLE IF EXISTS orders_rebuild')
+      db.exec(createTmp)
+      db.exec(`INSERT INTO orders_rebuild (${cols}) SELECT ${cols} FROM orders`)
+      db.exec('DROP TABLE orders')
+      db.exec('ALTER TABLE orders_rebuild RENAME TO orders')
+      for (const sql of indexes) db.exec(sql)
+
+      const broken = db.pragma('foreign_key_check')
+      if (broken.length) throw new Error(`${broken.length} verwaiste Verweise — Umbau verworfen`)
+    })()
+    console.log(`✅ orders.status erweitert um: ${missing.join(', ')}`)
+  } catch (e) {
+    console.error('[orders.status]', e.message)
+    // Nach einem Rückrollen darf nichts liegen bleiben, sonst wiederholt sich
+    // genau die Blockade, die diese Funktion beseitigen soll.
+    try { db.exec('DROP TABLE IF EXISTS orders_rebuild') } catch { /* egal */ }
+  } finally {
+    db.pragma('foreign_keys = ON')
+  }
+}
+
 export function runMigrations(db) {
   db.exec(`
     PRAGMA journal_mode = WAL;
@@ -439,88 +540,11 @@ export function runMigrations(db) {
     }
   } catch { /* table may not exist yet on first run */ }
 
-  // ── Migrate orders: add pending_payment to status CHECK ───────────────────
-  try {
-    const row = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='orders'").get()
-    if (row && !row.sql.includes('pending_payment')) {
-      db.exec(`
-        CREATE TABLE orders_new (
-          id                INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          shoe_id           INTEGER REFERENCES shoes(id) ON DELETE SET NULL,
-          shoe_name         TEXT NOT NULL,
-          material          TEXT NOT NULL,
-          color             TEXT NOT NULL,
-          price             TEXT NOT NULL,
-          status            TEXT NOT NULL DEFAULT 'pending_payment'
-                            CHECK(status IN ('pending_payment','pending','processing','shipped','delivered','cancelled')),
-          created_at        TEXT NOT NULL DEFAULT (datetime('now')),
-          updated_at        TEXT NOT NULL DEFAULT (datetime('now')),
-          user_order_number INTEGER NOT NULL DEFAULT 0,
-          delivery_address  TEXT,
-          billing_address   TEXT,
-          accessories       TEXT NOT NULL DEFAULT '[]',
-          scan_id           INTEGER REFERENCES foot_scans(id),
-          eu_size           TEXT
-        );
-        INSERT INTO orders_new
-          SELECT id,user_id,shoe_id,shoe_name,material,color,price,status,
-                 created_at,updated_at,user_order_number,delivery_address,
-                 billing_address,accessories,scan_id,eu_size
-          FROM orders;
-        DROP TABLE orders;
-        ALTER TABLE orders_new RENAME TO orders;
-        CREATE INDEX IF NOT EXISTS idx_orders_usr ON orders(user_id);
-      `)
-    }
-  } catch (e) { console.error('[migrate orders pending_payment]', e.message) }
-
-  // ── Migrate orders: add quality_check to status CHECK ────────────────────
-  try {
-    const row = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='orders'").get()
-    if (row && !row.sql.includes('quality_check')) {
-      db.exec(`
-        CREATE TABLE orders_new2 (
-          id                INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          shoe_id           INTEGER REFERENCES shoes(id) ON DELETE SET NULL,
-          shoe_name         TEXT NOT NULL,
-          material          TEXT NOT NULL,
-          color             TEXT NOT NULL,
-          price             TEXT NOT NULL,
-          status            TEXT NOT NULL DEFAULT 'pending_payment'
-                            CHECK(status IN ('pending_payment','pending','processing','quality_check','shipped','delivered','cancelled')),
-          created_at        TEXT NOT NULL DEFAULT (datetime('now')),
-          updated_at        TEXT NOT NULL DEFAULT (datetime('now')),
-          user_order_number INTEGER NOT NULL DEFAULT 0,
-          delivery_address  TEXT,
-          billing_address   TEXT,
-          accessories       TEXT NOT NULL DEFAULT '[]',
-          scan_id           INTEGER REFERENCES foot_scans(id),
-          eu_size           TEXT,
-          order_ref         TEXT,
-          foot_notes        TEXT,
-          foot_notes_en     TEXT,
-          shipping_method   TEXT,
-          shipping_cost     TEXT,
-          coupon_code       TEXT,
-          discount_amount   TEXT,
-          original_price    TEXT
-        );
-        INSERT INTO orders_new2
-          SELECT id,user_id,shoe_id,shoe_name,material,color,price,status,
-                 created_at,updated_at,user_order_number,delivery_address,
-                 billing_address,accessories,scan_id,eu_size,order_ref,
-                 foot_notes,foot_notes_en,
-                 shipping_method,shipping_cost,coupon_code,discount_amount,
-                 original_price
-          FROM orders;
-        DROP TABLE orders;
-        ALTER TABLE orders_new2 RENAME TO orders;
-        CREATE INDEX IF NOT EXISTS idx_orders_usr ON orders(user_id);
-      `)
-    }
-  } catch (e) { console.error('[migrate orders quality_check]', e.message) }
+  // Hier standen zwei Neubauten der orders-Tabelle (pending_payment und
+  // quality_check). Beide sind entfallen — sie liefen zu früh, kopierten eine
+  // fest verdrahtete Spaltenliste und ließen bei jedem Fehlschlag eine
+  // Leichtabelle zurück. Ersatz: ensureOrderStatusCheck() nach der
+  // colMigrations-Schleife.
 
   // ── ML Training data, foot scan images ──────────────────────────────────
   // Stores compressed images for each scan to build a training dataset.
@@ -1228,6 +1252,15 @@ export function runMigrations(db) {
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
+
+  // ── orders.status: fehlende Zustände in die CHECK-Bedingung aufnehmen ─────
+  // Muss NACH der colMigrations-Schleife stehen. Die Vorgänger standen ~750
+  // Zeilen weiter oben und kopierten Spalten (order_ref, foot_notes, …), die
+  // dort noch gar nicht existierten — der INSERT lief in „no such column",
+  // die halbfertige Tabelle blieb liegen, und weil sie liegen blieb,
+  // scheiterte jeder weitere Versuch an „table already exists". Ergebnis:
+  // Der Zustand quality_check fehlte dauerhaft in der Bedingung.
+  ensureOrderStatusCheck(db)
 
   // ── Slugs für bestehende Modelle nachtragen ──────────────────────────────
   // Muss NACH der colMigrations-Schleife stehen: dort wird shoes.slug erst

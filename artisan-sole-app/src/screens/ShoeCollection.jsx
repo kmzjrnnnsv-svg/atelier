@@ -255,10 +255,17 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
             einblendet. Vorher saß die Beschriftung unten und lag damit über
             Sohle und Schlagschatten — genau dort, wo bei einer Produktaufnahme
             das Motiv endet. Oben ist bei zentriert stehenden Schuhen Luft.
-            Ohne aufhellenden Verlauf: Der weiße Schleier lag über dem oberen
-            Bildrand und nahm der Aufnahme dort die Farbe. Lesbarkeit kommt
-            stattdessen aus dem Textschatten — er wirkt nur um die Buchstaben
-            herum und lässt das Bild unangetastet. */}
+            Keine Aufhellung hinter dem Text — weder Verlauf noch Textschatten.
+            Der Verlauf legte einen Schleier über den oberen Bildrand; der
+            weiße Schein, der ihn ersetzen sollte, war nicht besser: 10 px
+            Streuung bei 70 % Deckkraft um jede Letter, deren Höfe zu einer
+            durchgehenden hellen Fläche verschmolzen. Genau der Effekt, der
+            weg sollte, nur mit anderer Ursache.
+            Lesbarkeit kommt jetzt aus dem Motiv selbst: Produktaufnahmen
+            stehen auf ruhigem, hellem Grund (Greige), darauf trägt schwarze
+            Schrift ohne jede Hilfe. Sollte je eine dunkle Aufnahme dazu-
+            kommen, gehört sie im Hintergrund angeglichen — nicht der Text
+            mit Weiß unterlegt. */}
         <div
           className="absolute inset-x-0 top-0 z-10 px-3.5 pt-3 pb-9 pointer-events-none transition-opacity duration-500"
           style={{ opacity: showSecond ? 0 : (dimmed ? 0.8 : 1) }}
@@ -267,13 +274,11 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
               rechts oben, die beim Überfahren an derselben Stelle erscheint. */}
           <p
             className="text-[12px] lg:text-[13px] text-black font-normal leading-snug pr-9"
-            style={{ textShadow: '0 1px 3px rgba(255,255,255,0.85), 0 0 10px rgba(255,255,255,0.7)' }}
           >
             <ShoeName name={product.name} />
           </p>
           <p
             className="text-[12px] lg:text-[13px] text-black/55 font-light mt-0.5"
-            style={{ textShadow: '0 1px 3px rgba(255,255,255,0.85), 0 0 10px rgba(255,255,255,0.7)' }}
           >
             {priceLine}
           </p>
@@ -291,7 +296,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
               {campaign.payment_mode === 'company' ? 'Firma zahlt' : `-${campaign.discount_pct}%`}
             </span>
           ) : product.match ? (
-            <span className="mt-1.5 inline-block text-[10px] text-black/50 font-light" style={{ letterSpacing: '0.05em', textShadow: '0 1px 3px rgba(255,255,255,0.85)' }}>
+            <span className="mt-1.5 inline-block text-[10px] text-black/50 font-light" style={{ letterSpacing: '0.05em' }}>
               {product.match} Passform
             </span>
           ) : null}

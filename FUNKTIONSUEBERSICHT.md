@@ -25,7 +25,7 @@ ein Warenwirtschafts- und Fertigungssystem mit angeschlossenem Laden.
 | Zubehör dazubuchen | ✅ | Schuhspanner, Pflegeset u. a. |
 | Warenkorb, Kasse, Bestellung | ✅ | inkl. Liefer- und Rechnungsanschrift |
 | Gutscheincodes | ✅ | eigenes Gutscheinsystem im CMS |
-| Bestellverfolgung | ✅ | Zahlung → Fertigung → Qualitätsprüfung → Versand |
+| Bestellverfolgung | ⚠️ | Zahlung → Fertigung → Qualitätsprüfung → Versand; der Schritt „Qualitätsprüfung" ließ sich in der Datenbank nicht setzen, Korrektur liegt bereit |
 | Merkliste | ✅ | |
 | Suche | ✅ | |
 | Bewertungen | ✅ | Sterne und Text je Modell |
@@ -170,9 +170,15 @@ Ehrliche Liste, nach Dringlichkeit.
 
 ### Dringend
 
-**1. Zwölf Änderungen sind nicht ausgerollt.** Darunter der Fix, der das
+**1. Sechs Änderungen sind nicht ausgerollt.** Darunter der Fix, der das
 Speichern im CMS repariert, und die Datenbanksicherung. Das ist der wichtigste
 offene Punkt.
+
+**1b. Die orders-Migration war seit Monaten defekt.** Ein abgebrochener
+Tabellenneubau ließ `orders_new2` in der Datenbank zurück; deren bloße
+Existenz ließ jeden weiteren Versuch scheitern, bei jedem Start aufs Neue.
+Folge: Der Bestellstatus „Qualitätsprüfung" war in der Datenbank nicht
+erlaubt. Behoben, aber noch nicht ausgerollt.
 
 **2. Der Widerrufs-Hinweis fehlt im Bestellvorgang.** Der Ausschluss des
 Widerrufsrechts ist eure stärkste rechtliche Absicherung, hält aber nur mit
