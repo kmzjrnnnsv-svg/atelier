@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
+import { commissionFor, shoetreeCost } from '../utils/affiliate.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification } from '../utils/email.js'
 import { totpVerify } from '../utils/totp.js'
@@ -211,6 +212,45 @@ router.post('/',
       db.prepare("UPDATE coupons SET used_count = used_count + 1, updated_at = datetime('now') WHERE id = ?")
         .run(couponRow.id)
     }
+    // ── Vermittler-Provision festhalten ──────────────────────────────────
+    // Direkt bei der Bestellung, damit die Konditionen des Vermittlers zum
+    // Zeitpunkt des Kaufs gelten. Ändert er später seinen Satz, bleiben ältere
+    // Vermittlungen davon unberührt.
+    //
+    // Eigenbestellungen bringen keine Provision — gleiche E-Mail wie der
+    // Vermittler ist der häufigste Missbrauchsfall und hier mit einer
+    // Bedingung abgedeckt.
+    const affCode = String(req.body.affiliate_code || '').trim().toLowerCase()
+    if (affCode) {
+      try {
+        const aff = db.prepare("SELECT * FROM affiliates WHERE code = ? AND status = 'active'").get(affCode)
+        const buyerEmail = String(userRow?.email || '').toLowerCase()
+        const selfOrder = aff && (
+          String(aff.email || '').toLowerCase() === buyerEmail ||
+          (aff.user_id && aff.user_id === uid)
+        )
+        // Firmenkampagnen schlagen den Vermittlercode: Den Kunden hat dann die
+        // Firma gebracht, nicht der Vermittler.
+        if (aff && !selfOrder && !bizCampaign && !bizCode) {
+          const shoeRow = shoe_id ? db.prepare('SELECT category FROM shoes WHERE id = ?').get(shoe_id) : null
+          const c = commissionFor(aff, { price }, {
+            giftCost: shoetreeCost(db),
+            shoeCategory: shoeRow?.category || null,
+          })
+          db.prepare(`
+            INSERT INTO affiliate_commissions
+              (affiliate_id, order_id, status, shoe_price, gross_amount, gift_cost, amount)
+            VALUES (?, ?, 'pending', ?, ?, ?, ?)
+          `).run(aff.id, result.lastInsertRowid, c.shoe_price, c.gross_amount, c.gift_cost, c.amount)
+          db.prepare('UPDATE orders SET affiliate_code = ? WHERE id = ?').run(aff.code, result.lastInsertRowid)
+        }
+      } catch (e) {
+        // Eine fehlgeschlagene Provisionserfassung darf die Bestellung nicht
+        // scheitern lassen — der Kauf ist wichtiger als die Vermittlung.
+        console.error('[affiliate commission]', e.message)
+      }
+    }
+
     if (userRow?.is_promotion) {
       db.prepare("UPDATE users SET promotion_orders_used = promotion_orders_used + 1, updated_at = datetime('now') WHERE id = ?")
         .run(uid)

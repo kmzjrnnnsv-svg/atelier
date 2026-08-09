@@ -11,6 +11,7 @@ import { seedDatabase } from './db/seed.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
 import authRouter from './routes/auth.js'
 import usersRouter from './routes/users.js'
+import affiliatesRouter from './routes/affiliates.js'
 import { shoesRouter, shoeCardRouter, curatedRouter, wardrobeRouter, outfitsRouter, articlesRouter, materialsRouter, colorsRouter, solesRouter, exploreSectionsRouter, accessoriesRouter } from './routes/content.js'
 import scansRouter      from './routes/scans.js'
 import favoritesRouter  from './routes/favorites.js'
@@ -117,6 +118,7 @@ app.use('/api/auth',     authRouter)
 app.use('/api/users',    usersRouter)
 // shoeCardRouter zuerst: shoesRouter hat ein generisches GET /:id, das
 // '/color-summary' sonst als id auffassen und mit 404 beantworten würde.
+app.use('/api/affiliates', affiliatesRouter)
 app.use('/api/shoes',    shoeCardRouter)
 app.use('/api/shoes',    shoesRouter)
 app.use('/api/curated',  curatedRouter)

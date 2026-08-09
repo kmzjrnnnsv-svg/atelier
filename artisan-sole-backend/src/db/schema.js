@@ -343,6 +343,20 @@ export function runMigrations(db) {
     // /customize?id=13 — lesbar, teilbar und für Suchmaschinen brauchbar.
     // Kein UNIQUE-Index: SQLite kann das per ALTER TABLE nicht nachrüsten,
     // die Eindeutigkeit stellt slugForShoe() beim Schreiben sicher.
+    // accessories, Einkaufspreis. Nötig, seit ein Vermittler seinem Kunden
+    // eine Zugabe schenken kann: Verrechnet wird der Einkaufspreis, nicht der
+    // Ladenpreis. Beim Schuhspanner (45 € im Verkauf) läge der Ladenpreis über
+    // der Provision selbst — der Vermittler zahlte drauf.
+    `ALTER TABLE accessories ADD COLUMN cost_price REAL`,
+    // orders, Rückgabe und Reklamation nach Zustellung. Der Statuswert
+    // 'cancelled' meint eine Stornierung VOR Lieferung; was danach passiert,
+    // ließ sich bisher nirgends festhalten.
+    `ALTER TABLE orders ADD COLUMN returned_at    TEXT`,
+    `ALTER TABLE orders ADD COLUMN return_reason  TEXT`,
+    `ALTER TABLE orders ADD COLUMN delivered_at   TEXT`,
+    // orders, vermittelnder Code (Kleinschreibung, wie in affiliates.code)
+    `ALTER TABLE orders ADD COLUMN affiliate_code TEXT`,
+    `CREATE INDEX IF NOT EXISTS idx_orders_affiliate ON orders(affiliate_code)`,
     `ALTER TABLE shoes ADD COLUMN slug TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_slug ON shoes(slug)`,
     // shoes, optionales 3D-Modell (.glb/.gltf) als Pfad unter /uploads.
@@ -862,6 +876,98 @@ export function runMigrations(db) {
     -- zurück. Dieser Merkzettel hält fest, was bewusst entfernt wurde; der
     -- Seed überspringt diese Namen. Wird der Schuh später von Hand wieder
     -- angelegt, verschwindet der Eintrag.
+    -- ── Vermittler (Affiliates) ─────────────────────────────────────────────
+    -- Wirbt für die Schuhe und erhält je vermitteltem Paar eine Provision.
+    --
+    -- commission_type/-value: entweder ein fester Betrag je Paar oder ein
+    -- Prozentsatz vom Kaufpreis. cap_per_shoe deckelt beides — bewusst je
+    -- Paar, nicht je Bestellung, damit ein Einkauf mit mehreren Paaren auch
+    -- mehrfach vergütet wird.
+    --
+    -- gift_shoetree: Der Vermittler kann seinen Kunden einen Zedernholz-
+    -- Schuhspanner schenken. Verrechnet wird der Einkaufspreis aus
+    -- accessories.cost_price, nicht der Ladenpreis — der liegt mit 45 € über
+    -- der Provision selbst. Nur zusammen mit der Prozentwahl sinnvoll.
+    CREATE TABLE IF NOT EXISTS affiliates (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      code            TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+      status          TEXT    NOT NULL DEFAULT 'pending'
+                              CHECK(status IN ('pending','active','suspended','ended')),
+
+      -- Vertragsdaten
+      full_name       TEXT    NOT NULL,
+      email           TEXT    NOT NULL,
+      phone           TEXT,
+      street          TEXT,
+      postal_code     TEXT,
+      city            TEXT,
+      country         TEXT    NOT NULL DEFAULT 'DE',
+      birth_date      TEXT,
+
+      -- Steuer und Bank
+      tax_status      TEXT    NOT NULL DEFAULT 'small_business'
+                              CHECK(tax_status IN ('small_business','vat_liable')),
+      tax_number      TEXT,
+      vat_id          TEXT,
+      iban            TEXT,
+      account_holder  TEXT,
+
+      -- Vergütung
+      commission_type TEXT    NOT NULL DEFAULT 'percent'
+                              CHECK(commission_type IN ('percent','fixed')),
+      commission_value REAL   NOT NULL DEFAULT 10,
+      cap_per_shoe    REAL    NOT NULL DEFAULT 40,
+      gift_shoetree   INTEGER NOT NULL DEFAULT 0,
+
+      terms_accepted_at TEXT,
+      note            TEXT,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_affiliates_status ON affiliates(status);
+
+    -- Eine Zeile je vermitteltem Paar. orders trägt ohnehin ein Paar je Zeile,
+    -- die Zuordnung ist also eins zu eins.
+    --
+    -- Zustände:
+    --   pending    Bestellung liegt vor, noch nicht zugestellt
+    --   confirmed  zugestellt, Schutzfrist läuft
+    --   payable    Frist verstrichen, keine Rückgabe — auszahlbar
+    --   cancelled  zurückgegeben, reklamiert oder storniert
+    --   paid       ausgezahlt (payout_id gesetzt)
+    CREATE TABLE IF NOT EXISTS affiliate_commissions (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      affiliate_id  INTEGER NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+      order_id      INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      status        TEXT    NOT NULL DEFAULT 'pending'
+                            CHECK(status IN ('pending','confirmed','payable','cancelled','paid')),
+      shoe_price    REAL    NOT NULL DEFAULT 0,   -- Kaufpreis nach Rabatt
+      gross_amount  REAL    NOT NULL DEFAULT 0,   -- Provision vor Abzug
+      gift_cost     REAL    NOT NULL DEFAULT 0,   -- einbehaltener Einkaufspreis der Zugabe
+      amount        REAL    NOT NULL DEFAULT 0,   -- was ausgezahlt wird
+      payable_at    TEXT,                          -- Zustellung + Schutzfrist
+      payout_id     INTEGER REFERENCES affiliate_payouts(id) ON DELETE SET NULL,
+      cancel_reason TEXT,
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(order_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_aff_comm_affiliate ON affiliate_commissions(affiliate_id, status);
+
+    -- Auszahlung über jeweils fünf auszahlbare Paare.
+    CREATE TABLE IF NOT EXISTS affiliate_payouts (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      affiliate_id  INTEGER NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+      reference     TEXT    NOT NULL UNIQUE,
+      pair_count    INTEGER NOT NULL,
+      amount        REAL    NOT NULL,
+      paid_at       TEXT,
+      note          TEXT,
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_aff_payouts_affiliate ON affiliate_payouts(affiliate_id);
+
     CREATE TABLE IF NOT EXISTS deleted_seed_shoes (
       name       TEXT PRIMARY KEY,
       deleted_at TEXT NOT NULL DEFAULT (datetime('now'))
