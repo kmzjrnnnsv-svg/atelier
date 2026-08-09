@@ -485,17 +485,33 @@ export function runMigrations(db) {
     const upsert = db.prepare(`
       INSERT INTO accessories (key, name, description, price, sort_order, is_active, recommended_for, not_recommended_for)
       VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-      ON CONFLICT(key) DO UPDATE SET
-        name = excluded.name,
-        description = excluded.description,
-        price = excluded.price,
-        sort_order = excluded.sort_order,
-        recommended_for = excluded.recommended_for,
-        not_recommended_for = excluded.not_recommended_for
+      -- NICHTS überschreiben. Der Seed legt fehlende Artikel an, mehr nicht.
+      -- Vorher stand hier price = excluded.price: Jeder Serverstart schrieb
+      -- den im CMS gepflegten Preis mit dem fest im Code stehenden Wert
+      -- zurück. Für den Betreiber sah es aus, als würde nicht gespeichert —
+      -- gespeichert wurde, nur beim nächsten Start wieder überschrieben.
+      -- Dasselbe galt für Name, Beschreibung, Sortierung und Zuordnung.
+      ON CONFLICT(key) DO NOTHING
     `)
     for (const a of accData) {
       upsert.run(a.key, a.name, a.desc, a.price, a.sort, a.rec, a.not)
     }
+
+    // Einmalige Textkorrekturen — ausdrücklich ohne Preise anzufassen.
+    // Lieferantenzusätze gehören nicht in den Laden; sie werden nur entfernt,
+    // solange sie noch dastehen, und nie wieder gesetzt.
+    db.prepare(`
+      UPDATE accessories
+      SET name = TRIM(REPLACE(REPLACE(REPLACE(name,
+            ' (Private Labeled)', ''), ' (Labeled)', ''), ' (1 Unit)', ''))
+      WHERE name LIKE '%(Labeled)%' OR name LIKE '%(Private Labeled)%' OR name LIKE '%(1 Unit)%'
+    `).run()
+
+    // Beschreibungen nur füllen, wo keine steht.
+    const fillDesc = db.prepare(
+      "UPDATE accessories SET description = ? WHERE key = ? AND (description IS NULL OR TRIM(description) = '')"
+    )
+    for (const a of accData) fillDesc.run(a.desc, a.key)
 
 
   } catch (e) {
