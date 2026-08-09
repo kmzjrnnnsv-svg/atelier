@@ -335,16 +335,25 @@ function seedShoeAccessories(db) {
   const accByKey = Object.fromEntries(accs.map(a => [a.key, a.id]))
   const ak = (key) => accByKey[key] // shorthand
 
-  // Material / category detection helpers
-  const isSuede    = (m) => /suede|nubuck|velour/i.test(m)
-  const isCordovan = (m) => /cordovan/i.test(m)
-  const isPatent   = (m) => /patent|lack/i.test(m)
-  const isExotic   = (m) => /croc|krokodil|exotic|embossed|strauss|python/i.test(m)
-  const isDark     = (s) => /schwarz|black|midnight|dark|antiqued/i.test(s.material + s.name) || /^#[0-3][0-9a-f]/i.test(s.color)
-  const isBoot     = (cat) => cat === 'BOOT'
-  const isSneaker  = (cat) => cat === 'SNEAKER'
-  const isMonk     = (cat) => cat === 'MONK'
-  const hasLaces   = (cat) => cat === 'OXFORD' || cat === 'DERBY'
+  // Bei fünf Artikeln braucht es keinen Entscheidungsbaum mehr: Pflegeset
+  // nach Lederart, Spanner nach Bauform und Farbe. Vorher standen hier gut
+  // hundert Zeilen für Cremes, Bürsten und Gürtel, die es nicht mehr gibt.
+  const isSuede   = (m) => /suede|nubuck|velour|wildleder/i.test(m)
+  const isSneaker = (c) => /SNEAKER|TRAINER/i.test(c)
+  const isBoot    = (c) => ['BOOT', 'CHELSEA', 'CHUKKA', 'JODHPUR', 'BALMORAL', 'WELLINGTON'].includes(c)
+
+  // Schwarz heißt schwarz, nicht bloß dunkel. Ein Test auf „#0–3 an erster
+  // Stelle" stufte auch Dunkelbraun (#3b1f0a) als schwarz ein und hätte jedem
+  // braunen Schuh den schwarzen Spanner beigelegt. Jetzt zählt entweder die
+  // ausdrückliche Bezeichnung oder ein Farbwert, der in allen drei Kanälen
+  // nahe Null liegt.
+  const isBlack = (s) => {
+    if (/schwarz|black|noir/i.test(`${s.material || ''} ${s.name || ''}`)) return true
+    const hex = /^#([0-9a-f]{6})$/i.exec(s.color || '')
+    if (!hex) return false
+    const [r, g, b] = [0, 2, 4].map(i => parseInt(hex[1].substr(i, 2), 16))
+    return r <= 0x25 && g <= 0x25 && b <= 0x25
+  }
 
   const stmt = db.prepare('INSERT OR IGNORE INTO shoe_accessories (shoe_id, accessory_id, sort_order) VALUES (?, ?, ?)')
 
@@ -354,68 +363,15 @@ function seedShoeAccessories(db) {
       const mat = shoe.material || ''
       const cat = shoe.category || ''
 
-      if (isSneaker(cat)) {
-        // ── Sneaker: minimal care ──
-        if (ak('dustbag'))     links.push(ak('dustbag'))
-        if (ak('sneaker_kit')) links.push(ak('sneaker_kit'))
-      } else if (isSuede(mat)) {
-        // ── Suede / Nubuck: specific care ──
-        if (ak('shoetrees'))    links.push(ak('shoetrees'))
-        if (ak('dustbag'))      links.push(ak('dustbag'))
-        if (ak('shoehorn'))     links.push(ak('shoehorn'))
-        if (ak('suede_brush'))  links.push(ak('suede_brush'))
-        if (ak('suede_spray'))  links.push(ak('suede_spray'))
-        if (ak('suede_eraser')) links.push(ak('suede_eraser'))
-        if (hasLaces(cat) && ak('waxed_laces')) links.push(ak('waxed_laces'))
-      } else if (isCordovan(mat)) {
-        // ── Shell / Cognac Cordovan ──
-        if (ak('shoetrees'))       links.push(ak('shoetrees'))
-        if (ak('dustbag'))         links.push(ak('dustbag'))
-        if (ak('shoehorn'))        links.push(ak('shoehorn'))
-        if (ak('belt'))            links.push(ak('belt'))
-        if (ak('horsehair_brush')) links.push(ak('horsehair_brush'))
-        if (ak('cordovan_balm'))   links.push(ak('cordovan_balm'))
-        if (ak('polishing_cloth')) links.push(ak('polishing_cloth'))
-        if (ak('sole_oil'))        links.push(ak('sole_oil'))
-        if (isBoot(cat) && ak('boot_jack')) links.push(ak('boot_jack'))
-        if (hasLaces(cat) && ak('waxed_laces')) links.push(ak('waxed_laces'))
-      } else if (isPatent(mat)) {
-        // ── Patent Leather ──
-        if (ak('shoetrees'))       links.push(ak('shoetrees'))
-        if (ak('dustbag'))         links.push(ak('dustbag'))
-        if (ak('shoehorn'))        links.push(ak('shoehorn'))
-        if (ak('belt'))            links.push(ak('belt'))
-        if (ak('patent_care'))     links.push(ak('patent_care'))
-        if (ak('polishing_cloth')) links.push(ak('polishing_cloth'))
-        if (hasLaces(cat) && ak('waxed_laces')) links.push(ak('waxed_laces'))
-      } else if (isExotic(mat)) {
-        // ── Crocodile-Embossed / Exotic ──
-        if (ak('shoetrees'))       links.push(ak('shoetrees'))
-        if (ak('dustbag'))         links.push(ak('dustbag'))
-        if (ak('shoehorn'))        links.push(ak('shoehorn'))
-        if (ak('belt'))            links.push(ak('belt'))
-        if (ak('exotic_care'))     links.push(ak('exotic_care'))
-        if (ak('polishing_cloth')) links.push(ak('polishing_cloth'))
-        if (ak('sole_oil'))        links.push(ak('sole_oil'))
-        if (isMonk(cat) && ak('buckle_cloth')) links.push(ak('buckle_cloth'))
-      } else {
-        // ── Smooth leather (Calfskin, Pebble-Grain, etc.) ──
-        if (ak('shoetrees'))       links.push(ak('shoetrees'))
-        if (ak('dustbag'))         links.push(ak('dustbag'))
-        if (ak('shoehorn'))        links.push(ak('shoehorn'))
-        if (ak('belt'))            links.push(ak('belt'))
-        if (ak('horsehair_brush')) links.push(ak('horsehair_brush'))
-        // Color-matched shoe cream
-        if (isDark(shoe)) {
-          if (ak('cream_dark')) links.push(ak('cream_dark'))
-        } else {
-          if (ak('cream_cognac')) links.push(ak('cream_cognac'))
-        }
-        if (ak('polishing_cloth')) links.push(ak('polishing_cloth'))
-        if (ak('sole_oil'))        links.push(ak('sole_oil'))
-        if (isBoot(cat) && ak('boot_jack'))     links.push(ak('boot_jack'))
-        if (isMonk(cat) && ak('buckle_cloth'))  links.push(ak('buckle_cloth'))
-        if (hasLaces(cat) && ak('waxed_laces')) links.push(ak('waxed_laces'))
+      // Pflege richtet sich nach dem Leder, nicht nach der Bauform.
+      links.push(isSuede(mat) ? ak('care_kit_suede') : ak('care_kit_leather'))
+
+      // Spanner: Sneaker bekommen keinen, Stiefel den hohen, schwarze Schuhe
+      // den schwarzen, alle übrigen den aus Zedernholz.
+      if (!isSneaker(cat)) {
+        if (isBoot(cat))        links.push(ak('boot_tree_cedar'))
+        else if (isBlack(shoe)) links.push(ak('shoe_tree_black'))
+        else                    links.push(ak('shoe_tree_cedar'))
       }
 
       // Insert all links with sort_order

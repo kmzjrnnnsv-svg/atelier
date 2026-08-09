@@ -14,20 +14,12 @@ const CATEGORY_LABELS = {
   MONK: 'Monk', BOOT: 'Boot', SNEAKER: 'Sneaker',
 }
 
-const FILTERS = [
-  { key: 'all', label: 'Alle Produkte' },
-  { key: 'pflege', label: 'Pflege', match: ['carekit', 'cream_dark', 'cream_cognac', 'cordovan_balm', 'patent_care', 'exotic_care', 'sole_oil'] },
-  { key: 'buersten', label: 'Bürsten & Tücher', match: ['horsehair_brush', 'suede_brush', 'polishing_cloth', 'buckle_cloth'] },
-  { key: 'schutz', label: 'Schutz & Pflege', match: ['suede_spray', 'suede_eraser', 'dustbag', 'shoetrees'] },
-  { key: 'extras', label: 'Accessoires', match: ['shoehorn', 'belt', 'boot_jack', 'waxed_laces', 'sneaker_kit'] },
-]
 
 export default function Accessories() {
   const navigate = useNavigate()
   const { cart, addToCart, removeFromCart } = useStore()
   const [accessoriesList, setAccessoriesList] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     setLoading(true)
@@ -40,9 +32,10 @@ export default function Accessories() {
       .finally(() => setLoading(false))
   }, [])
 
-  const filtered = filter === 'all'
-    ? accessoriesList
-    : accessoriesList.filter(a => FILTERS.find(f => f.key === filter)?.match?.includes(a.key))
+  // Kein Filter mehr: Bei fünf Artikeln ist eine Reiterleiste Zierrat, und
+  // die alte fragte ohnehin nach Schlüsseln, die es nicht mehr gibt — jeder
+  // Reiter wäre leer geblieben.
+  const filtered = accessoriesList
 
   const cartIds = cart.filter(c => c.isAccessory).map(c => c.id)
 
@@ -73,26 +66,6 @@ export default function Accessories() {
         <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.1] tracking-tight">
           Zubehör & Pflege
         </h1>
-      </div>
-
-      {/* ── Filter navigation ───────────────────────────────────── */}
-      <div className="px-5 lg:px-16 pb-6 lg:pb-8 border-b border-black/[0.06]">
-        <div className="flex gap-1 overflow-x-auto justify-center" style={{ scrollbarWidth: 'none' }}>
-          {FILTERS.map(f => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`flex-shrink-0 px-4 py-2 text-[11px] lg:text-[12px] border-0 bg-transparent transition-all ${
-                filter === f.key
-                  ? 'text-black border-b-2 border-black font-medium'
-                  : 'text-black/35 hover:text-black/60'
-              }`}
-              style={{ letterSpacing: '0.06em', borderBottom: filter === f.key ? '2px solid black' : '2px solid transparent' }}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* ── Product count ───────────────────────────────────────── */}
