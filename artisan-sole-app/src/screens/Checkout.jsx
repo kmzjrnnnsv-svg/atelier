@@ -5,6 +5,7 @@ import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2,
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
 import { useAuth } from '../context/AuthContext'
+import { shoePath } from '../lib/shoePath'
 
 // Accessories are loaded from the DB via shoeAccessoryMap in the store
 
@@ -450,7 +451,7 @@ export default function Checkout() {
             if (lastShoe) {
               const product = shoes.find(s => s.id === lastShoe.shoeId)
               if (product) {
-                navigate(`/customize?id=${product.id}`, { state: { product } })
+                navigate(shoePath(product), { state: { product } })
                 return
               }
             }

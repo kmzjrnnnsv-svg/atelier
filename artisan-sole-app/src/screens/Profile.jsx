@@ -12,6 +12,7 @@ import { isMobileWeb } from '../App'
 import CtaBanner from '../components/CtaBanner'
 import { SHOES, HEROES } from '../lib/editorialImages'
 import PageHero from '../components/PageHero'
+import { shoePath } from '../lib/shoePath'
 
 const TIER_ICONS = { Award, Crown, Gem, Shield, Star }
 
@@ -81,7 +82,7 @@ export default function Profile() {
   }, [user])
   const loadConfig = (cfg) => {
     const shoe = shoes?.find(s => String(s.id) === String(cfg.shoeId))
-    navigate(`/customize?id=${cfg.shoeId}`, { state: { product: shoe || { id: cfg.shoeId, name: cfg.shoeName, category: cfg.category }, loadConfig: cfg } })
+    navigate(shoePath(shoe || { id: cfg.shoeId }), { state: { product: shoe || { id: cfg.shoeId, name: cfg.shoeName, category: cfg.category }, loadConfig: cfg } })
   }
   const removeConfig = async (id) => {
     const next = await deleteConfiguration(id).catch(() => null)

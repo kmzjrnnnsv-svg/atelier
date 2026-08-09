@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
+import { uniqueShoeSlug } from '../utils/slug.js'
 
 const router = Router()
 const canWrite = [authenticate, requireRole('admin', 'curator')]
@@ -12,7 +13,9 @@ const mustRead = [authenticate]
 // base64-Data-URL tragen: über alle Modelle summiert wäre das ein Vielfaches
 // der eigentlichen Nutzlast, und auf dem Telefon gäbe es dafür nicht einmal
 // eine Verwendung.
-function makeContentRouter(table, writeValidators = [], { publicRead = false, listExclude = [] } = {}) {
+// `onWrite` darf den Rumpf vor dem Schreiben ergänzen (etwa um einen aus dem
+// Namen abgeleiteten Slug). Bekommt (body, { db, id }); id ist beim Anlegen null.
+function makeContentRouter(table, writeValidators = [], { publicRead = false, listExclude = [], onWrite = null } = {}) {
   const r = Router()
   const readGuard = publicRead ? [] : mustRead
 
@@ -41,6 +44,7 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false, li
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
 
     const body = { ...req.body, created_by: req.user.id }
+    if (onWrite) Object.assign(body, onWrite(body, { db: getDb(), id: null }))
     const cols = Object.keys(body).join(', ')
     const vals = Object.keys(body).map(() => '?').join(', ')
     const result = getDb()
@@ -64,12 +68,15 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false, li
     delete updates.created_by
     delete updates.id
 
-    const set = Object.keys(req.body)
+    const writeBody = { ...req.body }
+    if (onWrite) Object.assign(writeBody, onWrite(writeBody, { db, id: Number(req.params.id) }))
+
+    const set = Object.keys(writeBody)
       .filter(k => k !== 'id' && k !== 'created_by')
       .map(k => `${k} = ?`).join(', ')
-    const vals = Object.keys(req.body)
+    const vals = Object.keys(writeBody)
       .filter(k => k !== 'id' && k !== 'created_by')
-      .map(k => req.body[k])
+      .map(k => writeBody[k])
 
     db.prepare(`UPDATE ${table} SET ${set}, updated_at = datetime('now') WHERE id = ?`)
       .run(...vals, req.params.id)
@@ -152,7 +159,14 @@ const exploreValidators = [
   body('sort_order').optional().isInt({ min: 0 }),
 ]
 
-export const shoesRouter      = makeContentRouter('shoes', shoeValidators, { publicRead: true, listExclude: ['hover_image_data', 'default_images'] })
+export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
+  publicRead: true,
+  listExclude: ['hover_image_data', 'default_images'],
+  // Slug aus dem Namen ableiten. Nur wenn ein Name im Rumpf steht — ein PUT,
+  // das etwa nur Bilder aktualisiert, lässt die Adresse unangetastet.
+  onWrite: (body, { db, id }) =>
+    body.name ? { slug: uniqueShoeSlug(db, body.name, id) } : {},
+})
 export const curatedRouter    = makeContentRouter('curated_items')
 export const wardrobeRouter   = makeContentRouter('wardrobe_items')
 export const outfitsRouter    = makeContentRouter('outfits', outfitValidators)
@@ -218,6 +232,15 @@ shoesRouter.put('/:id/accessories', ...canWrite, param('id').isInt(), (req, res)
 // Farben (nur Hex + Name) sind dagegen winzig und kommen gebündelt vorab,
 // das Hover-Bild holt die Kachel einzeln beim ersten Überfahren.
 export const shoeCardRouter = Router()
+
+// GET /api/shoes/by-slug/:slug — public. Auflösung der sprechenden Adresse.
+// Muss wie die übrigen Zusatzrouten vor shoesRouter stehen, sonst schluckt
+// dessen GET /:id den Pfad.
+shoeCardRouter.get('/by-slug/:slug', (req, res) => {
+  const row = getDb().prepare('SELECT * FROM shoes WHERE slug = ?').get(String(req.params.slug || ''))
+  if (!row) return res.status(404).json({ error: 'Not found' })
+  res.json(row)
+})
 
 // GET /api/shoes/color-summary — public. { [shoeId]: [{ hex, name }] }
 shoeCardRouter.get('/color-summary', (req, res) => {

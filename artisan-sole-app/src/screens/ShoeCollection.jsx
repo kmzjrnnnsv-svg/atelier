@@ -14,6 +14,7 @@ import { HEROES, SHOES } from '../lib/editorialImages'
 import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import PageHero from '../components/PageHero'
+import { shoePath } from '../lib/shoePath'
 
 // Anlass-basierte Kategorien. Jeder Anlass bildet auf mehrere Schuh-Typen ab
 // (ein Modell kann in mehreren Anlässen erscheinen). `cats` = enthaltene
@@ -165,6 +166,17 @@ function parsePrice(str) {
 const fmtPrice = (n) => n.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
 // ── Product Card (LV style, image + name + price, nothing more) ─────────
+// Produktaufnahmen haben rundum viel Luft — ohne Anschnitt steht der Schuh
+// klein und verloren in der Kachel. Der Zoom holt ihn näher heran, ohne dass
+// neu fotografiert werden muss.
+//
+// 1.12 ist bewusst zurückhaltend: Der Anschnitt frisst sich von allen vier
+// Seiten nach innen und darf nur den leeren Rand erwischen. Bei 1.22 stand
+// der rechte Schuh bereits über der Kante. Wer enger gefasste Aufnahmen
+// einsetzt, senkt den Wert weiter.
+const CARD_ZOOM = 'scale-[1.12]'
+const CARD_ZOOM_HOVER = 'group-hover:scale-[1.16]'
+
 function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, campaign }) {
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
   const campPriceNum = campaign ? (campaign.payment_mode === 'company' ? 0 : Math.round(parsePrice(product.price) * (1 - campaign.discount_pct / 100))) : null
@@ -206,16 +218,17 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
     >
       {/* Bildfläche. 3/4 hochkant wie bei den großen Häusern: der Schuh steht
           im Bild, statt in einem breiten Streifen zu schwimmen. */}
-      <div
-        className="w-full overflow-hidden flex items-center justify-center bg-[#f6f5f3] relative transition-colors duration-500 group-hover:bg-[#efeee9]"
-        style={{ aspectRatio: '3 / 4' }}
-      >
+      {/* Quadratisch, weil die Produktaufnahmen quadratisch sind. Im vorherigen
+          3:4-Hochformat musste object-cover links und rechts abschneiden — beim
+          rechten Schuh fehlte die Spitze. Gleiches Seitenverhältnis heißt: kein
+          erzwungener Beschnitt, nur der bewusste Zoom. */}
+      <div className="w-full aspect-square overflow-hidden flex items-center justify-center bg-[#f6f5f3] relative transition-colors duration-500 group-hover:bg-[#efeee9]">
         {product.image ? (
           <>
             <img
               src={product.image}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              className={`w-full h-full object-cover transition-transform duration-700 ${CARD_ZOOM} ${CARD_ZOOM_HOVER}`}
               style={{ opacity: dimmed ? 0.6 : 1 }}
             />
             {/* Zweitansicht liegt darüber und wird eingeblendet. Ein Wechsel
@@ -225,7 +238,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
                 src={hoverImage}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${CARD_ZOOM}`}
                 style={{ opacity: showSecond ? (dimmed ? 0.6 : 1) : 0 }}
               />
             )}
@@ -277,10 +290,13 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
             leere Ecke. Der Verlauf hält die Schrift auch auf hellem Leder
             lesbar. */}
         <div
-          className="absolute inset-x-0 bottom-0 z-10 px-4 pb-3.5 pt-10 pointer-events-none transition-opacity duration-500"
+          className="absolute inset-x-0 bottom-0 z-10 px-3.5 pb-3 pt-6 pointer-events-none transition-opacity duration-500"
           style={{
             opacity: showSecond ? 0 : (dimmed ? 0.75 : 1),
-            background: 'linear-gradient(transparent, rgba(255,255,255,0.82) 55%, rgba(255,255,255,0.95))',
+            // Enger als zuvor: Der Verlauf lief über die Sohle und nahm dem
+            // Schuh das untere Drittel. Er soll die Schrift tragen, nicht das
+            // Produkt überdecken.
+            background: 'linear-gradient(transparent, rgba(255,255,255,0.86) 62%, rgba(255,255,255,0.96))',
           }}
         >
           <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug">
@@ -425,7 +441,7 @@ export default function ShoeCollection() {
   const filtered = activeCategory === 'PROMO'
     ? enriched.filter(p => p.promotion_price)
     : enriched.filter(p => shoeInCategory(activeCategory, p.category))
-  const selectShoe = (product) => navigate(`/customize?id=${product.id}`, { state: { product } })
+  const selectShoe = (product) => navigate(shoePath(product), { state: { product } })
 
   return (
     <div className="min-h-full bg-white">
@@ -502,7 +518,11 @@ export default function ShoeCollection() {
       </div>
 
       {/* ── Product Grid (LV style, 4-col, compact cards) ────── */}
-      <div className="px-8 lg:px-24 xl:px-32 pb-16">
+      {/* Randlos auf dem Telefon: die Bilder tragen die Seite bis an die
+          Displaykante, wie in den Apps der großen Häuser. Erst ab lg gibt es
+          wieder Seitenränder, sonst würde das Raster auf großen Schirmen
+          auseinanderlaufen. */}
+      <div className="px-0 lg:px-24 xl:px-32 pb-16">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             {shoes.length === 0 && backendStatus === 'loading' && (
@@ -534,7 +554,7 @@ export default function ShoeCollection() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-3 lg:gap-x-5 gap-y-3 lg:gap-y-5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-px lg:gap-x-5 lg:gap-y-5">
             {filtered.map(product => (
               <ProductCard
                 key={product.id}

@@ -6,6 +6,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search as SearchIcon, X, TrendingUp } from 'lucide-react'
 import useStore from '../store/store'
+import { shoePath } from '../lib/shoePath'
 
 const SUGGESTIONS = ['Loafer', 'Oxford', 'Derby', 'Chelsea Boot', 'Sneaker', 'Kalbsleder']
 
@@ -27,7 +28,7 @@ export default function Search() {
     )
   }, [query, shoes])
 
-  const selectShoe = (shoe) => navigate(`/customize?id=${shoe.id}`, { state: { product: shoe } })
+  const selectShoe = (shoe) => navigate(shoePath(shoe), { state: { product: shoe } })
 
   return (
     <div className="min-h-full bg-white">

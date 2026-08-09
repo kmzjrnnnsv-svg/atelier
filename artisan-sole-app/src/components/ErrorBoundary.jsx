@@ -50,23 +50,44 @@ function recordReload() {
 
 // Cache-Bust-Reload, hängt einen Zeitstempel an, damit Browser-Cache,
 // CDN-Cache und etwaige Service-Worker-Caches die index.html neu holen.
-function reloadWithBust() {
-  try {
-    // ServiceWorker-Caches leeren (falls vorhanden), non-blocking
-    if ('caches' in window) {
-      caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {})
-    }
-    if ('serviceWorker' in navigator) {
+//
+// Das Aufräumen lief bisher „non-blocking", der Reload feuerte unmittelbar
+// danach. In der Praxis navigierte die Seite damit weg, bevor auch nur ein
+// Cache gelöscht war — der nächste Versuch fand denselben Stand vor und die
+// Schleife lief bis zum Limit. Deshalb jetzt abwarten, mit einer kurzen
+// Frist, damit ein hängender Aufruf den Reload nicht seinerseits blockiert.
+//
+// Außerdem wurde ein vorhandener Service Worker nur mit update() angestoßen.
+// Das prüft lediglich, ob ein neues Skript vorliegt, und nimmt ihm nicht die
+// Kontrolle über die Seite. Zum Auflösen eines festgefahrenen Zustands muss
+// er abgemeldet werden.
+async function clearClientCaches() {
+  const jobs = []
+  if ('caches' in window) {
+    jobs.push(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))))
+  }
+  if ('serviceWorker' in navigator) {
+    jobs.push(
       navigator.serviceWorker.getRegistrations()
-        .then(regs => regs.forEach(r => r.update().catch(() => {})))
-        .catch(() => {})
-    }
-  } catch { /* ignore */ }
+        .then(regs => Promise.all(regs.map(r => r.unregister())))
+    )
+  }
+  if (!jobs.length) return
+  // Nicht länger als 1,5 s warten — der Reload ist wichtiger als ein
+  // vollständiges Aufräumen.
+  await Promise.race([
+    Promise.all(jobs).catch(() => {}),
+    new Promise(resolve => setTimeout(resolve, 1500)),
+  ])
+}
 
+function reloadWithBust() {
   recordReload()
   const u = new URL(window.location.href)
   u.searchParams.set('_v', String(Date.now()))
-  window.location.replace(u.toString())
+  clearClientCaches()
+    .catch(() => {})
+    .finally(() => window.location.replace(u.toString()))
 }
 
 // Hard reload bei Chunk-Fehler, nichts anzeigen, sofort.
