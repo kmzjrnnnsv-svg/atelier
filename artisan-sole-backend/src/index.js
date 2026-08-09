@@ -9,9 +9,10 @@ import { execFile } from 'child_process'
 import { getDb } from './db/database.js'
 import { seedDatabase } from './db/seed.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
-import authRouter from './routes/auth.js'
+import authRouter, { issueTokens } from './routes/auth.js'
 import usersRouter from './routes/users.js'
 import affiliatesRouter from './routes/affiliates.js'
+import passkeysRouter, { makeLoginVerify } from './routes/passkeys.js'
 import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter } from './routes/content.js'
 import scansRouter      from './routes/scans.js'
 import favoritesRouter  from './routes/favorites.js'
@@ -114,6 +115,10 @@ app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')))
 app.use('/api', apiLimiter)
 
 // Routes
+// Der Anmeldeschritt hängt unter /api/auth, damit die Ratenbegrenzung der
+// Anmeldung greift; die Verwaltung der Schlüssel liegt getrennt darunter.
+app.post('/api/auth/passkey/login/verify', makeLoginVerify(issueTokens))
+app.use('/api/auth/passkey', passkeysRouter)
 app.use('/api/auth',     authRouter)
 app.use('/api/users',    usersRouter)
 // shoeCardRouter zuerst: shoesRouter hat ein generisches GET /:id, das
