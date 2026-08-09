@@ -53,16 +53,64 @@ function createTransporter(cfg) {
   })
 }
 
+/**
+ * Fehlt die SMTP-Zugangskennung, wurde bisher stillschweigend nur auf die
+ * Konsole geschrieben — auch im Produktivbetrieb. Nach außen sah alles nach
+ * Erfolg aus, während nie eine Mail hinausging. Genau daran sind die
+ * Einladungen gescheitert.
+ *
+ * Auf dem Entwicklungsrechner bleibt das Verhalten: Dort ist kein SMTP
+ * eingerichtet und soll es auch nicht sein. Im Produktivbetrieb wird daraus
+ * ein Fehler, den die aufrufende Stelle weiterreichen kann.
+ */
+export class EmailNotConfiguredError extends Error {
+  constructor() {
+    super('SMTP ist nicht eingerichtet — unter Administration › E-Mail / SMTP hinterlegen.')
+    this.name = 'EmailNotConfiguredError'
+  }
+}
+
 async function send(options) {
   const cfg         = getEmailConfig()
   const transporter = createTransporter(cfg)
   if (!transporter) {
+    if (process.env.NODE_ENV === 'production') throw new EmailNotConfiguredError()
     console.log('\n📧 [EMAIL · dev mode, SMTP not configured]')
     console.log('  To:     ', options.to)
     console.log('  Subject:', options.subject)
     return
   }
   await transporter.sendMail({ from: `Artisan Sole <${cfg.user}>`, ...options })
+}
+
+/**
+ * Prüft die SMTP-Einstellungen, ohne etwas zu verschicken, und liefert
+ * zusätzlich zurück, ob die Adresse der Anwendung brauchbar ist: Steht dort
+ * noch localhost, geht die Mail zwar hinaus, aber der Einladungslink darin
+ * führt beim Empfänger ins Leere.
+ */
+export async function verifyEmailSetup() {
+  const cfg = getEmailConfig()
+  const transporter = createTransporter(cfg)
+  if (!transporter) return { ok: false, reason: 'Kein SMTP-Benutzer hinterlegt.' }
+  try {
+    await transporter.verify()
+  } catch (e) {
+    return { ok: false, reason: e.message }
+  }
+  const appUrlUsable = /^https?:\/\//.test(cfg.appUrl) && !/localhost|127\.0\.0\.1/.test(cfg.appUrl)
+  return { ok: true, host: cfg.host, port: cfg.port, user: cfg.user, appUrl: cfg.appUrl, appUrlUsable }
+}
+
+/** Testnachricht an eine Adresse, damit sich der Weg vollständig prüfen lässt. */
+export async function sendTestEmail(to) {
+  const cfg = getEmailConfig()
+  await send({
+    to,
+    subject: 'Artisan Sole · Testnachricht',
+    html: `<p>Diese Nachricht bestätigt, dass der E-Mail-Versand funktioniert.</p>
+           <p style="color:#888;font-size:12px">Server: ${cfg.host}:${cfg.port} · Adresse der Anwendung: ${cfg.appUrl}</p>`,
+  })
 }
 
 // ─── Template engine ──────────────────────────────────────────────────────────

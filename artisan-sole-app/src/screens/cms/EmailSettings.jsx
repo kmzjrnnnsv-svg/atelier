@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Send, CheckCircle2, XCircle } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import MFAModal from '../../components/MFAModal'
 
@@ -15,6 +15,24 @@ export default function EmailSettings() {
  const [msg, setMsg] = useState(null)
  const [mfaOpen, setMfaOpen] = useState(false)
  const [mfaErr, setMfaErr] = useState(null)
+ const [check, setCheck] = useState(null)      // Ergebnis der Verbindungsprüfung
+ const [testTo, setTestTo] = useState('')
+ const [testing, setTesting] = useState(false)
+ const [testResult, setTestResult] = useState(null)
+
+ // Beim Öffnen sofort prüfen: Die häufigste Ursache für ausbleibende Mails ist
+ // eine fehlende Zugangskennung, und das sieht man den Feldern nicht an.
+ useEffect(() => { apiFetch('/api/settings/email/check').then(setCheck).catch(() => setCheck(null)) }, [])
+
+ const runTest = async () => {
+   setTesting(true); setTestResult(null)
+   try {
+     await apiFetch('/api/settings/email/test', { method: 'POST', body: JSON.stringify({ to: testTo.trim() }) })
+     setTestResult({ ok: true })
+   } catch (e) {
+     setTestResult({ ok: false, error: e?.error || 'Versand fehlgeschlagen' })
+   } finally { setTesting(false) }
+ }
 
  useEffect(() => { loadSettings() }, [])
 
@@ -208,6 +226,52 @@ export default function EmailSettings() {
  </p>
  </div>
  </div>
+ </div>
+
+ {/* Zustand des Versands, sichtbar ohne Suchen im Log */}
+ {check && (
+ <div className={`mb-6 border px-4 py-3 ${check.ok ? 'border-black/10 bg-black/[0.02]' : 'border-amber-300 bg-amber-50'}`}>
+ <div className="flex items-start gap-2">
+ {check.ok
+ ? <CheckCircle2 size={14} className="text-green-700 flex-shrink-0 mt-0.5" strokeWidth={1.6} />
+ : <XCircle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" strokeWidth={1.6} />}
+ <div className="min-w-0">
+ <p className="text-[12px] font-light text-black/70">
+ {check.ok ? `Verbindung zu ${check.host}:${check.port} steht.` : `Kein Versand möglich: ${check.reason}`}
+ </p>
+ {check.ok && !check.appUrlUsable && (
+ <p className="text-[11px] text-amber-800 font-light mt-1.5 leading-relaxed">
+ Die Adresse der Anwendung steht auf <strong className="font-normal">{check.appUrl}</strong>.
+ Mails gehen zwar hinaus, aber Einladungs- und Bestätigungslinks darin führen beim
+ Empfänger ins Leere. Bitte unten auf die öffentliche Adresse setzen.
+ </p>
+ )}
+ </div>
+ </div>
+ </div>
+ )}
+
+ {/* Testversand */}
+ <div className="mb-8 border border-black/[0.08] px-4 py-4">
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] mb-2.5 font-light">Testnachricht</p>
+ <div className="flex gap-2">
+ <input
+ type="email" value={testTo} onChange={e => setTestTo(e.target.value)}
+ placeholder="empfaenger@beispiel.de"
+ className="flex-1 h-10 px-3 border border-black/[0.12] text-[13px] font-light text-black/70 outline-none focus:border-black/40"
+ />
+ <button
+ onClick={runTest} disabled={testing || !testTo.includes('@')}
+ className="px-5 h-10 flex items-center gap-2 border border-black/20 text-[11px] uppercase tracking-[0.15em] font-light bg-transparent hover:bg-black hover:text-white transition-colors disabled:opacity-30"
+ >
+ <Send size={13} strokeWidth={1.4} /> {testing ? 'Sendet…' : 'Senden'}
+ </button>
+ </div>
+ {testResult && (
+ <p className={`text-[12px] font-light mt-2 ${testResult.ok ? 'text-green-700' : 'text-red-700'}`}>
+ {testResult.ok ? 'Versendet. Bitte im Postfach nachsehen, auch im Spam-Ordner.' : testResult.error}
+ </p>
+ )}
  </div>
 
  {/* Save button */}

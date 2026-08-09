@@ -53,11 +53,22 @@ router.post('/promotion',
       VALUES (?, ?, ?, 'user', 1, ?, ?, ?, ?)
     `).run(name, email, tempPassword, discount_pct || null, max_orders || null, inviteToken, req.user.id)
 
-    // Send invitation email
-    sendPromotionInvitation(email, name, inviteToken, discount_pct).catch(e => console.error('[email promo invite]', e.message))
+    // Der Versand wird abgewartet und das Ergebnis mitgeteilt. Vorher lief er
+    // nebenher und landete im Fehlerfall nur im Log — die Oberfläche meldete
+    // Erfolg, obwohl nie eine Einladung ankam. Das Konto bleibt trotzdem
+    // bestehen: Es ist angelegt, und der Link lässt sich erneut schicken.
+    let emailSent = true
+    let emailError = null
+    try {
+      await sendPromotionInvitation(email, name, inviteToken, discount_pct)
+    } catch (e) {
+      emailSent = false
+      emailError = e.message
+      console.error('[email promo invite]', e.message)
+    }
 
     const user = db.prepare('SELECT id, name, email, role, is_active, is_promotion, promotion_discount_pct, promotion_max_orders, promotion_orders_used, created_at FROM users WHERE id = ?').get(result.lastInsertRowid)
-    res.status(201).json(user)
+    res.status(201).json({ ...user, email_sent: emailSent, email_error: emailError })
   }
 )
 

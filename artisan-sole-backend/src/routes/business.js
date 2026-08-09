@@ -569,7 +569,16 @@ router.post('/', ...canManage,
     })
     const ownerId = tx()
 
-    sendBusinessInvitation(email, company, inviteToken).catch(e => console.error('[email business invite]', e.message))
+    // Abwarten und melden statt verschlucken — siehe routes/users.js.
+    let emailSent = true
+    let emailError = null
+    try {
+      await sendBusinessInvitation(email, company, inviteToken)
+    } catch (e) {
+      emailSent = false
+      emailError = e.message
+      console.error('[email business invite]', e.message)
+    }
 
     const row = db.prepare(`
       SELECT b.*, u.email AS owner_email, u.name AS owner_name, u.is_active AS owner_active
@@ -579,6 +588,7 @@ router.post('/', ...canManage,
       id: row.id, name: row.name, contact_email: row.contact_email, contact_phone: row.contact_phone,
       status: row.status, owner_email: row.owner_email, owner_name: row.owner_name,
       owner_active: !!row.owner_active, pending: !!row.invite_token, invite_token: row.invite_token,
+      email_sent: emailSent, email_error: emailError,
       source_request_id: row.source_request_id, created_at: row.created_at,
     })
   }
