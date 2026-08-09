@@ -345,6 +345,10 @@ export function runMigrations(db) {
     // die Eindeutigkeit stellt slugForShoe() beim Schreiben sicher.
     `ALTER TABLE shoes ADD COLUMN slug TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_slug ON shoes(slug)`,
+    // shoes, optionales 3D-Modell (.glb/.gltf) als Pfad unter /uploads.
+    // Kein base64 wie bei den Bildern — solche Dateien sind um Größenordnungen
+    // schwerer und haben in einer Datenbankspalte nichts verloren.
+    `ALTER TABLE shoes ADD COLUMN model_3d TEXT`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

@@ -30,6 +30,31 @@ const upload = multer({
   },
 })
 
+// ── 3D-Modelle je Schuh ───────────────────────────────────────────────────
+// Getrennt vom Bild-Upload: andere Dateitypen, anderes Größenlimit und die
+// Dateien gehören zu einem Modell, nicht in die allgemeine Mediathek.
+const MODEL_EXT = ['.glb', '.gltf']
+const modelUpload = multer({
+  storage,
+  limits: { fileSize: 40 * 1024 * 1024 },   // 3D-Dateien sind deutlich größer
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase()
+    if (MODEL_EXT.includes(ext)) cb(null, true)
+    else cb(new Error('Nur .glb oder .gltf erlaubt'))
+  },
+})
+
+// POST /api/media/model — admin/curator. Liefert { url }.
+router.post('/model', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  modelUpload.single('file')(req, res, (err) => {
+    // Multer meldet Größen- und Typfehler über den Callback, nicht als Wurf.
+    // Ohne diese Behandlung liefe ein zu großer Upload in einen 500er.
+    if (err) return res.status(400).json({ error: err.message || 'Upload fehlgeschlagen' })
+    if (!req.file) return res.status(400).json({ error: 'Keine Datei hochgeladen' })
+    res.json({ url: `/uploads/${req.file.filename}`, name: req.file.originalname })
+  })
+})
+
 // GET /api/media — list all CMS media (returns id, name, url, created_at)
 router.get('/', (req, res) => {
   const db = getDb()
