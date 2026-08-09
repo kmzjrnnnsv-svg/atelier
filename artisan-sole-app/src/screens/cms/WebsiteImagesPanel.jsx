@@ -11,7 +11,6 @@ import { useState, useEffect } from 'react'
 import { Loader2, Save, Check } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import ImagePicker from '../../components/ImagePicker'
-import { invalidatePageHeroes } from '../../lib/pageHeroes'
 
 // Beschreibung aller Homepage-Sektionen mit Bildslot
 const HOMEPAGE_LABELS = {
@@ -114,25 +113,22 @@ export default function WebsiteImagesPanel() {
   const [footer,   setFooter]   = useState({})  // Objekt
   const [cta,      setCta]      = useState({})  // Objekt
   const [explore,  setExplore]  = useState({})  // { hero_image, journal_cta_image, ... }
-  const [heroes,   setHeroes]   = useState({})  // { slot: { image, position } }
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       try {
-        const [hp, ft, ctaCfg, exp, hero] = await Promise.all([
+        const [hp, ft, ctaCfg, exp] = await Promise.all([
           apiFetch('/api/settings/homepage').catch(() => null),
           apiFetch('/api/settings/footer').catch(() => null),
           apiFetch('/api/settings/cta-banner').catch(() => null),
           apiFetch('/api/settings/explore').catch(() => null),
-          apiFetch('/api/settings/page-heroes').catch(() => null),
         ])
         if (cancelled) return
         setHomepage(Array.isArray(hp) ? hp : [])
         setFooter(ft || {})
         setCta(ctaCfg || {})
         setExplore(exp || {})
-        setHeroes(hero || {})
       } catch (e) {
         if (!cancelled) setError(e?.error || 'Laden fehlgeschlagen')
       } finally {
@@ -159,11 +155,7 @@ export default function WebsiteImagesPanel() {
         apiFetch('/api/settings/footer',   { method: 'PUT', body: JSON.stringify({ config: footer }) }),
         apiFetch('/api/settings/cta-banner', { method: 'PUT', body: JSON.stringify(cta) }),
         apiFetch('/api/settings/explore',  { method: 'PUT', body: JSON.stringify({ config: explore }) }),
-        apiFetch('/api/settings/page-heroes', { method: 'PUT', body: JSON.stringify({ heroes }) }),
       ])
-      // Der Header-Cache im Frontend hält die alte Fassung, sonst zeigt ein
-      // Seitenwechsel ohne Neuladen weiter das vorherige Bild.
-      invalidatePageHeroes()
       setSavedAt(Date.now())
     } catch (e) {
       setError(e?.error || 'Speichern fehlgeschlagen')
@@ -222,32 +214,6 @@ export default function WebsiteImagesPanel() {
       {error && (
         <div className="bg-red-50 border border-red-200 px-4 py-3 mb-6 text-[12px] text-red-700">{error}</div>
       )}
-
-      {/* Seiten-Header */}
-      <Section title="Seiten-Header" subtitle="Kopfbild je öffentlicher Seite">
-        {HERO_LABELS.map(h => (
-          <ImageSlot
-            key={h.key}
-            label={h.label}
-            sub={h.sub}
-            value={heroes[h.key]?.image || ''}
-            onChange={val => setHeroes(prev => ({
-              ...prev,
-              [h.key]: { ...(prev[h.key] || {}), image: val },
-            }))}
-            position={heroes[h.key]?.position || 'center'}
-            onPositionChange={val => setHeroes(prev => ({
-              ...prev,
-              [h.key]: { ...(prev[h.key] || {}), position: val },
-            }))}
-            tint={heroes[h.key]?.tint || false}
-            onTintChange={val => setHeroes(prev => ({
-              ...prev,
-              [h.key]: { ...(prev[h.key] || {}), tint: val },
-            }))}
-          />
-        ))}
-      </Section>
 
       {/* Homepage */}
       <Section title="Homepage" subtitle="Startseite (Für dich)">
