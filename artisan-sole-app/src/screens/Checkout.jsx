@@ -6,31 +6,39 @@ import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
 import { useAuth } from '../context/AuthContext'
 import { shoePath } from '../lib/shoePath'
+import { toFormAddress, streetLine } from '../lib/address'
+import { specFromCartItem } from '../lib/orderSpec'
 
 // Accessories are loaded from the DB via shoeAccessoryMap in the store
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 const STEPS = ['Warenkorb', 'Lieferung', 'Rechnung', 'Zubehör', 'Übersicht']
 
+// Der Bestellvorgang lief über die volle Fensterbreite. Auf einem breiten
+// Schirm zog das die Eingabefelder auf zwei Meter auseinander — man musste die
+// Augen wandern lassen, um eine Postleitzahl einzutippen. Ein Formular liest
+// sich in einer Spalte besser, deshalb eine feste, mittige Breite.
+const SHELL = 'w-full max-w-[680px] mx-auto px-5'
+
 function StepBar({ current }) {
   return (
-    <div className="flex items-center gap-1 px-5 lg:px-16 py-4">
+    <div className={`flex items-center gap-1 ${SHELL} py-5`}>
       {STEPS.map((label, i) => (
         <div key={label} className="flex items-center" style={{ flex: i < STEPS.length - 1 ? '1 1 0' : 'none' }}>
           <div className="flex flex-col items-center gap-1">
-            <div className={`w-6 h-6 flex items-center justify-center text-[9px] transition-all ${
+            <div className={`w-7 h-7 flex items-center justify-center text-[11px] transition-all ${
               i < current  ? 'bg-black text-white' :
               i === current ? 'bg-black text-white' :
               'bg-[#f6f5f3] text-black/25'
             }`} style={{ fontWeight: 300 }}>
-              {i < current ? <Check size={10} strokeWidth={2} /> : i + 1}
+              {i < current ? <Check size={12} strokeWidth={2} /> : i + 1}
             </div>
-            <span className={`text-[8px] uppercase whitespace-nowrap font-light ${i === current ? 'text-black' : 'text-black/25'}`} style={{ letterSpacing: '0.1em' }}>
+            <span className={`text-[9px] uppercase whitespace-nowrap ${i === current ? 'text-black font-normal' : 'text-black/35 font-light'}`} style={{ letterSpacing: '0.12em' }}>
               {label}
             </span>
           </div>
           {i < STEPS.length - 1 && (
-            <div className={`h-px flex-1 mx-1.5 mb-4 transition-all ${i < current ? 'bg-black' : 'bg-black/[0.06]'}`} />
+            <div className={`h-px flex-1 mx-2 mb-4 transition-all ${i < current ? 'bg-black' : 'bg-black/10'}`} />
           )}
         </div>
       ))}
@@ -79,10 +87,16 @@ function AddressForm({ title, value, onChange }) {
       <h2 className="text-[10px] text-black/30 mb-4 uppercase font-light" style={{ letterSpacing: '0.2em' }}>{title}</h2>
       <div className="space-y-2">
         <input className={inp} placeholder="Vollständiger Name" value={value.name || ''} onChange={e => f('name', e.target.value)} />
-        <input className={inp} placeholder="Straße + Hausnummer" value={value.street || ''} onChange={e => f('street', e.target.value)} />
+        {/* Getrennt, weil sich eine fehlende Hausnummer sonst nicht bemerken
+            lässt: In einem gemeinsamen Feld ist „Robert Mayer Straße" ausgefüllt
+            und trotzdem unzustellbar. */}
         <div className="flex gap-2">
-          <input className={inp} placeholder="PLZ" value={value.zip || ''} onChange={e => f('zip', e.target.value)} style={{ width: '35%' }} />
-          <input className={inp} placeholder="Stadt" value={value.city || ''} onChange={e => f('city', e.target.value)} style={{ flex: 1 }} />
+          <input className={inp} placeholder="Straße" value={value.street || ''} onChange={e => f('street', e.target.value)} style={{ flex: 1 }} autoComplete="address-line1" />
+          <input className={inp} placeholder="Nr." value={value.house_number || ''} onChange={e => f('house_number', e.target.value)} style={{ width: '30%' }} autoComplete="address-line2" />
+        </div>
+        <div className="flex gap-2">
+          <input className={inp} placeholder="PLZ" value={value.zip || ''} onChange={e => f('zip', e.target.value)} style={{ width: '35%' }} autoComplete="postal-code" />
+          <input className={inp} placeholder="Stadt" value={value.city || ''} onChange={e => f('city', e.target.value)} style={{ flex: 1 }} autoComplete="address-level2" />
         </div>
         <input className={inp} placeholder="Land" value={value.country || ''} onChange={e => f('country', e.target.value)} />
         <input className={inp} placeholder="Telefon (optional)" value={value.phone || ''} onChange={e => f('phone', e.target.value)} />
@@ -92,7 +106,8 @@ function AddressForm({ title, value, onChange }) {
 }
 
 function isAddrComplete(a) {
-  return a.name && a.street && a.zip && a.city && a.country
+  // Die Hausnummer zählt ausdrücklich dazu — ohne sie kommt nichts an.
+  return !!(a.name && a.street && a.house_number && a.zip && a.city && a.country)
 }
 
 // ── Accessory card ────────────────────────────────────────────────────────────
@@ -144,11 +159,11 @@ export default function Checkout() {
   const incomingAccessories = location.state?.accessories || []
   const startStep = product.id ? 1 : 0
 
-  const emptyAddr = { name:'', street:'', zip:'', city:'', country:'Deutschland', phone:'' }
+  const emptyAddr = { name:'', street:'', house_number:'', zip:'', city:'', country:'Deutschland', phone:'' }
   const [step,        setStep]        = useState(startStep)
-  const [delivery,    setDelivery]    = useState(savedDeliveryAddress || emptyAddr)
+  const [delivery,    setDelivery]    = useState(toFormAddress(savedDeliveryAddress) || emptyAddr)
   const [sameBilling, setSameBilling] = useState(true)
-  const [billing,     setBilling]     = useState(savedBillingAddress || emptyAddr)
+  const [billing,     setBilling]     = useState(toFormAddress(savedBillingAddress) || emptyAddr)
   const [saveAddr,    setSaveAddr]    = useState(true)
   const [selectedAcc, setSelectedAcc] = useState([])
   const [placing,     setPlacing]     = useState(false)
@@ -425,7 +440,7 @@ export default function Checkout() {
   if (step === 0 && cart.length === 0 && !product.id) {
     return (
       <div className="min-h-full bg-white">
-        <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-1">
+        <div className={`${SHELL} pt-8 lg:pt-14 pb-1`}>
           <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Artisan Sole</p>
           <p className="text-[28px] lg:text-[36px] font-extralight text-black tracking-tight">Einkaufstasche</p>
         </div>
@@ -447,7 +462,7 @@ export default function Checkout() {
     <div className="flex flex-col min-h-full bg-white">
 
       {/* Header */}
-      <div className="px-5 lg:px-16 pt-4 pb-2 flex items-center gap-3 flex-shrink-0">
+      <div className={`${SHELL} pt-4 pb-2 flex items-center gap-3 flex-shrink-0`}>
         <button onClick={() => {
             if (step > 0) { setStep(s => s - 1); return }
             // Navigate back to the last configured shoe
@@ -469,7 +484,9 @@ export default function Checkout() {
 
       <StepBar current={step} />
 
-      <div className="flex-1 overflow-y-auto pb-6">
+      {/* Der Inhalt der Schritte teilt dieselbe Spaltenbreite wie Kopf- und
+          Fußzeile — sonst stünden Felder und Knöpfe verschieden weit außen. */}
+      <div className="flex-1 overflow-y-auto pb-6 w-full max-w-[680px] mx-auto">
 
         {/* ── Step 0: Cart ── */}
         {step === 0 && (
@@ -630,6 +647,33 @@ export default function Checkout() {
               ))}
             </div>
 
+            {/* Vollständige Aufstellung dessen, was gefertigt wird — dieselbe
+                Quelle wie später in der Bestellung und beim Betreiber. Vorher
+                stand hier nur Leder und Sohle; wer eine Verzierung oder eine
+                Sohlenfarbe gewählt hatte, konnte vor dem Absenden nicht
+                nachsehen, ob sie richtig übernommen wurde. */}
+            {(product.id ? [product] : cart.filter(c => !c.isAccessory)).map((item, idx) => {
+              const rows = specFromCartItem(item)
+              if (!rows.length) return null
+              return (
+                <div key={item.id || idx} className="bg-white p-4 border border-black/[0.06]">
+                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">
+                    Ihre Konfiguration{(product.id ? false : cart.length > 1) ? ` · ${item.name}` : ''}
+                  </p>
+                  <table className="w-full">
+                    <tbody>
+                      {rows.map(([k, v]) => (
+                        <tr key={k}>
+                          <td className="text-[11px] text-black/40 align-top pr-3 py-[2px] whitespace-nowrap">{k}</td>
+                          <td className="text-[11px] text-black/75 align-top py-[2px] text-right">{v}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            })}
+
             {/* Passform bestätigen/ändern (nur Einzelprodukt) */}
             {product.id && (
               <div className="bg-white p-4 border border-black/[0.06]">
@@ -693,7 +737,7 @@ export default function Checkout() {
             <div className="bg-white p-4 border border-black/[0.06]">
               <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">Lieferadresse</p>
               <p className="text-[12px] text-black/55 leading-relaxed">
-                {delivery.name}<br />{delivery.street}<br />{delivery.zip} {delivery.city}<br />{delivery.country}
+                {delivery.name}<br />{streetLine(delivery)}<br />{delivery.zip} {delivery.city}<br />{delivery.country}
               </p>
             </div>
 
@@ -862,7 +906,7 @@ export default function Checkout() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="px-5 lg:px-16 pt-3 flex-shrink-0" style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
+      <div className={`${SHELL} pt-3 flex-shrink-0`} style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
         {step < 4 ? (
           <button onClick={handleNext} disabled={!canNext}
             className={`w-full py-3.5 flex items-center justify-center gap-2 text-[12px] font-light transition-all border ${
