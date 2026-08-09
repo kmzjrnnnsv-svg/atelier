@@ -1,0 +1,239 @@
+# Allgemeine Geschäftsbedingungen
+
+> **Vor der Verwendung ausfüllen:** Alle `[…]`-Stellen ersetzen. Die Klauseln
+> sind bewusst knapp gehalten und auf maßgefertigte Schuhe zugeschnitten.
+> Keine Rechtsberatung — vor dem Livegang von einer Anwältin oder einem Anwalt
+> für IT- und Verbraucherrecht prüfen lassen.
+
+**Stand: [DATUM]**
+
+---
+
+## 1. Geltungsbereich und Vertragspartner
+
+(1) Diese Bedingungen gelten für alle Bestellungen über [WEBSITE] zwischen
+[VOLLSTÄNDIGER NAME], [STRASSE], [PLZ ORT] (nachfolgend „wir") und Ihnen als
+Kundin oder Kunde.
+
+(2) Wir verkaufen an Verbraucher und Unternehmer. Verbraucher ist, wer das
+Geschäft zu Zwecken abschließt, die überwiegend weder der gewerblichen noch
+der selbständigen beruflichen Tätigkeit zugerechnet werden können (§ 13 BGB).
+
+(3) Abweichende Bedingungen der Kundin oder des Kunden gelten nur, wenn wir
+ihnen ausdrücklich in Textform zugestimmt haben.
+
+## 2. Was wir herstellen
+
+(1) Sämtliche angebotenen Schuhe werden **nach Ihren persönlichen Angaben
+einzeln angefertigt**. Es handelt sich nicht um Lagerware. Leistenform,
+Weite, Leder, Farbe, Sohle und Ausführung ergeben sich aus Ihrer
+Konfiguration und Ihren Maßangaben.
+
+(2) Die Fertigung beginnt erst nach vollständigem Zahlungseingang und nach
+Ihrer Freigabe der Konfiguration.
+
+(3) Die Herstellung dauert in der Regel [X] Wochen. Diese Angabe ist ein
+unverbindlicher Richtwert, kein Fixtermin.
+
+## 3. Vertragsschluss
+
+(1) Die Darstellung im Shop ist kein bindendes Angebot, sondern eine
+Aufforderung zur Bestellung.
+
+(2) Mit dem Absenden der Bestellung geben Sie ein verbindliches Angebot ab.
+
+(3) Der Vertrag kommt zustande, wenn wir die Bestellung ausdrücklich
+bestätigen oder mit der Fertigung beginnen. Eine automatische
+Eingangsbestätigung ist noch keine Annahme.
+
+## 4. Maße, Passform und Toleranzen
+
+Diese Ziffer ist der Kern des Vertrages. Bitte lesen Sie sie vollständig.
+
+### 4.1 Sie liefern die Maße
+
+(1) Die Fertigung erfolgt auf Grundlage der Maße, die Sie selbst eingeben
+oder über die Messfunktion unserer Anwendung ermitteln. **Für die Richtigkeit
+dieser Angaben sind Sie verantwortlich.** Wir prüfen sie nicht nach und
+können das auch nicht.
+
+(2) Wir empfehlen ausdrücklich, jedes Maß **von Hand nachzumessen** und mit
+dem angezeigten Wert zu vergleichen, bevor Sie die Konfiguration freigeben.
+Eine Anleitung finden Sie unter [LINK MESSANLEITUNG].
+
+(3) **Messen Sie stets mit den Socken, die Sie zu dem Schuh tragen werden.**
+Sockenstärke verändert Länge und Umfang spürbar.
+
+(4) Messen Sie am späten Nachmittag oder abends. Füße sind im Tagesverlauf
+größer als morgens.
+
+(5) Messen Sie **beide Füße**. Maßgeblich ist der größere Fuß.
+
+### 4.2 Toleranzen
+
+(1) Handwerkliche Fertigung arbeitet nicht im Zehntelmillimeterbereich. Wir
+fertigen mit einer Toleranz von **± 0,3 cm in Länge und Weite**. Abweichungen
+innerhalb dieser Spanne sind kein Mangel, sondern fertigungsbedingt und
+vertragsgemäß.
+
+(2) Auch die Messung selbst — ob von Hand oder über unsere Anwendung — ist
+mit einer Unsicherheit behaftet. Die von der Anwendung ermittelten Werte sind
+Näherungswerte und **ersetzen keine Anprobe**.
+
+### 4.3 Leder arbeitet
+
+(1) Leder dehnt sich beim Einlaufen. Ein neuer Lederschuh sitzt anfangs
+enger als nach einigen Wochen Tragezeit.
+
+(2) Wir wählen deshalb bei Lederschuhen den Leisten bewusst **eher knapp**.
+Das ist gewollt und entspricht dem Schuhmacherhandwerk. Ein anfangs strammer
+Sitz ist kein Mangel.
+
+(3) Bitte laufen Sie neue Schuhe behutsam ein: die ersten Male nur wenige
+Stunden, auf trockenem Untergrund, mit Ihren üblichen Socken.
+
+### 4.4 Wenn die Passform nicht stimmt
+
+(1) Weicht der gelieferte Schuh **außerhalb der Toleranz nach Ziffer 4.2**
+von Ihren freigegebenen Maßen ab, liegt ein Mangel vor. Es gelten die
+gesetzlichen Rechte nach Ziffer 6.
+
+(2) Entspricht der Schuh Ihren freigegebenen Maßen, passt aber dennoch nicht,
+weil die Maße unzutreffend erhoben wurden, liegt **kein Mangel** vor. In
+diesem Fall bieten wir Ihnen freiwillig die Lösung nach Ziffer 7 an.
+
+## 5. Kein Widerrufsrecht
+
+(1) Ein Widerrufsrecht besteht **nicht**. Nach § 312g Abs. 2 Nr. 1 BGB ist es
+bei Waren ausgeschlossen, die nicht vorgefertigt sind und für deren
+Herstellung eine individuelle Auswahl oder Bestimmung durch den Verbraucher
+maßgeblich ist oder die eindeutig auf seine persönlichen Bedürfnisse
+zugeschnitten sind.
+
+(2) Genau das trifft auf unsere Schuhe zu: Jedes Paar entsteht einzeln nach
+Ihren Maßen und Ihrer Konfiguration und ist nicht weiterverkäuflich.
+
+(3) Wir weisen Sie hierauf im Bestellvorgang gesondert hin. Sie bestätigen
+diesen Hinweis vor dem Absenden der Bestellung.
+
+## 6. Mängelhaftung
+
+(1) Es gelten die **gesetzlichen Vorschriften**. Für Verbraucher beträgt die
+Verjährungsfrist bei neuen Sachen **zwei Jahre** ab Ablieferung.
+
+(2) Ein Mangel liegt vor, wenn der Schuh nicht der vereinbarten Ausführung
+entspricht, Verarbeitungsfehler aufweist oder außerhalb der Toleranz nach
+Ziffer 4.2 gefertigt wurde.
+
+(3) **Kein Mangel** sind insbesondere:
+
+- natürliche Merkmale des Leders wie Narbung, Farbschwankungen, Insektenstiche
+  oder Hautfalten — sie zeichnen gewachsenes Material aus;
+- Abweichungen der Farbdarstellung auf Ihrem Bildschirm gegenüber dem
+  gelieferten Leder;
+- Gebrauchsspuren, Dehnung des Leders, Abnutzung von Sohle und Absatz;
+- Schäden durch unsachgemäße Pflege, Nässe, Hitze oder ungeeignete
+  Pflegemittel;
+- ein anfangs enger Sitz nach Ziffer 4.3;
+- Abweichungen innerhalb der Toleranz nach Ziffer 4.2.
+
+(4) Bitte prüfen Sie den Schuh nach Erhalt zeitnah und melden Sie erkennbare
+Mängel möglichst innerhalb von **14 Tagen** an [E-MAIL]. Diese Bitte
+beschränkt Ihre gesetzlichen Rechte nicht — sie hilft uns nur, schnell zu
+helfen. Fügen Sie bitte Fotos bei.
+
+(5) Bei einem Mangel bessern wir zunächst nach oder fertigen neu. Erst wenn
+das fehlschlägt oder unzumutbar ist, kommen Minderung oder Rücktritt in
+Betracht.
+
+## 7. Freiwillige Kulanz bei Nichtgefallen
+
+(1) Sie haben nach Ziffer 5 kein Widerrufsrecht. Weil ein Schuh trotz
+sorgfältiger Arbeit einmal nicht passen oder gefallen kann, bieten wir
+freiwillig Folgendes an:
+
+**Melden Sie sich innerhalb von 14 Tagen nach Erhalt bei uns**, dann suchen
+wir gemeinsam eine Lösung. Möglich sind je nach Fall:
+
+- eine Anpassung des Schuhs, soweit handwerklich machbar;
+- eine Neuanfertigung mit korrigierten Maßen gegen Erstattung unserer
+  Materialkosten;
+- eine **Gutschrift auf ein künftiges Paar** in Höhe eines von uns
+  festgelegten Gegenwerts.
+
+(2) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
+dem Grunde noch der Höhe nach. Eine Auszahlung in Geld erfolgt nicht.
+Über Art und Umfang entscheiden wir im Einzelfall.
+
+(3) Voraussetzung ist, dass der Schuh ungetragen ist — abgesehen von
+kurzer Anprobe in der Wohnung auf sauberem Boden — und vollständig mit
+Zubehör und Verpackung vorliegt.
+
+(4) Aus der Gewährung im Einzelfall entsteht kein Anspruch für die Zukunft.
+
+## 8. Preise, Zahlung, Eigentumsvorbehalt
+
+(1) Alle Preise verstehen sich in Euro.
+[**Variante Kleinunternehmer:** Gemäß § 19 UStG erheben wir keine
+Umsatzsteuer und weisen diese daher nicht aus.]
+[**Variante Regelbesteuerung:** Die Preise enthalten die gesetzliche
+Umsatzsteuer.]
+
+(2) Versandkosten werden im Bestellvorgang gesondert ausgewiesen.
+
+(3) Zahlbar im Voraus per [ZAHLUNGSARTEN]. Die Fertigung beginnt nach
+Zahlungseingang.
+
+(4) Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum.
+
+## 9. Versand und Gefahrübergang
+
+(1) Versand nach [LIEFERGEBIET].
+
+(2) Gegenüber Verbrauchern geht die Gefahr mit Übergabe an Sie über.
+Gegenüber Unternehmern mit Übergabe an den Versanddienstleister.
+
+(3) Transportschäden melden Sie uns bitte umgehend und dokumentieren sie mit
+Fotos. Das hilft uns gegenüber dem Versanddienstleister; Ihre gesetzlichen
+Rechte bleiben davon unberührt.
+
+## 10. Haftung
+
+(1) Wir haften unbeschränkt bei Vorsatz und grober Fahrlässigkeit sowie für
+Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit.
+
+(2) Bei einfacher Fahrlässigkeit haften wir nur bei Verletzung einer Pflicht,
+deren Erfüllung die ordnungsgemäße Durchführung des Vertrages überhaupt erst
+ermöglicht und auf deren Einhaltung Sie regelmäßig vertrauen dürfen
+(Kardinalpflicht). In diesem Fall ist die Haftung auf den vorhersehbaren,
+vertragstypischen Schaden begrenzt.
+
+(3) Im Übrigen ist die Haftung ausgeschlossen.
+
+(4) Die Haftung nach dem Produkthaftungsgesetz bleibt unberührt.
+
+(5) Die Messfunktion unserer Anwendung ist ein **Hilfsmittel**, keine
+medizinische oder orthopädische Vermessung. Für Schäden, die daraus
+entstehen, dass Sie die ermittelten Werte ungeprüft übernehmen, haften wir
+nur nach Maßgabe der Absätze 1 bis 4.
+
+## 11. Verfügbarkeit der Anwendung
+
+Wir bemühen uns um einen störungsfreien Betrieb, schulden aber keine
+ununterbrochene Verfügbarkeit. Wartungsarbeiten, Störungen und Ausfälle
+begründen keinen Anspruch.
+
+## 12. Streitbeilegung
+
+Wir sind zur Teilnahme an einem Streitbeilegungsverfahren vor einer
+Verbraucherschlichtungsstelle **weder verpflichtet noch bereit**.
+
+## 13. Schlussbestimmungen
+
+(1) Es gilt deutsches Recht. Bei Verbrauchern mit gewöhnlichem Aufenthalt in
+der EU bleiben zwingende Verbraucherschutzvorschriften des Aufenthaltsstaates
+unberührt.
+
+(2) Gegenüber Kaufleuten ist Gerichtsstand [ORT].
+
+(3) Sollte eine Bestimmung unwirksam sein, bleibt der übrige Vertrag wirksam.
