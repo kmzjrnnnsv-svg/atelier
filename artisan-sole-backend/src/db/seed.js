@@ -290,12 +290,13 @@ function seedConfiguratorOptions(db) {
   const insGroup = db.prepare(`
     INSERT INTO option_groups (key, label, description, ui_type, required, sort_order)
     VALUES (?, ?, ?, ?, ?, ?)
+    -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
+    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
+    -- schreiben.
     ON CONFLICT(key) DO UPDATE SET
-      label = excluded.label,
-      description = excluded.description,
       ui_type = excluded.ui_type,
       required = excluded.required,
-      sort_order = excluded.sort_order,
       updated_at = datetime('now')
   `)
   GROUPS.forEach(g => insGroup.run(g.key, g.label, g.description, g.ui_type, g.required, g.sort_order))
@@ -461,8 +462,11 @@ export function seedExtendedCatalog(db) {
   const insMat = db.prepare(`
     INSERT INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
     VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
-    ON CONFLICT(key) DO UPDATE SET label=excluded.label, sub=excluded.sub, color=excluded.color,
-      tip=excluded.tip, rating=excluded.rating, sort_order=excluded.sort_order, family=excluded.family,
+    -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
+    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
+    -- schreiben.
+    ON CONFLICT(key) DO UPDATE SET family=excluded.family,
       updated_at = datetime('now')
   `)
   MATERIALS.forEach(m => insMat.run(m.key, m.label, m.sub, m.color, m.tip, m.rating, m.sort, m.family))
@@ -513,8 +517,11 @@ export function seedExtendedCatalog(db) {
   const insCol = db.prepare(`
     INSERT INTO shoe_colors (key, hex, name, available, rating, sort_order, applicable_materials)
     VALUES (?, ?, ?, 1, ?, ?, ?)
-    ON CONFLICT(key) DO UPDATE SET hex=excluded.hex, name=excluded.name, rating=excluded.rating,
-      sort_order=excluded.sort_order, applicable_materials=excluded.applicable_materials,
+    -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
+    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
+    -- schreiben.
+    ON CONFLICT(key) DO UPDATE SET applicable_materials=excluded.applicable_materials,
       updated_at = datetime('now')
   `)
   COLORS.forEach(c => insCol.run(c.key, c.hex, c.name, c.rating, c.sort, c.materials))
@@ -530,8 +537,11 @@ export function seedExtendedCatalog(db) {
   const insGroup = db.prepare(`
     INSERT INTO option_groups (key, label, description, ui_type, required, sort_order)
     VALUES (?, ?, ?, ?, ?, ?)
-    ON CONFLICT(key) DO UPDATE SET label=excluded.label, description=excluded.description,
-      ui_type=excluded.ui_type, required=excluded.required, sort_order=excluded.sort_order,
+    -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
+    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
+    -- schreiben.
+    ON CONFLICT(key) DO UPDATE SET ui_type=excluded.ui_type, required=excluded.required,
       updated_at = datetime('now')
   `)
   NEW_GROUPS.forEach(g => insGroup.run(g.key, g.label, g.description, g.ui_type, g.required, g.sort_order))
@@ -592,26 +602,43 @@ export function seedExtendedCatalog(db) {
   const insOpt = db.prepare(`
     INSERT INTO options (group_id, key, label, description, default_price_extra, applicable_categories, sort_order)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(group_id, key) DO UPDATE SET label=excluded.label, description=excluded.description,
-      default_price_extra=excluded.default_price_extra, applicable_categories=excluded.applicable_categories,
-      sort_order=excluded.sort_order, updated_at = datetime('now')
+    -- default_price_extra steht bewusst NICHT in dieser Liste: Aufpreise
+    -- pflegt der Betreiber im CMS, und ein Serverstart darf sie nicht
+    -- zurueckschreiben.
+    -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
+    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
+    -- schreiben.
+    ON CONFLICT(group_id, key) DO UPDATE SET applicable_categories=excluded.applicable_categories,
+      updated_at = datetime('now')
   `)
   NEW_OPTIONS.forEach((o, i) => {
     const gid = groupIdOf(o.group)
     if (gid) insOpt.run(gid, o.key, o.label, o.description, o.price, o.cats, i)
   })
 
-  // Existing sole options auf Matrix-Preise aktualisieren
-  const SOLE_PRICE_UPDATES = [
-    { key: 'dainite',        price: 10 },
-    { key: 'crepe',          price: 10 },
-    { key: 'beveled_waist',  price: 50 },
-  ]
-  const upSole = db.prepare(`
-    UPDATE options SET default_price_extra = ?, updated_at = datetime('now')
-    WHERE group_id = (SELECT id FROM option_groups WHERE key='sole') AND key = ?
-  `)
-  SOLE_PRICE_UPDATES.forEach(s => upSole.run(s.price, s.key))
+  // Sohlen-Aufpreise: genau einmal nachtragen, danach nie wieder anfassen.
+  //
+  // Vorher lief dieses UPDATE bedingungslos bei jedem Serverstart und schrieb
+  // die im CMS gepflegten Aufpreise mit den hier stehenden Werten zurück. Für
+  // den Betreiber sah es aus, als würde nicht gespeichert — gespeichert wurde,
+  // nur beim nächsten Start wieder überschrieben. Ein Vermerk in settings hält
+  // fest, dass der Nachtrag erledigt ist.
+  const NACHTRAG = 'seed_sole_prices_done'
+  const erledigt = db.prepare('SELECT 1 FROM settings WHERE key = ?').get(NACHTRAG)
+  if (!erledigt) {
+    const SOLE_PRICE_UPDATES = [
+      { key: 'dainite',        price: 10 },
+      { key: 'crepe',          price: 10 },
+      { key: 'beveled_waist',  price: 50 },
+    ]
+    const upSole = db.prepare(`
+      UPDATE options SET default_price_extra = ?, updated_at = datetime('now')
+      WHERE group_id = (SELECT id FROM option_groups WHERE key='sole') AND key = ?
+    `)
+    SOLE_PRICE_UPDATES.forEach(s => upSole.run(s.price, s.key))
+    db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, '1', datetime('now'))").run(NACHTRAG)
+  }
 
   // ── 5) Erweiterte Kategorie-Vorlagen ───────────────────────────
   const optIdOf = (groupKey, optKey) => db.prepare(`
