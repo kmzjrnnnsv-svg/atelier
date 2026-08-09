@@ -536,7 +536,7 @@ const useStore = create((set, get) => ({
 
 // DB snake_case → app camelCase
 function normalizeShoe(r) {
-  return { id: String(r.id), slug: r.slug || null, name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null, ...('hover_image_data' in r ? { hover_image: r.hover_image_data || null } : {}), cost_price: r.cost_price ?? '', promotion_price: r.promotion_price || '', tagline: r.tagline || '', description: r.description || '', locked_decoration: r.locked_decoration || '' }
+  return { id: String(r.id), slug: r.slug || null, model_3d: r.model_3d || null, name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null, ...('hover_image_data' in r ? { hover_image: r.hover_image_data || null } : {}), cost_price: r.cost_price ?? '', promotion_price: r.promotion_price || '', tagline: r.tagline || '', description: r.description || '', locked_decoration: r.locked_decoration || '' }
 }
 function normalizeCurated(r) {
   return { id: String(r.id), name: r.name, color: r.color, badge: r.badge || '' }
@@ -630,6 +630,8 @@ function shoeToApi(s) {
   // der Schuhliste, die sie aus Gewichtsgründen nicht liefert) die
   // hinterlegten Bilder mit null.
   const imageFields = {}
+  // model_3d wie die Bildfelder nur mitschicken, wenn das Formular es kennt.
+  if (s.model_3d !== undefined) imageFields.model_3d = s.model_3d || null
   if (s.default_images !== undefined) {
     const gallery = Array.isArray(s.default_images) ? s.default_images : []
     imageFields.default_images = JSON.stringify(gallery)

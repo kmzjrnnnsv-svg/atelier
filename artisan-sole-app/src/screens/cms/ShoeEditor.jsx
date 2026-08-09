@@ -19,6 +19,7 @@ const emptyForm = {
  image: null,
  hover_image: null,
  default_images: [],
+ model_3d: null,
  cost_price: '',
  promotion_price: '',
 }
@@ -220,6 +221,27 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  setForm(f => ({ ...f, default_images: [...(f.default_images || []), ...dataUrls] }))
  }
 
+ // 3D-Modell hochladen. Anders als die Bilder nicht als base64 in die
+ // Datenbank, sondern als Datei unter /uploads — .glb-Dateien sind um
+ // Größenordnungen schwerer und hätten in einer Spalte nichts verloren.
+ const [modelUploading, setModelUploading] = useState(false)
+ const [modelError, setModelError] = useState(null)
+ const uploadModel = async (file) => {
+ if (!file) return
+ setModelUploading(true); setModelError(null)
+ const form = new FormData()
+ form.append('file', file)
+ try {
+ const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/media/model`, {
+ method: 'POST', body: form, credentials: 'include',
+ }).then(r => r.json())
+ if (res?.url) set('model_3d', res.url)
+ else setModelError(res?.error || 'Upload fehlgeschlagen')
+ } catch (e) {
+ setModelError('Upload fehlgeschlagen')
+ } finally { setModelUploading(false) }
+ }
+
  const removeDefaultImage = (idx) =>
  setForm(f => ({ ...f, default_images: (f.default_images || []).filter((_, i) => i !== idx) }))
 
@@ -338,6 +360,40 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  <input type="file" accept="image/*" multiple className="hidden" onChange={e => addDefaultImages(e.target.files)} />
  </label>
  </div>
+ </div>
+
+ {/* 3D-Modell (optional) */}
+ <div className="mb-5">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1 font-light">3D-Modell (optional)</label>
+ <p className="text-[10px] text-black/25 font-light mb-3 leading-relaxed max-w-xl">
+ Datei im Format .glb oder .gltf, höchstens 40 MB. Nur wenn hier eines
+ hinterlegt ist, erscheint auf der Produktseite der Knopf für die
+ 3D-Ansicht — sonst bleibt er aus.
+ </p>
+ {form.model_3d ? (
+ <div className="flex items-center gap-3">
+ <span className="text-[11px] text-black/60 font-light break-all">{form.model_3d}</span>
+ <button
+ type="button"
+ onClick={() => set('model_3d', null)}
+ className="px-3 h-8 border border-black/15 text-[10px] text-black/50 hover:text-red-600 hover:border-red-300 bg-transparent uppercase tracking-[0.15em]"
+ >
+ Entfernen
+ </button>
+ </div>
+ ) : (
+ <label className={`inline-flex items-center gap-2 px-5 h-9 border border-black/15 text-[10px] uppercase tracking-[0.15em] font-light transition-all ${
+ modelUploading ? 'opacity-40 cursor-wait' : 'text-black/50 hover:border-black hover:text-black cursor-pointer'
+ }`}>
+ <Upload size={12} strokeWidth={1.4} />
+ <span>{modelUploading ? 'Wird geladen …' : '3D-Modell hochladen'}</span>
+ <input
+ type="file" accept=".glb,.gltf" className="hidden" disabled={modelUploading}
+ onChange={e => uploadModel(e.target.files?.[0])}
+ />
+ </label>
+ )}
+ {modelError && <p className="text-[10px] text-red-600 mt-2">{modelError}</p>}
  </div>
 
  {/* Name */}

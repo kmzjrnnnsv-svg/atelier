@@ -44,6 +44,7 @@ import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import ShoeName, { cleanShoeName } from '../lib/shoeName'
 import CustomRequestModal from '../components/CustomRequestModal'
+import ShoeModelViewer from '../components/ShoeModelViewer'
 
 // ── Swipe: wische links/rechts um Option zu wechseln ────────────────────────
 function useSwipe(items, selectedId, onSelect) {
@@ -164,6 +165,8 @@ export default function Customize() {
   // keine eigenen Bilder hat.
   const [defaultImages, setDefaultImages] = useState([])
   const [slide, setSlide] = useState(0)   // Index in der aktiven Strecke
+  // Pfad zum hinterlegten 3D-Modell, null wenn keines existiert.
+  const [model3d, setModel3d] = useState(null)
   // Dynamische Konfigurator-Gruppen (Last, Welt, Heel, Toe, Schnalle, …)
   // Mit eigenem System verwaltet, Material/Color/Sole bleiben separat.
   const [extraOptionGroups, setExtraOptionGroups] = useState([])
@@ -186,12 +189,14 @@ export default function Customize() {
           try { arr = JSON.parse(row?.default_images || '[]') } catch { arr = [] }
           if (!arr.length) arr = [row?.image_data, row?.hover_image_data].filter(Boolean)
           setDefaultImages(arr)
+          setModel3d(row?.model_3d || null)
         })
-        .catch(() => setDefaultImages([]))
+        .catch(() => { setDefaultImages([]); setModel3d(null) })
     } else {
       setPerShoeMaterialKeys([])
       setPerShoeColorVariants([])
       setDefaultImages([])
+      setModel3d(null)
     }
 
     // Material/Color haben eigene Spezial-UIs. `last` (Schuhform) entfällt als
@@ -555,11 +560,7 @@ export default function Customize() {
 
   // 3D Viewer
   const [is3D, setIs3D] = useState(false)
-  const [rotY, setRotY] = useState(0)
   const [zoomed, setZoomed] = useState(false)
-  const [imgIdx, setImgIdx] = useState(0)
-  const drag = useRef({ on: false, x0: 0, a0: 0 })
-  const imgCount = 3 // Platzhalter für Produktbilder-Galerie
 
   // Reviews
   const [reviews, setReviews]       = useState([])
@@ -731,18 +732,6 @@ export default function Customize() {
     if (!product.id) return
     apiFetch(`/api/reviews/shoe/${product.id}`).then(setReviews).catch(() => {})
   }, [product.id])
-
-  // 3D drag
-  const onPointerDown = (e) => {
-    if (!is3D) return
-    drag.current = { on: true, x0: e.clientX, a0: rotY }
-    e.currentTarget.setPointerCapture(e.pointerId)
-  }
-  const onPointerMove = (e) => {
-    if (!drag.current.on) return
-    setRotY(drag.current.a0 + (e.clientX - drag.current.x0) * 0.5)
-  }
-  const onPointerUp = () => { drag.current.on = false }
 
   const addAccessoriesToCart = () => {
     selectedAccessories.forEach(id => {
@@ -951,18 +940,12 @@ export default function Customize() {
               cursor: is3D ? 'grab' : 'default',
               background: '#f6f5f3',
             }}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerLeave={onPointerUp}
           >
             <div
               className="absolute inset-0 flex items-center justify-center"
               style={{
-                transform: is3D
-                  ? `perspective(800px) rotateY(${rotY}deg)`
-                  : zoomed ? 'scale(1.6)' : 'none',
-                transition: drag.current.on ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+                transform: zoomed ? 'scale(1.6)' : 'none',
+                transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             >
               {gallery[activeSlide] ? (
@@ -998,31 +981,27 @@ export default function Customize() {
                 >
                   <ChevronRight size={16} strokeWidth={1.5} />
                 </button>
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
-                  {gallery.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={(e) => { e.stopPropagation(); setSlide(i); setZoomed(false); setIs3D(false) }}
-                      className="w-1.5 h-1.5 rounded-full border-0 p-0 transition-colors"
-                      style={{ backgroundColor: i === activeSlide ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.18)' }}
-                      aria-label={`Bild ${i + 1} von ${slideCount}`}
-                      aria-current={i === activeSlide}
-                    />
-                  ))}
-                </div>
               </>
             )}
 
             {/* Steuerungs-Icons links unten */}
             <div className="absolute left-4 bottom-4 flex items-center gap-2">
-              <button
-                onClick={() => { setIs3D(v => !v); setRotY(0); setZoomed(false) }}
-                className={`w-8 h-8 flex items-center justify-center border transition-all ${
-                  is3D ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
-                }`}
-              >
-                <Box size={14} strokeWidth={1.5} />
-              </button>
+              {/* Nur anbieten, wenn für dieses Modell auch wirklich eine
+                  3D-Datei hinterlegt ist. Vorher stand der Knopf immer da und
+                  kippte das flache Foto per CSS-Perspektive — aus jedem Winkel
+                  außer frontal sah man ein verzerrtes Bild statt eines
+                  gedrehten Schuhs. */}
+              {model3d && (
+                <button
+                  onClick={() => { setIs3D(v => !v); setZoomed(false) }}
+                  aria-label={is3D ? '3D-Ansicht schließen' : '3D-Ansicht öffnen'}
+                  className={`w-8 h-8 flex items-center justify-center border transition-all ${
+                    is3D ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
+                  }`}
+                >
+                  <Box size={14} strokeWidth={1.5} />
+                </button>
+              )}
               <button
                 onClick={() => { setZoomed(v => !v); setIs3D(false) }}
                 className={`w-8 h-8 flex items-center justify-center border transition-all ${
@@ -1036,8 +1015,10 @@ export default function Customize() {
               </button>
             </div>
 
+            {is3D && model3d && <ShoeModelViewer src={resolveImg(model3d)} />}
+
             {/* 3D-Hinweis */}
-            {is3D && (
+            {is3D && model3d && (
               <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
                 <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
                   Ziehen zum Drehen
@@ -1045,12 +1026,25 @@ export default function Customize() {
               </div>
             )}
 
-            {/* Pagination Dots */}
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
-              {Array.from({ length: imgCount }).map((_, i) => (
-                <div key={i} className={`rounded-full transition-all ${i === imgIdx ? 'w-5 h-1.5 bg-black' : 'w-1.5 h-1.5 bg-black/20'}`} />
-              ))}
-            </div>
+            {/* Ein Indikator für die Bilderstrecke. Vorher standen hier zwei
+                Reihen übereinander: diese, gespeist aus einem hartcodierten
+                Platzhalter von drei Bildern, und eine zweite aus der echten
+                Slideshow. Jetzt eine, mittig, anklickbar. */}
+            {slideCount > 1 && !is3D && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+                {gallery.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => { e.stopPropagation(); setSlide(i); setZoomed(false) }}
+                    aria-label={`Bild ${i + 1} von ${slideCount}`}
+                    aria-current={i === activeSlide}
+                    className={`rounded-full border-0 p-0 transition-all ${
+                      i === activeSlide ? 'w-5 h-1.5 bg-black' : 'w-1.5 h-1.5 bg-black/20 hover:bg-black/40'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Swipe-Hinweis (nur mobil) */}
             <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none lg:hidden">
