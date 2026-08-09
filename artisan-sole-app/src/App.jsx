@@ -44,6 +44,7 @@ import NotFound from './screens/NotFound'
 const lazyImports = {
   '/collection': () => import('./screens/ShoeCollection'),
   '/customize':  () => import('./screens/Customize'),
+  '/vermittler': () => import('./screens/AffiliatePortal'),
   '/profile':    () => import('./screens/Profile'),
   '/scan':       () => import('./screens/FootScan'),
   '/mirror':     () => import('./screens/Mirror'),
@@ -73,6 +74,7 @@ export function prefetchRoute(path) {
 // Lazy: loaded on demand per route
 const ShoeCollection    = lazy(lazyImports['/collection'])
 const Customize         = lazy(lazyImports['/customize'])
+const AffiliatePortal   = lazy(lazyImports['/vermittler'])
 const Profile           = lazy(lazyImports['/profile'])
 const FootScan          = lazy(lazyImports['/scan'])
 const Mirror            = lazy(lazyImports['/mirror'])
@@ -306,6 +308,7 @@ function AppRoutes() {
                   schreibt sich auf diese Form um, damit geteilte Links und
                   Lesezeichen weiter funktionieren. */}
               <Route path="/schuhe/:slug" element={<Customize />} />
+              <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
               <Route path="/customize"  element={<Customize />} />
               <Route path="/welcome"    element={<Welcome />} />
               <Route path="/explore"    element={<Explore />} />
@@ -359,6 +362,7 @@ function AppRoutes() {
       <Route path="/business/uebersicht" element={isProdApex ? <ExternalRedirect to={`${BUSINESS_URL}uebersicht`} /> : <CorporateOverview />} />
       <Route path="/collection" element={<ShoeCollection />} />
       <Route path="/schuhe/:slug" element={<Customize />} />
+      <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
       <Route path="/customize"  element={<Customize />} />
       <Route path="/welcome"    element={<Welcome />} />
       <Route path="/explore"    element={<Explore />} />
