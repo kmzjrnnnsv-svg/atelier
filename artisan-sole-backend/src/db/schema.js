@@ -446,6 +446,7 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN extras TEXT`,
     // Verweis auf die gespeicherte Konfiguration — die maßgebliche Quelle.
     `ALTER TABLE orders ADD COLUMN config_id TEXT REFERENCES shoe_configs(id)`,
+    `ALTER TABLE shoe_configs ADD COLUMN in_cart INTEGER NOT NULL DEFAULT 0`,
     `CREATE INDEX IF NOT EXISTS idx_orders_affiliate ON orders(affiliate_code)`,
     `ALTER TABLE shoes ADD COLUMN slug TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_slug ON shoes(slug)`,
@@ -1209,11 +1210,16 @@ export function runMigrations(db) {
       price        TEXT,
       status       TEXT    NOT NULL DEFAULT 'draft'
                            CHECK(status IN ('draft','ordered')),
+      -- Getrennt vom Status statt als weiterer Wert in der CHECK-Bedingung:
+      -- Die lässt sich in SQLite nachträglich nicht ändern, ohne die Tabelle
+      -- neu zu bauen. Ein eigenes Feld ist hier das kleinere Übel.
+      in_cart      INTEGER NOT NULL DEFAULT 0,
       created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at   TEXT    NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_configs_user   ON shoe_configs(user_id);
     CREATE INDEX IF NOT EXISTS idx_configs_status ON shoe_configs(status);
+    CREATE INDEX IF NOT EXISTS idx_configs_open   ON shoe_configs(user_id, shoe_id, status, in_cart);
   `)
 
   // ── Passkeys ─────────────────────────────────────────────────────────────

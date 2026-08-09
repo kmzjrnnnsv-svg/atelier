@@ -78,6 +78,44 @@ router.put('/:id', authenticateOptional, (req, res) => {
   res.json({ id, saved: true })
 })
 
+/**
+ * GET /api/configs/offen/:shoeId — der offene Entwurf dieses Kunden zu diesem
+ * Modell. Offen heißt: noch nicht im Warenkorb und nicht bestellt. Damit kann
+ * der Konfigurator beim Wiederaufrufen fragen, ob fortgesetzt werden soll.
+ */
+router.get('/offen/:shoeId', authenticate, (req, res) => {
+  const row = getDb().prepare(`
+    SELECT * FROM shoe_configs
+    WHERE user_id = ? AND shoe_id = ? AND status = 'draft' AND in_cart = 0
+    ORDER BY updated_at DESC LIMIT 1
+  `).get(req.user.id, req.params.shoeId)
+  res.json(row || null)
+})
+
+/** Entwurf verwerfen — „Nein, neu anfangen". */
+router.delete('/:id', authenticateOptional, (req, res) => {
+  const db = getDb()
+  const row = db.prepare('SELECT user_id, status FROM shoe_configs WHERE id = ?').get(req.params.id)
+  if (!row) return res.json({ ok: true })   // schon weg, auch gut
+  if (row.status === 'ordered') {
+    return res.status(409).json({ error: 'Gehört zu einer Bestellung und bleibt erhalten.' })
+  }
+  if (row.user_id && row.user_id !== req.user?.id) return res.status(403).json({ error: 'Kein Zugriff' })
+  db.prepare('DELETE FROM shoe_configs WHERE id = ?').run(req.params.id)
+  res.json({ ok: true })
+})
+
+/** Als „im Warenkorb" markieren, damit nicht mehr danach gefragt wird. */
+router.post('/:id/warenkorb', authenticateOptional, (req, res) => {
+  const db = getDb()
+  const row = db.prepare('SELECT user_id, status FROM shoe_configs WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Nicht gefunden' })
+  if (row.user_id && row.user_id !== req.user?.id) return res.status(403).json({ error: 'Kein Zugriff' })
+  db.prepare("UPDATE shoe_configs SET in_cart = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(req.body?.in_cart === false ? 0 : 1, req.params.id)
+  res.json({ ok: true })
+})
+
 // GET /api/configs/:id — eigener Entwurf oder Verwaltung
 router.get('/:id', authenticateOptional, (req, res) => {
   const row = getDb().prepare('SELECT * FROM shoe_configs WHERE id = ?').get(req.params.id)

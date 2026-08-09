@@ -50,3 +50,26 @@ export async function flushDraft(id, payload) {
     return false
   }
 }
+
+/** Offener Entwurf dieses Kunden zu diesem Modell — oder null. */
+export async function findOpenDraft(shoeId) {
+  if (!shoeId) return null
+  try { return await apiFetch(`/api/configs/offen/${shoeId}`) } catch { return null }
+}
+
+/** Verwerfen: „Nein, ich fange neu an." */
+export async function discardDraft(id) {
+  if (!id) return
+  clearTimeout(timers.get(id)); timers.delete(id); lastSent.delete(id)
+  try { await apiFetch(`/api/configs/${id}`, { method: 'DELETE' }) } catch { /* egal */ }
+}
+
+/**
+ * Als „im Warenkorb" markieren. Danach fragt der Konfigurator nicht mehr
+ * nach — der Entwurf ist ja weitergereicht und keine liegengebliebene Arbeit.
+ */
+export async function markInCart(id) {
+  if (!id) return
+  try { await apiFetch(`/api/configs/${id}/warenkorb`, { method: 'POST', body: JSON.stringify({ in_cart: true }) }) }
+  catch { /* egal */ }
+}
