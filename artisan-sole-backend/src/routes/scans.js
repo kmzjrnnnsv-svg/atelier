@@ -971,6 +971,18 @@ const saveValidators = [
   body('left_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
   body('right_foot_height').optional().isFloat({ min: 30, max: 120 }),
   body('left_foot_height').optional().isFloat({ min: 30, max: 120 }),
+  body('right_ball_width').optional().isFloat({ min: 50, max: 160 }),
+  body('right_heel_width').optional().isFloat({ min: 30, max: 120 }),
+  body('right_heel_height').optional().isFloat({ min: 5, max: 90 }),
+  body('right_ankle_width').optional().isFloat({ min: 40, max: 140 }),
+  body('right_ankle_height_medial').optional().isFloat({ min: 20, max: 140 }),
+  body('right_ankle_height_lateral').optional().isFloat({ min: 20, max: 140 }),
+  body('left_ball_width').optional().isFloat({ min: 50, max: 160 }),
+  body('left_heel_width').optional().isFloat({ min: 30, max: 120 }),
+  body('left_heel_height').optional().isFloat({ min: 5, max: 90 }),
+  body('left_ankle_width').optional().isFloat({ min: 40, max: 140 }),
+  body('left_ankle_height_medial').optional().isFloat({ min: 20, max: 140 }),
+  body('left_ankle_height_lateral').optional().isFloat({ min: 20, max: 140 }),
   body('eu_size').trim().notEmpty(),
   body('uk_size').trim().notEmpty(),
   body('us_size').trim().notEmpty(),
@@ -1101,6 +1113,10 @@ router.post('/', authenticate, ...saveValidators, async (req, res) => {
           left_toe_girth, left_preball_girth, left_midinstep_girth, left_upper_instep_girth,
           left_long_heel_girth, left_short_heel_girth,
           right_foot_height, left_foot_height,
+          right_ball_width, right_heel_width, right_heel_height,
+          right_ankle_width, right_ankle_height_medial, right_ankle_height_lateral,
+          left_ball_width, left_heel_width, left_heel_height,
+          left_ankle_width, left_ankle_height_medial, left_ankle_height_lateral,
           eu_size, uk_size, us_size, accuracy, notes,
           scanned_with_socks, shoe_type } = req.body
 
@@ -1115,8 +1131,12 @@ router.post('/', authenticate, ...saveValidators, async (req, res) => {
        left_toe_girth, left_preball_girth, left_midinstep_girth, left_upper_instep_girth,
        left_long_heel_girth, left_short_heel_girth,
        right_foot_height, left_foot_height,
+       right_ball_width, right_heel_width, right_heel_height,
+       right_ankle_width, right_ankle_height_medial, right_ankle_height_lateral,
+       left_ball_width, left_heel_width, left_heel_height,
+       left_ankle_width, left_ankle_height_medial, left_ankle_height_lateral,
        eu_size, uk_size, us_size, accuracy, notes, scanned_with_socks, shoe_type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     req.user.id, reference_type, ppm ?? null,
     right_length, right_width, right_arch,
@@ -1132,6 +1152,10 @@ router.post('/', authenticate, ...saveValidators, async (req, res) => {
     left_midinstep_girth ?? null, left_upper_instep_girth ?? null,
     left_long_heel_girth ?? null, left_short_heel_girth ?? null,
     right_foot_height ?? null, left_foot_height ?? null,
+    right_ball_width ?? null, right_heel_width ?? null, right_heel_height ?? null,
+    right_ankle_width ?? null, right_ankle_height_medial ?? null, right_ankle_height_lateral ?? null,
+    left_ball_width ?? null, left_heel_width ?? null, left_heel_height ?? null,
+    left_ankle_width ?? null, left_ankle_height_medial ?? null, left_ankle_height_lateral ?? null,
     eu_size, uk_size, us_size, accuracy, notes ?? null,
     scanned_with_socks != null ? (scanned_with_socks ? 1 : 0) : 1,
     shoe_type ?? 'oxford'
@@ -1394,6 +1418,12 @@ router.patch(
     body('right_long_heel_girth').optional().isFloat({ min: 200, max: 500 }),
     body('right_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
     body('right_foot_height').optional().isFloat({ min: 30, max: 120 }),
+    body('right_ball_width').optional().isFloat({ min: 50, max: 160 }),
+    body('right_heel_width').optional().isFloat({ min: 30, max: 120 }),
+    body('right_heel_height').optional().isFloat({ min: 5, max: 90 }),
+    body('right_ankle_width').optional().isFloat({ min: 40, max: 140 }),
+    body('right_ankle_height_medial').optional().isFloat({ min: 20, max: 140 }),
+    body('right_ankle_height_lateral').optional().isFloat({ min: 20, max: 140 }),
     body('left_length').optional().isFloat({ min: 100, max: 400 }),
     body('left_width').optional().isFloat({ min: 50, max: 200 }),
     body('left_arch').optional().isFloat({ min: 0, max: 80 }),
@@ -1405,6 +1435,12 @@ router.patch(
     body('left_long_heel_girth').optional().isFloat({ min: 200, max: 500 }),
     body('left_short_heel_girth').optional().isFloat({ min: 150, max: 500 }),
     body('left_foot_height').optional().isFloat({ min: 30, max: 120 }),
+    body('left_ball_width').optional().isFloat({ min: 50, max: 160 }),
+    body('left_heel_width').optional().isFloat({ min: 30, max: 120 }),
+    body('left_heel_height').optional().isFloat({ min: 5, max: 90 }),
+    body('left_ankle_width').optional().isFloat({ min: 40, max: 140 }),
+    body('left_ankle_height_medial').optional().isFloat({ min: 20, max: 140 }),
+    body('left_ankle_height_lateral').optional().isFloat({ min: 20, max: 140 }),
   ],
   (req, res) => {
     const errors = validationResult(req)
@@ -1419,18 +1455,26 @@ router.patch(
       right_length, right_width, right_arch,
       right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
       right_long_heel_girth, right_short_heel_girth, right_foot_height,
+      right_ball_width, right_heel_width, right_heel_height,
+      right_ankle_width, right_ankle_height_medial, right_ankle_height_lateral,
       left_length, left_width, left_arch,
       left_ball_girth, left_instep_girth, left_heel_girth, left_waist_girth, left_ankle_girth,
       left_long_heel_girth, left_short_heel_girth, left_foot_height,
+      left_ball_width, left_heel_width, left_heel_height,
+      left_ankle_width, left_ankle_height_medial, left_ankle_height_lateral,
     } = req.body
 
     const fieldMap = {
       right_length, right_width, right_arch,
       right_ball_girth, right_instep_girth, right_heel_girth, right_waist_girth, right_ankle_girth,
       right_long_heel_girth, right_short_heel_girth, right_foot_height,
+      right_ball_width, right_heel_width, right_heel_height,
+      right_ankle_width, right_ankle_height_medial, right_ankle_height_lateral,
       left_length, left_width, left_arch,
       left_ball_girth, left_instep_girth, left_heel_girth, left_waist_girth, left_ankle_girth,
       left_long_heel_girth, left_short_heel_girth, left_foot_height,
+      left_ball_width, left_heel_width, left_heel_height,
+      left_ankle_width, left_ankle_height_medial, left_ankle_height_lateral,
     }
 
     const updates = []
@@ -1725,6 +1769,15 @@ router.post('/lidar-measurements', authenticate, async (req, res) => {
     [`${s}_upper_instep_girth`]: measurements.upper_instep_girth ?? null,
     [`${s}_heel_girth`]:   measurements.heel_girth,
     [`${s}_ankle_girth`]:  measurements.ankle_girth,
+    // Bespoke (Maßschuh) measurements — measured directly in 3D
+    [`${s}_long_heel_girth`]:      measurements.long_heel_girth ?? null,
+    [`${s}_short_heel_girth`]:     measurements.short_heel_girth ?? null,
+    [`${s}_ball_width`]:           measurements.ball_width ?? null,
+    [`${s}_heel_width`]:           measurements.heel_width ?? null,
+    [`${s}_heel_height`]:          measurements.heel_height ?? null,
+    [`${s}_ankle_width`]:          measurements.ankle_width ?? null,
+    [`${s}_ankle_height_medial`]:  measurements.ankle_height_medial ?? null,
+    [`${s}_ankle_height_lateral`]: measurements.ankle_height_lateral ?? null,
     point_count: measurements.point_count,
     // Phase 5: cross-section geometries for shoe last production
     cross_sections: measurements.cross_sections ?? {},
