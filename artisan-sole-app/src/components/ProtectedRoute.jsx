@@ -50,6 +50,37 @@ export function BusinessRoute({ children }) {
   return children
 }
 
+/**
+ * Wohin ein angemeldeter Nutzer gehört, wenn er nicht Kunde ist.
+ * Reihenfolge: Verwaltungsrolle vor Firma vor Vermittler — dieselbe wie bei
+ * der Anmeldung, damit ein Administrator, der nebenbei Vermittler ist, nicht
+ * plötzlich woanders herauskommt.
+ */
+export function ownAreaFor(user) {
+  if (!user) return null
+  if (user.role === 'admin' || user.role === 'curator') return null  // dürfen alles sehen
+  if (user.is_business) return '/business/dashboard'
+  if (user.is_affiliate) return '/vermittler'
+  return null
+}
+
+/**
+ * Laden-Seiten: Firmenkonten und Vermittler werden in ihren eigenen Bereich
+ * geschickt. Sie sollen nach der Anmeldung nicht im Verkauf landen — ihr
+ * Verhältnis zum Haus ist ein anderes, und die Kollektion mit Warenkorb ist
+ * für sie eher verwirrend als nützlich.
+ *
+ * Gäste bleiben unberührt: Der Laden ist ohne Anmeldung offen, und das soll
+ * er bleiben.
+ */
+export function ShopRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <Spinner />
+  const area = ownAreaFor(user)
+  if (area) return <Navigate to={area} replace />
+  return children
+}
+
 // Admin only
 export function AdminRoute({ children }) {
   const { user, loading } = useAuth()

@@ -11,8 +11,10 @@
  * Abrechnung nicht nötig, datenschutzrechtlich unnötiger Ballast.
  */
 import { useEffect, useState } from 'react'
-import { Copy, Check, Download, Clock, Wallet, PackageCheck, AlertCircle, Share2, Mail } from 'lucide-react'
+import { Copy, Check, Download, Clock, Wallet, PackageCheck, AlertCircle, Share2, Mail, LogOut } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
+import { useAuth } from '../context/AuthContext'
+import { HOME_PATH } from '../lib/homePath'
 
 const euro = (n) => `€ ${Number(n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -86,6 +88,7 @@ export default function AffiliatePortal() {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [copied, setCopied] = useState(false)
+  const { logout } = useAuth()
 
   useEffect(() => {
     apiFetch('/api/affiliates/me')
@@ -141,6 +144,19 @@ export default function AffiliatePortal() {
 
   return (
     <div className="min-h-full bg-[#fafaf9] pb-20">
+      {/* Eigene Kopfzeile: Das Portal zeigt die Shop-Navigation nicht mehr,
+          also braucht es hier einen eigenen Weg nach draußen. Ohne ihn käme
+          ein Vermittler nicht einmal mehr zum Abmelden. */}
+      <div className="flex items-center justify-between px-5 lg:px-16 h-14 border-b border-black/[0.06] bg-white">
+        <span className="font-brand text-[11px] text-black/70">ARTISAN SOLE</span>
+        <button
+          onClick={() => { logout(); window.location.replace(HOME_PATH) }}
+          className="flex items-center gap-2 h-11 px-2 bg-transparent border-0 text-[11px] text-black/40 hover:text-black/70 uppercase tracking-[0.16em]"
+        >
+          <LogOut size={14} strokeWidth={1.4} /> Abmelden
+        </button>
+      </div>
+
       <div className="px-5 lg:px-16 pt-10 lg:pt-14 pb-8 max-w-5xl">
         <p className="text-[10px] uppercase tracking-[0.3em] text-black/25 mb-3">Vermittlerbereich</p>
         <h1 className="text-[26px] lg:text-[34px] font-extralight text-black tracking-tight">{a.full_name}</h1>

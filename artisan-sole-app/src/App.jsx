@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute } from './components/ProtectedRoute'
+import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
@@ -142,7 +142,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/vermittler']
 // Pfade mit variablem Ende: hier zählt der Anfang, nicht die genaue Adresse.
 const NO_NAV_PREFIXES = ['/schuhe/']
 const hidesNav = (path) =>
@@ -286,29 +286,29 @@ function AppRoutes() {
           <Suspense fallback={<DelayedSpinner />}>
             <PageTransition>
             <Routes>
-              <Route path="/"           element={<Navigate to="/collection" replace />} />
+              <Route path="/"           element={<ShopRoute><Navigate to="/collection" replace /></ShopRoute>} />
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
               {/* Public, Window Shopping ohne Login */}
               <Route path="/business"   element={<CorporateGifting />} />
               <Route path="/business/uebersicht" element={<CorporateOverview />} />
-              <Route path="/collection" element={<ShoeCollection />} />
+              <Route path="/collection" element={<ShopRoute><ShoeCollection /></ShopRoute>} />
               {/* Sprechende Produktadresse. /customize?id=… bleibt gültig und
                   schreibt sich auf diese Form um, damit geteilte Links und
                   Lesezeichen weiter funktionieren. */}
-              <Route path="/schuhe/:slug" element={<Customize />} />
+              <Route path="/schuhe/:slug" element={<ShopRoute><Customize /></ShopRoute>} />
               <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
               {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs:
                   Der blendet sich unter 768 px vollständig aus und zeigt nur
                   den Hinweis „nur auf iPad und Desktop" — genau der Fall, für
                   den diese Oberfläche gebaut ist. */}
               <Route path="/verwaltung" element={<CMSRoute><MobileAdmin /></CMSRoute>} />
-              <Route path="/customize"  element={<Customize />} />
+              <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
               <Route path="/welcome"    element={<Welcome />} />
               {/* Entdecken/Wissen sind entfallen — alte Adressen führen zur Kollektion. */}
               <Route path="/explore"    element={<Navigate to="/collection" replace />} />
-              <Route path="/accessories" element={<Accessories />} />
+              <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
               <Route path="/help"        element={<HelpSupport />} />
               <Route path="/legal/:type" element={<LegalDoc />} />
               <Route path="/learn"      element={<Navigate to="/collection" replace />} />
@@ -318,9 +318,9 @@ function AppRoutes() {
               <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
               <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
               <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+              <Route path="/wishlist"    element={<ShopRoute><ProtectedRoute><Wishlist /></ProtectedRoute></ShopRoute>} />
               <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-              <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/checkout"    element={<ShopRoute><ProtectedRoute><Checkout /></ProtectedRoute></ShopRoute>} />
               <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
               <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
 
@@ -336,7 +336,7 @@ function AppRoutes() {
 
   const routes = (
     <Routes>
-      <Route path="/"           element={isBusiness ? <CorporateGifting /> : <Navigate to="/collection" replace />} />
+      <Route path="/"           element={<ShopRoute>{isBusiness ? <CorporateGifting /> : <Navigate to="/collection" replace />}</ShopRoute>} />
       {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs: Der
           blendet sich unter 768 px vollständig aus und zeigt nur den Hinweis
           „nur auf iPad und Desktop" — genau der Fall, für den sie gebaut ist. */}
@@ -359,13 +359,13 @@ function AppRoutes() {
           selbst ist / die kanonische URL, /business leitet intern dorthin um. */}
       <Route path="/business"   element={isProdApex ? <ExternalRedirect to={BUSINESS_URL} /> : isBusiness ? <Navigate to="/" replace /> : <CorporateGifting />} />
       <Route path="/business/uebersicht" element={isProdApex ? <ExternalRedirect to={`${BUSINESS_URL}uebersicht`} /> : <CorporateOverview />} />
-      <Route path="/collection" element={<ShoeCollection />} />
-      <Route path="/schuhe/:slug" element={<Customize />} />
+      <Route path="/collection" element={<ShopRoute><ShoeCollection /></ShopRoute>} />
+      <Route path="/schuhe/:slug" element={<ShopRoute><Customize /></ShopRoute>} />
       <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
-      <Route path="/customize"  element={<Customize />} />
+      <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
       <Route path="/welcome"    element={<Welcome />} />
       <Route path="/explore"    element={<Navigate to="/collection" replace />} />
-      <Route path="/accessories" element={<Accessories />} />
+      <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
       <Route path="/help"        element={<HelpSupport />} />
       <Route path="/legal/:type" element={<LegalDoc />} />
       <Route path="/learn"      element={<Navigate to="/collection" replace />} />
@@ -375,9 +375,9 @@ function AppRoutes() {
       <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
       <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
       <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-      <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+      <Route path="/wishlist"    element={<ShopRoute><ProtectedRoute><Wishlist /></ProtectedRoute></ShopRoute>} />
       <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-      <Route path="/checkout"    element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+      <Route path="/checkout"    element={<ShopRoute><ProtectedRoute><Checkout /></ProtectedRoute></ShopRoute>} />
       <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
       <Route path="*"            element={<NotFound />} />
