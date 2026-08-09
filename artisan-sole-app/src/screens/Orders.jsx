@@ -2,10 +2,11 @@
  * Orders.jsx, LV-inspired orders page
  * Warm tones, elegant typography, generous whitespace
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Package, ShoppingBag, Clock, Truck, CheckCircle2, XCircle, Banknote, CreditCard, Scissors, SearchCheck } from 'lucide-react'
 import useStore from '../store/store'
+import { apiFetch } from '../hooks/useApi'
 import CtaBanner from '../components/CtaBanner'
 import { orderSpec } from '../lib/orderSpec'
 
@@ -225,6 +226,12 @@ export default function Orders() {
   const { orders } = useStore()
   const [filter, setFilter] = useState('all')
   const [selectedOrder, setSelectedOrder] = useState(null)
+  // Bisherige Passformen. Sie werden festgehalten statt überschrieben, damit
+  // nachvollziehbar bleibt, nach welchen Maßen ein Paar gebaut wurde.
+  const [passformen, setPassformen] = useState([])
+  useEffect(() => {
+    apiFetch('/api/auth/me/fit-profiles').then(r => setPassformen(Array.isArray(r) ? r : [])).catch(() => {})
+  }, [])
 
   if (selectedOrder) {
     return <JourneyMap order={selectedOrder} onBack={() => setSelectedOrder(null)} />
@@ -251,6 +258,37 @@ export default function Orders() {
           Verfolgen Sie den Status Ihrer Bestellungen.
         </p>
       </div>
+
+      {/* Verlauf der Passformen. Gehört hierher: Wer wissen will, warum ein
+          älteres Paar anders sitzt, findet hier die Maße von damals. */}
+      {passformen.length > 0 && (
+        <div className="px-5 lg:px-16 pb-6">
+          <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">Ihre Passformen</p>
+          <div className="border border-black/[0.06]">
+            {passformen.map((p, i) => (
+              <div key={p.id} className={`flex items-center justify-between px-4 py-3 ${i ? 'border-t border-black/[0.05]' : ''}`}>
+                <span className="min-w-0">
+                  <span className="text-[13px] font-light text-black/75 block">
+                    {p.foot_length_mm} mm Länge{p.ball_girth_mm ? ` · ${p.ball_girth_mm} mm Ballenumfang` : ''}
+                  </span>
+                  <span className="text-[11px] text-black/30 font-light">
+                    seit {String(p.created_at).slice(0, 10)}
+                    {p.source === 'scan' ? ' · aus 3D-Scan' : ''}
+                    {i === 0 ? ' · aktuell' : ''}
+                  </span>
+                </span>
+                <span className="text-[11px] text-black/35 font-light flex-shrink-0">
+                  {p.orders_count === 1 ? '1 Bestellung' : `${p.orders_count} Bestellungen`}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-black/25 font-light mt-2 leading-relaxed">
+            Jede Konfiguration ist an die Passform gebunden, mit der sie entstanden ist.
+            Neue Maße ergeben eine neue Konfiguration.
+          </p>
+        </div>
+      )}
 
       {/* ── Filter tabs ────────────────────────────────────────── */}
       {orders.length > 0 && (

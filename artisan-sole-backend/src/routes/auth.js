@@ -308,7 +308,39 @@ router.put('/me/foot-measurements', authenticate, (req, res) => {
   }
   db.prepare("UPDATE users SET foot_measurements = ?, updated_at = datetime('now') WHERE id = ?")
     .run(JSON.stringify(next), req.user.id)
-  res.json({ foot_measurements: next })
+
+  // Jede Vermessung wird zusätzlich als eigener Eintrag festgehalten, statt
+  // die vorige zu überschreiben. Nur wenn sie sich von der letzten
+  // unterscheidet — sonst entstünde bei jedem Speichern eine Dublette.
+  let fitProfileId = null
+  try {
+    const letzte = db.prepare(
+      'SELECT id, foot_length_mm, ball_girth_mm FROM fit_profiles WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT 1'
+    ).get(req.user.id)
+    if (!letzte || letzte.foot_length_mm !== next.foot_length_mm || letzte.ball_girth_mm !== next.ball_girth_mm) {
+      const info = db.prepare(
+        "INSERT INTO fit_profiles (user_id, foot_length_mm, ball_girth_mm, source) VALUES (?,?,?, 'manual')"
+      ).run(req.user.id, next.foot_length_mm, next.ball_girth_mm)
+      fitProfileId = info.lastInsertRowid
+    } else {
+      fitProfileId = letzte.id
+    }
+  } catch (e) { console.error('[fit_profiles]', e.message) }
+
+  res.json({ foot_measurements: next, fit_profile_id: fitProfileId })
+})
+
+// GET /api/auth/me/fit-profiles — bisherige Passformen, jüngste zuerst
+router.get('/me/fit-profiles', authenticate, (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT p.id, p.foot_length_mm, p.ball_girth_mm, p.source, p.created_at,
+           (SELECT COUNT(*) FROM orders o WHERE o.fit_profile_id = p.id) AS orders_count
+    FROM fit_profiles p
+    WHERE p.user_id = ?
+    ORDER BY p.created_at DESC, p.id DESC
+    LIMIT 50
+  `).all(req.user.id)
+  res.json(rows)
 })
 
 // POST /api/auth/me/fit-feedback — kategorisches Feedback ODER direkte Nudges
@@ -340,7 +372,39 @@ router.post('/me/fit-feedback', authenticate, (req, res) => {
   }
   db.prepare("UPDATE users SET foot_measurements = ?, updated_at = datetime('now') WHERE id = ?")
     .run(JSON.stringify(next), req.user.id)
-  res.json({ foot_measurements: next })
+
+  // Jede Vermessung wird zusätzlich als eigener Eintrag festgehalten, statt
+  // die vorige zu überschreiben. Nur wenn sie sich von der letzten
+  // unterscheidet — sonst entstünde bei jedem Speichern eine Dublette.
+  let fitProfileId = null
+  try {
+    const letzte = db.prepare(
+      'SELECT id, foot_length_mm, ball_girth_mm FROM fit_profiles WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT 1'
+    ).get(req.user.id)
+    if (!letzte || letzte.foot_length_mm !== next.foot_length_mm || letzte.ball_girth_mm !== next.ball_girth_mm) {
+      const info = db.prepare(
+        "INSERT INTO fit_profiles (user_id, foot_length_mm, ball_girth_mm, source) VALUES (?,?,?, 'manual')"
+      ).run(req.user.id, next.foot_length_mm, next.ball_girth_mm)
+      fitProfileId = info.lastInsertRowid
+    } else {
+      fitProfileId = letzte.id
+    }
+  } catch (e) { console.error('[fit_profiles]', e.message) }
+
+  res.json({ foot_measurements: next, fit_profile_id: fitProfileId })
+})
+
+// GET /api/auth/me/fit-profiles — bisherige Passformen, jüngste zuerst
+router.get('/me/fit-profiles', authenticate, (req, res) => {
+  const rows = getDb().prepare(`
+    SELECT p.id, p.foot_length_mm, p.ball_girth_mm, p.source, p.created_at,
+           (SELECT COUNT(*) FROM orders o WHERE o.fit_profile_id = p.id) AS orders_count
+    FROM fit_profiles p
+    WHERE p.user_id = ?
+    ORDER BY p.created_at DESC, p.id DESC
+    LIMIT 50
+  `).all(req.user.id)
+  res.json(rows)
 })
 
 // ── Saved addresses ───────────────────────────────────────────────────────────

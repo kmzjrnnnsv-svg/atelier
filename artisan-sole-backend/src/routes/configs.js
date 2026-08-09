@@ -49,8 +49,8 @@ router.put('/:id', authenticateOptional, (req, res) => {
     INSERT INTO shoe_configs
       (id, user_id, shoe_id, shoe_name, material, color, color_name, sole, extras,
        size_type, eu_size, last_key, last_label, last_width, fit_measurements,
-       accessories, price, status, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'draft', datetime('now'))
+       accessories, price, fit_profile_id, status, updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'draft', datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       user_id     = COALESCE(excluded.user_id, shoe_configs.user_id),
       shoe_id     = excluded.shoe_id,
@@ -68,12 +68,14 @@ router.put('/:id', authenticateOptional, (req, res) => {
       fit_measurements = excluded.fit_measurements,
       accessories = excluded.accessories,
       price       = excluded.price,
+      fit_profile_id = excluded.fit_profile_id,
       updated_at  = datetime('now')
   `).run(
     id, req.user?.id ?? null, b.shoe_id ?? null, str(b.shoe_name), str(b.material),
     str(b.color), str(b.color_name), str(b.sole), json(b.extras),
     str(b.size_type), str(b.eu_size), str(b.last_key), str(b.last_label), str(b.last_width),
     json(b.fit_measurements), json(b.accessories), str(b.price),
+    b.fit_profile_id ?? null,
   )
   res.json({ id, saved: true })
 })

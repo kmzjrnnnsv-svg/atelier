@@ -29,7 +29,9 @@ const parse = (v) => {
  * beim Betreiber ankommt. Vorher zeigte der Bestellvorgang nur Name, Leder
  * und Sohle; erst in der Fertigung wäre aufgefallen, was alles fehlt.
  */
-export function specFromCartItem(item) {
+// Der zweite Parameter wird nicht gelesen; er zwingt React nur dazu, die
+// Liste neu zu berechnen, wenn sich die Passform geändert hat.
+export function specFromCartItem(item, _neuzeichnen) {
   if (!item) return []
   return orderSpec({
     shoe_name: item.name,
