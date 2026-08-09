@@ -122,7 +122,7 @@ export default function AccessoriesPanel() {
           <div className="grid grid-cols-2 gap-5">
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Schlüssel *</label>
-              <input value={form.key} onChange={e => set('key', e.target.value)} placeholder="shoetrees" className={inp} disabled={mode !== 'add'} />
+              <input value={form.key} onChange={e => set('key', e.target.value)} placeholder="shoe_tree_cedar" className={inp} disabled={mode !== 'add'} />
             </div>
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Name *</label>

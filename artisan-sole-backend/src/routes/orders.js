@@ -65,6 +65,7 @@ router.post('/',
       delivery_address, billing_address, accessories, scan_id,
       foot_notes, shipping_method, shipping_cost, coupon_code, business_code, business_campaign_id,
       size_type, last_key, last_label, last_width, fit_measurements,
+      sole, extras,
     } = req.body
 
     // Translate foot notes to English for manufacturer
@@ -147,8 +148,9 @@ router.post('/',
          delivery_address, billing_address, accessories, scan_id, user_order_number, status, order_ref,
          foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price,
          size_type, last_key, last_label, last_width, fit_measurements,
-         business_id, business_code_id, business_coverage, business_campaign_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         business_id, business_code_id, business_coverage, business_campaign_id,
+         sole, extras)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `)
     const insertParams = [
       uid,
@@ -181,6 +183,11 @@ router.post('/',
       bizCode ? bizCode.id : null,
       orderCoverage,
       bizCampaign ? bizCampaign.id : null,
+      sole || null,
+      // Die gewählten Zusatzoptionen als Liste. Für die Fertigung ist das die
+      // eigentliche Spezifikation — ohne sie steht in der Bestellung nur
+      // Modell, Leder und Farbe, und die Manufaktur weiß nicht, was zu bauen ist.
+      Array.isArray(extras) && extras.length ? JSON.stringify(extras) : null,
     ]
 
     let result

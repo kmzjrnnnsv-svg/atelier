@@ -1,23 +1,19 @@
 import { useNavigate } from 'react-router-dom'
-import { Footprints, Sparkles, Shirt, Image, ArrowRight, ShoppingBag, ScanLine, BookOpen, Users } from 'lucide-react'
+import { Footprints, ArrowRight, ShoppingBag, ScanLine, Users } from 'lucide-react'
 import useStore from '../../store/store'
 
 export default function CMSDashboard() {
  const navigate = useNavigate()
- const { shoes, curated, wardrobe, outfits, orders, faqs, articles } = useStore()
+ const { shoes, orders, faqs } = useStore()
 
  const stats = [
  { label: 'Schuhe', value: shoes.length, icon: Footprints, to: '/cms/shoes' },
- { label: 'Curated', value: curated.length, icon: Sparkles, to: '/cms/curated' },
- { label: 'Garderobe', value: wardrobe.length, icon: Shirt, to: '/cms/wardrobe' },
- { label: 'Outfits', value: outfits.length, icon: Image, to: '/cms/outfits' },
  { label: 'Bestellungen', value: orders.length, icon: ShoppingBag, to: '/cms/orders' },
- { label: 'Artikel', value: articles.length, icon: BookOpen, to: '/cms/articles' },
  ]
 
  const quickActions = [
  { label: 'Schuh hinzufügen', to: '/cms/shoes' },
- { label: 'Outfit erstellen', to: '/cms/outfits' },
+ { label: 'Zubehör', to: '/cms/accessories' },
  { label: 'Bestellungen', to: '/cms/orders' },
  { label: 'Foot Scans', to: '/cms/scans' },
  ]

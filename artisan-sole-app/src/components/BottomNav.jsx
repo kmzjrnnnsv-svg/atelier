@@ -46,7 +46,7 @@ function IconBag({ active, count }) {
 
 const PILL_ITEMS = [
   { id: 'shop',    icon: IconProducts,  label: 'Produkte',       path: '/collection' },
-  { id: 'explore', icon: IconExplore,   label: 'Entdecken',      path: '/explore' },
+  { id: 'accessories', icon: IconExplore, label: 'Zubehör',        path: '/accessories' },
   { id: 'bag',     icon: IconBag,       label: 'Einkaufstasche', path: '/checkout' },
 ]
 

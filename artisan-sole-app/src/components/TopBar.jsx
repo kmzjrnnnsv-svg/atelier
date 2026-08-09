@@ -8,7 +8,6 @@ import useStore from '../store/store'
 const NAV_ITEMS = [
   { label: 'Kollektion',     path: '/collection' },
   { label: 'Zubehör',        path: '/accessories' },
-  { label: 'Entdecken',      path: '/explore' },
 ]
 
 const SECONDARY_ITEMS = [
@@ -19,7 +18,7 @@ const SECONDARY_ITEMS = [
 ]
 
 // Pages that are "main" tabs, show burger. Others show back arrow.
-const MAIN_PAGES = new Set(['/collection', '/accessories', '/explore', '/checkout'])
+const MAIN_PAGES = new Set(['/collection', '/accessories', '/checkout'])
 
 const ANIM_DURATION = 280 // ms, must match CSS
 

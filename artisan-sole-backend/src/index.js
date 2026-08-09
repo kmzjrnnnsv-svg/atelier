@@ -12,7 +12,7 @@ import { apiLimiter } from './middleware/rateLimiter.js'
 import authRouter from './routes/auth.js'
 import usersRouter from './routes/users.js'
 import affiliatesRouter from './routes/affiliates.js'
-import { shoesRouter, shoeCardRouter, curatedRouter, wardrobeRouter, outfitsRouter, articlesRouter, materialsRouter, colorsRouter, solesRouter, exploreSectionsRouter, accessoriesRouter } from './routes/content.js'
+import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter } from './routes/content.js'
 import scansRouter      from './routes/scans.js'
 import favoritesRouter  from './routes/favorites.js'
 import ordersRouter     from './routes/orders.js'
@@ -121,11 +121,7 @@ app.use('/api/users',    usersRouter)
 app.use('/api/affiliates', affiliatesRouter)
 app.use('/api/shoes',    shoeCardRouter)
 app.use('/api/shoes',    shoesRouter)
-app.use('/api/curated',  curatedRouter)
-app.use('/api/wardrobe', wardrobeRouter)
-app.use('/api/outfits',  outfitsRouter)
 app.use('/api/scans',     scansRouter)
-app.use('/api/articles',   articlesRouter)
 app.use('/api/materials',  materialsRouter)
 app.use('/api/colors',     colorsRouter)
 app.use('/api/soles',      solesRouter)
@@ -136,7 +132,6 @@ app.use('/api/faqs',      faqsRouter)
 app.use('/api/legal',     legalRouter)
 app.use('/api/settings',  settingsRouter)
 app.use('/api/email-templates', emailTemplatesRouter)
-app.use('/api/explore-sections', exploreSectionsRouter)
 app.use('/api/loyalty', loyaltyRouter)
 app.use('/api/feedback', feedbackRouter)
 app.use('/api/accessories', accessoriesRouter)

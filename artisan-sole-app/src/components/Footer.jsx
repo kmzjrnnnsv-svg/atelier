@@ -13,7 +13,6 @@ const DEFAULTS = {
   // „Über uns“-Spalte
   about_label: 'Über uns',
   about_links: [
-    { label: 'Artisan Sole', path: '/explore' },
     { label: 'Für Unternehmen', path: 'https://business.artisansole.com/' },
     { label: 'Boutiquen',    path: '/help' },
   ],

@@ -109,6 +109,13 @@ const LEATHER_KIT_DESC =
 const SUEDE_KIT_DESC =
   'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich.\n\nInhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei.\n\nGedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.'
 
+// Einkaufspreise je Zubehör-Schlüssel. Nur für Artikel nötig, die als Zugabe
+// im Vermittlerprogramm auftauchen — der Einkaufspreis wird dort von der
+// Provision einbehalten.
+const ACCESSORY_COSTS = {
+  shoe_tree_cedar: 22.0,
+}
+
 // Zubehör, das früher aus diesem Seed stammte und nicht mehr geführt wird.
 // Bewusst als feste Liste und nicht als „alles, was nicht in accData steht":
 // Artikel, die im CMS von Hand angelegt wurden, sollen bleiben.
@@ -161,40 +168,7 @@ export function runMigrations(db) {
       updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS curated_items (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      name        TEXT NOT NULL,
-      color       TEXT NOT NULL,
-      badge       TEXT,
-      sort_order  INTEGER NOT NULL DEFAULT 0,
-      created_by  INTEGER REFERENCES users(id),
-      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    );
 
-    CREATE TABLE IF NOT EXISTS wardrobe_items (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      name        TEXT NOT NULL,
-      color       TEXT NOT NULL,
-      sort_order  INTEGER NOT NULL DEFAULT 0,
-      created_by  INTEGER REFERENCES users(id),
-      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS outfits (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      style       TEXT NOT NULL,
-      description TEXT NOT NULL,
-      top         TEXT NOT NULL,
-      bottom      TEXT NOT NULL,
-      shoe        TEXT NOT NULL,
-      shoe_color  TEXT NOT NULL DEFAULT '#111827',
-      bg_color    TEXT NOT NULL DEFAULT '#f8f9fa',
-      created_by  INTEGER REFERENCES users(id),
-      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    );
 
     CREATE TABLE IF NOT EXISTS foot_scans (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -215,26 +189,10 @@ export function runMigrations(db) {
       created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS articles (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      title       TEXT    NOT NULL,
-      slug        TEXT,
-      excerpt     TEXT,
-      content     TEXT    NOT NULL,
-      category    TEXT    NOT NULL DEFAULT 'Allgemein',
-      featured    INTEGER NOT NULL DEFAULT 0,
-      image_data  TEXT,
-      sort_order  INTEGER NOT NULL DEFAULT 0,
-      created_by  INTEGER REFERENCES users(id),
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
 
     CREATE INDEX IF NOT EXISTS idx_refresh_user    ON refresh_tokens(user_id);
     CREATE INDEX IF NOT EXISTS idx_refresh_exp     ON refresh_tokens(expires_at);
     CREATE INDEX IF NOT EXISTS idx_scans_user      ON foot_scans(user_id);
-    CREATE INDEX IF NOT EXISTS idx_articles_feat   ON articles(featured);
-    CREATE INDEX IF NOT EXISTS idx_articles_cat    ON articles(category);
 
     CREATE TABLE IF NOT EXISTS favorites (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -494,6 +452,11 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN delivered_at   TEXT`,
     // orders, vermittelnder Code (Kleinschreibung, wie in affiliates.code)
     `ALTER TABLE orders ADD COLUMN affiliate_code TEXT`,
+    // Fertigungsspezifikation: Sohle und die gewählten Zusatzoptionen.
+    // Beides wurde im Warenkorb geführt, ging beim Bestellen aber verloren —
+    // in der Bestellung standen nur Modell, Leder und Farbe.
+    `ALTER TABLE orders ADD COLUMN sole   TEXT`,
+    `ALTER TABLE orders ADD COLUMN extras TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_orders_affiliate ON orders(affiliate_code)`,
     `ALTER TABLE shoes ADD COLUMN slug TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_slug ON shoes(slug)`,
@@ -525,7 +488,7 @@ export function runMigrations(db) {
     const accData = [
       { key: 'care_kit_leather', name: 'Lederpflege-Set',              desc: LEATHER_KIT_DESC,        price: 23.7,  sort: 0, rec: '[]',                                  not: '["SNEAKER"]' },
       { key: 'care_kit_suede',   name: 'Wildlederpflege-Set',           desc: SUEDE_KIT_DESC, price: 25.25, sort: 1, rec: '[]',                                  not: '[]' },
-      { key: 'shoe_tree_cedar',  name: 'Zedernholz-Schuhspanner',       desc: 'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    price: 21.0,  sort: 2, rec: '[]',                                  not: '["SNEAKER"]' },
+      { key: 'shoe_tree_cedar',  name: 'Zedernholz-Schuhspanner',       desc: 'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    price: 21.0,  sort: 2, rec: '[]',                                  not: '["SNEAKER"]', cost: 22.0 },
       { key: 'shoe_tree_black',  name: 'Schuhspanner Schwarz',          desc: 'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.',                                        price: 22.0,  sort: 3, rec: '[]',                                  not: '["SNEAKER"]' },
       { key: 'boot_tree_cedar',  name: 'Zedernholz-Stiefelspanner',     desc: 'Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.',                                                price: 29.0,  sort: 4, rec: '["BOOT","CHELSEA","CHUKKA","JODHPUR"]', not: '["SNEAKER"]' },
     ]
@@ -543,6 +506,7 @@ export function runMigrations(db) {
     for (const a of accData) {
       upsert.run(a.key, a.name, a.desc, a.price, a.sort, a.rec, a.not)
     }
+
 
   } catch (e) {
     // Beim allerersten Start gibt es die Tabelle noch nicht — sie entsteht
@@ -683,24 +647,6 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_pred_scan ON scan_predictions(scan_id);
 
     -- ── Explore sections (CMS-editable) ───────────────────────────────────
-    CREATE TABLE IF NOT EXISTS explore_sections (
-      id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      key           TEXT    NOT NULL UNIQUE,
-      label         TEXT    NOT NULL,
-      title         TEXT    NOT NULL,
-      description   TEXT,
-      tag           TEXT    NOT NULL DEFAULT 'Demnächst',
-      color         TEXT    NOT NULL DEFAULT '#1a1a1a',
-      accent        TEXT    NOT NULL DEFAULT '#ffffff',
-      icon          TEXT    NOT NULL DEFAULT 'BookOpen',
-      image_data    TEXT,
-      preview_items TEXT    NOT NULL DEFAULT '[]',
-      visible       INTEGER NOT NULL DEFAULT 1,
-      sort_order    INTEGER NOT NULL DEFAULT 0,
-      created_by    INTEGER REFERENCES users(id),
-      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
-      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
 
     -- Hero settings for explore page stored in settings table
     -- (hero_image, hero_title, hero_subtitle)
@@ -913,8 +859,8 @@ export function runMigrations(db) {
     --
     -- gift_shoetree: Der Vermittler kann seinen Kunden einen Zedernholz-
     -- Schuhspanner schenken. Verrechnet wird der Einkaufspreis aus
-    -- accessories.cost_price, nicht der Ladenpreis — der liegt mit 45 € über
-    -- der Provision selbst. Nur zusammen mit der Prozentwahl sinnvoll.
+    -- accessories.cost_price (22 €), nicht der Ladenpreis. Nur zusammen mit
+    -- der Prozentwahl sinnvoll.
     CREATE TABLE IF NOT EXISTS affiliates (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -1259,6 +1205,15 @@ export function runMigrations(db) {
     let removed = 0
     for (const key of RETIRED_ACCESSORIES) removed += del.run(key).changes
     if (removed) console.log(`🧹 Zubehör entfernt: ${removed} nicht mehr geführte Artikel`)
+
+    // Einkaufspreise. Hier und nicht oben beim Upsert: Der läuft beim ersten
+    // Start ins Leere, weil die Tabelle erst danach entsteht — der Wert hätte
+    // dann bis zum zweiten Start gefehlt, und die Zugabe an den Käufer wäre
+    // dem Vermittler geschenkt worden.
+    // Nur setzen, wo noch nichts steht: Gepflegt wird der Wert im CMS, kein
+    // Deploy darf ihn überschreiben.
+    const cost = db.prepare('UPDATE accessories SET cost_price = ? WHERE key = ? AND cost_price IS NULL')
+    for (const [key, value] of Object.entries(ACCESSORY_COSTS)) cost.run(value, key)
   } catch (e) { console.error('[accessories cleanup]', e.message) }
 
   // ── orders.status: fehlende Zustände in die CHECK-Bedingung aufnehmen ─────

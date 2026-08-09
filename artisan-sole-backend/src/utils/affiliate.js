@@ -30,9 +30,16 @@ const num = (v) => {
   return Number.isFinite(n) ? n : 0
 }
 
-/** Einkaufspreis der Zugabe; ohne hinterlegten Wert wird nichts einbehalten. */
+/**
+ * Einkaufspreis der Zugabe; ohne hinterlegten Wert wird nichts einbehalten.
+ *
+ * Der Schlüssel lautet shoe_tree_cedar. Vorher stand hier 'shoetrees' — ein
+ * Artikel, den es nicht mehr gibt. Die Abfrage lieferte nichts, num(undefined)
+ * ergibt 0, und damit wäre die Zugabe dem Vermittler geschenkt worden, ohne
+ * dass irgendetwas fehlgeschlagen wäre.
+ */
 export function shoetreeCost(db) {
-  const row = db.prepare("SELECT cost_price FROM accessories WHERE key = 'shoetrees'").get()
+  const row = db.prepare("SELECT cost_price FROM accessories WHERE key = 'shoe_tree_cedar'").get()
   return num(row?.cost_price)
 }
 

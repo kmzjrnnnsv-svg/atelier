@@ -9,10 +9,10 @@
  * stehen bereits die Komponenten, und jeder zusätzliche Nicht-Komponenten-
  * Export kostet dem Entwicklungsserver das schnelle Nachladen.
  */
-import { Capacitor } from '@capacitor/core'
-
-const HOSTNAME = typeof window !== 'undefined' ? window.location.hostname : ''
-const isBusinessHost = !Capacitor.isNativePlatform() && /^business\./i.test(HOSTNAME)
-
-// Auf der Business-Subdomain ist / die Startseite, sonst die Kollektion.
-export const HOME_PATH = isBusinessHost ? '/' : '/collection'
+// Immer die Wurzel der jeweiligen Domain, unabhängig von der Rolle. Vorher
+// führte das Abmelden auf der Hauptdomain nach /collection — für einen
+// Kunden dasselbe Ziel, aber ein Firmenkonto oder ein Vermittler landete
+// damit im Verkauf, den beide gerade nicht sehen sollen. Die Wurzel leitet
+// selbst weiter, wohin es gehört: artisansole.com in die Kollektion,
+// business.artisansole.com auf die Firmenseite.
+export const HOME_PATH = '/'

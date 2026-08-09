@@ -9,7 +9,6 @@ import { apiFetch } from '../../hooks/useApi'
 const DEFAULT_CONFIG = {
   about_label: 'Über uns',
   about_links: [
-    { label: 'Artisan Sole', path: '/explore' },
     { label: 'Boutiquen',    path: '/help' },
   ],
   help_label: 'Hilfe',
