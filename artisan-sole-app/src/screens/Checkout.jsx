@@ -185,7 +185,6 @@ export default function Checkout() {
   const [delivery,    setDelivery]    = useState(toFormAddress(savedDeliveryAddress) || emptyAddr)
   const [sameBilling, setSameBilling] = useState(true)
   const [billing,     setBilling]     = useState(toFormAddress(savedBillingAddress) || emptyAddr)
-  const [saveAddr,    setSaveAddr]    = useState(true)
   const [selectedAcc, setSelectedAcc] = useState([])
   const [placing,     setPlacing]     = useState(false)
   const [placed,      setPlaced]      = useState(null)
@@ -347,6 +346,17 @@ export default function Checkout() {
     : step === 2 ? (sameBilling || isAddrComplete(billing))
     : true
 
+  // Sobald die Lieferanschrift vollständig ist, wandert sie ins Konto —
+  // nicht erst mit der Bestellung. Wer den Vorgang abbricht, findet sie beim
+  // nächsten Mal trotzdem vor.
+  useEffect(() => {
+    if (!user || !isAddrComplete(delivery)) return
+    const t = setTimeout(() => {
+      saveAddresses(delivery, sameBilling ? null : billing).catch(() => {})
+    }, 800)
+    return () => clearTimeout(t)
+  }, [user, JSON.stringify(delivery), JSON.stringify(billing), sameBilling])
+
   const handleNext = () => { if (step < 4) setStep(s => s + 1) }
 
   const handlePlace = async () => {
@@ -400,7 +410,7 @@ export default function Checkout() {
         }
         clearCart()
       }
-      if (saveAddr) saveAddresses(delivery, sameBilling ? null : billing).catch(() => {})
+      saveAddresses(delivery, sameBilling ? null : billing).catch(() => {})
       setPlaced(lastRow)
     } catch (e) {
       setError(e?.error || 'Bestellung fehlgeschlagen. Bitte erneut versuchen.')
@@ -587,15 +597,12 @@ export default function Checkout() {
                 </div>
               )}
               <AddressForm title="Lieferadresse" value={delivery} onChange={setDelivery} />
-              <button onClick={() => setSaveAddr(v => !v)}
-                className="w-full flex items-center gap-3 mt-4 p-3 text-left bg-transparent border-0"
-                style={{ background: saveAddr ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
-                <div className={`w-4 h-4 flex items-center justify-center flex-shrink-0 transition-all ${
-                  saveAddr ? 'bg-black' : 'border-[1.5px] border-black/15'}`}>
-                  {saveAddr && <Check size={9} strokeWidth={3} className="text-white" />}
-                </div>
-                <span className="text-[12px] text-black/45">Adresse speichern</span>
-              </button>
+              {/* Kein Kontrollkästchen mehr: Die Anschrift wird immer im Konto
+                  hinterlegt. Wer bestellt, hat sie ohnehin angegeben, und beim
+                  nächsten Mal steht sie sofort da. */}
+              <p className="text-[11px] text-black/30 mt-3 font-light">
+                Die Anschrift wird in Ihrem Konto gespeichert.
+              </p>
             </div>
           </div>
         )}

@@ -148,7 +148,16 @@ export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
 export const materialsRouter  = makeContentRouter('shoe_materials', [], { publicRead: true })
 export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true })
 export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead: true })
-export const accessoriesRouter    = makeContentRouter('accessories', [], { publicRead: true })
+export const accessoriesRouter    = makeContentRouter('accessories', [], {
+  publicRead: true,
+  // Wie bei den Modellen: Löschung vormerken, sonst legt der Seed den Artikel
+  // beim nächsten Start wieder an.
+  onDelete: (row, { db }) => {
+    if (row?.key) {
+      db.prepare("INSERT OR REPLACE INTO deleted_seed_accessories (key, deleted_at) VALUES (?, datetime('now'))").run(row.key)
+    }
+  },
+})
 
 // ── Shoe ↔ Accessory relationship endpoints ────────────────────────────────
 

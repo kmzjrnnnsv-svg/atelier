@@ -492,7 +492,12 @@ export function runMigrations(db) {
       -- Dasselbe galt für Name, Beschreibung, Sortierung und Zuordnung.
       ON CONFLICT(key) DO NOTHING
     `)
+    // Im CMS gelöschte Artikel bleiben gelöscht.
+    const geloescht = new Set(
+      db.prepare('SELECT key FROM deleted_seed_accessories').all().map(r => r.key)
+    )
     for (const a of accData) {
+      if (geloescht.has(a.key)) continue
       upsert.run(a.key, a.name, a.desc, a.price, a.sort, a.rec, a.not)
     }
 
@@ -717,6 +722,13 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_tickets_status ON feedback_tickets(status);
 
     -- ── Accessories (CMS-editable) ────────────────────────────────────────
+    -- Merkliste für im CMS gelöschtes Zubehör. Muss vor der Tabelle stehen,
+    -- damit der Ausgangsbestand unten darauf prüfen kann.
+    CREATE TABLE IF NOT EXISTS deleted_seed_accessories (
+      key        TEXT PRIMARY KEY,
+      deleted_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS accessories (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       key         TEXT    NOT NULL UNIQUE,
@@ -730,14 +742,29 @@ export function runMigrations(db) {
       created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
-    -- Ausgangsbestand einer frischen Datenbank. Muss zu accData weiter oben
-    -- passen; dort werden bestehende Zeilen aktualisiert, hier nur angelegt.
-    INSERT OR IGNORE INTO accessories (key, name, description, price, sort_order) VALUES
-      ('care_kit_leather', 'Lederpflege-Set',          'Alles für die Reinigung und Pflege glatter Leder. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Inhalt: ein Tiegel natürliche Lederpflegecreme, ein Poliertuch aus 100 % Baumwolle, zwei kleine Rundbürsten, zwei große Bürsten. Eine Pflegeanleitung liegt bei. Gedacht für weiche Leder wie Box Calf oder poliertes Kalbsleder. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.',        23.7,  0),
-      ('care_kit_suede',   'Wildlederpflege-Set',      'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich. Inhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei. Gedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.', 25.25, 1),
-      ('shoe_tree_cedar',  'Zedernholz-Schuhspanner',  'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    21.0,  2),
-      ('shoe_tree_black',  'Schuhspanner Schwarz',     'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.',                                        22.0,  3),
-      ('boot_tree_cedar',  'Zedernholz-Stiefelspanner','Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.',                                                29.0,  4);
+    -- Ausgangsbestand einer frischen Datenbank. Jede Zeile prüft zweierlei:
+    -- ob der Artikel schon da ist und ob er im CMS gelöscht wurde. Ohne die
+    -- zweite Prüfung käme gelöschtes Zubehör bei jedem Serverstart zurück.
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'care_kit_leather', 'Lederpflege-Set', 'Alles für die Reinigung und Pflege glatter Leder. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Inhalt: ein Tiegel natürliche Lederpflegecreme, ein Poliertuch aus 100 % Baumwolle, zwei kleine Rundbürsten, zwei große Bürsten. Eine Pflegeanleitung liegt bei. Gedacht für weiche Leder wie Box Calf oder poliertes Kalbsleder. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.', 23.7, 0
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'care_kit_leather')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'care_kit_leather');
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'care_kit_suede', 'Wildlederpflege-Set', 'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich. Inhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei. Gedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.', 25.25, 1
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'care_kit_suede')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'care_kit_suede');
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'shoe_tree_cedar', 'Zedernholz-Schuhspanner', 'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.', 21.0, 2
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'shoe_tree_cedar')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'shoe_tree_cedar');
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'shoe_tree_black', 'Schuhspanner Schwarz', 'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.', 22.0, 3
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'shoe_tree_black')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'shoe_tree_black');
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'boot_tree_cedar', 'Zedernholz-Stiefelspanner', 'Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.', 29.0, 4
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'boot_tree_cedar')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'boot_tree_cedar');
 
     -- ── Shipping configuration ──────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS shipping_config (
@@ -950,6 +977,7 @@ export function runMigrations(db) {
       name       TEXT PRIMARY KEY,
       deleted_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
 
     CREATE TABLE IF NOT EXISTS cms_media (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
