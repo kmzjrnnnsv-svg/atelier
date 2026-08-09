@@ -127,49 +127,10 @@ const shoeValidators = [
 ]
 
 // Outfit validators
-const outfitValidators = [
-  body('style').trim().notEmpty(),
-  body('description').trim().notEmpty(),
-  body('top').trim().notEmpty(),
-  body('bottom').trim().notEmpty(),
-  body('shoe').trim().notEmpty(),
-]
 
 // Article validators
-const articleValidators = [
-  body('title').trim().notEmpty().withMessage('Title required'),
-  body('content').trim().notEmpty().withMessage('Content required'),
-  body('category').optional().trim(),
-  body('slug').optional().trim(),
-  body('excerpt').optional().trim().isLength({ max: 400 }),
-  body('featured').optional().isInt({ min: 0, max: 1 }),
-  body('sort_order').optional().isInt({ min: 0 }),
-  body('image_data').optional().custom(v => {
-    if (v && Buffer.byteLength(v, 'base64') > 3 * 1024 * 1024)
-      throw new Error('Image too large (max 3MB)')
-    return true
-  }),
-]
 
 // Explore section validators
-const exploreValidators = [
-  body('key').trim().notEmpty().withMessage('Key required'),
-  body('label').trim().notEmpty().withMessage('Label required'),
-  body('title').trim().notEmpty().withMessage('Title required'),
-  body('description').optional().trim(),
-  body('tag').optional().trim(),
-  body('color').optional().trim(),
-  body('accent').optional().trim(),
-  body('icon').optional().trim(),
-  body('image_data').optional().custom(v => {
-    if (v && Buffer.byteLength(v, 'base64') > 3 * 1024 * 1024)
-      throw new Error('Image too large (max 3MB)')
-    return true
-  }),
-  body('preview_items').optional().trim(),
-  body('visible').optional().isInt({ min: 0, max: 1 }),
-  body('sort_order').optional().isInt({ min: 0 }),
-]
 
 export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
   publicRead: true,
@@ -184,14 +145,9 @@ export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
     db.prepare('INSERT OR REPLACE INTO deleted_seed_shoes (name, deleted_at) VALUES (?, datetime(\'now\'))').run(row.name)
   },
 })
-export const curatedRouter    = makeContentRouter('curated_items')
-export const wardrobeRouter   = makeContentRouter('wardrobe_items')
-export const outfitsRouter    = makeContentRouter('outfits', outfitValidators)
-export const articlesRouter   = makeContentRouter('articles', articleValidators, { publicRead: true })
 export const materialsRouter  = makeContentRouter('shoe_materials', [], { publicRead: true })
 export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true })
 export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead: true })
-export const exploreSectionsRouter = makeContentRouter('explore_sections', exploreValidators, { publicRead: true })
 export const accessoriesRouter    = makeContentRouter('accessories', [], { publicRead: true })
 
 // ── Shoe ↔ Accessory relationship endpoints ────────────────────────────────

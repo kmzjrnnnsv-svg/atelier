@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, ImagePlus, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone, Home, ExternalLink, Sliders, Building2 } from 'lucide-react'
+import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 import { HOME_PATH } from '../../lib/homePath'
@@ -8,7 +8,7 @@ import { HOME_PATH } from '../../lib/homePath'
 export default function CMSLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const { shoes, curated, wardrobe, outfits, initStore, resetToDefaults } = useStore()
+  const { shoes, initStore, resetToDefaults } = useStore()
 
   useEffect(() => { initStore() }, [])
 
@@ -54,12 +54,6 @@ export default function CMSLayout() {
               { to: '/cms/coupons',  label: 'Gutscheine',   icon: Ticket },
             ]},
             { heading: 'Inhalte', items: [
-              { to: '/cms/homepage', label: 'Homepage',          icon: Home },
-              { to: '/cms/featured', label: 'Empfehlungen',     icon: Star },
-              { to: '/cms/curated',  label: 'Curated Sections', icon: Sparkles },
-              { to: '/cms/wardrobe', label: 'Garderobe',        icon: Shirt },
-              { to: '/cms/outfits',  label: 'Outfits',          icon: Image },
-              { to: '/cms/articles', label: 'Artikel',          icon: BookOpen },
               { to: '/cms/cta-banner', label: 'CTA-Banner',     icon: Megaphone },
               { to: '/cms/product-texts', label: 'Produktseite-Texte', icon: FileText },
               { to: '/cms/footer',     label: 'Footer & Service', icon: FileText },

@@ -168,40 +168,7 @@ export function runMigrations(db) {
       updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS curated_items (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      name        TEXT NOT NULL,
-      color       TEXT NOT NULL,
-      badge       TEXT,
-      sort_order  INTEGER NOT NULL DEFAULT 0,
-      created_by  INTEGER REFERENCES users(id),
-      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    );
 
-    CREATE TABLE IF NOT EXISTS wardrobe_items (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      name        TEXT NOT NULL,
-      color       TEXT NOT NULL,
-      sort_order  INTEGER NOT NULL DEFAULT 0,
-      created_by  INTEGER REFERENCES users(id),
-      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS outfits (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      style       TEXT NOT NULL,
-      description TEXT NOT NULL,
-      top         TEXT NOT NULL,
-      bottom      TEXT NOT NULL,
-      shoe        TEXT NOT NULL,
-      shoe_color  TEXT NOT NULL DEFAULT '#111827',
-      bg_color    TEXT NOT NULL DEFAULT '#f8f9fa',
-      created_by  INTEGER REFERENCES users(id),
-      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    );
 
     CREATE TABLE IF NOT EXISTS foot_scans (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -222,26 +189,10 @@ export function runMigrations(db) {
       created_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
 
-    CREATE TABLE IF NOT EXISTS articles (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      title       TEXT    NOT NULL,
-      slug        TEXT,
-      excerpt     TEXT,
-      content     TEXT    NOT NULL,
-      category    TEXT    NOT NULL DEFAULT 'Allgemein',
-      featured    INTEGER NOT NULL DEFAULT 0,
-      image_data  TEXT,
-      sort_order  INTEGER NOT NULL DEFAULT 0,
-      created_by  INTEGER REFERENCES users(id),
-      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
-      updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
 
     CREATE INDEX IF NOT EXISTS idx_refresh_user    ON refresh_tokens(user_id);
     CREATE INDEX IF NOT EXISTS idx_refresh_exp     ON refresh_tokens(expires_at);
     CREATE INDEX IF NOT EXISTS idx_scans_user      ON foot_scans(user_id);
-    CREATE INDEX IF NOT EXISTS idx_articles_feat   ON articles(featured);
-    CREATE INDEX IF NOT EXISTS idx_articles_cat    ON articles(category);
 
     CREATE TABLE IF NOT EXISTS favorites (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -678,24 +629,6 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_pred_scan ON scan_predictions(scan_id);
 
     -- ── Explore sections (CMS-editable) ───────────────────────────────────
-    CREATE TABLE IF NOT EXISTS explore_sections (
-      id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      key           TEXT    NOT NULL UNIQUE,
-      label         TEXT    NOT NULL,
-      title         TEXT    NOT NULL,
-      description   TEXT,
-      tag           TEXT    NOT NULL DEFAULT 'Demnächst',
-      color         TEXT    NOT NULL DEFAULT '#1a1a1a',
-      accent        TEXT    NOT NULL DEFAULT '#ffffff',
-      icon          TEXT    NOT NULL DEFAULT 'BookOpen',
-      image_data    TEXT,
-      preview_items TEXT    NOT NULL DEFAULT '[]',
-      visible       INTEGER NOT NULL DEFAULT 1,
-      sort_order    INTEGER NOT NULL DEFAULT 0,
-      created_by    INTEGER REFERENCES users(id),
-      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
-      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
-    );
 
     -- Hero settings for explore page stored in settings table
     -- (hero_image, hero_title, hero_subtitle)

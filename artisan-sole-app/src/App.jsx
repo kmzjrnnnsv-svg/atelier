@@ -47,10 +47,7 @@ const lazyImports = {
   '/vermittler': () => import('./screens/AffiliatePortal'),
   '/profile':    () => import('./screens/Profile'),
   '/scan':       () => import('./screens/FootScan'),
-  '/mirror':     () => import('./screens/Mirror'),
-  '/explore':    () => import('./screens/Explore'),
   '/health':     () => import('./screens/HealthInfo'),
-  '/learn':      () => import('./screens/Explore'),
   '/settings':   () => import('./screens/Settings'),
   '/wishlist':   () => import('./screens/Wishlist'),
   '/orders':     () => import('./screens/Orders'),
@@ -77,8 +74,6 @@ const Customize         = lazy(lazyImports['/customize'])
 const AffiliatePortal   = lazy(lazyImports['/vermittler'])
 const Profile           = lazy(lazyImports['/profile'])
 const FootScan          = lazy(lazyImports['/scan'])
-const Mirror            = lazy(lazyImports['/mirror'])
-const Explore           = lazy(lazyImports['/explore'])
 const HealthInfo        = lazy(lazyImports['/health'])
 const Settings          = lazy(lazyImports['/settings'])
 const Wishlist          = lazy(lazyImports['/wishlist'])
@@ -95,12 +90,8 @@ const Welcome           = lazy(lazyImports['/welcome'])
 const CMSLayout            = lazy(() => import('./screens/cms/CMSLayout'))
 const CMSDashboard         = lazy(() => import('./screens/cms/CMSDashboard'))
 const ShoeEditor           = lazy(() => import('./screens/cms/ShoeEditor'))
-const CuratedEditor        = lazy(() => import('./screens/cms/CuratedEditor'))
-const WardrobeEditor       = lazy(() => import('./screens/cms/WardrobeEditor'))
-const OutfitEditor         = lazy(() => import('./screens/cms/OutfitEditor'))
 const UsersPanel           = lazy(() => import('./screens/cms/UsersPanel'))
 const ScansPanel           = lazy(() => import('./screens/cms/ScansPanel'))
-const ArticleEditor        = lazy(() => import('./screens/cms/ArticleEditor'))
 const FAQEditor            = lazy(() => import('./screens/cms/FAQEditor'))
 const LegalEditor          = lazy(() => import('./screens/cms/LegalEditor'))
 const OrdersPanel          = lazy(() => import('./screens/cms/OrdersPanel'))
@@ -110,14 +101,11 @@ const EmailSettings        = lazy(() => import('./screens/cms/EmailSettings'))
 const EmailTemplatesPanel  = lazy(() => import('./screens/cms/EmailTemplatesPanel'))
 const LastSizeChartEditor  = lazy(() => import('./screens/cms/LastSizeChartEditor'))
 const ProductConfigEditor  = lazy(() => import('./screens/cms/ProductConfigEditor'))
-const ExploreEditor        = lazy(() => import('./screens/cms/ExploreEditor'))
 const LoyaltyEditor        = lazy(() => import('./screens/cms/LoyaltyEditor'))
 const FeedbackPanel        = lazy(() => import('./screens/cms/FeedbackPanel'))
 const AccessoriesPanel     = lazy(() => import('./screens/cms/AccessoriesPanel'))
 const ShippingPanel        = lazy(() => import('./screens/cms/ShippingPanel'))
 const CouponsPanel         = lazy(() => import('./screens/cms/CouponsPanel'))
-const FeaturedShoesPanel   = lazy(() => import('./screens/cms/FeaturedShoesPanel'))
-const HomepageEditor       = lazy(() => import('./screens/cms/HomepageEditor'))
 const FooterEditor         = lazy(() => import('./screens/cms/FooterEditor'))
 const ProductTextsEditor   = lazy(() => import('./screens/cms/ProductTextsEditor'))
 const MediaLibrary         = lazy(() => import('./screens/cms/MediaLibrary'))
@@ -211,7 +199,7 @@ function AppRoutes() {
   // Eigenständige Vollbild-Seiten (Firmenbereich, Kampagnen-Beitritt) ohne Shop-Nav.
   const isStandalone = location.pathname.startsWith('/business/') || location.pathname.startsWith('/c/')
   const showNav = !isCMS && !isCorporateLanding && !isStandalone && !hidesNav(location.pathname)
-  const FOOTER_PATHS = ['/collection', '/accessories', '/explore', '/business']
+  const FOOTER_PATHS = ['/collection', '/accessories', '/business']
   const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
 
@@ -249,15 +237,10 @@ function AppRoutes() {
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
               <Route index        element={<CMSDashboard />} />
               <Route path="shoes"    element={<ShoeEditor />} />
-              <Route path="curated"  element={<CuratedEditor />} />
-              <Route path="wardrobe" element={<WardrobeEditor />} />
-              <Route path="outfits"  element={<OutfitEditor />} />
               <Route path="users"    element={<AdminRoute><UsersPanel /></AdminRoute>} />
               <Route path="business" element={<BusinessPanel />} />
               <Route path="scans"    element={<ScansPanel />} />
-              <Route path="explore"  element={<ExploreEditor />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />
-              <Route path="articles" element={<ArticleEditor />} />
               <Route path="cta-banner" element={<CtaBannerPanel />} />
               <Route path="orders"   element={<OrdersPanel />} />
               <Route path="faq"      element={<FAQEditor />} />
@@ -272,8 +255,6 @@ function AppRoutes() {
               <Route path="accessories" element={<AccessoriesPanel />} />
               <Route path="shipping" element={<AdminRoute><ShippingPanel /></AdminRoute>} />
               <Route path="coupons"  element={<AdminRoute><CouponsPanel /></AdminRoute>} />
-              <Route path="featured" element={<FeaturedShoesPanel />} />
-              <Route path="homepage" element={<HomepageEditor />} />
               <Route path="footer" element={<FooterEditor />} />
               <Route path="product-texts" element={<ProductTextsEditor />} />
               <Route path="media" element={<MediaLibrary />} />
@@ -311,16 +292,16 @@ function AppRoutes() {
               <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
               <Route path="/customize"  element={<Customize />} />
               <Route path="/welcome"    element={<Welcome />} />
-              <Route path="/explore"    element={<Explore />} />
+              {/* Entdecken/Wissen sind entfallen — alte Adressen führen zur Kollektion. */}
+              <Route path="/explore"    element={<Navigate to="/collection" replace />} />
               <Route path="/accessories" element={<Accessories />} />
               <Route path="/help"        element={<HelpSupport />} />
               <Route path="/legal/:type" element={<LegalDoc />} />
-              <Route path="/learn"      element={<Navigate to="/explore" replace />} />
+              <Route path="/learn"      element={<Navigate to="/collection" replace />} />
 
               {/* Geschützt, Bestellung & persönliche Daten */}
               <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
-              <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
               <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
               <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
@@ -365,16 +346,15 @@ function AppRoutes() {
       <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
       <Route path="/customize"  element={<Customize />} />
       <Route path="/welcome"    element={<Welcome />} />
-      <Route path="/explore"    element={<Explore />} />
+      <Route path="/explore"    element={<Navigate to="/collection" replace />} />
       <Route path="/accessories" element={<Accessories />} />
       <Route path="/help"        element={<HelpSupport />} />
       <Route path="/legal/:type" element={<LegalDoc />} />
-      <Route path="/learn"      element={<Navigate to="/explore" replace />} />
+      <Route path="/learn"      element={<Navigate to="/collection" replace />} />
 
       {/* Geschützt, Bestellung & persönliche Daten */}
       <Route path="/profile"    element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/scan"       element={<ProtectedRoute><FootScan /></ProtectedRoute>} />
-      <Route path="/mirror"     element={<ProtectedRoute><Mirror /></ProtectedRoute>} />
       <Route path="/health"     element={<ProtectedRoute><HealthInfo /></ProtectedRoute>} />
       <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/wishlist"    element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />

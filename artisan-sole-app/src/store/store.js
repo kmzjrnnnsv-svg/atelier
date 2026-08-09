@@ -34,10 +34,6 @@ function writeLocalMeasurements(m) {
 // Client-side cache, source of truth is the backend DB
 const useStore = create((set, get) => ({
   shoes:      [],
-  curated:    [],
-  wardrobe:   [],
-  outfits:    [],
-  articles:   [],
   favorites:  [],   // string shoe IDs
   orders:     [],
   cart:       [],   // items in shopping cart (not yet ordered)
@@ -51,8 +47,6 @@ const useStore = create((set, get) => ({
   shoeSoles:    [],
   accessories:  [],          // all accessories from DB
   shoeAccessoryMap: {},      // { shoeId: [accessory, ...] }
-  exploreSections: [],
-  exploreHero: { image: null, title: '', subtitle: '' },
   loyaltyTiers: [],
   loyaltyStatus: { points: 0, tier: 'bronze' },
   savedDeliveryAddress: null, // persisted delivery address
@@ -129,12 +123,8 @@ const useStore = create((set, get) => ({
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, curated, wardrobe, outfits, articles, favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, expSections, settings, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData, footMeasData] = await Promise.all([
+      const [shoes, favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, settings, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData, footMeasData] = await Promise.all([
         apiFetch('/api/shoes').catch(() => []),
-        apiFetch('/api/curated').catch(() => []),
-        apiFetch('/api/wardrobe').catch(() => []),
-        apiFetch('/api/outfits').catch(() => []),
-        apiFetch('/api/articles').catch(() => []),
         apiFetch('/api/favorites/mine').catch(() => []),
         apiFetch('/api/orders/mine').catch(() => []),
         apiFetch('/api/faqs').catch(() => []),
@@ -144,8 +134,6 @@ const useStore = create((set, get) => ({
         apiFetch('/api/soles').catch(() => []),
         apiFetch('/api/accessories').catch(() => []),
         apiFetch('/api/accessories/by-shoe').catch(() => ({})),
-        apiFetch('/api/explore-sections').catch(() => []),
-        apiFetch('/api/settings/explore').catch(() => ({})),
         apiFetch('/api/loyalty/tiers').catch(() => []),
         apiFetch('/api/loyalty/my-status').catch(() => ({ points: 0, tier: 'bronze' })),
         apiFetch('/api/auth/me/foot-notes').catch(() => ({ foot_notes: '' })),
@@ -156,10 +144,6 @@ const useStore = create((set, get) => ({
       const settingsMap = settings || {}
       set({
         shoes:      shoes.map(normalizeShoe),
-        curated:    curated.map(normalizeCurated),
-        wardrobe:   wardrobe.map(normalizeWardrobe),
-        outfits:    outfits.map(normalizeOutfit),
-        articles:   articles.map(normalizeArticle).sort(articleSort),
         favorites:  favs.map(r => String(r.shoe_id)),
         orders,
         faqs,
@@ -169,12 +153,6 @@ const useStore = create((set, get) => ({
         shoeSoles:     Array.isArray(soles) ? soles : [],
         accessories:   Array.isArray(accs) ? accs.filter(a => a.is_active) : [],
         shoeAccessoryMap: accByShoe || {},
-        exploreSections: Array.isArray(expSections) ? expSections.map(normalizeExploreSection) : [],
-        exploreHero: {
-          image: settingsMap['explore_hero_image'] || null,
-          title: settingsMap['explore_hero_title'] || '',
-          subtitle: settingsMap['explore_hero_subtitle'] || '',
-        },
         loyaltyTiers: Array.isArray(loyaltyTiers) ? loyaltyTiers.map(normalizeLoyaltyTier) : [],
         loyaltyStatus: loyaltyStatus || { points: 0, tier: 'bronze' },
         footNotes: footNotesData?.foot_notes || '',
@@ -385,47 +363,10 @@ const useStore = create((set, get) => ({
   },
 
   // --- CURATED ---
-  async addCurated(item) {
-    const row = await apiFetch('/api/curated', { method: 'POST', body: JSON.stringify(item) })
-    set(s => ({ curated: [...s.curated, normalizeCurated(row)] }))
-  },
-  async updateCurated(id, updates) {
-    const row = await apiFetch(`/api/curated/${id}`, { method: 'PUT', body: JSON.stringify(updates) })
-    set(s => ({ curated: s.curated.map(c => c.id == id ? normalizeCurated(row) : c) }))
-  },
-  async deleteCurated(id) {
-    await apiFetch(`/api/curated/${id}`, { method: 'DELETE' })
-    set(s => ({ curated: s.curated.filter(c => c.id != id) }))
-  },
 
   // --- WARDROBE ---
-  async addWardrobeItem(item) {
-    const row = await apiFetch('/api/wardrobe', { method: 'POST', body: JSON.stringify(item) })
-    set(s => ({ wardrobe: [...s.wardrobe, normalizeWardrobe(row)] }))
-  },
-  async updateWardrobeItem(id, updates) {
-    const row = await apiFetch(`/api/wardrobe/${id}`, { method: 'PUT', body: JSON.stringify(updates) })
-    set(s => ({ wardrobe: s.wardrobe.map(w => w.id == id ? normalizeWardrobe(row) : w) }))
-  },
-  async deleteWardrobeItem(id) {
-    await apiFetch(`/api/wardrobe/${id}`, { method: 'DELETE' })
-    set(s => ({ wardrobe: s.wardrobe.filter(w => w.id != id) }))
-  },
 
   // --- OUTFITS ---
-  async addOutfit(outfit) {
-    const row = await apiFetch('/api/outfits', { method: 'POST', body: JSON.stringify(outfitToApi(outfit)) })
-    set(s => ({ outfits: [...s.outfits, normalizeOutfit(row)] }))
-  },
-  async updateOutfit(id, updates) {
-    const existing = get().outfits.find(o => o.id == id)
-    const row = await apiFetch(`/api/outfits/${id}`, { method: 'PUT', body: JSON.stringify(outfitToApi({ ...existing, ...updates })) })
-    set(s => ({ outfits: s.outfits.map(o => o.id == id ? normalizeOutfit(row) : o) }))
-  },
-  async deleteOutfit(id) {
-    await apiFetch(`/api/outfits/${id}`, { method: 'DELETE' })
-    set(s => ({ outfits: s.outfits.filter(o => o.id != id) }))
-  },
 
   // --- SHOE MATERIALS ---
   async addMaterial(m) {
@@ -470,34 +411,6 @@ const useStore = create((set, get) => ({
   },
 
   // --- EXPLORE SECTIONS ---
-  async fetchExploreSections() {
-    const rows = await apiFetch('/api/explore-sections')
-    set({ exploreSections: rows.map(normalizeExploreSection) })
-  },
-  async addExploreSection(item) {
-    const row = await apiFetch('/api/explore-sections', { method: 'POST', body: JSON.stringify(exploreSectionToApi(item)) })
-    set(s => ({ exploreSections: [...s.exploreSections, normalizeExploreSection(row)] }))
-  },
-  async updateExploreSection(id, updates) {
-    const existing = get().exploreSections.find(s => s.id == id)
-    const row = await apiFetch(`/api/explore-sections/${id}`, { method: 'PUT', body: JSON.stringify(exploreSectionToApi({ ...existing, ...updates })) })
-    set(s => ({ exploreSections: s.exploreSections.map(es => es.id == id ? normalizeExploreSection(row) : es) }))
-  },
-  async deleteExploreSection(id) {
-    await apiFetch(`/api/explore-sections/${id}`, { method: 'DELETE' })
-    set(s => ({ exploreSections: s.exploreSections.filter(es => es.id != id) }))
-  },
-  async updateExploreHero(hero) {
-    await apiFetch('/api/settings/explore', {
-      method: 'PUT',
-      body: JSON.stringify({
-        explore_hero_image: hero.image || '',
-        explore_hero_title: hero.title || '',
-        explore_hero_subtitle: hero.subtitle || '',
-      }),
-    })
-    set({ exploreHero: hero })
-  },
 
   // --- LOYALTY TIERS ---
   async fetchLoyaltyTiers() {
@@ -519,47 +432,11 @@ const useStore = create((set, get) => ({
   },
 
   // --- ARTICLES ---
-  async addArticle(article) {
-    const row = await apiFetch('/api/articles', { method: 'POST', body: JSON.stringify(articleToApi(article)) })
-    set(s => ({ articles: [...s.articles, normalizeArticle(row)].sort(articleSort) }))
-  },
-  async updateArticle(id, updates) {
-    const existing = get().articles.find(a => a.id == id)
-    const row = await apiFetch(`/api/articles/${id}`, { method: 'PUT', body: JSON.stringify(articleToApi({ ...existing, ...updates })) })
-    set(s => ({ articles: s.articles.map(a => a.id == id ? normalizeArticle(row) : a).sort(articleSort) }))
-  },
-  async deleteArticle(id) {
-    await apiFetch(`/api/articles/${id}`, { method: 'DELETE' })
-    set(s => ({ articles: s.articles.filter(a => a.id != id) }))
-  },
 }))
 
 // DB snake_case → app camelCase
 function normalizeShoe(r) {
   return { id: String(r.id), slug: r.slug || null, model_3d: r.model_3d || null, name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null, ...('hover_image_data' in r ? { hover_image: r.hover_image_data || null } : {}), cost_price: r.cost_price ?? '', promotion_price: r.promotion_price || '', tagline: r.tagline || '', description: r.description || '', locked_decoration: r.locked_decoration || '' }
-}
-function normalizeCurated(r) {
-  return { id: String(r.id), name: r.name, color: r.color, badge: r.badge || '' }
-}
-function normalizeWardrobe(r) {
-  return { id: String(r.id), name: r.name, color: r.color }
-}
-function normalizeOutfit(r) {
-  return { id: String(r.id), style: r.style, description: r.description, top: r.top, bottom: r.bottom, shoe: r.shoe, shoeColor: r.shoe_color, bgColor: r.bg_color }
-}
-function normalizeArticle(r) {
-  return {
-    id: String(r.id),
-    title: r.title,
-    slug: r.slug || '',
-    excerpt: r.excerpt || '',
-    content: r.content,
-    category: r.category || 'Allgemein',
-    featured: r.featured === 1 || r.featured === true,
-    image: r.image_data || null,
-    sortOrder: r.sort_order || 0,
-    createdAt: r.created_at || '',
-  }
 }
 
 function normalizeLoyaltyTier(r) {
@@ -590,39 +467,6 @@ function loyaltyTierToApi(t) {
   }
 }
 
-function normalizeExploreSection(r) {
-  return {
-    id: String(r.id),
-    key: r.key,
-    label: r.label,
-    title: r.title,
-    description: r.description || '',
-    tag: r.tag || 'Demnächst',
-    color: r.color || '#1a1a1a',
-    accent: r.accent || '#ffffff',
-    icon: r.icon || 'BookOpen',
-    image: r.image_data || null,
-    previewItems: (() => { try { return JSON.parse(r.preview_items || '[]') } catch { return [] } })(),
-    visible: r.visible === 1 || r.visible === true,
-    sortOrder: r.sort_order || 0,
-  }
-}
-function exploreSectionToApi(s) {
-  return {
-    key: s.key,
-    label: s.label,
-    title: s.title,
-    description: s.description || '',
-    tag: s.tag || 'Demnächst',
-    color: s.color || '#1a1a1a',
-    accent: s.accent || '#ffffff',
-    icon: s.icon || 'BookOpen',
-    image_data: s.image || null,
-    preview_items: JSON.stringify(s.previewItems || []),
-    visible: s.visible ? 1 : 0,
-    sort_order: s.sortOrder || 0,
-  }
-}
 
 function shoeToApi(s) {
   // Bildfelder nur mitschicken, wenn das Formular sie wirklich kennt — sonst
@@ -644,27 +488,7 @@ function shoeToApi(s) {
   }
   return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, ...imageFields, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null, tagline: s.tagline || null, description: s.description || null }
 }
-function outfitToApi(o) {
-  return { style: o.style, description: o.description, top: o.top, bottom: o.bottom, shoe: o.shoe, shoe_color: o.shoeColor, bg_color: o.bgColor }
-}
-function articleToApi(a) {
-  return {
-    title: a.title,
-    slug: a.slug || a.title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-'),
-    excerpt: a.excerpt || null,
-    content: a.content,
-    category: a.category || 'Allgemein',
-    featured: a.featured ? 1 : 0,
-    image_data: a.image || null,
-    sort_order: a.sortOrder || 0,
-  }
-}
 
 // Sort: featured first, then by sortOrder, then by id
-function articleSort(a, b) {
-  if (b.featured !== a.featured) return b.featured - a.featured
-  if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder
-  return Number(a.id) - Number(b.id)
-}
 
 export default useStore

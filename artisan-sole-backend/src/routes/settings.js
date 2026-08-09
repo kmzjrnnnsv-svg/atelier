@@ -148,7 +148,7 @@ router.get('/cta-banner', (req, res) => {
     text:   result.cta_text   || 'Erleben Sie Ihr persönliches Fitting mit 3D-Fußvermessung. Kostenlos und unverbindlich.',
     button: result.cta_button || 'Termin vereinbaren',
     link:   result.cta_link   || '/scan',
-    pages:  result.cta_pages  ? JSON.parse(result.cta_pages) : ['explore', 'collection', 'accessories'],
+    pages:  result.cta_pages  ? JSON.parse(result.cta_pages) : ['collection', 'accessories'],
     image:  result.cta_image  || '',
   })
 })
@@ -231,26 +231,6 @@ router.put('/product-texts', authenticate, requireRole('admin', 'curator'), (req
   res.json({ message: 'Produktseiten-Texte gespeichert' })
 })
 
-// ─── GET /api/settings/explore — public (explore page service section) ──────
-router.get('/explore', (req, res) => {
-  const db = getDb()
-  const row = db.prepare("SELECT value FROM settings WHERE key = 'explore_config'").get()
-  const config = row?.value ? JSON.parse(row.value) : null
-  res.json(config)
-})
-
-// ─── PUT /api/settings/explore — admin/curator ─────────────────────────────
-router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res) => {
-  const db = getDb()
-  const uid = req.user.id
-  db.prepare(`
-    INSERT INTO settings (key, value, updated_by, updated_at)
-    VALUES ('explore_config', ?, ?, datetime('now'))
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
-  `).run(JSON.stringify(req.body.config), uid)
-  res.json({ message: 'Explore-Einstellungen gespeichert' })
-})
-
 // ─── Seiten-Header (Hero-Bilder der öffentlichen Seiten) ───────────────────
 // Bis hierher steckten diese Bilder fest im Frontend-Code, jeder Wechsel
 // brauchte ein Deployment. Sie liegen jetzt wie alle anderen Website-Bilder
@@ -264,7 +244,7 @@ router.put('/explore', authenticate, requireRole('admin', 'curator'), (req, res)
 // getönte Schatten stehen — dieselbe Rechnung wie scripts/greige-bg.py, nur
 // im Browser statt vorab auf der Datei. Nur für Aufnahmen auf weißem Grund
 // sinnvoll; ein Lifestyle-Foto würde davon nur trüb.
-const HERO_SLOTS = ['collection', 'explore', 'accessories', 'profile', 'help', 'business', 'wishlist']
+const HERO_SLOTS = ['collection', 'accessories', 'profile', 'help', 'business', 'wishlist']
 const HERO_POSITIONS = ['top', 'center', 'bottom', 'left', 'right']
 
 router.get('/page-heroes', (req, res) => {
