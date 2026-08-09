@@ -46,6 +46,7 @@ const useStore = create((set, get) => ({
   shoeColors:   [],
   shoeSoles:    [],
   accessories:  [],          // all accessories from DB
+  myCampaigns:  [],          // Firmen-Aktionen, in denen der Kunde Mitglied ist
   shoeAccessoryMap: {},      // { shoeId: [accessory, ...] }
   loyaltyTiers: [],
   loyaltyStatus: { points: 0, tier: 'bronze' },
@@ -123,7 +124,12 @@ const useStore = create((set, get) => ({
   async initStore() {
     set({ loading: true, error: null })
     try {
-      const [shoes, favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, settings, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData, footMeasData] = await Promise.all([
+      // Die Reihenfolge hier muss Zeile für Zeile zur Liste unten passen.
+      // Sie tat es nicht: Eine Stelle für `settings` stand in der Zuweisung,
+      // ohne dass etwas abgerufen wurde — ab da war alles um eins verschoben.
+      // Die Fußmaße bekamen deshalb nie die Werte vom Server (nur den lokalen
+      // Notbehelf), und die gespeicherte Lieferadresse bekam den Warenkorb.
+      const [shoes, favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData, footMeasData, myCampaigns] = await Promise.all([
         apiFetch('/api/shoes').catch(() => []),
         apiFetch('/api/favorites/mine').catch(() => []),
         apiFetch('/api/orders/mine').catch(() => []),
@@ -140,8 +146,11 @@ const useStore = create((set, get) => ({
         apiFetch('/api/auth/me/addresses').catch(() => ({ delivery: null, billing: null })),
         apiFetch('/api/auth/me/cart').catch(() => ({ cart: [] })),
         apiFetch('/api/auth/me/foot-measurements').catch(() => ({ foot_measurements: null })),
+        // Firmen-Aktionen, an denen dieser Kunde teilnimmt. Der Rabatt daraus
+        // wird im Konfigurator auf den Preis gerechnet, ohne dass jemand einen
+        // Code eingibt — die Teilnahme hängt an der Adresse.
+        apiFetch('/api/business/campaigns/mine').catch(() => []),
       ])
-      const settingsMap = settings || {}
       set({
         shoes:      shoes.map(normalizeShoe),
         favorites:  favs.map(r => String(r.shoe_id)),
@@ -160,6 +169,7 @@ const useStore = create((set, get) => ({
         savedDeliveryAddress: addressData?.delivery || null,
         savedBillingAddress:  addressData?.billing  || null,
         cart: Array.isArray(cartData?.cart) && cartData.cart.length > 0 ? cartData.cart : get().cart,
+        myCampaigns: Array.isArray(myCampaigns) ? myCampaigns : [],
         loading:    false,
       })
     } catch (e) {

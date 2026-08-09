@@ -32,10 +32,12 @@ function LastShapeIcon({ shapeKey, active }) {
   )
 }
 import useStore from '../store/store'
+import { accessoryImages } from '../lib/accessoryImages'
 
 // Relative Bild-URLs (/uploads/…) gegen die API-Base auflösen, base64/http
 // bleiben unverändert.
 const IMG_API_BASE = import.meta.env.VITE_API_URL || ''
+
 const resolveImg = (url) => {
   if (!url) return url
   if (url.startsWith('http') || url.startsWith('data:')) return url
@@ -91,7 +93,7 @@ function Stars({ value, size = 14 }) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
   const { user } = useAuth()
 
   // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
@@ -362,6 +364,7 @@ export default function Customize() {
   const [measGirth, setMeasGirth] = useState('')
   const [measSaving, setMeasSaving] = useState(false)
   const [measOpen, setMeasOpen] = useState(false)   // Inline-Maßeingabe an der Passgenauigkeit
+  const [measAnchor, setMeasAnchor] = useState('kopf')  // 'kopf' | 'passform' — wo sie erscheint
 
   useEffect(() => {
     let cancelled = false
@@ -436,9 +439,15 @@ export default function Customize() {
   }, [fitState, availableLasts.map(v => v.key).join(','), chosenLast])
 
   // Maßeingabe öffnen, mit gespeicherten Werten vorbefüllen (zum Ändern).
-  const openMeasEdit = () => {
+  //
+  // Das Formular erscheint dort, wo geklickt wurde. Es stand fest oben an der
+  // Passgenauigkeit — wer ohne gespeicherte Maße weiter unten im Passform-Block
+  // auf „Maße eingeben" drückte, sah deshalb gar nichts passieren, weil die
+  // Eingabe außerhalb des Bildausschnitts aufging.
+  const openMeasEdit = (anker = 'kopf') => {
     setMeasLen(footMeasurements?.foot_length_mm ? String(footMeasurements.foot_length_mm) : '')
     setMeasGirth(footMeasurements?.ball_girth_mm ? String(footMeasurements.ball_girth_mm) : '')
+    setMeasAnchor(anker)
     setMeasOpen(true)
   }
 
@@ -452,6 +461,48 @@ export default function Customize() {
       setMeasLen(''); setMeasGirth(''); setMeasOpen(false)
     } catch {} finally { setMeasSaving(false) }
   }
+
+  // Ein Formular, zwei mögliche Plätze — gerendert wird es an dem, von dem
+  // aus es geöffnet wurde.
+  const massFormular = (
+            <div className="mt-3 border border-black/10 p-3 max-w-md">
+              <p className="text-[10px] text-black/40 font-light mb-2 leading-relaxed">
+                Zwei Maße genügen, ±0,5 cm sind völlig in Ordnung. Den passenden Leisten ermitteln wir automatisch.
+              </p>
+              <div className="flex items-end gap-2">
+                <label className="flex-1">
+                  <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Fußlänge (mm)</span>
+                  <input
+                    type="number" inputMode="decimal" value={measLen}
+                    onChange={(e) => setMeasLen(e.target.value)} placeholder="z. B. 270"
+                    className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
+                  />
+                </label>
+                <label className="flex-1">
+                  <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Ballenumfang (mm)</span>
+                  <input
+                    type="number" inputMode="decimal" value={measGirth}
+                    onChange={(e) => setMeasGirth(e.target.value)} placeholder="z. B. 255"
+                    className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={saveMeasurements}
+                  disabled={measSaving || !measLen || !measGirth}
+                  className="h-9 px-4 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0 disabled:opacity-30"
+                >
+                  {measSaving ? '…' : 'Übernehmen'}
+                </button>
+              </div>
+              {footMeasurements?.foot_length_mm && (
+                <button type="button" onClick={() => setMeasOpen(false)} className="mt-2 text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">
+                  Abbrechen
+                </button>
+              )}
+            </div>
+  )
+
 
   // Step-by-step guided flow: 0=nichts, 1=Leder gewählt, 3=Farbe gewählt.
   // Ab Stufe 3 werden die Extra-Konfigurator-Gruppen aktiv.
@@ -611,13 +662,36 @@ export default function Customize() {
     if (!name) return false
     return cm.split(',').map(s => s.trim().toLowerCase()).filter(Boolean).some(kw => name.includes(kw))
   }
+  // Nicht jedes Zubehör passt zu jedem Modell. Der Stiefelspanner etwa gehört
+  // zu Stiefeln und sonst nirgendwohin — er stand bislang bei jedem Halbschuh
+  // mit dabei, weil die Kategorie-Felder aus der Datenbank hier ungenutzt
+  // blieben. `not_recommended_for` schließt aus, `recommended_for` schränkt
+  // ein; leer heißt „passt überall".
+  const kategorien = [product.category, product.type, product.build]
+    .map(v => String(v || '').trim().toUpperCase()).filter(Boolean)
+  const liste = (v) => String(v || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+  const kategorieMatchesAccessory = (a) => {
+    const aus = liste(a.not_recommended_for).concat(
+      // Das Feld kommt aus dem CMS auch als JSON-Liste.
+      (() => { try { const j = JSON.parse(a.not_recommended_for || '[]'); return Array.isArray(j) ? j.map(x => String(x).toUpperCase()) : [] } catch { return [] } })()
+    )
+    if (aus.some(k => kategorien.includes(k))) return false
+    const nur = liste(a.recommended_for).concat(
+      (() => { try { const j = JSON.parse(a.recommended_for || '[]'); return Array.isArray(j) ? j.map(x => String(x).toUpperCase()) : [] } catch { return [] } })()
+    )
+    if (!nur.length) return true
+    return nur.some(k => kategorien.includes(k))
+  }
+
   const accessories = (Array.isArray(allAccessories) ? allAccessories : [])
-    .filter(a => a.is_active !== 0 && matMatchesAccessory(a) && colorMatchesAccessory(a))
+    .filter(a => a.is_active !== 0 && matMatchesAccessory(a) && colorMatchesAccessory(a) && kategorieMatchesAccessory(a))
     .map(a => ({
       id: a.id,
       name: a.name,
       price: parseFloat(a.price) || 0,
-      image: a.image_data || null,
+      // Dieselbe Bilderstrecke wie auf der Zubehör-Seite. Vorher wurde nur
+      // `image_data` gelesen — Artikel mit Strecke standen deshalb ohne Bild da.
+      image: accessoryImages(a)[0] || null,
       color: a.color || '#888',
     }))
 
@@ -674,16 +748,37 @@ export default function Customize() {
   const myRev    = reviews.find(r => r.user_id === user?.id)
 
   // Preis: Basispreis aus DB + Options-Aufpreise (inkl. Sohlen-Art) + Zubehör
-  const isPromo = !!user?.is_promotion
-  const promoDiscountPct = user?.promotion_discount_pct || 0
-  const effectivePrice = isPromo && product.promotion_price ? product.promotion_price : product.price
+  //
+  // Zwei Wege zu einem Nachlass, und beide sollen ohne Code-Eingabe wirken:
+  //   • Promotion-Konto — ein Prozentsatz am Benutzer.
+  //   • Firmen-Aktion — der Kunde ist Teilnehmer, weil seine Adresse zur
+  //     hinterlegten Domain gehört. Der Prozentsatz steht an der Kampagne.
+  // Gilt eine Aktion für ausgewählte Modelle, zählt sie nur dort. Treffen
+  // mehrere zu, gewinnt die günstigste — alles andere wäre schwer zu erklären.
+  const campaignForShoe = (Array.isArray(myCampaigns) ? myCampaigns : [])
+    .filter(c => c.status === 'open' && Number(c.discount_pct) > 0)
+    .filter(c => !Array.isArray(c.allowed_shoe_ids) || !c.allowed_shoe_ids.length
+      || c.allowed_shoe_ids.includes(Number(product.id)))
+    .sort((a, b) => Number(b.discount_pct) - Number(a.discount_pct))[0] || null
+
+  const userPct = user?.is_promotion ? (user?.promotion_discount_pct || 0) : 0
+  const campaignPct = campaignForShoe ? Number(campaignForShoe.discount_pct) : 0
+  const promoDiscountPct = Math.max(userPct, campaignPct)
+  const isPromo = promoDiscountPct > 0 || !!user?.is_promotion
+
+  const effectivePrice = user?.is_promotion && product.promotion_price ? product.promotion_price : product.price
   const basePrice = parseFloat(String(effectivePrice).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
   const accessoryTotal = selectedAccessories.reduce((sum, id) => {
     const acc = accessories.find(a => a.id === id)
     return sum + (acc?.price || 0)
   }, 0)
-  const accDiscount = isPromo && promoDiscountPct > 0 ? Math.round(accessoryTotal * promoDiscountPct / 100) : 0
-  const totalPrice = basePrice + extrasPriceTotal + accessoryTotal - accDiscount
+
+  // Der Nachlass gilt auf alles, was konfiguriert wurde — Schuh, Optionen und
+  // Zubehör. Vorher hing er allein am Zubehör, der Schuhpreis blieb stehen.
+  const priceBeforeDiscount = basePrice + extrasPriceTotal + accessoryTotal
+  const totalDiscount = promoDiscountPct > 0 ? Math.round(priceBeforeDiscount * promoDiscountPct / 100) : 0
+  const accDiscount = promoDiscountPct > 0 ? Math.round(accessoryTotal * promoDiscountPct / 100) : 0
+  const totalPrice = priceBeforeDiscount - totalDiscount
   const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
   const displayPrice = formatPrice(totalPrice)
 
@@ -1256,10 +1351,19 @@ export default function Customize() {
                         border: selected ? '1.5px solid black' : '1.5px solid transparent',
                       }}
                     >
-                      <div
-                        className="w-12 h-12 rounded-lg transition-transform group-hover:scale-110"
-                        style={{ background: acc.color, opacity: 0.7 }}
-                      />
+                      {acc.image ? (
+                        <img
+                          src={resolveImg(acc.image)}
+                          alt={acc.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      ) : (
+                        <div
+                          className="w-12 h-12 rounded-lg transition-transform group-hover:scale-110"
+                          style={{ background: acc.color, opacity: 0.7 }}
+                        />
+                      )}
                       {/* Toggle badge */}
                       <div
                         className="absolute top-2 right-2 w-6 h-6 rounded-md flex items-center justify-center transition-all"
@@ -1311,6 +1415,9 @@ export default function Customize() {
               </p>
             )}
             <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
+              {totalDiscount > 0 && (
+                <span className="text-black/25 line-through mr-2">{formatPrice(priceBeforeDiscount)}</span>
+              )}
               {displayPrice}
               {(extrasPriceTotal > 0 || accessoryTotal > 0) && (
                 <span className="text-[10px] text-black/35 ml-2">
@@ -1318,13 +1425,23 @@ export default function Customize() {
                 </span>
               )}
             </p>
+            {/* Woher der Nachlass kommt — sonst wirkt ein abweichender Preis
+                wie ein Fehler. */}
+            {totalDiscount > 0 && (
+              <p className="text-[10px] text-black/45 font-light mt-1" style={{ letterSpacing: '0.06em' }}>
+                {campaignForShoe && campaignPct >= userPct
+                  ? <>{campaignForShoe.business_name || campaignForShoe.name} · {String(promoDiscountPct).replace('.', ',')} % Firmenkondition</>
+                  : <>{String(promoDiscountPct).replace('.', ',')} % Sonderkondition</>}
+                {' '}— Sie sparen {formatPrice(totalDiscount)}
+              </p>
+            )}
             <div className="flex items-center gap-4 mt-2 lg:mt-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
                 {fitState === 'matched' && selectedFit?.fitPercent != null ? (
                   <span className="flex items-center gap-2">
                     <span className="text-[11px] lg:text-[12px] font-medium text-black">{String(selectedFit.fitPercent).replace('.', ',')} %</span>
-                    <button type="button" onClick={openMeasEdit} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">ändern</button>
+                    <button type="button" onClick={() => openMeasEdit('kopf')} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">ändern</button>
                   </span>
                 ) : fitState === 'matching' ? (
                   <span className="text-[11px] lg:text-[12px] text-black/35">wird berechnet …</span>
@@ -1336,12 +1453,12 @@ export default function Customize() {
                 ) : fitState === 'nomatch' && footMeasurements?.foot_length_mm ? (
                   <span className="flex items-center gap-2">
                     <span className="text-[11px] lg:text-[12px] text-black/55">keine Standard-Passform</span>
-                    <button type="button" onClick={openMeasEdit} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                    <button type="button" onClick={() => openMeasEdit('kopf')} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                   </span>
                 ) : (
                   <button
                     type="button"
-                    onClick={openMeasEdit}
+                    onClick={() => openMeasEdit('kopf')}
                     className="text-[11px] lg:text-[12px] text-black/55 underline underline-offset-2 bg-transparent border-0 p-0"
                   >
                     Maße eingeben
@@ -1395,44 +1512,7 @@ export default function Customize() {
             )}
 
             {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
-            {measOpen && (
-              <div className="mt-3 border border-black/10 p-3 max-w-md">
-                <p className="text-[10px] text-black/40 font-light mb-2 leading-relaxed">
-                  Zwei Maße genügen, ±0,5 cm sind völlig in Ordnung. Den passenden Leisten ermitteln wir automatisch.
-                </p>
-                <div className="flex items-end gap-2">
-                  <label className="flex-1">
-                    <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Fußlänge (mm)</span>
-                    <input
-                      type="number" inputMode="decimal" value={measLen}
-                      onChange={(e) => setMeasLen(e.target.value)} placeholder="z. B. 270"
-                      className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
-                    />
-                  </label>
-                  <label className="flex-1">
-                    <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Ballenumfang (mm)</span>
-                    <input
-                      type="number" inputMode="decimal" value={measGirth}
-                      onChange={(e) => setMeasGirth(e.target.value)} placeholder="z. B. 255"
-                      className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={saveMeasurements}
-                    disabled={measSaving || !measLen || !measGirth}
-                    className="h-9 px-4 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0 disabled:opacity-30"
-                  >
-                    {measSaving ? '…' : 'Übernehmen'}
-                  </button>
-                </div>
-                {footMeasurements?.foot_length_mm && (
-                  <button type="button" onClick={() => setMeasOpen(false)} className="mt-2 text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">
-                    Abbrechen
-                  </button>
-                )}
-              </div>
-            )}
+            {measOpen && measAnchor === 'kopf' && massFormular}
           </div>
 
           <div className="h-px bg-black/8 lg:my-4" />
@@ -1742,14 +1822,20 @@ export default function Customize() {
               {/* Keine Maße gespeichert → schlanke Eingabe */}
               {!footMeasurements?.foot_length_mm ? (
                 <div className="border border-black/10 p-4">
-                  <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
-                    Für die perfekte Passform messen wir Ihren Fuß statt zu raten.
-                    Geben Sie Fußlänge und Ballenumfang ein, die passende Schuhform
-                    und Größe ermitteln wir automatisch.
-                  </p>
-                  <button onClick={openMeasEdit} className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0">
-                    Maße eingeben
-                  </button>
+                  {measOpen && measAnchor === 'passform' ? (
+                    massFormular
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
+                        Für die perfekte Passform messen wir Ihren Fuß statt zu raten.
+                        Geben Sie Fußlänge und Ballenumfang ein, die passende Schuhform
+                        und Größe ermitteln wir automatisch.
+                      </p>
+                      <button onClick={() => openMeasEdit('passform')} className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0">
+                        Maße eingeben
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : fitState === 'matching' ? (
                 <p className="text-[11px] text-black/40 font-light">Passform wird ermittelt…</p>
@@ -1793,7 +1879,7 @@ export default function Customize() {
                   ) : availableLasts.length === 1 ? (
                     <p className="text-[10px] text-black/40 font-light">Schuhform: <span className="text-black/70">{availableLasts[0].label}</span></p>
                   ) : null}
-                  <button type="button" onClick={openMeasEdit} className="text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                  <button type="button" onClick={() => openMeasEdit('passform')} className="text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : fitState === 'error' ? (
                 /* Transienter Fehler, KEINE Custom-Anfrage vorschnell anbieten */
@@ -1808,7 +1894,7 @@ export default function Customize() {
                   >
                     Erneut versuchen
                   </button>
-                  <button type="button" onClick={openMeasEdit} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                  <button type="button" onClick={() => openMeasEdit('passform')} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : (
                 /* Maße vorhanden, aber kein Treffer, Custom-Anfrage */
@@ -1823,9 +1909,14 @@ export default function Customize() {
                   >
                     Custom Made anfragen
                   </button>
-                  <button type="button" onClick={openMeasEdit} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                  <button type="button" onClick={() => openMeasEdit('passform')} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               )}
+
+              {/* Sind bereits Maße hinterlegt, hängt das Formular unten am
+                  Block — der Fall ohne Maße zeigt es weiter oben anstelle des
+                  Hinweistextes. */}
+              {measOpen && measAnchor === 'passform' && footMeasurements?.foot_length_mm && massFormular}
             </div>
 
             {/* Reviews (kompakt) */}
