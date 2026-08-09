@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { isBusiness } from '../App'
+import { HOME_PATH } from '../lib/homePath'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -12,7 +13,7 @@ export default function Login() {
   // im Hauptshop die Kollektion. (Innerhalb der Komponente, NICHT auf Modul-
   // ebene — Login wird statisch in App.jsx importiert; ein Modul-Top-Level-
   // Zugriff auf isBusiness löst sonst einen TDZ-/Zirkularimport-Fehler aus.)
-  const HOME = isBusiness ? '/' : '/collection'
+  const HOME = HOME_PATH
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)

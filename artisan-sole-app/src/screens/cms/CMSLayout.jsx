@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Footprints, Sparkles, Shirt, Image, ImagePlus, LogOut, Users, Shield, ScanLine, BookOpen, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Star, Megaphone, Home, ExternalLink, Sliders, Building2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
+import { HOME_PATH } from '../../lib/homePath'
 
 export default function CMSLayout() {
   const navigate = useNavigate()
@@ -12,8 +13,14 @@ export default function CMSLayout() {
   useEffect(() => { initStore() }, [])
 
   const handleLogout = () => {
+    // Vollständiger Seitenwechsel statt Router-Navigation. Beim Abmelden
+    // rendern die geschützten Hüllen sonst noch einmal ohne Benutzer und
+    // schicken einen auf die Anmeldemaske, bevor der Wechsel greift — der
+    // Nutzer landete trotz allem auf /login. Der Neuaufbau räumt außerdem
+    // jeden im Speicher gehaltenen Zustand mit ab, was beim Abmelden
+    // ohnehin das Gewünschte ist.
     logout()
-    navigate('/login', { replace: true })
+    window.location.replace(HOME_PATH)
   }
 
   return (

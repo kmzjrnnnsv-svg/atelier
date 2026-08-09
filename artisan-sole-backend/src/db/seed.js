@@ -1,5 +1,19 @@
 import bcrypt from 'bcryptjs'
 
+// Im CMS gelöschte Modelle nicht wieder anlegen.
+// Der Seed kennt seine Modelle über den Namen und legte sie bei jedem Start
+// neu an, wenn sie fehlten — ein bewusst gelöschter Schuh kam damit beim
+// nächsten Neustart zurück. Die Namen auf dem Merkzettel bleiben ausgespart.
+function deletedSeedNames(db) {
+  try {
+    return new Set(db.prepare('SELECT name FROM deleted_seed_shoes').all().map(r => r.name))
+  } catch {
+    // Tabelle existiert auf sehr altem Schema noch nicht.
+    return new Set()
+  }
+}
+
+
 export async function seedDatabase(db) {
   // Always run article seeding, independent of user seeding so it
   // also populates articles in existing databases on upgrade.
@@ -55,10 +69,12 @@ export async function seedDatabase(db) {
     `).run('Demo', 'demo@artisansole.com', demoHash)
 
     // ── SHOES ──────────────────────────────────────────────────
-    const shoeStmt = db.prepare(`
+    const skipNames = deletedSeedNames(db)
+    const shoeStmtRaw = db.prepare(`
       INSERT INTO shoes (name, category, price, material, match_pct, color, tag, image_data)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `)
+    const shoeStmt = { run: (name, ...rest) => { if (!skipNames.has(name)) shoeStmtRaw.run(name, ...rest) } }
     // Oxford, verified free CDN photos
     shoeStmt.run('The Heritage Oxford',    'OXFORD',  '€ 1.450', 'Full-Grain Calfskin',    '99.4%', '#1f2937', 'BESTSELLER',
       'https://images.unsplash.com/photo-1653868250450-b83e6263d427?w=600&q=85&fit=crop&auto=format')
@@ -1008,8 +1024,10 @@ export function seedMatrixModels(db) {
     INSERT INTO shoes (name, category, price, material, color, tag, image_data)
     VALUES (?, ?, ?, ?, '#1f2937', NULL, NULL)
   `)
+  const skipMatrix = deletedSeedNames(db)
   let added = 0
   for (const m of MATRIX_MODELS) {
+    if (skipMatrix.has(m.name)) continue
     if (!exists.get(m.name)) {
       insert.run(m.name, m.category, m.price, m.material)
       added++
@@ -1113,8 +1131,10 @@ export function seedLoaferVariants(db) {
     VALUES (?, 'LOAFER', ?, ?, '98.0%', ?, ?, ?, ?, ?, ?)
   `)
   const setDeco = db.prepare("UPDATE shoes SET locked_decoration = ? WHERE id = ? AND (locked_decoration IS NULL OR locked_decoration = '')")
+  const skipLoafer = deletedSeedNames(db)
   let created = 0
   for (const v of VARIANTS) {
+    if (skipLoafer.has(v.name)) continue
     const existing = findByName.get(v.name)
     if (existing) { setDeco.run(v.deco, existing.id); continue }
     try {

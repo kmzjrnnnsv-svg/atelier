@@ -15,7 +15,9 @@ const mustRead = [authenticate]
 // eine Verwendung.
 // `onWrite` darf den Rumpf vor dem Schreiben ergänzen (etwa um einen aus dem
 // Namen abgeleiteten Slug). Bekommt (body, { db, id }); id ist beim Anlegen null.
-function makeContentRouter(table, writeValidators = [], { publicRead = false, listExclude = [], onWrite = null } = {}) {
+// `onDelete` läuft in derselben Transaktion wie das Löschen und bekommt den
+// Datensatz, bevor er verschwindet.
+function makeContentRouter(table, writeValidators = [], { publicRead = false, listExclude = [], onWrite = null, onDelete = null } = {}) {
   const r = Router()
   const readGuard = publicRead ? [] : mustRead
 
@@ -45,6 +47,11 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false, li
 
     const body = { ...req.body, created_by: req.user.id }
     if (onWrite) Object.assign(body, onWrite(body, { db: getDb(), id: null }))
+    // Ein zuvor gelöschter Name wird wieder freigegeben, sobald jemand ihn
+    // bewusst neu anlegt — sonst bliebe er für den Seed dauerhaft gesperrt.
+    if (table === 'shoes' && body.name) {
+      getDb().prepare('DELETE FROM deleted_seed_shoes WHERE name = ?').run(body.name)
+    }
     const cols = Object.keys(body).join(', ')
     const vals = Object.keys(body).map(() => '?').join(', ')
     const result = getDb()
@@ -88,9 +95,14 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false, li
   // DELETE
   r.delete('/:id', ...canWrite, param('id').isInt(), (req, res) => {
     const db = getDb()
-    const existing = db.prepare(`SELECT id FROM ${table} WHERE id = ?`).get(req.params.id)
+    const existing = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(req.params.id)
     if (!existing) return res.status(404).json({ error: 'Not found' })
-    db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(req.params.id)
+    // Gemeinsam ausführen: Ein Vermerk ohne Löschung (oder umgekehrt) wäre
+    // schlimmer als beides nicht zu tun.
+    db.transaction(() => {
+      if (onDelete) onDelete(existing, { db })
+      db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(req.params.id)
+    })()
     res.json({ message: 'Deleted' })
   })
 
@@ -166,6 +178,11 @@ export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
   // das etwa nur Bilder aktualisiert, lässt die Adresse unangetastet.
   onWrite: (body, { db, id }) =>
     body.name ? { slug: uniqueShoeSlug(db, body.name, id) } : {},
+  // Löschung vormerken, damit der Seed das Modell nicht beim nächsten Start
+  // wieder anlegt — er kennt seine Modelle über den Namen.
+  onDelete: (row, { db }) => {
+    db.prepare('INSERT OR REPLACE INTO deleted_seed_shoes (name, deleted_at) VALUES (?, datetime(\'now\'))').run(row.name)
+  },
 })
 export const curatedRouter    = makeContentRouter('curated_items')
 export const wardrobeRouter   = makeContentRouter('wardrobe_items')

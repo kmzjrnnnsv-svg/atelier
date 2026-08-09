@@ -170,7 +170,10 @@ export function AuthProvider({ children }) {
     persistRefreshToken(null)
     setUser(null)
     if (refreshTimer.current) clearTimeout(refreshTimer.current)
-    fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include', headers, body }).catch(() => {})
+    // keepalive: Die Abmeldung soll den Server auch dann erreichen, wenn die
+    // Seite unmittelbar danach neu lädt — sonst bliebe der Refresh-Token in
+    // der Datenbank gültig.
+    fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include', headers, body, keepalive: true }).catch(() => {})
   }
 
   return (

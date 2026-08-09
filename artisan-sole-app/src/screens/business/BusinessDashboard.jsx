@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Building2, ImageIcon, Megaphone, LogOut, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { HOME_PATH } from '../../lib/homePath'
 
 export default function BusinessDashboard() {
   const navigate = useNavigate()
@@ -23,7 +24,7 @@ export default function BusinessDashboard() {
             <p className="text-[13px] text-black/45 font-light mt-2">{user?.name} · {user?.email}</p>
           </div>
           <button
-            onClick={() => { logout(); navigate('/login', { replace: true }) }}
+            onClick={() => { logout(); window.location.replace(HOME_PATH) }}
             className="flex items-center gap-1.5 text-[11px] text-black/45 hover:text-black bg-transparent border-0 uppercase tracking-[0.15em] shrink-0 pt-1"
           >
             <LogOut size={15} strokeWidth={1.4} /> Abmelden

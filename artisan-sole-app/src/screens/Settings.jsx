@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
 import useDeviceInfo from '../hooks/useDeviceInfo'
+import { HOME_PATH } from '../lib/homePath'
 
 // ── Role labels ─────────────────────────────────────────────────────────────
 const roleMeta = {
@@ -220,8 +221,14 @@ export default function Settings() {
   // Logout
   const [logoutConfirm, setLogoutConfirm] = useState(false)
   const handleLogout = () => {
+    // Vollständiger Seitenwechsel statt Router-Navigation. Beim Abmelden
+    // rendern die geschützten Hüllen sonst noch einmal ohne Benutzer und
+    // schicken einen auf die Anmeldemaske, bevor der Wechsel greift — der
+    // Nutzer landete trotz allem auf /login. Der Neuaufbau räumt außerdem
+    // jeden im Speicher gehaltenen Zustand mit ab, was beim Abmelden
+    // ohnehin das Gewünschte ist.
     logout()
-    navigate('/login', { replace: true })
+    window.location.replace(HOME_PATH)
   }
 
   const role = roleMeta[user?.role ?? 'user']
