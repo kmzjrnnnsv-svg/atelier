@@ -101,6 +101,18 @@ function ensureOrderStatusCheck(db) {
   }
 }
 
+// Zubehör, das früher aus diesem Seed stammte und nicht mehr geführt wird.
+// Bewusst als feste Liste und nicht als „alles, was nicht in accData steht":
+// Artikel, die im CMS von Hand angelegt wurden, sollen bleiben.
+const RETIRED_ACCESSORIES = [
+  'shoetrees', 'carekit', 'dustbag', 'shoehorn', 'belt',
+  'horsehair_brush', 'suede_brush', 'suede_spray', 'suede_eraser',
+  'cream_dark', 'cream_cognac', 'cordovan_balm', 'patent_care',
+  'boot_jack', 'waxed_laces', 'sneaker_kit', 'buckle_cloth',
+  'sole_oil', 'exotic_care', 'polishing_cloth',
+  'care_kit_saphir_patina', 'calf_care_cream', 'shoe_cream_black',
+]
+
 export function runMigrations(db) {
   db.exec(`
     PRAGMA journal_mode = WAL;
@@ -477,38 +489,20 @@ export function runMigrations(db) {
     }
   } catch (e) { console.error('[migrate whatsapp_business_number]', e.message) }
 
-  // ── Ensure accessories exist with full data (upsert) ─────────────────────
+  // ── Zubehör: fünf Artikel, mehr wird nicht geführt ───────────────────────
+  // Vorher standen hier 28 Einträge — ein Katalog aus Cremes, Bürsten,
+  // Tüchern und Gürteln, den es real nie gab. Geführt werden zwei Pflegesets
+  // (Glatt- und Wildleder) und drei Spanner (Zeder, schwarz, Zeder für
+  // Stiefel). Die übrigen 23 sind unter RETIRED_ACCESSORIES aufgeführt und
+  // werden unten entfernt; ein bloßes Streichen aus dieser Liste würde sie
+  // nicht los, weil der Upsert nur anlegt und aktualisiert, nie löscht.
   try {
     const accData = [
-      { key: 'shoetrees',       name: 'Zedernholz Schuhspanner',    desc: 'Formerhalt & Feuchtigkeitskontrolle. Zedernholz absorbiert Feuchtigkeit und hält Ihren Schuh in perfekter Form.', price: 45,  sort: 0,  rec: '["OXFORD","DERBY","LOAFER","MONK","BOOT"]', not: '["SNEAKER"]' },
-      { key: 'carekit',         name: 'Lederpflege-Set',             desc: 'Komplett-Set mit Creme, Rosshaar-Bürste & Poliertuch für die optimale Pflege von Glattleder.',                   price: 35,  sort: 1,  rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-      { key: 'dustbag',         name: 'Samtbeutel',                  desc: 'Schutzaufbewahrung aus weicher Baumwolle. Bewahrt den Glanz und schützt vor Staub und Kratzern.',                price: 25,  sort: 2,  rec: '["OXFORD","DERBY","LOAFER","MONK","BOOT","SNEAKER"]', not: '[]' },
-      { key: 'shoehorn',        name: 'Messing-Schuhlöffel',         desc: 'Handgravierter Schuhlöffel aus massivem Messing, 38 cm. Schont die Fersenkappe beim Anziehen.',                  price: 20,  sort: 3,  rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-      { key: 'belt',            name: 'Passendes Ledergürtel',       desc: 'Maßgefertigter Gürtel aus derselben Haut & Farbe wie Ihr Schuh. Das perfekte Ensemble.',                        price: 180, sort: 4,  rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
-      { key: 'horsehair_brush', name: 'Rosshaar-Bürste',             desc: 'Weiche Naturborsten für das tägliche Polieren von Glattleder. Entfernt Staub und bringt den natürlichen Glanz zurück.', price: 28, sort: 5, rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-      { key: 'suede_brush',     name: 'Wildleder-Kreppbürste',       desc: 'Krepp- & Messingborsten für Velours und Nubuk. Richtet das Flor auf und entfernt hartnäckige Flecken.',           price: 32,  sort: 6,  rec: '["DERBY","LOAFER","BOOT"]', not: '["OXFORD","SNEAKER"]' },
-      { key: 'suede_spray',     name: 'Imprägnierspray',             desc: 'Nano-Schutz gegen Feuchtigkeit & Flecken, 250 ml. Unverzichtbar für empfindliche Leder und Wildleder.',          price: 18,  sort: 7,  rec: '["DERBY","BOOT","LOAFER"]', not: '[]' },
-      { key: 'suede_eraser',    name: 'Wildleder-Radierer',          desc: 'Entfernt trockene Flecken & Salzränder schonend, ohne das Material zu beschädigen.',                              price: 12,  sort: 8,  rec: '["DERBY","LOAFER","BOOT"]', not: '["OXFORD","SNEAKER"]' },
-      { key: 'cream_dark',      name: 'Schuhcreme Schwarz',          desc: 'Pigmentierte Pflegecreme für schwarzes Glattleder. Nährt das Leder und frischt die Farbe auf.',                  price: 15,  sort: 9,  rec: '["OXFORD","DERBY","MONK"]', not: '["SNEAKER","BOOT"]' },
-      { key: 'cream_cognac',    name: 'Schuhcreme Cognac',           desc: 'Pigmentierte Pflegecreme für braunes & cognacfarbenes Leder. Perfekt für warme Brauntöne.',                       price: 15,  sort: 10, rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-      { key: 'cordovan_balm',   name: 'Cordovan-Balsam',             desc: 'Spezialwachs für Shell Cordovan. Nährt das edle Pferdeleder und schützt vor Austrocknung.',                      price: 38,  sort: 11, rec: '["OXFORD","DERBY","MONK"]', not: '["SNEAKER","BOOT","LOAFER"]' },
-      { key: 'patent_care',     name: 'Lackleder-Pflege',            desc: 'Reinigung & Glanzerhalt für Patentleder. Entfernt Fingerabdrücke und kleine Kratzer.',                            price: 22,  sort: 12, rec: '["OXFORD","DERBY"]', not: '["SNEAKER","BOOT","LOAFER"]' },
-      { key: 'boot_jack',       name: 'Stiefelknecht',               desc: 'Massives Buchenholz mit Gummischutz. Erleichtert das Ausziehen von hohen Chelsea Boots.',                        price: 35,  sort: 13, rec: '["BOOT"]', not: '["OXFORD","DERBY","LOAFER","SNEAKER","MONK"]' },
-      { key: 'waxed_laces',     name: 'Gewachste Schnürsenkel',      desc: 'Rundes Profil, 75 cm, passend gefärbt. Halten besser und sehen eleganter aus.',                                  price: 12,  sort: 14, rec: '["OXFORD","DERBY"]', not: '["LOAFER","BOOT","SNEAKER","MONK"]' },
-      { key: 'sneaker_kit',     name: 'Sneaker-Reinigungsset',       desc: 'Spezialschaum, Mikrofasertuch & Sohlenbürste. Speziell für Glattleder-Sneaker entwickelt.',                      price: 28,  sort: 15, rec: '["SNEAKER"]', not: '["OXFORD","DERBY","BOOT","MONK","LOAFER"]' },
-      { key: 'buckle_cloth',    name: 'Schnallen-Poliertuch',        desc: 'Anti-Anlauf-Tuch für Messing- & Silberschnallen. Hält Schnallen und Metallteile glänzend.',                       price: 15,  sort: 16, rec: '["MONK","LOAFER"]', not: '["SNEAKER","OXFORD","DERBY"]' },
-      { key: 'sole_oil',        name: 'Ledersohlen-Balsam',          desc: 'Pflegt & imprägniert offenporige Ledersohlen. Verlängert die Lebensdauer der Sohle erheblich.',                  price: 18,  sort: 17, rec: '["OXFORD","DERBY","LOAFER","MONK"]', not: '["SNEAKER"]' },
-      { key: 'exotic_care',     name: 'Exotenleder-Pflege',          desc: 'Spezialcreme für Kroko-Prägung & strukturierte Leder. Erhält die einzigartige Textur.',                          price: 42,  sort: 18, rec: '["OXFORD","LOAFER","MONK"]', not: '["SNEAKER","BOOT"]' },
-      { key: 'polishing_cloth', name: 'Poliertuch',                  desc: 'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                  price: 12,  sort: 19, rec: '["OXFORD","DERBY","MONK","LOAFER"]', not: '["SNEAKER"]' },
-      // ── Neu: Spanner & Pflege-Kits (Zuordnung nach Lederart bzw. Farbe) ──
-      { key: 'shoe_tree_black',       name: 'Schuhspanner Schwarz (Labeled)',        desc: 'Eleganter lackierter Schuhspanner in Schwarz, passend zu schwarzen Schuhen. Formerhalt & Feuchtigkeitskontrolle.', price: 22.0,  sort: 20, rec: '[]', not: '["SNEAKER"]' },
-      { key: 'shoe_tree_cedar',       name: 'Zedernholz-Schuhspanner (Labeled)',     desc: 'Schuhspanner aus aromatischem Zedernholz. Absorbiert Feuchtigkeit und hält den Schuh in perfekter Form.',          price: 21.0,  sort: 21, rec: '[]', not: '["SNEAKER"]' },
-      { key: 'boot_tree_cedar',       name: 'Zedernholz-Stiefelspanner (Private Labeled)', desc: 'Hoher Spanner aus Zedernholz, speziell für Stiefel & Boots. Bewahrt Schaft und Form.',                       price: 29.0,  sort: 22, rec: '["BOOT"]', not: '["SNEAKER"]' },
-      { key: 'care_kit_saphir_patina', name: 'Schuhpflege-Set Saphir Patina',        desc: 'Premium-Set von Saphir Médaille d’Or für patinierte Leder: Creme, Bürste & Applikator. Erhält Tiefe und Glanz der Patina.', price: 38.0, sort: 23, rec: '[]', not: '["SNEAKER"]' },
-      { key: 'care_kit_suede',        name: 'Schuhpflege-Set Wildleder (1 Unit)',    desc: 'Komplett-Set für Velours & Nubuk: Krepp-/Messingbürste, Imprägnierung & Radierer. Richtet das Flor auf und schützt.', price: 25.25, sort: 24, rec: '[]', not: '[]' },
-      { key: 'care_kit_leather',      name: 'Schuhpflege-Set Glattleder (1 Unit)',   desc: 'Komplett-Set für Glattleder: Creme, Bürsten & Poliertuch. Nährt, schützt und bringt den Glanz zurück.',           price: 23.7,  sort: 25, rec: '[]', not: '["SNEAKER"]' },
-      { key: 'calf_care_cream',       name: 'Luxe Calf Leather Care Cream',          desc: 'Hochwertige Pflegecreme für feines Kalbsleder. Spendet Feuchtigkeit und frischt die Farbe schonend auf.',          price: 6.9,   sort: 26, rec: '[]', not: '["SNEAKER"]' },
-      { key: 'shoe_cream_black',      name: 'Schuhcreme-Set Schwarz',                desc: 'Pigmentierte Pflegecreme-Set in Schwarz für schwarzes Glattleder. Nährt das Leder und vertieft die Farbe.',        price: 6.9,   sort: 27, rec: '[]', not: '["SNEAKER"]' },
+      { key: 'care_kit_leather', name: 'Lederpflege-Set',              desc: 'Komplett-Set für Glattleder: Creme, Bürsten und Poliertuch. Nährt das Leder, schützt es und bringt den Glanz zurück.',        price: 23.7,  sort: 0, rec: '[]',                                  not: '["SNEAKER"]' },
+      { key: 'care_kit_suede',   name: 'Wildlederpflege-Set',           desc: 'Komplett-Set für Velours und Nubuk: Krepp- und Messingbürste, Imprägnierung und Radierer. Richtet das Flor auf und schützt.', price: 25.25, sort: 1, rec: '[]',                                  not: '[]' },
+      { key: 'shoe_tree_cedar',  name: 'Zedernholz-Schuhspanner',       desc: 'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    price: 21.0,  sort: 2, rec: '[]',                                  not: '["SNEAKER"]' },
+      { key: 'shoe_tree_black',  name: 'Schuhspanner Schwarz',          desc: 'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.',                                        price: 22.0,  sort: 3, rec: '[]',                                  not: '["SNEAKER"]' },
+      { key: 'boot_tree_cedar',  name: 'Zedernholz-Stiefelspanner',     desc: 'Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.',                                                price: 29.0,  sort: 4, rec: '["BOOT","CHELSEA","CHUKKA","JODHPUR"]', not: '["SNEAKER"]' },
     ]
     const upsert = db.prepare(`
       INSERT INTO accessories (key, name, description, price, sort_order, is_active, recommended_for, not_recommended_for)
@@ -518,14 +512,19 @@ export function runMigrations(db) {
         description = excluded.description,
         price = excluded.price,
         sort_order = excluded.sort_order,
-        is_active = 1,
         recommended_for = excluded.recommended_for,
         not_recommended_for = excluded.not_recommended_for
     `)
     for (const a of accData) {
       upsert.run(a.key, a.name, a.desc, a.price, a.sort, a.rec, a.not)
     }
-  } catch { /* table may not exist yet on first run */ }
+
+  } catch (e) {
+    // Beim allerersten Start gibt es die Tabelle noch nicht — sie entsteht
+    // weiter unten, und der INSERT OR IGNORE dort legt den Bestand an. Das
+    // ist kein Fehler und gehört nicht als solcher gemeldet.
+    if (!/no such table/.test(e.message)) console.error('[accessories]', e.message)
+  }
 
   // Hier standen zwei Neubauten der orders-Tabelle (pending_payment und
   // quality_check). Beide sind entfallen — sie liefen zu früh, kopierten eine
@@ -755,35 +754,14 @@ export function runMigrations(db) {
       created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
+    -- Ausgangsbestand einer frischen Datenbank. Muss zu accData weiter oben
+    -- passen; dort werden bestehende Zeilen aktualisiert, hier nur angelegt.
     INSERT OR IGNORE INTO accessories (key, name, description, price, sort_order) VALUES
-      ('shoetrees',       'Zedernholz Schuhspanner',    'Formerhalt & Feuchtigkeitskontrolle. Zedernholz absorbiert Feuchtigkeit und hält Ihren Schuh in perfekter Form.',  45,   0),
-      ('carekit',         'Lederpflege-Set',             'Komplett-Set mit Creme, Rosshaar-Bürste & Poliertuch für die optimale Pflege von Glattleder.',                     35,   1),
-      ('dustbag',         'Samtbeutel',                  'Schutzaufbewahrung aus weicher Baumwolle. Bewahrt den Glanz und schützt vor Staub und Kratzern.',                  25,   2),
-      ('shoehorn',        'Messing-Schuhlöffel',         'Handgravierter Schuhlöffel aus massivem Messing, 38 cm. Schont die Fersenkappe beim Anziehen.',                    20,   3),
-      ('belt',            'Passendes Ledergürtel',       'Maßgefertigter Gürtel aus derselben Haut & Farbe wie Ihr Schuh. Das perfekte Ensemble.',                          180,  4),
-      ('horsehair_brush', 'Rosshaar-Bürste',             'Weiche Naturborsten für das tägliche Polieren von Glattleder. Entfernt Staub und bringt den natürlichen Glanz zurück.', 28, 5),
-      ('suede_brush',     'Wildleder-Kreppbürste',       'Krepp- & Messingborsten für Velours und Nubuk. Richtet das Flor auf und entfernt hartnäckige Flecken.',             32,   6),
-      ('suede_spray',     'Imprägnierspray',             'Nano-Schutz gegen Feuchtigkeit & Flecken, 250 ml. Unverzichtbar für empfindliche Leder und Wildleder.',            18,   7),
-      ('suede_eraser',    'Wildleder-Radierer',          'Entfernt trockene Flecken & Salzränder schonend, ohne das Material zu beschädigen.',                                12,   8),
-      ('cream_dark',      'Schuhcreme Schwarz',          'Pigmentierte Pflegecreme für schwarzes Glattleder. Nährt das Leder und frischt die Farbe auf.',                    15,   9),
-      ('cream_cognac',    'Schuhcreme Cognac',           'Pigmentierte Pflegecreme für braunes & cognacfarbenes Leder. Perfekt für warme Brauntöne.',                         15,  10),
-      ('cordovan_balm',   'Cordovan-Balsam',             'Spezialwachs für Shell Cordovan. Nährt das edle Pferdeleder und schützt vor Austrocknung.',                        38,  11),
-      ('patent_care',     'Lackleder-Pflege',            'Reinigung & Glanzerhalt für Patentleder. Entfernt Fingerabdrücke und kleine Kratzer.',                              22,  12),
-      ('boot_jack',       'Stiefelknecht',               'Massives Buchenholz mit Gummischutz. Erleichtert das Ausziehen von hohen Chelsea Boots.',                          35,  13),
-      ('waxed_laces',     'Gewachste Schnürsenkel',      'Rundes Profil, 75 cm, passend gefärbt. Halten besser und sehen eleganter aus.',                                    12,  14),
-      ('sneaker_kit',     'Sneaker-Reinigungsset',       'Spezialschaum, Mikrofasertuch & Sohlenbürste. Speziell für Glattleder-Sneaker entwickelt.',                        28,  15),
-      ('buckle_cloth',    'Schnallen-Poliertuch',        'Anti-Anlauf-Tuch für Messing- & Silberschnallen. Hält Schnallen und Metallteile glänzend.',                         15,  16),
-      ('sole_oil',        'Ledersohlen-Balsam',          'Pflegt & imprägniert offenporige Ledersohlen. Verlängert die Lebensdauer der Sohle erheblich.',                    18,  17),
-      ('exotic_care',     'Exotenleder-Pflege',          'Spezialcreme für Kroko-Prägung & strukturierte Leder. Erhält die einzigartige Textur.',                            42,  18),
-      ('polishing_cloth', 'Poliertuch',                  'Doppellagiges Baumwollflanell für Hochglanz-Finish. Unverzichtbar für Mirror-Shine-Liebhaber.',                    12,  19),
-      ('shoe_tree_black',        'Schuhspanner Schwarz (Labeled)',                'Eleganter lackierter Schuhspanner in Schwarz, passend zu schwarzen Schuhen. Formerhalt & Feuchtigkeitskontrolle.',           22.0,  20),
-      ('shoe_tree_cedar',        'Zedernholz-Schuhspanner (Labeled)',             'Schuhspanner aus aromatischem Zedernholz. Absorbiert Feuchtigkeit und hält den Schuh in perfekter Form.',                    21.0,  21),
-      ('boot_tree_cedar',        'Zedernholz-Stiefelspanner (Private Labeled)',   'Hoher Spanner aus Zedernholz, speziell für Stiefel & Boots. Bewahrt Schaft und Form.',                                      29.0,  22),
-      ('care_kit_saphir_patina', 'Schuhpflege-Set Saphir Patina',                 'Premium-Set von Saphir Médaille d''Or für patinierte Leder: Creme, Bürste & Applikator. Erhält Tiefe und Glanz der Patina.', 38.0,  23),
-      ('care_kit_suede',         'Schuhpflege-Set Wildleder (1 Unit)',            'Komplett-Set für Velours & Nubuk: Krepp-/Messingbürste, Imprägnierung & Radierer. Richtet das Flor auf und schützt.',        25.25, 24),
-      ('care_kit_leather',       'Schuhpflege-Set Glattleder (1 Unit)',           'Komplett-Set für Glattleder: Creme, Bürsten & Poliertuch. Nährt, schützt und bringt den Glanz zurück.',                      23.7,  25),
-      ('calf_care_cream',        'Luxe Calf Leather Care Cream',                  'Hochwertige Pflegecreme für feines Kalbsleder. Spendet Feuchtigkeit und frischt die Farbe schonend auf.',                    6.9,   26),
-      ('shoe_cream_black',       'Schuhcreme-Set Schwarz',                        'Pigmentierte Pflegecreme-Set in Schwarz für schwarzes Glattleder. Nährt das Leder und vertieft die Farbe.',                  6.9,   27);
+      ('care_kit_leather', 'Lederpflege-Set',          'Komplett-Set für Glattleder: Creme, Bürsten und Poliertuch. Nährt das Leder, schützt es und bringt den Glanz zurück.',        23.7,  0),
+      ('care_kit_suede',   'Wildlederpflege-Set',      'Komplett-Set für Velours und Nubuk: Krepp- und Messingbürste, Imprägnierung und Radierer. Richtet das Flor auf und schützt.', 25.25, 1),
+      ('shoe_tree_cedar',  'Zedernholz-Schuhspanner',  'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    21.0,  2),
+      ('shoe_tree_black',  'Schuhspanner Schwarz',     'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.',                                        22.0,  3),
+      ('boot_tree_cedar',  'Zedernholz-Stiefelspanner','Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.',                                                29.0,  4);
 
     -- ── Shipping configuration ──────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS shipping_config (
@@ -1239,6 +1217,24 @@ export function runMigrations(db) {
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
+
+  // ── Nicht mehr geführtes Zubehör entfernen ───────────────────────────────
+  // Erst hier, nach allen Seed-Blöcken: Der Ausgangsbestand wird rund 500
+  // Zeilen weiter oben per INSERT OR IGNORE angelegt. Stünde das Aufräumen
+  // davor, legte derselbe Start die Artikel gleich wieder an — gelöscht und
+  // sofort neu erzeugt, bei jedem Deploy aufs Neue.
+  //
+  // Namentlich, nicht „alles außer den fünf": Zubehör, das im CMS von Hand
+  // angelegt wurde, bleibt unangetastet. Bestellungen sind nicht betroffen,
+  // orders.accessories hält eine Kopie aus Name und Preis statt eines
+  // Verweises; die Zuordnung zu Modellen räumt shoe_accessories per
+  // ON DELETE CASCADE selbst ab.
+  try {
+    const del = db.prepare('DELETE FROM accessories WHERE key = ?')
+    let removed = 0
+    for (const key of RETIRED_ACCESSORIES) removed += del.run(key).changes
+    if (removed) console.log(`🧹 Zubehör entfernt: ${removed} nicht mehr geführte Artikel`)
+  } catch (e) { console.error('[accessories cleanup]', e.message) }
 
   // ── orders.status: fehlende Zustände in die CHECK-Bedingung aufnehmen ─────
   // Muss NACH der colMigrations-Schleife stehen. Die Vorgänger standen ~750
