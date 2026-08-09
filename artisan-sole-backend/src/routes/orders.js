@@ -65,7 +65,7 @@ router.post('/',
       delivery_address, billing_address, accessories, scan_id,
       foot_notes, shipping_method, shipping_cost, coupon_code, business_code, business_campaign_id,
       size_type, last_key, last_label, last_width, fit_measurements,
-      sole, extras, config_id,
+      sole, extras, config_id, fit_profile_id,
     } = req.body
 
     // Translate foot notes to English for manufacturer
@@ -79,7 +79,7 @@ router.post('/',
     // aus dem, was der Browser mitschickt. Vorher baute jede Oberfläche das
     // Produktobjekt neu zusammen; wer ein Feld vergaß, verlor es lautlos —
     // beim Direktkauf fehlten so sämtliche Zusatzoptionen.
-    const spec = { sole, extras, size_type, eu_size, last_key, last_label, last_width, fit_measurements }
+    const spec = { sole, extras, size_type, eu_size, last_key, last_label, last_width, fit_measurements, fit_profile_id }
     let configRow = null
     if (config_id) {
       configRow = db.prepare('SELECT * FROM shoe_configs WHERE id = ?').get(config_id)
@@ -96,6 +96,7 @@ router.post('/',
         spec.last_label       = configRow.last_label       ?? spec.last_label
         spec.last_width       = configRow.last_width       ?? spec.last_width
         spec.fit_measurements = configRow.fit_measurements ?? spec.fit_measurements
+        spec.fit_profile_id   = configRow.fit_profile_id   ?? fit_profile_id
       }
     }
 
@@ -175,8 +176,8 @@ router.post('/',
          foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price,
          size_type, last_key, last_label, last_width, fit_measurements,
          business_id, business_code_id, business_coverage, business_campaign_id,
-         sole, extras, config_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         sole, extras, config_id, fit_profile_id)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `)
     const insertParams = [
       uid,
@@ -217,6 +218,7 @@ router.post('/',
       typeof spec.extras === 'string' ? spec.extras
         : (Array.isArray(spec.extras) && spec.extras.length ? JSON.stringify(spec.extras) : null),
       config_id || null,
+      spec.fit_profile_id || null,
     ]
 
     let result

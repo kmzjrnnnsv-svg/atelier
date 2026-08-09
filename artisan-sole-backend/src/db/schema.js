@@ -459,7 +459,6 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN extras TEXT`,
     // Verweis auf die gespeicherte Konfiguration — die maßgebliche Quelle.
     `ALTER TABLE orders ADD COLUMN config_id TEXT REFERENCES shoe_configs(id)`,
-    `ALTER TABLE shoe_configs ADD COLUMN in_cart INTEGER NOT NULL DEFAULT 0`,
     `CREATE INDEX IF NOT EXISTS idx_orders_affiliate ON orders(affiliate_code)`,
     `ALTER TABLE shoes ADD COLUMN slug TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_slug ON shoes(slug)`,
@@ -1208,6 +1207,29 @@ export function runMigrations(db) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
 
+  // ── Passformen je Kunde ──────────────────────────────────────────────────
+  // Jede eingetragene Fußvermessung wird festgehalten, nicht überschrieben.
+  // Eine Konfiguration verweist auf die Passform, mit der sie entstanden ist,
+  // und bleibt damit unveränderlich: Neue Maße heißen neue Konfiguration.
+  //
+  // Der Grund ist kein Ordnungssinn. Vorher liess sich die Passform in der
+  // Kasse nachträglich ändern — die Anzeige der Fertigung behielt aber die
+  // alten Maße. Auf derselben Seite standen zwei Zahlenpaare, und gefertigt
+  // worden wäre nach dem alten. Ein falsch sitzender Schuh, ohne Fehlermeldung.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS fit_profiles (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      foot_length_mm REAL    NOT NULL,
+      ball_girth_mm  REAL,
+      source         TEXT    NOT NULL DEFAULT 'manual',   -- manual | scan
+      scan_id        INTEGER REFERENCES foot_scans(id) ON DELETE SET NULL,
+      note           TEXT,
+      created_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_fitprofiles_user ON fit_profiles(user_id, created_at);
+  `)
+
   // ── Konfigurationen (Entwürfe) ───────────────────────────────────────────
   // Jede Konfiguration wird beim Zusammenstellen gespeichert, lange bevor
   // bestellt wird. Grund: Vorher reiste sie durch drei Bildschirme als
@@ -1237,6 +1259,9 @@ export function runMigrations(db) {
       fit_measurements TEXT,                      -- JSON
       accessories  TEXT,                          -- JSON
       price        TEXT,
+      -- Mit welcher Passform diese Konfiguration entstanden ist. Sie ist
+      -- festgeschrieben: Neue Maße heißen neue Konfiguration.
+      fit_profile_id INTEGER REFERENCES fit_profiles(id),
       status       TEXT    NOT NULL DEFAULT 'draft'
                            CHECK(status IN ('draft','ordered')),
       -- Getrennt vom Status statt als weiterer Wert in der CHECK-Bedingung:
@@ -1281,6 +1306,17 @@ export function runMigrations(db) {
       created_at TEXT    NOT NULL DEFAULT (datetime('now'))
     );
   `)
+
+  // Nachrüstung für Datenbanken, in denen die Tabellen schon standen. Hier
+  // und nicht in colMigrations: Die Schleife läuft, bevor diese Tabellen
+  // angelegt werden, und ein ALTER auf eine fehlende Tabelle scheitert still.
+  for (const sql of [
+    `ALTER TABLE shoe_configs ADD COLUMN in_cart INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE shoe_configs ADD COLUMN fit_profile_id INTEGER REFERENCES fit_profiles(id)`,
+    `ALTER TABLE orders       ADD COLUMN fit_profile_id INTEGER REFERENCES fit_profiles(id)`,
+  ]) {
+    try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
+  }
 
   // ── Nicht mehr geführtes Zubehör entfernen ───────────────────────────────
   // Erst hier, nach allen Seed-Blöcken: Der Ausgangsbestand wird rund 500

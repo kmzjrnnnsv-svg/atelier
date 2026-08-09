@@ -181,23 +181,28 @@ export default function Checkout() {
   const [selectedShipping, setSelectedShipping] = useState(null)
   const [campaigns, setCampaigns] = useState([])
   // Passform-Maße auf der Bestellseite bestätigen/ändern
-  const [fitEdit, setFitEdit] = useState(false)
-  const [fLen, setFLen] = useState('')
-  const [fGirth, setFGirth] = useState('')
-  const [fSaving, setFSaving] = useState(false)
-  const openFitEdit = () => {
-    setFLen(footMeasurements?.foot_length_mm ? String(footMeasurements.foot_length_mm) : '')
-    setFGirth(footMeasurements?.ball_girth_mm ? String(footMeasurements.ball_girth_mm) : '')
-    setFitEdit(true)
-  }
-  const saveFit = async () => {
-    const len = parseFloat(String(fLen).replace(',', '.'))
-    const girth = parseFloat(String(fGirth).replace(',', '.'))
-    if (!Number.isFinite(len) || !Number.isFinite(girth)) return
-    setFSaving(true)
-    try { await saveFootMeasurements({ foot_length_mm: len, ball_girth_mm: girth }); setFitEdit(false) }
-    catch {} finally { setFSaving(false) }
-  }
+  /**
+   * Passt der Schuh überhaupt? Ohne bestimmten Leisten gibt es keine Form,
+   * die zu diesen Maßen gehört — der Schuh würde nicht sitzen.
+   *
+   * Die Warnung nennt bewusst keinen Grund. Welche Leisten es gibt und welche
+   * Maße sie abdecken, ist Betriebswissen und geht den Käufer nichts an; er
+   * braucht nur die Auskunft, dass es für ihn nicht passt.
+   */
+  const ohnePassform = (product.id ? [product] : cart.filter(c => !c.isAccessory))
+    .filter(it => {
+      const m = typeof it.footMeasurementsUsed === 'string'
+        ? (() => { try { return JSON.parse(it.footMeasurementsUsed) } catch { return null } })()
+        : it.footMeasurementsUsed
+      // Nur wenn Maße vorliegen, aber kein Leisten dazu bestimmt wurde.
+      return m?.foot_length_mm && !(it.last || it.lastLabel)
+    })
+  const [passformAkzeptiert, setPassformAkzeptiert] = useState(false)
+
+  // Die Passform ist ab hier festgeschrieben. Wer andere Maße braucht, legt
+  // eine neue Konfiguration an — sonst stünden Maße und bereits bestimmte
+  // Leisten auseinander, und gefertigt würde nach dem einen, angezeigt das
+  // andere.
 
   // Kampagnen des Mitarbeiters laden (für automatischen Kampagnen-Rabatt).
   useEffect(() => {
@@ -678,38 +683,75 @@ export default function Checkout() {
               )
             })}
 
-            {/* Passform bestätigen/ändern (nur Einzelprodukt) */}
-            {product.id && (
-              <div className="bg-white p-4 border border-black/[0.06]">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider">Passform</p>
-                  <button onClick={fitEdit ? () => setFitEdit(false) : openFitEdit} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">
-                    {fitEdit ? 'Abbrechen' : 'Ändern'}
-                  </button>
-                </div>
-                {footMeasurements?.foot_length_mm ? (
-                  <p className="text-[12px] text-black/60 mt-1">Ihre Maße: {footMeasurements.foot_length_mm} mm Länge · {footMeasurements.ball_girth_mm} mm Ballenumfang</p>
-                ) : (
-                  <p className="text-[12px] text-black/45 mt-1">Noch keine Maße hinterlegt.</p>
-                )}
-                {fitEdit && (
-                  <div className="mt-3 flex items-end gap-2">
-                    <label className="flex-1">
-                      <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Fußlänge (mm)</span>
-                      <input type="number" inputMode="decimal" value={fLen} onChange={e => setFLen(e.target.value)} placeholder="z. B. 270" className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40" />
-                    </label>
-                    <label className="flex-1">
-                      <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Ballenumfang (mm)</span>
-                      <input type="number" inputMode="decimal" value={fGirth} onChange={e => setFGirth(e.target.value)} placeholder="z. B. 255" className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40" />
-                    </label>
-                    <button onClick={saveFit} disabled={fSaving || !fLen || !fGirth} className="h-9 px-4 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0 disabled:opacity-30">
-                      {fSaving ? '…' : 'Übernehmen'}
-                    </button>
-                  </div>
-                )}
-                <p className="text-[10px] text-black/30 mt-1.5 font-light">Bitte prüfen Sie, ob diese Maße stimmen, ±0,5 cm sind in Ordnung.</p>
+            {ohnePassform.length > 0 && (
+              <div className="bg-amber-50 border border-amber-300 p-4">
+                <p className="text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1.5">
+                  Dieser Schuh passt nicht zu Ihren Maßen
+                </p>
+                <p className="text-[12px] text-amber-900 leading-relaxed font-light">
+                  Für die hinterlegten Maße können wir bei diesem Modell keine passende Form
+                  anbieten. Bestellen Sie trotzdem, wird der Schuh mit hoher Wahrscheinlichkeit
+                  nicht richtig sitzen — ein Umtausch aus diesem Grund ist bei Maßanfertigungen
+                  nicht möglich.
+                </p>
+                <p className="text-[12px] text-amber-900 leading-relaxed font-light mt-2">
+                  Bitte prüfen Sie Ihre Maße oder wählen Sie ein anderes Modell. Gern beraten
+                  wir Sie auch persönlich.
+                </p>
+                <button
+                  onClick={() => setPassformAkzeptiert(v => !v)}
+                  className="mt-3 flex items-start gap-2.5 text-left bg-transparent border-0 p-0"
+                >
+                  <span className={`w-4 h-4 mt-0.5 flex-shrink-0 flex items-center justify-center ${passformAkzeptiert ? 'bg-amber-800' : 'border border-amber-700'}`}>
+                    {passformAkzeptiert && <Check size={11} strokeWidth={2.5} className="text-white" />}
+                  </span>
+                  <span className="text-[12px] text-amber-900 font-light leading-relaxed">
+                    Ich habe verstanden, dass dieser Schuh voraussichtlich nicht passt, und
+                    möchte ihn dennoch bestellen.
+                  </span>
+                </button>
               </div>
             )}
+
+            {/* Passform — festgeschrieben, nicht mehr änderbar.
+                Die Maße kommen aus der Konfiguration, nicht aus dem Profil.
+                Vorher zeigte dieser Kasten die Profilmaße, während die
+                Fertigung darüber die der Konfiguration führte: zwei
+                verschiedene Zahlenpaare auf einer Seite, und gebaut worden
+                wäre nach dem einen, geglaubt das andere. */}
+            {product.id && (() => {
+              const m = typeof product.footMeasurementsUsed === 'string'
+                ? (() => { try { return JSON.parse(product.footMeasurementsUsed) } catch { return null } })()
+                : product.footMeasurementsUsed
+              return (
+                <div className="bg-white p-4 border border-black/[0.06]">
+                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider">Passform</p>
+                  {m?.foot_length_mm ? (
+                    <>
+                      <p className="text-[12px] text-black/60 mt-1">
+                        {m.foot_length_mm} mm Länge{m.ball_girth_mm ? ` · ${m.ball_girth_mm} mm Ballenumfang` : ''}
+                      </p>
+                      <p className="text-[10px] text-black/30 mt-1.5 font-light leading-relaxed">
+                        Diese Maße gehören zu dieser Konfiguration und lassen sich hier nicht mehr
+                        ändern. Für andere Maße stellen Sie den Schuh bitte neu zusammen — nur so
+                        werden Leisten, Weite und Größe passend dazu bestimmt.
+                      </p>
+                      <button
+                        onClick={() => {
+                          const shoe = shoes.find(s => String(s.id) === String(product.id))
+                          navigate(shoe ? shoePath(shoe) : '/collection')
+                        }}
+                        className="mt-2 text-[10px] text-black/45 hover:text-black underline underline-offset-2 bg-transparent border-0 p-0"
+                      >
+                        Neu konfigurieren
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-[12px] text-black/45 mt-1">Für diese Konfiguration sind keine Maße hinterlegt.</p>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* Accessories */}
             {chosenAccessories.length > 0 && (
@@ -919,7 +961,7 @@ export default function Checkout() {
             Weiter <ChevronRight size={14} strokeWidth={1.5} />
           </button>
         ) : (
-          <button onClick={handlePlace} disabled={placing}
+          <button onClick={handlePlace} disabled={placing || (ohnePassform.length > 0 && !passformAkzeptiert)}
             className="w-full py-3.5 flex items-center justify-center gap-2 bg-black text-white text-[12px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300 disabled:opacity-50"
             style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             {placing ? (
