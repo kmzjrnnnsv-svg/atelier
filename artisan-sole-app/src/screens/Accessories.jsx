@@ -91,7 +91,7 @@ export default function Accessories() {
 
         /* ── Product Grid ──────────────────────────────────────── */
         <div className="px-5 lg:px-16 pb-16 pt-2">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 lg:gap-x-6 lg:gap-y-12">
             {filtered.map(acc => {
               const inCart = cartIds.includes(`acc-${acc.id}`)
               const recommended = JSON.parse(acc.recommended_for || '[]')
