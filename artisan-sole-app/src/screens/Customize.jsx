@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { isNative } from '../App'
 import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Send, ScanLine, BellRing, Lock, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler, Footprints, Layers, CircleDashed, Diamond, CircleDot, Square, Gem, Palette, Sparkles, ArrowRightLeft } from 'lucide-react'
@@ -45,6 +46,7 @@ import { useAuth } from '../context/AuthContext'
 import ShoeName, { cleanShoeName } from '../lib/shoeName'
 import CustomRequestModal from '../components/CustomRequestModal'
 import ShoeModelViewer from '../components/ShoeModelViewer'
+import { newDraftId, saveDraft, flushDraft, findOpenDraft, discardDraft, markInCart } from '../lib/configDraft'
 
 // ── Swipe: wische links/rechts um Option zu wechseln ────────────────────────
 function useSwipe(items, selectedId, onSelect) {
@@ -248,6 +250,13 @@ export default function Customize() {
 
   // Gewählte Sohlen-Art (Optionsgruppe 'sole') — ersetzt das Legacy-Sohlenfeld
   // in Warenkorb/Bestellung/Sticky-Bar.
+  // Eine Kennung je Produktseite. Sie begleitet die Konfiguration bis in die
+  // Bestellung, damit der Server dort nachschlagen kann, was gewählt wurde.
+  const [draftId, setDraftId] = useState(() => newDraftId())
+  // Liegengebliebene Konfiguration zu diesem Modell — erst fragen, dann handeln.
+  const [openDraft, setOpenDraft] = useState(null)
+  const [draftRestored, setDraftRestored] = useState(false)
+
   const soleArt = (() => {
     const g = extraOptionGroups.find(x => x.key === 'sole')
     return g ? (g.values.find(v => v.id === selectedExtras['sole']) || null) : null
@@ -791,6 +800,87 @@ export default function Customize() {
       return sel ? { group: g.label, key: g.key, value: sel.label, price: sel.price_extra || 0 } : null
     })
     .filter(Boolean)
+  // Was in den Entwurf geht — dieselben Felder, die später die Bestellung
+  // trägt. Bewusst eine einzige Stelle: Zwei Stellen waren genau das Problem.
+  const draftPayload = () => ({
+    shoe_id: product.id, shoe_name: cleanShoeName(product.name),
+    material: mat?.label || product.material,
+    color, color_name: col?.name || null,
+    sole: soleArt?.label || 'Standard',
+    extras: extrasForCart,
+    size_type: sizeType, eu_size: chosenEU,
+    last_key: selectedFit?.last_key || null,
+    last_label: selectedFit?.last_label || null,
+    last_width: selectedFit?.width || null,
+    fit_measurements: footMeasurementsUsed,
+    accessories: selectedAccessories,
+    price: formatPrice(basePrice + extrasPriceTotal),
+  })
+
+  // Laufend sichern, sobald etwas gewählt ist. Ohne Material und Farbe gibt es
+  // noch nichts zu speichern.
+  useEffect(() => {
+    if (!product?.id || !selMat || !selCol) return
+    if (openDraft) return          // Rückfrage steht noch offen
+    saveDraft(draftId, draftPayload())
+  }, [product?.id, selMat, selCol, color, JSON.stringify(selectedExtras), sizeType, chosenEU,
+      selectedFit?.last_key, selectedFit?.width, JSON.stringify(selectedAccessories), openDraft])
+
+  // Beim Öffnen nachsehen, ob zu diesem Modell noch etwas Halbfertiges liegt.
+  // Nur was weder im Warenkorb noch bestellt ist — alles andere ist erledigt
+  // und keine liegengebliebene Arbeit.
+  useEffect(() => {
+    let abgebrochen = false
+    if (!product?.id || !user || draftRestored) return
+    findOpenDraft(product.id).then(d => {
+      if (abgebrochen || !d) return
+      // Nur fragen, wenn wirklich etwas gewählt wurde.
+      const inhalt = d.material || d.color || (d.extras && d.extras !== '[]')
+      if (inhalt) setOpenDraft(d)
+    })
+    return () => { abgebrochen = true }
+  }, [product?.id, user, draftRestored])
+
+  // „Ja, fortsetzen" — den gespeicherten Stand zurück in die Maske holen.
+  const resumeDraft = () => {
+    const d = openDraft
+    if (!d) return
+    const parse = (v, f) => { try { return JSON.parse(v ?? 'null') ?? f } catch { return f } }
+    setDraftId(d.id)
+    if (d.material) {
+      const m = globalMatList.find(x => x.label === d.material)
+      if (m) { setSelMat(m.key); if (m.family) setSelFamily(m.family) }
+    }
+    if (d.color) setSelCol(d.color)
+    const ex = parse(d.extras, [])
+    if (ex.length) {
+      const map = {}
+      for (const e of ex) {
+        const g = extraOptionGroups.find(x => x.label === e.group || x.key === e.key)
+        const v = g?.values.find(v => v.label === e.value)
+        if (g && v) map[g.key] = v.id
+      }
+      if (Object.keys(map).length) setSelectedExtras(map)
+    }
+    if (d.size_type) setSizeType(d.size_type)
+    if (d.size_type === 'standard' && d.eu_size) setSelectedSize(d.eu_size)
+    const acc = parse(d.accessories, [])
+    if (Array.isArray(acc) && acc.length) setSelectedAccessories(acc)
+    setDraftRestored(true)
+    setOpenDraft(null)
+  }
+
+  // „Nein, neu anfangen" — Entwurf löschen und mit leerer Maske starten.
+  const dropDraft = async () => {
+    const id = openDraft?.id
+    setOpenDraft(null)
+    setDraftRestored(true)
+    setDraftId(newDraftId())
+    setSelFamily(''); setSelMat(''); setSelCol(''); setSelectedExtras({})
+    setSizeType(''); setSelectedSize(''); setSelectedAccessories([])
+    await discardDraft(id)
+  }
+
   const addShoeToCart = () => {
     addToCart({
       shoeId: product.id, name: cleanShoeName(product.name),
@@ -805,7 +895,11 @@ export default function Customize() {
       sizeSystem: selectedFit?.size_system || 'EU',
       footMeasurementsUsed,
       extras: extrasForCart,
+      configId: draftId,
     })
+    // Der Entwurf ist weitergereicht — beim nächsten Aufruf nicht mehr danach
+    // fragen, sonst wirkt jede Wiederkehr wie liegengebliebene Arbeit.
+    flushDraft(draftId, draftPayload()).then(() => markInCart(draftId))
   }
 
   const handleAddToCart = () => {
@@ -848,7 +942,11 @@ export default function Customize() {
   }
 
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
+    // Vor dem Wechsel zur Kasse ohne Verzögerung sichern: Ab hier ist der
+    // Entwurf die Quelle, aus der die Bestellung entsteht.
+    await flushDraft(draftId, draftPayload())
+    await markInCart(draftId)
     const cartAccessories = selectedAccessories.map(id => {
       const acc = accessories.find(a => a.id === id)
       return acc ? { id: acc.id, name: acc.name, price: acc.price, color: acc.color } : null
@@ -867,6 +965,12 @@ export default function Customize() {
           width: selectedFit?.width || null,
           sizeSystem: selectedFit?.size_system || 'EU',
           footMeasurementsUsed,
+          // Ohne das fehlten beim Direktkauf sämtliche Zusatzoptionen —
+          // Absatz, Welt, Sohlen- und Innenfarbe. Der Weg über den Warenkorb
+          // führte sie mit, dieser nicht, und in der Bestellung stand am Ende
+          // nur Leder, Farbe und Sohle.
+          extras: extrasForCart,
+          configId: draftId,
         },
         accessories: cartAccessories,
       },
@@ -887,6 +991,58 @@ export default function Customize() {
   }
 
   return (
+    <>
+    {/* Rückfrage bei liegengebliebener Konfiguration. Bewusst eine Frage und
+        keine stille Wiederherstellung: Wer neu anfangen will, soll nicht erst
+        Feld für Feld zurücksetzen müssen. */}
+    {/* Per Portal an den Seitenkörper: Der Seitenwechsel-Container darüber
+        trägt ein transform, und das macht position:fixed relativ zu ihm statt
+        zum Fenster — der Dialog landete dadurch weit unterhalb des sichtbaren
+        Bereichs statt darüber. */}
+    {openDraft && createPortal((
+      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 px-4">
+        <div className="bg-white w-full max-w-md p-6">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-black/30 mb-3">Unfertige Konfiguration</p>
+          <p className="text-[15px] font-light text-black/80 leading-relaxed">
+            Sie haben diesen Schuh schon einmal zusammengestellt und nicht in den
+            Warenkorb gelegt. Dort fortfahren?
+          </p>
+          <div className="mt-4 mb-5 border border-black/[0.08] px-4 py-3 space-y-1">
+            {[
+              ['Leder', openDraft.material],
+              ['Farbe', openDraft.color_name || openDraft.color],
+              ['Sohle', openDraft.sole],
+              ['Größe', openDraft.eu_size && `EU ${openDraft.eu_size}`],
+            ].filter(([, v]) => v).map(([k, v]) => (
+              <div key={k} className="flex justify-between">
+                <span className="text-[11px] text-black/40">{k}</span>
+                <span className="text-[11px] text-black/75">{v}</span>
+              </div>
+            ))}
+            {(() => {
+              let n = 0
+              try { n = (JSON.parse(openDraft.extras || '[]') || []).length } catch { n = 0 }
+              return n ? (
+                <div className="flex justify-between">
+                  <span className="text-[11px] text-black/40">Weitere Optionen</span>
+                  <span className="text-[11px] text-black/75">{n}</span>
+                </div>
+              ) : null
+            })()}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={resumeDraft}
+              className="flex-1 h-12 bg-black text-white text-[11px] uppercase tracking-[0.18em] border-0">
+              Ja, fortfahren
+            </button>
+            <button onClick={dropDraft}
+              className="flex-1 h-12 bg-white text-black/70 border border-black/15 text-[11px] uppercase tracking-[0.18em]">
+              Nein, neu
+            </button>
+          </div>
+        </div>
+      </div>
+    ), document.body)}
     <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden lg:h-full" ref={outerRef}>
 
       {/* ── Header ────────────────────────────────────────────────── */}
@@ -2021,5 +2177,6 @@ export default function Customize() {
         }}
       />
     </div>
+    </>
   )
 }

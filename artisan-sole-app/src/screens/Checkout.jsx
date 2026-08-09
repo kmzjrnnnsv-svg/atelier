@@ -346,6 +346,9 @@ export default function Checkout() {
           // Sohle und Zusatzoptionen gehören zur Fertigungsspezifikation. Sie
           // wurden bislang im Warenkorb geführt und beim Bestellen verworfen.
           sole: product.sole || null, extras: product.extras || null,
+          // Die Kennung des Entwurfs: Der Server liest die Fertigungsangaben
+          // von dort und nicht aus dem, was hier zusammengestellt wurde.
+          config_id: product.configId || null,
           ...shippingData,
         })
       } else {
@@ -362,6 +365,7 @@ export default function Checkout() {
             last_key: item.last || null, last_label: item.lastLabel || null,
             last_width: item.width || null, fit_measurements: item.footMeasurementsUsed || null,
             sole: item.sole || null, extras: item.extras || null,
+            config_id: item.configId || null,
             ...shippingData,
           })
         }
