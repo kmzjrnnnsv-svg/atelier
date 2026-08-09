@@ -248,6 +248,10 @@ export default function Customize() {
 
   // Gewählte Sohlen-Art (Optionsgruppe 'sole') — ersetzt das Legacy-Sohlenfeld
   // in Warenkorb/Bestellung/Sticky-Bar.
+  // Eine Kennung je Produktseite. Sie begleitet die Konfiguration bis in die
+  // Bestellung, damit der Server dort nachschlagen kann, was gewählt wurde.
+  const [draftId] = useState(() => newDraftId())
+
   const soleArt = (() => {
     const g = extraOptionGroups.find(x => x.key === 'sole')
     return g ? (g.values.find(v => v.id === selectedExtras['sole']) || null) : null
@@ -791,6 +795,30 @@ export default function Customize() {
       return sel ? { group: g.label, key: g.key, value: sel.label, price: sel.price_extra || 0 } : null
     })
     .filter(Boolean)
+  // Was in den Entwurf geht — dieselben Felder, die später die Bestellung
+  // trägt. Bewusst eine einzige Stelle: Zwei Stellen waren genau das Problem.
+  const draftPayload = () => ({
+    shoe_id: product.id, shoe_name: cleanShoeName(product.name),
+    material: mat?.label || product.material,
+    color, color_name: col?.name || null,
+    sole: soleArt?.label || 'Standard',
+    extras: extrasForCart,
+    size_type: sizeType, eu_size: chosenEU,
+    last_key: selectedFit?.last_key || null,
+    last_label: selectedFit?.last_label || null,
+    last_width: selectedFit?.width || null,
+    fit_measurements: footMeasurementsUsed,
+    price: formatPrice(basePrice + extrasPriceTotal),
+  })
+
+  // Laufend sichern, sobald etwas gewählt ist. Ohne Material und Farbe gibt es
+  // noch nichts zu speichern.
+  useEffect(() => {
+    if (!product?.id || !selMat || !selCol) return
+    saveDraft(draftId, draftPayload())
+  }, [product?.id, selMat, selCol, color, JSON.stringify(selectedExtras), sizeType, chosenEU,
+      selectedFit?.last_key, selectedFit?.width])
+
   const addShoeToCart = () => {
     addToCart({
       shoeId: product.id, name: cleanShoeName(product.name),
@@ -805,6 +833,7 @@ export default function Customize() {
       sizeSystem: selectedFit?.size_system || 'EU',
       footMeasurementsUsed,
       extras: extrasForCart,
+      configId: draftId,
     })
   }
 
@@ -848,7 +877,10 @@ export default function Customize() {
   }
 
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
+    // Vor dem Wechsel zur Kasse ohne Verzögerung sichern: Ab hier ist der
+    // Entwurf die Quelle, aus der die Bestellung entsteht.
+    await flushDraft(draftId, draftPayload())
     const cartAccessories = selectedAccessories.map(id => {
       const acc = accessories.find(a => a.id === id)
       return acc ? { id: acc.id, name: acc.name, price: acc.price, color: acc.color } : null
@@ -867,6 +899,12 @@ export default function Customize() {
           width: selectedFit?.width || null,
           sizeSystem: selectedFit?.size_system || 'EU',
           footMeasurementsUsed,
+          // Ohne das fehlten beim Direktkauf sämtliche Zusatzoptionen —
+          // Absatz, Welt, Sohlen- und Innenfarbe. Der Weg über den Warenkorb
+          // führte sie mit, dieser nicht, und in der Bestellung stand am Ende
+          // nur Leder, Farbe und Sohle.
+          extras: extrasForCart,
+          configId: draftId,
         },
         accessories: cartAccessories,
       },

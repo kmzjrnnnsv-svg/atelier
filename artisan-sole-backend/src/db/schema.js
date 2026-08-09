@@ -444,6 +444,8 @@ export function runMigrations(db) {
     // in der Bestellung standen nur Modell, Leder und Farbe.
     `ALTER TABLE orders ADD COLUMN sole   TEXT`,
     `ALTER TABLE orders ADD COLUMN extras TEXT`,
+    // Verweis auf die gespeicherte Konfiguration — die maßgebliche Quelle.
+    `ALTER TABLE orders ADD COLUMN config_id TEXT REFERENCES shoe_configs(id)`,
     `CREATE INDEX IF NOT EXISTS idx_orders_affiliate ON orders(affiliate_code)`,
     `ALTER TABLE shoes ADD COLUMN slug TEXT`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_slug ON shoes(slug)`,
@@ -1175,6 +1177,44 @@ export function runMigrations(db) {
   for (const sql of colMigrations) {
     try { db.exec(sql) } catch { /* column already exists */ }
   }
+
+  // ── Konfigurationen (Entwürfe) ───────────────────────────────────────────
+  // Jede Konfiguration wird beim Zusammenstellen gespeichert, lange bevor
+  // bestellt wird. Grund: Vorher reiste sie durch drei Bildschirme als
+  // Zustand im Browser — Konfigurator, Warenkorb, Kasse — und jede Stelle,
+  // die ein Feld vergaß, verlor es lautlos. Genau so fehlten beim Direktkauf
+  // sämtliche Zusatzoptionen in der Bestellung.
+  //
+  // Ab jetzt ist die Datenbank die Quelle: Die Bestellung verweist auf die
+  // Konfiguration, und der Server liest sie von dort, nicht aus dem, was der
+  // Browser mitschickt.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS shoe_configs (
+      id           TEXT    PRIMARY KEY,          -- vom Browser erzeugt, damit auch Gäste einen Entwurf führen können
+      user_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      shoe_id      INTEGER REFERENCES shoes(id) ON DELETE SET NULL,
+      shoe_name    TEXT,
+      material     TEXT,
+      color        TEXT,                          -- Farbwert (#hex)
+      color_name   TEXT,                          -- lesbarer Name
+      sole         TEXT,
+      extras       TEXT,                          -- JSON: [{group,key,value,price}]
+      size_type    TEXT,
+      eu_size      TEXT,
+      last_key     TEXT,
+      last_label   TEXT,
+      last_width   TEXT,
+      fit_measurements TEXT,                      -- JSON
+      accessories  TEXT,                          -- JSON
+      price        TEXT,
+      status       TEXT    NOT NULL DEFAULT 'draft'
+                           CHECK(status IN ('draft','ordered')),
+      created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_configs_user   ON shoe_configs(user_id);
+    CREATE INDEX IF NOT EXISTS idx_configs_status ON shoe_configs(status);
+  `)
 
   // ── Passkeys ─────────────────────────────────────────────────────────────
   // Ein Konto kann mehrere haben — Telefon und Rechner sollten getrennt

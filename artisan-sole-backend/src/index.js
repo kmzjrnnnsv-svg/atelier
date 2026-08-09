@@ -13,6 +13,7 @@ import authRouter, { issueTokens } from './routes/auth.js'
 import usersRouter from './routes/users.js'
 import affiliatesRouter from './routes/affiliates.js'
 import passkeysRouter, { makeLoginVerify } from './routes/passkeys.js'
+import configsRouter from './routes/configs.js'
 import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter } from './routes/content.js'
 import scansRouter      from './routes/scans.js'
 import favoritesRouter  from './routes/favorites.js'
@@ -119,6 +120,7 @@ app.use('/api', apiLimiter)
 // Anmeldung greift; die Verwaltung der Schlüssel liegt getrennt darunter.
 app.post('/api/auth/passkey/login/verify', makeLoginVerify(issueTokens))
 app.use('/api/auth/passkey', passkeysRouter)
+app.use('/api/configs',  configsRouter)
 app.use('/api/auth',     authRouter)
 app.use('/api/users',    usersRouter)
 // shoeCardRouter zuerst: shoesRouter hat ein generisches GET /:id, das

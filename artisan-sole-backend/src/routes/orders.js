@@ -65,7 +65,7 @@ router.post('/',
       delivery_address, billing_address, accessories, scan_id,
       foot_notes, shipping_method, shipping_cost, coupon_code, business_code, business_campaign_id,
       size_type, last_key, last_label, last_width, fit_measurements,
-      sole, extras,
+      sole, extras, config_id,
     } = req.body
 
     // Translate foot notes to English for manufacturer
@@ -73,6 +73,32 @@ router.post('/',
 
     const db  = getDb()
     const uid = req.user.id
+
+    // ── Die gespeicherte Konfiguration ist maßgeblich ────────────────────
+    // Liegt eine vor, werden die Fertigungsangaben von dort genommen und nicht
+    // aus dem, was der Browser mitschickt. Vorher baute jede Oberfläche das
+    // Produktobjekt neu zusammen; wer ein Feld vergaß, verlor es lautlos —
+    // beim Direktkauf fehlten so sämtliche Zusatzoptionen.
+    const spec = { sole, extras, size_type, eu_size, last_key, last_label, last_width, fit_measurements }
+    let configRow = null
+    if (config_id) {
+      configRow = db.prepare('SELECT * FROM shoe_configs WHERE id = ?').get(config_id)
+      if (configRow) {
+        // Fremde Entwürfe nicht annehmen.
+        if (configRow.user_id && configRow.user_id !== req.user.id) {
+          return res.status(403).json({ error: 'Diese Konfiguration gehört zu einem anderen Konto.' })
+        }
+        spec.sole             = configRow.sole             ?? spec.sole
+        spec.extras           = configRow.extras           ?? spec.extras
+        spec.size_type        = configRow.size_type        ?? spec.size_type
+        spec.eu_size          = configRow.eu_size          ?? spec.eu_size
+        spec.last_key         = configRow.last_key         ?? spec.last_key
+        spec.last_label       = configRow.last_label       ?? spec.last_label
+        spec.last_width       = configRow.last_width       ?? spec.last_width
+        spec.fit_measurements = configRow.fit_measurements ?? spec.fit_measurements
+      }
+    }
+
 
     // Check promotion order limit
     const userRow = db.prepare('SELECT is_promotion, promotion_max_orders, promotion_orders_used FROM users WHERE id = ?').get(uid)
@@ -149,8 +175,8 @@ router.post('/',
          foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price,
          size_type, last_key, last_label, last_width, fit_measurements,
          business_id, business_code_id, business_coverage, business_campaign_id,
-         sole, extras)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         sole, extras, config_id)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `)
     const insertParams = [
       uid,
@@ -159,7 +185,7 @@ router.post('/',
       material,
       color,
       price,
-      eu_size    || null,
+      spec.eu_size || null,
       delivery_address ? JSON.stringify(delivery_address) : null,
       billing_address  ? JSON.stringify(billing_address)  : null,
       JSON.stringify(accessories || []),
@@ -174,20 +200,23 @@ router.post('/',
       couponRow ? coupon_code.toUpperCase() : null,
       discount_amount || null,
       original_price || null,
-      size_type || 'standard',
-      last_key   || null,
-      last_label || null,
-      last_width || null,
-      fit_measurements ? JSON.stringify(fit_measurements) : null,
+      spec.size_type || 'standard',
+      spec.last_key   || null,
+      spec.last_label || null,
+      spec.last_width || null,
+      typeof spec.fit_measurements === 'string' ? spec.fit_measurements
+        : (spec.fit_measurements ? JSON.stringify(spec.fit_measurements) : null),
       orderBusinessId,
       bizCode ? bizCode.id : null,
       orderCoverage,
       bizCampaign ? bizCampaign.id : null,
-      sole || null,
+      spec.sole || null,
       // Die gewählten Zusatzoptionen als Liste. Für die Fertigung ist das die
       // eigentliche Spezifikation — ohne sie steht in der Bestellung nur
       // Modell, Leder und Farbe, und die Manufaktur weiß nicht, was zu bauen ist.
-      Array.isArray(extras) && extras.length ? JSON.stringify(extras) : null,
+      typeof spec.extras === 'string' ? spec.extras
+        : (Array.isArray(spec.extras) && spec.extras.length ? JSON.stringify(spec.extras) : null),
+      config_id || null,
     ]
 
     let result
@@ -210,6 +239,13 @@ router.post('/',
       }
     } else {
       result = insertOrder.run(...insertParams)
+    }
+
+    // Der Entwurf gehört jetzt zur Bestellung und wird festgeschrieben — ab
+    // hier lässt sich nicht mehr umschreiben, was gefertigt werden soll.
+    if (configRow) {
+      db.prepare("UPDATE shoe_configs SET status = 'ordered', user_id = COALESCE(user_id, ?), updated_at = datetime('now') WHERE id = ?")
+        .run(req.user.id, configRow.id)
     }
 
     // Record coupon usage + increment promotion orders
