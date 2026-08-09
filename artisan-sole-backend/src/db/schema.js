@@ -109,6 +109,13 @@ const LEATHER_KIT_DESC =
 const SUEDE_KIT_DESC =
   'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich.\n\nInhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei.\n\nGedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.'
 
+// Einkaufspreise je Zubehör-Schlüssel. Nur für Artikel nötig, die als Zugabe
+// im Vermittlerprogramm auftauchen — der Einkaufspreis wird dort von der
+// Provision einbehalten.
+const ACCESSORY_COSTS = {
+  shoe_tree_cedar: 22.0,
+}
+
 // Zubehör, das früher aus diesem Seed stammte und nicht mehr geführt wird.
 // Bewusst als feste Liste und nicht als „alles, was nicht in accData steht":
 // Artikel, die im CMS von Hand angelegt wurden, sollen bleiben.
@@ -512,7 +519,7 @@ export function runMigrations(db) {
     const accData = [
       { key: 'care_kit_leather', name: 'Lederpflege-Set',              desc: LEATHER_KIT_DESC,        price: 23.7,  sort: 0, rec: '[]',                                  not: '["SNEAKER"]' },
       { key: 'care_kit_suede',   name: 'Wildlederpflege-Set',           desc: SUEDE_KIT_DESC, price: 25.25, sort: 1, rec: '[]',                                  not: '[]' },
-      { key: 'shoe_tree_cedar',  name: 'Zedernholz-Schuhspanner',       desc: 'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    price: 21.0,  sort: 2, rec: '[]',                                  not: '["SNEAKER"]' },
+      { key: 'shoe_tree_cedar',  name: 'Zedernholz-Schuhspanner',       desc: 'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    price: 21.0,  sort: 2, rec: '[]',                                  not: '["SNEAKER"]', cost: 22.0 },
       { key: 'shoe_tree_black',  name: 'Schuhspanner Schwarz',          desc: 'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.',                                        price: 22.0,  sort: 3, rec: '[]',                                  not: '["SNEAKER"]' },
       { key: 'boot_tree_cedar',  name: 'Zedernholz-Stiefelspanner',     desc: 'Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.',                                                price: 29.0,  sort: 4, rec: '["BOOT","CHELSEA","CHUKKA","JODHPUR"]', not: '["SNEAKER"]' },
     ]
@@ -530,6 +537,7 @@ export function runMigrations(db) {
     for (const a of accData) {
       upsert.run(a.key, a.name, a.desc, a.price, a.sort, a.rec, a.not)
     }
+
 
   } catch (e) {
     // Beim allerersten Start gibt es die Tabelle noch nicht — sie entsteht
@@ -900,8 +908,8 @@ export function runMigrations(db) {
     --
     -- gift_shoetree: Der Vermittler kann seinen Kunden einen Zedernholz-
     -- Schuhspanner schenken. Verrechnet wird der Einkaufspreis aus
-    -- accessories.cost_price, nicht der Ladenpreis — der liegt mit 45 € über
-    -- der Provision selbst. Nur zusammen mit der Prozentwahl sinnvoll.
+    -- accessories.cost_price (22 €), nicht der Ladenpreis. Nur zusammen mit
+    -- der Prozentwahl sinnvoll.
     CREATE TABLE IF NOT EXISTS affiliates (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -1246,6 +1254,15 @@ export function runMigrations(db) {
     let removed = 0
     for (const key of RETIRED_ACCESSORIES) removed += del.run(key).changes
     if (removed) console.log(`🧹 Zubehör entfernt: ${removed} nicht mehr geführte Artikel`)
+
+    // Einkaufspreise. Hier und nicht oben beim Upsert: Der läuft beim ersten
+    // Start ins Leere, weil die Tabelle erst danach entsteht — der Wert hätte
+    // dann bis zum zweiten Start gefehlt, und die Zugabe an den Käufer wäre
+    // dem Vermittler geschenkt worden.
+    // Nur setzen, wo noch nichts steht: Gepflegt wird der Wert im CMS, kein
+    // Deploy darf ihn überschreiben.
+    const cost = db.prepare('UPDATE accessories SET cost_price = ? WHERE key = ? AND cost_price IS NULL')
+    for (const [key, value] of Object.entries(ACCESSORY_COSTS)) cost.run(value, key)
   } catch (e) { console.error('[accessories cleanup]', e.message) }
 
   // ── orders.status: fehlende Zustände in die CHECK-Bedingung aufnehmen ─────

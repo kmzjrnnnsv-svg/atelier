@@ -37,7 +37,7 @@ router.get('/validate/:code', (req, res) => {
     valid: true,
     code: a.code,
     // Zugabe gibt es nur bei der Prozentwahl — siehe utils/affiliate.js
-    gift: a.gift_shoetree === 1 && a.commission_type === 'percent' ? 'shoetrees' : null,
+    gift: a.gift_shoetree === 1 && a.commission_type === 'percent' ? 'shoe_tree_cedar' : null,
   })
 })
 

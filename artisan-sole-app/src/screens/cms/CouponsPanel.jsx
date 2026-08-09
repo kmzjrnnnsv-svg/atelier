@@ -9,13 +9,9 @@ const TYPES = [
   { key: 'free_accessory', label: 'Gratis Zubehör' },
 ]
 
-const ACCESSORIES = [
-  { id: 'shoetrees', name: 'Zedernholz Schuhspanner' },
-  { id: 'carekit', name: 'Lederpflege-Set' },
-  { id: 'dustbag', name: 'Samtbeutel' },
-  { id: 'shoehorn', name: 'Messing-Schuhlöffel' },
-  { id: 'belt', name: 'Passendes Ledergürtel' },
-]
+// Zubehör wird geladen, nicht aufgelistet. Die frühere feste Liste nannte
+// Artikel, die es längst nicht mehr gibt (Samtbeutel, Schuhlöffel, Gürtel) —
+// eine Gutscheinauswahl, die ins Leere zeigte.
 
 const empty = { code: '', type: 'percentage', value: 0, free_accessory_id: '', min_order_value: '', max_uses: '', single_use: false, expires_at: '' }
 
@@ -27,6 +23,7 @@ export default function CouponsPanel() {
   const [filter, setFilter] = useState('all')
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(empty)
+  const [accessories, setAccessories] = useState([])
 
   const load = async () => {
     try {
@@ -36,6 +33,13 @@ export default function CouponsPanel() {
   }
 
   useEffect(() => { load() }, [])
+
+  // Aktives Zubehör für die Auswahl „Gratis Zubehör".
+  useEffect(() => {
+    apiFetch('/api/accessories')
+      .then(d => setAccessories((Array.isArray(d) ? d : []).filter(a => a.is_active)))
+      .catch(() => setAccessories([]))
+  }, [])
 
   const startEdit = (c) => {
     setEditing(c ? c.id : 'new')
@@ -154,7 +158,7 @@ export default function CouponsPanel() {
                     {c.type === 'percentage' ? `${c.value}%` :
                      c.type === 'fixed' ? `\u20AC${c.value}` :
                      c.type === 'free_shipping' ? '\u2014' :
-                     ACCESSORIES.find(a => a.id === c.free_accessory_id)?.name || c.free_accessory_id}
+                     accessories.find(a => a.key === c.free_accessory_id)?.name || c.free_accessory_id}
                   </span>
                   <span className="text-[11px] text-black/35 font-light">
                     {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
@@ -211,7 +215,7 @@ function FormBlock({ form, set, onSave, onCancel, title }) {
             <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Zubehor</label>
             <select value={form.free_accessory_id} onChange={e => set('free_accessory_id', e.target.value)} className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70">
               <option value="">Zubehor wahlen...</option>
-              {ACCESSORIES.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              {accessories.map(a => <option key={a.key} value={a.key}>{a.name}</option>)}
             </select>
           </div>
         )}
