@@ -166,6 +166,52 @@ router.get('/', ...canAdmin, (req, res) => {
   })))
 })
 
+// ── CMS: Vermittler anlegen ───────────────────────────────────────────────
+// Anders als /register: Der Betreiber legt selbst an, also ist der Zugang
+// sofort aktiv — die Freigabe, die /register abwartet, hat hier schon
+// stattgefunden. Verlangt werden nur Name, E-Mail und Code; alles Weitere
+// (Anschrift, Steuerangaben, Bankverbindung) lässt sich später ergänzen.
+// Ohne IBAN bleibt die Auszahlung ohnehin gesperrt, siehe payout_blocked.
+router.post('/',
+  ...canAdmin,
+  body('full_name').trim().isLength({ min: 2 }).withMessage('Name erforderlich'),
+  body('email').trim().isEmail().withMessage('Gültige E-Mail erforderlich'),
+  body('code').trim().isLength({ min: 3, max: 24 }).withMessage('Code: 3 bis 24 Zeichen'),
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg })
+
+    const code = normCode(req.body.code)
+    if (!code) return res.status(400).json({ error: 'Code darf nur Buchstaben, Ziffern und Bindestriche enthalten.' })
+
+    const db = getDb()
+    if (db.prepare('SELECT 1 FROM affiliates WHERE code = ?').get(code)) {
+      return res.status(409).json({ error: 'Dieser Code ist bereits vergeben.' })
+    }
+
+    const b = req.body
+    const type = b.commission_type === 'fixed' ? 'fixed' : 'percent'
+    const info = db.prepare(`
+      INSERT INTO affiliates
+        (code, status, full_name, email, phone, street, postal_code, city, country,
+         tax_status, tax_number, vat_id, iban, account_holder,
+         commission_type, commission_value, cap_per_shoe, gift_shoetree, terms_accepted_at)
+      VALUES (?, 'active', ?,?,?,?,?,?,?, ?,?,?,?,?, ?,?,?,?, datetime('now'))
+    `).run(
+      code,
+      String(b.full_name).trim(), String(b.email).trim(), b.phone || null,
+      b.street || null, b.postal_code || null, b.city || null, b.country || 'DE',
+      b.tax_status === 'vat_liable' ? 'vat_liable' : 'small_business',
+      b.tax_number || null, b.vat_id || null, b.iban || null, b.account_holder || null,
+      type,
+      Number(b.commission_value) || (type === 'fixed' ? 25 : 10),
+      Number(b.cap_per_shoe) || 40,
+      b.gift_shoetree ? 1 : 0,
+    )
+    res.status(201).json({ id: info.lastInsertRowid, code, status: 'active' })
+  }
+)
+
 // ── CMS: einzelnen Vermittler ändern ──────────────────────────────────────
 router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
   const db = getDb()

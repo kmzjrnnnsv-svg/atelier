@@ -88,6 +88,7 @@ const Welcome           = lazy(lazyImports['/welcome'])
 
 // CMS
 const CMSLayout            = lazy(() => import('./screens/cms/CMSLayout'))
+const MobileAdmin          = lazy(() => import('./screens/admin/MobileAdmin'))
 const CMSDashboard         = lazy(() => import('./screens/cms/CMSDashboard'))
 const ShoeEditor           = lazy(() => import('./screens/cms/ShoeEditor'))
 const UsersPanel           = lazy(() => import('./screens/cms/UsersPanel'))
@@ -141,7 +142,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung']
 // Pfade mit variablem Ende: hier zählt der Anfang, nicht die genaue Adresse.
 const NO_NAV_PREFIXES = ['/schuhe/']
 const hidesNav = (path) =>
@@ -227,8 +228,16 @@ function AppRoutes() {
         <div className="flex md:hidden items-center justify-center h-full bg-white px-8">
           <div className="text-center">
             <p className="text-[16px] font-semibold text-black mb-2">CMS Studio</p>
-            <p className="text-[13px] text-black/50 font-light leading-relaxed mb-4">Das CMS ist nur auf iPad und Desktop verfügbar.</p>
-            <p className="text-[11px] text-black/30 font-light">Erkannt: {device.label}</p>
+            <p className="text-[13px] text-black/50 font-light leading-relaxed mb-5">
+              Der volle Bereich braucht iPad oder Rechner. Für unterwegs gibt es
+              die schlanke Verwaltung: Bestellungen, Versand, Gutscheine und
+              Vermittler.
+            </p>
+            <a href="/verwaltung"
+               className="inline-flex items-center justify-center h-12 px-7 bg-black text-white text-[12px] tracking-[0.18em] uppercase no-underline">
+              Zur Verwaltung
+            </a>
+            <p className="text-[11px] text-black/30 font-light mt-5">Erkannt: {device.label}</p>
           </div>
         </div>
         <div className="hidden md:block h-full">
@@ -290,6 +299,11 @@ function AppRoutes() {
                   Lesezeichen weiter funktionieren. */}
               <Route path="/schuhe/:slug" element={<Customize />} />
               <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
+              {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs:
+                  Der blendet sich unter 768 px vollständig aus und zeigt nur
+                  den Hinweis „nur auf iPad und Desktop" — genau der Fall, für
+                  den diese Oberfläche gebaut ist. */}
+              <Route path="/verwaltung" element={<CMSRoute><MobileAdmin /></CMSRoute>} />
               <Route path="/customize"  element={<Customize />} />
               <Route path="/welcome"    element={<Welcome />} />
               {/* Entdecken/Wissen sind entfallen — alte Adressen führen zur Kollektion. */}
@@ -323,6 +337,10 @@ function AppRoutes() {
   const routes = (
     <Routes>
       <Route path="/"           element={isBusiness ? <CorporateGifting /> : <Navigate to="/collection" replace />} />
+      {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs: Der
+          blendet sich unter 768 px vollständig aus und zeigt nur den Hinweis
+          „nur auf iPad und Desktop" — genau der Fall, für den sie gebaut ist. */}
+      <Route path="/verwaltung" element={<CMSRoute><MobileAdmin /></CMSRoute>} />
       <Route path="/login"      element={<Login />} />
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />

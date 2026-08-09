@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2 } from 'lucide-react'
+import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 import { HOME_PATH } from '../../lib/homePath'
@@ -137,6 +137,16 @@ export default function CMSLayout() {
 
       {/* Main content */}
       <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-[#fafaf9]">
+        {/* Hinweis nur auf schmalen Schirmen: Die Seitenleiste belegt feste
+            220 px, auf einem Telefon bleiben davon keine 160 px für den
+            Inhalt. Statt hier alles umzubauen, führt der Weg zur schlanken
+            Verwaltung — die deckt ab, was unterwegs anfällt. */}
+        <NavLink to="/verwaltung"
+          className="lg:hidden flex items-center gap-2 bg-black text-white px-4 py-3 text-[12px] font-light no-underline">
+          <Smartphone size={15} strokeWidth={1.4} className="flex-shrink-0" />
+          <span className="flex-1">Auf dem Telefon: zur schlanken Verwaltung</span>
+          <ChevronRight size={15} strokeWidth={1.5} />
+        </NavLink>
         <div className="w-full max-w-full overflow-hidden">
           <Outlet />
         </div>
