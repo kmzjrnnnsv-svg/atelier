@@ -47,10 +47,14 @@ function issueTokens(res, user) {
   // Pfaden (login/register/refresh) konsistent ist.
   const biz = getDb().prepare('SELECT id, name FROM businesses WHERE owner_user_id = ?').get(user.id)
   const vrow = getDb().prepare('SELECT email_verified FROM users WHERE id = ?').get(user.id)
+  // Vermittler kennzeichnen, damit die Anmeldung sie in ihr Portal führt statt
+  // in den Laden. Nur freigeschaltete zählen — wer noch auf Freigabe wartet,
+  // hat dort nichts zu sehen.
+  const aff = getDb().prepare("SELECT code FROM affiliates WHERE user_id = ? AND status = 'active'").get(user.id)
 
   // Return refreshToken in body too — Capacitor native apps can't rely on
   // cross-origin cookies in WKWebView, so they store it in memory instead.
-  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion, promotion_discount_pct: user.promotion_discount_pct || 0, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null, email_verified: !!vrow?.email_verified } }
+  return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion, promotion_discount_pct: user.promotion_discount_pct || 0, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null, is_affiliate: !!aff, affiliate_code: aff?.code || null, email_verified: !!vrow?.email_verified } }
 }
 
 // POST /api/auth/register
@@ -169,7 +173,8 @@ router.get('/me', authenticate, (req, res) => {
   const row = getDb().prepare('SELECT is_promotion, promotion_discount_pct, promotion_max_orders, promotion_orders_used FROM users WHERE id = ?').get(id)
   const biz = getDb().prepare('SELECT id, name FROM businesses WHERE owner_user_id = ?').get(id)
   const vrow = getDb().prepare('SELECT email_verified FROM users WHERE id = ?').get(id)
-  res.json({ id, name, email, role, is_promotion: !!(row?.is_promotion), promotion_discount_pct: row?.promotion_discount_pct, promotion_max_orders: row?.promotion_max_orders, promotion_orders_used: row?.promotion_orders_used, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null, email_verified: !!vrow?.email_verified })
+  const aff = getDb().prepare("SELECT code FROM affiliates WHERE user_id = ? AND status = 'active'").get(id)
+  res.json({ id, name, email, role, is_promotion: !!(row?.is_promotion), promotion_discount_pct: row?.promotion_discount_pct, promotion_max_orders: row?.promotion_max_orders, promotion_orders_used: row?.promotion_orders_used, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null, is_affiliate: !!aff, affiliate_code: aff?.code || null, email_verified: !!vrow?.email_verified })
 })
 
 // PATCH /api/auth/me  –  Update own profile (name / email / password)

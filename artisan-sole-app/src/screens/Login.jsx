@@ -37,6 +37,10 @@ export default function Login() {
         navigate('/cms', { replace: true })
       } else if (user.is_business) {
         navigate('/business/dashboard', { replace: true })
+      } else if (user.is_affiliate) {
+        // Vermittler arbeiten mit ihrem Portal, nicht mit dem Laden. Vorher
+        // landeten sie in der Kollektion und mussten die Adresse kennen.
+        navigate('/vermittler', { replace: true })
       } else if (redirectTo) {
         navigate(redirectTo, { replace: true, state: loadConfig ? { loadConfig } : undefined })
       } else {
