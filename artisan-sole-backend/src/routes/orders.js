@@ -450,6 +450,45 @@ function fristTageRest(order) {
   return WIDERRUF_TAGE - tage
 }
 
+// GET /api/orders/ruecksendungen/meine — Übersicht für den eigenen Bereich
+//
+// Ein Aufruf statt einer Abfrage je Bestellung: Die Seite im Profil zeigt alle
+// zugestellten Bestellungen mit dem, was daraus noch zurückgehen kann, und die
+// bereits angemeldeten Rücksendungen.
+router.get('/ruecksendungen/meine', authenticate, (req, res) => {
+  const db = getDb()
+  const bestellungen = db.prepare(`
+    SELECT * FROM orders
+    WHERE user_id = ? AND status = 'delivered'
+    ORDER BY COALESCE(delivered_at, created_at) DESC
+  `).all(req.user.id)
+
+  const antwort = bestellungen.map(o => {
+    const rest = fristTageRest(o)
+    return {
+      order_id: o.id,
+      order_ref: o.order_ref,
+      shoe_name: o.shoe_name,
+      delivered_at: o.delivered_at,
+      created_at: o.created_at,
+      items: ruecksendbar(db, o),
+      window_days: WIDERRUF_TAGE,
+      days_left: rest,
+      open: rest != null && rest > 0,
+      requests: db.prepare('SELECT id, status, items, amount, reason, note, created_at, decided_at FROM return_requests WHERE order_id = ? ORDER BY created_at DESC').all(o.id)
+        .map(r => ({ ...r, items: JSON.parse(r.items || '[]') })),
+    }
+  })
+
+  res.json({
+    window_days: WIDERRUF_TAGE,
+    orders: antwort,
+    // Warum der Schuh fehlt, steht einmal zentral — sonst sucht man ihn in
+    // jeder einzelnen Bestellung.
+    shoe_note: 'Maßgefertigte Schuhe entstehen für einen bestimmten Fuß und sind vom Widerruf ausgenommen. Passt etwas nicht, sehen wir uns das an.',
+  })
+})
+
 // GET /api/orders/:id/ruecksendung — was geht zurück, was nicht, und warum
 router.get('/:id/ruecksendung', authenticate, (req, res) => {
   const db = getDb()

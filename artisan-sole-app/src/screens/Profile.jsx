@@ -4,7 +4,7 @@
  */
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, ChevronRight, BookOpen, Footprints, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3, Package, Settings, LogOut, Layers, Trash2 } from 'lucide-react'
+import { CheckCircle, ChevronRight, BookOpen, Footprints, Award, Crown, Gem, Shield, Star, Lock, ChevronDown, ChevronUp, Edit3, Package, Settings, LogOut, Layers, Trash2, PackageOpen } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
@@ -709,6 +709,7 @@ export default function Profile() {
         {[
           { icon: Package,    label: 'Meine Bestellungen', sub: 'Bestellungen · Tracking · Status',        path: '/orders' },
           { icon: Footprints, label: 'Meine Scans',        sub: 'Fußscan-Verlauf · 3D-Modelle',           path: '/my-scans' },
+          { icon: PackageOpen, label: 'Rücksendungen',      sub: 'Zubehör zurücksenden · Stand',           path: '/ruecksendungen' },
           { icon: BookOpen,   label: 'Schuh-Info',          sub: 'Informationen rund um den perfekten Schuh', path: '/health' },
           { icon: Settings,   label: 'Einstellungen',       sub: 'Profil · Passwort · Adressen',            path: '/settings' },
         ].map(({ icon: Icon, label, sub, path }) => (

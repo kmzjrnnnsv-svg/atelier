@@ -74,6 +74,7 @@ const lazyImports = {
   '/feedback':   () => import('./screens/Feedback'),
   '/legal':      () => import('./screens/LegalDoc'),
   '/my-scans':   () => import('./screens/MyScans'),
+  '/ruecksendungen': () => import('./screens/Ruecksendungen'),
   '/welcome':    () => import('./screens/Welcome'),
 }
 
@@ -101,6 +102,7 @@ const HelpSupport       = lazy(lazyImports['/help'])
 const Feedback          = lazy(lazyImports['/feedback'])
 const LegalDoc          = lazy(lazyImports['/legal'])
 const MyScans           = lazy(lazyImports['/my-scans'])
+const Ruecksendungen    = lazy(lazyImports['/ruecksendungen'])
 const Welcome           = lazy(lazyImports['/welcome'])
 
 // CMS
@@ -147,6 +149,7 @@ const VerifyEmail          = lazy(() => import('./screens/VerifyEmail'))
 const BusinessPanel        = lazy(() => import('./screens/cms/BusinessPanel'))
 const AffiliatesPanel      = lazy(() => import('./screens/cms/AffiliatesPanel'))
 const AnfragenPanel        = lazy(() => import('./screens/cms/AnfragenPanel'))
+const RuecksendungenPanel  = lazy(() => import('./screens/cms/RuecksendungenPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -292,6 +295,7 @@ function AppRoutes() {
               <Route path="business" element={<BusinessPanel />} />
               <Route path="vermittler" element={<AffiliatesPanel />} />
               <Route path="anfragen" element={<AnfragenPanel />} />
+              <Route path="ruecksendungen" element={<RuecksendungenPanel />} />
               <Route path="scans"    element={<ScansPanel />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />
               <Route path="cta-banner" element={<CtaBannerPanel />} />
@@ -346,6 +350,7 @@ function AppRoutes() {
                   Lesezeichen weiter funktionieren. */}
               <Route path="/schuhe/:slug" element={<ShopRoute><Customize /></ShopRoute>} />
               <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
+              <Route path="/ruecksendungen" element={<ProtectedRoute><Ruecksendungen /></ProtectedRoute>} />
               {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs:
                   Der blendet sich unter 768 px vollständig aus und zeigt nur
                   den Hinweis „nur auf iPad und Desktop" — genau der Fall, für
@@ -414,6 +419,7 @@ function AppRoutes() {
       <Route path="/collection" element={<ShopRoute><ShoeCollection /></ShopRoute>} />
       <Route path="/schuhe/:slug" element={<ShopRoute><Customize /></ShopRoute>} />
       <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
+      <Route path="/ruecksendungen" element={<ProtectedRoute><Ruecksendungen /></ProtectedRoute>} />
       <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
       <Route path="/welcome"    element={<Welcome />} />
       <Route path="/explore"    element={<Navigate to="/collection" replace />} />

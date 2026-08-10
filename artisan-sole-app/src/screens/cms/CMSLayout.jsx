@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox } from 'lucide-react'
+import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 import { HOME_PATH } from '../../lib/homePath'
@@ -52,6 +52,7 @@ export default function CMSLayout() {
               { to: '/cms/anfragen', label: 'Anfragen',     icon: Inbox },
               { to: '/cms/orders',   label: 'Bestellungen', icon: ShoppingBag },
               { to: '/cms/shipping', label: 'Versand',      icon: Truck },
+              { to: '/cms/ruecksendungen', label: 'Rücksendungen', icon: PackageOpen },
               { to: '/cms/coupons',  label: 'Gutscheine',   icon: Ticket },
             ]},
             { heading: 'Inhalte', items: [
