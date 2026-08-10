@@ -14,6 +14,7 @@ import { SHOES } from '../lib/editorialImages'
 import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
+import Ablauf from '../components/Ablauf'
 
 // Anlass-basierte Kategorien. Jeder Anlass bildet auf mehrere Schuh-Typen ab
 // (ein Modell kann in mehreren Anlässen erscheinen). `cats` = enthaltene
@@ -576,6 +577,41 @@ export default function ShoeCollection() {
       {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}
       <div className="px-5 lg:px-16 pb-16">
         <CtaBanner page="collection" />
+      </div>
+
+      {/* ── Wie eine Bestellung abläuft ───────────────────────────
+          Ganz unten, nach der Kollektion: Wer hier ankommt, hat sich die
+          Modelle angesehen und fragt sich, wie es weitergeht. Maßschuhe
+          laufen anders als Konfektionsware, und das ungefragt zu erklären
+          erspart die Rückfrage. */}
+      <div className="px-5 lg:px-16 pb-20 border-t border-black/[0.07] pt-14">
+        <Ablauf
+          titel="So läuft eine Bestellung"
+          intro="Jedes Paar entsteht auf Bestellung. Es gibt kein Lager, aus dem wir greifen — deshalb dauert es länger als anderswo und sitzt dafür."
+          schritte={[
+            {
+              titel: 'Modell wählen und konfigurieren',
+              text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Was Sie einstellen, wird im Hintergrund gespeichert — Sie können jederzeit unterbrechen und später weitermachen.',
+            },
+            {
+              titel: 'Fußmaße angeben',
+              text: 'Zwei Maße genügen: Fußlänge und Ballenumfang, ±0,5 cm sind völlig in Ordnung. Daraus ermitteln wir Leisten und Größe. Eine Größentabelle brauchen Sie nicht, weil wir nicht raten.',
+            },
+            {
+              titel: 'Bestellen und bezahlen',
+              text: 'Vor dem Abschluss steht Ihre vollständige Konfiguration noch einmal da — jede Farbe, jede Option, jedes Zubehör. Erst dann geht die Bestellung in die Fertigung.',
+            },
+            {
+              titel: 'Fertigung in der Manufaktur',
+              text: 'Über 200 Arbeitsschritte von Hand. Sie bekommen Nachricht, wenn die Fertigung beginnt und wenn Ihr Paar in die Endkontrolle geht.',
+            },
+            {
+              titel: 'Endkontrolle und Versand',
+              text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.',
+            },
+          ]}
+          fuss="Ein maßgefertigter Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen — er ist vom Widerruf ausgenommen. Passt etwas nicht, sehen wir uns das an; dafür sind wir da. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung regulär zurück."
+        />
       </div>
     </div>
   )

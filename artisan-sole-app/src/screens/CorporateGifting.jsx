@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 import { Check, Send, MapPin, Gem, Footprints, PenTool, Package, MessageCircle, ArrowRight, LogIn, Gift, Heart, Handshake, Award, Building2 } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
+import Ablauf from '../components/Ablauf'
 
 const IMG_API_BASE = import.meta.env.VITE_API_URL || ''
 const resolveImg = (url) => {
@@ -394,6 +395,48 @@ export default function CorporateGifting() {
               </p>
             </form>
           )}
+        </div>
+      </section>
+
+      {/* ── Wie ein Firmenkonto abläuft ─────────────────────────────
+          Vor dem Footer, nach dem Kontaktformular: Wer bis hierhin gelesen
+          hat, überlegt es sich. Die häufigste offene Frage ist nicht das Ob,
+          sondern wie viel Arbeit es macht — deshalb steht der Ablauf hier
+          und nicht in einem FAQ. */}
+      <section className="px-5 lg:px-8 py-16 bg-white border-t border-stone-200/70">
+        <div className="max-w-5xl mx-auto">
+          <Ablauf
+            titel="Von der Anfrage bis zum ersten Paar"
+            intro="Sie legen die Konditionen fest, Ihre Mitarbeitenden bestellen selbst. Sie sammeln keine Größen ein und legen nichts aus."
+            schritte={[
+              {
+                titel: 'Anfrage senden',
+                text: 'Über das Formular oben oder per WhatsApp. Wir melden uns und klären, was Sie vorhaben — Anlass, Anzahl, Zeitrahmen.',
+              },
+              {
+                titel: 'Firmenkonto erhalten',
+                text: 'Wir richten Ihr Konto ein und schicken einen Einladungslink. Dort legen Sie Ihr Passwort fest, danach sind Sie unter business.artisansole.com angemeldet.',
+              },
+              {
+                titel: 'Profil und Logo hinterlegen',
+                text: 'Firmendaten und, wenn gewünscht, Ihr Logo für die Sohlenprägung. Einmal hinterlegt, gilt es für alle Bestellungen Ihres Hauses.',
+              },
+              {
+                titel: 'Kampagne anlegen',
+                text: 'Name, Rabatt, Frist und welche Modelle zur Wahl stehen. Sie entscheiden auch, wer teilnehmen darf: alle mit Ihrer E-Mail-Domain oder eine namentliche Liste.',
+              },
+              {
+                titel: 'Mitarbeitende teilnehmen lassen',
+                text: 'Wer sich mit der Firmen-E-Mail anmeldet, ist automatisch dabei — der Rabatt steht ohne Code im Konfigurator. Bei der namentlichen Liste verschicken wir die Einladungen per Mail.',
+              },
+              {
+                titel: 'Fortschritt verfolgen',
+                text: 'Sie sehen live, wie viele Paare je Modell zusammenkommen und wer schon bestellt hat. Ab zehn Paar pro Modell greift der Mengenrabatt.',
+              },
+            ]}
+            fuss="Jedes Paar wird einzeln auf die Maße der jeweiligen Person gefertigt und einzeln zugestellt. Es gibt keine Sammellieferung und keine Größenliste, die Sie führen müssten."
+            hell
+          />
         </div>
       </section>
 
