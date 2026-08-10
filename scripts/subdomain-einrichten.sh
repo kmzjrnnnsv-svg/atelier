@@ -97,15 +97,86 @@ else
 fi
 
 # ── 3. Zertifikat ───────────────────────────────────────────────────────────
-# --expand nimmt die Domain in das bestehende Zertifikat auf, statt ein zweites
-# anzulegen; --nginx trägt die Pfade selbst ein.
-echo "→ Zertifikat anfordern…"
-if certbot --nginx --expand -d "$DOMAIN" --non-interactive --agree-tos --keep-until-expiring; then
-  echo "  Zertifikat steht."
+#
+# Hier lag ein Fehler, der die Hauptseite lahmgelegt hat: `certbot --expand -d
+# <nur der neue Name>` erweitert nicht das bestehende Zertifikat, sondern legt
+# ein neues an, das ausschließlich diesen einen Namen führt — und `--nginx`
+# trägt dessen Pfade in den Block ein, der auch artisansole.com ausliefert.
+# Ergebnis: Zertifikat und Domain passen nicht mehr zusammen, der Browser
+# schlägt Alarm.
+#
+# Richtig ist: das bestehende Zertifikat über --cert-name ansprechen und ALLE
+# Namen des Blocks mitgeben. certbot ersetzt dann eins durch eins, statt ein
+# zweites danebenzustellen.
+echo "→ Zertifikat…"
+
+# Alle Namen aus dem HTTPS-Block einsammeln, den wir gerade angefasst haben.
+NAMEN="$(grep -hoE '^\s*server_name[^;]*' "$CONF" \
+  | sed -E 's/^\s*server_name\s+//' | tr ' ' '\n' \
+  | grep -E '^[a-z0-9.-]+\.[a-z]{2,}$' | sort -u)"
+
+if [[ -z "$NAMEN" ]]; then
+  echo "✗ Keine Domainnamen in $CONF gefunden." >&2
+  exit 1
+fi
+echo "  Abzudecken: $(echo "$NAMEN" | tr '\n' ' ')"
+
+# Welches Zertifikat deckt heute die Hauptdomain ab? Dessen Namen behalten wir
+# bei, damit die Erneuerung weiterläuft und keine Karteileiche entsteht.
+CERT_NAME="$(certbot certificates 2>/dev/null \
+  | awk -v d="$DOMAIN" '
+      /Certificate Name:/ { name=$3 }
+      /Domains:/ { if ($0 ~ /artisansole\.com/ && name != "") { print name; exit } }
+    ')"
+
+D_ARGS=()
+while read -r n; do [[ -n "$n" ]] && D_ARGS+=(-d "$n"); done <<< "$NAMEN"
+
+if [[ -n "$CERT_NAME" ]]; then
+  echo "  Bestehendes Zertifikat: $CERT_NAME (wird erweitert)"
+  CERT_ARGS=(--cert-name "$CERT_NAME")
 else
-  echo "✗ certbot ist gescheitert. Häufigste Ursache: Der DNS-Eintrag ist noch nicht überall" >&2
-  echo "  bekannt. In ein paar Minuten erneut versuchen:" >&2
-  echo "      sudo certbot --nginx --expand -d $DOMAIN" >&2
+  echo "  Kein passendes Zertifikat gefunden — es wird eins angelegt."
+  CERT_ARGS=()
+fi
+
+if ! certbot --nginx --expand "${CERT_ARGS[@]}" "${D_ARGS[@]}" \
+     --non-interactive --agree-tos --keep-until-expiring; then
+  cat >&2 <<EOF
+✗ certbot ist gescheitert. Die Seite läuft weiter mit dem alten Zertifikat.
+
+  Häufigste Ursache: Der DNS-Eintrag ist noch nicht überall bekannt.
+  In ein paar Minuten von Hand nachholen:
+
+      sudo certbot --nginx --expand ${CERT_NAME:+--cert-name $CERT_NAME} $(echo "$NAMEN" | sed 's/^/-d /' | tr '\n' ' ')
+
+  Kam die Warnung „Verbindung ist nicht privat" schon vorher: Sicherung
+  zurückspielen und erneut versuchen —
+      sudo cp ${SICHERUNG:-<sicherung>} $CONF && sudo nginx -t && sudo systemctl reload nginx
+EOF
+  exit 1
+fi
+echo "  Zertifikat deckt jetzt alle Namen ab."
+
+# Gegenprobe: Deckt das ausgelieferte Zertifikat wirklich jeden Namen? Ohne die
+# Prüfung fällt eine Lücke erst dem Besucher auf.
+echo "→ Gegenprobe…"
+FEHLT=""
+while read -r n; do
+  [[ -z "$n" ]] && continue
+  if echo | openssl s_client -servername "$n" -connect 127.0.0.1:443 2>/dev/null \
+     | openssl x509 -noout -checkhost "$n" 2>/dev/null | grep -q 'does match'; then
+    echo "  ✓ $n"
+  else
+    echo "  ✗ $n — Zertifikat passt nicht"
+    FEHLT="$FEHLT $n"
+  fi
+done <<< "$NAMEN"
+
+if [[ -n "$FEHLT" ]]; then
+  echo >&2
+  echo "✗ Für diese Namen passt das Zertifikat nicht:$FEHLT" >&2
+  echo "  Besucher sehen dort eine Sicherheitswarnung. Bitte melden." >&2
   exit 1
 fi
 
