@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../../hooks/useApi'
+import { LIEFERUMFANG } from '../../lib/lieferumfang'
 
 // Globale Produktseiten-Texte (für alle Schuhe). Tagline + Beschreibung sind
 // dagegen pro Schuh im Schuh-Editor pflegbar.
@@ -9,7 +10,7 @@ const DEFAULTS = {
   aesthetic_text: 'Edelste Leder, Lux Calf, Lux Suede, Painted Full Grain, Patina und Samt. Maximale optische Veredelung mit handpatinierten Oberflächen. Ideal für formelle Anlässe und besondere Momente.',
   durable_title: 'Durable',
   durable_text: 'Robuste Leder, Box Calf, Urban Suede, Painted Calf und Painted Full Grain. Wetterfest, alltagstauglich und langlebig. Ideal für täglichen Einsatz und anspruchsvolle Bedingungen.',
-  delivery_items: ['Handgefertigte Schuhe', 'Schuhbeutel aus Baumwolle', 'Schuhspanner aus Zedernholz', 'Pflegeanleitung'],
+  delivery_items: LIEFERUMFANG,
   badges: ['Handgenäht', 'Maßgefertigt', '200+ Schritte'],
 }
 

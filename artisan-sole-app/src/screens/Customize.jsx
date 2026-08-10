@@ -33,6 +33,7 @@ function LastShapeIcon({ shapeKey, active }) {
 }
 import useStore from '../store/store'
 import { accessoryImages } from '../lib/accessoryImages'
+import { LIEFERUMFANG } from '../lib/lieferumfang'
 
 // Relative Bild-URLs (/uploads/…) gegen die API-Base auflösen, base64/http
 // bleiben unverändert.
@@ -93,7 +94,7 @@ function Stars({ value, size = 14 }) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, vermittler, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
   const { user } = useAuth()
 
   // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
@@ -669,16 +670,29 @@ export default function Customize() {
   // ein; leer heißt „passt überall".
   const kategorien = [product.category, product.type, product.build]
     .map(v => String(v || '').trim().toUpperCase()).filter(Boolean)
-  const liste = (v) => String(v || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+  /**
+   * Kategorienliste aus einem Feld lesen, das mal JSON und mal Komma-Liste ist.
+   *
+   * Beides kommt vor: Das CMS schreibt ["SNEAKER"], ältere Einträge tragen
+   * "SNEAKER, BOOT". Zuerst JSON versuchen, sonst am Komma trennen — vorher
+   * lief beides durch dieselbe Trennung, und "[]" wurde dabei zur Kategorie
+   * namens „[]". Ein Zubehör mit leerem recommended_for galt damit als „nur
+   * für [] empfohlen" und verschwand bei jedem Schuh.
+   */
+  const liste = (v) => {
+    const roh = String(v ?? '').trim()
+    if (!roh) return []
+    if (roh.startsWith('[')) {
+      try {
+        const j = JSON.parse(roh)
+        return Array.isArray(j) ? j.map(x => String(x).trim().toUpperCase()).filter(Boolean) : []
+      } catch { return [] }
+    }
+    return roh.split(',').map(x => x.trim().toUpperCase()).filter(Boolean)
+  }
   const kategorieMatchesAccessory = (a) => {
-    const aus = liste(a.not_recommended_for).concat(
-      // Das Feld kommt aus dem CMS auch als JSON-Liste.
-      (() => { try { const j = JSON.parse(a.not_recommended_for || '[]'); return Array.isArray(j) ? j.map(x => String(x).toUpperCase()) : [] } catch { return [] } })()
-    )
-    if (aus.some(k => kategorien.includes(k))) return false
-    const nur = liste(a.recommended_for).concat(
-      (() => { try { const j = JSON.parse(a.recommended_for || '[]'); return Array.isArray(j) ? j.map(x => String(x).toUpperCase()) : [] } catch { return [] } })()
-    )
+    if (liste(a.not_recommended_for).some(k => kategorien.includes(k))) return false
+    const nur = liste(a.recommended_for)
     if (!nur.length) return true
     return nur.some(k => kategorien.includes(k))
   }
@@ -763,7 +777,10 @@ export default function Customize() {
 
   const userPct = user?.is_promotion ? (user?.promotion_discount_pct || 0) : 0
   const campaignPct = campaignForShoe ? Number(campaignForShoe.discount_pct) : 0
-  const promoDiscountPct = Math.max(userPct, campaignPct)
+  // Dritter Weg: der Werbelink eines Vermittlers (?ref=). Was dem Geworbenen
+  // zugesagt wurde, steht am Vermittler und gilt für jedes Modell.
+  const vermittlerPct = Number(vermittler?.customer_discount_pct) || 0
+  const promoDiscountPct = Math.max(userPct, campaignPct, vermittlerPct)
   const isPromo = promoDiscountPct > 0 || !!user?.is_promotion
 
   const effectivePrice = user?.is_promotion && product.promotion_price ? product.promotion_price : product.price
@@ -1309,12 +1326,7 @@ export default function Customize() {
           <div className="hidden lg:block pt-6 px-1">
             <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Lieferumfang</p>
             <div className="flex flex-col gap-1.5">
-              {(pageTexts?.delivery_items?.length ? pageTexts.delivery_items : [
-                'Handgefertigte Schuhe',
-                'Schuhbeutel aus Baumwolle',
-                'Schuhspanner aus Zedernholz',
-                'Pflegeanleitung',
-              ]).map((item) => (
+              {(pageTexts?.delivery_items?.length ? pageTexts.delivery_items : LIEFERUMFANG).map((item) => (
                 <div key={item} className="flex items-center gap-2">
                   <div className="w-1 h-1 rounded-full bg-black/15" />
                   <span className="text-[11px] text-black/40">{item}</span>
@@ -1429,9 +1441,11 @@ export default function Customize() {
                 wie ein Fehler. */}
             {totalDiscount > 0 && (
               <p className="text-[10px] text-black/45 font-light mt-1" style={{ letterSpacing: '0.06em' }}>
-                {campaignForShoe && campaignPct >= userPct
-                  ? <>{campaignForShoe.business_name || campaignForShoe.name} · {String(promoDiscountPct).replace('.', ',')} % Firmenkondition</>
-                  : <>{String(promoDiscountPct).replace('.', ',')} % Sonderkondition</>}
+                {promoDiscountPct === vermittlerPct && vermittlerPct > 0
+                  ? <>Empfehlung {vermittler.code.toUpperCase()} · {String(promoDiscountPct).replace('.', ',')} %</>
+                  : campaignForShoe && campaignPct >= userPct
+                    ? <>{campaignForShoe.business_name || campaignForShoe.name} · {String(promoDiscountPct).replace('.', ',')} % Firmenkondition</>
+                    : <>{String(promoDiscountPct).replace('.', ',')} % Sonderkondition</>}
                 {' '}— Sie sparen {formatPrice(totalDiscount)}
               </p>
             )}

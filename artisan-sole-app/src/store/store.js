@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { apiFetch } from '../hooks/useApi'
+import { refAusUrl, refMerken, refLesen, refVergessen } from '../lib/vermittlerCode'
 
 // Debounced cart sync, avoids race conditions when removing items quickly
 let _syncTimer = null
@@ -47,6 +48,7 @@ const useStore = create((set, get) => ({
   shoeSoles:    [],
   accessories:  [],          // all accessories from DB
   myCampaigns:  [],          // Firmen-Aktionen, in denen der Kunde Mitglied ist
+  vermittler:   null,        // { code, gift, customer_discount_pct } aus ?ref=
   shoeAccessoryMap: {},      // { shoeId: [accessory, ...] }
   loyaltyTiers: [],
   loyaltyStatus: { points: 0, tier: 'bronze' },
@@ -119,6 +121,42 @@ const useStore = create((set, get) => ({
     set({ cart: [] })
     clearTimeout(_syncTimer)
     apiFetch('/api/auth/me/cart', { method: 'PUT', body: JSON.stringify({ cart: [] }) }).catch(() => {})
+  },
+
+  /**
+   * Den Werbecode aus dem Link aufnehmen und prüfen.
+   *
+   * Läuft bei jedem Start: Ein neuer ?ref= in der Adresse ersetzt einen
+   * gemerkten, sonst gilt der gemerkte weiter. Ist er ungültig oder der
+   * Vermittler nicht mehr aktiv, wird er verworfen statt bis zur Kasse
+   * mitgeschleppt — dort fiele es sonst zum denkbar schlechtesten Zeitpunkt auf.
+   */
+  async vermittlerPruefen() {
+    const ausUrl = refAusUrl()
+    if (ausUrl) refMerken(ausUrl)
+    const code = ausUrl || refLesen()
+    if (!code) { set({ vermittler: null }); return null }
+    try {
+      const r = await apiFetch(`/api/affiliates/validate/${encodeURIComponent(code)}`)
+      if (!r?.valid) { refVergessen(); set({ vermittler: null }); return null }
+      const v = {
+        code: r.code,
+        gift: r.gift || null,
+        customer_discount_pct: Number(r.customer_discount_pct) || 0,
+      }
+      set({ vermittler: v })
+      return v
+    } catch {
+      // Netzwerkfehler ist kein Grund, den Code wegzuwerfen — beim nächsten
+      // Start wird erneut geprüft.
+      set({ vermittler: null })
+      return null
+    }
+  },
+
+  vermittlerEntfernen() {
+    refVergessen()
+    set({ vermittler: null })
   },
 
   async initStore() {

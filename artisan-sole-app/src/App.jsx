@@ -231,7 +231,7 @@ function AffiliateStart() {
 function AppRoutes() {
   const location = useLocation()
   const { user } = useAuth()
-  const { initStore } = useStore()
+  const { initStore, vermittlerPruefen } = useStore()
   const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
   // Corporate-Onepager bringt eine eigene Kopfzeile mit, globale Shop-Nav ausblenden.
@@ -258,6 +258,9 @@ function AppRoutes() {
   // to empty arrays for guests.
   useEffect(() => {
     initStore()
+    // Werbecode aus ?ref= aufnehmen und prüfen. Muss bei jedem Start laufen,
+    // nicht nur bei Anmeldung: Der Link führt Gäste in den Laden.
+    vermittlerPruefen()
   }, [user])
 
   if (isCMS) {

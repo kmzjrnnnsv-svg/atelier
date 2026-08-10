@@ -172,7 +172,7 @@ export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user } = useAuth()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, accessories: storeAccessories, shoes } = useStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, accessories: storeAccessories, shoes, vermittler } = useStore()
   const isPromo = !!user?.is_promotion
   const promoDiscountPct = user?.promotion_discount_pct || 0
 
@@ -380,6 +380,10 @@ export default function Checkout() {
           scan_id: latestScan?.id || null, delivery_address: delivery,
           billing_address: billingAddr, accessories: accList,
           foot_notes: footNotes || null, coupon_code: appliedCoupon, business_code: appliedBizCode, business_campaign_id: appliedCampaignId,
+          // Der Code aus dem Werbelink. Er wurde bislang nirgends
+          // mitgeschickt — die Bestellung kam an, die Vermittlung ging
+          // verloren. Firmenkampagnen schlagen ihn serverseitig.
+          affiliate_code: vermittler?.code || null,
           last_key: product.last || null, last_label: product.lastLabel || null,
           last_width: product.width || null, fit_measurements: product.footMeasurementsUsed || null,
           // Sohle und Zusatzoptionen gehören zur Fertigungsspezifikation. Sie
@@ -401,6 +405,7 @@ export default function Checkout() {
             scan_id: latestScan?.id || null, delivery_address: delivery,
             billing_address: billingAddr, accessories: accList,
             foot_notes: footNotes || null, coupon_code: i === 0 ? appliedCoupon : null,
+            affiliate_code: vermittler?.code || null,
             last_key: item.last || null, last_label: item.lastLabel || null,
             last_width: item.width || null, fit_measurements: item.footMeasurementsUsed || null,
             sole: item.sole || null, extras: item.extras || null,
