@@ -60,7 +60,9 @@ export default function BusinessDashboard() {
             sich zum ersten Mal anmeldet, sucht die nächste Schaltfläche, nicht
             eine Beschreibung. */}
         <div className="mt-10">
-          <div className="flex items-center gap-2.5 mb-5">
+          {/* Auf dieselbe Spalte wie der Ablauf darunter — sonst steht die
+              Überschrift links und die Anleitung mittig. */}
+          <div className="flex items-center gap-2.5 mb-5 max-w-2xl mx-auto">
             <Building2 size={16} strokeWidth={1.4} className="text-black/50" />
             <p className="text-[12px] text-black font-normal uppercase tracking-[0.15em]">Ihre nächsten Schritte</p>
           </div>
