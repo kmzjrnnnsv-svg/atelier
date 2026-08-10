@@ -82,7 +82,8 @@ function Bestellung({ eintrag, onSenden, sendet }) {
           <div>
             <p className="text-[12px] text-black/70">{b.shoe_name}</p>
             <p className="text-[11px] text-black/40 font-light leading-relaxed">
-              Maßanfertigung — vom Widerruf ausgenommen.
+              Maßanfertigung — vom Widerruf ausgenommen. Bei einem Mangel fertigen
+              wir neu; bei Nichtgefallen sehen wir uns das an.
             </p>
           </div>
         </div>

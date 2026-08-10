@@ -34,6 +34,7 @@ function LastShapeIcon({ shapeKey, active }) {
 import useStore from '../store/store'
 import { accessoryImages } from '../lib/accessoryImages'
 import { LIEFERUMFANG } from '../lib/lieferumfang'
+import GroessenTabelle from '../components/GroessenTabelle'
 
 // Relative Bild-URLs (/uploads/…) gegen die API-Base auflösen, base64/http
 // bleiben unverändert.
@@ -366,6 +367,7 @@ export default function Customize() {
   const [measSaving, setMeasSaving] = useState(false)
   const [measOpen, setMeasOpen] = useState(false)   // Inline-Maßeingabe an der Passgenauigkeit
   const [measAnchor, setMeasAnchor] = useState('kopf')  // 'kopf' | 'passform' — wo sie erscheint
+  const [groessenOffen, setGroessenOffen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -1848,6 +1850,16 @@ export default function Customize() {
                       <button onClick={() => openMeasEdit('passform')} className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0">
                         Maße eingeben
                       </button>
+                      {/* Für den, der nicht messen will. Bewusst klein und
+                          nachgeordnet: Es ist die schlechtere Wahl, und der
+                          Text im Fenster sagt auch warum. */}
+                      <button
+                        type="button"
+                        onClick={() => setGroessenOffen(true)}
+                        className="block w-full mt-2.5 text-[10px] text-black/40 hover:text-black/70 text-center underline underline-offset-4 bg-transparent border-0"
+                      >
+                        Lieber ohne Maße? Zur Größentabelle
+                      </button>
                     </>
                   )}
                 </div>
@@ -2229,6 +2241,14 @@ export default function Customize() {
       </div>
 
       {/* ── Duplikat-Dialog ────────────────────────────────────── */}
+      {/* Größentabelle. Als eigenes Fenster, damit sie von jeder Stelle der
+          Seite aus erreichbar ist, ohne den Konfigurator zu verlassen. */}
+      <GroessenTabelle
+        offen={groessenOffen}
+        onClose={() => setGroessenOffen(false)}
+        lastKey={chosenLast || null}
+      />
+
       {duplicateDialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40" onClick={() => setDuplicateDialog(false)}>
           <div className="bg-white mx-4 w-full max-w-md p-7" onClick={e => e.stopPropagation()}>
