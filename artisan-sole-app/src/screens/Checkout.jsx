@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck, Building2 } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck, Building2, PackageOpen } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
 import { useAuth } from '../context/AuthContext'
@@ -395,8 +395,14 @@ export default function Checkout() {
           ...shippingData,
         })
       } else {
-        for (let i = 0; i < cart.length; i++) {
-          const item = cart[i]
+        // Nur Schuhe werden zu Bestellungen. Zubehör hängt als `accessories`
+        // an der Schuhbestellung — vorher wurde aus jedem Warenkorb-Eintrag
+        // eine eigene Bestellung, auch aus einem Pflegeset, und dasselbe
+        // Zubehör landete zusätzlich in accList. Doppelt gezählt und einzeln
+        // verschickt.
+        const schuhe = cart.filter(c => !c.isAccessory)
+        for (let i = 0; i < schuhe.length; i++) {
+          const item = schuhe[i]
           const itemTotal = parsePrice(item.price) * item.qty
           lastRow = await placeOrder({
             shoe_id: item.shoeId || null, shoe_name: item.name,
@@ -501,6 +507,60 @@ export default function Checkout() {
             style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
             Kollektion entdecken
           </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Zubehör reist mit, es reist nicht allein: Ein Pflegeset einzeln zu
+  // verschicken kostet rund 30 € Porto — mehr als der Artikel selbst. Statt
+  // das am Ende als Fehler zu melden, steht es hier, bevor jemand Adresse und
+  // Zahlung ausfüllt.
+  const nurZubehoer = !product.id && cart.length > 0 && cart.every(c => c.isAccessory)
+  if (nurZubehoer) {
+    return (
+      <div className="min-h-full bg-white">
+        <div className={`${SHELL} pt-8 lg:pt-14 pb-1`}>
+          <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Artisan Sole</p>
+          <p className="text-[28px] lg:text-[36px] font-extralight text-black tracking-tight">Einkaufstasche</p>
+        </div>
+        <div className={`${SHELL} py-14`}>
+          <div className="border border-black/10 p-6 lg:p-8">
+            <PackageOpen size={22} strokeWidth={1.2} className="text-black/30 mb-4" />
+            <p className="text-[15px] font-light text-black">Zubehör gibt es nur zusammen mit einem Paar.</p>
+            <p className="text-[12px] text-black/50 font-light leading-relaxed mt-3 max-w-md">
+              Der Versand eines einzelnen Pflegesets kostet uns rund 30 € — mehr als
+              der Artikel selbst. Das wollen wir niemandem berechnen. Legen Sie ein
+              Modell dazu, dann geht Ihr Zubehör im selben Paket mit, ohne
+              zusätzlichen Versand.
+            </p>
+
+            <div className="mt-6 pt-5 border-t border-black/[0.07]">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-black/30 mb-2.5">In Ihrer Tasche</p>
+              {cart.map(c => (
+                <div key={c.id} className="flex items-center justify-between py-1.5">
+                  <span className="text-[12px] text-black/70">{c.qty}× {c.name}</span>
+                  <button
+                    onClick={() => removeFromCart(c.id)}
+                    className="text-[11px] text-black/35 hover:text-black bg-transparent border-0 p-0 underline underline-offset-2"
+                  >
+                    entfernen
+                  </button>
+                </div>
+              ))}
+              <p className="text-[11px] text-black/35 font-light mt-3">
+                Es bleibt liegen, bis Sie ein Paar dazulegen.
+              </p>
+            </div>
+
+            <button
+              onClick={() => navigate('/collection')}
+              className="mt-7 w-full sm:w-auto px-8 py-3 bg-black text-white text-[11px] font-light border-0"
+              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
+            >
+              Kollektion ansehen
+            </button>
+          </div>
         </div>
       </div>
     )

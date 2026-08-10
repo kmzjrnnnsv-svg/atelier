@@ -7,7 +7,7 @@ import { apiFetch } from '../../hooks/useApi'
 const ALL_PAGES = [
   { key: 'explore', label: 'Entdecken' },
   { key: 'collection', label: 'Kollektion' },
-  { key: 'accessories', label: 'Zubeh\u00f6r' },
+  { key: 'accessories', label: 'Zubehör' },
 ]
 
 export default function CtaBannerPanel() {
@@ -48,9 +48,9 @@ export default function CtaBannerPanel() {
       <div className="bg-white p-7 mb-6">
         <div className="space-y-5">
           <div>
-            <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">{'\u00dc'}berschrift-Label</label>
+            <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">{'Ü'}berschrift-Label</label>
             <input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
-              className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" placeholder="Pers\u00f6nliche Beratung" />
+              className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15" placeholder="Persönliche Beratung" />
           </div>
           <div>
             <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Titel</label>
@@ -61,7 +61,7 @@ export default function CtaBannerPanel() {
             <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Text</label>
             <textarea value={form.text} onChange={e => setForm(f => ({ ...f, text: e.target.value }))}
               className="w-full px-4 py-3 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 resize-y" rows={3}
-              placeholder="Erleben Sie Ihr pers\u00f6nliches Fitting..." />
+              placeholder="Erleben Sie Ihr persönliches Fitting..." />
           </div>
           <div className="flex gap-5">
             <div className="flex-1">

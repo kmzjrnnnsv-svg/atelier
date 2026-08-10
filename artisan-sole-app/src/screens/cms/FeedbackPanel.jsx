@@ -6,7 +6,7 @@ import { apiFetch } from '../../hooks/useApi'
 const STATUS_CONFIG = {
   open: { label: 'Offen', color: 'bg-black/15 text-black/60' },
   in_progress: { label: 'In Bearbeitung', color: 'bg-black/8 text-black/40' },
-  resolved: { label: 'Gel\u00f6st', color: 'bg-black/5 text-black/30' },
+  resolved: { label: 'Gelöst', color: 'bg-black/5 text-black/30' },
   closed: { label: 'Geschlossen', color: 'bg-black/[0.03] text-black/25' },
 }
 
@@ -21,7 +21,7 @@ const STATUS_FILTERS = [
   { key: 'all', label: 'Alle' },
   { key: 'open', label: 'Offen' },
   { key: 'in_progress', label: 'In Bearbeitung' },
-  { key: 'resolved', label: 'Gel\u00f6st' },
+  { key: 'resolved', label: 'Gelöst' },
   { key: 'closed', label: 'Geschlossen' },
 ]
 
@@ -179,7 +179,7 @@ function TicketCard({ ticket, onUpdate, onDelete }) {
             <textarea
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
-              placeholder="Interne Notizen hinzuf\u00fcgen..."
+              placeholder="Interne Notizen hinzufügen..."
               className="w-full text-[13px] font-light text-black/55 bg-white border border-black/[0.06] p-4 resize-y min-h-[80px] placeholder:text-black/20 focus:outline-none focus:border-black/15 transition-colors"
             />
             <button
@@ -205,7 +205,7 @@ function TicketCard({ ticket, onUpdate, onDelete }) {
                     : 'border-0 bg-black/[0.04] text-black/35 hover:bg-black/[0.08] hover:text-black/55'
                 }`}
               >
-                {updating ? '\u2026' : STATUS_CONFIG[s]?.label || s}
+                {updating ? '…' : STATUS_CONFIG[s]?.label || s}
               </button>
             ))}
 
@@ -214,13 +214,13 @@ function TicketCard({ ticket, onUpdate, onDelete }) {
             {/* Delete */}
             {confirmDelete ? (
               <div className="flex items-center gap-3">
-                <span className="text-[9px] text-black/25 font-light italic">Wirklich l\u00f6schen?</span>
+                <span className="text-[9px] text-black/25 font-light italic">Wirklich löschen?</span>
                 <button
                   onClick={handleDelete}
                   disabled={updating}
                   className="px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30"
                 >
-                  {updating ? '\u2026' : 'Ja, l\u00f6schen'}
+                  {updating ? '…' : 'Ja, löschen'}
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
@@ -235,7 +235,7 @@ function TicketCard({ ticket, onUpdate, onDelete }) {
                 className="flex items-center gap-2 text-[11px] text-black/20 hover:text-black/40 bg-transparent border-0 uppercase tracking-[0.2em] font-light transition-all"
               >
                 <Trash2 size={10} strokeWidth={1} />
-                L\u00f6schen
+                Löschen
               </button>
             )}
           </div>
@@ -309,7 +309,7 @@ export default function FeedbackPanel() {
           { label: 'Gesamt', value: tickets.length },
           { label: 'Offen', value: statusCounts.open || 0 },
           { label: 'In Bearbeitung', value: statusCounts.in_progress || 0 },
-          { label: 'Gel\u00f6st', value: statusCounts.resolved || 0 },
+          { label: 'Gelöst', value: statusCounts.resolved || 0 },
         ].map(stat => (
           <div key={stat.label} className="flex-1 bg-white p-6">
             <p className="text-[9px] text-black/25 uppercase tracking-[0.2em] font-light mb-2">{stat.label}</p>

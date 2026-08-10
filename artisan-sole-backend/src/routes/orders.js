@@ -60,6 +60,22 @@ router.post('/',
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
 
+    // ── Zubehör reist mit, es reist nicht allein ─────────────────────────
+    //
+    // Ein Pflegeset einzeln zu verschicken kostet uns rund 30 € Porto — mehr
+    // als der Artikel. Das ist niemandem zuzumuten, und deshalb gibt es
+    // Zubehör nur zusammen mit einem Paar: Es steht in orders.accessories der
+    // Schuhbestellung und geht mit demselben Paket hinaus.
+    //
+    // Die Prüfung gehört hierher und nicht nur in die Kasse. Eine Regel, die
+    // allein im Browser lebt, ist keine Regel — sie ist eine Bitte.
+    if (!req.body.shoe_id) {
+      return res.status(400).json({
+        error: 'Zubehör versenden wir nur zusammen mit einem Paar Schuhe. Bitte legen Sie ein Modell dazu.',
+        code: 'ACCESSORY_ONLY',
+      })
+    }
+
     const {
       shoe_id, shoe_name, material, color, price, eu_size,
       delivery_address, billing_address, accessories, scan_id,
