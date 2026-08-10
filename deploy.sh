@@ -103,6 +103,27 @@ echo ""
 echo "→ PM2 Status:"
 pm2 status
 
+# 5. Zertifikate prüfen
+#
+# Ein Zertifikat, das eine ausgelieferte Domain nicht abdeckt, sieht auf dem
+# Server nach nichts aus: nginx läuft, die Seite antwortet, die Logs schweigen.
+# Erst der Besucher bekommt „Diese Verbindung ist nicht privat" und ist weg.
+# Deshalb wird das hier bei jedem Deploy nachgesehen — es kostet Sekunden.
+#
+# Der Deploy scheitert daran nicht: Der Code ist ausgerollt, das Zertifikat ist
+# ein getrenntes Problem. Aber es steht in der Ausgabe und im Log, statt
+# unbemerkt zu bleiben.
+echo ""
+echo "→ TLS-Zertifikate prüfen..."
+if sudo "$(dirname "$0")/scripts/tls-pruefen.sh"; then
+  echo "  Zertifikate in Ordnung"
+else
+  echo ""
+  echo "  ⚠ ZERTIFIKAT-PROBLEM — Besucher sehen eine Sicherheitswarnung."
+  echo "     Beheben mit: sudo $(dirname "$0")/scripts/tls-pruefen.sh --reparieren"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') — WARNUNG: Zertifikat deckt nicht alle Domains ab" >> "$LOG"
+fi
+
 # Log schreiben
 echo "$(date '+%Y-%m-%d %H:%M:%S') — Deploy erfolgreich" >> "$LOG"
 
