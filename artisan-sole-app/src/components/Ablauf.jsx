@@ -17,15 +17,18 @@
  * @param {Array}   schritte  [{ titel, text }] — die Schritte in ihrer Reihenfolge.
  * @param {string}  [fuss]    Nachsatz, meist eine Einschränkung oder ein Hinweis.
  * @param {boolean} [hell]    Heller Kasten statt weißem Grund.
+ * @param {string}  [breite]  Spaltenbreite, damit der Block zu dem passt, was
+ *                            darüber steht. Sonst sitzt er schmaler als der
+ *                            Rest und wirkt versetzt.
  */
-export default function Ablauf({ titel, intro, schritte = [], fuss, hell = false }) {
+export default function Ablauf({ titel, intro, schritte = [], fuss, hell = false, breite = 'max-w-2xl' }) {
   if (!schritte.length) return null
 
   return (
     // Eine Spalte, mittig. Die Breitenbegrenzung saß vorher an jedem Element
     // einzeln und ohne Zentrierung — der Block klebte am linken Rand, rechts
     // stand die halbe Seite leer. Jetzt trägt der Rahmen sie einmal.
-    <section className={`max-w-2xl mx-auto${hell ? ' border border-black/[0.06] bg-[#fafaf9] p-6 lg:p-8' : ''}`}>
+    <section className={`${breite} mx-auto${hell ? ' border border-black/[0.06] bg-[#fafaf9] p-6 lg:p-8' : ''}`}>
       <p className="text-[10px] text-black/35 uppercase tracking-[0.22em] mb-2">{titel}</p>
       {intro && (
         <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-relaxed mb-6">

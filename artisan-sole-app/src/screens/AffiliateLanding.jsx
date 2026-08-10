@@ -50,8 +50,8 @@ function AnfrageFormular() {
   const gueltig = form.name.trim() && mailOk && telOk && form.message.trim()
   const fehlt = [
     !form.name.trim() && 'Name',
-    !form.email.trim() ? 'E-Mail' : (!mailOk && 'g\u00fcltige E-Mail'),
-    !telOk && 'g\u00fcltige Telefonnummer',
+    !form.email.trim() ? 'E-Mail' : (!mailOk && 'gültige E-Mail'),
+    !telOk && 'gültige Telefonnummer',
     !form.message.trim() && 'Nachricht',
   ].filter(Boolean)
   const begonnen = !!(form.name || form.email || form.phone || form.message)
@@ -80,7 +80,7 @@ function AnfrageFormular() {
 
   if (gesendet) {
     return (
-      <div className="border border-stone-200 bg-stone-50 p-8 max-w-xl">
+      <div className="border border-stone-200 bg-stone-50 p-8 max-w-xl mx-auto text-left">
         <Check size={20} strokeWidth={1.4} className="text-stone-500 mb-3" />
         <p className="text-[15px] text-stone-900 font-light">Ihre Anfrage ist angekommen.</p>
         <p className="text-[12px] text-stone-500 font-light leading-relaxed mt-2">
@@ -91,7 +91,7 @@ function AnfrageFormular() {
   }
 
   return (
-    <form onSubmit={senden} className="max-w-xl space-y-4" noValidate>
+    <form onSubmit={senden} className="max-w-xl mx-auto space-y-4 text-left" noValidate>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={beschriftung}>Name *</label>
@@ -104,7 +104,7 @@ function AnfrageFormular() {
       </div>
       <div>
         <label className={beschriftung}>Telefon</label>
-        <input className={eingabe} value={form.phone} onChange={e => setzen('phone', e.target.value)} placeholder="+49 \u2026" />
+        <input className={eingabe} value={form.phone} onChange={e => setzen('phone', e.target.value)} placeholder="+49 …" />
       </div>
       <div>
         <label className={beschriftung}>Nachricht *</label>
@@ -113,7 +113,7 @@ function AnfrageFormular() {
 
       {fehler && <p className="text-[12px] text-red-600/80 font-light">{fehler}</p>}
       {!gueltig && begonnen && (
-        <p className="text-[11px] text-stone-400 font-light">Bitte noch ausf\u00fcllen: {fehlt.join(', ')}</p>
+        <p className="text-[11px] text-stone-400 font-light">Bitte noch ausfüllen: {fehlt.join(', ')}</p>
       )}
 
       <button
@@ -122,7 +122,7 @@ function AnfrageFormular() {
         className="w-full py-4 flex items-center justify-center gap-2.5 bg-stone-900 text-white border-0 hover:bg-stone-800 disabled:opacity-30 transition-colors"
         style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
       >
-        <Send size={15} strokeWidth={1.5} /> {sendet ? 'Wird gesendet \u2026' : 'Anfrage senden'}
+        <Send size={15} strokeWidth={1.5} /> {sendet ? 'Wird gesendet …' : 'Anfrage senden'}
       </button>
     </form>
   )
@@ -141,18 +141,18 @@ export default function AffiliateLanding() {
         </Link>
       </div>
 
-      <section className="px-5 lg:px-10 pt-16 pb-14 max-w-5xl mx-auto">
+      <section className="px-5 lg:px-10 pt-16 pb-14 max-w-3xl mx-auto text-center">
         <p className="text-[10px] uppercase tracking-[0.32em] text-stone-400 mb-4">Vermittler</p>
-        <h1 className="text-[28px] lg:text-[38px] font-extralight tracking-tight leading-[1.1] max-w-2xl">
+        <h1 className="text-[28px] lg:text-[38px] font-extralight tracking-tight leading-[1.1]">
           Sie empfehlen. Wir fertigen. Beide verdienen daran.
         </h1>
-        <p className="text-[13px] lg:text-[14px] text-stone-500 font-light leading-relaxed max-w-2xl mt-5">
+        <p className="text-[13px] lg:text-[14px] text-stone-500 font-light leading-relaxed mt-5">
           Ein Vermittlerkonto ist kein Werbenetzwerk. Es ist eine Vereinbarung zwischen
           Ihnen und dem Haus: Sie geben Ihren Link weiter, wer darüber bestellt, bekommt
           die zugesagte Kondition, und Sie erhalten Ihre Provision. Wir sprechen
           Vermittler an — bewerben können Sie sich nicht, und das ist Absicht.
         </p>
-        <div className="flex flex-wrap items-center gap-3 mt-8">
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
           <Link
             to="/login"
             className="h-12 px-7 inline-flex items-center gap-2 bg-stone-900 text-white no-underline"
@@ -173,7 +173,7 @@ export default function AffiliateLanding() {
         </p>
       </section>
 
-      <section className="px-5 lg:px-10 pb-16 max-w-5xl mx-auto">
+      <section className="px-5 lg:px-10 pb-16 max-w-3xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-stone-200/70 border border-stone-200/70">
           {MERKMALE.map(m => {
             const Icon = m.icon
@@ -188,7 +188,7 @@ export default function AffiliateLanding() {
         </div>
       </section>
 
-      <section className="px-5 lg:px-10 pb-20 max-w-5xl mx-auto">
+      <section className="px-5 lg:px-10 pb-20 max-w-3xl mx-auto">
         <Ablauf
           titel="Vom Konto bis zur Auszahlung"
           intro="Sechs Schritte, von denen Sie fünf einmal machen und einen immer wieder."
@@ -220,16 +220,17 @@ export default function AffiliateLanding() {
           ]}
           fuss="Zugabe und Nachlass sind zweierlei. Ein Nachlass für den Geworbenen geht zulasten des Hauses; eine Zugabe wie der Zedernholz-Spanner wird zum Einkaufspreis von Ihrer Provision abgezogen. Was davon für Sie gilt, steht in Ihren Konditionen."
           hell
+          breite="max-w-3xl"
         />
       </section>
 
-      <section id="anfrage" className="px-5 lg:px-10 pb-20 max-w-5xl mx-auto scroll-mt-16">
-        <div className="border-t border-stone-200/70 pt-14">
+      <section id="anfrage" className="px-5 lg:px-10 pb-20 max-w-3xl mx-auto scroll-mt-16">
+        <div className="border-t border-stone-200/70 pt-14 text-center">
           <p className="text-[10px] uppercase tracking-[0.32em] text-stone-400 mb-3">Frage stellen</p>
           <h2 className="text-[22px] lg:text-[28px] font-extralight tracking-tight leading-tight">
             Etwas offen? Schreiben Sie uns.
           </h2>
-          <p className="text-[13px] text-stone-500 font-light leading-relaxed max-w-xl mt-4 mb-8">
+          <p className="text-[13px] text-stone-500 font-light leading-relaxed max-w-xl mx-auto mt-4 mb-8">
             Für Fragen zu Konditionen, Abrechnung oder einer bestehenden Zusammenarbeit.
             Wir antworten per E-Mail.
           </p>
@@ -238,7 +239,7 @@ export default function AffiliateLanding() {
       </section>
 
       <footer className="px-5 lg:px-10 py-9 bg-white border-t border-stone-200/70">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="font-brand text-[13px] tracking-[0.04em]">ARTISAN SOLE</span>
           <p className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">Custom Made Footwear · Made in Spain</p>
         </div>
