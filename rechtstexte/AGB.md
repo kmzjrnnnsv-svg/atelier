@@ -142,34 +142,79 @@ Mängel möglichst innerhalb von **14 Tagen** an [E-MAIL]. Diese Bitte
 beschränkt Ihre gesetzlichen Rechte nicht — sie hilft uns nur, schnell zu
 helfen. Fügen Sie bitte Fotos bei.
 
-(5) Bei einem Mangel bessern wir zunächst nach oder fertigen neu. Erst wenn
-das fehlschlägt oder unzumutbar ist, kommen Minderung oder Rücktritt in
-Betracht.
+(5) **Wareneingangskontrolle.** Jedes Paar wird bei uns aus der Manufaktur
+angenommen, geprüft und fotografiert, bevor es an Sie hinausgeht. Die
+Aufnahmen dokumentieren den Zustand bei Verlassen unseres Hauses und dienen
+beiden Seiten als Nachweis. Sie erhalten sie auf Anfrage.
 
-## 7. Freiwillige Kulanz bei Nichtgefallen
+(6) **Ersatz statt Rückgabe.** Ist ein Schuh mangelhaft, liefern wir Ersatz:
+Wir fertigen dasselbe Paar in derselben Ausführung neu. Das beanstandete Paar
+geht an uns zurück und verbleibt bei uns — es ist als Maßanfertigung nicht
+weiterverkäuflich und wird nicht wieder in Umlauf gebracht. Für Sie entstehen
+dabei keine Kosten, auch nicht für die Rücksendung.
+
+(7) Der Weg über die Ersatzlieferung ist die Nacherfüllung nach § 439 BGB.
+Schlägt sie fehl oder ist sie Ihnen nicht zuzumuten, stehen Ihnen die
+gesetzlichen Rechte zu — Minderung oder Rücktritt. Diese Rechte schränken wir
+nicht ein; die Beschränkungen in Ziffer 7 gelten ausdrücklich **nicht** für
+Mängel.
+
+## 7. Stornierung und Nichtgefallen
+
+> Diese Ziffer betrifft ausschließlich Fälle **ohne Mangel**. Ist der Schuh
+> mangelhaft, gilt Ziffer 6 — dort wird nichts gekürzt.
+
+### 7.1 Warum es hier eine Grenze gibt
+
+Ein Paar entsteht nach Ihren Maßen auf einem für Sie ausgewählten Leisten. Mit
+dem Zuschnitt sind Leder, Arbeitszeit und Leistenbelegung verbraucht; das
+fertige Paar lässt sich an niemanden sonst verkaufen. Was wir erstatten,
+tragen wir daher vollständig selbst. Deshalb die Grenze von 50 % — sie ist
+keine Vertragsstrafe, sondern der Punkt, an dem beide Seiten je die Hälfte
+tragen.
+
+### 7.2 Stornierung nach Auftragseingang
+
+(1) Bis zum Vertragsschluss nach Ziffer 3 können Sie jederzeit kostenfrei
+absehen.
+
+(2) Danach beginnt die Fertigung. Stornieren Sie ab diesem Zeitpunkt,
+erstatten wir **höchstens 50 % des Kaufpreises**. Der einbehaltene Anteil
+deckt Material, Arbeitszeit und die belegte Fertigungskapazität.
+
+(3) Melden Sie sich so früh wie möglich an [E-MAIL]. Je früher die Nachricht
+eintrifft, desto eher können wir mehr als die Hälfte erstatten — versprechen
+können wir das nicht.
+
+### 7.3 Nichtgefallen
 
 (1) Sie haben nach Ziffer 5 kein Widerrufsrecht. Weil ein Schuh trotz
-sorgfältiger Arbeit einmal nicht passen oder gefallen kann, bieten wir
-freiwillig Folgendes an:
+sorgfältiger Arbeit einmal nicht gefallen kann, bieten wir freiwillig an:
+**Melden Sie sich innerhalb von 14 Tagen nach Erhalt** bei uns.
 
-**Melden Sie sich innerhalb von 14 Tagen nach Erhalt bei uns**, dann suchen
-wir gemeinsam eine Lösung. Möglich sind je nach Fall:
+(2) Möglich sind je nach Fall:
 
 - eine Anpassung des Schuhs, soweit handwerklich machbar;
 - eine Neuanfertigung mit korrigierten Maßen gegen Erstattung unserer
   Materialkosten;
-- eine **Gutschrift auf ein künftiges Paar** in Höhe eines von uns
-  festgelegten Gegenwerts.
+- eine Gutschrift auf ein künftiges Paar;
+- eine Erstattung von **höchstens 50 % des Kaufpreises**.
 
-(2) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
-dem Grunde noch der Höhe nach. Eine Auszahlung in Geld erfolgt nicht.
-Über Art und Umfang entscheiden wir im Einzelfall.
+(3) Voraussetzung ist, dass der Schuh ungetragen ist — abgesehen von kurzer
+Anprobe in der Wohnung auf sauberem Boden — und vollständig mit Zubehör und
+Verpackung vorliegt. Maßgeblich für die Beurteilung sind die Aufnahmen aus der
+Wareneingangskontrolle nach Ziffer 6 Abs. 5.
 
-(3) Voraussetzung ist, dass der Schuh ungetragen ist — abgesehen von
-kurzer Anprobe in der Wohnung auf sauberem Boden — und vollständig mit
-Zubehör und Verpackung vorliegt.
+(4) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
+dem Grunde noch der Höhe nach; 50 % ist die Obergrenze, nicht die Regel. Über
+Art und Umfang entscheiden wir im Einzelfall. Aus der Gewährung im Einzelfall
+entsteht kein Anspruch für die Zukunft.
 
-(4) Aus der Gewährung im Einzelfall entsteht kein Anspruch für die Zukunft.
+### 7.4 Zubehör
+
+Zubehör — Pflegemittel, Schuhspanner, Beutel — ist keine Maßanfertigung.
+Dafür gilt Ziffer 7 nicht: Es geht innerhalb von 14 Tagen nach Zustellung
+vollständig und zum vollen Preis zurück.
 
 ## 8. Preise, Zahlung, Eigentumsvorbehalt
 

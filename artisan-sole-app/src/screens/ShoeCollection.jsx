@@ -610,7 +610,7 @@ export default function ShoeCollection() {
               text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.',
             },
           ]}
-          fuss="Ein maßgefertigter Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen — er ist vom Widerruf ausgenommen. Passt etwas nicht, sehen wir uns das an; dafür sind wir da. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung regulär zurück."
+          fuss="Ein maßgefertigter Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen — zurückgeben lässt er sich deshalb nicht. Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für Sie. Gefällt es Ihnen schlicht nicht, erstatten wir aus Kulanz bis zur Hälfte des Kaufpreises; dasselbe gilt bei einer Stornierung nach Fertigungsbeginn. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung vollständig zurück. Die Einzelheiten stehen in den AGB."
         />
       </div>
     </div>

@@ -96,7 +96,7 @@ export default function RuecksendungenPanel() {
 
       <p className="text-[11px] text-black/40 font-light leading-relaxed mb-5">
         Zubehör geht innerhalb von 14 Tagen nach Zustellung zurück. Maßgefertigte
-        Schuhe sind vom Widerruf ausgenommen und tauchen hier deshalb nie auf.
+        Schuhe lassen sich nicht zurückgeben und tauchen hier deshalb nie auf.
       </p>
 
       {laedt ? (
