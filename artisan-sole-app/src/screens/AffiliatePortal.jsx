@@ -15,6 +15,7 @@ import { Copy, Check, Download, Clock, Wallet, PackageCheck, AlertCircle, Share2
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import { HOME_PATH } from '../lib/homePath'
+import Ablauf from '../components/Ablauf'
 
 const euro = (n) => `€ ${Number(n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -307,6 +308,39 @@ export default function AffiliatePortal() {
           {' '}{rules.protectionDays} Tage nach Zustellung auszahlbar; wird es zurückgegeben oder
           reklamiert, entfällt die Provision.
         </p>
+
+        {/* Anleitung nach der Anmeldung. Der Bereich zeigt Zahlen — was damit
+            zu tun ist, stand nirgends. */}
+        <div className="pt-6 border-t border-black/[0.07]">
+          <Ablauf
+            titel="So arbeiten Sie damit"
+            intro="Fünf Schritte, von denen Sie vier einmal machen und einen immer wieder."
+            schritte={[
+              {
+                titel: 'Angaben vervollständigen',
+                text: 'Anschrift, Geburtsdatum, Steuernummer und Bankverbindung. Fehlt davon etwas, kann nicht ausgezahlt werden — die Gutschrift braucht die Angaben. Melden Sie sich, wenn etwas geändert werden muss.',
+              },
+              {
+                titel: 'Link oder QR-Code nehmen',
+                text: 'Beides steht oben in Ihrem Bereich. Der Link lässt sich per Mail oder Nachricht verschicken, den QR-Code können Sie ausdrucken und auslegen.',
+              },
+              {
+                titel: 'Weitergeben',
+                text: 'An wen Sie möchten. Wer über Ihren Link kommt, kauft im regulären Shop; Ihr Code steht sichtbar im Warenkorb, damit die Zuordnung nachvollziehbar bleibt. Auch bestehende Kunden können darüber profitieren — sie müssen den Link nur bekommen haben.',
+              },
+              {
+                titel: 'Paare reifen sehen',
+                text: `Jedes vermittelte Paar durchläuft dieselben Stufen: angelegt mit der Bestellung, bestätigt mit der Zustellung, auszahlbar ${rules.protectionDays} Tage danach. In der Liste oben sehen Sie, wo jedes Paar gerade steht.`,
+              },
+              {
+                titel: 'Abrechnung abwarten',
+                text: `Sind ${rules.batchSize} Paare auszahlbar, rechnen wir ab, älteste zuerst. Der Rest bleibt stehen und zählt für die nächste Runde weiter.`,
+              },
+            ]}
+            fuss="Kundennamen und Adressen sehen Sie hier nicht. Für die Abrechnung sind sie nicht nötig, und was nicht nötig ist, zeigen wir nicht."
+            hell
+          />
+        </div>
       </div>
     </div>
   )

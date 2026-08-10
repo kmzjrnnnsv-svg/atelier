@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, ImageIcon, Megaphone, LogOut, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { HOME_PATH } from '../../lib/homePath'
+import Ablauf from '../../components/Ablauf'
 
 export default function BusinessDashboard() {
   const navigate = useNavigate()
@@ -54,18 +55,47 @@ export default function BusinessDashboard() {
           })}
         </div>
 
-        <div className="mt-10 border border-black/[0.06] bg-[#fafaf9] p-7">
-          <div className="flex items-center gap-2.5 mb-2">
+        {/* Anleitung für das angemeldete Firmenkonto. Sie stand hier als ein
+            Absatz — richtig, aber nicht als Handlungsanweisung zu lesen. Wer
+            sich zum ersten Mal anmeldet, sucht die nächste Schaltfläche, nicht
+            eine Beschreibung. */}
+        <div className="mt-10">
+          <div className="flex items-center gap-2.5 mb-5">
             <Building2 size={16} strokeWidth={1.4} className="text-black/50" />
-            <p className="text-[12px] text-black font-normal uppercase tracking-[0.15em]">So funktioniert es</p>
+            <p className="text-[12px] text-black font-normal uppercase tracking-[0.15em]">Ihre nächsten Schritte</p>
           </div>
-          <p className="text-[12px] text-black/50 font-light leading-relaxed">
-            Legen Sie eine Kampagne an und teilen Sie den Beitritts-Link mit Ihrem
-            Team. Mitarbeitende melden sich mit ihrer Firmen-E-Mail an und bestellen
-            ihren passgenauen Custom-made Schuh, auf Wunsch mit Ihrem Logo auf der Sohle.
-            Ab 10 Paar pro Modell greift der Mengenrabatt, den Fortschritt sehen Sie
-            live je Modell.
-          </p>
+          <Ablauf
+            titel="Von hier bis zum ersten Paar"
+            intro="Sie legen die Konditionen fest, Ihre Mitarbeitenden bestellen selbst. Größen sammeln Sie keine ein."
+            schritte={[
+              {
+                titel: 'Profil und Logo hinterlegen',
+                text: 'Unter „Profil & Logo": Firmendaten und, wenn gewünscht, Ihr Logo für die Sohlenprägung. Einmal hinterlegt, gilt es für alle Bestellungen Ihres Hauses. Das ist der einzige Schritt, den Sie vorziehen sollten — ohne Logo geht die erste Kampagne ohne los.',
+              },
+              {
+                titel: 'Kampagne anlegen',
+                text: 'Unter „Kampagnen": Name, Rabatt, Frist und welche Modelle zur Wahl stehen. Sie entscheiden auch, wer teilnehmen darf — alle mit Ihrer E-Mail-Domain oder eine namentliche Liste.',
+              },
+              {
+                titel: 'Zugang öffnen',
+                text: 'Bei Domain-Zugang genügt die Ankündigung im Haus: Wer sich mit der Firmen-E-Mail anmeldet, ist automatisch dabei, ohne Code und ohne Beitrittslink. Bei der namentlichen Liste tragen Sie die Adressen ein, die Einladungen gehen per Mail raus.',
+              },
+              {
+                titel: 'Mitarbeitende bestellen',
+                text: 'Jeder gibt seine Fußmaße an und konfiguriert sein Paar. Der Rabatt steht im Konfigurator schon am Preis, es ist nichts einzugeben.',
+              },
+              {
+                titel: 'Fortschritt verfolgen',
+                text: 'Im Kampagnen-Dashboard sehen Sie je Modell, wie viele Paare zusammengekommen sind und wie viele Personen teilnehmen. Ab zehn Paar pro Modell greift der Mengenrabatt.',
+              },
+              {
+                titel: 'Kampagne schließen',
+                text: 'Zur Frist oder von Hand. Danach kommt niemand mehr dazu; bereits bestellte Paare laufen normal weiter durch die Fertigung.',
+              },
+            ]}
+            fuss="Jedes Paar wird einzeln auf die Maße der jeweiligen Person gefertigt und einzeln zugestellt. Es gibt keine Sammellieferung und keine Größenliste, die Sie führen müssten."
+            hell
+          />
         </div>
       </div>
     </div>

@@ -119,6 +119,7 @@ const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
 const CorporateOverview    = lazy(() => import('./screens/business/CorporateOverview'))
 const RegisterBusiness     = lazy(() => import('./screens/RegisterBusiness'))
 const RegisterAffiliate    = lazy(() => import('./screens/RegisterAffiliate'))
+const AffiliateLanding     = lazy(() => import('./screens/AffiliateLanding'))
 const BusinessDashboard    = lazy(() => import('./screens/business/BusinessDashboard'))
 const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfile'))
 const BusinessCampaigns    = lazy(() => import('./screens/business/BusinessCampaigns'))
@@ -194,6 +195,18 @@ function useViewportHeight() {
     }
   }, [update])
   return vh
+}
+
+/**
+ * Wurzel von affiliate.artisansole.com.
+ *
+ * Angemeldete Vermittler wollen ihren Stand sehen, alle anderen zuerst wissen,
+ * worum es geht. Vorher führte die Adresse ungefragt auf die Anmeldemaske.
+ */
+function AffiliateStart() {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  return user?.is_affiliate ? <Navigate to="/vermittler" replace /> : <AffiliateLanding />
 }
 
 function AppRoutes() {
@@ -347,7 +360,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={
         isAffiliateHost
-          ? <Navigate to="/vermittler" replace />
+          ? <AffiliateStart />
           : <ShopRoute>{isBusiness ? <CorporateGifting /> : <Navigate to="/collection" replace />}</ShopRoute>
       } />
       {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs: Der
