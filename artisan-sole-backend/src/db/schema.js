@@ -1396,6 +1396,12 @@ export function runMigrations(db) {
     `ALTER TABLE shoe_configs ADD COLUMN in_cart INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE shoe_configs ADD COLUMN fit_profile_id INTEGER REFERENCES fit_profiles(id)`,
     `ALTER TABLE orders       ADD COLUMN fit_profile_id INTEGER REFERENCES fit_profiles(id)`,
+    // Woher eine Anfrage kommt. Bislang liefen alle drei Wege in denselben
+    // Topf und ließen sich nur am Text auseinanderhalten ("Corporate
+    // Gifting" im shoe_name) — für getrennte Ansichten in der Verwaltung zu
+    // wenig. 'shop' = Maßanfrage aus dem Laden, 'business' = Firmenseite,
+    // 'affiliate' = Vermittlerseite.
+    `ALTER TABLE custom_requests ADD COLUMN source TEXT NOT NULL DEFAULT 'shop'`,
     // Einladung ins eigene Vermittler-Konto. Ohne Login sah ein angelegter
     // Vermittler seinen Stand nie — die Zeile existierte, das Konto nicht.
     `ALTER TABLE affiliates   ADD COLUMN invite_token TEXT`,
@@ -1406,6 +1412,13 @@ export function runMigrations(db) {
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }
+
+  // Bestehende Firmen-Anfragen nachtragen. Sie sind allein am shoe_name zu
+  // erkennen, den die Firmenseite fest gesetzt hat — einmalig, danach trägt
+  // jede Anfrage ihre Herkunft selbst.
+  try {
+    db.prepare("UPDATE custom_requests SET source = 'business' WHERE source = 'shop' AND shoe_name = 'Corporate Gifting'").run()
+  } catch { /* Spalte oder Tabelle noch nicht da */ }
 
   // ── Nicht mehr geführtes Zubehör entfernen ───────────────────────────────
   // Erst hier, nach allen Seed-Blöcken: Der Ausgangsbestand wird rund 500

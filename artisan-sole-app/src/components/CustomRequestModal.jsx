@@ -4,8 +4,12 @@ import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 
 /**
- * Custom-Anfrage, geht ohne Login als Anfrage an Admin/Curator,
- * Telefonnummer ist Pflicht, weiterer Austausch über WhatsApp Business.
+ * Custom-Anfrage, geht ohne Login als Anfrage an Admin/Curator.
+ *
+ * Pflicht sind Name, E-Mail und das Anliegen. Die Telefonnummer war es früher
+ * auch — sie kostete Anfragen von Leuten, die nicht angerufen werden wollen,
+ * und die E-Mail-Adresse genügt zum Antworten. Wer WhatsApp bevorzugt, trägt
+ * sie ein.
  */
 export default function CustomRequestModal({
   open,
@@ -41,9 +45,12 @@ export default function CustomRequestModal({
 
   if (!open) return null
 
-  const phoneValid = /^[+0-9 ()/-]{6,}$/.test(form.phone.trim())
+  // Telefon ist freiwillig, die Nachricht nicht: Ohne beschriebenes Anliegen
+  // ist eine Sonderanfrage nicht zu beantworten. Beides deckt sich mit der
+  // Prüfung im Server (routes/customRequests.js).
+  const phoneValid = !form.phone.trim() || /^[+0-9 ()/-]{6,}$/.test(form.phone.trim())
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
-  const isValid = form.name.trim() && emailValid && phoneValid
+  const isValid = form.name.trim() && emailValid && phoneValid && form.notes.trim()
 
   const submit = async () => {
     if (!isValid || submitting) return
@@ -54,7 +61,7 @@ export default function CustomRequestModal({
         body: JSON.stringify({
           customer_name:  form.name.trim(),
           customer_email: form.email.trim(),
-          customer_phone: form.phone.trim(),
+          customer_phone: form.phone.trim() || undefined,
           shoe_id:   product?.id ?? null,
           shoe_name: product?.name ?? null,
           material:  config?.material ?? null,
@@ -63,7 +70,8 @@ export default function CustomRequestModal({
           eu_size:   config?.euSize   ?? null,
           scan_id:   config?.scanId   ?? null,
           accessories: config?.accessories || [],
-          notes:     form.notes.trim() || null,
+          notes:     form.notes.trim(),
+          source:    'shop',
         }),
       })
       setSuccess(row)
@@ -119,9 +127,10 @@ export default function CustomRequestModal({
             <p className="text-[10px] text-black/30 uppercase mb-2" style={{ letterSpacing: '0.25em' }}>Anfrage #{success.id}</p>
             <h3 className="text-[18px] font-light tracking-[0.12em] uppercase text-black mb-3">Vielen Dank</h3>
             <p className="text-[13px] text-black/55 font-light leading-relaxed max-w-md mx-auto">
-              Ihre Custom-Anfrage ist eingegangen. Unser Atelier meldet sich
-              {waNumber ? ' in Kürze über WhatsApp Business' : ' in Kürze bei Ihnen'} unter
-              <span className="text-black"> {form.phone}</span>.
+              Ihre Custom-Anfrage ist eingegangen. Unser Atelier meldet sich in Kürze
+              {form.phone
+                ? <> unter <span className="text-black">{form.phone}</span>.</>
+                : <> per E-Mail an <span className="text-black">{form.email}</span>.</>}
             </p>
 
             {waLink && (
@@ -172,7 +181,6 @@ export default function CustomRequestModal({
             <Field label="E-Mail" required type="email" value={form.email} onChange={v => setForm({ ...form, email: v })} placeholder="ihre@email.com" />
             <Field
               label="Telefon (für WhatsApp)"
-              required
               type="tel"
               icon={Phone}
               value={form.phone}
@@ -183,13 +191,14 @@ export default function CustomRequestModal({
 
             <label className="block">
               <span className="text-[9px] text-black/40 uppercase tracking-[0.18em] mb-1.5 block">
-                Anmerkungen
+                Ihr Anliegen<span className="text-black/25"> · Pflicht</span>
               </span>
               <textarea
                 value={form.notes}
                 onChange={e => setForm({ ...form, notes: e.target.value })}
                 rows={4}
                 placeholder="Wünsche, Maße, bevorzugte Kontaktzeiten …"
+                required
                 className="w-full bg-[#f6f5f3] border border-black/[0.06] px-3 py-3 text-[13px] text-black placeholder-black/25 focus:outline-none focus:border-black/30 transition-all font-light"
                 style={{ fontFamily: 'inherit' }}
               />

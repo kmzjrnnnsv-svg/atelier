@@ -10,9 +10,11 @@
  * angemeldet. Der Code ist Teil der Außenwirkung, seine Vergabe bleibt beim
  * Haus.
  */
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { LogIn, Link2, Percent, Wallet, ShieldCheck } from 'lucide-react'
+import { LogIn, Link2, Percent, Wallet, ShieldCheck, Send, Check, ArrowRight } from 'lucide-react'
 import Ablauf from '../components/Ablauf'
+import { apiFetch } from '../hooks/useApi'
 
 const MERKMALE = [
   { icon: Link2, titel: 'Ein Link, ein QR-Code', text: 'Beides finden Sie nach der Anmeldung in Ihrem Bereich. Der Link führt auf den regulären Shop — Ihre Empfehlung wird dabei mitgeführt.' },
@@ -20,6 +22,111 @@ const MERKMALE = [
   { icon: Wallet, titel: 'Auszahlung in Fünferschritten', text: 'Sind fünf Paare auszahlbar, wird abgerechnet. Was übrig bleibt, zählt für die nächste Runde weiter.' },
   { icon: ShieldCheck, titel: 'Nachvollziehbar, ohne stilles Mitlesen', text: 'Der Code steht sichtbar im Warenkorb, statt in einem Cookie zu stecken. Kundennamen und Adressen sehen Sie nicht — für die Abrechnung sind sie nicht nötig.' },
 ]
+
+
+const eingabe = 'w-full border border-stone-300 px-3.5 py-3 text-[14px] bg-white outline-none focus:border-stone-900 transition-colors font-light text-stone-900 placeholder-stone-400'
+const beschriftung = 'block text-[10px] text-stone-400 uppercase tracking-[0.18em] mb-1.5 font-light'
+
+/**
+ * Anfrage von der Vermittlerseite.
+ *
+ * Landet im selben Topf wie die Firmen-Anfragen, aber mit eigener Herkunft —
+ * in der Verwaltung stehen die drei Wege getrennt, weil sie unterschiedlich
+ * beantwortet werden.
+ *
+ * Pflicht sind Name, E-Mail und die Nachricht. Telefon steht dabei, ist aber
+ * freiwillig: Wer nicht angerufen werden will, soll deshalb nicht auf die
+ * Anfrage verzichten.
+ */
+function AnfrageFormular() {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
+  const [sendet, setSendet] = useState(false)
+  const [gesendet, setGesendet] = useState(false)
+  const [fehler, setFehler] = useState(null)
+
+  const setzen = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const mailOk = /\S+@\S+\.\S+/.test(form.email)
+  const telOk = !form.phone.trim() || /^[+0-9 ()/-]{6,}$/.test(form.phone.trim())
+  const gueltig = form.name.trim() && mailOk && telOk && form.message.trim()
+  const fehlt = [
+    !form.name.trim() && 'Name',
+    !form.email.trim() ? 'E-Mail' : (!mailOk && 'g\u00fcltige E-Mail'),
+    !telOk && 'g\u00fcltige Telefonnummer',
+    !form.message.trim() && 'Nachricht',
+  ].filter(Boolean)
+  const begonnen = !!(form.name || form.email || form.phone || form.message)
+
+  const senden = async (e) => {
+    e.preventDefault()
+    if (!gueltig || sendet) return
+    setSendet(true); setFehler(null)
+    try {
+      await apiFetch('/api/custom-requests', {
+        method: 'POST',
+        body: JSON.stringify({
+          customer_name: form.name.trim(),
+          customer_email: form.email.trim(),
+          customer_phone: form.phone.trim() || undefined,
+          shoe_name: 'Vermittler-Anfrage',
+          notes: form.message.trim(),
+          source: 'affiliate',
+        }),
+      })
+      setGesendet(true)
+    } catch (err) {
+      setFehler(err?.error || 'Ihre Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.')
+    } finally { setSendet(false) }
+  }
+
+  if (gesendet) {
+    return (
+      <div className="border border-stone-200 bg-stone-50 p-8 max-w-xl">
+        <Check size={20} strokeWidth={1.4} className="text-stone-500 mb-3" />
+        <p className="text-[15px] text-stone-900 font-light">Ihre Anfrage ist angekommen.</p>
+        <p className="text-[12px] text-stone-500 font-light leading-relaxed mt-2">
+          Wir melden uns per E-Mail an {form.email.trim()}.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={senden} className="max-w-xl space-y-4" noValidate>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={beschriftung}>Name *</label>
+          <input className={eingabe} value={form.name} onChange={e => setzen('name', e.target.value)} />
+        </div>
+        <div>
+          <label className={beschriftung}>E-Mail *</label>
+          <input type="email" className={eingabe} value={form.email} onChange={e => setzen('email', e.target.value)} />
+        </div>
+      </div>
+      <div>
+        <label className={beschriftung}>Telefon</label>
+        <input className={eingabe} value={form.phone} onChange={e => setzen('phone', e.target.value)} placeholder="+49 \u2026" />
+      </div>
+      <div>
+        <label className={beschriftung}>Nachricht *</label>
+        <textarea rows={4} className={`${eingabe} resize-none`} value={form.message} onChange={e => setzen('message', e.target.value)} placeholder="Worum geht es?" />
+      </div>
+
+      {fehler && <p className="text-[12px] text-red-600/80 font-light">{fehler}</p>}
+      {!gueltig && begonnen && (
+        <p className="text-[11px] text-stone-400 font-light">Bitte noch ausf\u00fcllen: {fehlt.join(', ')}</p>
+      )}
+
+      <button
+        type="submit"
+        disabled={!gueltig || sendet}
+        className="w-full py-4 flex items-center justify-center gap-2.5 bg-stone-900 text-white border-0 hover:bg-stone-800 disabled:opacity-30 transition-colors"
+        style={{ letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: '12px' }}
+      >
+        <Send size={15} strokeWidth={1.5} /> {sendet ? 'Wird gesendet \u2026' : 'Anfrage senden'}
+      </button>
+    </form>
+  )
+}
 
 export default function AffiliateLanding() {
   return (
@@ -53,10 +160,17 @@ export default function AffiliateLanding() {
           >
             <LogIn size={15} strokeWidth={1.5} /> Zum Vermittler-Login
           </Link>
-          <p className="text-[11px] text-stone-400 font-light">
-            Einladung erhalten? Der Link darin führt direkt zur Aktivierung.
-          </p>
+          <Link
+            to="/vermittler/uebersicht"
+            className="h-12 px-7 inline-flex items-center gap-2 bg-white text-stone-900 border border-stone-300 hover:border-stone-900 no-underline transition-colors"
+            style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
+          >
+            Konditionen und Ablauf <ArrowRight size={15} strokeWidth={1.6} />
+          </Link>
         </div>
+        <p className="text-[11px] text-stone-400 font-light mt-4">
+          Einladung erhalten? Der Link darin führt direkt zur Aktivierung.
+        </p>
       </section>
 
       <section className="px-5 lg:px-10 pb-16 max-w-5xl mx-auto">
@@ -107,6 +221,20 @@ export default function AffiliateLanding() {
           fuss="Zugabe und Nachlass sind zweierlei. Ein Nachlass für den Geworbenen geht zulasten des Hauses; eine Zugabe wie der Zedernholz-Spanner wird zum Einkaufspreis von Ihrer Provision abgezogen. Was davon für Sie gilt, steht in Ihren Konditionen."
           hell
         />
+      </section>
+
+      <section id="anfrage" className="px-5 lg:px-10 pb-20 max-w-5xl mx-auto scroll-mt-16">
+        <div className="border-t border-stone-200/70 pt-14">
+          <p className="text-[10px] uppercase tracking-[0.32em] text-stone-400 mb-3">Frage stellen</p>
+          <h2 className="text-[22px] lg:text-[28px] font-extralight tracking-tight leading-tight">
+            Etwas offen? Schreiben Sie uns.
+          </h2>
+          <p className="text-[13px] text-stone-500 font-light leading-relaxed max-w-xl mt-4 mb-8">
+            Für Fragen zu Konditionen, Abrechnung oder einer bestehenden Zusammenarbeit.
+            Wir antworten per E-Mail.
+          </p>
+          <AnfrageFormular />
+        </div>
       </section>
 
       <footer className="px-5 lg:px-10 py-9 bg-white border-t border-stone-200/70">

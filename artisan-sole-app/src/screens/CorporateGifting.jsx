@@ -76,13 +76,19 @@ export default function CorporateGifting() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const emailValid = /\S+@\S+\.\S+/.test(form.email)
-  const valid = form.company.trim() && form.name.trim() && emailValid && form.phone.trim()
+  // Telefon ist freiwillig — wer angerufen werden möchte, trägt es ein. Steht
+  // etwas drin, muss es aber eine Nummer sein: Dieselbe Regel wie im Server
+  // (routes/customRequests.js), damit „test" hier auffällt und nicht erst als
+  // Absage zurückkommt, nachdem alles ausgefüllt war.
+  const phoneValid = !form.phone.trim() || /^[+0-9 ()/-]{6,}$/.test(form.phone.trim())
+  const valid = form.company.trim() && form.name.trim() && emailValid && phoneValid && form.message.trim()
   // Was fehlt noch? (für den Hinweis am deaktivierten Button)
   const missing = [
     !form.company.trim() && 'Firma',
     !form.name.trim() && 'Ansprechpartner',
     !form.email.trim() ? 'E-Mail' : (!emailValid && 'gültige E-Mail'),
-    !form.phone.trim() && 'Telefon',
+    !phoneValid && 'gültige Telefonnummer',
+    !form.message.trim() && 'Nachricht',
   ].filter(Boolean)
   const started = !!(form.company || form.name || form.email || form.phone)
 
@@ -109,9 +115,10 @@ export default function CorporateGifting() {
         body: JSON.stringify({
           customer_name: form.name.trim(),
           customer_email: form.email.trim(),
-          customer_phone: form.phone.trim(),
+          customer_phone: form.phone.trim() || undefined,
           shoe_name: 'Corporate Gifting',
           notes,
+          source: 'business',
         }),
       })
       setSent(true)
@@ -334,7 +341,7 @@ export default function CorporateGifting() {
                   <input type="email" className={inputCls} value={form.email} onChange={e => set('email', e.target.value)} placeholder="name@firma.com" />
                 </div>
                 <div>
-                  <label className={labelCls}>Telefon *</label>
+                  <label className={labelCls}>Telefon</label>
                   <input className={inputCls} value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+49 …" />
                 </div>
                 <div>
@@ -347,7 +354,7 @@ export default function CorporateGifting() {
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Nachricht</label>
+                <label className={labelCls}>Nachricht *</label>
                 <textarea rows={4} className={`${inputCls} resize-none`} value={form.message} onChange={e => set('message', e.target.value)} placeholder="Anzahl Empfänger, Wünsche, Zeitrahmen, Budget …" />
               </div>
 

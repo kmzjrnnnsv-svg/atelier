@@ -14,7 +14,8 @@ const DEFAULTS = {
   about_label: 'Über uns',
   about_links: [
     { label: 'Für Unternehmen', path: 'https://business.artisansole.com/' },
-    { label: 'Boutiquen',    path: '/help' },
+    { label: 'Für Vermittler',  path: 'https://affiliate.artisansole.com/' },
+    { label: 'Boutiquen',       path: '/help' },
   ],
 
   // „Hilfe“-Spalte
@@ -90,13 +91,22 @@ export default function Footer() {
       .catch(() => {})
   }, [])
 
-  // „Für Unternehmen" (Corporate Gifting) immer in der „Über uns"-Spalte zeigen,
-  // auch wenn der Footer im CMS angepasst wurde.
-  const BUSINESS_URL = 'https://business.artisansole.com/'
+  // Die beiden Nebeneingänge stehen immer in der „Über uns"-Spalte, auch wenn
+  // der Footer im CMS angepasst wurde. Sie sind der einzige Weg dorthin: Beide
+  // liegen auf eigenen Adressen und tauchen in der Shop-Navigation nicht auf,
+  // wer sie nicht kennt, findet sie sonst nicht.
+  //
+  // `alt` fängt Schreibweisen ab, die schon im CMS stehen könnten — sonst
+  // stünde der Eintrag nach einer Anpassung doppelt da.
+  const NEBENEINGAENGE = [
+    { label: 'Für Unternehmen', path: 'https://business.artisansole.com/',  alt: ['/business'] },
+    { label: 'Für Vermittler',  path: 'https://affiliate.artisansole.com/', alt: ['/vermittler'] },
+  ]
   const aboutLinks = (() => {
     const links = cfg.about_links?.length ? [...cfg.about_links] : DEFAULTS.about_links
-    if (!links.some(l => l.path === BUSINESS_URL || l.path === '/business')) {
-      links.push({ label: 'Für Unternehmen', path: BUSINESS_URL })
+    for (const e of NEBENEINGAENGE) {
+      const bekannt = [e.path, ...e.alt]
+      if (!links.some(l => bekannt.includes(l.path))) links.push({ label: e.label, path: e.path })
     }
     return links
   })()
