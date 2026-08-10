@@ -14,8 +14,13 @@ router.post('/',
   authenticateOptional,
   body('customer_name').trim().notEmpty().withMessage('Name erforderlich'),
   body('customer_email').trim().isEmail().withMessage('Gültige E-Mail erforderlich'),
-  body('customer_phone').trim().notEmpty().withMessage('Telefonnummer erforderlich')
+  // Telefon ist freiwillig: Die E-Mail-Adresse genügt, um zu antworten, und
+  // eine Pflichtnummer kostet Anfragen von Leuten, die nicht angerufen werden
+  // wollen. Steht etwas drin, muss es aber eine Nummer sein.
+  body('customer_phone').optional({ values: 'falsy' }).trim()
     .matches(/^[+0-9 ()/-]{6,}$/).withMessage('Ungültige Telefonnummer'),
+  // Ohne Anliegen ist eine Anfrage nicht zu beantworten.
+  body('notes').trim().notEmpty().withMessage('Bitte schildern Sie kurz Ihr Anliegen'),
   body('shoe_id').optional({ nullable: true }).isInt(),
   body('scan_id').optional({ nullable: true }).isInt(),
   body('shoe_name').optional().isString(),
@@ -23,8 +28,8 @@ router.post('/',
   body('color').optional().isString(),
   body('sole').optional().isString(),
   body('eu_size').optional().isString(),
-  body('notes').optional().isString(),
   body('accessories').optional().isArray(),
+  body('source').optional().isIn(['shop', 'business', 'affiliate']),
   (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
@@ -32,7 +37,7 @@ router.post('/',
     const {
       customer_name, customer_email, customer_phone,
       shoe_id, shoe_name, material, color, sole, eu_size, scan_id,
-      accessories, notes,
+      accessories, notes, source,
     } = req.body
 
     const db = getDb()
@@ -40,15 +45,20 @@ router.post('/',
       INSERT INTO custom_requests
         (user_id, customer_name, customer_email, customer_phone,
          shoe_id, shoe_name, material, color, sole, eu_size, scan_id,
-         accessories, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         accessories, notes, source)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       req.user?.id ?? null,
-      customer_name, customer_email, customer_phone,
+      customer_name, customer_email,
+      // Leerer Text statt NULL: Die Spalte ist NOT NULL, und dafür die Tabelle
+      // umzubauen wäre für ein freiwilliges Feld unverhältnismäßig. In der
+      // Verwaltung wird leer ohnehin wie „nicht angegeben" behandelt.
+      customer_phone?.trim() || '',
       shoe_id ?? null, shoe_name ?? null, material ?? null, color ?? null,
       sole ?? null, eu_size ?? null, scan_id ?? null,
       accessories ? JSON.stringify(accessories) : null,
       notes ?? null,
+      ['shop', 'business', 'affiliate'].includes(source) ? source : 'shop',
     )
 
     const row = db.prepare('SELECT * FROM custom_requests WHERE id = ?').get(result.lastInsertRowid)
@@ -76,10 +86,14 @@ router.get('/mine', authenticate, (req, res) => {
 
 // GET /api/custom-requests — admin/curator
 router.get('/', ...canManage, (req, res) => {
+  // ?source=business|affiliate|shop — die Verwaltung zeigt die drei Wege
+  // getrennt, weil sie unterschiedlich beantwortet werden.
+  const quelle = ['shop', 'business', 'affiliate'].includes(req.query.source) ? req.query.source : null
   const rows = getDb()
     .prepare(`SELECT cr.*, u.name as user_name, u.email as user_email
               FROM custom_requests cr
               LEFT JOIN users u ON u.id = cr.user_id
+              ${quelle ? 'WHERE cr.source = ?' : ''}
               ORDER BY
                 CASE cr.status
                   WHEN 'open' THEN 0
@@ -89,7 +103,7 @@ router.get('/', ...canManage, (req, res) => {
                   WHEN 'accepted' THEN 4
                   ELSE 5 END,
                 cr.created_at DESC`)
-    .all()
+    .all(...(quelle ? [quelle] : []))
   res.json(rows)
 })
 

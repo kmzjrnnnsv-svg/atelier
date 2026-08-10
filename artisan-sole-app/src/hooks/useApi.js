@@ -73,6 +73,33 @@ export async function refreshAccessToken() {
   }
 }
 
+/**
+ * Ein Satz zu einem Statuscode, wenn der Server keinen mitgeschickt hat.
+ *
+ * „HTTP 400" sagt niemandem, was zu tun ist — es sah aus wie ein Defekt,
+ * obwohl meist nur ein Feld nicht stimmte. Die Sätze hier sind der letzte
+ * Ausweg: Steht im Körper eine Meldung oder eine Feldprüfung, gilt die.
+ */
+function statusSatz(status) {
+  switch (status) {
+    case 400: return 'Ihre Angaben sind unvollständig oder nicht im erwarteten Format. Bitte prüfen Sie die Felder.'
+    case 401: return 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.'
+    case 403: return 'Für diesen Schritt fehlt die Berechtigung.'
+    case 404: return 'Das Gesuchte gibt es nicht (mehr).'
+    case 409: return 'Das lässt sich so nicht speichern — etwas ist bereits vergeben oder hat sich inzwischen geändert.'
+    case 413: return 'Die Datei ist zu groß.'
+    case 422: return 'Die Angaben konnten nicht verarbeitet werden. Bitte prüfen Sie die Felder.'
+    case 429: return 'Zu viele Versuche in kurzer Zeit. Bitte einen Moment warten.'
+    case 500: return 'Auf unserer Seite ist etwas schiefgegangen. Bitte später erneut versuchen.'
+    case 502:
+    case 503:
+    case 504: return 'Der Dienst ist gerade nicht erreichbar. Bitte in einem Moment erneut versuchen.'
+    default:  return status >= 500
+      ? 'Auf unserer Seite ist etwas schiefgegangen. Bitte später erneut versuchen.'
+      : 'Die Anfrage konnte nicht verarbeitet werden. Bitte prüfen Sie Ihre Angaben.'
+  }
+}
+
 export async function apiFetch(url, options = {}, _attempt = 0) {
   const token = getAccessToken()
   const headers = {
@@ -128,12 +155,25 @@ export async function apiFetch(url, options = {}, _attempt = 0) {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: 'Unknown error' }))
-    const errMsg = body.detail || body.error || body.message || `HTTP ${res.status}`
+    // express-validator antwortet mit { errors: [{ msg, path }] }, nicht mit
+    // { error }. Ohne diese Zeile blieb von „Ungültige Telefonnummer" nur
+    // „HTTP 400" übrig — und zwar in jedem validierten Formular der Anwendung.
+    // Mehrere Fehler werden zusammengezogen, sonst behebt man sie einzeln
+    // und schickt für jeden erneut ab.
+    const validierung = Array.isArray(body.errors)
+      ? [...new Set(body.errors.map(e => e?.msg).filter(Boolean))].join(' · ')
+      : null
+    // 'Unknown error' stammt aus der Ersatzantwort oben, wenn der Körper kein
+    // JSON war — als Meldung taugt er nicht.
+    const vomServer = [body.detail, body.error, body.message]
+      .find(t => typeof t === 'string' && t.trim() && t !== 'Unknown error')
+
+    const errMsg = vomServer || validierung || statusSatz(res.status)
     const error = new Error(errMsg)
     error.status = res.status
     error.body = body
     error.code = body.code || null
-    error.error = body.error || errMsg
+    error.error = errMsg
     throw error
   }
 

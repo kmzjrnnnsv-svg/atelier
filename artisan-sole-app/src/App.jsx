@@ -13,8 +13,25 @@ import useDeviceInfo from './hooks/useDeviceInfo'
 
 // Scroll to top on route change
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   useEffect(() => {
+    // Führt das Ziel einen Anker mit sich (etwa /#anfrage), gilt der statt des
+    // Seitenanfangs. React Router springt von sich aus nicht zu Ankern, und
+    // das Zurücksetzen hier machte es vollends zunichte: Ein Link aufs
+    // Anfrageformular landete am Seitenanfang. Zwei Anläufe, weil das Ziel
+    // erst existiert, wenn die neue Seite gezeichnet ist.
+    if (hash) {
+      const springen = () => {
+        const ziel = document.querySelector(hash)
+        if (!ziel) return false
+        ziel.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        return true
+      }
+      if (springen()) return
+      const t = setTimeout(springen, 120)
+      return () => clearTimeout(t)
+    }
+
     // Reset document scroll (mobile web)
     window.scrollTo(0, 0)
     // Reset all internal scroll containers (native + desktop fixed layouts)
@@ -23,7 +40,7 @@ function ScrollToTop() {
     resetContainers()
     // Also reset after React has rendered the new route content
     requestAnimationFrame(resetContainers)
-  }, [pathname])
+  }, [pathname, hash])
   return null
 }
 
@@ -120,6 +137,7 @@ const CorporateOverview    = lazy(() => import('./screens/business/CorporateOver
 const RegisterBusiness     = lazy(() => import('./screens/RegisterBusiness'))
 const RegisterAffiliate    = lazy(() => import('./screens/RegisterAffiliate'))
 const AffiliateLanding     = lazy(() => import('./screens/AffiliateLanding'))
+const AffiliateOverview    = lazy(() => import('./screens/AffiliateOverview'))
 const BusinessDashboard    = lazy(() => import('./screens/business/BusinessDashboard'))
 const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfile'))
 const BusinessCampaigns    = lazy(() => import('./screens/business/BusinessCampaigns'))
@@ -128,6 +146,7 @@ const CampaignJoin         = lazy(() => import('./screens/business/CampaignJoin'
 const VerifyEmail          = lazy(() => import('./screens/VerifyEmail'))
 const BusinessPanel        = lazy(() => import('./screens/cms/BusinessPanel'))
 const AffiliatesPanel      = lazy(() => import('./screens/cms/AffiliatesPanel'))
+const AnfragenPanel        = lazy(() => import('./screens/cms/AnfragenPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -269,6 +288,7 @@ function AppRoutes() {
               <Route path="users"    element={<AdminRoute><UsersPanel /></AdminRoute>} />
               <Route path="business" element={<BusinessPanel />} />
               <Route path="vermittler" element={<AffiliatesPanel />} />
+              <Route path="anfragen" element={<AnfragenPanel />} />
               <Route path="scans"    element={<ScansPanel />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />
               <Route path="cta-banner" element={<CtaBannerPanel />} />
@@ -312,6 +332,8 @@ function AppRoutes() {
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
               <Route path="/vermittler-konto"   element={<RegisterAffiliate />} />
+      {/* Öffentliche Anleitung, Gegenstück zu /business/uebersicht. */}
+      <Route path="/vermittler/uebersicht" element={<AffiliateOverview />} />
               {/* Public, Window Shopping ohne Login */}
               <Route path="/business"   element={<CorporateGifting />} />
               <Route path="/business/uebersicht" element={<CorporateOverview />} />
