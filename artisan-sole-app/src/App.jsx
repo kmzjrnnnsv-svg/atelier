@@ -189,6 +189,7 @@ export const isBusiness = !isNative && /^business\./i.test(HOSTNAME)
 export const isAffiliateHost = !isNative && /^affiliate\./i.test(HOSTNAME)
 const isProdApex = !isNative && /^(www\.)?artisansole\.com$/i.test(HOSTNAME)
 const BUSINESS_URL = 'https://business.artisansole.com/'
+const AFFILIATE_URL = 'https://affiliate.artisansole.com/'
 
 
 // Externe Weiterleitung (zur Subdomain)
@@ -339,8 +340,6 @@ function AppRoutes() {
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
               <Route path="/vermittler-konto"   element={<RegisterAffiliate />} />
-      {/* Öffentliche Anleitung, Gegenstück zu /business/uebersicht. */}
-      <Route path="/vermittler/uebersicht" element={<AffiliateOverview />} />
               {/* Public, Window Shopping ohne Login */}
               <Route path="/business"   element={<CorporateGifting />} />
               <Route path="/business/uebersicht" element={<CorporateOverview />} />
@@ -418,7 +417,19 @@ function AppRoutes() {
       <Route path="/business/uebersicht" element={isProdApex ? <ExternalRedirect to={`${BUSINESS_URL}uebersicht`} /> : <CorporateOverview />} />
       <Route path="/collection" element={<ShopRoute><ShoeCollection /></ShopRoute>} />
       <Route path="/schuhe/:slug" element={<ShopRoute><Customize /></ShopRoute>} />
-      <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
+      {/* Der Vermittlerbereich lebt auf affiliate.artisansole.com — dort meldet
+          sich ein Vermittler an, dort arbeitet er. Auf der Hauptdomain bleibt
+          die Adresse als Weiterleitung bestehen statt zu verschwinden: Sie
+          steckt in verschickten Links und Lesezeichen, und ein Verweis ist
+          freundlicher als eine Fehlerseite. Dasselbe Muster wie bei /business. */}
+      <Route path="/vermittler" element={
+        isProdApex ? <ExternalRedirect to={`${AFFILIATE_URL}vermittler`} />
+                   : <ProtectedRoute><AffiliatePortal /></ProtectedRoute>
+      } />
+      <Route path="/vermittler/uebersicht" element={
+        isProdApex ? <ExternalRedirect to={`${AFFILIATE_URL}vermittler/uebersicht`} />
+                   : <AffiliateOverview />
+      } />
       <Route path="/ruecksendungen" element={<ProtectedRoute><Ruecksendungen /></ProtectedRoute>} />
       <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
       <Route path="/welcome"    element={<Welcome />} />
