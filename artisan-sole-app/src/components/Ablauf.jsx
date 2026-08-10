@@ -22,15 +22,18 @@ export default function Ablauf({ titel, intro, schritte = [], fuss, hell = false
   if (!schritte.length) return null
 
   return (
-    <section className={hell ? 'border border-black/[0.06] bg-[#fafaf9] p-6 lg:p-8' : ''}>
+    // Eine Spalte, mittig. Die Breitenbegrenzung saß vorher an jedem Element
+    // einzeln und ohne Zentrierung — der Block klebte am linken Rand, rechts
+    // stand die halbe Seite leer. Jetzt trägt der Rahmen sie einmal.
+    <section className={`max-w-2xl mx-auto${hell ? ' border border-black/[0.06] bg-[#fafaf9] p-6 lg:p-8' : ''}`}>
       <p className="text-[10px] text-black/35 uppercase tracking-[0.22em] mb-2">{titel}</p>
       {intro && (
-        <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-relaxed max-w-2xl mb-6">
+        <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-relaxed mb-6">
           {intro}
         </p>
       )}
 
-      <ol className="space-y-5 max-w-2xl">
+      <ol className="space-y-5">
         {schritte.map((s, i) => (
           <li key={s.titel} className="flex gap-4">
             {/* Die Zahl trägt die Reihenfolge — sie ist der eigentliche Inhalt
@@ -50,7 +53,7 @@ export default function Ablauf({ titel, intro, schritte = [], fuss, hell = false
       </ol>
 
       {fuss && (
-        <p className="text-[11px] text-black/40 font-light leading-relaxed max-w-2xl mt-6 pt-5 border-t border-black/[0.07]">
+        <p className="text-[11px] text-black/40 font-light leading-relaxed mt-6 pt-5 border-t border-black/[0.07]">
           {fuss}
         </p>
       )}
