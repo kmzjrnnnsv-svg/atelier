@@ -759,3 +759,70 @@ export async function sendInquiryAck(request) {
 
   await send({ to: request.customer_email, subject, html })
 }
+
+// ─── Kampagnen-Einladung ────────────────────────────────────────────────────
+/**
+ * Lädt eine Person in eine Firmen-Kampagne ein.
+ *
+ * Der Link führt auf die Beitrittsseite der Kampagne. Wer noch kein Konto hat,
+ * legt dort eins an; wer eins hat, ist mit einem Klick dabei. Der Rabatt greift
+ * danach automatisch im Konfigurator.
+ */
+export async function sendCampaignInvitation(email, campaign, businessName) {
+  const cfg = getEmailConfig()
+  const link = `${cfg.appUrl}/kampagne/${campaign.slug}`
+  const rabatt = campaign.discount_pct ? `${String(campaign.discount_pct).replace('.', ',')} %` : null
+
+  const subject = `Artisan Sole · Einladung zu ${campaign.name}`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>EINLADUNG</p></div>
+  <div class="body" style="text-align:center">
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">${escapeHtml(campaign.name)}</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">
+      ${businessName ? `${escapeHtml(businessName)} lädt Sie ein` : 'Sie sind eingeladen'}, an dieser Aktion
+      teilzunehmen${rabatt ? ` — mit ${rabatt} auf Ihr maßgefertigtes Paar` : ''}.
+    </p>
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Jetzt teilnehmen</a>
+    <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
+  </div>
+  <div class="footer">Artisan Sole Custom Made Footwear</div>
+</div>
+</body></html>`
+
+  await send({ to: email, subject, html })
+}
+
+// ─── Vermittler-Einladung ───────────────────────────────────────────────────
+/**
+ * Lädt einen Vermittler in sein eigenes Konto ein.
+ *
+ * Der Zugang liegt auf einer eigenen Adresse — dort sieht er seinen Link,
+ * seinen QR-Code, die vermittelten Paare und den Stand der Auszahlungen. Der
+ * Laden gehört nicht dazu; sein Verhältnis zum Haus ist ein anderes.
+ */
+export async function sendAffiliateInvitation(email, name, inviteToken, code) {
+  const cfg = getEmailConfig()
+  const link = `${cfg.appUrl}/vermittler-konto?token=${inviteToken}`
+
+  const subject = 'Artisan Sole · Ihr Vermittler-Zugang'
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>VERMITTLER</p></div>
+  <div class="body" style="text-align:center">
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Willkommen${name ? `, ${escapeHtml(name)}` : ''}!</p>
+    <p style="font-size:14px;color:#555;margin:0 0 8px">
+      Ihr Vermittlerkonto steht bereit. Legen Sie jetzt Ihr Passwort fest — danach
+      finden Sie dort Ihren persönlichen Link, den QR-Code zum Weitergeben und die
+      Übersicht Ihrer vermittelten Paare.
+    </p>
+    ${code ? `<p style="font-size:13px;color:#111;margin:0 0 24px">Ihr Code: <strong>${escapeHtml(code)}</strong></p>` : '<div style="height:16px"></div>'}
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto aktivieren</a>
+    <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
+  </div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Vertrauliche Einladung</div>
+</div>
+</body></html>`
+
+  await send({ to: email, subject, html })
+}

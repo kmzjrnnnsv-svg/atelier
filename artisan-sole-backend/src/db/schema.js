@@ -128,7 +128,32 @@ const RETIRED_ACCESSORIES = [
   'care_kit_saphir_patina', 'calf_care_cream', 'shoe_cream_black',
 ]
 
+/**
+ * War die Datenbank leer, als die Migrationen liefen?
+ *
+ * Wichtig für die Katalog-Vorlage (seedExport.js): Auf einer frischen
+ * Installation legt der Quelltext hier gleich seine alten Festwerte an — Preise
+ * von damals. Die Vorlage darf die dann überschreiben, weil es keine gepflegten
+ * Daten gibt, die verloren gehen könnten. Auf einer laufenden Datenbank darf sie
+ * das nicht.
+ *
+ * Die Auskunft gilt einmal: Wer sie abholt, verbraucht sie. Ein zweiter
+ * Seed-Lauf im selben Prozess arbeitet damit auf einer Datenbank, die
+ * mittlerweile gepflegte Daten enthält, und lässt sie in Ruhe.
+ */
+const frischeDbs = new WeakSet()
+export function frischeInstallationVerbrauchen(db) {
+  if (!frischeDbs.has(db)) return false
+  frischeDbs.delete(db)
+  return true
+}
+
 export function runMigrations(db) {
+  const leer = db.prepare(
+    "SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+  ).get().n === 0
+  if (leer) frischeDbs.add(db)
+
   db.exec(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;
@@ -505,7 +530,12 @@ export function runMigrations(db) {
       -- Dasselbe galt für Name, Beschreibung, Sortierung und Zuordnung.
       ON CONFLICT(key) DO NOTHING
     `)
+    // Im CMS gelöschte Artikel bleiben gelöscht.
+    const geloescht = new Set(
+      db.prepare('SELECT key FROM deleted_seed_accessories').all().map(r => r.key)
+    )
     for (const a of accData) {
+      if (geloescht.has(a.key)) continue
       upsert.run(a.key, a.name, a.desc, a.price, a.sort, a.rec, a.not)
     }
 
@@ -730,6 +760,13 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_tickets_status ON feedback_tickets(status);
 
     -- ── Accessories (CMS-editable) ────────────────────────────────────────
+    -- Merkliste für im CMS gelöschtes Zubehör. Muss vor der Tabelle stehen,
+    -- damit der Ausgangsbestand unten darauf prüfen kann.
+    CREATE TABLE IF NOT EXISTS deleted_seed_accessories (
+      key        TEXT PRIMARY KEY,
+      deleted_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS accessories (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       key         TEXT    NOT NULL UNIQUE,
@@ -743,14 +780,29 @@ export function runMigrations(db) {
       created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
     );
-    -- Ausgangsbestand einer frischen Datenbank. Muss zu accData weiter oben
-    -- passen; dort werden bestehende Zeilen aktualisiert, hier nur angelegt.
-    INSERT OR IGNORE INTO accessories (key, name, description, price, sort_order) VALUES
-      ('care_kit_leather', 'Lederpflege-Set',          'Alles für die Reinigung und Pflege glatter Leder. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Inhalt: ein Tiegel natürliche Lederpflegecreme, ein Poliertuch aus 100 % Baumwolle, zwei kleine Rundbürsten, zwei große Bürsten. Eine Pflegeanleitung liegt bei. Gedacht für weiche Leder wie Box Calf oder poliertes Kalbsleder. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.',        23.7,  0),
-      ('care_kit_suede',   'Wildlederpflege-Set',      'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich. Inhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei. Gedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.', 25.25, 1),
-      ('shoe_tree_cedar',  'Zedernholz-Schuhspanner',  'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.',                                    21.0,  2),
-      ('shoe_tree_black',  'Schuhspanner Schwarz',     'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.',                                        22.0,  3),
-      ('boot_tree_cedar',  'Zedernholz-Stiefelspanner','Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.',                                                29.0,  4);
+    -- Ausgangsbestand einer frischen Datenbank. Jede Zeile prüft zweierlei:
+    -- ob der Artikel schon da ist und ob er im CMS gelöscht wurde. Ohne die
+    -- zweite Prüfung käme gelöschtes Zubehör bei jedem Serverstart zurück.
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'care_kit_leather', 'Lederpflege-Set', 'Alles für die Reinigung und Pflege glatter Leder. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Inhalt: ein Tiegel natürliche Lederpflegecreme, ein Poliertuch aus 100 % Baumwolle, zwei kleine Rundbürsten, zwei große Bürsten. Eine Pflegeanleitung liegt bei. Gedacht für weiche Leder wie Box Calf oder poliertes Kalbsleder. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.', 23.7, 0
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'care_kit_leather')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'care_kit_leather');
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'care_kit_suede', 'Wildlederpflege-Set', 'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich. Inhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei. Gedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.', 25.25, 1
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'care_kit_suede')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'care_kit_suede');
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'shoe_tree_cedar', 'Zedernholz-Schuhspanner', 'Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.', 21.0, 2
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'shoe_tree_cedar')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'shoe_tree_cedar');
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'shoe_tree_black', 'Schuhspanner Schwarz', 'Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.', 22.0, 3
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'shoe_tree_black')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'shoe_tree_black');
+    INSERT INTO accessories (key, name, description, price, sort_order)
+      SELECT 'boot_tree_cedar', 'Zedernholz-Stiefelspanner', 'Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.', 29.0, 4
+      WHERE NOT EXISTS (SELECT 1 FROM accessories WHERE key = 'boot_tree_cedar')
+        AND NOT EXISTS (SELECT 1 FROM deleted_seed_accessories WHERE key = 'boot_tree_cedar');
 
     -- ── Shipping configuration ──────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS shipping_config (
@@ -910,6 +962,11 @@ export function runMigrations(db) {
       commission_value REAL   NOT NULL DEFAULT 10,
       cap_per_shoe    REAL    NOT NULL DEFAULT 40,
       gift_shoetree   INTEGER NOT NULL DEFAULT 0,
+      -- Was der geworbene Kunde erhält, unabhängig von der Provision.
+      customer_discount_pct REAL NOT NULL DEFAULT 0,
+
+      -- Einladung ins eigene Konto (wie bei den Firmenkonten).
+      invite_token    TEXT,
 
       terms_accepted_at TEXT,
       note            TEXT,
@@ -959,10 +1016,35 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_aff_payouts_affiliate ON affiliate_payouts(affiliate_id);
 
+    -- ── Rücksendungen ───────────────────────────────────────────────────────
+    -- Der Schuh entsteht auf Maß für einen einzelnen Fuß und ist danach für
+    -- niemanden sonst zu gebrauchen — er ist vom Widerruf ausgenommen
+    -- (§ 312g Abs. 2 Nr. 1 BGB). Zubehör ist Lagerware und geht regulär zurück.
+    -- Deshalb hängt eine Rücksendung an einzelnen Positionen, nicht an der
+    -- Bestellung: items hält die zurückgehenden Zubehörzeilen als Kopie aus
+    -- Name, Preis und Menge, so wie orders.accessories sie führt.
+    CREATE TABLE IF NOT EXISTS return_requests (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id    INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      user_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      status      TEXT    NOT NULL DEFAULT 'requested'
+                          CHECK(status IN ('requested','approved','rejected','received','refunded')),
+      items       TEXT    NOT NULL DEFAULT '[]',
+      amount      REAL    NOT NULL DEFAULT 0,
+      reason      TEXT,
+      note        TEXT,
+      decided_at  TEXT,
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_return_requests_order ON return_requests(order_id);
+    CREATE INDEX IF NOT EXISTS idx_return_requests_status ON return_requests(status);
+
     CREATE TABLE IF NOT EXISTS deleted_seed_shoes (
       name       TEXT PRIMARY KEY,
       deleted_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
 
     CREATE TABLE IF NOT EXISTS cms_media (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1314,6 +1396,13 @@ export function runMigrations(db) {
     `ALTER TABLE shoe_configs ADD COLUMN in_cart INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE shoe_configs ADD COLUMN fit_profile_id INTEGER REFERENCES fit_profiles(id)`,
     `ALTER TABLE orders       ADD COLUMN fit_profile_id INTEGER REFERENCES fit_profiles(id)`,
+    // Einladung ins eigene Vermittler-Konto. Ohne Login sah ein angelegter
+    // Vermittler seinen Stand nie — die Zeile existierte, das Konto nicht.
+    `ALTER TABLE affiliates   ADD COLUMN invite_token TEXT`,
+    // Was der geworbene Kunde bekommt. Bislang gab es nur die Zugabe
+    // (gift_shoetree); zugesagt wird aber oft ein Nachlass, und der stand
+    // nirgends.
+    `ALTER TABLE affiliates   ADD COLUMN customer_discount_pct REAL NOT NULL DEFAULT 0`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }

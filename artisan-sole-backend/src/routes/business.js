@@ -13,7 +13,7 @@ import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
-import { sendBusinessInvitation } from '../utils/email.js'
+import { sendBusinessInvitation, sendCampaignInvitation } from '../utils/email.js'
 
 const router = Router()
 
@@ -119,6 +119,96 @@ const shapeCampaign = (c) => ({
   deadline: c.deadline || null,
   created_at: c.created_at,
 })
+
+/**
+ * Offene Kampagnen, in die jemand allein durch seine Adresse gehört.
+ *
+ * Wer sich mit der Firmen-Domain anmeldet, soll die Konditionen sehen, ohne
+ * vorher einen Beitrittslink zu suchen — die Einladung ist ja die Domain
+ * selbst. Für den Domain-Weg muss die Adresse bestätigt sein, sonst könnte man
+ * sich mit einer fremden Firmenadresse eintragen; für den Listen-Weg liegt die
+ * Einladung namentlich vor, da genügt sie.
+ *
+ * Wird nach der E-Mail-Bestätigung und bei jeder Anmeldung ausgeführt, damit
+ * auch Kampagnen greifen, die es beim Registrieren noch gar nicht gab.
+ */
+export function kampagnenAutomatischBeitreten(db, userId) {
+  const u = db.prepare('SELECT email, email_verified FROM users WHERE id = ?').get(userId)
+  if (!u?.email) return 0
+  const domain = emailDomain(u.email)
+  const heute = new Date().toISOString().slice(0, 10)
+
+  const offen = db.prepare(`
+    SELECT * FROM business_campaigns
+    WHERE status = 'open' AND (deadline IS NULL OR substr(deadline, 1, 10) >= ?)
+  `).all(heute)
+
+  let neu = 0
+  for (const c of offen) {
+    if (db.prepare('SELECT 1 FROM business_campaign_members WHERE campaign_id = ? AND user_id = ?').get(c.id, userId)) continue
+
+    const perDomain = (c.access_mode === 'domain' || c.access_mode === 'both')
+      && !!c.allowed_email_domain
+      && domain === String(c.allowed_email_domain).toLowerCase()
+      && !!u.email_verified
+
+    const einladung = (c.access_mode === 'list' || c.access_mode === 'both')
+      ? db.prepare("SELECT * FROM business_campaign_invites WHERE campaign_id = ? AND email = ? AND status != 'revoked'").get(c.id, u.email)
+      : null
+
+    if (!perDomain && !einladung) continue
+
+    db.transaction(() => {
+      db.prepare('INSERT OR IGNORE INTO business_campaign_members (campaign_id, user_id) VALUES (?, ?)').run(c.id, userId)
+      if (einladung) db.prepare("UPDATE business_campaign_invites SET status = 'joined', joined_user_id = ? WHERE id = ?").run(userId, einladung.id)
+    })()
+    neu++
+  }
+  return neu
+}
+
+/**
+ * E-Mail-Adressen zur Allow-Liste einer Kampagne hinzufügen und einladen.
+ *
+ * Geteilt vom Firmenkonto und von der Verwaltung — der Unterschied liegt allein
+ * darin, wer die Kampagne aufrufen darf. Wer bereits ein Konto hat, wird gleich
+ * eingetragen; der Rabatt ist dann beim nächsten Blick in den Konfigurator da,
+ * ohne dass jemand einen Link anklicken muss.
+ */
+function einladungenAnlegen(db, campaign, emails) {
+  const sauber = [...new Set(
+    (Array.isArray(emails) ? emails : [])
+      .map(e => String(e || '').trim().toLowerCase())
+      .filter(e => /\S+@\S+\.\S+/.test(e))
+  )]
+  if (!sauber.length) return { error: 'Keine gültigen E-Mail-Adressen' }
+
+  const ins = db.prepare('INSERT OR IGNORE INTO business_campaign_invites (campaign_id, email, token) VALUES (?, ?, ?)')
+  let added = 0
+  db.transaction(() => {
+    for (const e of sauber) added += ins.run(campaign.id, e, crypto.randomBytes(24).toString('hex')).changes
+  })()
+
+  // Bestehende Konten sofort eintragen — sie müssen nichts mehr bestätigen.
+  for (const e of sauber) {
+    const u = db.prepare('SELECT id FROM users WHERE email = ? COLLATE NOCASE').get(e)
+    if (u) kampagnenAutomatischBeitreten(db, u.id)
+  }
+
+  const firma = db.prepare('SELECT name FROM businesses WHERE id = ?').get(campaign.business_id)
+  // Der Versand darf den Vorgang nicht aufhalten: Die Einladung steht in der
+  // Datenbank, auch wenn der Mailserver gerade klemmt.
+  for (const e of sauber) {
+    sendCampaignInvitation(e, campaign, firma?.name || null)
+      .catch(err => console.error('[kampagne-einladung]', e, err.message))
+  }
+
+  return {
+    added,
+    versendet: sauber.length,
+    invites: db.prepare('SELECT email, status FROM business_campaign_invites WHERE campaign_id = ? ORDER BY email').all(campaign.id),
+  }
+}
 
 // Autoritative Prüfung, ob ein User in einer Kampagne ein Modell bestellen darf.
 // Geteilt von der Order-Route (orders.js) und dem Member-Endpoint.
@@ -408,14 +498,9 @@ router.post('/me/campaigns/:id/invites', authenticate, loadOwnBusiness, (req, re
   const db = getDb()
   const c = db.prepare('SELECT * FROM business_campaigns WHERE id = ? AND business_id = ?').get(req.params.id, req.business.id)
   if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
-  const emails = Array.isArray(req.body?.emails) ? req.body.emails : []
-  const clean = [...new Set(emails.map(e => String(e || '').trim().toLowerCase()).filter(e => /\S+@\S+\.\S+/.test(e)))]
-  if (clean.length === 0) return res.status(400).json({ error: 'Keine gültigen E-Mail-Adressen' })
-  const ins = db.prepare("INSERT OR IGNORE INTO business_campaign_invites (campaign_id, email, token) VALUES (?, ?, ?)")
-  let added = 0
-  db.transaction(() => { for (const e of clean) { const r = ins.run(c.id, e, crypto.randomBytes(24).toString('hex')); added += r.changes } })()
-  const all = db.prepare('SELECT email, status FROM business_campaign_invites WHERE campaign_id = ? ORDER BY email').all(c.id)
-  res.status(201).json({ added, invites: all })
+  const r = einladungenAnlegen(db, c, req.body?.emails)
+  if (r.error) return res.status(400).json({ error: r.error })
+  res.status(201).json(r)
 })
 
 // ── Kampagnen: öffentlich + Mitglieder ──────────────────────────────────────
@@ -488,6 +573,52 @@ router.post('/campaigns/:slug/join', authenticate, (req, res) => {
 
 // ── Admin / Curator ─────────────────────────────────────────────────────────
 const canManage = [authenticate, requireRole('admin', 'curator')]
+
+// GET /api/business/campaigns — alle Kampagnen, quer über die Firmenkonten
+router.get('/campaigns', ...canManage, (req, res) => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT c.*, b.name AS business_name
+    FROM business_campaigns c
+    JOIN businesses b ON b.id = c.business_id
+    ORDER BY c.status = 'open' DESC, c.created_at DESC, c.id DESC
+  `).all()
+  res.json(rows.map(c => ({
+    ...shapeCampaign(c),
+    business_name: c.business_name,
+    members: db.prepare('SELECT COUNT(*) AS n FROM business_campaign_members WHERE campaign_id = ?').get(c.id).n,
+    invites: db.prepare('SELECT COUNT(*) AS n FROM business_campaign_invites WHERE campaign_id = ?').get(c.id).n,
+  })))
+})
+
+// POST /api/business/campaigns/:id/invites — Einladungen aus der Verwaltung
+//
+// Dasselbe wie beim Firmenkonto, nur ohne die Bindung an das eigene Konto:
+// Der Betreiber lädt für jede Kampagne ein, wenn die Firma es nicht selbst tut.
+router.post('/campaigns/:id/invites', ...canManage, (req, res) => {
+  const db = getDb()
+  const c = db.prepare('SELECT * FROM business_campaigns WHERE id = ?').get(req.params.id)
+  if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
+  const r = einladungenAnlegen(db, c, req.body?.emails)
+  if (r.error) return res.status(400).json({ error: r.error })
+  res.status(201).json(r)
+})
+
+// GET /api/business/campaigns/:id/invites — Stand der Einladungen
+router.get('/campaigns/:id/invites', ...canManage, (req, res) => {
+  const db = getDb()
+  const c = db.prepare('SELECT * FROM business_campaigns WHERE id = ?').get(req.params.id)
+  if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
+  res.json({
+    campaign: shapeCampaign(c),
+    invites: db.prepare('SELECT email, status, created_at FROM business_campaign_invites WHERE campaign_id = ? ORDER BY email').all(c.id),
+    members: db.prepare(`
+      SELECT u.id, u.name, u.email, m.joined_at
+      FROM business_campaign_members m JOIN users u ON u.id = m.user_id
+      WHERE m.campaign_id = ? ORDER BY m.joined_at DESC
+    `).all(c.id),
+  })
+})
 
 // GET /api/business — alle Firmenkonten auflisten
 router.get('/', ...canManage, (req, res) => {

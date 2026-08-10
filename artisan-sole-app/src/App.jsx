@@ -118,6 +118,7 @@ const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
 const CorporateOverview    = lazy(() => import('./screens/business/CorporateOverview'))
 const RegisterBusiness     = lazy(() => import('./screens/RegisterBusiness'))
+const RegisterAffiliate    = lazy(() => import('./screens/RegisterAffiliate'))
 const BusinessDashboard    = lazy(() => import('./screens/business/BusinessDashboard'))
 const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfile'))
 const BusinessCampaigns    = lazy(() => import('./screens/business/BusinessCampaigns'))
@@ -125,6 +126,7 @@ const CampaignDashboard    = lazy(() => import('./screens/business/CampaignDashb
 const CampaignJoin         = lazy(() => import('./screens/business/CampaignJoin'))
 const VerifyEmail          = lazy(() => import('./screens/VerifyEmail'))
 const BusinessPanel        = lazy(() => import('./screens/cms/BusinessPanel'))
+const AffiliatesPanel      = lazy(() => import('./screens/cms/AffiliatesPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -142,7 +144,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/vermittler']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/vermittler-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/vermittler']
 // Pfade mit variablem Ende: hier zählt der Anfang, nicht die genaue Adresse.
 const NO_NAV_PREFIXES = ['/schuhe/']
 const hidesNav = (path) =>
@@ -157,6 +159,11 @@ export const isMobileWeb = !isNative && /iPhone|iPad|iPod|Android/i.test(navigat
 // die Hauptdomain (artisansole.com) leitet /business dorthin um.
 const HOSTNAME = typeof window !== 'undefined' ? window.location.hostname : ''
 export const isBusiness = !isNative && /^business\./i.test(HOSTNAME)
+// affiliate.artisansole.com — eigener Eingang für Vermittler, dieselbe Idee wie
+// bei den Firmenkonten: Wer sich hier anmeldet, landet in seinem Bereich und
+// nicht im Laden. Der Werbelink führt dagegen bewusst auf die Hauptdomain, denn
+// dort kauft der geworbene Kunde.
+export const isAffiliateHost = !isNative && /^affiliate\./i.test(HOSTNAME)
 const isProdApex = !isNative && /^(www\.)?artisansole\.com$/i.test(HOSTNAME)
 const BUSINESS_URL = 'https://business.artisansole.com/'
 
@@ -248,6 +255,7 @@ function AppRoutes() {
               <Route path="shoes"    element={<ShoeEditor />} />
               <Route path="users"    element={<AdminRoute><UsersPanel /></AdminRoute>} />
               <Route path="business" element={<BusinessPanel />} />
+              <Route path="vermittler" element={<AffiliatesPanel />} />
               <Route path="scans"    element={<ScansPanel />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />
               <Route path="cta-banner" element={<CtaBannerPanel />} />
@@ -290,6 +298,7 @@ function AppRoutes() {
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
+              <Route path="/vermittler-konto"   element={<RegisterAffiliate />} />
               {/* Public, Window Shopping ohne Login */}
               <Route path="/business"   element={<CorporateGifting />} />
               <Route path="/business/uebersicht" element={<CorporateOverview />} />
@@ -336,7 +345,11 @@ function AppRoutes() {
 
   const routes = (
     <Routes>
-      <Route path="/"           element={<ShopRoute>{isBusiness ? <CorporateGifting /> : <Navigate to="/collection" replace />}</ShopRoute>} />
+      <Route path="/" element={
+        isAffiliateHost
+          ? <Navigate to="/vermittler" replace />
+          : <ShopRoute>{isBusiness ? <CorporateGifting /> : <Navigate to="/collection" replace />}</ShopRoute>
+      } />
       {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs: Der
           blendet sich unter 768 px vollständig aus und zeigt nur den Hinweis
           „nur auf iPad und Desktop" — genau der Fall, für den sie gebaut ist. */}
@@ -345,6 +358,7 @@ function AppRoutes() {
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />
       <Route path="/register-business"  element={<RegisterBusiness />} />
+      <Route path="/vermittler-konto"   element={<RegisterAffiliate />} />
       {/* Firmenkonto-Bereich (business.artisansole.com) */}
       <Route path="/business/dashboard" element={<BusinessRoute><BusinessDashboard /></BusinessRoute>} />
       <Route path="/business/profile"   element={<BusinessRoute><BusinessProfile /></BusinessRoute>} />

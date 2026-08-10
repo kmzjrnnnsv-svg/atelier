@@ -11,6 +11,7 @@ import {
 import { authLimiter, refreshLimiter, strictLimiter } from '../middleware/rateLimiter.js'
 import { authenticate } from '../middleware/auth.js'
 import { sendEmailVerification } from '../utils/email.js'
+import { kampagnenAutomatischBeitreten } from './business.js'
 import crypto from 'crypto'
 
 const router = Router()
@@ -52,6 +53,17 @@ export function issueTokens(res, user) {
   // hat dort nichts zu sehen.
   const aff = getDb().prepare("SELECT code FROM affiliates WHERE user_id = ? AND status = 'active'").get(user.id)
 
+  // Firmen-Aktionen, die allein an der Adresse hängen, greifen ohne Zutun:
+  // Wer sich mit der Firmen-Domain anmeldet, ist danach Teilnehmer, und der
+  // Konfigurator zeigt die Konditionen. Hier, weil alle Token-Pfade darüber
+  // laufen — Anmeldung, Registrierung, Erneuerung, Passkey. Ein Fehler darf
+  // niemanden aussperren.
+  try {
+    kampagnenAutomatischBeitreten(getDb(), user.id)
+  } catch (e) {
+    console.error('[kampagne-beitritt]', e.message)
+  }
+
   // Return refreshToken in body too — Capacitor native apps can't rely on
   // cross-origin cookies in WKWebView, so they store it in memory instead.
   return { accessToken, refreshToken, user: { id: user.id, name: user.name, email: user.email, role: user.role, is_promotion: !!user.is_promotion, promotion_discount_pct: user.promotion_discount_pct || 0, is_business: !!biz, business_id: biz?.id || null, business_name: biz?.name || null, is_affiliate: !!aff, affiliate_code: aff?.code || null, email_verified: !!vrow?.email_verified } }
@@ -91,7 +103,12 @@ router.post('/verify-email', (req, res) => {
   const row = db.prepare('SELECT id FROM users WHERE email_verify_token = ?').get(String(token))
   if (!row) return res.status(404).json({ error: 'Ungültiger oder bereits verwendeter Link' })
   db.prepare("UPDATE users SET email_verified = 1, email_verify_token = NULL, updated_at = datetime('now') WHERE id = ?").run(row.id)
-  res.json({ ok: true })
+  // Der Domain-Zugang zu Firmen-Aktionen setzt eine bestätigte Adresse voraus —
+  // ab jetzt liegt sie vor, also gleich eintragen statt bis zur nächsten
+  // Anmeldung zu warten.
+  let kampagnen = 0
+  try { kampagnen = kampagnenAutomatischBeitreten(db, row.id) } catch (e) { console.error('[kampagne-beitritt]', e.message) }
+  res.json({ ok: true, kampagnen })
 })
 
 // POST /api/auth/resend-verification — neuen Bestätigungslink anfordern
@@ -546,6 +563,41 @@ router.post('/register-business',
     const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(biz.owner_user_id)
     const result = issueTokens(res, updated)
     res.status(201).json(result)
+  }
+)
+
+// POST /api/auth/register-affiliate — Vermittlerkonto aktivieren
+//
+// Derselbe Weg wie beim Firmenkonto: Der Datensatz besteht bereits, hier wird
+// nur das Passwort gesetzt und das Login scharfgeschaltet. Der Vermittler
+// landet danach in seinem Bereich, nicht im Laden.
+router.post('/register-affiliate',
+  body('token').trim().notEmpty().withMessage('Token erforderlich'),
+  body('name').trim().isLength({ min: 2 }).withMessage('Name min 2 Zeichen'),
+  body('password')
+    .isLength({ min: 8 }).withMessage('Passwort min 8 Zeichen')
+    .matches(/[0-9]/).withMessage('Passwort muss eine Zahl enthalten')
+    .matches(/[^a-zA-Z0-9]/).withMessage('Passwort muss ein Sonderzeichen enthalten'),
+  async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const { token, name, password } = req.body
+    const db = getDb()
+
+    const aff = db.prepare('SELECT * FROM affiliates WHERE invite_token = ?').get(token)
+    if (!aff) return res.status(404).json({ error: 'Ungültiger oder abgelaufener Einladungslink' })
+    if (!aff.user_id) return res.status(409).json({ error: 'Zu dieser Einladung fehlt das Benutzerkonto.' })
+
+    const hash = await bcrypt.hash(password, 12)
+    db.prepare(`
+      UPDATE users SET name = ?, password_hash = ?, is_active = 1, updated_at = datetime('now')
+      WHERE id = ?
+    `).run(name, hash, aff.user_id)
+    db.prepare("UPDATE affiliates SET invite_token = NULL, status = 'active', updated_at = datetime('now') WHERE id = ?").run(aff.id)
+
+    const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(aff.user_id)
+    res.status(201).json(issueTokens(res, updated))
   }
 )
 

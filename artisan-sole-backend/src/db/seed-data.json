@@ -1,0 +1,1289 @@
+{
+  "__hinweis": "Erzeugt von scripts/seed-export.js. Nicht von Hand bearbeiten — im CMS ändern und neu ausführen.",
+  "daten": {
+    "accessories": [
+      {
+        "key": "shoe_tree_black",
+        "name": "Schuhspanner Schwarz",
+        "description": "Lackierter Spanner in Schwarz, passend zu schwarzen Schuhen. Hält den Schuh in Form.",
+        "price": 22,
+        "is_active": 1,
+        "sort_order": 3,
+        "recommended_for": "[]",
+        "not_recommended_for": "[\"SNEAKER\"]",
+        "material_keys": "*",
+        "color_match": "schwarz,black"
+      },
+      {
+        "key": "shoe_tree_cedar",
+        "name": "Zedernholz-Schuhspanner",
+        "description": "Spanner aus aromatischem Zedernholz. Nimmt Feuchtigkeit auf und hält den Schuh in Form.",
+        "price": 21,
+        "is_active": 1,
+        "sort_order": 2,
+        "recommended_for": "[]",
+        "not_recommended_for": "[\"SNEAKER\"]",
+        "material_keys": "*",
+        "cost_price": 22
+      },
+      {
+        "key": "boot_tree_cedar",
+        "name": "Zedernholz-Stiefelspanner",
+        "description": "Hoher Spanner aus Zedernholz für Stiefel und Boots. Bewahrt Schaft und Form.",
+        "price": 29,
+        "is_active": 1,
+        "sort_order": 4,
+        "recommended_for": "[\"BOOT\",\"CHELSEA\",\"CHUKKA\",\"JODHPUR\"]",
+        "not_recommended_for": "[\"SNEAKER\"]",
+        "material_keys": "*"
+      },
+      {
+        "key": "care_kit_suede",
+        "name": "Wildlederpflege-Set",
+        "description": "Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich.\n\nInhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei.\n\nGedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.",
+        "price": 25.25,
+        "is_active": 1,
+        "sort_order": 1,
+        "recommended_for": "[]",
+        "not_recommended_for": "[]",
+        "material_keys": "lux_suede,urban_suede,suede"
+      },
+      {
+        "key": "care_kit_leather",
+        "name": "Lederpflege-Set",
+        "description": "Alles für die Reinigung und Pflege glatter Leder. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm.\n\nInhalt: ein Tiegel natürliche Lederpflegecreme, ein Poliertuch aus 100 % Baumwolle, zwei kleine Rundbürsten, zwei große Bürsten. Eine Pflegeanleitung liegt bei.\n\nGedacht für weiche Leder wie Box Calf oder poliertes Kalbsleder. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.",
+        "price": 23.7,
+        "is_active": 1,
+        "sort_order": 0,
+        "recommended_for": "[]",
+        "not_recommended_for": "[\"SNEAKER\"]",
+        "material_keys": "lux_calf,painted_full_grain,patina,box_calf,painted_calf,calfskin"
+      }
+    ],
+    "shoe_materials": [
+      {
+        "key": "calfskin",
+        "label": "CALFSKIN",
+        "sub": "Full-Grain",
+        "color": "#b45309",
+        "available": 0,
+        "tip": "Robust und langlebig, entwickelt mit der Zeit eine edle Patina. Ideal für den täglichen Einsatz bei jedem Wetter.",
+        "season": "Ganzjährig",
+        "rating": "good",
+        "sort_order": 0
+      },
+      {
+        "key": "suede",
+        "label": "SUEDE",
+        "sub": "Nubuck",
+        "color": "#78716c",
+        "available": 0,
+        "tip": "Samtig-weiche Oberfläche für lässig-elegante Looks. Empfindlich bei Nässe, am besten für trockene Tage und Indoor-Anlässe.",
+        "season": "Frühling / Sommer",
+        "rating": "warn",
+        "sort_order": 1
+      },
+      {
+        "key": "patent",
+        "label": "PATENT",
+        "sub": "High-Gloss",
+        "color": "#111827",
+        "available": 0,
+        "tip": "Hochglanz-Finish für formelle Anlässe, Galas und Abendveranstaltungen. Pflegeleicht, aber empfindlich gegen Kratzer.",
+        "season": "Events",
+        "rating": "neutral",
+        "sort_order": 2
+      },
+      {
+        "key": "lux_calf",
+        "label": "Lux Calf",
+        "sub": "Aesthetic",
+        "color": "#3b1f0a",
+        "available": 1,
+        "tip": "Hochglanz-Kalbsleder.",
+        "rating": "good",
+        "sort_order": 0,
+        "family": "aesthetic"
+      },
+      {
+        "key": "lux_suede",
+        "label": "Lux Suede",
+        "sub": "Aesthetic",
+        "color": "#7c3a1e",
+        "available": 1,
+        "tip": "Premium-Veloursleder.",
+        "rating": "good",
+        "sort_order": 1,
+        "family": "aesthetic"
+      },
+      {
+        "key": "painted_full_grain",
+        "label": "Painted Full Grain",
+        "sub": "Aesthetic",
+        "color": "#5b2c0e",
+        "available": 1,
+        "tip": "Patinierungs-Vollnarbenleder. Robust UND optisch veredelt, die Allzweckwahl.",
+        "rating": "good",
+        "sort_order": 2,
+        "family": "aesthetic"
+      },
+      {
+        "key": "patina",
+        "label": "Patina",
+        "sub": "Aesthetic",
+        "color": "#1c1c1e",
+        "available": 1,
+        "tip": "Speziell handpatiniert.",
+        "rating": "neutral",
+        "sort_order": 3,
+        "family": "aesthetic"
+      },
+      {
+        "key": "velvet",
+        "label": "Velvet",
+        "sub": "Aesthetic",
+        "color": "#2d1b3d",
+        "available": 1,
+        "tip": "Samt, exklusiv für Slipper, Boots, Drake.",
+        "rating": "neutral",
+        "sort_order": 4,
+        "family": "aesthetic"
+      },
+      {
+        "key": "box_calf",
+        "label": "Box Calf",
+        "sub": "Durable",
+        "color": "#1c1c1e",
+        "available": 1,
+        "tip": "Klassisches Box-Calf, robust und matt.",
+        "rating": "good",
+        "sort_order": 10,
+        "family": "durable"
+      },
+      {
+        "key": "urban_suede",
+        "label": "Urban Suede",
+        "sub": "Durable",
+        "color": "#7c3a1e",
+        "available": 1,
+        "tip": "Wetterbeständiges Veloursleder.",
+        "rating": "good",
+        "sort_order": 11,
+        "family": "durable"
+      },
+      {
+        "key": "painted_calf",
+        "label": "Painted Calf",
+        "sub": "Durable",
+        "color": "#5b2c0e",
+        "available": 1,
+        "tip": "Patinierungs-Kalbleder, alltagstauglich.",
+        "rating": "good",
+        "sort_order": 12,
+        "family": "durable"
+      }
+    ],
+    "shoe_colors": [
+      {
+        "key": "schwarz",
+        "hex": "#000000",
+        "name": "Schwarz",
+        "available": 1,
+        "tip": "Der Klassiker, passt zu jedem Outfit und jedem Anlass. Business, Formal, Casual, Schwarz geht immer.",
+        "pairs_with": "Grau, Navy, alle dunklen Anzüge",
+        "rating": "good",
+        "sort_order": 0,
+        "applicable_materials": "*"
+      },
+      {
+        "key": "black",
+        "hex": "#000000",
+        "name": "Black",
+        "available": 1,
+        "tip": "Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz, perfekt für Smart Casual und kreative Berufe.",
+        "pairs_with": "Dunkle Jeans, Navy Blazer, Charcoal Suits",
+        "rating": "good",
+        "sort_order": 0,
+        "applicable_materials": "lux_calf,lux_suede,painted_full_grain,patina,box_calf,urban_suede,painted_calf,painted_full_grain_durable,velvet"
+      },
+      {
+        "key": "cognac",
+        "hex": "#92400e",
+        "name": "Cognac",
+        "available": 1,
+        "tip": "Warmes Braun mit Tiefe, der ideale Business-Casual-Begleiter. Passt hervorragend zu Beige, Navy und Erdtönen.",
+        "pairs_with": "Beige Chinos, Navy Blazer, Jeans",
+        "rating": "good",
+        "sort_order": 4,
+        "applicable_materials": "lux_calf,lux_suede,painted_full_grain,box_calf,urban_suede,painted_calf,painted_full_grain_durable"
+      },
+      {
+        "key": "oxblood",
+        "hex": "#7b1e1e",
+        "name": "Oxblood",
+        "available": 1,
+        "tip": "Sattes Bordeaux-Rot, ein Herbst- und Winter-Statement. Elegant zum dunklen Anzug, lässig zur Jeans.",
+        "pairs_with": "Charcoal, Navy, Dunkelgrün, Tweed",
+        "rating": "good",
+        "sort_order": 5,
+        "applicable_materials": "lux_calf,lux_suede"
+      },
+      {
+        "key": "tan",
+        "hex": "#b45309",
+        "name": "Tan",
+        "available": 1,
+        "tip": "Helles Karamell-Braun, die perfekte Sommerfarbe. Strahlt bei Sonnenlicht und passt zu hellen, leichten Outfits.",
+        "pairs_with": "Weiß, Hellblau, Leinen, Beige",
+        "rating": "neutral",
+        "sort_order": 4,
+        "applicable_materials": "*"
+      },
+      {
+        "key": "navy",
+        "hex": "#1e3a5f",
+        "name": "Navy",
+        "available": 0,
+        "tip": "Der moderne Gentleman-Ton, elegant und unkonventionell zugleich. Perfekt zu grauen und hellbraunen Outfits.",
+        "pairs_with": "Grau, Beige, helle Jeans, Tweed",
+        "rating": "good",
+        "sort_order": 8,
+        "applicable_materials": "painted_full_grain,box_calf,urban_suede,painted_calf,painted_full_grain_durable,velvet"
+      },
+      {
+        "key": "forest",
+        "hex": "#14532d",
+        "name": "Forest",
+        "available": 0,
+        "tip": "Tiefes Waldgrün, für den mutigen Stilbewussten. Ein Herbst-Highlight zu Cord, Tweed und Erdtönen.",
+        "pairs_with": "Braun, Beige, Senfgelb, Cord",
+        "rating": "neutral",
+        "sort_order": 6,
+        "applicable_materials": "*"
+      },
+      {
+        "key": "dark_brown",
+        "hex": "#3b1f0a",
+        "name": "Dark Brown",
+        "available": 1,
+        "rating": "good",
+        "sort_order": 1,
+        "applicable_materials": "lux_calf,lux_suede,painted_full_grain,box_calf,urban_suede,painted_calf,painted_full_grain_durable"
+      },
+      {
+        "key": "medium_brown",
+        "hex": "#5b3a1d",
+        "name": "Medium Brown",
+        "available": 1,
+        "rating": "good",
+        "sort_order": 2,
+        "applicable_materials": "lux_calf,lux_suede,painted_full_grain,urban_suede,painted_calf,painted_full_grain_durable"
+      },
+      {
+        "key": "light_brown",
+        "hex": "#a0734a",
+        "name": "Light Brown",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 3,
+        "applicable_materials": "lux_calf,lux_suede"
+      },
+      {
+        "key": "burgundy",
+        "hex": "#4f1d24",
+        "name": "Burgundy",
+        "available": 1,
+        "rating": "good",
+        "sort_order": 6,
+        "applicable_materials": "lux_calf,lux_suede,painted_full_grain,box_calf,urban_suede,painted_calf,painted_full_grain_durable"
+      },
+      {
+        "key": "red",
+        "hex": "#a01c1c",
+        "name": "Red",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 7,
+        "applicable_materials": "lux_calf,lux_suede,painted_full_grain,painted_calf,painted_full_grain_durable,velvet"
+      },
+      {
+        "key": "olive",
+        "hex": "#3d3c1f",
+        "name": "Olive",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 9,
+        "applicable_materials": "painted_full_grain,painted_calf,painted_full_grain_durable"
+      },
+      {
+        "key": "sand",
+        "hex": "#d4b896",
+        "name": "Sand",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 10,
+        "applicable_materials": "lux_suede"
+      },
+      {
+        "key": "camel",
+        "hex": "#c8a97e",
+        "name": "Camel",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 11,
+        "applicable_materials": "lux_suede"
+      },
+      {
+        "key": "taupe",
+        "hex": "#705c4a",
+        "name": "Taupe",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 12,
+        "applicable_materials": "urban_suede"
+      },
+      {
+        "key": "velvet_beige",
+        "hex": "#c8b89a",
+        "name": "Beige",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 20,
+        "applicable_materials": "velvet"
+      },
+      {
+        "key": "velvet_darkgrey",
+        "hex": "#3a3a3a",
+        "name": "Dark Grey",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 21,
+        "applicable_materials": "velvet"
+      },
+      {
+        "key": "velvet_khaki",
+        "hex": "#8a8a4a",
+        "name": "Khaki",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 22,
+        "applicable_materials": "velvet"
+      },
+      {
+        "key": "velvet_makeup",
+        "hex": "#d6b4a0",
+        "name": "MakeUp",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 23,
+        "applicable_materials": "velvet"
+      },
+      {
+        "key": "velvet_mustard",
+        "hex": "#c8a020",
+        "name": "Mustard",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 24,
+        "applicable_materials": "velvet"
+      },
+      {
+        "key": "velvet_purple",
+        "hex": "#5a2d6d",
+        "name": "Purple",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 25,
+        "applicable_materials": "velvet"
+      },
+      {
+        "key": "velvet_royal",
+        "hex": "#1d3d9d",
+        "name": "Royal Blue",
+        "available": 1,
+        "rating": "neutral",
+        "sort_order": 26,
+        "applicable_materials": "velvet"
+      }
+    ],
+    "shoe_soles": [
+      {
+        "key": "leather",
+        "label": "LEDERSOHLE",
+        "sub": "Klassisch",
+        "description": "Handgenähte Ledersohle, elegant und atmungsaktiv.",
+        "tip": "Nur für trockene Bedingungen empfohlen. Ideal im Sommer und für Indoor-Anlässe. Bei Nässe wird es rutschig.",
+        "price_extra": 0,
+        "rating": "warn",
+        "recommended": 0,
+        "categories": "OXFORD,LOAFER,DERBY,MONK",
+        "sort_order": 0
+      },
+      {
+        "key": "rubber-grip",
+        "label": "ANTI-RUTSCH",
+        "sub": "Gummi-Profil",
+        "description": "Gummibeschichtete Profilsohle, maximale Rutschfestigkeit auf allen Oberflächen.",
+        "tip": "Unsere Empfehlung für den Alltag. Sicherer Halt bei Regen, Schnee und nassen Böden. Ganzjährig einsetzbar.",
+        "price_extra": 35,
+        "rating": "good",
+        "recommended": 1,
+        "categories": "OXFORD,LOAFER,DERBY,MONK,BOOT",
+        "sort_order": 1
+      },
+      {
+        "key": "sneaker",
+        "label": "SNEAKER-SOHLE",
+        "sub": "EVA-Komfort",
+        "description": "Leichte EVA-Komfortsohle mit Dämpfung, für maximalen Gehkomfort den ganzen Tag.",
+        "tip": "Speziell für Sneaker entwickelt. Stoßdämpfend, flexibel und ultraleicht.",
+        "price_extra": 0,
+        "rating": "good",
+        "recommended": 0,
+        "categories": "SNEAKER",
+        "sort_order": 2
+      }
+    ],
+    "option_groups": [
+      {
+        "key": "last",
+        "label": "Schuhform",
+        "description": "Leistenform, bestimmt Zehenform, Taille und Proportion.",
+        "ui_type": "single",
+        "required": 1,
+        "sort_order": 1,
+        "helper_text": "Die Leistenform bestimmt das Profil des Schuhs (Zehenform, Taille, Proportion). Monti ist vielseitig und passt den meisten Füßen; Zurigo gibt breiten Füßen mehr Platz; Savile und Belgravia sind schlanker für schmale Füße.",
+        "icon": "Footprints"
+      },
+      {
+        "key": "wholecut_base",
+        "label": "Base",
+        "description": "Vorderkappen-Verarbeitung (nur Whole Cut).",
+        "ui_type": "single",
+        "required": 1,
+        "sort_order": 4,
+        "helper_text": "Verarbeitung der Vorderkappe für den nahtlosen Whole-Cut-Schuh.",
+        "icon": "CircleDot"
+      },
+      {
+        "key": "heel",
+        "label": "Absatz",
+        "description": "Standard- oder erhöhter Absatz.",
+        "ui_type": "single",
+        "required": 1,
+        "sort_order": 3,
+        "helper_text": "Standard-Absatz passt zu allen Outfits und Anlässen. Higher Heel gibt etwas mehr Höhe und einen markanteren Auftritt.",
+        "icon": "ChevronUp"
+      },
+      {
+        "key": "loafer_decoration",
+        "label": "Accessoires",
+        "description": "Dekoration bei Loafer-Modellen.",
+        "ui_type": "single",
+        "required": 0,
+        "sort_order": 4,
+        "helper_text": "Dekoration auf dem Spann: Tassels & Albert klassisch, Horsebit als Statement, Bow elegant, Ohne für puristischen Look.",
+        "icon": "Sparkles"
+      },
+      {
+        "key": "sole",
+        "label": "Sohlen-Art",
+        "description": "Art der Sohle, z. B. Leder, Gummi, Dainite oder Crepe.",
+        "ui_type": "single",
+        "required": 1,
+        "sort_order": 5,
+        "helper_text": "Die Sohle bestimmt Anlass und Wetter-Tauglichkeit. Leder (Leather/Buttons) ist klassisch-elegant für Business und drinnen. Dainite & Commando sind griffig und wetterfest für draußen. Crepe ist weich und leger. Leather + Rubber ist der elegante Mittelweg.",
+        "icon": "Layers"
+      },
+      {
+        "key": "sole_color",
+        "label": "Sohlenfarbe",
+        "description": "Farbe der Außensohle (sichtbarer Rand).",
+        "ui_type": "single",
+        "required": 0,
+        "sort_order": 8,
+        "helper_text": "Farbe des Sohlenrands (außen sichtbar). Natural ist neutral, Black diskret, Brick & Brown setzen Akzente.",
+        "icon": "Palette"
+      },
+      {
+        "key": "welt",
+        "label": "Welt",
+        "description": "Rahmen, City für glatten Look, Country/Storm für robusten Auftritt.",
+        "ui_type": "single",
+        "required": 1,
+        "sort_order": 7,
+        "helper_text": "Der Rahmen (Welt) verbindet Schaft und Sohle. In den meisten Fällen genügt die schmale, elegante City-Naht (Business, Anzug, Alltag). Country ist breiter und robuster für legere Outfits, Storm zusätzlich wasserabweisend für Regen und Outdoor.",
+        "icon": "CircleDashed"
+      },
+      {
+        "key": "buckle",
+        "label": "Buckle",
+        "description": "Schnallenform (für Monk-Modelle).",
+        "ui_type": "single",
+        "required": 1,
+        "sort_order": 8,
+        "helper_text": "Schnallenform: Rund für klassische Eleganz, eckig für modernen Akzent.",
+        "icon": "Square"
+      },
+      {
+        "key": "buckle_color",
+        "label": "Schnallen-Farbe",
+        "description": "Material der Schnalle (nur Monk).",
+        "ui_type": "single",
+        "required": 0,
+        "sort_order": 9,
+        "helper_text": "Metall-Finish der Schnalle. Nickel ist der Klassiker, Gold setzt warme Akzente, Graphite ist diskret-modern, Copper auffällig.",
+        "icon": "Gem"
+      },
+      {
+        "key": "inner_color",
+        "label": "Innen­farbe",
+        "description": "Farbe des Futters.",
+        "ui_type": "single",
+        "required": 0,
+        "sort_order": 10,
+        "helper_text": "Farbe des Futters, sichtbar nur beim Anziehen. Klassisch farblich abgestimmt oder bewusst kontrastreich.",
+        "icon": "Palette"
+      },
+      {
+        "key": "sole_bottom_color",
+        "label": "Sohle Unterseite",
+        "description": "Farbe der Sohlen-Unterseite.",
+        "ui_type": "single",
+        "required": 0,
+        "sort_order": 11,
+        "helper_text": "Farbe der Sohlen-Unterseite. Wird nur beim Sitzen oder Übereinanderschlagen der Beine sichtbar, ein subtiles Detail für Kenner.",
+        "icon": "Palette"
+      },
+      {
+        "key": "toe",
+        "label": "Zehenkappe",
+        "description": "Zehenkappenform.",
+        "ui_type": "single",
+        "required": 0,
+        "sort_order": 12,
+        "helper_text": "Die Zehenkappe ist das prägende Detail vorne. Punch Cap mit klassischer Lochung, Plain Toe für minimalistischen Look, Cap Toe mit aufgesetzter Naht.",
+        "icon": "Diamond"
+      },
+      {
+        "key": "beveled_waist",
+        "label": "Beveled Waist",
+        "description": "Schlanke Taille für eleganteren Look.",
+        "ui_type": "toggle",
+        "required": 0,
+        "sort_order": 13,
+        "helper_text": "Schlanke, geschwungene Taille zwischen Ballen und Absatz. Subtil sichtbar, aber Markenzeichen feinster Schuhmacherkunst (+€19).",
+        "icon": "ArrowRightLeft"
+      }
+    ],
+    "options": [
+      {
+        "key": "zurigo",
+        "label": "Zurigo",
+        "description": "Runde Zehenform für traditionell-englischen Look. Bietet am meisten Platz im Zehenbereich, ideal für breitere Füße oder hohen Spann.",
+        "default_price_extra": 0,
+        "applicable_categories": "OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK",
+        "sort_order": 0,
+        "recommended": 0,
+        "__gruppe": "last"
+      },
+      {
+        "key": "monti",
+        "label": "Monti",
+        "description": "Klassische Eleganz mit leicht quadratischer Zehe. Der vielseitige Allrounder, passt zu den meisten Fußformen und jedem Anlass.",
+        "default_price_extra": 0,
+        "applicable_categories": "OXFORD,WHOLECUT,DERBY,LOAFER,MONK,DOUBLE_MONK",
+        "sort_order": 1,
+        "recommended": 0,
+        "__gruppe": "last"
+      },
+      {
+        "key": "savile",
+        "label": "Savile",
+        "description": "Schlanker Look mit leichter Chisel-Zehe. Elegant für normale bis schmale Füße.",
+        "default_price_extra": 0,
+        "applicable_categories": "OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK",
+        "sort_order": 2,
+        "recommended": 0,
+        "__gruppe": "last"
+      },
+      {
+        "key": "belgravia",
+        "label": "Belgravia",
+        "description": "Chisel-Zehe, schmale Taille und kubanischer Absatz. Markantes Statement, am besten für schlanke Füße.",
+        "default_price_extra": 0,
+        "applicable_categories": "OXFORD,WHOLECUT,CHELSEA",
+        "sort_order": 3,
+        "recommended": 0,
+        "__gruppe": "last"
+      },
+      {
+        "key": "leather",
+        "label": "Leather",
+        "description": "Klassische Ledersohle, elegant für Business, Anzug und drinnen. Die richtige Wahl für die meisten Anlässe.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 4,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "leather_mountain",
+        "label": "Leather Mountain",
+        "description": "Leder mit Bergprofil, etwas mehr Grip bei trockenem Wetter, behält den eleganten Charakter.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 5,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "leather_buttons",
+        "label": "Leather Buttons",
+        "description": "Leder mit eingelassenen Noppen, dezent griffiger als glattes Leder, gut für den Alltag.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 6,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "leather_rubber",
+        "label": "Leather + Rubber",
+        "description": "Leder mit Gummi-Mittelsteg, eleganter Look mit alltagstauglichem Halt. Guter Mittelweg.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 7,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "dainite",
+        "label": "Dainite",
+        "description": "Stollen-Gummisohle, robust und rutschsicher bei Nässe. Ideal für draußen und Regenwetter.",
+        "default_price_extra": 10,
+        "applicable_categories": "*",
+        "sort_order": 8,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "commando",
+        "label": "Commando",
+        "description": "Grobes Profil, maximaler Grip. Für Outdoor, Winter und raues Gelände.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 9,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "crepe",
+        "label": "Crepe",
+        "description": "Naturkautschuk, weich, leise und leger. Perfekt für entspannte, sommerliche Anlässe.",
+        "default_price_extra": 10,
+        "applicable_categories": "LOAFER,DERBY,SNEAKER",
+        "sort_order": 10,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "rubber",
+        "label": "Rubber",
+        "description": "Glatte Gummisohle, unauffälliger Allrounder mit etwas Grip für den Alltag.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 11,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "dots",
+        "label": "Dots",
+        "description": "Gummi mit feinen Noppen, dezenter Grip, unauffällig im Alltag.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 12,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "rocky",
+        "label": "Rocky",
+        "description": "Robuste Outdoor-Sohle, für Stiefel und raues Gelände bei jedem Wetter.",
+        "default_price_extra": 0,
+        "applicable_categories": "CHELSEA,BOOT,DERBY",
+        "sort_order": 13,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "beveled_waist",
+        "label": "Beveled Waist",
+        "description": "Schlanke, geschwungene Taille, Markenzeichen feinster Schuhmacherkunst, rein optisch.",
+        "default_price_extra": 50,
+        "applicable_categories": "OXFORD,WHOLECUT,DERBY,MONK,DOUBLE_MONK",
+        "sort_order": 14,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "art",
+        "label": "Art",
+        "description": "Handbemalte Spezialsohle, auffälliges Einzelstück für Individualisten.",
+        "default_price_extra": 17,
+        "applicable_categories": "*",
+        "sort_order": 15,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "city",
+        "label": "City",
+        "description": "Schmaler, eleganter Rahmen, für Business, Anzug und Alltag. Für die meisten Anlässe die richtige Wahl.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 16,
+        "recommended": 0,
+        "__gruppe": "welt"
+      },
+      {
+        "key": "country",
+        "label": "Country",
+        "description": "Breiterer, robusterer Rahmen, für legere Outfits und kräftigere Schuhe.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 17,
+        "recommended": 0,
+        "__gruppe": "welt"
+      },
+      {
+        "key": "storm",
+        "label": "Storm",
+        "description": "Wasserabweisender Rahmen, schützt bei Regen und Outdoor.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 18,
+        "recommended": 0,
+        "__gruppe": "welt"
+      },
+      {
+        "key": "standard",
+        "label": "Standard",
+        "description": "Klassische Absatzhöhe.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 19,
+        "recommended": 0,
+        "__gruppe": "heel"
+      },
+      {
+        "key": "higher_heel",
+        "label": "Higher Heel",
+        "description": "Erhöhter Absatz.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 20,
+        "recommended": 0,
+        "__gruppe": "heel"
+      },
+      {
+        "key": "plain_toe",
+        "label": "Plain Toe",
+        "description": "Glatte Zehenkappe ohne Verzierung.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 21,
+        "recommended": 0,
+        "__gruppe": "toe"
+      },
+      {
+        "key": "punch_cap",
+        "label": "Punch Cap",
+        "description": "Klassische Punch-Cap-Lochung.",
+        "default_price_extra": 0,
+        "applicable_categories": "OXFORD,DERBY",
+        "sort_order": 22,
+        "recommended": 0,
+        "__gruppe": "toe"
+      },
+      {
+        "key": "cap_toe",
+        "label": "Cap Toe",
+        "description": "Aufgesetzte Zehenkappe mit Naht.",
+        "default_price_extra": 0,
+        "applicable_categories": "OXFORD,DERBY,CHELSEA",
+        "sort_order": 23,
+        "recommended": 0,
+        "__gruppe": "toe"
+      },
+      {
+        "key": "bare",
+        "label": "Bare",
+        "description": "Komplett unverziert.",
+        "default_price_extra": 0,
+        "applicable_categories": "OXFORD,WHOLECUT",
+        "sort_order": 24,
+        "recommended": 0,
+        "__gruppe": "toe"
+      },
+      {
+        "key": "round_buckle",
+        "label": "Round Buckle",
+        "description": "Klassisch runde Schnalle.",
+        "default_price_extra": 0,
+        "applicable_categories": "MONK,DOUBLE_MONK",
+        "sort_order": 25,
+        "recommended": 0,
+        "__gruppe": "buckle"
+      },
+      {
+        "key": "square_buckle",
+        "label": "Square Buckle",
+        "description": "Eckige Schnalle, modern.",
+        "default_price_extra": 0,
+        "applicable_categories": "MONK,DOUBLE_MONK",
+        "sort_order": 26,
+        "recommended": 0,
+        "__gruppe": "buckle"
+      },
+      {
+        "key": "tassels",
+        "label": "Tassels",
+        "description": "Klassische Quasten.",
+        "default_price_extra": 0,
+        "applicable_categories": "LOAFER",
+        "sort_order": 27,
+        "recommended": 0,
+        "__gruppe": "loafer_decoration"
+      },
+      {
+        "key": "albert_mask",
+        "label": "Albert Mask",
+        "description": "Verzierte Maske auf dem Spann.",
+        "default_price_extra": 0,
+        "applicable_categories": "LOAFER",
+        "sort_order": 28,
+        "recommended": 0,
+        "__gruppe": "loafer_decoration"
+      },
+      {
+        "key": "metal_bit",
+        "label": "Metal Bit",
+        "description": "Pferdetrense aus Metall.",
+        "default_price_extra": 0,
+        "applicable_categories": "LOAFER",
+        "sort_order": 29,
+        "recommended": 0,
+        "__gruppe": "loafer_decoration"
+      },
+      {
+        "key": "bow",
+        "label": "Bow",
+        "description": "Schleife.",
+        "default_price_extra": 0,
+        "applicable_categories": "LOAFER,BELGIAN_SLIPPER",
+        "sort_order": 34,
+        "recommended": 0,
+        "__gruppe": "loafer_decoration"
+      },
+      {
+        "key": "bare",
+        "label": "Bare",
+        "description": "Ohne Dekoration.",
+        "default_price_extra": 0,
+        "applicable_categories": "LOAFER",
+        "sort_order": 31,
+        "recommended": 0,
+        "__gruppe": "loafer_decoration"
+      },
+      {
+        "key": "no",
+        "label": "Nein",
+        "description": "Standard-Taille.",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 32,
+        "recommended": 0,
+        "__gruppe": "beveled_waist"
+      },
+      {
+        "key": "yes",
+        "label": "Ja",
+        "description": "Schlanke Taille (+19 €).",
+        "default_price_extra": 19,
+        "applicable_categories": "*",
+        "sort_order": 33,
+        "recommended": 0,
+        "__gruppe": "beveled_waist"
+      },
+      {
+        "key": "punched_cap",
+        "label": "Punched Cap",
+        "description": "Klassische Lochkappe.",
+        "default_price_extra": 0,
+        "applicable_categories": "WHOLECUT",
+        "sort_order": 0,
+        "recommended": 0,
+        "__gruppe": "wholecut_base"
+      },
+      {
+        "key": "full_punched",
+        "label": "Full Punched",
+        "description": "Komplette Vorderkappen-Lochung.",
+        "default_price_extra": 0,
+        "applicable_categories": "WHOLECUT",
+        "sort_order": 1,
+        "recommended": 0,
+        "__gruppe": "wholecut_base"
+      },
+      {
+        "key": "plain",
+        "label": "Plain",
+        "description": "Glatte Vorderkappe.",
+        "default_price_extra": 0,
+        "applicable_categories": "WHOLECUT",
+        "sort_order": 2,
+        "recommended": 0,
+        "__gruppe": "wholecut_base"
+      },
+      {
+        "key": "black",
+        "label": "Black",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 3,
+        "color_hex": "#0a0a0a",
+        "recommended": 0,
+        "__gruppe": "sole_color"
+      },
+      {
+        "key": "brown",
+        "label": "Brown",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 4,
+        "color_hex": "#5b3a1d",
+        "recommended": 0,
+        "__gruppe": "sole_color"
+      },
+      {
+        "key": "brick",
+        "label": "Brick",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "MONK,DOUBLE_MONK",
+        "sort_order": 5,
+        "color_hex": "#8b3a2a",
+        "recommended": 0,
+        "__gruppe": "sole_color"
+      },
+      {
+        "key": "natural",
+        "label": "Natural",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 6,
+        "color_hex": "#d4b896",
+        "recommended": 0,
+        "__gruppe": "sole_color"
+      },
+      {
+        "key": "gold",
+        "label": "Gold",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "MONK,DOUBLE_MONK",
+        "sort_order": 7,
+        "color_hex": "#c9a85e",
+        "recommended": 0,
+        "__gruppe": "buckle_color"
+      },
+      {
+        "key": "graphite",
+        "label": "Graphite",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "MONK,DOUBLE_MONK",
+        "sort_order": 8,
+        "color_hex": "#3a3a3a",
+        "recommended": 0,
+        "__gruppe": "buckle_color"
+      },
+      {
+        "key": "nickel",
+        "label": "Nickel",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "MONK,DOUBLE_MONK",
+        "sort_order": 9,
+        "color_hex": "#a8a8a8",
+        "recommended": 0,
+        "__gruppe": "buckle_color"
+      },
+      {
+        "key": "copper",
+        "label": "Copper",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "MONK,DOUBLE_MONK",
+        "sort_order": 10,
+        "color_hex": "#b5704c",
+        "recommended": 0,
+        "__gruppe": "buckle_color"
+      },
+      {
+        "key": "black",
+        "label": "Black",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 11,
+        "color_hex": "#0a0a0a",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "brown",
+        "label": "Brown",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 12,
+        "color_hex": "#5b3a1d",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "tan",
+        "label": "Tan",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 13,
+        "color_hex": "#a0734a",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "beige",
+        "label": "Beige",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 14,
+        "color_hex": "#d4c4a0",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "red",
+        "label": "Red",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 15,
+        "color_hex": "#a01c1c",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "orange",
+        "label": "Orange",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 16,
+        "color_hex": "#d97706",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "navy",
+        "label": "Navy",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 17,
+        "color_hex": "#1e3a5f",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "white",
+        "label": "White",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 18,
+        "color_hex": "#f5f5f0",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "lila",
+        "label": "Lila",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 19,
+        "color_hex": "#5a2d6d",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "ochre",
+        "label": "Ochre",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 20,
+        "color_hex": "#b8860b",
+        "recommended": 0,
+        "__gruppe": "inner_color"
+      },
+      {
+        "key": "black",
+        "label": "Black",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 21,
+        "color_hex": "#0a0a0a",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "brown",
+        "label": "Brown",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 22,
+        "color_hex": "#5b3a1d",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "cognac",
+        "label": "Cognac",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 23,
+        "color_hex": "#92400e",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "dark_red",
+        "label": "Dark Red",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 24,
+        "color_hex": "#5a1818",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "forest_green",
+        "label": "Forest Green",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 25,
+        "color_hex": "#1f3d1f",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "lila",
+        "label": "Lila",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 26,
+        "color_hex": "#5a2d6d",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "natural",
+        "label": "Natural",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 27,
+        "color_hex": "#d4b896",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "orange",
+        "label": "Orange",
+        "description": "",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 28,
+        "color_hex": "#d97706",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "white",
+        "label": "Weiß",
+        "description": "Klassisch weiß (Sneaker).",
+        "default_price_extra": 0,
+        "applicable_categories": "SNEAKER,SNEAKER_LACED,SNEAKER_BOOT",
+        "sort_order": 29,
+        "color_hex": "#f5f5f0",
+        "recommended": 0,
+        "__gruppe": "sole_bottom_color"
+      },
+      {
+        "key": "gummy_sole",
+        "label": "Gummy Sole",
+        "description": "Glatte Gummisohle (Loafer-Stil).",
+        "default_price_extra": 0,
+        "applicable_categories": "*",
+        "sort_order": 30,
+        "recommended": 0,
+        "__gruppe": "sole"
+      },
+      {
+        "key": "albert_tassels",
+        "label": "Albert Tassels",
+        "description": "Tasseln im Albert-Stil.",
+        "default_price_extra": 0,
+        "applicable_categories": "LOAFER,BELGIAN_SLIPPER,WELLINGTON,DRAKE",
+        "sort_order": 31,
+        "recommended": 0,
+        "__gruppe": "loafer_decoration"
+      },
+      {
+        "key": "horsebit",
+        "label": "Horsebit",
+        "description": "Pferdetrense (Metal Bit).",
+        "default_price_extra": 0,
+        "applicable_categories": "LOAFER,BELGIAN_SLIPPER,WELLINGTON,DRAKE",
+        "sort_order": 32,
+        "recommended": 0,
+        "__gruppe": "loafer_decoration"
+      },
+      {
+        "key": "ohne",
+        "label": "Ohne",
+        "description": "Ohne Dekoration.",
+        "default_price_extra": 0,
+        "applicable_categories": "LOAFER,BELGIAN_SLIPPER,WELLINGTON,DRAKE",
+        "sort_order": 33,
+        "recommended": 0,
+        "__gruppe": "loafer_decoration"
+      }
+    ]
+  }
+}
