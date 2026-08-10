@@ -82,8 +82,8 @@ function Bestellung({ eintrag, onSenden, sendet }) {
           <div>
             <p className="text-[12px] text-black/70">{b.shoe_name}</p>
             <p className="text-[11px] text-black/40 font-light leading-relaxed">
-              Maßanfertigung — vom Widerruf ausgenommen. Bei einem Mangel fertigen
-              wir neu; bei Nichtgefallen sehen wir uns das an.
+              Maßanfertigung — keine Rückgabe. Bei einem Mangel fertigen wir das
+              Paar neu; gefällt es Ihnen nicht, sehen wir uns das an.
             </p>
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function Ruecksendungen() {
         <p className="text-[10px] uppercase tracking-[0.3em] text-black/25 mb-3">Rücksendungen</p>
         <h1 className="text-[26px] lg:text-[32px] font-extralight text-black tracking-tight">Etwas zurücksenden</h1>
         <p className="text-[13px] text-black/45 font-light leading-relaxed max-w-xl mt-3">
-          {daten?.shoe_note || 'Maßgefertigte Schuhe sind vom Widerruf ausgenommen. Zubehör geht regulär zurück.'}
+          {daten?.shoe_note || 'Maßgefertigte Schuhe können nicht zurückgegeben werden. Zubehör geht regulär zurück.'}
           {daten?.window_days ? ` Zubehör innerhalb von ${daten.window_days} Tagen nach Zustellung.` : ''}
         </p>
       </div>
