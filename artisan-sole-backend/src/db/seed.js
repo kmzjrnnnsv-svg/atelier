@@ -62,6 +62,18 @@ export async function seedDatabase(db) {
 
   console.log('🌱 Seeding database with defaults...')
 
+  // In Produktion wird niemals ein Admin mit Standardpasswort angelegt: Der
+  // Vorgabewert steht im Repository und wäre ein bekannter Zugang. Ohne
+  // ausdrücklich gesetztes SEED_ADMIN_PASSWORD bricht der Start hier ab —
+  // besser als ein stiller Betrieb mit bekanntem Admin-Login.
+  const isProd = process.env.NODE_ENV === 'production'
+  if (isProd && !process.env.SEED_ADMIN_PASSWORD) {
+    throw new Error(
+      'SEED_ADMIN_PASSWORD ist nicht gesetzt — in Produktion wird kein Admin mit ' +
+      'Standardpasswort angelegt. Bitte SEED_ADMIN_EMAIL und SEED_ADMIN_PASSWORD setzen.'
+    )
+  }
+
   const adminEmail    = process.env.SEED_ADMIN_EMAIL    || 'admin@artisansole.com'
   const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'ArtisanSole@2026!'
   const hash = await bcrypt.hash(adminPassword, 12)
@@ -73,19 +85,23 @@ export async function seedDatabase(db) {
       VALUES (?, ?, ?, 'admin')
     `).run('Admin', adminEmail, hash)
 
-    // Default curator
-    const curatorHash = bcrypt.hashSync('Curator@2026!', 12)
-    db.prepare(`
-      INSERT INTO users (name, email, password_hash, role)
-      VALUES (?, ?, ?, 'curator')
-    `).run('Curator', 'curator@artisansole.com', curatorHash)
+    // Vorgefertigte Kurator-/Demo-Konten mit bekannten Passwörtern nur außerhalb
+    // der Produktion — eine Entwicklungsbequemlichkeit, die in Produktion ein
+    // bekannter Zugang wäre.
+    if (!isProd) {
+      const curatorHash = bcrypt.hashSync('Curator@2026!', 12)
+      db.prepare(`
+        INSERT INTO users (name, email, password_hash, role)
+        VALUES (?, ?, ?, 'curator')
+      `).run('Curator', 'curator@artisansole.com', curatorHash)
 
-    // Demo / guest user, for trying the app without a real account
-    const demoHash = bcrypt.hashSync('Demo@2026!', 12)
-    db.prepare(`
-      INSERT INTO users (name, email, password_hash, role)
-      VALUES (?, ?, ?, 'user')
-    `).run('Demo', 'demo@artisansole.com', demoHash)
+      // Demo / guest user, for trying the app without a real account
+      const demoHash = bcrypt.hashSync('Demo@2026!', 12)
+      db.prepare(`
+        INSERT INTO users (name, email, password_hash, role)
+        VALUES (?, ?, ?, 'user')
+      `).run('Demo', 'demo@artisansole.com', demoHash)
+    }
 
     // ── SHOES ──────────────────────────────────────────────────
     const skipNames = deletedSeedNames(db)

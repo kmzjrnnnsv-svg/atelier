@@ -8,6 +8,27 @@ const router = Router()
 const canWrite = [authenticate, requireRole('admin', 'curator')]
 const mustRead = [authenticate]
 
+// Spalten-Whitelist je Tabelle, einmal aus dem Schema gelesen und gecacht.
+// req.body-Keys werden als SQL-Identifier in INSERT/UPDATE eingesetzt; ohne
+// diese Prüfung könnte ein Redakteur (admin/curator) beliebige Bezeichner
+// einschleusen (Identifier-Injection) oder nicht vorgesehene Spalten
+// beschreiben (Mass Assignment). `table` ist stets ein fest verdrahteter
+// interner Name, kein Nutzereingang.
+const _columnCache = new Map()
+function tableColumns(table) {
+  if (!_columnCache.has(table)) {
+    const cols = getDb().prepare(`PRAGMA table_info(${table})`).all().map(c => c.name)
+    _columnCache.set(table, new Set(cols))
+  }
+  return _columnCache.get(table)
+}
+function pickValidColumns(table, obj) {
+  const valid = tableColumns(table)
+  const out = {}
+  for (const k of Object.keys(obj || {})) if (valid.has(k)) out[k] = obj[k]
+  return out
+}
+
 // `listExclude` hält schwere Spalten aus der Listenantwort heraus, ohne sie
 // beim Einzelabruf zu verstecken. Nötig, seit Schuhe eine zweite Ansicht als
 // base64-Data-URL tragen: über alle Modelle summiert wäre das ein Vielfaches
@@ -61,11 +82,12 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false, li
     if (table === 'shoes' && body.name) {
       getDb().prepare('DELETE FROM deleted_seed_shoes WHERE name = ?').run(body.name)
     }
-    const cols = Object.keys(body).join(', ')
-    const vals = Object.keys(body).map(() => '?').join(', ')
+    const safeBody = pickValidColumns(table, body)
+    const cols = Object.keys(safeBody).join(', ')
+    const vals = Object.keys(safeBody).map(() => '?').join(', ')
     const result = getDb()
       .prepare(`INSERT INTO ${table} (${cols}) VALUES (${vals})`)
-      .run(...Object.values(body))
+      .run(...Object.values(safeBody))
 
     const row = getDb().prepare(`SELECT * FROM ${table} WHERE id = ?`).get(result.lastInsertRowid)
     res.status(201).json(row)
@@ -80,19 +102,15 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false, li
     const existing = db.prepare(`SELECT id FROM ${table} WHERE id = ?`).get(req.params.id)
     if (!existing) return res.status(404).json({ error: 'Not found' })
 
-    const updates = { ...req.body, updated_at: "datetime('now')" }
-    delete updates.created_by
-    delete updates.id
+    const writeBody = pickValidColumns(table, req.body)
+    if (onWrite) Object.assign(writeBody, pickValidColumns(table, onWrite(writeBody, { db, id: Number(req.params.id) })))
+    delete writeBody.id
+    delete writeBody.created_by
 
-    const writeBody = { ...req.body }
-    if (onWrite) Object.assign(writeBody, onWrite(writeBody, { db, id: Number(req.params.id) }))
-
-    const set = Object.keys(writeBody)
-      .filter(k => k !== 'id' && k !== 'created_by')
-      .map(k => `${k} = ?`).join(', ')
-    const vals = Object.keys(writeBody)
-      .filter(k => k !== 'id' && k !== 'created_by')
-      .map(k => writeBody[k])
+    const keys = Object.keys(writeBody)
+    if (keys.length === 0) return res.status(400).json({ error: 'Keine gültigen Felder' })
+    const set  = keys.map(k => `${k} = ?`).join(', ')
+    const vals = keys.map(k => writeBody[k])
 
     db.prepare(`UPDATE ${table} SET ${set}, updated_at = datetime('now') WHERE id = ?`)
       .run(...vals, req.params.id)

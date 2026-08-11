@@ -8,12 +8,14 @@ export function signAccessToken(user) {
   return jwt.sign(
     { sub: user.id, role: user.role, name: user.name },
     process.env.JWT_ACCESS_SECRET,
-    { expiresIn: ACCESS_EXPIRY }
+    { expiresIn: ACCESS_EXPIRY, algorithm: 'HS256' }
   )
 }
 
 export function verifyAccessToken(token) {
-  return jwt.verify(token, process.env.JWT_ACCESS_SECRET)
+  // Algorithmus fest auf HS256 pinnen: verhindert Algorithmus-Verwirrung
+  // (z. B. ein untergeschobenes 'none'- oder RS256-Token).
+  return jwt.verify(token, process.env.JWT_ACCESS_SECRET, { algorithms: ['HS256'] })
 }
 
 export function generateRefreshToken() {

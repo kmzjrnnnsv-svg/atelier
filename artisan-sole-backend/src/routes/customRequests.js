@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import rateLimit from 'express-rate-limit'
 import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, authenticateOptional, requireRole } from '../middleware/auth.js'
@@ -7,10 +8,23 @@ import { sendInquiryNotification, sendInquiryAck } from '../utils/email.js'
 const router = Router()
 const canManage = [authenticate, requireRole('admin', 'curator')]
 
+// Die Anfrage ist öffentlich und verschickt zwei E-Mails — ohne eigene Bremse
+// ein Spam-/Missbrauchsvektor. Eigener Limiter (nicht der globale apiLimiter),
+// damit ein Angreifer nicht die Mail-Auslösung, aber der normale Betrieb die
+// Katalog-Abrufe teilen.
+const inquiryLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: process.env.NODE_ENV !== 'production' ? 100 : 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Zu viele Anfragen, bitte später erneut versuchen' },
+})
+
 const VALID_STATUS = ['open', 'contacted', 'in_progress', 'quoted', 'accepted', 'declined', 'closed']
 
 // POST /api/custom-requests, guests + users may submit a Custom-Anfrage
 router.post('/',
+  inquiryLimiter,
   authenticateOptional,
   body('customer_name').trim().notEmpty().withMessage('Name erforderlich'),
   body('customer_email').trim().isEmail().withMessage('Gültige E-Mail erforderlich'),

@@ -400,11 +400,23 @@ router.put('/:id',
     const existing = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
     if (!existing) return res.status(404).json({ error: 'Not found' })
 
-    // Confirming payment (pending_payment → processing) requires admin + MFA
+    // Jeder Übergang aus 'pending_payment' heraus (außer Storno) bestätigt
+    // faktisch den Zahlungseingang und ist daher Admins vorbehalten. Zuvor war
+    // nur der Weg nach 'processing' abgesichert — ein Kurator konnte eine noch
+    // unbezahlte Bestellung direkt auf 'shipped'/'delivered' setzen und damit
+    // Versandmail und Treuepunkte auslösen.
+    const verlaesstZahlungswartung =
+      existing.status === 'pending_payment' &&
+      req.body.status !== 'pending_payment' &&
+      req.body.status !== 'cancelled'
+    if (verlaesstZahlungswartung && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Nur Admins können unbezahlte Bestellungen freigeben' })
+    }
+
+    // Die ausdrückliche Zahlungsbestätigung (pending_payment → processing)
+    // verlangt zusätzlich MFA. MFA ist ansonsten optionale Step-up-Auth und
+    // wird für andere Statuswechsel nicht erzwungen.
     if (req.body.status === 'processing' && existing.status === 'pending_payment') {
-      if (req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'Nur Admins können Zahlungen bestätigen' })
-      }
       // Inline MFA check (avoid redirect on 401 from middleware)
       const mfaRow = db.prepare('SELECT mfa_secret, mfa_enabled FROM users WHERE id = ?').get(req.user.id)
       if (!mfaRow?.mfa_enabled) {
