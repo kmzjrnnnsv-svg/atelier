@@ -1,6 +1,13 @@
 import bcrypt from 'bcryptjs'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { katalogAnwenden } from './seedExport.js'
 import { frischeInstallationVerbrauchen } from './schema.js'
+
+// Verzeichnis dieser Datei — die Rechtstexte liegen im Wurzelverzeichnis des
+// Repositories, nicht neben dem Backend.
+const __seedDir = path.dirname(fileURLToPath(import.meta.url))
 
 // Im CMS gelöschte Modelle nicht wieder anlegen.
 // Der Seed kennt seine Modelle über den Namen und legte sie bei jedem Start
@@ -57,6 +64,7 @@ export async function seedDatabase(db) {
   seedFaqs(db)
   cleanupLegacyWording(db)
   seedShoeDescriptions(db)
+  seedLegalDocs(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -1634,5 +1642,80 @@ function seedShoeDescriptions(db) {
 
   if (nachModell || nachKategorie) {
     console.log(`✅ Seeded: Modellbeschreibungen, ${nachModell} nach Modell, ${nachKategorie} nach Machart`)
+  }
+}
+
+// ── Rechtstexte auf die Seite bringen ────────────────────────────────────────
+//
+// AGB, Datenschutz und Impressum lagen als Dateien im Repository, kamen aber
+// nie in die Datenbank — und nur von dort holt sie die Seite. Wer im Laden auf
+// „AGB" tippte, las „Noch nicht verfügbar". Für einen Shop ist das keine
+// Kleinigkeit: Ein fehlendes Impressum ist abmahnfähig.
+//
+// Zwei Vorsichtsmaßnahmen:
+//
+//   • Unfertige Texte bleiben liegen. Enthält eine Datei noch einen Platzhalter
+//     in eckigen Klammern, wird sie NICHT veröffentlicht. Ein Impressum mit
+//     „[STRASSE UND HAUSNUMMER]" ist schlimmer als gar keines — es belegt, dass
+//     jemand es gesehen und trotzdem so gelassen hat.
+//
+//   • Geschrieben wird nur in leere Einträge. Was in der Verwaltung unter
+//     „Rechtliches" steht, bleibt unangetastet.
+
+const RECHTSTEXTE = [
+  { type: 'agb',          datei: 'AGB.md',                    titel: 'Allgemeine Geschäftsbedingungen' },
+  { type: 'datenschutz',  datei: 'Datenschutzerklaerung.md',  titel: 'Datenschutzerklärung' },
+  { type: 'impressum',    datei: 'Impressum.md',              titel: 'Impressum' },
+]
+
+/** Noch offene Platzhalter der Form [GROSSBUCHSTABEN] oder […]. */
+function offenePlatzhalter(text) {
+  return (text.match(/\[[^\]]{2,80}\]/g) || [])
+    // Markdown-Links [Text](url) sind keine Platzhalter.
+    .filter((_, i, alle) => alle.length > 0)
+}
+
+export function seedLegalDocs(db) {
+  let veroeffentlicht = 0
+  const zurueckgehalten = []
+
+  for (const { type, datei, titel } of RECHTSTEXTE) {
+    let pfad
+    try {
+      pfad = path.join(__seedDir, '..', '..', '..', 'rechtstexte', datei)
+      if (!fs.existsSync(pfad)) continue
+    } catch { continue }
+
+    let roh
+    try { roh = fs.readFileSync(pfad, 'utf8') } catch { continue }
+
+    // Der Hinweiskasten am Kopf ist eine Anweisung an uns, nicht an den Kunden.
+    const text = roh
+      .replace(/^#[^\n]*\n/, '')
+      .replace(/^>[^\n]*\n/gm, '')
+      .replace(/^---\s*$/gm, '')
+      .trim()
+
+    const offen = offenePlatzhalter(text)
+    if (offen.length) {
+      zurueckgehalten.push(`${datei} (${offen.length} Platzhalter)`)
+      continue
+    }
+
+    const vorhanden = db.prepare('SELECT content FROM legal_docs WHERE type = ?').get(type)
+    if (vorhanden?.content && vorhanden.content.trim()) continue
+
+    db.prepare(`
+      INSERT INTO legal_docs (type, title, content)
+      VALUES (?, ?, ?)
+      ON CONFLICT(type) DO UPDATE SET title = excluded.title, content = excluded.content
+    `).run(type, titel, text)
+    veroeffentlicht++
+  }
+
+  if (veroeffentlicht) console.log(`✅ Seeded: ${veroeffentlicht} Rechtstexte veröffentlicht`)
+  if (zurueckgehalten.length) {
+    console.warn(`⚠️  Rechtstexte NICHT veröffentlicht, es fehlen noch Angaben: ${zurueckgehalten.join(', ')}`)
+    console.warn('    Platzhalter in rechtstexte/ ausfüllen — dann erscheinen sie beim nächsten Start.')
   }
 }

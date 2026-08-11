@@ -200,12 +200,26 @@ sorgfältiger Arbeit einmal nicht gefallen kann, bieten wir freiwillig an:
 - eine Gutschrift auf ein künftiges Paar;
 - eine Erstattung von **höchstens 50 % des Kaufpreises**.
 
-(3) Voraussetzung ist, dass der Schuh ungetragen ist — abgesehen von kurzer
-Anprobe in der Wohnung auf sauberem Boden — und vollständig mit Zubehör und
-Verpackung vorliegt. Maßgeblich für die Beurteilung sind die Aufnahmen aus der
+(3) Voraussetzung ist, dass der Schuh **an uns zurückgesandt** wird und dabei
+ungetragen ist — abgesehen von kurzer Anprobe in der Wohnung auf sauberem
+Boden — und vollständig mit Zubehör und Verpackung vorliegt. Die Rücksendung
+erfolgt nach Absprache mit uns; die Kosten der Rücksendung tragen Sie.
+Maßgeblich für die Beurteilung sind die Aufnahmen aus der
 Wareneingangskontrolle nach Ziffer 6 Abs. 5.
 
-(4) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
+(4) **Ausgeschlossen sind Schuhe mit persönlicher Kennzeichnung.** Trägt der
+Schuh Initialen, ein Monogramm, einen Namenszug, ein Wappen oder eine andere
+auf Sie zugeschnittene Prägung, entfällt die Kulanz nach dieser Ziffer
+vollständig. Der Grund ist einfach: Ein Paar mit Ihren Initialen lässt sich
+niemandem sonst anbieten. Es ist kein Schuh, der zurück ins Regal kann,
+sondern ein Einzelstück, das nur zu Ihnen gehört. Bei allen übrigen
+Ausführungen — Leder, Farbe, Sohle, Leisten — greift die Kulanz wie oben
+beschrieben.
+
+(5) Erstattet wird erst, nachdem der Schuh bei uns eingegangen und geprüft
+ist.
+
+(6) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
 dem Grunde noch der Höhe nach; 50 % ist die Obergrenze, nicht die Regel. Über
 Art und Umfang entscheiden wir im Einzelfall. Aus der Gewährung im Einzelfall
 entsteht kein Anspruch für die Zukunft.
