@@ -74,7 +74,9 @@ function AnfrageFormular() {
       })
       setGesendet(true)
     } catch (err) {
-      setFehler(err?.error || 'Ihre Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.')
+      // err.error benennt den Grund (Feldprüfung, Wartezeit, Serverausfall).
+      // Der Ersatzsatz greift nur, wenn wirklich nichts zu erfahren war.
+      setFehler(err?.error || 'Ihre Anfrage konnte nicht gesendet werden. Bitte schreiben Sie uns notfalls direkt per E-Mail.')
     } finally { setSendet(false) }
   }
 

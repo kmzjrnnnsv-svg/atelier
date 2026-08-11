@@ -89,15 +89,34 @@ function statusSatz(status) {
     case 409: return 'Das lässt sich so nicht speichern — etwas ist bereits vergeben oder hat sich inzwischen geändert.'
     case 413: return 'Die Datei ist zu groß.'
     case 422: return 'Die Angaben konnten nicht verarbeitet werden. Bitte prüfen Sie die Felder.'
-    case 429: return 'Zu viele Versuche in kurzer Zeit. Bitte einen Moment warten.'
-    case 500: return 'Auf unserer Seite ist etwas schiefgegangen. Bitte später erneut versuchen.'
+    case 429: return 'Zu viele Versuche in kurzer Zeit. Bitte warten Sie einen Moment — an Ihren Angaben liegt es nicht.'
+    case 500: return 'Auf unserer Seite ist etwas schiefgegangen. Ihre Angaben sind in Ordnung — bitte versuchen Sie es in einigen Minuten erneut.'
     case 502:
     case 503:
-    case 504: return 'Der Dienst ist gerade nicht erreichbar. Bitte in einem Moment erneut versuchen.'
+    case 504: return 'Unser Server ist gerade nicht erreichbar. Das liegt nicht an Ihren Angaben — bitte versuchen Sie es in einigen Minuten erneut.'
     default:  return status >= 500
-      ? 'Auf unserer Seite ist etwas schiefgegangen. Bitte später erneut versuchen.'
+      ? 'Auf unserer Seite ist etwas schiefgegangen. Ihre Angaben sind in Ordnung — bitte versuchen Sie es später erneut.'
       : 'Die Anfrage konnte nicht verarbeitet werden. Bitte prüfen Sie Ihre Angaben.'
   }
+}
+
+/**
+ * Woran es lag — damit die Meldung nicht offenlässt, wer am Zug ist.
+ *
+ * „Bitte versuchen Sie es erneut" ist der unfreundlichste Satz, den ein
+ * Formular sagen kann: Er verschweigt, ob der Kunde etwas ändern kann oder ob
+ * er vergeblich klickt, weil unser Server nicht antwortet.
+ *
+ *   'angaben'   — im Formular steht etwas, das sich korrigieren lässt
+ *   'anmeldung' — die Sitzung fehlt oder reicht nicht
+ *   'warten'    — zu viele Versuche, es hilft nur Zeit
+ *   'system'    — unsere Seite; der Kunde kann nichts tun
+ */
+function herkunftZuStatus(status) {
+  if (status === 401 || status === 403) return 'anmeldung'
+  if (status === 429) return 'warten'
+  if (status >= 500 || status === 0) return 'system'
+  return 'angaben'
 }
 
 export async function apiFetch(url, options = {}, _attempt = 0) {
@@ -123,7 +142,24 @@ export async function apiFetch(url, options = {}, _attempt = 0) {
       await sleep(backoff(_attempt))
       return apiFetch(url, options, _attempt + 1)
     }
-    throw netErr
+    // Hier landet, was den Server nie erreicht hat: Server aus, Verbindung
+    // weg, Anfrage vom Browser blockiert. Bisher schlug der rohe TypeError
+    // durch — ohne `.error`, weshalb jedes Formular auf seinen allgemeinen
+    // Ersatzsatz zurückfiel („Bitte versuchen Sie es erneut"). Der Kunde
+    // korrigierte daraufhin Felder, an denen nichts falsch war.
+    //
+    // Deshalb bekommt der Netzwerkfall dieselbe Form wie eine Fehlerantwort,
+    // nur mit Status 0 — und sagt ausdrücklich, dass es nicht an den Angaben
+    // liegt.
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+    const fehler = new Error(offline
+      ? 'Keine Internetverbindung. Ihre Angaben bleiben erhalten — bitte versuchen Sie es erneut, sobald Sie wieder online sind.'
+      : 'Wir konnten unseren Server nicht erreichen. Das liegt nicht an Ihren Angaben — bitte versuchen Sie es in einigen Minuten erneut.')
+    fehler.status = 0
+    fehler.herkunft = offline ? 'verbindung' : 'system'
+    fehler.error = fehler.message
+    fehler.ursache = netErr
+    throw fehler
   }
 
   // Token expired, try refresh once
@@ -174,6 +210,9 @@ export async function apiFetch(url, options = {}, _attempt = 0) {
     error.body = body
     error.code = body.code || null
     error.error = errMsg
+    // Wer ist am Zug — der Kunde oder wir? Formulare können daran ihren
+    // Hinweis ausrichten, statt jeden Fehlschlag gleich aussehen zu lassen.
+    error.herkunft = herkunftZuStatus(res.status)
     throw error
   }
 
