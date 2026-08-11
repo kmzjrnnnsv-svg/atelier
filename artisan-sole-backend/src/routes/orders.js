@@ -166,6 +166,54 @@ router.post('/',
       if (!r.valid) return res.status(400).json({ error: r.reason || 'Kampagne ungültig' })
       bizCampaign = r.campaign
     }
+    // ── Untergrenze für den Preis ────────────────────────────────────────
+    //
+    // Der Preis kommt aus dem Browser. Der Konfigurator rechnet ihn richtig
+    // aus, aber wer die Anfrage von Hand stellt, schickt, was er will — eine
+    // Bestellung über 1 € wurde bis hierher anstandslos angenommen.
+    //
+    // Den ganzen Konfigurator im Server nachzubauen (Optionen, Sohlen,
+    // Zubehör, Staffeln) wäre eine zweite Wahrheit, die mit der ersten
+    // auseinanderläuft. Eine Untergrenze genügt und ist sicher: Optionen und
+    // Zubehör addieren nur, also kann der Endpreis nie unter dem
+    // Grundpreis abzüglich des höchsten Nachlasses liegen, der diesem
+    // Kunden wirklich zusteht — geprüft an Kampagne, Vermittler und Konto,
+    // nicht an dem, was der Browser behauptet.
+    if (shoe_id) {
+      const modell = db.prepare('SELECT price, promotion_price FROM shoes WHERE id = ?').get(shoe_id)
+      const zahl = (v) => parseFloat(String(v ?? '').replace(/[^0-9.,]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0
+
+      const nutzer = db.prepare('SELECT is_promotion, promotion_discount_pct FROM users WHERE id = ?').get(uid)
+      const aff = req.body.affiliate_code
+        ? db.prepare("SELECT customer_discount_pct FROM affiliates WHERE code = ? AND status = 'active'").get(String(req.body.affiliate_code).trim().toLowerCase())
+        : null
+
+      const saetze = [
+        bizCampaign ? Number(bizCampaign.discount_pct) || 0 : 0,
+        aff ? Number(aff.customer_discount_pct) || 0 : 0,
+        nutzer?.is_promotion ? Number(nutzer.promotion_discount_pct) || 0 : 0,
+        // Gutscheine kommen oben noch dazu; großzügig gerechnet, damit eine
+        // gültige Bestellung nie an dieser Prüfung scheitert.
+        coupon_code ? 50 : 0,
+      ]
+      const hoechster = Math.min(100, Math.max(0, ...saetze))
+
+      const grund = zahl(modell?.promotion_price) || zahl(modell?.price)
+      // Zehn Prozent Luft nach unten: Rundungen, Staffelpreise und künftige
+      // Nachlässe sollen keine ehrliche Bestellung abweisen. Es geht darum,
+      // grobe Manipulation zu stoppen, nicht darum, auf den Cent zu prüfen.
+      const untergrenze = grund * (1 - hoechster / 100) * 0.9
+      const gezahlt = zahl(price)
+
+      if (grund > 0 && gezahlt < untergrenze) {
+        console.warn(`[preis] Bestellung abgewiesen: ${gezahlt} € für Modell ${shoe_id} (Grundpreis ${grund} €, zulässig ab ${Math.round(untergrenze)} €, Nutzer ${uid})`)
+        return res.status(400).json({
+          error: 'Der übermittelte Preis passt nicht zu diesem Modell. Bitte laden Sie die Seite neu und versuchen Sie es erneut.',
+          code: 'PRICE_MISMATCH',
+        })
+      }
+    }
+
     // Order-Business-Felder: Code hat Vorrang, sonst Kampagne.
     const orderBusinessId = bizCode ? bizCode.business_id : (bizCampaign ? bizCampaign.business_id : null)
     const orderCoverage   = bizCode ? bizCode.coverage_type
@@ -371,8 +419,24 @@ router.put('/:id',
       }
     }
 
-    db.prepare("UPDATE orders SET status = ?, updated_at = datetime('now') WHERE id = ?")
-      .run(req.body.status, req.params.id)
+    // Der Zustellzeitpunkt wird festgehalten, sobald der Zustand ihn behauptet.
+    //
+    // Die Spalte gab es, geschrieben hat sie niemand. Zwei Dinge hingen daran
+    // und liefen ins Leere: Die Rücksendefrist beginnt mit der Zustellung — ohne
+    // Datum begann sie nie, und Zubehör ließ sich nie zurückgeben. Und die
+    // Schutzfrist der Vermittlerprovision rechnete ersatzweise ab updated_at,
+    // also ab der letzten beliebigen Änderung an der Bestellung.
+    //
+    // COALESCE, damit ein späterer Statuswechsel (etwa zurück und wieder vor)
+    // das ursprüngliche Datum nicht verschiebt — sonst verlängerte sich die
+    // Frist des Kunden mit jedem Klick in der Verwaltung.
+    db.prepare(`
+      UPDATE orders
+      SET status = ?,
+          delivered_at = CASE WHEN ? = 'delivered' THEN COALESCE(delivered_at, datetime('now')) ELSE delivered_at END,
+          updated_at = datetime('now')
+      WHERE id = ?
+    `).run(req.body.status, req.body.status, req.params.id)
     const row  = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
     const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(row.user_id)
 
