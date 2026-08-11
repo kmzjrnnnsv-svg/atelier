@@ -1,9 +1,9 @@
 /**
- * vermittlerCode.js — der Code aus dem Werbelink eines Vermittlers.
+ * affiliateCode.js — der Code aus dem Werbelink eines Affiliates.
  *
  * Der Link lautet artisansole.com/?ref=<code>. Er wurde bislang von niemandem
  * gelesen: Die Adresse funktionierte, der Code fiel unter den Tisch, und weder
- * bekam der Kunde seine zugesagte Kondition noch der Vermittler seine
+ * bekam der Kunde seine zugesagte Kondition noch der Affiliate seine
  * Provision. Diese Datei schließt die Lücke zwischen Link und Bestellung.
  *
  * Der Code wird gemerkt, weil zwischen dem Klick auf den Link und dem Kauf

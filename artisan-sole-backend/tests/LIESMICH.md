@@ -5,8 +5,10 @@ im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   62 Prüfungen: Registrierung, Katalog, Fußmaße,
                          Entwurf, Bestellung, Rücksendung, Verwaltung,
-                         Anfragen, Vermittler, Firmenkonto
-    tests/preise.mjs     21 Prüfungen: Kampagnenrabatt, Vermittler-Nachlass,
+                         Anfragen, Affiliate, Firmenkonto
+    tests/chat.mjs       18 Prüfungen: Nachrichtenverlauf zwischen Kunde und
+                         Verwaltung, Kategorien, Ungelesen-Zähler, Zugriffsschutz
+    tests/preise.mjs     21 Prüfungen: Kampagnenrabatt, Affiliate-Nachlass,
                          Provision samt Deckel, Preis-Untergrenze
 
 ## Aufrufen

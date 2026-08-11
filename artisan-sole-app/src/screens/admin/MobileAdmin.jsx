@@ -7,7 +7,7 @@
  *
  * Diese Oberfläche macht nicht dasselbe in klein, sondern etwas anderes:
  * Sie deckt die Handgriffe ab, die unterwegs anfallen — nachsehen, was
- * bestellt wurde, einen Gutschein ausstellen, einen Vermittler anlegen. Alles
+ * bestellt wurde, einen Gutschein ausstellen, einen Affiliate anlegen. Alles
  * Weitere (Schuhe pflegen, Bilder hochladen, Leisten justieren) bleibt dem
  * großen Bildschirm vorbehalten, und dafür gibt es unten einen Verweis.
  *
@@ -107,7 +107,7 @@ const TASKS = [
   { key: 'orders',     label: 'Bestellungen', hint: 'ansehen und Status setzen', icon: ShoppingBag },
   { key: 'shipping',   label: 'Versand',      hint: 'Arten und Kosten',          icon: Truck },
   { key: 'coupons',    label: 'Gutscheine',   hint: 'ausstellen und ansehen',    icon: Ticket },
-  { key: 'affiliates', label: 'Vermittler',   hint: 'anlegen und Stand prüfen',  icon: Users },
+  { key: 'affiliates', label: 'Affiliate',   hint: 'anlegen und Stand prüfen',  icon: Users },
 ]
 
 const ADMIN_TASKS = [
@@ -421,7 +421,7 @@ function Coupons({ back }) {
   )
 }
 
-// ── Vermittler ──────────────────────────────────────────────────────────────
+// ── Affiliate ──────────────────────────────────────────────────────────────
 
 function Affiliates({ back }) {
   const [rows, setRows] = useState(null)
@@ -462,7 +462,7 @@ function Affiliates({ back }) {
 
   if (adding) {
     return (
-      <Screen title="Vermittler anlegen" onBack={() => { setAdding(false); setError(null) }}>
+      <Screen title="Affiliate anlegen" onBack={() => { setAdding(false); setError(null) }}>
         <Field label="Name">
           <input value={form.full_name} onChange={e => set('full_name', e.target.value)} className={INPUT} />
         </Field>
@@ -521,15 +521,15 @@ function Affiliates({ back }) {
   }
 
   return (
-    <Screen title="Vermittler" onBack={back}
+    <Screen title="Affiliate" onBack={back}
       action={
-        <button onClick={() => setAdding(true)} aria-label="Neuer Vermittler"
+        <button onClick={() => setAdding(true)} aria-label="Neuer Affiliate"
           className="w-11 h-11 flex items-center justify-center bg-transparent border-0 text-black/50">
           <Plus size={20} strokeWidth={1.5} />
         </button>
       }>
       {rows === null ? <Spinner />
-        : rows.length === 0 ? <Empty>Noch keine Vermittler.</Empty>
+        : rows.length === 0 ? <Empty>Noch keine Affiliate.</Empty>
         : rows.map(a => (
           <Row key={a.id}>
             <span className="flex-1 min-w-0">

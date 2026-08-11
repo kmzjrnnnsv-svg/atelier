@@ -110,7 +110,7 @@ const SUEDE_KIT_DESC =
   'Zum Auffrischen von Wildleder und Nubuk. Vollständig in Italien gefertigt, geliefert in einer eigens angefertigten Schachtel, 18 × 11 × 5 cm. Auch einzeln erhältlich.\n\nInhalt: eine runde Messingbürste, eine runde Kreppbürste, ein Nubuk-Auffrischungsspray, ein kleiner Kreppradierer mit Bürste. Eine Pflegeanleitung liegt bei.\n\nGedacht für samtige Leder wie Wildleder und Nubuk. Wir empfehlen, in alle Schuhe Spanner einzusetzen, solange sie nicht getragen werden.'
 
 // Einkaufspreise je Zubehör-Schlüssel. Nur für Artikel nötig, die als Zugabe
-// im Vermittlerprogramm auftauchen — der Einkaufspreis wird dort von der
+// im Affiliate-Programm auftauchen — der Einkaufspreis wird dort von der
 // Provision einbehalten.
 const ACCESSORY_COSTS = {
   shoe_tree_cedar: 22.0,
@@ -460,10 +460,10 @@ export function runMigrations(db) {
     // /customize?id=13 — lesbar, teilbar und für Suchmaschinen brauchbar.
     // Kein UNIQUE-Index: SQLite kann das per ALTER TABLE nicht nachrüsten,
     // die Eindeutigkeit stellt slugForShoe() beim Schreiben sicher.
-    // accessories, Einkaufspreis. Nötig, seit ein Vermittler seinem Kunden
+    // accessories, Einkaufspreis. Nötig, seit ein Affiliate seinem Kunden
     // eine Zugabe schenken kann: Verrechnet wird der Einkaufspreis, nicht der
     // Ladenpreis. Beim Schuhspanner (45 € im Verkauf) läge der Ladenpreis über
-    // der Provision selbst — der Vermittler zahlte drauf.
+    // der Provision selbst — der Affiliate zahlte drauf.
     `ALTER TABLE accessories ADD COLUMN cost_price REAL`,
     // Bilderstrecke wie bei den Modellen: JSON-Feld, Reihenfolge trägt die
     // Bedeutung — erstes Bild in der Übersicht, zweites beim Überfahren.
@@ -919,7 +919,7 @@ export function runMigrations(db) {
     -- zurück. Dieser Merkzettel hält fest, was bewusst entfernt wurde; der
     -- Seed überspringt diese Namen. Wird der Schuh später von Hand wieder
     -- angelegt, verschwindet der Eintrag.
-    -- ── Vermittler (Affiliates) ─────────────────────────────────────────────
+    -- ── Affiliate (Affiliates) ─────────────────────────────────────────────
     -- Wirbt für die Schuhe und erhält je vermitteltem Paar eine Provision.
     --
     -- commission_type/-value: entweder ein fester Betrag je Paar oder ein
@@ -927,7 +927,7 @@ export function runMigrations(db) {
     -- Paar, nicht je Bestellung, damit ein Einkauf mit mehreren Paaren auch
     -- mehrfach vergütet wird.
     --
-    -- gift_shoetree: Der Vermittler kann seinen Kunden einen Zedernholz-
+    -- gift_shoetree: Der Affiliate kann seinen Kunden einen Zedernholz-
     -- Schuhspanner schenken. Verrechnet wird der Einkaufspreis aus
     -- accessories.cost_price (22 €), nicht der Ladenpreis. Nur zusammen mit
     -- der Prozentwahl sinnvoll.
@@ -1198,6 +1198,47 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_businesses_invite ON businesses(invite_token);
   `)
 
+  // ── Nachrichten zwischen Haus und Gegenüber ──────────────────────────────
+  //
+  // Bis hierher endete jede Nachricht in einer Sackgasse: Eine Anfrage landete
+  // in custom_requests und wurde per E-Mail beantwortet, ein Ticket in
+  // feedback_tickets bekam eine einzelne Notiz, auf die niemand antworten
+  // konnte. Wer nachfragen wollte, schrieb ein neues Ticket — und der Verlauf
+  // lag über zwei Tabellen und ein Postfach verstreut.
+  //
+  // Ein Verlauf je Person, nicht je Anliegen: Es ist ein Gespräch mit dem Haus,
+  // kein Ticketsystem. Deshalb `UNIQUE` auf user_id.
+  //
+  // Die Kategorie (Firma, Affiliate, Kunde) steht bewusst NICHT in der Tabelle.
+  // Sie ergibt sich aus dem Konto und kann sich ändern — wer heute Kunde ist,
+  // führt morgen ein Firmenkonto. Eingefroren wäre sie ab dann falsch, und die
+  // Verwaltung suchte den Verlauf im falschen Reiter.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS chat_threads (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id         INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      last_message_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_threads_letzte ON chat_threads(last_message_at DESC);
+
+    CREATE TABLE IF NOT EXISTS chat_messages (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id   INTEGER NOT NULL REFERENCES chat_threads(id) ON DELETE CASCADE,
+      -- 'kunde' = das Gegenüber, 'team' = Verwaltung (admin/curator)
+      von         TEXT    NOT NULL CHECK(von IN ('kunde','team')),
+      autor_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      text        TEXT    NOT NULL,
+      -- Gelesen wird je Nachricht vermerkt, nicht als Zähler am Verlauf.
+      -- Ein Zähler geht bei jedem Fehler dauerhaft falsch; hier lässt sich der
+      -- Stand jederzeit neu ausrechnen.
+      gelesen_am  TEXT,
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_thread ON chat_messages(thread_id, id);
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_offen  ON chat_messages(gelesen_am);
+  `)
+
   // ── Einmal-Codes pro Firmenkonto ─────────────────────────────────────────
   // Pro Code konfigurierbar: Deckung (voll vs. Rabatt) und Einlösbarkeit
   // (festgelegtes Design vs. freie Katalogwahl). Jeder Code ist genau einmal
@@ -1400,10 +1441,10 @@ export function runMigrations(db) {
     // Topf und ließen sich nur am Text auseinanderhalten ("Corporate
     // Gifting" im shoe_name) — für getrennte Ansichten in der Verwaltung zu
     // wenig. 'shop' = Maßanfrage aus dem Laden, 'business' = Firmenseite,
-    // 'affiliate' = Vermittlerseite.
+    // 'affiliate' = Affiliate-Seite.
     `ALTER TABLE custom_requests ADD COLUMN source TEXT NOT NULL DEFAULT 'shop'`,
-    // Einladung ins eigene Vermittler-Konto. Ohne Login sah ein angelegter
-    // Vermittler seinen Stand nie — die Zeile existierte, das Konto nicht.
+    // Einladung ins eigene Affiliate-Konto. Ohne Login sah ein angelegter
+    // Affiliate seinen Stand nie — die Zeile existierte, das Konto nicht.
     `ALTER TABLE affiliates   ADD COLUMN invite_token TEXT`,
     // Was der geworbene Kunde bekommt. Bislang gab es nur die Zugabe
     // (gift_shoetree); zugesagt wird aber oft ein Nachlass, und der stand
@@ -1440,7 +1481,7 @@ export function runMigrations(db) {
     // Einkaufspreise. Hier und nicht oben beim Upsert: Der läuft beim ersten
     // Start ins Leere, weil die Tabelle erst danach entsteht — der Wert hätte
     // dann bis zum zweiten Start gefehlt, und die Zugabe an den Käufer wäre
-    // dem Vermittler geschenkt worden.
+    // dem Affiliate geschenkt worden.
     // Nur setzen, wo noch nichts steht: Gepflegt wird der Wert im CMS, kein
     // Deploy darf ihn überschreiben.
     const cost = db.prepare('UPDATE accessories SET cost_price = ? WHERE key = ? AND cost_price IS NULL')

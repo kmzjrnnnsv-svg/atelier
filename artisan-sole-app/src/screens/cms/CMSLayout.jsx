@@ -1,14 +1,29 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 import { HOME_PATH } from '../../lib/homePath'
+import { apiFetch } from '../../hooks/useApi'
 
 export default function CMSLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { shoes, initStore, resetToDefaults } = useStore()
+
+  // Ungelesene Nachrichten. Regelmäßig nachfragen, damit eine Antwort nicht
+  // erst beim nächsten Seitenwechsel auffällt — der Bereich wird oft lange
+  // offen gelassen, ohne dass jemand neu lädt.
+  const [ungelesen, setUngelesen] = useState(0)
+  useEffect(() => {
+    let aktiv = true
+    const holen = () => apiFetch('/api/chat/ungelesen')
+      .then(d => { if (aktiv) setUngelesen(d?.gesamt || 0) })
+      .catch(() => {})
+    holen()
+    const t = setInterval(holen, 45000)
+    return () => { aktiv = false; clearInterval(t) }
+  }, [])
 
   useEffect(() => { initStore() }, [])
 
@@ -50,6 +65,7 @@ export default function CMSLayout() {
             ]},
             { heading: 'Bestellungen', items: [
               { to: '/cms/anfragen', label: 'Anfragen',     icon: Inbox },
+              { to: '/cms/nachrichten', label: 'Nachrichten', icon: MessageSquare, badge: ungelesen },
               { to: '/cms/orders',   label: 'Bestellungen', icon: ShoppingBag },
               { to: '/cms/shipping', label: 'Versand',      icon: Truck },
               { to: '/cms/ruecksendungen', label: 'Rücksendungen', icon: PackageOpen },
@@ -65,7 +81,7 @@ export default function CMSLayout() {
             { heading: 'Kunden', items: [
               { to: '/cms/scans',    label: 'Foot Scans',   icon: ScanLine },
               { to: '/cms/business', label: 'Firmenkonten', icon: Building2 },
-              { to: '/cms/vermittler', label: 'Vermittler',  icon: Users },
+              { to: '/cms/affiliate', label: 'Affiliate',  icon: Users },
               { to: '/cms/loyalty',  label: 'Loyalty & Tiers', icon: Award },
               { to: '/cms/feedback', label: 'Feedback & Tickets', icon: MessageSquare },
             ]},
@@ -86,7 +102,7 @@ export default function CMSLayout() {
                 <p className="text-[8px] uppercase tracking-[0.25em] text-white/15 px-3 mb-2.5 mt-7 font-light">{heading}</p>
               )}
               <div className="space-y-0.5">
-                {items.map(({ to, label, icon: Icon, end }) => (
+                {items.map(({ to, label, icon: Icon, end, badge }) => (
                   <NavLink
                     key={to}
                     to={to}
@@ -100,7 +116,12 @@ export default function CMSLayout() {
                     }
                   >
                     <Icon size={13} strokeWidth={1.25} />
-                    {label}
+                    <span className="flex-1">{label}</span>
+                    {badge > 0 && (
+                      <span className="bg-white text-black text-[9px] min-w-[16px] h-4 px-1 flex items-center justify-center flex-shrink-0">
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    )}
                   </NavLink>
                 ))}
               </div>

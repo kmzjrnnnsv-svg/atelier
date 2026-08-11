@@ -95,7 +95,7 @@ function Stars({ value, size = 14 }) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, vermittler, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, affiliate, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
   const { user } = useAuth()
 
   // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
@@ -779,10 +779,10 @@ export default function Customize() {
 
   const userPct = user?.is_promotion ? (user?.promotion_discount_pct || 0) : 0
   const campaignPct = campaignForShoe ? Number(campaignForShoe.discount_pct) : 0
-  // Dritter Weg: der Werbelink eines Vermittlers (?ref=). Was dem Geworbenen
-  // zugesagt wurde, steht am Vermittler und gilt für jedes Modell.
-  const vermittlerPct = Number(vermittler?.customer_discount_pct) || 0
-  const promoDiscountPct = Math.max(userPct, campaignPct, vermittlerPct)
+  // Dritter Weg: der Werbelink eines Affiliates (?ref=). Was dem Geworbenen
+  // zugesagt wurde, steht am Affiliate und gilt für jedes Modell.
+  const affiliatePct = Number(affiliate?.customer_discount_pct) || 0
+  const promoDiscountPct = Math.max(userPct, campaignPct, affiliatePct)
   const isPromo = promoDiscountPct > 0 || !!user?.is_promotion
 
   const effectivePrice = user?.is_promotion && product.promotion_price ? product.promotion_price : product.price
@@ -1443,8 +1443,8 @@ export default function Customize() {
                 wie ein Fehler. */}
             {totalDiscount > 0 && (
               <p className="text-[10px] text-black/45 font-light mt-1" style={{ letterSpacing: '0.06em' }}>
-                {promoDiscountPct === vermittlerPct && vermittlerPct > 0
-                  ? <>Empfehlung {vermittler.code.toUpperCase()} · {String(promoDiscountPct).replace('.', ',')} %</>
+                {promoDiscountPct === affiliatePct && affiliatePct > 0
+                  ? <>Empfehlung {affiliate.code.toUpperCase()} · {String(promoDiscountPct).replace('.', ',')} %</>
                   : campaignForShoe && campaignPct >= userPct
                     ? <>{campaignForShoe.business_name || campaignForShoe.name} · {String(promoDiscountPct).replace('.', ',')} % Firmenkondition</>
                     : <>{String(promoDiscountPct).replace('.', ',')} % Sonderkondition</>}

@@ -824,9 +824,9 @@ export async function sendCampaignInvitation(email, campaign, businessName) {
   await send({ to: email, subject, html })
 }
 
-// ─── Vermittler-Einladung ───────────────────────────────────────────────────
+// ─── Affiliate-Einladung ───────────────────────────────────────────────────
 /**
- * Lädt einen Vermittler in sein eigenes Konto ein.
+ * Lädt einen Affiliate in sein eigenes Konto ein.
  *
  * Der Zugang liegt auf einer eigenen Adresse — dort sieht er seinen Link,
  * seinen QR-Code, die vermittelten Paare und den Stand der Auszahlungen. Der
@@ -834,16 +834,16 @@ export async function sendCampaignInvitation(email, campaign, businessName) {
  */
 export async function sendAffiliateInvitation(email, name, inviteToken, code) {
   const cfg = getEmailConfig()
-  const link = `${cfg.appUrl}/vermittler-konto?token=${inviteToken}`
+  const link = `${cfg.appUrl}/affiliate-konto?token=${inviteToken}`
 
-  const subject = 'Artisan Sole · Ihr Vermittler-Zugang'
+  const subject = 'Artisan Sole · Ihr Affiliate-Zugang'
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
-  <div class="header"><h1>ARTISAN SOLE</h1><p>VERMITTLER</p></div>
+  <div class="header"><h1>ARTISAN SOLE</h1><p>AFFILIATE</p></div>
   <div class="body" style="text-align:center">
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Willkommen${name ? `, ${escapeHtml(name)}` : ''}!</p>
     <p style="font-size:14px;color:#555;margin:0 0 8px">
-      Ihr Vermittlerkonto steht bereit. Legen Sie jetzt Ihr Passwort fest — danach
+      Ihr Affiliate-Konto steht bereit. Legen Sie jetzt Ihr Passwort fest — danach
       finden Sie dort Ihren persönlichen Link, den QR-Code zum Weitergeben und die
       Übersicht Ihrer vermittelten Paare.
     </p>

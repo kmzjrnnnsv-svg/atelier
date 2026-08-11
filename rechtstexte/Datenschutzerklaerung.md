@@ -121,17 +121,17 @@ nicht erforderlich.
 
 - **Rechtsgrundlage:** § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich)
 
-## 8. Vermittlerprogramm
+## 8. Affiliate-Programm
 
-[**Nur behalten, wenn das Vermittlerprogramm live ist.**]
+[**Nur behalten, wenn das Affiliate-Programm live ist.**]
 
-Melden Sie sich als Vermittlerin oder Vermittler an, verarbeiten wir Name,
+Melden Sie sich als Affiliate oder Affiliate an, verarbeiten wir Name,
 Anschrift, Kontaktdaten, Steuerangaben und Bankverbindung sowie die über
 Ihren Code vermittelten Bestellungen.
 
 - **Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO für die Abwicklung,
   Art. 6 Abs. 1 lit. c DSGVO für steuerliche Aufbewahrungspflichten
-- **Umgekehrt gilt:** Vermittler sehen **keine** Namen, Anschriften oder
+- **Umgekehrt gilt:** Affiliates sehen **keine** Namen, Anschriften oder
   Kontaktdaten der Käuferinnen und Käufer, sondern nur Datum, Modell und
   Provisionsbetrag.
 

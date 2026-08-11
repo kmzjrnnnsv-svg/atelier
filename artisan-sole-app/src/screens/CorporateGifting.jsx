@@ -123,7 +123,7 @@ export default function CorporateGifting() {
       })
       setSent(true)
     } catch (e) {
-      setError(e?.error || 'Ihre Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.')
+      setError(e?.error || 'Ihre Anfrage konnte nicht gesendet werden. Bitte schreiben Sie uns notfalls direkt per E-Mail.')
     } finally { setSending(false) }
   }
 

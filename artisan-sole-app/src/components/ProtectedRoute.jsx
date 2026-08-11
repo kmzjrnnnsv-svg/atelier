@@ -52,20 +52,20 @@ export function BusinessRoute({ children }) {
 
 /**
  * Wohin ein angemeldeter Nutzer gehört, wenn er nicht Kunde ist.
- * Reihenfolge: Verwaltungsrolle vor Firma vor Vermittler — dieselbe wie bei
- * der Anmeldung, damit ein Administrator, der nebenbei Vermittler ist, nicht
+ * Reihenfolge: Verwaltungsrolle vor Firma vor Affiliate — dieselbe wie bei
+ * der Anmeldung, damit ein Administrator, der nebenbei Affiliate ist, nicht
  * plötzlich woanders herauskommt.
  */
 export function ownAreaFor(user) {
   if (!user) return null
   if (user.role === 'admin' || user.role === 'curator') return null  // dürfen alles sehen
   if (user.is_business) return '/business/dashboard'
-  if (user.is_affiliate) return '/vermittler'
+  if (user.is_affiliate) return '/affiliate'
   return null
 }
 
 /**
- * Laden-Seiten: Firmenkonten und Vermittler werden in ihren eigenen Bereich
+ * Laden-Seiten: Firmenkonten und Affiliates werden in ihren eigenen Bereich
  * geschickt. Sie sollen nach der Anmeldung nicht im Verkauf landen — ihr
  * Verhältnis zum Haus ist ein anderes, und die Kollektion mit Warenkorb ist
  * für sie eher verwirrend als nützlich.

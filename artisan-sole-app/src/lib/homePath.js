@@ -11,7 +11,7 @@
  */
 // Immer die Wurzel der jeweiligen Domain, unabhängig von der Rolle. Vorher
 // führte das Abmelden auf der Hauptdomain nach /collection — für einen
-// Kunden dasselbe Ziel, aber ein Firmenkonto oder ein Vermittler landete
+// Kunden dasselbe Ziel, aber ein Firmenkonto oder ein Affiliate landete
 // damit im Verkauf, den beide gerade nicht sehen sollen. Die Wurzel leitet
 // selbst weiter, wohin es gehört: artisansole.com in die Kollektion,
 // business.artisansole.com auf die Firmenseite.

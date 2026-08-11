@@ -1,5 +1,5 @@
 /**
- * Was passiert mit dem Preis? Kampagne, Vermittler, Firmenkonto —
+ * Was passiert mit dem Preis? Kampagne, Affiliate, Firmenkonto —
  * einmal ganz durch, mit Blick auf das, was am Ende in der Bestellung steht.
  */
 const BASIS = 'http://localhost:3099'
@@ -98,24 +98,24 @@ r = await ruf('/api/orders', {
 p('Fremde Kampagnen-Bestellung abgewiesen', r.status >= 400, `HTTP ${r.status} ${JSON.stringify(r.daten).slice(0, 90)}`)
 
 // ═══════════════════════════════════════════════════════════════════
-abschnitt('Vermittler: Code, Kundennachlass, Provision')
+abschnitt('Affiliate: Code, Kundennachlass, Provision')
 
 const code = `v${zufall()}`
 r = await ruf('/api/affiliates', {
   method: 'POST', token: admin,
-  body: { full_name: 'Vermittler', email: `v-${zufall()}@x.de`, code,
+  body: { full_name: 'Affiliate', email: `v-${zufall()}@x.de`, code,
           commission_type: 'percent', commission_value: 10, cap_per_shoe: 40, customer_discount_pct: 15 },
 })
-p('Vermittler mit 15 % Kundennachlass', r.status === 201, `HTTP ${r.status}`)
+p('Affiliate mit 15 % Kundennachlass', r.status === 201, `HTTP ${r.status}`)
 const affUser = r.daten.user_id
-r = await ruf('/api/auth/register-affiliate', { method: 'POST', body: { token: r.daten.invite_token, name: 'Vermittler', password: 'Verm1234!' } })
+r = await ruf('/api/auth/register-affiliate', { method: 'POST', body: { token: r.daten.invite_token, name: 'Affiliate', password: 'Verm1234!' } })
 const aff = r.daten.accessToken
 
 r = await ruf(`/api/affiliates/validate/${code}`)
 p('Kundennachlass wird geliefert', r.daten?.customer_discount_pct === 15, `${r.daten?.customer_discount_pct} %`)
 
 const nachlassAff = Math.round(vor * 15 / 100)
-p('Preisrechnung mit Vermittler', vor - nachlassAff === vor - Math.round(vor * 0.15), `${vor} − ${nachlassAff} = ${vor - nachlassAff} €`)
+p('Preisrechnung mit Affiliate', vor - nachlassAff === vor - Math.round(vor * 0.15), `${vor} − ${nachlassAff} = ${vor - nachlassAff} €`)
 
 const kMail = `geworben-${zufall()}@x.de`
 r = await ruf('/api/auth/register', { method: 'POST', body: { name: 'Geworben', email: kMail, password: 'Test1234!x' } })

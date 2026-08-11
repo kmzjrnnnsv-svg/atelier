@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, AlertTriangle, Clock, TrendingUp, TrendingDown, Activity, Bone, Heart, Zap } from 'lucide-react'
+import { AlertTriangle, Clock, TrendingUp, TrendingDown, Activity, Bone, Heart, Zap } from 'lucide-react'
 
 const sections = [
   {
@@ -62,16 +62,13 @@ export default function HealthInfo() {
     <div className="flex flex-col min-h-full bg-white">
       {/* Header */}
       <div className="bg-white px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
-        <div className="flex items-center gap-3 mb-1">
-          <button onClick={() => navigate(-1)} className="bg-transparent border-0 p-0">
-            <ArrowLeft size={20} strokeWidth={1.5} className="text-black" />
-          </button>
-          <div>
-            <p className="text-[8px] uppercase tracking-widest text-black/30" style={{ letterSpacing: '0.2em' }}>Schuh-Info</p>
-            <h1 className="text-[14px] text-black leading-tight" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Falsches Schuhwerk</h1>
-          </div>
+        {/* Der Zurück-Pfeil steht in der oberen Leiste; hier bleibt nur die
+            Überschrift der Seite. */}
+        <div className="mb-1">
+          <p className="text-[8px] uppercase tracking-widest text-black/30" style={{ letterSpacing: '0.2em' }}>Schuh-Info</p>
+          <h1 className="text-[14px] text-black leading-tight" style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Falsches Schuhwerk</h1>
         </div>
-        <p className="text-[10px] text-black/35 mt-2 leading-relaxed pl-8">
+        <p className="text-[10px] text-black/35 mt-2 leading-relaxed">
           Wie falsch sitzende Schuhe Fuß, Gelenke und Körperhaltung dauerhaft beeinflussen.
         </p>
       </div>

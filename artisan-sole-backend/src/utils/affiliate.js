@@ -1,5 +1,5 @@
 /**
- * Vermittler-Provisionen: Berechnung und Reifung.
+ * Affiliate-Provisionen: Berechnung und Reifung.
  *
  * Die Regeln an einer Stelle, damit sie nicht über Routen verstreut liegen:
  *
@@ -8,7 +8,7 @@
  *    Geld, das nie geflossen ist.
  *  • Gedeckelt je Paar (Standard 40 €), nicht je Bestellung — ein Einkauf mit
  *    drei Paaren wird dreifach vergütet.
- *  • Schenkt der Vermittler eine Zugabe, wird deren EINKAUFSPREIS einbehalten.
+ *  • Schenkt der Affiliate eine Zugabe, wird deren EINKAUFSPREIS einbehalten.
  *    Der Ladenpreis des Schuhspanners liegt mit 45 € über der Provision
  *    selbst; mit ihm zu rechnen ergäbe negative Auszahlungen.
  *  • Ausgezahlt wird erst, wenn fünf auszahlbare Paare zusammenkommen, danach
@@ -35,7 +35,7 @@ const num = (v) => {
  *
  * Der Schlüssel lautet shoe_tree_cedar. Vorher stand hier 'shoetrees' — ein
  * Artikel, den es nicht mehr gibt. Die Abfrage lieferte nichts, num(undefined)
- * ergibt 0, und damit wäre die Zugabe dem Vermittler geschenkt worden, ohne
+ * ergibt 0, und damit wäre die Zugabe dem Affiliate geschenkt worden, ohne
  * dass irgendetwas fehlgeschlagen wäre.
  */
 export function shoetreeCost(db) {
@@ -57,7 +57,7 @@ export function commissionFor(affiliate, order, { giftCost = 0, shoeCategory = n
 
   // Die Zugabe gibt es nur, wo sie auch passt. Der Schuhspanner ist für
   // Sneaker ausgeschlossen (siehe accessories.not_recommended_for); dort
-  // entfällt sie und der Vermittler behält die volle Provision.
+  // entfällt sie und der Affiliate behält die volle Provision.
   const giftApplies = affiliate.gift_shoetree === 1
     && affiliate.commission_type === 'percent'
     && shoeCategory !== 'SNEAKER'
@@ -119,7 +119,7 @@ export function matureCommissions(db) {
 }
 
 /**
- * Stand eines Vermittlers — die Zahlen, aus denen die Fortschrittsanzeige
+ * Stand eines Affiliates — die Zahlen, aus denen die Fortschrittsanzeige
  * im Portal entsteht.
  */
 export function affiliateStanding(db, affiliateId) {

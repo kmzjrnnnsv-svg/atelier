@@ -14,7 +14,7 @@ import { sendAffiliateInvitation } from '../utils/email.js'
 const router = Router()
 const canAdmin = [authenticate, requireRole('admin', 'curator')]
 
-// Was ein Vermittler von sich selbst sehen darf. Bankdaten ja (sind seine),
+// Was ein Affiliate von sich selbst sehen darf. Bankdaten ja (sind seine),
 // aber nirgends Kundennamen oder Adressen — für die Abrechnung nicht nötig
 // und datenschutzrechtlich unnötiger Ballast.
 const selfFields = `
@@ -28,7 +28,7 @@ const normCode = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9-]
 
 // ── Öffentlich: Code prüfen (Warenkorb) ───────────────────────────────────
 // Gibt bewusst wenig preis: ob der Code gilt und ob eine Zugabe dranhängt.
-// Weder Name noch Konditionen des Vermittlers gehen den Käufer etwas an.
+// Weder Name noch Konditionen des Affiliates gehen den Käufer etwas an.
 router.get('/validate/:code', (req, res) => {
   const code = normCode(req.params.code)
   if (!code) return res.status(400).json({ valid: false, error: 'Code fehlt' })
@@ -43,12 +43,12 @@ router.get('/validate/:code', (req, res) => {
     // Zugabe gibt es nur bei der Prozentwahl — siehe utils/affiliate.js
     gift: a.gift_shoetree === 1 && a.commission_type === 'percent' ? 'shoe_tree_cedar' : null,
     // Was dem Geworbenen zugesagt wurde. Der Kunde soll sehen, was er bekommt;
-    // was der Vermittler dafür erhält, geht ihn nichts an.
+    // was der Affiliate dafür erhält, geht ihn nichts an.
     customer_discount_pct: Number(a.customer_discount_pct) || 0,
   })
 })
 
-// ── Öffentlich: Bewerbung als Vermittler ──────────────────────────────────
+// ── Öffentlich: Bewerbung als Affiliate ──────────────────────────────────
 // Landet als 'pending' und wird im CMS freigegeben. Die Freigabe bleibt
 // bewusst beim Betreiber: Der Code ist Teil der Außenwirkung.
 router.post('/register',
@@ -89,8 +89,8 @@ router.post('/register',
   }
 )
 
-// ── Vermittler: eigener Stand ─────────────────────────────────────────────
-// Werbelink des Vermittlers. Der Code steckt als ?ref= darin; die Seite legt
+// ── Affiliate: eigener Stand ─────────────────────────────────────────────
+// Werbelink des Affiliates. Der Code steckt als ?ref= darin; die Seite legt
 // ihn in den Warenkorb, wo der Käufer ihn sieht und überschreiben kann — das
 // hält die Zuordnung nachvollziehbar und kommt ohne stilles Cookie aus.
 function affiliateLink(code) {
@@ -101,7 +101,7 @@ function affiliateLink(code) {
 router.get('/me', authenticate, async (req, res) => {
   const db = getDb()
   const a = db.prepare(`SELECT ${selfFields} FROM affiliates WHERE user_id = ?`).get(req.user.id)
-  if (!a) return res.status(404).json({ error: 'Kein Vermittlerkonto zu diesem Benutzer' })
+  if (!a) return res.status(404).json({ error: 'Kein Affiliate-Konto zu diesem Benutzer' })
 
   matureCommissions(db)
 
@@ -122,7 +122,7 @@ router.get('/me', authenticate, async (req, res) => {
   `).all(a.id)
 
   const link = affiliateLink(a.code)
-  // QR als Data-URL: Ein Vermittler soll ihn ausdrucken und auslegen können,
+  // QR als Data-URL: Ein Affiliate soll ihn ausdrucken und auslegen können,
   // ohne dass die Seite dafür eine weitere Abhängigkeit lädt.
   const qr = await QRCode.toDataURL(link, { margin: 1, width: 480, color: { dark: '#111111', light: '#FFFFFF' } })
     .catch(() => null)
@@ -143,8 +143,8 @@ router.get('/', ...canAdmin, (req, res) => {
   const db = getDb()
   matureCommissions(db)
 
-  // Ein Durchgang statt einer Abfrage je Vermittler: Bei „unzähligen"
-  // Vermittlern wäre das sonst eine Abfrage pro Zeile.
+  // Ein Durchgang statt einer Abfrage je Affiliate: Bei „unzähligen"
+  // Affiliates wäre das sonst eine Abfrage pro Zeile.
   const rows = db.prepare(`
     SELECT a.id, a.code, a.status, a.full_name, a.email, a.city,
            a.commission_type, a.commission_value, a.cap_per_shoe, a.gift_shoetree,
@@ -173,7 +173,7 @@ router.get('/', ...canAdmin, (req, res) => {
   })))
 })
 
-// ── CMS: Vermittler anlegen ───────────────────────────────────────────────
+// ── CMS: Affiliate anlegen ───────────────────────────────────────────────
 // Anders als /register: Der Betreiber legt selbst an, also ist der Zugang
 // sofort aktiv — die Freigabe, die /register abwartet, hat hier schon
 // stattgefunden. Verlangt werden nur Name, E-Mail und Code; alles Weitere
@@ -200,12 +200,12 @@ router.post('/',
     const email = String(b.email).trim()
     const type = b.commission_type === 'fixed' ? 'fixed' : 'percent'
 
-    // Ein Vermittler ist eine Person, kein Firmenkonto: Zum Datensatz gehört
+    // Ein Affiliate ist eine Person, kein Firmenkonto: Zum Datensatz gehört
     // ein Login, sonst sieht er seinen Stand nie. Gibt es die Adresse schon
     // als Benutzer, wird sie verknüpft statt ein zweites Konto anzulegen.
     const bestehend = db.prepare('SELECT id, is_active FROM users WHERE email = ? COLLATE NOCASE').get(email)
     if (bestehend && db.prepare('SELECT 1 FROM affiliates WHERE user_id = ?').get(bestehend.id)) {
-      return res.status(409).json({ error: 'Zu dieser Adresse besteht bereits ein Vermittlerkonto.' })
+      return res.status(409).json({ error: 'Zu dieser Adresse besteht bereits ein Affiliate-Konto.' })
     }
 
     const inviteToken = bestehend ? null : crypto.randomBytes(32).toString('hex')
@@ -267,7 +267,7 @@ router.post('/',
   }
 )
 
-// ── CMS: einzelnen Vermittler ändern ──────────────────────────────────────
+// ── CMS: einzelnen Affiliate ändern ──────────────────────────────────────
 router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
   const db = getDb()
   const a = db.prepare('SELECT * FROM affiliates WHERE id = ?').get(req.params.id)

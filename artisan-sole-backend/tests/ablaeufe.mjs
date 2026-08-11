@@ -182,7 +182,7 @@ p('Rücksendung bestätigen', r.status === 200 && r.daten?.status === 'approved'
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('8. Anfragen')
 
-for (const [quelle, name] of [['business', 'Firma'], ['affiliate', 'Vermittler'], ['shop', 'Laden']]) {
+for (const [quelle, name] of [['business', 'Firma'], ['affiliate', 'Affiliate'], ['shop', 'Laden']]) {
   r = await ruf('/api/custom-requests', {
     method: 'POST',
     body: { customer_name: name, customer_email: `${quelle}@example.de`, notes: 'Ein Anliegen', source: quelle, shoe_name: 'Test' },
@@ -203,19 +203,19 @@ r = await ruf('/api/custom-requests?source=business', { token: admin })
 p('Nach Herkunft gefiltert', Array.isArray(r.daten) && r.daten.every(x => x.source === 'business'), `${r.daten?.length} Firmen-Anfragen`)
 
 // ════════════════════════════════════════════════════════════════════════
-abschnitt('9. Vermittler')
+abschnitt('9. Affiliate')
 
 const affCode = `test-${zufall()}`
 r = await ruf('/api/affiliates', {
   method: 'POST', token: admin,
   body: {
-    full_name: 'Max Vermittler', email: `aff-${zufall()}@example.de`, code: affCode,
+    full_name: 'Max Affiliate', email: `aff-${zufall()}@example.de`, code: affCode,
     birth_date: '1980-05-01', street: 'Weg 1', postal_code: '10115', city: 'Berlin',
-    tax_number: '12/345/67890', iban: 'DE02120300000000202051', account_holder: 'Max Vermittler',
+    tax_number: '12/345/67890', iban: 'DE02120300000000202051', account_holder: 'Max Affiliate',
     commission_value: 12, customer_discount_pct: 10,
   },
 })
-p('Vermittler anlegen', r.status === 201, `HTTP ${r.status} ${r.status !== 201 ? JSON.stringify(r.daten).slice(0, 140) : ''}`)
+p('Affiliate anlegen', r.status === 201, `HTTP ${r.status} ${r.status !== 201 ? JSON.stringify(r.daten).slice(0, 140) : ''}`)
 p('Benutzerkonto entsteht mit', !!r.daten?.user_id, `user ${r.daten?.user_id}`)
 p('Einladung wird erzeugt', !!r.daten?.invite_token)
 const einladung = r.daten?.invite_token
@@ -229,11 +229,11 @@ p('Unbekannter Code abgewiesen', r.status === 404)
 
 r = await ruf('/api/auth/register-affiliate', {
   method: 'POST',
-  body: { token: einladung, name: 'Max Vermittler', password: 'Vermittler1!' },
+  body: { token: einladung, name: 'Max Affiliate', password: 'Affiliate1!' },
 })
-p('Vermittlerkonto aktivieren', r.status === 201, `HTTP ${r.status} ${r.status !== 201 ? JSON.stringify(r.daten).slice(0, 140) : ''}`)
+p('Affiliate-Konto aktivieren', r.status === 201, `HTTP ${r.status} ${r.status !== 201 ? JSON.stringify(r.daten).slice(0, 140) : ''}`)
 const affToken = r.daten?.accessToken
-p('Anmeldung als Vermittler', !!affToken)
+p('Anmeldung als Affiliate', !!affToken)
 p('Rolle wird gemeldet', r.daten?.user?.is_affiliate === true, `is_affiliate=${r.daten?.user?.is_affiliate}`)
 
 r = await ruf('/api/affiliates/me', { token: affToken })

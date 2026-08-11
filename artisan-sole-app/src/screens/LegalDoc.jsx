@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileText } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { FileText } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
+import { useSeitentitel } from '../store/seitentitel'
 
 const TITLES = {
   datenschutz: 'Datenschutzrichtlinie',
@@ -10,12 +11,13 @@ const TITLES = {
 }
 
 export default function LegalDoc() {
-  const navigate = useNavigate()
   const { type }  = useParams()
   const [doc,     setDoc]     = useState(null)
   const [loading, setLoading] = useState(true)
 
   const title = TITLES[type] || type
+  // Die Überschrift steht in der oberen Leiste, zusammen mit dem Zurück-Pfeil.
+  useSeitentitel(title)
 
   useEffect(() => {
     setLoading(true)
@@ -27,17 +29,6 @@ export default function LegalDoc() {
 
   return (
     <div className="flex flex-col min-h-full bg-white">
-
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-4 border-b border-black/5 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-black/5 flex items-center justify-center border-0">
-          <ArrowLeft size={18} strokeWidth={1.8} className="text-black/70" />
-        </button>
-        <span className="text-sm font-bold tracking-wide text-black text-center flex-1 px-2">{title}</span>
-        <div className="w-9 h-9 rounded-lg bg-black/5 flex items-center justify-center">
-          <FileText size={16} className="text-black/50" strokeWidth={1.5} />
-        </div>
-      </div>
 
       <div className="flex-1 px-5 py-5">
         {loading ? (
@@ -52,7 +43,10 @@ export default function LegalDoc() {
           </div>
         ) : (
           <>
-            {doc.title && (
+            {/* Nur, wenn das Dokument anders heißt als die Seite — sonst stünde
+                dieselbe Überschrift zweimal untereinander, einmal in der Leiste
+                und einmal hier. */}
+            {doc.title && doc.title.trim().toLowerCase() !== title.trim().toLowerCase() && (
               <h1 className="text-xl font-bold text-black leading-tight mb-4">{doc.title}</h1>
             )}
             <div className="space-y-3">

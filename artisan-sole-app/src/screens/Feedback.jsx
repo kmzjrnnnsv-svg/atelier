@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ChevronDown, ChevronUp, MessageSquare, CheckCircle2, Send } from 'lucide-react'
+import { ChevronDown, ChevronUp, MessageSquare, CheckCircle2, Send } from 'lucide-react'
 import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 
@@ -14,7 +13,6 @@ const STATUS_MAP = {
 }
 
 export default function Feedback() {
-  const navigate = useNavigate()
   const { orders } = useStore()
 
   // Form state
@@ -76,16 +74,7 @@ export default function Feedback() {
   return (
     <div className="flex flex-col min-h-full bg-white">
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/5 flex-shrink-0">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
-          <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
-        </button>
-        <span className="text-[11px] text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-          Feedback &amp; Hilfe
-        </span>
-        <div className="w-10" />
-      </div>
+      {/* Kopfzeile und Zurück-Pfeil stehen in der oberen Leiste, nicht hier. */}
 
       {/* Scrollable content */}
       <div className="flex-1">

@@ -94,7 +94,7 @@ Eine eigene Domain (`business.artisansole.com`) mit eigenem Einstieg.
 
 ---
 
-## 3. Vermittlerprogramm
+## 3. Affiliate-Programm
 
 Neu und **noch nicht vollständig**.
 
@@ -106,7 +106,7 @@ Neu und **noch nicht vollständig**.
 | Rückgabe lässt Provision verfallen | ✅ | |
 | Auszahlung in Fünferrunden | ✅ | |
 | Eigenbestellung gesperrt | ✅ | |
-| Vermittlerportal mit Fortschrittsanzeige | ✅ | „Noch ein Paar bis zur Auszahlung" |
+| Affiliate-Portal mit Fortschrittsanzeige | ✅ | „Noch ein Paar bis zur Auszahlung" |
 | Werbelink mit QR-Code | ✅ | |
 | Bewerbungs-Endpunkt | ✅ | Formular fehlt noch |
 | **Code-Eingabe im Warenkorb** | ❌ | Endpunkt fertig, Eingabefeld fehlt |
@@ -209,7 +209,7 @@ Bei 52 Tabellen und dieser Regeldichte ist jede Änderung ein Blindflug.
 
 ### Später
 
-- Vermittlerprogramm fertigstellen (drei fehlende Teile, siehe oben)
+- Affiliate-Programm fertigstellen (drei fehlende Teile, siehe oben)
 - Mehrsprachigkeit
 - Bestandsführung für Zubehör
 - Rechnungserstellung als PDF
@@ -236,7 +236,7 @@ Ladefehler — hätte ein Test gefunden, bevor sie beim Kunden ankam.
 3. Eine Handvoll Tests für die Kernwege: Bestellung, Passformberechnung,
    Provision
 4. Einen Zahlungsdienstleister anbinden
-5. Erst dann das Vermittlerprogramm zu Ende bauen
+5. Erst dann das Affiliate-Programm zu Ende bauen
 
 Punkt 3 ist der unbeliebteste und der mit dem größten Hebel. Zehn Tests für
 die drei Kernwege kosten einen Tag und ersparen die Klasse von Fehlern, die

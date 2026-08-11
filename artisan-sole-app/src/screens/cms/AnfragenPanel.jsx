@@ -2,7 +2,7 @@
  * AnfragenPanel — alle Anfragen an einer Stelle, nach Herkunft getrennt.
  *
  * Vorher lagen sie verstreut: Hilfe-Tickets im Feedback-Bereich, Firmen- und
- * Maßanfragen zusammen in einem Topf im Firmenkonten-Bereich, Vermittler
+ * Maßanfragen zusammen in einem Topf im Firmenkonten-Bereich, Affiliate
  * nirgends. Die drei Wege werden unterschiedlich beantwortet — eine
  * Firmenanfrage führt zu einem Angebot, ein Hilfe-Ticket zu einer Antwort —
  * deshalb stehen sie hier nebeneinander, aber nicht durcheinander.
@@ -23,8 +23,8 @@ const REITER = [
     hinweis: 'Fragen und Meldungen aus dem Hilfebereich. Antwort per E-Mail an den Absender.' },
   { id: 'business',  label: 'Unternehmen',     icon: Building2,  quelle: 'business',
     hinweis: 'Anfragen von der Firmenseite. Aus einer angenommenen Anfrage entsteht ein Firmenkonto.' },
-  { id: 'affiliate', label: 'Vermittler',      icon: Users,      quelle: 'affiliate',
-    hinweis: 'Anfragen von der Vermittlerseite. Vermittlerkonten werden unter Vermittler angelegt.' },
+  { id: 'affiliate', label: 'Affiliate',      icon: Users,      quelle: 'affiliate',
+    hinweis: 'Anfragen von der Affiliate-Seite. Affiliate-Konten werden unter Affiliate angelegt.' },
   { id: 'shop',      label: 'Maßanfragen',     icon: Footprints, quelle: 'shop',
     hinweis: 'Sonderwünsche aus dem Konfigurator, etwa wenn keine Standardleiste passt.' },
 ]

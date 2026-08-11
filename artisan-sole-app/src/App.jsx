@@ -61,7 +61,7 @@ import NotFound from './screens/NotFound'
 const lazyImports = {
   '/collection': () => import('./screens/ShoeCollection'),
   '/customize':  () => import('./screens/Customize'),
-  '/vermittler': () => import('./screens/AffiliatePortal'),
+  '/affiliate': () => import('./screens/AffiliatePortal'),
   '/profile':    () => import('./screens/Profile'),
   '/scan':       () => import('./screens/FootScan'),
   '/health':     () => import('./screens/HealthInfo'),
@@ -89,7 +89,7 @@ export function prefetchRoute(path) {
 // Lazy: loaded on demand per route
 const ShoeCollection    = lazy(lazyImports['/collection'])
 const Customize         = lazy(lazyImports['/customize'])
-const AffiliatePortal   = lazy(lazyImports['/vermittler'])
+const AffiliatePortal   = lazy(lazyImports['/affiliate'])
 const Profile           = lazy(lazyImports['/profile'])
 const FootScan          = lazy(lazyImports['/scan'])
 const HealthInfo        = lazy(lazyImports['/health'])
@@ -133,6 +133,7 @@ const WebsiteImagesPanel   = lazy(() => import('./screens/cms/WebsiteImagesPanel
 const OptionsEditor        = lazy(() => import('./screens/cms/OptionsEditor'))
 const ConfiguratorMatrix   = lazy(() => import('./screens/cms/ConfiguratorMatrix'))
 const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
+const NachrichtenPanel     = lazy(() => import('./screens/cms/NachrichtenPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
 const CorporateOverview    = lazy(() => import('./screens/business/CorporateOverview'))
@@ -167,7 +168,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/vermittler-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/vermittler']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/affiliate-konto', '/affiliate-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/affiliate', '/affiliate']
 // Pfade mit variablem Ende: hier zählt der Anfang, nicht die genaue Adresse.
 const NO_NAV_PREFIXES = ['/schuhe/']
 const hidesNav = (path) =>
@@ -182,7 +183,7 @@ export const isMobileWeb = !isNative && /iPhone|iPad|iPod|Android/i.test(navigat
 // die Hauptdomain (artisansole.com) leitet /business dorthin um.
 const HOSTNAME = typeof window !== 'undefined' ? window.location.hostname : ''
 export const isBusiness = !isNative && /^business\./i.test(HOSTNAME)
-// affiliate.artisansole.com — eigener Eingang für Vermittler, dieselbe Idee wie
+// affiliate.artisansole.com — eigener Eingang für Affiliate, dieselbe Idee wie
 // bei den Firmenkonten: Wer sich hier anmeldet, landet in seinem Bereich und
 // nicht im Laden. Der Werbelink führt dagegen bewusst auf die Hauptdomain, denn
 // dort kauft der geworbene Kunde.
@@ -196,6 +197,21 @@ const AFFILIATE_URL = 'https://affiliate.artisansole.com/'
 function ExternalRedirect({ to }) {
   useEffect(() => { window.location.replace(to) }, [to])
   return null
+}
+
+/**
+ * Weiterleitung einer alten Adresse auf ihre neue — samt Anhängseln.
+ *
+ * Aus „Affiliate" wurde „Affiliate", und damit auch aus /affiliate-konto
+ * das /affiliate-konto. Die alte Adresse darf trotzdem nicht verschwinden:
+ * Sie steckt in bereits verschickten Einladungen, und dort hängt der Token
+ * dran. Ein schlichtes <Navigate to="/affiliate-konto"> würde die Suchanfrage
+ * abschneiden — die Einladung führte dann auf ein Formular ohne Token, das
+ * niemanden mehr anmelden kann. Deshalb wandern search und hash mit.
+ */
+function PfadUmzug({ nach }) {
+  const { search, hash } = useLocation()
+  return <Navigate to={`${nach}${search}${hash}`} replace />
 }
 
 // Add class to <html> so CSS can differentiate
@@ -223,19 +239,19 @@ function useViewportHeight() {
 /**
  * Wurzel von affiliate.artisansole.com.
  *
- * Angemeldete Vermittler wollen ihren Stand sehen, alle anderen zuerst wissen,
+ * Angemeldete Affiliate wollen ihren Stand sehen, alle anderen zuerst wissen,
  * worum es geht. Vorher führte die Adresse ungefragt auf die Anmeldemaske.
  */
 function AffiliateStart() {
   const { user, loading } = useAuth()
   if (loading) return null
-  return user?.is_affiliate ? <Navigate to="/vermittler" replace /> : <AffiliateLanding />
+  return user?.is_affiliate ? <Navigate to="/affiliate" replace /> : <AffiliateLanding />
 }
 
 function AppRoutes() {
   const location = useLocation()
   const { user } = useAuth()
-  const { initStore, vermittlerPruefen } = useStore()
+  const { initStore, affiliatePruefen } = useStore()
   const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
   // Corporate-Onepager bringt eine eigene Kopfzeile mit, globale Shop-Nav ausblenden.
@@ -264,7 +280,7 @@ function AppRoutes() {
     initStore()
     // Werbecode aus ?ref= aufnehmen und prüfen. Muss bei jedem Start laufen,
     // nicht nur bei Anmeldung: Der Link führt Gäste in den Laden.
-    vermittlerPruefen()
+    affiliatePruefen()
   }, [user])
 
   if (isCMS) {
@@ -277,7 +293,7 @@ function AppRoutes() {
             <p className="text-[13px] text-black/50 font-light leading-relaxed mb-5">
               Der volle Bereich braucht iPad oder Rechner. Für unterwegs gibt es
               die schlanke Verwaltung: Bestellungen, Versand, Gutscheine und
-              Vermittler.
+              Affiliate.
             </p>
             <a href="/verwaltung"
                className="inline-flex items-center justify-center h-12 px-7 bg-black text-white text-[12px] tracking-[0.18em] uppercase no-underline">
@@ -294,8 +310,10 @@ function AppRoutes() {
               <Route path="shoes"    element={<ShoeEditor />} />
               <Route path="users"    element={<AdminRoute><UsersPanel /></AdminRoute>} />
               <Route path="business" element={<BusinessPanel />} />
-              <Route path="vermittler" element={<AffiliatesPanel />} />
+              <Route path="affiliate" element={<AffiliatesPanel />} />
+              <Route path="affiliate" element={<Navigate to="/cms/affiliate" replace />} />
               <Route path="anfragen" element={<AnfragenPanel />} />
+              <Route path="nachrichten" element={<NachrichtenPanel />} />
               <Route path="ruecksendungen" element={<RuecksendungenPanel />} />
               <Route path="scans"    element={<ScansPanel />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />
@@ -339,7 +357,8 @@ function AppRoutes() {
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
-              <Route path="/vermittler-konto"   element={<RegisterAffiliate />} />
+              <Route path="/affiliate-konto"    element={<RegisterAffiliate />} />
+              <Route path="/affiliate-konto"   element={<PfadUmzug nach="/affiliate-konto" />} />
               {/* Public, Window Shopping ohne Login */}
               <Route path="/business"   element={<CorporateGifting />} />
               <Route path="/business/uebersicht" element={<CorporateOverview />} />
@@ -348,7 +367,8 @@ function AppRoutes() {
                   schreibt sich auf diese Form um, damit geteilte Links und
                   Lesezeichen weiter funktionieren. */}
               <Route path="/schuhe/:slug" element={<ShopRoute><Customize /></ShopRoute>} />
-              <Route path="/vermittler" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
+              <Route path="/affiliate" element={<ProtectedRoute><AffiliatePortal /></ProtectedRoute>} />
+              <Route path="/affiliate" element={<PfadUmzug nach="/affiliate" />} />
               <Route path="/ruecksendungen" element={<ProtectedRoute><Ruecksendungen /></ProtectedRoute>} />
               {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs:
                   Der blendet sich unter 768 px vollständig aus und zeigt nur
@@ -400,7 +420,8 @@ function AppRoutes() {
       <Route path="/register"   element={<Registration />} />
       <Route path="/register-promotion" element={<RegisterPromotion />} />
       <Route path="/register-business"  element={<RegisterBusiness />} />
-      <Route path="/vermittler-konto"   element={<RegisterAffiliate />} />
+      <Route path="/affiliate-konto"    element={<RegisterAffiliate />} />
+      <Route path="/affiliate-konto"   element={<PfadUmzug nach="/affiliate-konto" />} />
       {/* Firmenkonto-Bereich (business.artisansole.com) */}
       <Route path="/business/dashboard" element={<BusinessRoute><BusinessDashboard /></BusinessRoute>} />
       <Route path="/business/profile"   element={<BusinessRoute><BusinessProfile /></BusinessRoute>} />
@@ -417,19 +438,23 @@ function AppRoutes() {
       <Route path="/business/uebersicht" element={isProdApex ? <ExternalRedirect to={`${BUSINESS_URL}uebersicht`} /> : <CorporateOverview />} />
       <Route path="/collection" element={<ShopRoute><ShoeCollection /></ShopRoute>} />
       <Route path="/schuhe/:slug" element={<ShopRoute><Customize /></ShopRoute>} />
-      {/* Der Vermittlerbereich lebt auf affiliate.artisansole.com — dort meldet
-          sich ein Vermittler an, dort arbeitet er. Auf der Hauptdomain bleibt
+      {/* Der Affiliate-Bereich lebt auf affiliate.artisansole.com — dort meldet
+          sich ein Affiliate an, dort arbeitet er. Auf der Hauptdomain bleibt
           die Adresse als Weiterleitung bestehen statt zu verschwinden: Sie
           steckt in verschickten Links und Lesezeichen, und ein Verweis ist
           freundlicher als eine Fehlerseite. Dasselbe Muster wie bei /business. */}
-      <Route path="/vermittler" element={
-        isProdApex ? <ExternalRedirect to={`${AFFILIATE_URL}vermittler`} />
+      <Route path="/affiliate" element={
+        isProdApex ? <ExternalRedirect to={`${AFFILIATE_URL}affiliate`} />
                    : <ProtectedRoute><AffiliatePortal /></ProtectedRoute>
       } />
-      <Route path="/vermittler/uebersicht" element={
-        isProdApex ? <ExternalRedirect to={`${AFFILIATE_URL}vermittler/uebersicht`} />
+      <Route path="/affiliate/uebersicht" element={
+        isProdApex ? <ExternalRedirect to={`${AFFILIATE_URL}affiliate/uebersicht`} />
                    : <AffiliateOverview />
       } />
+      {/* Die früheren Adressen bleiben als Weiterleitung bestehen — sie stehen
+          in Lesezeichen und in bereits verschickten Nachrichten. */}
+      <Route path="/affiliate" element={<PfadUmzug nach="/affiliate" />} />
+      <Route path="/affiliate/uebersicht" element={<PfadUmzug nach="/affiliate/uebersicht" />} />
       <Route path="/ruecksendungen" element={<ProtectedRoute><Ruecksendungen /></ProtectedRoute>} />
       <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
       <Route path="/welcome"    element={<Welcome />} />

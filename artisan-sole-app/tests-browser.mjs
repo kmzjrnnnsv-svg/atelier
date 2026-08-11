@@ -112,9 +112,9 @@ await page.goto(`${BASIS}/checkout`, { waitUntil: 'networkidle' })
 p('Kasse lädt', !(await page.getByText('Etwas ist schiefgelaufen').count()))
 
 // ═══════════════════════════════════════════════════════════════════
-abschnitt('Firmen- und Vermittlerseiten')
+abschnitt('Firmen- und Affiliate-Seiten')
 
-for (const [pfad, text] of [['/business', 'Von der Anfrage bis zum ersten Paar'], ['/business/uebersicht', 'Preise und Prozess'], ['/vermittler/uebersicht', 'Konditionen und Ablauf']]) {
+for (const [pfad, text] of [['/business', 'Von der Anfrage bis zum ersten Paar'], ['/business/uebersicht', 'Preise und Prozess'], ['/affiliate/uebersicht', 'Konditionen und Ablauf']]) {
   await page.goto(`${BASIS}${pfad}`, { waitUntil: 'networkidle' }).catch(() => {})
   await page.waitForTimeout(800)
   p(`${pfad} lädt`, await page.getByText(text).count() > 0, text)
@@ -130,7 +130,7 @@ await page.locator('button[type="submit"]').first().click()
 await page.waitForTimeout(3500)
 p('Admin angemeldet', !page.url().includes('/login'), page.url().replace(BASIS, ''))
 
-for (const [pfad, text] of [['/cms/anfragen', 'Anfragen'], ['/cms/ruecksendungen', 'Rücksendungen'], ['/cms/vermittler', 'Vermittler']]) {
+for (const [pfad, text] of [['/cms/anfragen', 'Anfragen'], ['/cms/ruecksendungen', 'Rücksendungen'], ['/cms/affiliate', 'Affiliate']]) {
   await page.goto(`${BASIS}${pfad}`, { waitUntil: 'networkidle' }).catch(() => {})
   await page.waitForTimeout(1200)
   p(`${pfad} lädt`, await page.getByText(text).first().count() > 0)
