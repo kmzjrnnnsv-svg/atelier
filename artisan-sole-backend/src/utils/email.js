@@ -50,6 +50,14 @@ function createTransporter(cfg) {
     port:   Number(cfg.port) || 587,
     secure: Number(cfg.port) === 465,
     auth:   { user: cfg.user, pass: cfg.pass },
+    // Zeitgrenzen, damit ein nicht erreichbarer Server auffällt statt zu
+    // hängen. Ohne sie wartet nodemailer je nach Phase bis zu zehn Minuten:
+    // Die Testnachricht in der Verwaltung stand dann dauerhaft auf „sendet …",
+    // ohne dass jemand erfuhr, woran es liegt — und beim Bestellversand
+    // blockierte jeder Versuch stillschweigend im Hintergrund.
+    connectionTimeout: 10000,
+    greetingTimeout:   10000,
+    socketTimeout:     20000,
   })
 }
 

@@ -10,12 +10,13 @@
  * Bewusst nicht enthalten: Kundennamen, Adressen, Bestellnummern. Für die
  * Abrechnung nicht nötig, datenschutzrechtlich unnötiger Ballast.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Copy, Check, Download, Clock, Wallet, PackageCheck, AlertCircle, Share2, Mail, LogOut, MessageSquare } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import { HOME_PATH } from '../lib/homePath'
 import ChatFenster, { useUngelesen } from '../components/ChatFenster'
+import AffiliateStammdaten from '../components/AffiliateStammdaten'
 import Ablauf from '../components/Ablauf'
 
 const euro = (n) => `€ ${Number(n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -96,11 +97,14 @@ export default function AffiliatePortal() {
   const [chatOffen, setChatOffen] = useState(false)
   const { ungelesen, neuLaden } = useUngelesen(true)
 
-  useEffect(() => {
+  // Als benannte Funktion, damit der Stand nach dem Eintragen der eigenen
+  // Daten neu geholt werden kann — sonst stünde oben weiter der leere Name.
+  const laden = useCallback(() => {
     apiFetch('/api/affiliates/me')
       .then(setData)
       .catch(e => setError(e?.error || 'Konnte nicht geladen werden'))
   }, [])
+  useEffect(() => { laden() }, [laden])
 
   const copyLink = async () => {
     try {
@@ -191,6 +195,11 @@ export default function AffiliatePortal() {
       </div>
 
       <div className="px-5 lg:px-16 max-w-5xl space-y-4">
+        {/* Ganz oben, solange etwas fehlt: Ohne Anschrift und Bankverbindung
+            kann nicht ausgezahlt werden, und das erfährt man sonst erst, wenn
+            die erste Runde voll ist. */}
+        <AffiliateStammdaten affiliate={a} onGespeichert={laden} />
+
         <PayoutProgress standing={standing} />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

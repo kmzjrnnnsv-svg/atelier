@@ -1,10 +1,21 @@
 /**
  * AffiliatesPanel — Affiliate anlegen und verwalten.
  *
- * Ein Affiliate ist eine Person, kein Firmenkonto. Erhoben wird deshalb, was
- * eine Abrechnung mit einer Privatperson braucht:
+ * Zum Anlegen genügt die E-Mail. Alles Weitere trägt der Affiliate nach der
+ * Einladung selbst ein — er ist der Einzige, der es sicher weiß. Vorher
+ * verlangte diese Maske Anschrift, Geburtsdatum, Steuerstatus und
+ * Bankverbindung von der Verwaltung, die davon nichts wissen kann: Die
+ * Angaben wurden geschätzt oder leer gelassen, und die Gutschrift lief auf
+ * eine Anschrift, die niemand geprüft hatte.
  *
- *   Pflicht    Name, E-Mail, Code — ohne die geht nichts.
+ * Geändert werden kann hinterher alles — unter „Bearbeiten" liegen dieselben
+ * Felder, samt Konditionen. Was der Affiliate selbst nicht darf: seinen Code,
+ * seine Provision und seinen Status setzen. Das sind Zusagen des Hauses.
+ *
+ * Ein Affiliate ist eine Person, kein Firmenkonto. Für die Abrechnung gehört
+ * dazu:
+ *
+ *   Pflicht    E-Mail — mehr nicht.
  *   Vertrag    Anschrift und Geburtsdatum laut Ausweis. Beides ist nötig, um
  *              eine Gutschrift auszustellen und die Person eindeutig zu
  *              identifizieren; das Geburtsdatum trennt Namensgleiche.
@@ -23,6 +34,9 @@ import { Users, Plus, Copy, Check, X, Mail, AlertTriangle, Link2, Percent, Gift 
 import { apiFetch } from '../../hooks/useApi'
 
 const APP_ORIGIN = (import.meta.env.VITE_API_URL ?? '') || (typeof window !== 'undefined' ? window.location.origin : '')
+
+// Zum Anlegen wird nur die Adresse gebraucht; der Rest kommt vom Affiliate.
+const neuesFormular = { _modus: 'neu', email: '', note: '' }
 
 const leeresFormular = {
   full_name: '', email: '', phone: '', code: '',
@@ -84,6 +98,14 @@ export default function AffiliatesPanel() {
     e.preventDefault()
     setBusy(true); setFehler(null); setHinweis(null)
     try {
+      if (form._modus === 'bearbeiten') {
+        const { _modus, id, ...rumpf } = form
+        await apiFetch(`/api/affiliates/${id}`, { method: 'PUT', body: JSON.stringify(rumpf) })
+        setForm(null)
+        await laden()
+        setHinweis('Änderungen gespeichert.')
+        return
+      }
       const res = await apiFetch('/api/affiliates', { method: 'POST', body: JSON.stringify(form) })
       setForm(null)
       await laden()
@@ -108,7 +130,7 @@ export default function AffiliatesPanel() {
           {!laedt && <span className="text-[11px] text-black/35">{liste.length}</span>}
         </div>
         <button
-          onClick={() => setForm(form ? null : { ...leeresFormular })}
+          onClick={() => setForm(form ? null : { ...neuesFormular })}
           className="flex items-center gap-1.5 h-8 px-3 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0"
         >
           {form ? <X size={12} /> : <Plus size={12} />}
@@ -129,8 +151,32 @@ export default function AffiliatesPanel() {
         </div>
       )}
 
-      {form && (
+      {form?._modus === 'neu' && (
+        <form onSubmit={anlegen} className="border border-black/10 p-5 mb-8 space-y-4 max-w-xl">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-black/30 mb-3">Neuer Affiliate</p>
+            <Feld label="E-Mail" required hint="Mehr wird nicht gebraucht. An diese Adresse geht die Einladung; Name, Anschrift, Steuer und Bankverbindung trägt der Affiliate danach selbst ein.">
+              <input type="email" className={eingabe} value={form.email} required autoFocus onChange={e => setzen('email', e.target.value)} />
+            </Feld>
+          </div>
+          <Feld label="Notiz (intern)" hint="Nur für die Verwaltung sichtbar.">
+            <textarea rows={2} className={`${eingabe} resize-y`} value={form.note} onChange={e => setzen('note', e.target.value)} />
+          </Feld>
+          <div className="flex items-center gap-3 pt-1">
+            <button type="submit" disabled={busy} className="h-9 px-5 bg-black text-white text-[11px] tracking-[0.14em] uppercase border-0 disabled:opacity-40">
+              {busy ? 'Wird angelegt …' : 'Einladen'}
+            </button>
+            <p className="text-[11px] text-black/40">Der Code wird aus der Adresse abgeleitet und ist später änderbar.</p>
+          </div>
+        </form>
+      )}
+
+      {form?._modus === 'bearbeiten' && (
         <form onSubmit={anlegen} className="border border-black/10 p-5 mb-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <p className="text-[12px] text-black/60">{form.full_name || form.email} bearbeiten</p>
+            <button type="button" onClick={() => setForm(null)} className="text-[11px] text-black/40 hover:text-black bg-transparent border-0">Schließen</button>
+          </div>
           <section>
             <p className="text-[10px] uppercase tracking-[0.18em] text-black/30 mb-3">Person</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -247,6 +293,7 @@ export default function AffiliatesPanel() {
                 <th className="text-right font-normal p-2.5">Offen</th>
                 <th className="text-right font-normal p-2.5">Rückgaben</th>
                 <th className="text-left font-normal p-2.5">Link</th>
+                <th className="text-right font-normal p-2.5"></th>
               </tr>
             </thead>
             <tbody>
@@ -255,7 +302,7 @@ export default function AffiliatesPanel() {
                 return (
                   <tr key={a.id} className="border-b border-black/5 last:border-0">
                     <td className="p-2.5">
-                      <span className="text-black/80">{a.full_name}</span>
+                      <span className="text-black/80">{a.full_name || <span className="text-black/30 italic">trägt Daten noch ein</span>}</span>
                       <span className="block text-[10px] text-black/35">{a.email}</span>
                     </td>
                     <td className="p-2.5 tabular-nums text-black/60">{a.code}</td>
@@ -273,6 +320,14 @@ export default function AffiliatesPanel() {
                       <button onClick={() => kopieren(link, a.id)} className="flex items-center gap-1.5 text-[11px] text-black/50 hover:text-black bg-transparent border-0 p-0">
                         {kopiert === a.id ? <Check size={11} /> : <Link2 size={11} />}
                         {kopiert === a.id ? 'kopiert' : 'kopieren'}
+                      </button>
+                    </td>
+                    <td className="p-2.5 text-right">
+                      <button
+                        onClick={() => { setForm({ ...leeresFormular, ...a, _modus: 'bearbeiten' }); setHinweis(null); setFehler(null) }}
+                        className="text-[11px] text-black/50 hover:text-black bg-transparent border-0 p-0"
+                      >
+                        bearbeiten
                       </button>
                     </td>
                   </tr>
