@@ -17,9 +17,18 @@ const mustRead = [authenticate]
 // Namen abgeleiteten Slug). Bekommt (body, { db, id }); id ist beim Anlegen null.
 // `onDelete` läuft in derselben Transaktion wie das Löschen und bekommt den
 // Datensatz, bevor er verschwindet.
-function makeContentRouter(table, writeValidators = [], { publicRead = false, listExclude = [], onWrite = null, onDelete = null } = {}) {
+function makeContentRouter(table, writeValidators = [], { publicRead = false, listExclude = [], onWrite = null, onDelete = null, vorabRouten = null } = {}) {
   const r = Router()
   const readGuard = publicRead ? [] : mustRead
+
+  // Eigene Routen mit festem Namen müssen VOR dem allgemeinen `/:id` stehen.
+  //
+  // Express nimmt den ersten Treffer. Wurde eine Route wie `/by-shoe` erst
+  // weiter unten in der Datei angehängt, landete der Aufruf im `/:id`-Zweig,
+  // suchte eine Zeile mit der Kennung „by-shoe" und antwortete mit 404 — die
+  // Route war da, aber unerreichbar. Aufgefallen ist das erst im Browser, weil
+  // der Laden den Fehlschlag stillschweigend abfing.
+  if (vorabRouten) vorabRouten(r, readGuard)
 
   // GET all
   r.get('/', ...readGuard, (req, res) => {
@@ -148,7 +157,33 @@ export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
 export const materialsRouter  = makeContentRouter('shoe_materials', [], { publicRead: true })
 export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true })
 export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead: true })
+/**
+ * Alle Zuordnungen Modell → Zubehör auf einmal.
+ *
+ * Der Laden holt sie beim Start einmal, statt je Modell nachzufragen. Als
+ * Vorabroute registriert, weil `/by-shoe` sonst vom allgemeinen `/:id`
+ * verschluckt wird.
+ */
+function zubehoerNachModell(r) {
+  r.get('/by-shoe', (req, res) => {
+    const rows = getDb().prepare(`
+      SELECT sa.shoe_id, a.*
+      FROM shoe_accessories sa
+      JOIN accessories a ON a.id = sa.accessory_id
+      WHERE a.is_active = 1
+      ORDER BY sa.shoe_id, sa.sort_order ASC, a.sort_order ASC
+    `).all()
+    const map = {}
+    for (const row of rows) {
+      if (!map[row.shoe_id]) map[row.shoe_id] = []
+      map[row.shoe_id].push(row)
+    }
+    res.json(map)
+  })
+}
+
 export const accessoriesRouter    = makeContentRouter('accessories', [], {
+  vorabRouten: zubehoerNachModell,
   publicRead: true,
   // Wie bei den Modellen: Löschung vormerken, sonst legt der Seed den Artikel
   // beim nächsten Start wieder an.
@@ -392,24 +427,6 @@ accessoriesRouter.put('/:id/shoes', ...canWrite, param('id').isInt(), (req, res)
     ORDER BY sa.sort_order ASC, s.id ASC
   `).all(accId)
   res.json(rows)
-})
-
-// GET /api/accessories/by-shoe — public: bulk fetch all shoe→accessory mappings
-accessoriesRouter.get('/by-shoe', (req, res) => {
-  const rows = getDb().prepare(`
-    SELECT sa.shoe_id, a.*
-    FROM shoe_accessories sa
-    JOIN accessories a ON a.id = sa.accessory_id
-    WHERE a.is_active = 1
-    ORDER BY sa.shoe_id, sa.sort_order ASC, a.sort_order ASC
-  `).all()
-  // Group by shoe_id
-  const map = {}
-  for (const r of rows) {
-    if (!map[r.shoe_id]) map[r.shoe_id] = []
-    map[r.shoe_id].push(r)
-  }
-  res.json(map)
 })
 
 export default router

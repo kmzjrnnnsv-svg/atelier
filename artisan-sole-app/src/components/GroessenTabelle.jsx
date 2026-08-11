@@ -89,7 +89,7 @@ export default function GroessenTabelle({ offen, onClose, lastKey = null }) {
 
   useEffect(() => {
     if (!offen || chart) return
-    apiFetch('/api/last-chart').then(setChart).catch(() => setChart([]))
+    apiFetch('/api/last-size-chart').then(setChart).catch(() => setChart([]))
   }, [offen, chart])
 
   // Mit der Esc-Taste schließen — ein Fenster ohne diesen Weg fühlt sich

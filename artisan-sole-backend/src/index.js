@@ -1,4 +1,35 @@
 import 'dotenv/config'
+
+// ── Pflicht-Umgebung, bevor irgendetwas startet ──────────────────────────────
+//
+// Fehlt JWT_ACCESS_SECRET, läuft der Server anstandslos hoch: Katalog, Bilder,
+// Rechtstexte — alles antwortet. Erst wer sich anmelden oder registrieren will,
+// bekommt „Internal server error", und im Log steht „secretOrPrivateKey must
+// have a value". Der Laden sieht von außen heil aus, während niemand ein Konto
+// anlegen kann.
+//
+// Deshalb hier und nicht später: Ein Fehlstart mit klarer Ansage ist besser als
+// ein halber Betrieb.
+{
+  const pflicht = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET']
+  const fehlend = pflicht.filter(k => !process.env[k])
+  if (fehlend.length) {
+    console.error('\n✗ Der Server startet nicht: es fehlen Umgebungsvariablen.\n')
+    for (const k of fehlend) console.error(`    ${k}`)
+    console.error('\n  Sie gehören in die .env neben package.json. Vorlage: .env.example')
+    console.error('  Werte erzeugen mit:  openssl rand -hex 32\n')
+    process.exit(1)
+  }
+  // Die Beispielwerte sind keine Geheimnisse — sie stehen im Repository.
+  const beispielhaft = pflicht.filter(k => String(process.env[k]).startsWith('change_me'))
+  if (beispielhaft.length && process.env.NODE_ENV === 'production') {
+    console.error('\n✗ Der Server startet nicht: unveränderte Beispielwerte im Einsatz.\n')
+    for (const k of beispielhaft) console.error(`    ${k}`)
+    console.error('\n  Sie stehen so in .env.example und damit im Repository.')
+    console.error('  Neue Werte:  openssl rand -hex 32\n')
+    process.exit(1)
+  }
+}
 import express from 'express'
 import path from 'path'
 import helmet from 'helmet'
