@@ -35,15 +35,21 @@ router.post('/',
     .matches(/^[+0-9 ()/-]{6,}$/).withMessage('Ungültige Telefonnummer'),
   // Ohne Anliegen ist eine Anfrage nicht zu beantworten.
   body('notes').trim().notEmpty().withMessage('Bitte schildern Sie kurz Ihr Anliegen'),
-  body('shoe_id').optional({ nullable: true }).isInt(),
-  body('scan_id').optional({ nullable: true }).isInt(),
-  body('shoe_name').optional().isString(),
-  body('material').optional().isString(),
-  body('color').optional().isString(),
-  body('sole').optional().isString(),
-  body('eu_size').optional().isString(),
-  body('accessories').optional().isArray(),
-  body('source').optional().isIn(['shop', 'business', 'affiliate']),
+  // `values: 'null'` statt des bloßen `optional()`: Das Formular schickt für
+  // nicht ausgefüllte Angaben ausdrücklich `null` (etwa eu_size, solange keine
+  // Maße hinterlegt sind, oder sole bei Modellen ohne Sohlenwahl). Ein nacktes
+  // `optional()` überspringt aber nur `undefined` — `null` lief in die Prüfung
+  // und die Anfrage scheiterte mit „Invalid value", ohne dass der Kunde
+  // erkennen konnte, woran.
+  body('shoe_id').optional({ values: 'null' }).isInt(),
+  body('scan_id').optional({ values: 'null' }).isInt(),
+  body('shoe_name').optional({ values: 'null' }).isString(),
+  body('material').optional({ values: 'null' }).isString(),
+  body('color').optional({ values: 'null' }).isString(),
+  body('sole').optional({ values: 'null' }).isString(),
+  body('eu_size').optional({ values: 'null' }).isString(),
+  body('accessories').optional({ values: 'null' }).isArray(),
+  body('source').optional({ values: 'null' }).isIn(['shop', 'business', 'affiliate']),
   (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
