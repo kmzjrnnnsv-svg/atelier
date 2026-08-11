@@ -133,6 +133,7 @@ const WebsiteImagesPanel   = lazy(() => import('./screens/cms/WebsiteImagesPanel
 const OptionsEditor        = lazy(() => import('./screens/cms/OptionsEditor'))
 const ConfiguratorMatrix   = lazy(() => import('./screens/cms/ConfiguratorMatrix'))
 const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
+const NachrichtenPanel     = lazy(() => import('./screens/cms/NachrichtenPanel'))
 const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
 const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
 const CorporateOverview    = lazy(() => import('./screens/business/CorporateOverview'))
@@ -312,6 +313,7 @@ function AppRoutes() {
               <Route path="affiliate" element={<AffiliatesPanel />} />
               <Route path="affiliate" element={<Navigate to="/cms/affiliate" replace />} />
               <Route path="anfragen" element={<AnfragenPanel />} />
+              <Route path="nachrichten" element={<NachrichtenPanel />} />
               <Route path="ruecksendungen" element={<RuecksendungenPanel />} />
               <Route path="scans"    element={<ScansPanel />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />

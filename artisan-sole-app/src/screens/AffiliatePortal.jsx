@@ -11,10 +11,11 @@
  * Abrechnung nicht nötig, datenschutzrechtlich unnötiger Ballast.
  */
 import { useEffect, useState } from 'react'
-import { Copy, Check, Download, Clock, Wallet, PackageCheck, AlertCircle, Share2, Mail, LogOut } from 'lucide-react'
+import { Copy, Check, Download, Clock, Wallet, PackageCheck, AlertCircle, Share2, Mail, LogOut, MessageSquare } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import { HOME_PATH } from '../lib/homePath'
+import ChatFenster, { useUngelesen } from '../components/ChatFenster'
 import Ablauf from '../components/Ablauf'
 
 const euro = (n) => `€ ${Number(n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -90,6 +91,10 @@ export default function AffiliatePortal() {
   const [error, setError] = useState(null)
   const [copied, setCopied] = useState(false)
   const { logout } = useAuth()
+  // Kurzer Draht ins Haus — Fragen zur Abrechnung gehören nicht in ein
+  // fremdes Postfach.
+  const [chatOffen, setChatOffen] = useState(false)
+  const { ungelesen, neuLaden } = useUngelesen(true)
 
   useEffect(() => {
     apiFetch('/api/affiliates/me')
@@ -148,14 +153,28 @@ export default function AffiliatePortal() {
       {/* Eigene Kopfzeile: Das Portal zeigt die Shop-Navigation nicht mehr,
           also braucht es hier einen eigenen Weg nach draußen. Ohne ihn käme
           ein Affiliate nicht einmal mehr zum Abmelden. */}
+      <ChatFenster offen={chatOffen} onClose={() => setChatOffen(false)} onGelesen={neuLaden} />
       <div className="flex items-center justify-between px-5 lg:px-16 h-14 border-b border-black/[0.06] bg-white">
         <span className="font-brand text-[11px] text-black/70">ARTISAN SOLE</span>
+        <div className="flex items-center gap-1">
+        <button
+          onClick={() => setChatOffen(true)}
+          className="relative flex items-center gap-2 h-11 px-2 bg-transparent border-0 text-[11px] text-black/40 hover:text-black/70 uppercase tracking-[0.16em]"
+        >
+          <MessageSquare size={14} strokeWidth={1.4} /> Nachrichten
+          {ungelesen > 0 && (
+            <span className="bg-black text-white text-[9px] min-w-[15px] h-[15px] px-1 flex items-center justify-center">
+              {ungelesen > 99 ? '99+' : ungelesen}
+            </span>
+          )}
+        </button>
         <button
           onClick={() => { logout(); window.location.replace(HOME_PATH) }}
           className="flex items-center gap-2 h-11 px-2 bg-transparent border-0 text-[11px] text-black/40 hover:text-black/70 uppercase tracking-[0.16em]"
         >
           <LogOut size={14} strokeWidth={1.4} /> Abmelden
         </button>
+        </div>
       </div>
 
       <div className="px-5 lg:px-16 pt-10 lg:pt-14 pb-8 max-w-5xl">

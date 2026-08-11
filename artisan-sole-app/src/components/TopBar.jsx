@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { X, ChevronLeft, ShoppingBag, User, Heart } from 'lucide-react'
+import { X, ChevronLeft, ShoppingBag, User, Heart, MessageSquare } from 'lucide-react'
 import { prefetchRoute, isMobileWeb } from '../App'
 import useStore from '../store/store'
 import { useSeitentitelStore, titelFuerPfad } from '../store/seitentitel'
+import ChatFenster, { useUngelesen } from './ChatFenster'
+import { useAuth } from '../context/AuthContext'
 
 // ── Navigation structure (LV-style) ─────────────────────────────────────────
 const NAV_ITEMS = [
@@ -29,6 +31,12 @@ export default function TopBar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const cartCount = useStore(s => s.cart.length)
+
+  // Das Gespräch mit dem Haus. Nur für Angemeldete — ohne Konto gäbe es
+  // keinen Verlauf, dem eine Antwort zugeordnet werden könnte.
+  const { user } = useAuth()
+  const [chatOffen, setChatOffen] = useState(false)
+  const { ungelesen, neuLaden } = useUngelesen(!!user)
   const pendingNav = useRef(null)
 
   const isSubPage = !MAIN_PAGES.has(pathname)
@@ -136,6 +144,23 @@ export default function TopBar() {
               <Heart size={18} strokeWidth={1.3} />
             </button>
           )}
+          {user && (
+            <button
+              onClick={() => setChatOffen(true)}
+              className="bg-transparent border-0 p-1.5 text-black active:opacity-50 relative"
+              aria-label="Nachrichten"
+            >
+              <MessageSquare size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
+              {ungelesen > 0 && (
+                <span
+                  className="absolute top-0.5 right-0 bg-black text-white text-[7px] font-bold min-w-[13px] h-[13px] flex items-center justify-center px-0.5 leading-none"
+                  style={{ borderRadius: '6px' }}
+                >
+                  {ungelesen > 99 ? '99+' : ungelesen}
+                </span>
+              )}
+            </button>
+          )}
           <button onClick={() => navigate('/profile')} className="bg-transparent border-0 p-1.5 text-black active:opacity-50">
             <User size={isMobileWeb ? 20 : 18} strokeWidth={1.3} />
           </button>
@@ -152,6 +177,8 @@ export default function TopBar() {
           </button>
         </div>
       </header>
+
+      <ChatFenster offen={chatOffen} onClose={() => setChatOffen(false)} onGelesen={neuLaden} />
 
       {/* ── Side panel menu (LV-style) ── */}
       {open && (

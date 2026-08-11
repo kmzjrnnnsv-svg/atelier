@@ -1,16 +1,25 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, ImageIcon, Megaphone, LogOut, ChevronRight } from 'lucide-react'
+import { Building2, ImageIcon, Megaphone, LogOut, ChevronRight, MessageSquare } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { HOME_PATH } from '../../lib/homePath'
 import Ablauf from '../../components/Ablauf'
+import ChatFenster, { useUngelesen } from '../../components/ChatFenster'
 
 export default function BusinessDashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
 
+  // Der kurze Draht ins Haus. Als Karte neben den übrigen, weil er zum
+  // Firmenkonto gehört wie Kampagnen und Profil — und nicht als schwebende
+  // Blase, die den Inhalt überdeckt.
+  const [chatOffen, setChatOffen] = useState(false)
+  const { ungelesen, neuLaden } = useUngelesen(true)
+
   const cards = [
     { icon: Megaphone, title: 'Kampagnen', desc: 'Sammelbestellungen anlegen, Beitritts-Link teilen und den Fortschritt je Modell verfolgen.', to: '/business/campaigns', active: true },
     { icon: ImageIcon, title: 'Profil & Logo', desc: 'Firmendaten pflegen und Ihr Logo für die Schuhsohle hinterlegen.', to: '/business/profile', active: true },
+    { icon: MessageSquare, title: 'Nachrichten', desc: 'Fragen zu Konditionen, Abrechnung oder einer laufenden Kampagne — direkt an uns, ohne Umweg über das Postfach.', chat: true, active: true, badge: ungelesen },
   ]
 
   return (
@@ -32,18 +41,28 @@ export default function BusinessDashboard() {
           </button>
         </div>
 
+        <ChatFenster offen={chatOffen} onClose={() => setChatOffen(false)} onGelesen={neuLaden} />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-black/[0.06] border border-black/[0.06]">
           {cards.map(c => {
             const Icon = c.icon
             return (
               <button
                 key={c.title}
-                onClick={() => c.active && c.to && navigate(c.to)}
+                onClick={() => {
+                  if (c.chat) return setChatOffen(true)
+                  if (c.active && c.to) navigate(c.to)
+                }}
                 disabled={!c.active}
                 className={`text-left bg-white p-7 transition-colors border-0 ${c.active ? 'hover:bg-black/[0.02] cursor-pointer' : 'cursor-default'}`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <Icon size={22} strokeWidth={1.25} className="text-black/55" />
+                  {c.badge > 0 && (
+                    <span className="bg-black text-white text-[9px] min-w-[16px] h-4 px-1 flex items-center justify-center mr-auto ml-3">
+                      {c.badge > 99 ? '99+' : c.badge}
+                    </span>
+                  )}
                   {c.active
                     ? <ChevronRight size={16} className="text-black/25" />
                     : <span className="text-[9px] text-black/35 uppercase tracking-[0.2em] border border-black/15 px-1.5 py-0.5">Demnächst</span>}
