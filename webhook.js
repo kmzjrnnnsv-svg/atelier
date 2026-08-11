@@ -3,7 +3,13 @@ const crypto = require('crypto')
 const { execSync } = require('child_process')
 
 const PORT = 9000
-const SECRET = process.env.WEBHOOK_SECRET || 'artisan-sole-webhook-secret-change-me'
+// Kein eingebauter Rückfallwert: Ein bekannter Konstant-Wert im Code würde den
+// Deploy-Endpunkt für jeden öffnen, der das Repository liest. Fehlt das Secret,
+// lehnt verifySignature grundsätzlich ab.
+const SECRET = process.env.WEBHOOK_SECRET
+if (!SECRET) {
+  console.error('WARnung: WEBHOOK_SECRET ist nicht gesetzt — alle Webhook-Aufrufe werden abgelehnt.')
+}
 // Muss auf dasselbe Verzeichnis zeigen wie deploy.sh ($HOME/as). Der frühere
 // Festwert '/home/nrply/app' zeigte woanders hin — ein Deploy über den Webhook
 // hätte dann ein anderes (oder gar kein) Arbeitsverzeichnis gebaut, während
@@ -11,12 +17,19 @@ const SECRET = process.env.WEBHOOK_SECRET || 'artisan-sole-webhook-secret-change
 const APP_DIR = process.env.APP_DIR || `${process.env.HOME || '/root'}/as`
 
 function verifySignature(req, body) {
+  if (!SECRET) return false
   const sig = req.headers['x-hub-signature-256']
   if (!sig) return false
   const hmac = crypto.createHmac('sha256', SECRET)
   hmac.update(body)
   const expected = 'sha256=' + hmac.digest('hex')
-  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+  // Erst die Länge prüfen: timingSafeEqual wirft eine RangeError bei
+  // ungleich langen Buffern — eine gefälschte Signatur beliebiger Länge
+  // hätte sonst den Prozess über die uncaught Exception abstürzen lassen.
+  const sigBuf = Buffer.from(sig, 'utf8')
+  const expBuf = Buffer.from(expected, 'utf8')
+  if (sigBuf.length !== expBuf.length) return false
+  return crypto.timingSafeEqual(sigBuf, expBuf)
 }
 
 const server = http.createServer((req, res) => {
@@ -34,7 +47,13 @@ const server = http.createServer((req, res) => {
       return res.end('Forbidden')
     }
 
-    const payload = JSON.parse(body)
+    let payload
+    try {
+      payload = JSON.parse(body)
+    } catch {
+      res.writeHead(400)
+      return res.end('Invalid JSON')
+    }
     if (payload.ref !== 'refs/heads/website') {
       res.writeHead(200)
       return res.end('Not website branch — skipped')

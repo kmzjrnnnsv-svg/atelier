@@ -140,8 +140,17 @@ app.use('/api', (req, res, next) => {
   res.status(403).json({ error: 'Missing CSRF header' })
 })
 
-// Static file serving for uploaded media
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')))
+// Static file serving for uploaded media.
+// Defense-in-Depth zusätzlich zur Upload-Prüfung in routes/media.js: nosniff
+// verhindert MIME-Sniffing, die CSP (sandbox ohne allow-scripts, script/object
+// = none) unterbindet jede Skriptausführung — auch bei einer versehentlich
+// abgelegten HTML/SVG-Datei.
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads'), {
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('Content-Security-Policy', "script-src 'none'; object-src 'none'; sandbox")
+  },
+}))
 
 // Global rate limit
 app.use('/api', apiLimiter)
@@ -187,15 +196,30 @@ app.use('/api/business', businessRouter)
 // GitHub Webhook — auto-deploy on push to website
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   const secret = process.env.WEBHOOK_SECRET
-  if (secret) {
-    const sig = req.headers['x-hub-signature-256']
-    const hmac = crypto.createHmac('sha256', secret).update(req.body).digest('hex')
-    if (sig !== `sha256=${hmac}`) {
-      return res.status(401).json({ error: 'Invalid signature' })
-    }
+  // Fail-closed: Ohne konfiguriertes Secret wird nichts ausgeführt. Der frühere
+  // `if (secret)` übersprang bei fehlender Variable die Prüfung komplett und
+  // öffnete den Deploy für jeden, der die Adresse kennt.
+  if (!secret) {
+    console.error('Webhook abgelehnt: WEBHOOK_SECRET ist nicht gesetzt.')
+    return res.status(503).json({ error: 'Webhook not configured' })
+  }
+  const sig = req.headers['x-hub-signature-256']
+  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(req.body).digest('hex')
+  // Konstante Laufzeit + vorheriger Längenvergleich: timingSafeEqual wirft bei
+  // abweichender Buffer-Länge, ein `!==` verriete zudem über die Laufzeit,
+  // wie viele Zeichen stimmen.
+  const sigBuf = Buffer.from(sig || '', 'utf8')
+  const expBuf = Buffer.from(expected, 'utf8')
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    return res.status(401).json({ error: 'Invalid signature' })
   }
 
-  const payload = JSON.parse(req.body)
+  let payload
+  try {
+    payload = JSON.parse(req.body)
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' })
+  }
   if (payload.ref !== 'refs/heads/website') {
     return res.json({ status: 'ignored', ref: payload.ref })
   }

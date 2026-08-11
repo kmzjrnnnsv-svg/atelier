@@ -7,7 +7,12 @@ Type=simple
 User=root
 WorkingDirectory=/home/nrply/app/atelier
 ExecStart=/opt/node22/bin/node /home/nrply/app/atelier/webhook.js
-Environment=WEBHOOK_SECRET=95f0314fdba3bd306bff7f771178414b51afd854c60492b8c5b41458c958da3a
+# Das Secret gehört NICHT in diese versionierte Datei. Es liegt außerhalb des
+# Repositories und wird beim Start geladen. Anlegen mit:
+#   install -m 600 /dev/null /etc/atelier/webhook.env
+#   echo "WEBHOOK_SECRET=$(openssl rand -hex 32)" > /etc/atelier/webhook.env
+# Denselben Wert im GitHub-Webhook hinterlegen.
+EnvironmentFile=/etc/atelier/webhook.env
 Restart=always
 RestartSec=5
 

@@ -159,6 +159,37 @@ function render(text, vars) {
   return (text || '').replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] !== undefined ? vars[key] : `{{${key}}}`)
 }
 
+// Wie render(), escaped aber die eingesetzten Werte — für Templates, die in
+// einen HTML-Kontext fließen (intro/body). Der Vorlagentext selbst (vom Admin
+// gepflegt) bleibt unangetastet; nur die eingesetzten, teils kundenkontrol-
+// lierten Werte ({{name}}, {{shoe_name}} …) werden neutralisiert. Der Betreff
+// nutzt weiter render(), da er als Header keine HTML-Escapes verträgt.
+function renderHtml(text, vars) {
+  return (text || '').replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] !== undefined ? escapeHtml(vars[key]) : `{{${key}}}`)
+}
+
+// Frisch geparste Lieferadresse feldweise escapen (die Objekte werden je
+// Funktion neu aus JSON gelesen, ein In-Place-Escapen ist daher unbedenklich).
+function escAddr(a) {
+  if (!a) return null
+  return {
+    name:    escapeHtml(a.name),
+    street:  escapeHtml(a.street),
+    zip:     escapeHtml(a.zip),
+    city:    escapeHtml(a.city),
+    country: escapeHtml(a.country),
+    phone:   a.phone ? escapeHtml(a.phone) : '',
+  }
+}
+
+// Zubehörliste (kundenseitig) feldweise escapen.
+function escAcc(list) {
+  return (Array.isArray(list) ? list : []).map(a => ({
+    name:  escapeHtml(a.name),
+    price: escapeHtml(a.price),
+  }))
+}
+
 function nl2br(text) {
   return (text || '').replace(/\n/g, '<br>')
 }
@@ -195,11 +226,11 @@ export async function sendOrderConfirmation(order, user) {
     eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
   }
   const subject = render(tmpl.subject, vars)
-  const intro   = nl2br(render(tmpl.intro, vars))
-  const closing = nl2br(render(tmpl.body, vars))
+  const intro   = nl2br(renderHtml(tmpl.intro, vars))
+  const closing = nl2br(renderHtml(tmpl.body, vars))
 
-  const addr         = order.delivery_address ? JSON.parse(order.delivery_address) : null
-  const accessories  = order.accessories ? JSON.parse(order.accessories) : []
+  const addr         = escAddr(order.delivery_address ? JSON.parse(order.delivery_address) : null)
+  const accessories  = escAcc(order.accessories ? JSON.parse(order.accessories) : [])
   const accessoryRows = accessories.map(a => `
     <tr>
       <td style="padding:6px 0;font-size:13px;color:#555">${a.name}</td>
@@ -215,16 +246,16 @@ export async function sendOrderConfirmation(order, user) {
   <div class="body">
     <p style="font-size:15px;color:#333;margin:0 0 24px">${intro}</p>
     <div class="label">Schuh</div>
-    <div class="val">${order.shoe_name}</div>
+    <div class="val">${escapeHtml(order.shoe_name)}</div>
     <div class="label">Material · Farbe</div>
-    <div class="val">${order.material} · ${order.color}</div>
+    <div class="val">${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
     <div class="label">Ihre Größe (aus 3D-Scan)</div>
     <div class="val">EU ${order.eu_size || '-'}</div>
     <hr class="divider">
     <table>
       <tr>
         <td style="font-size:13px;color:#555">Schuh</td>
-        <td style="font-size:13px;color:#555;text-align:right">${order.price}</td>
+        <td style="font-size:13px;color:#555;text-align:right">${escapeHtml(order.price)}</td>
       </tr>
       ${accessoryRows}
     </table>
@@ -257,8 +288,8 @@ export async function sendPaymentInstructions(order, user) {
     reference: order.order_ref || `ARTISANSOLE-${order.id}`,
   }
   const subject = render(tmpl.subject, vars)
-  const intro   = nl2br(render(tmpl.intro, vars))
-  const closing = nl2br(render(tmpl.body, vars))
+  const intro   = nl2br(renderHtml(tmpl.intro, vars))
+  const closing = nl2br(renderHtml(tmpl.body, vars))
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}
   .bank-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:20px;margin:20px 0}
@@ -278,7 +309,7 @@ export async function sendPaymentInstructions(order, user) {
     <div class="bank-box">
       <div class="bank-row">
         <span class="bank-label">Betrag</span>
-        <span class="bank-val" style="font-size:18px;color:#059669">${order.price}</span>
+        <span class="bank-val" style="font-size:18px;color:#059669">${escapeHtml(order.price)}</span>
       </div>
       <div class="bank-row">
         <span class="bank-label">Kontoinhaber</span>
@@ -303,7 +334,7 @@ export async function sendPaymentInstructions(order, user) {
     </div>
     <hr class="divider">
     <div class="label">Bestellte Schuhe</div>
-    <div class="val">${order.shoe_name}</div>
+    <div class="val">${escapeHtml(order.shoe_name)}</div>
     <div class="label">Ihr ${order.user_order_number}. Schuh bei Artisan Sole</div>
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0">${closing}</p>
@@ -325,8 +356,8 @@ export async function sendOrderConfirmed(order, user) {
     eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
   }
   const subject = render(tmpl.subject, vars)
-  const intro   = nl2br(render(tmpl.intro, vars))
-  const closing = nl2br(render(tmpl.body, vars))
+  const intro   = nl2br(renderHtml(tmpl.intro, vars))
+  const closing = nl2br(renderHtml(tmpl.body, vars))
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
@@ -341,7 +372,7 @@ export async function sendOrderConfirmed(order, user) {
       <div class="label">Bestellnummer</div>
       <div class="val">${ref}</div>
       <div class="label">Ihr ${order.user_order_number}. Schuh bei Artisan Sole</div>
-      <div class="val">${order.shoe_name} · ${order.material} · ${order.color}</div>
+      <div class="val">${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
       <div class="label">Geschätzte Lieferzeit</div>
       <div class="val">ca. 4 Wochen nach Zahlungseingang</div>
     </div>
@@ -365,8 +396,8 @@ export async function sendQualityCheckNotification(order, user) {
     eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
   }
   const subject = render(tmpl.subject, vars)
-  const intro   = nl2br(render(tmpl.intro, vars))
-  const closing = nl2br(render(tmpl.body, vars))
+  const intro   = nl2br(renderHtml(tmpl.intro, vars))
+  const closing = nl2br(renderHtml(tmpl.body, vars))
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
@@ -382,7 +413,7 @@ export async function sendQualityCheckNotification(order, user) {
       <div class="label">Bestellnummer</div>
       <div class="val">${ref}</div>
       <div class="label">Ihr Schuh</div>
-      <div class="val">${order.shoe_name} · ${order.material} · ${order.color}</div>
+      <div class="val">${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
     </div>
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">${closing}</p>
@@ -404,10 +435,10 @@ export async function sendShippingNotification(order, user) {
     eu_size: order.eu_size || '-', user_order_number: order.user_order_number,
   }
   const subject = render(tmpl.subject, vars)
-  const intro   = nl2br(render(tmpl.intro, vars))
-  const closing = nl2br(render(tmpl.body, vars))
+  const intro   = nl2br(renderHtml(tmpl.intro, vars))
+  const closing = nl2br(renderHtml(tmpl.body, vars))
 
-  const addr = order.delivery_address ? JSON.parse(order.delivery_address) : null
+  const addr = escAddr(order.delivery_address ? JSON.parse(order.delivery_address) : null)
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}
   .addr-box{background:#f8f7f5;border-radius:10px;padding:16px;margin:16px 0}
@@ -425,7 +456,7 @@ export async function sendShippingNotification(order, user) {
       <div class="label">Bestellnummer</div>
       <div class="val">${ref}</div>
       <div class="label">Ihr Schuh</div>
-      <div class="val">${order.shoe_name} · ${order.material} · ${order.color}</div>
+      <div class="val">${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
       ${addr ? `
       <div class="label">Lieferadresse</div>
       <div class="addr-box">
@@ -473,11 +504,11 @@ export async function sendManufacturerNotification(order, user, scan) {
     user_id_padded: userIdPadded,
   }
   const subject = render(tmpl.subject, vars)
-  const intro   = nl2br(render(tmpl.intro, vars))
-  const closing = nl2br(render(tmpl.body, vars))
+  const intro   = nl2br(renderHtml(tmpl.intro, vars))
+  const closing = nl2br(renderHtml(tmpl.body, vars))
 
-  const addr        = order.delivery_address ? JSON.parse(order.delivery_address) : null
-  const accessories = order.accessories ? JSON.parse(order.accessories) : []
+  const addr        = escAddr(order.delivery_address ? JSON.parse(order.delivery_address) : null)
+  const accessories = escAcc(order.accessories ? JSON.parse(order.accessories) : [])
 
   // B2B-Firmencode-Bestellung: Firma, Logo (für die Sohle) und Code beilegen.
   let biz = null, bizCode = null
@@ -528,10 +559,10 @@ export async function sendManufacturerNotification(order, user, scan) {
     <div class="section">
       <div class="section-title">Schuhmodell</div>
       <div class="grid">
-        <div class="item"><div class="label">Modell</div><div class="val">${order.shoe_name}</div></div>
-        <div class="item"><div class="label">Preis</div><div class="val">${order.price}</div></div>
-        <div class="item"><div class="label">Material</div><div class="val">${order.material}</div></div>
-        <div class="item"><div class="label">Farbe</div><div class="val">${order.color}</div></div>
+        <div class="item"><div class="label">Modell</div><div class="val">${escapeHtml(order.shoe_name)}</div></div>
+        <div class="item"><div class="label">Preis</div><div class="val">${escapeHtml(order.price)}</div></div>
+        <div class="item"><div class="label">Material</div><div class="val">${escapeHtml(order.material)}</div></div>
+        <div class="item"><div class="label">Farbe</div><div class="val">${escapeHtml(order.color)}</div></div>
         <div class="item"><div class="label">EU-Größe</div><div class="val">${order.eu_size || '-'}</div></div>
       </div>
     </div>
@@ -539,9 +570,9 @@ export async function sendManufacturerNotification(order, user, scan) {
     <div class="section">
       <div class="section-title">Firmenbestellung · Branding</div>
       <div class="grid">
-        <div class="item"><div class="label">Unternehmen</div><div class="val">${biz.name}</div></div>
+        <div class="item"><div class="label">Unternehmen</div><div class="val">${escapeHtml(biz.name)}</div></div>
         <div class="item"><div class="label">Deckung</div><div class="val">${coverageLabel}</div></div>
-        ${bizCode ? `<div class="item"><div class="label">Einmal-Code</div><div class="val">${bizCode.code}</div></div>` : ''}
+        ${bizCode ? `<div class="item"><div class="label">Einmal-Code</div><div class="val">${escapeHtml(bizCode.code)}</div></div>` : ''}
       </div>
       ${biz.logo_data ? `<div style="margin-top:14px"><div class="label" style="font-size:10px;color:#aaa;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Logo für die Sohle</div><img src="${biz.logo_data}" alt="Firmenlogo" style="max-width:200px;max-height:90px;background:#f8f7f5;padding:8px;border-radius:6px" /></div>` : ''}
     </div>` : ''}
@@ -579,8 +610,8 @@ export async function sendManufacturerNotification(order, user, scan) {
     ${order.foot_notes_en ? `
     <div class="section">
       <div class="section-title">Customer Foot Notes</div>
-      <div class="intro-note">${nl2br(order.foot_notes_en)}</div>
-      ${order.foot_notes ? `<p style="font-size:10px;color:#aaa;margin:4px 0 0">Original (DE): ${order.foot_notes}</p>` : ''}
+      <div class="intro-note">${nl2br(escapeHtml(order.foot_notes_en))}</div>
+      ${order.foot_notes ? `<p style="font-size:10px;color:#aaa;margin:4px 0 0">Original (DE): ${escapeHtml(order.foot_notes)}</p>` : ''}
     </div>` : ''}
     ${(() => {
       const stats = getUserShoeStats(order.user_id)
@@ -597,7 +628,7 @@ export async function sendManufacturerNotification(order, user, scan) {
         </tr></thead>
         <tbody>${entries.map(([name, s]) => `
           <tr>
-            <td style="font-size:13px;color:#111;padding:6px 8px;border-top:1px solid #f5f3ef">${name}</td>
+            <td style="font-size:13px;color:#111;padding:6px 8px;border-top:1px solid #f5f3ef">${escapeHtml(name)}</td>
             <td style="font-size:13px;color:#555;text-align:center;padding:6px 8px;border-top:1px solid #f5f3ef">${s.ordered}</td>
             <td style="font-size:13px;color:#111;font-weight:600;text-align:center;padding:6px 8px;border-top:1px solid #f5f3ef">${s.kept}</td>
           </tr>`).join('')}

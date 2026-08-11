@@ -509,7 +509,10 @@ router.post('/me/campaigns/:id/invites', authenticate, loadOwnBusiness, (req, re
 router.get('/campaigns/by-slug/:slug', (req, res) => {
   const db = getDb()
   const c = db.prepare('SELECT * FROM business_campaigns WHERE slug = ?').get(req.params.slug)
-  if (!c) return res.status(404).json({ error: 'Kampagne nicht gefunden' })
+  // Nur offene Kampagnen sind öffentlich sichtbar. Ein 'draft'/'closed' würde
+  // sonst über den (aus dem Namen ableitbaren) Slug Konditionen und Firma
+  // preisgeben, bevor bzw. nachdem die Aktion läuft — für Unbeteiligte 404.
+  if (!c || c.status !== 'open') return res.status(404).json({ error: 'Kampagne nicht gefunden' })
   const biz = db.prepare('SELECT name, logo_data FROM businesses WHERE id = ?').get(c.business_id)
   res.json({
     name: c.name, slug: c.slug, status: c.status,

@@ -12,21 +12,36 @@ const router = Router()
 const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads')
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true })
 
-// Multer storage: random filename, keep extension
-const storage = multer.diskStorage({
+// Bild-Upload: Die gespeicherte Endung wird vom Server aus dem (geprüften)
+// MIME-Typ bestimmt — nie aus originalname übernommen. Sonst konnte eine Datei
+// `x.html`/`x.svg` mit vorgetäuschtem `Content-Type: image/png` den Filter
+// passieren, als HTML/SVG aus /uploads ausgeliefert werden und dort Skriptcode
+// ausführen (Stored XSS). SVG ist bewusst nicht erlaubt (skriptfähig).
+const IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif']
+const MIME_TO_EXT = {
+  'image/jpeg': '.jpg',
+  'image/png':  '.png',
+  'image/webp': '.webp',
+  'image/gif':  '.gif',
+  'image/avif': '.avif',
+}
+const imageStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOADS_DIR),
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg'
+    // Endung ausschließlich aus dem MIME-Typ ableiten (im fileFilter geprüft).
+    const ext = MIME_TO_EXT[file.mimetype] || '.bin'
     cb(null, `${crypto.randomUUID()}${ext}`)
   },
 })
 
 const upload = multer({
-  storage,
+  storage: imageStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true)
-    else cb(new Error('Nur Bilder erlaubt'))
+    const ext = path.extname(file.originalname).toLowerCase()
+    // Beide müssen stimmen: bekannter Bild-MIME-Typ UND Bild-Endung.
+    if (MIME_TO_EXT[file.mimetype] && IMAGE_EXT.includes(ext)) cb(null, true)
+    else cb(new Error('Nur Bilder erlaubt (jpg, png, webp, gif, avif)'))
   },
 })
 
@@ -34,8 +49,15 @@ const upload = multer({
 // Getrennt vom Bild-Upload: andere Dateitypen, anderes Größenlimit und die
 // Dateien gehören zu einem Modell, nicht in die allgemeine Mediathek.
 const MODEL_EXT = ['.glb', '.gltf']
+const modelStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase()
+    cb(null, `${crypto.randomUUID()}${MODEL_EXT.includes(ext) ? ext : '.glb'}`)
+  },
+})
 const modelUpload = multer({
-  storage,
+  storage: modelStorage,
   limits: { fileSize: 40 * 1024 * 1024 },   // 3D-Dateien sind deutlich größer
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase()
@@ -56,7 +78,7 @@ router.post('/model', authenticate, requireRole('admin', 'curator'), (req, res) 
 })
 
 // GET /api/media — list all CMS media (returns id, name, url, created_at)
-router.get('/', (req, res) => {
+router.get('/', authenticate, requireRole('admin', 'curator'), (req, res) => {
   const db = getDb()
   const rows = db.prepare('SELECT id, name, filename, created_at FROM cms_media ORDER BY created_at DESC').all()
   res.json(rows.map(r => ({
