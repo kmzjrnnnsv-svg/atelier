@@ -83,6 +83,33 @@ router.post('/',
 
     const row = db.prepare('SELECT * FROM custom_requests WHERE id = ?').get(result.lastInsertRowid)
 
+    // Wer angemeldet ist, bekommt seine Anfrage in seinen Gesprächsverlauf
+    // gelegt. Sonst stünde sie in einem zweiten Posteingang, die Antwort ginge
+    // per Mail hinaus, und eine Rückfrage des Kunden landete wieder woanders —
+    // dasselbe Anliegen an drei Orten. Gäste haben kein Konto und damit keinen
+    // Verlauf; ihre Anfragen bleiben in der Liste und werden per Mail
+    // beantwortet.
+    if (req.user?.id) {
+      try {
+        let thread = db.prepare('SELECT * FROM chat_threads WHERE user_id = ?').get(req.user.id)
+        if (!thread) {
+          db.prepare('INSERT INTO chat_threads (user_id) VALUES (?)').run(req.user.id)
+          thread = db.prepare('SELECT * FROM chat_threads WHERE user_id = ?').get(req.user.id)
+        }
+        const kopf = [row.shoe_name, row.material, row.color].filter(Boolean).join(' · ')
+        const text = [kopf ? `Anfrage zu ${kopf}` : 'Anfrage', row.notes].filter(Boolean).join('\n\n')
+        db.transaction(() => {
+          db.prepare("INSERT INTO chat_messages (thread_id, von, autor_id, text) VALUES (?, 'kunde', ?, ?)")
+            .run(thread.id, req.user.id, text)
+          db.prepare("UPDATE chat_threads SET last_message_at = datetime('now') WHERE id = ?").run(thread.id)
+        })()
+      } catch (e) {
+        // Die Anfrage selbst ist gespeichert — sie darf nicht daran scheitern,
+        // dass der Verlauf nicht geschrieben werden konnte.
+        console.error('[anfrage→verlauf]', e.message)
+      }
+    }
+
     Promise.allSettled([
       sendInquiryNotification(row),
       sendInquiryAck(row),

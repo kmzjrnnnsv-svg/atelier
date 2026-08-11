@@ -312,7 +312,9 @@ function AppRoutes() {
               <Route path="business" element={<BusinessPanel />} />
               <Route path="affiliate" element={<AffiliatesPanel />} />
               <Route path="affiliate" element={<Navigate to="/cms/affiliate" replace />} />
-              <Route path="anfragen" element={<AnfragenPanel />} />
+              {/* Anfragen leben jetzt unter Nachrichten — die Adresse bleibt
+                  als Weiterleitung, sie steht in Lesezeichen. */}
+              <Route path="anfragen" element={<Navigate to="/cms/nachrichten" replace />} />
               <Route path="nachrichten" element={<NachrichtenPanel />} />
               <Route path="ruecksendungen" element={<RuecksendungenPanel />} />
               <Route path="scans"    element={<ScansPanel />} />

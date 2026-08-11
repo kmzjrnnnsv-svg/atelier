@@ -64,7 +64,6 @@ export default function CMSLayout() {
               { to: '/cms/accessories',    label: 'Zubehör',          icon: Gift },
             ]},
             { heading: 'Bestellungen', items: [
-              { to: '/cms/anfragen', label: 'Anfragen',     icon: Inbox },
               { to: '/cms/nachrichten', label: 'Nachrichten', icon: MessageSquare, badge: ungelesen },
               { to: '/cms/orders',   label: 'Bestellungen', icon: ShoppingBag },
               { to: '/cms/shipping', label: 'Versand',      icon: Truck },

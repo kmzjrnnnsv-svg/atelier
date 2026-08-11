@@ -12,14 +12,82 @@
  * Weg zurück.
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageSquare, RefreshCw, Send, ChevronLeft, Building2, Users, User } from 'lucide-react'
+import { MessageSquare, RefreshCw, Send, ChevronLeft, Building2, Users, User, Inbox, Mail, Phone } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 
 const REITER = [
   { key: 'business',  label: 'Firmen',     icon: Building2 },
   { key: 'affiliate', label: 'Affiliates', icon: Users },
   { key: 'user',      label: 'Kunden',     icon: User },
+  // Anfragen von Gästen. Wer angemeldet ist, dessen Anfrage steht im eigenen
+  // Verlauf unter „Kunden" — sie hier zu wiederholen, hieße dasselbe Anliegen
+  // an zwei Stellen zu führen. Gäste haben kein Konto und damit keinen
+  // Verlauf; ihnen wird per E-Mail geantwortet.
+  { key: 'gaeste',    label: 'Gäste',      icon: Inbox },
 ]
+
+const ANFRAGE_STATUS = {
+  open: 'Offen', contacted: 'Kontaktiert', in_progress: 'In Arbeit',
+  quoted: 'Angebot', accepted: 'Angenommen', declined: 'Abgelehnt', closed: 'Geschlossen',
+}
+
+/** Anfragen ohne Konto — beantwortet wird per E-Mail. */
+function GastAnfragen() {
+  const [liste, setListe] = useState(null)
+  const [fehler, setFehler] = useState(null)
+
+  const laden = useCallback(() => {
+    apiFetch('/api/custom-requests')
+      .then(r => setListe((r || []).filter(a => !a.user_id)))
+      .catch(e => setFehler(e?.error || 'Anfragen konnten nicht geladen werden.'))
+  }, [])
+  useEffect(() => { laden() }, [laden])
+
+  const setzeStatus = async (id, status) => {
+    try {
+      await apiFetch(`/api/custom-requests/${id}`, { method: 'PUT', body: JSON.stringify({ status }) })
+      setListe(l => l.map(a => a.id === id ? { ...a, status } : a))
+    } catch (e) { setFehler(e?.error || 'Status konnte nicht geändert werden.') }
+  }
+
+  if (fehler) return <p className="text-[12px] text-red-600/80">{fehler}</p>
+  if (!liste) return <p className="text-[12px] text-black/30">Wird geladen …</p>
+  if (!liste.length) return <p className="text-[12px] text-black/30">Keine offenen Anfragen von Gästen.</p>
+
+  return (
+    <div className="border border-black/8 divide-y divide-black/[0.06]">
+      {liste.map(a => (
+        <div key={a.id} className="p-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <p className="text-[13px] text-black">{a.customer_name}</p>
+              <div className="flex items-center gap-4 mt-1 flex-wrap">
+                <a href={`mailto:${a.customer_email}`} className="flex items-center gap-1.5 text-[11px] text-black/45 no-underline hover:text-black">
+                  <Mail size={11} strokeWidth={1.5} /> {a.customer_email}
+                </a>
+                {a.customer_phone && (
+                  <span className="flex items-center gap-1.5 text-[11px] text-black/45">
+                    <Phone size={11} strokeWidth={1.5} /> {a.customer_phone}
+                  </span>
+                )}
+                <span className="text-[10px] text-black/30">{zeit(a.created_at)}</span>
+              </div>
+            </div>
+            <select
+              value={a.status}
+              onChange={e => setzeStatus(a.id, e.target.value)}
+              className="border border-black/12 px-2 py-1 text-[11px] bg-white outline-none focus:border-black/40"
+            >
+              {Object.entries(ANFRAGE_STATUS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+          </div>
+          {a.shoe_name && <p className="text-[11px] text-black/40 mt-2">{[a.shoe_name, a.material, a.color].filter(Boolean).join(' · ')}</p>}
+          {a.notes && <p className="text-[12px] text-black/70 leading-relaxed mt-2 whitespace-pre-wrap">{a.notes}</p>}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 const zeit = (s) => {
   if (!s) return ''
@@ -128,6 +196,7 @@ export default function NachrichtenPanel() {
   const [fehler, setFehler] = useState(null)
 
   const laden = useCallback(async () => {
+    if (reiter === 'gaeste') { setLaedt(false); return }
     setLaedt(true); setFehler(null)
     try { setThreads(await apiFetch(`/api/chat/threads?kategorie=${reiter}`)) }
     catch (e) { setFehler(e?.error || 'Die Verläufe konnten nicht geladen werden.') }
@@ -179,8 +248,9 @@ export default function NachrichtenPanel() {
 
       {/* Inhalt */}
       <div className="flex-1 min-h-0">
+        {reiter === 'gaeste' && <GastAnfragen />}
         {fehler && <p className="text-[12px] text-red-600/80">{fehler}</p>}
-        {laedt ? (
+        {reiter === 'gaeste' ? null : laedt ? (
           <p className="text-[12px] text-black/30">Wird geladen …</p>
         ) : threads.length === 0 ? (
           <p className="text-[12px] text-black/30">Hier gibt es noch keine Gespräche.</p>
