@@ -21,10 +21,35 @@ const selfFields = `
   id, code, status, full_name, email, phone, street, postal_code, city, country,
   tax_status, tax_number, vat_id, iban, account_holder, birth_date,
   commission_type, commission_value, cap_per_shoe, gift_shoetree,
-  customer_discount_pct, created_at
+  customer_discount_pct, created_at, terms_accepted_at
 `
 
 const normCode = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+
+/**
+ * Ein freier Werbecode, abgeleitet aus der Adresse.
+ *
+ * Beim Anlegen ist außer der E-Mail nichts bekannt — der Name kommt erst,
+ * wenn der Affiliate seine Daten selbst einträgt. Der Code muss aber sofort
+ * stehen, weil er die Kennung des Kontos ist. Er lässt sich später in der
+ * Verwaltung ändern, solange er noch nirgends im Umlauf ist.
+ */
+function codeVorschlag(db, email) {
+  const frei = (c) => c.length >= 3 && !db.prepare('SELECT 1 FROM affiliates WHERE code = ?').get(c)
+  const basis = normCode(
+    String(email || '').split('@')[0]
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '-')
+  ).replace(/^-+|-+$/g, '').slice(0, 16)
+
+  if (frei(basis)) return basis
+  for (let i = 0; i < 50; i++) {
+    const kandidat = `${basis || 'partner'}-${crypto.randomBytes(2).toString('hex')}`.slice(0, 24)
+    if (frei(kandidat)) return kandidat
+  }
+  // Sollte nie eintreten; lieber ein sperriger Code als gar kein Konto.
+  return `partner-${crypto.randomBytes(6).toString('hex')}`.slice(0, 24)
+}
 
 // ── Öffentlich: Code prüfen (Warenkorb) ───────────────────────────────────
 // Gibt bewusst wenig preis: ob der Code gilt und ob eine Zugabe dranhängt.
@@ -138,6 +163,67 @@ router.get('/me', authenticate, async (req, res) => {
   })
 })
 
+// ── Affiliate: eigene Stammdaten eintragen ───────────────────────────────
+//
+// Beim Anlegen kennt das Haus nur die E-Mail. Anschrift, Geburtsdatum,
+// Steuerstatus und Bankverbindung stehen hier — eingetragen von dem, der sie
+// kennt. Vorher tippte die Verwaltung sie ab, und die Gutschrift lief auf
+// Angaben, die niemand geprüft hatte.
+//
+// Was der Affiliate NICHT ändern kann: seinen Code, seine Konditionen und
+// seinen Status. Das sind die Zusagen des Hauses, keine Selbstauskunft.
+const SELBST_FELDER = [
+  'full_name', 'phone', 'street', 'postal_code', 'city', 'country', 'birth_date',
+  'tax_status', 'tax_number', 'vat_id', 'iban', 'account_holder',
+]
+
+router.patch('/me', authenticate,
+  body('full_name').optional({ values: 'falsy' }).trim().isLength({ min: 2 }).withMessage('Bitte Vor- und Nachnamen angeben'),
+  body('iban').optional({ values: 'falsy' }).trim().isLength({ min: 15, max: 34 }).withMessage('Diese IBAN sieht nicht vollständig aus'),
+  (req, res) => {
+    const fehler = validationResult(req)
+    if (!fehler.isEmpty()) return res.status(400).json({ error: fehler.array()[0].msg })
+
+    const db = getDb()
+    const a = db.prepare('SELECT id FROM affiliates WHERE user_id = ?').get(req.user.id)
+    if (!a) return res.status(404).json({ error: 'Kein Affiliate-Konto zu diesem Benutzer' })
+
+    const patch = {}
+    for (const k of SELBST_FELDER) {
+      if (req.body[k] === undefined) continue
+      patch[k] = req.body[k] === '' ? null : req.body[k]
+    }
+    if (patch.tax_status && !['small_business', 'vat_liable'].includes(patch.tax_status)) {
+      return res.status(400).json({ error: 'Unbekannter Steuerstatus' })
+    }
+    // Ohne Angabe bleibt das Land, wie es war — NULL wäre gegen die Spalte.
+    if (patch.country === null) delete patch.country
+
+    // Zustimmung nur, wenn sie ausdrücklich mitkommt, und nur einmal.
+    if (req.body.terms_accepted) {
+      const vorhanden = db.prepare('SELECT terms_accepted_at FROM affiliates WHERE id = ?').get(a.id)
+      if (!vorhanden?.terms_accepted_at) patch.terms_accepted_at = new Date().toISOString()
+    }
+
+    if (!Object.keys(patch).length) {
+      return res.status(400).json({ error: 'Keine Änderungen angegeben' })
+    }
+
+    const set = Object.keys(patch).map(k => `${k} = ?`).join(', ')
+    db.prepare(`UPDATE affiliates SET ${set}, updated_at = datetime('now') WHERE id = ?`)
+      .run(...Object.values(patch), a.id)
+
+    // Der Name steht auch am Benutzerkonto — sonst grüßt der Laden weiter mit
+    // einer leeren Zeile, während im Affiliate-Bereich der richtige Name steht.
+    if (patch.full_name) {
+      db.prepare("UPDATE users SET name = ?, updated_at = datetime('now') WHERE id = ?")
+        .run(patch.full_name, req.user.id)
+    }
+
+    res.json(db.prepare(`SELECT ${selfFields} FROM affiliates WHERE id = ?`).get(a.id))
+  }
+)
+
 // ── CMS: Übersicht mit Rangliste ──────────────────────────────────────────
 router.get('/', ...canAdmin, (req, res) => {
   const db = getDb()
@@ -181,17 +267,26 @@ router.get('/', ...canAdmin, (req, res) => {
 // Ohne IBAN bleibt die Auszahlung ohnehin gesperrt, siehe payout_blocked.
 router.post('/',
   ...canAdmin,
-  body('full_name').trim().isLength({ min: 2 }).withMessage('Name erforderlich'),
+  // Zum Anlegen genügt die E-Mail.
+  //
+  // Vorher verlangte die Maske Name, Anschrift, Geburtsdatum, Steuerstatus und
+  // Bankverbindung — Angaben, die das Haus zu diesem Zeitpunkt gar nicht hat.
+  // Sie wurden geschätzt, aus einer Mail zusammengesucht oder leer gelassen,
+  // und die Gutschrift lief später auf eine Anschrift, die niemand geprüft
+  // hatte. Wer sie kennt, ist der Affiliate selbst: Er trägt sie nach der
+  // Einladung ein, die Verwaltung sieht sie und kann sie ändern.
   body('email').trim().isEmail().withMessage('Gültige E-Mail erforderlich'),
-  body('code').trim().isLength({ min: 3, max: 24 }).withMessage('Code: 3 bis 24 Zeichen'),
+  body('full_name').optional({ values: 'falsy' }).trim().isLength({ min: 2 }).withMessage('Name: mindestens 2 Zeichen'),
+  body('code').optional({ values: 'falsy' }).trim().isLength({ min: 3, max: 24 }).withMessage('Code: 3 bis 24 Zeichen'),
   async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg })
 
-    const code = normCode(req.body.code)
-    if (!code) return res.status(400).json({ error: 'Code darf nur Buchstaben, Ziffern und Bindestriche enthalten.' })
-
     const db = getDb()
+    // Ohne eigenen Code einen aus der Adresse ableiten — er ist die Kennung
+    // des Kontos und muss sofort stehen.
+    const code = req.body.code ? normCode(req.body.code) : codeVorschlag(db, req.body.email)
+    if (!code) return res.status(400).json({ error: 'Code darf nur Buchstaben, Ziffern und Bindestriche enthalten.' })
     if (db.prepare('SELECT 1 FROM affiliates WHERE code = ?').get(code)) {
       return res.status(409).json({ error: 'Dieser Code ist bereits vergeben.' })
     }
@@ -215,7 +310,7 @@ router.post('/',
       const userId = bestehend
         ? bestehend.id
         : db.prepare("INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, ?, 'user', 0)")
-            .run(String(b.full_name).trim(), email, tempHash).lastInsertRowid
+            .run(String(b.full_name || '').trim(), email, tempHash).lastInsertRowid
 
       const info = db.prepare(`
         INSERT INTO affiliates
@@ -223,10 +318,13 @@ router.post('/',
            tax_status, tax_number, vat_id, iban, account_holder,
            commission_type, commission_value, cap_per_shoe, gift_shoetree, customer_discount_pct,
            invite_token, note, terms_accepted_at)
-        VALUES (?, ?, 'active', ?,?,?,?,?,?,?,?, ?,?,?,?,?, ?,?,?,?,?, ?,?, datetime('now'))
+        -- terms_accepted_at bleibt leer: Zustimmen kann nur der Affiliate
+        -- selbst, und zwar wenn er seine Daten einträgt. Die Verwaltung kann
+        -- das nicht für ihn tun.
+        VALUES (?, ?, 'active', ?,?,?,?,?,?,?,?, ?,?,?,?,?, ?,?,?,?,?, ?,?, NULL)
       `).run(
         userId, code,
-        String(b.full_name).trim(), email, b.phone || null,
+        String(b.full_name || '').trim(), email, b.phone || null,
         b.street || null, b.postal_code || null, b.city || null, b.country || 'DE', b.birth_date || null,
         b.tax_status === 'vat_liable' ? 'vat_liable' : 'small_business',
         b.tax_number || null, b.vat_id || null, b.iban || null, b.account_holder || null,
