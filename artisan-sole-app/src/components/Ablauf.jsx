@@ -2,7 +2,7 @@
  * Ablauf — nummerierte Schritt-für-Schritt-Erklärung.
  *
  * Vier Stellen erklären, wie etwas läuft: der Bestellvorgang unter der
- * Kollektion, die Firmenseite, der Vermittlerbereich und die beiden
+ * Kollektion, die Firmenseite, der Affiliate-Bereich und die beiden
  * Übersichten nach der Anmeldung. Dieselbe Darstellung überall, damit die
  * Erklärung nicht an jeder Stelle anders aussieht und man sie
  * wiedererkennt.

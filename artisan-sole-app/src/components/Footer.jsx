@@ -14,7 +14,7 @@ const DEFAULTS = {
   about_label: 'Über uns',
   about_links: [
     { label: 'Für Unternehmen', path: 'https://business.artisansole.com/' },
-    { label: 'Für Vermittler',  path: 'https://affiliate.artisansole.com/' },
+    { label: 'Für Affiliate',  path: 'https://affiliate.artisansole.com/' },
     { label: 'Boutiquen',       path: '/help' },
   ],
 
@@ -100,7 +100,7 @@ export default function Footer() {
   // stünde der Eintrag nach einer Anpassung doppelt da.
   const NEBENEINGAENGE = [
     { label: 'Für Unternehmen', path: 'https://business.artisansole.com/',  alt: ['/business'] },
-    { label: 'Für Vermittler',  path: 'https://affiliate.artisansole.com/', alt: ['/vermittler'] },
+    { label: 'Für Affiliate',  path: 'https://affiliate.artisansole.com/', alt: ['/affiliate'] },
   ]
   const aboutLinks = (() => {
     const links = cfg.about_links?.length ? [...cfg.about_links] : DEFAULTS.about_links

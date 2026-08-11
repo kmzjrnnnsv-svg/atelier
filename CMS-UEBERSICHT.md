@@ -178,7 +178,7 @@ Darunter der zweite Faktor per TOTP als Rückfallebene.
 
 ## 8. Was fehlt
 
-**1. Ein Bereich für das Vermittlerprogramm.** Es gibt keinen. Die
+**1. Ein Bereich für das Affiliate-Programm.** Es gibt keinen. Die
 Provisionslogik ist fertig und rechnet korrekt, die Endpunkte für Rangliste
 und Auszahlung stehen — aber niemand kann sie bedienen. Du siehst weder, wer
 am meisten vermittelt hat, noch wer auf Geld wartet.
@@ -212,7 +212,7 @@ das Geschäft läuft, findet hier nur Zählwerte.
 
 **Was ich zuerst bauen würde:**
 
-1. Den Vermittler-Bereich — die Rechenarbeit ist getan, es fehlt die Oberfläche
+1. Den Affiliate-Bereich — die Rechenarbeit ist getan, es fehlt die Oberfläche
 2. Eine Umsatzansicht im Dashboard: Monat, Modell, offene Zahlungen
 3. Die Rechtstexte einpflegen
 

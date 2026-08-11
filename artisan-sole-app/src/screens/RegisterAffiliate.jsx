@@ -1,5 +1,5 @@
 /**
- * RegisterAffiliate — Vermittlerkonto aktivieren.
+ * RegisterAffiliate — Affiliate-Konto aktivieren.
  *
  * Gegenstück zu RegisterBusiness: Der Datensatz besteht bereits, hier wird nur
  * das Passwort gesetzt. Bewusst eine eigene Seite und keine geteilte mit einem
@@ -52,7 +52,7 @@ export default function RegisterAffiliate() {
       const data = await res.json()
       if (!res.ok) throw data
       loginWithTokenData(data)
-      navigate('/vermittler', { replace: true })
+      navigate('/affiliate', { replace: true })
     } catch (err) {
       setError(err?.error || err?.errors?.[0]?.msg || 'Registrierung fehlgeschlagen')
     } finally {
@@ -69,10 +69,10 @@ export default function RegisterAffiliate() {
         <div className="text-center mb-8">
           <p className="font-brand text-xl text-black">ARTISAN SOLE</p>
           <div className="mt-3 inline-block px-3 py-1 bg-black/[0.06]">
-            <p className="text-[9px] text-black/55 tracking-[0.25em] uppercase">Vermittler</p>
+            <p className="text-[9px] text-black/55 tracking-[0.25em] uppercase">Affiliate</p>
           </div>
           <p className="text-black/45 text-[13px] font-light mt-4 leading-relaxed">
-            Legen Sie Ihr Passwort fest, um Ihr Vermittlerkonto zu aktivieren.
+            Legen Sie Ihr Passwort fest, um Ihr Affiliate-Konto zu aktivieren.
             Danach finden Sie dort Ihren Link, den QR-Code und Ihre vermittelten Paare.
           </p>
         </div>

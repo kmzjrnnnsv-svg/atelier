@@ -48,7 +48,7 @@ export function issueTokens(res, user) {
   // Pfaden (login/register/refresh) konsistent ist.
   const biz = getDb().prepare('SELECT id, name FROM businesses WHERE owner_user_id = ?').get(user.id)
   const vrow = getDb().prepare('SELECT email_verified FROM users WHERE id = ?').get(user.id)
-  // Vermittler kennzeichnen, damit die Anmeldung sie in ihr Portal führt statt
+  // Affiliate kennzeichnen, damit die Anmeldung sie in ihr Portal führt statt
   // in den Laden. Nur freigeschaltete zählen — wer noch auf Freigabe wartet,
   // hat dort nichts zu sehen.
   const aff = getDb().prepare("SELECT code FROM affiliates WHERE user_id = ? AND status = 'active'").get(user.id)
@@ -566,10 +566,10 @@ router.post('/register-business',
   }
 )
 
-// POST /api/auth/register-affiliate — Vermittlerkonto aktivieren
+// POST /api/auth/register-affiliate — Affiliate-Konto aktivieren
 //
 // Derselbe Weg wie beim Firmenkonto: Der Datensatz besteht bereits, hier wird
-// nur das Passwort gesetzt und das Login scharfgeschaltet. Der Vermittler
+// nur das Passwort gesetzt und das Login scharfgeschaltet. Der Affiliate
 // landet danach in seinem Bereich, nicht im Laden.
 router.post('/register-affiliate',
   body('token').trim().notEmpty().withMessage('Token erforderlich'),

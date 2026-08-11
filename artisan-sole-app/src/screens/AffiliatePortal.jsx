@@ -1,5 +1,5 @@
 /**
- * AffiliatePortal — die Ansicht eines Vermittlers auf seine eigene Arbeit.
+ * AffiliatePortal — die Ansicht eines Affiliates auf seine eigene Arbeit.
  *
  * Kern ist die Fortschrittsleiste zur nächsten Auszahlung. Ausgezahlt wird in
  * Fünferrunden, und genau das soll man auf einen Blick sehen: wie viele Paare
@@ -126,7 +126,7 @@ export default function AffiliatePortal() {
           <AlertCircle size={20} strokeWidth={1.4} className="text-black/25 mx-auto mb-4" />
           <p className="text-[14px] font-light text-black/60">{error}</p>
           <p className="text-[12px] text-black/35 font-light mt-2">
-            Dieser Bereich steht nur freigegebenen Vermittlern offen.
+            Dieser Bereich steht nur freigegebenen Affiliates offen.
           </p>
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function AffiliatePortal() {
     <div className="min-h-full bg-[#fafaf9] pb-20">
       {/* Eigene Kopfzeile: Das Portal zeigt die Shop-Navigation nicht mehr,
           also braucht es hier einen eigenen Weg nach draußen. Ohne ihn käme
-          ein Vermittler nicht einmal mehr zum Abmelden. */}
+          ein Affiliate nicht einmal mehr zum Abmelden. */}
       <div className="flex items-center justify-between px-5 lg:px-16 h-14 border-b border-black/[0.06] bg-white">
         <span className="font-brand text-[11px] text-black/70">ARTISAN SOLE</span>
         <button
@@ -159,7 +159,7 @@ export default function AffiliatePortal() {
       </div>
 
       <div className="px-5 lg:px-16 pt-10 lg:pt-14 pb-8 max-w-5xl">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-black/25 mb-3">Vermittlerbereich</p>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-black/25 mb-3">Affiliate-Bereich</p>
         <h1 className="text-[26px] lg:text-[34px] font-extralight text-black tracking-tight">{a.full_name}</h1>
         <p className="text-[13px] text-black/40 font-light mt-1.5">
           Ihr Code: <span className="text-black font-normal tracking-wide">{a.code.toUpperCase()}</span>

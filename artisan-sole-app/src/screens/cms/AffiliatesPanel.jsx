@@ -1,7 +1,7 @@
 /**
- * AffiliatesPanel — Vermittler anlegen und verwalten.
+ * AffiliatesPanel — Affiliate anlegen und verwalten.
  *
- * Ein Vermittler ist eine Person, kein Firmenkonto. Erhoben wird deshalb, was
+ * Ein Affiliate ist eine Person, kein Firmenkonto. Erhoben wird deshalb, was
  * eine Abrechnung mit einer Privatperson braucht:
  *
  *   Pflicht    Name, E-Mail, Code — ohne die geht nichts.
@@ -15,7 +15,7 @@
  *   Konditionen Provision, Deckel je Paar, Zugabe — und getrennt davon, was
  *              der geworbene Kunde bekommt.
  *
- * Angelegt wird immer beides: der Vermittler-Datensatz und ein Login. Ohne
+ * Angelegt wird immer beides: der Affiliate-Datensatz und ein Login. Ohne
  * Login sieht die Person ihren Stand nie.
  */
 import { useState, useEffect } from 'react'
@@ -69,7 +69,7 @@ export default function AffiliatesPanel() {
       const rows = await apiFetch('/api/affiliates')
       setListe(Array.isArray(rows) ? rows : [])
     } catch (e) {
-      setFehler(e?.error || 'Vermittler konnten nicht geladen werden.')
+      setFehler(e?.error || 'Affiliate konnten nicht geladen werden.')
     } finally { setLaedt(false) }
   }
   useEffect(() => { laden() }, [])
@@ -92,7 +92,7 @@ export default function AffiliatesPanel() {
       } else if (res.email_sent) {
         setHinweis(`${res.code} angelegt. Die Einladung ist unterwegs.`)
       } else {
-        setHinweis(`${res.code} angelegt, aber die Einladung ging nicht raus${res.email_error ? ` (${res.email_error})` : ''}. Link zum Weitergeben: ${APP_ORIGIN}/vermittler-konto?token=${res.invite_token}`)
+        setHinweis(`${res.code} angelegt, aber die Einladung ging nicht raus${res.email_error ? ` (${res.email_error})` : ''}. Link zum Weitergeben: ${APP_ORIGIN}/affiliate-konto?token=${res.invite_token}`)
       }
     } catch (e) {
       setFehler(e?.error || 'Anlegen fehlgeschlagen.')
@@ -104,7 +104,7 @@ export default function AffiliatesPanel() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
           <Users size={18} className="text-black/50" />
-          <h1 className="text-[15px] tracking-[0.06em]">Vermittler</h1>
+          <h1 className="text-[15px] tracking-[0.06em]">Affiliate</h1>
           {!laedt && <span className="text-[11px] text-black/35">{liste.length}</span>}
         </div>
         <button
@@ -112,7 +112,7 @@ export default function AffiliatesPanel() {
           className="flex items-center gap-1.5 h-8 px-3 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0"
         >
           {form ? <X size={12} /> : <Plus size={12} />}
-          {form ? 'Abbrechen' : 'Vermittler anlegen'}
+          {form ? 'Abbrechen' : 'Affiliate anlegen'}
         </button>
       </div>
 
@@ -225,7 +225,7 @@ export default function AffiliatesPanel() {
             <button type="submit" disabled={busy} className="h-9 px-5 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0 disabled:opacity-30">
               {busy ? 'Wird angelegt…' : 'Anlegen und einladen'}
             </button>
-            <p className="text-[10px] text-black/40">Es entsteht ein Vermittlerkonto samt Anmeldung. Die Einladung geht per E-Mail raus.</p>
+            <p className="text-[10px] text-black/40">Es entsteht ein Affiliate-Konto samt Anmeldung. Die Einladung geht per E-Mail raus.</p>
           </div>
         </form>
       )}
@@ -233,7 +233,7 @@ export default function AffiliatesPanel() {
       {laedt ? (
         <p className="text-[12px] text-black/35">Wird geladen…</p>
       ) : liste.length === 0 ? (
-        <p className="text-[12px] text-black/35">Noch keine Vermittler angelegt.</p>
+        <p className="text-[12px] text-black/35">Noch keine Affiliate angelegt.</p>
       ) : (
         <div className="border border-black/10">
           <table className="w-full text-[12px]">
@@ -293,7 +293,7 @@ export default function AffiliatesPanel() {
       <div className="flex items-start gap-2 mt-2 text-[11px] text-black/40 leading-relaxed">
         <Gift size={12} className="mt-0.5 shrink-0" />
         <p>
-          Zugabe und Nachlass sind zweierlei: Die Zugabe wird dem Vermittler vom Honorar
+          Zugabe und Nachlass sind zweierlei: Die Zugabe wird dem Affiliate vom Honorar
           abgezogen, der Nachlass geht zulasten des Hauses.
         </p>
       </div>

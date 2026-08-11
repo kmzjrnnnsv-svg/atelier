@@ -2,11 +2,11 @@
  * AffiliateLanding — affiliate.artisansole.com für Nichtangemeldete.
  *
  * Bis hierher führte die Adresse direkt auf die Anmeldemaske. Wer den
- * Vermittlerbereich zum ersten Mal aufruft, sieht dann ein Formular und keine
+ * Affiliate-Bereich zum ersten Mal aufruft, sieht dann ein Formular und keine
  * Erklärung — und wer bereits eingeladen wurde, weiß nicht, ob er hier
  * richtig ist. Diese Seite erklärt beides und führt dann zur Anmeldung.
  *
- * Bewusst ohne Bewerbungsformular: Vermittler werden angesprochen, nicht
+ * Bewusst ohne Bewerbungsformular: Affiliates werden angesprochen, nicht
  * angemeldet. Der Code ist Teil der Außenwirkung, seine Vergabe bleibt beim
  * Haus.
  */
@@ -28,7 +28,7 @@ const eingabe = 'w-full border border-stone-300 px-3.5 py-3 text-[14px] bg-white
 const beschriftung = 'block text-[10px] text-stone-400 uppercase tracking-[0.18em] mb-1.5 font-light'
 
 /**
- * Anfrage von der Vermittlerseite.
+ * Anfrage von der Affiliate-Seite.
  *
  * Landet im selben Topf wie die Firmen-Anfragen, aber mit eigener Herkunft —
  * in der Verwaltung stehen die drei Wege getrennt, weil sie unterschiedlich
@@ -67,7 +67,7 @@ function AnfrageFormular() {
           customer_name: form.name.trim(),
           customer_email: form.email.trim(),
           customer_phone: form.phone.trim() || undefined,
-          shoe_name: 'Vermittler-Anfrage',
+          shoe_name: 'Affiliate-Anfrage',
           notes: form.message.trim(),
           source: 'affiliate',
         }),
@@ -139,20 +139,20 @@ export default function AffiliateLanding() {
           to="/login"
           className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-900 no-underline uppercase tracking-[0.18em] transition-colors"
         >
-          <LogIn size={15} strokeWidth={1.4} /> Vermittler-Login
+          <LogIn size={15} strokeWidth={1.4} /> Affiliate-Login
         </Link>
       </div>
 
       <section className="px-5 lg:px-10 pt-16 pb-14 max-w-3xl mx-auto text-center">
-        <p className="text-[10px] uppercase tracking-[0.32em] text-stone-400 mb-4">Vermittler</p>
+        <p className="text-[10px] uppercase tracking-[0.32em] text-stone-400 mb-4">Affiliate</p>
         <h1 className="text-[28px] lg:text-[38px] font-extralight tracking-tight leading-[1.1]">
           Sie empfehlen. Wir fertigen. Beide verdienen daran.
         </h1>
         <p className="text-[13px] lg:text-[14px] text-stone-500 font-light leading-relaxed mt-5">
-          Ein Vermittlerkonto ist kein Werbenetzwerk. Es ist eine Vereinbarung zwischen
+          Ein Affiliate-Konto ist kein Werbenetzwerk. Es ist eine Vereinbarung zwischen
           Ihnen und dem Haus: Sie geben Ihren Link weiter, wer darüber bestellt, bekommt
           die zugesagte Kondition, und Sie erhalten Ihre Provision. Wir sprechen
-          Vermittler an — bewerben können Sie sich nicht, und das ist Absicht.
+          Affiliates an — bewerben können Sie sich nicht, und das ist Absicht.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
           <Link
@@ -160,10 +160,10 @@ export default function AffiliateLanding() {
             className="h-12 px-7 inline-flex items-center gap-2 bg-stone-900 text-white no-underline"
             style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
           >
-            <LogIn size={15} strokeWidth={1.5} /> Zum Vermittler-Login
+            <LogIn size={15} strokeWidth={1.5} /> Zum Affiliate-Login
           </Link>
           <Link
-            to="/vermittler/uebersicht"
+            to="/affiliate/uebersicht"
             className="h-12 px-7 inline-flex items-center gap-2 bg-white text-stone-900 border border-stone-300 hover:border-stone-900 no-underline transition-colors"
             style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}
           >

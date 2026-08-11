@@ -1,8 +1,8 @@
 /**
- * AffiliateOverview — die Vermittler-Anleitung auf einer Seite.
+ * AffiliateOverview — die Affiliate-Anleitung auf einer Seite.
  *
  * Gegenstück zu /business/uebersicht, gleicher Aufbau: nummerierte Abschnitte,
- * Zahlen groß, druckfreundlich. Wer als Vermittler anfängt, hat drei Fragen —
+ * Zahlen groß, druckfreundlich. Wer als Affiliate anfängt, hat drei Fragen —
  * was bekomme ich, wie läuft es ab, und was muss ich dafür liefern. Alle drei
  * stehen hier, damit man sie nachlesen kann, ohne zu fragen.
  */
@@ -56,13 +56,13 @@ export default function AffiliateOverview() {
           to="/login"
           className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-900 no-underline uppercase tracking-[0.18em] transition-colors"
         >
-          <LogIn size={15} strokeWidth={1.4} /> Vermittler-Login
+          <LogIn size={15} strokeWidth={1.4} /> Affiliate-Login
         </Link>
       </div>
 
       <section className="px-5 lg:px-8 pt-14 lg:pt-20 pb-10 lg:pb-14 border-b border-stone-200/60">
         <div className="max-w-4xl mx-auto text-center">
-          <p className={`${eyebrow} mb-4`}>Für Vermittler · auf einen Blick</p>
+          <p className={`${eyebrow} mb-4`}>Für Affiliate · auf einen Blick</p>
           <h1 className="text-[28px] lg:text-[42px] font-extralight text-stone-900 leading-[1.08] tracking-tight">
             Empfehlen und daran verdienen.
             <br />

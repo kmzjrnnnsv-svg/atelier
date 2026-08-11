@@ -177,7 +177,7 @@ router.post('/',
     // auseinanderläuft. Eine Untergrenze genügt und ist sicher: Optionen und
     // Zubehör addieren nur, also kann der Endpreis nie unter dem
     // Grundpreis abzüglich des höchsten Nachlasses liegen, der diesem
-    // Kunden wirklich zusteht — geprüft an Kampagne, Vermittler und Konto,
+    // Kunden wirklich zusteht — geprüft an Kampagne, Affiliate und Konto,
     // nicht an dem, was der Browser behauptet.
     if (shoe_id) {
       const modell = db.prepare('SELECT price, promotion_price FROM shoes WHERE id = ?').get(shoe_id)
@@ -321,13 +321,13 @@ router.post('/',
       db.prepare("UPDATE coupons SET used_count = used_count + 1, updated_at = datetime('now') WHERE id = ?")
         .run(couponRow.id)
     }
-    // ── Vermittler-Provision festhalten ──────────────────────────────────
-    // Direkt bei der Bestellung, damit die Konditionen des Vermittlers zum
+    // ── Affiliate-Provision festhalten ──────────────────────────────────
+    // Direkt bei der Bestellung, damit die Konditionen des Affiliates zum
     // Zeitpunkt des Kaufs gelten. Ändert er später seinen Satz, bleiben ältere
     // Vermittlungen davon unberührt.
     //
     // Eigenbestellungen bringen keine Provision — gleiche E-Mail wie der
-    // Vermittler ist der häufigste Missbrauchsfall und hier mit einer
+    // Affiliate ist der häufigste Missbrauchsfall und hier mit einer
     // Bedingung abgedeckt.
     const affCode = String(req.body.affiliate_code || '').trim().toLowerCase()
     if (affCode) {
@@ -338,8 +338,8 @@ router.post('/',
           String(aff.email || '').toLowerCase() === buyerEmail ||
           (aff.user_id && aff.user_id === uid)
         )
-        // Firmenkampagnen schlagen den Vermittlercode: Den Kunden hat dann die
-        // Firma gebracht, nicht der Vermittler.
+        // Firmenkampagnen schlagen den Affiliate-Code: Den Kunden hat dann die
+        // Firma gebracht, nicht der Affiliate.
         if (aff && !selfOrder && !bizCampaign && !bizCode) {
           const shoeRow = shoe_id ? db.prepare('SELECT category FROM shoes WHERE id = ?').get(shoe_id) : null
           const c = commissionFor(aff, { price }, {
@@ -436,7 +436,7 @@ router.put('/:id',
     // Die Spalte gab es, geschrieben hat sie niemand. Zwei Dinge hingen daran
     // und liefen ins Leere: Die Rücksendefrist beginnt mit der Zustellung — ohne
     // Datum begann sie nie, und Zubehör ließ sich nie zurückgeben. Und die
-    // Schutzfrist der Vermittlerprovision rechnete ersatzweise ab updated_at,
+    // Schutzfrist der Affiliate-Provision rechnete ersatzweise ab updated_at,
     // also ab der letzten beliebigen Änderung an der Bestellung.
     //
     // COALESCE, damit ein späterer Statuswechsel (etwa zurück und wieder vor)
