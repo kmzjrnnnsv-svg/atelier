@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { X, ChevronLeft, ShoppingBag, User, Heart } from 'lucide-react'
 import { prefetchRoute, isMobileWeb } from '../App'
 import useStore from '../store/store'
+import { useSeitentitelStore, titelFuerPfad } from '../store/seitentitel'
 
 // ── Navigation structure (LV-style) ─────────────────────────────────────────
 const NAV_ITEMS = [
@@ -31,6 +32,12 @@ export default function TopBar() {
   const pendingNav = useRef(null)
 
   const isSubPage = !MAIN_PAGES.has(pathname)
+
+  // Die Überschrift der Seite steht in dieser Leiste und nur hier. Ein vom
+  // Bildschirm nachgemeldeter Titel (Rechtstext, Schuhmodell) hat Vorrang vor
+  // der festen Tabelle; fehlt beides, bleibt es bei der Marke.
+  const gemeldeterTitel = useSeitentitelStore(s => s.titel)
+  const seitenTitel = isSubPage ? (gemeldeterTitel || titelFuerPfad(pathname)) : null
 
   // Close menu (with animation) then optionally navigate
   const closeMenu = useCallback((path) => {
@@ -97,15 +104,30 @@ export default function TopBar() {
           )}
         </div>
 
-        {/* Center: Brand */}
-        <button
-          onClick={() => navigate('/collection')}
-          className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60"
-        >
-          <span className="font-brand text-[15px] lg:text-[16px] text-black" style={{ letterSpacing: '0.3em' }}>
-            ARTISAN SOLE
+        {/* Mitte: Seitentitel, sonst die Marke.
+            Der Titel ist kein Knopf — er benennt nur, wo man ist. Die Marke
+            führt weiterhin zur Kollektion. */}
+        {seitenTitel ? (
+          <span
+            className="absolute left-1/2 -translate-x-1/2 text-black text-center truncate"
+            style={{
+              maxWidth: 'calc(100% - 200px)',
+              fontSize: isMobileWeb ? 13 : 14,
+              letterSpacing: '0.06em',
+            }}
+          >
+            {seitenTitel}
           </span>
-        </button>
+        ) : (
+          <button
+            onClick={() => navigate('/collection')}
+            className="absolute left-1/2 -translate-x-1/2 bg-transparent border-0 p-0 active:opacity-60"
+          >
+            <span className="font-brand text-[15px] lg:text-[16px] text-black" style={{ letterSpacing: '0.3em' }}>
+              ARTISAN SOLE
+            </span>
+          </button>
+        )}
 
         {/* Right: icons */}
         <div className="flex items-center gap-0.5" style={{ minWidth: 80, justifyContent: 'flex-end' }}>

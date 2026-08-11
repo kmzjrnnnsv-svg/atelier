@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Footprints, Box, Ruler, Calendar,
+  Footprints, Box, Ruler, Calendar,
   RefreshCw, ChevronDown, ChevronUp, Download,
   Scan, AlertCircle, Loader,
 } from 'lucide-react'

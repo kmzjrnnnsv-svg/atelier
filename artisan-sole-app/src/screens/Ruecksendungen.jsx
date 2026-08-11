@@ -16,7 +16,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, PackageOpen, Lock, Check, Clock, AlertTriangle, Minus, Plus,
+  PackageOpen, Lock, Check, Clock, AlertTriangle, Minus, Plus,
 } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 
@@ -223,13 +223,8 @@ export default function Ruecksendungen() {
   return (
     <div className="min-h-full bg-white pb-20">
       <div className="px-5 lg:px-16 pt-8 lg:pt-12">
-        <button
-          onClick={() => navigate('/profile')}
-          className="flex items-center gap-2 text-[11px] text-black/40 hover:text-black bg-transparent border-0 p-0 mb-6 uppercase tracking-[0.14em]"
-        >
-          <ArrowLeft size={14} strokeWidth={1.5} /> Profil
-        </button>
-
+        {/* Der Weg zurück steht in der oberen Leiste. Ein zweiter Pfeil hier
+            ließ den Kunden raten, welcher der beiden wohin führt. */}
         <p className="text-[10px] uppercase tracking-[0.3em] text-black/25 mb-3">Rücksendungen</p>
         <h1 className="text-[26px] lg:text-[32px] font-extralight text-black tracking-tight">Etwas zurücksenden</h1>
         <p className="text-[13px] text-black/45 font-light leading-relaxed max-w-xl mt-3">
