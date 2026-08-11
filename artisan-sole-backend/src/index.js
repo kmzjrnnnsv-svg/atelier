@@ -64,6 +64,7 @@ import optionsRouter from './routes/options.js'
 import fitRouter from './routes/fit.js'
 import lastChartRouter from './routes/lastChart.js'
 import businessRouter from './routes/business.js'
+import chatRouter from './routes/chat.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -80,7 +81,7 @@ app.use(helmet({
       styleSrc:   ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc:    ["'self'", 'https://fonts.gstatic.com'],
       imgSrc:     ["'self'", 'data:', 'blob:', 'https:'],
-      connectSrc: ["'self'", 'https://artisansole.com', 'https://www.artisansole.com', 'https://business.artisansole.com'],
+      connectSrc: ["'self'", 'https://artisansole.com', 'https://www.artisansole.com', 'https://business.artisansole.com', 'https://affiliate.artisansole.com'],
       frameSrc:   ["'none'"],
       objectSrc:  ["'none'"],
       baseUri:    ["'self'"],
@@ -111,6 +112,10 @@ const allowedOrigins = [
   'https://artisansole.com',    // Production
   'https://www.artisansole.com', // Production (www)
   'https://business.artisansole.com', // Production (B2B-Subdomain)
+  // Der Affiliate-Bereich läuft auf einer eigenen Subdomain, spricht aber
+  // dieselbe API. Sie fehlte hier — jeder Aufruf von dort wurde abgewiesen,
+  // und im Browser sah es aus wie ein Serverausfall.
+  'https://affiliate.artisansole.com', // Production (Affiliate-Subdomain)
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ]
 app.use(cors({
@@ -192,6 +197,7 @@ app.use('/api', optionsRouter)
 app.use('/api/fit', fitRouter)
 app.use('/api/last-size-chart', lastChartRouter)
 app.use('/api/business', businessRouter)
+app.use('/api/chat',     chatRouter)
 
 // GitHub Webhook — auto-deploy on push to website
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {

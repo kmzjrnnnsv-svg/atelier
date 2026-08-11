@@ -1198,6 +1198,47 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_businesses_invite ON businesses(invite_token);
   `)
 
+  // ── Nachrichten zwischen Haus und Gegenüber ──────────────────────────────
+  //
+  // Bis hierher endete jede Nachricht in einer Sackgasse: Eine Anfrage landete
+  // in custom_requests und wurde per E-Mail beantwortet, ein Ticket in
+  // feedback_tickets bekam eine einzelne Notiz, auf die niemand antworten
+  // konnte. Wer nachfragen wollte, schrieb ein neues Ticket — und der Verlauf
+  // lag über zwei Tabellen und ein Postfach verstreut.
+  //
+  // Ein Verlauf je Person, nicht je Anliegen: Es ist ein Gespräch mit dem Haus,
+  // kein Ticketsystem. Deshalb `UNIQUE` auf user_id.
+  //
+  // Die Kategorie (Firma, Affiliate, Kunde) steht bewusst NICHT in der Tabelle.
+  // Sie ergibt sich aus dem Konto und kann sich ändern — wer heute Kunde ist,
+  // führt morgen ein Firmenkonto. Eingefroren wäre sie ab dann falsch, und die
+  // Verwaltung suchte den Verlauf im falschen Reiter.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS chat_threads (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id         INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      last_message_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_threads_letzte ON chat_threads(last_message_at DESC);
+
+    CREATE TABLE IF NOT EXISTS chat_messages (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id   INTEGER NOT NULL REFERENCES chat_threads(id) ON DELETE CASCADE,
+      -- 'kunde' = das Gegenüber, 'team' = Verwaltung (admin/curator)
+      von         TEXT    NOT NULL CHECK(von IN ('kunde','team')),
+      autor_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      text        TEXT    NOT NULL,
+      -- Gelesen wird je Nachricht vermerkt, nicht als Zähler am Verlauf.
+      -- Ein Zähler geht bei jedem Fehler dauerhaft falsch; hier lässt sich der
+      -- Stand jederzeit neu ausrechnen.
+      gelesen_am  TEXT,
+      created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_thread ON chat_messages(thread_id, id);
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_offen  ON chat_messages(gelesen_am);
+  `)
+
   // ── Einmal-Codes pro Firmenkonto ─────────────────────────────────────────
   // Pro Code konfigurierbar: Deckung (voll vs. Rabatt) und Einlösbarkeit
   // (festgelegtes Design vs. freie Katalogwahl). Jeder Code ist genau einmal
