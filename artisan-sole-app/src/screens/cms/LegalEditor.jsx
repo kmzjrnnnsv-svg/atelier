@@ -56,7 +56,7 @@ export default function LegalEditor() {
  const isDirty = currentDoc && (form.title !== (currentDoc.title || '') || form.content !== (currentDoc.content || ''))
 
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12">
+ <div className="">
  {/* Header */}
  <div className="flex items-center justify-between mb-6">
  <div>

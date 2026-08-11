@@ -89,14 +89,14 @@ export default function EmailSettings() {
 
  if (loading) {
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12 flex items-center gap-3">
+ <div className="flex items-center gap-3">
  <p className="text-[13px] text-black/30 font-light opacity-50">Laden...</p>
  </div>
  )
  }
 
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12 max-w-2xl">
+ <div className="max-w-2xl">
  {/* Header */}
  <div className="mb-10">
  <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Konfiguration</p>

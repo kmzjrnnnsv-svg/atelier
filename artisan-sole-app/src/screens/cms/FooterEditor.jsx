@@ -96,7 +96,7 @@ export default function FooterEditor() {
   const labelCls = 'text-[10px] font-light text-black/30 uppercase tracking-[0.2em] mb-1'
 
   return (
-    <div className="px-10 py-10 lg:px-14 lg:py-12 max-w-3xl">
+    <div className="max-w-3xl">
       <div className="mb-10">
         <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Inhalte</p>
         <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Footer</h1>

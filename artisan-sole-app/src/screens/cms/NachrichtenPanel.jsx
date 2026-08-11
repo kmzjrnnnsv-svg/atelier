@@ -147,7 +147,7 @@ export default function NachrichtenPanel() {
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Kopf */}
-      <div className="flex-shrink-0 px-5 lg:px-8 pt-6 pb-4">
+      <div className="flex-shrink-0 pb-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <MessageSquare size={17} strokeWidth={1.4} className="text-black/70" />
@@ -178,7 +178,7 @@ export default function NachrichtenPanel() {
       </div>
 
       {/* Inhalt */}
-      <div className="flex-1 min-h-0 px-5 lg:px-8 pb-6">
+      <div className="flex-1 min-h-0">
         {fehler && <p className="text-[12px] text-red-600/80">{fehler}</p>}
         {laedt ? (
           <p className="text-[12px] text-black/30">Wird geladen …</p>

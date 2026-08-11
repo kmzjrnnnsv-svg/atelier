@@ -356,7 +356,7 @@ export default function ProductConfigEditor() {
  } = useStore()
 
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12">
+ <div className="">
  <div className="mb-8">
  <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Configuration</p>
  <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Produkt-Konfiguration</h1>

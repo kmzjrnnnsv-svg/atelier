@@ -285,7 +285,7 @@ export default function FeedbackPanel() {
   for (const t of tickets) typeCounts[t.type] = (typeCounts[t.type] || 0) + 1
 
   return (
-    <div className="px-10 py-10 lg:px-14 lg:py-12 min-h-full">
+    <div className="min-h-full">
       {/* Header */}
       <div className="flex items-start justify-between mb-10">
         <div>

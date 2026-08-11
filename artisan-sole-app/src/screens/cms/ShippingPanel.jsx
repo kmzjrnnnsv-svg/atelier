@@ -45,7 +45,7 @@ export default function ShippingPanel() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   return (
-    <div className="px-10 py-10 lg:px-14 lg:py-12">
+    <div className="">
       <div className="flex items-center justify-between mb-8">
         <div>
           <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Logistik</p>

@@ -19,7 +19,7 @@ export default function CMSDashboard() {
  ]
 
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12">
+ <div className="">
  {/* Header */}
  <div className="mb-12">
  <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Übersicht</p>

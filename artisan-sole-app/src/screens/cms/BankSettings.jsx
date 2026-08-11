@@ -57,14 +57,14 @@ export default function BankSettings() {
 
  if (loading) {
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12 flex items-center gap-3 text-black/30">
+ <div className="flex items-center gap-3 text-black/30">
  <div className="w-5 h-5 border border-black/10 border-t-black/40 animate-spin rounded-full" /> Laden…
  </div>
  )
  }
 
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12" style={{ maxWidth: '640px' }}>
+ <div className="" style={{ maxWidth: '640px' }}>
  <div className="mb-10">
  <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Administration</p>
  <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Bankverbindung</h1>

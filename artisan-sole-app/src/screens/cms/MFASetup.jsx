@@ -67,7 +67,7 @@ export default function MFASetup() {
 
  if (!status) {
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12 flex items-center gap-3 text-black/30">
+ <div className="flex items-center gap-3 text-black/30">
  <Loader size={14} className="animate-spin" />
  <span className="text-[13px] font-light">Laden…</span>
  </div>
@@ -75,7 +75,7 @@ export default function MFASetup() {
  }
 
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12" style={{ maxWidth: '640px' }}>
+ <div className="" style={{ maxWidth: '640px' }}>
  <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Sicherheit</p>
  <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Zwei-Faktor-Authentifizierung</h1>
  <p className="text-[13px] text-black/30 mt-2 font-light mb-10">Schutz Ihres Admin-Zugangs mit TOTP-Einmalpasswort</p>

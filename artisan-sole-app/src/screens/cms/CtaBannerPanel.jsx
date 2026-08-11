@@ -40,7 +40,7 @@ export default function CtaBannerPanel() {
   }
 
   return (
-    <div className="px-10 py-10 lg:px-14 lg:py-12 max-w-xl">
+    <div className="max-w-xl">
       <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Marketing</p>
       <h2 className="text-[28px] font-extralight text-black/85 tracking-tight">CTA-Banner</h2>
       <p className="text-[13px] text-black/30 mt-2 font-light mb-10">Konfiguriere den Call-to-Action-Banner am Ende der Seiten.</p>
