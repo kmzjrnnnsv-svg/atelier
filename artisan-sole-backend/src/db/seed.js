@@ -56,6 +56,7 @@ export async function seedDatabase(db) {
   seedLastSizeChart(db)
   seedFaqs(db)
   cleanupLegacyWording(db)
+  seedShoeDescriptions(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -1496,4 +1497,142 @@ function cleanupLegacyWording(db) {
     })()
   }
   if (changed) console.log(`✅ Bereinigt: ${changed} DB-Texte (Custom-Made-Wording, keine Gedankenstriche)`)
+}
+
+// ── Modellbeschreibungen ─────────────────────────────────────────────────────
+//
+// Bis hierher trug jede Produktseite denselben Satz, nur mit eingesetztem
+// Namen: „Jeder <Modell> wird in unserer Manufaktur von Hand gefertigt …".
+// Er stimmt für alle und sagt deshalb über keines etwas aus. Ein Kunde, der
+// zwischen Oxford und Derby schwankt, findet dort nichts, was ihm die
+// Entscheidung abnimmt.
+//
+// Deshalb zwei Ebenen: ein eigener Text je Modell und, wo keiner hinterlegt
+// ist, einer je Machart. Auch ein erst im CMS angelegtes Modell bekommt so
+// etwas Zutreffendes statt der Schablone.
+//
+// Der Ton ist bewusst erklärend statt anpreisend — was ein Schuh ist, überzeugt
+// mehr als das Versprechen, dass er gut sei.
+//
+// Geschrieben wird ausschließlich in leere Felder. Was in der Verwaltung
+// eingetragen wurde, bleibt unangetastet — auch nach jedem weiteren Ausrollen.
+// (Nebenwirkung, dieselbe wie beim Zubehör: Wer ein Feld absichtlich leert, um
+// den Standardtext zurückzuholen, findet nach dem nächsten Ausrollen wieder den
+// Text von hier vor.)
+
+const MODELL_BESCHREIBUNGEN = {
+  'heritage oxford':
+    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, dadurch liegt der Schaft glatt am Fuß und die Linie bleibt ruhig. Vollnarbiges Kalbsleder ist die dichteste Schicht der Haut — es nimmt mit den Jahren die Bewegung Ihres Fußes an, statt sich abzunutzen. Ein Paar, das Sie nicht ersetzen, sondern begleiten werden.',
+  'balmoral cap-toe':
+    'Die umlaufende Naht über dem Rist gibt dem Balmoral seine klare Zäsur, die Kappe darüber fasst die Spitze. Shell Cordovan stammt aus einer besonders dichten Lederschicht: Es knittert nicht, es legt sich in weiche Wellen und gewinnt dabei an Tiefe. Ein Schuh für die Anlässe, an die Sie sich später erinnern.',
+  'riviera loafer':
+    'Ein Loafer kommt ohne Schnürung aus — er hält allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir Ihre Maße. Weiches Nubuk nimmt dem Auftritt die Strenge und macht ihn leicht: für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
+  'venetian penny':
+    'Der Penny trägt einen schmalen Riegel über dem Blatt, sonst nichts — der venezianische Schnitt verzichtet auf jede weitere Zutat. Brüniertes Kalbsleder wird an Spitze und Ferse von Hand nachgedunkelt, dadurch bekommt die Farbe Tiefe statt Fläche. Ein Schuh, der leiser spricht und länger bleibt.',
+  'monaco derby':
+    'Beim Derby sitzen die Schnürlaschen offen auf dem Blatt: Das gibt dem Spann Raum und macht den Schuh auch für kräftigere Füße bequem. Lackleder fängt das Licht des Abends ein, ohne aufdringlich zu werden. Für den festlichen Auftritt, der Ihnen leichtfallen darf.',
+  'brogue derby':
+    'Die Lochmuster des Brogue stammen aus dem irischen Hochland, wo sie das Wasser aus dem Leder ließen; heute sind sie Zierde und brechen die Strenge der Form auf. Genarbtes Leder verzeiht Regen und Alltag, ohne müde zu wirken. Ein Begleiter, der schöner wird, je öfter Sie ihn tragen.',
+  'chelsea boot':
+    'Der Chelsea hat keinen Verschluss — zwei elastische Einsätze halten ihn, ein Zug an der hinteren Lasche genügt. Cognacfarbenes Cordovan gibt dem knappen Schaft Wärme und einen Glanz, der von innen zu kommen scheint. Angezogen in Sekunden, getragen über Jahre.',
+  'jodhpur boot':
+    'Der Riemen um den Knöchel kommt aus dem Reitsport Rajasthans: Er hält den Schaft dort, wo ein Reißverschluss ihn nur öffnen würde. Antikisiertes Kalbsleder wird von Hand schattiert, deshalb gleicht kein Paar dem anderen. Für alle, die eine Spur eigenwilliger auftreten möchten.',
+  'artisan runner':
+    'Ein Sneaker aus der Rahmenwerkstatt: gefertigt wie ein Herrenschuh, gedacht für lange Wege. Die Perforation lässt den Fuß atmen, die leichte Sohle federt jeden Schritt ab. Er zeigt, dass Bequemlichkeit keine Ausrede sein muss.',
+  'court blanc':
+    'Weiß ist der ehrlichste Ton, den ein Schuh tragen kann — er zeigt jede Naht, deshalb muss jede sitzen. Vollnarbiges weißes Kalbsleder lässt sich reinigen und altert würdig, statt zu vergilben. Der Schuh, der zu fast allem passt, ohne beliebig zu werden.',
+  'double monk':
+    'Zwei Schnallen statt Schnürsenkel: Der Double Monk stammt aus den Klöstern der Alpen, wo Schuhe schnell sitzen und lange halten mussten. Brüniertes Kalbsleder bringt Bewegung in die geschlossene Fläche. Wer ihn trägt, hat sich entschieden — und das sieht man ihm an.',
+  'single monk strap':
+    'Eine Schnalle, ein Riemen, eine klare Linie — der einfache Monk ist die zurückhaltendere Form des doppelten. Die geprägte Narbung fängt das Licht in feinen Kanten, ohne zu glänzen. Für den Auftritt, der Aufmerksamkeit verdient und nicht darum bittet.',
+  'belgian slipper':
+    'Der Belgian Slipper ist der weichste Schuh im Haus: keine Schnürung, kaum Aufbau, ein flacher Schaft, der sich um den Fuß legt statt ihn zu fassen. Aus den Wohnräumen kam er in die Stadt und hat sich seine Leichtigkeit bewahrt. Schlicht, mit Schleife oder mit Quasten — für Abende, an denen nichts drücken soll.',
+  'wellington':
+    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: Der Wellington kommt ohne Schnürung aus und hält allein über die Passform — deshalb zählen hier Ihre Maße besonders. Schlicht bleibt er streng, mit Quasten, Albert-Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
+  'drake':
+    'Kein Verschluss, keine Ösen: Beim Drake steigen Sie hinein und gehen los. Was ihn ausmacht, entscheiden Sie — glatt belassen, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
+  'laceless trainer':
+    'Ein Sneaker ohne Schnürung: Die Form allein hält ihn am Fuß, weshalb hier jeder Millimeter zählt. Weiches Veloursleder macht ihn leicht, gefertigt wird er dennoch wie ein Herrenschuh. Für Wege, auf denen es schnell gehen darf, ohne nachlässig zu wirken.',
+  'mov flex sport':
+    'Ein Sneaker aus der Rahmenwerkstatt: die Machart eines Herrenschuhs, das Gewicht eines Sportschuhs. Weiches Veloursleder und eine nachgiebige Sohle nehmen dem Tag seine Länge. Für alle, die viel unterwegs sind und trotzdem gut angezogen sein wollen.',
+  'mov flex sport boot':
+    'Die hohe Form der Mov-Flex-Familie: Der Schaft reicht über den Knöchel und gibt ihm Halt, die leichte Sohle bleibt die eines Sneakers. Weiches Veloursleder hält die Silhouette weich statt klobig. Für kühlere Tage, an denen Sie auf Bequemlichkeit nicht verzichten möchten.',
+  'mov flex sport laced boot':
+    'Dieselbe hohe Form, hier mit Schnürung: Über die Ösen legen Sie den Schaft genau an den Knöchel, fester oder lockerer, je nach Tag. Veloursleder und leichte Sohle halten ihn dabei sportlich. Der Stiefel für lange Wege, die bequem bleiben sollen.',
+}
+
+const KATEGORIE_BESCHREIBUNGEN = {
+  OXFORD:
+    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, der Schaft liegt glatt am Fuß, die Linie bleibt ruhig. Das ist die formellste Machart des Schuhbaus — und die, die am meisten von einer genauen Passform lebt. Ein Paar, das mit den Jahren Ihre Bewegung annimmt.',
+  BALMORAL:
+    'Die umlaufende Naht über dem Rist trennt Vorder- von Hinterschaft und gibt dem Balmoral seine klare Zäsur. Diese eine Linie streckt den Fuß und lässt ihn schlanker wirken. Ein Schuh für die Anlässe, an die Sie sich später erinnern.',
+  WHOLECUT:
+    'Ein Wholecut ist aus einem einzigen Stück Leder gearbeitet — eine Naht an der Ferse, sonst keine. Das gelingt nur mit einer makellosen Haut, weshalb dafür wenige überhaupt infrage kommen. Die ruhigste Linie, die ein Schuh haben kann.',
+  DERBY:
+    'Beim Derby liegen die Schnürlaschen offen auf dem Blatt. Das gibt dem Spann Raum, macht den Schuh auch für kräftigere Füße bequem und lässt sich über den Tag nachjustieren. Formell genug für das Büro, gelassen genug für alles danach.',
+  LOAFER:
+    'Ein Loafer hält ohne Schnürung — allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir Ihre Maße. Für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
+  MONK:
+    'Statt Schnürsenkeln hält den Monk eine Schnalle. Die Form stammt aus den Klöstern der Alpen, wo Schuhe schnell sitzen und lange halten mussten. Ein Schuh, der auffällt, ohne laut zu sein.',
+  DOUBLE_MONK:
+    'Zwei Schnallen, ein Riemenpaar, kein Schnürsenkel: Der Double Monk sitzt fest, sobald er geschlossen ist, und lässt sich dabei fein justieren. Er trägt mehr Charakter als der Oxford, ohne dessen Form zu verlassen. Wer ihn trägt, hat sich entschieden.',
+  CHELSEA:
+    'Der Chelsea kommt ohne Verschluss aus: Zwei elastische Einsätze halten ihn, ein Zug an der hinteren Lasche genügt. Der knappe Schaft setzt die Linie des Beins fort, statt sie zu unterbrechen. Angezogen in Sekunden, getragen über Jahre.',
+  CHUKKA:
+    'Der Chukka ist der leichteste unter den Stiefeln: zwei oder drei Ösenpaare, ein knapper Schaft, sonst nichts. Er entstand für die Pausen zwischen den Spielabschnitten des Polos und hat sich deren Gelassenheit bewahrt. Der Schuh für die Übergänge — zwischen den Jahreszeiten wie zwischen den Anlässen.',
+  BOOT:
+    'Ein Stiefel schützt den Knöchel, ohne ihn festzustellen: Der Schaft endet dort, wo die Bewegung beginnt. Durchgenähte Konstruktion und kräftigeres Leder machen ihn wetterfest, ohne ihn schwer wirken zu lassen. Für die Jahreszeit, in der man den Weg nicht immer aussucht.',
+  SNEAKER:
+    'Ein Sneaker aus der Rahmenwerkstatt: gefertigt wie ein Herrenschuh, gedacht für lange Wege. Leichte Sohle, weiches Futter, dieselbe Sorgfalt an jeder Naht. Er zeigt, dass Bequemlichkeit keine Ausrede sein muss.',
+  JODHPUR:
+    'Der Riemen um den Knöchel kommt aus dem Reitsport Rajasthans: Er hält den Schaft dort, wo ein Reißverschluss ihn nur öffnen würde. Der Schnitt bleibt knapp und lässt den Fuß schlank wirken. Für alle, die eine Spur eigenwilliger auftreten möchten.',
+  BELGIAN_SLIPPER:
+    'Der Belgian Slipper ist die weichste Machart des Hauses: keine Schnürung, kaum Aufbau, ein flacher Schaft, der sich um den Fuß legt statt ihn zu fassen. Aus den Wohnräumen kam er in die Stadt und hat sich seine Leichtigkeit bewahrt. Für Abende, an denen nichts drücken soll.',
+  WELLINGTON:
+    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: ohne Schnürung, gehalten allein von der Passform — deshalb zählen hier Ihre Maße besonders. Schlicht bleibt er streng, mit Quasten, Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
+  DRAKE:
+    'Kein Verschluss, keine Ösen: Sie steigen hinein und gehen los. Wie viel Schmuck er trägt, entscheiden Sie — glatt, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
+  LACELESS_TRAINER:
+    'Ein Sneaker ohne Schnürung: Die Form allein hält ihn am Fuß, weshalb hier jeder Millimeter zählt. Weiches Leder macht ihn leicht, gefertigt wird er dennoch wie ein Herrenschuh. Für Wege, auf denen es schnell gehen darf, ohne nachlässig zu wirken.',
+  SNEAKER_BOOT:
+    'Die hohe Form des Sneakers: Der Schaft reicht über den Knöchel und gibt ihm Halt, die leichte Sohle bleibt sportlich. Weiches Leder hält die Silhouette weich statt klobig. Für kühlere Tage, an denen Sie auf Bequemlichkeit nicht verzichten möchten.',
+  SNEAKER_LACED:
+    'Dieselbe hohe Form, hier mit Schnürung: Über die Ösen legen Sie den Schaft genau an den Knöchel, fester oder lockerer, je nach Tag. Leichte Sohle, weiches Leder, die Machart eines Herrenschuhs. Der Stiefel für lange Wege, die bequem bleiben sollen.',
+}
+
+/** Vergleichsform des Namens: „The Heritage Oxford" und „Heritage Oxford"
+ *  sollen dasselbe treffen — der Artikel wurde in der Verwaltung vielfach
+ *  entfernt, der Schuh ist derselbe geblieben. */
+function beschreibungsSchluessel(name) {
+  return String(name || '').trim().toLowerCase().replace(/^the\s+/, '').replace(/\s+/g, ' ')
+}
+
+function seedShoeDescriptions(db) {
+  let spalte
+  try {
+    spalte = db.prepare('PRAGMA table_info(shoes)').all().some(c => c.name === 'description')
+  } catch { return }
+  if (!spalte) return
+
+  const offen = db.prepare(
+    "SELECT id, name, category FROM shoes WHERE description IS NULL OR TRIM(description) = ''"
+  ).all()
+  if (!offen.length) return
+
+  const schreiben = db.prepare("UPDATE shoes SET description = ?, updated_at = datetime('now') WHERE id = ?")
+  let nachModell = 0, nachKategorie = 0
+
+  db.transaction(() => {
+    for (const schuh of offen) {
+      const eigener = MODELL_BESCHREIBUNGEN[beschreibungsSchluessel(schuh.name)]
+      const text = eigener || KATEGORIE_BESCHREIBUNGEN[String(schuh.category || '').toUpperCase()]
+      if (!text) continue
+      schreiben.run(text, schuh.id)
+      if (eigener) nachModell++; else nachKategorie++
+    }
+  })()
+
+  if (nachModell || nachKategorie) {
+    console.log(`✅ Seeded: Modellbeschreibungen, ${nachModell} nach Modell, ${nachKategorie} nach Machart`)
+  }
 }
