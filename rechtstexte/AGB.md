@@ -138,7 +138,7 @@ Ziffer 4.2 gefertigt wurde.
 - Abweichungen innerhalb der Toleranz nach Ziffer 4.2.
 
 (4) Bitte prüfen Sie den Schuh nach Erhalt zeitnah und melden Sie erkennbare
-Mängel möglichst innerhalb von **14 Tagen** an [E-MAIL]. Diese Bitte
+Mängel möglichst innerhalb von **14 Tagen** an kontakt@artisansole.com. Diese Bitte
 beschränkt Ihre gesetzlichen Rechte nicht — sie hilft uns nur, schnell zu
 helfen. Fügen Sie bitte Fotos bei.
 
@@ -182,7 +182,7 @@ absehen.
 erstatten wir **höchstens 50 % des Kaufpreises**. Der einbehaltene Anteil
 deckt Material, Arbeitszeit und die belegte Fertigungskapazität.
 
-(3) Melden Sie sich so früh wie möglich an [E-MAIL]. Je früher die Nachricht
+(3) Melden Sie sich so früh wie möglich an kontakt@artisansole.com. Je früher die Nachricht
 eintrifft, desto eher können wir mehr als die Hälfte erstatten — versprechen
 können wir das nicht.
 
@@ -233,10 +233,7 @@ vollständig und zum vollen Preis zurück.
 ## 8. Preise, Zahlung, Eigentumsvorbehalt
 
 (1) Alle Preise verstehen sich in Euro.
-[**Variante Kleinunternehmer:** Gemäß § 19 UStG erheben wir keine
-Umsatzsteuer und weisen diese daher nicht aus.]
-[**Variante Regelbesteuerung:** Die Preise enthalten die gesetzliche
-Umsatzsteuer.]
+Die Preise enthalten die gesetzliche Umsatzsteuer.
 
 (2) Versandkosten werden im Bestellvorgang gesondert ausgewiesen.
 
@@ -247,7 +244,7 @@ Zahlungseingang.
 
 ## 9. Versand und Gefahrübergang
 
-(1) Versand nach [LIEFERGEBIET].
+(1) Wir liefern nach Deutschland.
 
 (2) Gegenüber Verbrauchern geht die Gefahr mit Übergabe an Sie über.
 Gegenüber Unternehmern mit Übergabe an den Versanddienstleister.

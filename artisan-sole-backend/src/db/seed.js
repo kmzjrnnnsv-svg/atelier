@@ -1668,11 +1668,22 @@ const RECHTSTEXTE = [
   { type: 'impressum',    datei: 'Impressum.md',              titel: 'Impressum' },
 ]
 
-/** Noch offene Platzhalter der Form [GROSSBUCHSTABEN] oder […]. */
+/**
+ * Noch offene Platzhalter.
+ *
+ * Zwei Formen, und die zweite hat mich einmal erwischt: Neben kurzen Marken
+ * wie [STRASSE] gibt es Entscheidungsblöcke — „[**Variante Kleinunternehmer:**
+ * … ]" —, die über mehrere Zeilen laufen. Eine Obergrenze von 80 Zeichen ließ
+ * sie durch, und im veröffentlichten Impressum standen beide Steuervarianten
+ * untereinander. Deshalb ohne Längengrenze und zusätzlich auf die
+ * Entscheidungsmarken geprüft.
+ */
 function offenePlatzhalter(text) {
-  return (text.match(/\[[^\]]{2,80}\]/g) || [])
+  const marken = text.match(/\[\*\*(Variante|Nur behalten|Nur aufnehmen)[^\]]*\]/gs) || []
+  const kurz = (text.match(/\[[^\]\n]{2,120}\]/g) || [])
     // Markdown-Links [Text](url) sind keine Platzhalter.
-    .filter((_, i, alle) => alle.length > 0)
+    .filter(m => !text.includes(`${m}(`))
+  return [...marken, ...kurz]
 }
 
 export function seedLegalDocs(db) {

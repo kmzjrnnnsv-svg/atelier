@@ -7,7 +7,7 @@
 
 ## Angaben gemäß § 5 DDG
 
-[VOLLSTÄNDIGER NAME — bei Einzelunternehmen Vor- und Nachname, kein Fantasiename]
+Qasim Raza
 Robert-Mayer-Straße 29
 60486 Frankfurt am Main
 Deutschland
@@ -17,7 +17,7 @@ Deutschland
 ## Kontakt
 
 Telefon: +49 151 26936500
-E-Mail: [E-MAIL-ADRESSE]
+E-Mail: kontakt@artisansole.com
 
 > Eine E-Mail-Adresse genügt allein nicht. Es muss ein zweiter, unmittelbarer
 > Weg der Kontaktaufnahme angegeben sein — üblicherweise eine Telefonnummer.
@@ -25,12 +25,7 @@ E-Mail: [E-MAIL-ADRESSE]
 
 ## Umsatzsteuer
 
-[**Variante Kleinunternehmer:**
-Gemäß § 19 UStG wird keine Umsatzsteuer erhoben und daher nicht ausgewiesen.
-Eine Umsatzsteuer-Identifikationsnummer liegt nicht vor.]
-
-[**Variante Regelbesteuerung:**
-Umsatzsteuer-Identifikationsnummer gemäß § 27 a UStG: DE327477003]
+Umsatzsteuer-Identifikationsnummer gemäß § 27 a UStG: DE327477003
 
 ## Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
 

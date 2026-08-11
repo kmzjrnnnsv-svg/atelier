@@ -14,7 +14,7 @@
 
 Artisan Sole, Inhaber Qasim Raza
 Robert-Mayer-Straße 29, 60486 Frankfurt am Main
-E-Mail: [E-MAIL] · Telefon: +49 151 26936500
+E-Mail: kontakt@artisansole.com · Telefon: +49 151 26936500
 
 Einen Datenschutzbeauftragten haben wir nicht bestellt; die gesetzlichen
 Voraussetzungen dafür liegen bei uns nicht vor.
@@ -99,7 +99,7 @@ die zugehörigen Maße, um die Genauigkeit unserer Messfunktion zu verbessern.
 
 - **Rechtsgrundlage:** Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)
 - **Freiwillig:** Die Einwilligung ist für die Bestellung nicht erforderlich.
-  Sie können sie jederzeit mit Wirkung für die Zukunft unter [E-MAIL]
+  Sie können sie jederzeit mit Wirkung für die Zukunft unter kontakt@artisansole.com
   widerrufen. Wir löschen die betroffenen Aufnahmen dann.
 
 ### 6.5 Speicherdauer
@@ -148,9 +148,9 @@ Wir geben Daten nur weiter, soweit es für die Abwicklung nötig ist:
 | Empfänger | Wofür |
 |---|---|
 | Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen | Betrieb der Server |
-| [VERSANDDIENSTLEISTER] | Zustellung |
+| Das von uns beauftragte Versandunternehmen | Zustellung |
 | unsere Hausbank (die Zahlung erfolgt per Überweisung; einen externen Zahlungsdienstleister setzen wir nicht ein) | Zahlungsabwicklung |
-| [MANUFAKTUR] | Anfertigung des Schuhs |
+| Unsere Fertigungsmanufaktur in Spanien | Anfertigung des Schuhs |
 | Steuerberatung, Finanzbehörden | gesetzliche Pflichten |
 
 Mit Dienstleistern, die in unserem Auftrag verarbeiten, haben wir Verträge zur
@@ -174,11 +174,10 @@ Sie haben das Recht auf:
 - **Widerruf erteilter Einwilligungen** mit Wirkung für die Zukunft (Art. 7
   Abs. 3)
 
-Eine Nachricht an [E-MAIL] genügt.
+Eine Nachricht an kontakt@artisansole.com genügt.
 
 Ihnen steht zudem ein **Beschwerderecht bei einer Aufsichtsbehörde** zu. Für
-uns zuständig ist [ZUSTÄNDIGE LANDESDATENSCHUTZBEHÖRDE — richtet sich nach
-eurem Sitz].
+uns zuständig ist Der Hessische Beauftragte für Datenschutz und Informationsfreiheit, Wiesbaden.
 
 ## 12. Keine automatisierte Entscheidungsfindung
 
