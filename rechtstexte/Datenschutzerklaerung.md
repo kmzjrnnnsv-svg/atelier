@@ -6,15 +6,15 @@
 > gilt zwingend. Was diese Erklärung leisten kann, ist Vollständigkeit und
 > Ehrlichkeit; beides schützt am besten. Keine Rechtsberatung.
 
-**Stand: [DATUM]**
+**Stand: 11. August 2026**
 
 ---
 
 ## 1. Verantwortlicher
 
-[VOLLSTÄNDIGER NAME]
-[STRASSE], [PLZ ORT]
-E-Mail: [E-MAIL] · Telefon: [TELEFON]
+Artisan Sole, Inhaber Qasim Raza
+Robert-Mayer-Straße 29, 60486 Frankfurt am Main
+E-Mail: [E-MAIL] · Telefon: +49 151 26936500
 
 Einen Datenschutzbeauftragten haben wir nicht bestellt; die gesetzlichen
 Voraussetzungen dafür liegen bei uns nicht vor.
@@ -123,7 +123,6 @@ nicht erforderlich.
 
 ## 8. Affiliate-Programm
 
-[**Nur behalten, wenn das Affiliate-Programm live ist.**]
 
 Melden Sie sich als Affiliate oder Affiliate an, verarbeiten wir Name,
 Anschrift, Kontaktdaten, Steuerangaben und Bankverbindung sowie die über
@@ -138,7 +137,7 @@ Ihren Code vermittelten Bestellungen.
 ## 9. E-Mails
 
 Für Bestellbestätigungen, Zahlungshinweise und Statusmeldungen versenden wir
-E-Mails über [E-MAIL-DIENSTLEISTER, z. B. den Anbieter des SMTP-Postausgangs].
+E-Mails über Hetzner Online GmbH (Postausgang).
 
 - **Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO
 
@@ -148,9 +147,9 @@ Wir geben Daten nur weiter, soweit es für die Abwicklung nötig ist:
 
 | Empfänger | Wofür |
 |---|---|
-| [HOSTING-ANBIETER, z. B. Hetzner Online GmbH] | Betrieb der Server |
+| Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen | Betrieb der Server |
 | [VERSANDDIENSTLEISTER] | Zustellung |
-| [ZAHLUNGSDIENSTLEISTER / Bank] | Zahlungsabwicklung |
+| unsere Hausbank (die Zahlung erfolgt per Überweisung; einen externen Zahlungsdienstleister setzen wir nicht ein) | Zahlungsabwicklung |
 | [MANUFAKTUR] | Anfertigung des Schuhs |
 | Steuerberatung, Finanzbehörden | gesetzliche Pflichten |
 

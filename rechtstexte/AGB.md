@@ -5,14 +5,14 @@
 > Keine Rechtsberatung — vor dem Livegang von einer Anwältin oder einem Anwalt
 > für IT- und Verbraucherrecht prüfen lassen.
 
-**Stand: [DATUM]**
+**Stand: 11. August 2026**
 
 ---
 
 ## 1. Geltungsbereich und Vertragspartner
 
-(1) Diese Bedingungen gelten für alle Bestellungen über [WEBSITE] zwischen
-[VOLLSTÄNDIGER NAME], [STRASSE], [PLZ ORT] (nachfolgend „wir") und Ihnen als
+(1) Diese Bedingungen gelten für alle Bestellungen über artisansole.com zwischen
+Artisan Sole, Inhaber Qasim Raza, Robert-Mayer-Straße 29, 60486 Frankfurt am Main (nachfolgend „wir") und Ihnen als
 Kundin oder Kunde.
 
 (2) Wir verkaufen an Verbraucher und Unternehmer. Verbraucher ist, wer das
@@ -32,7 +32,7 @@ Konfiguration und Ihren Maßangaben.
 (2) Die Fertigung beginnt erst nach vollständigem Zahlungseingang und nach
 Ihrer Freigabe der Konfiguration.
 
-(3) Die Herstellung dauert in der Regel [X] Wochen. Diese Angabe ist ein
+(3) Die Herstellung dauert in der Regel 4 bis 6 Wochen. Diese Angabe ist ein
 unverbindlicher Richtwert, kein Fixtermin.
 
 ## 3. Vertragsschluss
@@ -59,7 +59,7 @@ können das auch nicht.
 
 (2) Wir empfehlen ausdrücklich, jedes Maß **von Hand nachzumessen** und mit
 dem angezeigten Wert zu vergleichen, bevor Sie die Konfiguration freigeben.
-Eine Anleitung finden Sie unter [LINK MESSANLEITUNG].
+Eine Anleitung finden Sie unter artisansole.com/help.
 
 (3) **Messen Sie stets mit den Socken, die Sie zu dem Schuh tragen werden.**
 Sockenstärke verändert Länge und Umfang spürbar.
@@ -240,7 +240,7 @@ Umsatzsteuer.]
 
 (2) Versandkosten werden im Bestellvorgang gesondert ausgewiesen.
 
-(3) Zahlbar im Voraus per [ZAHLUNGSARTEN]. Die Fertigung beginnt nach
+(3) Zahlbar im Voraus per Überweisung (Vorkasse). Die Fertigung beginnt nach
 Zahlungseingang.
 
 (4) Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum.
@@ -293,6 +293,6 @@ Verbraucherschlichtungsstelle **weder verpflichtet noch bereit**.
 der EU bleiben zwingende Verbraucherschutzvorschriften des Aufenthaltsstaates
 unberührt.
 
-(2) Gegenüber Kaufleuten ist Gerichtsstand [ORT].
+(2) Gegenüber Kaufleuten ist Gerichtsstand Frankfurt am Main.
 
 (3) Sollte eine Bestimmung unwirksam sein, bleibt der übrige Vertrag wirksam.

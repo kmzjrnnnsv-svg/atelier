@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute } from './components/ProtectedRoute'
+import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute, StartRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
@@ -355,7 +355,7 @@ function AppRoutes() {
           <Suspense fallback={<DelayedSpinner />}>
             <PageTransition>
             <Routes>
-              <Route path="/"           element={<ShopRoute><Navigate to="/collection" replace /></ShopRoute>} />
+              <Route path="/"           element={<StartRoute />} />
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
