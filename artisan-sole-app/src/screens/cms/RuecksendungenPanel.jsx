@@ -69,7 +69,7 @@ export default function RuecksendungenPanel() {
   const sichtbar = zeigeErledigte ? zeilen : offene
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
           <PackageOpen size={18} className="text-black/50" />

@@ -155,7 +155,7 @@ export default function LoyaltyEditor() {
   const sorted = [...loyaltyTiers].sort((a, b) => a.sortOrder - b.sortOrder)
 
   return (
-    <div className="px-10 py-10 lg:px-14 lg:py-12">
+    <div className="">
       <div className="flex items-center justify-between mb-10">
         <div>
           <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Programme</p>

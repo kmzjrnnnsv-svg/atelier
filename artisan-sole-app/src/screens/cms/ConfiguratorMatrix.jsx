@@ -143,7 +143,7 @@ export default function ConfiguratorMatrix() {
 
   if (loading) {
     return (
-      <div className="px-10 py-10 lg:px-14 lg:py-12">
+      <div className="">
         <div className="flex items-center gap-3 text-black/40 text-[12px]">
           <Loader2 size={14} className="animate-spin" /> Lade Matrix …
         </div>

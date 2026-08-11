@@ -171,7 +171,15 @@ export default function CMSLayout() {
           <span className="flex-1">Auf dem Telefon: zur schlanken Verwaltung</span>
           <ChevronRight size={15} strokeWidth={1.5} />
         </NavLink>
-        <div className="w-full max-w-full overflow-hidden">
+        {/* Ein Rahmen für alle Seiten.
+            Vorher brachte jede ihren eigenen mit: zwölf nutzten px-10/lg:px-14,
+            andere p-8, die Affiliate-Seite gar keinen — dafür eine Deckelung
+            der Breite. Dadurch begann jede Seite an einer anderen Kante, und
+            auf breiten Bildschirmen lief die eine randlos aus, während die
+            andere rechts eine handbreite Lücke ließ.
+            Die Deckelung sitzt jetzt hier und ist mittig, damit links und
+            rechts gleich viel Luft bleibt. */}
+        <div className="w-full max-w-[1500px] mx-auto px-6 sm:px-10 lg:px-14 py-8 lg:py-12">
           <Outlet />
         </div>
       </main>

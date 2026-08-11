@@ -166,7 +166,7 @@ export default function WebsiteImagesPanel() {
 
   if (loading) {
     return (
-      <div className="px-10 py-10 lg:px-14 lg:py-12">
+      <div className="">
         <div className="flex items-center gap-3 text-black/40 text-[12px]">
           <Loader2 size={16} strokeWidth={1.4} className="animate-spin" />
           Lade Bilder …
@@ -181,7 +181,7 @@ export default function WebsiteImagesPanel() {
     .filter(Boolean)
 
   return (
-    <div className="px-10 py-10 lg:px-14 lg:py-12 min-h-full">
+    <div className="min-h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>

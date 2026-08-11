@@ -939,7 +939,7 @@ export default function ShoeEditor() {
  const filtered = filterCat === 'ALL' ? shoes : shoes.filter((s) => s.category === filterCat)
 
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12 w-full max-w-full overflow-hidden">
+ <div className="w-full max-w-full overflow-hidden">
  <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
  <div>
  <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Kollektion</p>

@@ -100,7 +100,7 @@ export default function AffiliatesPanel() {
   }
 
   return (
-    <div className="max-w-6xl">
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
           <Users size={18} className="text-black/50" />

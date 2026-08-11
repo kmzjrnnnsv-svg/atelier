@@ -101,7 +101,7 @@ export default function AccessoriesPanel() {
   const inp = 'w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15'
 
   return (
-    <div className="px-10 py-10 lg:px-14 lg:py-12">
+    <div className="">
       <div className="flex items-center justify-between mb-8">
         <div>
           <p className="text-[9px] text-black/20 uppercase tracking-[0.3em] mb-3 font-light">Kollektion</p>

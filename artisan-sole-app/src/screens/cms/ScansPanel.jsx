@@ -780,7 +780,7 @@ export default function ScansPanel() {
  const mostCommonEU = Object.keys(euDist).sort((a, b) => euDist[b] - euDist[a])[0] ?? '·'
 
  return (
- <div className="px-10 py-10 lg:px-14 lg:py-12 min-h-full">
+ <div className="min-h-full">
 
  {/* ── Header ── */}
  <div className="flex items-start justify-between mb-10">

@@ -161,7 +161,7 @@ export default function LastSizeChartEditor() {
   let currentGroup = null
 
   return (
-    <div className="px-10 py-10 lg:px-14 lg:py-12">
+    <div className="">
       {/* Header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
