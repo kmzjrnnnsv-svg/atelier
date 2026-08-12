@@ -2,9 +2,35 @@ import { create } from 'zustand'
 import { apiFetch } from '../hooks/useApi'
 import { refAusUrl, refMerken, refLesen, refVergessen } from '../lib/affiliateCode'
 
+/**
+ * Der Warenkorb liegt zweimal: im Konto und auf dem Gerät.
+ *
+ * Im Konto, damit er vom Telefon auf den Rechner mitkommt. Auf dem Gerät,
+ * weil ein Gast kein Konto hat — und gerade er soll seinen Korb behalten. Wer
+ * im Laden einen QR-Code scannt, stellt sich einen Schuh zusammen und meldet
+ * sich erst an, wenn er wirklich bestellt; bis dahin lag der Korb allein im
+ * Arbeitsspeicher und war beim nächsten Seitenaufruf leer.
+ */
+const WK_KEY = 'as_cart'
+function warenkorbLesen() {
+  try {
+    const v = localStorage.getItem(WK_KEY)
+    if (v) { const a = JSON.parse(v); if (Array.isArray(a)) return a }
+  } catch { /* ohne Speicher bleibt der Korb flüchtig */ }
+  return []
+}
+function warenkorbSchreiben(cart) {
+  try {
+    if (Array.isArray(cart) && cart.length) localStorage.setItem(WK_KEY, JSON.stringify(cart))
+    else localStorage.removeItem(WK_KEY)
+  } catch { /* ohne Speicher bleibt der Korb flüchtig */ }
+}
+
 // Debounced cart sync, avoids race conditions when removing items quickly
 let _syncTimer = null
 function debouncedSyncCart(getFn) {
+  // Lokal sofort: Ein Neuladen darf den Korb nicht um 300 ms verpassen.
+  warenkorbSchreiben(getFn().cart)
   clearTimeout(_syncTimer)
   _syncTimer = setTimeout(() => {
     const cart = getFn().cart
@@ -37,7 +63,7 @@ const useStore = create((set, get) => ({
   shoes:      [],
   favorites:  [],   // string shoe IDs
   orders:     [],
-  cart:       [],   // items in shopping cart (not yet ordered)
+  cart:       warenkorbLesen(),   // items in shopping cart (not yet ordered)
   faqs:       [],
   latestScan:  null, // most recent foot scan for this user
   averagedScan: null, // Bayesian-weighted average of all user scans
@@ -119,6 +145,7 @@ const useStore = create((set, get) => ({
   },
   clearCart() {
     set({ cart: [] })
+    warenkorbSchreiben([])
     clearTimeout(_syncTimer)
     apiFetch('/api/auth/me/cart', { method: 'PUT', body: JSON.stringify({ cart: [] }) }).catch(() => {})
   },
@@ -142,6 +169,9 @@ const useStore = create((set, get) => ({
       const v = {
         code: r.code,
         gift: r.gift || null,
+        // Die Zugabe mit Namen, Bild und Ladenpreis — damit sie im Warenkorb
+        // als Artikel dasteht und nicht als Schlüssel.
+        gift_item: r.gift_item || null,
         customer_discount_pct: Number(r.customer_discount_pct) || 0,
         // Euro-Grenze des Nachlasses. Der Affiliate zahlt ihn aus seiner
         // Provision, und die ist je Paar gedeckelt.
@@ -213,6 +243,9 @@ const useStore = create((set, get) => ({
         myCampaigns: Array.isArray(myCampaigns) ? myCampaigns : [],
         loading:    false,
       })
+      // Hat der Korb aus dem Konto gewonnen, muss die Kopie auf dem Gerät
+      // nachziehen — sonst holt der nächste Seitenaufruf den alten zurück.
+      warenkorbSchreiben(get().cart)
     } catch (e) {
       set({ error: e?.error || 'Failed to load', loading: false })
     }

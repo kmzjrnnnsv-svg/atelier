@@ -428,7 +428,7 @@ function Affiliates({ back }) {
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({
     full_name: '', email: '', code: '',
-    commission_type: 'percent', commission_value: '10', cap_per_shoe: '40', gift_shoetree: false,
+    commission_type: 'percent', commission_value: '10', cap_per_shoe: '50', gift_shoetree: false,
   })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -454,7 +454,7 @@ function Affiliates({ back }) {
         }),
       })
       setAdding(false)
-      setForm({ full_name: '', email: '', code: '', commission_type: 'percent', commission_value: '10', cap_per_shoe: '40', gift_shoetree: false })
+      setForm({ full_name: '', email: '', code: '', commission_type: 'percent', commission_value: '10', cap_per_shoe: '50', gift_shoetree: false })
       load()
     } catch (e) { setError(e?.error || 'Konnte nicht angelegt werden') }
     finally { setBusy(false) }

@@ -9,6 +9,7 @@ import { shoePath } from '../lib/shoePath'
 import { toFormAddress, streetLine } from '../lib/address'
 import { specFromCartItem } from '../lib/orderSpec'
 import { accessoryImages } from '../lib/accessoryImages'
+import AffiliateVorteil from '../components/AffiliateVorteil'
 
 // Zubehör kommt aus dem Store (dieselbe Quelle wie die Zubehörseite).
 
@@ -284,6 +285,10 @@ export default function Checkout() {
 
   const shoePrice = parsePrice(product.price)
   const cartTotal = cart.reduce((sum, item) => sum + parsePrice(item.price) * item.qty, 0)
+  // Die Zusage des Affiliates hängt am Paar, nicht am Zubehör: Ohne Schuh
+  // gibt es weder Nachlass noch Zugabe, und dann soll auch nichts davon
+  // versprochen werden.
+  const hatSchuh = !!product.id || cart.some(c => !c.isAccessory)
   const accTotal  = chosenAccessories.reduce((sum, a) => sum + a.priceNum, 0)
   const accPromoDiscount = isPromo && promoDiscountPct > 0 ? Math.round(accTotal * promoDiscountPct / 100) : 0
   const subtotal  = (product.id ? shoePrice : cartTotal) + accTotal - accPromoDiscount
@@ -357,7 +362,22 @@ export default function Checkout() {
     return () => clearTimeout(t)
   }, [user, JSON.stringify(delivery), JSON.stringify(billing), sameBilling])
 
-  const handleNext = () => { if (step < 4) setStep(s => s + 1) }
+  /**
+   * Weiter — oder erst zur Anmeldung.
+   *
+   * Der Warenkorb steht jedem offen: Wer im Laden einen QR-Code scannt, soll
+   * sich einen Schuh zusammenstellen und den Preis samt Vorteil sehen können,
+   * ohne vorher ein Konto anzulegen. Ab der Lieferadresse geht es nicht mehr
+   * ohne — dort beginnen Daten, die zu einer Person gehören. Der Korb bleibt
+   * dabei erhalten, und nach der Anmeldung geht es hier weiter.
+   */
+  const handleNext = () => {
+    if (!user) {
+      navigate('/login', { state: { from: '/checkout' } })
+      return
+    }
+    if (step < 4) setStep(s => s + 1)
+  }
 
   const handlePlace = async () => {
     setPlacing(true)
@@ -365,6 +385,15 @@ export default function Checkout() {
     try {
       const billingAddr = sameBilling ? delivery : billing
       const accList = chosenAccessories.map(a => ({ name: a.name, price: a.price }))
+
+      // Die Zugabe des Affiliates fährt als Position zu 0 € mit. Ohne sie
+      // stünde sie nur im Warenkorb: Der Kunde hätte sie zugesagt bekommen,
+      // in der Packliste wäre sie nicht aufgetaucht. Sie hängt am ersten
+      // Paar — zugesagt ist eine, nicht eine je Schuh.
+      const zugabeZeile = hatSchuh && affiliate?.gift_item
+        ? [{ name: `${affiliate.gift_item.name} · Zugabe ${String(affiliate.code || '').toUpperCase()}`, price: '€ 0' }]
+        : []
+
       let lastRow
       const appliedCoupon = couponResult?.valid ? couponCode.trim().toUpperCase() : null
       const appliedBizCode = bizResult?.valid && product.id ? bizCode.trim() : null
@@ -378,7 +407,7 @@ export default function Checkout() {
           material: product.material, color: product.color || product.selectedColor || '',
           price: `€ ${fmtPrice(total)}`, eu_size: product.euSize || latestScan?.eu_size || null,
           scan_id: latestScan?.id || null, delivery_address: delivery,
-          billing_address: billingAddr, accessories: accList,
+          billing_address: billingAddr, accessories: [...accList, ...zugabeZeile],
           foot_notes: footNotes || null, coupon_code: appliedCoupon, business_code: appliedBizCode, business_campaign_id: appliedCampaignId,
           // Der Code aus dem Werbelink. Er wurde bislang nirgends
           // mitgeschickt — die Bestellung kam an, die Vermittlung ging
@@ -409,7 +438,9 @@ export default function Checkout() {
             material: item.material || '', color: item.color || '',
             price: `€ ${fmtPrice(itemTotal)}`, eu_size: item.euSize || latestScan?.eu_size || null,
             scan_id: latestScan?.id || null, delivery_address: delivery,
-            billing_address: billingAddr, accessories: accList,
+            // Zubehör und Zugabe hängen am ersten Paar. An jede Bestellung
+            // gehängt wäre dasselbe Pflegeset dreimal in der Packliste.
+            billing_address: billingAddr, accessories: i === 0 ? [...accList, ...zugabeZeile] : [],
             foot_notes: footNotes || null, coupon_code: i === 0 ? appliedCoupon : null,
             affiliate_code: affiliate?.code || null,
             last_key: item.last || null, last_label: item.lastLabel || null,
@@ -648,6 +679,21 @@ export default function Checkout() {
               <span className="text-[13px] text-black/50">Zwischensumme</span>
               <span className="text-[15px] font-bold text-black">€ {fmtPrice(cartTotal)}</span>
             </div>
+
+            {/* Was der Werbecode zusagt — hier, nicht erst am Ende. Wer über
+                einen QR-Code aus einem Laden kam, soll es wiederfinden. */}
+            {hatSchuh && <AffiliateVorteil affiliate={affiliate} />}
+
+            {/* Für Gäste: Der Korb bleibt liegen, die Anmeldung kommt später.
+                Ohne diesen Satz wirkt der Weiter-Knopf wie eine Falle. */}
+            {!user && (
+              <div className="border border-black/[0.06] px-4 py-3">
+                <p className="text-[12px] text-black/55 font-light leading-relaxed">
+                  Zum Bestellen brauchen wir ein Konto — für Lieferadresse und Fertigungsstand.
+                  Ihr Warenkorb bleibt dabei erhalten{affiliate?.code ? ', Ihr Vorteil ebenfalls' : ''}.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -869,6 +915,11 @@ export default function Checkout() {
               </div>
             )}
 
+            {/* Der Vorteil aus dem Werbecode — noch einmal unmittelbar vor dem
+                Bestellen. Er ist Teil dessen, was hier zugesagt wird, und
+                gehört deshalb auf dieselbe Seite wie der Gesamtbetrag. */}
+            {hatSchuh && <AffiliateVorteil affiliate={affiliate} kompakt />}
+
             {/* Address */}
             <div className="bg-white p-4 border border-black/[0.06]">
               <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">Lieferadresse</p>
@@ -1048,7 +1099,7 @@ export default function Checkout() {
             className={`w-full py-3.5 flex items-center justify-center gap-2 text-[12px] font-light transition-all border ${
               canNext ? 'bg-black text-white border-black hover:bg-white hover:text-black' : 'bg-[#f6f5f3] text-black/20 border-transparent'}`}
             style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Weiter <ChevronRight size={14} strokeWidth={1.5} />
+            {user ? 'Weiter' : 'Anmelden und fortfahren'} <ChevronRight size={14} strokeWidth={1.5} />
           </button>
         ) : (
           <button onClick={handlePlace} disabled={placing || (ohnePassform.length > 0 && !passformAkzeptiert)}

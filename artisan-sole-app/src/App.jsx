@@ -396,7 +396,7 @@ function AppRoutes() {
               <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/wishlist"    element={<ShopRoute><ProtectedRoute><Wishlist /></ProtectedRoute></ShopRoute>} />
               <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-              <Route path="/checkout"    element={<ShopRoute><ProtectedRoute><Checkout /></ProtectedRoute></ShopRoute>} />
+              <Route path="/checkout"    element={<ShopRoute><Checkout /></ShopRoute>} />
               <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
               <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
 
@@ -477,7 +477,7 @@ function AppRoutes() {
       <Route path="/settings"    element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/wishlist"    element={<ShopRoute><ProtectedRoute><Wishlist /></ProtectedRoute></ShopRoute>} />
       <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-      <Route path="/checkout"    element={<ShopRoute><ProtectedRoute><Checkout /></ProtectedRoute></ShopRoute>} />
+      <Route path="/checkout"    element={<ShopRoute><Checkout /></ShopRoute>} />
       <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
       <Route path="*"            element={<NotFound />} />

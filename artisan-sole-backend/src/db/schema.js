@@ -922,15 +922,16 @@ export function runMigrations(db) {
     -- ── Affiliate (Affiliates) ─────────────────────────────────────────────
     -- Wirbt für die Schuhe und erhält je vermitteltem Paar eine Provision.
     --
-    -- commission_type/-value: entweder ein fester Betrag je Paar oder ein
-    -- Prozentsatz vom Kaufpreis. cap_per_shoe deckelt beides — bewusst je
+    -- commission_type/-value: entweder ein fester Betrag je Paar ('fixed',
+    -- dann ist commission_value der Topf) oder ein Prozentsatz vom Kaufpreis
+    -- ('percent', dann deckelt cap_per_shoe ihn). Gedeckelt wird bewusst je
     -- Paar, nicht je Bestellung, damit ein Einkauf mit mehreren Paaren auch
     -- mehrfach vergütet wird.
     --
-    -- cap_per_shoe ist zugleich die Obergrenze für das, was der Affiliate
-    -- seinem Kunden zusagen darf: Nachlass wie Zugabe gehen von seiner
-    -- Provision ab (customer_benefit). Eine Vermittlung kostet das Haus
-    -- deshalb nie mehr als diesen Betrag.
+    -- Der so bestimmte Topf ist zugleich die Obergrenze für das, was der
+    -- Affiliate seinem Kunden zusagen darf: Nachlass wie Zugabe gehen von
+    -- seiner Provision ab (customer_benefit). Eine Vermittlung kostet das
+    -- Haus deshalb nie mehr als diesen Betrag.
     --
     -- gift_shoetree: Vorgänger von customer_benefit/gift_key — die Spalte
     -- bleibt für alte Zeilen stehen, gelesen wird sie nicht mehr.
@@ -963,7 +964,7 @@ export function runMigrations(db) {
       commission_type TEXT    NOT NULL DEFAULT 'percent'
                               CHECK(commission_type IN ('percent','fixed')),
       commission_value REAL   NOT NULL DEFAULT 10,
-      cap_per_shoe    REAL    NOT NULL DEFAULT 40,
+      cap_per_shoe    REAL    NOT NULL DEFAULT 50,
       gift_shoetree   INTEGER NOT NULL DEFAULT 0,
       -- Was der geworbene Kunde erhält, unabhängig von der Provision.
       customer_discount_pct REAL NOT NULL DEFAULT 0,
@@ -1492,6 +1493,12 @@ export function runMigrations(db) {
       UPDATE affiliate_commissions SET benefit_kind = 'gift'
       WHERE benefit_kind = 'none' AND gift_cost > 0
     `).run()
+    // Der Deckel je Paar steigt von 40 auf 50 €. Angehoben wird nur, wo noch
+    // exakt der alte Standard steht — ein von Hand gesetzter Wert bleibt, was
+    // er ist. Bereits erfasste Provisionen sind davon nicht berührt: Sie
+    // tragen ihren Betrag selbst, damit eine spätere Änderung der Konditionen
+    // ältere Vermittlungen nicht rückwirkend verteuert.
+    db.prepare('UPDATE affiliates SET cap_per_shoe = 50 WHERE cap_per_shoe = 40').run()
   } catch { /* Spalten noch nicht da */ }
 
   // Bestehende Firmen-Anfragen nachtragen. Sie sind allein am shoe_name zu
