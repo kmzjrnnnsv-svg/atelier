@@ -76,6 +76,7 @@ const lazyImports = {
   '/my-scans':   () => import('./screens/MyScans'),
   '/ruecksendungen': () => import('./screens/Ruecksendungen'),
   '/welcome':    () => import('./screens/Welcome'),
+  '/entdecken':  () => import('./screens/Entdecken'),
 }
 
 // Prefetch a route's chunk on hover/touch, safe to call multiple times
@@ -104,6 +105,7 @@ const LegalDoc          = lazy(lazyImports['/legal'])
 const MyScans           = lazy(lazyImports['/my-scans'])
 const Ruecksendungen    = lazy(lazyImports['/ruecksendungen'])
 const Welcome           = lazy(lazyImports['/welcome'])
+const Entdecken         = lazy(lazyImports['/entdecken'])
 
 // CMS
 const CMSLayout            = lazy(() => import('./screens/cms/CMSLayout'))
@@ -168,7 +170,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/scan', '/customize', '/register-business', '/affiliate-konto', '/affiliate-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/affiliate', '/affiliate']
+const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/entdecken', '/scan', '/customize', '/register-business', '/affiliate-konto', '/vermittler-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/affiliate', '/vermittler']
 // Pfade mit variablem Ende: hier zählt der Anfang, nicht die genaue Adresse.
 const NO_NAV_PREFIXES = ['/schuhe/']
 const hidesNav = (path) =>
@@ -379,6 +381,7 @@ function AppRoutes() {
               <Route path="/verwaltung" element={<CMSRoute><MobileAdmin /></CMSRoute>} />
               <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
               <Route path="/welcome"    element={<Welcome />} />
+              <Route path="/entdecken"  element={<Entdecken />} />
               {/* Entdecken/Wissen sind entfallen — alte Adressen führen zur Kollektion. */}
               <Route path="/explore"    element={<Navigate to="/collection" replace />} />
               <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
@@ -460,6 +463,7 @@ function AppRoutes() {
       <Route path="/ruecksendungen" element={<ProtectedRoute><Ruecksendungen /></ProtectedRoute>} />
       <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
       <Route path="/welcome"    element={<Welcome />} />
+      <Route path="/entdecken"  element={<Entdecken />} />
       <Route path="/explore"    element={<Navigate to="/collection" replace />} />
       <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
       <Route path="/help"        element={<HelpSupport />} />

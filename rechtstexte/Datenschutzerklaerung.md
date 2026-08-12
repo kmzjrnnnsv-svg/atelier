@@ -109,7 +109,24 @@ bestellen können, ohne neu zu messen. Sie können jederzeit die Löschung
 verlangen; die Anfertigung bereits laufender Bestellungen bleibt davon
 unberührt.
 
-## 7. Cookies
+## 7. Ihr Vorname beim geführten Einstieg
+
+Wer über einen QR-Code aus einem Geschäft zu uns kommt, wird durch eine kurze
+Einführung geleitet und dabei nach dem Vornamen gefragt.
+
+Diese Angabe ist **freiwillig** — der Weg lässt sich ohne Namen fortsetzen.
+
+Der Vorname wird **nicht an unsere Server übertragen**. Er wird ausschließlich
+im Zwischenspeicher Ihres Browsers gehalten (`sessionStorage`) und dient allein
+dazu, Sie auf den folgenden Seiten anzusprechen. Sobald Sie den Tab schließen,
+ist er gelöscht; wir müssen dafür nichts tun und können ihn auch nicht
+wiederherstellen.
+
+Erst wenn Sie sich anschließend registrieren, wird der Name Teil Ihres
+Kundenkontos. Rechtsgrundlage ist dann Art. 6 Abs. 1 lit. b DSGVO
+(Vertragserfüllung); es gilt Ziffer 4.
+
+## 8. Cookies
 
 Wir setzen ausschließlich technisch notwendige Cookies ein — insbesondere
 eines, das Ihre Anmeldung aufrechterhält. Es ist gegen Auslesen durch Skripte
@@ -121,7 +138,7 @@ nicht erforderlich.
 
 - **Rechtsgrundlage:** § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich)
 
-## 8. Affiliate-Programm
+## 9. Affiliate-Programm
 
 
 Melden Sie sich als Affiliate oder Affiliate an, verarbeiten wir Name,
@@ -134,14 +151,14 @@ Ihren Code vermittelten Bestellungen.
   Kontaktdaten der Käuferinnen und Käufer, sondern nur Datum, Modell und
   Provisionsbetrag.
 
-## 9. E-Mails
+## 10. E-Mails
 
 Für Bestellbestätigungen, Zahlungshinweise und Statusmeldungen versenden wir
 E-Mails über Hetzner Online GmbH (Postausgang).
 
 - **Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO
 
-## 10. Empfänger
+## 11. Empfänger
 
 Wir geben Daten nur weiter, soweit es für die Abwicklung nötig ist:
 
@@ -160,7 +177,7 @@ Auftragsverarbeitung nach Art. 28 DSGVO geschlossen.
 hier die Rechtsgrundlage der Übermittlung stehen, etwa
 Standardvertragsklauseln. Prüft das für jeden Dienstleister einzeln.]
 
-## 11. Ihre Rechte
+## 12. Ihre Rechte
 
 Sie haben das Recht auf:
 
@@ -179,13 +196,13 @@ Eine Nachricht an kontakt@artisansole.com genügt.
 Ihnen steht zudem ein **Beschwerderecht bei einer Aufsichtsbehörde** zu. Für
 uns zuständig ist Der Hessische Beauftragte für Datenschutz und Informationsfreiheit, Wiesbaden.
 
-## 12. Keine automatisierte Entscheidungsfindung
+## 13. Keine automatisierte Entscheidungsfindung
 
 Eine automatisierte Entscheidungsfindung einschließlich Profilbildung nach
 Art. 22 DSGVO findet nicht statt. Die von unserer Anwendung errechneten
 Größen- und Modellempfehlungen sind Vorschläge; die Auswahl treffen Sie.
 
-## 13. Änderungen
+## 14. Änderungen
 
 Wir passen diese Erklärung an, wenn sich die Verarbeitung oder die
 Rechtslage ändert. Es gilt die jeweils auf dieser Seite veröffentlichte
