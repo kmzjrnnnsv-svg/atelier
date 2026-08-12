@@ -65,20 +65,34 @@ export function ownAreaFor(user) {
 }
 
 /**
- * Laden-Seiten: Firmenkonten und Affiliates werden in ihren eigenen Bereich
- * geschickt. Sie sollen nach der Anmeldung nicht im Verkauf landen — ihr
- * Verhältnis zum Haus ist ein anderes, und die Kollektion mit Warenkorb ist
- * für sie eher verwirrend als nützlich.
+ * Laden-Seiten. Offen für alle — auch für Firmenkonten und Affiliates.
  *
- * Gäste bleiben unberührt: Der Laden ist ohne Anmeldung offen, und das soll
- * er bleiben.
+ * Bis hierher wurden beide aus dem Verkauf heraus in ihren eigenen Bereich
+ * geschickt. Der Gedanke war, sie nicht mit einem Warenkorb zu behelligen,
+ * den sie nicht brauchen. In der Sache ging er daneben: Ein Affiliate, der
+ * nicht sehen kann, was er empfiehlt, kann es nicht empfehlen, und ein
+ * Firmenkonto wählt für seine Kampagne Modelle aus, die es nie zu Gesicht
+ * bekam. Auf den Unterdomänen stand die Kollektion deshalb leer da.
+ *
+ * Wohin es nach der Anmeldung geht, bleibt unverändert: Die Wurzel führt
+ * jeden in seinen Bereich (siehe StartRoute). Wer von dort aus in den Laden
+ * geht, darf ihn jetzt auch sehen.
  */
 export function ShopRoute({ children }) {
+  const { loading } = useAuth()
+  if (loading) return <Spinner />
+  return children
+}
+
+/**
+ * Die Wurzel der Domain: Jeder landet in seinem Bereich, alle anderen in der
+ * Kollektion. Diese Weiterleitung trug vorher ShopRoute — sie gehört aber nur
+ * hierher, sonst sperrt sie den Laden gleich mit zu.
+ */
+export function StartRoute() {
   const { user, loading } = useAuth()
   if (loading) return <Spinner />
-  const area = ownAreaFor(user)
-  if (area) return <Navigate to={area} replace />
-  return children
+  return <Navigate to={ownAreaFor(user) || '/collection'} replace />
 }
 
 // Admin only

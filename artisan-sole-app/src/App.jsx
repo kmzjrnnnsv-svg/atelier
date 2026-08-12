@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute } from './components/ProtectedRoute'
+import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute, StartRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
@@ -312,7 +312,9 @@ function AppRoutes() {
               <Route path="business" element={<BusinessPanel />} />
               <Route path="affiliate" element={<AffiliatesPanel />} />
               <Route path="affiliate" element={<Navigate to="/cms/affiliate" replace />} />
-              <Route path="anfragen" element={<AnfragenPanel />} />
+              {/* Anfragen leben jetzt unter Nachrichten — die Adresse bleibt
+                  als Weiterleitung, sie steht in Lesezeichen. */}
+              <Route path="anfragen" element={<Navigate to="/cms/nachrichten" replace />} />
               <Route path="nachrichten" element={<NachrichtenPanel />} />
               <Route path="ruecksendungen" element={<RuecksendungenPanel />} />
               <Route path="scans"    element={<ScansPanel />} />
@@ -353,7 +355,7 @@ function AppRoutes() {
           <Suspense fallback={<DelayedSpinner />}>
             <PageTransition>
             <Routes>
-              <Route path="/"           element={<ShopRoute><Navigate to="/collection" replace /></ShopRoute>} />
+              <Route path="/"           element={<StartRoute />} />
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />

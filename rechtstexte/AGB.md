@@ -5,14 +5,14 @@
 > Keine Rechtsberatung — vor dem Livegang von einer Anwältin oder einem Anwalt
 > für IT- und Verbraucherrecht prüfen lassen.
 
-**Stand: [DATUM]**
+**Stand: 11. August 2026**
 
 ---
 
 ## 1. Geltungsbereich und Vertragspartner
 
-(1) Diese Bedingungen gelten für alle Bestellungen über [WEBSITE] zwischen
-[VOLLSTÄNDIGER NAME], [STRASSE], [PLZ ORT] (nachfolgend „wir") und Ihnen als
+(1) Diese Bedingungen gelten für alle Bestellungen über artisansole.com zwischen
+Artisan Sole, Inhaber Qasim Raza, Robert-Mayer-Straße 29, 60486 Frankfurt am Main (nachfolgend „wir") und Ihnen als
 Kundin oder Kunde.
 
 (2) Wir verkaufen an Verbraucher und Unternehmer. Verbraucher ist, wer das
@@ -32,7 +32,7 @@ Konfiguration und Ihren Maßangaben.
 (2) Die Fertigung beginnt erst nach vollständigem Zahlungseingang und nach
 Ihrer Freigabe der Konfiguration.
 
-(3) Die Herstellung dauert in der Regel [X] Wochen. Diese Angabe ist ein
+(3) Die Herstellung dauert in der Regel 4 bis 6 Wochen. Diese Angabe ist ein
 unverbindlicher Richtwert, kein Fixtermin.
 
 ## 3. Vertragsschluss
@@ -59,7 +59,7 @@ können das auch nicht.
 
 (2) Wir empfehlen ausdrücklich, jedes Maß **von Hand nachzumessen** und mit
 dem angezeigten Wert zu vergleichen, bevor Sie die Konfiguration freigeben.
-Eine Anleitung finden Sie unter [LINK MESSANLEITUNG].
+Eine Anleitung finden Sie unter artisansole.com/help.
 
 (3) **Messen Sie stets mit den Socken, die Sie zu dem Schuh tragen werden.**
 Sockenstärke verändert Länge und Umfang spürbar.
@@ -138,7 +138,7 @@ Ziffer 4.2 gefertigt wurde.
 - Abweichungen innerhalb der Toleranz nach Ziffer 4.2.
 
 (4) Bitte prüfen Sie den Schuh nach Erhalt zeitnah und melden Sie erkennbare
-Mängel möglichst innerhalb von **14 Tagen** an [E-MAIL]. Diese Bitte
+Mängel möglichst innerhalb von **14 Tagen** an kontakt@artisansole.com. Diese Bitte
 beschränkt Ihre gesetzlichen Rechte nicht — sie hilft uns nur, schnell zu
 helfen. Fügen Sie bitte Fotos bei.
 
@@ -182,7 +182,7 @@ absehen.
 erstatten wir **höchstens 50 % des Kaufpreises**. Der einbehaltene Anteil
 deckt Material, Arbeitszeit und die belegte Fertigungskapazität.
 
-(3) Melden Sie sich so früh wie möglich an [E-MAIL]. Je früher die Nachricht
+(3) Melden Sie sich so früh wie möglich an kontakt@artisansole.com. Je früher die Nachricht
 eintrifft, desto eher können wir mehr als die Hälfte erstatten — versprechen
 können wir das nicht.
 
@@ -200,12 +200,26 @@ sorgfältiger Arbeit einmal nicht gefallen kann, bieten wir freiwillig an:
 - eine Gutschrift auf ein künftiges Paar;
 - eine Erstattung von **höchstens 50 % des Kaufpreises**.
 
-(3) Voraussetzung ist, dass der Schuh ungetragen ist — abgesehen von kurzer
-Anprobe in der Wohnung auf sauberem Boden — und vollständig mit Zubehör und
-Verpackung vorliegt. Maßgeblich für die Beurteilung sind die Aufnahmen aus der
+(3) Voraussetzung ist, dass der Schuh **an uns zurückgesandt** wird und dabei
+ungetragen ist — abgesehen von kurzer Anprobe in der Wohnung auf sauberem
+Boden — und vollständig mit Zubehör und Verpackung vorliegt. Die Rücksendung
+erfolgt nach Absprache mit uns; die Kosten der Rücksendung tragen Sie.
+Maßgeblich für die Beurteilung sind die Aufnahmen aus der
 Wareneingangskontrolle nach Ziffer 6 Abs. 5.
 
-(4) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
+(4) **Ausgeschlossen sind Schuhe mit persönlicher Kennzeichnung.** Trägt der
+Schuh Initialen, ein Monogramm, einen Namenszug, ein Wappen oder eine andere
+auf Sie zugeschnittene Prägung, entfällt die Kulanz nach dieser Ziffer
+vollständig. Der Grund ist einfach: Ein Paar mit Ihren Initialen lässt sich
+niemandem sonst anbieten. Es ist kein Schuh, der zurück ins Regal kann,
+sondern ein Einzelstück, das nur zu Ihnen gehört. Bei allen übrigen
+Ausführungen — Leder, Farbe, Sohle, Leisten — greift die Kulanz wie oben
+beschrieben.
+
+(5) Erstattet wird erst, nachdem der Schuh bei uns eingegangen und geprüft
+ist.
+
+(6) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
 dem Grunde noch der Höhe nach; 50 % ist die Obergrenze, nicht die Regel. Über
 Art und Umfang entscheiden wir im Einzelfall. Aus der Gewährung im Einzelfall
 entsteht kein Anspruch für die Zukunft.
@@ -219,21 +233,18 @@ vollständig und zum vollen Preis zurück.
 ## 8. Preise, Zahlung, Eigentumsvorbehalt
 
 (1) Alle Preise verstehen sich in Euro.
-[**Variante Kleinunternehmer:** Gemäß § 19 UStG erheben wir keine
-Umsatzsteuer und weisen diese daher nicht aus.]
-[**Variante Regelbesteuerung:** Die Preise enthalten die gesetzliche
-Umsatzsteuer.]
+Die Preise enthalten die gesetzliche Umsatzsteuer.
 
 (2) Versandkosten werden im Bestellvorgang gesondert ausgewiesen.
 
-(3) Zahlbar im Voraus per [ZAHLUNGSARTEN]. Die Fertigung beginnt nach
+(3) Zahlbar im Voraus per Überweisung (Vorkasse). Die Fertigung beginnt nach
 Zahlungseingang.
 
 (4) Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum.
 
 ## 9. Versand und Gefahrübergang
 
-(1) Versand nach [LIEFERGEBIET].
+(1) Wir liefern nach Deutschland.
 
 (2) Gegenüber Verbrauchern geht die Gefahr mit Übergabe an Sie über.
 Gegenüber Unternehmern mit Übergabe an den Versanddienstleister.
@@ -279,6 +290,6 @@ Verbraucherschlichtungsstelle **weder verpflichtet noch bereit**.
 der EU bleiben zwingende Verbraucherschutzvorschriften des Aufenthaltsstaates
 unberührt.
 
-(2) Gegenüber Kaufleuten ist Gerichtsstand [ORT].
+(2) Gegenüber Kaufleuten ist Gerichtsstand Frankfurt am Main.
 
 (3) Sollte eine Bestimmung unwirksam sein, bleibt der übrige Vertrag wirksam.
