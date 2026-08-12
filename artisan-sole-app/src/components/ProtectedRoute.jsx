@@ -1,5 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { FIRMENBEREICH_OFFEN } from '../lib/freigaben'
+import BaldVerfuegbar from '../screens/business/BaldVerfuegbar'
 
 // Spinner shown while session is being restored on page load
 function Spinner() {
@@ -47,6 +49,12 @@ export function BusinessRoute({ children }) {
     return <Navigate to="/login" replace state={{ from }} />
   }
   if (!user.is_business) return <Navigate to="/collection" replace />
+  // Solange der Bereich nicht offen ist, sieht ein Firmenkonto einen Hinweis
+  // statt einer Oberfläche, die nur halb bedient wird. Verwaltungsrollen kommen
+  // durch — sonst könnte niemand prüfen, was er da freischaltet.
+  if (!FIRMENBEREICH_OFFEN && user.role !== 'admin' && user.role !== 'curator') {
+    return <BaldVerfuegbar />
+  }
   return children
 }
 

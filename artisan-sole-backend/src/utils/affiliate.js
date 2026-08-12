@@ -31,48 +31,43 @@ const num = (v) => {
 }
 
 /**
- * Einkaufspreis der Zugabe; ohne hinterlegten Wert wird nichts einbehalten.
+ * Der Kundenvorteil kostet den Affiliate nichts mehr.
  *
- * Der Schlüssel lautet shoe_tree_cedar. Vorher stand hier 'shoetrees' — ein
- * Artikel, den es nicht mehr gibt. Die Abfrage lieferte nichts, num(undefined)
- * ergibt 0, und damit wäre die Zugabe dem Affiliate geschenkt worden, ohne
- * dass irgendetwas fehlgeschlagen wäre.
+ * Vorher wurde der Einkaufspreis der Zugabe von seiner Provision abgezogen.
+ * Das machte die Rechnung an drei Stellen kompliziert: Sie hing am Zubehör-
+ * Einkaufspreis, sie galt nur bei prozentualer Vergütung, und für Sneaker
+ * musste sie entfallen, weil ein Schuhspanner dort nicht hineinpasst. Drei
+ * Sonderfälle für einen Betrag um zwanzig Euro.
+ *
+ * Jetzt trägt das Haus beides — Nachlass wie Zugabe. Das ist nicht nur
+ * einfacher, es ist auch billiger als gedacht: Ein Nachlass von 10 % auf ein
+ * Paar zu 340 € kostet 34 €, ein Pflegeset im Einkauf rund 24 €. Die Zugabe
+ * ist die günstigere der beiden Zusagen, und der Affiliate bekommt in beiden
+ * Fällen dasselbe.
+ *
+ * Damit bleibt von der Provision eine Zeile: Prozent oder Festbetrag, gedeckelt.
  */
-export function shoetreeCost(db) {
-  const row = db.prepare("SELECT cost_price FROM accessories WHERE key = 'shoe_tree_cedar'").get()
-  return num(row?.cost_price)
-}
 
 /**
  * Provision für ein einzelnes Paar.
  * `order` braucht price (nach Rabatt) und optional die Kategorie des Schuhs.
  */
-export function commissionFor(affiliate, order, { giftCost = 0, shoeCategory = null } = {}) {
+export function commissionFor(affiliate, order) {
   const price = num(order.price)
   const gross = affiliate.commission_type === 'fixed'
     ? num(affiliate.commission_value)
     : price * num(affiliate.commission_value) / 100
 
-  const capped = Math.min(gross, num(affiliate.cap_per_shoe) || Infinity)
-
-  // Die Zugabe gibt es nur, wo sie auch passt. Der Schuhspanner ist für
-  // Sneaker ausgeschlossen (siehe accessories.not_recommended_for); dort
-  // entfällt sie und der Affiliate behält die volle Provision.
-  const giftApplies = affiliate.gift_shoetree === 1
-    && affiliate.commission_type === 'percent'
-    && shoeCategory !== 'SNEAKER'
-    && shoeCategory !== 'SNEAKER_LACED'
-    && shoeCategory !== 'SNEAKER_BOOT'
-    && shoeCategory !== 'LACELESS_TRAINER'
-
-  const withheld = giftApplies ? Math.min(giftCost, capped) : 0
+  const amount = Math.min(gross, num(affiliate.cap_per_shoe) || Infinity)
 
   return {
     shoe_price: round2(price),
-    gross_amount: round2(capped),
-    gift_cost: round2(withheld),
-    amount: round2(Math.max(0, capped - withheld)),
-    gift_applies: giftApplies,
+    gross_amount: round2(amount),
+    // Bleiben als Spalten erhalten, damit alte Zeilen lesbar bleiben; neu
+    // geschrieben wird hier nichts mehr davon.
+    gift_cost: 0,
+    amount: round2(Math.max(0, amount)),
+    gift_applies: false,
   }
 }
 

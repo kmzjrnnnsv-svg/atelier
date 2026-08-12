@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
-import { commissionFor, shoetreeCost } from '../utils/affiliate.js'
+import { commissionFor } from '../utils/affiliate.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification } from '../utils/email.js'
 import { totpVerify } from '../utils/totp.js'
@@ -341,11 +341,7 @@ router.post('/',
         // Firmenkampagnen schlagen den Affiliate-Code: Den Kunden hat dann die
         // Firma gebracht, nicht der Affiliate.
         if (aff && !selfOrder && !bizCampaign && !bizCode) {
-          const shoeRow = shoe_id ? db.prepare('SELECT category FROM shoes WHERE id = ?').get(shoe_id) : null
-          const c = commissionFor(aff, { price }, {
-            giftCost: shoetreeCost(db),
-            shoeCategory: shoeRow?.category || null,
-          })
+          const c = commissionFor(aff, { price })
           db.prepare(`
             INSERT INTO affiliate_commissions
               (affiliate_id, order_id, status, shoe_price, gross_amount, gift_cost, amount)

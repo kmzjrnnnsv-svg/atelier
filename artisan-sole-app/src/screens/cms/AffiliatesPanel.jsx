@@ -44,7 +44,7 @@ const leeresFormular = {
   tax_status: 'small_business', tax_number: '', vat_id: '',
   iban: '', account_holder: '',
   commission_type: 'percent', commission_value: 10, cap_per_shoe: 40,
-  gift_shoetree: false, customer_discount_pct: 0,
+  customer_benefit: 'none', customer_discount_pct: 10, gift_key: 'care_kit_leather',
   note: '',
 }
 
@@ -254,13 +254,29 @@ export default function AffiliatesPanel() {
               <Feld label="Deckel je Paar (€)" hint="Obergrenze der Provision, unabhängig vom Kaufpreis.">
                 <input type="number" step="1" min="0" className={eingabe} value={form.cap_per_shoe} onChange={e => setzen('cap_per_shoe', e.target.value)} />
               </Feld>
-              <Feld label="Nachlass für den Geworbenen (%)" hint="Was der Kunde über den Link erhält. Wirkt im Konfigurator, ohne dass er etwas eingibt.">
-                <input type="number" step="1" min="0" max="100" className={eingabe} value={form.customer_discount_pct} onChange={e => setzen('customer_discount_pct', e.target.value)} />
+              <Feld label="Was der Geworbene bekommt" hint="Entweder oder — beides zugleich gab es nie, stand aber in zwei getrennten Feldern.">
+                <select className={eingabe} value={form.customer_benefit} onChange={e => setzen('customer_benefit', e.target.value)}>
+                  <option value="none">Nichts</option>
+                  <option value="discount">Nachlass in Prozent</option>
+                  <option value="gift">Zugabe zum ersten Paar</option>
+                </select>
               </Feld>
-              <label className="flex items-center gap-2 mt-6">
-                <input type="checkbox" checked={form.gift_shoetree} onChange={e => setzen('gift_shoetree', e.target.checked)} />
-                <span className="text-[12px] text-black/70">Zedernholz-Schuhspanner als Zugabe</span>
-              </label>
+              {form.customer_benefit === 'discount' && (
+                <Feld label="Nachlass (%)" hint="Wirkt im Konfigurator, ohne dass der Kunde etwas eingibt.">
+                  <input type="number" step="1" min="0" max="100" className={eingabe} value={form.customer_discount_pct} onChange={e => setzen('customer_discount_pct', e.target.value)} />
+                </Feld>
+              )}
+              {form.customer_benefit === 'gift' && (
+                <Feld label="Welche Zugabe" hint="Liegt dem ersten Paar bei. Geht zulasten des Hauses, nicht der Provision.">
+                  <select className={eingabe} value={form.gift_key} onChange={e => setzen('gift_key', e.target.value)}>
+                    <option value="care_kit_leather">Lederpflege-Set</option>
+                    <option value="care_kit_suede">Wildlederpflege-Set</option>
+                    <option value="shoe_tree_cedar">Zedernholz-Schuhspanner</option>
+                    <option value="shoe_tree_black">Schuhspanner Schwarz</option>
+                    <option value="boot_tree_cedar">Zedernholz-Stiefelspanner</option>
+                  </select>
+                </Feld>
+              )}
             </div>
             <Feld label="Notiz (intern)">
               <textarea rows={2} className="w-full p-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40 bg-white" value={form.note} onChange={e => setzen('note', e.target.value)} />
@@ -348,8 +364,9 @@ export default function AffiliatesPanel() {
       <div className="flex items-start gap-2 mt-2 text-[11px] text-black/40 leading-relaxed">
         <Gift size={12} className="mt-0.5 shrink-0" />
         <p>
-          Zugabe und Nachlass sind zweierlei: Die Zugabe wird dem Affiliate vom Honorar
-          abgezogen, der Nachlass geht zulasten des Hauses.
+          Zugabe und Nachlass sind ein Entweder-oder, und beides trägt das Haus.
+          Die Provision des Affiliates bleibt davon unberührt: Prozent oder
+          Festbetrag, gedeckelt — mehr steht nicht in der Rechnung.
         </p>
       </div>
     </div>

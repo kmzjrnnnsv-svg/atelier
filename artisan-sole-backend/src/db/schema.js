@@ -1450,9 +1450,37 @@ export function runMigrations(db) {
     // (gift_shoetree); zugesagt wird aber oft ein Nachlass, und der stand
     // nirgends.
     `ALTER TABLE affiliates   ADD COLUMN customer_discount_pct REAL NOT NULL DEFAULT 0`,
+    // Eine Wahl statt zweier unabhängiger Felder.
+    //
+    // Vorher konnten Nachlass und Zugabe gleichzeitig gesetzt sein — gemeint
+    // war aber immer ein Entweder-oder, und in der Maske standen sie an
+    // getrennten Stellen. Wer beides ausfüllte, verschenkte doppelt, ohne dass
+    // ihn etwas gewarnt hätte.
+    //
+    // 'none' | 'discount' (dann zählt customer_discount_pct)
+    //        | 'gift'     (dann zählt gift_key)
+    `ALTER TABLE affiliates   ADD COLUMN customer_benefit TEXT NOT NULL DEFAULT 'none'`,
+    // Welche Zugabe. Vorher war der Zedernholz-Spanner fest verdrahtet; ein
+    // Pflegeset ließ sich nicht zusagen, obwohl es im Zubehör längst steht.
+    `ALTER TABLE affiliates   ADD COLUMN gift_key TEXT`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }
+
+  // Bestehende Affiliates auf die eine Wahl heben. Der Nachlass hat Vorrang:
+  // Er war das Zugesagte, die Zugabe die Beigabe — wer beides trug, behält
+  // den Nachlass, damit niemandem etwas weggenommen wird, das er versprochen
+  // bekam.
+  try {
+    db.prepare(`
+      UPDATE affiliates SET customer_benefit = 'discount'
+      WHERE customer_benefit = 'none' AND customer_discount_pct > 0
+    `).run()
+    db.prepare(`
+      UPDATE affiliates SET customer_benefit = 'gift', gift_key = 'shoe_tree_cedar'
+      WHERE customer_benefit = 'none' AND gift_shoetree = 1
+    `).run()
+  } catch { /* Spalten noch nicht da */ }
 
   // Bestehende Firmen-Anfragen nachtragen. Sie sind allein am shoe_name zu
   // erkennen, den die Firmenseite fest gesetzt hat — einmalig, danach trägt
