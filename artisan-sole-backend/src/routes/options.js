@@ -109,15 +109,19 @@ router.post('/options', ...adminOnly,
   (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
-    const { group_id, key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order } = req.body
+    // recommended/recommendation_reason wurden bislang gelesen, aber nie
+    // geschrieben: Der Konfigurator brachte die Auszeichnung mit, in der
+    // Verwaltung ließ sie sich nirgends setzen. Beides gehört zusammen.
+    const { group_id, key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order, recommended, recommendation_reason } = req.body
     const db = getDb()
     try {
       const r = db.prepare(`
-        INSERT INTO options (group_id, key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO options (group_id, key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order, recommended, recommendation_reason)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(group_id, key, label, description || null, image_data || null,
              color_hex || null, icon || null,
-             parseFloat(default_price_extra) || 0, applicable_categories || '*', parseInt(sort_order) || 0)
+             parseFloat(default_price_extra) || 0, applicable_categories || '*', parseInt(sort_order) || 0,
+             recommended ? 1 : 0, recommendation_reason || null)
       res.status(201).json(db.prepare('SELECT * FROM options WHERE id = ?').get(r.lastInsertRowid))
     } catch (e) {
       res.status(400).json({ error: e.message })
@@ -132,7 +136,7 @@ router.put('/options/:id', ...adminOnly, param('id').isInt(), (req, res) => {
   if (!db.prepare('SELECT id FROM options WHERE id = ?').get(id)) {
     return res.status(404).json({ error: 'Option not found' })
   }
-  const { key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order, group_id } = req.body
+  const { key, label, description, image_data, color_hex, icon, default_price_extra, applicable_categories, sort_order, group_id, recommended, recommendation_reason } = req.body
   const updates = []
   const vals = []
   if (key !== undefined)         { updates.push('key = ?');         vals.push(key) }
@@ -145,6 +149,11 @@ router.put('/options/:id', ...adminOnly, param('id').isInt(), (req, res) => {
   if (applicable_categories !== undefined) { updates.push('applicable_categories = ?'); vals.push(applicable_categories) }
   if (sort_order !== undefined)  { updates.push('sort_order = ?');  vals.push(parseInt(sort_order) || 0) }
   if (group_id !== undefined)    { updates.push('group_id = ?');    vals.push(parseInt(group_id)) }
+  // Die Empfehlung ist eine Auszeichnung je Wert, kein Feld je Gruppe: In
+  // einer Gruppe dürfen mehrere Werte empfohlen sein — bei den Sohlen ist
+  // genau das der Normalfall.
+  if (recommended !== undefined) { updates.push('recommended = ?'); vals.push(recommended ? 1 : 0) }
+  if (recommendation_reason !== undefined) { updates.push('recommendation_reason = ?'); vals.push(recommendation_reason || null) }
   updates.push("updated_at = datetime('now')")
   if (updates.length > 1) {
     db.prepare(`UPDATE options SET ${updates.join(', ')} WHERE id = ?`).run(...vals, id)

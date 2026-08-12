@@ -3,7 +3,7 @@
  * Drei Spalten: Gruppen-Liste · Werte der ausgewählten Gruppe · Detail.
  */
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Check, X, Loader2, Sliders } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, Loader2, Sliders, Star } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import ImagePicker from '../../components/ImagePicker'
 
@@ -57,6 +57,24 @@ export default function OptionsEditor() {
       await load()
     } catch (e) { alert(e?.error || 'Fehler') }
   }
+  /**
+   * Empfehlung eines Wertes umschalten.
+   *
+   * Bewusst ohne Formular und ohne Begrenzung auf einen Wert je Gruppe: In
+   * einer Gruppe dürfen mehrere empfohlen sein. Bei den Sohlen ist das der
+   * Normalfall — zwei taugen fürs Büro, eine fürs Wetter, und alle drei
+   * sollen den Hinweis tragen.
+   */
+  const empfehlungUmschalten = async (v) => {
+    try {
+      await apiFetch(`/api/options/${v.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ recommended: v.recommended ? 0 : 1 }),
+      })
+      await load()
+    } catch (e) { alert(e?.error || 'Fehler') }
+  }
+
   const deleteOption = async (id) => {
     if (!confirm('Wert löschen?')) return
     await apiFetch(`/api/options/${id}`, { method: 'DELETE' }).catch(e => alert(e?.error || 'Fehler'))
@@ -167,13 +185,37 @@ export default function OptionsEditor() {
                             : <Sliders size={14} strokeWidth={1.2} className="text-black/15" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-light text-black/80">{v.label}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[12px] font-light text-black/80">{v.label}</p>
+                          {v.recommended ? (
+                            <span className="text-[9px] uppercase tracking-[0.14em] text-black/45 border border-black/15 px-1.5 py-px">
+                              Empfohlen
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="text-[10px] text-black/35 font-light tracking-wider truncate">
                           {v.key}
                           {v.default_price_extra > 0 && ` · +${v.default_price_extra.toFixed(2).replace('.', ',')} €`}
                           {v.applicable_categories && v.applicable_categories !== '*' && ` · ${v.applicable_categories}`}
+                          {v.recommended && v.recommendation_reason && ` · ${v.recommendation_reason}`}
                         </p>
                       </div>
+                      {/* Direkt in der Liste umschaltbar: Eine Empfehlung
+                          betrifft selten einen einzelnen Wert. Über das
+                          Formular wären es je Wert vier Klicks — bei fünf
+                          Sohlen zwanzig, nur um drei auszuzeichnen. */}
+                      <button
+                        onClick={() => empfehlungUmschalten(v)}
+                        title={v.recommended ? 'Empfehlung zurücknehmen' : 'Als empfohlen auszeichnen'}
+                        className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] bg-transparent border-0"
+                      >
+                        <Star
+                          size={13}
+                          strokeWidth={1.3}
+                          className={v.recommended ? 'text-black' : 'text-black/20'}
+                          fill={v.recommended ? 'currentColor' : 'none'}
+                        />
+                      </button>
                       <button onClick={() => setEditingOption(v)} className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] bg-transparent border-0">
                         <Pencil size={12} strokeWidth={1.3} className="text-black/30" />
                       </button>
@@ -257,6 +299,7 @@ function OptionForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(initial || {
     key: '', label: '', description: '', image_data: '', color_hex: '', icon: '',
     default_price_extra: 0, applicable_categories: '*', sort_order: 0,
+    recommended: 0, recommendation_reason: '',
   })
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const valid = form.key && form.label
@@ -327,6 +370,32 @@ function OptionForm({ initial, onSave, onCancel }) {
           <Label>Reihenfolge</Label>
           <input type="number" value={form.sort_order} onChange={e => set('sort_order', parseInt(e.target.value) || 0)} className="w-full h-10 px-2 border-b border-black/[0.1] text-[13px] bg-transparent outline-none font-light" />
         </div>
+      </div>
+      {/* Empfehlung. Mehrere Werte einer Gruppe dürfen sie tragen — der
+          Kunde soll eine Vorauswahl sehen, keine Vorschrift. */}
+      <div className="mt-5">
+        <Label>Empfehlung</Label>
+        <button
+          type="button"
+          onClick={() => set('recommended', form.recommended ? 0 : 1)}
+          className={`flex items-center gap-2 h-10 px-3 border text-[12px] font-light transition-colors ${
+            form.recommended ? 'bg-black text-white border-black' : 'bg-transparent text-black/50 border-black/15 hover:border-black/40'
+          }`}
+        >
+          <Star size={13} strokeWidth={1.4} fill={form.recommended ? 'currentColor' : 'none'} />
+          {form.recommended ? 'Wird als empfohlen gezeigt' : 'Nicht empfohlen'}
+        </button>
+        {!!form.recommended && (
+          <div className="mt-3">
+            <Label>Warum (erscheint beim Kunden)</Label>
+            <input
+              value={form.recommendation_reason || ''}
+              onChange={e => set('recommendation_reason', e.target.value)}
+              placeholder="z. B. Unsere Wahl für den Alltag"
+              className="w-full h-10 px-2 border-b border-black/[0.1] text-[13px] bg-transparent outline-none font-light"
+            />
+          </div>
+        )}
       </div>
       <div className="mt-5">
         <Label>Gilt für Kategorien (* = alle)</Label>

@@ -1875,10 +1875,32 @@ export default function Customize() {
                         {v.price_extra > 0 && (
                           <p className="text-[9px] text-black/35 font-light mt-0.5">+{v.price_extra.toFixed(2).replace('.', ',')} €</p>
                         )}
+                        {/* Empfehlung des Hauses. In einer Gruppe dürfen
+                            mehrere Werte sie tragen — es ist eine Vorauswahl,
+                            keine Vorschrift, und deshalb ein Hinweis am Wert
+                            und keine gesperrte Auswahl. */}
+                        {v.recommended && (
+                          <span className="absolute top-1 right-1 text-black/45" title={v.recommendation_reason || 'Unsere Empfehlung'}>
+                            <Star size={9} strokeWidth={1.4} fill="currentColor" />
+                          </span>
+                        )}
                       </button>
                     )
                   })}
                 </div>
+                {/* Warum empfohlen — einmal je Gruppe, statt an jedem Knopf.
+                    Ein Stern ohne Begründung ist eine Behauptung. */}
+                {group.values.some(v => v.recommended && v.recommendation_reason) && (
+                  <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2 flex items-start gap-1.5">
+                    <Star size={9} strokeWidth={1.4} fill="currentColor" className="mt-[3px] shrink-0 text-black/40" />
+                    <span>
+                      {group.values
+                        .filter(v => v.recommended && v.recommendation_reason)
+                        .map(v => `${v.label}: ${v.recommendation_reason}`)
+                        .join(' · ')}
+                    </span>
+                  </p>
+                )}
                 {/* Beschreibung der aktuell gewählten Option (z. B. Leisten-
                     Erklärung „Runde Zehenform …") */}
                 {currentSelection?.description && (
