@@ -10,10 +10,11 @@
  */
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Send, MapPin, Gem, Footprints, PenTool, Package, MessageCircle, ArrowRight, LogIn, Gift, Heart, Handshake, Award, Building2 } from 'lucide-react'
+import { Check, Send, MapPin, Gem, Footprints, PenTool, Package, MessageCircle, ArrowRight, Gift, Heart, Handshake, Award, Building2 } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
 import Ablauf from '../components/Ablauf'
+import FirmenLogin from '../components/FirmenLogin'
 
 const IMG_API_BASE = import.meta.env.VITE_API_URL || ''
 const resolveImg = (url) => {
@@ -139,12 +140,9 @@ export default function CorporateGifting() {
       {/* Top bar, Brand + Firmen-Login */}
       <div className="sticky top-0 z-30 flex items-center justify-between px-5 lg:px-10 py-4 bg-white/85 backdrop-blur-md border-b border-stone-200/70">
         <span className="font-brand text-[15px] tracking-[0.04em]">ARTISAN SOLE</span>
-        <Link
-          to="/login"
+        <FirmenLogin
           className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-900 no-underline uppercase tracking-[0.18em] transition-colors"
-        >
-          <LogIn size={15} strokeWidth={1.4} /> Firmen-Login
-        </Link>
+        />
       </div>
 
       {/* Einstieg. Ohne Bannerbild: Die Aussage trägt sich selbst, und ein
@@ -452,12 +450,12 @@ export default function CorporateGifting() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="font-brand text-[13px] tracking-[0.04em] text-stone-900">ARTISAN SOLE</span>
           <div className="flex items-center gap-5">
-            <Link
-              to="/login"
+            <FirmenLogin
+              groesse={13}
               className="inline-flex items-center gap-1.5 text-[10px] text-stone-400 hover:text-stone-700 no-underline uppercase tracking-[0.2em] transition-colors"
             >
-              <LogIn size={13} strokeWidth={1.4} /> Bereits Firmenkunde? Zum Firmen-Login
-            </Link>
+              Bereits Firmenkunde? Zum Firmen-Login
+            </FirmenLogin>
             <p className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">Custom Made Footwear · Made in Spain</p>
           </div>
         </div>

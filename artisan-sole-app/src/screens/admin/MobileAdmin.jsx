@@ -502,7 +502,10 @@ function Affiliates({ back }) {
             </span>
             <span className="min-w-0">
               <span className="text-[14px] font-light text-black/80 block">Schuhspanner als Zugabe</span>
-              <span className="text-[11px] text-black/30 font-light">Einkaufspreis wird von der Provision einbehalten</span>
+              <span className="text-[11px] text-black/30 font-light">
+                Einkaufspreis wird von der Provision einbehalten. Andere Zusagen —
+                Nachlass oder gar nichts — stehen im vollen CMS.
+              </span>
             </span>
           </button>
         )}

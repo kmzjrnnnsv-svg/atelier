@@ -6,7 +6,7 @@ import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import {
-  affiliateStanding, matureCommissions, shoetreeCost,
+  affiliateStanding, matureCommissions, deckelVon, zugabeKosten,
   PAYOUT_BATCH_SIZE, PROTECTION_DAYS,
 } from '../utils/affiliate.js'
 import { sendAffiliateInvitation } from '../utils/email.js'
@@ -20,8 +20,8 @@ const canAdmin = [authenticate, requireRole('admin', 'curator')]
 const selfFields = `
   id, code, status, full_name, email, phone, street, postal_code, city, country,
   tax_status, tax_number, vat_id, iban, account_holder, birth_date,
-  commission_type, commission_value, cap_per_shoe, gift_shoetree,
-  customer_discount_pct, created_at, terms_accepted_at
+  commission_type, commission_value, cap_per_shoe,
+  customer_benefit, customer_discount_pct, gift_key, created_at, terms_accepted_at
 `
 
 const normCode = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
@@ -59,17 +59,25 @@ router.get('/validate/:code', (req, res) => {
   if (!code) return res.status(400).json({ valid: false, error: 'Code fehlt' })
 
   const db = getDb()
-  const a = db.prepare("SELECT code, gift_shoetree, commission_type, customer_discount_pct FROM affiliates WHERE code = ? AND status = 'active'").get(code)
+  const a = db.prepare(
+    "SELECT code, customer_benefit, customer_discount_pct, gift_key, cap_per_shoe FROM affiliates WHERE code = ? AND status = 'active'"
+  ).get(code)
   if (!a) return res.status(404).json({ valid: false, error: 'Dieser Code ist nicht gültig.' })
 
+  // Entweder ein Nachlass oder eine Zugabe — nie beides. Der Kunde soll sehen,
+  // was er bekommt; was der Affiliate dafür erhält, geht ihn nichts an.
+  //
+  // discount_cap begleitet den Prozentsatz: Der Nachlass geht von der Provision
+  // des Affiliates ab und ist damit auf seinen Deckel begrenzt. Der Betrag
+  // gehört zur Zusage — der Konfigurator muss ihn kennen, sonst zeigt er einen
+  // Preis an, den die Bestellung hinterher nicht bestätigt.
   res.json({
     valid: true,
     code: a.code,
-    // Zugabe gibt es nur bei der Prozentwahl — siehe utils/affiliate.js
-    gift: a.gift_shoetree === 1 && a.commission_type === 'percent' ? 'shoe_tree_cedar' : null,
-    // Was dem Geworbenen zugesagt wurde. Der Kunde soll sehen, was er bekommt;
-    // was der Affiliate dafür erhält, geht ihn nichts an.
-    customer_discount_pct: Number(a.customer_discount_pct) || 0,
+    benefit: a.customer_benefit || 'none',
+    customer_discount_pct: a.customer_benefit === 'discount' ? Number(a.customer_discount_pct) || 0 : 0,
+    discount_cap: a.customer_benefit === 'discount' ? deckelVon(a) : 0,
+    gift: a.customer_benefit === 'gift' ? (a.gift_key || null) : null,
   })
 })
 
@@ -133,7 +141,7 @@ router.get('/me', authenticate, async (req, res) => {
   const standing = affiliateStanding(db, a.id)
   const commissions = db.prepare(`
     SELECT c.id, c.status, c.shoe_price, c.gross_amount, c.gift_cost, c.amount,
-           c.payable_at, c.created_at, o.shoe_name
+           c.benefit_kind, c.payable_at, c.created_at, o.shoe_name
     FROM affiliate_commissions c
     JOIN orders o ON o.id = c.order_id
     WHERE c.affiliate_id = ?
@@ -159,7 +167,17 @@ router.get('/me', authenticate, async (req, res) => {
     standing,
     commissions,
     payouts,
-    rules: { batchSize: PAYOUT_BATCH_SIZE, protectionDays: PROTECTION_DAYS, giftCost: shoetreeCost(db) },
+    rules: {
+      batchSize: PAYOUT_BATCH_SIZE,
+      protectionDays: PROTECTION_DAYS,
+      // Der Deckel ist zugleich die Obergrenze der eigenen Zusage — im Portal
+      // steht beides in einem Satz, also kommt es in einem Feld.
+      capPerShoe: deckelVon(a),
+      giftCost: a.customer_benefit === 'gift' ? zugabeKosten(db, a.gift_key) : 0,
+      giftName: a.customer_benefit === 'gift' && a.gift_key
+        ? (db.prepare('SELECT name FROM accessories WHERE key = ?').get(a.gift_key)?.name || null)
+        : null,
+    },
   })
 })
 
@@ -295,6 +313,14 @@ router.post('/',
     const email = String(b.email).trim()
     const type = b.commission_type === 'fixed' ? 'fixed' : 'percent'
 
+    // Die Wahl darf mitkommen; tut sie es nicht, leiten wir sie aus dem ab,
+    // was dasteht. Sonst müsste jeder bestehende Aufrufer zugleich umgestellt
+    // werden, nur weil zwei Felder zu einem wurden.
+    const vorteil = ['none', 'discount', 'gift'].includes(b.customer_benefit)
+      ? b.customer_benefit
+      : (Number(b.customer_discount_pct) > 0 ? 'discount'
+        : (b.gift_key || b.gift_shoetree ? 'gift' : 'none'))
+
     // Ein Affiliate ist eine Person, kein Firmenkonto: Zum Datensatz gehört
     // ein Login, sonst sieht er seinen Stand nie. Gibt es die Adresse schon
     // als Benutzer, wird sie verknüpft statt ein zweites Konto anzulegen.
@@ -316,12 +342,13 @@ router.post('/',
         INSERT INTO affiliates
           (user_id, code, status, full_name, email, phone, street, postal_code, city, country, birth_date,
            tax_status, tax_number, vat_id, iban, account_holder,
-           commission_type, commission_value, cap_per_shoe, gift_shoetree, customer_discount_pct,
+           commission_type, commission_value, cap_per_shoe,
+           customer_benefit, customer_discount_pct, gift_key,
            invite_token, note, terms_accepted_at)
         -- terms_accepted_at bleibt leer: Zustimmen kann nur der Affiliate
         -- selbst, und zwar wenn er seine Daten einträgt. Die Verwaltung kann
         -- das nicht für ihn tun.
-        VALUES (?, ?, 'active', ?,?,?,?,?,?,?,?, ?,?,?,?,?, ?,?,?,?,?, ?,?, NULL)
+        VALUES (?, ?, 'active', ?,?,?,?,?,?,?,?, ?,?,?,?,?, ?,?,?, ?,?,?, ?,?, NULL)
       `).run(
         userId, code,
         String(b.full_name || '').trim(), email, b.phone || null,
@@ -331,8 +358,12 @@ router.post('/',
         type,
         Number(b.commission_value) || (type === 'fixed' ? 25 : 10),
         Number(b.cap_per_shoe) || 40,
-        b.gift_shoetree ? 1 : 0,
+        vorteil,
         Math.min(100, Math.max(0, Number(b.customer_discount_pct) || 0)),
+        // Ohne ausdrückliche Wahl gilt, was der alte Schalter meinte: der
+        // Zedernholz-Spanner. Sonst bekäme ein Aufrufer, der noch
+        // gift_shoetree schickt, stillschweigend ein Pflegeset.
+        vorteil === 'gift' ? (b.gift_key || (b.gift_shoetree ? 'shoe_tree_cedar' : 'care_kit_leather')) : null,
         inviteToken, b.note || null,
       )
       return { id: info.lastInsertRowid, userId }
@@ -373,8 +404,8 @@ router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
 
   const allowed = ['status', 'full_name', 'email', 'phone', 'street', 'postal_code', 'city',
     'country', 'birth_date', 'tax_status', 'tax_number', 'vat_id', 'iban', 'account_holder',
-    'commission_type', 'commission_value', 'cap_per_shoe', 'gift_shoetree',
-    'customer_discount_pct', 'note', 'user_id']
+    'commission_type', 'commission_value', 'cap_per_shoe',
+    'customer_benefit', 'customer_discount_pct', 'gift_key', 'note', 'user_id']
   const patch = {}
   for (const k of allowed) if (req.body[k] !== undefined) patch[k] = req.body[k]
   if (patch.gift_shoetree !== undefined) patch.gift_shoetree = patch.gift_shoetree ? 1 : 0

@@ -927,10 +927,13 @@ export function runMigrations(db) {
     -- Paar, nicht je Bestellung, damit ein Einkauf mit mehreren Paaren auch
     -- mehrfach vergütet wird.
     --
-    -- gift_shoetree: Der Affiliate kann seinen Kunden einen Zedernholz-
-    -- Schuhspanner schenken. Verrechnet wird der Einkaufspreis aus
-    -- accessories.cost_price (22 €), nicht der Ladenpreis. Nur zusammen mit
-    -- der Prozentwahl sinnvoll.
+    -- cap_per_shoe ist zugleich die Obergrenze für das, was der Affiliate
+    -- seinem Kunden zusagen darf: Nachlass wie Zugabe gehen von seiner
+    -- Provision ab (customer_benefit). Eine Vermittlung kostet das Haus
+    -- deshalb nie mehr als diesen Betrag.
+    --
+    -- gift_shoetree: Vorgänger von customer_benefit/gift_key — die Spalte
+    -- bleibt für alte Zeilen stehen, gelesen wird sie nicht mehr.
     CREATE TABLE IF NOT EXISTS affiliates (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -991,8 +994,9 @@ export function runMigrations(db) {
       status        TEXT    NOT NULL DEFAULT 'pending'
                             CHECK(status IN ('pending','confirmed','payable','cancelled','paid')),
       shoe_price    REAL    NOT NULL DEFAULT 0,   -- Kaufpreis nach Rabatt
-      gross_amount  REAL    NOT NULL DEFAULT 0,   -- Provision vor Abzug
-      gift_cost     REAL    NOT NULL DEFAULT 0,   -- einbehaltener Einkaufspreis der Zugabe
+      gross_amount  REAL    NOT NULL DEFAULT 0,   -- der Topf für dieses Paar
+      gift_cost     REAL    NOT NULL DEFAULT 0,   -- davon für die Zusage einbehalten
+      benefit_kind  TEXT    NOT NULL DEFAULT 'none', -- wofür: 'none'|'discount'|'gift'
       amount        REAL    NOT NULL DEFAULT 0,   -- was ausgezahlt wird
       payable_at    TEXT,                          -- Zustellung + Schutzfrist
       payout_id     INTEGER REFERENCES affiliate_payouts(id) ON DELETE SET NULL,
@@ -1450,9 +1454,45 @@ export function runMigrations(db) {
     // (gift_shoetree); zugesagt wird aber oft ein Nachlass, und der stand
     // nirgends.
     `ALTER TABLE affiliates   ADD COLUMN customer_discount_pct REAL NOT NULL DEFAULT 0`,
+    // Eine Wahl statt zweier unabhängiger Felder.
+    //
+    // Vorher konnten Nachlass und Zugabe gleichzeitig gesetzt sein — gemeint
+    // war aber immer ein Entweder-oder, und in der Maske standen sie an
+    // getrennten Stellen. Wer beides ausfüllte, verschenkte doppelt, ohne dass
+    // ihn etwas gewarnt hätte.
+    //
+    // 'none' | 'discount' (dann zählt customer_discount_pct)
+    //        | 'gift'     (dann zählt gift_key)
+    `ALTER TABLE affiliates   ADD COLUMN customer_benefit TEXT NOT NULL DEFAULT 'none'`,
+    // Welche Zugabe. Vorher war der Zedernholz-Spanner fest verdrahtet; ein
+    // Pflegeset ließ sich nicht zusagen, obwohl es im Zubehör längst steht.
+    `ALTER TABLE affiliates   ADD COLUMN gift_key TEXT`,
+    // Wofür bei dieser Vermittlung einbehalten wurde: 'none' | 'discount' | 'gift'.
+    // gift_cost allein sagt nur, DASS etwas abging — im Portal soll dastehen,
+    // wofür. Alte Zeilen tragen 'gift', denn mehr gab es damals nicht.
+    `ALTER TABLE affiliate_commissions ADD COLUMN benefit_kind TEXT NOT NULL DEFAULT 'none'`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }
+
+  // Bestehende Affiliates auf die eine Wahl heben. Der Nachlass hat Vorrang:
+  // Er war das Zugesagte, die Zugabe die Beigabe — wer beides trug, behält
+  // den Nachlass, damit niemandem etwas weggenommen wird, das er versprochen
+  // bekam.
+  try {
+    db.prepare(`
+      UPDATE affiliates SET customer_benefit = 'discount'
+      WHERE customer_benefit = 'none' AND customer_discount_pct > 0
+    `).run()
+    db.prepare(`
+      UPDATE affiliates SET customer_benefit = 'gift', gift_key = 'shoe_tree_cedar'
+      WHERE customer_benefit = 'none' AND gift_shoetree = 1
+    `).run()
+    db.prepare(`
+      UPDATE affiliate_commissions SET benefit_kind = 'gift'
+      WHERE benefit_kind = 'none' AND gift_cost > 0
+    `).run()
+  } catch { /* Spalten noch nicht da */ }
 
   // Bestehende Firmen-Anfragen nachtragen. Sie sind allein am shoe_name zu
   // erkennen, den die Firmenseite fest gesetzt hat — einmalig, danach trägt

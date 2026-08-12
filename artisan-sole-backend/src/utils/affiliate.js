@@ -1,16 +1,34 @@
 /**
  * Affiliate-Provisionen: Berechnung und Reifung.
  *
- * Die Regeln an einer Stelle, damit sie nicht über Routen verstreut liegen:
+ * ── Ein Topf je Paar ──────────────────────────────────────────────────────
+ *
+ * Für jedes vermittelte Paar stellt das Haus einen festen Betrag bereit:
+ * einen Prozentsatz vom Kaufpreis (Standard 10 %), gedeckelt je Paar
+ * (Standard 40 €). Das ist alles, was eine Vermittlung kosten darf — und
+ * zwar einschließlich dessen, was der Kunde bekommt.
+ *
+ * Aus diesem Topf zahlt der Affiliate seine Zusage an den Kunden:
+ *
+ *   • nichts       → der Schuh kostet den Normalpreis, der Affiliate
+ *                    erhält den vollen Topf.
+ *   • eine Zugabe  → der Einkaufspreis des Artikels wird einbehalten.
+ *   • ein Nachlass → der gewährte Nachlass wird einbehalten.
+ *
+ * Damit steht die Kalkulation im Voraus fest: Ein Affiliate kostet nie mehr
+ * als seinen Deckel je Paar, gleich was er zusagt. Deshalb gilt der Deckel
+ * auch für den Nachlass selbst — 10 % auf ein Paar zu 1.450 € wären 145 €
+ * und ließen sich aus einem Topf von 40 € nicht bezahlen.
+ *
+ * Die übrigen Regeln:
  *
  *  • Provision nur auf Schuhe, nicht auf Zubehör oder Versand.
  *  • Grundlage ist der Kaufpreis NACH Rabatt. Sonst zahlt man Provision auf
  *    Geld, das nie geflossen ist.
- *  • Gedeckelt je Paar (Standard 40 €), nicht je Bestellung — ein Einkauf mit
- *    drei Paaren wird dreifach vergütet.
- *  • Schenkt der Affiliate eine Zugabe, wird deren EINKAUFSPREIS einbehalten.
- *    Der Ladenpreis des Schuhspanners liegt mit 45 € über der Provision
- *    selbst; mit ihm zu rechnen ergäbe negative Auszahlungen.
+ *  • Gedeckelt je PAAR, nicht je Bestellung — ein Einkauf mit drei Paaren
+ *    wird dreifach vergütet.
+ *  • Verrechnet wird der EINKAUFSPREIS der Zugabe, nicht ihr Ladenpreis.
+ *    Mit dem Ladenpreis zu rechnen ergäbe negative Auszahlungen.
  *  • Ausgezahlt wird erst, wenn fünf auszahlbare Paare zusammenkommen, danach
  *    in Fünferschritten.
  *  • Auszahlbar wird ein Paar erst nach Ablauf der Schutzfrist ab ZUSTELLUNG.
@@ -30,53 +48,110 @@ const num = (v) => {
   return Number.isFinite(n) ? n : 0
 }
 
+const round2 = (n) => Math.round(n * 100) / 100
+
+/** Preise aus der Datenbank stehen als Text da („€ 1.450"). */
+export const preisZahl = num
+
 /**
- * Einkaufspreis der Zugabe; ohne hinterlegten Wert wird nichts einbehalten.
- *
- * Der Schlüssel lautet shoe_tree_cedar. Vorher stand hier 'shoetrees' — ein
- * Artikel, den es nicht mehr gibt. Die Abfrage lieferte nichts, num(undefined)
- * ergibt 0, und damit wäre die Zugabe dem Affiliate geschenkt worden, ohne
- * dass irgendetwas fehlgeschlagen wäre.
+ * Der Deckel je Paar. Ohne Angabe 40 € — bewusst nicht „unbegrenzt": Ein
+ * fehlender Wert darf keine offene Rechnung ergeben.
  */
-export function shoetreeCost(db) {
-  const row = db.prepare("SELECT cost_price FROM accessories WHERE key = 'shoe_tree_cedar'").get()
-  return num(row?.cost_price)
+export const DECKEL_STANDARD = 40
+export const deckelVon = (affiliate) => num(affiliate?.cap_per_shoe) || DECKEL_STANDARD
+
+/**
+ * Was ein vermitteltes Paar das Haus höchstens kostet — der Topf, aus dem
+ * sowohl die Zusage an den Kunden als auch die Auszahlung an den Affiliate
+ * bestritten wird.
+ */
+export function vermittlungsBudget(affiliate, price) {
+  const roh = affiliate?.commission_type === 'fixed'
+    ? num(affiliate.commission_value)
+    : num(price) * num(affiliate?.commission_value) / 100
+  return round2(Math.max(0, Math.min(roh, deckelVon(affiliate))))
+}
+
+/**
+ * Der Nachlass in Euro, den dieser Affiliate auf einen Preis zusagt.
+ *
+ * Der Prozentsatz steht am Affiliate, die Euro-Grenze ist sein Deckel: Was
+ * er verspricht, zahlt er aus seinem eigenen Topf, und der ist gedeckelt.
+ * Ohne diese Grenze wäre ein Nachlass auf ein teures Paar teurer als die
+ * ganze Vermittlung — 10 % von 1.450 € sind 145 €.
+ */
+export function kundenNachlass(affiliate, listenpreis) {
+  if (!affiliate || affiliate.customer_benefit !== 'discount') return 0
+  const pct = Math.min(100, Math.max(0, num(affiliate.customer_discount_pct)))
+  if (!pct) return 0
+  return round2(Math.max(0, Math.min(num(listenpreis) * pct / 100, deckelVon(affiliate))))
+}
+
+/**
+ * Derselbe Nachlass, aber aus dem GEZAHLTEN Preis zurückgerechnet.
+ *
+ * Die Bestellung kennt nur, was der Kunde am Ende bezahlt hat — der Nachlass
+ * lag auf der ganzen Konfiguration (Schuh, Optionen, Zubehör), nicht bloß auf
+ * dem Grundpreis des Modells. Aus dem Endbetrag zurückzurechnen trifft daher
+ * genauer als jeder Blick in die Modelltabelle. Der Deckel greift danach
+ * genauso wie vorne im Konfigurator, also stimmen beide Seiten überein.
+ */
+export function nachlassAusKaufpreis(affiliate, kaufpreis) {
+  if (!affiliate || affiliate.customer_benefit !== 'discount') return 0
+  const pct = Math.min(99, Math.max(0, num(affiliate.customer_discount_pct)))
+  if (!pct) return 0
+  return kundenNachlass(affiliate, num(kaufpreis) / (1 - pct / 100))
+}
+
+/**
+ * Einkaufspreis einer Zugabe. Fehlt er, gilt der Ladenpreis — lieber zu viel
+ * einbehalten als eine Zugabe zu verschenken, die niemand verrechnet hat.
+ */
+export function zugabeKosten(db, giftKey) {
+  if (!giftKey) return 0
+  try {
+    const a = db.prepare('SELECT price, cost_price FROM accessories WHERE key = ?').get(String(giftKey))
+    if (!a) return 0
+    return round2(Math.max(0, num(a.cost_price ?? a.price)))
+  } catch {
+    return 0
+  }
+}
+
+/**
+ * Was die Zusage dieses Affiliates bei diesem Kaufpreis kostet.
+ * Braucht die Datenbank nur für die Zugabe.
+ */
+export function zusageKosten(db, affiliate, kaufpreis) {
+  if (!affiliate) return 0
+  if (affiliate.customer_benefit === 'gift')     return zugabeKosten(db, affiliate.gift_key)
+  if (affiliate.customer_benefit === 'discount') return nachlassAusKaufpreis(affiliate, kaufpreis)
+  return 0
 }
 
 /**
  * Provision für ein einzelnes Paar.
- * `order` braucht price (nach Rabatt) und optional die Kategorie des Schuhs.
+ *
+ * `order` braucht den Kaufpreis (nach Rabatt) und optional `benefit_cost` —
+ * was die Zusage an den Kunden gekostet hat. Ohne diese Angabe wird nichts
+ * einbehalten; die Aufrufer ermitteln sie über `zusageKosten`.
  */
-export function commissionFor(affiliate, order, { giftCost = 0, shoeCategory = null } = {}) {
-  const price = num(order.price)
-  const gross = affiliate.commission_type === 'fixed'
-    ? num(affiliate.commission_value)
-    : price * num(affiliate.commission_value) / 100
-
-  const capped = Math.min(gross, num(affiliate.cap_per_shoe) || Infinity)
-
-  // Die Zugabe gibt es nur, wo sie auch passt. Der Schuhspanner ist für
-  // Sneaker ausgeschlossen (siehe accessories.not_recommended_for); dort
-  // entfällt sie und der Affiliate behält die volle Provision.
-  const giftApplies = affiliate.gift_shoetree === 1
-    && affiliate.commission_type === 'percent'
-    && shoeCategory !== 'SNEAKER'
-    && shoeCategory !== 'SNEAKER_LACED'
-    && shoeCategory !== 'SNEAKER_BOOT'
-    && shoeCategory !== 'LACELESS_TRAINER'
-
-  const withheld = giftApplies ? Math.min(giftCost, capped) : 0
+export function commissionFor(affiliate, order) {
+  const price   = num(order.price)
+  const budget  = vermittlungsBudget(affiliate, price)
+  // Nie mehr einbehalten, als im Topf liegt: Eine negative Auszahlung wäre
+  // eine Forderung an den Affiliate, und die will hier niemand stellen.
+  const zusage  = round2(Math.max(0, Math.min(num(order.benefit_cost), budget)))
 
   return {
-    shoe_price: round2(price),
-    gross_amount: round2(capped),
-    gift_cost: round2(withheld),
-    amount: round2(Math.max(0, capped - withheld)),
-    gift_applies: giftApplies,
+    shoe_price:   round2(price),
+    gross_amount: budget,
+    gift_cost:    zusage,
+    amount:       round2(Math.max(0, budget - zusage)),
+    // Wofür einbehalten wurde — für die Anzeige im Portal.
+    benefit_kind: order.benefit_kind || affiliate?.customer_benefit || 'none',
   }
 }
-
-const round2 = (n) => Math.round(n * 100) / 100
 
 /**
  * Zustände nachziehen: zugestellt → confirmed, Frist um → payable,

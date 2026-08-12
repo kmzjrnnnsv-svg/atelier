@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
-import { commissionFor, shoetreeCost } from '../utils/affiliate.js'
+import { commissionFor, zusageKosten } from '../utils/affiliate.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification } from '../utils/email.js'
 import { totpVerify } from '../utils/totp.js'
@@ -185,12 +185,15 @@ router.post('/',
 
       const nutzer = db.prepare('SELECT is_promotion, promotion_discount_pct FROM users WHERE id = ?').get(uid)
       const aff = req.body.affiliate_code
-        ? db.prepare("SELECT customer_discount_pct FROM affiliates WHERE code = ? AND status = 'active'").get(String(req.body.affiliate_code).trim().toLowerCase())
+        ? db.prepare("SELECT customer_benefit, customer_discount_pct FROM affiliates WHERE code = ? AND status = 'active'").get(String(req.body.affiliate_code).trim().toLowerCase())
         : null
 
       const saetze = [
         bizCampaign ? Number(bizCampaign.discount_pct) || 0 : 0,
-        aff ? Number(aff.customer_discount_pct) || 0 : 0,
+        // Nur wenn der Affiliate auch wirklich einen Nachlass zugesagt hat —
+        // bei einer Zugabe steht der Prozentsatz womöglich noch aus früherer
+        // Zeit in der Spalte, wirkt aber nicht mehr.
+        aff?.customer_benefit === 'discount' ? Number(aff.customer_discount_pct) || 0 : 0,
         nutzer?.is_promotion ? Number(nutzer.promotion_discount_pct) || 0 : 0,
         // Gutscheine kommen oben noch dazu; großzügig gerechnet, damit eine
         // gültige Bestellung nie an dieser Prüfung scheitert.
@@ -341,16 +344,17 @@ router.post('/',
         // Firmenkampagnen schlagen den Affiliate-Code: Den Kunden hat dann die
         // Firma gebracht, nicht der Affiliate.
         if (aff && !selfOrder && !bizCampaign && !bizCode) {
-          const shoeRow = shoe_id ? db.prepare('SELECT category FROM shoes WHERE id = ?').get(shoe_id) : null
-          const c = commissionFor(aff, { price }, {
-            giftCost: shoetreeCost(db),
-            shoeCategory: shoeRow?.category || null,
-          })
+          // Was der Affiliate seinem Kunden zugesagt hat, zahlt er aus seinem
+          // eigenen Topf. Der Betrag wird hier festgehalten, damit eine
+          // spätere Änderung seiner Zusage ältere Vermittlungen nicht rückwirkend
+          // verteuert oder verbilligt.
+          const zusage = zusageKosten(db, aff, price)
+          const c = commissionFor(aff, { price, benefit_cost: zusage })
           db.prepare(`
             INSERT INTO affiliate_commissions
-              (affiliate_id, order_id, status, shoe_price, gross_amount, gift_cost, amount)
-            VALUES (?, ?, 'pending', ?, ?, ?, ?)
-          `).run(aff.id, result.lastInsertRowid, c.shoe_price, c.gross_amount, c.gift_cost, c.amount)
+              (affiliate_id, order_id, status, shoe_price, gross_amount, gift_cost, amount, benefit_kind)
+            VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)
+          `).run(aff.id, result.lastInsertRowid, c.shoe_price, c.gross_amount, c.gift_cost, c.amount, c.benefit_kind)
           db.prepare('UPDATE orders SET affiliate_code = ? WHERE id = ?').run(aff.code, result.lastInsertRowid)
         }
       } catch (e) {

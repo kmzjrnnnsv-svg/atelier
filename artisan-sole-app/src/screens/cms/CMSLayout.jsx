@@ -79,10 +79,20 @@ export default function CMSLayout() {
             ]},
             { heading: 'Kunden', items: [
               { to: '/cms/scans',    label: 'Foot Scans',   icon: ScanLine },
-              { to: '/cms/business', label: 'Firmenkonten', icon: Building2 },
-              { to: '/cms/affiliate', label: 'Affiliate',  icon: Users },
               { to: '/cms/loyalty',  label: 'Loyalty & Tiers', icon: Award },
               { to: '/cms/feedback', label: 'Feedback & Tickets', icon: MessageSquare },
+            ]},
+            // Firmenkonten und Affiliates standen unter „Kunden" — ein
+            // Affiliate ist aber keiner. Der Unterschied ist nicht kosmetisch:
+            // Ein Firmenkonto kauft und bekommt eine Rechnung, ein Affiliate
+            // vermittelt und bekommt eine Gutschrift. Beim einen fließt Geld
+            // herein, beim anderen hinaus. Deshalb eine eigene Gruppe — aber
+            // zwei Einträge darin, denn zusammenlegen ließen sie sich nicht:
+            // Kampagnen und Codes auf der einen, Provision, Steuerstatus und
+            // Auszahlung auf der anderen Seite haben nichts gemeinsam.
+            { heading: 'Partner', items: [
+              { to: '/cms/business', label: 'Firmenkonten', icon: Building2 },
+              { to: '/cms/affiliate', label: 'Affiliates',  icon: Users },
             ]},
             { heading: 'Kommunikation', items: [
               { to: '/cms/email-templates', label: 'E-Mail Vorlagen', icon: Mail },

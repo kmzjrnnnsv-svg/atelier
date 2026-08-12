@@ -6,10 +6,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  LogIn, Send, MessageCircle, Check,
+  Send, MessageCircle, Check,
   Footprints, MapPin, Gem, PenTool, Award, Leaf,
 } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
+import FirmenLogin from '../../components/FirmenLogin'
 
 const LEISTUNG = [
   { icon: Footprints, t: 'Custom Made',          d: 'Auf Bestellung gefertigt, abgestimmt auf Fußmaße und Konfiguration.' },
@@ -74,12 +75,9 @@ export default function CorporateOverview() {
         <Link to="/" className="font-brand text-[15px] tracking-[0.04em] no-underline text-stone-900">
           ARTISAN SOLE
         </Link>
-        <Link
-          to="/login"
+        <FirmenLogin
           className="flex items-center gap-1.5 text-[11px] text-stone-500 hover:text-stone-900 no-underline uppercase tracking-[0.18em] transition-colors"
-        >
-          <LogIn size={15} strokeWidth={1.4} /> Firmen-Login
-        </Link>
+        />
       </div>
 
       {/* Header */}
@@ -276,12 +274,12 @@ export default function CorporateOverview() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="font-brand text-[13px] tracking-[0.04em] text-stone-900">ARTISAN SOLE</span>
           <div className="flex items-center gap-5">
-            <Link
-              to="/login"
+            <FirmenLogin
+              groesse={13}
               className="inline-flex items-center gap-1.5 text-[10px] text-stone-400 hover:text-stone-700 no-underline uppercase tracking-[0.2em] transition-colors print:hidden"
             >
-              <LogIn size={13} strokeWidth={1.4} /> Bereits Firmenkunde? Zum Firmen-Login
-            </Link>
+              Bereits Firmenkunde? Zum Firmen-Login
+            </FirmenLogin>
             <p className="text-[10px] text-stone-400 uppercase tracking-[0.2em]">Custom Made Footwear · Made in Spain</p>
           </div>
         </div>

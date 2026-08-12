@@ -120,10 +120,11 @@ export default function AffiliateOverview() {
             älteste zuerst. Was übrig bleibt, zählt für die nächste Runde weiter.
           </p>
           <p className="text-[12px] text-stone-500 font-light leading-relaxed mt-4 max-w-xl">
-            <span className="text-stone-900">Zugabe und Nachlass sind zweierlei.</span>{' '}
-            Ein Nachlass für den Geworbenen geht zulasten des Hauses. Eine Zugabe wie der
-            Zedernholz-Spanner wird zum Einkaufspreis von Ihrer Provision abgezogen. Was
-            davon für Sie gilt, steht in Ihren Konditionen.
+            <span className="text-stone-900">Was Sie zusagen, zahlen Sie selbst.</span>{' '}
+            Für jedes vermittelte Paar steht ein fester Betrag bereit — Ihr Prozentsatz,
+            gedeckelt je Paar. Daraus wird bezahlt, was Ihr Kunde bekommt: ein Nachlass
+            kostet den Nachlass, eine Zugabe ihren Einkaufspreis. Sagen Sie nichts zu,
+            zahlt Ihr Kunde den Normalpreis und Ihnen bleibt der volle Betrag.
           </p>
         </div>
       </section>

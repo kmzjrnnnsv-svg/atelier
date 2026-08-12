@@ -781,8 +781,15 @@ export default function Customize() {
   const campaignPct = campaignForShoe ? Number(campaignForShoe.discount_pct) : 0
   // Dritter Weg: der Werbelink eines Affiliates (?ref=). Was dem Geworbenen
   // zugesagt wurde, steht am Affiliate und gilt für jedes Modell.
+  //
+  // Anders als die beiden Aktionen des Hauses hat dieser Nachlass eine
+  // Euro-Grenze: Der Affiliate zahlt ihn aus seiner Provision, und die ist je
+  // Paar gedeckelt. Ohne die Grenze wären 10 % auf ein Paar zu 1.450 € eine
+  // Zusage über 145 € aus einem Topf von 40.
   const affiliatePct = Number(affiliate?.customer_discount_pct) || 0
-  const promoDiscountPct = Math.max(userPct, campaignPct, affiliatePct)
+  const affiliateCap = Number(affiliate?.discount_cap) || 0
+  const hausPct = Math.max(userPct, campaignPct)
+  const promoDiscountPct = Math.max(hausPct, affiliatePct)
   const isPromo = promoDiscountPct > 0 || !!user?.is_promotion
 
   const effectivePrice = user?.is_promotion && product.promotion_price ? product.promotion_price : product.price
@@ -795,10 +802,21 @@ export default function Customize() {
   // Der Nachlass gilt auf alles, was konfiguriert wurde — Schuh, Optionen und
   // Zubehör. Vorher hing er allein am Zubehör, der Schuhpreis blieb stehen.
   const priceBeforeDiscount = basePrice + extrasPriceTotal + accessoryTotal
-  const totalDiscount = promoDiscountPct > 0 ? Math.round(priceBeforeDiscount * promoDiscountPct / 100) : 0
-  const accDiscount = promoDiscountPct > 0 ? Math.round(accessoryTotal * promoDiscountPct / 100) : 0
+  const hausNachlass = hausPct > 0 ? Math.round(priceBeforeDiscount * hausPct / 100) : 0
+  const affNachlassRoh = affiliatePct > 0 ? Math.round(priceBeforeDiscount * affiliatePct / 100) : 0
+  const affNachlass = affiliateCap > 0 ? Math.min(affNachlassRoh, affiliateCap) : affNachlassRoh
+  // Es gilt der günstigste Weg für den Kunden, nicht die Summe: Zwei Nachlässe
+  // aufeinander wären zweimal derselbe Rabatt.
+  const totalDiscount = Math.max(hausNachlass, affNachlass)
+  // Der wirksame Satz kann unter dem zugesagten liegen, wenn die Euro-Grenze
+  // greift. Angezeigt wird, was tatsächlich abgezogen wird.
+  const wirksamerPct = priceBeforeDiscount > 0 ? (totalDiscount / priceBeforeDiscount) * 100 : 0
+  const accDiscount = Math.round(accessoryTotal * wirksamerPct / 100)
   const totalPrice = priceBeforeDiscount - totalDiscount
   const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
+  // Eine Nachkommastelle genügt; „9,7 %" ist ehrlicher als „10 %", wenn die
+  // Euro-Grenze ein Stück abgeschnitten hat.
+  const satzText = (v) => String(Math.round(v * 10) / 10).replace('.', ',')
   const displayPrice = formatPrice(totalPrice)
 
   // Swipe
@@ -1395,10 +1413,10 @@ export default function Customize() {
 
                     {/* Info below */}
                     <p className="text-[12px] text-black/70 font-light mt-2 px-0.5">{acc.name}</p>
-                    {isPromo && promoDiscountPct > 0 ? (
+                    {isPromo && wirksamerPct > 0 ? (
                       <div className="flex items-center gap-1.5 px-0.5">
                         <span className="text-[11px] text-black/25 line-through">€{acc.price}</span>
-                        <span className="text-[11px] text-black/60">€{Math.round(acc.price * (1 - promoDiscountPct / 100))}</span>
+                        <span className="text-[11px] text-black/60">€{Math.round(acc.price * (1 - wirksamerPct / 100))}</span>
                       </div>
                     ) : (
                       <p className="text-[11px] text-black/35 px-0.5">€{acc.price}</p>
@@ -1443,11 +1461,11 @@ export default function Customize() {
                 wie ein Fehler. */}
             {totalDiscount > 0 && (
               <p className="text-[10px] text-black/45 font-light mt-1" style={{ letterSpacing: '0.06em' }}>
-                {promoDiscountPct === affiliatePct && affiliatePct > 0
-                  ? <>Empfehlung {affiliate.code.toUpperCase()} · {String(promoDiscountPct).replace('.', ',')} %</>
+                {affNachlass >= hausNachlass && affiliatePct > 0
+                  ? <>Empfehlung {affiliate.code.toUpperCase()} · {satzText(wirksamerPct)} %</>
                   : campaignForShoe && campaignPct >= userPct
-                    ? <>{campaignForShoe.business_name || campaignForShoe.name} · {String(promoDiscountPct).replace('.', ',')} % Firmenkondition</>
-                    : <>{String(promoDiscountPct).replace('.', ',')} % Sonderkondition</>}
+                    ? <>{campaignForShoe.business_name || campaignForShoe.name} · {satzText(wirksamerPct)} % Firmenkondition</>
+                    : <>{satzText(wirksamerPct)} % Sonderkondition</>}
                 {' '}— Sie sparen {formatPrice(totalDiscount)}
               </p>
             )}
