@@ -38,14 +38,75 @@ const APP_ORIGIN = (import.meta.env.VITE_API_URL ?? '') || (typeof window !== 'u
 // Zum Anlegen wird nur die Adresse gebraucht; der Rest kommt vom Affiliate.
 const neuesFormular = { _modus: 'neu', email: '', note: '' }
 
+// Muss zu DECKEL_STANDARD in utils/affiliate.js passen: der Deckel je Paar,
+// wenn prozentual vergütet wird und nichts anderes eingetragen ist.
+const DECKEL_STANDARD = 50
+
 const leeresFormular = {
   full_name: '', email: '', phone: '', code: '',
   street: '', postal_code: '', city: '', country: 'DE', birth_date: '',
   tax_status: 'small_business', tax_number: '', vat_id: '',
   iban: '', account_holder: '',
-  commission_type: 'percent', commission_value: 10, cap_per_shoe: 40,
+  commission_type: 'fixed', commission_value: 50, cap_per_shoe: DECKEL_STANDARD,
   customer_benefit: 'none', customer_discount_pct: 10, gift_key: 'care_kit_leather',
   note: '',
+}
+
+// Beträge, die in der Praxis vergeben werden. Als Knöpfe, damit niemand
+// tippen muss — der Wert lässt sich daneben trotzdem frei setzen.
+const BETRAG_VORSCHLAEGE = [30, 40, 45, 50]
+
+// Falls das Zubehör nicht geladen werden konnte: Die Auswahl soll nicht leer
+// dastehen, sonst lässt sich eine bestehende Zusage nicht einmal ansehen.
+const ZUGABE_RUECKFALL = [
+  { key: 'care_kit_leather',  name: 'Lederpflege-Set' },
+  { key: 'care_kit_suede',    name: 'Wildlederpflege-Set' },
+  { key: 'shoe_tree_cedar',   name: 'Zedernholz-Schuhspanner' },
+  { key: 'shoe_tree_black',   name: 'Schuhspanner Schwarz' },
+  { key: 'boot_tree_cedar',   name: 'Zedernholz-Stiefelspanner' },
+]
+
+// Preis, an dem die Vorschau rechnet. Ein mittleres Paar — bei prozentualer
+// Vergütung hängt der Topf am Preis, und irgendeine Zahl muss darunter stehen.
+const BEISPIELPREIS = 340
+
+/**
+ * Eine Zeile aus der Liste in ein Formular überführen.
+ *
+ * NULL aus der Datenbank wird zu einer leeren Zeichenkette: React beschwert
+ * sich sonst über ein Eingabefeld ohne Wert, und beim Speichern ginge aus
+ * „nicht gesetzt" ein wörtliches null in die Maske ein.
+ */
+function zumFormular(a) {
+  const rein = Object.fromEntries(
+    Object.entries(a).map(([k, v]) => [k, v === null ? '' : v])
+  )
+  return { ...leeresFormular, ...rein, _modus: 'bearbeiten' }
+}
+
+/** Die Konditionen einer Zeile in einem Satzfragment. */
+function konditionenText(a) {
+  const topf = a.commission_type === 'fixed'
+    ? `${Number(a.commission_value) || 0} € je Paar`
+    : `${Number(a.commission_value) || 0} % · max. ${Number(a.cap_per_shoe) || DECKEL_STANDARD} €`
+  const zusage =
+    a.customer_benefit === 'discount' ? `Nachlass ${Number(a.customer_discount_pct) || 0} %`
+    : a.customer_benefit === 'gift'   ? 'Zugabe'
+    : 'ohne Zusage'
+  return `${topf} · ${zusage}`
+}
+
+/**
+ * Der Topf je Paar: Was eine Vermittlung das Haus höchstens kostet.
+ *
+ * Dieselbe Rechnung wie im Server (utils/affiliate.js). Sie steht hier ein
+ * zweites Mal, weil die Vorschau im Formular sonst raten müsste — und eine
+ * Vorschau, die anders rechnet als die Abrechnung, ist schlimmer als keine.
+ */
+function topfVon(form, preis) {
+  if (form.commission_type === 'fixed') return Math.max(0, Number(form.commission_value) || 0)
+  const roh = preis * (Number(form.commission_value) || 0) / 100
+  return Math.max(0, Math.min(roh, Number(form.cap_per_shoe) || DECKEL_STANDARD))
 }
 
 // Aus dem Namen einen brauchbaren Codevorschlag machen.
@@ -69,6 +130,69 @@ function Feld({ label, hint, children, required }) {
 
 const eingabe = 'w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40 bg-white'
 
+/**
+ * Was unter dem Strich herauskommt — in Zahlen, nicht als Erklärung.
+ *
+ * Die Konditionen bestehen aus drei Feldern, deren Zusammenspiel man sich
+ * sonst im Kopf ausrechnen müsste: Topf minus Zusage gleich Auszahlung. Wer
+ * hier einen Nachlass von 10 % neben einer Vergütung von 10 % einträgt, sieht
+ * sofort, dass für den Affiliate nichts übrig bleibt — und nicht erst bei der
+ * ersten Abrechnung.
+ */
+function Rechenbeispiel({ form, zubehoer }) {
+  const topf = topfVon(form, BEISPIELPREIS)
+
+  const artikel = zubehoer.find(z => z.key === form.gift_key)
+  const zugabeEk = artikel
+    ? Number(artikel.cost_price ?? String(artikel.price || '').replace(/[^0-9,.]/g, '').replace(',', '.')) || 0
+    : 0
+
+  const zusage =
+    form.customer_benefit === 'gift'     ? Math.min(zugabeEk, topf)
+    : form.customer_benefit === 'discount' ? Math.min(BEISPIELPREIS * (Number(form.customer_discount_pct) || 0) / 100, topf)
+    : 0
+
+  const auszahlung = Math.max(0, topf - zusage)
+
+  const zusageText =
+    form.customer_benefit === 'gift'
+      ? `Zugabe${artikel ? ` · ${artikel.name}` : ''}${zugabeEk ? ' (Einkauf)' : ' (kein Einkaufspreis hinterlegt)'}`
+      : form.customer_benefit === 'discount'
+        ? `Nachlass ${Number(form.customer_discount_pct) || 0} % auf ${euro(BEISPIELPREIS)}`
+        : 'Keine Zusage an den Kunden'
+
+  return (
+    <div className="mt-4 border border-black/12 bg-black/[0.015] p-4">
+      <p className="text-[10px] uppercase tracking-[0.16em] text-black/35 mb-2.5">
+        Ein Paar zu {euro(BEISPIELPREIS)}
+      </p>
+      <table className="w-full">
+        <tbody>
+          <tr>
+            <td className="text-[12px] text-black/55 py-[3px]">Topf je Paar</td>
+            <td className="text-[12px] text-black/80 py-[3px] text-right tabular-nums">{euro(topf)}</td>
+          </tr>
+          <tr>
+            <td className="text-[12px] text-black/55 py-[3px]">{zusageText}</td>
+            <td className="text-[12px] text-black/80 py-[3px] text-right tabular-nums">
+              {zusage > 0 ? `− ${euro(zusage)}` : euro(0)}
+            </td>
+          </tr>
+          <tr className="border-t border-black/10">
+            <td className="text-[12px] text-black pt-2">Auszahlung an den Affiliate</td>
+            <td className="text-[12px] text-black pt-2 text-right tabular-nums">{euro(auszahlung)}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="text-[10px] text-black/35 mt-2.5 leading-relaxed">
+        Das Haus zahlt in jedem Fall {euro(topf)} — was davon der Kunde bekommt und was
+        der Affiliate, entscheidet die Zusage.
+        {form.commission_type === 'percent' && ' Bei prozentualer Vergütung ändert sich der Topf mit dem Preis des Modells.'}
+      </p>
+    </div>
+  )
+}
+
 export default function AffiliatesPanel() {
   const [liste, setListe] = useState([])
   const [laedt, setLaedt] = useState(true)
@@ -77,6 +201,16 @@ export default function AffiliatesPanel() {
   const [fehler, setFehler] = useState(null)
   const [hinweis, setHinweis] = useState(null)
   const [kopiert, setKopiert] = useState(null)
+  const [zubehoer, setZubehoer] = useState([])
+
+  // Das Zubehör wird für die Zugabe gebraucht: Namen für die Auswahl,
+  // Einkaufspreise für die Vorschau. Schlägt der Abruf fehl, greift die feste
+  // Liste — die Maske soll deshalb nicht unbedienbar werden.
+  useEffect(() => {
+    apiFetch('/api/accessories')
+      .then(r => setZubehoer(Array.isArray(r) ? r.filter(z => z.key) : []))
+      .catch(() => setZubehoer([]))
+  }, [])
 
   const laden = async () => {
     try {
@@ -242,19 +376,39 @@ export default function AffiliatesPanel() {
                   onChange={e => setzen('code', codeVorschlag(e.target.value))}
                 />
               </Feld>
-              <Feld label="Vergütung">
+              <Feld label="Vergütung" hint="Der Betrag je Paar ist der Topf: alles, was diese Vermittlung kosten darf.">
                 <select className={eingabe} value={form.commission_type} onChange={e => setzen('commission_type', e.target.value)}>
+                  <option value="fixed">Betrag je Paar</option>
                   <option value="percent">Prozent vom Kaufpreis</option>
-                  <option value="fixed">Fester Betrag je Paar</option>
                 </select>
               </Feld>
               <Feld label={form.commission_type === 'fixed' ? 'Betrag je Paar (€)' : 'Prozentsatz (%)'}>
                 <input type="number" step="0.5" min="0" className={eingabe} value={form.commission_value} onChange={e => setzen('commission_value', e.target.value)} />
               </Feld>
-              <Feld label="Deckel je Paar (€)" hint="Was eine Vermittlung höchstens kostet — Auszahlung und Kundenvorteil zusammen.">
-                <input type="number" step="1" min="0" className={eingabe} value={form.cap_per_shoe} onChange={e => setzen('cap_per_shoe', e.target.value)} />
-              </Feld>
-              <Feld label="Was der Geworbene bekommt" hint="Zahlt der Affiliate aus seiner Provision. Sagt er nichts zu, bekommt er den vollen Betrag.">
+              {form.commission_type === 'fixed' ? (
+                <Feld label="Üblich" hint="Setzt den Betrag je Paar. Frei änderbar.">
+                  <div className="flex gap-1.5">
+                    {BETRAG_VORSCHLAEGE.map(v => (
+                      <button
+                        key={v} type="button"
+                        onClick={() => setzen('commission_value', v)}
+                        className={`h-9 flex-1 text-[12px] border transition-colors ${
+                          Number(form.commission_value) === v
+                            ? 'bg-black text-white border-black'
+                            : 'bg-white text-black/60 border-black/15 hover:border-black/40'
+                        }`}
+                      >
+                        {v} €
+                      </button>
+                    ))}
+                  </div>
+                </Feld>
+              ) : (
+                <Feld label="Deckel je Paar (€)" hint="Was eine Vermittlung höchstens kostet — Auszahlung und Kundenvorteil zusammen.">
+                  <input type="number" step="1" min="0" className={eingabe} value={form.cap_per_shoe} onChange={e => setzen('cap_per_shoe', e.target.value)} />
+                </Feld>
+              )}
+              <Feld label="Was der Geworbene bekommt" hint="Zahlt der Affiliate aus seinem Topf. Sagt er nichts zu, bekommt er den vollen Betrag.">
                 <select className={eingabe} value={form.customer_benefit} onChange={e => setzen('customer_benefit', e.target.value)}>
                   <option value="none">Nichts</option>
                   <option value="discount">Nachlass in Prozent</option>
@@ -262,22 +416,22 @@ export default function AffiliatesPanel() {
                 </select>
               </Feld>
               {form.customer_benefit === 'discount' && (
-                <Feld label="Nachlass (%)" hint={`Wirkt im Konfigurator, ohne dass der Kunde etwas eingibt. Höchstens € ${Number(form.cap_per_shoe) || 40} je Paar — mehr gibt die Provision nicht her.`}>
+                <Feld label="Nachlass (%)" hint={`Wirkt im Konfigurator, ohne dass der Kunde etwas eingibt. Höchstens ${euro(topfVon(form, 340))} je Paar — mehr gibt der Topf nicht her.`}>
                   <input type="number" step="1" min="0" max="100" className={eingabe} value={form.customer_discount_pct} onChange={e => setzen('customer_discount_pct', e.target.value)} />
                 </Feld>
               )}
               {form.customer_benefit === 'gift' && (
                 <Feld label="Welche Zugabe" hint="Liegt dem ersten Paar bei. Einbehalten wird der Einkaufspreis aus dem Zubehör.">
                   <select className={eingabe} value={form.gift_key} onChange={e => setzen('gift_key', e.target.value)}>
-                    <option value="care_kit_leather">Lederpflege-Set</option>
-                    <option value="care_kit_suede">Wildlederpflege-Set</option>
-                    <option value="shoe_tree_cedar">Zedernholz-Schuhspanner</option>
-                    <option value="shoe_tree_black">Schuhspanner Schwarz</option>
-                    <option value="boot_tree_cedar">Zedernholz-Stiefelspanner</option>
+                    {(zubehoer.length ? zubehoer : ZUGABE_RUECKFALL).map(z => (
+                      <option key={z.key} value={z.key}>{z.name}</option>
+                    ))}
                   </select>
                 </Feld>
               )}
             </div>
+
+            <Rechenbeispiel form={form} zubehoer={zubehoer} />
             <Feld label="Notiz (intern)">
               <textarea rows={2} className="w-full p-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40 bg-white" value={form.note} onChange={e => setzen('note', e.target.value)} />
             </Feld>
@@ -321,7 +475,13 @@ export default function AffiliatesPanel() {
                       <span className="text-black/80">{a.full_name || <span className="text-black/30 italic">trägt Daten noch ein</span>}</span>
                       <span className="block text-[10px] text-black/35">{a.email}</span>
                     </td>
-                    <td className="p-2.5 tabular-nums text-black/60">{a.code}</td>
+                    <td className="p-2.5 tabular-nums text-black/60">
+                      {a.code}
+                      {/* Die Konditionen gehören neben den Code: Ohne sie lässt
+                          sich eine Zeile in der Liste nicht beurteilen — man
+                          müsste jeden Eintrag einzeln aufklappen. */}
+                      <span className="block text-[10px] text-black/35">{konditionenText(a)}</span>
+                    </td>
                     <td className="p-2.5">
                       <span className={`text-[10px] uppercase tracking-wider ${a.status === 'active' ? 'text-black/60' : 'text-black/30'}`}>{a.status}</span>
                       {a.payout_blocked && (
@@ -340,7 +500,7 @@ export default function AffiliatesPanel() {
                     </td>
                     <td className="p-2.5 text-right">
                       <button
-                        onClick={() => { setForm({ ...leeresFormular, ...a, _modus: 'bearbeiten' }); setHinweis(null); setFehler(null) }}
+                        onClick={() => { setForm(zumFormular(a)); setHinweis(null); setFehler(null) }}
                         className="text-[11px] text-black/50 hover:text-black bg-transparent border-0 p-0"
                       >
                         bearbeiten
@@ -364,9 +524,9 @@ export default function AffiliatesPanel() {
       <div className="flex items-start gap-2 mt-2 text-[11px] text-black/40 leading-relaxed">
         <Gift size={12} className="mt-0.5 shrink-0" />
         <p>
-          Zugabe und Nachlass sind ein Entweder-oder, und beides trägt das Haus.
-          Die Provision des Affiliates bleibt davon unberührt: Prozent oder
-          Festbetrag, gedeckelt — mehr steht nicht in der Rechnung.
+          Zugabe und Nachlass sind ein Entweder-oder, und beides zahlt der Affiliate
+          aus seinem Topf: Der Betrag je Paar ist alles, was eine Vermittlung kosten
+          darf. Sagt er dem Kunden nichts zu, bekommt er ihn ganz.
         </p>
       </div>
     </div>

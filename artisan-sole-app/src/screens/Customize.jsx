@@ -10,6 +10,11 @@ const GROUP_ICONS = {
   Palette, Sparkles, ArrowRightLeft,
 }
 
+// Weitenbuchstaben in Alltagssprache. D, EE und EEE sind Werkstattmaße; in
+// der Zusammenfassung soll stehen, was der Kunde gewählt hat, nicht wie es
+// in der Manufaktur heißt.
+const WEITEN_NAME = { D: 'Normal', EE: 'Breit', EEE: 'Sehr breit' }
+
 // Leisten-Zehenform als Draufsicht-Silhouette. Visualisiert die Unterschiede
 // zwischen Zurigo (rund), Monti (leicht eckig), Savile (Chisel) und
 // Belgravia (scharfe Chisel). Wird angezeigt, wenn kein echtes Foto
@@ -368,6 +373,12 @@ export default function Customize() {
   const [measOpen, setMeasOpen] = useState(false)   // Inline-Maßeingabe an der Passgenauigkeit
   const [measAnchor, setMeasAnchor] = useState('kopf')  // 'kopf' | 'passform' — wo sie erscheint
   const [groessenOffen, setGroessenOffen] = useState(false)
+  // Was aus dem Größenfenster kommt, wenn jemand nicht messen will:
+  // { last_key, last_label, width, size_system, size_label }. Ohne diesen
+  // Zustand kannte die Bestellung nur die Zahl — Leisten und Weite fielen
+  // heraus, und in der Fertigung stand dann die Standardweite, obwohl der
+  // Kunde „breit" gewählt hatte.
+  const [manuelleWahl, setManuelleWahl] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -431,6 +442,38 @@ export default function Customize() {
     return list.sort((a, b) => (b.match.fitPercent || 0) - (a.match.fitPercent || 0))
   })()
   const selectedFit = chosenLast ? (bestPerLast.get(chosenLast) || null) : null
+
+  /**
+   * Die Passform, die in Entwurf, Warenkorb und Bestellung geht.
+   *
+   * Zwei Wege führen hierher: die aus den Fußmaßen ermittelte (`selectedFit`)
+   * und die von Hand im Größenfenster gewählte. Beide tragen dieselben Felder,
+   * damit sich weiter unten niemand merken muss, welcher Weg genommen wurde.
+   */
+  const passform = sizeType === 'standard' ? manuelleWahl : selectedFit
+
+  /**
+   * Welche Schuhformen im Größenfenster zur Wahl stehen.
+   *
+   * Nicht alle fünfzehn aus der Maßtabelle — nur die, die es für dieses
+   * Modell gibt. Sind Maße hinterlegt, sind es die passenden; sonst die
+   * Formen, die der Schuh überhaupt anbietet. Gibt der Schuh keine vor,
+   * bleibt die Liste leer und das Fenster nennt eine als Richtwert, statt
+   * eine Auswahl zu zeigen, die niemand treffen kann.
+   */
+  const groessenLeisten = (
+    availableLasts.length
+      ? availableLasts
+      : (lastGroup?.values || [])
+  ).map(v => ({ key: v.key, label: v.label }))
+
+  /** Was aus dem Größenfenster zurückkommt, wird zur gewählten Passform. */
+  const groesseUebernehmen = (wahl) => {
+    setManuelleWahl(wahl)
+    setSizeType('standard')
+    setSelectedSize(wahl.size_label)
+    setChosenLast(wahl.last_key)
+  }
 
   // Falls die automatisch gewählte Leiste nicht unter den (Schuh-)verfügbaren ist,
   // auf die best-passende verfügbare umschalten.
@@ -941,9 +984,9 @@ export default function Customize() {
     sole: soleArt?.label || 'Standard',
     extras: extrasForCart,
     size_type: sizeType, eu_size: chosenEU,
-    last_key: selectedFit?.last_key || null,
-    last_label: selectedFit?.last_label || null,
-    last_width: selectedFit?.width || null,
+    last_key: passform?.last_key || null,
+    last_label: passform?.last_label || null,
+    last_width: passform?.width || null,
     fit_measurements: footMeasurementsUsed,
     accessories: selectedAccessories,
     price: formatPrice(basePrice + extrasPriceTotal),
@@ -956,7 +999,7 @@ export default function Customize() {
     if (openDraft) return          // Rückfrage steht noch offen
     saveDraft(draftId, draftPayload())
   }, [product?.id, selMat, selCol, color, JSON.stringify(selectedExtras), sizeType, chosenEU,
-      selectedFit?.last_key, selectedFit?.width, JSON.stringify(selectedAccessories), openDraft])
+      passform?.last_key, passform?.width, JSON.stringify(selectedAccessories), openDraft])
 
   // Beim Öffnen nachsehen, ob zu diesem Modell noch etwas Halbfertiges liegt.
   // Nur was weder im Warenkorb noch bestellt ist — alles andere ist erledigt
@@ -1021,9 +1064,9 @@ export default function Customize() {
       sole: soleArt?.label || 'Standard',
       image: product.image,
       sizeType, euSize: chosenEU,
-      last: selectedFit?.last_key || null,
-      lastLabel: selectedFit?.last_label || null,
-      width: selectedFit?.width || null,
+      last: passform?.last_key || null,
+      lastLabel: passform?.last_label || null,
+      width: passform?.width || null,
       sizeSystem: selectedFit?.size_system || 'EU',
       footMeasurementsUsed,
       extras: extrasForCart,
@@ -1092,9 +1135,9 @@ export default function Customize() {
           color, colorName: col?.name || null, price: formatPrice(basePrice + extrasPriceTotal),
           sole: soleArt?.label || 'Standard',
           sizeType, euSize: chosenEU,
-          last: selectedFit?.last_key || null,
-          lastLabel: selectedFit?.last_label || null,
-          width: selectedFit?.width || null,
+          last: passform?.last_key || null,
+          lastLabel: passform?.last_label || null,
+          width: passform?.width || null,
           sizeSystem: selectedFit?.size_system || 'EU',
           footMeasurementsUsed,
           // Ohne das fehlten beim Direktkauf sämtliche Zusatzoptionen —
@@ -1832,10 +1875,32 @@ export default function Customize() {
                         {v.price_extra > 0 && (
                           <p className="text-[9px] text-black/35 font-light mt-0.5">+{v.price_extra.toFixed(2).replace('.', ',')} €</p>
                         )}
+                        {/* Empfehlung des Hauses. In einer Gruppe dürfen
+                            mehrere Werte sie tragen — es ist eine Vorauswahl,
+                            keine Vorschrift, und deshalb ein Hinweis am Wert
+                            und keine gesperrte Auswahl. */}
+                        {v.recommended && (
+                          <span className="absolute top-1 right-1 text-black/45" title={v.recommendation_reason || 'Unsere Empfehlung'}>
+                            <Star size={9} strokeWidth={1.4} fill="currentColor" />
+                          </span>
+                        )}
                       </button>
                     )
                   })}
                 </div>
+                {/* Warum empfohlen — einmal je Gruppe, statt an jedem Knopf.
+                    Ein Stern ohne Begründung ist eine Behauptung. */}
+                {group.values.some(v => v.recommended && v.recommendation_reason) && (
+                  <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2 flex items-start gap-1.5">
+                    <Star size={9} strokeWidth={1.4} fill="currentColor" className="mt-[3px] shrink-0 text-black/40" />
+                    <span>
+                      {group.values
+                        .filter(v => v.recommended && v.recommendation_reason)
+                        .map(v => `${v.label}: ${v.recommendation_reason}`)
+                        .join(' · ')}
+                    </span>
+                  </p>
+                )}
                 {/* Beschreibung der aktuell gewählten Option (z. B. Leisten-
                     Erklärung „Runde Zehenform …") */}
                 {currentSelection?.description && (
@@ -1853,8 +1918,42 @@ export default function Customize() {
             <div className="px-5 lg:px-0">
               <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Passform</p>
 
-              {/* Keine Maße gespeichert → schlanke Eingabe */}
-              {!footMeasurements?.foot_length_mm ? (
+              {/* Selbst gewählt → das Ergebnis steht hier, samt Rückweg.
+                  Ohne diese Karte verschwände die Wahl wieder im Fenster und
+                  ließe sich nur durch erneutes Öffnen nachlesen. */}
+              {sizeType === 'standard' && manuelleWahl ? (
+                <div className="border border-black/10 p-4">
+                  <p className="text-[11px] text-black/40 uppercase tracking-[0.14em] mb-1.5">Selbst gewählt</p>
+                  <p className="text-[15px] font-light text-black">
+                    EU {String(manuelleWahl.size_label).replace('.', ',')}
+                    <span className="text-[12px] text-black/45 ml-2">
+                      · Weite {WEITEN_NAME[manuelleWahl.width] || manuelleWahl.width}
+                      {manuelleWahl.last_label ? ` · ${manuelleWahl.last_label}` : ''}
+                    </span>
+                  </p>
+                  <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2">
+                    Ohne Maße bauen wir nach der Tabelle. Wenn Sie uns Fußlänge und
+                    Ballenumfang nennen, wählen wir Leisten und Weite passend dazu — das
+                    sitzt spürbar besser.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-4 mt-3">
+                    <button
+                      type="button" onClick={() => setGroessenOffen(true)}
+                      className="text-[10px] text-black/50 hover:text-black underline underline-offset-2 bg-transparent border-0 p-0"
+                    >
+                      Größe ändern
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setManuelleWahl(null); setSizeType(''); setSelectedSize(''); openMeasEdit('passform') }}
+                      className="text-[10px] text-black/50 hover:text-black underline underline-offset-2 bg-transparent border-0 p-0"
+                    >
+                      Lieber doch messen
+                    </button>
+                  </div>
+                  {measOpen && measAnchor === 'passform' && massFormular}
+                </div>
+              ) : !footMeasurements?.foot_length_mm ? (
                 <div className="border border-black/10 p-4">
                   {measOpen && measAnchor === 'passform' ? (
                     massFormular
@@ -1876,7 +1975,7 @@ export default function Customize() {
                         onClick={() => setGroessenOffen(true)}
                         className="block w-full mt-2.5 text-[10px] text-black/40 hover:text-black/70 text-center underline underline-offset-4 bg-transparent border-0"
                       >
-                        Lieber ohne Maße? Zur Größentabelle
+                        Lieber ohne Maße? Größe selbst wählen
                       </button>
                     </>
                   )}
@@ -1952,6 +2051,14 @@ export default function Customize() {
                     className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0"
                   >
                     Custom Made anfragen
+                  </button>
+                  {/* Wer trotzdem lieber eine Standardgröße nimmt, soll das
+                      können — die Anfrage ist ein Angebot, keine Sackgasse. */}
+                  <button
+                    type="button" onClick={() => setGroessenOffen(true)}
+                    className="block w-full mt-2 text-[10px] text-black/40 hover:text-black/70 text-center underline underline-offset-4 bg-transparent border-0"
+                  >
+                    Oder eine Standardgröße selbst wählen
                   </button>
                   <button type="button" onClick={() => openMeasEdit('passform')} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
@@ -2070,16 +2177,16 @@ export default function Customize() {
                   {/* Leisten und Weite gehören sichtbar dazu: Sie bestimmen,
                       wie der Schuh sitzt, und standen bisher nur in der
                       Bestellansicht des Betreibers. */}
-                  {selectedFit?.last_label && (
+                  {passform?.last_label && (
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-black/50">Leisten</span>
-                      <span className="text-[11px] text-black">{selectedFit.last_label}</span>
+                      <span className="text-[11px] text-black">{passform.last_label}</span>
                     </div>
                   )}
-                  {selectedFit?.width && (
+                  {passform?.width && (
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-black/50">Weite</span>
-                      <span className="text-[11px] text-black">{selectedFit.width}</span>
+                      <span className="text-[11px] text-black">{WEITEN_NAME[passform.width] || passform.width}</span>
                     </div>
                   )}
                   {sizeType === 'fit' && selectedFit?.size_label && (
@@ -2265,6 +2372,8 @@ export default function Customize() {
         offen={groessenOffen}
         onClose={() => setGroessenOffen(false)}
         lastKey={chosenLast || null}
+        leisten={groessenLeisten}
+        onUebernehmen={groesseUebernehmen}
       />
 
       {duplicateDialog && (

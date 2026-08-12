@@ -6,7 +6,7 @@ import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import {
-  affiliateStanding, matureCommissions, deckelVon, zugabeKosten,
+  affiliateStanding, matureCommissions, deckelVon, zugabeKosten, DECKEL_STANDARD,
   PAYOUT_BATCH_SIZE, PROTECTION_DAYS,
 } from '../utils/affiliate.js'
 import { sendAffiliateInvitation } from '../utils/email.js'
@@ -59,25 +59,60 @@ router.get('/validate/:code', (req, res) => {
   if (!code) return res.status(400).json({ valid: false, error: 'Code fehlt' })
 
   const db = getDb()
-  const a = db.prepare(
-    "SELECT code, customer_benefit, customer_discount_pct, gift_key, cap_per_shoe FROM affiliates WHERE code = ? AND status = 'active'"
-  ).get(code)
+  const a = db.prepare(`
+    SELECT code, customer_benefit, customer_discount_pct, gift_key,
+           commission_type, commission_value, cap_per_shoe
+    FROM affiliates WHERE code = ? AND status = 'active'
+  `).get(code)
   if (!a) return res.status(404).json({ valid: false, error: 'Dieser Code ist nicht gültig.' })
 
   // Entweder ein Nachlass oder eine Zugabe — nie beides. Der Kunde soll sehen,
   // was er bekommt; was der Affiliate dafür erhält, geht ihn nichts an.
   //
-  // discount_cap begleitet den Prozentsatz: Der Nachlass geht von der Provision
-  // des Affiliates ab und ist damit auf seinen Deckel begrenzt. Der Betrag
-  // gehört zur Zusage — der Konfigurator muss ihn kennen, sonst zeigt er einen
-  // Preis an, den die Bestellung hinterher nicht bestätigt.
+  // discount_cap begleitet den Prozentsatz: Der Nachlass geht vom Topf des
+  // Affiliates ab und ist damit auf dessen Höhe begrenzt. Der Betrag gehört
+  // zur Zusage — der Konfigurator muss ihn kennen, sonst zeigt er einen Preis
+  // an, den die Bestellung hinterher nicht bestätigt.
+  //
+  // Bei einem festen Betrag je Paar ist dieser Betrag die Grenze; beim
+  // Prozentsatz der Deckel. Die Höhe der Provision selbst bleibt drinnen.
+  const grenze = a.commission_type === 'fixed'
+    ? Math.max(0, Number(a.commission_value) || 0)
+    : deckelVon(a)
+
+  // Die Zugabe mit Namen und Bild, damit sie im Warenkorb nicht bloß als
+  // Schlüssel dasteht. Der Ladenpreis geht mit: Er zeigt dem Kunden, was die
+  // Beigabe wert ist — bezahlt wird sie nicht von ihm.
+  let zugabe = null
+  if (a.customer_benefit === 'gift' && a.gift_key) {
+    try {
+      const z = db.prepare(
+        'SELECT key, name, price, image_data, images FROM accessories WHERE key = ?'
+      ).get(String(a.gift_key))
+      if (z) {
+        let bild = z.image_data || null
+        try {
+          const strecke = JSON.parse(z.images || '[]')
+          if (Array.isArray(strecke) && strecke[0]) bild = strecke[0]
+        } catch { /* ohne Strecke bleibt es beim Einzelbild */ }
+        zugabe = { key: z.key, name: z.name, price: z.price || null, image: bild }
+      } else {
+        // Der Artikel wurde aus dem Zubehör entfernt, die Zusage steht noch.
+        // Lieber ohne Bild anzeigen als die Zusage stillschweigend fallen zu
+        // lassen — sie wurde im Laden gegeben.
+        zugabe = { key: String(a.gift_key), name: 'Zugabe', price: null, image: null }
+      }
+    } catch { /* Zubehör nicht lesbar — dann ohne Bild */ }
+  }
+
   res.json({
     valid: true,
     code: a.code,
     benefit: a.customer_benefit || 'none',
     customer_discount_pct: a.customer_benefit === 'discount' ? Number(a.customer_discount_pct) || 0 : 0,
-    discount_cap: a.customer_benefit === 'discount' ? deckelVon(a) : 0,
-    gift: a.customer_benefit === 'gift' ? (a.gift_key || null) : null,
+    discount_cap: a.customer_benefit === 'discount' ? grenze : 0,
+    gift: zugabe ? zugabe.key : null,
+    gift_item: zugabe,
   })
 })
 
@@ -115,7 +150,7 @@ router.post('/register',
       b.tax_number || null, b.vat_id || null, b.iban || null, b.account_holder || null,
       b.commission_type === 'fixed' ? 'fixed' : 'percent',
       Number(b.commission_value) || 10,
-      Number(b.cap_per_shoe) || 40,
+      Number(b.cap_per_shoe) || DECKEL_STANDARD,
       b.gift_shoetree ? 1 : 0,
     )
     res.status(201).json({ id: info.lastInsertRowid, code, status: 'pending' })
@@ -250,9 +285,16 @@ router.get('/', ...canAdmin, (req, res) => {
   // Ein Durchgang statt einer Abfrage je Affiliate: Bei „unzähligen"
   // Affiliates wäre das sonst eine Abfrage pro Zeile.
   const rows = db.prepare(`
-    SELECT a.id, a.code, a.status, a.full_name, a.email, a.city,
+    -- Vollständig, nicht ausschnittsweise: Die Verwaltung bearbeitet einen
+    -- Affiliate aus dieser Liste heraus. Kämen die Vertragsfelder hier nicht
+    -- mit, stünden sie in der Maske leer da und würden beim Speichern über
+    -- die hinterlegten Angaben geschrieben.
+    SELECT a.id, a.code, a.status, a.full_name, a.email, a.phone,
+           a.street, a.postal_code, a.city, a.country, a.birth_date,
            a.commission_type, a.commission_value, a.cap_per_shoe, a.gift_shoetree,
-           a.tax_status, a.iban, a.created_at,
+           a.customer_benefit, a.customer_discount_pct, a.gift_key,
+           a.tax_status, a.tax_number, a.vat_id, a.iban, a.account_holder,
+           a.note, a.created_at,
            COUNT(c.id)                                                   AS pairs_total,
            COALESCE(SUM(CASE WHEN c.status != 'cancelled' THEN c.shoe_price END), 0) AS revenue,
            COALESCE(SUM(CASE WHEN c.status = 'payable'   THEN c.amount END), 0)      AS open_amount,
@@ -357,7 +399,7 @@ router.post('/',
         b.tax_number || null, b.vat_id || null, b.iban || null, b.account_holder || null,
         type,
         Number(b.commission_value) || (type === 'fixed' ? 25 : 10),
-        Number(b.cap_per_shoe) || 40,
+        Number(b.cap_per_shoe) || DECKEL_STANDARD,
         vorteil,
         Math.min(100, Math.max(0, Number(b.customer_discount_pct) || 0)),
         // Ohne ausdrückliche Wahl gilt, was der alte Schalter meinte: der

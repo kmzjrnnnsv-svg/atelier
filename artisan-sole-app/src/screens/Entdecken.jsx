@@ -173,6 +173,12 @@ export default function Entdecken() {
               vernäht. Ist die Sohle in zehn Jahren durch, wird sie erneuert — der Schuh bleibt.
               Ein geklebter Schuh wäre an dieser Stelle Abfall.
             </p>
+            <p className="text-[14px] text-black/55 font-light leading-relaxed mt-4">
+              Und weil er ohnehin erst für Sie gebaut wird, bestimmen Sie, wie er aussieht:
+              Leder und Farbe, die Sohle, die Lochung, die Farbe des Fadens — auf Wunsch mit
+              Ihren Initialen im Schaft. Kein Aufpreis für eine Entscheidung, die vor der
+              Fertigung fällt.
+            </p>
             <Knopf onClick={weiter} />
           </>
         )}
@@ -242,8 +248,8 @@ export default function Entdecken() {
             )}
 
             <p className="text-[13px] text-black/45 font-light leading-relaxed mt-6">
-              Im Konfigurator wählen Sie Leder, Farbe, Sohle und Ausführung. Ihre Maße nehmen
-              wir Schritt für Schritt mit Ihnen auf.
+              Im Konfigurator wählen Sie Leder, Farbe, Sohle, Lochung und — wenn Sie mögen —
+              Ihre Initialen. Größe und Maße nehmen wir Schritt für Schritt mit Ihnen auf.
             </p>
 
             <button

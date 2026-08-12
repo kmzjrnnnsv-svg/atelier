@@ -3,10 +3,15 @@
  *
  * ── Ein Topf je Paar ──────────────────────────────────────────────────────
  *
- * Für jedes vermittelte Paar stellt das Haus einen festen Betrag bereit:
- * einen Prozentsatz vom Kaufpreis (Standard 10 %), gedeckelt je Paar
- * (Standard 40 €). Das ist alles, was eine Vermittlung kosten darf — und
- * zwar einschließlich dessen, was der Kunde bekommt.
+ * Für jedes vermittelte Paar stellt das Haus einen festen Betrag bereit. Wie
+ * er zustande kommt, entscheidet die Verwaltung je Affiliate:
+ *
+ *   • Betrag je Paar   — „dieser Partner bekommt 50 € für jedes Paar".
+ *   • Prozent vom Kauf — ein Anteil am Kaufpreis, gedeckelt je Paar.
+ *
+ * Beides führt auf dieselbe Zahl: den Topf. Das ist alles, was eine
+ * Vermittlung kosten darf — und zwar einschließlich dessen, was der Kunde
+ * bekommt.
  *
  * Aus diesem Topf zahlt der Affiliate seine Zusage an den Kunden:
  *
@@ -16,9 +21,9 @@
  *   • ein Nachlass → der gewährte Nachlass wird einbehalten.
  *
  * Damit steht die Kalkulation im Voraus fest: Ein Affiliate kostet nie mehr
- * als seinen Deckel je Paar, gleich was er zusagt. Deshalb gilt der Deckel
- * auch für den Nachlass selbst — 10 % auf ein Paar zu 1.450 € wären 145 €
- * und ließen sich aus einem Topf von 40 € nicht bezahlen.
+ * als seinen Topf je Paar, gleich was er zusagt. Deshalb ist auch der
+ * Nachlass daran gebunden — 10 % auf ein Paar zu 1.450 € wären 145 € und
+ * ließen sich aus einem Topf von 50 € nicht bezahlen.
  *
  * Die übrigen Regeln:
  *
@@ -54,37 +59,46 @@ const round2 = (n) => Math.round(n * 100) / 100
 export const preisZahl = num
 
 /**
- * Der Deckel je Paar. Ohne Angabe 40 € — bewusst nicht „unbegrenzt": Ein
- * fehlender Wert darf keine offene Rechnung ergeben.
+ * Der Deckel je Paar für die prozentuale Vergütung. Ohne Angabe 50 € —
+ * bewusst nicht „unbegrenzt": Ein fehlender Wert darf keine offene Rechnung
+ * ergeben.
  */
-export const DECKEL_STANDARD = 40
+export const DECKEL_STANDARD = 50
 export const deckelVon = (affiliate) => num(affiliate?.cap_per_shoe) || DECKEL_STANDARD
 
 /**
  * Was ein vermitteltes Paar das Haus höchstens kostet — der Topf, aus dem
  * sowohl die Zusage an den Kunden als auch die Auszahlung an den Affiliate
  * bestritten wird.
+ *
+ * Beim Betrag je Paar IST der eingetragene Betrag der Topf. Der Deckel
+ * gehört zur prozentualen Vergütung und wird hier nicht noch einmal
+ * darübergelegt — wer 50 € je Paar zusagt, hätte sonst 40 € gemeint, ohne
+ * dass es irgendwo stünde.
  */
 export function vermittlungsBudget(affiliate, price) {
-  const roh = affiliate?.commission_type === 'fixed'
-    ? num(affiliate.commission_value)
-    : num(price) * num(affiliate?.commission_value) / 100
+  if (!affiliate) return 0
+  if (affiliate.commission_type === 'fixed') {
+    return round2(Math.max(0, num(affiliate.commission_value)))
+  }
+  const roh = num(price) * num(affiliate.commission_value) / 100
   return round2(Math.max(0, Math.min(roh, deckelVon(affiliate))))
 }
 
 /**
  * Der Nachlass in Euro, den dieser Affiliate auf einen Preis zusagt.
  *
- * Der Prozentsatz steht am Affiliate, die Euro-Grenze ist sein Deckel: Was
- * er verspricht, zahlt er aus seinem eigenen Topf, und der ist gedeckelt.
- * Ohne diese Grenze wäre ein Nachlass auf ein teures Paar teurer als die
- * ganze Vermittlung — 10 % von 1.450 € sind 145 €.
+ * Der Prozentsatz steht am Affiliate, die Euro-Grenze ist sein Topf: Was er
+ * verspricht, zahlt er selbst, und mehr als der Topf hergibt kann er nicht
+ * versprechen. Ohne diese Grenze wäre ein Nachlass auf ein teures Paar
+ * teurer als die ganze Vermittlung — 10 % von 1.450 € sind 145 €.
  */
 export function kundenNachlass(affiliate, listenpreis) {
   if (!affiliate || affiliate.customer_benefit !== 'discount') return 0
   const pct = Math.min(100, Math.max(0, num(affiliate.customer_discount_pct)))
   if (!pct) return 0
-  return round2(Math.max(0, Math.min(num(listenpreis) * pct / 100, deckelVon(affiliate))))
+  const grenze = vermittlungsBudget(affiliate, listenpreis)
+  return round2(Math.max(0, Math.min(num(listenpreis) * pct / 100, grenze)))
 }
 
 /**
