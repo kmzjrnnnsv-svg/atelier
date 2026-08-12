@@ -220,7 +220,7 @@ export default function AffiliateLanding() {
               text: 'Sind fünf Paare auszahlbar, rechnen wir ab, älteste zuerst. Sie sehen jederzeit, wie viele Paare offen sind und was noch bis zur nächsten Runde fehlt.',
             },
           ]}
-          fuss="Zugabe und Nachlass sind zweierlei. Ein Nachlass für den Geworbenen geht zulasten des Hauses; eine Zugabe wie der Zedernholz-Spanner wird zum Einkaufspreis von Ihrer Provision abgezogen. Was davon für Sie gilt, steht in Ihren Konditionen."
+          fuss="Was Sie Ihrem Kunden zusagen, zahlen Sie aus Ihrer Provision: ein Nachlass kostet den Nachlass, eine Zugabe ihren Einkaufspreis. Sagen Sie nichts zu, zahlt Ihr Kunde den Normalpreis und Ihnen bleibt der volle Betrag. Was für Sie eingestellt ist, steht in Ihrem Bereich."
           hell
           breite="max-w-3xl"
         />

@@ -101,7 +101,8 @@ Neu und **noch nicht vollständig**.
 | Bereich | Zustand | Anmerkung |
 |---|---|---|
 | Provisionsberechnung | ✅ | Prozent oder Festbetrag, gedeckelt je Paar |
-| Zugabe für den Käufer | ✅ | Einkaufspreis wird von der Provision einbehalten |
+| Kundenvorteil aus einem Topf | ✅ | nichts, Nachlass oder Zugabe — der Affiliate zahlt es aus seiner Provision |
+| Vermittlung kostet höchstens den Deckel | ✅ | auch der Nachlass ist auf `cap_per_shoe` begrenzt |
 | Reifung der Provision | ✅ | zugestellt → Frist → auszahlbar |
 | Rückgabe lässt Provision verfallen | ✅ | |
 | Auszahlung in Fünferrunden | ✅ | |

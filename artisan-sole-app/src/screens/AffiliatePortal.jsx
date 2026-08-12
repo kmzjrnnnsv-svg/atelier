@@ -256,10 +256,21 @@ export default function AffiliatePortal() {
                 Wer über den Link kommt, hat Ihren Code beim Bezahlen bereits im Warenkorb stehen.
                 Er lässt sich dort auch von Hand eingeben — auf einer Karte, im Laden, im Gespräch.
               </p>
-              {a.gift_shoetree === 1 && (
+              {a.customer_benefit === 'gift' && (
                 <p className="text-[11px] text-black/45 font-light mt-2.5 leading-relaxed">
-                  Ihre Kunden erhalten einen Zedernholz-Schuhspanner dazu. Dafür werden je Paar
+                  Ihre Kunden erhalten {rules.giftName || 'eine Zugabe'} dazu. Dafür werden je Paar
                   {' '}{euro(rules.giftCost)} von Ihrer Provision einbehalten.
+                </p>
+              )}
+              {a.customer_benefit === 'discount' && (
+                <p className="text-[11px] text-black/45 font-light mt-2.5 leading-relaxed">
+                  Ihre Kunden erhalten {String(a.customer_discount_pct).replace('.', ',')} % Nachlass,
+                  höchstens {euro(rules.capPerShoe)} je Paar. Der Nachlass geht von Ihrer Provision ab.
+                </p>
+              )}
+              {(!a.customer_benefit || a.customer_benefit === 'none') && (
+                <p className="text-[11px] text-black/45 font-light mt-2.5 leading-relaxed">
+                  Ihre Kunden zahlen den Normalpreis — dafür bleibt Ihnen die volle Provision.
                 </p>
               )}
             </div>
@@ -296,7 +307,7 @@ export default function AffiliatePortal() {
                       <p className="text-[13px] text-black font-light truncate">{c.shoe_name}</p>
                       <p className="text-[11px] text-black/35 font-light mt-0.5">
                         {new Date(c.created_at + 'Z').toLocaleDateString('de-DE')} · {s.text}
-                        {c.gift_cost > 0 && ` · Zugabe −${euro(c.gift_cost)}`}
+                        {c.gift_cost > 0 && ` · ${c.benefit_kind === 'discount' ? 'Nachlass' : 'Zugabe'} −${euro(c.gift_cost)}`}
                       </p>
                     </div>
                     <p className={`text-[13px] font-light flex-shrink-0 ${c.status === 'cancelled' ? 'text-black/25 line-through' : 'text-black'}`}>
@@ -330,6 +341,24 @@ export default function AffiliatePortal() {
             </div>
           </div>
         )}
+
+        {/* Die Rechnung in drei Sätzen. Ohne sie wirkt ein Abzug in der Liste
+            oben wie ein Fehler — und ohne sie wüsste niemand, dass es sich
+            lohnt, nichts zu verschenken. */}
+        <div className="border border-black/10 bg-white px-6 py-6">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-black/30 mb-4">Wie sich das rechnet</p>
+          <p className="text-[13px] text-black/60 font-light leading-relaxed">
+            Für jedes vermittelte Paar stehen {String(a.commission_value).replace('.', ',')}
+            {a.commission_type === 'fixed' ? ' €' : ' % des Kaufpreises'} bereit, höchstens
+            {' '}{euro(rules.capPerShoe)}. Aus diesem Betrag zahlen Sie, was Sie Ihrem Kunden
+            zusagen — der Rest wird an Sie ausgezahlt.
+          </p>
+          <p className="text-[13px] text-black/60 font-light leading-relaxed mt-3">
+            Sagen Sie nichts zu, bleibt Ihnen alles. Eine Zugabe kostet ihren Einkaufspreis,
+            ein Nachlass kostet genau den Nachlass. Was Sie zusagen, legen Sie fest — sprechen
+            Sie uns über die Nachrichten an, wenn Sie es ändern möchten.
+          </p>
+        </div>
 
         <p className="text-[11px] text-black/30 font-light leading-relaxed pt-2">
           Ausgezahlt wird nach jeweils {rules.batchSize} vermittelten Paaren. Ein Paar wird

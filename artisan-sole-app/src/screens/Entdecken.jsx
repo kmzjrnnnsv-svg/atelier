@@ -39,7 +39,7 @@ export default function Entdecken() {
   const [folie, setFolie] = useState(0)
   const [name, setName] = useState(() => nameLesen())
   const [eingabe, setEingabe] = useState(() => nameLesen())
-  const [vorteil, setVorteil] = useState(null)   // { customer_discount_pct, gift }
+  const [vorteil, setVorteil] = useState(null)   // { rabatt, deckel, gift }
   const [laden, setLaden] = useState('')          // Name des Geschäfts, falls bekannt
 
   // Der Code zuerst — noch vor der ersten Folie. Bricht jemand hier ab und
@@ -51,7 +51,11 @@ export default function Entdecken() {
     apiFetch(`/api/affiliates/validate/${encodeURIComponent(code)}`)
       .then(d => {
         if (!d?.valid) return
-        setVorteil({ rabatt: Number(d.customer_discount_pct) || 0, gift: d.gift || null })
+        setVorteil({
+          rabatt: Number(d.customer_discount_pct) || 0,
+          deckel: Number(d.discount_cap) || 0,
+          gift: d.gift || null,
+        })
         if (d.partner_name) setLaden(d.partner_name)
       })
       .catch(() => { /* ohne Vorteil geht es auch — dann endet es beim Knopf */ })
@@ -216,6 +220,7 @@ export default function Entdecken() {
                       </p>
                       <p className="text-[11px] text-black/40 font-light mt-0.5">
                         Wird im Konfigurator abgezogen. Sie müssen nichts eingeben.
+                        {vorteil.deckel > 0 && ` Höchstens € ${vorteil.deckel} je Paar.`}
                       </p>
                     </div>
                   </div>

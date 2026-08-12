@@ -48,7 +48,7 @@ const useStore = create((set, get) => ({
   shoeSoles:    [],
   accessories:  [],          // all accessories from DB
   myCampaigns:  [],          // Firmen-Aktionen, in denen der Kunde Mitglied ist
-  affiliate:   null,        // { code, gift, customer_discount_pct } aus ?ref=
+  affiliate:   null,        // { code, gift, customer_discount_pct, discount_cap } aus ?ref=
   shoeAccessoryMap: {},      // { shoeId: [accessory, ...] }
   loyaltyTiers: [],
   loyaltyStatus: { points: 0, tier: 'bronze' },
@@ -143,6 +143,9 @@ const useStore = create((set, get) => ({
         code: r.code,
         gift: r.gift || null,
         customer_discount_pct: Number(r.customer_discount_pct) || 0,
+        // Euro-Grenze des Nachlasses. Der Affiliate zahlt ihn aus seiner
+        // Provision, und die ist je Paar gedeckelt.
+        discount_cap: Number(r.discount_cap) || 0,
       }
       set({ affiliate: v })
       return v

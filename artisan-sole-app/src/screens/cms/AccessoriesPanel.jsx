@@ -4,7 +4,7 @@ import { apiFetch } from '../../hooks/useApi'
 import useStore from '../../store/store'
 import { accessoryImages } from '../../lib/accessoryImages'
 
-const emptyForm = { key: '', name: '', description: '', price: '', is_active: 1, sort_order: 0, images: [] }
+const emptyForm = { key: '', name: '', description: '', price: '', cost_price: '', is_active: 1, sort_order: 0, images: [] }
 
 export default function AccessoriesPanel() {
   const [items, setItems] = useState([])
@@ -60,6 +60,8 @@ export default function AccessoriesPanel() {
       images: JSON.stringify(imgs),
       image_data: imgs[0] || '',
       price: parseFloat(form.price) || 0,
+      // Leer heißt „nicht gepflegt" — dann gilt beim Affiliate der Ladenpreis.
+      cost_price: form.cost_price === '' ? null : parseFloat(form.cost_price) || 0,
       sort_order: parseInt(form.sort_order) || 0,
       is_active: form.is_active ? 1 : 0,
     }
@@ -86,7 +88,9 @@ export default function AccessoriesPanel() {
   const startEdit = (item) => {
     setForm({
       key: item.key, name: item.name, description: item.description || '',
-      price: String(item.price), is_active: item.is_active,
+      price: String(item.price),
+      cost_price: item.cost_price == null ? '' : String(item.cost_price),
+      is_active: item.is_active,
       sort_order: item.sort_order || 0,
       images: accessoryImages(item),
     })
@@ -185,10 +189,14 @@ export default function AccessoriesPanel() {
               </label>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Preis (€) *</label>
               <input type="number" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} placeholder="45" className={inp} />
+            </div>
+            <div>
+              <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Einkauf (€)</label>
+              <input type="number" step="0.01" value={form.cost_price} onChange={e => set('cost_price', e.target.value)} placeholder="—" className={inp} />
             </div>
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Sortierung</label>
@@ -200,6 +208,11 @@ export default function AccessoriesPanel() {
               </button>
             </div>
           </div>
+          <p className="text-[10px] text-black/25 font-light leading-relaxed max-w-xl -mt-2">
+            Der Einkaufspreis erscheint nirgends im Laden. Er zählt nur, wenn ein Affiliate
+            diesen Artikel als Zugabe zusagt: Genau dieser Betrag wird ihm von seiner
+            Provision einbehalten. Bleibt das Feld leer, gilt ersatzweise der Verkaufspreis.
+          </p>
           <div className="flex gap-3 pt-2">
             <button onClick={handleSave} disabled={!valid} className={`flex-1 h-11 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all duration-300 uppercase tracking-[0.2em] font-light flex items-center justify-center gap-2 ${!valid ? 'opacity-30 cursor-not-allowed' : ''}`}>
               <Check size={14} strokeWidth={1.25} /> Speichern

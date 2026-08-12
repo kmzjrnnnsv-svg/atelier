@@ -8,8 +8,9 @@ im Betrieb, nichts nachgebaut.
                          Anfragen, Affiliate, Firmenkonto
     tests/chat.mjs       18 Prüfungen: Nachrichtenverlauf zwischen Kunde und
                          Verwaltung, Kategorien, Ungelesen-Zähler, Zugriffsschutz
-    tests/preise.mjs     21 Prüfungen: Kampagnenrabatt, Affiliate-Nachlass,
-                         Provision samt Deckel, Preis-Untergrenze
+    tests/preise.mjs     38 Prüfungen: Kampagnenrabatt, Affiliate-Nachlass,
+                         Provision samt Deckel, alle drei Kundenvorteile
+                         (nichts/Nachlass/Zugabe), Preis-Untergrenze
 
 ## Aufrufen
 

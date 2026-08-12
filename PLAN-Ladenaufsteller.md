@@ -17,8 +17,9 @@ bauen keinen zweiten Weg, sondern hängen uns in den vorhandenen ein.
 | Werbecode je Partner | fertig | `affiliates.code` |
 | QR-Code je Partner | fertig, wird im Partner-Bereich erzeugt | `routes/affiliates.js` → `/me` |
 | `?ref=CODE` aus der Adresse lesen und 30 Tage merken | fertig | `lib/affiliateCode.js` |
-| **Nachlass für den Geworbenen** (Prozent) | fertig, je Partner einstellbar | `affiliates.customer_discount_pct` |
-| **Zedernholz-Schuhspanner als Zugabe** | fertig, je Partner einstellbar | `affiliates.gift_shoetree` |
+| **Nachlass für den Geworbenen** (Prozent) | fertig, je Partner einstellbar | `affiliates.customer_benefit` = `discount` |
+| **Zugabe** (Spanner oder Pflegeset) | fertig, je Partner einstellbar | `affiliates.customer_benefit` = `gift`, `gift_key` |
+| **Gar nichts** — Normalpreis, volle Provision | fertig | `affiliates.customer_benefit` = `none` |
 | Öffentliche Code-Prüfung (gibt Nachlass + Zugabe zurück) | fertig | `GET /api/affiliates/validate/:code` |
 | Provision, Deckel, Auszahlung in Fünferrunden | fertig | `utils/affiliate.js` |
 

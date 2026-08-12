@@ -251,10 +251,10 @@ export default function AffiliatesPanel() {
               <Feld label={form.commission_type === 'fixed' ? 'Betrag je Paar (€)' : 'Prozentsatz (%)'}>
                 <input type="number" step="0.5" min="0" className={eingabe} value={form.commission_value} onChange={e => setzen('commission_value', e.target.value)} />
               </Feld>
-              <Feld label="Deckel je Paar (€)" hint="Obergrenze der Provision, unabhängig vom Kaufpreis.">
+              <Feld label="Deckel je Paar (€)" hint="Was eine Vermittlung höchstens kostet — Auszahlung und Kundenvorteil zusammen.">
                 <input type="number" step="1" min="0" className={eingabe} value={form.cap_per_shoe} onChange={e => setzen('cap_per_shoe', e.target.value)} />
               </Feld>
-              <Feld label="Was der Geworbene bekommt" hint="Entweder oder — beides zugleich gab es nie, stand aber in zwei getrennten Feldern.">
+              <Feld label="Was der Geworbene bekommt" hint="Zahlt der Affiliate aus seiner Provision. Sagt er nichts zu, bekommt er den vollen Betrag.">
                 <select className={eingabe} value={form.customer_benefit} onChange={e => setzen('customer_benefit', e.target.value)}>
                   <option value="none">Nichts</option>
                   <option value="discount">Nachlass in Prozent</option>
@@ -262,12 +262,12 @@ export default function AffiliatesPanel() {
                 </select>
               </Feld>
               {form.customer_benefit === 'discount' && (
-                <Feld label="Nachlass (%)" hint="Wirkt im Konfigurator, ohne dass der Kunde etwas eingibt.">
+                <Feld label="Nachlass (%)" hint={`Wirkt im Konfigurator, ohne dass der Kunde etwas eingibt. Höchstens € ${Number(form.cap_per_shoe) || 40} je Paar — mehr gibt die Provision nicht her.`}>
                   <input type="number" step="1" min="0" max="100" className={eingabe} value={form.customer_discount_pct} onChange={e => setzen('customer_discount_pct', e.target.value)} />
                 </Feld>
               )}
               {form.customer_benefit === 'gift' && (
-                <Feld label="Welche Zugabe" hint="Liegt dem ersten Paar bei. Geht zulasten des Hauses, nicht der Provision.">
+                <Feld label="Welche Zugabe" hint="Liegt dem ersten Paar bei. Einbehalten wird der Einkaufspreis aus dem Zubehör.">
                   <select className={eingabe} value={form.gift_key} onChange={e => setzen('gift_key', e.target.value)}>
                     <option value="care_kit_leather">Lederpflege-Set</option>
                     <option value="care_kit_suede">Wildlederpflege-Set</option>

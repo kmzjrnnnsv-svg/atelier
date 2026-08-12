@@ -104,7 +104,8 @@ const code = `v${zufall()}`
 r = await ruf('/api/affiliates', {
   method: 'POST', token: admin,
   body: { full_name: 'Affiliate', email: `v-${zufall()}@x.de`, code,
-          commission_type: 'percent', commission_value: 10, cap_per_shoe: 40, customer_discount_pct: 15 },
+          commission_type: 'percent', commission_value: 10, cap_per_shoe: 40,
+          customer_benefit: 'discount', customer_discount_pct: 15 },
 })
 p('Affiliate mit 15 % Kundennachlass', r.status === 201, `HTTP ${r.status}`)
 const affUser = r.daten.user_id
@@ -113,9 +114,11 @@ const aff = r.daten.accessToken
 
 r = await ruf(`/api/affiliates/validate/${code}`)
 p('Kundennachlass wird geliefert', r.daten?.customer_discount_pct === 15, `${r.daten?.customer_discount_pct} %`)
+p('Euro-Grenze kommt mit', r.daten?.discount_cap === 40, `${r.daten?.discount_cap} €`)
 
-const nachlassAff = Math.round(vor * 15 / 100)
-p('Preisrechnung mit Affiliate', vor - nachlassAff === vor - Math.round(vor * 0.15), `${vor} − ${nachlassAff} = ${vor - nachlassAff} €`)
+// Der Nachlass ist auf den Deckel begrenzt — er geht von der Provision ab.
+const nachlassAff = Math.min(40, Math.round(vor * 15 / 100))
+p('Nachlass gedeckelt', nachlassAff === Math.min(40, Math.round(vor * 0.15)), `${vor} − ${nachlassAff} = ${vor - nachlassAff} €`)
 
 const kMail = `geworben-${zufall()}@x.de`
 r = await ruf('/api/auth/register', { method: 'POST', body: { name: 'Geworben', email: kMail, password: 'Test1234!x' } })
@@ -130,9 +133,19 @@ p('Bestellung über den Werbelink', r.status === 201, `HTTP ${r.status}`)
 
 r = await ruf('/api/affiliates/me', { token: aff })
 const prov = r.daten?.commissions?.[0]
+const gezahlt = vor - nachlassAff
+const topf = Math.min(40, gezahlt * 0.1)
 p('Provision erfasst', !!prov, `${r.daten?.commissions?.length} Positionen`)
-p('Provision vom rabattierten Preis', Math.abs(prov?.shoe_price - (vor - nachlassAff)) < 1, `Grundlage ${prov?.shoe_price} €`)
-p('10 % davon, gedeckelt bei 40 €', Math.abs(prov?.amount - Math.min(40, (vor - nachlassAff) * 0.1)) < 0.6, `${prov?.amount} €`)
+p('Provision vom rabattierten Preis', Math.abs(prov?.shoe_price - gezahlt) < 1, `Grundlage ${prov?.shoe_price} €`)
+p('Topf: 10 % davon, gedeckelt bei 40 €', Math.abs(prov?.gross_amount - topf) < 0.6, `${prov?.gross_amount} €`)
+// Der zugesagte Nachlass wird einbehalten — höchstens so viel, wie im Topf liegt.
+p('Nachlass wird einbehalten', Math.abs(prov?.gift_cost - Math.min(nachlassAff, topf)) < 1.5, `−${prov?.gift_cost} €`)
+p('Einbehalt ist als Nachlass ausgewiesen', prov?.benefit_kind === 'discount', `${prov?.benefit_kind}`)
+p('Auszahlung ist Topf minus Zusage', Math.abs(prov?.amount - Math.max(0, prov.gross_amount - prov.gift_cost)) < 0.02, `${prov?.amount} €`)
+p('Auszahlung nie negativ', prov?.amount >= 0, `${prov?.amount} €`)
+// Der Kern der Kalkulation: eine Vermittlung kostet nie mehr als den Deckel.
+p('Vermittlung kostet höchstens den Deckel', prov.gift_cost + prov.amount <= 40.01,
+  `${(prov.gift_cost + prov.amount).toFixed(2)} € gesamt`)
 
 // Eigenbestellung bringt keine Provision
 r = await ruf('/api/orders', {
@@ -151,7 +164,73 @@ r = await ruf('/api/orders', {
 })
 r = await ruf('/api/affiliates/me', { token: aff })
 const teuer = r.daten.commissions.find(c => Math.abs(c.shoe_price - Math.round(basis * 1.5)) < 2)
-p('Deckel von 40 € greift', teuer && teuer.amount <= 40.01, `${teuer?.amount} € bei ${Math.round(basis * 1.5)} € Kaufpreis`)
+p('Deckel von 40 € greift', teuer && teuer.gift_cost + teuer.amount <= 40.01,
+  `${teuer?.amount} € ausgezahlt, ${teuer?.gift_cost} € einbehalten bei ${Math.round(basis * 1.5)} € Kaufpreis`)
+
+// ── Wer nichts zusagt, bekommt alles ────────────────────────────────
+const codeOhne = `o${zufall()}`
+r = await ruf('/api/affiliates', {
+  method: 'POST', token: admin,
+  body: { full_name: 'Ohne Zusage', email: `o-${zufall()}@x.de`, code: codeOhne,
+          commission_type: 'percent', commission_value: 10, cap_per_shoe: 40,
+          customer_benefit: 'none' },
+})
+p('Affiliate ohne Kundenvorteil angelegt', r.status === 201, `HTTP ${r.status}`)
+r = await ruf('/api/auth/register-affiliate', { method: 'POST', body: { token: r.daten.invite_token, name: 'Ohne', password: 'Verm1234!' } })
+const affOhne = r.daten.accessToken
+
+r = await ruf(`/api/affiliates/validate/${codeOhne}`)
+p('Kein Nachlass für den Kunden', r.daten?.customer_discount_pct === 0 && !r.daten?.gift, `benefit ${r.daten?.benefit}`)
+
+const kMail2 = `voll-${zufall()}@x.de`
+r = await ruf('/api/auth/register', { method: 'POST', body: { name: 'Voll', email: kMail2, password: 'Test1234!x' } })
+const vollKunde = r.daten.accessToken
+r = await ruf('/api/orders', {
+  method: 'POST', token: vollKunde,
+  body: { shoe_id: schuh.id, shoe_name: schuh.name, material: 'lux_calf', color: 'black',
+          price: `€ ${vor}`, affiliate_code: codeOhne,
+          delivery_address: { street: 'W', house_number: '1', zip: '1', city: 'B' } },
+})
+p('Bestellung zum Normalpreis', r.status === 201, `HTTP ${r.status} — ${vor} €`)
+r = await ruf('/api/affiliates/me', { token: affOhne })
+const voll = r.daten?.commissions?.[0]
+p('Nichts einbehalten', voll?.gift_cost === 0, `−${voll?.gift_cost} €`)
+p('Volle Provision', Math.abs(voll?.amount - Math.min(40, vor * 0.1)) < 0.6, `${voll?.amount} € bei ${vor} € Kaufpreis`)
+
+// ── Zugabe kostet ihren Einkaufspreis ───────────────────────────────
+const codeGeschenk = `g${zufall()}`
+r = await ruf('/api/affiliates', {
+  method: 'POST', token: admin,
+  body: { full_name: 'Mit Zugabe', email: `g-${zufall()}@x.de`, code: codeGeschenk,
+          commission_type: 'percent', commission_value: 10, cap_per_shoe: 40,
+          customer_benefit: 'gift', gift_key: 'shoe_tree_cedar' },
+})
+p('Affiliate mit Zugabe angelegt', r.status === 201, `HTTP ${r.status}`)
+r = await ruf('/api/auth/register-affiliate', { method: 'POST', body: { token: r.daten.invite_token, name: 'Zugabe', password: 'Verm1234!' } })
+const affGeschenk = r.daten.accessToken
+
+r = await ruf(`/api/affiliates/validate/${codeGeschenk}`)
+p('Zugabe wird ausgewiesen', r.daten?.gift === 'shoe_tree_cedar', `${r.daten?.gift}`)
+
+const kMail3 = `zugabe-${zufall()}@x.de`
+r = await ruf('/api/auth/register', { method: 'POST', body: { name: 'Zugabe', email: kMail3, password: 'Test1234!x' } })
+const zugabeKunde = r.daten.accessToken
+r = await ruf('/api/orders', {
+  method: 'POST', token: zugabeKunde,
+  body: { shoe_id: schuh.id, shoe_name: schuh.name, material: 'lux_calf', color: 'black',
+          price: `€ ${vor}`, affiliate_code: codeGeschenk,
+          delivery_address: { street: 'W', house_number: '1', zip: '1', city: 'B' } },
+})
+p('Bestellung mit Zugabe', r.status === 201, `HTTP ${r.status}`)
+r = await ruf('/api/affiliates/me', { token: affGeschenk })
+const mitZugabe = r.daten?.commissions?.[0]
+p('Einkaufspreis der Zugabe einbehalten', mitZugabe?.gift_cost > 0 && mitZugabe.gift_cost <= 30,
+  `−${mitZugabe?.gift_cost} € (Einkauf, nicht Ladenpreis)`)
+p('Einbehalt ist als Zugabe ausgewiesen', mitZugabe?.benefit_kind === 'gift', `${mitZugabe?.benefit_kind}`)
+p('Zugabe kostet den Affiliate, nicht das Haus',
+  Math.abs(mitZugabe?.gross_amount - Math.min(40, vor * 0.1)) < 0.6
+  && Math.abs(mitZugabe?.amount - (mitZugabe.gross_amount - mitZugabe.gift_cost)) < 0.02,
+  `${mitZugabe?.gross_amount} € − ${mitZugabe?.gift_cost} € = ${mitZugabe?.amount} €`)
 
 // ═══════════════════════════════════════════════════════════════════
 abschnitt('Wer bestimmt den Preis?')

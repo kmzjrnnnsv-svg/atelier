@@ -6,7 +6,7 @@ import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import {
-  affiliateStanding, matureCommissions,
+  affiliateStanding, matureCommissions, deckelVon, zugabeKosten,
   PAYOUT_BATCH_SIZE, PROTECTION_DAYS,
 } from '../utils/affiliate.js'
 import { sendAffiliateInvitation } from '../utils/email.js'
@@ -60,17 +60,23 @@ router.get('/validate/:code', (req, res) => {
 
   const db = getDb()
   const a = db.prepare(
-    "SELECT code, customer_benefit, customer_discount_pct, gift_key FROM affiliates WHERE code = ? AND status = 'active'"
+    "SELECT code, customer_benefit, customer_discount_pct, gift_key, cap_per_shoe FROM affiliates WHERE code = ? AND status = 'active'"
   ).get(code)
   if (!a) return res.status(404).json({ valid: false, error: 'Dieser Code ist nicht gültig.' })
 
   // Entweder ein Nachlass oder eine Zugabe — nie beides. Der Kunde soll sehen,
   // was er bekommt; was der Affiliate dafür erhält, geht ihn nichts an.
+  //
+  // discount_cap begleitet den Prozentsatz: Der Nachlass geht von der Provision
+  // des Affiliates ab und ist damit auf seinen Deckel begrenzt. Der Betrag
+  // gehört zur Zusage — der Konfigurator muss ihn kennen, sonst zeigt er einen
+  // Preis an, den die Bestellung hinterher nicht bestätigt.
   res.json({
     valid: true,
     code: a.code,
     benefit: a.customer_benefit || 'none',
     customer_discount_pct: a.customer_benefit === 'discount' ? Number(a.customer_discount_pct) || 0 : 0,
+    discount_cap: a.customer_benefit === 'discount' ? deckelVon(a) : 0,
     gift: a.customer_benefit === 'gift' ? (a.gift_key || null) : null,
   })
 })
@@ -135,7 +141,7 @@ router.get('/me', authenticate, async (req, res) => {
   const standing = affiliateStanding(db, a.id)
   const commissions = db.prepare(`
     SELECT c.id, c.status, c.shoe_price, c.gross_amount, c.gift_cost, c.amount,
-           c.payable_at, c.created_at, o.shoe_name
+           c.benefit_kind, c.payable_at, c.created_at, o.shoe_name
     FROM affiliate_commissions c
     JOIN orders o ON o.id = c.order_id
     WHERE c.affiliate_id = ?
@@ -161,7 +167,17 @@ router.get('/me', authenticate, async (req, res) => {
     standing,
     commissions,
     payouts,
-    rules: { batchSize: PAYOUT_BATCH_SIZE, protectionDays: PROTECTION_DAYS },
+    rules: {
+      batchSize: PAYOUT_BATCH_SIZE,
+      protectionDays: PROTECTION_DAYS,
+      // Der Deckel ist zugleich die Obergrenze der eigenen Zusage — im Portal
+      // steht beides in einem Satz, also kommt es in einem Feld.
+      capPerShoe: deckelVon(a),
+      giftCost: a.customer_benefit === 'gift' ? zugabeKosten(db, a.gift_key) : 0,
+      giftName: a.customer_benefit === 'gift' && a.gift_key
+        ? (db.prepare('SELECT name FROM accessories WHERE key = ?').get(a.gift_key)?.name || null)
+        : null,
+    },
   })
 })
 
@@ -344,7 +360,10 @@ router.post('/',
         Number(b.cap_per_shoe) || 40,
         vorteil,
         Math.min(100, Math.max(0, Number(b.customer_discount_pct) || 0)),
-        vorteil === 'gift' ? (b.gift_key || 'care_kit_leather') : null,
+        // Ohne ausdrückliche Wahl gilt, was der alte Schalter meinte: der
+        // Zedernholz-Spanner. Sonst bekäme ein Aufrufer, der noch
+        // gift_shoetree schickt, stillschweigend ein Pflegeset.
+        vorteil === 'gift' ? (b.gift_key || (b.gift_shoetree ? 'shoe_tree_cedar' : 'care_kit_leather')) : null,
         inviteToken, b.note || null,
       )
       return { id: info.lastInsertRowid, userId }
