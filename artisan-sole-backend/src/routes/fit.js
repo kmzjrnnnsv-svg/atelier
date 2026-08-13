@@ -29,35 +29,57 @@ const LAST_LABELS = {
   audrey_rose: 'Audrey & Rose', chenoa: 'Chenoa', carola: 'Carola B',
 }
 
-// GET /api/fit/match?category=OXFORD&length=270&girth=260&tolerance=5
+/**
+ * GET /api/fit/match?category=OXFORD&length=270&girth=260&tolerance=5
+ *
+ * Der Ballenumfang ist seit jeher das zweite Maß — und für viele das eine zu
+ * viel. Die Länge misst jeder in einer Minute mit Wand und Zollstock; für den
+ * Ballenumfang braucht es ein Maßband und die Bereitschaft, es sich um den
+ * Fuß zu legen. Wer nur die Länge hatte, bekam bislang eine 400er-Antwort:
+ * kein Treffer, kein Hinweis, nichts.
+ *
+ * Deshalb ist `girth` jetzt optional. Ohne ihn wird nach der Länge auf die
+ * Größe gerastet, und die Weite kommt nicht aus einer Messung, sondern aus
+ * der Angabe des Kunden — `width`, ohne Angabe die Normalweite D. Die Antwort
+ * sagt das auch: `girth_known: false` und `fitPercent: null`. Eine
+ * Passgenauigkeit in Prozent auszuweisen, wenn die halbe Rechnung fehlt, wäre
+ * eine Zahl, die niemand verantworten kann.
+ */
 router.get('/match', (req, res) => {
   const db = getDb()
   const category = (req.query.category || '').toString().toUpperCase()
   const length = Number(req.query.length)
   const girth = Number(req.query.girth)
   const tolerance = Number.isFinite(Number(req.query.tolerance)) ? Number(req.query.tolerance) : 5
+  const nurLaenge = !Number.isFinite(girth)
+  const weite = typeof req.query.width === 'string' && req.query.width ? req.query.width : null
 
-  if (!Number.isFinite(length) || !Number.isFinite(girth)) {
-    return res.status(400).json({ error: 'length und girth (mm) erforderlich' })
+  if (!Number.isFinite(length)) {
+    return res.status(400).json({ error: 'length (mm) erforderlich' })
   }
 
   // 1) Erlaubte Leisten für die Kategorie. Unbekannte Kategorie → alle Leisten.
   const allowed = CATEGORY_LASTS[category] || null
 
-  // 2) Chart-Zeilen laden.
-  let rows
+  // 2) Chart-Zeilen laden. Ohne gemessenen Ballenumfang wird auf die
+  //    angegebene Weite eingeschränkt (ohne Angabe: Normalweite) — sonst
+  //    lägen dieselbe Leiste in drei Weiten gleichauf im Ergebnis, und die
+  //    Reihenfolge entschiede der Zufall.
+  const weiteFilter = weite || (nurLaenge ? 'D' : null)
+  const bedingungen = []
+  const werte = []
   if (allowed && allowed.length) {
-    const placeholders = allowed.map(() => '?').join(',')
-    rows = db.prepare(
-      `SELECT last_key, width, size_system, size_label, foot_length_mm, ball_girth_mm
-       FROM last_size_chart WHERE last_key IN (${placeholders})`
-    ).all(...allowed)
-  } else {
-    rows = db.prepare(
-      `SELECT last_key, width, size_system, size_label, foot_length_mm, ball_girth_mm
-       FROM last_size_chart`
-    ).all()
+    bedingungen.push(`last_key IN (${allowed.map(() => '?').join(',')})`)
+    werte.push(...allowed)
   }
+  if (weiteFilter) {
+    bedingungen.push('width = ?')
+    werte.push(weiteFilter)
+  }
+  const rows = db.prepare(
+    `SELECT last_key, width, size_system, size_label, foot_length_mm, ball_girth_mm
+     FROM last_size_chart${bedingungen.length ? ` WHERE ${bedingungen.join(' AND ')}` : ''}`
+  ).all(...werte)
 
   if (!rows.length) {
     return res.json({ matches: [], tolerance })
@@ -83,9 +105,11 @@ router.get('/match', (req, res) => {
       if (dLen < bestDLen) { bestDLen = dLen; best = r }
     }
     if (!best || bestDLen > tolerance) continue
-    // 4) Ballenumfang innerhalb Toleranz?
-    const dGirth = Math.abs(best.ball_girth_mm - girth)
-    if (dGirth > tolerance) continue
+    // 4) Ballenumfang innerhalb Toleranz? Ohne gemessenen Umfang entfällt
+    //    diese Prüfung — die Weite steht dann durch die Angabe des Kunden
+    //    fest und ist keine Größe, die man verfehlen kann.
+    const dGirth = nurLaenge ? null : Math.abs(best.ball_girth_mm - girth)
+    if (dGirth !== null && dGirth > tolerance) continue
     candidates.push({
       last_key: best.last_key,
       last_label: LAST_LABELS[best.last_key] || best.last_key,
@@ -95,16 +119,19 @@ router.get('/match', (req, res) => {
       foot_length_mm: best.foot_length_mm,
       ball_girth_mm: best.ball_girth_mm,
       deltaLength: Math.round((best.foot_length_mm - length) * 10) / 10,
-      deltaGirth: Math.round((best.ball_girth_mm - girth) * 10) / 10,
-      score: Math.round(Math.sqrt(bestDLen * bestDLen + dGirth * dGirth) * 100) / 100,
-      fitPercent: fitPercent(best.foot_length_mm - length, best.ball_girth_mm - girth),
+      deltaGirth: dGirth === null ? null : Math.round((best.ball_girth_mm - girth) * 10) / 10,
+      score: nurLaenge ? bestDLen : Math.round(Math.sqrt(bestDLen * bestDLen + dGirth * dGirth) * 100) / 100,
+      // Ohne zweites Maß keine Prozentzahl. Sie stünde sonst für eine
+      // Genauigkeit, von der die Hälfte geraten ist.
+      fitPercent: nurLaenge ? null : fitPercent(best.foot_length_mm - length, best.ball_girth_mm - girth),
+      girth_known: !nurLaenge,
     })
   }
 
   // 5) Ranking nach kombiniertem Delta (kleinster score zuerst).
   candidates.sort((a, b) => a.score - b.score)
 
-  res.json({ matches: candidates, tolerance })
+  res.json({ matches: candidates, tolerance, girth_known: !nurLaenge })
 })
 
 // GET /api/fit/feasible?length=270&girth=260&tolerance=5

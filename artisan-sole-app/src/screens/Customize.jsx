@@ -15,6 +15,14 @@ const GROUP_ICONS = {
 // in der Manufaktur heißt.
 const WEITEN_NAME = { D: 'Normal', EE: 'Breit', EEE: 'Sehr breit' }
 
+// Dieselbe Frage wie im Größenfenster, in denselben Worten. Sie wird an zwei
+// Stellen gestellt — sie darf nicht an beiden anders klingen.
+const WEITEN_WAHL = [
+  { key: 'D',   titel: 'Normal',     kurz: 'Die meisten Füße', hinweis: 'Sie kaufen Schuhe von der Stange und es passt meistens.' },
+  { key: 'EE',  titel: 'Breit',      kurz: 'Drückt am Ballen', hinweis: 'Neue Schuhe drücken seitlich am Fußballen, obwohl die Länge stimmt. Oft kaufen Sie deshalb eine Nummer größer.' },
+  { key: 'EEE', titel: 'Sehr breit', kurz: 'Auch weite drücken', hinweis: 'Auch als weit ausgewiesene Schuhe sind Ihnen zu eng, oder Sie tragen üblicherweise Spezialweiten.' },
+]
+
 // Leisten-Zehenform als Draufsicht-Silhouette. Visualisiert die Unterschiede
 // zwischen Zurigo (rund), Monti (leicht eckig), Savile (Chisel) und
 // Belgravia (scharfe Chisel). Wird angezeigt, wenn kein echtes Foto
@@ -359,6 +367,17 @@ export default function Customize() {
   const [chosenLast, setChosenLast] = useState(null)    // vom Nutzer/Auto gewählter last_key
   const [lastGroup, setLastGroup]   = useState(null)    // 'last'-Optionsgruppe des Schuhs (Schuhform)
   const [fitState, setFitState] = useState('idle')      // 'idle'|'matching'|'matched'|'nomatch'|'error'
+  /**
+   * Die Weite, wenn sie nicht gemessen wurde.
+   *
+   * Der Ballenumfang ist das Maß, an dem die meisten aussteigen: Länge misst
+   * man mit Wand und Zollstock, für den Umfang braucht es ein Maßband. Fehlt
+   * er, wird die Weite nicht geraten, sondern gefragt — in denselben drei
+   * Worten wie im Größenfenster, damit es überall dieselbe Frage bleibt.
+   */
+  const [gewaehlteWeite, setGewaehlteWeite] = useState('D')
+  const hatUmfang = Number.isFinite(Number(footMeasurements?.ball_girth_mm))
+    && Number(footMeasurements?.ball_girth_mm) > 0
   const [fitRetryKey, setFitRetryKey] = useState(0)     // manuelles Erneut-Versuchen
   // Global im CMS gepflegte Produktseiten-Texte (Familien, Lieferumfang, Badges).
   const [pageTexts, setPageTexts] = useState(null)
@@ -382,13 +401,15 @@ export default function Customize() {
 
   useEffect(() => {
     let cancelled = false
-    if (!footMeasurements?.foot_length_mm || !footMeasurements?.ball_girth_mm) {
+    if (!footMeasurements?.foot_length_mm) {
       setFitMatches([]); setChosenLast(null); setFitState('idle')
       return
     }
     const adj = footMeasurements.fit_adjust || { length_mm: 0, girth_mm: 0 }
     const effLen = footMeasurements.foot_length_mm + (adj.length_mm || 0)
-    const effGirth = footMeasurements.ball_girth_mm + (adj.girth_mm || 0)
+    // Ohne gemessenen Ballenumfang gibt es keinen zu korrigieren: Dann geht
+    // statt eines Maßes die gewählte Weite an den Matcher.
+    const effGirth = hatUmfang ? footMeasurements.ball_girth_mm + (adj.girth_mm || 0) : undefined
     setFitState('matching')
 
     const applyMatches = (matches) => {
@@ -417,7 +438,9 @@ export default function Customize() {
     // Fehler in den neutralen 'error'-Zustand wechseln (kein Custom-CTA).
     ;(async () => {
       for (let attempt = 0; attempt < 3 && !cancelled; attempt++) {
-        const { ok, matches } = await matchFit({ category, length: effLen, girth: effGirth, tolerance: 5 })
+        const { ok, matches } = await matchFit({
+          category, length: effLen, girth: effGirth, width: gewaehlteWeite, tolerance: 5,
+        })
         if (cancelled) return
         if (ok) { applyMatches(matches); return }
         await new Promise(r => setTimeout(r, 600 * (attempt + 1)))
@@ -426,7 +449,7 @@ export default function Customize() {
     })()
 
     return () => { cancelled = true }
-  }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm, footMeasurements?.fit_adjust?.length_mm, footMeasurements?.fit_adjust?.girth_mm, category, fitRetryKey])
+  }, [footMeasurements?.foot_length_mm, footMeasurements?.ball_girth_mm, footMeasurements?.fit_adjust?.length_mm, footMeasurements?.fit_adjust?.girth_mm, category, fitRetryKey, hatUmfang, gewaehlteWeite])
 
   // Abgeleitet: beste Leiste je last_key, verfügbare (passende) Schuhformen,
   // und der aktuell gewählte Fit. selectedFit folgt der gewählten Schuhform.
@@ -500,10 +523,15 @@ export default function Customize() {
   const saveMeasurements = async () => {
     const len = parseFloat(String(measLen).replace(',', '.'))
     const girth = parseFloat(String(measGirth).replace(',', '.'))
-    if (!Number.isFinite(len) || !Number.isFinite(girth)) return
+    // Die Länge genügt. Der Ballenumfang darf leer bleiben — dann wird die
+    // Weite gewählt statt gemessen.
+    if (!Number.isFinite(len)) return
     setMeasSaving(true)
     try {
-      await saveFootMeasurements({ foot_length_mm: len, ball_girth_mm: girth })
+      await saveFootMeasurements({
+        foot_length_mm: len,
+        ball_girth_mm: Number.isFinite(girth) ? girth : null,
+      })
       setMeasLen(''); setMeasGirth(''); setMeasOpen(false)
     } catch {} finally { setMeasSaving(false) }
   }
@@ -513,7 +541,9 @@ export default function Customize() {
   const massFormular = (
             <div className="mt-3 border border-black/10 p-3 max-w-md">
               <p className="text-[10px] text-black/40 font-light mb-2 leading-relaxed">
-                Zwei Maße genügen, ±0,5 cm sind völlig in Ordnung. Den passenden Leisten ermitteln wir automatisch.
+                Die Fußlänge genügt uns für die Größe — ±0,5 cm sind völlig in Ordnung.
+                Kommt der Ballenumfang dazu, bestimmen wir auch die Weite und den Leisten;
+                ohne ihn fragen wir Sie danach.
               </p>
               <div className="flex items-end gap-2">
                 <label className="flex-1">
@@ -525,17 +555,19 @@ export default function Customize() {
                   />
                 </label>
                 <label className="flex-1">
-                  <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Ballenumfang (mm)</span>
+                  <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">
+                    Ballenumfang (mm) <span className="text-black/25 normal-case tracking-normal">· optional</span>
+                  </span>
                   <input
                     type="number" inputMode="decimal" value={measGirth}
-                    onChange={(e) => setMeasGirth(e.target.value)} placeholder="z. B. 255"
+                    onChange={(e) => setMeasGirth(e.target.value)} placeholder="wenn zur Hand"
                     className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
                   />
                 </label>
                 <button
                   type="button"
                   onClick={saveMeasurements}
-                  disabled={measSaving || !measLen || !measGirth}
+                  disabled={measSaving || !measLen}
                   className="h-9 px-4 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0 disabled:opacity-30"
                 >
                   {measSaving ? '…' : 'Übernehmen'}
@@ -1986,8 +2018,58 @@ export default function Customize() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-[11px] text-black/45 font-light">
                     <Check size={13} strokeWidth={2} className="text-black/40" />
-                    <span>Passform automatisch ermittelt, keine Größenwahl nötig.</span>
+                    <span>
+                      {hatUmfang
+                        ? 'Passform automatisch ermittelt, keine Größenwahl nötig.'
+                        : `Größe aus Ihrer Fußlänge: ${selectedFit?.size_label ? `EU ${String(selectedFit.size_label).replace('.', ',')}` : '—'}.`}
+                    </span>
                   </div>
+
+                  {/* Nur Länge gemessen → die Weite ist die offene Frage.
+                      Gefragt in denselben drei Worten wie im Größenfenster:
+                      Die Buchstaben D, EE und EEE sagen niemandem etwas, der
+                      nicht in einer Manufaktur gearbeitet hat. */}
+                  {!hatUmfang && (
+                    <div className="border border-black/10 p-3.5">
+                      <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-2">
+                        Wie breit ist Ihr Fuß?
+                      </p>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {WEITEN_WAHL.map(w => {
+                          const an = gewaehlteWeite === w.key
+                          return (
+                            <button
+                              key={w.key} type="button"
+                              onClick={() => setGewaehlteWeite(w.key)}
+                              className={`text-left p-2.5 border transition-colors ${
+                                an ? 'bg-black text-white border-black' : 'bg-white border-black/12 hover:border-black/35'
+                              }`}
+                            >
+                              <span className="block text-[12px]">{w.titel}</span>
+                              <span className={`block text-[9px] mt-0.5 leading-tight ${an ? 'text-white/60' : 'text-black/40'}`}>
+                                {w.kurz}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2.5">
+                        {WEITEN_WAHL.find(w => w.key === gewaehlteWeite)?.hinweis}
+                      </p>
+                      <p className="text-[10px] text-black/35 font-light leading-relaxed mt-2 pt-2 border-t border-black/[0.06]">
+                        Die Länge haben Sie gemessen, die Weite gewählt. Genauer wird es mit
+                        dem Ballenumfang — ein Maßband einmal um den Fußballen, an der
+                        breitesten Stelle.
+                        {' '}
+                        <button
+                          type="button" onClick={() => openMeasEdit('passform')}
+                          className="underline underline-offset-2 bg-transparent border-0 p-0 text-[10px] text-black/50 hover:text-black"
+                        >
+                          Umfang nachtragen
+                        </button>
+                      </p>
+                    </div>
+                  )}
                   {availableLasts.length >= 2 ? (
                     <div>
                       <p className="text-[9px] text-black/35 uppercase tracking-wider mb-2">Schuhform · mehrere passen zu Ihren Maßen</p>

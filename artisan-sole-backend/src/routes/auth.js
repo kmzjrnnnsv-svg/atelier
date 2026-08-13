@@ -297,13 +297,22 @@ router.put('/me/foot-measurements', authenticate, (req, res) => {
     return res.json({ foot_measurements: null })
   }
   const len = Number(foot_length_mm)
-  const girth = Number(ball_girth_mm)
   if (!Number.isFinite(len) || len < 150 || len > 350) {
     return res.status(400).json({ error: 'foot_length_mm muss zwischen 150 und 350 mm liegen' })
   }
-  if (!Number.isFinite(girth) || girth < 150 || girth > 340) {
+  // Der Ballenumfang ist freiwillig.
+  //
+  // Er war Pflicht, und das kostete mehr, als es einbrachte: Die Länge misst
+  // jeder mit Wand und Zollstock, für den Umfang braucht es ein Maßband.
+  // Wer nur die Länge hatte, konnte gar nichts speichern und stand vor einem
+  // Konfigurator, der auf Maße wartete, die nie kamen. Fehlt er, wird die
+  // Weite gewählt statt gemessen (siehe fit.js) — schlechter als gemessen,
+  // aber unendlich viel besser als nichts.
+  const girthRoh = ball_girth_mm == null || ball_girth_mm === '' ? null : Number(ball_girth_mm)
+  if (girthRoh !== null && (!Number.isFinite(girthRoh) || girthRoh < 150 || girthRoh > 340)) {
     return res.status(400).json({ error: 'ball_girth_mm muss zwischen 150 und 340 mm liegen' })
   }
+  const girth = girthRoh
   // Optionale Links/Rechts-Maße. Gespeichert wird beides; fürs Matching zählt
   // der größere Fuß (vom Client als foot_length_mm/ball_girth_mm übergeben).
   const cleanFoot = (f) => f && typeof f === 'object'
@@ -313,7 +322,7 @@ router.put('/me/foot-measurements', authenticate, (req, res) => {
   const existing = readMeasurements(db.prepare('SELECT foot_measurements FROM users WHERE id = ?').get(req.user.id)) || {}
   const next = {
     foot_length_mm: Math.round(len * 10) / 10,
-    ball_girth_mm: Math.round(girth * 10) / 10,
+    ball_girth_mm: girth === null ? null : Math.round(girth * 10) / 10,
     updated_at: new Date().toISOString(),
     fit_adjust: fit_adjust && typeof fit_adjust === 'object'
       ? { length_mm: Number(fit_adjust.length_mm) || 0, girth_mm: Number(fit_adjust.girth_mm) || 0 }

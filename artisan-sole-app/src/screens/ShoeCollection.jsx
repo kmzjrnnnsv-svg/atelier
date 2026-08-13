@@ -366,7 +366,14 @@ export default function ShoeCollection() {
 
   // Feasibility laden, sobald Maße vorhanden sind.
   useEffect(() => {
-    if (!footMeasurements?.foot_length_mm) { setFeasible(null); return }
+    // Ohne Ballenumfang lässt sich nicht sagen, welche Leisten ausscheiden —
+    // genau das ist die Frage, die diese Abfrage beantwortet. Ohne ihn bleibt
+    // die Kollektion ungefiltert. Vorher wurde `null + 0` zu einer Weite von
+    // 0 mm gerechnet, zu der keine Leiste passt: Die ganze Kollektion hätte
+    // als unpassend dagestanden.
+    const umfangDa = Number.isFinite(Number(footMeasurements?.ball_girth_mm))
+      && Number(footMeasurements?.ball_girth_mm) > 0
+    if (!footMeasurements?.foot_length_mm || !umfangDa) { setFeasible(null); return }
     let cancelled = false
     const adj = footMeasurements?.fit_adjust || { length_mm: 0, girth_mm: 0 }
     fitFeasibility({
