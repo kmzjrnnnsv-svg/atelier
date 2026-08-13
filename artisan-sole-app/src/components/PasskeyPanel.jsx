@@ -1,14 +1,18 @@
 /**
- * PasskeyPanel.jsx — Passkeys des eigenen Verwaltungszugangs.
+ * PasskeyPanel.jsx — Anmeldung ohne Passwort verwalten.
  *
- * Ein Passkey ersetzt das Passwort beim Anmelden durch Fingerabdruck, Gesicht
- * oder Geräte-PIN. Anders als Passwort und TOTP lässt er sich nicht abgreifen:
- * Der Schlüssel ist an die Domain gebunden, eine nachgebaute Anmeldeseite
- * bekommt ihn nicht heraus.
+ * Steht an zwei Stellen: in den Einstellungen jedes Kunden und im
+ * Verwaltungsbereich. Neue Konten entstehen von vornherein ohne Passwort;
+ * hier legt sich ein Konto von früher denselben Weg zu, und jedes Konto ein
+ * zweites Gerät.
  *
- * Das Passwort bleibt daneben bestehen. Wer sein einziges Gerät verliert und
- * keinen zweiten Weg hat, käme sonst an den eigenen Laden nicht mehr heran —
- * deshalb der ausdrückliche Hinweis, einen zweiten Passkey anzulegen.
+ * Statt eines Passworts tritt Fingerabdruck, Gesicht oder Geräte-PIN. Anders
+ * als ein Passwort lässt sich das nicht abgreifen: Der Schlüssel ist an die
+ * Domain gebunden, eine nachgebaute Anmeldeseite bekommt ihn nicht heraus.
+ *
+ * Der Hinweis auf ein zweites Gerät ist kein Beiwerk. Ein Schlüssel, der nur
+ * auf einem Telefon liegt, geht mit diesem Telefon verloren — beim
+ * Verwaltungszugang stünde man dann vor dem eigenen Laden.
  */
 import { useState, useEffect } from 'react'
 import { KeyRound, Trash2, Plus, AlertCircle, CheckCircle2 } from 'lucide-react'
@@ -70,10 +74,11 @@ export default function PasskeyPanel() {
       <div className="flex items-start gap-3 mb-4">
         <KeyRound size={16} strokeWidth={1.4} className="text-black/40 flex-shrink-0 mt-0.5" />
         <div className="min-w-0">
-          <p className="text-[14px] font-light text-black/80">Passkeys</p>
+          <p className="text-[14px] font-light text-black/80">Ohne Passwort anmelden</p>
           <p className="text-[12px] text-black/40 font-light mt-1 leading-relaxed">
-            Anmelden mit Fingerabdruck, Gesicht oder Geräte-PIN statt Passwort.
-            Das Passwort bleibt als Rückfallebene bestehen.
+            Anmelden mit Fingerabdruck, Gesicht oder Geräte-PIN statt Passwort. Legen Sie
+            das auf jedem Gerät an, das Sie nutzen — dann kommen Sie überall herein, ohne
+            sich etwas zu merken.
           </p>
         </div>
       </div>

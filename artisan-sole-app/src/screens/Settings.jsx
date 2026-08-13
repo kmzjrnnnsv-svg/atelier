@@ -7,9 +7,10 @@ import { useNavigate } from 'react-router-dom'
 import {
   User, Mail, Lock, LogOut, ChevronRight,
   Shield, FileText, HelpCircle, Star, Trash2, Check, X, Eye, EyeOff, MapPin,
-  Smartphone, Tablet, Monitor,
+  Smartphone, Tablet, Monitor, ScanFace,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import PasskeyPanel from '../components/PasskeyPanel'
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
 import useDeviceInfo from '../hooks/useDeviceInfo'
@@ -156,6 +157,7 @@ export default function Settings() {
 
   // Password
   const [pwOpen,    setPwOpen]    = useState(false)
+  const [passkeyOpen, setPasskeyOpen] = useState(false)
   const [pwCurrent, setPwCurrent] = useState('')
   const [pwNew,     setPwNew]     = useState('')
   const [pwConfirm, setPwConfirm] = useState('')
@@ -290,6 +292,26 @@ export default function Settings() {
               {profileSaving ? 'Speichern…' : 'Speichern'}
             </button>
           </div>
+        </div>
+      )}
+
+      <Divider />
+
+      {/* Ohne Passwort anmelden. Steht VOR dem Passwort, weil es der bessere
+          Weg ist: Neue Konten haben gar keines mehr, und wer eines von früher
+          hat, soll hier den Umstieg finden statt eine Passwortmaske. */}
+      <SettingsRow
+        icon={ScanFace}
+        label="Ohne Passwort anmelden"
+        sub="Mit Face ID, Fingerabdruck oder Geräte-PIN"
+        onPress={() => { setPasskeyOpen(o => !o); setPwOpen(false); setProfileOpen(false) }}
+        rightEl={
+          <ChevronRight size={15} className={`text-black/15 flex-shrink-0 transition-transform ${passkeyOpen ? 'rotate-90' : ''}`} />
+        }
+      />
+      {passkeyOpen && (
+        <div className="bg-[#f6f5f3]/50 border-y border-black/[0.04] px-5 lg:px-16 py-4">
+          <PasskeyPanel />
         </div>
       )}
 
