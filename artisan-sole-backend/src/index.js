@@ -43,7 +43,7 @@ import { apiLimiter } from './middleware/rateLimiter.js'
 import authRouter, { issueTokens } from './routes/auth.js'
 import usersRouter from './routes/users.js'
 import affiliatesRouter from './routes/affiliates.js'
-import passkeysRouter, { makeLoginVerify, makeSignupVerify, makeRecoverVerify } from './routes/passkeys.js'
+import passkeysRouter, { makeLoginVerify, makeSignupVerify, makeRecoverVerify, makeAffiliateVerify } from './routes/passkeys.js'
 import recoveryRouter from './routes/recovery.js'
 import configsRouter from './routes/configs.js'
 import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter } from './routes/content.js'
@@ -169,6 +169,8 @@ app.post('/api/auth/passkey/login/verify', makeLoginVerify(issueTokens))
 // Sitzungstoken ausstellt und deshalb issueTokens braucht.
 app.post('/api/auth/passkey/signup/verify', makeSignupVerify(issueTokens))
 app.post('/api/auth/passkey/recover/verify', makeRecoverVerify(issueTokens))
+// Affiliate nimmt seine Einladung an — ohne Passwort, per QR-Code eingescannt.
+app.post('/api/auth/passkey/affiliate/verify', makeAffiliateVerify(issueTokens))
 app.use('/api/auth/passkey', passkeysRouter)
 // Zugang wiederherstellen (Ausweis über eine Bestellung). Eigener Pfad, damit
 // die Ratenbegrenzung dort und nicht auf der Anmeldung sitzt.

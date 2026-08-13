@@ -72,6 +72,23 @@ const WEITEN = [
   },
 ]
 
+/**
+ * Woran man die eigene Weite merkt, ohne zu messen.
+ *
+ * Denselben Umweg wie im Konfigurator: Statt den eigenen Fuß zu beurteilen —
+ * wozu der Vergleich fehlt — beurteilt man Sneaker, deren Passform bekannt
+ * ist. adidas Samba und Gazelle fallen ausgesprochen schmal aus, der Nike
+ * Air Force 1 großzügig. Dazwischen liegt die ganze Skala.
+ *
+ * Quellen: moresneakers.com, kicksundercost.com, freakyshoes.com, Stand
+ * August 2026.
+ */
+const SNEAKER_TEST = [
+  { key: 'D',   frage: 'Samba oder Gazelle passen mir gut',           folge: 'Beide sind schmal geschnitten — wem sie passen, der hat keinen breiten Fuß.' },
+  { key: 'EE',  frage: 'Samba drückt seitlich, Air Force 1 sitzt gut', folge: 'Genau der Unterschied zwischen schmal und großzügig. Sie brauchen Platz am Ballen.' },
+  { key: 'EEE', frage: 'Auch der Air Force 1 ist mir zu eng',          folge: 'Der gilt als einer der geräumigsten überhaupt. Dann ist es die weiteste Ausführung.' },
+]
+
 const REGISTER = [
   { id: 'waehlen',   label: 'Größe wählen', icon: Ruler },
   { id: 'vergleich', label: 'Vergleich',    icon: ArrowLeftRight },
@@ -332,9 +349,38 @@ export default function GroessenTabelle({
                   Kein Maßband nötig: Schnürsenkel um den Ballen legen, die Stelle markieren,
                   wo er sich trifft, und an ein Lineal halten.
                 </p>
-                <p className="text-[10px] text-black/45 font-light leading-relaxed mb-6">
+                <p className="text-[10px] text-black/45 font-light leading-relaxed mb-3">
                   {WEITEN.find(w => w.key === wirksameWeite)?.hinweis}
                 </p>
+
+                {/* Der Umweg über bekannte Sneaker — den eigenen Fuß schätzt
+                    niemand richtig ein, Schuhe aus dem eigenen Schrank schon. */}
+                <div className="mb-6 pt-3 border-t border-black/[0.06]">
+                  <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">
+                    Nicht sicher? Woran Sie es merken
+                  </p>
+                  <div className="space-y-1">
+                    {SNEAKER_TEST.filter(t => weitenDa.some(w => w.key === t.key)).map(t => {
+                      const an = wirksameWeite === t.key
+                      return (
+                        <button
+                          key={t.key}
+                          onClick={() => waehle(setWeite)(t.key)}
+                          className={`w-full text-left px-3 py-2 border transition-colors ${
+                            an ? 'border-black bg-black/[0.03]' : 'border-black/[0.08] hover:border-black/25 bg-white'
+                          }`}
+                        >
+                          <span className={`block text-[12px] ${an ? 'text-black' : 'text-black/70'}`}>„{t.frage}"</span>
+                          <span className="block text-[10px] text-black/40 font-light leading-relaxed mt-0.5">{t.folge}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[9px] text-black/30 font-light leading-relaxed mt-2">
+                    Anhaltspunkte, keine Messung — Sneaker sitzen ohnehin lockerer als
+                    rahmengenähte Schuhe. Der gemessene Ballenumfang bleibt genauer.
+                  </p>
+                </div>
 
                 {/* Schritt 2 — Größe */}
                 <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">

@@ -161,6 +161,23 @@ router.post('/register',
 // Werbelink des Affiliates. Der Code steckt als ?ref= darin; die Seite legt
 // ihn in den Warenkorb, wo der Käufer ihn sieht und überschreiben kann — das
 // hält die Zuordnung nachvollziehbar und kommt ohne stilles Cookie aus.
+/**
+ * Die Adresse des Affiliate-Bereichs.
+ *
+ * Aus der App-Adresse abgeleitet, damit Entwicklung und Betrieb ohne
+ * Sonderbehandlung funktionieren. Auf localhost bleibt es bei der Hauptadresse
+ * — dort gibt es keine Unterdomänen.
+ */
+function affiliateBasis() {
+  const basis = (process.env.APP_URL || 'https://artisansole.com').replace(/\/+$/, '')
+  try {
+    const u = new URL(basis)
+    if (/^(localhost|127\.)/.test(u.hostname)) return basis
+    const nackt = u.hostname.replace(/^(www|business|affiliate)\./i, '')
+    return `${u.protocol}//affiliate.${nackt}`
+  } catch { return basis }
+}
+
 function affiliateLink(code) {
   const base = process.env.APP_URL || 'https://artisansole.com'
   return `${base.replace(/\/$/, '')}/?ref=${encodeURIComponent(code)}`
@@ -495,8 +512,9 @@ router.get('/:id/einladung', ...canAdmin, param('id').isInt(), async (req, res) 
     })
   }
 
-  const basis = process.env.APP_URL || 'https://artisansole.com'
-  const link = `${basis}/affiliate-konto?token=${a.invite_token}`
+  // Der Affiliate gehört auf seine Unterdomäne, nicht in den Laden. Wer den
+  // QR-Code im Geschäft scannt, soll dort landen, wo er künftig arbeitet.
+  const link = `${affiliateBasis()}/affiliate-konto?token=${a.invite_token}`
   const qr = await QRCode.toDataURL(link, { margin: 1, width: 480, color: { dark: '#111111', light: '#FFFFFF' } })
     .catch(() => null)
 
