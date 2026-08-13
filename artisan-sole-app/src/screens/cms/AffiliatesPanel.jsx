@@ -202,6 +202,7 @@ export default function AffiliatesPanel() {
   const [hinweis, setHinweis] = useState(null)
   const [kopiert, setKopiert] = useState(null)
   const [zubehoer, setZubehoer] = useState([])
+  const [einladung, setEinladung] = useState(null)   // { offen, link, qr, … }
 
   // Das Zubehör wird für die Zugabe gebraucht: Namen für die Auswahl,
   // Einkaufspreise für die Vorschau. Schlägt der Abruf fehl, greift die feste
@@ -223,6 +224,24 @@ export default function AffiliatesPanel() {
   useEffect(() => { laden() }, [])
 
   const setzen = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  /**
+   * Einladung eines Affiliates holen und anzeigen.
+   *
+   * Als eigener Aufruf und nicht in der Liste: Der QR-Code ist ein halbes
+   * Dutzend Kilobyte je Zeile, und gebraucht wird er für eine.
+   */
+  const einladungHolen = async (a) => {
+    setFehler(null); setHinweis(null)
+    setEinladung({ laedt: true, name: a.full_name || a.email, code: a.code })
+    try {
+      const d = await apiFetch(`/api/affiliates/${a.id}/einladung`)
+      setEinladung({ ...d, name: a.full_name || a.email })
+    } catch (e) {
+      setEinladung(null)
+      setFehler(e?.error || 'Einladung konnte nicht geladen werden.')
+    }
+  }
 
   const kopieren = async (text, id) => {
     try { await navigator.clipboard.writeText(text); setKopiert(id); setTimeout(() => setKopiert(null), 1600) } catch { /* ohne Zwischenablage */ }
@@ -282,6 +301,60 @@ export default function AffiliatesPanel() {
         <div className="flex items-start gap-2 border border-black/15 p-3 mb-4">
           <Mail size={13} className="text-black/50 mt-0.5 shrink-0" />
           <p className="text-[12px] text-black/70 leading-relaxed break-all">{hinweis}</p>
+        </div>
+      )}
+
+      {/* Einladung zum Weitergeben — Link zum Kopieren, QR zum Abscannen.
+          Ohne funktionierenden Mailversand ist das der einzige Weg ins Konto;
+          mit Mailversand der schnellere, wenn der Partner ohnehin vor einem
+          steht. */}
+      {einladung && (
+        <div className="border border-black/12 p-5 mb-8 max-w-2xl">
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-black/30">Einladung</p>
+              <p className="text-[13px] text-black/70 mt-0.5">{einladung.name} · {einladung.code}</p>
+            </div>
+            <button
+              onClick={() => setEinladung(null)}
+              className="text-[11px] text-black/40 hover:text-black bg-transparent border-0"
+            >
+              Schließen
+            </button>
+          </div>
+
+          {einladung.laedt ? (
+            <p className="text-[12px] text-black/35">Wird geladen …</p>
+          ) : einladung.offen === false ? (
+            <p className="text-[12px] text-black/55 font-light leading-relaxed">{einladung.grund}</p>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-5">
+              {einladung.qr && (
+                <div className="flex-shrink-0">
+                  <img src={einladung.qr} alt="QR-Code zur Einladung" className="w-[150px] h-[150px] border border-black/[0.07]" />
+                  <p className="text-[10px] text-black/35 font-light text-center mt-1.5 max-w-[150px] leading-relaxed">
+                    Vom Bildschirm abscannen lassen
+                  </p>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-black/45 font-light leading-relaxed mb-2">
+                  Dieser Link führt einmalig in das Konto von {einladung.name}. Dort trägt der
+                  Affiliate seine Daten selbst ein. Bitte nicht öffentlich teilen.
+                </p>
+                <p className="text-[11px] text-black/70 break-all bg-black/[0.02] border border-black/[0.06] p-2.5">
+                  {einladung.link}
+                </p>
+                <button
+                  onClick={() => kopieren(einladung.link, 'einladung')}
+                  className="mt-2.5 flex items-center gap-1.5 h-8 px-3 border border-black/15 text-[11px] tracking-[0.1em] uppercase text-black/60 hover:border-black hover:text-black bg-transparent"
+                >
+                  {kopiert === 'einladung' ? <Check size={12} /> : <Link2 size={12} />}
+                  {kopiert === 'einladung' ? 'Kopiert' : 'Link kopieren'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -499,12 +572,23 @@ export default function AffiliatesPanel() {
                       </button>
                     </td>
                     <td className="p-2.5 text-right">
-                      <button
-                        onClick={() => { setForm(zumFormular(a)); setHinweis(null); setFehler(null) }}
-                        className="text-[11px] text-black/50 hover:text-black bg-transparent border-0 p-0"
-                      >
-                        bearbeiten
-                      </button>
+                      <div className="flex items-center justify-end gap-3">
+                        {/* Die Einladung zum Weitergeben — unabhängig davon,
+                            ob je eine Mail hinausging. Sie ist der Weg; die
+                            Mail war nur eine Zustellart davon. */}
+                        <button
+                          onClick={() => einladungHolen(a)}
+                          className="text-[11px] text-black/50 hover:text-black bg-transparent border-0 p-0"
+                        >
+                          Einladung
+                        </button>
+                        <button
+                          onClick={() => { setForm(zumFormular(a)); setHinweis(null); setFehler(null) }}
+                          className="text-[11px] text-black/50 hover:text-black bg-transparent border-0 p-0"
+                        >
+                          bearbeiten
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )

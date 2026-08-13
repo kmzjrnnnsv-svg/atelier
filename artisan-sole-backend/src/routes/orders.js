@@ -3,7 +3,8 @@ import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { commissionFor, zusageKosten } from '../utils/affiliate.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
-import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification } from '../utils/email.js'
+import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification, bankKonfiguration } from '../utils/email.js'
+import { giroCode, betragAusText } from '../utils/zahlung.js'
 import { totpVerify } from '../utils/totp.js'
 import { validateBusinessCode, validateCampaignForUser } from './business.js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -551,6 +552,56 @@ function fristTageRest(order) {
 // Ein Aufruf statt einer Abfrage je Bestellung: Die Seite im Profil zeigt alle
 // zugestellten Bestellungen mit dem, was daraus noch zurückgehen kann, und die
 // bereits angemeldeten Rücksendungen.
+/**
+ * GET /api/orders/:id/zahlung — wohin überwiesen wird.
+ *
+ * Diese Angaben standen ausschließlich in der Zahlungs-Mail. Ging sie nicht
+ * hinaus, hatte der Kunde eine Bestellung im Zustand „Zahlung ausstehend" und
+ * keine Möglichkeit zu erfahren, wohin er überweisen soll — ohne Fehler, ohne
+ * Meldung, einfach eine Bestellung, die nie bezahlt wird. Eine Seite, die den
+ * Betrag nennt, aber nicht das Konto, ist keine Rechnung.
+ *
+ * Zurück kommt zusätzlich ein GiroCode: Der Kunde scannt ihn mit seiner
+ * Banking-App und hat Empfänger, IBAN, Betrag und Verwendungszweck ausgefüllt
+ * im Formular. Das ist nicht bloß bequemer, es ist genauer — abgetippte
+ * Verwendungszwecke sind der häufigste Grund für Zahlungen, die sich keiner
+ * Bestellung zuordnen lassen.
+ */
+router.get('/:id/zahlung', authenticate, async (req, res) => {
+  const db = getDb()
+  const bestellung = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
+  if (!bestellung) return res.status(404).json({ error: 'Bestellung nicht gefunden' })
+
+  const darf = bestellung.user_id === req.user.id
+    || req.user.role === 'admin' || req.user.role === 'curator'
+  if (!darf) return res.status(403).json({ error: 'Kein Zugriff auf diese Bestellung' })
+
+  const bank = bankKonfiguration()
+  const referenz = bestellung.order_ref || `ARTISANSOLE-${bestellung.id}`
+  const betrag = betragAusText(bestellung.price)
+
+  const qr = await giroCode({
+    empfaenger: bank.holder,
+    iban: bank.iban,
+    bic: bank.bic,
+    betrag,
+    verwendungszweck: referenz,
+  })
+
+  res.json({
+    empfaenger: bank.holder,
+    iban: bank.iban,
+    bic: bank.bic,
+    bank: bank.bank,
+    betrag,
+    referenz,
+    bezahlt: bestellung.status !== 'pending_payment',
+    // Ohne vollständige Bankverbindung gibt es keinen Code. Dann steht in der
+    // Anwendung ein Hinweis statt eines Codes, der ins Leere führt.
+    giro_qr: qr,
+  })
+})
+
 router.get('/ruecksendungen/meine', authenticate, (req, res) => {
   const db = getDb()
   const bestellungen = db.prepare(`

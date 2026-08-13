@@ -460,6 +460,49 @@ router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
   res.json(db.prepare('SELECT * FROM affiliates WHERE id = ?').get(req.params.id))
 })
 
+/**
+ * GET /api/affiliates/:id/einladung — Einladung zum Weitergeben.
+ *
+ * Die Einladung ging bislang nur per Mail hinaus, und der Link stand allein
+ * dann in der Verwaltung, wenn der Versand fehlgeschlagen war. Solange Mails
+ * überhaupt nicht hinausgehen, ist das die falsche Reihenfolge: Der Link ist
+ * der Weg, die Mail nur eine Zustellart davon.
+ *
+ * Deshalb hier jederzeit abrufbar, mit QR-Code dazu — ein Partner, der im
+ * Laden steht, scannt ihn vom Bildschirm ab, statt eine Adresse abzutippen.
+ *
+ * Fehlt die Kennung, weil das Konto bereits vollständig ist, sagt die Antwort
+ * das: Ein Link, der nirgendwohin führt, wäre schlimmer als keiner.
+ */
+router.get('/:id/einladung', ...canAdmin, param('id').isInt(), async (req, res) => {
+  const db = getDb()
+  const a = db.prepare('SELECT id, code, full_name, email, invite_token, user_id FROM affiliates WHERE id = ?')
+    .get(req.params.id)
+  if (!a) return res.status(404).json({ error: 'Not found' })
+
+  const konto = a.user_id ? db.prepare('SELECT is_active FROM users WHERE id = ?').get(a.user_id) : null
+
+  // Kein Token mehr: entweder schon eingelöst oder von Anfang an keins nötig
+  // (die Adresse hatte bereits ein Konto).
+  if (!a.invite_token) {
+    return res.json({
+      offen: false,
+      grund: konto?.is_active
+        ? 'Dieses Konto ist bereits aktiv — der Affiliate meldet sich wie gewohnt an.'
+        : 'Für dieses Konto liegt keine offene Einladung vor.',
+      code: a.code,
+      email: a.email,
+    })
+  }
+
+  const basis = process.env.APP_URL || 'https://artisansole.com'
+  const link = `${basis}/affiliate-konto?token=${a.invite_token}`
+  const qr = await QRCode.toDataURL(link, { margin: 1, width: 480, color: { dark: '#111111', light: '#FFFFFF' } })
+    .catch(() => null)
+
+  res.json({ offen: true, link, qr, code: a.code, email: a.email, name: a.full_name })
+})
+
 // ── CMS: Auszahlung anlegen ───────────────────────────────────────────────
 // Zahlt volle Fünferrunden aus, älteste Paare zuerst. Der Rest bleibt stehen
 // und zählt für die nächste Runde weiter.
