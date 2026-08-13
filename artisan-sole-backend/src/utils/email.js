@@ -10,6 +10,8 @@
  */
 
 import nodemailer from 'nodemailer'
+import net from 'net'
+import dns from 'dns/promises'
 import { getDb } from '../db/database.js'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -58,6 +60,18 @@ function createTransporter(cfg) {
     connectionTimeout: 10000,
     greetingTimeout:   10000,
     socketTimeout:     20000,
+    // Wahl der IP-Version.
+    //
+    // Hat der Mailserver einen AAAA-Eintrag, ist über IPv6 aber nicht
+    // erreichbar, wählt Node genau diesen Weg und wartet, bis das Zeitlimit
+    // greift — obwohl IPv4 sofort ginge. Das Fehlerbild ist eine
+    // Zeitüberschreitung bei völlig korrekter Konfiguration, und vom eigenen
+    // Rechner aus lässt es sich nie nachstellen.
+    //
+    // Ohne Angabe bleibt alles wie bisher (Node entscheidet). SMTP_FAMILY=4
+    // erzwingt IPv4 — das ist die Abhilfe, die die Verbindungsprüfung
+    // vorschlägt, wenn sie genau dieses Bild misst.
+    ...(process.env.SMTP_FAMILY ? { family: Number(process.env.SMTP_FAMILY) } : {}),
   })
 }
 
@@ -157,6 +171,85 @@ export async function verifyEmailSetup() {
   }
   const appUrlUsable = /^https?:\/\//.test(cfg.appUrl) && !/localhost|127\.0\.0\.1/.test(cfg.appUrl)
   return { ok: true, host: cfg.host, port: cfg.port, user: cfg.user, appUrl: cfg.appUrl, appUrlUsable }
+}
+
+/**
+ * Wo genau es klemmt — ohne SSH-Zugang.
+ *
+ * Eine Zeitüberschreitung hat bei korrektem Host und Port praktisch immer
+ * einen von zwei Gründen, und die Meldung selbst unterscheidet sie nicht:
+ *
+ *   1. Der Port ist gesperrt. Hetzner sperrt ausgehende Mail-Ports bei neuen
+ *      Servern; freischalten geht per Support-Anfrage.
+ *   2. Die Sackgasse über IPv6. Hat der Mailserver einen AAAA-Eintrag, ist
+ *      aber über IPv6 nicht erreichbar, wählt Node genau diesen Weg und
+ *      wartet, bis das Zeitlimit greift. Über IPv4 ginge es sofort. Das ist
+ *      der heimtückischere Fall: Nichts ist falsch konfiguriert, und jede
+ *      Prüfung vom eigenen Rechner aus gelingt.
+ *
+ * Diese Prüfung baut deshalb rohe TCP-Verbindungen auf — je Port einmal über
+ * IPv4 und einmal über IPv6 — und sagt, welcher Weg offen ist. Aus „geht
+ * nicht" wird damit „Port 465 über IPv4 offen, über IPv6 tot".
+ *
+ * Geprüft wird ausschließlich der hinterlegte Mailserver auf den drei
+ * SMTP-Ports. Ein frei wählbares Ziel wäre ein Portscanner mit Anmeldung.
+ */
+const SMTP_PORTS = [587, 465, 25]
+
+function tcpVersuch(host, port, family, ms = 4000) {
+  return new Promise((fertig) => {
+    let erledigt = false
+    const schluss = (r) => { if (!erledigt) { erledigt = true; try { s.destroy() } catch { /* schon zu */ } fertig(r) } }
+    const s = net.connect({ host, port, family })
+    const uhr = setTimeout(() => schluss({ ok: false, grund: 'Zeitüberschreitung' }), ms)
+    s.once('connect', () => { clearTimeout(uhr); schluss({ ok: true }) })
+    s.once('error', (e) => { clearTimeout(uhr); schluss({ ok: false, grund: e.code || e.message }) })
+  })
+}
+
+export async function diagnoseSmtp() {
+  const cfg = getEmailConfig()
+  if (!cfg.host) return { ok: false, reason: 'Kein Mailserver hinterlegt.' }
+
+  const v4 = await dns.resolve4(cfg.host).catch(() => [])
+  const v6 = await dns.resolve6(cfg.host).catch(() => [])
+
+  const ports = []
+  for (const port of SMTP_PORTS) {
+    const eintrag = { port, konfiguriert: Number(cfg.port) === port }
+    if (v4.length) eintrag.ipv4 = await tcpVersuch(v4[0], port, 4)
+    if (v6.length) eintrag.ipv6 = await tcpVersuch(v6[0], port, 6)
+    ports.push(eintrag)
+  }
+
+  // Der Satz, der die Sache entscheidet — zusammengesetzt aus dem, was
+  // tatsächlich gemessen wurde, nicht aus Vermutungen.
+  const offenV4 = ports.filter(p => p.ipv4?.ok).map(p => p.port)
+  const offenV6 = ports.filter(p => p.ipv6?.ok).map(p => p.port)
+  const konf = ports.find(p => p.konfiguriert)
+
+  let befund
+  if (!v4.length && !v6.length) {
+    befund = `Der Name „${cfg.host}" lässt sich nicht auflösen. Bitte die Schreibweise prüfen.`
+  } else if (!offenV4.length && !offenV6.length) {
+    befund = 'Kein einziger Mail-Port ist von diesem Server aus erreichbar — weder 25 noch 465 noch 587. '
+      + 'Das ist das Bild einer Sperre beim Rechenzentrum, nicht einer falschen Einstellung. '
+      + 'Bei Hetzner lässt sich der ausgehende Mail-Versand per Support-Anfrage freischalten.'
+  } else if (konf?.ipv4?.ok && v6.length && !konf?.ipv6?.ok) {
+    befund = `Port ${konf.port} ist über IPv4 offen, über IPv6 tot. Genau daher kommt die Zeitüberschreitung: `
+      + 'Der Mailserver hat einen IPv6-Eintrag, ist darüber aber nicht erreichbar, und dieser Weg wird zuerst versucht. '
+      + 'Abhilfe: SMTP_FAMILY=4 in der Server-Umgebung setzen, dann wird nur noch IPv4 verwendet.'
+  } else if (!konf?.ipv4?.ok && !konf?.ipv6?.ok && (offenV4.length || offenV6.length)) {
+    befund = `Der eingestellte Port ${cfg.port} ist gesperrt, offen ist dagegen ${[...new Set([...offenV4, ...offenV6])].join(' und ')}. `
+      + 'Bitte auf einen offenen Port umstellen — 587 spricht STARTTLS, 465 direktes TLS.'
+  } else if (konf?.ipv4?.ok || konf?.ipv6?.ok) {
+    befund = `Port ${cfg.port} ist erreichbar. Die Verbindung steht also — scheitert es trotzdem, `
+      + 'liegt es an der Anmeldung oder der Verschlüsselung, nicht am Netz.'
+  } else {
+    befund = 'Uneindeutiges Bild, siehe die einzelnen Ergebnisse unten.'
+  }
+
+  return { ok: true, host: cfg.host, port: cfg.port, ipv4: v4[0] || null, ipv6: v6[0] || null, ports, befund }
 }
 
 /** Testnachricht an eine Adresse, damit sich der Weg vollständig prüfen lässt. */
