@@ -316,13 +316,16 @@ const useStore = create((set, get) => ({
   // Gibt { ok, matches } zurück: ok=false signalisiert einen Übertragungs-
   // fehler (z. B. Rate-Limit), der NICHT mit „keine Passform" verwechselt
   // werden darf — ein leeres matches bei ok=true ist die echte Absage.
-  async matchFit({ category, length, girth, tolerance = 5 }) {
+  // `girth` darf fehlen: Dann rastet der Server nur nach der Länge und nimmt
+  // die Weite, die hier als `width` mitkommt (ohne Angabe: Normalweite).
+  async matchFit({ category, length, girth, width, tolerance = 5 }) {
     const q = new URLSearchParams({
       category: category || '',
       length: String(length),
-      girth: String(girth),
       tolerance: String(tolerance),
     })
+    if (Number.isFinite(Number(girth))) q.set('girth', String(girth))
+    else if (width) q.set('width', String(width))
     try {
       const res = await apiFetch(`/api/fit/match?${q.toString()}`)
       return { ok: true, matches: Array.isArray(res?.matches) ? res.matches : [] }

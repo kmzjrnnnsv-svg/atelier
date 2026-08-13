@@ -107,9 +107,11 @@ export default function Profile() {
   const saveMeasurements = async () => {
     const len = parseFloat(String(fmLen).replace(',', '.'))
     const girth = parseFloat(String(fmGirth).replace(',', '.'))
-    if (!Number.isFinite(len) || !Number.isFinite(girth)) return
+    // Die Länge genügt; der Ballenumfang darf leer bleiben. Dann wird die
+    // Weite im Konfigurator gewählt statt gemessen.
+    if (!Number.isFinite(len)) return
     setFmSaving(true)
-    try { await saveFootMeasurements({ foot_length_mm: len, ball_girth_mm: girth, fit_adjust: footMeasurements?.fit_adjust, saved_fit: footMeasurements?.saved_fit }) }
+    try { await saveFootMeasurements({ foot_length_mm: len, ball_girth_mm: Number.isFinite(girth) ? girth : null, fit_adjust: footMeasurements?.fit_adjust, saved_fit: footMeasurements?.saved_fit }) }
     catch {} finally { setFmSaving(false) }
   }
 
