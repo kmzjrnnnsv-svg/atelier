@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Shield, UserX, UserCheck, Trash2, ChevronDown, Plus, Send, ScanLine, Sparkles, KeyRound, Copy, Check } from 'lucide-react'
+import { Shield, UserX, UserCheck, Trash2, ChevronDown, Plus, Send, ScanLine, Sparkles, KeyRound, Copy, Check, Undo2, AlertTriangle } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 
@@ -27,6 +27,30 @@ export default function UsersPanel() {
  const [wiederherstellung, setWiederherstellung] = useState(null)
  const [wBusy, setWBusy] = useState(false)
  const [wKopiert, setWKopiert] = useState(false)
+
+ // ── Konto löschen: beantragen, bestätigen, Frist ──────────────────────
+ const [loeschen, setLoeschen] = useState(null)   // { userId, userName, reason }
+ const [lBusy, setLBusy] = useState(false)
+ const [geloescht, setGeloescht] = useState(null) // { konten, frist_tage }
+ const [zeigeGeloescht, setZeigeGeloescht] = useState(false)
+
+ const geloeschteLaden = async () => {
+   try { setGeloescht(await apiFetch('/api/users/geloescht')) }
+   catch (e) { alert(e?.error || 'Liste konnte nicht geladen werden') }
+ }
+ useEffect(() => { geloeschteLaden() }, [])
+
+ const loeschAktion = async (pfad, koerper, erfolg) => {
+   setLBusy(true)
+   try {
+     await apiFetch(pfad, { method: 'POST', body: JSON.stringify(koerper || {}) })
+     await Promise.all([load(), geloeschteLaden()])
+     setLoeschen(null)
+     if (erfolg) alert(erfolg)
+   } catch (e) {
+     alert(e?.error || 'Vorgang fehlgeschlagen')
+   } finally { setLBusy(false) }
+ }
 
  const zugangFreigeben = async () => {
    if (!wiederherstellung || wBusy) return
@@ -70,11 +94,19 @@ export default function UsersPanel() {
  } catch (e) { alert(e?.error || 'Fehler') }
  }
 
- const deleteUser = async (id, name) => {
- if (!confirm(`"${name}" wirklich löschen?`)) return
+ /**
+  * Der letzte Schritt: endgültig entfernen, bevor die Frist abgelaufen ist.
+  *
+  * Der Server nimmt das nur für Konten an, die bereits gesperrt sind, und
+  * nur von einer anderen Person als der, die den Antrag gestellt hat.
+  * Vorher hing an dieser Stelle ein Knopf, der ohne Umweg gelöscht hat.
+  */
+ const endgueltigLoeschen = async (id, name) => {
+ if (!confirm(`„${name}" endgültig entfernen? Das lässt sich nicht zurücknehmen.`)) return
  try {
  await apiFetch(`/api/users/${id}`, { method: 'DELETE' })
  setUsers(u => u.filter(usr => usr.id !== id))
+ await geloeschteLaden()
  } catch (e) { alert(e?.error || 'Fehler') }
  }
 
@@ -297,6 +329,115 @@ export default function UsersPanel() {
  </div>
  )}
 
+
+ {/* Löschantrag. Der Grund ist Pflicht: Er zwingt dazu, kurz innezuhalten,
+     und beantwortet später die Frage, warum ein Konto weg ist. */}
+ {loeschen && (
+ <div className="bg-white p-6 mb-6 space-y-4 border border-black/15">
+ <div className="flex items-start gap-2">
+ <AlertTriangle size={14} className="text-black/40 mt-0.5 shrink-0" />
+ <div>
+ <h3 className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">
+ Konto löschen — {loeschen.userName}
+ </h3>
+ <p className="text-[12px] text-black/50 font-light leading-relaxed mt-2 max-w-2xl">
+ Zwei Schritte: Sie beantragen, eine zweite Person aus der Verwaltung bestätigt.
+ Danach ist das Konto gesperrt und {geloescht?.frist_tage || 30} Tage lang
+ wiederherstellbar; erst dann wird es endgültig entfernt. Bestellungen bleiben
+ als Geschäftsunterlagen bestehen, verlieren aber die Verbindung zur Person.
+ </p>
+ </div>
+ </div>
+ <input
+ value={loeschen.reason}
+ onChange={e => setLoeschen(l => ({ ...l, reason: e.target.value }))}
+ placeholder="Grund — etwa „Löschwunsch des Kunden vom 13.08.“"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
+ />
+ <div className="flex gap-3">
+ <button
+ onClick={() => loeschAktion(`/api/users/${loeschen.userId}/loeschung`, { reason: loeschen.reason },
+   'Antrag gestellt. Eine zweite Person muss ihn jetzt bestätigen.')}
+ disabled={lBusy || (loeschen.reason || '').trim().length < 4}
+ className="flex items-center gap-2 px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black"
+ >
+ <Trash2 size={11} strokeWidth={1.25} /> {lBusy ? 'Läuft …' : 'Löschung beantragen'}
+ </button>
+ <button onClick={() => setLoeschen(null)} className="px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 tracking-wider font-light uppercase">Abbrechen</button>
+ </div>
+ </div>
+ )}
+
+ {/* Gelöschte Konten — die Frist sichtbar machen. Ein Konto, das still im
+     Hintergrund abläuft, ist genau das, was niemand rechtzeitig bemerkt. */}
+ {!!geloescht?.konten?.length && (
+ <div className="bg-white border border-black/[0.08] mb-6">
+ <button
+ onClick={() => setZeigeGeloescht(v => !v)}
+ className="w-full flex items-center justify-between px-5 py-3.5 bg-transparent border-0 text-left"
+ >
+ <span className="text-[9px] text-black/30 uppercase tracking-[0.25em] font-light">
+ Gelöschte Konten · {geloescht.konten.length}
+ </span>
+ <ChevronDown size={13} className={`text-black/25 transition-transform ${zeigeGeloescht ? 'rotate-180' : ''}`} />
+ </button>
+
+ {zeigeGeloescht && (
+ <div className="px-5 pb-5">
+ <p className="text-[11px] text-black/40 font-light leading-relaxed mb-4 max-w-2xl">
+ Gesperrt und wiederherstellbar. Nach {geloescht.frist_tage} Tagen werden sie
+ automatisch endgültig entfernt — beim nächsten Öffnen dieser Liste.
+ </p>
+ {geloescht.konten.map(k => (
+ <div key={k.id} className="flex items-start justify-between gap-4 py-3 border-t border-black/[0.05]">
+ <div className="min-w-0">
+ <p className="text-[13px] text-black/75 font-light">{k.name}</p>
+ <p className="text-[10px] text-black/35 font-light">{k.email}</p>
+ {k.deletion_reason && (
+ <p className="text-[10px] text-black/45 font-light mt-1 leading-relaxed">{k.deletion_reason}</p>
+ )}
+ <p className="text-[10px] text-black/30 font-light mt-1">
+ {k.deleted_at
+ ? `Gesperrt · noch ${Math.max(0, k.tage_uebrig)} Tage · beantragt von ${k.beantragt_von || '—'}, bestätigt von ${k.bestaetigt_von || '—'}`
+ : `Antrag von ${k.beantragt_von || '—'} — wartet auf Bestätigung durch eine zweite Person`}
+ </p>
+ </div>
+ <div className="flex items-center gap-2 shrink-0">
+ {!k.deleted_at && k.beantragt_von && (
+ <button
+ onClick={() => loeschAktion(`/api/users/${k.id}/loeschung/bestaetigen`, {},
+   'Bestätigt. Das Konto ist gesperrt und läuft in der Frist.')}
+ disabled={lBusy}
+ className="h-8 px-3 border border-black/15 text-[10px] tracking-[0.1em] uppercase text-black/60 hover:border-black hover:text-black bg-transparent disabled:opacity-30"
+ >
+ Bestätigen
+ </button>
+ )}
+ {k.deleted_at && (
+ <button
+ onClick={() => endgueltigLoeschen(k.id, k.name)}
+ title="Frist abkürzen und endgültig entfernen"
+ className="h-8 px-3 border border-black/15 text-[10px] tracking-[0.1em] uppercase text-black/40 hover:border-red-400 hover:text-red-600 bg-transparent"
+ >
+ Jetzt endgültig
+ </button>
+ )}
+ <button
+ onClick={() => loeschAktion(`/api/users/${k.id}/loeschung/zuruecknehmen`, {}, 'Konto wiederhergestellt.')}
+ disabled={lBusy}
+ title="Wiederherstellen"
+ className="flex items-center gap-1.5 h-8 px-3 border border-black/15 text-[10px] tracking-[0.1em] uppercase text-black/60 hover:border-black hover:text-black bg-transparent disabled:opacity-30"
+ >
+ <Undo2 size={11} strokeWidth={1.4} /> Zurückholen
+ </button>
+ </div>
+ </div>
+ ))}
+ </div>
+ )}
+ </div>
+ )}
+
  {/* Role legend */}
  <div className="flex gap-3 mb-6 flex-wrap">
  {[
@@ -429,8 +570,8 @@ export default function UsersPanel() {
  }
  </button>
  <button
- onClick={() => deleteUser(u.id, u.name)}
- title="Löschen"
+ onClick={() => setLoeschen({ userId: u.id, userName: u.name, reason: '' })}
+ title="Konto löschen (Antrag, zweite Person bestätigt)"
  className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
  >
  <Trash2 size={12} strokeWidth={1.25} className="text-black/25" />

@@ -306,7 +306,7 @@ router.get('/', ...canAdmin, (req, res) => {
     -- Affiliate aus dieser Liste heraus. Kämen die Vertragsfelder hier nicht
     -- mit, stünden sie in der Maske leer da und würden beim Speichern über
     -- die hinterlegten Angaben geschrieben.
-    SELECT a.id, a.code, a.status, a.full_name, a.email, a.phone,
+    SELECT a.id, a.code, a.status, a.full_name, a.email, a.phone, a.user_id,
            a.street, a.postal_code, a.city, a.country, a.birth_date,
            a.commission_type, a.commission_value, a.cap_per_shoe, a.gift_shoetree,
            a.customer_benefit, a.customer_discount_pct, a.gift_key,
@@ -519,6 +519,43 @@ router.get('/:id/einladung', ...canAdmin, param('id').isInt(), async (req, res) 
     .catch(() => null)
 
   res.json({ offen: true, link, qr, code: a.code, email: a.email, name: a.full_name })
+})
+
+/**
+ * DELETE /api/affiliates/:id — einen Affiliate-Datensatz entfernen.
+ *
+ * Nur für Zeilen OHNE Benutzerkonto: versehentlich angelegte, nie eingelöste
+ * Einladungen. Hängt ein Konto daran, führt der Weg über das Löschverfahren
+ * für Konten — Antrag, Bestätigung durch eine zweite Person, dreißig Tage
+ * Frist. Zwei Wege zum selben Ziel, von denen einer die Sicherung umgeht,
+ * wäre keine Sicherung.
+ *
+ * Ebenfalls gesperrt, sobald Provisionen erfasst sind: Sie gehören zur
+ * Abrechnung und überleben den Datensatz nicht.
+ */
+router.delete('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
+  const db = getDb()
+  const a = db.prepare('SELECT id, user_id, full_name, email FROM affiliates WHERE id = ?').get(req.params.id)
+  if (!a) return res.status(404).json({ error: 'Nicht gefunden' })
+
+  if (a.user_id) {
+    return res.status(409).json({
+      error: 'Zu diesem Affiliate gehört ein Konto. Bitte über „Konto löschen" gehen — dort mit Bestätigung durch eine zweite Person und dreißig Tagen Frist.',
+      code: 'UEBER_KONTO',
+      user_id: a.user_id,
+    })
+  }
+
+  const provisionen = db.prepare('SELECT COUNT(*) n FROM affiliate_commissions WHERE affiliate_id = ?').get(a.id).n
+  if (provisionen > 0) {
+    return res.status(409).json({
+      error: `Zu diesem Affiliate sind ${provisionen} Provisionen erfasst. Setzen Sie ihn auf „ended", statt die Abrechnung zu entfernen.`,
+      code: 'HAT_PROVISIONEN',
+    })
+  }
+
+  db.prepare('DELETE FROM affiliates WHERE id = ?').run(a.id)
+  res.json({ ok: true })
 })
 
 // ── CMS: Auszahlung anlegen ───────────────────────────────────────────────

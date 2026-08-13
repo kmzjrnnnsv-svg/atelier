@@ -1504,6 +1504,21 @@ export function runMigrations(db) {
     // und dürfen nicht vom Browser zurückkommen, sonst könnte er sie zwischen
     // Stellen und Einlösen austauschen.
     `ALTER TABLE webauthn_challenges ADD COLUMN data TEXT`,
+    // ── Konto löschen, in zwei Schritten und mit Frist ────────────────────
+    //
+    // Ein Konto zu löschen ist der einzige Vorgang hier, der sich nicht
+    // zurücknehmen lässt — Bestellungen, Passformen, Nachrichten, alles weg.
+    // Deshalb nicht ein Klick, sondern: beantragen, von einer zweiten Person
+    // bestätigen lassen, dreißig Tage Frist. Erst danach ist es endgültig.
+    //
+    // Die Frist ist kein Zögern. Sie ist die Zeit, in der ein Irrtum noch
+    // auffällt — und in der ein Kunde, der es sich anders überlegt, sein
+    // Konto zurückbekommt, statt neu anzufangen.
+    `ALTER TABLE users ADD COLUMN deletion_requested_at TEXT`,
+    `ALTER TABLE users ADD COLUMN deletion_requested_by INTEGER`,
+    `ALTER TABLE users ADD COLUMN deletion_reason TEXT`,
+    `ALTER TABLE users ADD COLUMN deleted_at TEXT`,
+    `ALTER TABLE users ADD COLUMN deleted_by INTEGER`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }

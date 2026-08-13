@@ -182,22 +182,5 @@ router.patch('/:id/status',
   }
 )
 
-// DELETE /api/users/:id
-router.delete('/:id', param('id').isInt(), (req, res) => {
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
-
-  const targetId = parseInt(req.params.id)
-  if (targetId === req.user.id) {
-    return res.status(400).json({ error: 'Cannot delete yourself' })
-  }
-
-  const db = getDb()
-  const user = db.prepare('SELECT id FROM users WHERE id = ?').get(targetId)
-  if (!user) return res.status(404).json({ error: 'User not found' })
-
-  db.prepare('DELETE FROM users WHERE id = ?').run(targetId)
-  res.json({ message: 'User deleted' })
-})
 
 export default router
