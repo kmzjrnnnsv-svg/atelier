@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Shield, UserX, UserCheck, Trash2, ChevronDown, Plus, Send, ScanLine, Sparkles } from 'lucide-react'
+import { Shield, UserX, UserCheck, Trash2, ChevronDown, Plus, Send, ScanLine, Sparkles, KeyRound, Copy, Check } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
 
@@ -21,6 +21,26 @@ export default function UsersPanel() {
  const [promoForm, setPromoForm] = useState({ email: '', name: '', discount_pct: '', max_orders: '' })
  const [promoSaving, setPromoSaving] = useState(false)
  const [scanAssign, setScanAssign] = useState(null) // { userId, userName }
+ // Notausgang: { userId, userName, note } beim Erfassen, danach zusätzlich
+ // { link, qr }. Der letzte Weg zurück, wenn ein Kunde alle Geräte verloren
+ // hat und auch über die Bestelldaten nicht weiterkommt.
+ const [wiederherstellung, setWiederherstellung] = useState(null)
+ const [wBusy, setWBusy] = useState(false)
+ const [wKopiert, setWKopiert] = useState(false)
+
+ const zugangFreigeben = async () => {
+   if (!wiederherstellung || wBusy) return
+   setWBusy(true)
+   try {
+     const d = await apiFetch(`/api/users/${wiederherstellung.userId}/wiederherstellung`, {
+       method: 'POST',
+       body: JSON.stringify({ note: wiederherstellung.note }),
+     })
+     setWiederherstellung(w => ({ ...w, ...d }))
+   } catch (e) {
+     alert(e?.error || 'Freigabe fehlgeschlagen')
+   } finally { setWBusy(false) }
+ }
  const [scanId, setScanId] = useState('')
 
  const load = async () => {
@@ -207,6 +227,76 @@ export default function UsersPanel() {
  </div>
  )}
 
+ {/* Notausgang. Der Weg, an dem Unternehmen fallen — nicht an der
+     Verschlüsselung, sondern daran, dass jemand anruft, überzeugend klingt
+     und einen Link bekommt. Deshalb ist die Notiz Pflicht: Sie stellt die
+     Frage, wie die Identität geprüft wurde, bevor der Link entsteht. */}
+ {wiederherstellung && (
+ <div className="bg-white p-6 mb-6 space-y-4 border border-black/10">
+ <h3 className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">
+ Zugang wiederherstellen für {wiederherstellung.userName}
+ </h3>
+
+ {!wiederherstellung.link ? (
+ <>
+ <p className="text-[12px] text-black/50 font-light leading-relaxed max-w-2xl">
+ Erzeugt einen Link, mit dem dieses Konto ein neues Gerät hinterlegen kann —
+ eine Stunde gültig, einmal benutzbar. Bestehende Geräte bleiben gültig, alle
+ offenen Sitzungen werden beendet, und im Nachrichtenverlauf des Kunden
+ erscheint ein Hinweis.
+ </p>
+ <p className="text-[12px] text-black/50 font-light leading-relaxed max-w-2xl">
+ Bitte vorher die Identität prüfen: Bestellnummer <em>und</em> Lieferadresse
+ abfragen, nicht nur die E-Mail. Geben Sie den Link niemals an eine Adresse,
+ die Ihnen gerade erst genannt wurde.
+ </p>
+ <input
+ value={wiederherstellung.note}
+ onChange={e => setWiederherstellung(w => ({ ...w, note: e.target.value }))}
+ placeholder="Wie haben Sie die Identität geprüft?"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
+ />
+ <div className="flex gap-3">
+ <button
+ onClick={zugangFreigeben}
+ disabled={wBusy || (wiederherstellung.note || '').trim().length < 4}
+ className="flex items-center gap-2 px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black"
+ >
+ <KeyRound size={11} strokeWidth={1.25} /> {wBusy ? 'Wird erzeugt …' : 'Link erzeugen'}
+ </button>
+ <button onClick={() => setWiederherstellung(null)} className="px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 tracking-wider font-light uppercase">Abbrechen</button>
+ </div>
+ </>
+ ) : (
+ <div className="flex flex-col sm:flex-row gap-5">
+ {wiederherstellung.qr && (
+ <img src={wiederherstellung.qr} alt="QR-Code zur Wiederherstellung" className="w-[150px] h-[150px] border border-black/[0.07] flex-shrink-0" />
+ )}
+ <div className="flex-1 min-w-0">
+ <p className="text-[11px] text-black/45 font-light leading-relaxed mb-2">
+ Eine Stunde gültig, einmal benutzbar. Geben Sie ihn dem Kunden direkt —
+ am Telefon vorlesen, im Laden abscannen lassen.
+ </p>
+ <p className="text-[11px] text-black/70 break-all bg-black/[0.02] border border-black/[0.06] p-2.5">
+ {wiederherstellung.link}
+ </p>
+ <div className="flex gap-3 mt-2.5">
+ <button
+ onClick={async () => {
+ try { await navigator.clipboard.writeText(wiederherstellung.link); setWKopiert(true); setTimeout(() => setWKopiert(false), 1600) } catch { /* ohne Zwischenablage bleibt das Ablesen */ }
+ }}
+ className="flex items-center gap-1.5 h-8 px-3 border border-black/15 text-[11px] tracking-[0.1em] uppercase text-black/60 hover:border-black hover:text-black bg-transparent"
+ >
+ {wKopiert ? <Check size={12} /> : <Copy size={12} />} {wKopiert ? 'Kopiert' : 'Link kopieren'}
+ </button>
+ <button onClick={() => setWiederherstellung(null)} className="text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 tracking-wider font-light uppercase">Schließen</button>
+ </div>
+ </div>
+ </div>
+ )}
+ </div>
+ )}
+
  {/* Role legend */}
  <div className="flex gap-3 mb-6 flex-wrap">
  {[
@@ -321,6 +411,13 @@ export default function UsersPanel() {
  <ScanLine size={12} strokeWidth={1.25} className="text-black/25" />
  </button>
  )}
+ <button
+ onClick={() => setWiederherstellung({ userId: u.id, userName: u.name, note: '' })}
+ title="Zugang wiederherstellen"
+ className="w-7 h-7 flex items-center justify-center hover:bg-black/[0.04] transition-colors border-0 bg-transparent"
+ >
+ <KeyRound size={12} strokeWidth={1.25} className="text-black/25" />
+ </button>
  <button
  onClick={() => toggleStatus(u.id, u.is_active)}
  title={u.is_active ? 'Deaktivieren' : 'Aktivieren'}

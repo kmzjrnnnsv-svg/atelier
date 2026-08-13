@@ -1426,6 +1426,31 @@ export function runMigrations(db) {
     -- Kurzlebige Aufgaben (Challenges). Sie dürfen genau einmal eingelöst
     -- werden und verfallen nach fünf Minuten; ohne das ließe sich eine
     -- abgefangene Antwort wiederverwenden.
+    -- ── Zugang wiederherstellen ──────────────────────────────────────────
+    --
+    -- Konten ohne Passwort haben nichts, was sich zurücksetzen ließe. Wer
+    -- alle Geräte verliert, braucht trotzdem einen Weg zurück: eine einmalige
+    -- Kennung, die genau eines erlaubt — einen neuen Passkey anzulegen.
+    --
+    -- Gespeichert wird der Hash, nicht die Kennung selbst. Wer die Datenbank
+    -- liest, soll damit keine Konten übernehmen können.
+    --
+    -- issued_by hält fest, wer sie ausgestellt hat: NULL bei Selbstbedienung
+    -- über die Bestelldaten, sonst die Verwaltungsperson. Das ist kein
+    -- Ordnungssinn — ein Zugangsweg ohne Spur ist keiner, den man verantworten
+    -- kann.
+    CREATE TABLE IF NOT EXISTS account_recovery (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT    NOT NULL UNIQUE,
+      expires_at TEXT    NOT NULL,
+      used_at    TEXT,
+      issued_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      note       TEXT,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_recovery_user ON account_recovery(user_id, created_at);
+
     CREATE TABLE IF NOT EXISTS webauthn_challenges (
       id         TEXT    PRIMARY KEY,
       user_id    INTEGER REFERENCES users(id) ON DELETE CASCADE,

@@ -43,7 +43,8 @@ import { apiLimiter } from './middleware/rateLimiter.js'
 import authRouter, { issueTokens } from './routes/auth.js'
 import usersRouter from './routes/users.js'
 import affiliatesRouter from './routes/affiliates.js'
-import passkeysRouter, { makeLoginVerify, makeSignupVerify } from './routes/passkeys.js'
+import passkeysRouter, { makeLoginVerify, makeSignupVerify, makeRecoverVerify } from './routes/passkeys.js'
+import recoveryRouter from './routes/recovery.js'
 import configsRouter from './routes/configs.js'
 import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter } from './routes/content.js'
 import scansRouter      from './routes/scans.js'
@@ -167,7 +168,11 @@ app.post('/api/auth/passkey/login/verify', makeLoginVerify(issueTokens))
 // Registrierung ohne Passwort. Steht hier oben, weil sie wie die Anmeldung
 // Sitzungstoken ausstellt und deshalb issueTokens braucht.
 app.post('/api/auth/passkey/signup/verify', makeSignupVerify(issueTokens))
+app.post('/api/auth/passkey/recover/verify', makeRecoverVerify(issueTokens))
 app.use('/api/auth/passkey', passkeysRouter)
+// Zugang wiederherstellen (Ausweis über eine Bestellung). Eigener Pfad, damit
+// die Ratenbegrenzung dort und nicht auf der Anmeldung sitzt.
+app.use('/api/auth/recover', recoveryRouter)
 app.use('/api/configs',  configsRouter)
 app.use('/api/auth',     authRouter)
 app.use('/api/users',    usersRouter)

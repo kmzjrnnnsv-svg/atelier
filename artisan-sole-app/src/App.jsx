@@ -77,6 +77,7 @@ const lazyImports = {
   '/ruecksendungen': () => import('./screens/Ruecksendungen'),
   '/welcome':    () => import('./screens/Welcome'),
   '/entdecken':  () => import('./screens/Entdecken'),
+  '/konto-wiederherstellen': () => import('./screens/KontoWiederherstellen'),
 }
 
 // Prefetch a route's chunk on hover/touch, safe to call multiple times
@@ -98,6 +99,7 @@ const Settings          = lazy(lazyImports['/settings'])
 const Wishlist          = lazy(lazyImports['/wishlist'])
 const Orders            = lazy(lazyImports['/orders'])
 const Checkout          = lazy(lazyImports['/checkout'])
+const KontoWiederherstellen = lazy(lazyImports['/konto-wiederherstellen'])
 const Accessories       = lazy(lazyImports['/accessories'])
 const HelpSupport       = lazy(lazyImports['/help'])
 const Feedback          = lazy(lazyImports['/feedback'])
@@ -170,7 +172,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/welcome', '/entdecken', '/scan', '/customize', '/register-business', '/affiliate-konto', '/vermittler-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/affiliate', '/vermittler']
+const NO_NAV_PATHS = ['/login', '/register', '/konto-wiederherstellen', '/welcome', '/entdecken', '/scan', '/customize', '/register-business', '/affiliate-konto', '/vermittler-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/affiliate', '/vermittler']
 // Pfade mit variablem Ende: hier zählt der Anfang, nicht die genaue Adresse.
 const NO_NAV_PREFIXES = ['/schuhe/']
 const hidesNav = (path) =>
@@ -397,6 +399,7 @@ function AppRoutes() {
               <Route path="/wishlist"    element={<ShopRoute><ProtectedRoute><Wishlist /></ProtectedRoute></ShopRoute>} />
               <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
               <Route path="/checkout"    element={<ShopRoute><Checkout /></ShopRoute>} />
+              <Route path="/konto-wiederherstellen" element={<KontoWiederherstellen />} />
               <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
               <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
 
@@ -478,6 +481,7 @@ function AppRoutes() {
       <Route path="/wishlist"    element={<ShopRoute><ProtectedRoute><Wishlist /></ProtectedRoute></ShopRoute>} />
       <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
       <Route path="/checkout"    element={<ShopRoute><Checkout /></ShopRoute>} />
+      <Route path="/konto-wiederherstellen" element={<KontoWiederherstellen />} />
       <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
       <Route path="*"            element={<NotFound />} />

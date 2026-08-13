@@ -37,6 +37,7 @@ import {
 } from '@simplewebauthn/server'
 import { getDb } from '../db/database.js'
 import { authenticate } from '../middleware/auth.js'
+import { kennungPruefen, kennungEinloesen } from './recovery.js'
 
 const router = Router()
 // Jeder Angemeldete verwaltet seine eigenen Passkeys. Die Beschränkung auf
@@ -324,6 +325,120 @@ export function makeSignupVerify(issueTokens) {
     }
 
     res.status(201).json(issueTokens(res, neu))
+  }
+}
+
+// ── Zugang wiederherstellen ─────────────────────────────────────────────────
+//
+// Mit einer Kennung aus recovery.js: ausgestellt entweder gegen Bestellnummer
+// und Postleitzahl oder von der Verwaltung. Sie erlaubt genau eines — einen
+// neuen Passkey anzulegen.
+
+router.post('/recover/options', async (req, res) => {
+  const db = getDb()
+  const eintrag = kennungPruefen(db, req.body?.token)
+  if (!eintrag) {
+    return res.status(400).json({ error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt.' })
+  }
+  const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(eintrag.user_id)
+  if (!user) return res.status(400).json({ error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt.' })
+
+  const { rpID } = relyingParty()
+  const vorhanden = db.prepare('SELECT credential_id, transports FROM passkeys WHERE user_id = ?').all(user.id)
+  const options = await generateRegistrationOptions({
+    rpName: RP_NAME,
+    rpID,
+    userName: user.email,
+    userDisplayName: user.name || user.email,
+    excludeCredentials: vorhanden.map(c => ({ id: c.credential_id, transports: toTransports(c.transports) })),
+    authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
+  })
+
+  const challengeId = storeChallenge(user.id, options.challenge, 'register')
+  res.json({ challengeId, options, name: user.name })
+})
+
+export function makeRecoverVerify(issueTokens) {
+  return async (req, res) => {
+    const { token, challengeId, response, label } = req.body || {}
+    const db = getDb()
+
+    // Erst die Kennung, dann die Aufgabe: Eine gültige Aufgabe ohne gültige
+    // Kennung wäre ein Weg, sich einen Schlüssel in ein fremdes Konto zu
+    // legen, sobald man einmal eine Aufgabe abgefangen hat.
+    const eintrag = kennungPruefen(db, token)
+    if (!eintrag) {
+      return res.status(400).json({ error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt.' })
+    }
+    const stored = consumeChallenge(challengeId, 'register')
+    if (!stored || stored.user_id !== eintrag.user_id) {
+      return res.status(400).json({ error: 'Der Vorgang ist abgelaufen. Bitte erneut versuchen.' })
+    }
+
+    const { rpID, origins } = relyingParty()
+    let verification
+    try {
+      verification = await verifyRegistrationResponse({
+        response,
+        expectedChallenge: stored.challenge,
+        expectedOrigin: origins,
+        expectedRPID: rpID,
+        requireUserVerification: false,
+      })
+    } catch (e) {
+      return res.status(400).json({ error: e.message })
+    }
+    if (!verification.verified || !verification.registrationInfo) {
+      return res.status(400).json({ error: 'Der Passkey konnte nicht bestätigt werden.' })
+    }
+
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(eintrag.user_id)
+    if (!user || !user.is_active) {
+      return res.status(400).json({ error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt.' })
+    }
+
+    const { credential } = verification.registrationInfo
+    db.transaction(() => {
+      db.prepare(`
+        INSERT INTO passkeys (user_id, credential_id, public_key, counter, transports, label)
+        VALUES (?,?,?,?,?,?)
+      `).run(
+        user.id,
+        credential.id,
+        Buffer.from(credential.publicKey).toString('base64'),
+        credential.counter || 0,
+        JSON.stringify(credential.transports || []),
+        (label || '').trim().slice(0, 60) || 'Wiederhergestellt',
+      )
+      kennungEinloesen(db, eintrag.id)
+
+      // Alle bestehenden Sitzungen beenden. Wer den Zugang zurückholt, will
+      // nicht, dass daneben noch jemand angemeldet bleibt.
+      db.prepare('DELETE FROM refresh_tokens WHERE user_id = ?').run(user.id)
+
+      // Bestehende Passkeys bleiben ABSICHTLICH stehen: Sie zu löschen machte
+      // aus der Wiederherstellung eine Waffe gegen den rechtmäßigen Inhaber.
+      // Stattdessen eine Spur im Nachrichtenverlauf — der einzige Kanal, der
+      // den Kunden ohne Mailversand zuverlässig erreicht.
+      try {
+        let thread = db.prepare('SELECT id FROM chat_threads WHERE user_id = ?').get(user.id)
+        if (!thread) {
+          const info = db.prepare('INSERT INTO chat_threads (user_id) VALUES (?)').run(user.id)
+          thread = { id: info.lastInsertRowid }
+        }
+        db.prepare(`
+          INSERT INTO chat_messages (thread_id, sender, body)
+          VALUES (?, 'team', ?)
+        `).run(
+          thread.id,
+          'Für Ihr Konto wurde ein neues Gerät zur Anmeldung hinterlegt und alle offenen '
+          + 'Sitzungen wurden beendet. Waren Sie das nicht, melden Sie sich bitte umgehend '
+          + 'bei uns — wir entfernen den Zugang dann sofort.',
+        )
+      } catch { /* ohne Nachrichtenverlauf geht die Wiederherstellung trotzdem */ }
+    })()
+
+    res.json(issueTokens(res, user))
   }
 }
 

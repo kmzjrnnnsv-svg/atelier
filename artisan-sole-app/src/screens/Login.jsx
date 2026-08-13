@@ -160,6 +160,13 @@ export default function Login() {
               {pkError && (
                 <p className="text-[12px] text-red-700 font-light mt-1 text-center">{pkError}</p>
               )}
+              {/* Der Weg zurück, wenn alle Geräte weg sind. Klein, aber
+                  auffindbar — wer ihn braucht, sucht ihn gezielt. */}
+              <p className="text-center">
+                <Link to="/konto-wiederherstellen" className="text-[11px] text-black/35 hover:text-black/70 underline underline-offset-4">
+                  Kein Zugriff mehr auf Ihre Geräte?
+                </Link>
+              </p>
               <div className="flex items-center gap-3 pt-1">
                 <div className="h-px flex-1 bg-black/[0.08]" />
                 <span className="text-[9px] uppercase tracking-[0.2em] text-black/25">oder mit Passwort</span>
