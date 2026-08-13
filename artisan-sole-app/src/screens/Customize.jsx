@@ -17,6 +17,12 @@ const WEITEN_NAME = { D: 'Normal', EE: 'Breit', EEE: 'Sehr breit' }
 
 // Dieselbe Frage wie im Größenfenster, in denselben Worten. Sie wird an zwei
 // Stellen gestellt — sie darf nicht an beiden anders klingen.
+//
+// Gefragt wird nach der WEITE des Schuhs, gemessen wird der BALLENUMFANG des
+// Fußes. Das ist kein Wortklauben: „Wie breit ist Ihr Fuß?" mit einer
+// Millimeterzahl darunter ist eine Fangfrage — wer die Breite seines Fußes
+// mit dem Lineal abmisst, bekommt rund ein Drittel des Wertes heraus, der
+// dort steht, und wählt die falsche Weite.
 const WEITEN_WAHL = [
   { key: 'D',   titel: 'Normal',     kurz: 'Die meisten Füße', hinweis: 'Sie kaufen Schuhe von der Stange und es passt meistens.' },
   { key: 'EE',  titel: 'Breit',      kurz: 'Drückt am Ballen', hinweis: 'Neue Schuhe drücken seitlich am Fußballen, obwohl die Länge stimmt. Oft kaufen Sie deshalb eine Nummer größer.' },
@@ -2045,8 +2051,11 @@ export default function Customize() {
                       nicht in einer Manufaktur gearbeitet hat. */}
                   {!hatUmfang && (
                     <div className="border border-black/10 p-3.5">
-                      <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-2">
-                        Wie breit ist Ihr Fuß?
+                      <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-0.5">
+                        Welche Weite brauchen Sie?
+                      </p>
+                      <p className="text-[10px] text-black/35 font-light mb-2">
+                        Die Zahl ist der Ballenumfang, nicht die Breite.
                       </p>
                       <div className="grid grid-cols-3 gap-1.5">
                         {WEITEN_WAHL.filter(w => !weitenHier.length || weitenHier.some(x => x.width === w.key)).map(w => {
@@ -2066,6 +2075,7 @@ export default function Customize() {
                               {mm != null && (
                                 <span className={`block text-[11px] tabular-nums mt-0.5 ${an ? 'text-white' : 'text-black/70'}`}>
                                   {Math.round(mm)} mm
+                                  <span className={`text-[9px] ml-1 ${an ? 'text-white/55' : 'text-black/35'}`}>Umf.</span>
                                 </span>
                               )}
                               <span className={`block text-[9px] mt-0.5 leading-tight ${an ? 'text-white/60' : 'text-black/40'}`}>
@@ -2080,11 +2090,11 @@ export default function Customize() {
                           Knöpfen eine Zahl ohne Bezug. */}
                       {weitenHier.length > 0 && (
                         <p className="text-[10px] text-black/50 font-light leading-relaxed mt-2.5">
-                          Die Zahl ist der Ballenumfang, den wir für diese Weite bauen — einmal
-                          um den Fuß herum an der breitesten Stelle, dort wo der große Zeh
-                          ansetzt. Sie brauchen kein Maßband: Legen Sie einen Schnürsenkel um
-                          den Ballen, markieren Sie die Stelle, wo er sich trifft, und halten
-                          Sie ihn an ein Lineal.
+                          Der Ballenumfang ist einmal um den Fuß herum gemessen, an der
+                          breitesten Stelle, dort wo der große Zeh ansetzt — nicht die Breite
+                          quer über den Fuß. Sie brauchen kein Maßband: Legen Sie einen
+                          Schnürsenkel um den Ballen, markieren Sie die Stelle, wo er sich
+                          trifft, und halten Sie ihn an ein Lineal.
                         </p>
                       )}
                       <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2">
@@ -2093,7 +2103,8 @@ export default function Customize() {
                       <p className="text-[10px] text-black/35 font-light leading-relaxed mt-2 pt-2 border-t border-black/[0.06]">
                         Die Länge haben Sie gemessen, die Weite geschätzt. Wir merken uns das
                         und fragen vor der Fertigung nach, wenn etwas unstimmig wirkt — der
-                        Schuh entsteht ohnehin erst in den Wochen danach.
+                        Schuh entsteht ohnehin erst in den Wochen danach. Genauer wird es mit
+                        dem gemessenen Ballenumfang.
                         {' '}
                         <button
                           type="button" onClick={() => openMeasEdit('passform')}

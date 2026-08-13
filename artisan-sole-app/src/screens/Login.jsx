@@ -32,6 +32,11 @@ export default function Login() {
   // WebAuthn kann, bleibt das Formular darunter der einzige Weg; in der
   // iOS-App fehlt zudem die Domainbindung.
   const passkeyPossible = typeof window !== 'undefined' && !!window.PublicKeyCredential
+  // Das Passwortformular ist eingeklappt, solange es ohne geht. Zwei
+  // gleichwertige Wege nebeneinander sind eine Entscheidung, die niemand
+  // treffen will — und die schlechtere von beiden gewinnt sie oft, weil sie
+  // vertrauter aussieht.
+  const [passwortWeg, setPasswortWeg] = useState(!passkeyPossible)
 
   const signInWithPasskey = async () => {
     setPkBusy(true); setPkError(null)
@@ -167,13 +172,28 @@ export default function Login() {
                   Kein Zugriff mehr auf Ihre Geräte?
                 </Link>
               </p>
-              <div className="flex items-center gap-3 pt-1">
-                <div className="h-px flex-1 bg-black/[0.08]" />
-                <span className="text-[9px] uppercase tracking-[0.2em] text-black/25">oder mit Passwort</span>
-                <div className="h-px flex-1 bg-black/[0.08]" />
-              </div>
+              {!passwortWeg && (
+                <p className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setPasswortWeg(true)}
+                    className="text-[11px] text-black/30 hover:text-black/60 underline underline-offset-4 bg-transparent border-0 p-0"
+                  >
+                    Konto von früher? Mit Passwort anmelden
+                  </button>
+                </p>
+              )}
+              {passwortWeg && (
+                <div className="flex items-center gap-3 pt-1">
+                  <div className="h-px flex-1 bg-black/[0.08]" />
+                  <span className="text-[9px] uppercase tracking-[0.2em] text-black/25">oder mit Passwort</span>
+                  <div className="h-px flex-1 bg-black/[0.08]" />
+                </div>
+              )}
             </>
           )}
+
+          {passwortWeg && (<>
 
           <div>
             <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1.5 block" style={{ letterSpacing: '0.15em' }}>Email Address</label>
@@ -218,9 +238,10 @@ export default function Login() {
           >
             {loading
               ? <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin-custom" />
-              : <><span>Sign In</span><ArrowRight size={16} /></>
+              : <><span>Anmelden</span><ArrowRight size={16} /></>
             }
           </button>
+          </>)}
 
         </form>
       </div>

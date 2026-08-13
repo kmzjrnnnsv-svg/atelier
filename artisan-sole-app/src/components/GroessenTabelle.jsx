@@ -9,8 +9,9 @@
  *
  * Jetzt sind es drei Schritte in Alltagssprache:
  *
- *   1. Wie breit ist Ihr Fuß?   Normal, breit, sehr breit — mit dem Satz
- *                               dazu, woran man es merkt.
+ *   1. Welche Weite brauchen Sie? Normal, breit, sehr breit — mit dem Satz
+ *                               dazu, woran man es merkt, und dem
+ *                               Ballenumfang in Millimetern daneben.
  *   2. Welche Größe tragen Sie? Nur die Größen, die es für diesen Schuh
  *                               wirklich gibt.
  *   3. Das kommt dabei heraus.  Fußlänge und Ballenumfang in Millimetern,
@@ -289,8 +290,11 @@ export default function GroessenTabelle({
                 )}
 
                 {/* Schritt 1 — Weite */}
-                <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">
-                  1 · Wie breit ist Ihr Fuß?
+                <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-0.5">
+                  1 · Welche Weite brauchen Sie?
+                </p>
+                <p className="text-[10px] text-black/35 font-light mb-2">
+                  Die Zahl ist der Ballenumfang, nicht die Breite.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 mb-2">
                   {weitenDa.map(w => {
@@ -312,6 +316,7 @@ export default function GroessenTabelle({
                         {mm != null && (
                           <span className={`block text-[12px] tabular-nums mt-0.5 ${an ? 'text-white' : 'text-black/70'}`}>
                             {Math.round(mm)} mm
+                            <span className={`text-[9px] ml-1 tracking-wide ${an ? 'text-white/55' : 'text-black/35'}`}>Umfang</span>
                           </span>
                         )}
                         <span className={`block text-[10px] mt-0.5 ${an ? 'text-white/60' : 'text-black/40'}`}>
@@ -322,10 +327,10 @@ export default function GroessenTabelle({
                   })}
                 </div>
                 <p className="text-[10px] text-black/50 font-light leading-relaxed mb-1.5">
-                  Die Zahl ist der Ballenumfang, den wir für diese Weite bauen — einmal um den
-                  Fuß herum an der breitesten Stelle, dort wo der große Zeh ansetzt. Kein
-                  Maßband nötig: Schnürsenkel um den Ballen legen, die Stelle markieren, wo er
-                  sich trifft, und an ein Lineal halten.
+                  Der Ballenumfang ist einmal um den Fuß herum gemessen, an der breitesten
+                  Stelle, dort wo der große Zeh ansetzt — nicht die Breite quer über den Fuß.
+                  Kein Maßband nötig: Schnürsenkel um den Ballen legen, die Stelle markieren,
+                  wo er sich trifft, und an ein Lineal halten.
                 </p>
                 <p className="text-[10px] text-black/45 font-light leading-relaxed mb-6">
                   {WEITEN.find(w => w.key === wirksameWeite)?.hinweis}
