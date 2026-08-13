@@ -1519,6 +1519,15 @@ export function runMigrations(db) {
     `ALTER TABLE users ADD COLUMN deletion_reason TEXT`,
     `ALTER TABLE users ADD COLUMN deleted_at TEXT`,
     `ALTER TABLE users ADD COLUMN deleted_by INTEGER`,
+    // Welche Felder der Affiliate nicht mehr selbst ändern darf.
+    //
+    // JSON-Liste von Spaltennamen. Der Affiliate trägt seine Daten selbst ein
+    // — das ist richtig, denn er ist der Einzige, der sie sicher weiß. Sobald
+    // die Verwaltung eine Angabe geprüft hat (Anschrift auf dem Ausweis, IBAN
+    // gegen den Kontoauszug), soll sie sich aber nicht mehr still ändern
+    // lassen: Eine geprüfte Bankverbindung, die nachts eine andere wird, ist
+    // der klassische Weg, eine Gutschrift umzuleiten.
+    `ALTER TABLE affiliates ADD COLUMN locked_fields TEXT NOT NULL DEFAULT '[]'`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }

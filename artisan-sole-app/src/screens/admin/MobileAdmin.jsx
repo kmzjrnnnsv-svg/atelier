@@ -20,7 +20,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ShoppingBag, Truck, Ticket, Users, Landmark, ShieldCheck, Mail,
-  ChevronRight, ChevronLeft, Plus, Check, Monitor, LogOut, AlertCircle,
+  ChevronRight, ChevronLeft, Plus, Check, Monitor, LogOut, AlertCircle, QrCode, KeyRound,
 } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import { useAuth } from '../../context/AuthContext'
@@ -426,36 +426,51 @@ function Coupons({ back }) {
 function Affiliates({ back }) {
   const [rows, setRows] = useState(null)
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({
-    full_name: '', email: '', code: '',
-    commission_type: 'percent', commission_value: '10', cap_per_shoe: '50', gift_shoetree: false,
-  })
+  const [form, setForm] = useState({ email: '', note: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  // Einladung oder Zugang als QR-Code — am Telefon der eigentliche Weg: Der
+  // Partner steht daneben und scannt vom Display ab.
+  const [karte, setKarte] = useState(null)   // { titel, name, link, qr, laedt }
+
+  const zeigeEinladung = async (a) => {
+    setKarte({ titel: 'Einladung', name: a.full_name || a.email, laedt: true })
+    try { setKarte({ titel: 'Einladung', name: a.full_name || a.email, ...(await apiFetch(`/api/affiliates/${a.id}/einladung`)) }) }
+    catch (e) { setKarte(null); setError(e?.error || 'Einladung konnte nicht geladen werden') }
+  }
+
+  const zeigeZugang = async (a) => {
+    const notiz = prompt(`Anmeldung für ${a.full_name || a.email} zurücksetzen.\n\nWie haben Sie die Identität geprüft?`)
+    if (notiz === null) return
+    if (notiz.trim().length < 4) { setError('Bitte kurz festhalten, wie Sie die Identität geprüft haben.'); return }
+    setKarte({ titel: 'Anmeldung zurücksetzen', name: a.full_name || a.email, laedt: true })
+    try {
+      const d = await apiFetch(`/api/users/${a.user_id}/wiederherstellung`, {
+        method: 'POST', body: JSON.stringify({ note: notiz.trim() }),
+      })
+      setKarte({ titel: 'Anmeldung zurücksetzen', name: a.full_name || a.email, ...d })
+    } catch (e) { setKarte(null); setError(e?.error || 'Zugang konnte nicht zurückgesetzt werden') }
+  }
 
   const load = () => apiFetch('/api/affiliates').then(setRows).catch(() => setRows([]))
   useEffect(() => { load() }, [])
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
-  const valid = form.full_name.trim().length >= 2
-    && /\S+@\S+\.\S+/.test(form.email)
-    && form.code.trim().length >= 3
+  const valid = /\S+@\S+\.\S+/.test(form.email)
 
+  // Zum Anlegen genügt die E-Mail — wie im großen CMS. Name, Anschrift,
+  // Steuer und Bankverbindung trägt der Affiliate danach selbst ein; am
+  // Telefon war das ohnehin nie zu tippen.
   const save = async () => {
     setBusy(true); setError(null)
     try {
-      await apiFetch('/api/affiliates', {
-        method: 'POST',
-        body: JSON.stringify({
-          ...form,
-          commission_value: Number(form.commission_value),
-          cap_per_shoe: Number(form.cap_per_shoe),
-          gift_shoetree: form.gift_shoetree ? 1 : 0,
-        }),
-      })
+      const neu = await apiFetch('/api/affiliates', { method: 'POST', body: JSON.stringify(form) })
       setAdding(false)
-      setForm({ full_name: '', email: '', code: '', commission_type: 'percent', commission_value: '10', cap_per_shoe: '50', gift_shoetree: false })
-      load()
+      setForm({ email: '', note: '' })
+      await load()
+      // Direkt den QR-Code zeigen: Genau dafür legt man am Telefon einen
+      // Affiliate an — der Partner steht daneben.
+      if (neu?.id) zeigeEinladung({ id: neu.id, full_name: '', email: neu.code })
     } catch (e) { setError(e?.error || 'Konnte nicht angelegt werden') }
     finally { setBusy(false) }
   }
@@ -463,62 +478,57 @@ function Affiliates({ back }) {
   if (adding) {
     return (
       <Screen title="Affiliate anlegen" onBack={() => { setAdding(false); setError(null) }}>
-        <Field label="Name">
-          <input value={form.full_name} onChange={e => set('full_name', e.target.value)} className={INPUT} />
-        </Field>
-        <Field label="E-Mail">
+        <Field label="E-Mail" hint="Mehr wird nicht gebraucht. Name, Anschrift, Steuer und Bankverbindung trägt der Affiliate danach selbst ein.">
           <input type="email" inputMode="email" autoCapitalize="none" value={form.email}
             onChange={e => set('email', e.target.value)} className={INPUT} />
         </Field>
-        <Field label="Werbecode" hint="Erscheint im Link und im Warenkorb. Buchstaben, Ziffern, Bindestriche.">
-          <input value={form.code} onChange={e => set('code', e.target.value)}
-            autoCapitalize="none" placeholder="max-mustermann" className={INPUT} />
+        <Field label="Notiz (intern)" hint="Nur für die Verwaltung sichtbar.">
+          <input value={form.note} onChange={e => set('note', e.target.value)} className={INPUT} />
         </Field>
 
-        <Field label="Provision">
-          <div className="grid grid-cols-2 gap-1.5 mb-2">
-            {[['percent', 'Prozent'], ['fixed', 'Festbetrag']].map(([k, l]) => (
-              <button key={k} onClick={() => set('commission_type', k)}
-                className={`h-12 text-[12px] font-light border transition-colors ${
-                  form.commission_type === k ? 'bg-black text-white border-black' : 'bg-white text-black/60 border-black/[0.12]'}`}>
-                {l}
-              </button>
-            ))}
-          </div>
-          <input type="number" inputMode="decimal" value={form.commission_value}
-            onChange={e => set('commission_value', e.target.value)} className={INPUT} />
-        </Field>
+        {error && <p className="text-[12px] text-red-600 font-light px-1 mb-3">{error}</p>}
 
-        <Field label="Höchstbetrag je Paar (€)">
-          <input type="number" inputMode="decimal" value={form.cap_per_shoe}
-            onChange={e => set('cap_per_shoe', e.target.value)} className={INPUT} />
-        </Field>
-
-        {form.commission_type === 'percent' && (
-          <button onClick={() => set('gift_shoetree', !form.gift_shoetree)}
-            className="w-full flex items-center gap-3 bg-white border border-black/[0.12] px-3.5 py-3 mb-4 text-left">
-            <span className={`w-5 h-5 flex items-center justify-center flex-shrink-0 ${form.gift_shoetree ? 'bg-black' : 'border border-black/25'}`}>
-              {form.gift_shoetree && <Check size={12} strokeWidth={2.5} className="text-white" />}
-            </span>
-            <span className="min-w-0">
-              <span className="text-[14px] font-light text-black/80 block">Schuhspanner als Zugabe</span>
-              <span className="text-[11px] text-black/30 font-light">
-                Einkaufspreis wird von der Provision einbehalten. Andere Zusagen —
-                Nachlass oder gar nichts — stehen im vollen CMS.
-              </span>
-            </span>
-          </button>
-        )}
-
-        <p className="text-[11px] text-black/30 font-light mb-4 leading-relaxed">
-          Anschrift, Steuerangaben und Bankverbindung lassen sich später ergänzen.
-          Ohne IBAN bleibt die Auszahlung gesperrt.
-        </p>
-
-        {error && <p className="text-[12px] text-red-700 font-light mb-3">{error}</p>}
-        <button disabled={!valid || busy} onClick={save} className={`${BUTTON} bg-black text-white border border-black`}>
-          {busy ? 'Anlegen…' : 'Anlegen'}
+        <button onClick={save} disabled={!valid || busy}
+          className="w-full h-12 bg-black text-white text-[12px] tracking-[0.18em] uppercase border-0 disabled:opacity-30">
+          {busy ? 'Wird angelegt …' : 'Anlegen und QR-Code zeigen'}
         </button>
+      </Screen>
+    )
+  }
+
+  // Der QR-Code als eigene Ansicht: groß, mittig, nichts daneben. Er wird vom
+  // Display abgescannt — alles andere stört dabei nur.
+  if (karte) {
+    return (
+      <Screen title={karte.titel} onBack={() => setKarte(null)}>
+        <p className="text-[13px] text-black/60 font-light px-1 mb-4">{karte.name}</p>
+        {karte.laedt ? <Spinner /> : karte.offen === false ? (
+          <p className="text-[13px] text-black/50 font-light px-1 leading-relaxed">{karte.grund}</p>
+        ) : (
+          <>
+            {karte.qr && (
+              <div className="flex justify-center mb-4">
+                <img src={karte.qr} alt="QR-Code" className="w-[260px] h-[260px] border border-black/[0.07]" />
+              </div>
+            )}
+            <p className="text-[12px] text-black/45 font-light leading-relaxed px-1 mb-3">
+              Vom Bildschirm abscannen lassen. {karte.titel === 'Einladung'
+                ? 'Der Affiliate legt damit sein Konto an — ohne Passwort, mit Face ID oder Fingerabdruck.'
+                : 'Damit hinterlegt er ein neues Gerät. Eine Stunde gültig, einmal benutzbar.'}
+            </p>
+            {karte.link && (
+              <>
+                <p className="text-[11px] text-black/60 break-all bg-black/[0.02] border border-black/[0.06] p-3 mb-3">{karte.link}</p>
+                <button
+                  onClick={() => navigator.clipboard?.writeText(karte.link)}
+                  className="w-full h-11 border border-black/15 text-[11px] tracking-[0.14em] uppercase text-black/60 bg-transparent"
+                >
+                  Link kopieren
+                </button>
+              </>
+            )}
+          </>
+        )}
       </Screen>
     )
   }
@@ -542,9 +552,21 @@ function Affiliates({ back }) {
                 {a.payout_blocked && ' · Auszahlung gesperrt'}
               </span>
             </span>
-            <span className="text-right flex-shrink-0">
-              <span className="text-[14px] font-light text-black/80 block">€ {money(a.open_amount)}</span>
-              <span className="text-[10px] text-black/30 font-light">offen</span>
+            <span className="text-right flex-shrink-0 flex items-center gap-3">
+              <span>
+                <span className="text-[14px] font-light text-black/80 block">€ {money(a.open_amount)}</span>
+                <span className="text-[10px] text-black/30 font-light">offen</span>
+              </span>
+              <button onClick={() => zeigeEinladung(a)} aria-label="Einladung als QR-Code"
+                className="w-10 h-10 flex items-center justify-center bg-transparent border-0 text-black/35">
+                <QrCode size={17} strokeWidth={1.5} />
+              </button>
+              {a.user_id ? (
+                <button onClick={() => zeigeZugang(a)} aria-label="Anmeldung zurücksetzen"
+                  className="w-10 h-10 flex items-center justify-center bg-transparent border-0 text-black/35">
+                  <KeyRound size={17} strokeWidth={1.5} />
+                </button>
+              ) : null}
             </span>
           </Row>
         ))}

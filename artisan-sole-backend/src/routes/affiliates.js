@@ -21,7 +21,8 @@ const selfFields = `
   id, code, status, full_name, email, phone, street, postal_code, city, country,
   tax_status, tax_number, vat_id, iban, account_holder, birth_date,
   commission_type, commission_value, cap_per_shoe,
-  customer_benefit, customer_discount_pct, gift_key, created_at, terms_accepted_at
+  customer_benefit, customer_discount_pct, gift_key, locked_fields,
+  created_at, terms_accepted_at
 `
 
 const normCode = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
@@ -247,6 +248,14 @@ const SELBST_FELDER = [
   'tax_status', 'tax_number', 'vat_id', 'iban', 'account_holder',
 ]
 
+/** Gesperrte Felder eines Affiliates als Liste. */
+export function gesperrteFelder(a) {
+  try {
+    const l = JSON.parse(a?.locked_fields || '[]')
+    return Array.isArray(l) ? l.filter(f => SELBST_FELDER.includes(f)) : []
+  } catch { return [] }
+}
+
 router.patch('/me', authenticate,
   body('full_name').optional({ values: 'falsy' }).trim().isLength({ min: 2 }).withMessage('Bitte Vor- und Nachnamen angeben'),
   body('iban').optional({ values: 'falsy' }).trim().isLength({ min: 15, max: 34 }).withMessage('Diese IBAN sieht nicht vollständig aus'),
@@ -257,6 +266,18 @@ router.patch('/me', authenticate,
     const db = getDb()
     const a = db.prepare('SELECT id FROM affiliates WHERE user_id = ?').get(req.user.id)
     if (!a) return res.status(404).json({ error: 'Kein Affiliate-Konto zu diesem Benutzer' })
+
+    // Gesperrte Felder still zu übergehen wäre die schlechtere Wahl: Der
+    // Affiliate sähe seine Eingabe verschwinden und wüsste nicht, warum.
+    const gesperrt = gesperrteFelder(db.prepare('SELECT locked_fields FROM affiliates WHERE id = ?').get(a.id))
+    const verletzt = gesperrt.filter(k => req.body[k] !== undefined)
+    if (verletzt.length) {
+      return res.status(403).json({
+        error: 'Diese Angaben hat die Verwaltung geprüft und festgeschrieben. Bitte schreiben Sie uns, wenn sich etwas geändert hat.',
+        code: 'FELD_GESPERRT',
+        felder: verletzt,
+      })
+    }
 
     const patch = {}
     for (const k of SELBST_FELDER) {
@@ -309,7 +330,7 @@ router.get('/', ...canAdmin, (req, res) => {
     SELECT a.id, a.code, a.status, a.full_name, a.email, a.phone, a.user_id,
            a.street, a.postal_code, a.city, a.country, a.birth_date,
            a.commission_type, a.commission_value, a.cap_per_shoe, a.gift_shoetree,
-           a.customer_benefit, a.customer_discount_pct, a.gift_key,
+           a.customer_benefit, a.customer_discount_pct, a.gift_key, a.locked_fields,
            a.tax_status, a.tax_number, a.vat_id, a.iban, a.account_holder,
            a.note, a.created_at,
            COUNT(c.id)                                                   AS pairs_total,
@@ -464,10 +485,18 @@ router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
   const allowed = ['status', 'full_name', 'email', 'phone', 'street', 'postal_code', 'city',
     'country', 'birth_date', 'tax_status', 'tax_number', 'vat_id', 'iban', 'account_holder',
     'commission_type', 'commission_value', 'cap_per_shoe',
-    'customer_benefit', 'customer_discount_pct', 'gift_key', 'note', 'user_id']
+    'customer_benefit', 'customer_discount_pct', 'gift_key', 'note', 'user_id',
+    'locked_fields']
   const patch = {}
   for (const k of allowed) if (req.body[k] !== undefined) patch[k] = req.body[k]
   if (patch.gift_shoetree !== undefined) patch.gift_shoetree = patch.gift_shoetree ? 1 : 0
+  // Die Sperre kommt als Liste und wird als Liste gespeichert — aber nur mit
+  // Namen, die es gibt. Ein Feldname aus dem Nichts sperrte sonst nichts und
+  // sähe trotzdem gesperrt aus.
+  if (patch.locked_fields !== undefined) {
+    const roh = Array.isArray(patch.locked_fields) ? patch.locked_fields : []
+    patch.locked_fields = JSON.stringify(roh.filter(f => SELBST_FELDER.includes(f)))
+  }
   if (!Object.keys(patch).length) return res.json(a)
 
   const set = Object.keys(patch).map(k => `${k} = ?`).join(', ')
