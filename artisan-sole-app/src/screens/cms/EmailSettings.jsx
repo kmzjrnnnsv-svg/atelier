@@ -19,6 +19,18 @@ export default function EmailSettings() {
  const [testTo, setTestTo] = useState('')
  const [testing, setTesting] = useState(false)
  const [testResult, setTestResult] = useState(null)
+ const [diag, setDiag] = useState(null)        // Ergebnis der Leitungsprüfung
+ const [diagLaeuft, setDiagLaeuft] = useState(false)
+
+ // Die Leitungsprüfung geht bewusst nicht automatisch los: Sie baut bis zu
+ // sechs Verbindungen auf und dauert einige Sekunden. Gebraucht wird sie erst,
+ // wenn etwas nicht geht.
+ const runDiag = async () => {
+   setDiagLaeuft(true); setDiag(null)
+   try { setDiag(await apiFetch('/api/settings/email/diagnose')) }
+   catch (e) { setDiag({ ok: false, reason: e?.error || 'Prüfung fehlgeschlagen' }) }
+   finally { setDiagLaeuft(false) }
+ }
 
  // Beim Öffnen sofort prüfen: Die häufigste Ursache für ausbleibende Mails ist
  // eine fehlende Zugangskennung, und das sieht man den Feldern nicht an.
@@ -255,6 +267,55 @@ export default function EmailSettings() {
  Mails gehen zwar hinaus, aber Einladungs- und Bestätigungslinks darin führen beim
  Empfänger ins Leere. Bitte unten auf die öffentliche Adresse setzen.
  </p>
+ )}
+
+ {/* Leitungsprüfung. Sie beantwortet die Frage, die die Fehlermeldung
+     offenlässt: gesperrter Port oder IPv6-Sackgasse? Beide sehen von
+     außen gleich aus, brauchen aber gegensätzliche Abhilfen. */}
+ {!check.ok && (
+ <div className="mt-3 pt-3 border-t border-amber-200">
+ <button
+ type="button" onClick={runDiag} disabled={diagLaeuft}
+ className="h-8 px-3 border border-amber-700/40 text-[11px] tracking-[0.1em] uppercase text-amber-900 bg-transparent hover:bg-amber-100 disabled:opacity-40"
+ >
+ {diagLaeuft ? 'Leitung wird geprüft …' : 'Leitung prüfen'}
+ </button>
+ <span className="text-[10px] text-amber-800/70 font-light ml-2.5">
+ Baut Testverbindungen zu {check.host} auf — dauert einige Sekunden.
+ </span>
+
+ {diag && (
+ <div className="mt-3">
+ <p className="text-[12px] text-amber-900 font-light leading-relaxed">
+ {diag.befund || diag.reason}
+ </p>
+ {Array.isArray(diag.ports) && (
+ <table className="mt-2.5 text-[11px]">
+ <tbody>
+ {diag.ports.map(p => (
+ <tr key={p.port}>
+ <td className="pr-4 py-0.5 text-amber-900/70 tabular-nums whitespace-nowrap">
+ Port {p.port}{p.konfiguriert ? ' · eingestellt' : ''}
+ </td>
+ <td className="pr-4 py-0.5 text-amber-900/70 whitespace-nowrap">
+ IPv4: {p.ipv4 ? (p.ipv4.ok ? 'offen' : p.ipv4.grund) : '—'}
+ </td>
+ <td className="py-0.5 text-amber-900/70 whitespace-nowrap">
+ IPv6: {p.ipv6 ? (p.ipv6.ok ? 'offen' : p.ipv6.grund) : '—'}
+ </td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ )}
+ {(diag.ipv4 || diag.ipv6) && (
+ <p className="text-[10px] text-amber-800/60 font-light mt-1.5">
+ {diag.host} löst auf zu {[diag.ipv4, diag.ipv6].filter(Boolean).join(' und ')}
+ </p>
+ )}
+ </div>
+ )}
+ </div>
  )}
  </div>
  </div>

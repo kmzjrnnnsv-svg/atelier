@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
-import { verifyEmailSetup, sendTestEmail } from '../utils/email.js'
+import { verifyEmailSetup, sendTestEmail, diagnoseSmtp } from '../utils/email.js'
 
 const router = Router()
 
@@ -78,6 +78,20 @@ router.get('/email', authenticate, requireRole('admin'), (req, res) => {
 // meldete nach außen Erfolg.
 router.get('/email/check', authenticate, requireRole('admin'), async (req, res) => {
   res.json(await verifyEmailSetup())
+})
+
+// ─── GET /api/settings/email/diagnose — wo genau es klemmt ─────────────────
+// Rohe TCP-Verbindungen zum hinterlegten Mailserver, je Port über IPv4 und
+// IPv6 getrennt. Damit lässt sich eine gesperrte Portfreigabe von einer
+// IPv6-Sackgasse unterscheiden — ohne Zugang zur Kommandozeile des Servers.
+// Die Prüfung dauert bis zu einigen Sekunden, deshalb ein eigener Aufruf und
+// kein Teil von /check.
+router.get('/email/diagnose', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    res.json(await diagnoseSmtp())
+  } catch (e) {
+    res.status(500).json({ ok: false, reason: e.message })
+  }
 })
 
 // ─── POST /api/settings/email/test — Testnachricht verschicken ─────────────
