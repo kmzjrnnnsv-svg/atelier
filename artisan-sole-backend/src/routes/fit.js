@@ -81,6 +81,35 @@ router.get('/match', (req, res) => {
      FROM last_size_chart${bedingungen.length ? ` WHERE ${bedingungen.join(' AND ')}` : ''}`
   ).all(...werte)
 
+  /**
+   * Was die Weiten bei DIESER Leiste und Größe bedeuten — in Millimetern.
+   *
+   * Nur im Fall ohne gemessenen Umfang, und dort ist es der eigentliche
+   * Punkt: „Normal oder breit?" ist geraten, solange niemand sagt, woran man
+   * es misst. Mit der Zahl daneben wird aus der Schätzung eine Prüfung —
+   * ein Schnürsenkel um den Ballen, einmal ans Lineal gehalten, fertig.
+   *
+   * Bewusst die Werte aus der Tabelle und kein Faustwert: Das Verhältnis von
+   * Umfang zu Länge schwankt über unsere Leisten zwischen 0,89 und 0,94
+   * allein in der Normalweite. Ein Mittelwert wäre bei der Hälfte daneben.
+   */
+  const weitenNach = new Map()
+  if (nurLaenge) {
+    const alle = db.prepare(
+      `SELECT last_key, width, size_system, size_label, ball_girth_mm
+       FROM last_size_chart${allowed && allowed.length ? ` WHERE last_key IN (${allowed.map(() => '?').join(',')})` : ''}`
+    ).all(...(allowed && allowed.length ? allowed : []))
+    const RANG = { D: 0, EE: 1, EEE: 2 }
+    for (const r of alle) {
+      const k = `${r.last_key}|${r.size_system}|${r.size_label}`
+      if (!weitenNach.has(k)) weitenNach.set(k, [])
+      weitenNach.get(k).push({ width: r.width, ball_girth_mm: r.ball_girth_mm })
+    }
+    for (const liste of weitenNach.values()) {
+      liste.sort((a, b) => (RANG[a.width] ?? 9) - (RANG[b.width] ?? 9))
+    }
+  }
+
   if (!rows.length) {
     return res.json({ matches: [], tolerance })
   }
@@ -125,6 +154,11 @@ router.get('/match', (req, res) => {
       // Genauigkeit, von der die Hälfte geraten ist.
       fitPercent: nurLaenge ? null : fitPercent(best.foot_length_mm - length, best.ball_girth_mm - girth),
       girth_known: !nurLaenge,
+      // Was die Weiten hier in Millimetern Ballenumfang bedeuten. Nur ohne
+      // gemessenen Umfang — sonst steht die Weite ohnehin fest.
+      weiten: nurLaenge
+        ? (weitenNach.get(`${best.last_key}|${best.size_system}|${best.size_label}`) || [])
+        : undefined,
     })
   }
 

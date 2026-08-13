@@ -76,14 +76,26 @@ export function orderSpec(order) {
   add('Größe', sizeLine)
 
   add('Leisten', order.last_label || order.last_key)
-  add('Weite', order.last_width)
+
+  const m = parse(order.fit_measurements)
+
+  // Die Weite mit dem Vermerk, woher sie stammt.
+  //
+  // Sie kann gemessen sein (Ballenumfang) oder gewählt (der Kunde hat
+  // „normal/breit/sehr breit" angegeben, weil er nur die Länge gemessen hat).
+  // Beides steht hier bislang gleich da, und das ist die eine Zeile, an der
+  // sich vor der Fertigung noch etwas retten lässt: Ein Schuh entsteht erst
+  // Wochen nach der Bestellung — bis dahin kann man nachfragen.
+  add('Weite', order.last_width
+    ? `${order.last_width}${m?.weite_geschaetzt ? ' · vom Kunden geschätzt, nicht gemessen' : ''}`
+    : null)
 
   // Die Maße, auf denen die Größe beruht. Weicht der fertige Schuh ab, ist das
   // die Zeile, an der sich klären lässt, woran es lag.
-  const m = parse(order.fit_measurements)
   if (m?.foot_length_mm) {
     const parts = [`Länge ${m.foot_length_mm} mm`]
     if (m.ball_girth_mm) parts.push(`Ballenumfang ${m.ball_girth_mm} mm`)
+    else parts.push('Ballenumfang nicht gemessen')
     add('Maße', parts.join(' · '))
   }
 

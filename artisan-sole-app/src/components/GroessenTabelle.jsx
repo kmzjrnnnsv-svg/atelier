@@ -153,6 +153,23 @@ export default function GroessenTabelle({
 
   const wirksameWeite = weitenDa.some(w => w.key === weite) ? weite : (weitenDa[0]?.key || 'D')
 
+  /**
+   * Der Ballenumfang einer Weite, in der gewählten Größe.
+   *
+   * Solange keine Größe gewählt ist, in der mittleren der angebotenen — so
+   * steht schon vor der Größenwahl eine Hausnummer da, statt eines leeren
+   * Knopfes. Ein Zentimeter Unterschied über die Größenreihe ändert an der
+   * Entscheidung „normal oder breit" ohnehin nichts.
+   */
+  const umfangFuer = (w) => {
+    const reihe = zeilenAlle
+      .filter(r => r.last_key === gewaehlteLeiste?.key && r.width === w)
+      .sort((a, b) => alsZahl(a.size_label) - alsZahl(b.size_label))
+    if (!reihe.length) return null
+    const genau = groesse && reihe.find(r => r.size_label === groesse)
+    return (genau || reihe[Math.floor(reihe.length / 2)]).ball_girth_mm
+  }
+
   const groessen = useMemo(
     () => zeilenAlle
       .filter(r => r.last_key === gewaehlteLeiste?.key && r.width === wirksameWeite)
@@ -278,6 +295,11 @@ export default function GroessenTabelle({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 mb-2">
                   {weitenDa.map(w => {
                     const an = w.key === wirksameWeite
+                    // Der Ballenumfang dieser Weite in der bereits gewählten
+                    // Größe — oder, solange keine gewählt ist, in der
+                    // mittleren. Ohne eine Zahl bliebe „normal oder breit?"
+                    // eine Geschmacksfrage.
+                    const mm = umfangFuer(w.key)
                     return (
                       <button
                         key={w.key}
@@ -287,6 +309,11 @@ export default function GroessenTabelle({
                         }`}
                       >
                         <span className="block text-[13px]">{w.titel}</span>
+                        {mm != null && (
+                          <span className={`block text-[12px] tabular-nums mt-0.5 ${an ? 'text-white' : 'text-black/70'}`}>
+                            {Math.round(mm)} mm
+                          </span>
+                        )}
                         <span className={`block text-[10px] mt-0.5 ${an ? 'text-white/60' : 'text-black/40'}`}>
                           {w.kurz}
                         </span>
@@ -294,6 +321,12 @@ export default function GroessenTabelle({
                     )
                   })}
                 </div>
+                <p className="text-[10px] text-black/50 font-light leading-relaxed mb-1.5">
+                  Die Zahl ist der Ballenumfang, den wir für diese Weite bauen — einmal um den
+                  Fuß herum an der breitesten Stelle, dort wo der große Zeh ansetzt. Kein
+                  Maßband nötig: Schnürsenkel um den Ballen legen, die Stelle markieren, wo er
+                  sich trifft, und an ein Lineal halten.
+                </p>
                 <p className="text-[10px] text-black/45 font-light leading-relaxed mb-6">
                   {WEITEN.find(w => w.key === wirksameWeite)?.hinweis}
                 </p>
