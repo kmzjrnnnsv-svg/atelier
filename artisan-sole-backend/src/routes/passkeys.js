@@ -37,6 +37,7 @@ import {
 } from '@simplewebauthn/server'
 import { getDb } from '../db/database.js'
 import { authenticate } from '../middleware/auth.js'
+import { kennungPruefen, kennungEinloesen } from './recovery.js'
 
 const router = Router()
 // Jeder Angemeldete verwaltet seine eigenen Passkeys. Die Beschränkung auf
@@ -64,15 +65,24 @@ function relyingParty() {
   let host = 'localhost'
   try { host = new URL(origin).hostname } catch { /* unbrauchbare Adresse, Rückfall unten */ }
 
-  // Ein Passkey für artisansole.com gilt auch auf business.artisansole.com.
-  // Deshalb die Registrierungsdomain um eine Ebene kürzen, wenn wir auf einer
-  // Unterdomain sitzen — sonst bräuchte jede Unterdomain eigene Schlüssel.
-  const rpID = process.env.WEBAUTHN_RP_ID || host.replace(/^business\./i, '')
+  // Ein Passkey für artisansole.com gilt auch auf den Unterdomänen. Deshalb
+  // die Registrierungsdomain um eine Ebene kürzen, wenn wir auf einer sitzen —
+  // sonst bräuchte jede eigene Schlüssel, und ein Affiliate, der sich auf
+  // affiliate.artisansole.com registriert hat, käme auf der Hauptdomain nicht
+  // mehr herein.
+  const UNTERDOMAENEN = ['www', 'business', 'affiliate']
+  const rpID = process.env.WEBAUTHN_RP_ID
+    || host.replace(new RegExp(`^(${UNTERDOMAENEN.join('|')})\\.`, 'i'), '')
 
-  // Beide Herkünfte gelten: Wer sich auf der Unterdomain anmeldet, soll
-  // denselben Schlüssel benutzen können.
-  const origins = [origin]
-  if (host !== rpID) origins.push(origin.replace(host, rpID))
+  // Alle Herkünfte gelten, aus denen die Anwendung ausgeliefert wird. Fehlt
+  // eine, schlägt die Prüfung dort mit „origin mismatch" fehl — einer
+  // Meldung, die im Browser niemand zu sehen bekommt.
+  const schema = origin.startsWith('http://') ? 'http' : 'https'
+  const origins = [...new Set([
+    origin,
+    `${schema}://${rpID}`,
+    ...UNTERDOMAENEN.map(s => `${schema}://${s}.${rpID}`),
+  ])]
   return { rpID, origins }
 }
 
@@ -324,6 +334,224 @@ export function makeSignupVerify(issueTokens) {
     }
 
     res.status(201).json(issueTokens(res, neu))
+  }
+}
+
+// ── Affiliate: Einladung annehmen, ohne Passwort ────────────────────────────
+//
+// Der Affiliate ist der Fall, in dem ein Passwort am wenigsten Sinn ergibt.
+// Er bekommt keine Mail von uns — die Einladung kommt als QR-Code, den er im
+// Laden vom Bildschirm abscannt. Ein Passwort, das er sich dabei ausdenken
+// und merken müsste, wäre der einzige Schritt in der Kette, der nicht am
+// Gerät hängt.
+//
+// Der Datensatz besteht bereits (die Verwaltung hat ihn mit der E-Mail
+// angelegt); hier wird das Konto scharfgeschaltet und der Schlüssel angelegt.
+
+router.post('/affiliate/options', async (req, res) => {
+  const db = getDb()
+  const token = String(req.body?.token || '')
+  const aff = token
+    ? db.prepare('SELECT id, user_id, email, full_name FROM affiliates WHERE invite_token = ?').get(token)
+    : null
+  if (!aff || !aff.user_id) {
+    return res.status(404).json({ error: 'Diese Einladung ist abgelaufen oder wurde bereits eingelöst.' })
+  }
+
+  const name = String(req.body?.name || '').trim()
+  if (name.length < 2) return res.status(400).json({ error: 'Bitte geben Sie Ihren Namen an.' })
+
+  const { rpID } = relyingParty()
+  const options = await generateRegistrationOptions({
+    rpName: RP_NAME,
+    rpID,
+    userName: aff.email,
+    userDisplayName: name,
+    authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
+  })
+
+  const challengeId = storeChallenge(aff.user_id, options.challenge, 'register', { affiliate: aff.id, name })
+  res.json({ challengeId, options })
+})
+
+export function makeAffiliateVerify(issueTokens) {
+  return async (req, res) => {
+    const { token, challengeId, response, label } = req.body || {}
+    const db = getDb()
+
+    // Die Einladung wird erneut geprüft, nicht nur die Aufgabe: Sonst ließe
+    // sich mit einer abgefangenen Aufgabe ein Schlüssel hinterlegen, nachdem
+    // die Einladung längst zurückgezogen wurde.
+    const aff = token
+      ? db.prepare('SELECT id, user_id FROM affiliates WHERE invite_token = ?').get(String(token))
+      : null
+    if (!aff || !aff.user_id) {
+      return res.status(404).json({ error: 'Diese Einladung ist abgelaufen oder wurde bereits eingelöst.' })
+    }
+
+    const stored = consumeChallenge(challengeId, 'register')
+    if (!stored || stored.user_id !== aff.user_id) {
+      return res.status(400).json({ error: 'Der Vorgang ist abgelaufen. Bitte erneut versuchen.' })
+    }
+    let angaben
+    try { angaben = JSON.parse(stored.data || '{}') } catch { angaben = {} }
+
+    const { rpID, origins } = relyingParty()
+    let verification
+    try {
+      verification = await verifyRegistrationResponse({
+        response,
+        expectedChallenge: stored.challenge,
+        expectedOrigin: origins,
+        expectedRPID: rpID,
+        requireUserVerification: false,
+      })
+    } catch (e) {
+      return res.status(400).json({ error: e.message })
+    }
+    if (!verification.verified || !verification.registrationInfo) {
+      return res.status(400).json({ error: 'Der Passkey konnte nicht bestätigt werden.' })
+    }
+
+    const { credential } = verification.registrationInfo
+    const nutzer = db.transaction(() => {
+      db.prepare(`
+        INSERT INTO passkeys (user_id, credential_id, public_key, counter, transports, label)
+        VALUES (?,?,?,?,?,?)
+      `).run(
+        aff.user_id,
+        credential.id,
+        Buffer.from(credential.publicKey).toString('base64'),
+        credential.counter || 0,
+        JSON.stringify(credential.transports || []),
+        (label || '').trim().slice(0, 60) || 'Erstes Gerät',
+      )
+      // Der Name kommt vom Affiliate selbst — die Verwaltung kannte beim
+      // Anlegen nur die E-Mail.
+      db.prepare("UPDATE users SET name = ?, is_active = 1, updated_at = datetime('now') WHERE id = ?")
+        .run(angaben.name || 'Affiliate', aff.user_id)
+      // Die Einladung ist verbraucht. Ohne dieses Löschen bliebe der QR-Code
+      // gültig — und wer ihn abfotografiert hat, käme später hinterher.
+      db.prepare("UPDATE affiliates SET invite_token = NULL, full_name = COALESCE(NULLIF(full_name,''), ?), status = 'active', updated_at = datetime('now') WHERE id = ?")
+        .run(angaben.name || null, aff.id)
+      return db.prepare('SELECT * FROM users WHERE id = ?').get(aff.user_id)
+    })()
+
+    res.status(201).json(issueTokens(res, nutzer))
+  }
+}
+
+// ── Zugang wiederherstellen ─────────────────────────────────────────────────
+//
+// Mit einer Kennung aus recovery.js: ausgestellt entweder gegen Bestellnummer
+// und Postleitzahl oder von der Verwaltung. Sie erlaubt genau eines — einen
+// neuen Passkey anzulegen.
+
+router.post('/recover/options', async (req, res) => {
+  const db = getDb()
+  const eintrag = kennungPruefen(db, req.body?.token)
+  if (!eintrag) {
+    return res.status(400).json({ error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt.' })
+  }
+  const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(eintrag.user_id)
+  if (!user) return res.status(400).json({ error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt.' })
+
+  const { rpID } = relyingParty()
+  const vorhanden = db.prepare('SELECT credential_id, transports FROM passkeys WHERE user_id = ?').all(user.id)
+  const options = await generateRegistrationOptions({
+    rpName: RP_NAME,
+    rpID,
+    userName: user.email,
+    userDisplayName: user.name || user.email,
+    excludeCredentials: vorhanden.map(c => ({ id: c.credential_id, transports: toTransports(c.transports) })),
+    authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
+  })
+
+  const challengeId = storeChallenge(user.id, options.challenge, 'register')
+  res.json({ challengeId, options, name: user.name })
+})
+
+export function makeRecoverVerify(issueTokens) {
+  return async (req, res) => {
+    const { token, challengeId, response, label } = req.body || {}
+    const db = getDb()
+
+    // Erst die Kennung, dann die Aufgabe: Eine gültige Aufgabe ohne gültige
+    // Kennung wäre ein Weg, sich einen Schlüssel in ein fremdes Konto zu
+    // legen, sobald man einmal eine Aufgabe abgefangen hat.
+    const eintrag = kennungPruefen(db, token)
+    if (!eintrag) {
+      return res.status(400).json({ error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt.' })
+    }
+    const stored = consumeChallenge(challengeId, 'register')
+    if (!stored || stored.user_id !== eintrag.user_id) {
+      return res.status(400).json({ error: 'Der Vorgang ist abgelaufen. Bitte erneut versuchen.' })
+    }
+
+    const { rpID, origins } = relyingParty()
+    let verification
+    try {
+      verification = await verifyRegistrationResponse({
+        response,
+        expectedChallenge: stored.challenge,
+        expectedOrigin: origins,
+        expectedRPID: rpID,
+        requireUserVerification: false,
+      })
+    } catch (e) {
+      return res.status(400).json({ error: e.message })
+    }
+    if (!verification.verified || !verification.registrationInfo) {
+      return res.status(400).json({ error: 'Der Passkey konnte nicht bestätigt werden.' })
+    }
+
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(eintrag.user_id)
+    if (!user || !user.is_active) {
+      return res.status(400).json({ error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt.' })
+    }
+
+    const { credential } = verification.registrationInfo
+    db.transaction(() => {
+      db.prepare(`
+        INSERT INTO passkeys (user_id, credential_id, public_key, counter, transports, label)
+        VALUES (?,?,?,?,?,?)
+      `).run(
+        user.id,
+        credential.id,
+        Buffer.from(credential.publicKey).toString('base64'),
+        credential.counter || 0,
+        JSON.stringify(credential.transports || []),
+        (label || '').trim().slice(0, 60) || 'Wiederhergestellt',
+      )
+      kennungEinloesen(db, eintrag.id)
+
+      // Alle bestehenden Sitzungen beenden. Wer den Zugang zurückholt, will
+      // nicht, dass daneben noch jemand angemeldet bleibt.
+      db.prepare('DELETE FROM refresh_tokens WHERE user_id = ?').run(user.id)
+
+      // Bestehende Passkeys bleiben ABSICHTLICH stehen: Sie zu löschen machte
+      // aus der Wiederherstellung eine Waffe gegen den rechtmäßigen Inhaber.
+      // Stattdessen eine Spur im Nachrichtenverlauf — der einzige Kanal, der
+      // den Kunden ohne Mailversand zuverlässig erreicht.
+      try {
+        let thread = db.prepare('SELECT id FROM chat_threads WHERE user_id = ?').get(user.id)
+        if (!thread) {
+          const info = db.prepare('INSERT INTO chat_threads (user_id) VALUES (?)').run(user.id)
+          thread = { id: info.lastInsertRowid }
+        }
+        db.prepare(`
+          INSERT INTO chat_messages (thread_id, sender, body)
+          VALUES (?, 'team', ?)
+        `).run(
+          thread.id,
+          'Für Ihr Konto wurde ein neues Gerät zur Anmeldung hinterlegt und alle offenen '
+          + 'Sitzungen wurden beendet. Waren Sie das nicht, melden Sie sich bitte umgehend '
+          + 'bei uns — wir entfernen den Zugang dann sofort.',
+        )
+      } catch { /* ohne Nachrichtenverlauf geht die Wiederherstellung trotzdem */ }
+    })()
+
+    res.json(issueTokens(res, user))
   }
 }
 

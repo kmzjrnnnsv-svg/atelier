@@ -4,12 +4,47 @@ import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
+import QRCode from 'qrcode'
 import { sendPromotionInvitation } from '../utils/email.js'
+import { kennungAusstellen } from './recovery.js'
 
 const router = Router()
 router.use(authenticate, requireRole('admin'))
 
 // GET /api/users
+/**
+ * POST /api/users/:id/wiederherstellung — Notausgang für ein Konto.
+ *
+ * Der letzte Weg zurück, wenn ein Kunde alle Geräte verloren hat und auch
+ * über Bestellnummer und Postleitzahl nicht weiterkommt. Herausgegeben wird
+ * ein Link, der genau eines erlaubt: einen neuen Passkey anzulegen. Eine
+ * Stunde gültig, einmalig, und im Protokoll steht, wer ihn ausgestellt hat.
+ *
+ * Genau hier fallen Unternehmen, nicht an der Verschlüsselung: Jemand ruft
+ * an, klingt überzeugend, bekommt einen Link. Deshalb verlangt die Oberfläche
+ * eine Notiz, wie die Identität geprüft wurde — nicht als Formalie, sondern
+ * damit die Frage überhaupt gestellt wird.
+ */
+router.post('/:id/wiederherstellung', param('id').isInt(), async (req, res) => {
+  const db = getDb()
+  const user = db.prepare('SELECT id, name, email, is_active FROM users WHERE id = ?').get(req.params.id)
+  if (!user) return res.status(404).json({ error: 'Konto nicht gefunden' })
+  if (!user.is_active) return res.status(400).json({ error: 'Dieses Konto ist deaktiviert.' })
+
+  const notiz = String(req.body?.note || '').trim().slice(0, 300)
+  if (notiz.length < 4) {
+    return res.status(400).json({ error: 'Bitte kurz festhalten, wie Sie die Identität geprüft haben.' })
+  }
+
+  const token = kennungAusstellen(db, user.id, { issuedBy: req.user.id, note: notiz })
+  const basis = process.env.APP_URL || 'https://artisansole.com'
+  const link = `${basis}/konto-wiederherstellen?token=${token}`
+  const qr = await QRCode.toDataURL(link, { margin: 1, width: 480, color: { dark: '#111111', light: '#FFFFFF' } })
+    .catch(() => null)
+
+  res.json({ link, qr, name: user.name, email: user.email, gueltig_minuten: 60 })
+})
+
 router.get('/', (req, res) => {
   const users = getDb().prepare(`
     SELECT id, name, email, role, is_active, is_promotion,

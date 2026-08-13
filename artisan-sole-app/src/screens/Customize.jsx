@@ -17,6 +17,42 @@ const WEITEN_NAME = { D: 'Normal', EE: 'Breit', EEE: 'Sehr breit' }
 
 // Dieselbe Frage wie im Größenfenster, in denselben Worten. Sie wird an zwei
 // Stellen gestellt — sie darf nicht an beiden anders klingen.
+//
+// Gefragt wird nach der WEITE des Schuhs, gemessen wird der BALLENUMFANG des
+// Fußes. Das ist kein Wortklauben: „Wie breit ist Ihr Fuß?" mit einer
+// Millimeterzahl darunter ist eine Fangfrage — wer die Breite seines Fußes
+// mit dem Lineal abmisst, bekommt rund ein Drittel des Wertes heraus, der
+// dort steht, und wählt die falsche Weite.
+
+/**
+ * Woran man die eigene Weite merkt, ohne zu messen.
+ *
+ * „Normal oder breit?" beantwortet niemand zuverlässig aus dem Bauch — man
+ * hat keinen Vergleich. Doch fast jeder hat Sneaker im Schrank, deren Passform
+ * bekannt und dokumentiert ist, und zwar an den beiden Enden der Skala:
+ *
+ *   adidas Samba und Gazelle fallen ausgesprochen SCHMAL aus. Wer normale
+ *   oder breite Füße hat, greift dort regelmäßig zur nächsten halben Größe,
+ *   bei sehr breiten Füßen zur ganzen — nicht wegen der Länge, sondern um
+ *   Platz am Ballen zu bekommen.
+ *
+ *   Der Nike Air Force 1 liegt am anderen Ende: großzügig geschnitten und
+ *   deutlich geräumiger als beide.
+ *
+ * Damit lässt sich die Frage umdrehen. Statt den eigenen Fuß zu beurteilen,
+ * beurteilt man Schuhe, die man kennt — und das kann jeder.
+ *
+ * Quellen: moresneakers.com (Samba fällt schmal aus, bei breiten Füßen halbe
+ * Größe hoch, ab 2E ganze), kicksundercost.com (Gazelle schmal, halbe Größe
+ * über Samba), freakyshoes.com (AF1 größer und geräumiger als Gazelle).
+ * Stand August 2026.
+ */
+const SNEAKER_TEST = [
+  { key: 'D',   frage: 'Samba oder Gazelle passen mir gut',          folge: 'Beide sind schmal geschnitten — wem sie passen, der hat keinen breiten Fuß.' },
+  { key: 'EE',  frage: 'Samba drückt seitlich, Air Force 1 sitzt gut', folge: 'Genau der Unterschied zwischen schmal und großzügig. Sie brauchen Platz am Ballen.' },
+  { key: 'EEE', frage: 'Auch der Air Force 1 ist mir zu eng',          folge: 'Der gilt als einer der geräumigsten überhaupt. Dann ist es die weiteste Ausführung.' },
+]
+
 const WEITEN_WAHL = [
   { key: 'D',   titel: 'Normal',     kurz: 'Die meisten Füße', hinweis: 'Sie kaufen Schuhe von der Stange und es passt meistens.' },
   { key: 'EE',  titel: 'Breit',      kurz: 'Drückt am Ballen', hinweis: 'Neue Schuhe drücken seitlich am Fußballen, obwohl die Länge stimmt. Oft kaufen Sie deshalb eine Nummer größer.' },
@@ -2045,8 +2081,11 @@ export default function Customize() {
                       nicht in einer Manufaktur gearbeitet hat. */}
                   {!hatUmfang && (
                     <div className="border border-black/10 p-3.5">
-                      <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-2">
-                        Wie breit ist Ihr Fuß?
+                      <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-0.5">
+                        Welche Weite brauchen Sie?
+                      </p>
+                      <p className="text-[10px] text-black/35 font-light mb-2">
+                        Die Zahl ist der Ballenumfang, nicht die Breite.
                       </p>
                       <div className="grid grid-cols-3 gap-1.5">
                         {WEITEN_WAHL.filter(w => !weitenHier.length || weitenHier.some(x => x.width === w.key)).map(w => {
@@ -2066,6 +2105,7 @@ export default function Customize() {
                               {mm != null && (
                                 <span className={`block text-[11px] tabular-nums mt-0.5 ${an ? 'text-white' : 'text-black/70'}`}>
                                   {Math.round(mm)} mm
+                                  <span className={`text-[9px] ml-1 ${an ? 'text-white/55' : 'text-black/35'}`}>Umf.</span>
                                 </span>
                               )}
                               <span className={`block text-[9px] mt-0.5 leading-tight ${an ? 'text-white/60' : 'text-black/40'}`}>
@@ -2080,20 +2120,52 @@ export default function Customize() {
                           Knöpfen eine Zahl ohne Bezug. */}
                       {weitenHier.length > 0 && (
                         <p className="text-[10px] text-black/50 font-light leading-relaxed mt-2.5">
-                          Die Zahl ist der Ballenumfang, den wir für diese Weite bauen — einmal
-                          um den Fuß herum an der breitesten Stelle, dort wo der große Zeh
-                          ansetzt. Sie brauchen kein Maßband: Legen Sie einen Schnürsenkel um
-                          den Ballen, markieren Sie die Stelle, wo er sich trifft, und halten
-                          Sie ihn an ein Lineal.
+                          Der Ballenumfang ist einmal um den Fuß herum gemessen, an der
+                          breitesten Stelle, dort wo der große Zeh ansetzt — nicht die Breite
+                          quer über den Fuß. Sie brauchen kein Maßband: Legen Sie einen
+                          Schnürsenkel um den Ballen, markieren Sie die Stelle, wo er sich
+                          trifft, und halten Sie ihn an ein Lineal.
                         </p>
                       )}
                       <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2">
                         {WEITEN_WAHL.find(w => w.key === gewaehlteWeite)?.hinweis}
                       </p>
+
+                      {/* Der Umweg über bekannte Sneaker. Den eigenen Fuß
+                          einzuschätzen gelingt niemandem — Schuhe zu
+                          beurteilen, die man getragen hat, dagegen jedem. */}
+                      <div className="mt-3 pt-3 border-t border-black/[0.06]">
+                        <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-2">
+                          Nicht sicher? Woran Sie es merken
+                        </p>
+                        <div className="space-y-1">
+                          {SNEAKER_TEST.filter(t => WEITEN_WAHL.some(w => w.key === t.key)
+                              && (!weitenHier.length || weitenHier.some(x => x.width === t.key))).map(t => {
+                            const an = gewaehlteWeite === t.key
+                            return (
+                              <button
+                                key={t.key} type="button"
+                                onClick={() => setGewaehlteWeite(t.key)}
+                                className={`w-full text-left px-3 py-2 border transition-colors ${
+                                  an ? 'border-black bg-black/[0.03]' : 'border-black/[0.08] hover:border-black/25 bg-transparent'
+                                }`}
+                              >
+                                <span className={`block text-[11px] ${an ? 'text-black' : 'text-black/70'}`}>„{t.frage}"</span>
+                                <span className="block text-[10px] text-black/40 font-light leading-relaxed mt-0.5">{t.folge}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                        <p className="text-[9px] text-black/30 font-light leading-relaxed mt-2">
+                          Anhaltspunkte, keine Messung — Sneaker sitzen ohnehin lockerer als
+                          rahmengenähte Schuhe. Der gemessene Ballenumfang bleibt genauer.
+                        </p>
+                      </div>
                       <p className="text-[10px] text-black/35 font-light leading-relaxed mt-2 pt-2 border-t border-black/[0.06]">
                         Die Länge haben Sie gemessen, die Weite geschätzt. Wir merken uns das
                         und fragen vor der Fertigung nach, wenn etwas unstimmig wirkt — der
-                        Schuh entsteht ohnehin erst in den Wochen danach.
+                        Schuh entsteht ohnehin erst in den Wochen danach. Genauer wird es mit
+                        dem gemessenen Ballenumfang.
                         {' '}
                         <button
                           type="button" onClick={() => openMeasEdit('passform')}
