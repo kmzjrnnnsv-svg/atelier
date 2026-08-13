@@ -21,10 +21,13 @@
  * Schuh. Nur wenn zu einem Modell mehrere Formen zur Auswahl stehen, sind sie
  * als Knöpfe zu sehen — mit ihren Namen, nicht mit ihren Schlüsseln.
  *
- * Der Vergleich mit anderen Häusern bleibt bewusst bei Größensystem und
- * Machart. Feste Zuschläge je Marke stimmen bestenfalls für ein einziges
- * Modell; eine Zahl, die man nicht belegen kann, ist bei einem Schuh, der
- * eigens gefertigt wird, keine Hilfe, sondern ein Rückgabegrund.
+ * Der zweite Reiter beantwortet die andere Frage: „Und was bin ich bei
+ * Crockett & Jones?" Er nimmt die Fußlänge — aus der gewählten Größe oder von
+ * Hand eingetippt — und rechnet sie in UK, US, EU und Mondopoint um, nach den
+ * veröffentlichten Regeln der jeweiligen Systeme (siehe lib/groessenSysteme.js).
+ * Abgeschriebene Marken-Tabellen stehen hier bewusst nicht: Sie stammen fast
+ * nie vom Hersteller, widersprechen einander, und eine falsche halbe Größe ist
+ * bei einem eigens gefertigten Schuh ein Rückgabegrund.
  *
  * Als Portal an <body>: Ein Vorfahr des Konfigurators trägt eine
  * CSS-Transformation, und darunter bezieht sich `position: fixed` nicht mehr
@@ -34,35 +37,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Ruler, ArrowLeftRight, Info, Check } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
+import { umrechnen, spanneText, HAEUSER } from '../lib/groessenSysteme'
 
-/**
- * Fußlänge → gängige Größenbezeichnungen.
- *
- * Die Fußlänge in Millimetern ist der einzige feste Bezugspunkt; EU, UK und US
- * sind Rechengrößen, die je nach Haus um eine halbe bis ganze Größe abweichen.
- * Genau deshalb steht sie hier in der ersten Spalte und nicht am Rand.
- */
-const UMRECHNUNG = [
-  { mm: 240, eu: '38½', uk: '5½',  us: '6',   jp: '24,0' },
-  { mm: 245, eu: '39',  uk: '6',   us: '6½',  jp: '24,5' },
-  { mm: 250, eu: '40',  uk: '6½',  us: '7',   jp: '25,0' },
-  { mm: 255, eu: '40½', uk: '7',   us: '7½',  jp: '25,5' },
-  { mm: 260, eu: '41',  uk: '7½',  us: '8',   jp: '26,0' },
-  { mm: 265, eu: '42',  uk: '8',   us: '8½',  jp: '26,5' },
-  { mm: 270, eu: '42½', uk: '8½',  us: '9',   jp: '27,0' },
-  { mm: 275, eu: '43',  uk: '9',   us: '9½',  jp: '27,5' },
-  { mm: 280, eu: '44',  uk: '9½',  us: '10',  jp: '28,0' },
-  { mm: 285, eu: '44½', uk: '10',  us: '10½', jp: '28,5' },
-  { mm: 290, eu: '45',  uk: '10½', us: '11',  jp: '29,0' },
-  { mm: 295, eu: '46',  uk: '11',  us: '11½', jp: '29,5' },
-  { mm: 300, eu: '46½', uk: '11½', us: '12',  jp: '30,0' },
-]
-
-/** Die Zeile, deren Fußlänge der gesuchten am nächsten liegt. */
-function umrechnungFuer(mm) {
-  if (!Number.isFinite(mm)) return null
-  return UMRECHNUNG.reduce((a, b) => (Math.abs(b.mm - mm) < Math.abs(a.mm - mm) ? b : a))
-}
+// Die Umrechnung liegt in lib/groessenSysteme.js: gerechnet nach den
+// veröffentlichten Regeln (Gerstenkorn, Brannock, Pariser Stich, Mondopoint)
+// statt aus fremden Tabellen abgeschrieben. Warum, steht dort ausführlich.
 
 /**
  * Die Weiten in Alltagssprache.
@@ -89,36 +68,6 @@ const WEITEN = [
     titel: 'Sehr breit',
     kurz: 'Auch weite drücken',
     hinweis: 'Auch als weit ausgewiesene Schuhe sind Ihnen zu eng, oder Sie tragen üblicherweise Spezialweiten.',
-  },
-]
-
-/**
- * Woran es liegt, dass dieselbe Zahl anderswo anders ausfällt.
- *
- * Bewusst über die Größensysteme und die Machart, nicht über einzelne Häuser
- * mit angeblich festen Zuschlägen: Solche Zahlen stimmen bestenfalls für ein
- * Modell und führen sonst in die Irre. Was hier steht, ist überprüfbar.
- */
-const MARKEN = [
-  {
-    gruppe: 'Englische Rahmengenähte',
-    system: 'UK',
-    hinweis: 'Rechnen in UK-Größen. Zwischen UK und EU liegen je nach Umrechnung ein bis zwei halbe Größen — die häufigste Quelle für einen zu großen Schuh. Ihre UK-Zahl finden Sie unten in der Tabelle wieder.',
-  },
-  {
-    gruppe: 'Italienische Manufakturen',
-    system: 'EU',
-    hinweis: 'Rechnen in EU-Größen, fallen aber oft schmal und knapp aus. Wenn Sie dort eine halbe Nummer größer kaufen, wählen Sie hier trotzdem Ihre gemessene Größe — und lieber die Weite breit.',
-  },
-  {
-    gruppe: 'Amerikanische Klassiker',
-    system: 'US',
-    hinweis: 'US-Größen mit eigener Weitenskala (B bis EEE). Die Weite steht dort gleichberechtigt neben der Länge — wie bei uns. Ihr Weitenbuchstabe lässt sich also direkt übernehmen.',
-  },
-  {
-    gruppe: 'Sneaker',
-    system: 'US / UK gemischt',
-    hinweis: 'Fallen meist eine halbe bis ganze Größe größer aus als Rahmengenähte, weil sie mehr Zugabe brauchen. Eine Sneakergröße lässt sich nicht auf einen Anzugschuh übertragen — nehmen Sie hier eher die kleinere Zahl.',
   },
 ]
 
@@ -152,6 +101,10 @@ export default function GroessenTabelle({
   const [weite, setWeite]   = useState('D')
   const [groesse, setGroesse] = useState(null)
   const [uebernommen, setUebernommen] = useState(false)
+  // Fußlänge im Vergleichsteil. Leer heißt „die der gewählten Größe" — so
+  // muss niemand abtippen, was nebenan schon steht, kann aber jederzeit eine
+  // eigene Zahl eingeben, ohne vorher eine Größe zu wählen.
+  const [laenge, setLaenge] = useState('')
 
   useEffect(() => {
     if (!offen || chart) return
@@ -211,7 +164,14 @@ export default function GroessenTabelle({
   // vorherigen Auswahl übernommen: Wer die Weite wechselt, sieht dadurch die
   // Werte dieser Weite — und nie die einer Zeile, die es nicht mehr gibt.
   const treffer = groessen.find(r => r.size_label === groesse) || null
-  const um = treffer ? umrechnungFuer(treffer.foot_length_mm) : null
+  const um = treffer ? umrechnen(treffer.foot_length_mm) : null
+
+  // Der Vergleich rechnet mit der eingetippten Länge, sonst mit der der
+  // gewählten Größe.
+  const eigeneLaenge = parseFloat(String(laenge).replace(',', '.'))
+  const vergleich = Number.isFinite(eigeneLaenge) && eigeneLaenge > 0
+    ? umrechnen(eigeneLaenge)
+    : um
 
   if (!offen) return null
 
@@ -381,7 +341,15 @@ export default function GroessenTabelle({
                     </p>
                     {um && (
                       <p className="text-[11px] text-black/45 font-light mt-2">
-                        Andernorts wäre das etwa UK {um.uk} · US {um.us} · Japan {um.jp} cm.
+                        Andernorts wäre das UK {spanneText(um.uk)} · US {spanneText(um.us)} ·
+                        {' '}Japan {String(um.jp).replace('.', ',')} cm.
+                        {' '}<button
+                          type="button"
+                          onClick={() => setAktiv('vergleich')}
+                          className="underline underline-offset-2 bg-transparent border-0 p-0 text-[11px] text-black/45 hover:text-black"
+                        >
+                          Zum Vergleich
+                        </button>
                       </p>
                     )}
 
@@ -405,53 +373,103 @@ export default function GroessenTabelle({
           {aktiv === 'vergleich' && (
             <>
               <p className="text-[11px] text-black/50 font-light leading-relaxed mb-4">
-                Die Fußlänge steht vorne, weil sie als Einzige feststeht. EU, UK und US
-                sind Rechengrößen — sie sagen erst zusammen mit dem Haus etwas aus.
+                Was Ihre Fußlänge anderswo für eine Nummer ergibt. Gerechnet nach den
+                Regeln, nach denen die Häuser ihre Größen vergeben — nicht aus fremden
+                Tabellen abgeschrieben.
               </p>
-              <table className="w-full text-[12px]">
-                <thead>
-                  <tr className="text-[9px] uppercase tracking-[0.14em] text-black/35 border-b border-black/[0.07]">
-                    <th className="text-left font-normal py-2">Fußlänge</th>
-                    <th className="text-right font-normal py-2">EU</th>
-                    <th className="text-right font-normal py-2">UK</th>
-                    <th className="text-right font-normal py-2">US</th>
-                    <th className="text-right font-normal py-2">JP / cm</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {UMRECHNUNG.map(r => {
-                    const an = um && um.mm === r.mm
-                    return (
-                      <tr key={r.mm} className={`border-b border-black/[0.04] last:border-0 ${an ? 'bg-black/[0.04]' : ''}`}>
-                        <td className="py-2 tabular-nums text-black/80">{r.mm} mm</td>
-                        <td className="py-2 text-right tabular-nums text-black/60">{r.eu}</td>
-                        <td className="py-2 text-right tabular-nums text-black/60">{r.uk}</td>
-                        <td className="py-2 text-right tabular-nums text-black/60">{r.us}</td>
-                        <td className="py-2 text-right tabular-nums text-black/60">{r.jp}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
 
-              <p className="text-[11px] text-black/50 font-light leading-relaxed mt-7 mb-4">
-                Warum dieselbe Zahl anderswo anders ausfällt. Es liegt am Größensystem
-                und an der Machart — nicht daran, dass jemand falsch misst.
-              </p>
-              <div className="space-y-4">
-                {MARKEN.map(m => (
-                  <div key={m.gruppe} className="border-b border-black/[0.05] pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <p className="text-[13px] text-black">{m.gruppe}</p>
-                      <span className="text-[10px] uppercase tracking-[0.14em] text-black/35 shrink-0">{m.system}</span>
-                    </div>
-                    <p className="text-[11px] text-black/50 font-light leading-relaxed mt-1">{m.hinweis}</p>
+              {/* Die Fußlänge ist der Bezugspunkt. Ohne gewählte Größe lässt sie
+                  sich hier direkt eingeben: Wer nur wissen will, was seine
+                  25,9 cm anderswo bedeuten, soll nicht erst eine Größe wählen
+                  müssen, die er noch nicht kennt. */}
+              <label className="block mb-5">
+                <span className="block text-[9px] text-black/35 uppercase tracking-[0.14em] mb-1.5">
+                  Ihre Fußlänge
+                </span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" inputMode="decimal" step="1" min="180" max="360"
+                    value={laenge}
+                    onChange={e => setLaenge(e.target.value)}
+                    placeholder={treffer ? String(Math.round(treffer.foot_length_mm)) : 'z. B. 265'}
+                    className="w-28 h-9 px-2.5 border border-black/15 text-[14px] tabular-nums bg-white outline-none focus:border-black/40"
+                  />
+                  <span className="text-[12px] text-black/40">mm</span>
+                  {treffer && (
+                    <button
+                      type="button"
+                      onClick={() => setLaenge('')}
+                      className="text-[10px] text-black/35 hover:text-black underline underline-offset-2 bg-transparent border-0 p-0 ml-1"
+                    >
+                      aus Ihrer Größe übernehmen
+                    </button>
+                  )}
+                </div>
+              </label>
+
+              {vergleich ? (
+                <>
+                  <table className="w-full text-[12px] mb-2">
+                    <tbody>
+                      {[
+                        ['Japan / Mondopoint', `${String(vergleich.jp).replace('.', ',')} cm`, 'Die Größe ist die Fußlänge. Nichts umzurechnen.'],
+                        ['UK', spanneText(vergleich.uk), 'Gerstenkorn: eine Größe ist ein Drittel Zoll.'],
+                        ['US Herren', spanneText(vergleich.us), 'Brannock: dieselbe Schrittweite, genau eine Nummer über UK.'],
+                        ['EU', spanneText(vergleich.eu, n => String(n)), 'Pariser Stich, gemessen am Leisten — deshalb die Spanne.'],
+                      ].map(([sys, wert, erklaerung]) => (
+                        <tr key={sys} className="border-b border-black/[0.05] last:border-0">
+                          <td className="py-2.5 pr-3 align-top">
+                            <span className="text-[12px] text-black/75">{sys}</span>
+                            <span className="block text-[10px] text-black/35 font-light leading-relaxed mt-0.5">{erklaerung}</span>
+                          </td>
+                          <td className="py-2.5 text-right align-top tabular-nums text-[15px] text-black whitespace-nowrap">{wert}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <p className="text-[10px] text-black/40 font-light leading-relaxed mb-7">
+                    UK und US stehen als halbe Spanne da, und das mit Absicht. Die reine
+                    Rechnung ergibt die untere Zahl; die englischen Häuser führen dieselbe
+                    Fußlänge in ihren eigenen Tabellen durchgehend eine halbe Größe höher,
+                    weil dort schon etwas Luft eingerechnet ist. Eine der beiden Zahlen
+                    auszuwählen hieße, die andere zu unterschlagen.
+                  </p>
+
+                  {/* Wer wie nummeriert. Der Weitenteil ist der nützlichste:
+                      Dieselben Buchstaben bedeuten je nach Haus anderes. */}
+                  <p className="text-[11px] text-black/50 font-light leading-relaxed mb-4">
+                    Und so hieße Ihre Größe bei den Häusern, mit denen wir am häufigsten
+                    verglichen werden:
+                  </p>
+                  <div className="space-y-4">
+                    {HAEUSER.map(h => (
+                      <div key={h.gruppe} className="border-b border-black/[0.05] pb-4 last:border-0 last:pb-0">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <p className="text-[13px] text-black">{h.gruppe}</p>
+                          <span className="text-[13px] tabular-nums text-black shrink-0">
+                            {h.system === 'uk' ? `UK ${spanneText(vergleich.uk)}` : `US ${spanneText(vergleich.us)}`}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-black/40 font-light mt-0.5">{h.beispiele}</p>
+                        <p className="text-[11px] text-black/50 font-light leading-relaxed mt-1.5">{h.hinweis}</p>
+                        <p className="text-[10px] text-black/35 font-light leading-relaxed mt-1">Weiten dort: {h.weiten}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-black/35 font-light leading-relaxed mt-5">
-                Angaben zur Orientierung. Auch innerhalb eines Hauses fällt nicht jeder
-                Leisten gleich aus — deshalb messen wir lieber, als umzurechnen.
+                </>
+              ) : (
+                <p className="text-[11px] text-black/35 font-light">
+                  Fußlänge eintragen oder links eine Größe wählen — dann steht hier, was
+                  daraus anderswo wird.
+                </p>
+              )}
+
+              <p className="text-[10px] text-black/35 font-light leading-relaxed mt-6">
+                Zur Orientierung. Auch innerhalb eines Hauses fällt nicht jeder Leisten
+                gleich aus, und keine Umrechnung kennt Ihren Ballenumfang — deshalb messen
+                wir lieber, als zu rechnen. Für Ihr Paar zählt allein unsere eigene
+                Leistentabelle.
               </p>
             </>
           )}
