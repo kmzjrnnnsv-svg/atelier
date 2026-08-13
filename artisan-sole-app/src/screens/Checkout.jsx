@@ -430,24 +430,58 @@ export default function Checkout() {
         // Zubehör landete zusätzlich in accList. Doppelt gezählt und einzeln
         // verschickt.
         const schuhe = cart.filter(c => !c.isAccessory)
+
+        // ── Zubehör AUS DEM WARENKORB ───────────────────────────────────
+        //
+        // Es gab zwei Töpfe, und nur einer kam an: das hier in der Kasse
+        // gewählte Zubehör (accList) und das, was schon im Warenkorb lag.
+        // Letzteres wurde angezeigt, in die Zwischensumme gerechnet — und
+        // dann von cart.filter(!isAccessory) stillschweigend weggeworfen.
+        // Der Kunde sah ein Pflegeset in seiner Bestellung, bezahlte es
+        // nicht, und in der Packliste stand es nie.
+        //
+        // Mehrfache Anzahl wird ausgeschrieben: „2× Pflegeset" als eine
+        // Zeile ließe sich in der Fertigung überlesen.
+        const korbZubehoer = cart
+          .filter(c => c.isAccessory)
+          .flatMap(c => Array.from(
+            { length: Math.max(1, c.qty || 1) },
+            () => ({ name: c.name, price: c.price }),
+          ))
+
         for (let i = 0; i < schuhe.length; i++) {
           const item = schuhe[i]
           const itemTotal = parsePrice(item.price) * item.qty
+
+          // Der Preis der ERSTEN Bestellung trägt alles, was nicht an einem
+          // einzelnen Paar hängt: Zubehör, Versand, Gutschein, Rabatte. Statt
+          // das nachzurechnen — und dabei eine der Stellen zu vergessen —
+          // wird vom angezeigten Gesamtbetrag abgezogen, was die anderen
+          // Paare kosten. Damit stimmt die Summe der Bestellungen zwangsläufig
+          // mit dem überein, was der Kunde vor dem Absenden gesehen hat.
+          const andereSchuhe = schuhe
+            .filter((_, j) => j !== 0)
+            .reduce((s, x) => s + parsePrice(x.price) * x.qty, 0)
+          const preis = i === 0 ? Math.max(0, total - andereSchuhe) : itemTotal
+
           lastRow = await placeOrder({
             shoe_id: item.shoeId || null, shoe_name: item.name,
             material: item.material || '', color: item.color || '',
-            price: `€ ${fmtPrice(itemTotal)}`, eu_size: item.euSize || latestScan?.eu_size || null,
+            price: `€ ${fmtPrice(preis)}`, eu_size: item.euSize || latestScan?.eu_size || null,
             scan_id: latestScan?.id || null, delivery_address: delivery,
             // Zubehör und Zugabe hängen am ersten Paar. An jede Bestellung
             // gehängt wäre dasselbe Pflegeset dreimal in der Packliste.
-            billing_address: billingAddr, accessories: i === 0 ? [...accList, ...zugabeZeile] : [],
+            billing_address: billingAddr,
+            accessories: i === 0 ? [...korbZubehoer, ...accList, ...zugabeZeile] : [],
             foot_notes: footNotes || null, coupon_code: i === 0 ? appliedCoupon : null,
             affiliate_code: affiliate?.code || null,
             last_key: item.last || null, last_label: item.lastLabel || null,
             last_width: item.width || null, fit_measurements: item.footMeasurementsUsed || null,
             sole: item.sole || null, extras: item.extras || null,
             config_id: item.configId || null,
-            ...shippingData,
+            // Versand fällt einmal an, nicht je Paar. Er hing bisher an jeder
+            // Bestellung und wurde bei drei Paaren dreifach ausgewiesen.
+            ...(i === 0 ? shippingData : {}),
           })
         }
         clearCart()
