@@ -236,9 +236,19 @@ export default function EmailSettings() {
  ? <CheckCircle2 size={14} className="text-green-700 flex-shrink-0 mt-0.5" strokeWidth={1.6} />
  : <XCircle size={14} className="text-amber-600 flex-shrink-0 mt-0.5" strokeWidth={1.6} />}
  <div className="min-w-0">
- <p className="text-[12px] font-light text-black/70">
+ <p className="text-[12px] font-light text-black/70 leading-relaxed">
  {check.ok ? `Verbindung zu ${check.host}:${check.port} steht.` : `Kein Versand möglich: ${check.reason}`}
  </p>
+ {/* Wohin überhaupt verbunden wurde. Bei einer Zeitüberschreitung ist der
+     häufigste Fall, dass dort noch ein Vorgabewert steht — was niemand
+     bemerkt, solange die Meldung ihn nicht nennt. */}
+ {!check.ok && check.host && (
+ <p className="text-[11px] text-amber-800/80 font-light mt-1.5 leading-relaxed">
+ Versucht wurde <strong className="font-normal">{check.host}:{check.port}</strong>
+ {check.user ? <> als <strong className="font-normal">{check.user}</strong></> : null}
+ {check.code ? <> · Fehlercode {check.code}</> : null}
+ </p>
+ )}
  {check.ok && !check.appUrlUsable && (
  <p className="text-[11px] text-amber-800 font-light mt-1.5 leading-relaxed">
  Die Adresse der Anwendung steht auf <strong className="font-normal">{check.appUrl}</strong>.

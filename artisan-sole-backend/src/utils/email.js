@@ -97,6 +97,52 @@ async function send(options) {
  * noch localhost, geht die Mail zwar hinaus, aber der Einladungslink darin
  * führt beim Empfänger ins Leere.
  */
+/**
+ * Was ein SMTP-Fehler bedeutet — und was er ausschließt.
+ *
+ * „Connection timeout" ist die unfreundlichste aller Meldungen: Sie sagt, dass
+ * etwas nicht ging, aber nicht, wonach man suchen soll. Wer sie liest, prüft
+ * zuerst das Passwort — und genau das ist die einzige Sache, die es sicher
+ * NICHT sein kann. Eine Zeitüberschreitung entsteht, bevor irgendeine
+ * Anmeldung stattfindet: Die Verbindung zum Server kam gar nicht erst
+ * zustande.
+ *
+ * Deshalb steht hier zu jedem Fehlerbild, was es ausschließt und wo man
+ * nachsieht. Der Text landet unverändert in der Verwaltung.
+ */
+function smtpDeutung(e, cfg) {
+  const code = e?.code || ''
+  const text = String(e?.message || '')
+  const ziel = `${cfg.host}:${cfg.port}`
+
+  if (code === 'ETIMEDOUT' || code === 'ECONNECTION' || /timeout/i.test(text)) {
+    return `Keine Verbindung zu ${ziel} — die Gegenstelle antwortet nicht. `
+      + 'An Benutzername oder Passwort liegt es nicht: Bis zur Anmeldung kommt es gar nicht. '
+      + 'Entweder ist der Servername falsch, der Port falsch, oder der Port ist gesperrt. '
+      + 'Hetzner sperrt ausgehende Mail-Ports bei neuen Servern standardmäßig; '
+      + 'das lässt sich per Support-Anfrage freischalten. Prüfen lässt es sich auf dem '
+      + `Server mit: nc -zv -w5 ${cfg.host} ${cfg.port}`
+  }
+  if (code === 'ECONNREFUSED') {
+    return `${ziel} weist die Verbindung aktiv ab — dort nimmt nichts Verbindungen an. `
+      + 'Meist ein falscher Port: 587 für STARTTLS, 465 für direktes TLS.'
+  }
+  if (code === 'EDNS' || code === 'ENOTFOUND' || /getaddrinfo/i.test(text)) {
+    return `Der Servername „${cfg.host}" lässt sich nicht auflösen. Vertippt, oder der Eintrag fehlt im DNS.`
+  }
+  if (code === 'EAUTH') {
+    return 'Der Server ist erreichbar, weist aber die Anmeldung zurück. '
+      + `Benutzername oder Passwort stimmen nicht — bei „${cfg.user}" ist meist die volle `
+      + 'E-Mail-Adresse als Benutzername gefragt, nicht nur der Teil davor.'
+  }
+  if (code === 'ESOCKET' || /wrong version number|ssl/i.test(text)) {
+    return `Verschlüsselung passt nicht zum Port ${cfg.port}. `
+      + 'Port 465 spricht von Anfang an TLS, Port 587 beginnt unverschlüsselt und schaltet um. '
+      + 'Die beiden lassen sich nicht tauschen.'
+  }
+  return text || 'Unbekannter Fehler beim Verbindungsaufbau.'
+}
+
 export async function verifyEmailSetup() {
   const cfg = getEmailConfig()
   const transporter = createTransporter(cfg)
@@ -104,7 +150,10 @@ export async function verifyEmailSetup() {
   try {
     await transporter.verify()
   } catch (e) {
-    return { ok: false, reason: e.message }
+    // Host und Port gehören zur Fehlermeldung: Ohne sie sieht niemand, wohin
+    // überhaupt verbunden wurde — und der häufigste Fall ist, dass dort noch
+    // der Vorgabewert smtp.gmail.com steht.
+    return { ok: false, reason: smtpDeutung(e, cfg), code: e?.code || null, host: cfg.host, port: cfg.port, user: cfg.user }
   }
   const appUrlUsable = /^https?:\/\//.test(cfg.appUrl) && !/localhost|127\.0\.0\.1/.test(cfg.appUrl)
   return { ok: true, host: cfg.host, port: cfg.port, user: cfg.user, appUrl: cfg.appUrl, appUrlUsable }
@@ -113,12 +162,21 @@ export async function verifyEmailSetup() {
 /** Testnachricht an eine Adresse, damit sich der Weg vollständig prüfen lässt. */
 export async function sendTestEmail(to) {
   const cfg = getEmailConfig()
-  await send({
-    to,
-    subject: 'Artisan Sole · Testnachricht',
-    html: `<p>Diese Nachricht bestätigt, dass der E-Mail-Versand funktioniert.</p>
-           <p style="color:#888;font-size:12px">Server: ${cfg.host}:${cfg.port} · Adresse der Anwendung: ${cfg.appUrl}</p>`,
-  })
+  try {
+    await send({
+      to,
+      subject: 'Artisan Sole · Testnachricht',
+      html: `<p>Diese Nachricht bestätigt, dass der E-Mail-Versand funktioniert.</p>
+             <p style="color:#888;font-size:12px">Server: ${cfg.host}:${cfg.port} · Adresse der Anwendung: ${cfg.appUrl}</p>`,
+    })
+  } catch (e) {
+    // Dieselbe Deutung wie bei der Prüfung. Ohne sie stand hier die nackte
+    // Meldung der Bibliothek, und die schickt jeden zuerst zum Passwort.
+    if (e instanceof EmailNotConfiguredError) throw e
+    const fehler = new Error(smtpDeutung(e, cfg))
+    fehler.code = e?.code || null
+    throw fehler
+  }
 }
 
 // ─── Template engine ──────────────────────────────────────────────────────────
