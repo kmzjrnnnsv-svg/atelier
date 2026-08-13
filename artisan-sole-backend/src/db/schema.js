@@ -1472,6 +1472,13 @@ export function runMigrations(db) {
     // gift_cost allein sagt nur, DASS etwas abging — im Portal soll dastehen,
     // wofür. Alte Zeilen tragen 'gift', denn mehr gab es damals nicht.
     `ALTER TABLE affiliate_commissions ADD COLUMN benefit_kind TEXT NOT NULL DEFAULT 'none'`,
+    // Anmeldedaten einer noch nicht angelegten Registrierung.
+    //
+    // Bei der Registrierung mit Passkey gibt es das Konto noch nicht, wenn die
+    // Aufgabe gestellt wird — Name und Adresse müssen die Zeremonie überdauern
+    // und dürfen nicht vom Browser zurückkommen, sonst könnte er sie zwischen
+    // Stellen und Einlösen austauschen.
+    `ALTER TABLE webauthn_challenges ADD COLUMN data TEXT`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }

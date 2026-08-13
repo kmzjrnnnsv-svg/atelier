@@ -45,6 +45,18 @@ function getEmailConfig() {
   }
 }
 
+/**
+ * Die Bankverbindung, wie sie in der Verwaltung hinterlegt ist.
+ *
+ * Sie lag bislang nur hier, weil nur die Zahlungs-Mail sie brauchte. Jetzt
+ * braucht sie auch die Bestellseite — dieselbe Quelle, damit nicht zwei
+ * Stellen zwei Konten nennen.
+ */
+export function bankKonfiguration() {
+  const cfg = getEmailConfig()
+  return { iban: cfg.bankIban, bic: cfg.bankBic, holder: cfg.bankHolder, bank: cfg.bankName }
+}
+
 function createTransporter(cfg) {
   if (!cfg.user) return null
   return nodemailer.createTransport({

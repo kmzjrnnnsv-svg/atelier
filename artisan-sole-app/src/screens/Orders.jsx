@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Package, ShoppingBag, Clock, Truck, CheckCircle2, XCircle, Banknote, CreditCard, Scissors, SearchCheck } from 'lucide-react'
 import useStore from '../store/store'
+import Ueberweisung from '../components/Ueberweisung'
 import { apiFetch } from '../hooks/useApi'
 import CtaBanner from '../components/CtaBanner'
 import { orderSpec } from '../lib/orderSpec'
@@ -67,6 +68,15 @@ function JourneyMap({ order, onBack }) {
               <p className="text-[24px] lg:text-[28px] font-extralight text-black tracking-tight">{order.shoe_name}</p>
               <p className="text-[12px] text-black/35 mt-2 font-light">{order.material} · {order.color}</p>
             </div>
+
+            {/* Solange nicht bezahlt ist, ist dies die wichtigste Information
+                auf der Seite — vor der Reise des Schuhs, denn ohne Zahlung
+                beginnt sie nicht. Vorher stand sie nur in einer Mail. */}
+            {order.status === 'pending_payment' && (
+              <div className="mb-10">
+                <Ueberweisung orderId={order.id} />
+              </div>
+            )}
 
             {/* Path */}
             {/* ml-5 hob die Zentrierung auf: Ein fester linker Rand schlägt

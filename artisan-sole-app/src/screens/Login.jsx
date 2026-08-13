@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft, KeyRound } from 'lucide-react'
+import { Eye, EyeOff, ArrowRight, AlertCircle, ArrowLeft, ScanFace } from 'lucide-react'
 import { startAuthentication } from '@simplewebauthn/browser'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -27,8 +27,10 @@ export default function Login() {
   const redirectTo = location.state?.from || null
   const [pkBusy, setPkBusy] = useState(false)
   const [pkError, setPkError] = useState(null)
-  // Passkeys gibt es nur für Verwaltungszugänge, und nur wo der Browser sie
-  // kann. In der iOS-App fehlt die Domainbindung — dort bleibt das Passwort.
+  // Die Anmeldung ohne Passwort steht allen offen — sie ist der Regelweg,
+  // seit neue Konten gar kein Passwort mehr haben. Nur wo der Browser kein
+  // WebAuthn kann, bleibt das Formular darunter der einzige Weg; in der
+  // iOS-App fehlt zudem die Domainbindung.
   const passkeyPossible = typeof window !== 'undefined' && !!window.PublicKeyCredential
 
   const signInWithPasskey = async () => {
@@ -41,7 +43,10 @@ export default function Login() {
         body: JSON.stringify({ challengeId, response }),
       })
       loginWithTokenData(data)
-      navigate(data.user.role === 'admin' || data.user.role === 'curator' ? '/cms' : HOME_PATH, { replace: true })
+      // Dieselbe Wegführung wie nach der Anmeldung mit Passwort. Vorher
+      // landete jeder Kunde auf der Startseite — auch wer aus dem Warenkorb
+      // kam und danach dort weitermachen wollte.
+      nachAnmeldung(data.user)
     } catch (e) {
       const name = e?.name || ''
       if (name === 'NotAllowedError' || name === 'AbortError') setPkError(null)
@@ -52,25 +57,35 @@ export default function Login() {
   // auf der Zielseite wiederhergestellt werden soll.
   const loadConfig = location.state?.loadConfig || null
 
+  /**
+   * Wohin es nach erfolgreicher Anmeldung geht.
+   *
+   * Eine Stelle für beide Wege — mit Passwort wie ohne. Vorher stand die
+   * Wegführung nur im Passwortzweig, und wer sich ohne Passwort anmeldete,
+   * landete unabhängig von Rolle und Ziel auf der Startseite.
+   */
+  const nachAnmeldung = (user) => {
+    if (user.role === 'admin' || user.role === 'curator') {
+      navigate('/cms', { replace: true })
+    } else if (user.is_business) {
+      navigate('/business/dashboard', { replace: true })
+    } else if (user.is_affiliate) {
+      // Affiliate arbeiten mit ihrem Portal, nicht mit dem Laden. Vorher
+      // landeten sie in der Kollektion und mussten die Adresse kennen.
+      navigate('/affiliate', { replace: true })
+    } else if (redirectTo) {
+      navigate(redirectTo, { replace: true, state: loadConfig ? { loadConfig } : undefined })
+    } else {
+      navigate(HOME, { replace: true })
+    }
+  }
+
   const handleSubmit = async () => {
     if (!isValid || loading) return
     setLoading(true)
     setError(null)
     try {
-      const user = await login(form.email, form.password)
-      if (user.role === 'admin' || user.role === 'curator') {
-        navigate('/cms', { replace: true })
-      } else if (user.is_business) {
-        navigate('/business/dashboard', { replace: true })
-      } else if (user.is_affiliate) {
-        // Affiliate arbeiten mit ihrem Portal, nicht mit dem Laden. Vorher
-        // landeten sie in der Kollektion und mussten die Adresse kennen.
-        navigate('/affiliate', { replace: true })
-      } else if (redirectTo) {
-        navigate(redirectTo, { replace: true, state: loadConfig ? { loadConfig } : undefined })
-      } else {
-        navigate(HOME, { replace: true })
-      }
+      nachAnmeldung(await login(form.email, form.password))
     } catch (err) {
       setError(err?.error || 'Login fehlgeschlagen')
     } finally {
@@ -127,6 +142,32 @@ export default function Login() {
             </div>
           )}
 
+          {/* Ohne Passwort zuerst. Neue Konten haben gar keines mehr, und wer
+              einen Schlüssel hinterlegt hat, ist mit einem Tipper drin — das
+              Passwortformular darunter ist für Konten von früher. */}
+          {passkeyPossible && (
+            <>
+              <button
+                type="button"
+                onClick={signInWithPasskey}
+                disabled={pkBusy}
+                style={{ height: '52px', letterSpacing: '0.14em' }}
+                className="w-full flex items-center justify-center gap-2.5 text-sm font-semibold uppercase bg-black text-white border-0 transition-all disabled:opacity-40"
+              >
+                <ScanFace size={17} strokeWidth={1.6} />
+                {pkBusy ? 'Einen Moment…' : 'Ohne Passwort anmelden'}
+              </button>
+              {pkError && (
+                <p className="text-[12px] text-red-700 font-light mt-1 text-center">{pkError}</p>
+              )}
+              <div className="flex items-center gap-3 pt-1">
+                <div className="h-px flex-1 bg-black/[0.08]" />
+                <span className="text-[9px] uppercase tracking-[0.2em] text-black/25">oder mit Passwort</span>
+                <div className="h-px flex-1 bg-black/[0.08]" />
+              </div>
+            </>
+          )}
+
           <div>
             <label className="text-[9px] uppercase tracking-[0.15em] text-black/40 font-medium mb-1.5 block" style={{ letterSpacing: '0.15em' }}>Email Address</label>
             <input
@@ -174,26 +215,6 @@ export default function Login() {
             }
           </button>
 
-          {/* Passkey-Weg. Steht unter dem Passwort, nicht darüber: Kunden
-              melden sich weiterhin mit Passwort an, und nur wer einen Passkey
-              hinterlegt hat, braucht diesen Knopf überhaupt. */}
-          {passkeyPossible && (
-            <>
-              <button
-                type="button"
-                onClick={signInWithPasskey}
-                disabled={pkBusy}
-                style={{ height: '52px', letterSpacing: '0.14em' }}
-                className="w-full flex items-center justify-center gap-2 text-[12px] uppercase tracking-widest border border-black/20 bg-transparent text-black/70 hover:border-black hover:text-black transition-colors mt-3 disabled:opacity-40"
-              >
-                <KeyRound size={15} strokeWidth={1.5} />
-                {pkBusy ? 'Einen Moment…' : 'Mit Passkey anmelden'}
-              </button>
-              {pkError && (
-                <p className="text-[12px] text-red-700 font-light mt-2 text-center">{pkError}</p>
-              )}
-            </>
-          )}
         </form>
       </div>
 
