@@ -16,6 +16,7 @@ export default function EmailSettings() {
  const [showKey, setShowKey] = useState(false)
  const [anbieter, setAnbieter] = useState([])
  const [anleitungOffen, setAnleitungOffen] = useState(false)
+ const [smtpHilfeOffen, setSmtpHilfeOffen] = useState(false)
  const [loading, setLoading] = useState(true)
  const [saving, setSaving] = useState(false)
  const [msg, setMsg] = useState(null)
@@ -325,6 +326,60 @@ export default function EmailSettings() {
  </>
  )}
 
+ {/* Auch der Mailserver braucht eine Anleitung — und zwar dieselbe Art
+     wie die Dienste. Der Unterschied ist nur, dass hier meist gar nichts
+     einzurichten ist: Das Postfach besteht bereits, es ist das, für das
+     ohnehin bezahlt wird. Wer das nicht weiß, sucht nach etwas Neuem. */}
+ {form.mail_weg === 'smtp' && (
+ <div className="bg-white border border-black/[0.08] mb-6">
+ <button
+ onClick={() => setSmtpHilfeOffen(v => !v)}
+ className="w-full flex items-center justify-between px-7 py-4 bg-transparent border-0 text-left"
+ >
+ <span className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light">
+ Woher die Angaben kommen
+ </span>
+ <ChevronDown size={14} strokeWidth={1.4} className={`text-black/25 transition-transform ${smtpHilfeOffen ? 'rotate-180' : ''}`} />
+ </button>
+ {smtpHilfeOffen && (
+ <div className="px-7 pb-7 -mt-1">
+ <p className="text-[12px] text-black/55 font-light leading-relaxed mb-4">
+ Hier wird nichts Neues eingerichtet. Die Anwendung meldet sich an dem Postfach an,
+ das ohnehin besteht — wie ein Mailprogramm es täte — und übergibt die Nachricht.
+ Zugestellt wird sie dann vom Anbieter dieses Postfachs, nicht von diesem Server.
+ </p>
+ <ol className="space-y-3.5 list-none p-0 m-0">
+ {[
+ 'Mailserver: die Adresse des Postfach-Anbieters. Bei Namecheap Private Email ist '
+ + 'das mail.privateemail.com — dieselbe Angabe, die auch in Outlook oder Apple Mail stünde.',
+ 'Port: 587. Nicht 465 — den sperrt Hetzner ausgehend, zusammen mit 25. '
+ + 'Beide Ports führen zum selben Server, die Verschlüsselung stellt sich nach der Zahl '
+ + 'von selbst um. Wenn hier bisher 465 stand, ist das der ganze Fehler.',
+ 'Absender E-Mail: die vollständige Adresse des Postfachs, nicht nur der Teil vor dem @. '
+ + 'Sie ist zugleich der Benutzername für die Anmeldung.',
+ 'Passwort: das Passwort des Postfachs. Bei Namecheap im Dashboard unter Private Email › '
+ + 'Manage bei der jeweiligen Domain — dort lässt es sich auch neu setzen, falls es '
+ + 'nicht mehr vorliegt. Ein eigenes App-Passwort braucht es nicht.',
+ 'Speichern, dann Testnachricht schicken. Kommt sie an, ist der Versand in Betrieb.',
+ ].map((schritt, i) => (
+ <li key={i} className="flex gap-3.5">
+ <span className="flex-shrink-0 w-5 h-5 border border-black/15 flex items-center justify-center text-[10px] text-black/40 tabular-nums">
+ {i + 1}
+ </span>
+ <span className="text-[12px] text-black/55 font-light leading-relaxed">{schritt}</span>
+ </li>
+ ))}
+ </ol>
+ <p className="text-[11px] text-black/30 font-light leading-relaxed mt-5 pt-4 border-t border-black/[0.06]">
+ Existiert noch gar kein Postfach, wird es beim Anbieter angelegt — bei Namecheap unter
+ Private Email › Manage › Mailboxes. Zum Verschicken genügt eines; erst wenn Kunden auf
+ eine Bestätigung antworten sollen, muss auch jemand hineinsehen.
+ </p>
+ </div>
+ )}
+ </div>
+ )}
+
  <div className="bg-white p-7 mb-6">
  {form.mail_weg === 'http' && (
  <p className="text-[11px] text-black/30 font-light mb-5 leading-relaxed">
@@ -354,6 +409,15 @@ export default function EmailSettings() {
  onChange={e => f('smtp_port', e.target.value)}
  />
  </div>
+ {/* Direkt am Feld, nicht in einer Fußnote: Diese eine Zahl ist der
+     Unterschied zwischen „geht" und „Connection timeout". */}
+ {form.mail_weg === 'smtp' && Number(form.smtp_port) === 465 && (
+ <p className="col-span-3 text-[11px] text-amber-900 font-light leading-relaxed border border-amber-300 bg-amber-50 px-4 py-3 -mt-2">
+ Port 465 wird von Hetzner ausgehend gesperrt — daher die Zeitüberschreitung.
+ Fast jeder Mailserver nimmt dieselbe Post auch unter <strong className="font-normal">587</strong> an,
+ Namecheap ebenfalls. Zahl ändern, speichern, Testnachricht: Das ist voraussichtlich alles.
+ </p>
+ )}
  </div>
 
  {/* Sender email */}
