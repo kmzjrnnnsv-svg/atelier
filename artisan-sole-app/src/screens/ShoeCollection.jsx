@@ -368,6 +368,16 @@ export default function ShoeCollection() {
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [scanAccuracy, setScanAccuracy] = useState(null)
 
+  // Die Kollektionen kommen aus der Datenbank, nicht aus einer Liste im Code —
+  // es sollen weitere dazukommen können, ohne dass jemand ausrollen muss.
+  const [alleKollektionen, setAlleKollektionen] = useState([])
+  const [aktiveKollektion, setAktiveKollektion] = useState('standard')
+  useEffect(() => {
+    apiFetch('/api/collections')
+      .then(k => setAlleKollektionen(Array.isArray(k) ? k : []))
+      .catch(() => setAlleKollektionen([]))
+  }, [])
+
   // ── Passform-Filter ──────────────────────────────────────────────────────
   // Maße kommen aus dem Store (footMeasurements), für eingeloggte Nutzer vom
   // Konto, für Gäste aus localStorage (beides via saveFootMeasurements). Der
@@ -449,6 +459,11 @@ export default function ShoeCollection() {
     ? [{ label: 'Promo', value: 'PROMO' }, ...BASE_CATEGORIES]
     : BASE_CATEGORIES
 
+  // Nur Kollektionen zeigen, in denen auch etwas steht. Eine leere
+  // Registerkarte ist ein Versprechen auf ein Regal, das es nicht gibt.
+  const belegt = new Set(shoes.map(s => s.collection || 'standard'))
+  const kollektionen = alleKollektionen.filter(k => k.visible && belegt.has(k.key))
+
   // Bei aktiver Kampagne mit festen Designs den Katalog darauf beschränken.
   const scopedShoes = activeCampaign?.allowed_shoe_ids?.length
     ? shoes.filter(s => activeCampaign.allowed_shoe_ids.includes(s.id))
@@ -460,9 +475,15 @@ export default function ShoeCollection() {
     return { ...s, match: pct != null ? `${String(pct).replace('.', ',')} %` : null }
   })
 
+  // Die Kollektion geht der Kategorie vor: Erst entscheidet der Kunde, welches
+  // Angebot er ansieht — Maßanfertigung oder Express —, dann welche Machart.
+  // Andersherum stünden zwei Oxford-Kacheln zu verschiedenen Preisen
+  // nebeneinander, ohne dass jemand sagt, warum.
+  const inKollektion = enriched.filter(p => (p.collection || 'standard') === aktiveKollektion)
+
   const filtered = activeCategory === 'PROMO'
-    ? enriched.filter(p => p.promotion_price)
-    : enriched.filter(p => shoeInCategory(activeCategory, p.category))
+    ? inKollektion.filter(p => p.promotion_price)
+    : inKollektion.filter(p => shoeInCategory(activeCategory, p.category))
   const selectShoe = (product) => navigate(shoePath(product), { state: { product } })
 
   return (
@@ -476,13 +497,51 @@ export default function ShoeCollection() {
         </h1>
       </div>
 
+      {/* ── Kollektionen ───────────────────────────────────────────
+          Über den Kategorien, weil es die gröbere Entscheidung ist: erst das
+          Angebot, dann die Machart. Erscheint nur, wenn es überhaupt etwas
+          zu wählen gibt — bei einer einzigen Kollektion wäre es ein Schalter
+          mit einer Stellung. */}
+      {kollektionen.length > 1 && (
+        <div className="px-5 lg:px-16 pb-4">
+          <div className="flex justify-center gap-1.5 flex-wrap">
+            {kollektionen.map(k => {
+              const anzahl = enriched.filter(p => (p.collection || 'standard') === k.key).length
+              const offen = aktiveKollektion === k.key
+              return (
+                <button
+                  key={k.key}
+                  onClick={() => { setAktiveKollektion(k.key); setActiveCategory('ALL') }}
+                  className={`px-5 py-2 text-[11px] tracking-[0.14em] uppercase border transition-colors bg-transparent ${
+                    offen ? 'border-black text-black' : 'border-black/12 text-black/40 hover:border-black/35 hover:text-black/70'
+                  }`}
+                >
+                  {k.label}
+                  <span className={offen ? 'text-black/35 ml-1.5' : 'text-black/20 ml-1.5'}>{anzahl}</span>
+                </button>
+              )
+            })}
+          </div>
+          {/* Ein Satz zur gewählten Kollektion. Ohne ihn steht „Express" da wie
+              eine Versandart, und niemand erfährt, was der Unterschied ist. */}
+          {kollektionen.find(k => k.key === aktiveKollektion)?.description && (
+            <p className="text-center text-[11px] lg:text-[12px] text-black/40 font-light mt-3 max-w-xl mx-auto leading-relaxed">
+              {kollektionen.find(k => k.key === aktiveKollektion).description}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* ── Category navigation (LV underline tabs) ────────────── */}
       <div className="px-5 lg:px-16 pb-5 lg:pb-8">
         <div className="flex gap-0 lg:gap-1 overflow-x-auto justify-center" style={{ scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => {
-            const count = cat.value === 'ALL' ? enriched.length
-              : cat.value === 'PROMO' ? enriched.filter(p => p.promotion_price).length
-              : enriched.filter(p => shoeInCategory(cat.value, p.category)).length
+            // Gezählt wird innerhalb der gewählten Kollektion. Über dem
+            // Raster stand sonst „Alle Modelle 47", während darunter 16
+            // Kacheln lagen — der Zähler zählte den ganzen Katalog.
+            const count = cat.value === 'ALL' ? inKollektion.length
+              : cat.value === 'PROMO' ? inKollektion.filter(p => p.promotion_price).length
+              : inKollektion.filter(p => shoeInCategory(cat.value, p.category)).length
             return (
               <button
                 key={cat.value}

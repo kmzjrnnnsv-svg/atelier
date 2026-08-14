@@ -531,7 +531,8 @@ function normalizeShoe(r) {
     express: Number(r.express) ? 1 : 0,
     express_surcharge: r.express_surcharge ?? 100,
     express_weeks: r.express_weeks ?? 2,
-    express_groups: r.express_groups ?? '[]' }
+    express_groups: r.express_groups ?? '[]',
+    collection: r.collection || 'standard' }
 }
 
 function normalizeLoyaltyTier(r) {
@@ -593,6 +594,7 @@ function shoeToApi(s) {
     // Immer als gültiges JSON-Array, auch wenn im Formular Unsinn steht —
     // ein kaputter Wert in dieser Spalte blendete im Konfigurator sonst
     // sämtliche Auswahl aus, ohne dass jemand den Zusammenhang sähe.
+    express.collection = s.collection || (Number(s.express) ? 'express' : 'standard')
     express.express_groups = (() => {
       try {
         const l = JSON.parse(s.express_groups || '[]')

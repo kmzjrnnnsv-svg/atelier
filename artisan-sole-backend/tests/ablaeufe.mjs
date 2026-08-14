@@ -59,12 +59,32 @@ p('Nur die fünf geführten Artikel', zubehoer.length === 5, zubehoer.map(a => a
 const { daten: chart } = await ruf('/api/last-size-chart')
 p('Größentabelle abrufbar', Array.isArray(chart) && chart.length > 0, `${chart?.length} Zeilen`)
 
-// Express-Linie. Kein Modell gehört ihr von sich aus an — sie wird Modell für
-// Modell in der Verwaltung geöffnet. Ein Vorgabewert, der versehentlich auf 1
-// stünde, verspräche dem Kunden zwei Wochen für einen Maßschuh.
-p('Kein Modell steht ungefragt im Express', schuhe.every(s => Number(s.express) === 0))
-p('Express-Vorgaben stehen', schuh.express_surcharge === 100 && schuh.express_weeks === 2,
-  `${schuh.express_surcharge} € · ${schuh.express_weeks} Wochen`)
+// ── Kollektionen und Express-Linie ──
+//
+// Beide Linien stehen nebeneinander im Katalog, getrennt durch die Kollektion.
+// Die beiden Eigenschaften müssen zusammenpassen: Ein Modell in der
+// Express-Kollektion, dem das Express-Kennzeichen fehlt, verspricht auf der
+// Kachel zwei Wochen und zeigt in der Konfiguration die volle Auswahl.
+const { daten: kollektionen } = await ruf('/api/collections')
+p('Kollektionen abrufbar', Array.isArray(kollektionen) && kollektionen.length >= 2,
+  (kollektionen || []).map(k => k.key).join(', '))
+
+const standard = schuhe.filter(s => (s.collection || 'standard') === 'standard')
+const expressLinie = schuhe.filter(s => s.collection === 'express')
+p('Maßanfertigung ohne Express-Kennzeichen', standard.every(s => Number(s.express) === 0))
+p('Express-Linie ist belegt', expressLinie.length > 0, `${expressLinie.length} Modelle`)
+p('Jedes Express-Modell trägt sein Kennzeichen', expressLinie.every(s => Number(s.express) === 1))
+p('Jedes Express-Modell nennt Aufpreis und Dauer',
+  expressLinie.every(s => Number(s.express_surcharge) > 0 && Number(s.express_weeks) > 0))
+// Der Preis trägt den Aufpreis bereits — nirgends wird er ein zweites Mal
+// addiert. Stichprobe am Oxford, dessen Grundpreis bekannt ist.
+{
+  const grund = schuhe.find(s => s.name === 'Oxford' && s.collection === 'standard')
+  const schnell = schuhe.find(s => s.name === 'Oxford Express')
+  const zahl = (t) => parseFloat(String(t).replace(/[^0-9,.]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.'))
+  p('Aufpreis steckt im Preis', !grund || !schnell || zahl(schnell.price) === zahl(grund.price) + 100,
+    grund && schnell ? `${grund.price} → ${schnell.price}` : 'Modelle nicht gefunden')
+}
 
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('3. Fußmaße und Passform')

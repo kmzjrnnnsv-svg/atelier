@@ -172,6 +172,20 @@ export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
     db.prepare('INSERT OR REPLACE INTO deleted_seed_shoes (name, deleted_at) VALUES (?, datetime(\'now\'))').run(row.name)
   },
 })
+/**
+ * Die Kollektionen — die Angebote, in die der Katalog zerfällt.
+ *
+ * Öffentlich lesbar, denn der Laden gliedert seine Übersicht danach. Es sind
+ * Regalbeschriftungen, nichts Schützenswertes: „Maßanfertigung", „Express".
+ * Das Feld `visible` kommt mit; ausgeblendet wird im Laden, nicht hier —
+ * die Verwaltung braucht dieselbe Liste einschließlich der vorbereiteten.
+ */
+export const collectionsRouter = makeContentRouter('collections', [
+  body('key').trim().notEmpty().withMessage('Schlüssel erforderlich')
+    .matches(/^[a-z][a-z0-9_]*$/).withMessage('Nur Kleinbuchstaben, Ziffern und Unterstrich'),
+  body('label').trim().notEmpty().withMessage('Bezeichnung erforderlich'),
+], { publicRead: true })
+
 export const materialsRouter  = makeContentRouter('shoe_materials', [], { publicRead: true })
 export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true })
 export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead: true })
