@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Fünf Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Sechs Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   75 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -20,6 +20,13 @@ im Betrieb, nichts nachgebaut.
                          Versand. Braucht KEINEN Server und keine Zugangsdaten:
                          Das Skript legt ein eigenes `fetch` unter und hält die
                          Anfrage fest, statt sie hinauszugeben.
+    tests/sohlenregel.mjs
+                         34 Prüfungen: welche Auswahlgruppen ein Kunde
+                         angeboten bekommt — Express-Freigabe und die Regel,
+                         dass an einer Gummisohle keine Randfarbe zur Wahl
+                         steht. Ebenfalls ohne Server: eine reine Funktion,
+                         die sich nicht durch einen Konfigurator mit einem
+                         Dutzend Schritten prüfen lassen sollte.
 
 ## Aufrufen
 
