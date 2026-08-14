@@ -83,6 +83,10 @@ router.post('/',
       foot_notes, shipping_method, shipping_cost, coupon_code, business_code, business_campaign_id,
       size_type, last_key, last_label, last_width, fit_measurements,
       sole, extras, config_id, fit_profile_id,
+      // Klammer um alles, was in einem Kauf zusammen bestellt wurde. Der
+      // Warenkorb legt sie an und schickt sie an jede Bestellung mit; der
+      // Server macht daraus eine gemeinsame Zahlung.
+      basket_id,
     } = req.body
 
     // Translate foot notes to English for manufacturer
@@ -237,6 +241,25 @@ router.post('/',
     for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)]
     const order_ref = `ATL-${date}-${suffix}`
 
+    // ── Eine Zahlung je Warenkorb ────────────────────────────────────────
+    //
+    // Gehört diese Bestellung zu einem Kauf, für den schon eine angelegt wurde,
+    // übernimmt sie deren Verwendungszweck. Sonst wird ihr eigener zur Klammer.
+    //
+    // Die Suche geht über das eigene Konto und über einen engen Zeitraum: Eine
+    // Korbkennung, die aus einem alten Browser-Tab zurückkommt, soll keine
+    // Bestellung von heute an die Zahlung von vorletzter Woche hängen.
+    const zahlungsKennung = (() => {
+      if (!basket_id) return order_ref
+      const geschwister = db.prepare(`
+        SELECT payment_ref FROM orders
+        WHERE user_id = ? AND basket_id = ? AND payment_ref IS NOT NULL
+          AND created_at >= datetime('now', '-2 hours')
+        ORDER BY id LIMIT 1
+      `).get(uid, String(basket_id))
+      return geschwister?.payment_ref || order_ref
+    })()
+
     const insertOrder = db.prepare(`
       INSERT INTO orders
         (user_id, shoe_id, shoe_name, material, color, price, eu_size,
@@ -244,8 +267,8 @@ router.post('/',
          foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price,
          size_type, last_key, last_label, last_width, fit_measurements,
          business_id, business_code_id, business_coverage, business_campaign_id,
-         sole, extras, config_id, fit_profile_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         sole, extras, config_id, fit_profile_id, payment_ref, basket_id)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `)
     const insertParams = [
       uid,
@@ -287,6 +310,8 @@ router.post('/',
         : (Array.isArray(spec.extras) && spec.extras.length ? JSON.stringify(spec.extras) : null),
       config_id || null,
       spec.fit_profile_id || null,
+      zahlungsKennung,
+      basket_id ? String(basket_id).slice(0, 64) : null,
     ]
 
     let result
@@ -375,7 +400,18 @@ router.post('/',
 
     // Send order confirmation + payment instructions async — don't block the response
     sendOrderConfirmation(order, user).catch(e => console.error('[email confirmation]', e.message))
-    sendPaymentInstructions(order, user).catch(e => console.error('[email payment]', e.message))
+
+    // Die Zahlungsanweisung geht NICHT hier hinaus.
+    //
+    // Sie nennt den Betrag des ganzen Korbs, und der steht erst fest, wenn die
+    // letzte Bestellung angelegt ist — bei der ersten kennt der Server die
+    // Geschwister noch nicht. Eine Mail von hier trüge den Preis des ersten
+    // Paars und wäre für jeden Korb mit zwei Paaren falsch.
+    //
+    // Der Warenkorb ruft nach seiner letzten Bestellung POST /zahlung/abschluss
+    // auf. Bleibt der Aufruf aus — abgebrochene Verbindung, geschlossener Tab —,
+    // fehlt nur die Mail: Die Zahlungsseite unter „Meine Bestellungen" rechnet
+    // dieselbe Summe und zeigt denselben Verwendungszweck.
 
     // Read bank details from DB settings (admin-editable)
     const bankRows = db.prepare(
@@ -385,6 +421,11 @@ router.post('/',
 
     res.status(201).json({
       ...order,
+      // Der Verwendungszweck kommt vom Server, nicht aus der Oberfläche.
+      // Dort stand zuletzt „AS-42" — eine Kennung, die in keiner Bestellung
+      // vorkommt und zu der sich folglich keine Zahlung zuordnen ließ.
+      verwendungszweck: [order.payment_ref || order.order_ref, (user?.name || '').trim()]
+        .filter(Boolean).join(' ').slice(0, 140),
       bank_iban:   bank.bank_iban   || process.env.BANK_IBAN   || 'DE00 0000 0000 0000 0000 00',
       bank_bic:    bank.bank_bic    || process.env.BANK_BIC    || 'XXXXXXXX',
       bank_holder: bank.bank_holder || process.env.BANK_HOLDER || 'ATELIER GmbH',
@@ -567,6 +608,62 @@ function fristTageRest(order) {
  * Verwendungszwecke sind der häufigste Grund für Zahlungen, die sich keiner
  * Bestellung zuordnen lassen.
  */
+/**
+ * POST /api/orders/zahlung/abschluss — der Korb ist vollständig, eine Mail.
+ *
+ * ── Warum ein eigener Aufruf ──────────────────────────────────────────────
+ *
+ * Die Zahlungsanweisung nennt den Betrag des ganzen Kaufs. Der steht erst
+ * fest, wenn die letzte Bestellung angelegt ist — beim Anlegen der ersten
+ * kennt der Server die Geschwister noch nicht. Eine Mail von dort trüge den
+ * Preis des ersten Paars und wäre für jeden Korb mit zwei Paaren falsch.
+ *
+ * Der Warenkorb ruft diesen Punkt deshalb an, nachdem er seine letzte
+ * Bestellung abgesetzt hat.
+ *
+ * ── Was passiert, wenn der Aufruf ausbleibt ───────────────────────────────
+ *
+ * Nichts Schlimmes. Es fehlt die Mail, nicht die Zahlung: Unter „Meine
+ * Bestellungen" rechnet dieselbe Stelle dieselbe Summe und zeigt denselben
+ * Verwendungszweck samt GiroCode. Deshalb darf dieser Aufruf auch scheitern,
+ * ohne dass der Kauf scheitert.
+ */
+router.post('/zahlung/abschluss', authenticate, async (req, res) => {
+  const db = getDb()
+  const korb = String(req.body?.basket_id || '').slice(0, 64)
+  if (!korb) return res.status(400).json({ error: 'basket_id fehlt' })
+
+  const teile = db.prepare(`
+    SELECT * FROM orders
+    WHERE user_id = ? AND basket_id = ?
+      AND created_at >= datetime('now', '-2 hours')
+    ORDER BY id
+  `).all(req.user.id, korb)
+  if (!teile.length) return res.status(404).json({ error: 'Zu dieser Kennung gibt es keine Bestellung' })
+
+  // Die erste Bestellung stiftet den Verwendungszweck und trägt den Vermerk,
+  // dass die Mail hinaus ist. Ein zweiter Aufruf — Doppelklick, wiederholte
+  // Anfrage — schickt sie deshalb nicht noch einmal.
+  const erste = teile.find(o => o.payment_ref === o.order_ref) || teile[0]
+  if (erste.payment_mailed_at) return res.json({ ok: true, bereits_verschickt: true })
+
+  const summe = Math.round(teile.reduce((s, o) => s + betragAusText(o.price), 0) * 100) / 100
+  const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(req.user.id)
+
+  db.prepare("UPDATE orders SET payment_mailed_at = datetime('now') WHERE id = ?").run(erste.id)
+  try {
+    // Der Vorlage wird der Gesamtbetrag untergeschoben — sie zeigt `price`,
+    // und das ist hier die Summe des Korbs, nicht der Preis eines Paars.
+    await sendPaymentInstructions({ ...erste, price: `€ ${summe.toLocaleString('de-DE', { minimumFractionDigits: 2 })}` }, user)
+    res.json({ ok: true, referenz: erste.payment_ref || erste.order_ref, betrag: summe, positionen: teile.length })
+  } catch (e) {
+    // Vermerk zurücknehmen, damit ein späterer Versuch es erneut darf.
+    db.prepare('UPDATE orders SET payment_mailed_at = NULL WHERE id = ?').run(erste.id)
+    console.error('[email payment]', e.message)
+    res.status(502).json({ ok: false, error: e.message })
+  }
+})
+
 router.get('/:id/zahlung', authenticate, async (req, res) => {
   const db = getDb()
   const bestellung = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
@@ -577,15 +674,30 @@ router.get('/:id/zahlung', authenticate, async (req, res) => {
   if (!darf) return res.status(403).json({ error: 'Kein Zugriff auf diese Bestellung' })
 
   const bank = bankKonfiguration()
-  const referenz = bestellung.order_ref || `ARTISANSOLE-${bestellung.id}`
-  const betrag = betragAusText(bestellung.price)
+  const referenz = bestellung.payment_ref || bestellung.order_ref || `ARTISANSOLE-${bestellung.id}`
+
+  // Bezahlt wird der ganze Kauf, nicht das einzelne Paar. Wer zwei Paare in
+  // einem Korb hatte, bekommt hier eine Summe und einen Verwendungszweck —
+  // vorher zeigte die Bestätigungsseite die Gesamtsumme und daneben den
+  // Verwendungszweck nur einer der Bestellungen.
+  const geschwister = db.prepare(
+    'SELECT id, price, status, shoe_name FROM orders WHERE payment_ref = ? AND user_id = ? ORDER BY id'
+  ).all(referenz, bestellung.user_id)
+  const teile = geschwister.length ? geschwister : [bestellung]
+  const betrag = Math.round(teile.reduce((s, o) => s + betragAusText(o.price), 0) * 100) / 100
+
+  // Der Name gehört in den Verwendungszweck: Auf dem Kontoauszug steht sonst
+  // nur eine Kennung, und die Zuordnung von Hand wird zur Sucharbeit. Die
+  // Kennung bleibt vorn, damit sie maschinell zuerst gefunden wird.
+  const kaeufer = db.prepare('SELECT name FROM users WHERE id = ?').get(bestellung.user_id)
+  const zweck = [referenz, (kaeufer?.name || '').trim()].filter(Boolean).join(' ').slice(0, 140)
 
   const qr = await giroCode({
     empfaenger: bank.holder,
     iban: bank.iban,
     bic: bank.bic,
     betrag,
-    verwendungszweck: referenz,
+    verwendungszweck: zweck,
   })
 
   res.json({
@@ -595,7 +707,13 @@ router.get('/:id/zahlung', authenticate, async (req, res) => {
     bank: bank.bank,
     betrag,
     referenz,
-    bezahlt: bestellung.status !== 'pending_payment',
+    verwendungszweck: zweck,
+    // Woraus sich der Betrag zusammensetzt. Ohne diese Aufstellung sähe der
+    // Kunde eine Summe, die höher ist als der Preis der Bestellung, die er
+    // gerade offen hat.
+    positionen: teile.map(o => ({ id: o.id, name: o.shoe_name, preis: betragAusText(o.price) })),
+    // Bezahlt ist der Kauf erst, wenn keine Bestellung mehr darauf wartet.
+    bezahlt: teile.every(o => o.status !== 'pending_payment'),
     // Ohne vollständige Bankverbindung gibt es keinen Code. Dann steht in der
     // Anwendung ein Hinweis statt eines Codes, der ins Leere führt.
     giro_qr: qr,

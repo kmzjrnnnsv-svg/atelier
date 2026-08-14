@@ -323,7 +323,74 @@ r = await ruf('/api/business/campaigns/mine', { token: admin })
 console.log('     (Admin-Sicht nur zur Kontrolle)')
 
 // ════════════════════════════════════════════════════════════════════════
-abschnitt('11. Rechtstexte')
+abschnitt('11. Eine Zahlung je Warenkorb')
+
+// Zwei Paare in einem Korb werden zu zwei Bestellungen — sie werden einzeln
+// gefertigt und einzeln storniert. Bezahlt wird aber einmal. Vorher bekam jede
+// Bestellung ihren eigenen Verwendungszweck und ihren eigenen Betrag, während
+// die Bestätigungsseite die Gesamtsumme zeigte: Wer wie angezeigt überwies,
+// hatte eine überzahlte und eine unbezahlte Bestellung.
+const korb = `k-pruef-${zufall()}`
+const paar = (preis) => ({
+  shoe_id: schuh.id, shoe_name: schuh.name, material: 'lux_calf', color: 'black',
+  price: preis, basket_id: korb,
+  delivery_address: { street: 'Musterweg', house_number: '7', zip: '10115', city: 'Berlin', country: 'DE' },
+})
+
+// Die Preise müssen zum Modell passen — der Server weist alles ab, was
+// deutlich darunter liegt, und das zu Recht.
+const stueck = Math.round(parseFloat(String(schuh.price).replace(/[^0-9,.]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.')))
+r = await ruf('/api/orders', { method: 'POST', token: kunde, body: paar(`€ ${stueck}`) })
+p('Erstes Paar angelegt', r.status === 201, `HTTP ${r.status}`)
+const erstes = r.daten
+r = await ruf('/api/orders', { method: 'POST', token: kunde, body: paar(`€ ${stueck}`) })
+p('Zweites Paar angelegt', r.status === 201, `HTTP ${r.status}`)
+const zweites = r.daten
+
+p('Beide teilen einen Verwendungszweck', !!erstes.payment_ref && erstes.payment_ref === zweites.payment_ref,
+  String(zweites.payment_ref))
+p('Der Zweck ist der der ersten Bestellung', erstes.payment_ref === erstes.order_ref)
+p('Der Käufername steht dabei', (zweites.verwendungszweck || '').includes('Test Kunde'),
+  zweites.verwendungszweck)
+
+r = await ruf(`/api/orders/${zweites.id}/zahlung`, { token: kunde })
+p('Zahlungsauskunft antwortet', r.status === 200, `HTTP ${r.status}`)
+p('Betrag ist die Summe des Korbs', r.daten?.betrag === stueck * 2, `${r.daten?.betrag} statt ${stueck * 2}`)
+p('Beide Paare sind aufgeführt', r.daten?.positionen?.length === 2)
+p('Ein Verwendungszweck für beides', r.daten?.referenz === erstes.payment_ref)
+// Der GiroCode entsteht nur mit echter Bankverbindung — in dieser
+// Wegwerf-Datenbank steht der Platzhalter DE00…, und den weist die
+// EPC-Prüfung zu Recht ab. Geprüft wird deshalb, dass das Feld da ist und
+// dass ein Platzhalter zu null führt statt zu einem Code, den keine
+// Banking-App annimmt.
+p('GiroCode-Feld vorhanden', 'giro_qr' in (r.daten || {}))
+p('Platzhalter-IBAN erzeugt keinen Code', r.daten?.giro_qr === null || String(r.daten?.giro_qr).startsWith('data:image'),
+  r.daten?.giro_qr === null ? 'null (keine Bankverbindung hinterlegt)' : 'Code erzeugt')
+p('Noch nicht bezahlt', r.daten?.bezahlt === false)
+
+// Dieselbe Auskunft von der anderen Bestellung aus — sie muss übereinstimmen,
+// sonst führt jede Seite den Kunden zu einem anderen Betrag.
+const vonErster = (await ruf(`/api/orders/${erstes.id}/zahlung`, { token: kunde })).daten
+p('Von beiden Bestellungen dieselbe Summe', vonErster?.betrag === r.daten?.betrag)
+p('Von beiden derselbe Zweck', vonErster?.referenz === r.daten?.referenz)
+
+r = await ruf('/api/orders/zahlung/abschluss', { method: 'POST', token: kunde, body: { basket_id: korb } })
+p('Abschluss nimmt den Korb an', r.status === 200, `HTTP ${r.status} ${JSON.stringify(r.daten).slice(0, 90)}`)
+p('Er rechnet dieselbe Summe', r.daten?.betrag === stueck * 2, String(r.daten?.betrag))
+r = await ruf('/api/orders/zahlung/abschluss', { method: 'POST', token: kunde, body: { basket_id: korb } })
+p('Zweiter Aufruf schickt nichts erneut', r.daten?.bereits_verschickt === true)
+r = await ruf('/api/orders/zahlung/abschluss', { method: 'POST', token: kunde, body: { basket_id: 'gibt-es-nicht' } })
+p('Unbekannter Korb wird abgewiesen', r.status === 404, `HTTP ${r.status}`)
+
+// Ein einzelnes Paar ohne Korbkennung behält sein eigenes Verhalten.
+r = await ruf('/api/orders', { method: 'POST', token: kunde, body: { ...paar(`€ ${stueck}`), basket_id: undefined } })
+const allein = r.daten
+r = await ruf(`/api/orders/${allein.id}/zahlung`, { token: kunde })
+p('Einzelbestellung: nur ihr eigener Betrag', r.daten?.betrag === stueck, String(r.daten?.betrag))
+p('Einzelbestellung: eine Position', r.daten?.positionen?.length === 1)
+
+// ════════════════════════════════════════════════════════════════════════
+abschnitt('12. Rechtstexte')
 
 // Die AGB werden als Datei gepflegt und beim ersten Start veröffentlicht.
 // Danach nie wieder — was in der Verwaltung geändert wurde, darf ein Neustart

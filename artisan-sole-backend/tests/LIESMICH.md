@@ -3,9 +3,10 @@
 Sechs Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
-    tests/ablaeufe.mjs   75 Prüfungen: Registrierung, Katalog, Fußmaße,
+    tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
                          Entwurf, Bestellung, Rücksendung, Verwaltung,
-                         Anfragen, Affiliate, Firmenkonto, Kollektionen, Rechtstexte
+                         Anfragen, Affiliate, Firmenkonto, Kollektionen, Zahlung je
+                         Warenkorb, Rechtstexte
     tests/chat.mjs       18 Prüfungen: Nachrichtenverlauf zwischen Kunde und
                          Verwaltung, Kategorien, Ungelesen-Zähler, Zugriffsschutz
     tests/preise.mjs     38 Prüfungen: Kampagnenrabatt, Affiliate-Nachlass,
