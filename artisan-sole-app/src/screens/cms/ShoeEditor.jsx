@@ -25,6 +25,66 @@ const emptyForm = {
  express: 0,
  express_surcharge: 100,
  express_weeks: 2,
+ express_groups: '[]',
+}
+
+/**
+ * Was am Express-Modell wählbar bleibt.
+ *
+ * Alles, was hier NICHT angehakt ist, legt das vorbereitete Bauteil fest —
+ * der Kunde bekommt die Gruppe gar nicht zu sehen. Deshalb ist die Vorgabe
+ * leer und nicht „alles": Eine Gruppe zu öffnen, die sich am vorbereiteten
+ * Schaft nicht mehr ändern lässt, wäre ein Versprechen, das die Werkstatt
+ * nicht halten kann.
+ *
+ * Die Schuhform steht bewusst nicht zur Wahl. Express gibt es nur auf einem
+ * Leisten; welcher das ist, entscheidet das Modell und nicht der Kunde.
+ */
+function ExpressGruppen({ wert, onChange }) {
+  const [gruppen, setGruppen] = useState([])
+  useEffect(() => {
+    apiFetch('/api/option-groups')
+      .then(g => setGruppen(Array.isArray(g) ? g : []))
+      .catch(() => setGruppen([]))
+  }, [])
+
+  const offen = (() => {
+    try { const l = JSON.parse(wert || '[]'); return Array.isArray(l) ? l : [] } catch { return [] }
+  })()
+  const umschalten = (key) => {
+    const neu = offen.includes(key) ? offen.filter(k => k !== key) : [...offen, key]
+    onChange(JSON.stringify(neu))
+  }
+
+  return (
+    <div className="mt-6">
+      <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] mb-2 font-light">Wählbar bleibt</p>
+      <p className="text-[11px] text-black/35 font-light mb-3 leading-relaxed max-w-xl">
+        Was hier nicht angehakt ist, legt das vorbereitete Bauteil fest — der Kunde sieht die
+        Gruppe gar nicht. Die Schuhform gehört bewusst nicht dazu: Express gibt es nur auf
+        einem Leisten, und den bestimmt das Modell.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {gruppen.filter(g => g.key !== 'last').map(g => (
+          <button
+            key={g.key} type="button" onClick={() => umschalten(g.key)}
+            className={`px-3 py-1.5 text-[11px] border transition-colors bg-transparent ${
+              offen.includes(g.key)
+                ? 'border-black text-black'
+                : 'border-black/12 text-black/35 hover:border-black/30'
+            }`}
+          >
+            {g.label || g.key}
+          </button>
+        ))}
+      </div>
+      {offen.length === 0 && (
+        <p className="text-[11px] text-black/30 font-light mt-2.5">
+          Nichts gewählt — der Kunde bestimmt nur Größe und Weite.
+        </p>
+      )}
+    </div>
+  )
 }
 
 function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
@@ -790,6 +850,13 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </span>
  </span>
  </label>
+
+ {!!Number(form.express) && (
+ <ExpressGruppen
+ wert={form.express_groups}
+ onChange={(v) => set('express_groups', v)}
+ />
+ )}
 
  {!!Number(form.express) && (
  <div className="grid grid-cols-2 gap-5 mt-6 max-w-md">
