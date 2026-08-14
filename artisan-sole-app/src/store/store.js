@@ -179,9 +179,13 @@ const useStore = create((set, get) => ({
       }
       set({ affiliate: v })
       return v
-    } catch {
-      // Netzwerkfehler ist kein Grund, den Code wegzuwerfen — beim nächsten
-      // Start wird erneut geprüft.
+    } catch (e) {
+      // Eine klare Absage des Servers wird auch als solche behandelt: Der Code
+      // gilt nicht (404) oder er ist der eigene (409). Ihn weiter mitzuführen
+      // hieße, ihn bei jedem Start erneut anzubieten und jedes Mal wieder
+      // abzuweisen. Netzwerkfehler dagegen sind kein Grund, ihn wegzuwerfen —
+      // beim nächsten Start wird erneut geprüft.
+      if (e?.status === 404 || e?.status === 409) refVergessen()
       set({ affiliate: null })
       return null
     }

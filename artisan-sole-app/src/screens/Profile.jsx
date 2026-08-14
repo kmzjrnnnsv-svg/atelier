@@ -10,6 +10,7 @@ import useStore from '../store/store'
 import { apiFetch } from '../hooks/useApi'
 import { isMobileWeb } from '../App'
 import CtaBanner from '../components/CtaBanner'
+import Bereichswechsel from '../components/Bereichswechsel'
 import { SHOES } from '../lib/editorialImages'
 import { shoePath } from '../lib/shoePath'
 
@@ -704,6 +705,13 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      {/* ── Bereiche ───────────────────────────────────────────────
+          Wer neben dem Kundenkonto noch einen zweiten Bereich hat, findet
+          ihn hier. Auf der Kontoseite und nicht nur im Seitenmenü, weil das
+          Menü auf dem Telefon nur auf den Hauptseiten erscheint — die
+          Kontoseite erreicht man von überall. */}
+      <Bereichswechsel className="px-5 lg:px-16 pt-8" />
 
       {/* ── Quick links ────────────────────────────────────────── */}
       <div className="px-5 lg:px-16 pt-8">

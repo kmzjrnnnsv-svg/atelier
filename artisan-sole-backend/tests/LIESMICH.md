@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Zwei Skripte, die die Anwendung über HTTP durchspielen — dieselben Routen wie
+Vier Skripte, die die Anwendung über HTTP durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   62 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -11,6 +11,10 @@ im Betrieb, nichts nachgebaut.
     tests/preise.mjs     38 Prüfungen: Kampagnenrabatt, Affiliate-Nachlass,
                          Provision samt Deckel, alle drei Kundenvorteile
                          (nichts/Nachlass/Zugabe), Preis-Untergrenze
+    tests/affiliate-anlegen.mjs
+                         18 Prüfungen: Anlegen mit nur einer E-Mail-Adresse,
+                         Einladung, Selbsteintrag der Stammdaten, unveränderbare
+                         Konditionen, eigener Code beim eigenen Einkauf
 
 ## Aufrufen
 

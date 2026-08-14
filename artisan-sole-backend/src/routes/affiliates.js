@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import QRCode from 'qrcode'
 import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
-import { authenticate, requireRole } from '../middleware/auth.js'
+import { authenticate, authenticateOptional, requireRole } from '../middleware/auth.js'
 import {
   affiliateStanding, matureCommissions, deckelVon, zugabeKosten, DECKEL_STANDARD,
   PAYOUT_BATCH_SIZE, PROTECTION_DAYS,
@@ -55,17 +55,45 @@ function codeVorschlag(db, email) {
 // ── Öffentlich: Code prüfen (Warenkorb) ───────────────────────────────────
 // Gibt bewusst wenig preis: ob der Code gilt und ob eine Zugabe dranhängt.
 // Weder Name noch Konditionen des Affiliates gehen den Käufer etwas an.
-router.get('/validate/:code', (req, res) => {
+//
+// Die Anmeldung wird gelesen, aber nicht verlangt: Der Werbelink führt Gäste
+// in den Laden, und die sollen den Vorteil sehen, bevor sie ein Konto haben.
+// Wer angemeldet ist, wird geprüft — siehe unten.
+router.get('/validate/:code', authenticateOptional, (req, res) => {
   const code = normCode(req.params.code)
   if (!code) return res.status(400).json({ valid: false, error: 'Code fehlt' })
 
   const db = getDb()
   const a = db.prepare(`
     SELECT code, customer_benefit, customer_discount_pct, gift_key,
-           commission_type, commission_value, cap_per_shoe
+           commission_type, commission_value, cap_per_shoe, user_id, email
     FROM affiliates WHERE code = ? AND status = 'active'
   `).get(code)
   if (!a) return res.status(404).json({ valid: false, error: 'Dieser Code ist nicht gültig.' })
+
+  // Der eigene Code beim eigenen Einkauf zählt nicht.
+  //
+  // Die Bestellung wies Eigenbestellungen schon immer ab — es entstand keine
+  // Provision. Der Nachlass wurde aber trotzdem gewährt, denn er wird vorne
+  // im Warenkorb gerechnet und hier ausgegeben. Der Affiliate kaufte also
+  // günstiger, ohne dass es von seinem Topf abging: Bezahlt hat es das Haus.
+  //
+  // Auffällig wurde das erst jetzt. Solange ein Affiliate seinen eigenen
+  // Bereich nicht verlassen konnte, kam er auf diesem Weg gar nicht in den
+  // Laden; mit dem Wechsel zwischen den Bereichen ist es ein Klick. Dieselbe
+  // Bedingung wie bei der Provision — gleiches Konto oder gleiche Adresse.
+  const kaeufer = req.user
+  const selbst = kaeufer && (
+    (a.user_id && a.user_id === kaeufer.id) ||
+    (a.email && String(a.email).toLowerCase() === String(kaeufer.email || '').toLowerCase())
+  )
+  if (selbst) {
+    return res.status(409).json({
+      valid: false,
+      code: 'EIGENER_CODE',
+      error: 'Das ist Ihr eigener Code. Für eigene Bestellungen gilt er nicht.',
+    })
+  }
 
   // Entweder ein Nachlass oder eine Zugabe — nie beides. Der Kunde soll sehen,
   // was er bekommt; was der Affiliate dafür erhält, geht ihn nichts an.

@@ -64,5 +64,17 @@ const id=(r.d.affiliates||r.d).find(a=>a.email===mail)?.id
 r=await ruf(`/api/affiliates/${id}`,{method:'PUT',token:admin,body:{city:'Hamburg',commission_value:15,full_name:'Q. Raza'}})
 p('Admin ändert Daten',r.status===200 && r.d?.city==='Hamburg' && r.d?.commission_value===15,`HTTP ${r.status}`)
 
+// 8) Der eigene Code gilt für den eigenen Einkauf nicht
+const code=r.d?.code
+r=await ruf(`/api/affiliates/validate/${code}`)
+p('Gast bekommt den Vorteil',r.status===200 && r.d?.valid===true,`HTTP ${r.status}`)
+r=await ruf(`/api/affiliates/validate/${code}`,{token:aff})
+p('Eigener Code abgewiesen',r.status===409 && r.d?.code==='EIGENER_CODE',`HTTP ${r.status} ${JSON.stringify(r.d)}`)
+
+// Ein anderes Konto darf ihn selbstverständlich weiter benutzen.
+r=await ruf('/api/auth/register',{method:'POST',body:{name:'Fremder Kunde',email:`kunde-${zz()}@x.de`,password:'Passwort1!'}})
+r=await ruf(`/api/affiliates/validate/${code}`,{token:r.d?.accessToken})
+p('Fremder Kunde bekommt ihn',r.status===200 && r.d?.valid===true,`HTTP ${r.status}`)
+
 console.log(`\n  ${ok} bestanden, ${bad.length} fehlgeschlagen`)
 if(bad.length){console.log('  '+bad.join('\n  '));process.exit(1)}
