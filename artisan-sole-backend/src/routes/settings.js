@@ -3,11 +3,13 @@ import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 import { verifyEmailSetup, sendTestEmail, diagnoseSmtp } from '../utils/email.js'
+import { anbieterListe, ANBIETER } from '../utils/mailHttp.js'
 
 const router = Router()
 
 const BANK_KEYS  = ['bank_iban', 'bank_bic', 'bank_holder', 'bank_name']
-const EMAIL_KEYS = ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_manufacturer_email', 'business_inquiry_email', 'app_url']
+const EMAIL_KEYS = ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_manufacturer_email', 'business_inquiry_email', 'app_url',
+                    'mail_weg', 'mail_anbieter', 'mail_api_key', 'mail_absender', 'mail_domain', 'mail_region']
 
 // GET /api/settings/bank — admin + curator
 router.get('/bank', authenticate, requireRole('admin', 'curator'), (req, res) => {
@@ -68,6 +70,15 @@ router.get('/email', authenticate, requireRole('admin'), (req, res) => {
     smtp_manufacturer_email: s.smtp_manufacturer_email || process.env.MANUFACTURER_EMAIL      || '',
     business_inquiry_email:  s.business_inquiry_email  || process.env.BUSINESS_INQUIRY_EMAIL  || '',
     app_url:                 s.app_url                 || process.env.APP_URL                 || '',
+    // Der Weg hinaus. Der Schlüssel selbst geht nie zurück an den Browser —
+    // dieselbe Regel wie beim SMTP-Passwort; gemeldet wird nur, ob einer da ist.
+    mail_weg:                s.mail_weg      || process.env.MAIL_WEG      || 'smtp',
+    mail_anbieter:           s.mail_anbieter || process.env.MAIL_ANBIETER || 'brevo',
+    mail_api_key_set:        !!(s.mail_api_key || process.env.MAIL_API_KEY),
+    mail_absender:           s.mail_absender || process.env.MAIL_ABSENDER || '',
+    mail_domain:             s.mail_domain   || process.env.MAIL_DOMAIN   || '',
+    mail_region:             s.mail_region   || process.env.MAIL_REGION   || 'eu',
+    anbieter:                anbieterListe(),
   })
 })
 
@@ -116,6 +127,7 @@ router.put('/email',
   body('smtp_user').optional({ checkFalsy: true }).isEmail().withMessage('Ungültige Absender-E-Mail'),
   body('smtp_manufacturer_email').optional({ checkFalsy: true }).isEmail().withMessage('Ungültige Hersteller-E-Mail'),
   body('business_inquiry_email').optional({ checkFalsy: true }).isEmail().withMessage('Ungültige Anfrage-E-Mail'),
+  body('mail_absender').optional({ checkFalsy: true }).isEmail().withMessage('Ungültige Absenderadresse'),
   (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
@@ -128,7 +140,8 @@ router.put('/email',
       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
     `)
 
-    const { smtp_host, smtp_port, smtp_user, smtp_pass, smtp_manufacturer_email, business_inquiry_email, app_url } = req.body
+    const { smtp_host, smtp_port, smtp_user, smtp_pass, smtp_manufacturer_email, business_inquiry_email, app_url,
+            mail_weg, mail_anbieter, mail_api_key, mail_absender, mail_domain, mail_region } = req.body
 
     if (smtp_host               !== undefined) upsert.run('smtp_host',               smtp_host               || '', uid)
     if (smtp_port               !== undefined) upsert.run('smtp_port',               smtp_port               || '587', uid)
@@ -138,6 +151,28 @@ router.put('/email',
     if (app_url                 !== undefined) upsert.run('app_url',                 app_url                 || '', uid)
     // Only overwrite password if a new one was explicitly provided
     if (smtp_pass && smtp_pass.trim()) upsert.run('smtp_pass', smtp_pass.trim(), uid)
+
+    // Der Weg hinaus. Nur bekannte Werte werden übernommen — ein unbekannter
+    // Anbieter würde den Versand stillschweigend lahmlegen, und der Fehler
+    // fiele erst bei der nächsten Bestellung auf.
+    if (mail_weg !== undefined) {
+      if (!['smtp', 'http'].includes(mail_weg)) return res.status(400).json({ error: 'Unbekannter Versandweg' })
+      upsert.run('mail_weg', mail_weg, uid)
+    }
+    if (mail_anbieter !== undefined) {
+      if (!ANBIETER[mail_anbieter]) return res.status(400).json({ error: 'Unbekannter Maildienst' })
+      upsert.run('mail_anbieter', mail_anbieter, uid)
+    }
+    if (mail_region !== undefined) {
+      if (!['eu', 'us'].includes(mail_region)) return res.status(400).json({ error: 'Unbekannte Region' })
+      upsert.run('mail_region', mail_region, uid)
+    }
+    if (mail_absender !== undefined) upsert.run('mail_absender', String(mail_absender).trim(), uid)
+    if (mail_domain   !== undefined) upsert.run('mail_domain',   String(mail_domain).trim().toLowerCase(), uid)
+    // Wie beim SMTP-Passwort: nur überschreiben, wenn wirklich einer kommt.
+    // Sonst löschte jedes Speichern des Formulars den hinterlegten Schlüssel,
+    // denn zurückgegeben wird er nie.
+    if (mail_api_key && String(mail_api_key).trim()) upsert.run('mail_api_key', String(mail_api_key).trim(), uid)
 
     res.json({ message: 'E-Mail-Einstellungen gespeichert' })
   }

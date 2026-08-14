@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Vier Skripte, die die Anwendung über HTTP durchspielen — dieselben Routen wie
+Fünf Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   62 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -15,6 +15,11 @@ im Betrieb, nichts nachgebaut.
                          18 Prüfungen: Anlegen mit nur einer E-Mail-Adresse,
                          Einladung, Selbsteintrag der Stammdaten, unveränderbare
                          Konditionen, eigener Code beim eigenen Einkauf
+    tests/mailwege.mjs   38 Prüfungen: der Versand über HTTPS — Form der Anfrage
+                         je Dienst, Deutung abschlägiger Antworten, Prüfung ohne
+                         Versand. Braucht KEINEN Server und keine Zugangsdaten:
+                         Das Skript legt ein eigenes `fetch` unter und hält die
+                         Anfrage fest, statt sie hinauszugeben.
 
 ## Aufrufen
 
