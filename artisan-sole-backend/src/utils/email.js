@@ -470,6 +470,76 @@ const CSS = `
 `
 
 // ─── Customer confirmation email ───────────────────────────────────────────────
+/**
+ * Die Vertragsbedingungen, wie sie in die Bestellbestätigung gehören.
+ *
+ * ── Warum das in die Mail muss und nicht auf die Website ──────────────────
+ *
+ * Im Fernabsatz müssen die Vertragsbestimmungen einschließlich der AGB dem
+ * Kunden auf einem dauerhaften Datenträger zugehen (§ 312f BGB). Ein Link
+ * genügt dafür nicht: Was auf einer Website steht, lässt sich ändern, und
+ * der Kunde hat nichts in der Hand, das den Stand zum Zeitpunkt seines
+ * Kaufs festhält. Eine Mail hat er.
+ *
+ * Dazu die Belehrung über das nicht bestehende Widerrufsrecht. Sie ist kein
+ * Kleingedrucktes, das man verstecken darf — der Kunde muss vor und bei
+ * Vertragsschluss wissen, dass er dieses Paar nicht zurückgeben kann.
+ *
+ * ── Warum der Text aus der Datenbank kommt ────────────────────────────────
+ *
+ * Damit in der Mail dasselbe steht wie auf der Website. Zwei Fassungen
+ * derselben AGB sind schlimmer als eine veraltete: Im Streitfall gilt, was
+ * der Kunde bekommen hat, und niemand wüsste, welche das war.
+ *
+ * Fehlt der Text — frische Datenbank, noch nichts veröffentlicht —, geht die
+ * Bestätigung trotzdem hinaus. Eine Bestellung ohne Bestätigung wäre der
+ * größere Schaden; der Hinweis nennt dann die Adresse, unter der die
+ * Bedingungen stehen.
+ */
+function vertragsbedingungen(appUrl) {
+  let agb = ''
+  try {
+    agb = getDb().prepare("SELECT content FROM legal_docs WHERE type = 'agb'").get()?.content || ''
+  } catch { /* ohne Datenbank bleibt es beim Verweis */ }
+
+  const widerruf = `
+    <div style="border:1px solid #e5e0d8;background:#faf9f7;padding:16px 18px;margin:24px 0">
+      <p style="font-size:13px;color:#111;font-weight:600;margin:0 0 8px">Kein Widerrufsrecht</p>
+      <p style="font-size:12px;color:#555;line-height:1.7;margin:0">
+        Ihr Paar entsteht einzeln nach Ihren Maßen und Ihrer Konfiguration. Bei solchen Waren
+        besteht nach § 312g Abs. 2 Nr. 1 BGB kein Widerrufsrecht — auch nicht in der
+        Express-Linie, denn auch dort wird auf dem für Ihren Fuß bestimmten Leisten
+        gearbeitet. Ein Paar auf Ihrem Leisten lässt sich an niemanden sonst verkaufen.
+      </p>
+      <p style="font-size:12px;color:#555;line-height:1.7;margin:8px 0 0">
+        Freiwillig bieten wir Ihnen bei Nichtgefallen eine Lösung an — Anpassung,
+        Neuanfertigung, Gutschrift oder eine Erstattung von höchstens 50 %. Melden Sie sich
+        dafür innerhalb von 14 Tagen nach Erhalt. Die Einzelheiten stehen in Ziffer 7 unten.
+      </p>
+      <p style="font-size:12px;color:#555;line-height:1.7;margin:8px 0 0">
+        Eine Stornierung ist bis zur Freigabe an die Werkstatt kostenfrei. Danach richtet
+        sich der einbehaltene Anteil nach dem Stand der Arbeit; die Staffel steht in
+        Ziffer 7.2.
+      </p>
+    </div>`
+
+  if (!agb.trim()) {
+    return widerruf + `
+    <p style="font-size:11px;color:#888;line-height:1.7;margin:16px 0 0">
+      Unsere Allgemeinen Geschäftsbedingungen finden Sie unter
+      <a href="${escapeHtml(appUrl)}/legal/agb" style="color:#555">${escapeHtml(appUrl)}/legal/agb</a>.
+      Auf Wunsch senden wir sie Ihnen in Textform zu — schreiben Sie uns kurz.
+    </p>`
+  }
+
+  return widerruf + `
+    <hr class="divider">
+    <p style="font-size:11px;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px">
+      Allgemeine Geschäftsbedingungen · Stand Ihrer Bestellung
+    </p>
+    <div style="font-size:11px;color:#666;line-height:1.75;white-space:pre-wrap;word-wrap:break-word">${escapeHtml(agb)}</div>`
+}
+
 export async function sendOrderConfirmation(order, user) {
   const tmpl = getTemplate('order_confirmation')
   const ref  = order.order_ref || `#${order.id}`
@@ -520,6 +590,7 @@ export async function sendOrderConfirmation(order, user) {
     </div>` : ''}
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0">${closing}</p>
+    ${vertragsbedingungen(getEmailConfig().appUrl)}
   </div>
   <div class="footer">Artisan Sole Custom Made Footwear · Alle Schuhe sind Einzelanfertigungen</div>
 </div>

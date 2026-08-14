@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -1998,7 +1999,9 @@ function benenneSohlenGruppen(db) {
 
 export function seedLegalDocs(db) {
   let veroeffentlicht = 0
+  let nachgezogen = 0
   const zurueckgehalten = []
+  const unveraendert = []
 
   for (const { type, datei, titel } of RECHTSTEXTE) {
     const { text, fehler, offen } = rechtstextAusDatei(datei)
@@ -2008,17 +2011,62 @@ export function seedLegalDocs(db) {
     }
 
     const vorhanden = db.prepare('SELECT content FROM legal_docs WHERE type = ?').get(type)
-    if (vorhanden?.content && vorhanden.content.trim()) continue
 
+    // ── Nachziehen, solange niemand von Hand eingegriffen hat ────────────
+    //
+    // Bisher galt: Steht etwas drin, wird nichts geschrieben. Richtig gedacht
+    // — eine Änderung aus der Verwaltung darf ein Neustart nicht wegwischen.
+    // Nur hatte es eine Kehrseite, die erst auffiel, als sich die AGB
+    // wirklich änderten: Die neue Fassung lag in der Datei, wurde ausgerollt,
+    // und auf der Website stand weiter die alte. Ohne Fehler, ohne Meldung.
+    //
+    // Die Auflösung ist ein Fingerabdruck. Beim Veröffentlichen merken wir
+    // uns, WAS wir veröffentlicht haben. Steht in der Datenbank noch genau
+    // das, hat niemand eingegriffen — dann darf eine neue Fassung nachziehen.
+    // Weicht sie ab, hat jemand die Hand angelegt, und wir rühren nichts an.
+    //
+    // Das ist der Unterschied zwischen „ist belegt" und „ist bearbeitet". Nur
+    // das zweite ist ein Grund, die Finger davonzulassen.
+    if (vorhanden?.content && vorhanden.content.trim()) {
+      const zuletzt = db.prepare('SELECT value FROM settings WHERE key = ?').get(`legal_seed_${type}`)
+      const fingerabdruck = (t) => crypto.createHash('sha256').update(String(t).trim()).digest('hex')
+
+      if (!zuletzt?.value || zuletzt.value !== fingerabdruck(vorhanden.content)) {
+        // Entweder von Hand geändert, oder von einem Stand vor dieser Zählung.
+        // In beiden Fällen: nicht anfassen. Der Weg über die Verwaltung
+        // („Fassung aus dem Projekt prüfen") bleibt offen.
+        if (fingerabdruck(vorhanden.content) !== fingerabdruck(text)) unveraendert.push(datei)
+        continue
+      }
+      if (fingerabdruck(vorhanden.content) === fingerabdruck(text)) continue
+      db.prepare(`
+        UPDATE legal_docs SET title = ?, content = ?, updated_at = datetime('now') WHERE type = ?
+      `).run(titel, text, type)
+      db.prepare(`
+        INSERT INTO settings (key, value) VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `).run(`legal_seed_${type}`, fingerabdruck(text))
+      nachgezogen++
+      continue
+    }
     db.prepare(`
       INSERT INTO legal_docs (type, title, content)
       VALUES (?, ?, ?)
       ON CONFLICT(type) DO UPDATE SET title = excluded.title, content = excluded.content
     `).run(type, titel, text)
+    db.prepare(`
+      INSERT INTO settings (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `).run(`legal_seed_${type}`, crypto.createHash('sha256').update(text.trim()).digest('hex'))
     veroeffentlicht++
   }
 
   if (veroeffentlicht) console.log(`✅ Seeded: ${veroeffentlicht} Rechtstexte veröffentlicht`)
+  if (nachgezogen) console.log(`✅ Nachgezogen: ${nachgezogen} Rechtstext(e) auf den Stand des Projekts`)
+  if (unveraendert.length) {
+    console.warn(`ℹ️  Rechtstexte weichen ab, wurden aber NICHT überschrieben: ${unveraendert.join(', ')}`)
+    console.warn('    Sie wurden in der Verwaltung bearbeitet. Dort unter Rechtliches vergleichen und ggf. übernehmen.')
+  }
   if (zurueckgehalten.length) {
     console.warn(`⚠️  Rechtstexte NICHT veröffentlicht, es fehlen noch Angaben: ${zurueckgehalten.join(', ')}`)
     console.warn('    Platzhalter in rechtstexte/ ausfüllen — dann erscheinen sie beim nächsten Start.')
