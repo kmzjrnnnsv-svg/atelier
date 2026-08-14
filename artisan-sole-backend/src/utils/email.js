@@ -78,6 +78,19 @@ function createTransporter(cfg) {
     host:   cfg.host,
     port:   Number(cfg.port) || 587,
     secure: Number(cfg.port) === 465,
+    // Verschlüsselung erzwingen, wo sie nicht schon von Anfang an steht.
+    //
+    // Port 465 spricht ab dem ersten Byte TLS — dort ist nichts zu erzwingen.
+    // Port 587 beginnt im Klartext und schaltet mit STARTTLS um, und ohne
+    // diese Zeile ist das Umschalten für nodemailer freiwillig: Bietet die
+    // Gegenstelle es nicht an oder scheitert der Wechsel, wird die Anmeldung
+    // trotzdem geschickt — Benutzername und Passwort im Klartext über die
+    // Leitung.
+    //
+    // Das ist kein Randfall mehr, seit 587 der empfohlene Port ist: Hetzner
+    // sperrt 465, wer umstellt, landet genau hier. Mit requireTLS bricht die
+    // Verbindung stattdessen ab, und der Fehler ist sichtbar statt still.
+    requireTLS: Number(cfg.port) !== 465,
     auth:   { user: cfg.user, pass: cfg.pass },
     // Zeitgrenzen, damit ein nicht erreichbarer Server auffällt statt zu
     // hängen. Ohne sie wartet nodemailer je nach Phase bis zu zehn Minuten:
