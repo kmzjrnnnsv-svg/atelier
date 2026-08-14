@@ -491,9 +491,12 @@ export default function EmailSettings() {
  {!check.ok && check.weg !== 'http' && (
  <div className="mt-3 pt-3 border-t border-amber-200">
  <p className="text-[11px] text-amber-900 font-light mb-2.5 leading-relaxed">
- Findet die Prüfung eine Sperre beim Rechenzentrum, hilft kein Feld auf dieser
- Seite: Dann bitte oben auf <strong className="font-normal">Maildienst (HTTPS)</strong>
- {' '}umstellen — dieser Weg braucht keinen Mail-Port.
+ Sie misst, welcher Port von diesem Server aus offen ist. Der häufigste Befund
+ kostet nichts: Hetzner sperrt ausgehend die Ports 25 und 465, lässt aber
+ <strong className="font-normal"> 587</strong> offen — dann genügt es, unten die Zahl
+ zu ändern. Ist wirklich kein Port erreichbar, hilft kein Feld auf dieser Seite;
+ dann oben auf <strong className="font-normal">Maildienst (HTTPS)</strong> umstellen,
+ der braucht keinen Mail-Port.
  </p>
  <button
  type="button" onClick={runDiag} disabled={diagLaeuft}

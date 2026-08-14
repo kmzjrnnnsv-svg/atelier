@@ -179,12 +179,22 @@ function smtpDeutung(e, cfg) {
   const ziel = `${cfg.host}:${cfg.port}`
 
   if (code === 'ETIMEDOUT' || code === 'ECONNECTION' || /timeout/i.test(text)) {
+    // Der erste Rat ist bewusst der billigste. Hetzner sperrt ausgehend die
+    // Ports 25 und 465, lässt 587 aber offen — wer auf 465 steht, ist mit
+    // einer geänderten Zahl womöglich fertig, ohne Support-Anfrage und ohne
+    // fremden Dienst. Erst wenn auch 587 tot ist, geht es um die Sperre.
+    const port465 = Number(cfg.port) === 465
     return `Keine Verbindung zu ${ziel} — die Gegenstelle antwortet nicht. `
       + 'An Benutzername oder Passwort liegt es nicht: Bis zur Anmeldung kommt es gar nicht. '
-      + 'Entweder ist der Servername falsch, der Port falsch, oder der Port ist gesperrt. '
-      + 'Hetzner sperrt ausgehende Mail-Ports bei neuen Servern standardmäßig; '
-      + 'das lässt sich per Support-Anfrage freischalten. Prüfen lässt es sich auf dem '
-      + `Server mit: nc -zv -w5 ${cfg.host} ${cfg.port}`
+      + (port465
+        ? 'Sie stehen auf Port 465, und genau den sperrt Hetzner ausgehend — zusammen mit 25. '
+          + 'Port 587 bleibt offen. Fast alle Mailserver nehmen beide an, also zuerst 587 '
+          + 'versuchen: eine Zahl ändern, speichern, Testnachricht. Das kostet nichts und '
+          + 'ist in einer Minute erledigt.'
+        : 'Entweder ist der Servername falsch, der Port falsch, oder der Port ist gesperrt. '
+          + 'Hetzner sperrt ausgehend die Ports 25 und 465; freischalten geht per Support-Anfrage, '
+          + 'sobald das Konto einen Monat besteht und die erste Rechnung bezahlt ist.')
+      + ' Womit sich das klären lässt, ohne zu raten: „Leitung prüfen" unten.'
   }
   if (code === 'ECONNREFUSED') {
     return `${ziel} weist die Verbindung aktiv ab — dort nimmt nichts Verbindungen an. `
@@ -292,14 +302,19 @@ export async function diagnoseSmtp() {
   } else if (!offenV4.length && !offenV6.length) {
     befund = 'Kein einziger Mail-Port ist von diesem Server aus erreichbar — weder 25 noch 465 noch 587. '
       + 'Das ist das Bild einer Sperre beim Rechenzentrum, nicht einer falschen Einstellung. '
-      + 'Bei Hetzner lässt sich der ausgehende Mail-Versand per Support-Anfrage freischalten.'
+      + 'Bei Hetzner lässt sich der ausgehende Versand per Support-Anfrage freischalten, sobald das '
+      + 'Konto einen Monat besteht und die erste Rechnung bezahlt ist. Ohne Warten geht es über den '
+      + 'Maildienst per HTTPS — oben umstellen, der braucht keinen Mail-Port.'
   } else if (konf?.ipv4?.ok && v6.length && !konf?.ipv6?.ok) {
     befund = `Port ${konf.port} ist über IPv4 offen, über IPv6 tot. Genau daher kommt die Zeitüberschreitung: `
       + 'Der Mailserver hat einen IPv6-Eintrag, ist darüber aber nicht erreichbar, und dieser Weg wird zuerst versucht. '
       + 'Abhilfe: SMTP_FAMILY=4 in der Server-Umgebung setzen, dann wird nur noch IPv4 verwendet.'
   } else if (!konf?.ipv4?.ok && !konf?.ipv6?.ok && (offenV4.length || offenV6.length)) {
-    befund = `Der eingestellte Port ${cfg.port} ist gesperrt, offen ist dagegen ${[...new Set([...offenV4, ...offenV6])].join(' und ')}. `
-      + 'Bitte auf einen offenen Port umstellen — 587 spricht STARTTLS, 465 direktes TLS.'
+    befund = `Der eingestellte Port ${cfg.port} ist gesperrt, offen ist dagegen `
+      + `${[...new Set([...offenV4, ...offenV6])].join(' und ')}. Damit ist die Sache erledigt: `
+      + 'oben die Zahl ändern, speichern, Testnachricht. Kein Support-Ticket, kein fremder Dienst. '
+      + '587 spricht STARTTLS, 465 direktes TLS — die Verschlüsselung stellt sich nach der Zahl '
+      + 'von selbst um.'
   } else if (konf?.ipv4?.ok || konf?.ipv6?.ok) {
     befund = `Port ${cfg.port} ist erreichbar. Die Verbindung steht also — scheitert es trotzdem, `
       + 'liegt es an der Anmeldung oder der Verschlüsselung, nicht am Netz.'
