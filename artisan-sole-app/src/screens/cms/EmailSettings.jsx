@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Eye, EyeOff, Send, CheckCircle2, XCircle } from 'lucide-react'
+import { Eye, EyeOff, Send, CheckCircle2, XCircle, ChevronDown } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import MFAModal from '../../components/MFAModal'
 
@@ -15,6 +15,7 @@ export default function EmailSettings() {
  const [keySet, setKeySet] = useState(false)
  const [showKey, setShowKey] = useState(false)
  const [anbieter, setAnbieter] = useState([])
+ const [anleitungOffen, setAnleitungOffen] = useState(false)
  const [loading, setLoading] = useState(true)
  const [saving, setSaving] = useState(false)
  const [msg, setMsg] = useState(null)
@@ -80,6 +81,18 @@ export default function EmailSettings() {
  }
 
  const f = (field, val) => setForm(prev => ({ ...prev, [field]: val }))
+
+ const aktuellerAnbieter = anbieter.find(a => a.schluessel === form.mail_anbieter) || null
+
+ // Der Weg ist gewählt, aber es fehlt noch etwas: Dann greift im Hintergrund
+ // weiterhin SMTP, und dort scheitert der Versand. Das sagt sonst niemand —
+ // die Felder sehen aus wie fertig, und der Fehler taucht erst bei der
+ // nächsten Bestellung auf.
+ const nochUnvollstaendig = form.mail_weg === 'http' && ([
+   !keySet && !form.mail_api_key.trim() ? (aktuellerAnbieter?.schluesselFeld || 'Schlüssel') : null,
+   !form.mail_absender.trim() && !form.smtp_user.trim() ? 'Absenderadresse' : null,
+   aktuellerAnbieter?.brauchtDomain && !form.mail_domain.trim() ? 'Domain' : null,
+ ].filter(Boolean))
 
  const handleSave = () => {
  setMfaErr(null)
@@ -168,10 +181,57 @@ export default function EmailSettings() {
  </button>
  ))}
  </div>
+ {/* Was noch fehlt, steht hier oben und nicht unten bei den Feldern:
+     Solange etwas davon fehlt, greift im Hintergrund weiter SMTP, und
+     dort scheitert der Versand. Die Felder sähen sonst fertig aus, und
+     der Fehler fiele erst bei der nächsten Bestellung auf. */}
+ {nochUnvollstaendig && nochUnvollstaendig.length > 0 && (
+ <p className="text-[12px] text-amber-900 font-light leading-relaxed border border-amber-300 bg-amber-50 px-4 py-3 mt-5">
+ Es fehlt noch: <strong className="font-normal">{nochUnvollstaendig.join(', ')}</strong>.
+ Bis dahin geht der Versand weiter über den Mailserver — und scheitert dort am gesperrten Port.
+ </p>
+ )}
  </div>
 
  {/* ── Maildienst über HTTPS ─────────────────────────────────────── */}
  {form.mail_weg === 'http' && (
+ <>
+ {/* Die Einrichtung passiert beim Dienst, nicht hier — und wer das zum
+     ersten Mal macht, sucht sonst in einem fremden Menü nach dem
+     richtigen Reiter. Deshalb stehen die Schritte an der Stelle, an der
+     man sie braucht, und nicht in einer Datei, die niemand aufmacht. */}
+ <div className="bg-white border border-black/[0.08] mb-6">
+ <button
+ onClick={() => setAnleitungOffen(v => !v)}
+ className="w-full flex items-center justify-between px-7 py-4 bg-transparent border-0 text-left"
+ >
+ <span className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light">
+ So richten Sie {aktuellerAnbieter?.name || 'den Dienst'} ein
+ </span>
+ <ChevronDown size={14} strokeWidth={1.4} className={`text-black/25 transition-transform ${anleitungOffen ? 'rotate-180' : ''}`} />
+ </button>
+ {anleitungOffen && (
+ <div className="px-7 pb-7 -mt-1">
+ <ol className="space-y-3.5 list-none p-0 m-0">
+ {(aktuellerAnbieter?.einrichtung || []).map((schritt, i) => (
+ <li key={i} className="flex gap-3.5">
+ <span className="flex-shrink-0 w-5 h-5 border border-black/15 flex items-center justify-center text-[10px] text-black/40 tabular-nums">
+ {i + 1}
+ </span>
+ <span className="text-[12px] text-black/55 font-light leading-relaxed">{schritt}</span>
+ </li>
+ ))}
+ </ol>
+ <p className="text-[11px] text-black/30 font-light leading-relaxed mt-5 pt-4 border-t border-black/[0.06]">
+ Die DNS-Einträge liegen dort, wo die Domain verwaltet wird. Ihre Werte erzeugt der Dienst
+ selbst und zeigt sie an — sie lassen sich nicht vorwegnehmen, weil jeder Schlüssel anders
+ ist. Ein DMARC-Eintrag ist zusätzlich empfehlenswert, aber keine Voraussetzung dafür,
+ dass Nachrichten hinausgehen.
+ </p>
+ </div>
+ )}
+ </div>
+
  <div className="bg-white p-7 mb-6">
  <div className="space-y-5">
 
@@ -262,6 +322,7 @@ export default function EmailSettings() {
  )}
  </div>
  </div>
+ </>
  )}
 
  <div className="bg-white p-7 mb-6">

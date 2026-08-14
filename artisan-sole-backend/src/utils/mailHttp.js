@@ -46,9 +46,21 @@ const ZEITGRENZE_MS = 15000
 export const ANBIETER = {
   brevo: {
     name: 'Brevo',
-    hinweis: 'Rechenzentren in der EU, 300 Mails am Tag kostenlos. Schlüssel unter Settings › SMTP & API › API keys.',
+    hinweis: 'Rechenzentren in der EU, 300 Mails am Tag kostenlos.',
     schluesselFeld: 'API-Schlüssel (beginnt mit xkeysib-)',
     brauchtDomain: false,
+    einrichtung: [
+      'Konto anlegen auf brevo.com. Kostenlos, 300 Nachrichten am Tag, keine Karte nötig.',
+      'Domain bestätigen: „Senders, Domains & Dedicated IPs" › Domains › Add Domain › artisansole.com. '
+        + 'Brevo zeigt daraufhin die einzutragenden Werte an (Brevo-Code, DKIM, SPF) — die kommen bei Ihrem '
+        + 'DNS-Anbieter in die Zone der Domain, danach dort auf „Verify". Meist in Minuten bestätigt, '
+        + 'in Ausnahmen dauert die Verteilung im DNS bis zu 48 Stunden.',
+      'Schlüssel erzeugen: Settings › SMTP & API › Reiter „API keys" › Generate a new API key. '
+        + 'Er wird genau einmal angezeigt — am besten gleich hier einfügen. '
+        + 'Nicht zu verwechseln mit dem SMTP-Passwort im Reiter daneben: Die beiden sind verschieden '
+        + 'und lassen sich nicht gegeneinander tauschen.',
+      'Schlüssel und Absenderadresse hier eintragen, speichern, Testnachricht schicken.',
+    ],
     senden: (cfg, m) => ({
       url: 'https://api.brevo.com/v3/smtp/email',
       init: {
@@ -71,9 +83,18 @@ export const ANBIETER = {
 
   resend: {
     name: 'Resend',
-    hinweis: 'In Minuten eingerichtet, 3.000 Mails im Monat kostenlos. Die Absender-Domain muss dort einmal bestätigt werden.',
+    hinweis: 'In Minuten eingerichtet, 3.000 Mails im Monat kostenlos.',
     schluesselFeld: 'API-Schlüssel (beginnt mit re_)',
     brauchtDomain: false,
+    einrichtung: [
+      'Konto anlegen auf resend.com. Kostenlos, 3.000 Nachrichten im Monat.',
+      'Domain bestätigen: Domains › Add Domain › artisansole.com. Resend zeigt die einzutragenden '
+        + 'Werte an (MX, SPF als TXT, DKIM) — die kommen bei Ihrem DNS-Anbieter in die Zone der Domain, '
+        + 'danach dort auf „Verify". In der Regel innerhalb einer Viertelstunde bestätigt.',
+      'Schlüssel erzeugen: API Keys › Create API Key. „Sending access" genügt — mehr Rechte braucht '
+        + 'diese Anwendung nicht.',
+      'Schlüssel und Absenderadresse hier eintragen, speichern, Testnachricht schicken.',
+    ],
     senden: (cfg, m) => ({
       url: 'https://api.resend.com/emails',
       init: {
@@ -96,9 +117,19 @@ export const ANBIETER = {
 
   postmark: {
     name: 'Postmark',
-    hinweis: 'Sehr zuverlässige Zustellung, 100 Mails im Monat kostenlos. Absenderadresse (Sender Signature) muss dort bestätigt sein.',
+    hinweis: 'Sehr zuverlässige Zustellung, 100 Mails im Monat kostenlos.',
     schluesselFeld: 'Server-Token',
     brauchtDomain: false,
+    einrichtung: [
+      'Konto anlegen auf postmarkapp.com. 100 Nachrichten im Monat kostenlos.',
+      'Absender bestätigen: unter „Sender Signatures" entweder die einzelne Adresse '
+        + '(Postmark schickt eine Bestätigungsmail an sie) oder gleich die ganze Domain über die dort '
+        + 'angezeigten DNS-Einträge. Die einzelne Adresse geht schneller, die Domain ist die bessere Wahl, '
+        + 'wenn später weitere Absender dazukommen.',
+      'Schlüssel holen: beim Server unter „API Tokens" den Server-Token kopieren. '
+        + 'Nicht den Account-Token — der ist für die Kontoverwaltung und wird hier abgewiesen.',
+      'Token und Absenderadresse hier eintragen, speichern, Testnachricht schicken.',
+    ],
     senden: (cfg, m) => ({
       url: 'https://api.postmarkapp.com/email',
       init: {
@@ -129,6 +160,15 @@ export const ANBIETER = {
     hinweis: 'Region EU wählbar. Braucht zusätzlich die dort eingerichtete Domain.',
     schluesselFeld: 'Private API-Schlüssel',
     brauchtDomain: true,
+    einrichtung: [
+      'Konto anlegen auf mailgun.com — bei der Registrierung die Region EU wählen. '
+        + 'Sie lässt sich später nicht umstellen, und ein EU-Konto ist über den US-Endpunkt nicht erreichbar.',
+      'Domain einrichten: Sending › Domains › Add New Domain. Üblich ist eine eigene Unterdomain '
+        + 'wie mg.artisansole.com, damit die Zustellung nicht an der Hauptdomain hängt. Die dort '
+        + 'angezeigten TXT-, MX- und CNAME-Einträge beim DNS-Anbieter eintragen und verifizieren lassen.',
+      'Schlüssel holen: unter API Security den privaten API-Schlüssel kopieren.',
+      'Schlüssel, Absenderadresse, Domain und Region hier eintragen, speichern, Testnachricht schicken.',
+    ],
     senden: (cfg, m) => {
       // Mailgun nimmt Formularfelder, kein JSON — als einziger der vier.
       const felder = new URLSearchParams({
@@ -164,6 +204,7 @@ export const anbieterListe = () =>
   Object.entries(ANBIETER).map(([schluessel, a]) => ({
     schluessel, name: a.name, hinweis: a.hinweis,
     schluesselFeld: a.schluesselFeld, brauchtDomain: a.brauchtDomain,
+    einrichtung: a.einrichtung || [],
   }))
 
 /**
