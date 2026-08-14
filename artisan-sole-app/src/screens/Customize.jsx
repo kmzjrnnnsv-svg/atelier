@@ -85,6 +85,8 @@ import { accessoryImages } from '../lib/accessoryImages'
 import { LIEFERUMFANG } from '../lib/lieferumfang'
 import GroessenTabelle from '../components/GroessenTabelle'
 import ExpressHinweis from '../components/ExpressHinweis'
+import { sichtbareGruppen as gruppenFuer, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
+
 
 // Relative Bild-URLs (/uploads/…) gegen die API-Base auflösen, base64/http
 // bleiben unverändert.
@@ -258,8 +260,16 @@ export default function Customize() {
     // Material/Color haben eigene Spezial-UIs. `last` (Schuhform) entfällt als
     // manueller Schritt, die Leistenform wird über die Fußmaße automatisch
     // ermittelt (Auto-Match) und nur dezent im Checkout gezeigt.
+    // In der Express-Linie bleibt nur offen, was am Modell freigegeben ist.
+    // Alles andere legt das vorbereitete Bauteil fest — eine Gruppe zu zeigen,
+    // die sich am fertigen Schaft nicht mehr ändern lässt, wäre ein
+    // Versprechen, das die Werkstatt nicht halten kann.
+    const expressOffen = expressFreigabe(product)
+
     const filterGroups = (groups) =>
-      (Array.isArray(groups) ? groups : []).filter(g => !['material', 'color', 'last'].includes(g.key))
+      (Array.isArray(groups) ? groups : [])
+        .filter(g => !['material', 'color', 'last'].includes(g.key))
+        .filter(g => !expressOffen || expressOffen.has(g.key))
 
     // Optionen laden: zuerst per-Schuh, bei leer → Kategorie-Vorlage.
     const loadOptions = async () => {
@@ -276,7 +286,10 @@ export default function Customize() {
       setSelectedExtras({})  // keine Auto-Defaults: User klickt jeden Schritt
     }
     loadOptions()
-  }, [product?.id, category])
+    // Die Express-Angaben hängen am Modell und ändern sich nur mit ihm — sie
+    // stehen trotzdem in der Liste, damit niemand später rätselt, warum die
+    // Auswahl nach einem Wechsel der Kollektion nicht nachzieht.
+  }, [product?.id, product?.express, product?.express_groups, category])
 
   // Eigenstaendige Stil-Loafer: feste Ausfuehrung still vorbelegen (der
   // Selektor selbst wird unten ausgeblendet), damit sie in Warenkorb/
@@ -296,12 +309,6 @@ export default function Customize() {
     ? extraOptionGroups.find(g => g.key === 'loafer_decoration')?.values?.find(v => v.key === product.locked_decoration)?.label || null
     : null
 
-  // Summe der Extra-Aufpreise
-  const extrasPriceTotal = extraOptionGroups.reduce((sum, g) => {
-    const sel = g.values.find(v => v.id === selectedExtras[g.key])
-    return sum + (sel?.price_extra || 0)
-  }, 0)
-
   // Gewählte Sohlen-Art (Optionsgruppe 'sole') — ersetzt das Legacy-Sohlenfeld
   // in Warenkorb/Bestellung/Sticky-Bar.
   // Eine Kennung je Produktseite. Sie begleitet die Konfiguration bis in die
@@ -315,6 +322,34 @@ export default function Customize() {
     const g = extraOptionGroups.find(x => x.key === 'sole')
     return g ? (g.values.find(v => v.id === selectedExtras['sole']) || null) : null
   })()
+
+  const gummiSohle = !hatLederrand(soleArt?.key)
+
+  // Die Express-Freigabe hat beim Laden schon gefiltert; hier kommt dazu, was
+  // die gewählte Sohle übriglässt — das ändert sich mit jeder Wahl.
+  const sichtbareGruppen = gruppenFuer(extraOptionGroups, { soleKey: soleArt?.key })
+
+  // Summe der Extra-Aufpreise. Steht hinter `sichtbareGruppen`, weil eine
+  // ausgeblendete Gruppe auch nichts kosten darf — der Sohlenrand an einer
+  // Gummisohle wäre sonst ein Aufpreis für etwas, das es nicht gibt.
+  const extrasPriceTotal = sichtbareGruppen.reduce((sum, g) => {
+    const sel = g.values.find(v => v.id === selectedExtras[g.key])
+    return sum + (sel?.price_extra || 0)
+  }, 0)
+
+  // Eine Farbe, die niemand mehr sieht, darf nicht mitbestellt werden. Wer
+  // erst Sohlenrand „Cognac" wählt und dann auf Gummi wechselt, hätte sonst
+  // eine Angabe in der Bestellung, zu der es am Schuh nichts gibt.
+  useEffect(() => {
+    if (!gummiSohle) return
+    setSelectedExtras(prev => {
+      const offen = FARBGRUPPEN_SOHLE.filter(k => prev[k] !== undefined)
+      if (!offen.length) return prev
+      const neu = { ...prev }
+      for (const k of offen) delete neu[k]
+      return neu
+    })
+  }, [gummiSohle])
 
   // Daten aus dem Store (mit Fallback)
   // Nur als verfügbar markierte Materialien (available !== 0) anzeigen,
@@ -1052,7 +1087,7 @@ export default function Customize() {
   const needsCustomRequest = (fitState === 'nomatch' && sizeType !== 'standard') || sizeType === 'custom'
   // Extras als lesbare Liste mit Aufpreissumme, wird in der Bestellung
   // mitgeführt, damit Admin & Manufaktur die Spezifikation sehen.
-  const extrasForCart = extraOptionGroups
+  const extrasForCart = sichtbareGruppen
     .map(g => {
       const sel = g.values.find(v => v.id === selectedExtras[g.key])
       return sel ? { group: g.label, key: g.key, value: sel.label, price: sel.price_extra || 0 } : null
@@ -1909,7 +1944,7 @@ export default function Customize() {
             {/* ── Konfigurator-Extras (Schritt-für-Schritt) ─────────────
                 Erst sichtbar, wenn Material+Farbe gewählt sind. Vor jedem
                 Schritt ein Helper-Text mit Anwendungs-Hinweisen. */}
-            {extraOptionGroups
+            {sichtbareGruppen
               .filter(g => !(product?.locked_decoration && g.key === 'loafer_decoration'))
               .map((group, gIdx, renderGroups) => {
               const currentSelection = group.values.find(v => v.id === selectedExtras[group.key])
@@ -2356,7 +2391,7 @@ export default function Customize() {
                   </div>
                   {/* Sohle wird als Optionsgruppe "Sohlen-Art" unten gelistet. */}
                   {/* Dynamische Extras (Last, Welt, Heel, Toe, Schnalle, …) */}
-                  {extraOptionGroups.map(group => {
+                  {sichtbareGruppen.map(group => {
                     const sel = group.values.find(v => v.id === selectedExtras[group.key])
                     if (!sel) return null
                     return (
