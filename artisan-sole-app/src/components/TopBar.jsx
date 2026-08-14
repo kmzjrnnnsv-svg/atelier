@@ -5,6 +5,7 @@ import { prefetchRoute, isMobileWeb } from '../App'
 import useStore from '../store/store'
 import { useSeitentitelStore, titelFuerPfad } from '../store/seitentitel'
 import ChatFenster, { useUngelesen } from './ChatFenster'
+import Bereichswechsel from './Bereichswechsel'
 import { useAuth } from '../context/AuthContext'
 
 // ── Navigation structure (LV-style) ─────────────────────────────────────────
@@ -237,6 +238,11 @@ export default function TopBar() {
 
               {/* Divider */}
               <div className="my-5 h-px bg-black/[0.06]" />
+
+              {/* Wer mehr als einen Bereich hat, kommt hier hinüber. Bewusst
+                  über den Kontopunkten: Es ist ein Ortswechsel, keine
+                  Einstellung. Konten mit nur einem Bereich sehen nichts. */}
+              <Bereichswechsel oeffne={go} />
 
               {/* Secondary navigation */}
               <nav>

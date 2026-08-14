@@ -16,6 +16,7 @@ import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import { HOME_PATH } from '../lib/homePath'
 import ChatFenster, { useUngelesen } from '../components/ChatFenster'
+import Bereichswechsel from '../components/Bereichswechsel'
 import AffiliateStammdaten from '../components/AffiliateStammdaten'
 import Ablauf from '../components/Ablauf'
 
@@ -161,6 +162,10 @@ export default function AffiliatePortal() {
       <div className="flex items-center justify-between px-5 lg:px-16 h-14 border-b border-black/[0.06] bg-white">
         <span className="font-brand text-[11px] text-black/70">ARTISAN SOLE</span>
         <div className="flex items-center gap-1">
+        {/* Zurück in den Laden. Ein Affiliate ist meistens auch Kunde — er
+            trägt schließlich, was er empfiehlt. Ohne diesen Weg müsste er
+            sich abmelden, um ein Paar für sich selbst zu bestellen. */}
+        <Bereichswechsel kompakt />
         <button
           onClick={() => setChatOffen(true)}
           className="relative flex items-center gap-2 h-11 px-2 bg-transparent border-0 text-[11px] text-black/40 hover:text-black/70 uppercase tracking-[0.16em]"
