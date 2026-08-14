@@ -30,7 +30,7 @@
  * Login sieht die Person ihren Stand nie.
  */
 import { useState, useEffect } from 'react'
-import { Users, Plus, Copy, Check, X, Mail, AlertTriangle, Link2, Percent, Gift } from 'lucide-react'
+import { Users, Plus, Copy, Check, X, Mail, AlertTriangle, Link2, Percent, Gift, KeyRound, Lock, Unlock } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 
 const APP_ORIGIN = (import.meta.env.VITE_API_URL ?? '') || (typeof window !== 'undefined' ? window.location.origin : '')
@@ -82,6 +82,33 @@ function zumFormular(a) {
     Object.entries(a).map(([k, v]) => [k, v === null ? '' : v])
   )
   return { ...leeresFormular, ...rein, _modus: 'bearbeiten' }
+}
+
+/**
+ * Welche Angaben der Affiliate selbst pflegen darf — und welche davon die
+ * Verwaltung festgeschrieben hat.
+ *
+ * Sperren ist keine Bevormundung: Sobald jemand die Anschrift gegen den
+ * Ausweis und die IBAN gegen den Kontoauszug geprüft hat, darf sich beides
+ * nicht mehr still ändern. Eine geprüfte Bankverbindung, die nachts eine
+ * andere wird, ist der klassische Weg, eine Gutschrift umzuleiten.
+ */
+const SPERRBARE_FELDER = [
+  { key: 'full_name',      label: 'Name' },
+  { key: 'street',         label: 'Straße' },
+  { key: 'postal_code',    label: 'PLZ' },
+  { key: 'city',           label: 'Ort' },
+  { key: 'birth_date',     label: 'Geburtsdatum' },
+  { key: 'tax_status',     label: 'Steuerstatus' },
+  { key: 'tax_number',     label: 'Steuernummer' },
+  { key: 'vat_id',         label: 'USt-IdNr.' },
+  { key: 'iban',           label: 'IBAN' },
+  { key: 'account_holder', label: 'Kontoinhaber' },
+]
+
+const sperrliste = (a) => {
+  try { const l = JSON.parse(a?.locked_fields || '[]'); return Array.isArray(l) ? l : [] }
+  catch { return [] }
 }
 
 /** Die Konditionen einer Zeile in einem Satzfragment. */
@@ -203,6 +230,28 @@ export default function AffiliatesPanel() {
   const [kopiert, setKopiert] = useState(null)
   const [zubehoer, setZubehoer] = useState([])
   const [einladung, setEinladung] = useState(null)   // { offen, link, qr, … }
+  // Zugang zurücksetzen — derselbe Weg wie bei den Benutzern, nur von hier
+  // aus erreichbar. Ein Affiliate, der sein Gerät verliert, bekommt keine
+  // Mail von uns; der QR-Code ist der einzige Weg zurück.
+  const [zugang, setZugang] = useState(null)
+
+  const zugangFreigeben = async (a) => {
+    const notiz = prompt(`Zugang für ${a.full_name || a.email} zurücksetzen.\n\nWie haben Sie die Identität geprüft?`)
+    if (notiz === null) return
+    if (notiz.trim().length < 4) { setFehler('Bitte kurz festhalten, wie Sie die Identität geprüft haben.'); return }
+    setFehler(null); setHinweis(null)
+    setZugang({ laedt: true, name: a.full_name || a.email })
+    try {
+      const d = await apiFetch(`/api/users/${a.user_id}/wiederherstellung`, {
+        method: 'POST', body: JSON.stringify({ note: notiz.trim() }),
+      })
+      setZugang({ ...d, name: a.full_name || a.email })
+    } catch (e) {
+      setZugang(null)
+      setFehler(e?.error || 'Zugang konnte nicht zurückgesetzt werden.')
+    }
+  }
+
 
   // Das Zubehör wird für die Zugabe gebraucht: Namen für die Auswahl,
   // Einkaufspreise für die Vorschau. Schlägt der Abruf fehl, greift die feste
@@ -351,6 +400,43 @@ export default function AffiliatesPanel() {
                 >
                   {kopiert === 'einladung' ? <Check size={12} /> : <Link2 size={12} />}
                   {kopiert === 'einladung' ? 'Kopiert' : 'Link kopieren'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Zugang zurücksetzen: Link und QR. Dieselbe Kennung wie bei den
+          Benutzern, eine Stunde gültig, einmal benutzbar. */}
+      {zugang && (
+        <div className="border border-black/12 p-5 mb-8 max-w-2xl">
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-black/30">Anmeldung zurücksetzen</p>
+              <p className="text-[13px] text-black/70 mt-0.5">{zugang.name}</p>
+            </div>
+            <button onClick={() => setZugang(null)} className="text-[11px] text-black/40 hover:text-black bg-transparent border-0">Schließen</button>
+          </div>
+          {zugang.laedt ? (
+            <p className="text-[12px] text-black/35">Wird erzeugt …</p>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-5">
+              {zugang.qr && (
+                <img src={zugang.qr} alt="QR-Code zum Zurücksetzen" className="w-[150px] h-[150px] border border-black/[0.07] flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-black/45 font-light leading-relaxed mb-2">
+                  Eine Stunde gültig, einmal benutzbar. Damit hinterlegt der Affiliate ein
+                  neues Gerät. Bisherige Geräte bleiben gültig, offene Sitzungen enden.
+                </p>
+                <p className="text-[11px] text-black/70 break-all bg-black/[0.02] border border-black/[0.06] p-2.5">{zugang.link}</p>
+                <button
+                  onClick={() => kopieren(zugang.link, 'zugang')}
+                  className="mt-2.5 flex items-center gap-1.5 h-8 px-3 border border-black/15 text-[11px] tracking-[0.1em] uppercase text-black/60 hover:border-black hover:text-black bg-transparent"
+                >
+                  {kopiert === 'zugang' ? <Check size={12} /> : <KeyRound size={12} />}
+                  {kopiert === 'zugang' ? 'Kopiert' : 'Link kopieren'}
                 </button>
               </div>
             </div>
@@ -508,6 +594,41 @@ export default function AffiliatesPanel() {
             <Feld label="Notiz (intern)">
               <textarea rows={2} className="w-full p-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40 bg-white" value={form.note} onChange={e => setzen('note', e.target.value)} />
             </Feld>
+
+            {/* Festgeschriebene Angaben. Der Affiliate pflegt seine Daten
+                selbst — das ist richtig, er ist der Einzige, der sie sicher
+                weiß. Sobald jemand die Anschrift gegen den Ausweis und die
+                IBAN gegen den Kontoauszug geprüft hat, darf sich beides aber
+                nicht mehr still ändern. */}
+            {form.id && (
+              <div className="mt-5 pt-4 border-t border-black/[0.08]">
+                <p className="text-[10px] uppercase tracking-[0.14em] text-black/40 mb-1">Geprüft und festgeschrieben</p>
+                <p className="text-[10px] text-black/35 mb-2.5 leading-relaxed max-w-xl">
+                  Was Sie hier sperren, kann der Affiliate nicht mehr selbst ändern — er sieht
+                  einen Hinweis und wird gebeten, sich zu melden. Sie selbst ändern es
+                  weiterhin oben in dieser Maske.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {SPERRBARE_FELDER.map(f => {
+                    const zu = sperrliste(form).includes(f.key)
+                    return (
+                      <button
+                        key={f.key} type="button"
+                        onClick={() => setzen('locked_fields', JSON.stringify(
+                          zu ? sperrliste(form).filter(x => x !== f.key) : [...sperrliste(form), f.key]
+                        ))}
+                        className={`flex items-center gap-1.5 h-8 px-2.5 text-[11px] border transition-colors ${
+                          zu ? 'bg-black text-white border-black' : 'bg-white text-black/50 border-black/15 hover:border-black/40'
+                        }`}
+                      >
+                        {zu ? <Lock size={11} strokeWidth={1.6} /> : <Unlock size={11} strokeWidth={1.4} />}
+                        {f.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </section>
 
           <div className="flex items-center gap-3 pt-1">
@@ -582,6 +703,17 @@ export default function AffiliatesPanel() {
                         >
                           Einladung
                         </button>
+                        {/* Zugang zurücksetzen — ein Affiliate bekommt keine
+                            Mail von uns; der QR-Code ist sein Weg zurück. */}
+                        {a.user_id ? (
+                          <button
+                            onClick={() => zugangFreigeben(a)}
+                            title="Anmeldung zurücksetzen (Link + QR)"
+                            className="text-[11px] text-black/50 hover:text-black bg-transparent border-0 p-0"
+                          >
+                            Zugang
+                          </button>
+                        ) : null}
                         <button
                           onClick={() => { setForm(zumFormular(a)); setHinweis(null); setFehler(null) }}
                           className="text-[11px] text-black/50 hover:text-black bg-transparent border-0 p-0"

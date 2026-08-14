@@ -1504,6 +1504,30 @@ export function runMigrations(db) {
     // und dürfen nicht vom Browser zurückkommen, sonst könnte er sie zwischen
     // Stellen und Einlösen austauschen.
     `ALTER TABLE webauthn_challenges ADD COLUMN data TEXT`,
+    // ── Konto löschen, in zwei Schritten und mit Frist ────────────────────
+    //
+    // Ein Konto zu löschen ist der einzige Vorgang hier, der sich nicht
+    // zurücknehmen lässt — Bestellungen, Passformen, Nachrichten, alles weg.
+    // Deshalb nicht ein Klick, sondern: beantragen, von einer zweiten Person
+    // bestätigen lassen, dreißig Tage Frist. Erst danach ist es endgültig.
+    //
+    // Die Frist ist kein Zögern. Sie ist die Zeit, in der ein Irrtum noch
+    // auffällt — und in der ein Kunde, der es sich anders überlegt, sein
+    // Konto zurückbekommt, statt neu anzufangen.
+    `ALTER TABLE users ADD COLUMN deletion_requested_at TEXT`,
+    `ALTER TABLE users ADD COLUMN deletion_requested_by INTEGER`,
+    `ALTER TABLE users ADD COLUMN deletion_reason TEXT`,
+    `ALTER TABLE users ADD COLUMN deleted_at TEXT`,
+    `ALTER TABLE users ADD COLUMN deleted_by INTEGER`,
+    // Welche Felder der Affiliate nicht mehr selbst ändern darf.
+    //
+    // JSON-Liste von Spaltennamen. Der Affiliate trägt seine Daten selbst ein
+    // — das ist richtig, denn er ist der Einzige, der sie sicher weiß. Sobald
+    // die Verwaltung eine Angabe geprüft hat (Anschrift auf dem Ausweis, IBAN
+    // gegen den Kontoauszug), soll sie sich aber nicht mehr still ändern
+    // lassen: Eine geprüfte Bankverbindung, die nachts eine andere wird, ist
+    // der klassische Weg, eine Gutschrift umzuleiten.
+    `ALTER TABLE affiliates ADD COLUMN locked_fields TEXT NOT NULL DEFAULT '[]'`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }

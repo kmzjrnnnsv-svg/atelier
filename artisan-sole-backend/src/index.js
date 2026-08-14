@@ -42,6 +42,7 @@ import { seedDatabase } from './db/seed.js'
 import { apiLimiter } from './middleware/rateLimiter.js'
 import authRouter, { issueTokens } from './routes/auth.js'
 import usersRouter from './routes/users.js'
+import kontoLoeschungRouter from './routes/kontoLoeschung.js'
 import affiliatesRouter from './routes/affiliates.js'
 import passkeysRouter, { makeLoginVerify, makeSignupVerify, makeRecoverVerify, makeAffiliateVerify } from './routes/passkeys.js'
 import recoveryRouter from './routes/recovery.js'
@@ -177,6 +178,10 @@ app.use('/api/auth/passkey', passkeysRouter)
 app.use('/api/auth/recover', recoveryRouter)
 app.use('/api/configs',  configsRouter)
 app.use('/api/auth',     authRouter)
+// Löschverfahren zuerst: Es lässt Kuratoren mitwirken, die übrigen
+// Benutzerrouten nicht. Ohne zweite Person ließe sich das Vier-Augen-Prinzip
+// bei nur einem Administrator nie zu Ende führen.
+app.use('/api/users',    kontoLoeschungRouter)
 app.use('/api/users',    usersRouter)
 // shoeCardRouter zuerst: shoesRouter hat ein generisches GET /:id, das
 // '/color-summary' sonst als id auffassen und mit 404 beantworten würde.

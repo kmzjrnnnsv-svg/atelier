@@ -279,12 +279,41 @@ Wir bemühen uns um einen störungsfreien Betrieb, schulden aber keine
 ununterbrochene Verfügbarkeit. Wartungsarbeiten, Störungen und Ausfälle
 begründen keinen Anspruch.
 
-## 12. Streitbeilegung
+## 12. Fußmaße und Ihr Konto
+
+**(1) Wofür wir Ihre Maße verwenden.** Fußlänge, Ballenumfang und — sofern Sie
+sie uns überlassen — Messdaten aus einem Fußscan verwenden wir, um Leisten,
+Weite und Größe für Ihr Paar zu bestimmen. Ohne diese Angaben können wir nicht
+maßfertigen.
+
+**(2) Anonymisierte Weiterverwendung.** Wir verwenden Maß- und Formdaten
+zusätzlich in **anonymisierter Form**, um unsere Leistentabelle, das
+Passform-Verfahren und künftige Modelle weiterzuentwickeln und zu erproben.
+Anonymisiert heißt: ohne Ihren Namen, Ihre Anschrift, Ihre E-Mail-Adresse und
+ohne jede Kennung, über die sich ein Bezug zu Ihnen herstellen ließe. Solche
+Daten sind keine personenbezogenen Daten mehr; sie bleiben erhalten, auch wenn
+Sie Ihr Konto löschen lassen, weil sie sich Ihnen dann nicht mehr zuordnen
+lassen.
+
+**(3) Löschung Ihres Kontos.** Sie können die Löschung Ihres Kontos jederzeit
+verlangen. Schreiben Sie uns dazu über den Nachrichtenbereich in der Anwendung
+oder an die im Impressum genannte Adresse. Wir sperren das Konto daraufhin und
+löschen es **nach dreißig Tagen** endgültig. Die Frist dient allein dazu, eine
+irrtümliche Löschung noch rückgängig machen zu können; auf Ihren ausdrücklichen
+Wunsch löschen wir sofort.
+
+**(4) Was die Löschung nicht erfasst.** Abgeschlossene Bestellungen unterliegen
+handels- und steuerrechtlichen Aufbewahrungsfristen und bleiben für deren Dauer
+bestehen. Sie verlieren mit der Löschung ihre Verbindung zu Ihrer Person:
+Anschrift, Maße und Notizen werden entfernt. Ebenso bleiben abgerechnete
+Provisionen eines Affiliate-Kontos bestehen, ohne die Person zu benennen.
+
+## 13. Streitbeilegung
 
 Wir sind zur Teilnahme an einem Streitbeilegungsverfahren vor einer
 Verbraucherschlichtungsstelle **weder verpflichtet noch bereit**.
 
-## 13. Schlussbestimmungen
+## 14. Schlussbestimmungen
 
 (1) Es gilt deutsches Recht. Bei Verbrauchern mit gewöhnlichem Aufenthalt in
 der EU bleiben zwingende Verbraucherschutzvorschriften des Aufenthaltsstaates

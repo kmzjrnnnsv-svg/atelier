@@ -15,13 +15,37 @@
  * Zeile.
  */
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Check, AlertTriangle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Check, AlertTriangle, Lock } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 
 const eingabe = 'w-full border border-black/12 px-3 py-2.5 text-[13px] outline-none focus:border-black/40 bg-white'
+const gesperrtStil = 'w-full border border-black/[0.06] bg-black/[0.03] px-3 py-2.5 text-[13px] text-black/50'
 const beschriftung = 'block text-[10px] uppercase tracking-[0.14em] text-black/40 mb-1'
 
-function Feld({ label, hinweis, children }) {
+/**
+ * Ein Feld — oder, wenn die Verwaltung es festgeschrieben hat, der Wert zum
+ * Ablesen mit Schloss.
+ *
+ * Ein gesperrtes Feld auszugrauen und stumm zu lassen wäre die schlechtere
+ * Wahl: Wer hineintippt und nichts geschieht, hält es für kaputt. Hier steht,
+ * dass es geprüft wurde und wie man es ändert.
+ */
+function Feld({ label, hinweis, children, gesperrt, wert }) {
+  if (gesperrt) {
+    return (
+      <div className="block">
+        <span className={`${beschriftung} flex items-center gap-1.5`}>
+          {label}
+          <Lock size={10} strokeWidth={1.6} className="text-black/30" />
+        </span>
+        <p className={gesperrtStil}>{wert || <span className="text-black/25">—</span>}</p>
+        <span className="block text-[10px] text-black/30 mt-1 leading-relaxed">
+          Von uns geprüft und festgeschrieben. Hat sich etwas geändert? Schreiben Sie uns kurz,
+          wir tragen es nach.
+        </span>
+      </div>
+    )
+  }
   return (
     <label className="block">
       <span className={beschriftung}>{label}</span>
@@ -29,6 +53,12 @@ function Feld({ label, hinweis, children }) {
       {hinweis && <span className="block text-[10px] text-black/30 mt-1 leading-relaxed">{hinweis}</span>}
     </label>
   )
+}
+
+/** Welche Felder die Verwaltung festgeschrieben hat. */
+function gesperrteFelder(a) {
+  try { const l = JSON.parse(a?.locked_fields || '[]'); return Array.isArray(l) ? l : [] }
+  catch { return [] }
 }
 
 /** Was für eine Auszahlung vorliegen muss. */
@@ -46,6 +76,8 @@ function fehlendeAngaben(a) {
 
 export default function AffiliateStammdaten({ affiliate, onGespeichert }) {
   const fehlt = fehlendeAngaben(affiliate)
+  const zu = gesperrteFelder(affiliate)
+  const istZu = (k) => zu.includes(k)
   const [offen, setOffen] = useState(fehlt.length > 0)
   const [form, setForm] = useState({
     full_name: affiliate?.full_name || '',
@@ -109,21 +141,21 @@ export default function AffiliateStammdaten({ affiliate, onGespeichert }) {
       {offen && (
         <form onSubmit={speichern} className="px-5 pb-5 space-y-5 border-t border-black/[0.06] pt-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Feld label="Vor- und Nachname" hinweis="Laut Ausweis — er steht auf der Gutschrift.">
+            <Feld label="Vor- und Nachname" hinweis="Laut Ausweis — er steht auf der Gutschrift." gesperrt={istZu('full_name')} wert={form.full_name}>
               <input className={eingabe} value={form.full_name} onChange={e => setzen('full_name', e.target.value)} />
             </Feld>
             <Feld label="Telefon">
               <input className={eingabe} value={form.phone} onChange={e => setzen('phone', e.target.value)} />
             </Feld>
-            <Feld label="Straße und Hausnummer">
+            <Feld label="Straße und Hausnummer" gesperrt={istZu('street')} wert={form.street}>
               <input className={eingabe} value={form.street} onChange={e => setzen('street', e.target.value)} />
             </Feld>
             <div className="grid grid-cols-3 gap-2">
-              <Feld label="PLZ"><input className={eingabe} value={form.postal_code} onChange={e => setzen('postal_code', e.target.value)} /></Feld>
-              <Feld label="Ort"><input className={eingabe} value={form.city} onChange={e => setzen('city', e.target.value)} /></Feld>
+              <Feld label="PLZ" gesperrt={istZu('postal_code')} wert={form.postal_code}><input className={eingabe} value={form.postal_code} onChange={e => setzen('postal_code', e.target.value)} /></Feld>
+              <Feld label="Ort" gesperrt={istZu('city')} wert={form.city}><input className={eingabe} value={form.city} onChange={e => setzen('city', e.target.value)} /></Feld>
               <Feld label="Land"><input className={eingabe} maxLength={2} value={form.country} onChange={e => setzen('country', e.target.value.toUpperCase())} /></Feld>
             </div>
-            <Feld label="Geburtsdatum" hinweis="Trennt Namensgleiche.">
+            <Feld label="Geburtsdatum" hinweis="Trennt Namensgleiche." gesperrt={istZu('birth_date')} wert={form.birth_date}>
               <input type="date" className={eingabe} value={form.birth_date || ''} onChange={e => setzen('birth_date', e.target.value)} />
             </Feld>
           </div>
@@ -136,18 +168,18 @@ export default function AffiliateStammdaten({ affiliate, onGespeichert }) {
               </select>
             </Feld>
             {form.tax_status === 'vat_liable' ? (
-              <Feld label="USt-IdNr." hinweis="Sie weisen Umsatzsteuer aus, deshalb gehört sie auf die Gutschrift.">
+              <Feld label="USt-IdNr." hinweis="Sie weisen Umsatzsteuer aus, deshalb gehört sie auf die Gutschrift." gesperrt={istZu('vat_id')} wert={form.vat_id}>
                 <input className={eingabe} value={form.vat_id} onChange={e => setzen('vat_id', e.target.value)} />
               </Feld>
             ) : (
-              <Feld label="Steuernummer" hinweis="Als Kleinunternehmer genügt sie.">
+              <Feld label="Steuernummer" hinweis="Als Kleinunternehmer genügt sie." gesperrt={istZu('tax_number')} wert={form.tax_number}>
                 <input className={eingabe} value={form.tax_number} onChange={e => setzen('tax_number', e.target.value)} />
               </Feld>
             )}
-            <Feld label="IBAN" hinweis="Ohne IBAN und Kontoinhaber können wir nicht auszahlen.">
+            <Feld label="IBAN" hinweis="Ohne IBAN und Kontoinhaber können wir nicht auszahlen." gesperrt={istZu('iban')} wert={form.iban}>
               <input className={eingabe} value={form.iban} onChange={e => setzen('iban', e.target.value.toUpperCase().replace(/\s+/g, ''))} />
             </Feld>
-            <Feld label="Kontoinhaber">
+            <Feld label="Kontoinhaber" gesperrt={istZu('account_holder')} wert={form.account_holder}>
               <input className={eingabe} value={form.account_holder} placeholder={form.full_name} onChange={e => setzen('account_holder', e.target.value)} />
             </Feld>
           </div>
