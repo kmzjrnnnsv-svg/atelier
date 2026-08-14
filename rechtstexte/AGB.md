@@ -30,10 +30,42 @@ Weite, Leder, Farbe, Sohle und Ausführung ergeben sich aus Ihrer
 Konfiguration und Ihren Maßangaben.
 
 (2) Die Fertigung beginnt erst nach vollständigem Zahlungseingang und nach
-Ihrer Freigabe der Konfiguration.
+Ihrer Freigabe der Konfiguration. Mit dem Eingang der Zahlung geht Ihr
+Auftrag an die Werkstatt; ab diesem Zeitpunkt ist Ihr Paar in Arbeit. Was
+eine Stornierung danach kostet, steht in Ziffer 7.2.
 
 (3) Die Herstellung dauert in der Regel 4 bis 6 Wochen. Diese Angabe ist ein
 unverbindlicher Richtwert, kein Fixtermin.
+
+### 2.1 Zwei Linien
+
+(1) Wir bieten zwei Wege an, die sich in der Fertigungsdauer und im Umfang
+Ihrer Auswahl unterscheiden:
+
+| | **Maßanfertigung** | **Express** |
+|---|---|---|
+| Dauer | 4 bis 6 Wochen | rund 2 Wochen |
+| Preis | Grundpreis | Grundpreis zzgl. Aufpreis |
+| Auswahl | vollständig — Leisten, Leder, Farbe, Sohle, Ausführung | eingeschränkt |
+| Fertigung | von Grund auf für Sie | aus vorbereiteten Bauteilen, auf Ihre Maße vollendet |
+
+(2) Bei der Express-Linie halten wir häufig gewählte Bauteile — zugeschnittene
+Schäfte, vorbereitete Sohlen — bereits vor. Was diese Zeit spart, kostet
+Auswahl: Nicht jede Kombination aus Leder, Farbe und Ausführung lässt sich so
+darstellen. Welche Angaben Sie treffen können, sehen Sie am jeweiligen Modell,
+bevor Sie bestellen.
+
+(3) **Auch das Express-Paar entsteht für Sie.** Die vorbereiteten Bauteile
+sind Halbzeug, kein fertiger Schuh: Gezwickt, aufgebaut und ausgearbeitet wird
+auf dem für Sie bestimmten Leisten, nach Ihren Maßen, in Ihrer Größe und
+Weite. Ein Paar aus dieser Linie ist deshalb ebenso wenig weiterverkäuflich
+wie eines aus der Maßanfertigung — es passt zu Ihrem Fuß und zu keinem
+anderen.
+
+(4) Die Angabe „rund 2 Wochen" ist wie jede Fertigungsdauer ein
+unverbindlicher Richtwert. Sie setzt voraus, dass die für Ihre Konfiguration
+nötigen Bauteile vorrätig sind; ist das nicht der Fall, sagen wir Ihnen das
+vor der Fertigung und Sie können den Auftrag kostenfrei aufheben.
 
 ## 3. Vertragsschluss
 
@@ -113,7 +145,13 @@ zugeschnitten sind.
 (2) Genau das trifft auf unsere Schuhe zu: Jedes Paar entsteht einzeln nach
 Ihren Maßen und Ihrer Konfiguration und ist nicht weiterverkäuflich.
 
-(3) Wir weisen Sie hierauf im Bestellvorgang gesondert hin. Sie bestätigen
+(3) **Das gilt für beide Linien.** Auch beim Express-Paar ist die individuelle
+Bestimmung durch Sie maßgeblich: Größe, Weite und Leisten richten sich nach
+Ihren Maßen, und erst danach wird das Paar aufgebaut. Die vorbereiteten
+Bauteile nach Ziffer 2.1 verkürzen die Arbeit, nehmen ihr aber nicht den
+Charakter der Einzelanfertigung — ohne Ihre Maße entsteht kein Schuh.
+
+(4) Wir weisen Sie hierauf im Bestellvorgang gesondert hin. Sie bestätigen
 diesen Hinweis vor dem Absenden der Bestellung.
 
 ## 6. Mängelhaftung
@@ -169,22 +207,50 @@ Mängel.
 Ein Paar entsteht nach Ihren Maßen auf einem für Sie ausgewählten Leisten. Mit
 dem Zuschnitt sind Leder, Arbeitszeit und Leistenbelegung verbraucht; das
 fertige Paar lässt sich an niemanden sonst verkaufen. Was wir erstatten,
-tragen wir daher vollständig selbst. Deshalb die Grenze von 50 % — sie ist
-keine Vertragsstrafe, sondern der Punkt, an dem beide Seiten je die Hälfte
-tragen.
+tragen wir daher vollständig selbst.
+
+Deshalb steigt der einbehaltene Anteil mit dem Fortschritt der Arbeit statt
+von Anfang an festzustehen. Solange nichts geschnitten ist, kostet eine
+Stornierung nichts. Ist das Paar fertig, ist es verbraucht.
 
 ### 7.2 Stornierung nach Auftragseingang
 
-(1) Bis zum Vertragsschluss nach Ziffer 3 können Sie jederzeit kostenfrei
-absehen.
+(1) Was eine Stornierung kostet, hängt davon ab, wie weit Ihr Paar gediehen
+ist. Nicht vom Kalender: Zwei Wochen nach der Bestellung kann ein Paar noch
+unberührt sein oder bereits zugeschnitten — entscheidend ist der Stand der
+Arbeit, und den sehen Sie jederzeit unter *Meine Bestellungen*.
 
-(2) Danach beginnt die Fertigung. Stornieren Sie ab diesem Zeitpunkt,
-erstatten wir **höchstens 50 % des Kaufpreises**. Der einbehaltene Anteil
-deckt Material, Arbeitszeit und die belegte Fertigungskapazität.
+| Stand Ihrer Bestellung | Wir behalten ein | Sie erhalten zurück |
+|---|---|---|
+| Zahlung noch nicht eingegangen | — | Der Auftrag verfällt, es ist nichts zu erstatten |
+| Bezahlt, Freigabe an die Werkstatt noch nicht erteilt | 0 % | **den vollen Betrag** |
+| In Fertigung | 50 % | 50 % |
+| Fertiggestellt, in der Qualitätsprüfung | 75 % | 25 % |
+| Versandt oder zugestellt | — | keine Erstattung; es bleibt die Kulanz nach Ziffer 7.3 |
 
-(3) Melden Sie sich so früh wie möglich an kontakt@artisansole.com. Je früher die Nachricht
-eintrifft, desto eher können wir mehr als die Hälfte erstatten — versprechen
-können wir das nicht.
+(2) **Der Wendepunkt ist die Freigabe an die Werkstatt.** Sie erfolgt, sobald
+Ihre Zahlung eingegangen ist — von da an sind Leisten belegt, Leder
+zugeschnitten und Arbeitszeit eingeplant. Bis dahin kostet eine Stornierung
+nichts, danach beginnt die Staffel. Wir bestätigen Ihnen die Freigabe per
+E-Mail; die Nachricht nennt den Zeitpunkt.
+
+(3) Der einbehaltene Anteil deckt Material, Arbeitszeit und die belegte
+Fertigungskapazität. Es ist keine Vertragsstrafe: Was wir erstatten, tragen
+wir vollständig selbst, denn ein Paar auf Ihrem Leisten lässt sich an
+niemanden sonst verkaufen.
+
+(4) Melden Sie sich so früh wie möglich über *Nachrichten* in Ihrem Konto
+oder an kontakt@artisansole.com. Maßgeblich ist der Stand zum Zeitpunkt, zu dem
+Ihre Nachricht bei uns eingeht — nicht der, zu dem wir sie bearbeiten.
+
+(5) Fällt uns die Stornierung leichter als die Staffel vermuten lässt — weil
+ein Bauteil sich anderweitig verwenden lässt oder die Arbeit noch nicht
+begonnen hat —, erstatten wir mehr. Die Sätze oben sind Obergrenzen dessen,
+was wir einbehalten, keine Beträge, die wir in jedem Fall beanspruchen.
+
+(6) Für die Express-Linie nach Ziffer 2.1 gilt dieselbe Staffel. Die Stufen
+folgen dort schneller aufeinander, weil die Fertigung kürzer ist — umso mehr
+kommt es darauf an, sich früh zu melden.
 
 ### 7.3 Nichtgefallen
 

@@ -5,7 +5,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
+import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
@@ -301,6 +301,17 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
               {product.match} Passform
             </span>
           ) : null}
+
+          {/* Die Lieferzeit ist bei diesen Modellen das Kaufargument — sie
+              gehört auf die Kachel und nicht erst auf die Produktseite.
+              Eigene Zeile statt in die Kette oben: Ein Express-Modell kann
+              zugleich eine Passform-Angabe tragen, und beides ist wahr. */}
+          {Number(product.express) === 1 && (
+            <span className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] text-black bg-white/90 border border-black/15 px-2 py-0.5 font-normal" style={{ letterSpacing: '0.04em' }}>
+              <Zap size={10} strokeWidth={2} className="flex-shrink-0" />
+              Express · rund {product.express_weeks || 2} Wochen
+            </span>
+          )}
         </div>
 
         {/* Wunschliste, erscheint beim Überfahren */}

@@ -84,6 +84,7 @@ import useStore from '../store/store'
 import { accessoryImages } from '../lib/accessoryImages'
 import { LIEFERUMFANG } from '../lib/lieferumfang'
 import GroessenTabelle from '../components/GroessenTabelle'
+import ExpressHinweis from '../components/ExpressHinweis'
 
 // Relative Bild-URLs (/uploads/…) gegen die API-Base auflösen, base64/http
 // bleiben unverändert.
@@ -1631,6 +1632,17 @@ export default function Customize() {
                 </div>
               )}
             </div>
+
+            {/* Vor der Konfiguration, nicht darunter: Was hier eingeschränkt
+                ist, muss man wissen, bevor man anfängt zu wählen — nicht,
+                nachdem man eine Auswahl vermisst hat. */}
+            {Number(product.express) === 1 && (
+              <ExpressHinweis
+                wochen={product.express_weeks || 2}
+                aufpreis={Number(product.express_surcharge) || 0}
+                className="mt-4"
+              />
+            )}
 
             {/* Test-Detail: Leisten-Sollmaße vs. Fußmaße (zur Überprüfung) */}
             {fitState === 'matched' && selectedFit?.foot_length_mm != null && footMeasurements?.foot_length_mm && (

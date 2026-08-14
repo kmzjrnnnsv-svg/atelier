@@ -51,6 +51,30 @@ export default function LegalEditor() {
  }
  }
 
+ // ── Fassung aus dem Projekt ─────────────────────────────────────────────
+ //
+ // Die Rechtstexte werden als Dateien gepflegt und beim ersten Start
+ // übernommen — danach nie wieder, damit ein Neustart nichts überschreibt,
+ // was hier geändert wurde. Die Kehrseite: Eine überarbeitete Fassung landet
+ // in der Datei, wird ausgerollt, und auf der Website steht weiter die alte.
+ // Ohne Fehler, ohne Meldung.
+ //
+ // Deshalb dieser Weg: nachsehen, vergleichen, bewusst übernehmen.
+ const [vorlage, setVorlage] = useState(null)
+ const [vorlageLaeuft, setVorlageLaeuft] = useState(false)
+ const [vorlageFehler, setVorlageFehler] = useState(null)
+
+ useEffect(() => { setVorlage(null); setVorlageFehler(null) }, [activeTab])
+
+ const vorlageHolen = async () => {
+   setVorlageLaeuft(true); setVorlageFehler(null)
+   try {
+     setVorlage(await apiFetch(`/api/legal/${activeTab}/vorlage`))
+   } catch (e) {
+     setVorlageFehler(e?.error || 'Konnte nicht gelesen werden')
+   } finally { setVorlageLaeuft(false) }
+ }
+
  const currentDoc = docs[activeTab]
  const currentTabInfo = LEGAL_TABS.find(t => t.key === activeTab)
  const isDirty = currentDoc && (form.title !== (currentDoc.title || '') || form.content !== (currentDoc.content || ''))
@@ -165,7 +189,55 @@ export default function LegalEditor() {
  Zurücksetzen
  </button>
  )}
+
+ <button
+ onClick={vorlageHolen}
+ disabled={vorlageLaeuft}
+ className="px-6 h-11 text-[11px] text-black/30 hover:text-black/60 bg-transparent border-0 transition-colors font-light disabled:opacity-40"
+ >
+ {vorlageLaeuft ? 'Wird gelesen …' : 'Fassung aus dem Projekt prüfen'}
+ </button>
  </div>
+
+ {vorlageFehler && (
+ <p className="text-[12px] text-amber-900 font-light border border-amber-300 bg-amber-50 px-4 py-3 mt-4 leading-relaxed">
+ {vorlageFehler}
+ </p>
+ )}
+
+ {vorlage && (
+ <div className="border border-black/[0.10] mt-4">
+ <div className="px-5 py-4 border-b border-black/[0.06]">
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light mb-1.5">
+ rechtstexte/{vorlage.datei}
+ </p>
+ <p className="text-[12px] text-black/55 font-light leading-relaxed">
+ {vorlage.abweichend
+   ? 'Diese Fassung weicht von der veröffentlichten ab. Unten steht sie vollständig — '
+     + 'bitte lesen, bevor Sie sie übernehmen. Danach müssen Sie noch speichern.'
+   : 'Die veröffentlichte Fassung stimmt mit der Datei überein. Es gibt nichts zu übernehmen.'}
+ </p>
+ </div>
+ {vorlage.abweichend && (
+ <>
+ <pre className="px-5 py-4 text-[11px] text-black/50 font-mono leading-relaxed whitespace-pre-wrap max-h-80 overflow-y-auto m-0">
+ {vorlage.text}
+ </pre>
+ <div className="px-5 py-4 border-t border-black/[0.06] flex items-center gap-3">
+ <button
+ onClick={() => { setForm(f => ({ ...f, content: vorlage.text })); setVorlage(null) }}
+ className="px-6 h-10 border border-black/20 text-[11px] tracking-[0.15em] uppercase text-black/70 hover:bg-black hover:text-white hover:border-black bg-transparent transition-colors font-light"
+ >
+ In das Feld übernehmen
+ </button>
+ <span className="text-[11px] text-black/30 font-light">
+ Veröffentlicht wird erst mit „Aktualisieren".
+ </span>
+ </div>
+ </>
+ )}
+ </div>
+ )}
  </div>
  )}
  </div>

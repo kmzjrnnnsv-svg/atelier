@@ -491,6 +491,32 @@ export function runMigrations(db) {
     // Kein base64 wie bei den Bildern — solche Dateien sind um Größenordnungen
     // schwerer und haben in einer Datenbankspalte nichts verloren.
     `ALTER TABLE shoes ADD COLUMN model_3d TEXT`,
+    // ── Express-Linie ────────────────────────────────────────────────────
+    //
+    // Manche Modelle lassen sich in rund zwei statt vier bis sechs Wochen
+    // fertigen, weil häufig gewählte Bauteile — zugeschnittene Schäfte,
+    // vorbereitete Sohlen — vorgehalten werden. Gezwickt und ausgearbeitet
+    // wird trotzdem auf dem Leisten des Kunden: Das Paar ist eine
+    // Einzelanfertigung, nur mit kürzerem Weg dorthin.
+    //
+    // Die Eigenschaft hängt am Modell, nicht an der Bestellung. Ob ein Schuh
+    // so gebaut werden kann, entscheidet die Werkstatt und nicht der Kunde
+    // beim Bezahlen.
+    `ALTER TABLE shoes ADD COLUMN express INTEGER NOT NULL DEFAULT 0`,
+    // Aufpreis in Euro. Die schnellere Fertigung kostet Vorhaltung: Bauteile
+    // liegen auf Lager, ohne dass feststeht, ob sie jemand abruft.
+    `ALTER TABLE shoes ADD COLUMN express_surcharge REAL NOT NULL DEFAULT 100`,
+    // Zugesagte Dauer in Wochen — Richtwert, kein Fixtermin (AGB Ziffer 2.1).
+    `ALTER TABLE shoes ADD COLUMN express_weeks INTEGER NOT NULL DEFAULT 2`,
+    // Welche Auswahlgruppen im Express-Weg offen bleiben (JSON-Array von
+    // option_groups.key). Leer heißt: nur Größe und Weite, alles andere ist
+    // durch das vorbereitete Bauteil festgelegt.
+    //
+    // Bewusst leer als Vorgabe. Eine Gruppe zu öffnen, die sich am
+    // vorbereiteten Schaft gar nicht mehr ändern lässt, wäre ein Versprechen
+    // an den Kunden, das die Werkstatt nicht halten kann — die Liste gehört
+    // deshalb von Hand gesetzt, Modell für Modell.
+    `ALTER TABLE shoes ADD COLUMN express_groups TEXT NOT NULL DEFAULT '[]'`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────

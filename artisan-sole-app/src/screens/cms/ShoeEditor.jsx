@@ -22,6 +22,9 @@ const emptyForm = {
  model_3d: null,
  cost_price: '',
  promotion_price: '',
+ express: 0,
+ express_surcharge: 100,
+ express_weeks: 2,
 }
 
 function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
@@ -762,6 +765,62 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  />
  </div>
  </div>
+ </div>
+
+ {/* ── Express-Linie ──────────────────────────────────────────────────
+     Der Preis oben ist auch beim Express-Modell der volle Preis. Der
+     Aufpreis hier wird NICHT addiert — er wird ausgewiesen, damit der
+     Kunde sieht, was die kürzere Wartezeit kostet. Zwei Stellen, die
+     denselben Preis errechnen, gehen früher oder später auseinander. */}
+ <div className="bg-white p-7 mb-6">
+ <label className="flex items-start gap-3 cursor-pointer">
+ <input
+ type="checkbox"
+ checked={!!Number(form.express)}
+ onChange={(e) => set('express', e.target.checked ? 1 : 0)}
+ className="mt-0.5 w-4 h-4 accent-black"
+ />
+ <span>
+ <span className="text-[13px] text-black font-light">Express-Linie</span>
+ <span className="block text-[11px] text-black/35 font-light mt-1 leading-relaxed max-w-xl">
+ Dieses Modell wird aus vorbereiteten Bauteilen auf den Leisten des Kunden
+ vollendet und ist dadurch in rund zwei Wochen fertig. Der Kunde sieht das
+ auf der Kollektionsseite und auf der Produktseite, samt Hinweis, dass die
+ Auswahl dafür eingeschränkt ist.
+ </span>
+ </span>
+ </label>
+
+ {!!Number(form.express) && (
+ <div className="grid grid-cols-2 gap-5 mt-6 max-w-md">
+ <div>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Ausgewiesener Aufpreis (€)</label>
+ <input
+ type="number" step="1"
+ value={form.express_surcharge}
+ onChange={(e) => set('express_surcharge', e.target.value)}
+ placeholder="100"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
+ />
+ <p className="text-[10px] text-black/25 font-light mt-1.5 leading-relaxed">
+ Nur zur Anzeige. Der Preis oben muss den Aufpreis bereits enthalten.
+ </p>
+ </div>
+ <div>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Lieferzeit (Wochen)</label>
+ <input
+ type="number" step="1" min="1"
+ value={form.express_weeks}
+ onChange={(e) => set('express_weeks', e.target.value)}
+ placeholder="2"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
+ />
+ <p className="text-[10px] text-black/25 font-light mt-1.5 leading-relaxed">
+ Richtwert, kein Fixtermin — so steht es auch in den AGB.
+ </p>
+ </div>
+ </div>
+ )}
  </div>
 
  {/* Actions */}

@@ -1695,30 +1695,46 @@ function offenePlatzhalter(text) {
   return [...marken, ...kurz]
 }
 
+/**
+ * Ein Rechtstext aus der Datei — geputzt und auf Platzhalter geprüft.
+ *
+ * Ausgelagert, weil es zwei Aufrufer gibt: den Seed beim Start, der nur leere
+ * Einträge füllt, und die Verwaltung, die einen Text ausdrücklich aus der
+ * Datei neu einlesen darf.
+ */
+export function rechtstextAusDatei(datei) {
+  let pfad
+  try {
+    pfad = path.join(__seedDir, '..', '..', '..', 'rechtstexte', datei)
+    if (!fs.existsSync(pfad)) return { fehler: 'Datei nicht gefunden' }
+  } catch { return { fehler: 'Datei nicht lesbar' } }
+
+  let roh
+  try { roh = fs.readFileSync(pfad, 'utf8') } catch { return { fehler: 'Datei nicht lesbar' } }
+
+  // Der Hinweiskasten am Kopf ist eine Anweisung an uns, nicht an den Kunden.
+  const text = roh
+    .replace(/^#[^\n]*\n/, '')
+    .replace(/^>[^\n]*\n/gm, '')
+    .replace(/^---\s*$/gm, '')
+    .trim()
+
+  const offen = offenePlatzhalter(text)
+  if (offen.length) return { fehler: `${offen.length} Platzhalter noch offen`, offen }
+  return { text }
+}
+
+/** Welche Datei zu welchem Typ gehört — für die Verwaltung. */
+export const rechtstextDatei = (type) => RECHTSTEXTE.find(r => r.type === type) || null
+
 export function seedLegalDocs(db) {
   let veroeffentlicht = 0
   const zurueckgehalten = []
 
   for (const { type, datei, titel } of RECHTSTEXTE) {
-    let pfad
-    try {
-      pfad = path.join(__seedDir, '..', '..', '..', 'rechtstexte', datei)
-      if (!fs.existsSync(pfad)) continue
-    } catch { continue }
-
-    let roh
-    try { roh = fs.readFileSync(pfad, 'utf8') } catch { continue }
-
-    // Der Hinweiskasten am Kopf ist eine Anweisung an uns, nicht an den Kunden.
-    const text = roh
-      .replace(/^#[^\n]*\n/, '')
-      .replace(/^>[^\n]*\n/gm, '')
-      .replace(/^---\s*$/gm, '')
-      .trim()
-
-    const offen = offenePlatzhalter(text)
-    if (offen.length) {
-      zurueckgehalten.push(`${datei} (${offen.length} Platzhalter)`)
+    const { text, fehler, offen } = rechtstextAusDatei(datei)
+    if (fehler) {
+      if (offen?.length) zurueckgehalten.push(`${datei} (${offen.length} Platzhalter)`)
       continue
     }
 
