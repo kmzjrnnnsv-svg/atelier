@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Sechs Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Sieben Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -28,6 +28,13 @@ im Betrieb, nichts nachgebaut.
                          steht. Ebenfalls ohne Server: eine reine Funktion,
                          die sich nicht durch einen Konfigurator mit einem
                          Dutzend Schritten prüfen lassen sollte.
+    tests/bestaetigung.mjs
+                         16 Prüfungen: was in der Bestellbestätigung stehen
+                         MUSS — Belehrung über das nicht bestehende
+                         Widerrufsrecht und die AGB im Volltext, weil beides
+                         dem Kunden auf einem dauerhaften Datenträger zugehen
+                         muss. Braucht DB_PATH; fängt die Nachricht ab, statt
+                         sie zu verschicken.
 
 ## Aufrufen
 
