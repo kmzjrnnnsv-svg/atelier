@@ -47,7 +47,7 @@ import affiliatesRouter from './routes/affiliates.js'
 import passkeysRouter, { makeLoginVerify, makeSignupVerify, makeRecoverVerify, makeAffiliateVerify } from './routes/passkeys.js'
 import recoveryRouter from './routes/recovery.js'
 import configsRouter from './routes/configs.js'
-import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter } from './routes/content.js'
+import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter, collectionsRouter } from './routes/content.js'
 import scansRouter      from './routes/scans.js'
 import favoritesRouter  from './routes/favorites.js'
 import ordersRouter     from './routes/orders.js'
@@ -189,6 +189,7 @@ app.use('/api/affiliates', affiliatesRouter)
 app.use('/api/shoes',    shoeCardRouter)
 app.use('/api/shoes',    shoesRouter)
 app.use('/api/scans',     scansRouter)
+app.use('/api/collections', collectionsRouter)
 app.use('/api/materials',  materialsRouter)
 app.use('/api/colors',     colorsRouter)
 app.use('/api/soles',      solesRouter)

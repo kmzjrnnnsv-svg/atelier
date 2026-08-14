@@ -65,6 +65,8 @@ export async function seedDatabase(db) {
   cleanupLegacyWording(db)
   seedShoeDescriptions(db)
   benenneSohlenGruppen(db)
+  seedKollektionen(db)
+  seedExpressModelle(db)
   seedLegalDocs(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
@@ -158,6 +160,11 @@ export async function seedDatabase(db) {
   console.log(`✅ Seeded: admin@artisansole.com / ArtisanSole@2026!`)
   console.log(`✅ Seeded: curator@artisansole.com / Curator@2026!`)
   console.log(`✅ Seeded: 12 shoes`)
+
+  // Noch einmal, jetzt mit vollständigem Katalog. Beim ersten Durchgang weiter
+  // oben gab es die Grundmodelle noch nicht — sie entstehen erst hier —, und
+  // ohne diesen zweiten Aufruf fehlte die Hälfte der Express-Fassungen.
+  seedExpressModelle(db)
 }
 
 // ── EMAIL TEMPLATES ────────────────────────────────────────────────────────────
@@ -1727,6 +1734,171 @@ export function rechtstextAusDatei(datei) {
 
 /** Welche Datei zu welchem Typ gehört — für die Verwaltung. */
 export const rechtstextDatei = (type) => RECHTSTEXTE.find(r => r.type === type) || null
+
+/**
+ * Die Kollektionen — die Angebote, in die der Katalog zerfällt.
+ *
+ * Nur anlegen, was fehlt. Beschriftungen, die jemand in der Verwaltung
+ * geändert hat, bleiben stehen.
+ */
+export function seedKollektionen(db) {
+  const vorgabe = [
+    { key: 'standard', label: 'Maßanfertigung', sort_order: 1,
+      description: 'Von Grund auf für Sie gefertigt, volle Auswahl, 4 bis 6 Wochen.' },
+    { key: 'express',  label: 'Express',        sort_order: 2,
+      description: 'Aus vorbereiteten Bauteilen auf Ihren Leisten vollendet, rund 2 Wochen.' },
+  ]
+  const einfuegen = db.prepare(`
+    INSERT OR IGNORE INTO collections (key, label, description, sort_order) VALUES (?, ?, ?, ?)
+  `)
+  let neu = 0
+  for (const k of vorgabe) {
+    const vorher = db.prepare('SELECT key FROM collections WHERE key = ?').get(k.key)
+    einfuegen.run(k.key, k.label, k.description, k.sort_order)
+    if (!vorher) neu++
+  }
+  if (neu) console.log(`✅ Seeded: ${neu} Kollektion(en)`)
+}
+
+/**
+ * Die Express-Fassungen der Modelle, die sich so fertigen lassen.
+ *
+ * ── Warum Zweitfassungen und keine Umschaltung am Modell ─────────────────
+ *
+ * Dieselbe Machart gibt es in beiden Linien: den Oxford von Grund auf in
+ * sechs Wochen, und den Oxford aus vorbereiteten Bauteilen in zweien. Das
+ * sind zwei Angebote mit verschiedenem Preis, verschiedener Auswahl und
+ * verschiedener Lieferzeit — also zwei Einträge. Ein Schalter am selben
+ * Eintrag müsste Preis, Auswahl und Zusage gleichzeitig doppelt führen; die
+ * Kollektionsansicht könnte weder das eine noch das andere anzeigen, ohne
+ * zu lügen.
+ *
+ * ── Warum nur einmal ─────────────────────────────────────────────────────
+ *
+ * Der Lauf merkt sich in den Einstellungen, dass er getan ist. Sonst käme
+ * bei jedem Start ein Modell zurück, das jemand aus gutem Grund gelöscht
+ * hat — und das gelöschte Modell wäre nie loszuwerden.
+ *
+ * ── Welche Modelle ───────────────────────────────────────────────────────
+ *
+ * Express geht nur auf dem Zurigo-Leisten. Deshalb steht hier eine Liste von
+ * Namen und nicht von Kategorien: In BOOT und MONK liegen je zwei Modelle,
+ * von denen nur eines gemeint ist.
+ */
+const EXPRESS_MODELLE = [
+  // Loafer, alle Varianten
+  'Loafer', 'The Horsebit Loafer', 'The Tassel Loafer',
+  'The Albert Loafer', 'The Riviera Loafer', 'The Venetian Penny',
+  // Oxford
+  'Oxford', 'The Heritage Oxford', 'The Balmoral Cap-Toe',
+  // Derby
+  'Derby', 'The Monaco Derby', 'The Brogue Derby',
+  // Monk
+  'Double Monk', 'The Double Monk',
+  // Chelsea
+  'Chelsea Boot', 'The Chelsea Boot',
+]
+
+/** Was am Express-Schuh wählbar bleibt. Alles andere legt das Bauteil fest. */
+const EXPRESS_GRUPPEN = ['sole', 'sole_color', 'sole_bottom_color', 'buckle', 'buckle_color']
+
+/** Aufpreis in Euro für die kürzere Wartezeit. */
+const EXPRESS_AUFPREIS = 100
+
+export function seedExpressModelle(db) {
+  const erledigt = db.prepare("SELECT value FROM settings WHERE key = 'express_grundbestand'").get()
+  if (erledigt?.value) return
+
+  // Zurigo ist der Leisten der Express-Linie. Für BOOT und MONK war er noch
+  // nicht freigegeben, obwohl dort je ein Modell dazugehört — ohne diese
+  // Zeile stünde der Kunde vor einem Express-Schuh ohne wählbare Schuhform.
+  const zurigo = db.prepare("SELECT id, applicable_categories FROM options WHERE key = 'zurigo'").get()
+  if (zurigo) {
+    const kat = new Set(String(zurigo.applicable_categories || '').split(',').map(s => s.trim()).filter(Boolean))
+    const vorher = kat.size
+    kat.add('BOOT'); kat.add('MONK')
+    if (kat.size !== vorher) {
+      db.prepare('UPDATE options SET applicable_categories = ? WHERE id = ?')
+        .run([...kat].join(','), zurigo.id)
+    }
+  }
+
+  const preisZahl = (t) => {
+    const n = parseFloat(String(t ?? '').replace(/[^0-9.,]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.'))
+    return Number.isFinite(n) ? n : null
+  }
+
+  let angelegt = 0
+  let unauffindbar = 0
+  const anlegen = db.transaction(() => {
+    for (const name of EXPRESS_MODELLE) {
+      const quelle = db.prepare("SELECT * FROM shoes WHERE name = ? AND collection = 'standard'").get(name)
+      if (!quelle) { unauffindbar++; continue }
+
+      const expressName = `${name} Express`
+      if (db.prepare('SELECT id FROM shoes WHERE name = ?').get(expressName)) continue
+
+      // Der Preis trägt den Aufpreis bereits. Er wird an keiner weiteren
+      // Stelle addiert — sonst gäbe es zwei Quellen für einen Betrag.
+      const grund = preisZahl(quelle.price)
+      const preis = grund != null
+        ? `€ ${Math.round(grund + EXPRESS_AUFPREIS).toLocaleString('de-DE')}`
+        : quelle.price
+
+      const info = db.prepare(`
+        INSERT INTO shoes (
+          name, category, price, material, color, tag, tagline, description,
+          image_data, hover_image_data, default_images, model_3d,
+          cost_price, locked_decoration, slug, collection,
+          express, express_surcharge, express_weeks, express_groups
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'express', 1, ?, 2, ?)
+      `).run(
+        expressName, quelle.category, preis, quelle.material, quelle.color, quelle.tag,
+        quelle.tagline, quelle.description,
+        quelle.image_data, quelle.hover_image_data, quelle.default_images, quelle.model_3d,
+        quelle.cost_price, quelle.locked_decoration,
+        `${(quelle.slug || expressName.toLowerCase().replace(/[^a-z0-9]+/g, '-')).replace(/-express$/, '')}-express`,
+        EXPRESS_AUFPREIS, JSON.stringify(EXPRESS_GRUPPEN),
+      )
+
+      // Freigegebene Optionen und Farben übernehmen: Die Auswahl wird über
+      // express_groups eingeschränkt, nicht dadurch, dass unten nichts liegt.
+      db.prepare('INSERT INTO shoe_options (shoe_id, option_id, price_override, is_default, sort_order) SELECT ?, option_id, price_override, is_default, sort_order FROM shoe_options WHERE shoe_id = ?')
+        .run(info.lastInsertRowid, quelle.id)
+      // Farbvarianten nur aus Luxe Calf: Was an anderen Ledern hängt, gibt es
+      // in dieser Linie nicht, und ein Farbfeld ohne zugehöriges Leder wäre
+      // eine Auswahl, die ins Leere führt.
+      db.prepare(`
+        INSERT INTO shoe_color_variants (shoe_id, hex, name, images, sort_order, material_key)
+        SELECT ?, hex, name, images, sort_order, material_key
+        FROM shoe_color_variants
+        WHERE shoe_id = ? AND (material_key = 'lux_calf' OR material_key IS NULL)
+      `).run(info.lastInsertRowid, quelle.id)
+
+      // Leder: In der Express-Linie nur Luxe Calf. Die Beschränkung sitzt am
+      // Zweitmodell, damit die Maßanfertigung ihre volle Auswahl behält.
+      db.prepare('DELETE FROM shoe_material_options WHERE shoe_id = ?').run(info.lastInsertRowid)
+      db.prepare('INSERT OR IGNORE INTO shoe_material_options (shoe_id, material_key, sort_order) VALUES (?, ?, 0)')
+        .run(info.lastInsertRowid, 'lux_calf')
+
+      angelegt++
+    }
+  })
+  anlegen()
+
+  // Erst vermerken, wenn wirklich jedes Modell der Liste eine Fassung hat.
+  // Fehlt eines, war der Katalog zum Zeitpunkt des Laufs noch unvollständig —
+  // dann soll der nächste Start es nachholen dürfen. Ein Vermerk, der zu früh
+  // gesetzt wird, macht die fehlende Hälfte dauerhaft unerreichbar.
+  if (!unauffindbar) {
+    db.prepare(`
+      INSERT INTO settings (key, value) VALUES ('express_grundbestand', datetime('now'))
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `).run()
+  }
+
+  if (angelegt) console.log(`✅ Seeded: ${angelegt} Express-Modell(e) angelegt${unauffindbar ? ` (${unauffindbar} noch ohne Vorlage)` : ''}`)
+}
 
 /**
  * Die beiden Sohlenfarben so benennen, dass man sie auseinanderhält.

@@ -517,6 +517,19 @@ export function runMigrations(db) {
     // an den Kunden, das die Werkstatt nicht halten kann — die Liste gehört
     // deshalb von Hand gesetzt, Modell für Modell.
     `ALTER TABLE shoes ADD COLUMN express_groups TEXT NOT NULL DEFAULT '[]'`,
+    // ── Kollektion ───────────────────────────────────────────────────────
+    //
+    // Eine Ebene über der Kategorie. Die Kategorie sagt, was für ein Schuh
+    // es ist (Oxford, Loafer); die Kollektion sagt, zu welchem Angebot er
+    // gehört — Maßanfertigung, Express, später Damen.
+    //
+    // Nötig geworden, weil dieselbe Machart in zwei Linien vorkommt: Es gibt
+    // den Oxford als Maßanfertigung und als Express. Ohne diese Spalte
+    // stünden beide unsortiert nebeneinander in der Kollektionsansicht, und
+    // der Kunde sähe zweimal „Oxford" zu verschiedenen Preisen, ohne dass
+    // ihm jemand sagt, warum.
+    `ALTER TABLE shoes ADD COLUMN collection TEXT NOT NULL DEFAULT 'standard'`,
+    `CREATE INDEX IF NOT EXISTS idx_shoes_collection ON shoes(collection)`,
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────
@@ -1140,6 +1153,21 @@ export function runMigrations(db) {
 
     -- ── Generisches Konfigurator-Options-System ─────────────────────────────
     -- option_groups: Konfigurator-Schritte (Last, Sohle, Welt, Heel, Toe, …)
+    -- collections: die Angebote, in die der Katalog zerfällt.
+    -- Eine Ebene über der Kategorie: „Maßanfertigung", „Express", später
+    -- „Damen". Als Tabelle und nicht als feste Liste im Code, weil hier
+    -- absehbar weitere dazukommen — und dann soll niemand deployen müssen.
+    CREATE TABLE IF NOT EXISTS collections (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      key           TEXT    NOT NULL UNIQUE,
+      label         TEXT    NOT NULL,
+      description   TEXT,
+      sort_order    INTEGER NOT NULL DEFAULT 0,
+      visible       INTEGER NOT NULL DEFAULT 1,
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS option_groups (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       key           TEXT    NOT NULL UNIQUE,
