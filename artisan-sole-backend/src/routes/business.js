@@ -628,7 +628,9 @@ router.get('/', ...canManage, (req, res) => {
   const rows = getDb().prepare(`
     SELECT b.id, b.name, b.contact_email, b.contact_phone, b.status,
            b.invite_token, b.source_request_id, b.created_at,
-           u.email AS owner_email, u.name AS owner_name, u.is_active AS owner_active
+           b.owner_user_id,
+           u.email AS owner_email, u.name AS owner_name, u.is_active AS owner_active,
+           u.deletion_requested_at, u.deleted_at
     FROM businesses b
     JOIN users u ON u.id = b.owner_user_id
     ORDER BY b.created_at DESC
@@ -639,9 +641,15 @@ router.get('/', ...canManage, (req, res) => {
     contact_email: r.contact_email,
     contact_phone: r.contact_phone,
     status: r.status,
+    // Gelöscht wird das Konto der Inhaberin oder des Inhabers — an ihm hängt
+    // die Firma. Die Liste braucht deshalb dessen Nummer und dessen Stand,
+    // sonst müsste die Verwaltung zwischen zwei Listen hin und her suchen.
+    owner_user_id: r.owner_user_id,
     owner_email: r.owner_email,
     owner_name: r.owner_name,
     owner_active: !!r.owner_active,
+    loeschung_beantragt: !!r.deletion_requested_at,
+    geloescht: !!r.deleted_at,
     pending: !!r.invite_token,
     invite_token: r.invite_token || null,
     source_request_id: r.source_request_id || null,

@@ -13,6 +13,7 @@ import nodemailer from 'nodemailer'
 import net from 'net'
 import dns from 'dns/promises'
 import { getDb } from '../db/database.js'
+import { versendeUeberHttp, pruefeHttp } from './mailHttp.js'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 function getEmailConfig() {
@@ -20,6 +21,7 @@ function getEmailConfig() {
     const db   = getDb()
     const keys = ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_manufacturer_email', 'app_url',
                   'business_inquiry_email',
+                  'mail_weg', 'mail_anbieter', 'mail_api_key', 'mail_absender', 'mail_domain', 'mail_region',
                   'bank_iban', 'bank_bic', 'bank_holder', 'bank_name']
     const rows = db.prepare(`SELECT key, value FROM settings WHERE key IN (${keys.map(() => '?').join(',')})`)
       .all(...keys)
@@ -31,6 +33,18 @@ function getEmailConfig() {
       pass:       s.smtp_pass               || process.env.SMTP_PASS               || '',
       mfgEmail:   s.smtp_manufacturer_email || process.env.MANUFACTURER_EMAIL      || '',
       inquiryEmail: s.business_inquiry_email || process.env.BUSINESS_INQUIRY_EMAIL || '',
+      // Der Weg hinaus: 'smtp' wie bisher, 'http' über die Schnittstelle eines
+      // Maildienstes. Ohne Angabe bleibt alles beim Alten — eine bestehende
+      // Einrichtung soll sich durch diese Erweiterung nicht ändern.
+      weg:        s.mail_weg      || process.env.MAIL_WEG      || 'smtp',
+      provider:   s.mail_anbieter || process.env.MAIL_ANBIETER || 'brevo',
+      apiKey:     s.mail_api_key  || process.env.MAIL_API_KEY  || '',
+      // Fehlt die Absenderadresse, gilt die des SMTP-Kontos: Wer von SMTP
+      // umstellt, hat sie dort bereits stehen.
+      from:       s.mail_absender || process.env.MAIL_ABSENDER || s.smtp_user || process.env.SMTP_USER || '',
+      fromName:   'Artisan Sole',
+      domain:     s.mail_domain   || process.env.MAIL_DOMAIN   || '',
+      region:     s.mail_region   || process.env.MAIL_REGION   || 'eu',
       appUrl:     s.app_url                 || process.env.APP_URL                 || 'http://localhost:5173',
       bankIban:   s.bank_iban   || process.env.BANK_IBAN   || 'DE00 0000 0000 0000 0000 00',
       bankBic:    s.bank_bic    || process.env.BANK_BIC    || 'XXXXXXXX',
@@ -40,6 +54,7 @@ function getEmailConfig() {
   } catch {
     return {
       host: 'smtp.gmail.com', port: '587', user: '', pass: '', mfgEmail: '', inquiryEmail: '', appUrl: 'http://localhost:5173',
+      weg: 'smtp', provider: 'brevo', apiKey: '', from: '', fromName: 'Artisan Sole', domain: '', region: 'eu',
       bankIban: 'DE00 0000 0000 0000 0000 00', bankBic: 'XXXXXXXX', bankHolder: 'Artisan Sole GmbH', bankName: 'Musterbank',
     }
   }
@@ -104,8 +119,30 @@ export class EmailNotConfiguredError extends Error {
   }
 }
 
+/**
+ * Ist der Versand über HTTPS eingerichtet?
+ *
+ * Gefragt wird nach beidem — der ausdrücklichen Wahl und den nötigen Angaben.
+ * Ein halb ausgefülltes Formular soll nicht dazu führen, dass gar nichts mehr
+ * hinausgeht: Fehlt der Schlüssel, bleibt es beim bisherigen Weg.
+ */
+const httpVersand = (cfg) => cfg.weg === 'http' && !!cfg.apiKey && !!cfg.from
+
 async function send(options) {
-  const cfg         = getEmailConfig()
+  const cfg = getEmailConfig()
+
+  // Der Weg über HTTPS. Er braucht keinen offenen Mail-Port und ist deshalb
+  // auf diesem Server der einzige, der zuverlässig hinauskommt.
+  if (httpVersand(cfg)) {
+    await versendeUeberHttp(cfg, {
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+    })
+    return
+  }
+
   const transporter = createTransporter(cfg)
   if (!transporter) {
     if (process.env.NODE_ENV === 'production') throw new EmailNotConfiguredError()
@@ -171,18 +208,27 @@ function smtpDeutung(e, cfg) {
 
 export async function verifyEmailSetup() {
   const cfg = getEmailConfig()
+  const appUrlOk = /^https?:\/\//.test(cfg.appUrl) && !/localhost|127\.0\.0\.1/.test(cfg.appUrl)
+
+  // Der Weg über HTTPS prüft sich anders: Es gibt keine Verbindung, die man
+  // aufbauen und wieder schließen könnte. Stattdessen fragt er den Dienst nach
+  // dem eigenen Konto — antwortet der, stimmen Schlüssel und Erreichbarkeit.
+  if (cfg.weg === 'http') {
+    const r = await pruefeHttp(cfg)
+    return { ...r, weg: 'http', anbieter: r.anbieter || cfg.provider, absender: cfg.from, appUrl: cfg.appUrl, appUrlUsable: appUrlOk }
+  }
+
   const transporter = createTransporter(cfg)
-  if (!transporter) return { ok: false, reason: 'Kein SMTP-Benutzer hinterlegt.' }
+  if (!transporter) return { ok: false, weg: 'smtp', reason: 'Kein SMTP-Benutzer hinterlegt.' }
   try {
     await transporter.verify()
   } catch (e) {
     // Host und Port gehören zur Fehlermeldung: Ohne sie sieht niemand, wohin
     // überhaupt verbunden wurde — und der häufigste Fall ist, dass dort noch
     // der Vorgabewert smtp.gmail.com steht.
-    return { ok: false, reason: smtpDeutung(e, cfg), code: e?.code || null, host: cfg.host, port: cfg.port, user: cfg.user }
+    return { ok: false, weg: 'smtp', reason: smtpDeutung(e, cfg), code: e?.code || null, host: cfg.host, port: cfg.port, user: cfg.user }
   }
-  const appUrlUsable = /^https?:\/\//.test(cfg.appUrl) && !/localhost|127\.0\.0\.1/.test(cfg.appUrl)
-  return { ok: true, host: cfg.host, port: cfg.port, user: cfg.user, appUrl: cfg.appUrl, appUrlUsable }
+  return { ok: true, weg: 'smtp', host: cfg.host, port: cfg.port, user: cfg.user, appUrl: cfg.appUrl, appUrlUsable: appUrlOk }
 }
 
 /**
@@ -267,17 +313,25 @@ export async function diagnoseSmtp() {
 /** Testnachricht an eine Adresse, damit sich der Weg vollständig prüfen lässt. */
 export async function sendTestEmail(to) {
   const cfg = getEmailConfig()
+  const ueberHttp = httpVersand(cfg)
+  const weg = ueberHttp
+    ? `${cfg.provider} über HTTPS · Absender ${cfg.from}`
+    : `${cfg.host}:${cfg.port}`
   try {
     await send({
       to,
       subject: 'Artisan Sole · Testnachricht',
       html: `<p>Diese Nachricht bestätigt, dass der E-Mail-Versand funktioniert.</p>
-             <p style="color:#888;font-size:12px">Server: ${cfg.host}:${cfg.port} · Adresse der Anwendung: ${cfg.appUrl}</p>`,
+             <p style="color:#888;font-size:12px">Weg: ${weg} · Adresse der Anwendung: ${cfg.appUrl}</p>`,
+      text: 'Diese Nachricht bestätigt, dass der E-Mail-Versand funktioniert.',
     })
   } catch (e) {
+    if (e instanceof EmailNotConfiguredError) throw e
+    // Der HTTPS-Weg deutet seine Fehler selbst — die Meldung von dort ist
+    // bereits ein ganzer Satz und würde von der SMTP-Deutung nur verfälscht.
+    if (ueberHttp) throw e
     // Dieselbe Deutung wie bei der Prüfung. Ohne sie stand hier die nackte
     // Meldung der Bibliothek, und die schickt jeden zuerst zum Passwort.
-    if (e instanceof EmailNotConfiguredError) throw e
     const fehler = new Error(smtpDeutung(e, cfg))
     fehler.code = e?.code || null
     throw fehler

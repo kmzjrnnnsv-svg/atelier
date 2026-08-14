@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Building2, Mail, Phone, Plus, Copy, Check, UserPlus, Clock, X, Ticket, ChevronDown, Megaphone } from 'lucide-react'
+import { Building2, Mail, Phone, Plus, Copy, Check, UserPlus, Clock, X, Ticket, ChevronDown, Megaphone, Trash2, AlertTriangle } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 
 const APP_ORIGIN = (import.meta.env.VITE_API_URL ?? '') || (typeof window !== 'undefined' ? window.location.origin : '')
@@ -112,6 +112,36 @@ export default function BusinessPanel() {
     setTimeout(() => setCopied(null), 1800)
   }
 
+  // ── Löschung beantragen ─────────────────────────────────────────────────
+  //
+  // Eine Firma hat kein eigenes Konto: Sie hängt am Konto der Inhaberin oder
+  // des Inhabers, und mit diesem geht sie. Deshalb beantragt dieser Knopf die
+  // Löschung genau dieses Kontos — dieselbe Route, dasselbe Vier-Augen-Prinzip
+  // und dieselbe Frist wie in der Benutzerliste.
+  //
+  // Bestätigt wird bewusst nicht hier. Die zweite Unterschrift gehört an eine
+  // Stelle, an der die betroffene Person mit allem sichtbar ist, was an ihr
+  // hängt — und das ist die Benutzerliste.
+  const [loeschen, setLoeschen] = useState(null)   // { id, name, ownerId, reason }
+  const [lBusy, setLBusy] = useState(false)
+  const [lMeldung, setLMeldung] = useState(null)
+
+  const loeschungBeantragen = async () => {
+    if (lBusy || !loeschen) return
+    setLBusy(true); setError(null)
+    try {
+      await apiFetch(`/api/users/${loeschen.ownerId}/loeschung`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: loeschen.reason.trim() }),
+      })
+      setLoeschen(null)
+      setLMeldung('Antrag gestellt. Eine zweite Person aus der Verwaltung bestätigt ihn unter Benutzer.')
+      load()
+    } catch (e) {
+      setError(e?.error || 'Antrag fehlgeschlagen')
+    } finally { setLBusy(false) }
+  }
+
   const inp = 'w-full h-10 border border-black/15 px-3 text-[13px] bg-white outline-none focus:border-black/40 font-light'
   const lbl = 'block text-[10px] text-black/40 uppercase tracking-[0.12em] mb-1 font-light'
   const statusBadge = (s) => ({
@@ -160,6 +190,49 @@ export default function BusinessPanel() {
         </div>
       )}
 
+      {lMeldung && (
+        <p className="text-[12px] text-black/50 font-light border border-black/10 bg-black/[0.02] px-4 py-3 mb-4">{lMeldung}</p>
+      )}
+
+      {/* Löschantrag. Der Grund ist Pflicht — er zwingt zum Innehalten und
+          beantwortet später die Frage, warum ein Konto weg ist. */}
+      {loeschen && (
+        <div className="bg-white p-6 mb-6 space-y-4 border border-black/15">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={14} className="text-black/40 mt-0.5 shrink-0" />
+            <div>
+              <h3 className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">
+                Firmenkonto löschen — {loeschen.name}
+              </h3>
+              <p className="text-[12px] text-black/50 font-light leading-relaxed mt-2 max-w-2xl">
+                Eine Firma hat kein eigenes Konto — sie hängt am Konto der Inhaberin oder des
+                Inhabers, und mit diesem geht sie. Gelöscht wird deshalb dieses Konto samt
+                Kampagnen und Codes. Zwei Schritte: Sie beantragen, eine zweite Person aus der
+                Verwaltung bestätigt unter Benutzer. Danach ist das Konto gesperrt und dreißig
+                Tage lang wiederherstellbar. Bestellungen bleiben als Geschäftsunterlagen
+                bestehen, verlieren aber die Verbindung zur Person.
+              </p>
+            </div>
+          </div>
+          <input
+            value={loeschen.reason}
+            onChange={e => setLoeschen(l => ({ ...l, reason: e.target.value }))}
+            placeholder="Grund — etwa „Löschwunsch des Unternehmens vom 13.08.“"
+            className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
+          />
+          <div className="flex gap-3">
+            <button
+              onClick={loeschungBeantragen}
+              disabled={lBusy || (loeschen.reason || '').trim().length < 4}
+              className="flex items-center gap-2 px-6 h-10 border border-black text-black text-[11px] bg-transparent hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em] font-light disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-black"
+            >
+              <Trash2 size={11} strokeWidth={1.25} /> {lBusy ? 'Läuft …' : 'Löschung beantragen'}
+            </button>
+            <button onClick={() => setLoeschen(null)} className="px-3.5 py-1.5 text-[10px] text-black/25 hover:text-black/50 bg-transparent border-0 tracking-wider font-light uppercase">Abbrechen</button>
+          </div>
+        </div>
+      )}
+
       {/* Konten-Liste */}
       <p className="text-[10px] text-black/35 uppercase tracking-[0.2em] mb-3">Firmenkonten ({accounts.length})</p>
       {accounts.length === 0 ? (
@@ -192,10 +265,31 @@ export default function BusinessPanel() {
                       {copied === a.id ? <><Check size={13} strokeWidth={2} /> Kopiert</> : <><Copy size={13} strokeWidth={1.6} /> Einladungslink</>}
                     </button>
                   )}
+                  {/* Klein und ohne Aufschrift — er soll nicht neben den
+                      täglichen Handgriffen stehen wie einer von ihnen. */}
+                  {!a.loeschung_beantragt && !a.geloescht && (
+                    <button
+                      onClick={() => { setLMeldung(null); setLoeschen({ id: a.id, name: a.name, ownerId: a.owner_user_id, reason: '' }) }}
+                      title="Löschung beantragen"
+                      aria-label={`Löschung von ${a.name} beantragen`}
+                      className="flex items-center justify-center w-9 h-9 border border-black/10 text-black/25 hover:text-black hover:border-black/40 bg-white transition-colors"
+                    >
+                      <Trash2 size={13} strokeWidth={1.5} />
+                    </button>
+                  )}
                 </div>
               </div>
               {a.pending && (
                 <p className="text-[10px] text-amber-700/80 font-light mt-2 flex items-center gap-1.5"><Clock size={11} /> Wartet auf Aktivierung durch das Unternehmen.</p>
+              )}
+              {a.geloescht ? (
+                <p className="text-[10px] text-red-700/80 font-light mt-2 flex items-center gap-1.5">
+                  <AlertTriangle size={11} /> Gesperrt, die Frist läuft. Wiederherstellen lässt sich das Konto unter Benutzer.
+                </p>
+              ) : a.loeschung_beantragt && (
+                <p className="text-[10px] text-amber-700/80 font-light mt-2 flex items-center gap-1.5">
+                  <AlertTriangle size={11} /> Löschung beantragt — es fehlt die Bestätigung einer zweiten Person, unter Benutzer.
+                </p>
               )}
               {campExpanded === a.id && (
                 <div className="mt-3 border-t border-black/[0.06] pt-3">
