@@ -64,6 +64,7 @@ export async function seedDatabase(db) {
   seedFaqs(db)
   cleanupLegacyWording(db)
   seedShoeDescriptions(db)
+  benenneSohlenGruppen(db)
   seedLegalDocs(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
@@ -1726,6 +1727,60 @@ export function rechtstextAusDatei(datei) {
 
 /** Welche Datei zu welchem Typ gehört — für die Verwaltung. */
 export const rechtstextDatei = (type) => RECHTSTEXTE.find(r => r.type === type) || null
+
+/**
+ * Die beiden Sohlenfarben so benennen, dass man sie auseinanderhält.
+ *
+ * ── Warum ────────────────────────────────────────────────────────────────
+ *
+ * Es gibt zwei Farbangaben an der Sohle, und ihre bisherigen Namen sagten
+ * nicht, welche welche ist:
+ *
+ *   „Sohlenfarbe"      — vier Töne, gemeint war der sichtbare RAND
+ *   „Sohle Unterseite" — neun Töne, gemeint war die LAUFFLÄCHE
+ *
+ * „Sohlenfarbe" klingt nach beidem. Wer den Rand färben will, greift zur
+ * falschen Gruppe, sieht am Modell keine Änderung und wählt noch einmal —
+ * bis am Ende beides anders ist als gedacht. Im 3D-Konfigurator heißt der
+ * Rand zudem „Outsole", was ihn vollends zur Laufsohle macht.
+ *
+ * Deshalb: „Sohlenrand" und „Laufsohle". Zwei Wörter, die einander
+ * ausschließen — man kann sie nicht verwechseln, weil das eine die Kante
+ * benennt und das andere die Fläche.
+ *
+ * ── Warum nur die alten Namen ────────────────────────────────────────────
+ *
+ * Umbenannt wird ausschließlich, was noch die bekannten Vorgabewerte trägt.
+ * Hat jemand in der Verwaltung eine eigene Bezeichnung vergeben, bleibt sie
+ * stehen — ein Seed, der bei jedem Start die Beschriftung überschreibt, ist
+ * kein Seed, sondern ein Rückschritt in Endlosschleife.
+ */
+function benenneSohlenGruppen(db) {
+  const umbenennungen = [
+    {
+      key: 'sole_color',
+      alt: ['Sohlenfarbe', 'Sohlen Color', 'Outsole'],
+      label: 'Sohlenrand',
+      description: 'Die Kante der Sohle — das, was man von der Seite sieht.',
+    },
+    {
+      key: 'sole_bottom_color',
+      alt: ['Sohle Unterseite', 'Sohle Farbe Unten', 'Leather Sole'],
+      label: 'Laufsohle',
+      description: 'Die Unterseite, auf der Sie gehen.',
+    },
+  ]
+
+  let geaendert = 0
+  for (const { key, alt, label, description } of umbenennungen) {
+    const da = db.prepare('SELECT id, label FROM option_groups WHERE key = ?').get(key)
+    if (!da || !alt.includes(da.label)) continue
+    db.prepare("UPDATE option_groups SET label = ?, description = ?, updated_at = datetime('now') WHERE id = ?")
+      .run(label, description, da.id)
+    geaendert++
+  }
+  if (geaendert) console.log(`✅ Umbenannt: ${geaendert} Sohlengruppe(n) — Sohlenrand und Laufsohle`)
+}
 
 export function seedLegalDocs(db) {
   let veroeffentlicht = 0
