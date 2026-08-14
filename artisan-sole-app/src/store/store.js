@@ -530,7 +530,8 @@ function normalizeShoe(r) {
   return { id: String(r.id), slug: r.slug || null, model_3d: r.model_3d || null, name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null, ...('hover_image_data' in r ? { hover_image: r.hover_image_data || null } : {}), cost_price: r.cost_price ?? '', promotion_price: r.promotion_price || '', tagline: r.tagline || '', description: r.description || '', locked_decoration: r.locked_decoration || '',
     express: Number(r.express) ? 1 : 0,
     express_surcharge: r.express_surcharge ?? 100,
-    express_weeks: r.express_weeks ?? 2 }
+    express_weeks: r.express_weeks ?? 2,
+    express_groups: r.express_groups ?? '[]' }
 }
 
 function normalizeLoyaltyTier(r) {
@@ -589,6 +590,15 @@ function shoeToApi(s) {
     express.express = Number(s.express) ? 1 : 0
     express.express_surcharge = Number(s.express_surcharge) || 0
     express.express_weeks = Math.max(1, Number(s.express_weeks) || 2)
+    // Immer als gültiges JSON-Array, auch wenn im Formular Unsinn steht —
+    // ein kaputter Wert in dieser Spalte blendete im Konfigurator sonst
+    // sämtliche Auswahl aus, ohne dass jemand den Zusammenhang sähe.
+    express.express_groups = (() => {
+      try {
+        const l = JSON.parse(s.express_groups || '[]')
+        return JSON.stringify(Array.isArray(l) ? l.filter(x => typeof x === 'string') : [])
+      } catch { return '[]' }
+    })()
   }
   return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, ...imageFields, ...express, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null, tagline: s.tagline || null, description: s.description || null }
 }
