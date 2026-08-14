@@ -527,7 +527,10 @@ const useStore = create((set, get) => ({
 
 // DB snake_case → app camelCase
 function normalizeShoe(r) {
-  return { id: String(r.id), slug: r.slug || null, model_3d: r.model_3d || null, name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null, ...('hover_image_data' in r ? { hover_image: r.hover_image_data || null } : {}), cost_price: r.cost_price ?? '', promotion_price: r.promotion_price || '', tagline: r.tagline || '', description: r.description || '', locked_decoration: r.locked_decoration || '' }
+  return { id: String(r.id), slug: r.slug || null, model_3d: r.model_3d || null, name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null, ...('hover_image_data' in r ? { hover_image: r.hover_image_data || null } : {}), cost_price: r.cost_price ?? '', promotion_price: r.promotion_price || '', tagline: r.tagline || '', description: r.description || '', locked_decoration: r.locked_decoration || '',
+    express: Number(r.express) ? 1 : 0,
+    express_surcharge: r.express_surcharge ?? 100,
+    express_weeks: r.express_weeks ?? 2 }
 }
 
 function normalizeLoyaltyTier(r) {
@@ -577,7 +580,17 @@ function shoeToApi(s) {
   } else if (s.hover_image !== undefined) {
     imageFields.hover_image_data = s.hover_image || null
   }
-  return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, ...imageFields, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null, tagline: s.tagline || null, description: s.description || null }
+  // Express-Angaben nur mitschicken, wenn das Formular sie kennt — dieselbe
+  // Vorsicht wie bei den Bildern. Ein Speichern aus der Liste heraus dürfte
+  // ein Express-Modell sonst stillschweigend zurück in die Maßanfertigung
+  // stellen.
+  const express = {}
+  if (s.express !== undefined) {
+    express.express = Number(s.express) ? 1 : 0
+    express.express_surcharge = Number(s.express_surcharge) || 0
+    express.express_weeks = Math.max(1, Number(s.express_weeks) || 2)
+  }
+  return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, ...imageFields, ...express, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null, tagline: s.tagline || null, description: s.description || null }
 }
 
 // Sort: featured first, then by sortOrder, then by id

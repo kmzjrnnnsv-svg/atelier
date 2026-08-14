@@ -59,6 +59,13 @@ p('Nur die fünf geführten Artikel', zubehoer.length === 5, zubehoer.map(a => a
 const { daten: chart } = await ruf('/api/last-size-chart')
 p('Größentabelle abrufbar', Array.isArray(chart) && chart.length > 0, `${chart?.length} Zeilen`)
 
+// Express-Linie. Kein Modell gehört ihr von sich aus an — sie wird Modell für
+// Modell in der Verwaltung geöffnet. Ein Vorgabewert, der versehentlich auf 1
+// stünde, verspräche dem Kunden zwei Wochen für einen Maßschuh.
+p('Kein Modell steht ungefragt im Express', schuhe.every(s => Number(s.express) === 0))
+p('Express-Vorgaben stehen', schuh.express_surcharge === 100 && schuh.express_weeks === 2,
+  `${schuh.express_surcharge} € · ${schuh.express_weeks} Wochen`)
+
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('3. Fußmaße und Passform')
 
@@ -294,6 +301,29 @@ p('Ohne E-Mail-Bestätigung kein Beitritt', vorBestaetigung === 0, `${vorBestaet
 // Bestätigen und erneut anmelden
 r = await ruf('/api/business/campaigns/mine', { token: admin })
 console.log('     (Admin-Sicht nur zur Kontrolle)')
+
+// ════════════════════════════════════════════════════════════════════════
+abschnitt('11. Rechtstexte')
+
+// Die AGB werden als Datei gepflegt und beim ersten Start veröffentlicht.
+// Danach nie wieder — was in der Verwaltung geändert wurde, darf ein Neustart
+// nicht überschreiben. Genau daran ging eine überarbeitete Fassung schon
+// einmal verloren: Sie lag in der Datei, wurde ausgerollt, und auf der Seite
+// stand weiter die alte. Deshalb prüfen wir beides — dass der Inhalt ankommt
+// und dass sich eine Abweichung überhaupt bemerken lässt.
+r = await ruf('/api/legal/agb')
+const agbText = r.daten?.content || ''
+p('AGB ohne Anmeldung abrufbar', r.status === 200 && agbText.length > 1000, `${agbText.length} Zeichen`)
+p('Stornostaffel veröffentlicht', agbText.includes('Stand Ihrer Bestellung') && agbText.includes('In Fertigung'))
+p('Freigabe an den Zahlungseingang gekoppelt', agbText.includes('Freigabe an die Werkstatt'))
+p('Express-Linie beschrieben', agbText.includes('Zwei Linien') && agbText.includes('vorbereitete'))
+
+r = await ruf('/api/legal/agb/vorlage', { token: admin })
+p('Fassung aus dem Projekt lesbar', r.status === 200 && r.daten?.datei === 'AGB.md', `HTTP ${r.status}`)
+p('Veröffentlicht und Datei stimmen überein', r.daten?.abweichend === false)
+
+r = await ruf('/api/legal/agb/vorlage')
+p('Fassung nur für die Verwaltung', r.status === 401 || r.status === 403, `HTTP ${r.status}`)
 
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('Ergebnis')
