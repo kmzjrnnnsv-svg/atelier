@@ -164,6 +164,9 @@ console.log('\n── 9. Liste für die Verwaltung ─────────�
   p('Alle vier Dienste', liste.length === 4, liste.map(a => a.name).join(', '))
   p('Ohne Funktionen', liste.every(a => typeof a.senden === 'undefined'))
   p('Jeder mit Hinweis und Feldnamen', liste.every(a => a.hinweis && a.schluesselFeld))
+  p('Jeder mit vier Einrichtungsschritten', liste.every(a => a.einrichtung?.length === 4),
+    liste.map(a => `${a.name}:${a.einrichtung.length}`).join(' '))
+  p('Kein Schritt bleibt eine Überschrift', liste.every(a => a.einrichtung.every(s => s.length > 40)))
 }
 
 globalThis.fetch = echtesFetch

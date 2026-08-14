@@ -15,7 +15,7 @@ im Betrieb, nichts nachgebaut.
                          18 Prüfungen: Anlegen mit nur einer E-Mail-Adresse,
                          Einladung, Selbsteintrag der Stammdaten, unveränderbare
                          Konditionen, eigener Code beim eigenen Einkauf
-    tests/mailwege.mjs   38 Prüfungen: der Versand über HTTPS — Form der Anfrage
+    tests/mailwege.mjs   40 Prüfungen: der Versand über HTTPS — Form der Anfrage
                          je Dienst, Deutung abschlägiger Antworten, Prüfung ohne
                          Versand. Braucht KEINEN Server und keine Zugangsdaten:
                          Das Skript legt ein eigenes `fetch` unter und hält die
