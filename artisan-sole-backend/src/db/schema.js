@@ -528,6 +528,29 @@ export function runMigrations(db) {
     // stünden beide unsortiert nebeneinander in der Kollektionsansicht, und
     // der Kunde sähe zweimal „Oxford" zu verschiedenen Preisen, ohne dass
     // ihm jemand sagt, warum.
+    // ── Eine Zahlung je Warenkorb ────────────────────────────────────────
+    //
+    // Ein Korb mit zwei Paaren wird zu zwei Bestellungen — das ist richtig, sie
+    // werden einzeln gefertigt, einzeln versandt, einzeln storniert. Bezahlt
+    // wird aber einmal.
+    //
+    // Bisher bekam jede Bestellung ihren eigenen Verwendungszweck und ihren
+    // eigenen Betrag, während die Bestätigungsseite die Gesamtsumme zeigte.
+    // Wer wie angezeigt überwies, hatte eine überzahlte und eine unbezahlte
+    // Bestellung — und niemandem fiel auf, warum.
+    //
+    // `payment_ref` klammert zusammen, was zusammen bezahlt wird. Alle
+    // Bestellungen eines Kaufs tragen dieselbe; der Betrag ist ihre Summe.
+    `ALTER TABLE orders ADD COLUMN payment_ref TEXT`,
+    // Die Kennung des Warenkorbs, aus dem diese Bestellung stammt. Der Browser
+    // vergibt sie einmal je Kauf; der Server erkennt daran die Geschwister.
+    `ALTER TABLE orders ADD COLUMN basket_id TEXT`,
+    // Wann die Zahlungsanweisung für diesen Kauf hinausging. Steht nur an der
+    // Bestellung, die den Verwendungszweck stiftet, und verhindert, dass ein
+    // zweiter Aufruf dieselbe Mail noch einmal verschickt.
+    `ALTER TABLE orders ADD COLUMN payment_mailed_at TEXT`,
+    `CREATE INDEX IF NOT EXISTS idx_orders_payment_ref ON orders(payment_ref)`,
+    `CREATE INDEX IF NOT EXISTS idx_orders_basket ON orders(basket_id)`,
     `ALTER TABLE shoes ADD COLUMN collection TEXT NOT NULL DEFAULT 'standard'`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_collection ON shoes(collection)`,
   ]

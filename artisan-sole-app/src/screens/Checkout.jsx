@@ -449,6 +449,19 @@ export default function Checkout() {
             () => ({ name: c.name, price: c.price }),
           ))
 
+        // ── Eine Zahlung je Korb ────────────────────────────────────────
+        //
+        // Zwei Paare werden zu zwei Bestellungen — sie werden einzeln
+        // gefertigt, einzeln versandt, einzeln storniert. Bezahlt wird aber
+        // einmal. Diese Kennung reist an jeder Bestellung mit; der Server
+        // erkennt daran, was zusammengehört, und vergibt einen gemeinsamen
+        // Verwendungszweck.
+        //
+        // Vorher zeigte diese Seite den Gesamtbetrag und daneben den
+        // Verwendungszweck nur einer der Bestellungen: Wer wie angezeigt
+        // überwies, hatte eine überzahlte und eine unbezahlte Bestellung.
+        const korbKennung = `k-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+
         for (let i = 0; i < schuhe.length; i++) {
           const item = schuhe[i]
           const itemTotal = parsePrice(item.price) * item.qty
@@ -479,11 +492,22 @@ export default function Checkout() {
             last_width: item.width || null, fit_measurements: item.footMeasurementsUsed || null,
             sole: item.sole || null, extras: item.extras || null,
             config_id: item.configId || null,
+            basket_id: korbKennung,
             // Versand fällt einmal an, nicht je Paar. Er hing bisher an jeder
             // Bestellung und wurde bei drei Paaren dreifach ausgewiesen.
             ...(i === 0 ? shippingData : {}),
           })
         }
+
+        // Jetzt ist der Korb vollständig — erst jetzt kann der Server die
+        // Summe bilden und eine einzige Zahlungsanweisung verschicken.
+        // Scheitert der Aufruf, fehlt nur die Mail: Die Zahlungsseite unter
+        // „Meine Bestellungen" rechnet dieselbe Summe.
+        await apiFetch('/api/orders/zahlung/abschluss', {
+          method: 'POST',
+          body: JSON.stringify({ basket_id: korbKennung }),
+        }).catch(() => {})
+
         clearCart()
       }
       saveAddresses(delivery, sameBilling ? null : billing).catch(() => {})
@@ -529,8 +553,13 @@ export default function Checkout() {
               <div className="h-px bg-black/5" />
               <div>
                 <p className="text-[10px] text-black/30 uppercase tracking-wider mb-2">Verwendungszweck</p>
+                {/* Vom Server, nicht hier gebaut. Hier stand zuletzt
+                    „AS-42" — eine Kennung, die in keiner Bestellung vorkommt
+                    und zu der sich keine Zahlung zuordnen ließ. */}
                 <div className="bg-black px-4 py-2.5 text-center">
-                  <span className="text-white font-mono font-bold tracking-widest text-[14px]">AS-{placed.id}</span>
+                  <span className="text-white font-mono font-bold tracking-widest text-[13px] break-all">
+                    {placed.verwendungszweck || placed.payment_ref || placed.order_ref}
+                  </span>
                 </div>
               </div>
             </div>

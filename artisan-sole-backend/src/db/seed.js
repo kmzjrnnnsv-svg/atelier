@@ -1263,10 +1263,19 @@ export function seedMatrixTemplatesV2(db) {
   //    weg. Notwendig, weil ältere Seed-Läufe schon falsche Templates
   //    angewendet haben können. Admin-Customizations werden überschrieben
   //    (User-Wunsch: Matrix ist Single Source of Truth).
+  //
+  //    Die Express-Linie bleibt außen vor. Ihre Modelle sind bewusst enger
+  //    geschnitten — ein Leder, ausgewählte Gruppen —, und dieses Force-Reset
+  //    setzte ihnen bei JEDEM Neustart die volle Matrix zurück. Der Kunde sah
+  //    daraufhin sechs Lederarten an einem Schuh, für den nur eines
+  //    vorbereitet vorliegt. Aufgefallen ist es erst, als die Familienwahl
+  //    („Aesthetic oder Durable") an einem Modell auftauchte, an dem es
+  //    nichts zu wählen gibt.
   const matrixCats = Object.keys(MATRIX_MATERIALS_V2)
   const matrixCatsPlaceholders = matrixCats.map(() => '?').join(',')
   const shoesWithMatrixCat = db.prepare(
-    `SELECT id, category, name FROM shoes WHERE category IN (${matrixCatsPlaceholders})`
+    `SELECT id, category, name FROM shoes
+     WHERE category IN (${matrixCatsPlaceholders}) AND collection = 'standard'`
   ).all(...matrixCats)
 
   let forceResetCount = 0
@@ -1805,9 +1814,42 @@ const EXPRESS_GRUPPEN = ['sole', 'sole_color', 'sole_bottom_color', 'buckle', 'b
 /** Aufpreis in Euro für die kürzere Wartezeit. */
 const EXPRESS_AUFPREIS = 100
 
+/**
+ * Einmalige Reparatur der Leder-Beschränkung.
+ *
+ * Das Force-Reset der Matrix hat den Express-Modellen bei jedem Neustart die
+ * volle Kategorie-Auswahl zurückgesetzt — sechs Lederarten an einem Schuh, für
+ * den nur eines vorbereitet vorliegt. Das Reset nimmt die Express-Linie jetzt
+ * aus; was es bis dahin angerichtet hat, räumt diese Funktion einmal auf.
+ *
+ * Einmal, und dann nie wieder: Wer später bewusst ein zweites Leder freigibt,
+ * soll es beim nächsten Start nicht wieder verlieren.
+ */
+function repariereExpressLeder(db) {
+  const erledigt = db.prepare("SELECT value FROM settings WHERE key = 'express_leder_repariert'").get()
+  if (erledigt?.value) return
+
+  const modelle = db.prepare("SELECT id FROM shoes WHERE collection = 'express'").all()
+  let repariert = 0
+  for (const m of modelle) {
+    const jetzt = db.prepare('SELECT material_key FROM shoe_material_options WHERE shoe_id = ?').all(m.id)
+    if (jetzt.length === 1 && jetzt[0].material_key === 'lux_calf') continue
+    db.prepare('DELETE FROM shoe_material_options WHERE shoe_id = ?').run(m.id)
+    db.prepare('INSERT OR IGNORE INTO shoe_material_options (shoe_id, material_key, sort_order) VALUES (?, ?, 0)')
+      .run(m.id, 'lux_calf')
+    repariert++
+  }
+
+  db.prepare(`
+    INSERT INTO settings (key, value) VALUES ('express_leder_repariert', datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run()
+  if (repariert) console.log(`✅ Repariert: ${repariert} Express-Modell(e) wieder auf Luxe Calf`)
+}
+
 export function seedExpressModelle(db) {
   const erledigt = db.prepare("SELECT value FROM settings WHERE key = 'express_grundbestand'").get()
-  if (erledigt?.value) return
+  if (erledigt?.value) { repariereExpressLeder(db); return }
 
   // Zurigo ist der Leisten der Express-Linie. Für BOOT und MONK war er noch
   // nicht freigegeben, obwohl dort je ein Modell dazugehört — ohne diese
