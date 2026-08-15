@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import { katalogAnwenden } from './seedExport.js'
 import { frischeInstallationVerbrauchen } from './schema.js'
 import { GUERTEL_KEY, GUERTEL_ART, GROESSEN } from '../utils/guertel.js'
+import { saisonFuerKategorie } from '../utils/saison.js'
 
 // Verzeichnis dieser Datei — die Rechtstexte liegen im Wurzelverzeichnis des
 // Repositories, nicht neben dem Backend.
@@ -81,6 +82,8 @@ export async function seedDatabase(db) {
   seedGuertel(db)
   seedExpressModelle(db)
   seedLegalDocs(db)
+  // Zuletzt: Erst hier stehen alle Modelle, auch die Express-Zweitfassungen.
+  seedSaison(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -178,6 +181,7 @@ export async function seedDatabase(db) {
   // oben gab es die Grundmodelle noch nicht — sie entstehen erst hier —, und
   // ohne diesen zweiten Aufruf fehlte die Hälfte der Express-Fassungen.
   seedExpressModelle(db)
+  seedSaison(db)
 }
 
 // ── EMAIL TEMPLATES ────────────────────────────────────────────────────────────
@@ -2100,10 +2104,10 @@ export function seedMokassin(db) {
       const m = MOKASSIN_MODELL
       const info = db.prepare(`
         INSERT INTO shoes (name, category, price, material, match_pct, color, tag,
-                           tagline, description, cost_price, slug, collection)
-        VALUES (?, ?, ?, ?, '97.0%', ?, ?, ?, ?, ?, ?, 'standard')
+                           tagline, description, cost_price, slug, collection, season)
+        VALUES (?, ?, ?, ?, '97.0%', ?, ?, ?, ?, ?, ?, 'standard', ?)
       `).run(m.name, KAT, m.price, m.material, m.color, m.tag,
-             m.tagline, m.description, m.cost_price, m.slug)
+             m.tagline, m.description, m.cost_price, m.slug, saisonFuerKategorie(KAT))
       schuh = { id: info.lastInsertRowid }
     }
 
@@ -2288,9 +2292,9 @@ export function seedMocFlexSport(db) {
     if (!db.prepare("SELECT 1 FROM shoes WHERE name = 'Moc Flex Sport'").get()
         && !deletedSeedNames(db).has('Moc Flex Sport')) {
       db.prepare(`
-        INSERT INTO shoes (name, category, price, material, match_pct, color, tag, slug, collection)
-        VALUES ('Moc Flex Sport', ?, '€ 890', 'Unlined Suede', '96.0%', '#c8a97e', NULL, 'moc-flex-sport', 'standard')
-      `).run(KAT)
+        INSERT INTO shoes (name, category, price, material, match_pct, color, tag, slug, collection, season)
+        VALUES ('Moc Flex Sport', ?, '€ 890', 'Unlined Suede', '96.0%', '#c8a97e', NULL, 'moc-flex-sport', 'standard', ?)
+      `).run(KAT, saisonFuerKategorie(KAT))
     }
 
     const schuh = db.prepare("SELECT id FROM shoes WHERE name = 'Moc Flex Sport'").get()
@@ -2481,9 +2485,9 @@ export function seedMocFlexSportBoot(db) {
     if (!db.prepare("SELECT 1 FROM shoes WHERE name = 'Moc Flex Sport Boot'").get()
         && !deletedSeedNames(db).has('Moc Flex Sport Boot')) {
       db.prepare(`
-        INSERT INTO shoes (name, category, price, material, match_pct, color, tag, slug, collection)
-        VALUES ('Moc Flex Sport Boot', ?, '€ 920', 'Lined Suede', '96.0%', '#14110f', NULL, 'moc-flex-sport-boot', 'standard')
-      `).run(KAT)
+        INSERT INTO shoes (name, category, price, material, match_pct, color, tag, slug, collection, season)
+        VALUES ('Moc Flex Sport Boot', ?, '€ 920', 'Lined Suede', '96.0%', '#14110f', NULL, 'moc-flex-sport-boot', 'standard', ?)
+      `).run(KAT, saisonFuerKategorie(KAT))
     }
     const schuh = db.prepare("SELECT id FROM shoes WHERE name = 'Moc Flex Sport Boot'").get()
     if (!schuh) return
@@ -2516,6 +2520,40 @@ export function seedMocFlexSportBoot(db) {
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
   `).run(STAND)
   console.log(`✅ Seeded: Moc Flex Sport Boot (Lined Suede, ${MOC_SPORT_FARBEN.length} Farben, ${BOOT_NAHT.length} Nahtfarben, ${BOOT_RIEMEN.length} Riementöne)`)
+}
+
+/**
+ * Die Saison nachtragen, wo noch keine steht.
+ *
+ * ── Warum bei jedem Start und nicht einmalig ─────────────────────────────
+ *
+ * Weil ständig Modelle dazukommen — aus dem Seed, aus dem CMS, aus einer
+ * späteren Erweiterung. Ein einmaliger Lauf hätte die von damals erwischt
+ * und die von morgen nicht, und im Laden stünde ein Schuh unter keiner der
+ * drei Rubriken.
+ *
+ * ── Warum das nichts überschreibt ────────────────────────────────────────
+ *
+ * Angefasst wird nur, wo das Feld leer ist. Ein Chelsea Boot aus
+ * ungefüttertem Wildleder kann sehr wohl ein Sommerschuh sein; wer das im
+ * CMS so eingetragen hat, behält es. Die Regel ist die Vorgabe, nicht das
+ * Gesetz.
+ */
+function seedSaison(db) {
+  try {
+    const offen = db.prepare("SELECT id, category FROM shoes WHERE season IS NULL OR season = ''").all()
+    if (!offen.length) return
+    const setzen = db.prepare('UPDATE shoes SET season = ? WHERE id = ?')
+    const zaehler = {}
+    db.transaction(() => {
+      for (const s of offen) {
+        const saison = saisonFuerKategorie(s.category)
+        setzen.run(saison, s.id)
+        zaehler[saison] = (zaehler[saison] || 0) + 1
+      }
+    })()
+    console.log(`✅ Saison vorbelegt: ${Object.entries(zaehler).map(([k, n]) => `${n}× ${k}`).join(', ')}`)
+  } catch (e) { console.error('[saison]', e.message) }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

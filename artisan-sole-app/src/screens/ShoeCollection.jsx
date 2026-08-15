@@ -5,7 +5,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap } from 'lucide-react'
+import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap, Search, X } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
@@ -15,26 +15,24 @@ import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
+import { SAISONS, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
 
-// Anlass-basierte Kategorien. Jeder Anlass bildet auf mehrere Schuh-Typen ab
-// (ein Modell kann in mehreren Anlässen erscheinen). `cats` = enthaltene
-// shoe.category-Werte; ohne `cats` (nur ALL) zählt alles.
+// Die Rubriken des Ladens: Sommer, Winter, Ganzjährig.
+//
+// Hier standen sechs Anlässe — „Büro & Business", „Smart Casual",
+// „Freizeit", „Abend & Gala", „Outdoor" —, und sie überschnitten sich: Ein
+// Loafer lag unter „Smart Casual" UND unter „Freizeit", ein Oxford unter
+// „Büro" UND unter „Abend". Wer einen bestimmten Schuh suchte, musste raten,
+// unter welchem der beiden Reiter er liegt.
+//
+// Die Saison hat je Schuh genau eine Antwort. Sie steht am Modell und ist im
+// CMS zu ändern — die Machart (OXFORD, LOAFER …) bleibt im Programm, weil an
+// ihr Leisten und Optionen hängen, taucht im Laden aber nicht mehr auf.
 const BASE_CATEGORIES = [
-  { label: 'Alle Modelle',    value: 'ALL' },
-  { label: 'Büro & Business', value: 'BUSINESS',     cats: ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK'] },
-  { label: 'Smart Casual',    value: 'SMART_CASUAL', cats: ['LOAFER', 'MOCCASIN', 'MONK', 'DOUBLE_MONK', 'DERBY', 'CHELSEA'] },
-  { label: 'Freizeit',        value: 'LEISURE',      cats: ['SNEAKER', 'SNEAKER_LACED', 'SNEAKER_BOOT', 'LACELESS_TRAINER', 'LOAFER', 'MOCCASIN', 'MOC_SPORT', 'MOC_SPORT_BOOT', 'CHUKKA', 'BOOT', 'JODHPUR'] },
-  { label: 'Abend & Gala',    value: 'EVENING',      cats: ['WHOLECUT', 'OXFORD', 'BELGIAN_SLIPPER', 'WELLINGTON', 'DRAKE'] },
-  { label: 'Outdoor',         value: 'OUTDOOR',      cats: ['BOOT', 'CHELSEA', 'BALMORAL', 'JODHPUR', 'CHUKKA'] },
+  { label: 'Alle Modelle', value: 'ALL' },
+  ...SAISONS.map(s => ({ label: s.label, value: s.key })),
 ]
-const CATEGORY_CAT_MAP = Object.fromEntries(BASE_CATEGORIES.filter(c => c.cats).map(c => [c.value, c.cats]))
-// Trifft ein Schuh (shoe.category) auf die gewählte Anlass-Kategorie zu?
-const shoeInCategory = (catValue, shoeCategory) => {
-  if (catValue === 'ALL') return true
-  const cats = CATEGORY_CAT_MAP[catValue]
-  return cats ? cats.includes(shoeCategory) : shoeCategory === catValue
-}
 
 // ── Passform-Leiste, inline unter den Reitern, kein Overlay ────────────
 // Fragt Länge + Ballenumfang für beide Füße. Der größere Fuß zählt fürs
@@ -380,6 +378,7 @@ export default function ShoeCollection() {
     }
   }
   const [activeCategory, setActiveCategory] = useState('ALL')
+  const [suche, setSuche] = useState('')
   const [scanAccuracy, setScanAccuracy] = useState(null)
 
   // Die Kollektionen kommen aus der Datenbank, nicht aus einer Liste im Code —
@@ -433,33 +432,18 @@ export default function ShoeCollection() {
   const handleResetMeasurements = async () => {
     await saveFootMeasurements({ foot_length_mm: null, ball_girth_mm: null }).catch(() => {})
   }
-  // Backend-Status: 'loading' (Initial-Pull läuft) | 'ok' | 'error'
-  const [backendStatus, setBackendStatus] = useState(shoes.length ? 'ok' : 'loading')
-  const [backendError, setBackendError]   = useState(null)
+  // Woran wir sind, steht im Laden. Hier stand dafür ein eigener Abruf des
+  // ganzen Katalogs, dessen Ergebnis verworfen wurde — er diente allein dazu,
+  // am Gelingen abzulesen, ob der Server antwortet. Auf dem Telefon war das
+  // die Liste ein zweites Mal, mitsamt aller Bilder.
+  const backendStatus = useStore(s => s.katalogStatus)
+  const backendError  = useStore(s => s.katalogFehler)
   const isPromo = !!user?.is_promotion
 
   useEffect(() => {
     apiFetch('/api/scans/mine')
       .then(scans => { if (scans?.length) setScanAccuracy(scans[0].accuracy) })
       .catch(() => {})
-  }, [])
-
-  // Eigener Probe-Fetch, damit wir explizit zwischen „Backend down“
-  // und „Backend antwortet mit leerer Liste“ unterscheiden können.
-  useEffect(() => {
-    let cancelled = false
-    apiFetch('/api/shoes')
-      .then(rows => {
-        if (cancelled) return
-        setBackendStatus('ok')
-        setBackendError(null)
-      })
-      .catch(err => {
-        if (cancelled) return
-        setBackendStatus('error')
-        setBackendError(err?.error || err?.message || 'Verbindung zum Server fehlgeschlagen')
-      })
-    return () => { cancelled = true }
   }, [])
 
   // Aktive Firmen-Kampagne des Mitarbeiters laden.
@@ -495,9 +479,22 @@ export default function ShoeCollection() {
   // nebeneinander, ohne dass jemand sagt, warum.
   const inKollektion = enriched.filter(p => (p.collection || 'standard') === aktiveKollektion)
 
+  // Suchbegriff zuerst: Er gilt über alle Rubriken hinweg. Wer „chelsea"
+  // tippt, während „Sommer" offen ist, soll den Chelsea finden und nicht
+  // erst merken, dass er unter Winter liegt.
+  const gesucht = inKollektion.filter(p => trifftSuche(p, suche))
   const filtered = activeCategory === 'PROMO'
-    ? inKollektion.filter(p => p.promotion_price)
-    : inKollektion.filter(p => shoeInCategory(activeCategory, p.category))
+    ? gesucht.filter(p => p.promotion_price)
+    : gesucht.filter(p => passtZurSaison(activeCategory, p))
+
+  // Bei „Alle Modelle" wird nicht ein Raster gezeigt, sondern drei — je
+  // Saison eines, mit Überschrift und Trennlinie dazwischen. Sonst stünden
+  // Stiefel und Sommerschuh Kachel an Kachel, und die Einteilung wäre eine
+  // Behauptung der Reiterleiste, die das Raster nicht einlöst.
+  const abschnitte = activeCategory === 'ALL' && !suche.trim()
+    ? SAISONS.map(s => ({ ...s, modelle: filtered.filter(p => saisonVon(p) === s.key) }))
+        .filter(a => a.modelle.length > 0)
+    : null
   const selectShoe = (product) => navigate(shoePath(product), { state: { product } })
 
   return (
@@ -553,9 +550,9 @@ export default function ShoeCollection() {
             // Gezählt wird innerhalb der gewählten Kollektion. Über dem
             // Raster stand sonst „Alle Modelle 47", während darunter 16
             // Kacheln lagen — der Zähler zählte den ganzen Katalog.
-            const count = cat.value === 'ALL' ? inKollektion.length
-              : cat.value === 'PROMO' ? inKollektion.filter(p => p.promotion_price).length
-              : inKollektion.filter(p => shoeInCategory(cat.value, p.category)).length
+            const count = cat.value === 'ALL' ? gesucht.length
+              : cat.value === 'PROMO' ? gesucht.filter(p => p.promotion_price).length
+              : gesucht.filter(p => passtZurSaison(cat.value, p)).length
             return (
               <button
                 key={cat.value}
@@ -576,6 +573,40 @@ export default function ShoeCollection() {
             )
           })}
         </div>
+      </div>
+
+      {/* ── Suche ────────────────────────────────────────────────
+          Unter den Reitern, nicht darüber: Die Rubrik ist die gröbere
+          Entscheidung, die Suche der Griff für den, der schon weiß, was er
+          will. Sie durchsucht auch die Saison — wer „winter" tippt, bekommt
+          die Stiefel, obwohl das Wort an keinem einzelnen Modell steht. */}
+      <div className="px-5 lg:px-16 pb-4">
+        <div className="max-w-sm mx-auto relative">
+          <Search size={14} strokeWidth={1.5}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-black/25 pointer-events-none" />
+          <input
+            type="search"
+            value={suche}
+            onChange={e => setSuche(e.target.value)}
+            placeholder="Modell, Leder oder Saison"
+            aria-label="Modelle durchsuchen"
+            className="w-full border border-black/12 focus:border-black/40 outline-none bg-transparent
+                       pl-9 pr-8 py-2 text-[12px] text-black placeholder:text-black/30 transition-colors"
+          />
+          {suche && (
+            <button onClick={() => setSuche('')} aria-label="Suche zurücksetzen"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-black/30 hover:text-black bg-transparent border-0 p-1">
+              <X size={13} strokeWidth={1.8} />
+            </button>
+          )}
+        </div>
+        {suche.trim() && (
+          <p className="text-center text-[11px] text-black/35 font-light mt-2">
+            {filtered.length === 0
+              ? <>Nichts gefunden zu „{suche.trim()}".</>
+              : <>{filtered.length} {filtered.length === 1 ? 'Treffer' : 'Treffer'} zu „{suche.trim()}"</>}
+          </p>
+        )}
       </div>
 
       {/* ── Passform-Leiste (inline, unter den Reitern) ─────────── */}
@@ -631,7 +662,7 @@ export default function ShoeCollection() {
                 <p className="text-[12px] text-black/40 mt-2 font-light max-w-md">{backendError}</p>
                 <button
                   type="button"
-                  onClick={() => { setBackendStatus('loading'); setBackendError(null); window.location.reload() }}
+                  onClick={() => window.location.reload()}
                   className="mt-5 px-6 h-10 border border-black text-black text-[11px] tracking-[0.18em] uppercase font-light hover:bg-black hover:text-white transition-all"
                 >
                   Erneut versuchen
@@ -641,12 +672,57 @@ export default function ShoeCollection() {
             {/* Schuhe sind geladen, diese Kategorie ist nur (noch) leer,
                 niemals als Fehler darstellen. */}
             {(shoes.length > 0 || backendStatus === 'ok') && (
-              <>
-                <p className="text-[14px] font-light text-black/40">Diese Kategorie wird gerade kuratiert.</p>
-                <p className="text-[12px] text-black/20 mt-2 font-light">Bald verfügbar.</p>
-              </>
+              suche.trim() ? (
+                <>
+                  <p className="text-[14px] font-light text-black/40">Zu „{suche.trim()}" haben wir nichts.</p>
+                  <button onClick={() => setSuche('')}
+                    className="mt-4 text-[11px] tracking-[0.14em] uppercase text-black/45 hover:text-black bg-transparent border-0 underline underline-offset-4">
+                    Suche zurücksetzen
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-[14px] font-light text-black/40">Diese Rubrik wird gerade kuratiert.</p>
+                  <p className="text-[12px] text-black/20 mt-2 font-light">Bald verfügbar.</p>
+                </>
+              )
             )}
           </div>
+        ) : abschnitte ? (
+          /* ── Drei Raster statt einem ───────────────────────────────
+              Bei „Alle Modelle" bekommt jede Saison ihren eigenen Block mit
+              Überschrift und Trennlinie. Ohne das stünden Stiefel und
+              Sommerschuh Kachel an Kachel — die Einteilung wäre dann eine
+              Behauptung der Reiterleiste, die das Raster nicht einlöst. */
+          abschnitte.map((abschnitt, i) => (
+            <section key={abschnitt.key} className={i > 0 ? 'mt-14 lg:mt-20' : ''}>
+              <header className={`px-5 lg:px-0 pb-5 lg:pb-7 ${i > 0 ? 'border-t border-black/[0.09] pt-10 lg:pt-14' : ''}`}>
+                <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight">
+                  {abschnitt.titel}
+                  <span className="text-black/20 text-[12px] lg:text-[13px] ml-2.5 font-light">
+                    {abschnitt.modelle.length}
+                  </span>
+                </h2>
+                <p className="text-[11px] lg:text-[12px] text-black/35 font-light mt-1 max-w-md leading-relaxed">
+                  {abschnitt.text}
+                </p>
+              </header>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-px lg:gap-x-5 lg:gap-y-5">
+                {abschnitt.modelle.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onSelect={selectShoe}
+                    isFav={favorites.includes(String(product.id))}
+                    onToggleFav={() => handleToggleFav(product.id)}
+                    isPromo={isPromo}
+                    dimmed={!fitsMeasurements(product.category)}
+                    campaign={activeCampaign}
+                  />
+                ))}
+              </div>
+            </section>
+          ))
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-px lg:gap-x-5 lg:gap-y-5">
             {filtered.map(product => (

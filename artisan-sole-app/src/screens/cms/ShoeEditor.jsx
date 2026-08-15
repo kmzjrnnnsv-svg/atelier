@@ -9,6 +9,9 @@ const TAGS = [null, 'BESTSELLER', 'NEW', 'LIMITED']
 const emptyForm = {
  name: '',
  category: 'OXFORD',
+ // Leer heißt „nach Machart": Der Server leitet die Saison dann aus der
+ // Kategorie ab. Ein gesetzter Wert schlägt die Regel.
+ season: '',
  price: '',
  material: '',
  tagline: '',
@@ -474,16 +477,29 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </p>
  </div>
 
- {/* Category + Tag row */}
- <div className="grid grid-cols-2 gap-5 mb-5">
+ {/* Kategorie, Saison, Badge */}
+ <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 mb-2">
  <div>
- <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Kategorie *</label>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Machart *</label>
  <select
  value={form.category}
  onChange={(e) => set('category', e.target.value)}
  className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70"
  >
  {[...new Set([...CATEGORIES, form.category].filter(Boolean))].map((c) => <option key={c} value={c}>{c}</option>)}
+ </select>
+ </div>
+ <div>
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Saison</label>
+ <select
+ value={form.season || ''}
+ onChange={(e) => set('season', e.target.value)}
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70"
+ >
+ <option value="">Nach Machart</option>
+ <option value="summer">Sommer</option>
+ <option value="winter">Winter</option>
+ <option value="all">Ganzjährig</option>
  </select>
  </div>
  <div>
@@ -498,6 +514,14 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </select>
  </div>
  </div>
+ <p className="text-[10px] text-black/25 font-light leading-relaxed max-w-2xl mb-5">
+ Die <strong className="font-normal">Machart</strong> steuert, was der Konfigurator zeigt — Leisten,
+ Sohlen, Optionen. Sie erscheint im Laden nicht mehr. Was der Kunde dort sieht, ist die
+ <strong className="font-normal"> Saison</strong>: Sommer, Winter oder ganzjährig.
+ „Nach Machart" heißt, dass wir sie ableiten — Stiefel in den Winter, Mokassins und Walks in den
+ Sommer, alles andere ins ganze Jahr. Ein ungefütterter Sommerstiefel ist damit nicht erfasst;
+ stellen Sie ihn hier von Hand um.
+ </p>
 
  {/* Price + Match row */}
  <div className="grid grid-cols-2 gap-5 mb-5">
