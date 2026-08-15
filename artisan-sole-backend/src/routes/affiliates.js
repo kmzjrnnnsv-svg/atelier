@@ -451,10 +451,21 @@ router.post('/',
     const tempHash = bestehend ? null : await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 12)
 
     const tx = db.transaction(() => {
+      // Niemals ein Konto ohne Namen anlegen.
+      //
+      // Beim Anlegen über die E-Mail-Adresse allein ist `full_name` leer, und
+      // ein leerer Name war bis eben kein Schönheitsfehler, sondern ein
+      // Ausfall: Die Benutzerliste der Verwaltung griff auf den ersten
+      // Buchstaben zu und stürzte ab — an die ganze Seite kam danach niemand
+      // mehr heran. Ersatzweise gilt der Teil vor dem @; den ersetzt der
+      // Affiliate mit seinen Stammdaten ohnehin selbst.
+      const anzeigeName = String(b.full_name || '').trim()
+        || String(email).split('@')[0].replace(/[._-]+/g, ' ').trim()
+        || 'Neues Konto'
       const userId = bestehend
         ? bestehend.id
         : db.prepare("INSERT INTO users (name, email, password_hash, role, is_active) VALUES (?, ?, ?, 'user', 0)")
-            .run(String(b.full_name || '').trim(), email, tempHash).lastInsertRowid
+            .run(anzeigeName, email, tempHash).lastInsertRowid
 
       const info = db.prepare(`
         INSERT INTO affiliates

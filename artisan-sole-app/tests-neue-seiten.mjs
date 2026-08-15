@@ -123,6 +123,9 @@ p('Steuerausweis blendet ihn ein', mitAusweis === 1, `${mitAusweis} Feld(er)`)
 p('Umschalten ohne Laufzeitfehler', konsolenFehler.filter(echterFehler).length === 0,
   konsolenFehler.filter(echterFehler)[0]?.slice(0, 110) || '')
 await oeffne('/cms/orders', 'Bestellungen')
+// Stürzte im Betrieb ab, sobald ein Konto ohne Namen in der Liste stand —
+// und dann kam niemand mehr an die Benutzerverwaltung heran.
+await oeffne('/cms/users', 'Benutzer')
 
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('4. Bestellansicht des Kunden')

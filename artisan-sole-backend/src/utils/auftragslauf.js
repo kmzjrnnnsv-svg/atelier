@@ -112,7 +112,8 @@ export function stornoVorschau(order, { pctUeberschreiben = null } = {}) {
   const betrag = runden(betragAusText(order?.price))
 
   if (!regel.moeglich) {
-    return { moeglich: false, betrag, pct: null, gebuehr: 0, erstattung: 0, hinweis: regel.hinweis }
+    return { moeglich: false, bezahlt: order?.status !== 'pending_payment',
+             betrag, pct: null, gebuehr: 0, erstattung: 0, hinweis: regel.hinweis }
   }
 
   // Nicht bezahlt heißt: Es gibt nichts zu erstatten und nichts einzubehalten.
@@ -125,7 +126,11 @@ export function stornoVorschau(order, { pctUeberschreiben = null } = {}) {
   const gebuehr    = bezahlt ? runden(betrag * pct / 100) : 0
   const erstattung = bezahlt ? runden(betrag - gebuehr)   : 0
 
-  return { moeglich: true, betrag, pct, hoechstsatz: hoechst, gebuehr, erstattung, hinweis: regel.hinweis }
+  // `bezahlt` geht ausdrücklich mit hinaus. Ohne die Angabe rechnete die
+  // Stornomaske der Verwaltung den Erstattungsbetrag selbst aus dem
+  // Auftragswert — und bot bei einer unbezahlten Bestellung an, den vollen
+  // Preis zurückzuüberweisen. Geld, das nie eingegangen ist.
+  return { moeglich: true, bezahlt, betrag, pct, hoechstsatz: hoechst, gebuehr, erstattung, hinweis: regel.hinweis }
 }
 
 /**
