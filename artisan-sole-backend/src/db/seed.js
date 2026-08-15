@@ -67,6 +67,10 @@ export async function seedDatabase(db) {
   seedShoeDescriptions(db)
   benenneSohlenGruppen(db)
   seedKollektionen(db)
+  // Nach der Matrix, nicht davor: Deren Force-Reset räumt jede Kategorie ab,
+  // die es kennt. MOCCASIN steht nicht darin — und soll es auch nicht, sonst
+  // bekäme der Mokassin bei jedem Start die Dress-Leder zurück.
+  seedMokassin(db)
   seedExpressModelle(db)
   seedLegalDocs(db)
 
@@ -527,12 +531,22 @@ export function seedExtendedCatalog(db) {
   `)
   MATERIALS.forEach(m => insMat.run(m.key, m.label, m.sub, m.color, m.tip, m.rating, m.sort, m.family))
 
-  // Alte/Legacy-Materialien (calfskin, suede, patent, cordovan, exotic,
-  // scotch_grain, …) auf available=0 setzen → tauchen nicht mehr in der
-  // User-UI auf. Nur Matrix-Materialien sind aktiv.
-  const MATRIX_KEYS = MATERIALS.map(m => m.key)
-  const placeholders = MATRIX_KEYS.map(() => '?').join(',')
-  db.prepare(`UPDATE shoe_materials SET available = 0 WHERE key NOT IN (${placeholders})`).run(...MATRIX_KEYS)
+  // Die abgelösten Lederarten stilllegen — beim Namen genannt.
+  //
+  // Hier stand `WHERE key NOT IN (Matrix)`: Alles, was diese Liste nicht
+  // kennt, wurde bei JEDEM Serverstart abgeschaltet. Gemeint waren die
+  // Altlasten aus der ersten Fassung; getroffen wurde jede Lederart, die
+  // später dazukam — die drei des Mokassins ebenso wie eine, die jemand im
+  // CMS anlegt. Sie erschienen einmal und waren nach dem nächsten Neustart
+  // stillschweigend weg, ohne dass irgendwo etwas davon stand.
+  //
+  // Eine Liste dessen, was stillgelegt gehört, ist länger als eine Liste
+  // dessen, was bleiben darf — aber sie trifft nur, was sie meint.
+  const ABGELOEST = ['calfskin', 'suede', 'patent', 'cordovan', 'exotic', 'scotch_grain',
+                     'painted_full_grain_durable']
+  db.prepare(
+    `UPDATE shoe_materials SET available = 0 WHERE key IN (${ABGELOEST.map(() => '?').join(',')})`
+  ).run(...ABGELOEST)
 
   // Painted Full Grain (Durable) entfernen: Farben, die darauf zeigten,
   // jetzt auf 'painted_full_grain' (Aesthetic) umleiten.
@@ -1147,8 +1161,24 @@ export function seedMatrixTemplatesV2(db) {
     LACELESS_TRAINER: [...mk('LACELESS_TRAINER', 'inner_color', INNER_FULL), ['LACELESS_TRAINER', 'sole_bottom_color:white', 1]],
   }
 
-  // 1) Templates komplett ersetzen
-  db.prepare('DELETE FROM category_templates').run()
+  // 1) Templates ersetzen — aber nur die Kategorien, die diese Matrix führt.
+  //
+  // Hier stand `DELETE FROM category_templates` ohne Bedingung. Das war
+  // richtig, solange die Matrix alles war, was es gab: Sie ist für ihre
+  // Kategorien die maßgebliche Quelle und baut sie bei jedem Start neu auf.
+  //
+  // Mit dem Mokassin gibt es die erste Kategorie außerhalb der Matrix. Ihre
+  // Vorlage wurde von diesem DELETE beim zweiten Start mitgenommen — beim
+  // ersten Lauf war sie noch da (der Mokassin-Seed läuft später), beim
+  // zweiten war sie weg, und der Mokassin-Seed hatte sich in den
+  // Einstellungen bereits als erledigt vermerkt. Ergebnis: eine leere
+  // Kategorie-Vorlage, die niemand wieder aufbaut.
+  //
+  // Was die Matrix nicht kennt, räumt sie deshalb auch nicht ab.
+  const gefuehrteKategorien = Object.keys(M)
+  db.prepare(
+    `DELETE FROM category_templates WHERE category IN (${gefuehrteKategorien.map(() => '?').join(',')})`
+  ).run(...gefuehrteKategorien)
   const insTpl = db.prepare(`
     INSERT INTO category_templates (category, option_id, is_default, sort_order)
     VALUES (?, ?, ?, ?)
@@ -1424,6 +1454,9 @@ export const CATEGORY_LASTS = {
   CHUKKA:           ['zurigo', 'savile'],
   LOAFER:           ['venetian', 'penny_loafer', 'drivers'],
   BELGIAN_SLIPPER:  ['drivers', 'venetian'],
+  // Der Mokassin läuft nur auf dem Drivers-Leisten — der einzige, der die
+  // Machart trägt. Die Maßtabelle führt ihn bereits (EU 38 bis 48, Weite D).
+  MOCCASIN:         ['drivers'],
   WELLINGTON:       ['wellington'],
   DRAKE:            ['drake'],
   SNEAKER:          ['sneaker', 'moc_sport', 'chunky'],
@@ -1768,6 +1801,315 @@ export function seedKollektionen(db) {
     if (!vorher) neu++
   }
   if (neu) console.log(`✅ Seeded: ${neu} Kollektion(en)`)
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Der Mokassin.
+ *
+ * ── Was hier abgebildet wird ─────────────────────────────────────────────
+ *
+ * Der Driver der Manufaktur wird nach anderen Regeln konfiguriert als ein
+ * Rahmengenähter. Er hat keinen Rahmen, keinen Absatz und keine Zehenkappe;
+ * dafür hat er Teile, die es sonst nirgends gibt: ein Vorderteil, eine
+ * sichtbare Naht, ein Weichfutter und einen Kragen. Und er läuft auf drei
+ * eigenen Ledern — Calf Suede, Nappa, Fullgrain —, die mit den Ledern der
+ * Dress-Linie nichts zu tun haben.
+ *
+ * ── Warum eine eigene Kategorie ──────────────────────────────────────────
+ *
+ * Weil die Kategorie im ganzen System der Schlüssel ist, an dem hängt, was
+ * wählbar ist: Leisten (CATEGORY_LASTS), Optionsgruppen
+ * (options.applicable_categories), Vorlagen (category_templates). Den
+ * Mokassin unter LOAFER zu führen hieße, jede dieser Listen mit
+ * Ausnahmen zu durchsetzen — und der Loafer bekäme ein Vorderteil, das er
+ * nicht hat.
+ *
+ * ── Warum eigene Farben ──────────────────────────────────────────────────
+ *
+ * Die Farbzeilen sind global und tragen je EINEN Namen. Die Töne der
+ * Dress-Linie heißen inzwischen „Espresso Heritage" und „Midnight Black" —
+ * Namen, die für Luxe Calf vergeben wurden. Hinge der Mokassin an denselben
+ * Zeilen, würde jede spätere Umbenennung dort seine Farben mit umbenennen.
+ * Deshalb ein eigener Satz mit dem Präfix `moc_`, so wie es die Velvet-Töne
+ * schon vormachen.
+ *
+ * Die drei Leder teilen sich diesen Satz: `applicable_materials` sagt je
+ * Farbe, an welchem Leder es sie gibt. 22 Zeilen statt 37, und die
+ * Schnittmenge steht an einer Stelle statt dreimal.
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/** Die drei Leder des Mokassins. Eine Familie, damit die Wahl in einem Schritt bleibt. */
+const MOKASSIN_LEDER = [
+  { key: 'calf_suede', label: 'Calf Suede', color: '#8a7f76',
+    tip: 'Fein geschliffenes Kalbsveloursleder, weich im Griff. Der klassische Fahrer-Schuh, am besten bei trockenem Wetter.' },
+  { key: 'nappa',      label: 'Nappa',      color: '#b98a5e',
+    tip: 'Vollnarbiges Nappaleder, glatt und nachgiebig. Legt sich schnell an den Fuß und bleibt weich.' },
+  { key: 'fullgrain',  label: 'Fullgrain',  color: '#6b4423',
+    tip: 'Unkorrigierte Vollnarbe mit sichtbarer Struktur. Das robusteste der drei, entwickelt Patina.' },
+]
+
+/**
+ * Die Farbpalette des Mokassins.
+ *
+ * `an` nennt die Leder, an denen es die Farbe gibt — genau die Aufteilung
+ * aus dem Konfigurator der Manufaktur: 17 Töne in Calf Suede, 13 in Nappa,
+ * 7 in Fullgrain.
+ */
+const MOKASSIN_FARBEN = [
+  { key: 'moc_black',        name: 'Black',        hex: '#14110f', an: ['calf_suede', 'nappa', 'fullgrain'] },
+  { key: 'moc_dark_brown',   name: 'Dark Brown',   hex: '#3b2314', an: ['calf_suede', 'nappa', 'fullgrain'] },
+  { key: 'moc_medium_brown', name: 'Medium Brown', hex: '#7a4a24', an: ['calf_suede'] },
+  { key: 'moc_tan',          name: 'Tan',          hex: '#b07a45', an: ['nappa', 'fullgrain'] },
+  { key: 'moc_camel',        name: 'Camel',        hex: '#c19a6b', an: ['calf_suede'] },
+  { key: 'moc_honey',        name: 'Honey',        hex: '#d99a3c', an: ['nappa'] },
+  { key: 'moc_nude',         name: 'Nude',         hex: '#e0c3a8', an: ['nappa'] },
+  { key: 'moc_sand',         name: 'Sand',         hex: '#d8c9a8', an: ['fullgrain'] },
+  { key: 'moc_white',        name: 'White',        hex: '#f4f2ed', an: ['calf_suede', 'nappa', 'fullgrain'] },
+  { key: 'moc_grey',         name: 'Grey',         hex: '#8b8b88', an: ['calf_suede'] },
+  { key: 'moc_navy',         name: 'Navy',         hex: '#1e2f4d', an: ['calf_suede', 'nappa', 'fullgrain'] },
+  { key: 'moc_light_blue',   name: 'Light Blue',   hex: '#8fb3d9', an: ['calf_suede', 'nappa'] },
+  { key: 'moc_turquoise',    name: 'Turquoise',    hex: '#2fa39b', an: ['calf_suede'] },
+  { key: 'moc_green',        name: 'Green',        hex: '#3f7d43', an: ['calf_suede'] },
+  { key: 'moc_light_green',  name: 'Light Green',  hex: '#9cc08a', an: ['nappa'] },
+  { key: 'moc_dark_green',   name: 'Dark Green',   hex: '#1f4029', an: ['calf_suede'] },
+  { key: 'moc_khaki',        name: 'Khaki',        hex: '#7c7554', an: ['calf_suede', 'nappa'] },
+  { key: 'moc_yellow',       name: 'Yellow',       hex: '#e3b325', an: ['calf_suede'] },
+  { key: 'moc_orange',       name: 'Orange',       hex: '#d2691e', an: ['calf_suede', 'nappa'] },
+  { key: 'moc_red',          name: 'Red',          hex: '#a4232a', an: ['calf_suede', 'nappa', 'fullgrain'] },
+  { key: 'moc_pink',         name: 'Pink',         hex: '#dfa0b0', an: ['calf_suede', 'nappa'] },
+  { key: 'moc_velvet',       name: 'Velvet',       hex: '#6d2740', an: ['calf_suede'] },
+]
+
+/** Die zehn Futtertöne der Manufaktur — dieselbe Reihe wie bei `inner_color`. */
+const MOKASSIN_FUTTER = [
+  ['black', 'Black', '#0a0a0a'], ['brown', 'Brown', '#5b3a1d'], ['tan', 'Tan', '#a0734a'],
+  ['beige', 'Beige', '#d4c4a0'], ['red', 'Red', '#a01c1c'],     ['orange', 'Orange', '#d97706'],
+  ['navy', 'Navy', '#1e3a5f'],   ['white', 'White', '#f5f5f0'], ['lila', 'Lila', '#5a2d6d'],
+  ['ochre', 'Ochre', '#b8860b'],
+]
+
+/**
+ * Die Schritte, die es nur am Mokassin gibt.
+ *
+ * `inner_color` (Futter) steht nicht dabei: Die Gruppe gilt bereits für alle
+ * Kategorien und trägt genau diese zehn Töne. Sie ein zweites Mal anzulegen
+ * hieße, dieselbe Liste an zwei Stellen zu pflegen.
+ *
+ * Der Kragen führt die Fullgrain-Palette, weil er in der Fertigung aus
+ * Fullgrain geschnitten wird — sieben Töne, nicht die zweiundzwanzig des
+ * Schafts.
+ */
+const MOKASSIN_GRUPPEN = [
+  {
+    key: 'moccasin_front', label: 'Vorderteil', sort_order: 4, required: 0,
+    beschreibung: 'Das Teil über dem Spann: schlicht, mit Schleife oder mit Maske.',
+    werte: [
+      { key: 'bare', label: 'Bare', hex: null, beschreibung: 'Ohne Aufsatz, durchgehende Fläche.' },
+      { key: 'bow',  label: 'Bow',  hex: null, beschreibung: 'Schleife aus demselben Leder.' },
+      { key: 'mask', label: 'Mask', hex: null, beschreibung: 'Aufgesetzte Maske über dem Spann.' },
+    ],
+  },
+  {
+    key: 'stitching_color', label: 'Nahtfarbe', sort_order: 6, required: 0,
+    beschreibung: 'Die sichtbare Naht rundum. Ton in Ton oder als Kontrast.',
+    werte: [
+      { key: 'black',  label: 'Black',  hex: '#0a0a0a' },
+      { key: 'grey',   label: 'Grey',   hex: '#8b8b88' },
+      { key: 'brown',  label: 'Brown',  hex: '#5b3a1d' },
+      { key: 'red',    label: 'Red',    hex: '#a01c1c' },
+      { key: 'green',  label: 'Green',  hex: '#2f6b3a' },
+      { key: 'blue',   label: 'Blue',   hex: '#24487d' },
+      { key: 'yellow', label: 'Yellow', hex: '#e3b325' },
+      { key: 'white',  label: 'White',  hex: '#f5f5f0' },
+    ],
+  },
+  {
+    key: 'soft_lining_color', label: 'Weichfutter', sort_order: 10, required: 0,
+    beschreibung: 'Die gepolsterte Lage unter dem Futter, dort wo der Fuß aufliegt.',
+    werte: MOKASSIN_FUTTER.map(([key, label, hex]) => ({ key, label, hex })),
+  },
+  {
+    key: 'collar_color', label: 'Kragen', sort_order: 10, required: 0,
+    beschreibung: 'Der umlaufende Rand am Einstieg, aus Fullgrain.',
+    werte: [
+      ['black', 'Black', '#14110f'], ['dark_brown', 'Dark Brown', '#3b2314'],
+      ['tan', 'Tan', '#b07a45'],     ['sand', 'Sand', '#d8c9a8'],
+      ['white', 'White', '#f4f2ed'], ['navy', 'Navy', '#1e2f4d'],
+      ['red', 'Red', '#a4232a'],
+    ].map(([key, label, hex]) => ({ key, label, hex })),
+  },
+]
+
+/** Die Sohlen, die unter einen Fahrer-Schuh gehören. Erste ist Vorgabe. */
+const MOKASSIN_SOHLEN = ['dots', 'gummy_sole', 'rubber']
+
+/**
+ * Das Modell selbst.
+ *
+ * Preis und Einstandspreis sind zwei verschiedene Dinge: 105 € ist, was die
+ * Manufaktur für die Einzelanfertigung nimmt (aus ihrem Back Office), 890 €
+ * der Verkaufspreis. Er ist an der Freizeit-Linie ausgerichtet — zwischen
+ * Sneaker (890 €) und Belgian Slipper (1.180 €) — und im CMS jederzeit
+ * änderbar.
+ *
+ * Ohne Bild: Für den Driver liegt keine Aufnahme vor, und ein
+ * fremdes Foto wäre eine Behauptung über ein Produkt, das anders aussieht.
+ * Die Karte bleibt bis zum Upload im CMS ohne Motiv — so wie bei den übrigen
+ * Matrix-Modellen auch.
+ */
+const MOKASSIN_MODELL = {
+  name: 'Driver',
+  slug: 'driver',
+  price: '€ 890',
+  cost_price: 105,
+  material: 'Calf Suede',
+  color: '#3b2314',
+  tag: 'NEW',
+  tagline: 'Der Fahrer-Mokassin, weich gearbeitet.',
+  description: 'Ungefütterter Mokassin mit umlaufender Naht und Noppensohle — der Schuh für alles, was kein Anzug ist. Sie wählen das Leder aus Calf Suede, Nappa oder Fullgrain, dazu Farbe, Nahtfarbe, Futter, Weichfutter, Kragen und das Vorderteil: schlicht, mit Schleife oder mit Maske. Gefertigt auf dem Drivers-Leisten in Ihrer Länge und Weite.',
+}
+
+/**
+ * Stand der Mokassin-Einrichtung.
+ *
+ * Eine Nummer statt eines Zeitstempels, damit sich ein Nachtrag ausrollen
+ * lässt: Wer die alte Nummer stehen hat, läuft einmal durch und bekommt, was
+ * dazugekommen ist. Alles ist `INSERT OR IGNORE`, ein zweiter Lauf legt also
+ * nichts doppelt an — er ergänzt nur, was fehlt.
+ */
+const MOKASSIN_STAND = '2'
+
+/**
+ * Den Mokassin einrichten: Leder, Farben, Schritte, Vorlage, Modell.
+ *
+ * Sonst einmalig, wie die Express-Linie: Der Vermerk in den Einstellungen
+ * verhindert, dass ein im CMS gelöschtes Modell oder eine abgewählte Farbe
+ * beim nächsten Start zurückkommt.
+ */
+export function seedMokassin(db) {
+  const stand = db.prepare("SELECT value FROM settings WHERE key = 'mokassin_konfiguration'").get()
+  if (stand?.value === MOKASSIN_STAND) return
+
+  const KAT = 'MOCCASIN'
+  const lederKeys = MOKASSIN_LEDER.map(l => l.key)
+
+  const einrichten = db.transaction(() => {
+    // ── 1. Leder ────────────────────────────────────────────────────────
+    // Hinter der Dress-Linie einsortiert (sort_order ab 20), damit sie in
+    // der CMS-Liste als eigener Block stehen und sich nicht dazwischen
+    // schieben.
+    const insLeder = db.prepare(`
+      INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
+      VALUES (?, ?, 'Aesthetic', ?, 1, ?, 'good', ?, 'aesthetic')
+    `)
+    MOKASSIN_LEDER.forEach((l, i) => insLeder.run(l.key, l.label, l.color, l.tip, 20 + i))
+
+    // ── 2. Farben ───────────────────────────────────────────────────────
+    const insFarbe = db.prepare(`
+      INSERT OR IGNORE INTO shoe_colors (key, hex, name, available, rating, sort_order, applicable_materials)
+      VALUES (?, ?, ?, 1, 'neutral', ?, ?)
+    `)
+    MOKASSIN_FARBEN.forEach((f, i) => insFarbe.run(f.key, f.hex, f.name, 100 + i, f.an.join(',')))
+
+    // Drei Farbzeilen aus der ersten Fassung — „Schwarz", „Tan", „Forest" —
+    // stehen noch auf `*` und gelten damit für jedes Leder, das es je geben
+    // wird. Am Mokassin wären sie drei Töne zu viel, und „Tan" stünde dort
+    // zweimal: einmal als Altbestand, einmal als eigene Nappa-Farbe.
+    //
+    // Statt sie zu löschen (jemand hat sie vielleicht schon bestellt) werden
+    // sie an die Leder gebunden, an denen sie bisher schon standen. Für die
+    // Dress-Linie ändert das nichts — sie bietet genau diese Leder an. Wer
+    // die Bindung im CMS bereits selbst gesetzt hat, behält sie.
+    // Beim Schlüssel genannt, nicht über `WHERE applicable_materials = '*'`:
+    // Eine Farbe, die jemand im CMS bewusst für alle Leder angelegt hat, ist
+    // kein Altbestand und wird nicht mit eingesammelt.
+    const DRESS_LEDER = ['lux_calf', 'lux_suede', 'painted_full_grain', 'patina', 'velvet',
+                         'box_calf', 'urban_suede', 'painted_calf']
+    const ALTBESTAND = ['schwarz', 'tan', 'forest']
+    db.prepare(`
+      UPDATE shoe_colors SET applicable_materials = ?, updated_at = datetime('now')
+      WHERE key IN (${ALTBESTAND.map(() => '?').join(',')}) AND applicable_materials = '*'
+    `).run(DRESS_LEDER.join(','), ...ALTBESTAND)
+
+    // ── 3. Schritte ─────────────────────────────────────────────────────
+    const insGruppe = db.prepare(`
+      INSERT OR IGNORE INTO option_groups (key, label, description, ui_type, required, sort_order)
+      VALUES (?, ?, ?, 'single', ?, ?)
+    `)
+    const gruppeId = db.prepare('SELECT id FROM option_groups WHERE key = ?')
+    const insWert = db.prepare(`
+      INSERT OR IGNORE INTO options (group_id, key, label, description, default_price_extra, applicable_categories, sort_order, color_hex)
+      VALUES (?, ?, ?, ?, 0, ?, ?, ?)
+    `)
+    for (const g of MOKASSIN_GRUPPEN) {
+      insGruppe.run(g.key, g.label, g.beschreibung, g.required, g.sort_order)
+      const gid = gruppeId.get(g.key)?.id
+      if (!gid) continue
+      g.werte.forEach((w, i) => insWert.run(gid, w.key, w.label, w.beschreibung || null, KAT, i, w.hex))
+    }
+
+    // ── 4. Vorlage für die Kategorie ────────────────────────────────────
+    // Woraus sie besteht: die vier eigenen Schritte, das Futter aus der
+    // allgemeinen Gruppe und die drei Sohlen. Kein Rahmen, kein Absatz,
+    // keine Zehenkappe — die hat der Schuh nicht.
+    //
+    // Auch keine Sohlenfarben: `dots` ist eine durchgehende Gummisohle, und
+    // die Regel in sohlenRegel.js blendet Rand und Lauffläche dort ohnehin
+    // aus. Was nie erscheint, muss auch nicht in der Vorlage stehen.
+    const optId = db.prepare(`
+      SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+      WHERE g.key = ? AND o.key = ?
+    `)
+    const insVorlage = db.prepare(`
+      INSERT OR IGNORE INTO category_templates (category, option_id, is_default, sort_order)
+      VALUES (?, ?, ?, ?)
+    `)
+    const vorlage = []
+    for (const g of MOKASSIN_GRUPPEN) vorlage.push([g.key, g.werte.map(w => w.key)])
+    vorlage.push(['inner_color', MOKASSIN_FUTTER.map(([k]) => k)])
+    vorlage.push(['sole', MOKASSIN_SOHLEN])
+
+    let lfd = 0
+    for (const [gruppe, keys] of vorlage) {
+      keys.forEach((k, i) => {
+        const id = optId.get(gruppe, k)?.id
+        if (id) insVorlage.run(KAT, id, i === 0 ? 1 : 0, lfd++)
+      })
+    }
+
+    // ── 5. Das Modell ───────────────────────────────────────────────────
+    if (deletedSeedNames(db).has(MOKASSIN_MODELL.name)) return
+    let schuh = db.prepare('SELECT id FROM shoes WHERE name = ?').get(MOKASSIN_MODELL.name)
+    if (!schuh) {
+      const m = MOKASSIN_MODELL
+      const info = db.prepare(`
+        INSERT INTO shoes (name, category, price, material, match_pct, color, tag,
+                           tagline, description, cost_price, slug, collection)
+        VALUES (?, ?, ?, ?, '97.0%', ?, ?, ?, ?, ?, ?, 'standard')
+      `).run(m.name, KAT, m.price, m.material, m.color, m.tag,
+             m.tagline, m.description, m.cost_price, m.slug)
+      schuh = { id: info.lastInsertRowid }
+    }
+
+    // Leder und Schritte an das Modell hängen. Die Kategorie-Vorlage greift
+    // im Konfigurator nur, solange am Modell nichts steht — hier steht
+    // etwas, damit die Verwaltung es je Modell verengen kann.
+    const insModellLeder = db.prepare(
+      'INSERT OR IGNORE INTO shoe_material_options (shoe_id, material_key, sort_order) VALUES (?, ?, ?)')
+    lederKeys.forEach((k, i) => insModellLeder.run(schuh.id, k, i))
+
+    db.prepare(`
+      INSERT OR IGNORE INTO shoe_options (shoe_id, option_id, price_override, is_default, sort_order)
+      SELECT ?, option_id, NULL, is_default, sort_order FROM category_templates WHERE category = ?
+    `).run(schuh.id, KAT)
+  })
+
+  einrichten()
+  db.prepare(`
+    INSERT INTO settings (key, value) VALUES ('mokassin_konfiguration', ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(MOKASSIN_STAND)
+  console.log(`✅ Seeded: Mokassin (${MOKASSIN_LEDER.length} Leder, ${MOKASSIN_FARBEN.length} Farben, ${MOKASSIN_GRUPPEN.length} eigene Schritte)`)
 }
 
 /**

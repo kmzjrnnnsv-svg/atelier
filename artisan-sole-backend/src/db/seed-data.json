@@ -198,7 +198,7 @@
       {
         "key": "black",
         "hex": "#000000",
-        "name": "Black",
+        "name": "Midnight Black",
         "available": 1,
         "tip": "Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz, perfekt für Smart Casual und kreative Berufe.",
         "pairs_with": "Dunkle Jeans, Navy Blazer, Charcoal Suits",
@@ -209,7 +209,7 @@
       {
         "key": "cognac",
         "hex": "#92400e",
-        "name": "Cognac",
+        "name": "Cognac Classic",
         "available": 1,
         "tip": "Warmes Braun mit Tiefe, der ideale Business-Casual-Begleiter. Passt hervorragend zu Beige, Navy und Erdtönen.",
         "pairs_with": "Beige Chinos, Navy Blazer, Jeans",
@@ -220,7 +220,7 @@
       {
         "key": "oxblood",
         "hex": "#7b1e1e",
-        "name": "Oxblood",
+        "name": "Bordeaux Heritage",
         "available": 1,
         "tip": "Sattes Bordeaux-Rot, ein Herbst- und Winter-Statement. Elegant zum dunklen Anzug, lässig zur Jeans.",
         "pairs_with": "Charcoal, Navy, Dunkelgrün, Tweed",
@@ -242,7 +242,7 @@
       {
         "key": "navy",
         "hex": "#1e3a5f",
-        "name": "Navy",
+        "name": "Midnight Navy",
         "available": 0,
         "tip": "Der moderne Gentleman-Ton, elegant und unkonventionell zugleich. Perfekt zu grauen und hellbraunen Outfits.",
         "pairs_with": "Grau, Beige, helle Jeans, Tweed",
@@ -253,7 +253,7 @@
       {
         "key": "forest",
         "hex": "#14532d",
-        "name": "Forest",
+        "name": "Forest Heritage",
         "available": 0,
         "tip": "Tiefes Waldgrün, für den mutigen Stilbewussten. Ein Herbst-Highlight zu Cord, Tweed und Erdtönen.",
         "pairs_with": "Braun, Beige, Senfgelb, Cord",
@@ -264,7 +264,7 @@
       {
         "key": "dark_brown",
         "hex": "#3b1f0a",
-        "name": "Dark Brown",
+        "name": "Espresso Heritage",
         "available": 1,
         "rating": "good",
         "sort_order": 1,
@@ -273,7 +273,7 @@
       {
         "key": "medium_brown",
         "hex": "#5b3a1d",
-        "name": "Medium Brown",
+        "name": "Cedar Brown",
         "available": 1,
         "rating": "good",
         "sort_order": 2,
@@ -282,7 +282,7 @@
       {
         "key": "light_brown",
         "hex": "#a0734a",
-        "name": "Light Brown",
+        "name": "Sandy Taupe",
         "available": 1,
         "rating": "neutral",
         "sort_order": 3,
@@ -291,7 +291,7 @@
       {
         "key": "burgundy",
         "hex": "#4f1d24",
-        "name": "Burgundy",
+        "name": "Burgundy Wine",
         "available": 1,
         "rating": "good",
         "sort_order": 6,
@@ -300,7 +300,7 @@
       {
         "key": "red",
         "hex": "#a01c1c",
-        "name": "Red",
+        "name": "Crimson Red",
         "available": 1,
         "rating": "neutral",
         "sort_order": 7,
@@ -309,7 +309,7 @@
       {
         "key": "olive",
         "hex": "#3d3c1f",
-        "name": "Olive",
+        "name": "Olive Grove",
         "available": 1,
         "rating": "neutral",
         "sort_order": 9,

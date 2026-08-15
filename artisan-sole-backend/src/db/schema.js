@@ -1803,6 +1803,15 @@ export function runMigrations(db) {
   //  2. **Genau einmal.** Der Merker verhindert, dass ein Neustart eine
   //     spätere Änderung aus dem CMS wieder überschreibt. Umbenannt wird
   //     außerdem nur, was noch den alten Namen trägt.
+  //
+  //  3. **Die neuen Namen stehen zusätzlich in `seed-data.json`.** Diese
+  //     Umbenennung allein reichte nicht: Auf einer FRISCHEN Installation
+  //     laufen die Migrationen zuerst, und danach schreibt `katalogAnwenden`
+  //     die Vorlage mit `ueberschreiben: true` darüber — die eben
+  //     umbenannten Farben trugen anschließend wieder ihre alten Namen, und
+  //     der Merker hier stand bereits auf „erledigt". Im Bestand fiel es
+  //     nicht auf, weil dort nichts überschrieben wird. Beide Stellen tragen
+  //     deshalb dieselben Namen; wer einen ändert, ändert beide.
   try {
     const schonGelaufen = db.prepare("SELECT value FROM settings WHERE key = 'farbnamen_luxe_2026'").get()
     if (!schonGelaufen) {

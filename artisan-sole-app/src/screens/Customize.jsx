@@ -198,6 +198,9 @@ export default function Customize() {
     OXFORD:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     WHOLECUT:         ['lux_calf', 'lux_suede', 'painted_full_grain', 'patina', 'box_calf', 'urban_suede', 'painted_calf'],
     LOAFER:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    // Der Mokassin läuft auf eigenen Ledern; keines der Dress-Leder gehört
+    // dazu, und keines seiner drei gehört an einen Rahmengenähten.
+    MOCCASIN:         ['calf_suede', 'nappa', 'fullgrain'],
     DERBY:            ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     DOUBLE_MONK:      ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     MONK:             ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
@@ -398,10 +401,17 @@ export default function Customize() {
   // Globale Farben können per `applicable_materials` an einzelne Material-
   // Typen gebunden sein (z. B. Velvet-Farben nur bei Material 'velvet').
   // Wir filtern, sobald der Nutzer ein Material gewählt hat.
+  // Solange noch kein Leder gewählt ist, zählt, was an DIESEM Modell
+  // überhaupt zur Wahl steht. Vorher galt in diesem Fall „alles" — und die
+  // Farbtafel eines Oxfords zeigte kurz die Velvet-Töne mit. Mit den
+  // zweiundzwanzig Mokassin-Farben wäre daraus eine Tafel geworden, auf der
+  // die Hälfte zu keinem der angebotenen Leder gehört.
+  const modellLeder = new Set(baseMatList.map(m => m.key))
   const colorMatchesMaterial = (c, matKey) => {
     if (!c.applicable_materials || c.applicable_materials === '*') return true
-    if (!matKey) return true
-    return c.applicable_materials.split(',').map(s => s.trim()).includes(matKey)
+    const erlaubt = c.applicable_materials.split(',').map(s => s.trim())
+    if (!matKey) return erlaubt.some(k => modellLeder.has(k))
+    return erlaubt.includes(matKey)
   }
 
   const filteredGlobalColors = shoeColors.filter(c => colorMatchesMaterial(c, selMat))

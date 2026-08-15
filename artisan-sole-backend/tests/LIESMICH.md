@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Acht Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Neun Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -47,6 +47,12 @@ im Betrieb, nichts nachgebaut.
                          dem Kunden auf einem dauerhaften Datenträger zugehen
                          muss. Braucht DB_PATH; fängt die Nachricht ab, statt
                          sie zu verschicken.
+    tests/mokassin.mjs   36 Prüfungen: der Driver — drei eigene Leder mit
+                         genau 17, 13 und 7 Farben (die Zahlen aus dem
+                         Konfigurator der Manufaktur), die sechs Schritte,
+                         der Drivers-Leisten, und in beide Richtungen die
+                         Abgrenzung zur Dress-Linie: kein Lux Calf am
+                         Mokassin, kein Nappa am Oxford.
 
 ## Aufrufen
 
@@ -64,8 +70,16 @@ Bestellungen und Kampagnen an.
 
     # Terminal 2 — Prüfungen
     node tests/ablaeufe.mjs
+    node tests/mokassin.mjs
     DB_PATH=/tmp/pruef.db node tests/preise.mjs
     DB_PATH=/tmp/pruef.db node tests/nachdemkauf.mjs
+
+Einmal sollte der Durchgang auf einer **wirklich frischen** Datei laufen (die
+Datei vorher löschen, nicht nur den Server neu starten) und einmal auf einer,
+die schon einen Start hinter sich hat. Beide Wege gehen durch verschiedenen
+Code: Auf der frischen Datei überschreibt `katalogAnwenden` die Vorlage, auf
+der bestehenden nicht. Zwei Fehler hingen genau daran und waren auf jeweils
+nur einem der beiden Wege zu sehen.
 
 Wichtig: Server und Prüfskript müssen **dieselbe Datei** sehen. Läuft der
 Server in einer Sandbox oder einem Container mit eigenem `/tmp`, legen Sie die
