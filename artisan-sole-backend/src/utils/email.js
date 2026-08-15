@@ -14,6 +14,7 @@ import net from 'net'
 import dns from 'dns/promises'
 import { getDb } from '../db/database.js'
 import { versendeUeberHttp, pruefeHttp } from './mailHttp.js'
+import { sendungsLink, stufeInfo } from './auftragslauf.js'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 function getEmailConfig() {
@@ -763,6 +764,10 @@ export async function sendShippingNotification(order, user) {
   const closing = nl2br(renderHtml(tmpl.body, vars))
 
   const addr = escAddr(order.delivery_address ? JSON.parse(order.delivery_address) : null)
+  // Die Nummer allein hilft niemandem — erst mit dem Zusteller ergibt sie eine
+  // Adresse, die man aufrufen kann. Fehlt eines von beidem, bleibt der ganze
+  // Block weg, statt einen toten Knopf anzubieten.
+  const sendung = sendungsLink(order)
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}
   .addr-box{background:#f8f7f5;border-radius:10px;padding:16px;margin:16px 0}
@@ -789,7 +794,17 @@ export async function sendShippingNotification(order, user) {
           ${addr.phone ? `<br>${addr.phone}` : ''}
         </p>
       </div>` : ''}
+      ${sendung ? `
+      <div class="label">Sendungsnummer</div>
+      <div class="val">${escapeHtml(sendung.code)} · ${escapeHtml(sendung.dienst)}</div>` : ''}
     </div>
+    ${sendung?.url ? `
+    <p style="margin:20px 0 0">
+      <a href="${escapeHtml(sendung.url)}"
+         style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600">
+        Sendung verfolgen
+      </a>
+    </p>` : ''}
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">${closing}</p>
   </div>
@@ -798,6 +813,74 @@ export async function sendShippingNotification(order, user) {
 </body></html>`
 
   await send({ to: user.email, subject, html })
+}
+
+/**
+ * Stornobestätigung.
+ *
+ * Die eine Angabe, auf die es ankommt, ist der Erstattungsbetrag — und die
+ * eine Frage danach lautet, wann er kommt. Beides steht deshalb oben und
+ * nicht in einem Absatz weiter unten.
+ *
+ * Der Beleg über die Staffel gehört mit in die Nachricht: Was einbehalten
+ * wurde und aus welchem Grund, muss der Kunde schwarz auf weiß haben. Steht
+ * es nur in seinem Konto, hat er es nicht in der Hand.
+ */
+export async function sendCancellation(order, user, storno) {
+  const ref = order.order_ref || `#${order.id}`
+  const geld = (n) => `${(Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+  const durchKunde = order.cancelled_by === 'kunde'
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}
+  .box{background:#f8f7f5;border-radius:10px;padding:16px;margin:16px 0;text-align:left}
+  .zeile{display:block;font-size:13px;color:#555;line-height:2}
+</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <h1>ARTISAN SOLE</h1>
+    <p>STORNIERUNG · ${ref}</p>
+  </div>
+  <div class="body">
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">
+      ${durchKunde ? 'Ihre Stornierung ist eingegangen.' : 'Wir haben Ihren Auftrag storniert.'}
+    </p>
+    <p style="font-size:14px;color:#555;margin:0 0 20px">
+      ${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}
+    </p>
+
+    <div class="box">
+      <span class="zeile"><strong>Auftragswert</strong> · ${geld(storno.betrag)}</span>
+      <span class="zeile"><strong>Einbehalten</strong> · ${geld(storno.gebuehr)}${storno.pct ? ` (${storno.pct} % nach Ziffer 7.2 unserer AGB)` : ' — keine Gebühr'}</span>
+      <span class="zeile" style="font-size:15px;color:#111"><strong>Erstattung</strong> · ${geld(storno.erstattung)}</span>
+    </div>
+
+    ${storno.erstattung > 0 ? `
+    <p style="font-size:14px;color:#555;margin:0 0 16px">
+      Wir überweisen den Betrag innerhalb von fünf Werktagen auf das Konto, von dem
+      Ihre Zahlung kam. Sie müssen dafür nichts tun.
+    </p>` : `
+    <p style="font-size:14px;color:#555;margin:0 0 16px">
+      Es ist nichts zu erstatten — für diesen Auftrag war noch keine Zahlung eingegangen.
+    </p>`}
+
+    ${storno.gebuehr > 0 ? `
+    <p style="font-size:12px;color:#888;line-height:1.7">
+      Der einbehaltene Anteil deckt Material, Arbeitszeit und die belegte
+      Fertigungskapazität. Ein Paar auf Ihrem Leisten lässt sich an niemanden
+      sonst verkaufen — was wir erstatten, tragen wir vollständig selbst.
+    </p>` : ''}
+
+    <hr class="divider">
+    <p style="font-size:12px;color:#888;line-height:1.7;margin:0">
+      Wenn Sie glauben, dass hier etwas nicht stimmt, antworten Sie einfach auf
+      diese Nachricht oder melden Sie sich über <em>Nachrichten</em> in Ihrem Konto.
+    </p>
+  </div>
+  <div class="footer">Artisan Sole Custom Made Footwear · Alle Schuhe sind Einzelanfertigungen</div>
+</div>
+</body></html>`
+
+  await send({ to: user.email, subject: `Stornierung ${ref} — Erstattung ${geld(storno.erstattung)}`, html })
 }
 
 // ─── Helper: compute user shoe stats (ordered vs kept) ───────────────────────
@@ -1008,6 +1091,45 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
 </body></html>`
 
   await send({ to: email, subject, html })
+}
+
+/**
+ * Passwort zurücksetzen.
+ *
+ * Der Link führt zu einer Seite, die ein neues Passwort entgegennimmt. Die
+ * Gültigkeit steht ausdrücklich in der Nachricht — wer sie zwei Tage später
+ * öffnet, soll wissen, warum der Link nicht mehr geht, statt einen Fehler zu
+ * sehen und aufzugeben.
+ *
+ * Der Hinweis am Ende ist kein Beiwerk: Eine Zurücksetzungsmail, die jemand
+ * bekommt, ohne sie angefordert zu haben, ist das erste Zeichen dafür, dass
+ * jemand anderes an seinem Konto arbeitet.
+ */
+export async function sendPasswordReset(email, name, token, stunden = 1) {
+  const cfg = getEmailConfig()
+  const link = `${cfg.appUrl}/passwort-neu?token=${token}`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>PASSWORT ZURÜCKSETZEN</p></div>
+  <div class="body" style="text-align:center">
+    <p style="font-size:15px;color:#111;margin:0 0 8px;font-weight:600">Hallo${name ? ` ${escapeHtml(name)}` : ''},</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">
+      über den Knopf unten setzen Sie ein neues Passwort. Der Link gilt
+      ${stunden === 1 ? 'eine Stunde' : `${stunden} Stunden`} und nur einmal.
+    </p>
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Neues Passwort setzen</a>
+    <p style="font-size:11px;color:#999;margin:0 0 24px">Falls der Knopf nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
+    <hr class="divider">
+    <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">
+      <strong>Sie haben das nicht angefordert?</strong> Dann tun Sie nichts — Ihr
+      bisheriges Passwort gilt weiter, und der Link verfällt von allein. Bekommen
+      Sie diese Nachricht öfter, melden Sie sich bitte bei uns.
+    </p>
+  </div>
+  <div class="footer">Artisan Sole Custom Made Footwear</div>
+</div>
+</body></html>`
+  await send({ to: email, subject: 'Artisan Sole · Passwort zurücksetzen', html })
 }
 
 export async function sendEmailVerification(email, name, token) {

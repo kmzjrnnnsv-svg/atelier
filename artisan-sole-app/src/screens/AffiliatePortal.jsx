@@ -19,6 +19,7 @@ import ChatFenster, { useUngelesen } from '../components/ChatFenster'
 import Bereichswechsel from '../components/Bereichswechsel'
 import AffiliateStammdaten from '../components/AffiliateStammdaten'
 import Ablauf from '../components/Ablauf'
+import VermittlerWerkzeug, { GutschriftKnopf } from '../components/VermittlerWerkzeug'
 
 const euro = (n) => `€ ${Number(n || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -151,7 +152,7 @@ export default function AffiliatePortal() {
     )
   }
 
-  const { affiliate: a, standing, commissions, payouts, link, qr, rules } = data
+  const { affiliate: a, standing, commissions, payouts, link, qr, rules, klicks } = data
 
   return (
     <div className="min-h-full bg-[#fafaf9] pb-20">
@@ -206,6 +207,14 @@ export default function AffiliatePortal() {
         <AffiliateStammdaten affiliate={a} onGespeichert={laden} />
 
         <PayoutProgress standing={standing} />
+
+        {/* Alles, was der Vermittler selbst tun kann: Auszahlung anfordern,
+            Reichweite ablesen, Links und Material holen. Vorher konnte er
+            zusehen und sonst nichts. */}
+        <VermittlerWerkzeug
+          affiliate={a} standing={standing} klicks={klicks} link={link}
+          aufFrisch={laden}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Figure
@@ -337,10 +346,13 @@ export default function AffiliatePortal() {
                   <div className="min-w-0">
                     <p className="text-[13px] text-black font-light">{p.pair_count} Paar</p>
                     <p className="text-[11px] text-black/35 font-light mt-0.5 truncate">
-                      {p.paid_at ? new Date(p.paid_at + 'Z').toLocaleDateString('de-DE') : '—'} · {p.reference}
+                      {p.paid_at ? new Date(p.paid_at + 'Z').toLocaleDateString('de-DE') : '—'} · {p.document_no || p.reference}
                     </p>
                   </div>
-                  <p className="text-[13px] text-black font-light flex-shrink-0">{euro(p.amount)}</p>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <p className="text-[13px] text-black font-light">{euro(p.amount)}</p>
+                    <GutschriftKnopf payout={p} />
+                  </div>
                 </div>
               ))}
             </div>

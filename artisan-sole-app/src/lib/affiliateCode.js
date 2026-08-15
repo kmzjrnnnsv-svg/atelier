@@ -53,3 +53,32 @@ export function refVergessen() {
 }
 
 export const REF_FRIST_TAGE = FRIST_TAGE
+
+/**
+ * Den Klick melden.
+ *
+ * Damit ein Vermittler überhaupt beurteilen kann, ob sein Link wirkt: Bisher
+ * wurde erst die Bestellung gezählt, und wer nichts verkaufte, erfuhr nicht,
+ * ob niemand geklickt hat oder ob alle an der Kasse abgesprungen sind.
+ *
+ * Je Sitzung und Ziel einmal. React ruft Effekte in der Entwicklung doppelt
+ * auf und bei jedem Zurück-Knopf erneut — ohne diese Sperre stünde in der
+ * Auswertung ein Vielfaches dessen, was tatsächlich passiert ist.
+ *
+ * Der Aufruf ist bewusst ohne Anmeldung und ohne Fehlerbehandlung: Ein
+ * verlorener Klick ist kein Grund, dem Besucher etwas anzuzeigen.
+ */
+export function refZaehlen({ code, target = 'seite', shoe_slug = null }) {
+  if (!code) return
+  const merkmal = `as_klick:${code}:${target}:${shoe_slug || ''}`
+  try {
+    if (sessionStorage.getItem(merkmal)) return
+    sessionStorage.setItem(merkmal, '1')
+  } catch { /* privater Modus — dann wird eben je Seitenaufruf gezählt */ }
+
+  fetch('/api/affiliates/klick', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'ArtisanSole' },
+    body: JSON.stringify({ code, target, shoe_slug, referrer: document.referrer || null }),
+  }).catch(() => { /* still */ })
+}

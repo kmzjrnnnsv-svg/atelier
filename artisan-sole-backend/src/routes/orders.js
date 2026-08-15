@@ -3,8 +3,13 @@ import { body, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { commissionFor, zusageKosten } from '../utils/affiliate.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
-import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification, bankKonfiguration } from '../utils/email.js'
+import { sendOrderConfirmation, sendPaymentInstructions, sendOrderConfirmed, sendManufacturerNotification, sendShippingNotification, sendQualityCheckNotification, sendCancellation, bankKonfiguration } from '../utils/email.js'
 import { giroCode, betragAusText } from '../utils/zahlung.js'
+import {
+  STUFEN, stufeInfo, stornoVorschau, merkeEreignis, verlauf, sendungsLink,
+  protokoll, ZUSTELLER,
+} from '../utils/auftragslauf.js'
+import { rechnungPdf, vergibRechnungsnummer } from '../utils/beleg.js'
 import { totpVerify } from '../utils/totp.js'
 import { validateBusinessCode, validateCampaignForUser } from './business.js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -222,6 +227,25 @@ router.post('/',
       }
     }
 
+    // ── Deckt der Bestand die Express-Zusage? ────────────────────────────
+    //
+    // Die zwei Wochen setzen voraus, dass ein vorbereiteter Schaft in der
+    // Werkstatt liegt (AGB 2.1 Abs. 4). Ohne Zähler nahm der Laden beliebig
+    // viele Express-Bestellungen an, und jede weitere war ein Versprechen
+    // ohne Deckung.
+    //
+    // NULL heißt „nicht geführt" und lässt alles durch — wer den Bestand
+    // nicht pflegen will, merkt von dieser Prüfung nichts.
+    if (shoe_id) {
+      const vorrat = db.prepare('SELECT express, express_stock, name FROM shoes WHERE id = ?').get(shoe_id)
+      if (vorrat?.express && vorrat.express_stock !== null && vorrat.express_stock <= 0) {
+        return res.status(409).json({
+          error: `Von „${vorrat.name}" ist zurzeit kein vorbereitetes Paar vorrätig. Wir können die zwei Wochen deshalb nicht zusagen — als Maßanfertigung ist das Modell weiterhin bestellbar.`,
+          code: 'EXPRESS_AUSVERKAUFT',
+        })
+      }
+    }
+
     // Order-Business-Felder: Code hat Vorrang, sonst Kampagne.
     const orderBusinessId = bizCode ? bizCode.business_id : (bizCampaign ? bizCampaign.business_id : null)
     const orderCoverage   = bizCode ? bizCode.coverage_type
@@ -398,6 +422,23 @@ router.post('/',
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid)
     const user  = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(uid)
 
+    // Der erste Punkt im Verlauf. Ohne ihn begänne die Geschichte der
+    // Bestellung erst bei der ersten Änderung durch die Verwaltung.
+    merkeEreignis(db, order.id, 'pending_payment', { actor: 'kunde', actorId: uid })
+
+    // Das Bauteil ist jetzt vergeben. Abgezogen wird beim Bestellen und nicht
+    // erst beim Bezahlen: Ein Schaft, der für eine offene Bestellung
+    // reserviert ist, steht der nächsten nicht mehr zur Verfügung. Bei einer
+    // Stornierung geht er zurück in den Bestand.
+    if (order.shoe_id) {
+      try {
+        db.prepare(`
+          UPDATE shoes SET express_stock = express_stock - 1
+          WHERE id = ? AND express = 1 AND express_stock IS NOT NULL AND express_stock > 0
+        `).run(order.shoe_id)
+      } catch (e) { console.error('[express bestand]', e.message) }
+    }
+
     // Send order confirmation + payment instructions async — don't block the response
     sendOrderConfirmation(order, user).catch(e => console.error('[email confirmation]', e.message))
 
@@ -459,10 +500,28 @@ router.put('/:id',
       return res.status(403).json({ error: 'Nur Admins können unbezahlte Bestellungen freigeben' })
     }
 
-    // Die ausdrückliche Zahlungsbestätigung (pending_payment → processing)
-    // verlangt zusätzlich MFA. MFA ist ansonsten optionale Step-up-Auth und
-    // wird für andere Statuswechsel nicht erzwungen.
-    if (req.body.status === 'processing' && existing.status === 'pending_payment') {
+    // Stornieren geht nicht über diesen Weg.
+    //
+    // Eine Stornierung ist kein Statuswechsel, sondern eine Abrechnung: Sie
+    // hat eine Gebühr nach der Staffel, einen Erstattungsbetrag und einen
+    // Grund, und all das muss festgehalten werden. Ginge es hier durch, stünde
+    // am Ende eine stornierte Bestellung ohne Angabe, was dem Kunden
+    // zurückgezahlt wurde.
+    if (req.body.status === 'cancelled') {
+      return res.status(400).json({
+        error: 'Stornierungen laufen über PUT /api/orders/:id/storno — dort wird die Gebühr nach AGB 7.2 berechnet und festgehalten.',
+        code: 'STORNO_EIGENER_WEG',
+      })
+    }
+
+    // Die ausdrückliche Zahlungsbestätigung verlangt zusätzlich MFA. MFA ist
+    // ansonsten optionale Step-up-Auth und wird für andere Statuswechsel nicht
+    // erzwungen.
+    //
+    // Seit die Zahlung getrennt gebucht werden kann ('pending'), gilt das für
+    // beide Wege aus der Zahlungswartung heraus — sonst führte der neue,
+    // kürzere Weg an der Prüfung vorbei.
+    if (existing.status === 'pending_payment' && ['pending', 'processing'].includes(req.body.status)) {
       // Inline MFA check (avoid redirect on 401 from middleware)
       const mfaRow = db.prepare('SELECT mfa_secret, mfa_enabled FROM users WHERE id = ?').get(req.user.id)
       if (!mfaRow?.mfa_enabled) {
@@ -488,13 +547,38 @@ router.put('/:id',
     // COALESCE, damit ein späterer Statuswechsel (etwa zurück und wieder vor)
     // das ursprüngliche Datum nicht verschiebt — sonst verlängerte sich die
     // Frist des Kunden mit jedem Klick in der Verwaltung.
+    //
+    // `paid_at` folgt derselben Überlegung: Wer die Zahlungswartung verlässt,
+    // hat bezahlt. Bislang trug allein der Status diese Information, und der
+    // lässt sich zurückdrehen — womit sich nicht mehr feststellen ließ, ob
+    // Geld geflossen ist.
+    const zahltJetzt = existing.status === 'pending_payment'
     db.prepare(`
       UPDATE orders
       SET status = ?,
           delivered_at = CASE WHEN ? = 'delivered' THEN COALESCE(delivered_at, datetime('now')) ELSE delivered_at END,
+          paid_at      = CASE WHEN ? = 1          THEN COALESCE(paid_at, datetime('now'))      ELSE paid_at      END,
           updated_at = datetime('now')
       WHERE id = ?
-    `).run(req.body.status, req.body.status, req.params.id)
+    `).run(req.body.status, req.body.status, zahltJetzt ? 1 : 0, req.params.id)
+
+    merkeEreignis(db, Number(req.params.id), req.body.status, {
+      actor: 'verwaltung', actorId: req.user.id,
+    })
+    protokoll(db, {
+      entity: 'order', entityId: req.params.id, action: 'status',
+      detail: `${stufeInfo(existing.status).label} → ${stufeInfo(req.body.status).label}`,
+      user: req.user,
+    })
+
+    // Die Rechnungsnummer wird bei Zahlungseingang vergeben, nicht bei der
+    // Bestellung: Vorher steht nicht fest, dass es zu einem Umsatz kommt, und
+    // eine stornierte Bestellung risse eine Lücke in die fortlaufende Reihe.
+    if (zahltJetzt) {
+      try { vergibRechnungsnummer(db, Number(req.params.id)) }
+      catch (e) { console.error('[rechnungsnummer]', e.message) }
+    }
+
     const row  = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
     const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(row.user_id)
 
@@ -544,6 +628,226 @@ router.put('/:id',
   }
 )
 
+
+// ── Nach dem Kauf ───────────────────────────────────────────────────────────
+//
+// Bis hierher endete die Bestellung mit ihrem Status. Was der Kunde sah, war
+// ein Wort ohne Datum und ohne Aussicht; wo das Paket ist, stand nirgends; und
+// eine Stornierung rechnete ein Mensch nach der Tabelle in den AGB.
+
+/** Die Bestellung, wenn sie dem Anfragenden gehört oder er sie verwalten darf. */
+function bestellungFuer(req, id) {
+  const db = getDb()
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(id)
+  if (!order) return { fehler: 404 }
+  const darf = order.user_id === req.user.id || ['admin', 'curator'].includes(req.user.role)
+  if (!darf) return { fehler: 403 }
+  return { order, db }
+}
+
+// GET /api/orders/:id/verlauf — wo das Paar steht, seit wann, und was folgt
+router.get('/:id/verlauf', authenticate, (req, res) => {
+  const { order, db, fehler } = bestellungFuer(req, req.params.id)
+  if (fehler) return res.status(fehler).json({ error: fehler === 404 ? 'Not found' : 'Kein Zugriff' })
+
+  const jetzt = stufeInfo(order.status)
+  res.json({
+    status: order.status,
+    label: jetzt.label,
+    text: jetzt.kunde,
+    naechstes: jetzt.naechstes,
+    // Die Leiter, an der sich der Fortschritt ablesen lässt. Eine stornierte
+    // Bestellung hat keine — sie steht nicht auf halbem Weg, sie ist beendet.
+    stufen: order.status === 'cancelled' ? [] : STUFEN.map(s => ({ key: s.key, label: s.label })),
+    verlauf: verlauf(db, order),
+    sendung: sendungsLink(order),
+    rechnung: order.invoice_no
+      ? { nummer: order.invoice_no, datum: order.invoice_issued_at, url: `/api/orders/${order.id}/rechnung` }
+      : null,
+    storno: order.cancelled_at
+      ? { am: order.cancelled_at, gebuehr: order.cancel_fee, erstattung: order.refund_amount, satz: order.cancel_fee_pct }
+      : stornoVorschau(order),
+  })
+})
+
+// GET /api/orders/:id/rechnung — der Beleg als PDF
+router.get('/:id/rechnung', authenticate, (req, res) => {
+  const { order, db, fehler } = bestellungFuer(req, req.params.id)
+  if (fehler) return res.status(fehler).json({ error: fehler === 404 ? 'Not found' : 'Kein Zugriff' })
+
+  // Keine Rechnung vor der Zahlung. Ein Beleg über einen Umsatz, den es noch
+  // nicht gibt, wäre falsch — bis dahin gilt die Zahlungsanweisung.
+  if (!order.invoice_no) {
+    return res.status(409).json({
+      error: 'Für diese Bestellung ist noch keine Rechnung ausgestellt. Sie entsteht, sobald die Zahlung verbucht ist.',
+      code: 'NOCH_KEINE_RECHNUNG',
+    })
+  }
+
+  const kunde = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(order.user_id)
+  const pdf = rechnungPdf(db, order, kunde)
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader('Content-Disposition', `inline; filename="${order.invoice_no}.pdf"`)
+  res.send(pdf)
+})
+
+// PATCH /api/orders/:id/sendung — Sendungsnummer eintragen (Verwaltung)
+//
+// Ein Vorgang, nicht zwei: Wer die Nummer einträgt, hat das Paket abgegeben.
+// Der Status springt mit, und die Versandmail trägt den Link — bisher ging
+// sie ohne hinaus, weil es nichts einzutragen gab.
+router.patch('/:id/sendung', ...canWrite,
+  body('tracking_code').trim().isLength({ min: 3, max: 60 }),
+  body('carrier').trim().isIn(Object.keys(ZUSTELLER)),
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const db = getDb()
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
+    if (!order) return res.status(404).json({ error: 'Not found' })
+    if (order.status === 'cancelled') {
+      return res.status(409).json({ error: 'Die Bestellung ist storniert.' })
+    }
+
+    const versendetJetzt = !['shipped', 'delivered'].includes(order.status)
+    db.prepare(`
+      UPDATE orders SET tracking_code = ?, carrier = ?,
+        status = CASE WHEN ? = 1 THEN 'shipped' ELSE status END,
+        updated_at = datetime('now')
+      WHERE id = ?
+    `).run(req.body.tracking_code.trim(), req.body.carrier, versendetJetzt ? 1 : 0, order.id)
+
+    const row = db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id)
+    merkeEreignis(db, order.id, row.status, {
+      note: `${ZUSTELLER[row.carrier].name} ${row.tracking_code}`,
+      actor: 'verwaltung', actorId: req.user.id,
+    })
+    protokoll(db, {
+      entity: 'order', entityId: order.id, action: 'sendung',
+      detail: `${ZUSTELLER[row.carrier].name} ${row.tracking_code}`, user: req.user,
+    })
+
+    if (versendetJetzt) {
+      const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(row.user_id)
+      sendShippingNotification(row, user).catch(e => console.error('[email shipping]', e.message))
+    }
+    res.json({ ...row, sendung: sendungsLink(row) })
+  }
+)
+
+// ── Stornierung ─────────────────────────────────────────────────────────────
+//
+// Die Staffel stand in den AGB und nirgends im Programm. Auslösen konnte der
+// Kunde sie nicht — er musste schreiben, und zwar ausgerechnet in der Phase,
+// in der eine Stornierung kostenfrei ist und eine liegengebliebene Nachricht
+// deshalb am meisten kostet.
+
+// GET /api/orders/:id/storno — was es jetzt kosten würde
+router.get('/:id/storno', authenticate, (req, res) => {
+  const { order, fehler } = bestellungFuer(req, req.params.id)
+  if (fehler) return res.status(fehler).json({ error: fehler === 404 ? 'Not found' : 'Kein Zugriff' })
+  res.json({ ...stornoVorschau(order), status: order.status, label: stufeInfo(order.status).label })
+})
+
+/**
+ * Die Stornierung selbst. Ein Weg für beide Seiten — der Kunde kann nur den
+ * Höchstsatz bekommen, die Verwaltung darf nach Ziffer 7.2 Abs. 5 darunter
+ * bleiben. Darüber kann niemand: `stornoVorschau` deckelt.
+ */
+function fuehreStornoAus({ db, order, satz, grund, durch, user }) {
+  const v = stornoVorschau(order, { pctUeberschreiben: satz })
+  if (!v.moeglich) return { fehler: 409, meldung: v.hinweis }
+
+  db.prepare(`
+    UPDATE orders
+    SET status = 'cancelled', cancelled_at = datetime('now'),
+        cancel_fee_pct = ?, cancel_fee = ?, refund_amount = ?,
+        cancel_reason = ?, cancelled_by = ?, updated_at = datetime('now')
+    WHERE id = ?
+  `).run(v.pct, v.gebuehr, v.erstattung, grund || null, durch, order.id)
+
+  merkeEreignis(db, order.id, 'cancelled', {
+    note: v.gebuehr > 0
+      ? `Storno mit ${v.pct} % Gebühr (${v.gebuehr.toFixed(2)} €), Erstattung ${v.erstattung.toFixed(2)} €`
+      : 'Storno ohne Gebühr',
+    actor: durch, actorId: user?.id ?? null,
+  })
+  protokoll(db, {
+    entity: 'order', entityId: order.id, action: 'storno',
+    detail: `${v.pct} % einbehalten, ${v.erstattung.toFixed(2)} € zu erstatten${grund ? ` — ${grund}` : ''}`,
+    user,
+  })
+
+  // Die Provision fällt mit der Bestellung. Sie wurde für eine Vermittlung
+  // gezahlt, die nicht zustande kam — bliebe sie stehen, entstünde ein
+  // Anreiz, der niemandem nützt.
+  try {
+    db.prepare(`
+      UPDATE affiliate_commissions
+      SET status = 'cancelled', cancel_reason = 'Bestellung storniert', updated_at = datetime('now')
+      WHERE order_id = ? AND status IN ('pending','confirmed','payable')
+    `).run(order.id)
+  } catch (e) { console.error('[storno provision]', e.message) }
+
+  // Das vorgehaltene Bauteil geht zurück in den Bestand — sonst schrumpft er
+  // mit jeder Stornierung, ohne dass etwas verbraucht wurde.
+  try {
+    if (order.shoe_id) {
+      db.prepare(`
+        UPDATE shoes SET express_stock = express_stock + 1
+        WHERE id = ? AND express = 1 AND express_stock IS NOT NULL
+      `).run(order.shoe_id)
+    }
+  } catch (e) { console.error('[storno bestand]', e.message) }
+
+  return { ergebnis: { ...v, order: db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id) } }
+}
+
+// POST /api/orders/:id/storno — der Kunde storniert selbst
+router.post('/:id/storno', authenticate,
+  body('grund').optional({ values: 'falsy' }).trim().isLength({ max: 500 }),
+  (req, res) => {
+    const db = getDb()
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
+    if (!order) return res.status(404).json({ error: 'Not found' })
+    if (order.user_id !== req.user.id) return res.status(403).json({ error: 'Kein Zugriff' })
+
+    const { fehler, meldung, ergebnis } = fuehreStornoAus({
+      db, order, satz: null, grund: req.body.grund, durch: 'kunde', user: req.user,
+    })
+    if (fehler) return res.status(fehler).json({ error: meldung, code: 'STORNO_NICHT_MOEGLICH' })
+
+    const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(order.user_id)
+    sendCancellation(ergebnis.order, user, ergebnis).catch(e => console.error('[email storno]', e.message))
+    res.json(ergebnis)
+  }
+)
+
+// PUT /api/orders/:id/storno — die Verwaltung storniert, ggf. mit weniger Gebühr
+router.put('/:id/storno', ...canWrite,
+  body('satz').optional({ values: 'null' }).isFloat({ min: 0, max: 100 }),
+  body('grund').optional({ values: 'falsy' }).trim().isLength({ max: 500 }),
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const db = getDb()
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
+    if (!order) return res.status(404).json({ error: 'Not found' })
+
+    const { fehler, meldung, ergebnis } = fuehreStornoAus({
+      db, order,
+      satz: req.body.satz === undefined || req.body.satz === null ? null : Number(req.body.satz),
+      grund: req.body.grund, durch: 'verwaltung', user: req.user,
+    })
+    if (fehler) return res.status(fehler).json({ error: meldung, code: 'STORNO_NICHT_MOEGLICH' })
+
+    const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(order.user_id)
+    sendCancellation(ergebnis.order, user, ergebnis).catch(e => console.error('[email storno]', e.message))
+    res.json(ergebnis)
+  }
+)
 
 // ── Rücksendungen ───────────────────────────────────────────────────────────
 //
@@ -628,6 +932,133 @@ function fristTageRest(order) {
  * Verwendungszweck samt GiroCode. Deshalb darf dieser Aufruf auch scheitern,
  * ohne dass der Kauf scheitert.
  */
+// ── Zahlungseingang abgleichen ──────────────────────────────────────────────
+//
+// Es gibt keinen Bankabruf und keinen Zahlungsdienstleister — der Abgleich
+// geschieht von Hand am Kontoauszug. Was ihn bisher mühsam machte, war nicht
+// das Buchen, sondern das Suchen: In der Bestellliste stehen Namen und
+// Nummern, auf dem Auszug steht der Verwendungszweck.
+//
+// Diese beiden Routen drehen das um. Man liest eine Zeile vom Auszug ab, fügt
+// sie ein, und der Server findet den ganzen Warenkorb dazu.
+
+// GET /api/orders/zahlung/offen — was auf Zahlung wartet, nach Korb gebündelt
+router.get('/zahlung/offen', ...canWrite, (req, res) => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT o.*, u.name AS user_name, u.email AS user_email
+    FROM orders o JOIN users u ON u.id = o.user_id
+    WHERE o.status = 'pending_payment'
+    ORDER BY o.created_at
+  `).all()
+
+  const koerbe = new Map()
+  for (const o of rows) {
+    const schluessel = o.payment_ref || o.order_ref
+    if (!koerbe.has(schluessel)) {
+      koerbe.set(schluessel, {
+        referenz: schluessel,
+        verwendungszweck: [schluessel, (o.user_name || '').trim()].filter(Boolean).join(' ').slice(0, 140),
+        kunde: o.user_name, email: o.user_email,
+        seit: o.created_at, summe: 0, positionen: [],
+      })
+    }
+    const korb = koerbe.get(schluessel)
+    korb.summe += betragAusText(o.price) + betragAusText(o.shipping_cost)
+    korb.positionen.push({ id: o.id, order_ref: o.order_ref, shoe_name: o.shoe_name, price: o.price })
+  }
+  res.json([...koerbe.values()].map(k => ({ ...k, summe: Math.round(k.summe * 100) / 100 })))
+})
+
+/**
+ * POST /api/orders/zahlung/buchen — eine Zeile vom Kontoauszug verbuchen.
+ *
+ * Gesucht wird über die Referenz, die im Verwendungszweck steckt. Der Kunde
+ * schreibt sie selten sauber ab: Sie steht irgendwo im Text, oft klein
+ * geschrieben, oft mit seinem Namen dahinter. Deshalb wird der eingefügte
+ * Text durchsucht und nicht verglichen.
+ *
+ * Gebucht wird der ganze Korb — es ist eine Überweisung, und alles andere
+ * hieße, dieselbe Zahlung mehrfach zuzuordnen.
+ *
+ * MFA: Das Buchen ist die Bestätigung eines Geldeingangs. Dieselbe Schwelle
+ * wie bei der Freigabe über PUT /:id, sonst führte der bequemere Weg an der
+ * Prüfung vorbei.
+ */
+router.post('/zahlung/buchen',
+  authenticate, requireRole('admin'), requireMFA,
+  body('verwendungszweck').trim().isLength({ min: 4, max: 200 }),
+  body('freigeben').optional().isBoolean(),
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
+
+    const db = getDb()
+    const text = req.body.verwendungszweck.trim()
+
+    // Alle offenen Referenzen gegen den eingefügten Text halten. Die längste
+    // Übereinstimmung gewinnt — eine Referenz, die in einer anderen enthalten
+    // ist, darf nicht die falsche Bestellung treffen.
+    const offen = db.prepare(`
+      SELECT DISTINCT COALESCE(payment_ref, order_ref) AS referenz
+      FROM orders WHERE status = 'pending_payment'
+    `).all().map(r => r.referenz).filter(Boolean)
+
+    const klein = text.toLowerCase()
+    const treffer = offen
+      .filter(r => klein.includes(String(r).toLowerCase()))
+      .sort((a, b) => b.length - a.length)[0]
+
+    if (!treffer) {
+      return res.status(404).json({
+        error: 'Zu diesem Verwendungszweck ist keine offene Bestellung zu finden.',
+        code: 'KEIN_TREFFER',
+      })
+    }
+
+    const posten = db.prepare(`
+      SELECT * FROM orders
+      WHERE status = 'pending_payment' AND COALESCE(payment_ref, order_ref) = ?
+    `).all(treffer)
+
+    const zielStatus = req.body.freigeben === false ? 'pending' : 'processing'
+    const gebucht = []
+
+    for (const o of posten) {
+      db.prepare(`
+        UPDATE orders SET status = ?, paid_at = COALESCE(paid_at, datetime('now')),
+          updated_at = datetime('now')
+        WHERE id = ?
+      `).run(zielStatus, o.id)
+      merkeEreignis(db, o.id, zielStatus, { note: 'Zahlungseingang verbucht', actor: 'verwaltung', actorId: req.user.id })
+      protokoll(db, {
+        entity: 'order', entityId: o.id, action: 'zahlung',
+        detail: `Zahlungseingang zu „${treffer}" verbucht`, user: req.user,
+      })
+      try { vergibRechnungsnummer(db, o.id) } catch (e) { console.error('[rechnungsnummer]', e.message) }
+      gebucht.push(db.prepare('SELECT * FROM orders WHERE id = ?').get(o.id))
+    }
+
+    // Die Freigabemail geht je Bestellung hinaus, wie beim Weg über PUT /:id.
+    if (zielStatus === 'processing') {
+      for (const row of gebucht) {
+        const user = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(row.user_id)
+        const scan = row.scan_id ? db.prepare('SELECT * FROM foot_scans WHERE id = ?').get(row.scan_id) : null
+        sendOrderConfirmed(row, user).catch(e => console.error('[email confirmed]', e.message))
+        sendManufacturerNotification(row, user, scan).catch(e => console.error('[email mfr]', e.message))
+      }
+    }
+
+    res.json({
+      referenz: treffer,
+      status: zielStatus,
+      anzahl: gebucht.length,
+      summe: Math.round(gebucht.reduce((s, o) => s + betragAusText(o.price) + betragAusText(o.shipping_cost), 0) * 100) / 100,
+      bestellungen: gebucht,
+    })
+  }
+)
+
 router.post('/zahlung/abschluss', authenticate, async (req, res) => {
   const db = getDb()
   const korb = String(req.body?.basket_id || '').slice(0, 64)

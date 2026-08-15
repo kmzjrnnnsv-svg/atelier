@@ -10,6 +10,9 @@ import {
   PAYOUT_BATCH_SIZE, PROTECTION_DAYS,
 } from '../utils/affiliate.js'
 import { sendAffiliateInvitation } from '../utils/email.js'
+import rateLimit from 'express-rate-limit'
+import { gutschriftPdf, vergibGutschriftsnummer } from '../utils/beleg.js'
+import { protokoll } from '../utils/auftragslauf.js'
 
 const router = Router()
 const canAdmin = [authenticate, requireRole('admin', 'curator')]
@@ -22,7 +25,7 @@ const selfFields = `
   tax_status, tax_number, vat_id, iban, account_holder, birth_date,
   commission_type, commission_value, cap_per_shoe,
   customer_benefit, customer_discount_pct, gift_key, locked_fields,
-  created_at, terms_accepted_at
+  created_at, terms_accepted_at, payout_requested_at
 `
 
 const normCode = (s) => String(s || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
@@ -231,7 +234,7 @@ router.get('/me', authenticate, async (req, res) => {
   `).all(a.id)
 
   const payouts = db.prepare(`
-    SELECT id, reference, pair_count, amount, paid_at, created_at
+    SELECT id, reference, pair_count, amount, paid_at, created_at, document_no
     FROM affiliate_payouts WHERE affiliate_id = ? ORDER BY created_at DESC
   `).all(a.id)
 
@@ -248,6 +251,9 @@ router.get('/me', authenticate, async (req, res) => {
     standing,
     commissions,
     payouts,
+    // Ohne die Klicks ist die Übersicht eine Erfolgsmeldung ohne Nenner: Man
+    // sieht, was ankam, aber nicht, wie viele es versucht haben.
+    klicks: klickBilanz(db, a.id),
     rules: {
       batchSize: PAYOUT_BATCH_SIZE,
       protectionDays: PROTECTION_DAYS,
@@ -658,10 +664,279 @@ router.post('/:id/payout', ...canAdmin, param('id').isInt(), (req, res) => {
 
     const mark = db.prepare("UPDATE affiliate_commissions SET status = 'paid', payout_id = ?, updated_at = datetime('now') WHERE id = ?")
     for (const c of selected) mark.run(info.lastInsertRowid, c.id)
+    // Die Anforderung ist erledigt — sonst stünde sie für immer offen und die
+    // Verwaltung sähe eine Bitte, der sie längst nachgekommen ist.
+    db.prepare('UPDATE affiliates SET payout_requested_at = NULL WHERE id = ?').run(a.id)
     return { id: info.lastInsertRowid, reference, pair_count: selected.length, amount }
   })()
 
-  res.status(201).json(result)
+  // Die Belegnummer erst nach der Buchung: Sie gehört zu einer Auszahlung, die
+  // es gibt, nicht zu einer, die vielleicht scheitert.
+  let belegNr = null
+  try { belegNr = vergibGutschriftsnummer(db, result.id) }
+  catch (e) { console.error('[gutschriftsnummer]', e.message) }
+
+  protokoll(db, {
+    entity: 'affiliate', entityId: a.id, action: 'auszahlung',
+    detail: `${result.pair_count} Paare, ${result.amount.toFixed(2)} € — ${reference}`,
+    user: req.user,
+  })
+
+  res.status(201).json({ ...result, document_no: belegNr })
 })
+
+// ═══ Selbstbedienung für Vermittler ═══════════════════════════════════════
+//
+// Bisher konnte ein Vermittler zusehen und sonst nichts: Er sah seine
+// Provisionen, aber nicht, ob sein Link überhaupt geklickt wird; er bekam kein
+// Material, mit dem er hätte werben können; er konnte seine Auszahlung nicht
+// anstoßen und hatte hinterher keinen Beleg für sein Finanzamt.
+
+// ── Klicks ───────────────────────────────────────────────────────────────
+//
+// POST /api/affiliates/klick — öffentlich, absichtlich anonym.
+//
+// Kein Cookie, keine IP, keine Wiedererkennung. Gespeichert werden Tag, Ziel
+// und der Host, von dem der Besucher kam. Das beantwortet „wirkt mein Link"
+// und macht die Zählung nicht einwilligungspflichtig — es entstehen keine
+// personenbezogenen Daten, also gibt es auch nichts, wozu jemand Ja sagen
+// müsste.
+const klickLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+/**
+ * Nur der Host der Herkunft. Der volle Pfad verriete, was jemand gelesen hat.
+ *
+ * Leerer String statt NULL, wenn nichts mitkam — und dasselbe gilt unten für
+ * den Modellnamen. In SQLite gelten zwei NULL in einem UNIQUE-Index als
+ * verschieden: Mit NULL hätte jeder Direktaufruf eine neue Zeile angelegt,
+ * statt den Zähler zu erhöhen, und die Tabelle wäre unbegrenzt gewachsen.
+ * Beim Lesen wird der leere String wieder zu „direkt".
+ */
+function herkunft(req) {
+  const roh = req.body?.referrer || req.get('referer') || ''
+  if (!roh) return ''
+  try {
+    const host = new URL(String(roh)).hostname.replace(/^www\./, '')
+    // Der eigene Laden ist keine Herkunft, sondern der Weg dorthin.
+    return host.includes('artisansole') ? '' : host.slice(0, 80)
+  } catch { return '' }
+}
+
+router.post('/klick', klickLimiter, (req, res) => {
+  const code = normCode(req.body?.code)
+  if (!code) return res.status(400).json({ error: 'Code fehlt' })
+
+  const db = getDb()
+  const a = db.prepare("SELECT id FROM affiliates WHERE code = ? AND status = 'active'").get(code)
+  // Kein 404: Ein unbekannter Code ist für den Zähler kein Fehler, sondern
+  // nichts zu tun. Eine Fehlermeldung verriete außerdem, welche Codes es gibt.
+  if (!a) return res.json({ ok: true })
+
+  const ziel = req.body?.target === 'modell' ? 'modell' : 'seite'
+  const slug = ziel === 'modell' ? String(req.body?.shoe_slug || '').slice(0, 120) : ''
+  const tag = new Date().toISOString().slice(0, 10)
+
+  try {
+    db.prepare(`
+      INSERT INTO affiliate_clicks (affiliate_id, day, target, shoe_slug, referrer, count)
+      VALUES (?, ?, ?, ?, ?, 1)
+      ON CONFLICT(affiliate_id, day, target, shoe_slug, referrer)
+      DO UPDATE SET count = count + 1
+    `).run(a.id, tag, ziel, slug, herkunft(req))
+  } catch (e) {
+    // Ein verlorener Klick ist kein Grund, dem Besucher einen Fehler zu zeigen.
+    console.error('[klick]', e.message)
+  }
+  res.json({ ok: true })
+})
+
+/**
+ * Die Klickzahlen eines Vermittlers, aufbereitet.
+ *
+ * Die Konversion steht dabei — sie ist die eigentliche Auskunft. 200 Klicks
+ * ohne Bestellung und 3 Klicks mit einer Bestellung sind zwei völlig
+ * verschiedene Lagen, und die nackte Klickzahl unterscheidet sie nicht.
+ */
+function klickBilanz(db, affiliateId) {
+  const seit = (tage) => {
+    const d = new Date(); d.setDate(d.getDate() - tage)
+    return d.toISOString().slice(0, 10)
+  }
+  const summe = (ab) => db.prepare(
+    'SELECT COALESCE(SUM(count), 0) AS n FROM affiliate_clicks WHERE affiliate_id = ? AND day >= ?'
+  ).get(affiliateId, ab).n
+
+  const gesamt = db.prepare(
+    'SELECT COALESCE(SUM(count), 0) AS n FROM affiliate_clicks WHERE affiliate_id = ?'
+  ).get(affiliateId).n
+  const bestellungen = db.prepare(
+    'SELECT COUNT(*) AS n FROM affiliate_commissions WHERE affiliate_id = ?'
+  ).get(affiliateId).n
+
+  return {
+    gesamt,
+    dreissigTage: summe(seit(30)),
+    siebenTage: summe(seit(7)),
+    bestellungen,
+    konversion: gesamt > 0 ? Math.round((bestellungen / gesamt) * 1000) / 10 : null,
+    proTag: db.prepare(`
+      SELECT day, SUM(count) AS anzahl FROM affiliate_clicks
+      WHERE affiliate_id = ? AND day >= ?
+      GROUP BY day ORDER BY day
+    `).all(affiliateId, seit(30)),
+    herkunft: db.prepare(`
+      SELECT CASE WHEN COALESCE(referrer, '') = '' THEN 'direkt' ELSE referrer END AS quelle,
+             SUM(count) AS anzahl
+      FROM affiliate_clicks WHERE affiliate_id = ?
+      GROUP BY quelle ORDER BY anzahl DESC LIMIT 8
+    `).all(affiliateId),
+    modelle: db.prepare(`
+      SELECT shoe_slug, SUM(count) AS anzahl FROM affiliate_clicks
+      WHERE affiliate_id = ? AND target = 'modell' AND COALESCE(shoe_slug, '') != ''
+      GROUP BY shoe_slug ORDER BY anzahl DESC LIMIT 10
+    `).all(affiliateId),
+  }
+}
+
+// GET /api/affiliates/me/klicks
+router.get('/me/klicks', authenticate, (req, res) => {
+  const db = getDb()
+  const a = db.prepare('SELECT id FROM affiliates WHERE user_id = ?').get(req.user.id)
+  if (!a) return res.status(404).json({ error: 'Kein Affiliate-Konto zu diesem Benutzer' })
+  res.json(klickBilanz(db, a.id))
+})
+
+// ── Fertige Links auf einzelne Modelle ───────────────────────────────────
+//
+// Der Code hat immer überall gewirkt, aber es gab nichts zum Kopieren. Wer
+// ein bestimmtes Paar empfehlen wollte, musste sich die Adresse selbst
+// zusammensetzen — und tat es dann meistens ohne Code.
+router.get('/me/links', authenticate, (req, res) => {
+  const db = getDb()
+  const a = db.prepare('SELECT id, code FROM affiliates WHERE user_id = ?').get(req.user.id)
+  if (!a) return res.status(404).json({ error: 'Kein Affiliate-Konto zu diesem Benutzer' })
+
+  const basis = (process.env.APP_URL || 'https://artisansole.com').replace(/\/$/, '')
+  const modelle = db.prepare(`
+    SELECT slug, name, category, collection, express, image_data
+    FROM shoes WHERE slug IS NOT NULL AND slug != ''
+    ORDER BY collection, category, name
+  `).all()
+
+  res.json({
+    seite: affiliateLink(a.code),
+    modelle: modelle.map(m => ({
+      slug: m.slug, name: m.name, category: m.category,
+      collection: m.collection, express: !!m.express,
+      bild: m.image_data || null,
+      url: `${basis}/schuhe/${m.slug}?ref=${encodeURIComponent(a.code)}`,
+    })),
+  })
+})
+
+// ── Werbemittel ──────────────────────────────────────────────────────────
+router.get('/me/werbemittel', authenticate, (req, res) => {
+  const db = getDb()
+  const a = db.prepare('SELECT id FROM affiliates WHERE user_id = ?').get(req.user.id)
+  if (!a) return res.status(404).json({ error: 'Kein Affiliate-Konto zu diesem Benutzer' })
+  res.json(db.prepare(`
+    SELECT id, title, kind, body, image_data, note
+    FROM affiliate_assets WHERE visible = 1 ORDER BY sort_order, id
+  `).all())
+})
+
+// ── Auszahlung selbst anfordern ──────────────────────────────────────────
+//
+// Die Verwaltung löst weiterhin aus — geprüft wird die Bankverbindung, und
+// Geld verlässt das Haus nicht auf Knopfdruck eines Dritten. Was der
+// Vermittler jetzt kann, ist Bescheid geben, und das sichtbar.
+router.post('/me/auszahlung', authenticate, (req, res) => {
+  const db = getDb()
+  const a = db.prepare('SELECT * FROM affiliates WHERE user_id = ?').get(req.user.id)
+  if (!a) return res.status(404).json({ error: 'Kein Affiliate-Konto zu diesem Benutzer' })
+
+  matureCommissions(db)
+  const offen = db.prepare(`
+    SELECT COUNT(*) AS n, COALESCE(SUM(amount), 0) AS summe
+    FROM affiliate_commissions WHERE affiliate_id = ? AND status = 'payable'
+  `).get(a.id)
+
+  if (offen.n === 0) {
+    return res.status(400).json({
+      error: 'Zurzeit ist nichts auszahlbar. Provisionen werden auszahlbar, wenn die Schutzfrist nach der Zustellung abgelaufen ist.',
+      code: 'NICHTS_OFFEN',
+    })
+  }
+  if (!a.iban) {
+    return res.status(400).json({
+      error: 'Bitte tragen Sie zuerst Ihre Bankverbindung ein — ohne sie können wir nicht überweisen.',
+      code: 'KEINE_BANKVERBINDUNG',
+    })
+  }
+  if (a.payout_requested_at) {
+    return res.status(409).json({
+      error: 'Ihre Anforderung liegt bereits vor. Wir melden uns.',
+      code: 'SCHON_ANGEFORDERT',
+      seit: a.payout_requested_at,
+    })
+  }
+
+  db.prepare("UPDATE affiliates SET payout_requested_at = datetime('now') WHERE id = ?").run(a.id)
+  protokoll(db, {
+    entity: 'affiliate', entityId: a.id, action: 'auszahlung-angefordert',
+    detail: `${offen.n} Paare, ${Number(offen.summe).toFixed(2)} €`, user: req.user,
+  })
+  res.json({ angefordert: true, paare: offen.n, summe: Math.round(offen.summe * 100) / 100 })
+})
+
+// ── Gutschrift als PDF ───────────────────────────────────────────────────
+//
+// Eine Bildschirmansicht ist kein Beleg. Wer Provisionen versteuert, braucht
+// ein Dokument, das er weiterreichen kann.
+router.get('/me/gutschrift/:payoutId', authenticate, param('payoutId').isInt(), (req, res) => {
+  const db = getDb()
+  const a = db.prepare('SELECT * FROM affiliates WHERE user_id = ?').get(req.user.id)
+  if (!a) return res.status(404).json({ error: 'Kein Affiliate-Konto zu diesem Benutzer' })
+  liefereGutschrift(res, db, a, req.params.payoutId)
+})
+
+// Dieselbe Gutschrift aus Sicht der Verwaltung — etwa um sie nachzusenden.
+router.get('/:id/gutschrift/:payoutId', ...canAdmin,
+  param('id').isInt(), param('payoutId').isInt(), (req, res) => {
+    const db = getDb()
+    const a = db.prepare('SELECT * FROM affiliates WHERE id = ?').get(req.params.id)
+    if (!a) return res.status(404).json({ error: 'Not found' })
+    liefereGutschrift(res, db, a, req.params.payoutId)
+  }
+)
+
+function liefereGutschrift(res, db, affiliate, payoutId) {
+  const payout = db.prepare('SELECT * FROM affiliate_payouts WHERE id = ? AND affiliate_id = ?')
+    .get(payoutId, affiliate.id)
+  if (!payout) return res.status(404).json({ error: 'Diese Auszahlung gibt es nicht.' })
+
+  // Auszahlungen von vor der Einführung der Belegnummern bekommen ihre jetzt.
+  if (!payout.document_no) {
+    try { payout.document_no = vergibGutschriftsnummer(db, payout.id) }
+    catch (e) { console.error('[gutschriftsnummer]', e.message) }
+  }
+
+  const positionen = db.prepare(`
+    SELECT c.amount, c.benefit_kind, o.shoe_name, o.order_ref, o.delivered_at
+    FROM affiliate_commissions c
+    JOIN orders o ON o.id = c.order_id
+    WHERE c.payout_id = ? ORDER BY c.id
+  `).all(payout.id)
+
+  const pdf = gutschriftPdf(db, payout, affiliate, positionen)
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader('Content-Disposition', `inline; filename="${payout.document_no || payout.reference}.pdf"`)
+  res.send(pdf)
+}
 
 export default router

@@ -273,6 +273,29 @@ export function runMigrations(db) {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    -- ── Der Weg einer Bestellung ────────────────────────────────────────────
+    --
+    -- Die Bestellung trägt ihren Status, aber ein Status ist ein Zustand und
+    -- keine Geschichte: Er sagt, wo das Paar gerade ist, nicht wann es dorthin
+    -- kam und wer es bewegt hat. Der Kunde sah deshalb eine Stufe ohne Datum,
+    -- und bei einer Rückfrage ließ sich nicht belegen, wann freigegeben wurde.
+    --
+    -- Eine Zeile je Übergang. Sie wird nie geändert und nie gelöscht — das ist
+    -- der Punkt: Was hier steht, ist der Nachweis.
+    CREATE TABLE IF NOT EXISTS order_events (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id   INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      status     TEXT    NOT NULL,
+      note       TEXT,
+      -- Wer den Übergang ausgelöst hat: 'kunde', 'verwaltung' oder 'system'.
+      -- Der Name statt der Nutzerkennung, damit der Eintrag lesbar bleibt,
+      -- wenn das Konto später gelöscht wird.
+      actor      TEXT    NOT NULL DEFAULT 'system',
+      actor_id   INTEGER,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_order_events ON order_events(order_id, id);
+
     CREATE INDEX IF NOT EXISTS idx_fav_user   ON favorites(user_id);
     CREATE INDEX IF NOT EXISTS idx_fav_shoe   ON favorites(shoe_id);
     CREATE INDEX IF NOT EXISTS idx_orders_usr ON orders(user_id);
@@ -553,6 +576,60 @@ export function runMigrations(db) {
     `CREATE INDEX IF NOT EXISTS idx_orders_basket ON orders(basket_id)`,
     `ALTER TABLE shoes ADD COLUMN collection TEXT NOT NULL DEFAULT 'standard'`,
     `CREATE INDEX IF NOT EXISTS idx_shoes_collection ON shoes(collection)`,
+
+    // ── Nach dem Kauf ────────────────────────────────────────────────────
+    //
+    // Bis hierher endete die Bestellung mit dem Status. Wann er sich änderte,
+    // stand nirgends; wo das Paket ist, auch nicht. Der Kunde sah eine Stufe
+    // ohne Datum und ohne Aussicht, und die Verwaltung beantwortete das per
+    // Nachricht.
+    //
+    // Sendungsnummer und Zusteller. Getrennte Spalten, weil erst beides
+    // zusammen einen Link ergibt — eine Nummer ohne Dienstleister ist eine
+    // Zahl, die niemand nachschlagen kann.
+    `ALTER TABLE orders ADD COLUMN tracking_code TEXT`,
+    `ALTER TABLE orders ADD COLUMN carrier       TEXT`,
+    // Wann die Zahlung verbucht wurde. Bis dahin trug allein der Status die
+    // Information, und der lässt sich zurückdrehen.
+    `ALTER TABLE orders ADD COLUMN paid_at TEXT`,
+    // Stornierung. Die Staffel steht in den AGB (Ziffer 7.2); was tatsächlich
+    // einbehalten und was erstattet wurde, muss an der Bestellung stehen —
+    // sonst ist der Vorgang nach einem Jahr nicht mehr nachvollziehbar.
+    `ALTER TABLE orders ADD COLUMN cancelled_at   TEXT`,
+    `ALTER TABLE orders ADD COLUMN cancel_fee_pct REAL`,
+    `ALTER TABLE orders ADD COLUMN cancel_fee     REAL`,
+    `ALTER TABLE orders ADD COLUMN refund_amount  REAL`,
+    `ALTER TABLE orders ADD COLUMN cancel_reason  TEXT`,
+    `ALTER TABLE orders ADD COLUMN cancelled_by   TEXT`,
+    // Rechnungsnummer. Fortlaufend und lückenlos je Jahr — eine Rechnung
+    // darf nicht zweimal vergeben und nicht übersprungen werden.
+    `ALTER TABLE orders ADD COLUMN invoice_no        TEXT`,
+    `ALTER TABLE orders ADD COLUMN invoice_issued_at TEXT`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_invoice ON orders(invoice_no) WHERE invoice_no IS NOT NULL`,
+
+    // ── Passwort zurücksetzen ────────────────────────────────────────────
+    //
+    // Gab es nie, aus einem Grund, der entfallen ist: Der Mailversand stand
+    // still. Die Kontowiederherstellung führt zu einem neuen Passkey — wer
+    // sich mit Passwort angemeldet hat und es vergisst, hatte keinen Weg
+    // zurück.
+    //
+    // Gespeichert wird der SHA-256 des Tokens, nicht das Token. Wer die
+    // Datenbank liest, soll sich damit nicht anmelden können.
+    `ALTER TABLE users ADD COLUMN reset_token_hash TEXT`,
+    `ALTER TABLE users ADD COLUMN reset_expires_at TEXT`,
+
+    // ── Express-Bestand ──────────────────────────────────────────────────
+    //
+    // Die zwei Wochen sind eine Zusage, und sie hängt daran, dass in der
+    // Werkstatt vorbereitete Schäfte liegen. Ohne Zähler ist sie ungedeckt:
+    // Der Laden nimmt Bestellungen an, für die es kein Bauteil gibt.
+    //
+    // NULL heißt ausdrücklich „nicht geführt" — nicht „null Stück". Wer den
+    // Bestand nicht pflegen will, ändert nichts und der Laden verhält sich
+    // wie bisher.
+    `ALTER TABLE shoes ADD COLUMN express_stock INTEGER`,
+
   ]
 
   // ── Backfill default WhatsApp Business number when empty ─────────────────
@@ -1083,6 +1160,68 @@ export function runMigrations(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_aff_payouts_affiliate ON affiliate_payouts(affiliate_id);
 
+    -- ── Klicks ──────────────────────────────────────────────────────────────
+    --
+    -- Gezählt wurde bisher erst die Bestellung. Ein Vermittler, der nichts
+    -- verkauft, erfuhr damit nicht, ob niemand geklickt hat oder ob alle an
+    -- der Kasse abgesprungen sind — zwei Befunde, die zu völlig
+    -- verschiedenen Schlüssen führen.
+    --
+    -- Absichtlich ohne Kennung des Besuchers: kein Cookie, keine IP, keine
+    -- Wiedererkennung. Gespeichert wird der Tag, das Ziel und woher der Klick
+    -- kam. Das genügt für die Frage „wirkt mein Link" und macht die Zählung
+    -- nicht einwilligungspflichtig.
+    CREATE TABLE IF NOT EXISTS affiliate_clicks (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      affiliate_id INTEGER NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+      day          TEXT    NOT NULL,          -- YYYY-MM-DD
+      target       TEXT    NOT NULL DEFAULT 'seite',  -- 'seite' | 'modell'
+      shoe_slug    TEXT,
+      referrer     TEXT,                      -- nur der Host, nie der volle Pfad
+      count        INTEGER NOT NULL DEFAULT 0,
+      UNIQUE(affiliate_id, day, target, shoe_slug, referrer)
+    );
+    CREATE INDEX IF NOT EXISTS idx_aff_clicks ON affiliate_clicks(affiliate_id, day);
+
+    -- ── Werbemittel ─────────────────────────────────────────────────────────
+    -- Freigegebenes Material, damit sich niemand sein eigenes baut. Bei einer
+    -- Marke, die von Bildsprache lebt, ist selbstgebautes Material ein
+    -- doppeltes Risiko: schlechte Bilder und ungedeckte Aussagen.
+    CREATE TABLE IF NOT EXISTS affiliate_assets (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      title      TEXT    NOT NULL,
+      kind       TEXT    NOT NULL DEFAULT 'bild',   -- 'bild' | 'text'
+      body       TEXT,                              -- Textbaustein zum Kopieren
+      image_data TEXT,                              -- Data-URL wie bei den Modellen
+      note       TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      visible    INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+
+    -- ── Änderungsprotokoll ──────────────────────────────────────────────────
+    --
+    -- Einzelne Tabellen vermerkten den Bearbeiter in updated_by, aber das ist
+    -- der letzte, nicht der Verlauf. Bei einem Streit über einen Preis oder
+    -- eine Kondition fehlte der Nachweis, wer wann was gesetzt hat.
+    --
+    -- Bewusst schmal: Was, woran, von wem, wann — und der vorherige Wert.
+    -- Kein vollständiges Abbild jeder Zeile; das bläht die Datenbank auf und
+    -- niemand liest es.
+    CREATE TABLE IF NOT EXISTS audit_log (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      entity     TEXT    NOT NULL,       -- 'order', 'affiliate', 'shoe', …
+      entity_id  TEXT,
+      action     TEXT    NOT NULL,       -- 'status', 'storno', 'auszahlung', …
+      detail     TEXT,                   -- eine lesbare Zeile, kein JSON-Klumpen
+      user_id    INTEGER,
+      user_name  TEXT,
+      created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_log(entity, entity_id, id);
+    CREATE INDEX IF NOT EXISTS idx_audit_zeit   ON audit_log(id DESC);
+
     -- ── Rücksendungen ───────────────────────────────────────────────────────
     -- Der Schuh entsteht auf Maß für einen einzelnen Fuß und ist danach für
     -- niemanden sonst zu gebrauchen — er ist vom Widerruf ausgenommen
@@ -1605,6 +1744,13 @@ export function runMigrations(db) {
     // lassen: Eine geprüfte Bankverbindung, die nachts eine andere wird, ist
     // der klassische Weg, eine Gutschrift umzuleiten.
     `ALTER TABLE affiliates ADD COLUMN locked_fields TEXT NOT NULL DEFAULT '[]'`,
+    // Auszahlung auf Zuruf. Bisher löste allein die Verwaltung aus; der
+    // Vermittler konnte weder anstoßen noch erkennen, dass etwas läuft.
+    // Der Zeitstempel ist zugleich die Sperre gegen mehrfaches Anfordern.
+    `ALTER TABLE affiliates ADD COLUMN payout_requested_at TEXT`,
+    // Belegnummer der Gutschrift. Eigener Nummernkreis (GS-JJJJ-NNNN), weil
+    // eine Gutschrift keine Rechnung ist und nicht in deren Reihe gehört.
+    `ALTER TABLE affiliate_payouts ADD COLUMN document_no TEXT`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }

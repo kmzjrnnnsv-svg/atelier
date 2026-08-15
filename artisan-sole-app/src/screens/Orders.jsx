@@ -10,6 +10,7 @@ import Ueberweisung from '../components/Ueberweisung'
 import { apiFetch } from '../hooks/useApi'
 import CtaBanner from '../components/CtaBanner'
 import { orderSpec } from '../lib/orderSpec'
+import AuftragsAbschluss from '../components/AuftragsAbschluss'
 
 // ── Journey stages ────────────────────────────────────────────────────────────
 const JOURNEY_STAGES = [
@@ -20,6 +21,22 @@ const JOURNEY_STAGES = [
   { key: 'shipped',    label: 'Auf dem Weg zu Ihnen',  icon: Truck,        desc: 'Ihr Schuh ist unterwegs' },
   { key: 'delivered',  label: 'Angekommen',            icon: CheckCircle2, desc: 'Viel Freude mit Ihrem Schuh' },
 ]
+
+// Welcher Punkt der Reise zu welchem Status gehört. Gebraucht, seit der
+// Server zu jeder Stufe ein Datum liefert — vorher war die Reise eine
+// Illustration, jetzt ist sie ein Nachweis.
+const STUFE_ZU_STATUS = {
+  ordered: 'pending_payment', paid: 'pending', crafting: 'processing',
+  quality: 'quality_check', shipped: 'shipped', delivered: 'delivered',
+}
+
+const tagUndZeit = (s) => {
+  if (!s) return null
+  const d = new Date(String(s).replace(' ', 'T') + (String(s).includes('Z') ? '' : 'Z'))
+  return Number.isNaN(d.getTime())
+    ? null
+    : d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
 function getActiveIndex(status) {
   switch (status) {
@@ -38,6 +55,23 @@ function getActiveIndex(status) {
 function JourneyMap({ order, onBack }) {
   const activeIdx = getActiveIndex(order.status)
   const isCancelled = order.status === 'cancelled'
+
+  // Der Verlauf kommt vom Server: Datum je Stufe, Sendungsnummer, Rechnung
+  // und was eine Stornierung in diesem Moment kostet.
+  const [lauf, setLauf] = useState(null)
+  const laden = () => {
+    apiFetch(`/api/orders/${order.id}/verlauf`)
+      .then(setLauf)
+      .catch(() => setLauf(null))
+  }
+  useEffect(laden, [order.id])
+
+  // Wann eine Stufe erreicht wurde. Der erste Eintrag zählt — ein späterer
+  // Rücksprung in der Verwaltung soll das Datum nicht verschieben.
+  const datumJeStufe = {}
+  for (const e of lauf?.verlauf || []) {
+    if (!datumJeStufe[e.status]) datumJeStufe[e.status] = e.created_at
+  }
 
   return (
     <div className="min-h-full bg-white">
@@ -126,8 +160,21 @@ function JourneyMap({ order, onBack }) {
                       {(isComplete || isActive) && (
                         <p className="text-[11px] text-black/30 mt-1 font-light">{stage.desc}</p>
                       )}
+                      {/* Das Datum. Eine Stufe ohne Datum ist eine Behauptung —
+                          der Kunde konnte bisher nicht sehen, seit wann sein
+                          Paar dort steht, und fragte deshalb nach. */}
+                      {tagUndZeit(datumJeStufe[STUFE_ZU_STATUS[stage.key]]) && (
+                        <p className="text-[10px] text-black/40 mt-1 font-light tabular-nums">
+                          {tagUndZeit(datumJeStufe[STUFE_ZU_STATUS[stage.key]])}
+                        </p>
+                      )}
                       {isActive && (
-                        <span className="inline-block mt-2 text-[9px] uppercase tracking-[0.2em] text-black/30 font-light">Aktuell</span>
+                        <>
+                          <span className="inline-block mt-2 text-[9px] uppercase tracking-[0.2em] text-black/30 font-light">Aktuell</span>
+                          {lauf?.naechstes && (
+                            <p className="text-[10px] text-black/30 mt-1 font-light">Als Nächstes: {lauf.naechstes}</p>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
@@ -167,8 +214,14 @@ function JourneyMap({ order, onBack }) {
                 </div>
               ))}
             </div>
+
+            <AuftragsAbschluss orderId={order.id} lauf={lauf} aufFrisch={laden} />
           </div>
         )}
+
+        {/* Auch eine stornierte Bestellung braucht ihre Abrechnung — was
+            einbehalten und was erstattet wurde, ist genau dann die Frage. */}
+        {isCancelled && <AuftragsAbschluss orderId={order.id} lauf={lauf} aufFrisch={laden} />}
       </div>
     </div>
   )

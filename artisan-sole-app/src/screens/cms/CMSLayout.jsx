@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen } from 'lucide-react'
+import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen, TrendingUp } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 import { HOME_PATH } from '../../lib/homePath'
@@ -66,6 +66,7 @@ export default function CMSLayout() {
             { heading: 'Bestellungen', items: [
               { to: '/cms/nachrichten', label: 'Nachrichten', icon: MessageSquare, badge: ungelesen },
               { to: '/cms/orders',   label: 'Bestellungen', icon: ShoppingBag },
+              { to: '/cms/zahlungen', label: 'Zahlungseingang', icon: Landmark },
               { to: '/cms/shipping', label: 'Versand',      icon: Truck },
               { to: '/cms/ruecksendungen', label: 'Rücksendungen', icon: PackageOpen },
               { to: '/cms/coupons',  label: 'Gutscheine',   icon: Ticket },
@@ -76,6 +77,9 @@ export default function CMSLayout() {
               { to: '/cms/footer',     label: 'Footer & Service', icon: FileText },
               { to: '/cms/website-images', label: 'Website-Bilder',  icon: Image },
               { to: '/cms/media',      label: 'Mediathek',        icon: ImagePlus },
+            ]},
+            { heading: 'Auswertung', items: [
+              { to: '/cms/auswertung', label: 'Zahlen & Protokoll', icon: TrendingUp },
             ]},
             { heading: 'Kunden', items: [
               { to: '/cms/scans',    label: 'Foot Scans',   icon: ScanLine },
@@ -93,6 +97,7 @@ export default function CMSLayout() {
             { heading: 'Partner', items: [
               { to: '/cms/business', label: 'Firmenkonten', icon: Building2 },
               { to: '/cms/affiliate', label: 'Affiliates',  icon: Users },
+              { to: '/cms/werbemittel', label: 'Werbemittel', icon: Megaphone },
             ]},
             { heading: 'Kommunikation', items: [
               { to: '/cms/email-templates', label: 'E-Mail Vorlagen', icon: Mail },
@@ -102,6 +107,7 @@ export default function CMSLayout() {
             ...(user?.role === 'admin' ? [{ heading: 'Administration', items: [
               { to: '/cms/users', label: 'Benutzer',       icon: Users },
               { to: '/cms/bank',  label: 'Bankverbindung', icon: Landmark },
+              { to: '/cms/rechnungsangaben', label: 'Rechnungsangaben', icon: FileText },
               { to: '/cms/email', label: 'E-Mail / SMTP',  icon: Mail },
               { to: '/cms/mfa',   label: 'MFA-Sicherheit', icon: ShieldCheck },
             ]}] : []),

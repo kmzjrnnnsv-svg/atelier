@@ -27,12 +27,19 @@ const FILTERS = [
  { key: 'cancelled', label: 'Storniert' },
 ]
 
+// 'cancelled' steht hier nicht mehr.
+//
+// Eine Stornierung ist kein Statuswechsel, sondern eine Abrechnung: Sie hat
+// eine Gebühr nach AGB 7.2, einen Erstattungsbetrag und einen Grund. Ginge
+// sie über den Statusweg, stünde am Ende eine stornierte Bestellung ohne
+// Angabe, was dem Kunden zurückgezahlt wurde. Der Server weist diesen Weg
+// inzwischen ab; hier ist der eigene Knopf dafür.
 const NEXT_STATUSES = {
- pending_payment: ['processing', 'cancelled'],
- pending: ['processing', 'cancelled'],
- processing: ['quality_check', 'cancelled'],
- quality_check: ['shipped', 'cancelled'],
- shipped: ['delivered', 'cancelled'],
+ pending_payment: ['processing'],
+ pending: ['processing'],
+ processing: ['quality_check'],
+ quality_check: ['shipped'],
+ shipped: ['delivered'],
  delivered: [],
  cancelled: [],
 }
@@ -42,16 +49,206 @@ const STATUS_LABELS = {
  quality_check: 'Zur Qualitätskontrolle',
  shipped: 'QC bestanden → Versand',
  delivered: 'Als geliefert markieren',
- cancelled: 'Stornieren',
 }
 
-function OrderRow({ order, onStatusChange, isAdmin }) {
+const ZUSTELLER = [
+ { key: 'dhl', name: 'DHL' },
+ { key: 'dpd', name: 'DPD' },
+ { key: 'ups', name: 'UPS' },
+ { key: 'gls', name: 'GLS' },
+ { key: 'fedex', name: 'FedEx' },
+ { key: 'hermes', name: 'Hermes' },
+ { key: 'sonstige', name: 'Sonstiger Zusteller' },
+]
+
+const geld = (n) =>
+ `${(Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+
+/**
+ * Sendungsnummer eintragen.
+ *
+ * Ein Vorgang, nicht zwei: Wer die Nummer einträgt, hat das Paket abgegeben.
+ * Der Status springt mit, und die Versandmail trägt den Verfolgungslink.
+ */
+function SendungFeld({ order, onFertig }) {
+ const [code, setCode] = useState(order.tracking_code || '')
+ const [dienst, setDienst] = useState(order.carrier || 'dhl')
+ const [laeuft, setLaeuft] = useState(false)
+ const [fehler, setFehler] = useState(null)
+
+ const speichern = async () => {
+  setLaeuft(true); setFehler(null)
+  try {
+   const neu = await apiFetch(`/api/orders/${order.id}/sendung`, {
+    method: 'PATCH',
+    body: JSON.stringify({ tracking_code: code.trim(), carrier: dienst }),
+   })
+   onFertig(neu)
+  } catch (e) {
+   setFehler(e.error || 'Konnte nicht gespeichert werden.')
+  } finally {
+   setLaeuft(false)
+  }
+ }
+
+ return (
+  <div className="pt-3 border-t border-black/[0.04]">
+   <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] mb-2 font-light">Sendung</p>
+   <div className="flex flex-wrap gap-2 items-center">
+    <select
+     value={dienst} onChange={(e) => setDienst(e.target.value)}
+     className="h-9 border border-black/10 px-2 text-[11px] font-light bg-white"
+    >
+     {ZUSTELLER.map(z => <option key={z.key} value={z.key}>{z.name}</option>)}
+    </select>
+    <input
+     value={code} onChange={(e) => setCode(e.target.value)}
+     placeholder="Sendungsnummer"
+     className="h-9 flex-1 min-w-[180px] border border-black/10 px-2 text-[11px] font-light"
+    />
+    <button
+     onClick={speichern} disabled={laeuft || code.trim().length < 3}
+     className="h-9 px-4 text-[10px] font-light border border-black text-black hover:bg-black hover:text-white bg-transparent disabled:opacity-40"
+    >
+     {laeuft ? '…' : order.tracking_code ? 'Ändern' : 'Eintragen & versenden'}
+    </button>
+   </div>
+   {fehler && <p className="text-[10px] text-red-700 font-light mt-1.5">{fehler}</p>}
+   {order.tracking_code && (
+    <p className="text-[10px] text-black/30 font-light mt-1.5">
+     Der Kunde hat den Verfolgungslink per E-Mail bekommen.
+    </p>
+   )}
+  </div>
+ )
+}
+
+/**
+ * Stornieren, mit der Staffel aus AGB 7.2.
+ *
+ * Der vorgeschlagene Satz ist die Obergrenze, nicht der Betrag. Ziffer 7.2
+ * Abs. 5 sagt ausdrücklich, dass wir weniger einbehalten dürfen, wenn die
+ * Arbeit noch nicht begonnen hat — deshalb ist das Feld überschreibbar. Nach
+ * oben deckelt der Server.
+ */
+function StornoDialog({ order, onSchliessen, onFertig }) {
+ const [vorschau, setVorschau] = useState(null)
+ const [satz, setSatz] = useState(null)
+ const [grund, setGrund] = useState('')
+ const [laeuft, setLaeuft] = useState(false)
+ const [fehler, setFehler] = useState(null)
+
+ useEffect(() => {
+  apiFetch(`/api/orders/${order.id}/storno`)
+   .then(v => { setVorschau(v); setSatz(v.pct ?? 0) })
+   .catch(e => setFehler(e.error || 'Vorschau nicht abrufbar.'))
+ }, [order.id])
+
+ const betrag = vorschau?.betrag || 0
+ const gebuehr = Math.round(betrag * (Number(satz) || 0)) / 100
+ const erstattung = Math.round((betrag - gebuehr) * 100) / 100
+
+ const stornieren = async () => {
+  setLaeuft(true); setFehler(null)
+  try {
+   const erg = await apiFetch(`/api/orders/${order.id}/storno`, {
+    method: 'PUT',
+    body: JSON.stringify({ satz: Number(satz), grund: grund.trim() || undefined }),
+   })
+   onFertig(erg)
+  } catch (e) {
+   setFehler(e.error || 'Die Stornierung ist nicht durchgegangen.')
+   setLaeuft(false)
+  }
+ }
+
+ return (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40" onClick={onSchliessen}>
+   <div className="bg-white mx-4 w-full max-w-md p-7" onClick={e => e.stopPropagation()}>
+    <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-3 font-light">Stornierung</p>
+    <p className="text-[16px] font-extralight text-black tracking-tight leading-snug mb-1">
+     {order.shoe_name}
+    </p>
+    <p className="text-[11px] text-black/35 font-light mb-5">{order.order_ref || `#${order.id}`}</p>
+
+    {!vorschau && !fehler && <p className="text-[12px] text-black/35 font-light">Wird geladen …</p>}
+
+    {vorschau && !vorschau.moeglich && (
+     <p className="text-[12px] text-black/50 font-light leading-relaxed mb-5">{vorschau.hinweis}</p>
+    )}
+
+    {vorschau?.moeglich && (
+     <>
+      <p className="text-[12px] text-black/45 font-light leading-relaxed mb-4">{vorschau.hinweis}</p>
+
+      <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">
+       Einbehalt in Prozent — höchstens {vorschau.hoechstsatz} %
+      </label>
+      <input
+       type="number" min={0} max={vorschau.hoechstsatz} step={1}
+       value={satz ?? 0}
+       onChange={(e) => setSatz(Math.min(Number(e.target.value) || 0, vorschau.hoechstsatz))}
+       className="w-full h-10 border border-black/10 px-3 text-[13px] font-light mb-4"
+      />
+
+      <div className="bg-black/[0.03] px-4 py-3 mb-4">
+       <div className="flex justify-between py-0.5">
+        <span className="text-[11px] text-black/40 font-light">Auftragswert</span>
+        <span className="text-[12px] text-black/70 font-light">{geld(betrag)}</span>
+       </div>
+       <div className="flex justify-between py-0.5">
+        <span className="text-[11px] text-black/40 font-light">Einbehalt</span>
+        <span className="text-[12px] text-black/70 font-light">− {geld(gebuehr)}</span>
+       </div>
+       <div className="flex justify-between py-0.5 border-t border-black/[0.06] mt-1 pt-1.5">
+        <span className="text-[11px] text-black/60 font-light">Zu erstatten</span>
+        <span className="text-[14px] text-black font-normal">{geld(erstattung)}</span>
+       </div>
+      </div>
+
+      <textarea
+       value={grund} onChange={(e) => setGrund(e.target.value)}
+       rows={2} maxLength={500} placeholder="Grund (erscheint im Protokoll)"
+       className="w-full border border-black/10 px-3 py-2 text-[12px] font-light resize-none mb-4"
+      />
+     </>
+    )}
+
+    {fehler && <p className="text-[12px] text-red-700 font-light mb-3">{fehler}</p>}
+
+    <div className="flex gap-3">
+     <button
+      onClick={onSchliessen}
+      className="flex-1 h-11 border border-black/15 text-black/40 text-[10px] uppercase tracking-[0.15em] font-light bg-transparent"
+     >
+      Abbrechen
+     </button>
+     {vorschau?.moeglich && (
+      <button
+       onClick={stornieren} disabled={laeuft}
+       className="flex-1 h-11 text-[10px] uppercase tracking-[0.15em] font-light border bg-red-600 text-white border-red-600 disabled:opacity-50"
+      >
+       {laeuft ? '…' : `${geld(erstattung)} erstatten`}
+      </button>
+     )}
+    </div>
+    <p className="text-[10px] text-black/25 font-light mt-3 leading-relaxed">
+     Der Kunde bekommt eine Bestätigung mit dem Erstattungsbetrag. Überwiesen
+     wird von Hand — das System löst keine Zahlung aus.
+    </p>
+   </div>
+  </div>
+ )
+}
+
+function OrderRow({ order, onStatusChange, onOrderChange, isAdmin }) {
  const [expanded, setExpanded] = useState(false)
  const [updating, setUpdating] = useState(false)
  const [mfaOpen, setMfaOpen] = useState(false)
  const [mfaErr, setMfaErr] = useState(null)
  const [pendingStatus, setPendingStatus] = useState(null)
  const [confirmDialog, setConfirmDialog] = useState(null)
+ const [stornoOffen, setStornoOffen] = useState(false)
  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending
 
  const delivery = order.delivery_address ? JSON.parse(order.delivery_address) : null
@@ -238,28 +435,56 @@ function OrderRow({ order, onStatusChange, isAdmin }) {
  </div>
  )}
 
+ {/* Sendung — sobald das Paar die Werkstatt verlassen kann */}
+ {['processing', 'quality_check', 'shipped', 'delivered'].includes(order.status) && (
+ <SendungFeld order={order} onFertig={(neu) => onOrderChange?.(neu)} />
+ )}
+
+ {/* Bereits storniert: die Abrechnung bleibt sichtbar */}
+ {order.cancelled_at && (
+ <div className="pt-3 border-t border-black/[0.04]">
+ <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] mb-1.5 font-light">Stornierung</p>
+ <p className="text-[11px] text-black/45 font-light">
+ {order.cancel_fee_pct} % einbehalten ({geld(order.cancel_fee)}) · {geld(order.refund_amount)} zu erstatten
+ </p>
+ {order.cancel_reason && (
+ <p className="text-[10px] text-black/30 font-light mt-1">Grund: {order.cancel_reason}</p>
+ )}
+ </div>
+ )}
+
  {/* Actions */}
- {nextOptions.length > 0 && (
+ {(nextOptions.length > 0 || (!order.cancelled_at && order.status !== 'cancelled')) && (
  <div className="pt-3 border-t border-black/[0.04] flex flex-wrap gap-2">
  {nextOptions.map(s => (
  <button
  key={s}
  disabled={updating}
  onClick={() => handleStatus(s)}
- className={`disabled:opacity-50 transition-all ${
- s === 'cancelled'
- ? 'text-[10px] font-light px-4 py-2 border border-black/10 text-black/30 hover:border-black/25 hover:text-black/50 bg-transparent'
- : s === 'processing'
- ? 'text-[10px] font-light px-4 py-2 border border-black text-black hover:bg-black hover:text-white bg-transparent'
- : 'text-[10px] font-light px-4 py-2 border border-black text-black hover:bg-black hover:text-white bg-transparent'
- }`}
+ className="text-[10px] font-light px-4 py-2 border border-black text-black hover:bg-black hover:text-white bg-transparent disabled:opacity-50 transition-all"
  >
  {updating ? '...' : STATUS_LABELS[s] || s}
  </button>
  ))}
+ {!order.cancelled_at && order.status !== 'cancelled' && (
+ <button
+ onClick={() => setStornoOffen(true)}
+ className="text-[10px] font-light px-4 py-2 border border-black/10 text-black/30 hover:border-black/25 hover:text-black/50 bg-transparent transition-all"
+ >
+ Stornieren …
+ </button>
+ )}
  </div>
  )}
  </div>
+ )}
+
+ {stornoOffen && (
+ <StornoDialog
+ order={order}
+ onSchliessen={() => setStornoOffen(false)}
+ onFertig={(erg) => { setStornoOffen(false); onOrderChange?.(erg.order) }}
+ />
  )}
 
  {/* Confirmation dialog */}
@@ -333,6 +558,14 @@ export default function OrdersPanel() {
  setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o))
  }
 
+ // Sendung und Stornierung geben die geänderte Bestellung zurück. Sie wird
+ // eingesetzt statt die Liste neu zu laden — sonst klappt die aufgeklappte
+ // Zeile beim Speichern zu, und man verliert die Stelle.
+ const handleOrderChange = (neu) => {
+ if (!neu?.id) return
+ setOrders(prev => prev.map(o => o.id === neu.id ? { ...o, ...neu } : o))
+ }
+
  const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter)
 
  const counts = {}
@@ -397,7 +630,7 @@ export default function OrdersPanel() {
  ) : (
  <div className="bg-white">
  {filtered.map(order => (
- <OrderRow key={order.id} order={order} onStatusChange={handleStatusChange} isAdmin={isAdmin} />
+ <OrderRow key={order.id} order={order} onStatusChange={handleStatusChange} onOrderChange={handleOrderChange} isAdmin={isAdmin} />
  ))}
  </div>
  )}

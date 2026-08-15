@@ -186,6 +186,18 @@ export const collectionsRouter = makeContentRouter('collections', [
   body('label').trim().notEmpty().withMessage('Bezeichnung erforderlich'),
 ], { publicRead: true })
 
+/**
+ * Werbemittel für Vermittler.
+ *
+ * Nicht öffentlich lesbar: Das Material ist für Partner freigegeben, nicht
+ * für den Laden. Der Abruf durch den Vermittler läuft über
+ * GET /api/affiliates/me/werbemittel, das prüft, dass es ein Partner ist.
+ */
+export const affiliateAssetsRouter = makeContentRouter('affiliate_assets', [
+  body('title').trim().notEmpty().withMessage('Bezeichnung erforderlich'),
+  body('kind').optional().isIn(['bild', 'text']).withMessage('Art: Bild oder Text'),
+])
+
 export const materialsRouter  = makeContentRouter('shoe_materials', [], { publicRead: true })
 export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true })
 export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead: true })

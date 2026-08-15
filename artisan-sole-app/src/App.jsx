@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute, StartRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
+import RefErfassung from './components/RefErfassung'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
 import useStore from './store/store'
@@ -78,6 +79,7 @@ const lazyImports = {
   '/welcome':    () => import('./screens/Welcome'),
   '/entdecken':  () => import('./screens/Entdecken'),
   '/konto-wiederherstellen': () => import('./screens/KontoWiederherstellen'),
+  '/passwort-neu': () => import('./screens/PasswortNeu'),
 }
 
 // Prefetch a route's chunk on hover/touch, safe to call multiple times
@@ -100,6 +102,7 @@ const Wishlist          = lazy(lazyImports['/wishlist'])
 const Orders            = lazy(lazyImports['/orders'])
 const Checkout          = lazy(lazyImports['/checkout'])
 const KontoWiederherstellen = lazy(lazyImports['/konto-wiederherstellen'])
+const PasswortNeu       = lazy(lazyImports['/passwort-neu'])
 const Accessories       = lazy(lazyImports['/accessories'])
 const HelpSupport       = lazy(lazyImports['/help'])
 const Feedback          = lazy(lazyImports['/feedback'])
@@ -119,6 +122,10 @@ const ScansPanel           = lazy(() => import('./screens/cms/ScansPanel'))
 const FAQEditor            = lazy(() => import('./screens/cms/FAQEditor'))
 const LegalEditor          = lazy(() => import('./screens/cms/LegalEditor'))
 const OrdersPanel          = lazy(() => import('./screens/cms/OrdersPanel'))
+const ZahlungsPanel        = lazy(() => import('./screens/cms/ZahlungsPanel'))
+const RechnungsAngaben     = lazy(() => import('./screens/cms/RechnungsAngaben'))
+const AuswertungPanel      = lazy(() => import('./screens/cms/AuswertungPanel'))
+const WerbemittelPanel     = lazy(() => import('./screens/cms/WerbemittelPanel'))
 const MFASetup             = lazy(() => import('./screens/cms/MFASetup'))
 const BankSettings         = lazy(() => import('./screens/cms/BankSettings'))
 const EmailSettings        = lazy(() => import('./screens/cms/EmailSettings'))
@@ -172,7 +179,7 @@ function DelayedSpinner() {
 }
 
 // Routes where the global bottom nav should NOT appear
-const NO_NAV_PATHS = ['/login', '/register', '/konto-wiederherstellen', '/welcome', '/entdecken', '/scan', '/customize', '/register-business', '/affiliate-konto', '/vermittler-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/affiliate', '/vermittler']
+const NO_NAV_PATHS = ['/login', '/register', '/konto-wiederherstellen', '/passwort-neu', '/welcome', '/entdecken', '/scan', '/customize', '/register-business', '/affiliate-konto', '/vermittler-konto', '/business/dashboard', '/business/profile', '/business/campaigns', '/verify-email', '/verwaltung', '/affiliate', '/vermittler']
 // Pfade mit variablem Ende: hier zählt der Anfang, nicht die genaue Adresse.
 const NO_NAV_PREFIXES = ['/schuhe/']
 const hidesNav = (path) =>
@@ -254,6 +261,9 @@ function AffiliateStart() {
 
 function AppRoutes() {
   const location = useLocation()
+  // Nimmt `?ref=` auf jeder Seite auf, nicht nur auf der Startseite — seit
+  // Vermittler fertige Links auf einzelne Modelle bekommen, kommt der
+  // Besucher woanders an. Rendert nichts, siehe unten im Baum.
   const { user } = useAuth()
   const { initStore, affiliatePruefen } = useStore()
   const device = useDeviceInfo()
@@ -308,6 +318,7 @@ function AppRoutes() {
         </div>
         <div className="hidden md:block h-full">
         <Suspense fallback={<DelayedSpinner />}>
+          <RefErfassung />
           <Routes>
             <Route path="/cms" element={<CMSRoute><CMSLayout /></CMSRoute>}>
               <Route index        element={<CMSDashboard />} />
@@ -325,10 +336,14 @@ function AppRoutes() {
               <Route path="loyalty"  element={<LoyaltyEditor />} />
               <Route path="cta-banner" element={<CtaBannerPanel />} />
               <Route path="orders"   element={<OrdersPanel />} />
+              <Route path="zahlungen" element={<AdminRoute><ZahlungsPanel /></AdminRoute>} />
+              <Route path="auswertung" element={<AuswertungPanel />} />
+              <Route path="werbemittel" element={<WerbemittelPanel />} />
               <Route path="faq"      element={<FAQEditor />} />
               <Route path="legal"    element={<LegalEditor />} />
               <Route path="mfa"      element={<AdminRoute><MFASetup /></AdminRoute>} />
               <Route path="bank"     element={<AdminRoute><BankSettings /></AdminRoute>} />
+              <Route path="rechnungsangaben" element={<AdminRoute><RechnungsAngaben /></AdminRoute>} />
               <Route path="email"    element={<AdminRoute><EmailSettings /></AdminRoute>} />
               <Route path="email-templates" element={<EmailTemplatesPanel />} />
               <Route path="leisten"       element={<LastSizeChartEditor />} />
@@ -358,6 +373,7 @@ function AppRoutes() {
         <div className="flex-1 overflow-y-auto relative">
           <Suspense fallback={<DelayedSpinner />}>
             <PageTransition>
+            <RefErfassung />
             <Routes>
               <Route path="/"           element={<StartRoute />} />
               <Route path="/login"      element={<Login />} />
@@ -400,6 +416,7 @@ function AppRoutes() {
               <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
               <Route path="/checkout"    element={<ShopRoute><Checkout /></ShopRoute>} />
               <Route path="/konto-wiederherstellen" element={<KontoWiederherstellen />} />
+              <Route path="/passwort-neu" element={<PasswortNeu />} />
               <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
               <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
 
@@ -414,6 +431,8 @@ function AppRoutes() {
   }
 
   const routes = (
+    <>
+    <RefErfassung />
     <Routes>
       <Route path="/" element={
         isAffiliateHost
@@ -482,10 +501,12 @@ function AppRoutes() {
       <Route path="/orders"      element={<ProtectedRoute><Orders /></ProtectedRoute>} />
       <Route path="/checkout"    element={<ShopRoute><Checkout /></ShopRoute>} />
       <Route path="/konto-wiederherstellen" element={<KontoWiederherstellen />} />
+      <Route path="/passwort-neu" element={<PasswortNeu />} />
       <Route path="/feedback"    element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/my-scans"    element={<ProtectedRoute><MyScans /></ProtectedRoute>} />
       <Route path="*"            element={<NotFound />} />
     </Routes>
+    </>
   )
 
   // ── Mobile web: TopBar (burger menu), natural document scroll ──

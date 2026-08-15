@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Sieben Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Acht Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -28,6 +28,18 @@ im Betrieb, nichts nachgebaut.
                          steht. Ebenfalls ohne Server: eine reine Funktion,
                          die sich nicht durch einen Konfigurator mit einem
                          Dutzend Schritten prüfen lassen sollte.
+    tests/nachdemkauf.mjs
+                         120 Prüfungen: alles, was nach dem Bestellen kommt —
+                         Verlauf mit Datum je Stufe, Zahlungseingang über den
+                         Verwendungszweck buchen, Rechnung als PDF samt
+                         fortlaufender Nummer, Stornostaffel nach AGB 7.2 auf
+                         jeder Stufe, Sendungsnummer, Express-Bestand,
+                         Auswertung, Protokoll, Klickzählung und Gutschrift
+                         für Vermittler, Rechnungsangaben samt § 19 UStG,
+                         Passwort zurücksetzen.
+                         Braucht DB_PATH — für den Zweitfaktor des Admins und
+                         die Prüfsumme des Zurücksetzen-Tokens gibt es keine
+                         Route, und geraten wird hier nichts.
     tests/bestaetigung.mjs
                          16 Prüfungen: was in der Bestellbestätigung stehen
                          MUSS — Belehrung über das nicht bestehende
@@ -53,6 +65,14 @@ Bestellungen und Kampagnen an.
     # Terminal 2 — Prüfungen
     node tests/ablaeufe.mjs
     DB_PATH=/tmp/pruef.db node tests/preise.mjs
+    DB_PATH=/tmp/pruef.db node tests/nachdemkauf.mjs
+
+Wichtig: Server und Prüfskript müssen **dieselbe Datei** sehen. Läuft der
+Server in einer Sandbox oder einem Container mit eigenem `/tmp`, legen Sie die
+Wegwerf-Datenbank stattdessen neben das Projekt (`DB_PATH=./pruef.db`) —
+`*.db` steht in der `.gitignore`. Andernfalls schreibt das Prüfskript in eine
+Datei, die der Server nie zu sehen bekommt, und die Fehlermeldungen führen in
+die Irre.
 
 `preise.mjs` braucht den DB-Pfad, weil es den E-Mail-Bestätigungstoken direkt
 ausliest — im Betrieb kommt der per Mail, und ohne bestätigte Adresse gibt es
@@ -74,6 +94,19 @@ Der erste Lauf war kein Selbstzweck. Gefunden wurden:
 * Ohne `JWT_ACCESS_SECRET` startete der Server anstandslos und scheiterte erst
   beim ersten Anmeldeversuch mit einem 500er.
 
-Für die Oberfläche liegt daneben `artisan-sole-app/tests-browser.mjs`
-(Playwright, 23 Prüfungen). Es braucht einen laufenden Entwicklungsserver und
-den Chromium-Pfad des Systems; siehe Kopf der Datei.
+Für die Oberfläche liegen daneben zwei Playwright-Skripte. Beide brauchen
+einen laufenden Entwicklungsserver und den Chromium-Pfad des Systems; siehe
+Kopf der jeweiligen Datei.
+
+    artisan-sole-app/tests-browser.mjs
+                         23 Prüfungen: die Wege, die ein Kunde geht.
+    artisan-sole-app/tests-neue-seiten.mjs
+                         32 Prüfungen: dass die Seiten nach dem Kauf und die
+                         neuen Verwaltungsansichten überhaupt aufgehen. Ein
+                         erfolgreicher Build sagt nur, dass sich die Dateien
+                         übersetzen lassen — ob eine Seite beim Öffnen
+                         abstürzt, sagt er nicht, und genau dort sitzen die
+                         Fehler, die im Betrieb ein weißes Fenster ergeben.
+
+Der Entwicklungsserver spricht standardmäßig mit Port 3001. Für einen Lauf
+gegen die Wegwerf-Datenbank auf 3099: `API_PORT=3099 npx vite`.
