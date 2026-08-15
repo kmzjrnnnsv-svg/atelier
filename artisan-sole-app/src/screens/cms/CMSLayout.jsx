@@ -67,7 +67,7 @@ export default function CMSLayout() {
         {/* Logo */}
         <div className="px-7 pt-8 pb-6">
           <p className="font-brand text-[11px] text-white/90">ARTISAN SOLE</p>
-          <p className="text-[9px] text-white/20 tracking-[0.2em] uppercase mt-1 font-light">Content Studio</p>
+          <p className="text-[9px] text-white/45 tracking-[0.2em] uppercase mt-1 font-light">Content Studio</p>
         </div>
 
         {/* Nav */}
@@ -146,7 +146,7 @@ export default function CMSLayout() {
               {heading && (
                 <button
                   onClick={() => umschalten(heading)}
-                  className="w-full flex items-center gap-1.5 text-[8px] uppercase tracking-[0.25em] text-white/15 hover:text-white/35 px-3 mb-2.5 mt-7 font-light bg-transparent border-0 transition-colors"
+                  className="w-full flex items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-white/50 hover:text-white/80 px-3 mb-2.5 mt-7 bg-transparent border-0 transition-colors"
                 >
                   <ChevronRight
                     size={9} strokeWidth={2}
@@ -156,9 +156,9 @@ export default function CMSLayout() {
                   {/* Zugeklappt darf eine Gruppe nicht verschlucken, dass in
                       ihr etwas ungelesen liegt. */}
                   {!offen && items.some(i => i.badge > 0) && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/85" />
                   )}
-                  {!offen && trefferHier && <span className="w-1.5 h-1.5 rounded-full bg-white/30" />}
+                  {!offen && trefferHier && <span className="w-1.5 h-1.5 rounded-full bg-white/50" />}
                 </button>
               )}
               <div className={`space-y-0.5 ${offen ? '' : 'hidden'}`}>
@@ -168,10 +168,16 @@ export default function CMSLayout() {
                     to={to}
                     end={end}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-[7px] text-[12px] transition-all no-underline tracking-wide ${
+                      // Der aktive Eintrag trägt zusätzlich einen Balken
+                      // links. Der Hintergrundwechsel allein kam auf 1,35:1
+                      // gegen die Leiste — zu wenig, um ihn zu erkennen, und
+                      // wer Farben schlecht unterscheidet, sah gar nichts.
+                      // Der Balken ist immer da, nur durchsichtig, damit die
+                      // Zeilen beim Wechsel nicht springen.
+                      `flex items-center gap-3 pl-2.5 pr-3 py-[7px] text-[12px] border-l-2 transition-all no-underline tracking-wide ${
                         isActive
-                          ? 'bg-white/[0.08] text-white/90 font-normal'
-                          : 'text-white/25 hover:text-white/50 hover:bg-white/[0.03] font-light'
+                          ? 'border-white bg-white/[0.12] text-white font-normal'
+                          : 'border-transparent text-white/55 hover:text-white/90 hover:bg-white/[0.06] font-light'
                       }`
                     }
                   >
@@ -193,25 +199,25 @@ export default function CMSLayout() {
         {/* User footer */}
         <div className="px-6 py-6 border-t border-white/[0.06]">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-7 h-7 bg-white/[0.08] flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-light text-white/50">{user?.name?.[0]?.toUpperCase()}</span>
+            <div className="w-7 h-7 bg-white/[0.12] flex items-center justify-center flex-shrink-0">
+              <span className="text-[10px] font-light text-white/70">{user?.name?.[0]?.toUpperCase()}</span>
             </div>
             <div className="min-w-0">
-              <p className="text-[12px] font-light text-white/60 truncate">{user?.name}</p>
-              <p className="text-[9px] text-white/20 truncate font-light">{user?.role}</p>
+              <p className="text-[12px] font-light text-white/80 truncate">{user?.name}</p>
+              <p className="text-[9px] text-white/45 truncate font-light">{user?.role}</p>
             </div>
           </div>
           <div className="space-y-1">
             <button
               onClick={() => navigate('/collection')}
-              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/20 hover:text-white/45 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
+              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/55 hover:text-white/90 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
             >
               <ExternalLink size={11} strokeWidth={1.25} />
               App ansehen
             </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/20 hover:text-white/45 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
+              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/55 hover:text-white/90 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
             >
               <LogOut size={11} strokeWidth={1.25} />
               Abmelden
