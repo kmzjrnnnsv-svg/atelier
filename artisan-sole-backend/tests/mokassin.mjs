@@ -191,6 +191,80 @@ p('Sie enthält die eigenen Schritte',
   [...vorlagenKeys].join(', '))
 
 // ════════════════════════════════════════════════════════════════════════
+abschnitt('7. Der Sport-Mokassin')
+
+/*
+ * Der zweite Mokassin, „Moc Flex Sport". Er stand im Katalog schon — als
+ * „Mov Flex Sport" mit v, unter SNEAKER, mit der Konfiguration eines
+ * Sneakers: Innenfarbe und weiße Sohle, sonst nichts.
+ *
+ * Zwei Dinge sind hier zu prüfen, und beide gehen leicht schief:
+ *
+ *   • Der alte Name darf nicht zurückkommen. Er stand in der Matrix-Liste,
+ *     und die legt an, was sie vermisst — ein Neustart hätte ihn sonst neben
+ *     dem umbenannten Modell noch einmal angelegt.
+ *   • Seine Konfiguration darf nicht abgeräumt werden. Unter SNEAKER stünde
+ *     sie in der Matrix, und deren Force-Reset setzt bei jedem Start zurück.
+ */
+const sport = (schuhe || []).find(s => s.category === 'MOC_SPORT')
+p('Der Sport-Mokassin steht im Katalog', !!sport, sport ? `${sport.name} (${sport.price})` : 'keiner')
+
+if (sport) {
+  p('Er heißt „Moc Flex Sport"', sport.name === 'Moc Flex Sport', sport.name)
+  p('Der alte Name mit v ist weg',
+    !(schuhe || []).some(s => String(s.name).startsWith('Mov ')),
+    (schuhe || []).filter(s => String(s.name).startsWith('Mov ')).map(s => s.name).join(', ') || 'keiner')
+  p('Einstandspreis hinterlegt', Number(sport.cost_price) > 0, `${sport.cost_price} €`)
+
+  const { daten: sportLeder } = await ruf(`/api/shoes/${sport.id}/materials`)
+  p('Nur ungefüttertes Wildleder', (sportLeder || []).join(',') === 'unlined_suede', (sportLeder || []).join(', '))
+
+  const suedeFarben = farbenFuer(alleFarben || [], 'unlined_suede')
+  p('Neun Farben', suedeFarben.length === 9, `${suedeFarben.length} — ${suedeFarben.map(c => c.name).join(', ')}`)
+
+  const { daten: sportGruppen } = await ruf(`/api/shoes/${sport.id}/options`)
+  const sNach = Object.fromEntries((sportGruppen || []).map(g => [g.key, g]))
+  for (const [key, anzahl, name] of [
+    ['loafer_decoration', 4,  'Aufsatz'],
+    ['buckle_color',      4,  'Metall'],
+    ['stitching_color',   9,  'Naht (Ton in Ton + 8 Farben)'],
+    ['inner_color',       10, 'Futter'],
+    ['sole_bottom_color', 1,  'Laufsohle'],
+  ]) {
+    const g = sNach[key]
+    p(`${name} mit ${anzahl} Werten`, !!g && g.values.length === anzahl, g ? `${g.values.length}` : 'Gruppe fehlt')
+  }
+
+  // Die vier Aufsätze aus dem Back Office — Metallbügel, Maske, Quasten, ohne.
+  const auf = (sNach.loafer_decoration?.values || []).map(v => v.key).sort()
+  p('Bare, Metal Bit, Mask, Tassels', auf.join(',') === 'albert_mask,bare,metal_bit,tassels', auf.join(', '))
+  // „Ton in Ton" muss die Vorgabe sein: Wer sich um die Naht nicht kümmert,
+  // bekommt die unauffällige, nicht die erste Farbe der Liste.
+  const naht = sNach.stitching_color?.values?.find(v => v.is_default)
+  p('Die Naht ist Ton in Ton vorbelegt', naht?.key === 'tonal', naht?.label)
+
+  // Ein Mokassin hat keinen Rahmen und keinen Absatz.
+  for (const nicht of ['welt', 'heel', 'toe', 'buckle', 'sole']) {
+    p(`Kein Schritt „${nicht}"`, !sNach[nicht])
+  }
+
+  // Der Leisten: `moc_sport`, nicht der des Drivers.
+  //
+  // Der Ballenumfang ist bewusst ein anderer als beim Driver: Der Moc-Sport-
+  // Leisten ist schmaler geschnitten (244 mm statt 246 bei EU 42), und mit
+  // dem Wert des Drivers läge die Abfrage außerhalb der Toleranz — die
+  // Prüfung fiele um, ohne dass etwas kaputt wäre.
+  const { daten: sportPass } = await ruf('/api/fit/match?category=MOC_SPORT&length=265&girth=244')
+  const sportLeisten = [...new Set((sportPass?.matches || []).map(m => m.last_key))]
+  p('Nur der Moc-Sport-Leisten', sportLeisten.length === 1 && sportLeisten[0] === 'moc_sport', sportLeisten.join(', '))
+
+  // Und die Gegenprobe zum Driver: zwei Mokassins, zwei Leder, zwei Leisten.
+  p('Kein Wildleder am Driver', !(lederAmModell || []).includes('unlined_suede'))
+  p('Keine Driver-Leder am Sport-Mokassin',
+    !ERWARTET.some(k => (sportLeder || []).includes(k)))
+}
+
+// ════════════════════════════════════════════════════════════════════════
 console.log(`\n── Ergebnis ${'─'.repeat(48)}\n`)
 console.log(`  ${ok} bestanden, ${fehler.length} fehlgeschlagen`)
 if (fehler.length) { console.log('\n  ' + fehler.join('\n  ')); process.exit(1) }

@@ -1870,6 +1870,35 @@ export function runMigrations(db) {
     }
   } catch (e) { console.error('[migrate Farbnamen]', e.message) }
 
+  // ── „Mov Flex Sport" heißt „Moc Flex Sport" ──────────────────────────────
+  //
+  // Ein Vertipper, und die eigene Datenbank verrät ihn: Der Leisten, auf dem
+  // diese Linie läuft, heißt seit jeher `moc_sport`. „Moc" ist die Machart
+  // (Mokassin), „Mov" heißt nichts.
+  //
+  // Warum das HIER steht und nicht im Seed: Der Seed legt an, was er
+  // vermisst — und er kennt seine Modelle über den Namen. Liefe die
+  // Umbenennung nach ihm, hätte er die neuen Namen längst als fehlend
+  // angelegt, und im Katalog stünden beide Fassungen nebeneinander. Die
+  // Migrationen laufen davor; danach findet der Seed vor, was er sucht.
+  try {
+    const schonUmbenannt = db.prepare("SELECT value FROM settings WHERE key = 'moc_flex_umbenannt'").get()
+    if (!schonUmbenannt) {
+      const um = db.prepare('UPDATE shoes SET name = ?, updated_at = datetime(\'now\') WHERE name = ?')
+      let n = 0
+      for (const alt of ['Mov Flex Sport', 'Mov Flex Sport Laced Boot', 'Mov Flex Sport Boot']) {
+        const neu = alt.replace('Mov ', 'Moc ')
+        // Gibt es den neuen Namen schon, wäre die Umbenennung eine Kollision.
+        // Dann ist nichts zu tun: Der Bestand hat den richtigen bereits.
+        if (db.prepare('SELECT 1 FROM shoes WHERE name = ?').get(neu)) continue
+        n += um.run(neu, alt).changes
+      }
+      db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('moc_flex_umbenannt', ?, datetime('now'))")
+        .run(String(n))
+      if (n) console.log(`✅ Umbenannt: ${n}× „Mov Flex Sport" → „Moc Flex Sport"`)
+    }
+  } catch (e) { console.error('[migrate Moc Flex]', e.message) }
+
   // Bestehende Affiliates auf die eine Wahl heben. Der Nachlass hat Vorrang:
   // Er war das Zugesagte, die Zugabe die Beigabe — wer beides trug, behält
   // den Nachlass, damit niemandem etwas weggenommen wird, das er versprochen

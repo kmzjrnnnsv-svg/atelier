@@ -203,6 +203,9 @@ export default function Customize() {
     // Der Mokassin läuft auf eigenen Ledern; keines der Dress-Leder gehört
     // dazu, und keines seiner drei gehört an einen Rahmengenähten.
     MOCCASIN:         ['calf_suede', 'nappa', 'fullgrain'],
+    // Der Sport-Mokassin gibt es nur ungefüttert — beim Hersteller ist das
+    // die einzige Wahl an diesem Modell.
+    MOC_SPORT:        ['unlined_suede'],
     DERBY:            ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     DOUBLE_MONK:      ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     MONK:             ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
@@ -332,7 +335,15 @@ export default function Customize() {
 
   // Die Express-Freigabe hat beim Laden schon gefiltert; hier kommt dazu, was
   // die gewählte Sohle übriglässt — das ändert sich mit jeder Wahl.
-  const sichtbareGruppen = gruppenFuer(extraOptionGroups, { soleKey: soleArt?.key })
+  // Die gewählte Ausführung entscheidet mit: Ohne Metall auf dem Spann gibt
+  // es keinen Metallton zu wählen.
+  const dekoWahl = (() => {
+    const g = extraOptionGroups.find(x => x.key === 'loafer_decoration')
+    if (!g) return null
+    return g.values.find(v => v.id === selectedExtras['loafer_decoration'])?.key
+      || product?.locked_decoration || null
+  })()
+  const sichtbareGruppen = gruppenFuer(extraOptionGroups, { soleKey: soleArt?.key, dekoKey: dekoWahl })
 
   // Summe der Extra-Aufpreise. Steht hinter `sichtbareGruppen`, weil eine
   // ausgeblendete Gruppe auch nichts kosten darf — der Sohlenrand an einer

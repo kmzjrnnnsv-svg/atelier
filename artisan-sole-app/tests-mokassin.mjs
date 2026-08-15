@@ -141,6 +141,54 @@ p('Keine Mokassin-Farbe in der Dress-Tafel',
 p('Ohne Laufzeitfehler', schlimm().length === 0, schlimm()[0]?.slice(0, 110) || '')
 
 // ════════════════════════════════════════════════════════════════════════
+abschnitt('6. Der Sport-Mokassin und sein Metall')
+
+/*
+ * Am „Moc Flex Sport" sitzt auf dem Spann entweder ein Metallbügel oder
+ * eben keiner. Der Schritt nach dem Metallton darf deshalb nicht immer
+ * dastehen — sonst wählt der Kunde Nickel zu einem Paar Quasten, und in der
+ * Bestellung steht eine Angabe zu einem Teil, das der Schuh nicht hat.
+ *
+ * Die Regel selbst ist als reine Funktion geprüft (tests/sohlenregel.mjs).
+ * Hier geht es um die Verdrahtung: dass der Konfigurator die gewählte
+ * Ausführung überhaupt an sie weiterreicht. Beides sieht aus der Ferne
+ * gleich aus, und nur eines davon merkt der Kunde.
+ */
+konsole.length = 0
+await page.goto(`${BASIS}/schuhe/moc-flex-sport`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(2500)
+const sportSeite = await page.locator('body').innerText()
+p('Die Seite lädt', sportSeite.length > 200, `${sportSeite.length} Zeichen`)
+p('Ungefüttertes Wildleder', sportSeite.includes('Unlined Suede'))
+p('Kein Dress-Leder', !sportSeite.includes('Lux Calf') && !sportSeite.includes('Box Calf'))
+p('Ohne Laufzeitfehler', schlimm().length === 0, schlimm()[0]?.slice(0, 110) || '')
+
+// Neun Farben, wie im Back Office.
+const swatch = page.locator(FARBFELD).first()
+if (await swatch.count()) { await swatch.click({ force: true }); await page.waitForTimeout(900) }
+const sportFarben = await farbtafel()
+p('Neun Wildlederfarben', sportFarben.length === 9, `${sportFarben.length} — ${sportFarben.join(', ')}`)
+
+const zeigtMetall = async () => /schnallen-farbe/i.test(await page.locator('body').innerText())
+const waehle = async (txt) => {
+  const el = page.getByText(txt, { exact: true }).first()
+  if (await el.count()) await el.click({ force: true }).catch(() => {})
+  await page.waitForTimeout(900)
+}
+
+await waehle('Metal Bit')
+p('Mit Metallbügel steht der Metallton zur Wahl', await zeigtMetall())
+await waehle('Tassels')
+p('Bei Quasten verschwindet er', !(await zeigtMetall()))
+await waehle('Albert Mask')
+p('Bei der Maske ebenso', !(await zeigtMetall()))
+await waehle('Bare')
+p('Ohne Aufsatz ebenso', !(await zeigtMetall()))
+await waehle('Metal Bit')
+p('Und er kommt zurück', await zeigtMetall())
+p('Immer noch ohne Laufzeitfehler', schlimm().length === 0, schlimm()[0]?.slice(0, 110) || '')
+
+// ════════════════════════════════════════════════════════════════════════
 console.log(`\n── Ergebnis ${'─'.repeat(46)}\n`)
 console.log(`  ${ok} bestanden, ${fehler.length} fehlgeschlagen`)
 await br.close()

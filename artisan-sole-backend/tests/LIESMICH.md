@@ -22,12 +22,13 @@ im Betrieb, nichts nachgebaut.
                          Das Skript legt ein eigenes `fetch` unter und hält die
                          Anfrage fest, statt sie hinauszugeben.
     tests/sohlenregel.mjs
-                         34 Prüfungen: welche Auswahlgruppen ein Kunde
+                         45 Prüfungen: welche Auswahlgruppen ein Kunde
                          angeboten bekommt — Express-Freigabe und die Regel,
                          dass an einer Gummisohle keine Randfarbe zur Wahl
-                         steht. Ebenfalls ohne Server: eine reine Funktion,
-                         die sich nicht durch einen Konfigurator mit einem
-                         Dutzend Schritten prüfen lassen sollte.
+                         steht — und dass der Metallton nur erscheint, wo
+                         auch Metall sitzt. Ebenfalls ohne Server: eine reine
+                         Funktion, die sich nicht durch einen Konfigurator mit
+                         einem Dutzend Schritten prüfen lassen sollte.
     tests/nachdemkauf.mjs
                          131 Prüfungen: alles, was nach dem Bestellen kommt —
                          Verlauf mit Datum je Stufe, Zahlungseingang über den
@@ -47,12 +48,14 @@ im Betrieb, nichts nachgebaut.
                          dem Kunden auf einem dauerhaften Datenträger zugehen
                          muss. Braucht DB_PATH; fängt die Nachricht ab, statt
                          sie zu verschicken.
-    tests/mokassin.mjs   36 Prüfungen: der Driver — drei eigene Leder mit
+    tests/mokassin.mjs   57 Prüfungen: die beiden Mokassins — der Driver — drei eigene Leder mit
                          genau 17, 13 und 7 Farben (die Zahlen aus dem
                          Konfigurator der Manufaktur), die sechs Schritte,
                          der Drivers-Leisten, und in beide Richtungen die
                          Abgrenzung zur Dress-Linie: kein Lux Calf am
-                         Mokassin, kein Nappa am Oxford.
+                         Mokassin, kein Nappa am Oxford. Dazu der Moc Flex
+                         Sport: ein Leder, neun Farben, vier Aufsätze, und
+                         dass der alte Name „Mov" nicht zurückkommt.
     tests/guertel.mjs    44 Prüfungen: der konfigurierte Gürtel — Preis und
                          Beschreibungssatz entstehen am Server (ein Gürtel für
                          1 € wird abgewiesen), unvollständige Angaben ebenso,

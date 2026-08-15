@@ -72,6 +72,9 @@ export async function seedDatabase(db) {
   // die es kennt. MOCCASIN steht nicht darin — und soll es auch nicht, sonst
   // bekäme der Mokassin bei jedem Start die Dress-Leder zurück.
   seedMokassin(db)
+  // Braucht die Naht-Gruppe aus dem Mokassin-Lauf und muss nach der Matrix
+  // stehen: Er nimmt den Sport-Mokassin aus SNEAKER heraus.
+  seedMocFlexSport(db)
   // Nach den Optionen: Der Gürtel gibt `buckle` und `buckle_color` für sich
   // frei, und die beiden Gruppen entstehen weiter oben.
   seedGuertel(db)
@@ -897,9 +900,12 @@ export function seedMatrixModels(db) {
     { name: 'Belgian Slipper',    category: 'BELGIAN_SLIPPER', price: '€ 1.180', material: 'Lux Calf' },
     { name: 'Wellington',         category: 'WELLINGTON',      price: '€ 1.220', material: 'Lux Calf' },
     { name: 'Drake',              category: 'DRAKE',           price: '€ 1.190', material: 'Lux Calf' },
-    { name: 'Mov Flex Sport',     category: 'SNEAKER',         price: '€ 890',   material: 'Lux Suede' },
-    { name: 'Mov Flex Sport Laced Boot', category: 'SNEAKER_LACED', price: '€ 950', material: 'Lux Suede' },
-    { name: 'Mov Flex Sport Boot', category: 'SNEAKER_BOOT',   price: '€ 920',   material: 'Lux Suede' },
+    // Der Sport-Mokassin steht NICHT mehr in dieser Liste: Er hat eine eigene
+    // Kategorie (MOC_SPORT) und eine eigene Konfiguration, und das
+    // Force-Reset der Matrix würde ihm beides bei jedem Start abräumen.
+    // Angelegt wird er in seedMocFlexSport.
+    { name: 'Moc Flex Sport Laced Boot', category: 'SNEAKER_LACED', price: '€ 950', material: 'Lux Suede' },
+    { name: 'Moc Flex Sport Boot', category: 'SNEAKER_BOOT',   price: '€ 920',   material: 'Lux Suede' },
     { name: 'Laceless Trainer',   category: 'LACELESS_TRAINER', price: '€ 850',  material: 'Lux Suede' },
   ]
 
@@ -1205,7 +1211,7 @@ export function seedMatrixTemplatesV2(db) {
     'Oxford', 'Whole Cut', 'Loafer', 'Derby', 'Double Monk',
     'Chelsea Boot', 'Balmoral Boot', 'Jodhpur Boot', 'Chukka',
     'Belgian Slipper', 'Wellington', 'Drake',
-    'Mov Flex Sport', 'Mov Flex Sport Laced Boot', 'Mov Flex Sport Boot', 'Laceless Trainer',
+    'Moc Flex Sport Laced Boot', 'Moc Flex Sport Boot', 'Laceless Trainer',
   ]
   const findShoe = db.prepare('SELECT id, category FROM shoes WHERE name = ?')
   const clearOpts = db.prepare('DELETE FROM shoe_options WHERE shoe_id = ?')
@@ -1461,6 +1467,8 @@ export const CATEGORY_LASTS = {
   // Der Mokassin läuft nur auf dem Drivers-Leisten — der einzige, der die
   // Machart trägt. Die Maßtabelle führt ihn bereits (EU 38 bis 48, Weite D).
   MOCCASIN:         ['drivers'],
+  // Der Sport-Mokassin auf seinem eigenen: `moc_sport`, EU 39 bis 46.
+  MOC_SPORT:        ['moc_sport'],
   WELLINGTON:       ['wellington'],
   DRAKE:            ['drake'],
   SNEAKER:          ['sneaker', 'moc_sport', 'chunky'],
@@ -2114,6 +2122,205 @@ export function seedMokassin(db) {
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
   `).run(MOKASSIN_STAND)
   console.log(`✅ Seeded: Mokassin (${MOKASSIN_LEDER.length} Leder, ${MOKASSIN_FARBEN.length} Farben, ${MOKASSIN_GRUPPEN.length} eigene Schritte)`)
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Der Sport-Mokassin.
+ *
+ * ── Was er ist ───────────────────────────────────────────────────────────
+ *
+ * Ein Mokassin auf einer weißen Laufsohle: dieselbe Machart wie der Driver,
+ * aber für den Tag statt für den Wagen. Die Manufaktur führt ihn als „Moc
+ * Flex Sport".
+ *
+ * ── Warum aus „Mov" ein „Moc" wird ───────────────────────────────────────
+ *
+ * Im Katalog stand er als „Mov Flex Sport" — mit v. Das war ein Vertipper,
+ * und man sieht es an der eigenen Datenbank: Der Leisten, auf dem er läuft,
+ * heißt seit jeher `moc_sport`. „Moc" ist die Machart (Mokassin), „Mov"
+ * heißt nichts.
+ *
+ * Der Name wird deshalb einmalig korrigiert — an ihm und an seinen beiden
+ * Geschwistern, damit die Linie einheitlich heißt. Wer den alten Namen
+ * lieber behalten will, ändert ihn im CMS zurück; dieser Lauf kommt nicht
+ * wieder.
+ *
+ * ── Warum eine eigene Kategorie ──────────────────────────────────────────
+ *
+ * Er stand unter SNEAKER und hatte damit die Konfiguration eines Sneakers:
+ * Innenfarbe und weiße Laufsohle, sonst nichts. Beim Hersteller hat er neun
+ * Wildlederfarben, eine Naht, vier Aufsätze und einen Metallton.
+ *
+ * Das ließe sich nicht unter SNEAKER unterbringen: Die Kategorie steht in
+ * der Dress-Matrix, und deren Force-Reset setzt sie bei jedem Start
+ * zurück — die Konfiguration wäre nach einem Neustart wieder weg. Und
+ * gäbe man sie der ganzen Kategorie, bekäme auch der Court Blanc Quasten.
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+/** Die neun Wildlederfarben aus dem Konfigurator der Manufaktur, in ihrer Reihenfolge. */
+const MOC_SPORT_FARBEN = [
+  'moc_sand', 'moc_burgundy', 'moc_dark_brown', 'moc_grey', 'moc_khaki',
+  'moc_medium_brown', 'moc_camel', 'moc_navy', 'moc_black',
+]
+
+/**
+ * Die Aufsätze auf dem Spann.
+ *
+ * Es ist dieselbe Gruppe, aus der der Loafer seine Ausführung bekommt —
+ * `loafer_decoration`. Metallbügel, Maske, Quasten, ohne: vier Werte, die es
+ * längst gibt. Eine zweite Gruppe mit denselben vier Werten wäre eine zweite
+ * Stelle, an der jemand später eine Bezeichnung ändert.
+ */
+const MOC_SPORT_AUFSAETZE = ['bare', 'metal_bit', 'albert_mask', 'tassels']
+
+/** Die Metalltöne des Bügels — dieselben wie an Schnalle und Gürtel. */
+const MOC_SPORT_METALL = ['nickel', 'gold', 'graphite', 'copper']
+
+export function seedMocFlexSport(db) {
+  const STAND = '1'
+  const vermerk = db.prepare("SELECT value FROM settings WHERE key = 'moc_sport_konfiguration'").get()
+  if (vermerk?.value === STAND) return
+
+  const KAT = 'MOC_SPORT'
+
+  const einrichten = db.transaction(() => {
+    // ── 1. Das Leder ────────────────────────────────────────────────────
+    // Ungefüttertes Wildleder — beim Hersteller die einzige Wahl an diesem
+    // Modell, und deshalb auch hier die einzige.
+    db.prepare(`
+      INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
+      VALUES ('unlined_suede', 'Unlined Suede', 'Aesthetic', '#c8a97e', 1, ?, 'good', 23, 'aesthetic')
+    `).run('Ungefüttertes Kalbsvelours, weich und leicht. Ohne Futter legt sich der Schuh unmittelbar an den Fuß — am besten bei trockenem Wetter.')
+
+    // ── 2. Die Farben ───────────────────────────────────────────────────
+    // Acht davon gibt es schon (sie hängen am Driver); ihnen wird das neue
+    // Leder nur hinzugefügt. Burgundy kommt dazu.
+    db.prepare(`
+      INSERT OR IGNORE INTO shoe_colors (key, hex, name, available, rating, sort_order, applicable_materials)
+      VALUES ('moc_burgundy', '#4f1d24', 'Burgundy', 1, 'neutral', 122, 'unlined_suede')
+    `).run()
+    const farbe = db.prepare('SELECT key, applicable_materials FROM shoe_colors WHERE key = ?')
+    const setzeLeder = db.prepare('UPDATE shoe_colors SET applicable_materials = ?, updated_at = datetime(\'now\') WHERE key = ?')
+    for (const key of MOC_SPORT_FARBEN) {
+      const row = farbe.get(key)
+      if (!row) continue
+      const leder = String(row.applicable_materials || '').split(',').map(s => s.trim()).filter(Boolean)
+      if (leder.includes('unlined_suede')) continue
+      leder.push('unlined_suede')
+      setzeLeder.run(leder.join(','), key)
+    }
+
+    // ── 3. Die Schritte für diese Kategorie freigeben ───────────────────
+    const freigeben = (gruppe, keys) => {
+      for (const k of keys) {
+        const row = db.prepare(`
+          SELECT o.id, o.applicable_categories FROM options o
+          JOIN option_groups g ON g.id = o.group_id WHERE g.key = ? AND o.key = ?
+        `).get(gruppe, k)
+        if (!row) continue
+        const kat = String(row.applicable_categories || '')
+        if (kat === '*' || kat.split(',').map(s => s.trim()).includes(KAT)) continue
+        db.prepare('UPDATE options SET applicable_categories = ? WHERE id = ?')
+          .run(kat ? `${kat},${KAT}` : KAT, row.id)
+      }
+    }
+    freigeben('loafer_decoration', MOC_SPORT_AUFSAETZE)
+    freigeben('buckle_color', MOC_SPORT_METALL)
+
+    // Die Naht: „Tonal" heißt beim Hersteller, dass sie die Farbe des Leders
+    // trägt. Das ist keine eigene Gruppe, sondern ein Wert neben den acht
+    // Farben — wer nichts Besonderes will, wählt ihn, und die Frage ist
+    // beantwortet statt übersprungen.
+    const nahtGruppe = db.prepare("SELECT id FROM option_groups WHERE key = 'stitching_color'").get()
+    if (nahtGruppe) {
+      db.prepare(`
+        INSERT OR IGNORE INTO options (group_id, key, label, description, default_price_extra, applicable_categories, sort_order, color_hex)
+        VALUES (?, 'tonal', 'Ton in Ton', ?, 0, ?, -1, NULL)
+      `).run(nahtGruppe.id, 'Die Naht trägt die Farbe des Leders und tritt nicht in Erscheinung.', KAT)
+    }
+    freigeben('stitching_color', ['black', 'grey', 'brown', 'red', 'green', 'blue', 'yellow', 'white'])
+
+    // ── 4. Die Vorlage ──────────────────────────────────────────────────
+    // Aufsatz, Metall, Naht, Futter, Laufsohle. Keine Sohlen-Art: Unter dem
+    // Schuh sitzt die weiße Schale, und die ist nicht zur Wahl gestellt.
+    const optId = db.prepare(`
+      SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+      WHERE g.key = ? AND o.key = ?
+    `)
+    const insVorlage = db.prepare(`
+      INSERT OR IGNORE INTO category_templates (category, option_id, is_default, sort_order)
+      VALUES (?, ?, ?, ?)
+    `)
+    const vorlage = [
+      ['loafer_decoration', MOC_SPORT_AUFSAETZE],
+      ['buckle_color',      MOC_SPORT_METALL],
+      ['stitching_color',   ['tonal', 'black', 'grey', 'brown', 'red', 'green', 'blue', 'yellow', 'white']],
+      ['inner_color',       ['black', 'brown', 'tan', 'beige', 'red', 'orange', 'navy', 'white', 'lila', 'ochre']],
+      ['sole_bottom_color', ['white']],
+    ]
+    let lfd = 0
+    for (const [gruppe, keys] of vorlage) {
+      keys.forEach((k, i) => {
+        const id = optId.get(gruppe, k)?.id
+        if (id) insVorlage.run(KAT, id, i === 0 ? 1 : 0, lfd++)
+      })
+    }
+
+    // ── 5. Das Modell ───────────────────────────────────────────────────
+    //
+    // Vorhanden ist es bereits, unter dem alten Namen. Umbenannt statt neu
+    // angelegt: Ein zweites Modell mit fast demselben Namen wäre für jeden
+    // Betrachter des Katalogs ein Rätsel, und die Bestellungen, die schon
+    // auf das alte zeigen, blieben an der falschen Zeile hängen.
+    // Die Umbenennung „Mov" → „Moc" ist an dieser Stelle schon geschehen: Sie
+    // steht in den Migrationen, weil sie VOR dem Seed laufen muss. Liefe sie
+    // hier, hätte die Matrix die neuen Namen längst als fehlend angelegt, und
+    // im Katalog stünden beide Fassungen nebeneinander.
+
+    // Im Bestand steht er schon und wurde eben umbenannt. Auf einer frischen
+    // Datenbank gibt es ihn nicht: Er stand in der Matrix-Liste, und die
+    // führt ihn nicht mehr — sonst würde ihr Force-Reset seine Konfiguration
+    // bei jedem Start abräumen. Also legt ihn dieser Lauf selbst an.
+    if (!db.prepare("SELECT 1 FROM shoes WHERE name = 'Moc Flex Sport'").get()
+        && !deletedSeedNames(db).has('Moc Flex Sport')) {
+      db.prepare(`
+        INSERT INTO shoes (name, category, price, material, match_pct, color, tag, slug, collection)
+        VALUES ('Moc Flex Sport', ?, '€ 890', 'Unlined Suede', '96.0%', '#c8a97e', NULL, 'moc-flex-sport', 'standard')
+      `).run(KAT)
+    }
+
+    const schuh = db.prepare("SELECT id FROM shoes WHERE name = 'Moc Flex Sport'").get()
+    if (!schuh) return
+
+    db.prepare(`
+      UPDATE shoes SET category = ?, material = 'Unlined Suede', cost_price = 102,
+                       tagline = ?, description = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `).run(KAT,
+      'Der Mokassin für den Tag, auf weißer Sohle.',
+      'Ungefütterter Mokassin aus Kalbsvelours auf einer leichten weißen Laufsohle — der Schuh für lange Tage, an denen nichts drücken darf. '
+      + 'Sie wählen die Farbe aus neun Wildledertönen, dazu die Naht (Ton in Ton oder als Kontrast), das Futter und den Aufsatz auf dem Spann: '
+      + 'ohne, mit Metallbügel, mit Maske oder mit Quasten. Beim Metallbügel bestimmen Sie auch den Ton des Metalls. '
+      + 'Gefertigt auf dem Moc-Sport-Leisten in Ihrer Länge und Weite.',
+      schuh.id)
+
+    db.prepare('DELETE FROM shoe_material_options WHERE shoe_id = ?').run(schuh.id)
+    db.prepare('INSERT OR IGNORE INTO shoe_material_options (shoe_id, material_key, sort_order) VALUES (?, ?, 0)')
+      .run(schuh.id, 'unlined_suede')
+
+    db.prepare('DELETE FROM shoe_options WHERE shoe_id = ?').run(schuh.id)
+    db.prepare(`
+      INSERT OR IGNORE INTO shoe_options (shoe_id, option_id, price_override, is_default, sort_order)
+      SELECT ?, option_id, NULL, is_default, sort_order FROM category_templates WHERE category = ?
+    `).run(schuh.id, KAT)
+  })
+
+  einrichten()
+  db.prepare(`
+    INSERT INTO settings (key, value) VALUES ('moc_sport_konfiguration', ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(STAND)
+  console.log(`✅ Seeded: Moc Flex Sport (Unlined Suede, ${MOC_SPORT_FARBEN.length} Farben, ${MOC_SPORT_AUFSAETZE.length} Aufsätze)`)
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
