@@ -48,14 +48,17 @@ im Betrieb, nichts nachgebaut.
                          dem Kunden auf einem dauerhaften Datenträger zugehen
                          muss. Braucht DB_PATH; fängt die Nachricht ab, statt
                          sie zu verschicken.
-    tests/mokassin.mjs   57 Prüfungen: die beiden Mokassins — der Driver — drei eigene Leder mit
+    tests/mokassin.mjs   78 Prüfungen: die drei Mokassins — der Driver — drei eigene Leder mit
                          genau 17, 13 und 7 Farben (die Zahlen aus dem
                          Konfigurator der Manufaktur), die sechs Schritte,
                          der Drivers-Leisten, und in beide Richtungen die
                          Abgrenzung zur Dress-Linie: kein Lux Calf am
                          Mokassin, kein Nappa am Oxford. Dazu der Moc Flex
                          Sport: ein Leder, neun Farben, vier Aufsätze, und
-                         dass der alte Name „Mov" nicht zurückkommt.
+                         dass der alte Name „Mov" nicht zurückkommt. Und der
+                         Boot dazu — Fersenriemen, sechzehn Nahtfarben, und
+                         die Probe, dass sein Leder das Dress-Velours nicht
+                         mit umfärbt.
     tests/guertel.mjs    44 Prüfungen: der konfigurierte Gürtel — Preis und
                          Beschreibungssatz entstehen am Server (ein Gürtel für
                          1 € wird abgewiesen), unvollständige Angaben ebenso,
