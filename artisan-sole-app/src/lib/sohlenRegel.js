@@ -33,6 +33,28 @@ export const OHNE_LEDERRAND = ['rubber', 'gummy_sole', 'commando', 'crepe', 'dot
 /** Die beiden Farbangaben an der Sohle — Kante und Lauffläche. */
 export const FARBGRUPPEN_SOHLE = ['sole_color', 'sole_bottom_color']
 
+/**
+ * Aufsätze auf dem Spann, an denen Metall sitzt.
+ *
+ * Nur bei ihnen gibt es einen Metallton zu wählen. „Ohne", „Maske" und
+ * „Quasten" tragen keines — die Frage nach Gold oder Nickel ginge dort ins
+ * Leere, und der Kunde bekäme eine Angabe in die Bestellung, die an seinem
+ * Schuh nirgends zu sehen ist.
+ */
+export const AUFSATZ_MIT_METALL = ['metal_bit', 'horsebit']
+
+/**
+ * Steht am Modell überhaupt ein Metallton zur Wahl?
+ *
+ * `deko` ist die gewählte Ausführung, `hatDekoGruppe` sagt, ob es diese Wahl
+ * an dem Modell gibt. Der Unterschied zählt: Am Double Monk gibt es keine
+ * Ausführung zu wählen, dort sitzt IMMER eine Schnalle — die Frage nach dem
+ * Metall bleibt also stehen. Am Loafer und am Sport-Mokassin hängt sie
+ * davon ab, was auf dem Spann sitzt.
+ */
+export const hatMetall = (deko, hatDekoGruppe) =>
+  !hatDekoGruppe || !deko || AUFSATZ_MIT_METALL.includes(deko)
+
 /** Hat diese Sohlen-Art einen Rand, den man färben kann? */
 export const hatLederrand = (soleKey) => !soleKey || !OHNE_LEDERRAND.includes(soleKey)
 
@@ -62,12 +84,16 @@ export function expressFreigabe(product) {
  * `gruppen` sind die am Modell hinterlegten Auswahlgruppen, `soleKey` die
  * gerade gewählte Sohlen-Art (oder null, solange keine gewählt ist).
  */
-export function sichtbareGruppen(gruppen, { product, soleKey } = {}) {
+export function sichtbareGruppen(gruppen, { product, soleKey, dekoKey } = {}) {
   const frei = expressFreigabe(product)
   const rand = hatLederrand(soleKey)
-  return (Array.isArray(gruppen) ? gruppen : []).filter(g => {
+  const liste = Array.isArray(gruppen) ? gruppen : []
+  const hatDeko = liste.some(g => g.key === 'loafer_decoration')
+  const metall = hatMetall(dekoKey, hatDeko)
+  return liste.filter(g => {
     if (frei && !frei.has(g.key)) return false
     if (!rand && FARBGRUPPEN_SOHLE.includes(g.key)) return false
+    if (!metall && g.key === 'buckle_color') return false
     return true
   })
 }

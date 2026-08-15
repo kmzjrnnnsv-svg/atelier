@@ -4,7 +4,7 @@ import { apiFetch } from '../../hooks/useApi'
 import useStore from '../../store/store'
 import { accessoryImages } from '../../lib/accessoryImages'
 
-const emptyForm = { key: '', name: '', description: '', price: '', cost_price: '', is_active: 1, sort_order: 0, images: [] }
+const emptyForm = { key: '', name: '', description: '', price: '', price_with_shoe: '', cost_price: '', is_active: 1, sort_order: 0, images: [] }
 
 export default function AccessoriesPanel() {
   const [items, setItems] = useState([])
@@ -60,6 +60,9 @@ export default function AccessoriesPanel() {
       images: JSON.stringify(imgs),
       image_data: imgs[0] || '',
       price: parseFloat(form.price) || 0,
+      // Leer heißt „ein Preis für beide Wege". Eine 0 hieße „umsonst" — das
+      // ist etwas anderes, und der Unterschied darf nicht verlorengehen.
+      price_with_shoe: form.price_with_shoe === '' ? null : parseFloat(form.price_with_shoe) || 0,
       // Leer heißt „nicht gepflegt" — dann gilt beim Affiliate der Ladenpreis.
       cost_price: form.cost_price === '' ? null : parseFloat(form.cost_price) || 0,
       sort_order: parseInt(form.sort_order) || 0,
@@ -89,6 +92,7 @@ export default function AccessoriesPanel() {
     setForm({
       key: item.key, name: item.name, description: item.description || '',
       price: String(item.price),
+      price_with_shoe: item.price_with_shoe == null ? '' : String(item.price_with_shoe),
       cost_price: item.cost_price == null ? '' : String(item.cost_price),
       is_active: item.is_active,
       sort_order: item.sort_order || 0,
@@ -189,10 +193,14 @@ export default function AccessoriesPanel() {
               </label>
             </div>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Preis (€) *</label>
               <input type="number" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} placeholder="45" className={inp} />
+            </div>
+            <div>
+              <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Zum Paar (€)</label>
+              <input type="number" step="0.01" value={form.price_with_shoe} onChange={e => set('price_with_shoe', e.target.value)} placeholder="—" className={inp} />
             </div>
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Einkauf (€)</label>
@@ -208,6 +216,11 @@ export default function AccessoriesPanel() {
               </button>
             </div>
           </div>
+          <p className="text-[10px] text-black/25 font-light leading-relaxed max-w-xl -mt-2">
+            „Zum Paar" ist der Preis, wenn der Artikel zusammen mit Schuhen bestellt wird —
+            dann geht er im selben Karton hinaus und kostet uns kein eigenes Porto. Leer
+            heißt: ein Preis für beide Wege.
+          </p>
           <p className="text-[10px] text-black/25 font-light leading-relaxed max-w-xl -mt-2">
             Der Einkaufspreis erscheint nirgends im Laden. Er zählt nur, wenn ein Affiliate
             diesen Artikel als Zugabe zusagt: Genau dieser Betrag wird ihm von seiner

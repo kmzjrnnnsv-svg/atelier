@@ -3,6 +3,9 @@ import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import { uniqueShoeSlug } from '../utils/slug.js'
+import {
+  guertelArtikel, wahlmoeglichkeiten as guertelWahl, preis as guertelPreis,
+} from '../utils/guertel.js'
 
 const router = Router()
 const canWrite = [authenticate, requireRole('admin', 'curator')]
@@ -223,6 +226,33 @@ function zubehoerNachModell(r) {
       map[row.shoe_id].push(row)
     }
     res.json(map)
+  })
+
+  /**
+   * Alles, was die Gürtelmaske braucht — in einem Aufruf.
+   *
+   * Die Maske gibt es an zwei Stellen: im Konfigurator neben dem Schuh und
+   * auf der Zubehörseite für sich. Beide holen ihre Auswahl von hier, damit
+   * es nicht zwei Listen gibt, die sich mit der Zeit unterscheiden.
+   *
+   * Die Preise stehen bewusst mit dabei: Der Kunde soll sehen, dass der
+   * Gürtel zum Paar günstiger ist, BEVOR er sich entscheidet — und nicht
+   * erst an der Kasse.
+   */
+  r.get('/guertel', (req, res) => {
+    const db = getDb()
+    const artikel = guertelArtikel(db)
+    if (!artikel) return res.status(404).json({ error: 'Den Gürtel führen wir derzeit nicht.' })
+    res.json({
+      artikel: {
+        id: artikel.id, key: artikel.key, name: artikel.name,
+        description: artikel.description, image_data: artikel.image_data,
+        config_kind: artikel.config_kind,
+      },
+      preis_einzeln: guertelPreis(artikel, { mitSchuh: false }),
+      preis_zum_paar: guertelPreis(artikel, { mitSchuh: true }),
+      ...guertelWahl(db),
+    })
   })
 }
 

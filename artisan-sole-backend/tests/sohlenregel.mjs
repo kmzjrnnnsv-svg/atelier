@@ -15,8 +15,8 @@
  *     node tests/sohlenregel.mjs
  */
 import {
-  sichtbareGruppen, hatLederrand, expressFreigabe,
-  OHNE_LEDERRAND, FARBGRUPPEN_SOHLE,
+  sichtbareGruppen, hatLederrand, expressFreigabe, hatMetall,
+  OHNE_LEDERRAND, FARBGRUPPEN_SOHLE, AUFSATZ_MIT_METALL,
 } from '../../artisan-sole-app/src/lib/sohlenRegel.js'
 
 let ok = 0
@@ -93,6 +93,47 @@ console.log('\n── 6. Kein Eingriff bei fehlenden Daten ───────
 p('Leere Liste bleibt leer', sichtbareGruppen([], { product: massschuh }).length === 0)
 p('Kein Array bleibt leer', sichtbareGruppen(null, { product: massschuh }).length === 0)
 p('Ohne Angaben unverändert', sichtbareGruppen(ALLE).length === 9)
+
+console.log('\n── 7. Metall nur, wo Metall sitzt ────────────────────────────')
+
+/*
+ * Am Sport-Mokassin und am Loafer sitzt auf dem Spann entweder ein
+ * Metallbügel oder eben keiner. Ist keiner gewählt, gibt es auch keinen
+ * Metallton — die Frage nach Gold oder Nickel ginge ins Leere, und in der
+ * Bestellung stünde eine Angabe zu einem Teil, das der Schuh nicht hat.
+ *
+ * Am Double Monk ist es umgekehrt: Dort gibt es die Wahl der Ausführung gar
+ * nicht, weil IMMER eine Schnalle sitzt. Die Frage bleibt also stehen. Der
+ * Unterschied hängt daran, ob es die Gruppe `loafer_decoration` überhaupt
+ * gibt — und genau das ist die Stelle, an der sich eine zu einfache Regel
+ * vertut.
+ */
+const MIT_DEKO = [...ALLE, { key: 'loafer_decoration', label: 'Accessoires' }]
+const keys = (l) => l.map(g => g.key)
+
+p('Metallbügel: Metallton bleibt',
+  keys(sichtbareGruppen(MIT_DEKO, { dekoKey: 'metal_bit' })).includes('buckle_color'))
+p('Horsebit: Metallton bleibt',
+  keys(sichtbareGruppen(MIT_DEKO, { dekoKey: 'horsebit' })).includes('buckle_color'))
+p('Ohne Aufsatz: kein Metallton',
+  !keys(sichtbareGruppen(MIT_DEKO, { dekoKey: 'bare' })).includes('buckle_color'))
+p('Quasten: kein Metallton',
+  !keys(sichtbareGruppen(MIT_DEKO, { dekoKey: 'tassels' })).includes('buckle_color'))
+p('Maske: kein Metallton',
+  !keys(sichtbareGruppen(MIT_DEKO, { dekoKey: 'albert_mask' })).includes('buckle_color'))
+// Solange nichts gewählt ist, wird nichts weggenommen: Ein Schritt, der
+// verschwindet und wiederkommt, sieht aus wie ein Fehler.
+p('Noch nichts gewählt: Metallton steht da',
+  keys(sichtbareGruppen(MIT_DEKO, {})).includes('buckle_color'))
+// Der Double Monk: keine Ausführung zu wählen, also immer eine Schnalle.
+p('Ohne Ausführungs-Gruppe bleibt der Metallton',
+  keys(sichtbareGruppen(ALLE, { dekoKey: 'bare' })).includes('buckle_color'))
+
+p('hatMetall: Bügel ja', hatMetall('metal_bit', true) === true)
+p('hatMetall: Quasten nein', hatMetall('tassels', true) === false)
+p('hatMetall: ohne Gruppe immer ja', hatMetall('tassels', false) === true)
+p('Die Liste nennt beide Metallteile',
+  AUFSATZ_MIT_METALL.includes('metal_bit') && AUFSATZ_MIT_METALL.includes('horsebit'))
 
 console.log('\n── Ergebnis ──────────────────────────────────────────────────\n')
 console.log(`  ${ok} bestanden, ${bad.length} fehlgeschlagen`)

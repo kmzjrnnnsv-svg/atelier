@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, X, Check, Upload, Gift, ChevronDown, ChevronUp, L
 import useStore from '../../store/store'
 import { apiFetch } from '../../hooks/useApi'
 
-const CATEGORIES = ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK', 'LOAFER', 'BALMORAL', 'BOOT', 'CHELSEA', 'CHUKKA', 'SNEAKER']
+const CATEGORIES = ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK', 'LOAFER', 'MOCCASIN', 'MOC_SPORT', 'BALMORAL', 'BOOT', 'CHELSEA', 'CHUKKA', 'SNEAKER']
 const TAGS = [null, 'BESTSELLER', 'NEW', 'LIMITED']
 
 const emptyForm = {

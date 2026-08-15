@@ -6,9 +6,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShoppingBag, Plus, Check } from 'lucide-react'
 import useStore from '../store/store'
+import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
 import CtaBanner from '../components/CtaBanner'
 import { accessoryImages } from '../lib/accessoryImages'
+import GuertelDialog from '../components/GuertelDialog'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
@@ -18,10 +20,16 @@ const CATEGORY_LABELS = {
 
 export default function Accessories() {
   const navigate = useNavigate()
-  const { cart, addToCart, removeFromCart } = useStore()
+  const { cart, addToCart, removeFromCart, shoeMaterials, shoeColors } = useStore()
+  const { user } = useAuth()
   const [accessoriesList, setAccessoriesList] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
+  // Der Gürtel wird nicht angehakt, sondern zusammengestellt. Die Maske dafür
+  // steht in einem eigenen Fenster: Sie hat fünf Fragen, und fünf Fragen
+  // passen in keine Kachel.
+  const [guertelOptionen, setGuertelOptionen] = useState(null)
+  const [guertelOffen, setGuertelOffen] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -32,7 +40,33 @@ export default function Accessories() {
       })
       .catch(() => setAccessoriesList([]))
       .finally(() => setLoading(false))
+    apiFetch('/api/accessories/guertel').then(setGuertelOptionen).catch(() => setGuertelOptionen(null))
   }, [])
+
+  /** Der fertig konfigurierte Gürtel geht als eigene Korbposition hinein. */
+  const guertelInKorb = (zeile) => {
+    addToCart({
+      id: `guertel-${zeile.belt.leder}-${zeile.belt.farbe}-${zeile.belt.form}-${zeile.belt.metall}-${zeile.belt.groesse}`,
+      shoeId: null,
+      name: zeile.name,
+      // Der Beschreibungssatz steht als „Material" im Korb — an dieser Stelle
+      // zeigt die Kasse ihre Zusatzzeile, und ohne sie stünden dort drei
+      // gleich aussehende Gürtel ohne Unterschied.
+      material: zeile.beschreibung,
+      price: zeile.price,
+      image: null,
+      isAccessory: true,
+      accKey: zeile.key,
+      configKind: 'belt',
+      belt: zeile.belt,
+      // Der Gürtel darf allein reisen. Das steht am Artikel; hier wird es
+      // mitgeschrieben, damit die Kasse es auch dann weiß, wenn der
+      // Zubehörbestand im Laden noch nicht geladen ist — bei einem Gast
+      // nämlich nie.
+      shipsAlone: true,
+    })
+    setGuertelOffen(false)
+  }
 
   // Kein Filter mehr: Bei fünf Artikeln ist eine Reiterleiste Zierrat, und
   // die alte fragte ohnehin nach Schlüsseln, die es nicht mehr gibt — jeder
@@ -55,6 +89,8 @@ export default function Accessories() {
         image: accessoryImages(acc)[0] || null,
         isAccessory: true,
         shoeId: null,
+        accKey: acc.key,
+        shipsAlone: Number(acc.ships_alone) === 1,
       })
     }
   }
@@ -169,7 +205,19 @@ export default function Accessories() {
                     </div>
                   )}
 
-                  {/* Add to cart */}
+                  {/* Add to cart — oder, beim Gürtel, die Maske öffnen.
+                      „In den Warenkorb" wäre hier gelogen: Es gibt keinen
+                      Gürtel, den man ohne Angaben legen könnte. */}
+                  {acc.config_kind === 'belt' ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setGuertelOffen(true) }}
+                      disabled={!guertelOptionen}
+                      className="mt-3 w-full h-10 lg:h-11 flex items-center justify-center gap-2 text-[11px] lg:text-[12px] transition-all duration-300 border bg-white text-black border-black/15 hover:bg-black hover:text-white hover:border-black disabled:opacity-40"
+                      style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
+                    >
+                      <Plus size={13} strokeWidth={2} /> Zusammenstellen
+                    </button>
+                  ) : (
                   <button
                     onClick={(e) => handleToggleCart(acc, e)}
                     className={`mt-3 w-full h-10 lg:h-11 flex items-center justify-center gap-2 text-[11px] lg:text-[12px] transition-all duration-300 border ${
@@ -184,11 +232,23 @@ export default function Accessories() {
                       : 'In den Warenkorb'
                     }
                   </button>
+                  )}
                 </div>
               )
             })}
           </div>
         </div>
+      )}
+
+      {guertelOffen && guertelOptionen && (
+        <GuertelDialog
+          optionen={guertelOptionen}
+          materialien={(shoeMaterials || []).filter(m => m.available !== 0)}
+          farben={shoeColors || []}
+          angemeldet={!!user}
+          onSchliessen={() => setGuertelOffen(false)}
+          onUebernehmen={guertelInKorb}
+        />
       )}
 
       {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}

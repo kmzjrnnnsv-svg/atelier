@@ -6,12 +6,14 @@
  * erst entsteht, wenn ein gültiger Code aus der Adresse gelesen und beim
  * Server bestätigt wurde. Nur im Browser ist das zu sehen.
  *
- *   BASIS=https://127.0.0.1:5190 CODE=schuhhaus node tests-vermittler.mjs
+ *   BASIS=https://127.0.0.1:5190 node tests-vermittler.mjs
  */
 import { chromium } from 'playwright'
 
 const BASIS = process.env.BASIS || 'https://127.0.0.1:5190'
+const API = process.env.API || 'http://localhost:3099'
 const CODE = process.env.CODE || 'schuhhaus'
+const ANZEIGENAME = 'Schuhhaus Müller'
 let ok = 0
 const fehler = []
 const p = (was, bed, zus = '') => {
@@ -19,6 +21,56 @@ const p = (was, bed, zus = '') => {
   else { fehler.push(was); console.log(`  FEHLER ${was}${zus ? ' — ' + zus : ''}`) }
 }
 const abschnitt = t => console.log(`\n── ${t} ${'─'.repeat(Math.max(0, 54 - t.length))}`)
+
+/**
+ * Den Vermittler anlegen, über den geprüft wird.
+ *
+ * Er stand bisher nicht im Skript: Angelegt wurde er einmal von Hand, und
+ * die Prüfung lief nur auf genau der Datenbank, auf der das geschehen war.
+ * Auf einer frischen fiel sie mit neun Fehlschlägen um, ohne dass an der
+ * Anwendung etwas kaputt gewesen wäre — die schlechteste Sorte Fehlschlag,
+ * weil man ihr nachgeht.
+ */
+async function vermittlerBereitstellen() {
+  const j = async (pfad, opt = {}) => {
+    const res = await fetch(`${API}${pfad}`, {
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'ArtisanSole', ...(opt.token ? { Authorization: `Bearer ${opt.token}` } : {}) },
+      method: opt.method || 'GET',
+      ...(opt.body ? { body: JSON.stringify(opt.body) } : {}),
+    })
+    return { status: res.status, daten: await res.json().catch(() => null) }
+  }
+
+  const vorhanden = await j(`/api/affiliates/validate/${CODE}`)
+  if (vorhanden.status === 200 && vorhanden.daten?.display_name === ANZEIGENAME) return true
+
+  const an = await j('/api/auth/login', { method: 'POST',
+    body: { email: 'admin@artisansole.com', password: 'ArtisanSole@2026!' } })
+  const token = an.daten?.accessToken
+  if (!token) return false
+
+  if (vorhanden.status !== 200) {
+    await j('/api/affiliates', { method: 'POST', token, body: {
+      email: `schuhhaus-${Date.now()}@example.de`, full_name: 'Schuhhaus Müller GmbH', code: CODE,
+      commission_type: 'percent', commission_value: 12, cap_per_shoe: 50,
+      customer_benefit: 'discount', customer_discount_pct: 10,
+    } })
+  }
+  // Der Anzeigename steht getrennt vom Firmennamen: Auf dem Streifen soll
+  // stehen, wie der Laden heißt, nicht wie er im Handelsregister steht.
+  const liste = await j('/api/affiliates', { token })
+  const eintrag = (Array.isArray(liste.daten) ? liste.daten : []).find(a => a.code === CODE)
+  if (!eintrag) return false
+  await j(`/api/affiliates/${eintrag.id}`, { method: 'PUT', token, body: { ...eintrag, display_name: ANZEIGENAME } })
+  const nachher = await j(`/api/affiliates/validate/${CODE}`)
+  return nachher.status === 200 && nachher.daten?.display_name === ANZEIGENAME
+}
+
+const bereit = await vermittlerBereitstellen()
+if (!bereit) {
+  console.log(`\n  Der Vermittler „${CODE}" ließ sich nicht anlegen — läuft der Server auf ${API}?`)
+  process.exit(1)
+}
 
 const br = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
 const c = await br.newContext({ ignoreHTTPSErrors: true, viewport: { width: 1440, height: 1000 } })

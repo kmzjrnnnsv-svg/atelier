@@ -23,8 +23,8 @@ import Ablauf from '../components/Ablauf'
 const BASE_CATEGORIES = [
   { label: 'Alle Modelle',    value: 'ALL' },
   { label: 'Büro & Business', value: 'BUSINESS',     cats: ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK'] },
-  { label: 'Smart Casual',    value: 'SMART_CASUAL', cats: ['LOAFER', 'MONK', 'DOUBLE_MONK', 'DERBY', 'CHELSEA'] },
-  { label: 'Freizeit',        value: 'LEISURE',      cats: ['SNEAKER', 'SNEAKER_LACED', 'SNEAKER_BOOT', 'LACELESS_TRAINER', 'LOAFER', 'CHUKKA', 'BOOT', 'JODHPUR'] },
+  { label: 'Smart Casual',    value: 'SMART_CASUAL', cats: ['LOAFER', 'MOCCASIN', 'MONK', 'DOUBLE_MONK', 'DERBY', 'CHELSEA'] },
+  { label: 'Freizeit',        value: 'LEISURE',      cats: ['SNEAKER', 'SNEAKER_LACED', 'SNEAKER_BOOT', 'LACELESS_TRAINER', 'LOAFER', 'MOCCASIN', 'MOC_SPORT', 'CHUKKA', 'BOOT', 'JODHPUR'] },
   { label: 'Abend & Gala',    value: 'EVENING',      cats: ['WHOLECUT', 'OXFORD', 'BELGIAN_SLIPPER', 'WELLINGTON', 'DRAKE'] },
   { label: 'Outdoor',         value: 'OUTDOOR',      cats: ['BOOT', 'CHELSEA', 'BALMORAL', 'JODHPUR', 'CHUKKA'] },
 ]

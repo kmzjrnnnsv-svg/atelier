@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { isNative } from '../App'
@@ -86,6 +86,8 @@ import { LIEFERUMFANG } from '../lib/lieferumfang'
 import GroessenTabelle from '../components/GroessenTabelle'
 import ExpressHinweis from '../components/ExpressHinweis'
 import { sichtbareGruppen as gruppenFuer, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
+import GuertelWahl from '../components/GuertelWahl'
+import { guertelSatz } from '../lib/guertel'
 
 
 // Relative Bild-URLs (/uploads/…) gegen die API-Base auflösen, base64/http
@@ -198,6 +200,12 @@ export default function Customize() {
     OXFORD:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     WHOLECUT:         ['lux_calf', 'lux_suede', 'painted_full_grain', 'patina', 'box_calf', 'urban_suede', 'painted_calf'],
     LOAFER:           ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
+    // Der Mokassin läuft auf eigenen Ledern; keines der Dress-Leder gehört
+    // dazu, und keines seiner drei gehört an einen Rahmengenähten.
+    MOCCASIN:         ['calf_suede', 'nappa', 'fullgrain'],
+    // Der Sport-Mokassin gibt es nur ungefüttert — beim Hersteller ist das
+    // die einzige Wahl an diesem Modell.
+    MOC_SPORT:        ['unlined_suede'],
     DERBY:            ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     DOUBLE_MONK:      ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     MONK:             ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
@@ -327,7 +335,15 @@ export default function Customize() {
 
   // Die Express-Freigabe hat beim Laden schon gefiltert; hier kommt dazu, was
   // die gewählte Sohle übriglässt — das ändert sich mit jeder Wahl.
-  const sichtbareGruppen = gruppenFuer(extraOptionGroups, { soleKey: soleArt?.key })
+  // Die gewählte Ausführung entscheidet mit: Ohne Metall auf dem Spann gibt
+  // es keinen Metallton zu wählen.
+  const dekoWahl = (() => {
+    const g = extraOptionGroups.find(x => x.key === 'loafer_decoration')
+    if (!g) return null
+    return g.values.find(v => v.id === selectedExtras['loafer_decoration'])?.key
+      || product?.locked_decoration || null
+  })()
+  const sichtbareGruppen = gruppenFuer(extraOptionGroups, { soleKey: soleArt?.key, dekoKey: dekoWahl })
 
   // Summe der Extra-Aufpreise. Steht hinter `sichtbareGruppen`, weil eine
   // ausgeblendete Gruppe auch nichts kosten darf — der Sohlenrand an einer
@@ -398,10 +414,17 @@ export default function Customize() {
   // Globale Farben können per `applicable_materials` an einzelne Material-
   // Typen gebunden sein (z. B. Velvet-Farben nur bei Material 'velvet').
   // Wir filtern, sobald der Nutzer ein Material gewählt hat.
+  // Solange noch kein Leder gewählt ist, zählt, was an DIESEM Modell
+  // überhaupt zur Wahl steht. Vorher galt in diesem Fall „alles" — und die
+  // Farbtafel eines Oxfords zeigte kurz die Velvet-Töne mit. Mit den
+  // zweiundzwanzig Mokassin-Farben wäre daraus eine Tafel geworden, auf der
+  // die Hälfte zu keinem der angebotenen Leder gehört.
+  const modellLeder = new Set(baseMatList.map(m => m.key))
   const colorMatchesMaterial = (c, matKey) => {
     if (!c.applicable_materials || c.applicable_materials === '*') return true
-    if (!matKey) return true
-    return c.applicable_materials.split(',').map(s => s.trim()).includes(matKey)
+    const erlaubt = c.applicable_materials.split(',').map(s => s.trim())
+    if (!matKey) return erlaubt.some(k => modellLeder.has(k))
+    return erlaubt.includes(matKey)
   }
 
   const filteredGlobalColors = shoeColors.filter(c => colorMatchesMaterial(c, selMat))
@@ -800,6 +823,82 @@ export default function Customize() {
   const mat      = matList.find(m => m.key === selMat) || matList[0]
   const col      = colList.find(c => c.key === selCol) || colList[0]
 
+  /* ── Der Gürtel ────────────────────────────────────────────────────────
+   *
+   * Er ist das einzige Zubehör, das nicht angehakt, sondern konfiguriert
+   * wird — und das einzige, das etwas vom Schuh übernimmt. Deshalb steht er
+   * nicht in der Kachelreihe „Passend dazu", sondern als eigener Schritt
+   * zwischen den übrigen: Leder und Farbe stehen an dieser Stelle schon
+   * fest, und genau das macht die Frage einfach.
+   *
+   * `guertelAn` kennt drei Zustände. `null` heißt: noch nicht gefragt —
+   * beide Knöpfe stehen gleichwertig da. Ein ausdrückliches Nein ist etwas
+   * anderes als eine unbeantwortete Frage, und der Schritt danach soll erst
+   * aufgehen, wenn eine Antwort da ist.
+   */
+  const [guertelOptionen, setGuertelOptionen] = useState(null)
+  const [guertelAn, setGuertelAn] = useState(null)
+  const [guertelCfg, setGuertelCfg] = useState(null)
+
+  useEffect(() => {
+    apiFetch('/api/accessories/guertel')
+      .then(setGuertelOptionen)
+      .catch(() => setGuertelOptionen(null))   // nicht geführt → kein Schritt
+  }, [])
+
+  /**
+   * Was der Schuh dem Gürtel vorgibt.
+   *
+   * Leder und Farbe immer — dafür ist der Gürtel da. Den Metallton nur, wenn
+   * der Schuh einen hat: Am Double Monk ist er längst gewählt, und ihn ein
+   * zweites Mal zu fragen hieße, zwei Antworten auf dieselbe Frage
+   * zuzulassen. An einem Oxford gibt es keine Schnalle, und dann wird
+   * gefragt.
+   */
+  const guertelVorgabe = useMemo(() => {
+    // `col` kann aus den modelleigenen Farbvarianten stammen; deren Kennung
+    // („cms-…") kennt der Server nicht. Dann zählt der Name, unter dem die
+    // Farbe global geführt wird — sonst schlüge die Prüfung beim Bestellen
+    // fehl, und zwar erst an der Kasse.
+    const global = shoeColors.find(c => c.key === selCol)
+      || shoeColors.find(c => c.name && col?.name && c.name.toLowerCase() === col.name.toLowerCase())
+    const metallGruppe = extraOptionGroups.find(g => g.key === 'buckle_color')
+    const metallWert = metallGruppe?.values?.find(v => v.id === selectedExtras['buckle_color'])
+    return {
+      leder: mat?.key || null,      leder_label: mat?.label || null,
+      farbe: global?.key || null,   farbe_name: global?.name || col?.name || null,
+      farbe_hex: global?.hex || col?.hex || null,
+      metall: metallWert?.key || null, metall_label: metallWert?.label || null,
+      metall_hex: metallWert?.color_hex || null,
+    }
+  }, [mat, selCol, col, shoeColors, extraOptionGroups, selectedExtras])
+
+  // Ohne Leder oder Farbe lässt sich kein Gürtel dazu bauen — der Schritt
+  // erscheint erst, wenn beides GEWÄHLT ist.
+  //
+  // `selMat` und `selCol` stehen hier ausdrücklich mit dabei: `mat` und `col`
+  // fallen auf den ersten Eintrag der Liste zurück, damit die Seite von
+  // Anfang an etwas zeigen kann. Ohne diese Prüfung böte der Gürtel eine
+  // Farbe an, die der Kunde nie angeklickt hat — sie stünde nur zufällig
+  // vorne in der Liste.
+  const guertelMoeglich = !!(guertelOptionen && selMat && selCol
+    && guertelVorgabe.leder && guertelVorgabe.farbe)
+
+  /** Die Position, die in Warenkorb und Bestellung geht. Preis: der zum Paar. */
+  const guertelZeile = useMemo(() => {
+    if (!guertelAn || !guertelCfg || !guertelOptionen) return null
+    const preis = Number(guertelOptionen.preis_zum_paar) || 0
+    return {
+      key: guertelOptionen.artikel.key,
+      name: guertelOptionen.artikel.name,
+      priceNum: preis,
+      price: `€ ${preis.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`,
+      config_kind: 'belt',
+      belt: guertelCfg,
+      beschreibung: guertelSatz(guertelCfg, guertelOptionen.spielraum_cm),
+    }
+  }, [guertelAn, guertelCfg, guertelOptionen])
+
   // Zubehör wird nach gewählter Lederart empfohlen (nicht mehr pro Schuhmodell):
   // material_keys '*'/leer = universell; sonst muss das gewählte Material (selMat)
   // enthalten sein. Zusätzlich optionale Farb-Zuordnung (z. B. schwarzer Spanner
@@ -949,7 +1048,7 @@ export default function Customize() {
   const accessoryTotal = selectedAccessories.reduce((sum, id) => {
     const acc = accessories.find(a => a.id === id)
     return sum + (acc?.price || 0)
-  }, 0)
+  }, 0) + (guertelZeile ? guertelZeile.priceNum : 0)
 
   // Der Nachlass gilt auf alles, was konfiguriert wurde — Schuh, Optionen und
   // Zubehör. Vorher hing er allein am Zubehör, der Schuhpreis blieb stehen.
@@ -1039,9 +1138,29 @@ export default function Customize() {
           sole: '',
           image: null,
           isAccessory: true,
+          accKey: acc.key,
+          shipsAlone: Number(acc.ships_alone) === 1,
         })
       }
     })
+    // Der Gürtel trägt seine Konfiguration mit in den Korb. Ohne sie stünde
+    // dort ein Artikel namens „Gürtel Hamptons" und niemand wüsste, welcher.
+    if (guertelZeile) {
+      addToCart({
+        shoeId: `guertel-${guertelZeile.belt.leder}-${guertelZeile.belt.farbe}-${guertelZeile.belt.form}-${guertelZeile.belt.metall}-${guertelZeile.belt.groesse}`,
+        name: guertelZeile.name,
+        material: guertelZeile.beschreibung,
+        color: guertelZeile.belt.farbe_hex,
+        price: guertelZeile.price,
+        sole: '',
+        image: null,
+        isAccessory: true,
+        accKey: guertelZeile.key,
+        configKind: 'belt',
+        belt: guertelZeile.belt,
+        shipsAlone: true,
+      })
+    }
   }
 
   const chosenEU = sizeType === 'fit'
@@ -1171,6 +1290,7 @@ export default function Customize() {
     setDraftId(newDraftId())
     setSelFamily(''); setSelMat(''); setSelCol(''); setSelectedExtras({})
     setSizeType(''); setSelectedSize(''); setSelectedAccessories([])
+    setGuertelAn(null); setGuertelCfg(null)
     await discardDraft(id)
   }
 
@@ -1221,6 +1341,9 @@ export default function Customize() {
     addShoeToCart()
     addAccessoriesToCart()
     setSelectedAccessories([])
+    // Auch der Gürtel: Er liegt jetzt im Korb, und ein zweiter Klick auf
+    // „In den Warenkorb" legte sonst denselben noch einmal dazu.
+    setGuertelAn(null); setGuertelCfg(null)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -1229,6 +1352,7 @@ export default function Customize() {
     if (includeShoe) addShoeToCart()
     addAccessoriesToCart()
     setSelectedAccessories([])
+    setGuertelAn(null); setGuertelCfg(null)
     setDuplicateDialog(false)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
@@ -1242,7 +1366,7 @@ export default function Customize() {
     await markInCart(draftId)
     const cartAccessories = selectedAccessories.map(id => {
       const acc = accessories.find(a => a.id === id)
-      return acc ? { id: acc.id, name: acc.name, price: acc.price, color: acc.color } : null
+      return acc ? { id: acc.id, name: acc.name, price: acc.price, color: acc.color, key: acc.key } : null
     }).filter(Boolean)
 
     navigate('/checkout', {
@@ -1266,6 +1390,10 @@ export default function Customize() {
           configId: draftId,
         },
         accessories: cartAccessories,
+        // Der Gürtel geht als eigene Position mit. Er lässt sich nicht über
+        // die Zubehör-Kennung mitführen wie die übrigen — von ihm gibt es
+        // nicht einen, sondern einen je Konfiguration.
+        guertel: guertelZeile,
       },
     })
   }
@@ -2040,6 +2168,52 @@ export default function Customize() {
               </div>
               )
             })}
+
+            {/* ── Gürtel dazu? ──────────────────────────────────────────
+                Die Frage steht hier und nicht bei „Passend dazu": Dort wird
+                angehakt, hier wird konfiguriert — und Leder und Farbe stehen
+                an dieser Stelle fest, sodass die Frage aus einem Ja oder Nein
+                besteht statt aus fünf weiteren. */}
+            {guertelMoeglich && (
+              <div className="px-5 lg:px-0 mb-8 transition-all duration-500"
+                style={{ opacity: configStep >= 3 ? 1 : 0.3, pointerEvents: configStep >= 3 ? 'auto' : 'none' }}>
+                <p className="text-[10px] text-black/45 uppercase mb-1.5" style={{ letterSpacing: '0.18em' }}>
+                  Passender Gürtel
+                </p>
+                <p className="text-[11px] text-black/45 font-light leading-relaxed mb-3">
+                  Aus demselben Leder in derselben Farbe wie Ihre Schuhe, 3,5 cm breit.
+                  {' '}Zusammen mit dem Paar {' '}
+                  <span className="text-black/70">
+                    € {Number(guertelOptionen.preis_zum_paar).toLocaleString('de-DE')}
+                  </span>
+                  {Number(guertelOptionen.preis_einzeln) > Number(guertelOptionen.preis_zum_paar) && (
+                    <> statt <span className="line-through">€ {Number(guertelOptionen.preis_einzeln).toLocaleString('de-DE')}</span> einzeln</>
+                  )}
+                  {' '}— er geht im selben Karton hinaus.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 max-w-xs">
+                  <button onClick={() => setGuertelAn(true)}
+                    className={`border px-3 py-2.5 text-[12px] transition-colors ${
+                      guertelAn === true ? 'border-black text-black' : 'border-black/12 text-black/55 hover:border-black/30'}`}>
+                    Ja, dazu
+                  </button>
+                  <button onClick={() => { setGuertelAn(false); setGuertelCfg(null) }}
+                    className={`border px-3 py-2.5 text-[12px] transition-colors ${
+                      guertelAn === false ? 'border-black text-black' : 'border-black/12 text-black/55 hover:border-black/30'}`}>
+                    Nein, danke
+                  </button>
+                </div>
+
+                {guertelAn === true && (
+                  <GuertelWahl
+                    optionen={guertelOptionen}
+                    vorgabe={guertelVorgabe}
+                    onChange={setGuertelCfg}
+                  />
+                )}
+              </div>
+            )}
 
             {/* ── Passform ──────────────────────────────────────────────
                 Die richtige Größe + Leistenform wird aus den Fußmaßen

@@ -54,7 +54,18 @@ const schuh = schuhe[0]
 
 const { daten: zubehoer } = await ruf('/api/accessories')
 p('Zubehör abrufbar', Array.isArray(zubehoer) && zubehoer.length > 0, `${zubehoer?.length} Artikel`)
-p('Nur die fünf geführten Artikel', zubehoer.length === 5, zubehoer.map(a => a.key).join(', '))
+// Die Zahl stand hier fest („nur die fünf"), und mit dem Gürtel waren es
+// sechs. Eine Zahl prüft nur, dass niemand etwas dazugelegt hat — gemeint war
+// aber, dass die geführten Artikel da sind. Also werden sie benannt.
+const ZUBEHOER = ['care_kit_leather', 'care_kit_suede', 'shoe_tree_cedar', 'shoe_tree_black', 'boot_tree_cedar']
+const vorhanden = new Set(zubehoer.map(a => a.key))
+p('Die geführten Pflege- und Spannerartikel sind da',
+  ZUBEHOER.every(k => vorhanden.has(k)), zubehoer.map(a => a.key).join(', '))
+// Genau einer wird konfiguriert statt angehakt. Wären es plötzlich zwei,
+// bekäme der zweite dieselbe Gürtelmaske vorgesetzt.
+p('Genau ein konfigurierbarer Artikel',
+  zubehoer.filter(a => a.config_kind).length === 1,
+  zubehoer.filter(a => a.config_kind).map(a => `${a.key}:${a.config_kind}`).join(', '))
 
 const { daten: chart } = await ruf('/api/last-size-chart')
 p('Größentabelle abrufbar', Array.isArray(chart) && chart.length > 0, `${chart?.length} Zeilen`)

@@ -453,6 +453,23 @@ export function runMigrations(db) {
     `ALTER TABLE accessories ADD COLUMN material_keys TEXT`,
     // accessories, optionale Farb-Zuordnung (CSV Schlüsselwörter, z. B. 'schwarz,black')
     `ALTER TABLE accessories ADD COLUMN color_match TEXT`,
+    // accessories, zweiter Preis: was der Artikel kostet, wenn er ZUSAMMEN mit
+    // einem Paar Schuhe bestellt wird. Dann geht er im selben Karton hinaus;
+    // allein braucht er Verpackung und Porto für sich. NULL heißt: ein Preis
+    // für beide Wege, nämlich `price`.
+    `ALTER TABLE accessories ADD COLUMN price_with_shoe REAL`,
+    // accessories, Art der Konfiguration. NULL ist der Normalfall — der
+    // Artikel wandert wie er ist in den Warenkorb. 'belt' heißt: Er wird
+    // vorher konfiguriert (Leder, Farbe, Schließe, Metall, Länge), und die
+    // Oberfläche zeigt dafür eine Maske statt eines Knopfes.
+    `ALTER TABLE accessories ADD COLUMN config_kind TEXT`,
+    // accessories, darf dieser Artikel allein reisen?
+    //
+    // Für Pflegesets und Spanner gilt: nein — das Porto kostet mehr als der
+    // Artikel. Der Gürtel trägt sein Porto selbst, und ein Kunde, der ein
+    // halbes Jahr nach den Schuhen den passenden Gürtel bestellen will, soll
+    // dafür nicht ein zweites Paar kaufen müssen.
+    `ALTER TABLE accessories ADD COLUMN ships_alone INTEGER NOT NULL DEFAULT 0`,
     // orders, B2B-Firmencode-Einlösung
     `ALTER TABLE orders ADD COLUMN business_id          INTEGER REFERENCES businesses(id)`,
     `ALTER TABLE orders ADD COLUMN business_code_id     INTEGER REFERENCES business_codes(id)`,
@@ -1803,6 +1820,15 @@ export function runMigrations(db) {
   //  2. **Genau einmal.** Der Merker verhindert, dass ein Neustart eine
   //     spätere Änderung aus dem CMS wieder überschreibt. Umbenannt wird
   //     außerdem nur, was noch den alten Namen trägt.
+  //
+  //  3. **Die neuen Namen stehen zusätzlich in `seed-data.json`.** Diese
+  //     Umbenennung allein reichte nicht: Auf einer FRISCHEN Installation
+  //     laufen die Migrationen zuerst, und danach schreibt `katalogAnwenden`
+  //     die Vorlage mit `ueberschreiben: true` darüber — die eben
+  //     umbenannten Farben trugen anschließend wieder ihre alten Namen, und
+  //     der Merker hier stand bereits auf „erledigt". Im Bestand fiel es
+  //     nicht auf, weil dort nichts überschrieben wird. Beide Stellen tragen
+  //     deshalb dieselben Namen; wer einen ändert, ändert beide.
   try {
     const schonGelaufen = db.prepare("SELECT value FROM settings WHERE key = 'farbnamen_luxe_2026'").get()
     if (!schonGelaufen) {
@@ -1843,6 +1869,35 @@ export function runMigrations(db) {
       if (fehlend.length) console.log(`ℹ️  Farbnamen: nicht im Bestand, daher unverändert — ${fehlend.join(', ')}`)
     }
   } catch (e) { console.error('[migrate Farbnamen]', e.message) }
+
+  // ── „Mov Flex Sport" heißt „Moc Flex Sport" ──────────────────────────────
+  //
+  // Ein Vertipper, und die eigene Datenbank verrät ihn: Der Leisten, auf dem
+  // diese Linie läuft, heißt seit jeher `moc_sport`. „Moc" ist die Machart
+  // (Mokassin), „Mov" heißt nichts.
+  //
+  // Warum das HIER steht und nicht im Seed: Der Seed legt an, was er
+  // vermisst — und er kennt seine Modelle über den Namen. Liefe die
+  // Umbenennung nach ihm, hätte er die neuen Namen längst als fehlend
+  // angelegt, und im Katalog stünden beide Fassungen nebeneinander. Die
+  // Migrationen laufen davor; danach findet der Seed vor, was er sucht.
+  try {
+    const schonUmbenannt = db.prepare("SELECT value FROM settings WHERE key = 'moc_flex_umbenannt'").get()
+    if (!schonUmbenannt) {
+      const um = db.prepare('UPDATE shoes SET name = ?, updated_at = datetime(\'now\') WHERE name = ?')
+      let n = 0
+      for (const alt of ['Mov Flex Sport', 'Mov Flex Sport Laced Boot', 'Mov Flex Sport Boot']) {
+        const neu = alt.replace('Mov ', 'Moc ')
+        // Gibt es den neuen Namen schon, wäre die Umbenennung eine Kollision.
+        // Dann ist nichts zu tun: Der Bestand hat den richtigen bereits.
+        if (db.prepare('SELECT 1 FROM shoes WHERE name = ?').get(neu)) continue
+        n += um.run(neu, alt).changes
+      }
+      db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('moc_flex_umbenannt', ?, datetime('now'))")
+        .run(String(n))
+      if (n) console.log(`✅ Umbenannt: ${n}× „Mov Flex Sport" → „Moc Flex Sport"`)
+    }
+  } catch (e) { console.error('[migrate Moc Flex]', e.message) }
 
   // Bestehende Affiliates auf die eine Wahl heben. Der Nachlass hat Vorrang:
   // Er war das Zugesagte, die Zugabe die Beigabe — wer beides trug, behält

@@ -7,7 +7,7 @@ import { Plus, Pencil, Trash2, Check, X, Loader2, Sliders, Star } from 'lucide-r
 import { apiFetch } from '../../hooks/useApi'
 import ImagePicker from '../../components/ImagePicker'
 
-const CATEGORIES = ['*', 'OXFORD', 'WHOLECUT', 'DERBY', 'LOAFER', 'CHELSEA', 'MONK', 'DOUBLE_MONK', 'BOOT', 'SNEAKER']
+const CATEGORIES = ['*', 'OXFORD', 'WHOLECUT', 'DERBY', 'LOAFER', 'MOCCASIN', 'MOC_SPORT', 'CHELSEA', 'MONK', 'DOUBLE_MONK', 'BOOT', 'SNEAKER']
 
 export default function OptionsEditor() {
   const [groups, setGroups] = useState([])
