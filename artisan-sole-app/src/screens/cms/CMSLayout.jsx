@@ -62,12 +62,17 @@ export default function CMSLayout() {
   return (
     <div className="flex bg-white text-black" style={{ width: '100%', height: '100%', maxWidth: '100vw', maxHeight: '100dvh', overflow: 'hidden' }}>
       {/* Sidebar */}
-      <aside className="w-[220px] flex-shrink-0 bg-[#111] flex flex-col">
+      {/* Weiß wie der Rest der Anwendung. Die dunkle Leiste war das einzige
+          Dunkle darin und stand für nichts — sie trennte die Verwaltung
+          optisch vom Laden, den sie verwaltet. Abgesetzt wird sie jetzt
+          über die Kante und den etwas kühleren Grund des Inhaltsbereichs,
+          nicht über einen Farbwechsel. */}
+      <aside className="w-[220px] flex-shrink-0 bg-white border-r border-black/[0.08] flex flex-col">
 
         {/* Logo */}
         <div className="px-7 pt-8 pb-6">
-          <p className="font-brand text-[11px] text-white/90">ARTISAN SOLE</p>
-          <p className="text-[9px] text-white/45 tracking-[0.2em] uppercase mt-1 font-light">Content Studio</p>
+          <p className="font-brand text-[11px] text-black/90">ARTISAN SOLE</p>
+          <p className="text-[9px] text-black/55 tracking-[0.2em] uppercase mt-1 font-light">Content Studio</p>
         </div>
 
         {/* Nav */}
@@ -146,7 +151,7 @@ export default function CMSLayout() {
               {heading && (
                 <button
                   onClick={() => umschalten(heading)}
-                  className="w-full flex items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-white/50 hover:text-white/80 px-3 mb-2.5 mt-7 bg-transparent border-0 transition-colors"
+                  className="w-full flex items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-black/55 hover:text-black/85 px-3 mb-2.5 mt-7 bg-transparent border-0 transition-colors"
                 >
                   <ChevronRight
                     size={9} strokeWidth={2}
@@ -156,9 +161,9 @@ export default function CMSLayout() {
                   {/* Zugeklappt darf eine Gruppe nicht verschlucken, dass in
                       ihr etwas ungelesen liegt. */}
                   {!offen && items.some(i => i.badge > 0) && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/85" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-black/85" />
                   )}
-                  {!offen && trefferHier && <span className="w-1.5 h-1.5 rounded-full bg-white/50" />}
+                  {!offen && trefferHier && <span className="w-1.5 h-1.5 rounded-full bg-black/50" />}
                 </button>
               )}
               <div className={`space-y-0.5 ${offen ? '' : 'hidden'}`}>
@@ -176,15 +181,15 @@ export default function CMSLayout() {
                       // Zeilen beim Wechsel nicht springen.
                       `flex items-center gap-3 pl-2.5 pr-3 py-[7px] text-[12px] border-l-2 transition-all no-underline tracking-wide ${
                         isActive
-                          ? 'border-white bg-white/[0.12] text-white font-normal'
-                          : 'border-transparent text-white/55 hover:text-white/90 hover:bg-white/[0.06] font-light'
+                          ? 'border-black bg-black/[0.05] text-black font-normal'
+                          : 'border-transparent text-black/60 hover:text-black hover:bg-black/[0.03] font-light'
                       }`
                     }
                   >
                     <Icon size={13} strokeWidth={1.25} />
                     <span className="flex-1">{label}</span>
                     {badge > 0 && (
-                      <span className="bg-white text-black text-[9px] min-w-[16px] h-4 px-1 flex items-center justify-center flex-shrink-0">
+                      <span className="bg-black text-white text-[9px] min-w-[16px] h-4 px-1 flex items-center justify-center flex-shrink-0">
                         {badge > 99 ? '99+' : badge}
                       </span>
                     )}
@@ -197,27 +202,27 @@ export default function CMSLayout() {
         </nav>
 
         {/* User footer */}
-        <div className="px-6 py-6 border-t border-white/[0.06]">
+        <div className="px-6 py-6 border-t border-black/[0.08]">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-7 h-7 bg-white/[0.12] flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-light text-white/70">{user?.name?.[0]?.toUpperCase()}</span>
+            <div className="w-7 h-7 bg-black/[0.06] flex items-center justify-center flex-shrink-0">
+              <span className="text-[10px] font-light text-black/70">{user?.name?.[0]?.toUpperCase()}</span>
             </div>
             <div className="min-w-0">
-              <p className="text-[12px] font-light text-white/80 truncate">{user?.name}</p>
-              <p className="text-[9px] text-white/45 truncate font-light">{user?.role}</p>
+              <p className="text-[12px] font-light text-black/80 truncate">{user?.name}</p>
+              <p className="text-[9px] text-black/55 truncate font-light">{user?.role}</p>
             </div>
           </div>
           <div className="space-y-1">
             <button
               onClick={() => navigate('/collection')}
-              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/55 hover:text-white/90 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
+              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-black/60 hover:text-black transition-colors bg-transparent border-0 text-left font-light tracking-wide"
             >
               <ExternalLink size={11} strokeWidth={1.25} />
               App ansehen
             </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/55 hover:text-white/90 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
+              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-black/60 hover:text-black transition-colors bg-transparent border-0 text-left font-light tracking-wide"
             >
               <LogOut size={11} strokeWidth={1.25} />
               Abmelden
