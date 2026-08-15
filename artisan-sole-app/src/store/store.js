@@ -168,6 +168,11 @@ const useStore = create((set, get) => ({
       if (!r?.valid) { refVergessen(); set({ affiliate: null }); return null }
       const v = {
         code: r.code,
+        // Der Anzeigename des Vermittlers, falls die Verwaltung einen
+        // gepflegt hat — für den Streifen über der Navigation. Ohne ihn
+        // spricht der Streifen nur von „einer Empfehlung"; der Klarname des
+        // Vermittlers hat im Laden nichts zu suchen.
+        display_name: r.display_name || null,
         gift: r.gift || null,
         // Die Zugabe mit Namen, Bild und Ladenpreis — damit sie im Warenkorb
         // als Artikel dasteht und nicht als Schlüssel.
@@ -191,6 +196,13 @@ const useStore = create((set, get) => ({
     }
   },
 
+  /**
+   * Die Empfehlung fallen lassen.
+   *
+   * Der Streifen über der Navigation bietet das an, und das ist kein Beiwerk:
+   * Etwas, das im Browser liegt und Preise verändert, muss sichtbar und
+   * widerruflich sein.
+   */
   affiliateEntfernen() {
     refVergessen()
     set({ affiliate: null })

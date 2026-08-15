@@ -69,7 +69,8 @@ router.get('/validate/:code', authenticateOptional, (req, res) => {
   const db = getDb()
   const a = db.prepare(`
     SELECT code, customer_benefit, customer_discount_pct, gift_key,
-           commission_type, commission_value, cap_per_shoe, user_id, email
+           commission_type, commission_value, cap_per_shoe, user_id, email,
+           display_name
     FROM affiliates WHERE code = ? AND status = 'active'
   `).get(code)
   if (!a) return res.status(404).json({ valid: false, error: 'Dieser Code ist nicht gültig.' })
@@ -140,6 +141,9 @@ router.get('/validate/:code', authenticateOptional, (req, res) => {
   res.json({
     valid: true,
     code: a.code,
+    // Der Anzeigename, wenn einer gepflegt ist — sonst nichts. Der Klarname
+    // aus full_name geht hier ausdrücklich NICHT hinaus.
+    display_name: (a.display_name || '').trim() || null,
     benefit: a.customer_benefit || 'none',
     customer_discount_pct: a.customer_benefit === 'discount' ? Number(a.customer_discount_pct) || 0 : 0,
     discount_cap: a.customer_benefit === 'discount' ? grenze : 0,
@@ -361,7 +365,7 @@ router.get('/', ...canAdmin, (req, res) => {
     -- Affiliate aus dieser Liste heraus. Kämen die Vertragsfelder hier nicht
     -- mit, stünden sie in der Maske leer da und würden beim Speichern über
     -- die hinterlegten Angaben geschrieben.
-    SELECT a.id, a.code, a.status, a.full_name, a.email, a.phone, a.user_id,
+    SELECT a.id, a.code, a.status, a.full_name, a.display_name, a.email, a.phone, a.user_id,
            a.street, a.postal_code, a.city, a.country, a.birth_date,
            a.commission_type, a.commission_value, a.cap_per_shoe, a.gift_shoetree,
            a.customer_benefit, a.customer_discount_pct, a.gift_key, a.locked_fields,
@@ -516,7 +520,7 @@ router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
   const a = db.prepare('SELECT * FROM affiliates WHERE id = ?').get(req.params.id)
   if (!a) return res.status(404).json({ error: 'Not found' })
 
-  const allowed = ['status', 'full_name', 'email', 'phone', 'street', 'postal_code', 'city',
+  const allowed = ['status', 'full_name', 'display_name', 'email', 'phone', 'street', 'postal_code', 'city',
     'country', 'birth_date', 'tax_status', 'tax_number', 'vat_id', 'iban', 'account_holder',
     'commission_type', 'commission_value', 'cap_per_shoe',
     'customer_benefit', 'customer_discount_pct', 'gift_key', 'note', 'user_id',
@@ -524,20 +528,65 @@ router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
   const patch = {}
   for (const k of allowed) if (req.body[k] !== undefined) patch[k] = req.body[k]
   if (patch.gift_shoetree !== undefined) patch.gift_shoetree = patch.gift_shoetree ? 1 : 0
-  // Die Sperre kommt als Liste und wird als Liste gespeichert — aber nur mit
-  // Namen, die es gibt. Ein Feldname aus dem Nichts sperrte sonst nichts und
-  // sähe trotzdem gesperrt aus.
+
+  // Die Sperrliste kommt in zwei Gestalten, und das war ein stiller Verlust.
+  //
+  // Die Maske hält sie als JSON-Zeichenkette (so steht sie auch in der
+  // Datenbank und so kommt sie aus der Liste zurück). Geprüft wurde hier aber
+  // nur auf ein Array — eine Zeichenkette fiel deshalb auf die leere Liste
+  // zurück, und JEDES Speichern eines Affiliates hob sämtliche Sperren auf.
+  // Niemandem fiel es auf, weil nichts fehlschlug: Die Antwort war 200, und
+  // die Häkchen waren beim nächsten Öffnen einfach weg.
   if (patch.locked_fields !== undefined) {
-    const roh = Array.isArray(patch.locked_fields) ? patch.locked_fields : []
-    patch.locked_fields = JSON.stringify(roh.filter(f => SELBST_FELDER.includes(f)))
+    let roh = patch.locked_fields
+    if (typeof roh === 'string') {
+      try { roh = JSON.parse(roh || '[]') } catch { roh = [] }
+    }
+    patch.locked_fields = JSON.stringify(
+      (Array.isArray(roh) ? roh : []).filter(f => SELBST_FELDER.includes(f))
+    )
   }
+
+  // SQLite bindet nur Zahlen, Zeichenketten, null und Puffer. Alles andere —
+  // ein `true` aus einem Kontrollkästchen, ein verschachteltes Objekt aus
+  // einem Formular — ließ `run()` werfen, und der allgemeine Fehlerbehandler
+  // antwortete mit „Internal server error". Für den, der davorsitzt, ist das
+  // keine Auskunft: Er weiß nicht, welches Feld gemeint ist, und die Maske
+  // bleibt mit ungespeicherten Änderungen stehen.
+  //
+  // Bekannte Formen werden umgesetzt, alles Übrige benannt und abgewiesen.
+  for (const [k, v] of Object.entries(patch)) {
+    if (typeof v === 'boolean') { patch[k] = v ? 1 : 0; continue }
+    if (v === null || ['string', 'number', 'bigint'].includes(typeof v)) continue
+    return res.status(400).json({
+      error: `Das Feld „${k}" hat einen Wert, den die Datenbank nicht annehmen kann.`,
+      code: 'FELD_UNGUELTIG',
+      feld: k,
+    })
+  }
+
   if (!Object.keys(patch).length) return res.json(a)
 
   const set = Object.keys(patch).map(k => `${k} = ?`).join(', ')
-  db.prepare(`UPDATE affiliates SET ${set}, updated_at = datetime('now') WHERE id = ?`)
-    .run(...Object.values(patch), req.params.id)
+  try {
+    db.prepare(`UPDATE affiliates SET ${set}, updated_at = datetime('now') WHERE id = ?`)
+      .run(...Object.values(patch), req.params.id)
+  } catch (e) {
+    // Eine verletzte Bedingung (CHECK auf status, UNIQUE auf code) ist ein
+    // Bedienfehler und keine Panne — sie gehört als Satz zurück, nicht als 500.
+    console.error('[affiliate PUT]', req.params.id, e.message, Object.keys(patch).join(','))
+    return res.status(400).json({
+      error: `Speichern nicht möglich: ${e.message}`,
+      code: 'SPEICHERN_FEHLGESCHLAGEN',
+    })
+  }
 
-  res.json(db.prepare('SELECT * FROM affiliates WHERE id = ?').get(req.params.id))
+  const neu = db.prepare('SELECT * FROM affiliates WHERE id = ?').get(req.params.id)
+  protokoll(db, {
+    entity: 'affiliate', entityId: neu.id, action: 'geaendert',
+    detail: `Geändert: ${Object.keys(patch).join(', ')}`, user: req.user,
+  })
+  res.json(neu)
 })
 
 /**

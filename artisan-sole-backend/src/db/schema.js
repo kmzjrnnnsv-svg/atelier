@@ -1751,6 +1751,15 @@ export function runMigrations(db) {
     // Belegnummer der Gutschrift. Eigener Nummernkreis (GS-JJJJ-NNNN), weil
     // eine Gutschrift keine Rechnung ist und nicht in deren Reihe gehört.
     `ALTER TABLE affiliate_payouts ADD COLUMN document_no TEXT`,
+    // Wie der Vermittler im Laden genannt wird — „Schuhhaus Müller", nicht
+    // „Michael Müller".
+    //
+    // Bewusst getrennt von full_name: Der steht auf der Gutschrift und ist
+    // der Name laut Ausweis. Ihn dem Besucher zu zeigen, hieße den Klarnamen
+    // einer Privatperson auf jeder Ladenseite auszustellen. Bleibt das Feld
+    // leer, nennt das Banner keinen Namen und spricht nur von einer
+    // Empfehlung.
+    `ALTER TABLE affiliates ADD COLUMN display_name TEXT`,
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen, TrendingUp } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
@@ -8,6 +8,7 @@ import { apiFetch } from '../../hooks/useApi'
 
 export default function CMSLayout() {
   const navigate = useNavigate()
+  const { pathname: pfad } = useLocation()
   const { user, logout } = useAuth()
   const { shoes, initStore, resetToDefaults } = useStore()
 
@@ -26,6 +27,26 @@ export default function CMSLayout() {
   }, [])
 
   useEffect(() => { initStore() }, [])
+
+  /**
+   * Welche Gruppen zugeklappt sind.
+   *
+   * Gemerkt wird, was ZU ist, nicht was offen ist: Kommt später eine Gruppe
+   * dazu, ist sie damit von selbst sichtbar. Andersherum wäre sie unsichtbar,
+   * bis jemand sie sucht — und suchen kann man nur, was man kennt.
+   */
+  const [zu, setZu] = useState(() => {
+    try { const l = JSON.parse(localStorage.getItem('cms_nav_zu') || '[]'); return Array.isArray(l) ? l : [] }
+    catch { return [] }
+  })
+  const umschalten = (heading) => setZu(l => {
+    const neu = l.includes(heading) ? l.filter(x => x !== heading) : [...l, heading]
+    try { localStorage.setItem('cms_nav_zu', JSON.stringify(neu)) } catch { /* ohne Speicher gilt es für diese Sitzung */ }
+    return neu
+  })
+  // Die Gruppe, in der man gerade steht, bleibt offen — sonst klappte die
+  // Navigation den eigenen Standort weg.
+  const aktiv = (i) => i.end ? pfad === i.to : pfad.startsWith(i.to)
 
   const handleLogout = () => {
     // Vollständiger Seitenwechsel statt Router-Navigation. Beim Abmelden
@@ -111,12 +132,36 @@ export default function CMSLayout() {
               { to: '/cms/email', label: 'E-Mail / SMTP',  icon: Mail },
               { to: '/cms/mfa',   label: 'MFA-Sicherheit', icon: ShieldCheck },
             ]}] : []),
-          ].map(({ heading, items }, gi) => (
+          ].map(({ heading, items }, gi) => {
+            // Zusammenklappbar, seit die Liste über die sichtbare Höhe
+            // hinausgewachsen ist: Bei acht Gruppen und 33 Einträgen lagen
+            // zuletzt gut zwei Drittel unterhalb des Fensterrands, und
+            // „Benutzer" ganz unten war praktisch nicht mehr zu finden.
+            //
+            // Ohne Überschrift (das Dashboard) gibt es nichts zu klappen.
+            const offen = !heading || !zu.includes(heading)
+            const trefferHier = items.some(i => aktiv(i))
+            return (
             <div key={gi}>
               {heading && (
-                <p className="text-[8px] uppercase tracking-[0.25em] text-white/15 px-3 mb-2.5 mt-7 font-light">{heading}</p>
+                <button
+                  onClick={() => umschalten(heading)}
+                  className="w-full flex items-center gap-1.5 text-[8px] uppercase tracking-[0.25em] text-white/15 hover:text-white/35 px-3 mb-2.5 mt-7 font-light bg-transparent border-0 transition-colors"
+                >
+                  <ChevronRight
+                    size={9} strokeWidth={2}
+                    className={`transition-transform ${offen ? 'rotate-90' : ''}`}
+                  />
+                  <span className="flex-1 text-left">{heading}</span>
+                  {/* Zugeklappt darf eine Gruppe nicht verschlucken, dass in
+                      ihr etwas ungelesen liegt. */}
+                  {!offen && items.some(i => i.badge > 0) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                  )}
+                  {!offen && trefferHier && <span className="w-1.5 h-1.5 rounded-full bg-white/30" />}
+                </button>
               )}
-              <div className="space-y-0.5">
+              <div className={`space-y-0.5 ${offen ? '' : 'hidden'}`}>
                 {items.map(({ to, label, icon: Icon, end, badge }) => (
                   <NavLink
                     key={to}
@@ -141,7 +186,8 @@ export default function CMSLayout() {
                 ))}
               </div>
             </div>
-          ))}
+            )
+          })}
         </nav>
 
         {/* User footer */}
