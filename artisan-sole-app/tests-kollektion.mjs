@@ -155,8 +155,17 @@ await page.getByRole('button', { name: /^winter/i }).first().click({ force: true
 const winter = await zaehle()
 text = await page.locator('body').innerText()
 p('Winter zeigt weniger als alles', winter > 0 && winter < alle, `${winter} von ${alle}`)
-// Im Reiter selbst keine Überschriften mehr: Die Rubrik steht schon oben.
-p('Ohne Abschnittsüberschriften', !hat(text, 'Das ganze Jahr'))
+// Der gewählte Reiter behält seine Überschrift — man soll noch wissen,
+// worauf man schaut, wenn die Reiterleiste längst weggescrollt ist. Die
+// anderen Rubriken stehen dann aber NICHT da.
+p('Der gewählte Reiter zeigt seine Überschrift', hat(text, 'Herbst & Winter'))
+p('Und die Beschreibung dazu', hat(text, 'Über dem Knöchel'))
+p('Die anderen Rubriken nicht', !hat(text, 'Das ganze Jahr') && !hat(text, 'Frühling & Sommer'))
+// Die Zahl steht in der Überschrift; darüber wäre sie ein zweites Mal
+// dieselbe Auskunft und sähe nach einem Fehler aus.
+p('Die Modellzahl steht genau einmal',
+  (text.match(new RegExp(`\\b${winter} Modelle\\b`, 'gi')) || []).length === 1,
+  `${winter} Modelle`)
 
 await page.getByRole('button', { name: /^sommer/i }).first().click({ force: true })
 const sommer = await zaehle()

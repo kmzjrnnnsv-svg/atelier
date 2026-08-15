@@ -15,7 +15,7 @@ import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
-import { saisonsSortiert, laufendeSaison, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
+import { SAISONS, saisonsSortiert, laufendeSaison, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
 
 // Die Rubriken des Ladens: Sommer, Winter, Ganzjährig.
@@ -543,11 +543,22 @@ export default function ShoeCollection() {
   // Saison eines, mit Überschrift und Trennlinie dazwischen. Sonst stünden
   // Stiefel und Sommerschuh Kachel an Kachel, und die Einteilung wäre eine
   // Behauptung der Reiterleiste, die das Raster nicht einlöst.
-  const abschnitte = activeCategory === 'ALL' && !suche.trim()
-    ? saisonsSortiert(new Date())
-        .map(s => ({ ...s, modelle: filtered.filter(p => saisonVon(p) === s.key) }))
-        .filter(a => a.modelle.length > 0)
-    : null
+  //
+  // Und bei einem einzelnen Reiter dasselbe, nur mit einem Abschnitt: Wer
+  // „Ganzjährig" wählt, bekam bisher ein Raster ohne jede Überschrift. Über
+  // den Kacheln stand dann nichts als eine Zahl — man sah, WAS da ist, aber
+  // nicht mehr, WORAUF man gerade schaut. Der aktive Reiter allein trägt das
+  // nicht: Er steht weit oben und ist beim Scrollen längst aus dem Bild.
+  const gewaehlteSaison = SAISONS.find(s => s.key === activeCategory)
+  const abschnitte = suche.trim()
+    ? null
+    : activeCategory === 'ALL'
+      ? saisonsSortiert(new Date())
+          .map(s => ({ ...s, modelle: filtered.filter(p => saisonVon(p) === s.key) }))
+          .filter(a => a.modelle.length > 0)
+      : gewaehlteSaison && filtered.length > 0
+        ? [{ ...gewaehlteSaison, modelle: filtered }]
+        : null
   const selectShoe = (product) => navigate(shoePath(product), { state: { product } })
 
   return (
@@ -704,19 +715,26 @@ export default function ShoeCollection() {
       {/* ── Product count ─────────────────────────────────────────
           Während geladen wird, steht hier ein Balken statt einer Zahl. „0
           Modelle" wäre eine Aussage über den Katalog, und sie wäre falsch —
-          gezählt ist erst, was angekommen ist. */}
-      <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2" aria-live="polite">
-        {laedt ? (
-          <>
-            <span className="inline-block h-3 w-20 bg-black/[0.06] animate-pulse align-middle" aria-hidden="true" />
-            <span className="sr-only">Modelle werden geladen</span>
-          </>
-        ) : (
-          <p className="text-[11px] text-black/30 font-light tabular-nums">
-            {filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}
-          </p>
-        )}
-      </div>
+          gezählt ist erst, was angekommen ist.
+
+          Bei genau einem Abschnitt entfällt die Zeile: Die Überschrift
+          darunter nennt dieselbe Zahl, und zweimal „5 Modelle" untereinander
+          sieht nach einem Fehler aus. Bei dreien bleibt sie — dort ist sie
+          die Summe und damit eine andere Auskunft. */}
+      {!(abschnitte?.length === 1) && (
+        <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2 text-center" aria-live="polite">
+          {laedt ? (
+            <>
+              <span className="inline-block h-3 w-20 bg-black/[0.06] animate-pulse align-middle" aria-hidden="true" />
+              <span className="sr-only">Modelle werden geladen</span>
+            </>
+          ) : (
+            <p className="text-[11px] text-black/30 font-light tabular-nums">
+              {filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ── Product Grid (LV style, 4-col, compact cards) ────── */}
       {/* Randlos auf dem Telefon: die Bilder tragen die Seite bis an die
@@ -768,8 +786,17 @@ export default function ShoeCollection() {
               Behauptung der Reiterleiste, die das Raster nicht einlöst. */
           abschnitte.map((abschnitt, i) => (
             <section key={abschnitt.key} className={i > 0 ? 'mt-14 lg:mt-20' : ''}>
-              <header className={`px-5 lg:px-0 pb-5 lg:pb-7 ${i > 0 ? 'border-t border-black/[0.09] pt-10 lg:pt-14' : ''}`}>
-                <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight flex items-baseline gap-2.5 flex-wrap">
+              {/* Mittig, wie alles darüber: Titel, Reiter und Suchfeld stehen
+                  auf der Mittelachse — eine linksbündige Überschrift dazwischen
+                  ließ die Seite kippen.
+                  Und mit Luft nach oben: Der erste Abschnitt stieß fast an die
+                  Modellzahl darüber. Die folgenden haben ihre Trennlinie, die
+                  den Abstand mitbringt; der erste hat keine und brauchte ihn
+                  ausdrücklich. */}
+              <header className={`px-5 lg:px-0 pb-5 lg:pb-7 text-center ${
+                i > 0 ? 'border-t border-black/[0.09] pt-10 lg:pt-14' : 'pt-8 lg:pt-12'
+              }`}>
+                <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight flex items-baseline justify-center gap-2.5 flex-wrap">
                   {abschnitt.titel}
                   {/* Ausgeschrieben, nicht als nackte Ziffer: Neben einer
                       Überschrift steht eine allein stehende Zahl für alles
@@ -786,7 +813,7 @@ export default function ShoeCollection() {
                     </span>
                   )}
                 </h2>
-                <p className="text-[11px] lg:text-[12px] text-black/35 font-light mt-1 max-w-md leading-relaxed">
+                <p className="text-[11px] lg:text-[12px] text-black/35 font-light mt-1.5 max-w-md mx-auto leading-relaxed">
                   {abschnitt.text}
                 </p>
               </header>
