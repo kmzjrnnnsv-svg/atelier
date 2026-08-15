@@ -120,7 +120,7 @@ export default function AffiliatePortal() {
   // Teilen-Auswahl (WhatsApp, Nachrichten, Mail); wo es die nicht gibt —
   // Firefox, ältere Browser, http — bleibt der Weg über die Zwischenablage.
   const shareLink = async () => {
-    const text = `Maßgefertigte Schuhe von Artisan Sole. Mit diesem Link ist mein Code ${data.affiliate.code} beim Bezahlen schon hinterlegt:`
+    const text = `Custom Made Schuhe von Artisan Sole. Mit diesem Link ist mein Code ${data.affiliate.code} beim Bezahlen schon hinterlegt:`
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Artisan Sole', text, url: data.link })
@@ -260,7 +260,7 @@ export default function AffiliatePortal() {
                   <Share2 size={14} strokeWidth={1.5} /> Weitergeben
                 </button>
                 <a
-                  href={`mailto:?subject=${encodeURIComponent('Maßgefertigte Schuhe von Artisan Sole')}&body=${encodeURIComponent(`Mit diesem Link ist mein Code ${a.code} beim Bezahlen schon hinterlegt:\n\n${link}`)}`}
+                  href={`mailto:?subject=${encodeURIComponent('Custom Made Schuhe von Artisan Sole')}&body=${encodeURIComponent(`Mit diesem Link ist mein Code ${a.code} beim Bezahlen schon hinterlegt:\n\n${link}`)}`}
                   className="h-12 flex items-center justify-center gap-2 bg-white text-black/70 border border-black/15 text-[11px] tracking-[0.16em] uppercase no-underline"
                 >
                   <Mail size={14} strokeWidth={1.5} /> Per E-Mail

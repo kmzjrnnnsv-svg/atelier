@@ -712,28 +712,19 @@ export default function ShoeCollection() {
         </div>
       )}
 
-      {/* ── Product count ─────────────────────────────────────────
-          Während geladen wird, steht hier ein Balken statt einer Zahl. „0
-          Modelle" wäre eine Aussage über den Katalog, und sie wäre falsch —
-          gezählt ist erst, was angekommen ist.
+      {/* ── Woran der Laden gerade ist ─────────────────────────────
+          Hier stand eine Zeile „11 Modelle" über dem Raster. Sie sagte
+          nichts, was nicht schon zweimal dastand: am Reiter in Klammern und
+          in der Rubriküberschrift darunter. Dreimal dieselbe Zahl auf
+          zwanzig Zentimetern — und keine davon war die Auskunft, die jemand
+          gesucht hätte.
 
-          Bei genau einem Abschnitt entfällt die Zeile: Die Überschrift
-          darunter nennt dieselbe Zahl, und zweimal „5 Modelle" untereinander
-          sieht nach einem Fehler aus. Bei dreien bleibt sie — dort ist sie
-          die Summe und damit eine andere Auskunft. */}
-      {!(abschnitte?.length === 1) && (
-        <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2 text-center" aria-live="polite">
-          {laedt ? (
-            <>
-              <span className="inline-block h-3 w-20 bg-black/[0.06] animate-pulse align-middle" aria-hidden="true" />
-              <span className="sr-only">Modelle werden geladen</span>
-            </>
-          ) : (
-            <p className="text-[11px] text-black/30 font-light tabular-nums">
-              {filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}
-            </p>
-          )}
-        </div>
+          Was bleibt, ist die Ansage für alle, die den Bildschirm nicht
+          sehen: Sonst wechselte die Seite lautlos von leer auf zweiunddreißig
+          Modelle. Sichtbar ist an dieser Stelle nichts mehr — der Ladezustand
+          steht in den Kachelflächen selbst. */}
+      {laedt && (
+        <p className="sr-only" role="status" aria-live="polite">Modelle werden geladen</p>
       )}
 
       {/* ── Product Grid (LV style, 4-col, compact cards) ────── */}
@@ -741,7 +732,10 @@ export default function ShoeCollection() {
           Displaykante, wie in den Apps der großen Häuser. Erst ab lg gibt es
           wieder Seitenränder, sonst würde das Raster auf großen Schirmen
           auseinanderlaufen. */}
-      <div className="px-0 lg:px-24 xl:px-32 pb-16">
+      {/* Der Abstand nach oben sitzt jetzt hier statt an der weggefallenen
+          Zählzeile — so bekommt ihn auch das schlichte Raster (Suchtreffer,
+          Aktionsmodelle), das keine Überschrift über sich hat. */}
+      <div className="px-0 lg:px-24 xl:px-32 pt-8 lg:pt-10 pb-16">
         {laedt ? (
           <Ladeflaeche />
         ) : filtered.length === 0 ? (
@@ -789,12 +783,13 @@ export default function ShoeCollection() {
               {/* Mittig, wie alles darüber: Titel, Reiter und Suchfeld stehen
                   auf der Mittelachse — eine linksbündige Überschrift dazwischen
                   ließ die Seite kippen.
-                  Und mit Luft nach oben: Der erste Abschnitt stieß fast an die
-                  Modellzahl darüber. Die folgenden haben ihre Trennlinie, die
-                  den Abstand mitbringt; der erste hat keine und brauchte ihn
-                  ausdrücklich. */}
+                  Und mit Luft nach oben: Die folgenden Abschnitte haben ihre
+                  Trennlinie, die den Abstand mitbringt; der erste hat keine
+                  und brauchte ihn ausdrücklich. Den Hauptteil davon trägt
+                  inzwischen der Innenabstand des Rasters — hier steht nur
+                  noch der Rest. */}
               <header className={`px-5 lg:px-0 pb-5 lg:pb-7 text-center ${
-                i > 0 ? 'border-t border-black/[0.09] pt-10 lg:pt-14' : 'pt-8 lg:pt-12'
+                i > 0 ? 'border-t border-black/[0.09] pt-10 lg:pt-14' : 'pt-4 lg:pt-6'
               }`}>
                 <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight flex items-baseline justify-center gap-2.5 flex-wrap">
                   {abschnitt.titel}
@@ -887,7 +882,7 @@ export default function ShoeCollection() {
               text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.',
             },
           ]}
-          fuss="Ein maßgefertigter Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen — zurückgeben lässt er sich deshalb nicht. Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für Sie. Gefällt es Ihnen schlicht nicht, erstatten wir aus Kulanz bis zur Hälfte des Kaufpreises; dasselbe gilt bei einer Stornierung nach Fertigungsbeginn. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung vollständig zurück. Die Einzelheiten stehen in den AGB."
+          fuss="Ein Custom Made Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen — zurückgeben lässt er sich deshalb nicht. Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für Sie. Gefällt es Ihnen schlicht nicht, erstatten wir aus Kulanz bis zur Hälfte des Kaufpreises; dasselbe gilt bei einer Stornierung nach Fertigungsbeginn. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung vollständig zurück. Die Einzelheiten stehen in den AGB."
         />
       </div>
     </div>

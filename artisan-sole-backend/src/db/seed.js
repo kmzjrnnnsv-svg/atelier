@@ -1544,9 +1544,10 @@ function seedFaqs(db) {
 
 // ── Einmalige, idempotente Bereinigung bestehender DB-Texte ────────────────
 // Stellt bereits geseedete Inhalte (E-Mail-Templates, Konfigurator-Optionen,
-// Artikel, FAQ, Material-/Farb-Tipps) auf die neue Sprache um: "Maßschuh/
-// Maßanfertigung/Bespoke" → "Custom Made", Lieferzeit → "ca. 4 Wochen nach
-// Zahlungseingang" und entfernt Gedankenstriche. "maßgefertigt" bleibt.
+// Artikel, FAQ, Material-/Farb-Tipps, Treuestufen, Seitentexte) auf die neue
+// Sprache um: "Maßschuh/Maßanfertigung/Bespoke/maßgefertigt" → "Custom Made",
+// Lieferzeit → "ca. 4 Wochen nach Zahlungseingang" und entfernt
+// Gedankenstriche.
 // Achtung: überschreibt entsprechende Stellen auch bei manuellen CMS-Edits.
 function cleanLegacyText(s, isSubject) {
   if (s == null) return s
@@ -1557,6 +1558,18 @@ function cleanLegacyText(s, isSubject) {
     .replace(/Maßschuh\b/g, 'Custom-made Schuh')
     .replace(/Maßanfertigungen/g, 'Custom-Made-Anfertigungen')
     .replace(/Maßanfertigung/g, 'Custom Made')
+    // „maßgefertigt" beugt sich, „Custom Made" nicht — es steht unverändert
+    // vor dem Substantiv, wie „prima" oder „rosa". In allen Fällen bis auf
+    // einen geht das auf, weil das Substantiv sein Kennzeichen selbst trägt.
+    //
+    // Die Ausnahme ist der Genitiv Plural: In „die Präzision maßgefertigter
+    // Schuhe" steckt der Fall AM ADJEKTIV. Fiele die Endung weg, stünde dort
+    // ein Satz ohne Fall. Diese eine Wendung wird deshalb ganz ersetzt —
+    // „von Custom Made Schuhen", Dativ statt Genitiv. Sie kommt in den
+    // geseedeten Texten genau zweimal vor, beide Male mit „Schuhe".
+    .replace(/\bma(?:ß|ss)gefertigter Schuhe\b/g, 'von Custom Made Schuhen')
+    .replace(/\bMa(?:ß|ss)gefertigter Schuhe\b/g, 'Von Custom Made Schuhen')
+    .replace(/\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/g, 'Custom Made')
     .replace(/Bespoke Footwear/g, 'Custom Made Footwear')
     .replace(/Bespoke/g, 'Custom Made')
     .replace(/6\s*[–-]\s*8\s*Wochen/g, 'ca. 4 Wochen nach Zahlungseingang')
@@ -1564,13 +1577,21 @@ function cleanLegacyText(s, isSubject) {
     .replace(/\s[–—]\s/g, isSubject ? ' · ' : ', ')
 }
 
-function cleanupLegacyWording(db) {
+// Ausgeführt beim Start; ausgeführt auch von `tests/wortlaut.mjs`, das einen
+// Bestand mit altem Wortlaut nachstellt und den Durchgang darüber laufen
+// lässt. Deshalb nach außen sichtbar.
+export function cleanupLegacyWording(db) {
   const TARGETS = [
     { table: 'email_templates', pk: 'type', cols: ['name', 'description', 'subject', 'intro', 'body'], subjectCols: ['subject'] },
     { table: 'faqs',            pk: 'id',   cols: ['question', 'answer'] },
     { table: 'options',         pk: 'id',   cols: ['label', 'description'] },
     { table: 'shoe_materials',  pk: 'id',   cols: ['label', 'sub', 'tip'] },
     { table: 'shoe_colors',     pk: 'id',   cols: ['name', 'tip', 'pairs_with'] },
+    // Die Treuestufen tragen den Begriff in ihrer Beschreibung und in der
+    // Vorteilsliste. `benefits` ist eine JSON-Liste — ein Textersatz darin
+    // ist unbedenklich, weil weder der alte noch der neue Wortlaut ein
+    // Anführungszeichen oder einen Gegenschrägstrich enthält.
+    { table: 'loyalty_tiers',   pk: 'id',   cols: ['description', 'benefits'] },
   ]
   let changed = 0
   const tableExists = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
@@ -1589,6 +1610,32 @@ function cleanupLegacyWording(db) {
       }
     })()
   }
+  // Die Einstellungen bekommen einen eigenen, engeren Durchgang.
+  //
+  // Ihr `value` ist meist JSON — Footer-Spalten, Seitentexte, Bankdaten. Die
+  // volle Bereinigung dort laufen zu lassen wäre gefährlich: Sie zieht auch
+  // Gedankenstriche zu Kommas, und in einem Footer-Eintrag oder einer IBAN
+  // hat das nichts zu suchen. Ersetzt wird deshalb nur der eine Begriff.
+  //
+  // Ohne diesen Durchgang bliebe „Maßgefertigt" als Auszeichnung unter jedem
+  // Konfigurator stehen: Der Text liegt unter `product-texts` und wird aus
+  // dem Programm nur noch geholt, wenn in der Datenbank nichts steht.
+  try {
+    const zeilen = db.prepare('SELECT key, value FROM settings').all()
+    const upd = db.prepare("UPDATE settings SET value = ?, updated_at = datetime('now') WHERE key = ?")
+    let n = 0
+    db.transaction(() => {
+      for (const z of zeilen) {
+        const neu = String(z.value ?? '')
+          .replace(/\bma(?:ß|ss)gefertigter Schuhe\b/g, 'von Custom Made Schuhen')
+          .replace(/\bMa(?:ß|ss)gefertigter Schuhe\b/g, 'Von Custom Made Schuhen')
+          .replace(/\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/g, 'Custom Made')
+        if (neu !== z.value) { upd.run(neu, z.key); n++ }
+      }
+    })()
+    changed += n
+  } catch (e) { console.error('[Bereinigung Einstellungen]', e.message) }
+
   if (changed) console.log(`✅ Bereinigt: ${changed} DB-Texte (Custom-Made-Wording, keine Gedankenstriche)`)
 }
 

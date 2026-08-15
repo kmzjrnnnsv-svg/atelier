@@ -12,7 +12,7 @@ const STEPS = [
   {
     icon: Sparkles,
     title: 'Individuelle Schuhleisten',
-    desc: 'Auf Basis deiner Maße erstellen wir einen digitalen Leisten, die Grundlage für maßgefertigte Schuhe.',
+    desc: 'Auf Basis deiner Maße erstellen wir einen digitalen Leisten, die Grundlage für Custom Made Schuhe.',
   },
   {
     icon: Ruler,

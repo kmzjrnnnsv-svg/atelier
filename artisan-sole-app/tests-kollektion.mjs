@@ -257,6 +257,17 @@ const ueberschrift = (await page.locator('h2').first().innerText()).replace(/\s+
 p('Die Abschnittsüberschrift schreibt „Modelle" aus',
   /\d+\s+modelle?\b/i.test(ueberschrift), `„${ueberschrift}"`)
 
+// Über dem Raster stand einmal eine Zeile „32 Modelle". Sie sagte nichts,
+// was nicht schon am Reiter in Klammern und in der Überschrift darunter
+// stand — dreimal dieselbe Zahl, und keine davon die gesuchte Auskunft.
+// Am Reiter steht „Alle Modelle (32)", in den Überschriften 18/7/7 — die
+// Zeichenfolge „32 Modelle" käme also nur aus der weggefallenen Zeile.
+const oben = (await page.locator('body').innerText()).replace(/\s+/g, ' ')
+p('Keine eigene Zählzeile mehr über dem Raster',
+  !oben.toLowerCase().includes(`${alle} modelle`), `${alle} Modelle`)
+// Die Summe steht weiterhin am Reiter — nur eben genau dort und nur einmal.
+p('Die Gesamtzahl steht am Reiter', oben.includes(`(${alle})`), `(${alle})`)
+
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('6. Solange geladen wird')
 

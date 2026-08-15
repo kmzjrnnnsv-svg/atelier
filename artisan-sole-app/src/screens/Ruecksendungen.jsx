@@ -1,7 +1,7 @@
 /**
  * Ruecksendungen — Rücksendungen im eigenen Bereich.
  *
- * Der maßgefertigte Schuh entsteht für einen bestimmten Fuß und ist danach für
+ * Der Custom Made Schuh entsteht für einen bestimmten Fuß und ist danach für
  * niemanden sonst zu gebrauchen — er ist vom Widerruf ausgenommen. Zubehör ist
  * Lagerware und geht regulär zurück.
  *
@@ -228,7 +228,7 @@ export default function Ruecksendungen() {
         <p className="text-[10px] uppercase tracking-[0.3em] text-black/25 mb-3">Rücksendungen</p>
         <h1 className="text-[26px] lg:text-[32px] font-extralight text-black tracking-tight">Etwas zurücksenden</h1>
         <p className="text-[13px] text-black/45 font-light leading-relaxed max-w-xl mt-3">
-          {daten?.shoe_note || 'Maßgefertigte Schuhe können nicht zurückgegeben werden. Zubehör geht regulär zurück.'}
+          {daten?.shoe_note || 'Custom Made Schuhe können nicht zurückgegeben werden. Zubehör geht regulär zurück.'}
           {daten?.window_days ? ` Zubehör innerhalb von ${daten.window_days} Tagen nach Zustellung.` : ''}
         </p>
       </div>

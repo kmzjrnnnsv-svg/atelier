@@ -211,7 +211,7 @@ export default function CorporateGifting() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 lg:mb-16">
             <p className={`${eyebrow} mb-3`}>Custom Made</p>
-            <h2 className={h2cls}>Die Präzision maßgefertigter Schuhe, ohne den Aufwand</h2>
+            <h2 className={h2cls}>Die Präzision von Custom Made Schuhen, ohne den Aufwand</h2>
             <p className={`${lead} mt-4 max-w-xl mx-auto`}>
               Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben der Empfänger genügen, den Rest übernehmen wir.
             </p>

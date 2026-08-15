@@ -1258,7 +1258,7 @@ export async function sendCampaignInvitation(email, campaign, businessName) {
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">${escapeHtml(campaign.name)}</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">
       ${businessName ? `${escapeHtml(businessName)} lädt Sie ein` : 'Sie sind eingeladen'}, an dieser Aktion
-      teilzunehmen${rabatt ? ` — mit ${rabatt} auf Ihr maßgefertigtes Paar` : ''}.
+      teilzunehmen${rabatt ? ` — mit ${rabatt} auf Ihr Custom Made Paar` : ''}.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Jetzt teilnehmen</a>
     <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>

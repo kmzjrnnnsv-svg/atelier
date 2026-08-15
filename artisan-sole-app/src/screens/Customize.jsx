@@ -1864,7 +1864,7 @@ export default function Customize() {
               )}
             </p>
             <div className="flex items-center gap-4 mt-3">
-              {(pageTexts?.badges?.length ? pageTexts.badges : ['Handgenäht', 'Maßgefertigt', '200+ Schritte']).map((b, i, arr) => (
+              {(pageTexts?.badges?.length ? pageTexts.badges : ['Handgenäht', 'Custom Made', '200+ Schritte']).map((b, i, arr) => (
                 <span key={b} className="flex items-center gap-4">
                   <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>{b}</span>
                   {i < arr.length - 1 && <span className="text-black/10">·</span>}

@@ -1290,7 +1290,7 @@ router.get('/ruecksendungen/meine', authenticate, (req, res) => {
     orders: antwort,
     // Warum der Schuh fehlt, steht einmal zentral — sonst sucht man ihn in
     // jeder einzelnen Bestellung.
-    shoe_note: 'Maßgefertigte Schuhe entstehen für einen bestimmten Fuß und lassen sich deshalb nicht zurückgeben. Passt etwas nicht, sehen wir uns das an.',
+    shoe_note: 'Custom Made Schuhe entstehen für einen bestimmten Fuß und lassen sich deshalb nicht zurückgeben. Passt etwas nicht, sehen wir uns das an.',
   })
 })
 
@@ -1342,7 +1342,7 @@ router.post('/:id/ruecksendung', authenticate, (req, res) => {
     if (!v) {
       // Der häufigste Fall: Jemand versucht den Schuh zurückzugeben.
       if (name && name === order.shoe_name) {
-        return res.status(409).json({ error: 'Maßgefertigte Schuhe lassen sich nicht zurückgeben. Passt etwas nicht, sehen wir uns das an — bitte melden Sie sich.' })
+        return res.status(409).json({ error: 'Custom Made Schuhe lassen sich nicht zurückgeben. Passt etwas nicht, sehen wir uns das an — bitte melden Sie sich.' })
       }
       return res.status(400).json({ error: `„${name}" gehört nicht zu den rücksendbaren Positionen dieser Bestellung.` })
     }
