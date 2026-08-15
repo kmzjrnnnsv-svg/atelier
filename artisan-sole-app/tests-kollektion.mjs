@@ -22,6 +22,7 @@
  *   BASIS=https://localhost:5173 node tests-kollektion.mjs
  */
 import { chromium } from 'playwright'
+import { saisonsSortiert, laufendeSaison } from './src/lib/saison.js'
 
 const BASIS = process.env.BASIS || 'https://localhost:5173'
 let ok = 0
@@ -97,6 +98,50 @@ for (const ueber of ['Frühling & Sommer', 'Herbst & Winter', 'Das ganze Jahr'])
   p(`Abschnitt „${ueber}"`, hat(text, ueber))
 }
 
+// ── Die Reihenfolge richtet sich nach dem Datum ─────────────────────────
+//
+// Zuerst die ganzjährigen, dann die Jahreszeit, die gerade läuft, zuletzt
+// die andere. Im August stehen die Sommerschuhe vor den Stiefeln, im Januar
+// umgekehrt.
+//
+// Erst die reine Funktion über alle zwölf Monate — sonst prüfte dieses
+// Skript nur den Tag, an dem es zufällig läuft, und die Umkehrung im
+// Oktober fiele niemandem auf.
+for (const [monat, sollJetzt] of [
+  [1, 'winter'], [2, 'winter'], [3, 'winter'], [4, 'summer'], [5, 'summer'], [6, 'summer'],
+  [7, 'summer'], [8, 'summer'], [9, 'summer'], [10, 'winter'], [11, 'winter'], [12, 'winter'],
+]) {
+  const d = new Date(Date.UTC(2026, monat - 1, 15))
+  const reihe = saisonsSortiert(d).map(x => x.key)
+  const soll = ['all', sollJetzt, sollJetzt === 'summer' ? 'winter' : 'summer']
+  p(`Monat ${String(monat).padStart(2)}: ${soll.join(' · ')}`,
+    laufendeSaison(d) === sollJetzt && reihe.join(',') === soll.join(','), reihe.join(' · '))
+}
+
+// Und dann, dass die Seite sich daran hält.
+const erwartet = saisonsSortiert(new Date()).map(x => x.titel)
+const gezeigt = await page.$$eval('section h2', els => els.map(e => e.innerText.trim()))
+p('Die Abschnitte stehen in dieser Reihenfolge',
+  gezeigt.length === erwartet.length
+  && gezeigt.every((t, i) => t.toLowerCase().startsWith(erwartet[i].toLowerCase())),
+  gezeigt.join(' | '))
+p('Die ganzjährigen stehen oben', /ganze jahr/i.test(gezeigt[0] || ''), gezeigt[0] || '—')
+// Der Vermerk sagt, warum dieser Block dort steht. Ohne ihn wirkt die
+// Reihenfolge willkürlich — und im Januar, wenn sie sich umdreht, wie ein
+// Fehler.
+p('Die laufende Jahreszeit ist als „Jetzt" gekennzeichnet',
+  (gezeigt[1] || '').toUpperCase().includes('JETZT'), gezeigt[1] || '—')
+p('Und die andere nicht', !(gezeigt[2] || '').toUpperCase().includes('JETZT'), gezeigt[2] || '—')
+
+// Auch die Reiterleiste folgt derselben Reihenfolge — zwei verschiedene
+// Ordnungen auf einer Seite wären zwei Behauptungen.
+const reiter = await page.$$eval('button', els =>
+  els.map(e => e.innerText.trim()).filter(t => /^(Alle Modelle|Sommer|Winter|Ganzjährig)/.test(t)))
+const reiterSoll = ['Alle Modelle', ...saisonsSortiert(new Date()).map(x => x.label)]
+p('Die Reiterleiste in derselben Reihenfolge',
+  reiter.length >= 4 && reiter.slice(0, 4).every((t, i) => t.startsWith(reiterSoll[i])),
+  reiter.slice(0, 4).join(' · '))
+
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('3. Ein Reiter zeigt seine Rubrik')
 
@@ -167,6 +212,78 @@ await page.getByText('Suche zurücksetzen').first().click({ force: true })
 await page.waitForTimeout(700)
 p('Zurücksetzen bringt alles wieder', await kacheln() === alle, `${await kacheln()} von ${alle}`)
 p('Ohne Laufzeitfehler', schlimm().length === 0, schlimm()[0]?.slice(0, 110) || '')
+
+// ════════════════════════════════════════════════════════════════════════
+abschnitt('5. Was die Zahlen bedeuten')
+
+// „Alle Modelle32" — die Ziffer klebte am Namen und stand in black/15, also
+// knapp über unsichtbar. Wer sie sah, konnte sie für einen Teil der
+// Beschriftung halten. In Klammern ist sie als Anzahl zu erkennen.
+await feld.fill('')
+await page.waitForTimeout(700)
+
+const reiterAlle = page.getByRole('button', { name: /^Alle Modelle/ }).first()
+const reiterText = (await reiterAlle.innerText()).replace(/\s+/g, ' ')
+p('Die Zahl am Reiter steht in Klammern', /\(\d+\)/.test(reiterText), `„${reiterText}"`)
+p('Und klebt nicht am Namen', !/Modelle\d/.test(reiterText))
+p('Sie nennt den Katalogumfang', reiterText.includes(`(${alle})`), `erwartet (${alle})`)
+
+// Für alle, die den Bildschirm nicht sehen: Der Reiter sagt selbst, was die
+// Zahl ist. Ohne das bliebe „(32)" eine Ziffer ohne Bezugswort.
+const beschriftung = await reiterAlle.getAttribute('aria-label')
+p('Der Reiter erklärt seine Zahl auch vorgelesen',
+  hat(beschriftung || '', 'Modelle'), `„${beschriftung}"`)
+
+// Der Kontrast: black/15 auf Weiß ist rund 1,2:1 und damit weit unter jedem
+// Maßstab. Gemessen wird, was gezeichnet wurde, nicht was im Quelltext steht.
+const deckkraft = await reiterAlle.locator('span').first().evaluate(el => {
+  const m = getComputedStyle(el).color.match(/[\d.]+/g)
+  return m && m.length > 3 ? Number(m[3]) : 1
+})
+p('Die Zahl ist dunkel genug zum Lesen', deckkraft >= 0.28, `Deckkraft ${deckkraft}`)
+
+const ueberschrift = (await page.locator('h2').first().innerText()).replace(/\s+/g, ' ')
+// Die Überschrift steht in Versalien — das macht das Stylesheet, nicht der
+// Text. Beim Vergleich also die Schreibung ignorieren.
+p('Die Abschnittsüberschrift schreibt „Modelle" aus',
+  /\d+\s+modelle?\b/i.test(ueberschrift), `„${ueberschrift}"`)
+
+// ════════════════════════════════════════════════════════════════════════
+abschnitt('6. Solange geladen wird')
+
+// Der Katalog wird künstlich aufgehalten, sonst ist der Zustand vorbei,
+// bevor man ihn sehen kann. Genau dieser Moment war die Beschwerde: Auf dem
+// Telefon dauerte er lang genug, um „Diese Rubrik wird gerade kuratiert" zu
+// lesen und wieder zu gehen.
+const langsam = await c.newPage()
+const langsamFehler = []
+langsam.on('pageerror', e => langsamFehler.push(String(e)))
+await langsam.route(/\/api\/shoes(\?|$)/, async route => {
+  await new Promise(r => setTimeout(r, 3000))
+  await route.continue()
+})
+await langsam.goto(`${BASIS}/collection`, { waitUntil: 'commit' })
+await langsam.waitForTimeout(1200)
+
+const waehrend = await langsam.locator('body').innerText()
+p('Kein „wird gerade kuratiert", während geladen wird', !hat(waehrend, 'kuratiert'),
+  hat(waehrend, 'kuratiert') ? 'steht aber da' : '')
+p('Und kein „0 Modelle"', !/\b0 Modelle\b/.test(waehrend),
+  /\b0 Modelle\b/.test(waehrend) ? 'steht aber da' : '')
+p('Auch kein „Nichts gefunden"', !hat(waehrend, 'haben wir nichts'))
+
+const platzhalter = await langsam.locator('div.grid > div.aspect-square').count()
+p('Stattdessen stehen die Kachelflächen schon da', platzhalter >= 4, `${platzhalter} Flächen`)
+p('Vorgelesen wird der Zustand genannt', hat(waehrend, 'werden geladen'))
+
+// Und danach: dieselbe Seite, gefüllt.
+await langsam.locator(KACHEL).first().waitFor({ timeout: 20000 }).catch(() => {})
+const danach = await langsam.locator(KACHEL).count()
+p('Nach dem Laden stehen die Modelle da', danach === alle, `${danach} von ${alle}`)
+p('Und die Platzhalter sind weg',
+  await langsam.locator('div.grid > div.aspect-square').count() === 0)
+p('Ohne Laufzeitfehler', langsamFehler.length === 0, langsamFehler[0]?.slice(0, 110) || '')
+await langsam.close()
 
 // ════════════════════════════════════════════════════════════════════════
 console.log(`\n── Ergebnis ${'─'.repeat(46)}\n`)

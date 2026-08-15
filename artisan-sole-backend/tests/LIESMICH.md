@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Elf Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Zwölf Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -76,6 +76,17 @@ im Betrieb, nichts nachgebaut.
                          und dass eine im CMS gesetzte Saison weder vom
                          nächsten Start noch von einem Speichern ohne das Feld
                          überschrieben wird.
+    tests/eindeutig.mjs  29 Prüfungen: ein Modellname gehört genau einem
+                         Modell. Der eindeutige Index in der Datenbank (er
+                         ist das Eigentliche — er gilt auch für ein INSERT von
+                         Hand), die Abweisung durch die Schreibroute samt
+                         lesbarem Satz, und dass „derselbe Name" auch dann
+                         gilt, wenn er groß geschrieben ist oder ein
+                         Leerzeichen zu viel trägt. Dazu der Weg über eine
+                         Datenbank, die schon Doppelte enthält: Sie werden
+                         beim Start unterscheidbar benannt, aber NICHT
+                         gelöscht — was der Betreiber angelegt hat, räumt er
+                         selbst weg. Braucht DB_PATH.
 
 ## Aufrufen
 
@@ -96,6 +107,7 @@ Bestellungen und Kampagnen an.
     node tests/mokassin.mjs
     node tests/guertel.mjs
     node tests/saison.mjs
+    DB_PATH=/tmp/pruef.db node tests/eindeutig.mjs
     DB_PATH=/tmp/pruef.db node tests/preise.mjs
     DB_PATH=/tmp/pruef.db node tests/nachdemkauf.mjs
 
@@ -151,6 +163,16 @@ Kopf der jeweiligen Datei.
                          durchgestrichene Preise auf Kachel und Modellseite,
                          und dass sich beides wieder loswerden lässt. Braucht
                          einen aktiven Code; das Skript nennt ihn über CODE=.
+    artisan-sole-app/tests-kollektion.mjs
+                         62 Prüfungen: die Kollektionsseite. Die Reihenfolge
+                         der Rubriken über zwölf Monate hinweg (erst die
+                         ganzjährigen, dann die laufende Jahreszeit), die
+                         Suche samt Saison-Treffern, die Zeit bis zur ersten
+                         Kachel — und was an ihrer Stelle steht, solange sie
+                         unterwegs ist. Der Katalog wird dafür künstlich
+                         aufgehalten: „Diese Rubrik wird gerade kuratiert"
+                         darf in diesem Moment NICHT dastehen, denn er stimmt
+                         nicht, und wer ihn liest, geht wieder.
     artisan-sole-app/tests-neue-seiten.mjs
                          32 Prüfungen: dass die Seiten nach dem Kauf und die
                          neuen Verwaltungsansichten überhaupt aufgehen. Ein

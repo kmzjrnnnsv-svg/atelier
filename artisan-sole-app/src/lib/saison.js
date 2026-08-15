@@ -42,6 +42,40 @@ export const SAISONS = [
 ]
 
 /**
+ * Welche Jahreszeit gerade läuft.
+ *
+ * ── Wo die Grenze liegt ──────────────────────────────────────────────────
+ *
+ * April bis September ist Sommer, der Rest Winter. Das ist der Kalender und
+ * nicht der Modekalender: Die Häuser zeigen ihre Herbstkollektion im August,
+ * weil sie ein halbes Jahr vorausplanen. Wir verkaufen keine Kollektionen,
+ * sondern Schuhe an Leute, die sie tragen wollen — und im August trägt
+ * niemand Stiefel.
+ *
+ * `datum` ist ein Übergabewert und keine Abfrage im Rumpf: Sonst ließe sich
+ * die Reihenfolge nur an dem Tag prüfen, an dem man gerade prüft.
+ */
+export const SOMMER_MONATE = [4, 5, 6, 7, 8, 9]
+
+export function laufendeSaison(datum = new Date()) {
+  return SOMMER_MONATE.includes(datum.getMonth() + 1) ? 'summer' : 'winter'
+}
+
+/**
+ * Die Rubriken in der Reihenfolge, in der sie im Laden stehen.
+ *
+ * Zuerst die ganzjährigen — sie gehen immer und sind die größte Gruppe.
+ * Dann die Jahreszeit, die gerade läuft. Zuletzt die andere: Sie
+ * verschwindet nicht, sie steht nur nicht mehr oben, wo im August die
+ * Stiefel standen.
+ */
+export function saisonsSortiert(datum = new Date()) {
+  const jetzt = laufendeSaison(datum)
+  const reihe = ['all', jetzt, jetzt === 'summer' ? 'winter' : 'summer']
+  return reihe.map(k => SAISONS.find(s => s.key === k)).filter(Boolean)
+}
+
+/**
  * Die Saison eines Modells.
  *
  * Steht keine dran, gilt „ganzjährig". Ein Schuh ohne Rubrik wäre sonst

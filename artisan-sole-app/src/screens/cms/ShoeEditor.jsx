@@ -103,6 +103,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  const [assignedMaterials, setAssignedMaterials] = useState([]) // string[] (keys)
  const [variantsLoaded, setVariantsLoaded] = useState(!initial.id)
  const [variantError, setVariantError] = useState(null)
+ const [speicherFehler, setSpeicherFehler] = useState(null)
  const [saving, setSaving] = useState(false)
  // Aktiver Tab pro Farbe: { [colorKey]: material_key|null }
  const [activeTab, setActiveTab] = useState({})
@@ -355,7 +356,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
      setVariantError('Jede ausgewählte Farbe braucht mindestens 1 Bild.')
      return
    }
-   setSaving(true); setVariantError(null)
+   setSaving(true); setVariantError(null); setSpeicherFehler(null)
    try {
      // Erstes Variant-Hex als Vorschau-Farbe übernehmen (für die Listen-Kachel),
      // ansonsten unverändert lassen.
@@ -367,7 +368,11 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
        if (selectedOpts.size > 0)  await persistOptions(shoeId)
      })
    } catch (e) {
-     setVariantError(e?.error || 'Speichern fehlgeschlagen')
+     // Der Server nennt bei einem doppelten Namen das Modell, das ihn schon
+     // trägt. Diese Meldung gehört an die Schaltfläche, an der sie entsteht —
+     // im Varianten-Block darüber stand sie unter Umständen außerhalb des
+     // Bildausschnitts, und der Redakteur sah nur, dass nichts geschah.
+     setSpeicherFehler(e?.error || 'Speichern fehlgeschlagen')
    } finally {
      setSaving(false)
    }
@@ -936,6 +941,12 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </div>
 
  {/* Actions */}
+ {speicherFehler && (
+ <div role="alert" className="mt-6 flex items-start gap-2 bg-red-50 border border-red-200 px-3 py-2.5">
+ <AlertCircle size={13} className="text-red-500 flex-shrink-0 mt-0.5" />
+ <p className="text-[11px] text-red-700 leading-relaxed">{speicherFehler}</p>
+ </div>
+ )}
  <div className="flex gap-3 pt-6 items-center">
  <button
  onClick={handleSave}

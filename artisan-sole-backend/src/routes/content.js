@@ -4,6 +4,7 @@ import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import { uniqueShoeSlug } from '../utils/slug.js'
 import { saisonFuerKategorie, istSaison } from '../utils/saison.js'
+import { sauberName, nameKollision } from '../utils/schuhname.js'
 import {
   guertelArtikel, wahlmoeglichkeiten as guertelWahl, preis as guertelPreis,
 } from '../utils/guertel.js'
@@ -31,6 +32,37 @@ function pickValidColumns(table, obj) {
   const out = {}
   for (const k of Object.keys(obj || {})) if (valid.has(k)) out[k] = obj[k]
   return out
+}
+
+/**
+ * Ein Grund, das Schreiben abzulehnen.
+ *
+ * `onWrite` durfte den Rumpf bisher nur ergänzen. Für „diesen Namen gibt es
+ * schon" reicht das nicht: Die Prüfung braucht die Datenbank, sitzt damit
+ * genau dort — und muss abbrechen können. Ein geworfener Fehler landete sonst
+ * im allgemeinen Fänger und käme als 500 zurück, aus der niemand liest, was
+ * zu tun ist.
+ */
+class SchreibAbbruch extends Error {
+  constructor(status, nutzlast) {
+    super(nutzlast?.message || 'Abgelehnt')
+    this.status = status
+    this.nutzlast = nutzlast
+  }
+}
+
+// Ruft `onWrite` und übersetzt einen Abbruch in eine Antwort. Liefert true,
+// wenn geschrieben werden darf.
+function anreichern(onWrite, ziel, ctx, res, durchWhitelist = null) {
+  if (!onWrite) return true
+  try {
+    const zusatz = onWrite(ziel, ctx)
+    Object.assign(ziel, durchWhitelist ? pickValidColumns(durchWhitelist, zusatz) : zusatz)
+    return true
+  } catch (e) {
+    if (e instanceof SchreibAbbruch) { res.status(e.status).json(e.nutzlast); return false }
+    throw e
+  }
 }
 
 // `listExclude` hält schwere Spalten aus der Listenantwort heraus, ohne sie
@@ -80,7 +112,7 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false, li
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
 
     const body = { ...req.body, created_by: req.user.id }
-    if (onWrite) Object.assign(body, onWrite(body, { db: getDb(), id: null }))
+    if (!anreichern(onWrite, body, { db: getDb(), id: null }, res)) return
     // Ein zuvor gelöschter Name wird wieder freigegeben, sobald jemand ihn
     // bewusst neu anlegt — sonst bliebe er für den Seed dauerhaft gesperrt.
     if (table === 'shoes' && body.name) {
@@ -107,7 +139,7 @@ function makeContentRouter(table, writeValidators = [], { publicRead = false, li
     if (!existing) return res.status(404).json({ error: 'Not found' })
 
     const writeBody = pickValidColumns(table, req.body)
-    if (onWrite) Object.assign(writeBody, pickValidColumns(table, onWrite(writeBody, { db, id: Number(req.params.id) })))
+    if (!anreichern(onWrite, writeBody, { db, id: Number(req.params.id) }, res, table)) return
     delete writeBody.id
     delete writeBody.created_by
 
@@ -175,7 +207,27 @@ export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
   // ist die Vorgabe, nicht das Gesetz.
   onWrite: (body, { db, id }) => {
     const zusatz = {}
-    if (body.name) zusatz.slug = uniqueShoeSlug(db, body.name, id)
+    if (body.name) {
+      // Der Name wird auf seine Schreibform gebracht, bevor irgendetwas mit
+      // ihm geschieht. Sonst hinge die Frage, ob zwei Modelle dasselbe heißen,
+      // an einem Leerzeichen, das niemand sieht.
+      const sauber = sauberName(body.name)
+      const belegt = nameKollision(db, sauber, id)
+      if (belegt) {
+        // `detail` trägt den Satz, `error` den Schlüssel: Der Laden zeigt das
+        // erste Feld an, das eine Meldung enthält, und `detail` steht davor.
+        // Stünde der Schlüssel dort, läse der Redakteur „SHOE_NAME_DOPPELT".
+        throw new SchreibAbbruch(409, {
+          error: 'SHOE_NAME_DOPPELT',
+          detail: `„${belegt.name}" gibt es bereits (Modell Nr. ${belegt.id}). `
+            + 'Zwei Modelle mit demselben Namen wären im Laden nicht auseinanderzuhalten — '
+            + 'bitte einen anderen Namen wählen oder das vorhandene Modell bearbeiten.',
+          conflictId: belegt.id,
+        })
+      }
+      zusatz.name = sauber
+      zusatz.slug = uniqueShoeSlug(db, sauber, id)
+    }
     if (!istSaison(body.season)) {
       const vorhanden = id ? db.prepare('SELECT season FROM shoes WHERE id = ?').get(id)?.season : null
       if (!istSaison(vorhanden)) zusatz.season = saisonFuerKategorie(body.category)

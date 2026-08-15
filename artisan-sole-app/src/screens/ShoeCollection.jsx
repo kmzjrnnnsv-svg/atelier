@@ -3,7 +3,7 @@
  * Clean grid, generous whitespace, minimal product cards
  * Modeled after LV's collection pages
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap, Search, X } from 'lucide-react'
 import useStore from '../store/store'
@@ -15,7 +15,7 @@ import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
-import { SAISONS, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
+import { saisonsSortiert, laufendeSaison, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
 
 // Die Rubriken des Ladens: Sommer, Winter, Ganzjährig.
@@ -29,9 +29,13 @@ import Ablauf from '../components/Ablauf'
 // Die Saison hat je Schuh genau eine Antwort. Sie steht am Modell und ist im
 // CMS zu ändern — die Machart (OXFORD, LOAFER …) bleibt im Programm, weil an
 // ihr Leisten und Optionen hängen, taucht im Laden aber nicht mehr auf.
-const BASE_CATEGORIES = [
+// Die Reihenfolge richtet sich nach dem Datum: zuerst die ganzjährigen, dann
+// die Jahreszeit, die gerade läuft, zuletzt die andere. Im August stehen die
+// Sommerschuhe vor den Stiefeln, im Januar umgekehrt — beides ist da, aber
+// oben steht, was jetzt zählt.
+const kategorienFuer = (datum) => [
   { label: 'Alle Modelle', value: 'ALL' },
-  ...SAISONS.map(s => ({ label: s.label, value: s.key })),
+  ...saisonsSortiert(datum).map(s => ({ label: s.label, value: s.key })),
 ]
 
 // ── Passform-Leiste, inline unter den Reitern, kein Overlay ────────────
@@ -360,6 +364,42 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
   )
 }
 
+/**
+ * Was an der Stelle der Kacheln steht, solange sie unterwegs sind.
+ *
+ * ── Was hier vorher stand ────────────────────────────────────────────────
+ *
+ * „0 Modelle" und darunter „Diese Rubrik wird gerade kuratiert. Bald
+ * verfügbar." — ein Satz über ein leeres Regal, während die Schuhe noch auf
+ * dem Weg waren. Er stimmte nie: Er erschien in genau der Sekunde, in der die
+ * Anfrage lief. Wer ihn las, hielt den Laden für leer und ging wieder.
+ *
+ * Die Kachelform steht deshalb schon da, bevor Inhalt da ist. Das ist keine
+ * Verzierung, sondern eine Aussage: Hier kommt etwas, und zwar so viel und in
+ * dieser Anordnung. Die Seite springt beim Eintreffen nicht mehr um, weil die
+ * Fläche bereits die richtige Höhe hat.
+ *
+ * Die Verzögerungen sind gestaffelt, damit die Fläche atmet statt zu blinken.
+ */
+const PLATZHALTER = [0, 1, 2, 3, 4, 5]
+
+function Ladeflaeche() {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-px lg:gap-x-5 lg:gap-y-5" aria-hidden="true">
+      {PLATZHALTER.map(i => (
+        <div key={i} className="w-full aspect-square bg-[#f6f5f3] overflow-hidden relative">
+          <div className="absolute inset-x-0 top-0 px-3.5 pt-3.5 flex flex-col gap-2">
+            <div className="h-2.5 w-2/5 bg-black/[0.06] animate-pulse"
+                 style={{ animationDelay: `${i * 110}ms` }} />
+            <div className="h-2.5 w-1/4 bg-black/[0.04] animate-pulse"
+                 style={{ animationDelay: `${i * 110 + 140}ms` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 export default function ShoeCollection() {
   const navigate = useNavigate()
@@ -438,6 +478,12 @@ export default function ShoeCollection() {
   // die Liste ein zweites Mal, mitsamt aller Bilder.
   const backendStatus = useStore(s => s.katalogStatus)
   const backendError  = useStore(s => s.katalogFehler)
+  // Solange nichts da ist und weder „fertig" noch „fehlgeschlagen" gemeldet
+  // wurde, ist der Katalog unterwegs. Bewusst nicht `=== 'loading'`: Käme je
+  // ein weiterer Zwischenstand dazu, fiele die Seite sonst in die Anzeige
+  // „leeres Regal" zurück — und das ist der Zustand, der hier nie wieder
+  // fälschlich erscheinen soll.
+  const laedt = shoes.length === 0 && backendStatus !== 'ok' && backendStatus !== 'error'
   const isPromo = !!user?.is_promotion
 
   useEffect(() => {
@@ -453,9 +499,15 @@ export default function ShoeCollection() {
   }, [user])
   const activeCampaign = campaigns[0] || null
 
+  // Einmal je Aufruf der Seite bestimmt. Ein Datum, das sich während des
+  // Betrachtens ändert, gibt es nicht — und ein Wert, der bei jedem
+  // Neuzeichnen neu entsteht, wäre eine neue Liste bei jedem Tastendruck im
+  // Suchfeld.
+  const rubriken = useMemo(() => kategorienFuer(new Date()), [])
+  const jetzt = useMemo(() => laufendeSaison(new Date()), [])
   const CATEGORIES = isPromo
-    ? [{ label: 'Promo', value: 'PROMO' }, ...BASE_CATEGORIES]
-    : BASE_CATEGORIES
+    ? [{ label: 'Promo', value: 'PROMO' }, ...rubriken]
+    : rubriken
 
   // Nur Kollektionen zeigen, in denen auch etwas steht. Eine leere
   // Registerkarte ist ein Versprechen auf ein Regal, das es nicht gibt.
@@ -492,7 +544,8 @@ export default function ShoeCollection() {
   // Stiefel und Sommerschuh Kachel an Kachel, und die Einteilung wäre eine
   // Behauptung der Reiterleiste, die das Raster nicht einlöst.
   const abschnitte = activeCategory === 'ALL' && !suche.trim()
-    ? SAISONS.map(s => ({ ...s, modelle: filtered.filter(p => saisonVon(p) === s.key) }))
+    ? saisonsSortiert(new Date())
+        .map(s => ({ ...s, modelle: filtered.filter(p => saisonVon(p) === s.key) }))
         .filter(a => a.modelle.length > 0)
     : null
   const selectShoe = (product) => navigate(shoePath(product), { state: { product } })
@@ -528,7 +581,7 @@ export default function ShoeCollection() {
                   }`}
                 >
                   {k.label}
-                  <span className={offen ? 'text-black/35 ml-1.5' : 'text-black/20 ml-1.5'}>{anzahl}</span>
+                  <span className={`ml-1.5 tabular-nums ${offen ? 'text-black/45' : 'text-black/30'}`}>({anzahl})</span>
                 </button>
               )
             })}
@@ -557,6 +610,8 @@ export default function ShoeCollection() {
               <button
                 key={cat.value}
                 onClick={() => setActiveCategory(cat.value)}
+                aria-pressed={activeCategory === cat.value}
+                aria-label={`${cat.label} — ${count} ${count === 1 ? 'Modell' : 'Modelle'}`}
                 className={`flex-shrink-0 px-3 lg:px-4 py-2 text-[11px] lg:text-[12px] border-0 bg-transparent transition-all ${
                   activeCategory === cat.value
                     ? 'text-black'
@@ -568,7 +623,16 @@ export default function ShoeCollection() {
                 }}
               >
                 {cat.label}
-                {count > 0 && <span className="text-black/15 ml-1 font-light">{count}</span>}
+                {/* Die Zahl in Klammern, nicht angeklebt. „Alle Modelle 32"
+                    las sich als Teil des Namens; „Alle Modelle (32)" ist als
+                    Anzahl zu erkennen, ohne dass jemand es erklären muss.
+                    Und heller als black/15 — bei dieser Deckkraft war die
+                    Ziffer eher zu erahnen als zu lesen. */}
+                {count > 0 && (
+                  <span className={`ml-1.5 font-light tabular-nums ${
+                    activeCategory === cat.value ? 'text-black/45' : 'text-black/30'
+                  }`}>({count})</span>
+                )}
               </button>
             )
           })}
@@ -637,9 +701,21 @@ export default function ShoeCollection() {
         </div>
       )}
 
-      {/* ── Product count ───────────────────────────────────────── */}
-      <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2">
-        <p className="text-[11px] text-black/20 font-light">{filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}</p>
+      {/* ── Product count ─────────────────────────────────────────
+          Während geladen wird, steht hier ein Balken statt einer Zahl. „0
+          Modelle" wäre eine Aussage über den Katalog, und sie wäre falsch —
+          gezählt ist erst, was angekommen ist. */}
+      <div className="px-5 lg:px-16 pt-5 lg:pt-6 pb-2" aria-live="polite">
+        {laedt ? (
+          <>
+            <span className="inline-block h-3 w-20 bg-black/[0.06] animate-pulse align-middle" aria-hidden="true" />
+            <span className="sr-only">Modelle werden geladen</span>
+          </>
+        ) : (
+          <p className="text-[11px] text-black/30 font-light tabular-nums">
+            {filtered.length} {filtered.length === 1 ? 'Modell' : 'Modelle'}
+          </p>
+        )}
       </div>
 
       {/* ── Product Grid (LV style, 4-col, compact cards) ────── */}
@@ -648,14 +724,10 @@ export default function ShoeCollection() {
           wieder Seitenränder, sonst würde das Raster auf großen Schirmen
           auseinanderlaufen. */}
       <div className="px-0 lg:px-24 xl:px-32 pb-16">
-        {filtered.length === 0 ? (
+        {laedt ? (
+          <Ladeflaeche />
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            {shoes.length === 0 && backendStatus === 'loading' && (
-              <>
-                <div className="w-6 h-6 border border-black/15 border-t-black/50 rounded-full animate-spin-custom mb-4" />
-                <p className="text-[14px] font-light text-black/40">Produkte werden geladen …</p>
-              </>
-            )}
             {shoes.length === 0 && backendStatus === 'error' && (
               <>
                 <p className="text-[14px] font-light text-red-700/80">Produkte können aktuell nicht geladen werden.</p>
@@ -697,11 +769,22 @@ export default function ShoeCollection() {
           abschnitte.map((abschnitt, i) => (
             <section key={abschnitt.key} className={i > 0 ? 'mt-14 lg:mt-20' : ''}>
               <header className={`px-5 lg:px-0 pb-5 lg:pb-7 ${i > 0 ? 'border-t border-black/[0.09] pt-10 lg:pt-14' : ''}`}>
-                <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight">
+                <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight flex items-baseline gap-2.5 flex-wrap">
                   {abschnitt.titel}
-                  <span className="text-black/20 text-[12px] lg:text-[13px] ml-2.5 font-light">
-                    {abschnitt.modelle.length}
+                  {/* Ausgeschrieben, nicht als nackte Ziffer: Neben einer
+                      Überschrift steht eine allein stehende Zahl für alles
+                      Mögliche — eine Nummerierung, ein Jahr, ein Preis. */}
+                  <span className="text-black/30 text-[12px] lg:text-[13px] font-light tabular-nums">
+                    {abschnitt.modelle.length} {abschnitt.modelle.length === 1 ? 'Modell' : 'Modelle'}
                   </span>
+                  {/* Woran man erkennt, warum dieser Block hier steht. Ohne
+                      den Vermerk wirkt die Reihenfolge willkürlich — und im
+                      Januar, wenn sie sich umdreht, wie ein Fehler. */}
+                  {abschnitt.key === jetzt && (
+                    <span className="text-[9px] tracking-[0.18em] uppercase text-black/45 border border-black/15 px-2 py-0.5">
+                      Jetzt
+                    </span>
+                  )}
                 </h2>
                 <p className="text-[11px] lg:text-[12px] text-black/35 font-light mt-1 max-w-md leading-relaxed">
                   {abschnitt.text}

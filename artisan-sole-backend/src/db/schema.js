@@ -1904,6 +1904,57 @@ export function runMigrations(db) {
     }
   } catch (e) { console.error('[migrate Moc Flex]', e.message) }
 
+  // ── Ein Modellname gehört genau einem Modell ─────────────────────────────
+  //
+  // Doppelte Modelle sind im Laden nicht auseinanderzuhalten: zwei Kacheln,
+  // derselbe Name, zwei verschiedene Konfigurationen dahinter. Wer die falsche
+  // anklickt, bestellt etwas anderes als das, was er gesehen hat.
+  //
+  // Bisher hat jeder Weg, auf dem ein Schuh entsteht, für sich geprüft — und
+  // alle mit `WHERE name = ?`, also zeichengenau. Ein Leerzeichen zu viel, ein
+  // großer Anfangsbuchstabe, und die Prüfung sagt „gibt es nicht". Einmal ist
+  // genau das passiert.
+  //
+  // Deshalb entscheidet das ab hier die Datenbank und nicht mehr der Aufrufer.
+  // Ein eindeutiger Index gilt für jeden INSERT — auch für den, den heute
+  // niemand geschrieben hat, und für den von Hand abgesetzten.
+  //
+  // Drei Schritte, in dieser Reihenfolge, sonst scheitert der letzte:
+  //   1. Namen auf ihre Schreibform bringen (Ränder ab, Mehrfachleerzeichen
+  //      zu einem) — sonst hinge der Unterschied an Unsichtbarem.
+  //   2. Vorgefundene Doppelte unterscheidbar machen. GELÖSCHT WIRD NICHTS:
+  //      Was ein Betreiber angelegt hat, räumt er selbst weg. Das ältere
+  //      Modell behält seinen Namen, das jüngere bekommt „(2)" angehängt und
+  //      steht damit sichtbar im CMS, statt still verschwunden zu sein.
+  //      Der Slug bleibt, wie er war — verschickte Links sollen halten.
+  //   3. Den Index setzen.
+  try {
+    const eintraege = db.prepare('SELECT id, name FROM shoes ORDER BY id ASC').all()
+    const putzen = db.prepare("UPDATE shoes SET name = ?, updated_at = datetime('now') WHERE id = ?")
+    let geputzt = 0, entdoppelt = 0
+    const gesehen = new Map()   // Schlüssel → erste id
+
+    for (const zeile of eintraege) {
+      const sauber = String(zeile.name ?? '').replace(/\s+/g, ' ').trim()
+      let endgueltig = sauber
+      const schluessel = sauber.toLowerCase()
+      if (gesehen.has(schluessel)) {
+        // Die nächste freie Nummer suchen, und dabei auch die Namen
+        // berücksichtigen, die in diesem Durchlauf gerade erst entstanden sind.
+        for (let n = 2; n < 1000; n++) {
+          const kandidat = `${sauber} (${n})`
+          if (!gesehen.has(kandidat.toLowerCase())) { endgueltig = kandidat; break }
+        }
+        entdoppelt++
+        console.warn(`⚠️  Doppeltes Modell: „${sauber}" (Nr. ${zeile.id}) heißt jetzt „${endgueltig}"`)
+      }
+      gesehen.set(endgueltig.toLowerCase(), zeile.id)
+      if (endgueltig !== zeile.name) { putzen.run(endgueltig, zeile.id); geputzt++ }
+    }
+
+    db.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_shoes_name_eindeutig ON shoes (lower(trim(name)))').run()
+    if (geputzt) console.log(`✅ Modellnamen bereinigt: ${geputzt} (davon ${entdoppelt} Doppelte umbenannt)`)
+  } catch (e) { console.error('[migrate Modellnamen eindeutig]', e.message) }
 
   // Bestehende Affiliates auf die eine Wahl heben. Der Nachlass hat Vorrang:
   // Er war das Zugesagte, die Zugabe die Beigabe — wer beides trug, behält
