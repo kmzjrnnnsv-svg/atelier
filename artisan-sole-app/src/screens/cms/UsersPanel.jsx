@@ -11,6 +11,20 @@ const roleBadge = {
  user: 'text-[9px] text-black/25 px-2.5 py-0.5 font-light tracking-wider',
 }
 
+/**
+ * Der Buchstabe im Kreis vor einem Namen.
+ *
+ * Muss jeden Fall aushalten: Konten, die über eine Affiliate-Einladung
+ * entstehen, tragen zunächst keinen Namen — dort steht ein leerer String.
+ * Ersatzweise gilt der erste Buchstabe der Adresse, und wenn auch die fehlt,
+ * ein Fragezeichen. Ein Platzhalter ist immer besser als eine Seite, die
+ * niemand mehr öffnen kann.
+ */
+function anfangsbuchstabe(u) {
+  const quelle = (u?.name || '').trim() || (u?.email || '').trim()
+  return quelle ? quelle[0].toUpperCase() : '?'
+}
+
 export default function UsersPanel() {
  const { user: me } = useAuth()
  const [users, setUsers] = useState([])
@@ -477,12 +491,17 @@ export default function UsersPanel() {
  <div className="min-w-0">
  <div className="flex items-center gap-3">
  <div className="w-7 h-7 bg-black/[0.04] flex items-center justify-center flex-shrink-0">
- <span className="text-[10px] font-light text-black/30">{u.name[0].toUpperCase()}</span>
+ {/* Ein Konto ohne Namen ließ die ganze Seite abstürzen: `''[0]` ist
+ undefined, und `.toUpperCase()` darauf wirft. Solche Konten
+ entstehen beim Anlegen eines Affiliates, von dem nur die
+ E-Mail-Adresse bekannt ist — die Verwaltung kam an ihre
+ Benutzerliste dann gar nicht mehr heran. */}
+ <span className="text-[10px] font-light text-black/30">{anfangsbuchstabe(u)}</span>
  </div>
  <div className="min-w-0">
  <div className="flex items-center gap-1.5">
  <p className="text-[13px] font-light text-black/70 truncate">
- {u.name}
+ {u.name?.trim() || <span className="text-black/35 italic">Ohne Namen</span>}
  {u.id === me.id && <span className="ml-1.5 text-[9px] text-black/20 font-light">(du)</span>}
  </p>
  {!!u.is_promotion && (

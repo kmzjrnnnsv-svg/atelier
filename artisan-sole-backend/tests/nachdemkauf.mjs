@@ -471,6 +471,17 @@ p('Ein Ja/Nein-Wert wird umgesetzt', r.status === 200, `HTTP ${r.status}`)
 r = await ruf(`/api/affiliates/${vId}`, { method: 'PUT', token: admin, body: { status: 'quatsch' } })
 p('Ein unzulässiger Status bekommt einen Grund', r.status === 400 && /CHECK/.test(r.daten?.error || ''), `HTTP ${r.status}`)
 
+// Ein Affiliate, von dem nur die Adresse bekannt ist, bekam ein Konto mit
+// leerem Namen — und die Benutzerliste der Verwaltung stürzte daran ab.
+const nurMail = `nurmail-${zufall()}@example.de`
+r = await ruf('/api/affiliates', { method: 'POST', token: admin, body: { email: nurMail } })
+p('Anlegen mit nur einer Adresse geht', r.status === 201, `HTTP ${r.status} ${r.daten?.error || ''}`)
+r = await ruf('/api/users', { token: admin })
+const frisch = (r.daten || []).find(x => x.email === nurMail)
+p('Das Konto dazu trägt einen Namen', !!frisch?.name?.trim(), JSON.stringify(frisch?.name))
+p('Kein einziges Konto ohne Namen', (r.daten || []).every(x => (x.name || '').trim()),
+  (r.daten || []).filter(x => !(x.name || '').trim()).map(x => x.email).join(', ') || 'keins')
+
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('14. Passwort vergessen')
 

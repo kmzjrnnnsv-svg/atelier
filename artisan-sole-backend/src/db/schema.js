@@ -1764,6 +1764,86 @@ export function runMigrations(db) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }
 
+  // ── Konten ohne Namen nachtragen ─────────────────────────────────────────
+  //
+  // Wer einen Affiliate über die E-Mail-Adresse allein anlegte, erzeugte ein
+  // Benutzerkonto mit leerem Namen. Das war nicht bloß unschön: Die
+  // Benutzerliste der Verwaltung griff auf den ersten Buchstaben zu, `''[0]`
+  // ist undefined, und die ganze Seite stürzte ab — an die Liste kam danach
+  // niemand mehr heran.
+  //
+  // Der Teil vor dem @ ist ein Notbehelf, kein Anspruch auf Richtigkeit. Er
+  // wird überschrieben, sobald der Affiliate seine Stammdaten einträgt, und
+  // ist allemal besser als eine Verwaltung, die sich nicht öffnen lässt.
+  try {
+    const info = db.prepare(`
+      UPDATE users
+      SET name = TRIM(REPLACE(REPLACE(REPLACE(
+            substr(email, 1, instr(email, '@') - 1), '.', ' '), '_', ' '), '-', ' ')),
+          updated_at = datetime('now')
+      WHERE (name IS NULL OR TRIM(name) = '') AND instr(email, '@') > 1
+    `).run()
+    if (info.changes) console.log(`✅ Nachgetragen: ${info.changes} Konto/Konten ohne Namen`)
+  } catch (e) { console.error('[migrate leere Namen]', e.message) }
+
+  // ── Farbnamen der Luxe-Calf-Reihe ────────────────────────────────────────
+  //
+  // Aus „Black" wird „Midnight Black", aus „Cognac" „Cognac Classic". Die
+  // alten Namen waren Farbbezeichnungen aus dem Gerbereikatalog; die neuen
+  // sind die, unter denen das Haus sie verkauft.
+  //
+  // Zwei Dinge dazu, die man wissen muss:
+  //
+  //  1. **Es gibt einen Namen je Farbe, nicht je Leder.** Die Tabelle führt
+  //     jede Farbe einmal und vermerkt daneben, für welche Leder sie gilt.
+  //     „Black" heißt deshalb auch beim Wildleder künftig „Midnight Black".
+  //     Wer je Leder verschiedene Namen will, bräuchte eine zweite Spalte —
+  //     das wäre eine eigene Entscheidung und keine Umbenennung.
+  //
+  //  2. **Genau einmal.** Der Merker verhindert, dass ein Neustart eine
+  //     spätere Änderung aus dem CMS wieder überschreibt. Umbenannt wird
+  //     außerdem nur, was noch den alten Namen trägt.
+  try {
+    const schonGelaufen = db.prepare("SELECT value FROM settings WHERE key = 'farbnamen_luxe_2026'").get()
+    if (!schonGelaufen) {
+      const NEUE_NAMEN = [
+        ['Black',        'Midnight Black'],
+        ['Grey',         'Silver Mist'],
+        ['Dark Brown',   'Espresso Heritage'],
+        ['Medium Brown', 'Cedar Brown'],
+        ['Syrup',        'Maple Amber'],
+        ['Cognac',       'Cognac Classic'],
+        ['Saffron',      'Saffron Sunset'],
+        ['Light Brown',  'Sandy Taupe'],
+        ['Oxblood',      'Bordeaux Heritage'],
+        ['Burgundy',     'Burgundy Wine'],
+        ['Red',          'Crimson Red'],
+        ['Forest Green', 'Forest Heritage'],
+        // Im Bestand heißt diese Farbe nur „Forest" — beide Schreibweisen
+        // treffen dasselbe und sollen auf denselben neuen Namen laufen.
+        ['Forest',       'Forest Heritage'],
+        ['Olive',        'Olive Grove'],
+        ['Navy',         'Midnight Navy'],
+        ['Medium Navy',  'Ocean Navy'],
+        ['Plain Crust',  'Natural Sand'],
+      ]
+      const um = db.prepare('UPDATE shoe_colors SET name = ? WHERE name = ? COLLATE NOCASE')
+      const getroffen = []
+      const fehlend = []
+      for (const [alt, neu] of NEUE_NAMEN) {
+        const info = um.run(neu, alt)
+        if (info.changes) getroffen.push(`${alt} → ${neu}`)
+        else if (!getroffen.some(g => g.endsWith(neu))) fehlend.push(alt)
+      }
+      db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('farbnamen_luxe_2026', ?, datetime('now'))")
+        .run(String(getroffen.length))
+      if (getroffen.length) console.log(`✅ Farbnamen: ${getroffen.length} umbenannt (${getroffen.join(', ')})`)
+      // Ausdrücklich melden, was NICHT gefunden wurde. Eine Umbenennung, die
+      // still nichts tut, sieht aus wie eine, die gewirkt hat.
+      if (fehlend.length) console.log(`ℹ️  Farbnamen: nicht im Bestand, daher unverändert — ${fehlend.join(', ')}`)
+    }
+  } catch (e) { console.error('[migrate Farbnamen]', e.message) }
+
   // Bestehende Affiliates auf die eine Wahl heben. Der Nachlass hat Vorrang:
   // Er war das Zugesagte, die Zugabe die Beigabe — wer beides trug, behält
   // den Nachlass, damit niemandem etwas weggenommen wird, das er versprochen

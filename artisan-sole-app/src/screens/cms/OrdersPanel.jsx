@@ -64,6 +64,16 @@ const ZUSTELLER = [
 const geld = (n) =>
  `${(Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
 
+// Was der Kunde zurückbekommen kann — absteigend, weil die volle Erstattung
+// der Normalfall ist und oben stehen soll.
+//
+// Welche Stufen in einer Phase tatsächlich angeboten werden, entscheidet der
+// Höchstsatz aus AGB 7.2: vor der Freigabe nur 100 %, in der Fertigung auch
+// 50 %, in der Endkontrolle auch 25 %. Die 0 % erscheinen nirgends, weil es
+// keine Phase gibt, in der wir alles einbehalten und trotzdem stornieren —
+// nach dem Versand ist die Stornierung beendet, dann greift die Kulanz.
+const ERSTATTUNGSSTUFEN = [100, 50, 25, 0]
+
 /**
  * Sendungsnummer eintragen.
  *
@@ -145,8 +155,15 @@ function StornoDialog({ order, onSchliessen, onFertig }) {
  }, [order.id])
 
  const betrag = vorschau?.betrag || 0
- const gebuehr = Math.round(betrag * (Number(satz) || 0)) / 100
- const erstattung = Math.round((betrag - gebuehr) * 100) / 100
+ // Ohne Zahlungseingang gibt es nichts zu erstatten und nichts einzubehalten.
+ //
+ // Das stand vorher nicht hier: Der Betrag wurde aus dem Auftragswert
+ // gerechnet, und bei einer unbezahlten Bestellung bot die Maske an, den
+ // vollen Preis zurückzuüberweisen — Geld, das nie eingegangen war. Der
+ // Server hat es immer richtig gerechnet, die Maske hat ihn nur nicht gefragt.
+ const bezahlt = vorschau?.bezahlt !== false
+ const gebuehr = bezahlt ? Math.round(betrag * (Number(satz) || 0)) / 100 : 0
+ const erstattung = bezahlt ? Math.round((betrag - gebuehr) * 100) / 100 : 0
 
  const stornieren = async () => {
   setLaeuft(true); setFehler(null)
@@ -181,29 +198,64 @@ function StornoDialog({ order, onSchliessen, onFertig }) {
      <>
       <p className="text-[12px] text-black/45 font-light leading-relaxed mb-4">{vorschau.hinweis}</p>
 
-      <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">
-       Einbehalt in Prozent — höchstens {vorschau.hoechstsatz} %
-      </label>
-      <input
-       type="number" min={0} max={vorschau.hoechstsatz} step={1}
-       value={satz ?? 0}
-       onChange={(e) => setSatz(Math.min(Number(e.target.value) || 0, vorschau.hoechstsatz))}
-       className="w-full h-10 border border-black/10 px-3 text-[13px] font-light mb-4"
-      />
+      {bezahlt && (
+       <>
+        <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">
+         Was der Kunde zurückbekommt
+        </label>
+        {/* Feste Stufen statt eines freien Feldes. Gedacht wird in dem, was
+            zurückgeht — danach fragt der Kunde, und danach fragt man sich
+            selbst. Der Einbehalt ist der Rest und steht unten in der
+            Aufstellung.
+
+            Angeboten wird nur, was die AGB in dieser Phase hergeben. Ziffer
+            7.2 nennt einen Höchstsatz für den Einbehalt, weniger dürfen wir
+            immer: Vor der Freigabe bleibt deshalb nur „alles zurück", in der
+            Fertigung kommen 50 % dazu, in der Endkontrolle 25 %. */}
+        <div className="flex flex-wrap gap-2 mb-4 mt-1">
+         {ERSTATTUNGSSTUFEN
+          .filter(e => 100 - e <= vorschau.hoechstsatz)
+          .map(e => {
+           const gewaehlt = (100 - (Number(satz) || 0)) === e
+           return (
+            <button
+             key={e} type="button" onClick={() => setSatz(100 - e)}
+             className={`px-4 h-10 text-[12px] border transition-all ${
+              gewaehlt
+               ? 'bg-black text-white border-black'
+               : 'bg-white text-black/50 border-black/15 hover:border-black/40'
+             }`}
+            >
+             {e} %{e === 100 ? ' — alles' : ''}
+            </button>
+           )
+          })}
+        </div>
+       </>
+      )}
 
       <div className="bg-black/[0.03] px-4 py-3 mb-4">
        <div className="flex justify-between py-0.5">
         <span className="text-[11px] text-black/40 font-light">Auftragswert</span>
         <span className="text-[12px] text-black/70 font-light">{geld(betrag)}</span>
        </div>
-       <div className="flex justify-between py-0.5">
-        <span className="text-[11px] text-black/40 font-light">Einbehalt</span>
-        <span className="text-[12px] text-black/70 font-light">− {geld(gebuehr)}</span>
-       </div>
-       <div className="flex justify-between py-0.5 border-t border-black/[0.06] mt-1 pt-1.5">
-        <span className="text-[11px] text-black/60 font-light">Zu erstatten</span>
-        <span className="text-[14px] text-black font-normal">{geld(erstattung)}</span>
-       </div>
+       {bezahlt ? (
+        <>
+         <div className="flex justify-between py-0.5">
+          <span className="text-[11px] text-black/40 font-light">Einbehalt ({satz ?? 0} %)</span>
+          <span className="text-[12px] text-black/70 font-light">− {geld(gebuehr)}</span>
+         </div>
+         <div className="flex justify-between py-0.5 border-t border-black/[0.06] mt-1 pt-1.5">
+          <span className="text-[11px] text-black/60 font-light">Zu erstatten</span>
+          <span className="text-[14px] text-black font-normal">{geld(erstattung)}</span>
+         </div>
+        </>
+       ) : (
+        <div className="flex justify-between py-0.5 border-t border-black/[0.06] mt-1 pt-1.5">
+         <span className="text-[11px] text-black/60 font-light">Zu erstatten</span>
+         <span className="text-[13px] text-black/60 font-light">nichts — keine Zahlung eingegangen</span>
+        </div>
+       )}
       </div>
 
       <textarea
@@ -228,13 +280,14 @@ function StornoDialog({ order, onSchliessen, onFertig }) {
        onClick={stornieren} disabled={laeuft}
        className="flex-1 h-11 text-[10px] uppercase tracking-[0.15em] font-light border bg-red-600 text-white border-red-600 disabled:opacity-50"
       >
-       {laeuft ? '…' : `${geld(erstattung)} erstatten`}
+       {laeuft ? '…' : bezahlt ? `${geld(erstattung)} erstatten` : 'Auftrag aufheben'}
       </button>
      )}
     </div>
     <p className="text-[10px] text-black/25 font-light mt-3 leading-relaxed">
-     Der Kunde bekommt eine Bestätigung mit dem Erstattungsbetrag. Überwiesen
-     wird von Hand — das System löst keine Zahlung aus.
+     {bezahlt
+      ? 'Der Kunde bekommt eine Bestätigung mit dem Erstattungsbetrag. Überwiesen wird von Hand — das System löst keine Zahlung aus.'
+      : 'Der Kunde bekommt eine Bestätigung. Zu erstatten ist nichts, weil keine Zahlung eingegangen ist.'}
     </p>
    </div>
   </div>
