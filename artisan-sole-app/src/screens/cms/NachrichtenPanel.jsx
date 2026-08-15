@@ -227,7 +227,7 @@ export default function NachrichtenPanel() {
           </button>
         </div>
         <p className="text-[11px] text-black/35 font-light mt-1.5">
-          Gespräche mit Firmen, Affiliates und Kunden — getrennt, weil sie verschieden beantwortet werden.
+          Gespräche mit Firmen, Affiliates und Kunden, getrennt, weil sie verschieden beantwortet werden.
         </p>
 
         <div className="flex gap-1 mt-4 border-b border-black/8">
@@ -272,7 +272,7 @@ export default function NachrichtenPanel() {
                   </div>
                   <div className="flex items-center justify-between gap-2 mt-1">
                     <span className="text-[11px] text-black/40 font-light truncate">
-                      {t.letzter_von === 'team' ? 'Sie: ' : ''}{t.letzter_text || '—'}
+                      {t.letzter_von === 'team' ? 'Sie: ' : ''}{t.letzter_text || 'noch nichts'}
                     </span>
                     {t.ungelesen > 0 && (
                       <span className="flex-shrink-0 bg-black text-white text-[9px] min-w-[16px] h-4 px-1 flex items-center justify-center">

@@ -36,7 +36,7 @@ export default function BaldVerfuegbar() {
           <p className="text-[14px] text-black/50 font-light leading-relaxed mt-5">
             Sammelbestellungen, Einmal-Codes und Ihr Logo auf der Sohle stehen kurz bevor.
             Wir öffnen den Bereich erst, wenn wir jede Bestellung daraus auch zuverlässig
-            ausführen können — eine halb betreute Kampagne wäre niemandem gedient.
+            ausführen können, eine halb betreute Kampagne wäre niemandem gedient.
           </p>
           <p className="text-[14px] text-black/50 font-light leading-relaxed mt-4">
             Ihr Konto bleibt bestehen. Sobald es so weit ist, melden wir uns bei Ihnen.

@@ -200,11 +200,11 @@ export default function AccessoriesPanel() {
             </div>
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Zum Paar (€)</label>
-              <input type="number" step="0.01" value={form.price_with_shoe} onChange={e => set('price_with_shoe', e.target.value)} placeholder="—" className={inp} />
+              <input type="number" step="0.01" value={form.price_with_shoe} onChange={e => set('price_with_shoe', e.target.value)} placeholder="leer = wie Einzelpreis" className={inp} />
             </div>
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Einkauf (€)</label>
-              <input type="number" step="0.01" value={form.cost_price} onChange={e => set('cost_price', e.target.value)} placeholder="—" className={inp} />
+              <input type="number" step="0.01" value={form.cost_price} onChange={e => set('cost_price', e.target.value)} placeholder="leer = nicht erfasst" className={inp} />
             </div>
             <div>
               <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Sortierung</label>
@@ -217,7 +217,7 @@ export default function AccessoriesPanel() {
             </div>
           </div>
           <p className="text-[10px] text-black/25 font-light leading-relaxed max-w-xl -mt-2">
-            „Zum Paar" ist der Preis, wenn der Artikel zusammen mit Schuhen bestellt wird —
+            „Zum Paar" ist der Preis, wenn der Artikel zusammen mit Schuhen bestellt wird,
             dann geht er im selben Karton hinaus und kostet uns kein eigenes Porto. Leer
             heißt: ein Preis für beide Wege.
           </p>

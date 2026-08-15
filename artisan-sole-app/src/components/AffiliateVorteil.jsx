@@ -71,7 +71,7 @@ export default function AffiliateVorteil({ affiliate, kompakt = false }) {
             </p>
             {!kompakt && (
               <p className="text-[10px] text-black/40 font-light mt-1 leading-relaxed">
-                Bereits im Preis abgezogen — Sie müssen nichts eingeben.
+                Bereits im Preis abgezogen, Sie müssen nichts eingeben.
                 {deckel > 0 && ` Höchstens € ${deckel} je Paar.`}
               </p>
             )}

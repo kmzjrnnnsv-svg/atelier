@@ -460,7 +460,7 @@ router.put('/me/campaigns/:id', authenticate, loadOwnBusiness, (req, res) => {
   const cols = [], params = []
   if (b.name != null) { if (String(b.name).trim().length < 2) return res.status(400).json({ error: 'Name min. 2 Zeichen' }); cols.push('name = ?'); params.push(String(b.name).trim()) }
   if (b.payment_mode != null) { cols.push('payment_mode = ?'); params.push(b.payment_mode === 'company' ? 'company' : 'employee') }
-  if (b.discount_pct != null) { const p = Number(b.discount_pct); if (!Number.isFinite(p) || p < 0 || p > 100) return res.status(400).json({ error: 'Rabatt 0–100' }); cols.push('discount_pct = ?'); params.push(p) }
+  if (b.discount_pct != null) { const p = Number(b.discount_pct); if (!Number.isFinite(p) || p < 0 || p > 100) return res.status(400).json({ error: 'Rabatt 0-100' }); cols.push('discount_pct = ?'); params.push(p) }
   if (b.moq_per_model != null) { const m = parseInt(b.moq_per_model, 10); if (!Number.isInteger(m) || m < 1) return res.status(400).json({ error: 'MOQ min. 1' }); cols.push('moq_per_model = ?'); params.push(m) }
   if (b.allowed_shoe_ids !== undefined) { const sr = validateShoeIds(db, b.allowed_shoe_ids); if (sr.error) return res.status(400).json({ error: sr.error }); cols.push('allowed_shoe_ids = ?'); params.push(sr.json) }
   if (b.access_mode != null && ['domain', 'list', 'both'].includes(b.access_mode)) { cols.push('access_mode = ?'); params.push(b.access_mode) }

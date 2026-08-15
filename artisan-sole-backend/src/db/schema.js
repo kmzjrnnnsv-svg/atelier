@@ -51,7 +51,7 @@ function ensureOrderStatusCheck(db) {
 
   const check = /CHECK\s*\(\s*status\s+IN\s*\([^)]*\)\s*\)/i
   if (!check.test(row.sql)) {
-    console.error('[orders.status] CHECK-Bedingung nicht gefunden — übersprungen')
+    console.error('[orders.status] CHECK-Bedingung nicht gefunden, übersprungen')
     return
   }
 
@@ -61,7 +61,7 @@ function ensureOrderStatusCheck(db) {
     .replace(check, `CHECK(status IN (${ORDER_STATUS.map(s => `'${s}'`).join(',')}))`)
 
   if (!createTmp.startsWith('CREATE TABLE orders_rebuild')) {
-    console.error('[orders.status] Tabellenname nicht ersetzbar — übersprungen')
+    console.error('[orders.status] Tabellenname nicht ersetzbar, übersprungen')
     return
   }
 
@@ -88,7 +88,7 @@ function ensureOrderStatusCheck(db) {
       for (const sql of indexes) db.exec(sql)
 
       const broken = db.pragma('foreign_key_check')
-      if (broken.length) throw new Error(`${broken.length} verwaiste Verweise — Umbau verworfen`)
+      if (broken.length) throw new Error(`${broken.length} verwaiste Verweise, Umbau verworfen`)
     })()
     console.log(`✅ orders.status erweitert um: ${missing.join(', ')}`)
   } catch (e) {
@@ -280,7 +280,7 @@ export function runMigrations(db) {
     -- kam und wer es bewegt hat. Der Kunde sah deshalb eine Stufe ohne Datum,
     -- und bei einer Rückfrage ließ sich nicht belegen, wann freigegeben wurde.
     --
-    -- Eine Zeile je Übergang. Sie wird nie geändert und nie gelöscht — das ist
+    -- Eine Zeile je Übergang. Sie wird nie geändert und nie gelöscht, das ist
     -- der Punkt: Was hier steht, ist der Nachweis.
     CREATE TABLE IF NOT EXISTS order_events (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -686,7 +686,7 @@ export function runMigrations(db) {
       -- NICHTS überschreiben. Der Seed legt fehlende Artikel an, mehr nicht.
       -- Vorher stand hier price = excluded.price: Jeder Serverstart schrieb
       -- den im CMS gepflegten Preis mit dem fest im Code stehenden Wert
-      -- zurück. Für den Betreiber sah es aus, als würde nicht gespeichert —
+      -- zurück. Für den Betreiber sah es aus, als würde nicht gespeichert,
       -- gespeichert wurde, nur beim nächsten Start wieder überschrieben.
       -- Dasselbe galt für Name, Beschreibung, Sortierung und Zuordnung.
       ON CONFLICT(key) DO NOTHING
@@ -1094,7 +1094,7 @@ export function runMigrations(db) {
     -- seiner Provision ab (customer_benefit). Eine Vermittlung kostet das
     -- Haus deshalb nie mehr als diesen Betrag.
     --
-    -- gift_shoetree: Vorgänger von customer_benefit/gift_key — die Spalte
+    -- gift_shoetree: Vorgänger von customer_benefit/gift_key, die Spalte
     -- bleibt für alte Zeilen stehen, gelesen wird sie nicht mehr.
     CREATE TABLE IF NOT EXISTS affiliates (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1146,7 +1146,7 @@ export function runMigrations(db) {
     -- Zustände:
     --   pending    Bestellung liegt vor, noch nicht zugestellt
     --   confirmed  zugestellt, Schutzfrist läuft
-    --   payable    Frist verstrichen, keine Rückgabe — auszahlbar
+    --   payable    Frist verstrichen, keine Rückgabe, auszahlbar
     --   cancelled  zurückgegeben, reklamiert oder storniert
     --   paid       ausgezahlt (payout_id gesetzt)
     CREATE TABLE IF NOT EXISTS affiliate_commissions (
@@ -1186,7 +1186,7 @@ export function runMigrations(db) {
     --
     -- Gezählt wurde bisher erst die Bestellung. Ein Vermittler, der nichts
     -- verkauft, erfuhr damit nicht, ob niemand geklickt hat oder ob alle an
-    -- der Kasse abgesprungen sind — zwei Befunde, die zu völlig
+    -- der Kasse abgesprungen sind, zwei Befunde, die zu völlig
     -- verschiedenen Schlüssen führen.
     --
     -- Absichtlich ohne Kennung des Besuchers: kein Cookie, keine IP, keine
@@ -1228,7 +1228,7 @@ export function runMigrations(db) {
     -- der letzte, nicht der Verlauf. Bei einem Streit über einen Preis oder
     -- eine Kondition fehlte der Nachweis, wer wann was gesetzt hat.
     --
-    -- Bewusst schmal: Was, woran, von wem, wann — und der vorherige Wert.
+    -- Bewusst schmal: Was, woran, von wem, wann, und der vorherige Wert.
     -- Kein vollständiges Abbild jeder Zeile; das bläht die Datenbank auf und
     -- niemand liest es.
     CREATE TABLE IF NOT EXISTS audit_log (
@@ -1246,7 +1246,7 @@ export function runMigrations(db) {
 
     -- ── Rücksendungen ───────────────────────────────────────────────────────
     -- Der Schuh entsteht auf Maß für einen einzelnen Fuß und ist danach für
-    -- niemanden sonst zu gebrauchen — er ist vom Widerruf ausgenommen
+    -- niemanden sonst zu gebrauchen, er ist vom Widerruf ausgenommen
     -- (§ 312g Abs. 2 Nr. 1 BGB). Zubehör ist Lagerware und geht regulär zurück.
     -- Deshalb hängt eine Rücksendung an einzelnen Positionen, nicht an der
     -- Bestellung: items hält die zurückgehenden Zubehörzeilen als Kopie aus
@@ -1340,7 +1340,7 @@ export function runMigrations(db) {
     -- collections: die Angebote, in die der Katalog zerfällt.
     -- Eine Ebene über der Kategorie: „Maßanfertigung", „Express", später
     -- „Damen". Als Tabelle und nicht als feste Liste im Code, weil hier
-    -- absehbar weitere dazukommen — und dann soll niemand deployen müssen.
+    -- absehbar weitere dazukommen, und dann soll niemand deployen müssen.
     CREATE TABLE IF NOT EXISTS collections (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       key           TEXT    NOT NULL UNIQUE,
@@ -1668,14 +1668,14 @@ export function runMigrations(db) {
     --
     -- Konten ohne Passwort haben nichts, was sich zurücksetzen ließe. Wer
     -- alle Geräte verliert, braucht trotzdem einen Weg zurück: eine einmalige
-    -- Kennung, die genau eines erlaubt — einen neuen Passkey anzulegen.
+    -- Kennung, die genau eines erlaubt, einen neuen Passkey anzulegen.
     --
     -- Gespeichert wird der Hash, nicht die Kennung selbst. Wer die Datenbank
     -- liest, soll damit keine Konten übernehmen können.
     --
     -- issued_by hält fest, wer sie ausgestellt hat: NULL bei Selbstbedienung
     -- über die Bestelldaten, sonst die Verwaltungsperson. Das ist kein
-    -- Ordnungssinn — ein Zugangsweg ohne Spur ist keiner, den man verantworten
+    -- Ordnungssinn, ein Zugangsweg ohne Spur ist keiner, den man verantworten
     -- kann.
     CREATE TABLE IF NOT EXISTS account_recovery (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1871,7 +1871,7 @@ export function runMigrations(db) {
       if (getroffen.length) console.log(`✅ Farbnamen: ${getroffen.length} umbenannt (${getroffen.join(', ')})`)
       // Ausdrücklich melden, was NICHT gefunden wurde. Eine Umbenennung, die
       // still nichts tut, sieht aus wie eine, die gewirkt hat.
-      if (fehlend.length) console.log(`ℹ️  Farbnamen: nicht im Bestand, daher unverändert — ${fehlend.join(', ')}`)
+      if (fehlend.length) console.log(`ℹ️  Farbnamen: nicht im Bestand, daher unverändert, ${fehlend.join(', ')}`)
     }
   } catch (e) { console.error('[migrate Farbnamen]', e.message) }
 

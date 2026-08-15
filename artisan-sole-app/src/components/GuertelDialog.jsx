@@ -131,7 +131,7 @@ export default function GuertelDialog({ optionen, materialien = [], farben = [],
                   <button onClick={() => { setFreiGewaehlt(true); setGewaehlteVorlage(null) }}
                     className={`mt-2 w-full border px-3 py-2.5 text-[12px] text-left transition-colors ${
                       frei ? 'border-black text-black' : 'border-black/12 text-black/55 hover:border-black/30'}`}>
-                    Frei zusammenstellen — anderes Leder, andere Farbe
+                    Frei zusammenstellen, anderes Leder, andere Farbe
                   </button>
                 </div>
               )}

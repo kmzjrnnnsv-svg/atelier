@@ -89,12 +89,12 @@ export const stufenIndex = (status) => STUFEN.findIndex(s => s.key === status)
  */
 export const STAFFEL = {
   // Nichts gezahlt, nichts zu erstatten. Der Auftrag verfällt einfach.
-  pending_payment: { pct: 0, moeglich: true,  hinweis: 'Es ist noch nichts gezahlt — der Auftrag verfällt ohne Kosten.' },
+  pending_payment: { pct: 0, moeglich: true,  hinweis: 'Es ist noch nichts gezahlt, der Auftrag verfällt ohne Kosten.' },
   // Der Wendepunkt: bis zur Freigabe kostenfrei.
   pending:         { pct: 0, moeglich: true,  hinweis: 'Die Freigabe an die Werkstatt ist noch nicht erteilt. Die Stornierung ist kostenfrei.' },
   processing:      { pct: 50, moeglich: true, hinweis: 'Ihr Paar ist in Fertigung. Nach Ziffer 7.2 behalten wir bis zu 50 % ein.' },
   quality_check:   { pct: 75, moeglich: true, hinweis: 'Ihr Paar ist fertiggestellt. Nach Ziffer 7.2 behalten wir bis zu 75 % ein.' },
-  shipped:         { pct: null, moeglich: false, hinweis: 'Ihr Paar ist bereits unterwegs. Eine Stornierung ist nicht mehr möglich — es bleibt die Kulanz nach Ziffer 7.3.' },
+  shipped:         { pct: null, moeglich: false, hinweis: 'Ihr Paar ist bereits unterwegs. Eine Stornierung ist nicht mehr möglich, es bleibt die Kulanz nach Ziffer 7.3.' },
   delivered:       { pct: null, moeglich: false, hinweis: 'Ihr Paar ist zugestellt. Melden Sie sich innerhalb von 14 Tagen nach Erhalt, wenn etwas nicht passt (Ziffer 7.3).' },
   cancelled:       { pct: null, moeglich: false, hinweis: 'Dieser Auftrag ist bereits storniert.' },
 }

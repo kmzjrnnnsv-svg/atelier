@@ -44,14 +44,14 @@ router.post('/:id/loeschung', param('id').isInt(), (req, res) => {
   // An diesem Konto hängen die Bestellungen bereits gelöschter Kunden. Es zu
   // löschen nähme ihnen den Anker und damit die Aufbewahrung.
   if (user.email === PLATZHALTER_MAIL) {
-    return res.status(400).json({ error: 'Das ist der Platzhalter für gelöschte Konten — an ihm hängen aufzubewahrende Bestellungen.' })
+    return res.status(400).json({ error: 'Das ist der Platzhalter für gelöschte Konten, an ihm hängen aufzubewahrende Bestellungen.' })
   }
   if (user.deleted_at) return res.status(409).json({ error: 'Dieses Konto ist bereits gesperrt.' })
   if (user.deletion_requested_at) return res.status(409).json({ error: 'Für dieses Konto liegt bereits ein Antrag vor.' })
 
   const grund = String(req.body?.reason || '').trim().slice(0, 300)
   if (grund.length < 4) {
-    return res.status(400).json({ error: 'Bitte den Grund festhalten — etwa „Löschwunsch des Kunden vom 13.08.".' })
+    return res.status(400).json({ error: 'Bitte den Grund festhalten, etwa „Löschwunsch des Kunden vom 13.08.".' })
   }
 
   db.prepare(`

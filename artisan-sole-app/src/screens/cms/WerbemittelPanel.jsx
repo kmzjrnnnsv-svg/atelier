@@ -83,7 +83,7 @@ export default function WerbemittelPanel() {
           <h1 className="text-[26px] font-extralight text-black tracking-tight">Werbemittel</h1>
           <p className="text-[12px] text-black/35 font-light mt-1.5 max-w-lg leading-relaxed">
             Freigegebene Bilder und Textbausteine. Vermittler finden sie in ihrem
-            Konto und können sie kopieren — was hier nicht steht, bauen sie sich
+            Konto und können sie kopieren, was hier nicht steht, bauen sie sich
             selbst.
           </p>
         </div>
@@ -116,7 +116,7 @@ export default function WerbemittelPanel() {
           <input
             value={entwurf.title}
             onChange={(e) => setEntwurf({ ...entwurf, title: e.target.value })}
-            placeholder="Bezeichnung — wofür ist es gedacht?"
+            placeholder="Bezeichnung, wofür ist es gedacht?"
             className="h-11 border border-black/10 px-3 text-[13px] font-light focus:outline-none focus:border-black"
           />
 
@@ -144,7 +144,7 @@ export default function WerbemittelPanel() {
           <input
             value={entwurf.note || ''}
             onChange={(e) => setEntwurf({ ...entwurf, note: e.target.value })}
-            placeholder="Hinweis für den Vermittler (freiwillig) — z. B. „nur für Instagram-Stories“"
+            placeholder="Hinweis für den Vermittler (freiwillig), z. B. „nur für Instagram-Stories“"
             className="h-10 border border-black/10 px-3 text-[12px] font-light focus:outline-none focus:border-black"
           />
 

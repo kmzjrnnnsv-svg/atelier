@@ -39,7 +39,7 @@ export default function ExpressHinweis({ wochen = 2, aufpreis = 100, offenGruppe
         <div className="flex gap-3">
           <Clock size={14} strokeWidth={1.5} className="text-black/30 flex-shrink-0 mt-0.5" />
           <p className="text-[12px] text-black/55 font-light leading-relaxed">
-            Möglich wird das, weil wir für dieses Modell Bauteile vorbereitet vorhalten —
+            Möglich wird das, weil wir für dieses Modell Bauteile vorbereitet vorhalten,
             zugeschnittene Schäfte, fertige Sohlen. Der Weg zum fertigen Paar ist dadurch
             kürzer, nicht die Arbeit daran hastiger.
           </p>
@@ -49,7 +49,7 @@ export default function ExpressHinweis({ wochen = 2, aufpreis = 100, offenGruppe
           <p className="text-[12px] text-black/55 font-light leading-relaxed">
             <strong className="font-normal text-black/75">Dafür haben Sie weniger zu entscheiden.</strong>{' '}
             {offenGruppen > 0
-              ? 'Was an diesem Modell wählbar bleibt, sehen Sie unten — alles Übrige ist durch das vorbereitete Bauteil festgelegt.'
+              ? 'Was an diesem Modell wählbar bleibt, sehen Sie unten, alles Übrige ist durch das vorbereitete Bauteil festgelegt.'
               : 'Leder, Farbe und Ausführung sind durch die vorbereiteten Bauteile festgelegt. Sie wählen Größe und Weite.'}
             {' '}Ein Paar aus der Maßanfertigung ist individueller; dieses hier ist schneller.
           </p>
@@ -58,7 +58,7 @@ export default function ExpressHinweis({ wochen = 2, aufpreis = 100, offenGruppe
 
       <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 pt-4 border-t border-black/[0.07]">
         Gezwickt und ausgearbeitet wird trotzdem auf dem Leisten, der für Ihren Fuß bestimmt
-        ist — nach Ihren Maßen, in Ihrer Größe und Weite. Es bleibt eine Einzelanfertigung
+        ist, nach Ihren Maßen, in Ihrer Größe und Weite. Es bleibt eine Einzelanfertigung
         und ist deshalb ebenso wenig rückgabefähig wie ein Paar aus der Maßanfertigung.
         {aufpreis > 0 && ` Die kürzere Wartezeit ist mit ${aufpreis} € im Preis enthalten.`}
       </p>

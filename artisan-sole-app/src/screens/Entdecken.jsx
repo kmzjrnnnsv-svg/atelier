@@ -118,11 +118,11 @@ export default function Entdecken() {
           <>
             <p className="text-[10px] uppercase tracking-[0.3em] text-black/30">Schön, dass Sie da sind</p>
             <h1 className="text-[27px] lg:text-[34px] font-extralight leading-[1.15] tracking-tight mt-4">
-              Wir sind Artisan Sole — und wir lassen die Seele des Handwerks wieder aufleben.
+              Wir sind Artisan Sole, und wir lassen die Seele des Handwerks wieder aufleben.
             </h1>
             <p className="text-[14px] text-black/50 font-light leading-relaxed mt-5">
               Das Paar, das Sie gerade in der Hand halten, ist kein Serienschuh. Wir nehmen uns
-              dafür ein paar Sätze Zeit — und würden Sie dabei gern beim Namen nennen.
+              dafür ein paar Sätze Zeit, und würden Sie dabei gern beim Namen nennen.
             </p>
             <form onSubmit={nameUebernehmen} className="mt-8">
               <label className="block text-[10px] uppercase tracking-[0.18em] text-black/40 mb-2">Ihr Vorname</label>
@@ -166,16 +166,16 @@ export default function Entdecken() {
             </h2>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-5">
               Wir haben kein Lager, aus dem wir greifen. Jeder Schuh entsteht erst nach Ihrer
-              Bestellung, von Hand, in einer Manufaktur in Spanien — in vier bis sechs Wochen.
+              Bestellung, von Hand, in einer Manufaktur in Spanien, in vier bis sechs Wochen.
             </p>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-4">
               Rahmengenäht statt geklebt: Sohle und Schaft sind über einen Lederstreifen
-              vernäht. Ist die Sohle in zehn Jahren durch, wird sie erneuert — der Schuh bleibt.
+              vernäht. Ist die Sohle in zehn Jahren durch, wird sie erneuert, der Schuh bleibt.
               Ein geklebter Schuh wäre an dieser Stelle Abfall.
             </p>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-4">
               Und weil er ohnehin erst für Sie gebaut wird, bestimmen Sie, wie er aussieht:
-              Leder und Farbe, die Sohle, die Lochung, die Farbe des Fadens — auf Wunsch mit
+              Leder und Farbe, die Sohle, die Lochung, die Farbe des Fadens, auf Wunsch mit
               Ihren Initialen im Schaft. Kein Aufpreis für eine Entscheidung, die vor der
               Fertigung fällt.
             </p>
@@ -236,7 +236,7 @@ export default function Entdecken() {
                     <Check size={15} strokeWidth={1.6} className="text-black/60 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-[15px] text-black">
-                        {ZUGABE_NAMEN[vorteil.gift] || 'Zugabe'} — kostenlos dazu
+                        {ZUGABE_NAMEN[vorteil.gift] || 'Zugabe'}, kostenlos dazu
                       </p>
                       <p className="text-[11px] text-black/40 font-light mt-0.5">
                         Liegt Ihrem ersten Paar bei.
@@ -248,7 +248,7 @@ export default function Entdecken() {
             )}
 
             <p className="text-[13px] text-black/45 font-light leading-relaxed mt-6">
-              Im Konfigurator wählen Sie Leder, Farbe, Sohle, Lochung und — wenn Sie mögen —
+              Im Konfigurator wählen Sie Leder, Farbe, Sohle, Lochung und, wenn Sie mögen,
               Ihre Initialen. Größe und Maße nehmen wir Schritt für Schritt mit Ihnen auf.
             </p>
 

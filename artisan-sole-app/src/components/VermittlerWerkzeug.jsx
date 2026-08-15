@@ -57,7 +57,7 @@ function Klicks({ klicks }) {
         </div>
         <div>
           <p className="text-[22px] font-extralight text-black tabular-nums leading-none">
-            {klicks.konversion === null ? '—' : `${klicks.konversion} %`}
+            {klicks.konversion === null ? 'noch keine' : `${klicks.konversion} %`}
           </p>
           <p className="text-[10px] text-black/30 font-light mt-1.5">werden zur Bestellung</p>
         </div>
@@ -107,7 +107,7 @@ function Klicks({ klicks }) {
         </>
       )}
       <p className="text-[10px] text-black/25 font-light mt-4 leading-relaxed">
-        Gezählt wird ohne Cookie und ohne IP-Adresse — nur Tag, Ziel und die
+        Gezählt wird ohne Cookie und ohne IP-Adresse, nur Tag, Ziel und die
         Seite, von der jemand kam.
       </p>
     </div>
@@ -187,7 +187,7 @@ function Werbemittel() {
       </p>
       <p className="text-[12px] text-black/45 font-light leading-relaxed mb-4">
         Freigegebenes Material. Bitte verwenden Sie diese Bilder und Formulierungen
-        unverändert — sie sind mit dem Haus abgestimmt.
+        unverändert, sie sind mit dem Haus abgestimmt.
       </p>
       <div className="flex flex-col gap-4">
         {mittel.map(m => (
@@ -268,7 +268,7 @@ function Auszahlung({ affiliate, standing, aufFrisch }) {
           <p className="text-[11px] text-black/35 font-light mt-0.5">
             {affiliate.iban
               ? 'Sagen Sie Bescheid, wenn Sie ausgezahlt werden möchten.'
-              : 'Tragen Sie zuerst Ihre Bankverbindung ein — ohne sie können wir nicht überweisen.'}
+              : 'Tragen Sie zuerst Ihre Bankverbindung ein, ohne sie können wir nicht überweisen.'}
           </p>
         </div>
         <button

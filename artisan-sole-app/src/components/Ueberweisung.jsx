@@ -89,7 +89,7 @@ export default function Ueberweisung({ orderId }) {
         <p className="text-[22px] font-extralight tracking-tight text-black">{euro(daten.betrag)}</p>
         <p className="text-[11px] text-black/45 font-light mt-1 leading-relaxed">
           Ihre Schuhe gehen nach Zahlungseingang in die Fertigung. Bitte geben Sie den
-          Verwendungszweck genau so an — daran erkennen wir, zu welcher Bestellung Ihre
+          Verwendungszweck genau so an, daran erkennen wir, zu welcher Bestellung Ihre
           Zahlung gehört.
         </p>
       </div>
@@ -103,7 +103,7 @@ export default function Ueberweisung({ orderId }) {
               className="w-[168px] h-[168px] border border-black/[0.07]"
             />
             <p className="text-[10px] text-black/35 font-light text-center mt-1.5 leading-relaxed max-w-[168px]">
-              Mit der Banking-App scannen — alles ausgefüllt.
+              Mit der Banking-App scannen, alles ausgefüllt.
             </p>
           </div>
           <div className="flex-1 min-w-0">

@@ -20,7 +20,7 @@ router.get('/shoe/:shoeId', (req, res) => {
 router.post('/',
   authenticate,
   body('shoe_id').isInt().withMessage('shoe_id must be integer'),
-  body('rating').isInt({ min: 1, max: 5 }).withMessage('rating 1–5 required'),
+  body('rating').isInt({ min: 1, max: 5 }).withMessage('rating 1-5 required'),
   body('comment').optional().trim().isLength({ max: 1000 }),
   (req, res) => {
     const errors = validationResult(req)

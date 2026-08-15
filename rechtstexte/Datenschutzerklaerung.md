@@ -2,7 +2,7 @@
 
 > **Vor der Verwendung ausfüllen:** Alle `[…]`-Stellen ersetzen und die
 > Abschnitte streichen, die auf euch nicht zutreffen. Anders als bei AGB und
-> Impressum lässt sich hier **nichts durch Klauseln abbedingen** — die DSGVO
+> Impressum lässt sich hier **nichts durch Klauseln abbedingen**, die DSGVO
 > gilt zwingend. Was diese Erklärung leisten kann, ist Vollständigkeit und
 > Ehrlichkeit; beides schützt am besten. Keine Rechtsberatung.
 
@@ -89,7 +89,7 @@ Sicht nicht statt.
 ### 6.4 Verbesserung der Messfunktion
 
 [**Diesen Abschnitt nur behalten, wenn ihr Scans tatsächlich zur
-Verbesserung auswertet — die Datenbank sieht es vor.** Wenn ja, muss die
+Verbesserung auswertet, die Datenbank sieht es vor.** Wenn ja, muss die
 Einwilligung im Scanvorgang aktiv eingeholt werden: ein nicht vorangekreuztes
 Kästchen mit klarem Text. Ohne diese Einwilligung darf die Auswertung nicht
 stattfinden.]
@@ -114,7 +114,7 @@ unberührt.
 Wer über einen QR-Code aus einem Geschäft zu uns kommt, wird durch eine kurze
 Einführung geleitet und dabei nach dem Vornamen gefragt.
 
-Diese Angabe ist **freiwillig** — der Weg lässt sich ohne Namen fortsetzen.
+Diese Angabe ist **freiwillig**, der Weg lässt sich ohne Namen fortsetzen.
 
 Der Vorname wird **nicht an unsere Server übertragen**. Er wird ausschließlich
 im Zwischenspeicher Ihres Browsers gehalten (`sessionStorage`) und dient allein
@@ -128,7 +128,7 @@ Kundenkontos. Rechtsgrundlage ist dann Art. 6 Abs. 1 lit. b DSGVO
 
 ## 8. Cookies
 
-Wir setzen ausschließlich technisch notwendige Cookies ein — insbesondere
+Wir setzen ausschließlich technisch notwendige Cookies ein, insbesondere
 eines, das Ihre Anmeldung aufrechterhält. Es ist gegen Auslesen durch Skripte
 geschützt.
 
@@ -173,7 +173,7 @@ Wir geben Daten nur weiter, soweit es für die Abwicklung nötig ist:
 Mit Dienstleistern, die in unserem Auftrag verarbeiten, haben wir Verträge zur
 Auftragsverarbeitung nach Art. 28 DSGVO geschlossen.
 
-[**Nur ergänzen, falls ein Empfänger außerhalb der EU sitzt** — dann muss
+[**Nur ergänzen, falls ein Empfänger außerhalb der EU sitzt**, dann muss
 hier die Rechtsgrundlage der Übermittlung stehen, etwa
 Standardvertragsklauseln. Prüft das für jeden Dienstleister einzeln.]
 

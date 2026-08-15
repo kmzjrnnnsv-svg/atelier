@@ -286,7 +286,7 @@ export default function UsersPanel() {
  {!wiederherstellung.link ? (
  <>
  <p className="text-[12px] text-black/50 font-light leading-relaxed max-w-2xl">
- Erzeugt einen Link, mit dem dieses Konto ein neues Gerät hinterlegen kann —
+ Erzeugt einen Link, mit dem dieses Konto ein neues Gerät hinterlegen kann,
  eine Stunde gültig, einmal benutzbar. Bestehende Geräte bleiben gültig, alle
  offenen Sitzungen werden beendet, und im Nachrichtenverlauf des Kunden
  erscheint ein Hinweis.
@@ -320,7 +320,7 @@ export default function UsersPanel() {
  )}
  <div className="flex-1 min-w-0">
  <p className="text-[11px] text-black/45 font-light leading-relaxed mb-2">
- Eine Stunde gültig, einmal benutzbar. Geben Sie ihn dem Kunden direkt —
+ Eine Stunde gültig, einmal benutzbar. Geben Sie ihn dem Kunden direkt,
  am Telefon vorlesen, im Laden abscannen lassen.
  </p>
  <p className="text-[11px] text-black/70 break-all bg-black/[0.02] border border-black/[0.06] p-2.5">
@@ -352,7 +352,7 @@ export default function UsersPanel() {
  <AlertTriangle size={14} className="text-black/40 mt-0.5 shrink-0" />
  <div>
  <h3 className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">
- Konto löschen — {loeschen.userName}
+ Konto löschen, {loeschen.userName}
  </h3>
  <p className="text-[12px] text-black/50 font-light leading-relaxed mt-2 max-w-2xl">
  Zwei Schritte: Sie beantragen, eine zweite Person aus der Verwaltung bestätigt.
@@ -365,7 +365,7 @@ export default function UsersPanel() {
  <input
  value={loeschen.reason}
  onChange={e => setLoeschen(l => ({ ...l, reason: e.target.value }))}
- placeholder="Grund — etwa „Löschwunsch des Kunden vom 13.08.“"
+ placeholder="Grund, etwa „Löschwunsch des Kunden vom 13.08.“"
  className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
  />
  <div className="flex gap-3">
@@ -400,7 +400,7 @@ export default function UsersPanel() {
  <div className="px-5 pb-5">
  <p className="text-[11px] text-black/40 font-light leading-relaxed mb-4 max-w-2xl">
  Gesperrt und wiederherstellbar. Nach {geloescht.frist_tage} Tagen werden sie
- automatisch endgültig entfernt — beim nächsten Öffnen dieser Liste.
+ automatisch endgültig entfernt, beim nächsten Öffnen dieser Liste.
  </p>
  {geloescht.konten.map(k => (
  <div key={k.id} className="flex items-start justify-between gap-4 py-3 border-t border-black/[0.05]">
@@ -412,8 +412,8 @@ export default function UsersPanel() {
  )}
  <p className="text-[10px] text-black/30 font-light mt-1">
  {k.deleted_at
- ? `Gesperrt · noch ${Math.max(0, k.tage_uebrig)} Tage · beantragt von ${k.beantragt_von || '—'}, bestätigt von ${k.bestaetigt_von || '—'}`
- : `Antrag von ${k.beantragt_von || '—'} — wartet auf Bestätigung durch eine zweite Person`}
+ ? `Gesperrt · noch ${Math.max(0, k.tage_uebrig)} Tage · beantragt von ${k.beantragt_von || 'k. A.'}, bestätigt von ${k.bestaetigt_von || 'k. A.'}`
+ : `Antrag von ${k.beantragt_von || 'k. A.'}, wartet auf Bestätigung durch eine zweite Person`}
  </p>
  </div>
  <div className="flex items-center gap-2 shrink-0">

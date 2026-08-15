@@ -107,7 +107,7 @@ export default function Accessories() {
         {/* Die Regel gehört hierher, nicht an die Kasse. Wer erst dort erfährt,
             dass er nicht bestellen kann, hat den Weg umsonst gemacht. */}
         <p className="text-[11px] lg:text-[12px] text-black/40 font-light leading-relaxed max-w-md mx-auto mt-4">
-          Zubehör versenden wir zusammen mit einem Paar Schuhe — im selben Paket,
+          Zubehör versenden wir zusammen mit einem Paar Schuhe, im selben Paket,
           ohne zusätzlichen Versand. Einzeln kostet das Porto mehr als der Artikel.
         </p>
       </div>

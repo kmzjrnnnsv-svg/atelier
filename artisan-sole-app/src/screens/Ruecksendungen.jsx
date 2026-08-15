@@ -62,7 +62,7 @@ function Bestellung({ eintrag, onSenden, sendet }) {
           <p className="text-[13px] text-black">{b.shoe_name}</p>
           <p className="text-[11px] text-black/35 font-light mt-0.5">
             {b.order_ref ? `${b.order_ref} · ` : ''}
-            Zugestellt {datum(b.delivered_at) || '—'}
+            Zugestellt {datum(b.delivered_at) || 'noch nicht'}
           </p>
         </div>
         <span className={`text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 border shrink-0 ${b.open ? 'border-black/25 text-black/60' : 'border-black/10 text-black/30'}`}>
@@ -82,7 +82,7 @@ function Bestellung({ eintrag, onSenden, sendet }) {
           <div>
             <p className="text-[12px] text-black/70">{b.shoe_name}</p>
             <p className="text-[11px] text-black/40 font-light leading-relaxed">
-              Maßanfertigung — keine Rückgabe. Bei einem Mangel fertigen wir das
+              Maßanfertigung, keine Rückgabe. Bei einem Mangel fertigen wir das
               Paar neu; gefällt es Ihnen nicht, sehen wir uns das an.
             </p>
           </div>

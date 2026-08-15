@@ -196,7 +196,7 @@ function Storno({ orderId, storno, aufFrisch }) {
           <textarea
             value={grund} onChange={(e) => setGrund(e.target.value)}
             rows={2} maxLength={500}
-            placeholder="Grund (freiwillig) — hilft uns, es besser zu machen"
+            placeholder="Grund (freiwillig), hilft uns, es besser zu machen"
             className="w-full mt-3 px-3 py-2.5 border border-black/10 text-[12px] font-light resize-none focus:outline-none focus:border-black/30"
           />
 

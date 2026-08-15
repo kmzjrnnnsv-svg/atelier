@@ -77,7 +77,7 @@ export default function PasskeyPanel() {
           <p className="text-[14px] font-light text-black/80">Ohne Passwort anmelden</p>
           <p className="text-[12px] text-black/40 font-light mt-1 leading-relaxed">
             Anmelden mit Fingerabdruck, Gesicht oder Geräte-PIN statt Passwort. Legen Sie
-            das auf jedem Gerät an, das Sie nutzen — dann kommen Sie überall herein, ohne
+            das auf jedem Gerät an, das Sie nutzen, dann kommen Sie überall herein, ohne
             sich etwas zu merken.
           </p>
         </div>
@@ -113,7 +113,7 @@ export default function PasskeyPanel() {
         <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 px-3 py-2.5 mb-4">
           <AlertCircle size={13} className="text-amber-600 flex-shrink-0 mt-0.5" strokeWidth={1.6} />
           <p className="text-[11px] text-amber-900 font-light leading-relaxed">
-            Legen Sie einen zweiten Passkey auf einem anderen Gerät an — Telefon
+            Legen Sie einen zweiten Passkey auf einem anderen Gerät an, Telefon
             und Rechner. Sonst hängt der bequeme Zugang an einem einzigen Gerät.
           </p>
         </div>

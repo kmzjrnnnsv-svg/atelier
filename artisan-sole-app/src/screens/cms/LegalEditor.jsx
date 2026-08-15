@@ -213,7 +213,7 @@ export default function LegalEditor() {
  </p>
  <p className="text-[12px] text-black/55 font-light leading-relaxed">
  {vorlage.abweichend
-   ? 'Diese Fassung weicht von der veröffentlichten ab. Unten steht sie vollständig — '
+   ? 'Diese Fassung weicht von der veröffentlichten ab. Unten steht sie vollständig, '
      + 'bitte lesen, bevor Sie sie übernehmen. Danach müssen Sie noch speichern.'
    : 'Die veröffentlichte Fassung stimmt mit der Datei überein. Es gibt nichts zu übernehmen.'}
  </p>

@@ -341,7 +341,7 @@ router.post('/',
       const vorrat = db.prepare('SELECT express, express_stock, name FROM shoes WHERE id = ?').get(shoe_id)
       if (vorrat?.express && vorrat.express_stock !== null && vorrat.express_stock <= 0) {
         return res.status(409).json({
-          error: `Von „${vorrat.name}" ist zurzeit kein vorbereitetes Paar vorrätig. Wir können die zwei Wochen deshalb nicht zusagen — als Maßanfertigung ist das Modell weiterhin bestellbar.`,
+          error: `Von „${vorrat.name}" ist zurzeit kein vorbereitetes Paar vorrätig. Wir können die zwei Wochen deshalb nicht zusagen, als Maßanfertigung ist das Modell weiterhin bestellbar.`,
           code: 'EXPRESS_AUSVERKAUFT',
         })
       }
@@ -610,7 +610,7 @@ router.put('/:id',
     // zurückgezahlt wurde.
     if (req.body.status === 'cancelled') {
       return res.status(400).json({
-        error: 'Stornierungen laufen über PUT /api/orders/:id/storno — dort wird die Gebühr nach AGB 7.2 berechnet und festgehalten.',
+        error: 'Stornierungen laufen über PUT /api/orders/:id/storno, dort wird die Gebühr nach AGB 7.2 berechnet und festgehalten.',
         code: 'STORNO_EIGENER_WEG',
       })
     }
@@ -876,7 +876,7 @@ function fuehreStornoAus({ db, order, satz, grund, durch, user }) {
   })
   protokoll(db, {
     entity: 'order', entityId: order.id, action: 'storno',
-    detail: `${v.pct} % einbehalten, ${v.erstattung.toFixed(2)} € zu erstatten${grund ? ` — ${grund}` : ''}`,
+    detail: `${v.pct} % einbehalten, ${v.erstattung.toFixed(2)} € zu erstatten${grund ? `, ${grund}` : ''}`,
     user,
   })
 
@@ -1308,7 +1308,7 @@ router.get('/:id/ruecksendung', authenticate, (req, res) => {
     items: ruecksendbar(db, order),
     // Der Schuh steht bewusst mit dabei, mit Begründung — sonst sucht der
     // Kunde die Schaltfläche, die es nicht gibt.
-    shoe: { name: order.shoe_name, returnable: false, reason: 'Maßanfertigung — keine Rückgabe möglich.' },
+    shoe: { name: order.shoe_name, returnable: false, reason: 'Maßanfertigung, keine Rückgabe möglich.' },
     window_days: WIDERRUF_TAGE,
     days_left: rest,
     open: order.status === 'delivered' && rest != null && rest > 0,
@@ -1342,7 +1342,7 @@ router.post('/:id/ruecksendung', authenticate, (req, res) => {
     if (!v) {
       // Der häufigste Fall: Jemand versucht den Schuh zurückzugeben.
       if (name && name === order.shoe_name) {
-        return res.status(409).json({ error: 'Custom Made Schuhe lassen sich nicht zurückgeben. Passt etwas nicht, sehen wir uns das an — bitte melden Sie sich.' })
+        return res.status(409).json({ error: 'Custom Made Schuhe lassen sich nicht zurückgeben. Passt etwas nicht, sehen wir uns das an, bitte melden Sie sich.' })
       }
       return res.status(400).json({ error: `„${name}" gehört nicht zu den rücksendbaren Positionen dieser Bestellung.` })
     }

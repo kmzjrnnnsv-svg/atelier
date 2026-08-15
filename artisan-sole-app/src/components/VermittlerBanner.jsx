@@ -71,7 +71,7 @@ export default function VermittlerBanner() {
             <span className="text-white/70">
               Sie erhalten <span className="text-white">
                 {deckel > 0 ? `bis zu ${alsPreis(deckel)}` : `${nachlass} %`}
-              </span> Nachlass auf jedes Paar — die Preise unten sind bereits angepasst.
+              </span> Nachlass auf jedes Paar, die Preise unten sind bereits angepasst.
             </span>
           )}
         </p>

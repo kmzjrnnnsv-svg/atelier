@@ -416,7 +416,7 @@ export default function CorporateGifting() {
             schritte={[
               {
                 titel: 'Anfrage senden',
-                text: 'Über das Formular oben oder per WhatsApp. Wir melden uns und klären, was Sie vorhaben — Anlass, Anzahl, Zeitrahmen.',
+                text: 'Über das Formular oben oder per WhatsApp. Wir melden uns und klären, was Sie vorhaben, Anlass, Anzahl, Zeitrahmen.',
               },
               {
                 titel: 'Firmenkonto erhalten',
@@ -432,7 +432,7 @@ export default function CorporateGifting() {
               },
               {
                 titel: 'Mitarbeitende teilnehmen lassen',
-                text: 'Wer sich mit der Firmen-E-Mail anmeldet, ist automatisch dabei — der Rabatt steht ohne Code im Konfigurator. Bei der namentlichen Liste verschicken wir die Einladungen per Mail.',
+                text: 'Wer sich mit der Firmen-E-Mail anmeldet, ist automatisch dabei, der Rabatt steht ohne Code im Konfigurator. Bei der namentlichen Liste verschicken wir die Einladungen per Mail.',
               },
               {
                 titel: 'Fortschritt verfolgen',

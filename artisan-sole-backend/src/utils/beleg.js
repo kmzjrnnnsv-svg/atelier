@@ -35,7 +35,7 @@ const RECHTS = SEITE.breite - RAND
 const euro = (n) => `${(Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
 const datum = (s) => {
   const d = s ? new Date(String(s).replace(' ', 'T') + (String(s).includes('Z') ? '' : 'Z')) : new Date()
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return Number.isNaN(d.getTime()) ? 'k. A.' : d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 /** Die Angaben über den Aussteller. Alles aus den Einstellungen, mit Rückfall. */
@@ -220,7 +220,7 @@ export function rechnungPdf(db, order, kunde) {
   const posten = []
   const grund = betragAusText(order.original_price) || betragAusText(order.price)
   posten.push({
-    text: `${order.shoe_name} — ${order.material}, ${order.color}`,
+    text: `${order.shoe_name}, ${order.material}, ${order.color}`,
     zusatz: [order.eu_size && `Größe ${order.eu_size}`, order.sole, order.last_label]
       .filter(Boolean).join(' · '),
     betrag: grund,

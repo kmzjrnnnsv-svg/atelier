@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Zwölf Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Dreizehn Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -87,6 +87,15 @@ im Betrieb, nichts nachgebaut.
                          beim Start unterscheidbar benannt, aber NICHT
                          gelöscht — was der Betreiber angelegt hat, räumt er
                          selbst weg. Braucht DB_PATH.
+    tests/wortlaut.mjs   11 Prüfungen: der Laden sagt „Custom Made", nicht
+                         „maßgefertigt". Im Quelltext, in dem, was der Server
+                         ausliefert, und über alle Textspalten der Datenbank
+                         hinweg. Dazu die Umstellung eines Bestands, der den
+                         alten Wortlaut noch trägt: Die einfache Beugung fällt
+                         weg, der Genitiv Plural wird zu „von … Schuhen" —
+                         dort steckt der Fall AM ADJEKTIV, und ohne Ersatz
+                         stünde da ein Satz ohne Fall. Ein zweiter Durchgang
+                         darf nichts mehr ändern. Braucht DB_PATH.
 
 ## Aufrufen
 
@@ -108,6 +117,7 @@ Bestellungen und Kampagnen an.
     node tests/guertel.mjs
     node tests/saison.mjs
     DB_PATH=/tmp/pruef.db node tests/eindeutig.mjs
+    DB_PATH=/tmp/pruef.db node tests/wortlaut.mjs
     DB_PATH=/tmp/pruef.db node tests/preise.mjs
     DB_PATH=/tmp/pruef.db node tests/nachdemkauf.mjs
 
@@ -163,6 +173,16 @@ Kopf der jeweiligen Datei.
                          durchgestrichene Preise auf Kachel und Modellseite,
                          und dass sich beides wieder loswerden lässt. Braucht
                          einen aktiven Code; das Skript nennt ihn über CODE=.
+    artisan-sole-app/tests-striche.mjs
+                         10 Prüfungen: auf keiner Seite steht mehr ein
+                         Gedankenstrich. Gemessen wird der gezeichnete Text,
+                         nicht der Quelltext: In den Kommentaren dieses
+                         Projekts steht der Strich hundertfach, und die
+                         stehen nicht auf der Seite. Geprüft werden Kollektion,
+                         Startseite, Hilfe, die drei Rechtstexte, An- und
+                         Abmeldung sowie eine Modellseite mit ihrer
+                         Beschreibung, denn die liegt in der Datenbank und
+                         trug dort die meisten.
     artisan-sole-app/tests-kollektion.mjs
                          62 Prüfungen: die Kollektionsseite. Die Reihenfolge
                          der Rubriken über zwölf Monate hinweg (erst die

@@ -2,7 +2,7 @@
 
 > **Vor der Verwendung ausfüllen:** Alle `[…]`-Stellen ersetzen. Die Klauseln
 > sind bewusst knapp gehalten und auf maßgefertigte Schuhe zugeschnitten.
-> Keine Rechtsberatung — vor dem Livegang von einer Anwältin oder einem Anwalt
+> Keine Rechtsberatung, vor dem Livegang von einer Anwältin oder einem Anwalt
 > für IT- und Verbraucherrecht prüfen lassen.
 
 **Stand: 11. August 2026**
@@ -46,11 +46,11 @@ Ihrer Auswahl unterscheiden:
 |---|---|---|
 | Dauer | 4 bis 6 Wochen | rund 2 Wochen |
 | Preis | Grundpreis | Grundpreis zzgl. Aufpreis |
-| Auswahl | vollständig — Leisten, Leder, Farbe, Sohle, Ausführung | eingeschränkt |
+| Auswahl | vollständig, Leisten, Leder, Farbe, Sohle, Ausführung | eingeschränkt |
 | Fertigung | von Grund auf für Sie | aus vorbereiteten Bauteilen, auf Ihre Maße vollendet |
 
-(2) Bei der Express-Linie halten wir häufig gewählte Bauteile — zugeschnittene
-Schäfte, vorbereitete Sohlen — bereits vor. Was diese Zeit spart, kostet
+(2) Bei der Express-Linie halten wir häufig gewählte Bauteile, zugeschnittene
+Schäfte, vorbereitete Sohlen, bereits vor. Was diese Zeit spart, kostet
 Auswahl: Nicht jede Kombination aus Leder, Farbe und Ausführung lässt sich so
 darstellen. Welche Angaben Sie treffen können, sehen Sie am jeweiligen Modell,
 bevor Sie bestellen.
@@ -59,7 +59,7 @@ bevor Sie bestellen.
 sind Halbzeug, kein fertiger Schuh: Gezwickt, aufgebaut und ausgearbeitet wird
 auf dem für Sie bestimmten Leisten, nach Ihren Maßen, in Ihrer Größe und
 Weite. Ein Paar aus dieser Linie ist deshalb ebenso wenig weiterverkäuflich
-wie eines aus der Maßanfertigung — es passt zu Ihrem Fuß und zu keinem
+wie eines aus der Maßanfertigung, es passt zu Ihrem Fuß und zu keinem
 anderen.
 
 (4) Die Angabe „rund 2 Wochen" ist wie jede Fertigungsdauer ein
@@ -108,7 +108,7 @@ fertigen mit einer Toleranz von **± 0,3 cm in Länge und Weite**. Abweichungen
 innerhalb dieser Spanne sind kein Mangel, sondern fertigungsbedingt und
 vertragsgemäß.
 
-(2) Auch die Messung selbst — ob von Hand oder über unsere Anwendung — ist
+(2) Auch die Messung selbst, ob von Hand oder über unsere Anwendung, ist
 mit einer Unsicherheit behaftet. Die von der Anwendung ermittelten Werte sind
 Näherungswerte und **ersetzen keine Anprobe**.
 
@@ -149,7 +149,7 @@ Ihren Maßen und Ihrer Konfiguration und ist nicht weiterverkäuflich.
 Bestimmung durch Sie maßgeblich: Größe, Weite und Leisten richten sich nach
 Ihren Maßen, und erst danach wird das Paar aufgebaut. Die vorbereiteten
 Bauteile nach Ziffer 2.1 verkürzen die Arbeit, nehmen ihr aber nicht den
-Charakter der Einzelanfertigung — ohne Ihre Maße entsteht kein Schuh.
+Charakter der Einzelanfertigung, ohne Ihre Maße entsteht kein Schuh.
 
 (4) Wir weisen Sie hierauf im Bestellvorgang gesondert hin. Sie bestätigen
 diesen Hinweis vor dem Absenden der Bestellung.
@@ -166,7 +166,7 @@ Ziffer 4.2 gefertigt wurde.
 (3) **Kein Mangel** sind insbesondere:
 
 - natürliche Merkmale des Leders wie Narbung, Farbschwankungen, Insektenstiche
-  oder Hautfalten — sie zeichnen gewachsenes Material aus;
+  oder Hautfalten, sie zeichnen gewachsenes Material aus;
 - Abweichungen der Farbdarstellung auf Ihrem Bildschirm gegenüber dem
   gelieferten Leder;
 - Gebrauchsspuren, Dehnung des Leders, Abnutzung von Sohle und Absatz;
@@ -177,7 +177,7 @@ Ziffer 4.2 gefertigt wurde.
 
 (4) Bitte prüfen Sie den Schuh nach Erhalt zeitnah und melden Sie erkennbare
 Mängel möglichst innerhalb von **14 Tagen** an kontakt@artisansole.com. Diese Bitte
-beschränkt Ihre gesetzlichen Rechte nicht — sie hilft uns nur, schnell zu
+beschränkt Ihre gesetzlichen Rechte nicht, sie hilft uns nur, schnell zu
 helfen. Fügen Sie bitte Fotos bei.
 
 (5) **Wareneingangskontrolle.** Jedes Paar wird bei uns aus der Manufaktur
@@ -187,20 +187,20 @@ beiden Seiten als Nachweis. Sie erhalten sie auf Anfrage.
 
 (6) **Ersatz statt Rückgabe.** Ist ein Schuh mangelhaft, liefern wir Ersatz:
 Wir fertigen dasselbe Paar in derselben Ausführung neu. Das beanstandete Paar
-geht an uns zurück und verbleibt bei uns — es ist als Maßanfertigung nicht
+geht an uns zurück und verbleibt bei uns, es ist als Maßanfertigung nicht
 weiterverkäuflich und wird nicht wieder in Umlauf gebracht. Für Sie entstehen
 dabei keine Kosten, auch nicht für die Rücksendung.
 
 (7) Der Weg über die Ersatzlieferung ist die Nacherfüllung nach § 439 BGB.
 Schlägt sie fehl oder ist sie Ihnen nicht zuzumuten, stehen Ihnen die
-gesetzlichen Rechte zu — Minderung oder Rücktritt. Diese Rechte schränken wir
+gesetzlichen Rechte zu, Minderung oder Rücktritt. Diese Rechte schränken wir
 nicht ein; die Beschränkungen in Ziffer 7 gelten ausdrücklich **nicht** für
 Mängel.
 
 ## 7. Stornierung und Nichtgefallen
 
 > Diese Ziffer betrifft ausschließlich Fälle **ohne Mangel**. Ist der Schuh
-> mangelhaft, gilt Ziffer 6 — dort wird nichts gekürzt.
+> mangelhaft, gilt Ziffer 6, dort wird nichts gekürzt.
 
 ### 7.1 Warum es hier eine Grenze gibt
 
@@ -217,19 +217,19 @@ Stornierung nichts. Ist das Paar fertig, ist es verbraucht.
 
 (1) Was eine Stornierung kostet, hängt davon ab, wie weit Ihr Paar gediehen
 ist. Nicht vom Kalender: Zwei Wochen nach der Bestellung kann ein Paar noch
-unberührt sein oder bereits zugeschnitten — entscheidend ist der Stand der
+unberührt sein oder bereits zugeschnitten, entscheidend ist der Stand der
 Arbeit, und den sehen Sie jederzeit unter *Meine Bestellungen*.
 
 | Stand Ihrer Bestellung | Wir behalten ein | Sie erhalten zurück |
 |---|---|---|
-| Zahlung noch nicht eingegangen | — | Der Auftrag verfällt, es ist nichts zu erstatten |
+| Zahlung noch nicht eingegangen |, | Der Auftrag verfällt, es ist nichts zu erstatten |
 | Bezahlt, Freigabe an die Werkstatt noch nicht erteilt | 0 % | **den vollen Betrag** |
 | In Fertigung | 50 % | 50 % |
 | Fertiggestellt, in der Qualitätsprüfung | 75 % | 25 % |
-| Versandt oder zugestellt | — | keine Erstattung; es bleibt die Kulanz nach Ziffer 7.3 |
+| Versandt oder zugestellt |, | keine Erstattung; es bleibt die Kulanz nach Ziffer 7.3 |
 
 (2) **Der Wendepunkt ist die Freigabe an die Werkstatt.** Sie erfolgt, sobald
-Ihre Zahlung eingegangen ist — von da an sind Leisten belegt, Leder
+Ihre Zahlung eingegangen ist, von da an sind Leisten belegt, Leder
 zugeschnitten und Arbeitszeit eingeplant. Bis dahin kostet eine Stornierung
 nichts, danach beginnt die Staffel. Wir bestätigen Ihnen die Freigabe per
 E-Mail; die Nachricht nennt den Zeitpunkt.
@@ -241,15 +241,15 @@ niemanden sonst verkaufen.
 
 (4) Melden Sie sich so früh wie möglich über *Nachrichten* in Ihrem Konto
 oder an kontakt@artisansole.com. Maßgeblich ist der Stand zum Zeitpunkt, zu dem
-Ihre Nachricht bei uns eingeht — nicht der, zu dem wir sie bearbeiten.
+Ihre Nachricht bei uns eingeht, nicht der, zu dem wir sie bearbeiten.
 
-(5) Fällt uns die Stornierung leichter als die Staffel vermuten lässt — weil
+(5) Fällt uns die Stornierung leichter als die Staffel vermuten lässt, weil
 ein Bauteil sich anderweitig verwenden lässt oder die Arbeit noch nicht
-begonnen hat —, erstatten wir mehr. Die Sätze oben sind Obergrenzen dessen,
+begonnen hat, erstatten wir mehr. Die Sätze oben sind Obergrenzen dessen,
 was wir einbehalten, keine Beträge, die wir in jedem Fall beanspruchen.
 
 (6) Für die Express-Linie nach Ziffer 2.1 gilt dieselbe Staffel. Die Stufen
-folgen dort schneller aufeinander, weil die Fertigung kürzer ist — umso mehr
+folgen dort schneller aufeinander, weil die Fertigung kürzer ist, umso mehr
 kommt es darauf an, sich früh zu melden.
 
 ### 7.3 Nichtgefallen
@@ -267,8 +267,8 @@ sorgfältiger Arbeit einmal nicht gefallen kann, bieten wir freiwillig an:
 - eine Erstattung von **höchstens 50 % des Kaufpreises**.
 
 (3) Voraussetzung ist, dass der Schuh **an uns zurückgesandt** wird und dabei
-ungetragen ist — abgesehen von kurzer Anprobe in der Wohnung auf sauberem
-Boden — und vollständig mit Zubehör und Verpackung vorliegt. Die Rücksendung
+ungetragen ist, abgesehen von kurzer Anprobe in der Wohnung auf sauberem
+Boden, und vollständig mit Zubehör und Verpackung vorliegt. Die Rücksendung
 erfolgt nach Absprache mit uns; die Kosten der Rücksendung tragen Sie.
 Maßgeblich für die Beurteilung sind die Aufnahmen aus der
 Wareneingangskontrolle nach Ziffer 6 Abs. 5.
@@ -279,7 +279,7 @@ auf Sie zugeschnittene Prägung, entfällt die Kulanz nach dieser Ziffer
 vollständig. Der Grund ist einfach: Ein Paar mit Ihren Initialen lässt sich
 niemandem sonst anbieten. Es ist kein Schuh, der zurück ins Regal kann,
 sondern ein Einzelstück, das nur zu Ihnen gehört. Bei allen übrigen
-Ausführungen — Leder, Farbe, Sohle, Leisten — greift die Kulanz wie oben
+Ausführungen, Leder, Farbe, Sohle, Leisten, greift die Kulanz wie oben
 beschrieben.
 
 (5) Erstattet wird erst, nachdem der Schuh bei uns eingegangen und geprüft
@@ -292,7 +292,7 @@ entsteht kein Anspruch für die Zukunft.
 
 ### 7.4 Zubehör
 
-Zubehör — Pflegemittel, Schuhspanner, Beutel — ist keine Maßanfertigung.
+Zubehör, Pflegemittel, Schuhspanner, Beutel, ist keine Maßanfertigung.
 Dafür gilt Ziffer 7 nicht: Es geht innerhalb von 14 Tagen nach Zustellung
 vollständig und zum vollen Preis zurück.
 
@@ -347,8 +347,8 @@ begründen keinen Anspruch.
 
 ## 12. Fußmaße und Ihr Konto
 
-**(1) Wofür wir Ihre Maße verwenden.** Fußlänge, Ballenumfang und — sofern Sie
-sie uns überlassen — Messdaten aus einem Fußscan verwenden wir, um Leisten,
+**(1) Wofür wir Ihre Maße verwenden.** Fußlänge, Ballenumfang und, sofern Sie
+sie uns überlassen, Messdaten aus einem Fußscan verwenden wir, um Leisten,
 Weite und Größe für Ihr Paar zu bestimmen. Ohne diese Angaben können wir nicht
 maßfertigen.
 

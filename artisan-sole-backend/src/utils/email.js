@@ -128,7 +128,7 @@ function createTransporter(cfg) {
  */
 export class EmailNotConfiguredError extends Error {
   constructor() {
-    super('SMTP ist nicht eingerichtet — unter Administration › E-Mail / SMTP hinterlegen.')
+    super('SMTP ist nicht eingerichtet, unter Administration › E-Mail / SMTP hinterlegen.')
     this.name = 'EmailNotConfiguredError'
   }
 }
@@ -198,10 +198,10 @@ function smtpDeutung(e, cfg) {
     // einer geänderten Zahl womöglich fertig, ohne Support-Anfrage und ohne
     // fremden Dienst. Erst wenn auch 587 tot ist, geht es um die Sperre.
     const port465 = Number(cfg.port) === 465
-    return `Keine Verbindung zu ${ziel} — die Gegenstelle antwortet nicht. `
+    return `Keine Verbindung zu ${ziel}, die Gegenstelle antwortet nicht. `
       + 'An Benutzername oder Passwort liegt es nicht: Bis zur Anmeldung kommt es gar nicht. '
       + (port465
-        ? 'Sie stehen auf Port 465, und genau den sperrt Hetzner ausgehend — zusammen mit 25. '
+        ? 'Sie stehen auf Port 465, und genau den sperrt Hetzner ausgehend, zusammen mit 25. '
           + 'Port 587 bleibt offen. Fast alle Mailserver nehmen beide an, also zuerst 587 '
           + 'versuchen: eine Zahl ändern, speichern, Testnachricht. Das kostet nichts und '
           + 'ist in einer Minute erledigt.'
@@ -211,7 +211,7 @@ function smtpDeutung(e, cfg) {
       + ' Womit sich das klären lässt, ohne zu raten: „Leitung prüfen" unten.'
   }
   if (code === 'ECONNREFUSED') {
-    return `${ziel} weist die Verbindung aktiv ab — dort nimmt nichts Verbindungen an. `
+    return `${ziel} weist die Verbindung aktiv ab, dort nimmt nichts Verbindungen an. `
       + 'Meist ein falscher Port: 587 für STARTTLS, 465 für direktes TLS.'
   }
   if (code === 'EDNS' || code === 'ENOTFOUND' || /getaddrinfo/i.test(text)) {
@@ -219,7 +219,7 @@ function smtpDeutung(e, cfg) {
   }
   if (code === 'EAUTH') {
     return 'Der Server ist erreichbar, weist aber die Anmeldung zurück. '
-      + `Benutzername oder Passwort stimmen nicht — bei „${cfg.user}" ist meist die volle `
+      + `Benutzername oder Passwort stimmen nicht, bei „${cfg.user}" ist meist die volle `
       + 'E-Mail-Adresse als Benutzername gefragt, nicht nur der Teil davor.'
   }
   if (code === 'ESOCKET' || /wrong version number|ssl/i.test(text)) {
@@ -314,11 +314,11 @@ export async function diagnoseSmtp() {
   if (!v4.length && !v6.length) {
     befund = `Der Name „${cfg.host}" lässt sich nicht auflösen. Bitte die Schreibweise prüfen.`
   } else if (!offenV4.length && !offenV6.length) {
-    befund = 'Kein einziger Mail-Port ist von diesem Server aus erreichbar — weder 25 noch 465 noch 587. '
+    befund = 'Kein einziger Mail-Port ist von diesem Server aus erreichbar, weder 25 noch 465 noch 587. '
       + 'Das ist das Bild einer Sperre beim Rechenzentrum, nicht einer falschen Einstellung. '
       + 'Bei Hetzner lässt sich der ausgehende Versand per Support-Anfrage freischalten, sobald das '
       + 'Konto einen Monat besteht und die erste Rechnung bezahlt ist. Ohne Warten geht es über den '
-      + 'Maildienst per HTTPS — oben umstellen, der braucht keinen Mail-Port.'
+      + 'Maildienst per HTTPS, oben umstellen, der braucht keinen Mail-Port.'
   } else if (konf?.ipv4?.ok && v6.length && !konf?.ipv6?.ok) {
     befund = `Port ${konf.port} ist über IPv4 offen, über IPv6 tot. Genau daher kommt die Zeitüberschreitung: `
       + 'Der Mailserver hat einen IPv6-Eintrag, ist darüber aber nicht erreichbar, und dieser Weg wird zuerst versucht. '
@@ -327,10 +327,10 @@ export async function diagnoseSmtp() {
     befund = `Der eingestellte Port ${cfg.port} ist gesperrt, offen ist dagegen `
       + `${[...new Set([...offenV4, ...offenV6])].join(' und ')}. Damit ist die Sache erledigt: `
       + 'oben die Zahl ändern, speichern, Testnachricht. Kein Support-Ticket, kein fremder Dienst. '
-      + '587 spricht STARTTLS, 465 direktes TLS — die Verschlüsselung stellt sich nach der Zahl '
+      + '587 spricht STARTTLS, 465 direktes TLS, die Verschlüsselung stellt sich nach der Zahl '
       + 'von selbst um.'
   } else if (konf?.ipv4?.ok || konf?.ipv6?.ok) {
-    befund = `Port ${cfg.port} ist erreichbar. Die Verbindung steht also — scheitert es trotzdem, `
+    befund = `Port ${cfg.port} ist erreichbar. Die Verbindung steht also, scheitert es trotzdem, `
       + 'liegt es an der Anmeldung oder der Verschlüsselung, nicht am Netz.'
   } else {
     befund = 'Uneindeutiges Bild, siehe die einzelnen Ergebnisse unten.'
@@ -508,12 +508,12 @@ function vertragsbedingungen(appUrl) {
       <p style="font-size:13px;color:#111;font-weight:600;margin:0 0 8px">Kein Widerrufsrecht</p>
       <p style="font-size:12px;color:#555;line-height:1.7;margin:0">
         Ihr Paar entsteht einzeln nach Ihren Maßen und Ihrer Konfiguration. Bei solchen Waren
-        besteht nach § 312g Abs. 2 Nr. 1 BGB kein Widerrufsrecht — auch nicht in der
+        besteht nach § 312g Abs. 2 Nr. 1 BGB kein Widerrufsrecht, auch nicht in der
         Express-Linie, denn auch dort wird auf dem für Ihren Fuß bestimmten Leisten
         gearbeitet. Ein Paar auf Ihrem Leisten lässt sich an niemanden sonst verkaufen.
       </p>
       <p style="font-size:12px;color:#555;line-height:1.7;margin:8px 0 0">
-        Freiwillig bieten wir Ihnen bei Nichtgefallen eine Lösung an — Anpassung,
+        Freiwillig bieten wir Ihnen bei Nichtgefallen eine Lösung an, Anpassung,
         Neuanfertigung, Gutschrift oder eine Erstattung von höchstens 50 %. Melden Sie sich
         dafür innerhalb von 14 Tagen nach Erhalt. Die Einzelheiten stehen in Ziffer 7 unten.
       </p>
@@ -529,7 +529,7 @@ function vertragsbedingungen(appUrl) {
     <p style="font-size:11px;color:#888;line-height:1.7;margin:16px 0 0">
       Unsere Allgemeinen Geschäftsbedingungen finden Sie unter
       <a href="${escapeHtml(appUrl)}/legal/agb" style="color:#555">${escapeHtml(appUrl)}/legal/agb</a>.
-      Auf Wunsch senden wir sie Ihnen in Textform zu — schreiben Sie uns kurz.
+      Auf Wunsch senden wir sie Ihnen in Textform zu, schreiben Sie uns kurz.
     </p>`
   }
 
@@ -850,7 +850,7 @@ export async function sendCancellation(order, user, storno) {
 
     <div class="box">
       <span class="zeile"><strong>Auftragswert</strong> · ${geld(storno.betrag)}</span>
-      <span class="zeile"><strong>Einbehalten</strong> · ${geld(storno.gebuehr)}${storno.pct ? ` (${storno.pct} % nach Ziffer 7.2 unserer AGB)` : ' — keine Gebühr'}</span>
+      <span class="zeile"><strong>Einbehalten</strong> · ${geld(storno.gebuehr)}${storno.pct ? ` (${storno.pct} % nach Ziffer 7.2 unserer AGB)` : ', keine Gebühr'}</span>
       <span class="zeile" style="font-size:15px;color:#111"><strong>Erstattung</strong> · ${geld(storno.erstattung)}</span>
     </div>
 
@@ -860,14 +860,14 @@ export async function sendCancellation(order, user, storno) {
       Ihre Zahlung kam. Sie müssen dafür nichts tun.
     </p>` : `
     <p style="font-size:14px;color:#555;margin:0 0 16px">
-      Es ist nichts zu erstatten — für diesen Auftrag war noch keine Zahlung eingegangen.
+      Es ist nichts zu erstatten, für diesen Auftrag war noch keine Zahlung eingegangen.
     </p>`}
 
     ${storno.gebuehr > 0 ? `
     <p style="font-size:12px;color:#888;line-height:1.7">
       Der einbehaltene Anteil deckt Material, Arbeitszeit und die belegte
       Fertigungskapazität. Ein Paar auf Ihrem Leisten lässt sich an niemanden
-      sonst verkaufen — was wir erstatten, tragen wir vollständig selbst.
+      sonst verkaufen, was wir erstatten, tragen wir vollständig selbst.
     </p>` : ''}
 
     <hr class="divider">
@@ -880,7 +880,7 @@ export async function sendCancellation(order, user, storno) {
 </div>
 </body></html>`
 
-  await send({ to: user.email, subject: `Stornierung ${ref} — Erstattung ${geld(storno.erstattung)}`, html })
+  await send({ to: user.email, subject: `Stornierung ${ref}, Erstattung ${geld(storno.erstattung)}`, html })
 }
 
 // ─── Helper: compute user shoe stats (ordered vs kept) ───────────────────────
@@ -1121,7 +1121,7 @@ export async function sendPasswordReset(email, name, token, stunden = 1) {
     <p style="font-size:11px;color:#999;margin:0 0 24px">Falls der Knopf nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">
-      <strong>Sie haben das nicht angefordert?</strong> Dann tun Sie nichts — Ihr
+      <strong>Sie haben das nicht angefordert?</strong> Dann tun Sie nichts, Ihr
       bisheriges Passwort gilt weiter, und der Link verfällt von allein. Bekommen
       Sie diese Nachricht öfter, melden Sie sich bitte bei uns.
     </p>
@@ -1258,7 +1258,7 @@ export async function sendCampaignInvitation(email, campaign, businessName) {
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">${escapeHtml(campaign.name)}</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">
       ${businessName ? `${escapeHtml(businessName)} lädt Sie ein` : 'Sie sind eingeladen'}, an dieser Aktion
-      teilzunehmen${rabatt ? ` — mit ${rabatt} auf Ihr Custom Made Paar` : ''}.
+      teilzunehmen${rabatt ? `, mit ${rabatt} auf Ihr Custom Made Paar` : ''}.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Jetzt teilnehmen</a>
     <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
@@ -1289,7 +1289,7 @@ export async function sendAffiliateInvitation(email, name, inviteToken, code) {
   <div class="body" style="text-align:center">
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Willkommen${name ? `, ${escapeHtml(name)}` : ''}!</p>
     <p style="font-size:14px;color:#555;margin:0 0 8px">
-      Ihr Affiliate-Konto steht bereit. Legen Sie jetzt Ihr Passwort fest — danach
+      Ihr Affiliate-Konto steht bereit. Legen Sie jetzt Ihr Passwort fest, danach
       finden Sie dort Ihren persönlichen Link, den QR-Code zum Weitergeben und die
       Übersicht Ihrer vermittelten Paare.
     </p>

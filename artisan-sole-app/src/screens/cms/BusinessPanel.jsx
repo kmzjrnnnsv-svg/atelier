@@ -202,10 +202,10 @@ export default function BusinessPanel() {
             <AlertTriangle size={14} className="text-black/40 mt-0.5 shrink-0" />
             <div>
               <h3 className="text-[9px] text-black/20 uppercase tracking-[0.3em] font-light">
-                Firmenkonto löschen — {loeschen.name}
+                Firmenkonto löschen, {loeschen.name}
               </h3>
               <p className="text-[12px] text-black/50 font-light leading-relaxed mt-2 max-w-2xl">
-                Eine Firma hat kein eigenes Konto — sie hängt am Konto der Inhaberin oder des
+                Eine Firma hat kein eigenes Konto, sie hängt am Konto der Inhaberin oder des
                 Inhabers, und mit diesem geht sie. Gelöscht wird deshalb dieses Konto samt
                 Kampagnen und Codes. Zwei Schritte: Sie beantragen, eine zweite Person aus der
                 Verwaltung bestätigt unter Benutzer. Danach ist das Konto gesperrt und dreißig
@@ -217,7 +217,7 @@ export default function BusinessPanel() {
           <input
             value={loeschen.reason}
             onChange={e => setLoeschen(l => ({ ...l, reason: e.target.value }))}
-            placeholder="Grund — etwa „Löschwunsch des Unternehmens vom 13.08.“"
+            placeholder="Grund, etwa „Löschwunsch des Unternehmens vom 13.08.“"
             className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 font-light text-black/70 placeholder-black/15"
           />
           <div className="flex gap-3">
@@ -288,7 +288,7 @@ export default function BusinessPanel() {
                 </p>
               ) : a.loeschung_beantragt && (
                 <p className="text-[10px] text-amber-700/80 font-light mt-2 flex items-center gap-1.5">
-                  <AlertTriangle size={11} /> Löschung beantragt — es fehlt die Bestätigung einer zweiten Person, unter Benutzer.
+                  <AlertTriangle size={11} /> Löschung beantragt, es fehlt die Bestätigung einer zweiten Person, unter Benutzer.
                 </p>
               )}
               {campExpanded === a.id && (

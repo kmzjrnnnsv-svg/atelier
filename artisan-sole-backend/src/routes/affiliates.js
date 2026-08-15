@@ -628,7 +628,7 @@ router.get('/:id/einladung', ...canAdmin, param('id').isInt(), async (req, res) 
     return res.json({
       offen: false,
       grund: konto?.is_active
-        ? 'Dieses Konto ist bereits aktiv — der Affiliate meldet sich wie gewohnt an.'
+        ? 'Dieses Konto ist bereits aktiv, der Affiliate meldet sich wie gewohnt an.'
         : 'Für dieses Konto liegt keine offene Einladung vor.',
       code: a.code,
       email: a.email,
@@ -663,7 +663,7 @@ router.delete('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
 
   if (a.user_id) {
     return res.status(409).json({
-      error: 'Zu diesem Affiliate gehört ein Konto. Bitte über „Konto löschen" gehen — dort mit Bestätigung durch eine zweite Person und dreißig Tagen Frist.',
+      error: 'Zu diesem Affiliate gehört ein Konto. Bitte über „Konto löschen" gehen, dort mit Bestätigung durch eine zweite Person und dreißig Tagen Frist.',
       code: 'UEBER_KONTO',
       user_id: a.user_id,
     })
@@ -738,7 +738,7 @@ router.post('/:id/payout', ...canAdmin, param('id').isInt(), (req, res) => {
 
   protokoll(db, {
     entity: 'affiliate', entityId: a.id, action: 'auszahlung',
-    detail: `${result.pair_count} Paare, ${result.amount.toFixed(2)} € — ${reference}`,
+    detail: `${result.pair_count} Paare, ${result.amount.toFixed(2)} €, ${reference}`,
     user: req.user,
   })
 
@@ -934,7 +934,7 @@ router.post('/me/auszahlung', authenticate, (req, res) => {
   }
   if (!a.iban) {
     return res.status(400).json({
-      error: 'Bitte tragen Sie zuerst Ihre Bankverbindung ein — ohne sie können wir nicht überweisen.',
+      error: 'Bitte tragen Sie zuerst Ihre Bankverbindung ein, ohne sie können wir nicht überweisen.',
       code: 'KEINE_BANKVERBINDUNG',
     })
   }

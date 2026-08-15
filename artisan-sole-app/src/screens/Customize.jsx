@@ -48,7 +48,7 @@ const WEITEN_NAME = { D: 'Normal', EE: 'Breit', EEE: 'Sehr breit' }
  * Stand August 2026.
  */
 const SNEAKER_TEST = [
-  { key: 'D',   frage: 'Samba oder Gazelle passen mir gut',          folge: 'Beide sind schmal geschnitten — wem sie passen, der hat keinen breiten Fuß.' },
+  { key: 'D',   frage: 'Samba oder Gazelle passen mir gut',          folge: 'Beide sind schmal geschnitten, wem sie passen, der hat keinen breiten Fuß.' },
   { key: 'EE',  frage: 'Samba drückt seitlich, Air Force 1 sitzt gut', folge: 'Genau der Unterschied zwischen schmal und großzügig. Sie brauchen Platz am Ballen.' },
   { key: 'EEE', frage: 'Auch der Air Force 1 ist mir zu eng',          folge: 'Der gilt als einer der geräumigsten überhaupt. Dann ist es die weiteste Ausführung.' },
 ]
@@ -642,7 +642,7 @@ export default function Customize() {
   const massFormular = (
             <div className="mt-3 border border-black/10 p-3 max-w-md">
               <p className="text-[10px] text-black/40 font-light mb-2 leading-relaxed">
-                Die Fußlänge genügt uns für die Größe — ±0,5 cm sind völlig in Ordnung.
+                Die Fußlänge genügt uns für die Größe, ±0,5 cm sind völlig in Ordnung.
                 Kommt der Ballenumfang dazu, bestimmen wir auch die Weite und den Leisten;
                 ohne ihn fragen wir Sie danach.
               </p>
@@ -1756,7 +1756,7 @@ export default function Customize() {
                   : campaignForShoe && campaignPct >= userPct
                     ? <>{campaignForShoe.business_name || campaignForShoe.name} · {satzText(wirksamerPct)} % Firmenkondition</>
                     : <>{satzText(wirksamerPct)} % Sonderkondition</>}
-                {' '}— Sie sparen {formatPrice(totalDiscount)}
+                {' '}, Sie sparen {formatPrice(totalDiscount)}
               </p>
             )}
             <div className="flex items-center gap-4 mt-2 lg:mt-3">
@@ -2190,7 +2190,7 @@ export default function Customize() {
                   {Number(guertelOptionen.preis_einzeln) > Number(guertelOptionen.preis_zum_paar) && (
                     <> statt <span className="line-through">€ {Number(guertelOptionen.preis_einzeln).toLocaleString('de-DE')}</span> einzeln</>
                   )}
-                  {' '}— er geht im selben Karton hinaus.
+                  {' '}, er geht im selben Karton hinaus.
                 </p>
 
                 <div className="grid grid-cols-2 gap-2 max-w-xs">
@@ -2237,7 +2237,7 @@ export default function Customize() {
                   </p>
                   <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2">
                     Ohne Maße bauen wir nach der Tabelle. Wenn Sie uns Fußlänge und
-                    Ballenumfang nennen, wählen wir Leisten und Weite passend dazu — das
+                    Ballenumfang nennen, wählen wir Leisten und Weite passend dazu, das
                     sitzt spürbar besser.
                   </p>
                   <div className="flex flex-wrap items-center gap-4 mt-3">
@@ -2293,7 +2293,7 @@ export default function Customize() {
                     <span>
                       {hatUmfang
                         ? 'Passform automatisch ermittelt, keine Größenwahl nötig.'
-                        : `Größe aus Ihrer Fußlänge: ${selectedFit?.size_label ? `EU ${String(selectedFit.size_label).replace('.', ',')}` : '—'}.`}
+                        : `Größe aus Ihrer Fußlänge: ${selectedFit?.size_label ? `EU ${String(selectedFit.size_label).replace('.', ',')}` : 'noch offen'}.`}
                     </span>
                   </div>
 
@@ -2343,7 +2343,7 @@ export default function Customize() {
                       {weitenHier.length > 0 && (
                         <p className="text-[10px] text-black/50 font-light leading-relaxed mt-2.5">
                           Der Ballenumfang ist einmal um den Fuß herum gemessen, an der
-                          breitesten Stelle, dort wo der große Zeh ansetzt — nicht die Breite
+                          breitesten Stelle, dort wo der große Zeh ansetzt, nicht die Breite
                           quer über den Fuß. Sie brauchen kein Maßband: Legen Sie einen
                           Schnürsenkel um den Ballen, markieren Sie die Stelle, wo er sich
                           trifft, und halten Sie ihn an ein Lineal.
@@ -2379,13 +2379,13 @@ export default function Customize() {
                           })}
                         </div>
                         <p className="text-[9px] text-black/30 font-light leading-relaxed mt-2">
-                          Anhaltspunkte, keine Messung — Sneaker sitzen ohnehin lockerer als
+                          Anhaltspunkte, keine Messung, Sneaker sitzen ohnehin lockerer als
                           rahmengenähte Schuhe. Der gemessene Ballenumfang bleibt genauer.
                         </p>
                       </div>
                       <p className="text-[10px] text-black/35 font-light leading-relaxed mt-2 pt-2 border-t border-black/[0.06]">
                         Die Länge haben Sie gemessen, die Weite geschätzt. Wir merken uns das
-                        und fragen vor der Fertigung nach, wenn etwas unstimmig wirkt — der
+                        und fragen vor der Fertigung nach, wenn etwas unstimmig wirkt, der
                         Schuh entsteht ohnehin erst in den Wochen danach. Genauer wird es mit
                         dem gemessenen Ballenumfang.
                         {' '}
@@ -2463,7 +2463,7 @@ export default function Customize() {
                     Custom Made anfragen
                   </button>
                   {/* Wer trotzdem lieber eine Standardgröße nimmt, soll das
-                      können — die Anfrage ist ein Angebot, keine Sackgasse. */}
+                      können, die Anfrage ist ein Angebot, keine Sackgasse. */}
                   <button
                     type="button" onClick={() => setGroessenOffen(true)}
                     className="block w-full mt-2 text-[10px] text-black/40 hover:text-black/70 text-center underline underline-offset-4 bg-transparent border-0"
@@ -2475,7 +2475,7 @@ export default function Customize() {
               )}
 
               {/* Sind bereits Maße hinterlegt, hängt das Formular unten am
-                  Block — der Fall ohne Maße zeigt es weiter oben anstelle des
+                  Block, der Fall ohne Maße zeigt es weiter oben anstelle des
                   Hinweistextes. */}
               {measOpen && measAnchor === 'passform' && footMeasurements?.foot_length_mm && massFormular}
             </div>

@@ -84,7 +84,7 @@ const WEITEN = [
  * August 2026.
  */
 const SNEAKER_TEST = [
-  { key: 'D',   frage: 'Samba oder Gazelle passen mir gut',           folge: 'Beide sind schmal geschnitten — wem sie passen, der hat keinen breiten Fuß.' },
+  { key: 'D',   frage: 'Samba oder Gazelle passen mir gut',           folge: 'Beide sind schmal geschnitten, wem sie passen, der hat keinen breiten Fuß.' },
   { key: 'EE',  frage: 'Samba drückt seitlich, Air Force 1 sitzt gut', folge: 'Genau der Unterschied zwischen schmal und großzügig. Sie brauchen Platz am Ballen.' },
   { key: 'EEE', frage: 'Auch der Air Force 1 ist mir zu eng',          folge: 'Der gilt als einer der geräumigsten überhaupt. Dann ist es die weiteste Ausführung.' },
 ]
@@ -94,7 +94,7 @@ const REGISTER = [
   { id: 'vergleich', label: 'Vergleich',    icon: ArrowLeftRight },
 ]
 
-const zahl = (v) => (v == null ? '—' : String(Math.round(v)).replace('.', ','))
+const zahl = (v) => (v == null ? 'k. A.' : String(Math.round(v)).replace('.', ','))
 
 /** Aus 'penny_loafer' wird 'Penny Loafer' — für den Fall ohne mitgelieferten Namen. */
 const leistenName = (key) =>
@@ -345,7 +345,7 @@ export default function GroessenTabelle({
                 </div>
                 <p className="text-[10px] text-black/50 font-light leading-relaxed mb-1.5">
                   Der Ballenumfang ist einmal um den Fuß herum gemessen, an der breitesten
-                  Stelle, dort wo der große Zeh ansetzt — nicht die Breite quer über den Fuß.
+                  Stelle, dort wo der große Zeh ansetzt, nicht die Breite quer über den Fuß.
                   Kein Maßband nötig: Schnürsenkel um den Ballen legen, die Stelle markieren,
                   wo er sich trifft, und an ein Lineal halten.
                 </p>
@@ -377,12 +377,12 @@ export default function GroessenTabelle({
                     })}
                   </div>
                   <p className="text-[9px] text-black/30 font-light leading-relaxed mt-2">
-                    Anhaltspunkte, keine Messung — Sneaker sitzen ohnehin lockerer als
+                    Anhaltspunkte, keine Messung, Sneaker sitzen ohnehin lockerer als
                     rahmengenähte Schuhe. Der gemessene Ballenumfang bleibt genauer.
                   </p>
                 </div>
 
-                {/* Schritt 2 — Größe */}
+                {/* Schritt 2: Größe */}
                 <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">
                   2 · Welche Größe tragen Sie? (EU)
                 </p>
@@ -408,7 +408,7 @@ export default function GroessenTabelle({
                   </p>
                 )}
 
-                {/* Schritt 3 — was dabei herauskommt */}
+                {/* Schritt 3: was dabei herauskommt */}
                 {treffer && (
                   <div className="mt-5 border border-black/12 bg-[#fafaf9] p-4">
                     <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">3 · Ihre Größe</p>
@@ -458,7 +458,7 @@ export default function GroessenTabelle({
             <>
               <p className="text-[11px] text-black/50 font-light leading-relaxed mb-4">
                 Was Ihre Fußlänge anderswo für eine Nummer ergibt. Gerechnet nach den
-                Regeln, nach denen die Häuser ihre Größen vergeben — nicht aus fremden
+                Regeln, nach denen die Häuser ihre Größen vergeben, nicht aus fremden
                 Tabellen abgeschrieben.
               </p>
 
@@ -499,7 +499,7 @@ export default function GroessenTabelle({
                         ['Japan / Mondopoint', `${String(vergleich.jp).replace('.', ',')} cm`, 'Die Größe ist die Fußlänge. Nichts umzurechnen.'],
                         ['UK', spanneText(vergleich.uk), 'Gerstenkorn: eine Größe ist ein Drittel Zoll.'],
                         ['US Herren', spanneText(vergleich.us), 'Brannock: dieselbe Schrittweite, genau eine Nummer über UK.'],
-                        ['EU', spanneText(vergleich.eu, n => String(n)), 'Pariser Stich, gemessen am Leisten — deshalb die Spanne.'],
+                        ['EU', spanneText(vergleich.eu, n => String(n)), 'Pariser Stich, gemessen am Leisten, deshalb die Spanne.'],
                       ].map(([sys, wert, erklaerung]) => (
                         <tr key={sys} className="border-b border-black/[0.05] last:border-0">
                           <td className="py-2.5 pr-3 align-top">
@@ -544,14 +544,14 @@ export default function GroessenTabelle({
                 </>
               ) : (
                 <p className="text-[11px] text-black/35 font-light">
-                  Fußlänge eintragen oder links eine Größe wählen — dann steht hier, was
+                  Fußlänge eintragen oder links eine Größe wählen, dann steht hier, was
                   daraus anderswo wird.
                 </p>
               )}
 
               <p className="text-[10px] text-black/35 font-light leading-relaxed mt-6">
                 Zur Orientierung. Auch innerhalb eines Hauses fällt nicht jeder Leisten
-                gleich aus, und keine Umrechnung kennt Ihren Ballenumfang — deshalb messen
+                gleich aus, und keine Umrechnung kennt Ihren Ballenumfang, deshalb messen
                 wir lieber, als zu rechnen. Für Ihr Paar zählt allein unsere eigene
                 Leistentabelle.
               </p>
@@ -562,7 +562,7 @@ export default function GroessenTabelle({
         <div className="flex items-start gap-2 px-5 py-3.5 border-t border-black/[0.07] bg-[#fafaf9]">
           <Info size={13} strokeWidth={1.5} className="text-black/35 mt-0.5 shrink-0" />
           <p className="text-[11px] text-black/50 font-light leading-relaxed">
-            Eine Größenzahl kennt nur die Länge. Zwei Maße — Fußlänge und Ballenumfang —
+            Eine Größenzahl kennt nur die Länge. Zwei Maße, Fußlänge und Ballenumfang,
             genügen uns für Leisten, Weite und Größe, und das Ergebnis sitzt spürbar
             besser. Bei einem Schuh, der eigens für Sie gebaut wird, lohnt sich das Maßband.
           </p>

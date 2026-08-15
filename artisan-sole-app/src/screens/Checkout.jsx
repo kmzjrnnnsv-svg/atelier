@@ -694,7 +694,7 @@ export default function Checkout() {
             <PackageOpen size={22} strokeWidth={1.2} className="text-black/30 mb-4" />
             <p className="text-[15px] font-light text-black">Zubehör gibt es nur zusammen mit einem Paar.</p>
             <p className="text-[12px] text-black/50 font-light leading-relaxed mt-3 max-w-md">
-              Der Versand eines einzelnen Pflegesets kostet uns rund 30 € — mehr als
+              Der Versand eines einzelnen Pflegesets kostet uns rund 30 €, mehr als
               der Artikel selbst. Das wollen wir niemandem berechnen. Legen Sie ein
               Modell dazu, dann geht Ihr Zubehör im selben Paket mit, ohne
               zusätzlichen Versand.
@@ -823,7 +823,7 @@ export default function Checkout() {
             {!user && (
               <div className="border border-black/[0.06] px-4 py-3">
                 <p className="text-[12px] text-black/55 font-light leading-relaxed">
-                  Zum Bestellen brauchen wir ein Konto — für Lieferadresse und Fertigungsstand.
+                  Zum Bestellen brauchen wir ein Konto, für Lieferadresse und Fertigungsstand.
                   Ihr Warenkorb bleibt dabei erhalten{affiliate?.code ? ', Ihr Vorteil ebenfalls' : ''}.
                 </p>
               </div>
@@ -961,7 +961,7 @@ export default function Checkout() {
                 <p className="text-[12px] text-amber-900 leading-relaxed font-light">
                   Für die hinterlegten Maße können wir bei diesem Modell keine passende Form
                   anbieten. Bestellen Sie trotzdem, wird der Schuh mit hoher Wahrscheinlichkeit
-                  nicht richtig sitzen — ein Umtausch aus diesem Grund ist bei Maßanfertigungen
+                  nicht richtig sitzen, ein Umtausch aus diesem Grund ist bei Maßanfertigungen
                   nicht möglich.
                 </p>
                 <p className="text-[12px] text-amber-900 leading-relaxed font-light mt-2">
@@ -1003,7 +1003,7 @@ export default function Checkout() {
                       </p>
                       <p className="text-[10px] text-black/30 mt-1.5 font-light leading-relaxed">
                         Diese Maße gehören zu dieser Konfiguration und lassen sich hier nicht mehr
-                        ändern. Für andere Maße stellen Sie den Schuh bitte neu zusammen — nur so
+                        ändern. Für andere Maße stellen Sie den Schuh bitte neu zusammen, nur so
                         werden Leisten, Weite und Größe passend dazu bestimmt.
                       </p>
                       <button

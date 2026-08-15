@@ -17,10 +17,10 @@ import Ablauf from '../components/Ablauf'
 import { apiFetch } from '../hooks/useApi'
 
 const MERKMALE = [
-  { icon: Link2, titel: 'Ein Link, ein QR-Code', text: 'Beides finden Sie nach der Anmeldung in Ihrem Bereich. Der Link führt auf den regulären Shop — Ihre Empfehlung wird dabei mitgeführt.' },
+  { icon: Link2, titel: 'Ein Link, ein QR-Code', text: 'Beides finden Sie nach der Anmeldung in Ihrem Bereich. Der Link führt auf den regulären Shop, Ihre Empfehlung wird dabei mitgeführt.' },
   { icon: Percent, titel: 'Provision je vermitteltem Paar', text: 'Prozentual oder als fester Betrag, mit einer vereinbarten Obergrenze je Paar. Ihre Konditionen stehen in Ihrem Bereich.' },
   { icon: Wallet, titel: 'Auszahlung in Fünferschritten', text: 'Sind fünf Paare auszahlbar, wird abgerechnet. Was übrig bleibt, zählt für die nächste Runde weiter.' },
-  { icon: ShieldCheck, titel: 'Nachvollziehbar, ohne stilles Mitlesen', text: 'Der Code steht sichtbar im Warenkorb, statt in einem Cookie zu stecken. Kundennamen und Adressen sehen Sie nicht — für die Abrechnung sind sie nicht nötig.' },
+  { icon: ShieldCheck, titel: 'Nachvollziehbar, ohne stilles Mitlesen', text: 'Der Code steht sichtbar im Warenkorb, statt in einem Cookie zu stecken. Kundennamen und Adressen sehen Sie nicht, für die Abrechnung sind sie nicht nötig.' },
 ]
 
 
@@ -152,7 +152,7 @@ export default function AffiliateLanding() {
           Ein Affiliate-Konto ist kein Werbenetzwerk. Es ist eine Vereinbarung zwischen
           Ihnen und dem Haus: Sie geben Ihren Link weiter, wer darüber bestellt, bekommt
           die zugesagte Kondition, und Sie erhalten Ihre Provision. Wir sprechen
-          Affiliates an — bewerben können Sie sich nicht, und das ist Absicht.
+          Affiliates an, bewerben können Sie sich nicht, und das ist Absicht.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
           <Link
@@ -197,7 +197,7 @@ export default function AffiliateLanding() {
           schritte={[
             {
               titel: 'Einladung erhalten',
-              text: 'Wir legen Ihr Konto an und schicken Ihnen einen Link. Darin steht auch Ihr Code — der Name, unter dem Sie empfehlen.',
+              text: 'Wir legen Ihr Konto an und schicken Ihnen einen Link. Darin steht auch Ihr Code, der Name, unter dem Sie empfehlen.',
             },
             {
               titel: 'Konto aktivieren',
@@ -209,7 +209,7 @@ export default function AffiliateLanding() {
             },
             {
               titel: 'Weitergeben',
-              text: 'An wen Sie möchten. Wer über Ihren Link kommt, kauft im regulären Shop — mit der Kondition, die Sie ihm zugesagt bekommen haben. Auch bestehende Kunden können darüber profitieren, sie müssen den Link nur bekommen haben.',
+              text: 'An wen Sie möchten. Wer über Ihren Link kommt, kauft im regulären Shop, mit der Kondition, die Sie ihm zugesagt bekommen haben. Auch bestehende Kunden können darüber profitieren, sie müssen den Link nur bekommen haben.',
             },
             {
               titel: 'Paare reifen lassen',

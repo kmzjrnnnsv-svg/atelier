@@ -44,7 +44,7 @@ const STATUS_LABEL = Object.fromEntries(STATUS.map(s => [s.value, s.label]))
 const istOffen = (r) => !['closed', 'declined', 'accepted', 'resolved'].includes(r.status)
 
 const datum = (s) => {
-  if (!s) return '—'
+  if (!s) return 'k. A.'
   const d = new Date(String(s).replace(' ', 'T') + (String(s).endsWith('Z') ? '' : 'Z'))
   return Number.isNaN(d.getTime()) ? s : d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
@@ -80,7 +80,7 @@ function Zeile({ eintrag, onStatus, speichert }) {
         <div className="px-4 pb-4 -mt-1">
           <div className="border border-black/[0.07] bg-[#fafaf9] p-4">
             <p className="text-[12px] text-black/70 font-light leading-relaxed whitespace-pre-wrap">
-              {e.notes || e.message || '—'}
+              {e.notes || e.message || 'k. A.'}
             </p>
 
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-[11px] text-black/45">

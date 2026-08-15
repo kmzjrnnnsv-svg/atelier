@@ -26,7 +26,7 @@ const ZUSTAND = {
 const ERLEDIGT = ['refunded', 'rejected']
 
 const datum = (s) => {
-  if (!s) return '—'
+  if (!s) return 'k. A.'
   const d = new Date(String(s).replace(' ', 'T') + (String(s).endsWith('Z') ? '' : 'Z'))
   return Number.isNaN(d.getTime()) ? s : d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }

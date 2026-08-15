@@ -112,7 +112,7 @@ export default function RegisterAffiliate() {
             <p className="text-[9px] text-black/55 tracking-[0.25em] uppercase">Affiliate</p>
           </div>
           <p className="text-black/45 text-[13px] font-light mt-4 leading-relaxed">
-            Nennen Sie uns Ihren Namen und hinterlegen Sie dieses Gerät — danach
+            Nennen Sie uns Ihren Namen und hinterlegen Sie dieses Gerät, danach
             melden Sie sich damit an, ohne Passwort. In Ihrem Bereich finden Sie
             Ihren Werbelink, Ihren QR-Code zum Auslegen und Ihre vermittelten Paare.
           </p>

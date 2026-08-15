@@ -622,7 +622,7 @@ export default function ShoeCollection() {
                 key={cat.value}
                 onClick={() => setActiveCategory(cat.value)}
                 aria-pressed={activeCategory === cat.value}
-                aria-label={`${cat.label} — ${count} ${count === 1 ? 'Modell' : 'Modelle'}`}
+                aria-label={`${cat.label}, ${count} ${count === 1 ? 'Modell' : 'Modelle'}`}
                 className={`flex-shrink-0 px-3 lg:px-4 py-2 text-[11px] lg:text-[12px] border-0 bg-transparent transition-all ${
                   activeCategory === cat.value
                     ? 'text-black'
@@ -776,7 +776,7 @@ export default function ShoeCollection() {
           /* ── Drei Raster statt einem ───────────────────────────────
               Bei „Alle Modelle" bekommt jede Saison ihren eigenen Block mit
               Überschrift und Trennlinie. Ohne das stünden Stiefel und
-              Sommerschuh Kachel an Kachel — die Einteilung wäre dann eine
+              Sommerschuh Kachel an Kachel, die Einteilung wäre dann eine
               Behauptung der Reiterleiste, die das Raster nicht einlöst. */
           abschnitte.map((abschnitt, i) => (
             <section key={abschnitt.key} className={i > 0 ? 'mt-14 lg:mt-20' : ''}>
@@ -859,11 +859,11 @@ export default function ShoeCollection() {
       <div className="px-5 lg:px-16 pb-20 border-t border-black/[0.07] pt-14">
         <Ablauf
           titel="So läuft eine Bestellung"
-          intro="Jedes Paar entsteht auf Bestellung. Es gibt kein Lager, aus dem wir greifen — deshalb dauert es länger als anderswo und sitzt dafür."
+          intro="Jedes Paar entsteht auf Bestellung. Es gibt kein Lager, aus dem wir greifen, deshalb dauert es länger als anderswo und sitzt dafür."
           schritte={[
             {
               titel: 'Modell wählen und konfigurieren',
-              text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Was Sie einstellen, wird im Hintergrund gespeichert — Sie können jederzeit unterbrechen und später weitermachen.',
+              text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Was Sie einstellen, wird im Hintergrund gespeichert, Sie können jederzeit unterbrechen und später weitermachen.',
             },
             {
               titel: 'Fußmaße angeben',
@@ -871,7 +871,7 @@ export default function ShoeCollection() {
             },
             {
               titel: 'Bestellen und bezahlen',
-              text: 'Vor dem Abschluss steht Ihre vollständige Konfiguration noch einmal da — jede Farbe, jede Option, jedes Zubehör. Erst dann geht die Bestellung in die Fertigung.',
+              text: 'Vor dem Abschluss steht Ihre vollständige Konfiguration noch einmal da, jede Farbe, jede Option, jedes Zubehör. Erst dann geht die Bestellung in die Fertigung.',
             },
             {
               titel: 'Fertigung in der Manufaktur',
@@ -882,7 +882,7 @@ export default function ShoeCollection() {
               text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.',
             },
           ]}
-          fuss="Ein Custom Made Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen — zurückgeben lässt er sich deshalb nicht. Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für Sie. Gefällt es Ihnen schlicht nicht, erstatten wir aus Kulanz bis zur Hälfte des Kaufpreises; dasselbe gilt bei einer Stornierung nach Fertigungsbeginn. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung vollständig zurück. Die Einzelheiten stehen in den AGB."
+          fuss="Ein Custom Made Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen, zurückgeben lässt er sich deshalb nicht. Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für Sie. Gefällt es Ihnen schlicht nicht, erstatten wir aus Kulanz bis zur Hälfte des Kaufpreises; dasselbe gilt bei einer Stornierung nach Fertigungsbeginn. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung vollständig zurück. Die Einzelheiten stehen in den AGB."
         />
       </div>
     </div>
