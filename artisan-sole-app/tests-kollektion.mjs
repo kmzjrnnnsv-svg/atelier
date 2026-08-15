@@ -22,6 +22,7 @@
  *   BASIS=https://localhost:5173 node tests-kollektion.mjs
  */
 import { chromium } from 'playwright'
+import { saisonsSortiert, laufendeSaison } from './src/lib/saison.js'
 
 const BASIS = process.env.BASIS || 'https://localhost:5173'
 let ok = 0
@@ -96,6 +97,50 @@ for (const alt of ['Büro & Business', 'Smart Casual', 'Freizeit', 'Abend & Gala
 for (const ueber of ['Frühling & Sommer', 'Herbst & Winter', 'Das ganze Jahr']) {
   p(`Abschnitt „${ueber}"`, hat(text, ueber))
 }
+
+// ── Die Reihenfolge richtet sich nach dem Datum ─────────────────────────
+//
+// Zuerst die ganzjährigen, dann die Jahreszeit, die gerade läuft, zuletzt
+// die andere. Im August stehen die Sommerschuhe vor den Stiefeln, im Januar
+// umgekehrt.
+//
+// Erst die reine Funktion über alle zwölf Monate — sonst prüfte dieses
+// Skript nur den Tag, an dem es zufällig läuft, und die Umkehrung im
+// Oktober fiele niemandem auf.
+for (const [monat, sollJetzt] of [
+  [1, 'winter'], [2, 'winter'], [3, 'winter'], [4, 'summer'], [5, 'summer'], [6, 'summer'],
+  [7, 'summer'], [8, 'summer'], [9, 'summer'], [10, 'winter'], [11, 'winter'], [12, 'winter'],
+]) {
+  const d = new Date(Date.UTC(2026, monat - 1, 15))
+  const reihe = saisonsSortiert(d).map(x => x.key)
+  const soll = ['all', sollJetzt, sollJetzt === 'summer' ? 'winter' : 'summer']
+  p(`Monat ${String(monat).padStart(2)}: ${soll.join(' · ')}`,
+    laufendeSaison(d) === sollJetzt && reihe.join(',') === soll.join(','), reihe.join(' · '))
+}
+
+// Und dann, dass die Seite sich daran hält.
+const erwartet = saisonsSortiert(new Date()).map(x => x.titel)
+const gezeigt = await page.$$eval('section h2', els => els.map(e => e.innerText.trim()))
+p('Die Abschnitte stehen in dieser Reihenfolge',
+  gezeigt.length === erwartet.length
+  && gezeigt.every((t, i) => t.toLowerCase().startsWith(erwartet[i].toLowerCase())),
+  gezeigt.join(' | '))
+p('Die ganzjährigen stehen oben', /ganze jahr/i.test(gezeigt[0] || ''), gezeigt[0] || '—')
+// Der Vermerk sagt, warum dieser Block dort steht. Ohne ihn wirkt die
+// Reihenfolge willkürlich — und im Januar, wenn sie sich umdreht, wie ein
+// Fehler.
+p('Die laufende Jahreszeit ist als „Jetzt" gekennzeichnet',
+  (gezeigt[1] || '').toUpperCase().includes('JETZT'), gezeigt[1] || '—')
+p('Und die andere nicht', !(gezeigt[2] || '').toUpperCase().includes('JETZT'), gezeigt[2] || '—')
+
+// Auch die Reiterleiste folgt derselben Reihenfolge — zwei verschiedene
+// Ordnungen auf einer Seite wären zwei Behauptungen.
+const reiter = await page.$$eval('button', els =>
+  els.map(e => e.innerText.trim()).filter(t => /^(Alle Modelle|Sommer|Winter|Ganzjährig)/.test(t)))
+const reiterSoll = ['Alle Modelle', ...saisonsSortiert(new Date()).map(x => x.label)]
+p('Die Reiterleiste in derselben Reihenfolge',
+  reiter.length >= 4 && reiter.slice(0, 4).every((t, i) => t.startsWith(reiterSoll[i])),
+  reiter.slice(0, 4).join(' · '))
 
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('3. Ein Reiter zeigt seine Rubrik')

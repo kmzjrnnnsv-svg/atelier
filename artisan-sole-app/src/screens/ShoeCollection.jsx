@@ -3,7 +3,7 @@
  * Clean grid, generous whitespace, minimal product cards
  * Modeled after LV's collection pages
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap, Search, X } from 'lucide-react'
 import useStore from '../store/store'
@@ -15,7 +15,7 @@ import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
-import { SAISONS, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
+import { saisonsSortiert, laufendeSaison, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
 
 // Die Rubriken des Ladens: Sommer, Winter, Ganzjährig.
@@ -29,9 +29,13 @@ import Ablauf from '../components/Ablauf'
 // Die Saison hat je Schuh genau eine Antwort. Sie steht am Modell und ist im
 // CMS zu ändern — die Machart (OXFORD, LOAFER …) bleibt im Programm, weil an
 // ihr Leisten und Optionen hängen, taucht im Laden aber nicht mehr auf.
-const BASE_CATEGORIES = [
+// Die Reihenfolge richtet sich nach dem Datum: zuerst die ganzjährigen, dann
+// die Jahreszeit, die gerade läuft, zuletzt die andere. Im August stehen die
+// Sommerschuhe vor den Stiefeln, im Januar umgekehrt — beides ist da, aber
+// oben steht, was jetzt zählt.
+const kategorienFuer = (datum) => [
   { label: 'Alle Modelle', value: 'ALL' },
-  ...SAISONS.map(s => ({ label: s.label, value: s.key })),
+  ...saisonsSortiert(datum).map(s => ({ label: s.label, value: s.key })),
 ]
 
 // ── Passform-Leiste, inline unter den Reitern, kein Overlay ────────────
@@ -453,9 +457,15 @@ export default function ShoeCollection() {
   }, [user])
   const activeCampaign = campaigns[0] || null
 
+  // Einmal je Aufruf der Seite bestimmt. Ein Datum, das sich während des
+  // Betrachtens ändert, gibt es nicht — und ein Wert, der bei jedem
+  // Neuzeichnen neu entsteht, wäre eine neue Liste bei jedem Tastendruck im
+  // Suchfeld.
+  const rubriken = useMemo(() => kategorienFuer(new Date()), [])
+  const jetzt = useMemo(() => laufendeSaison(new Date()), [])
   const CATEGORIES = isPromo
-    ? [{ label: 'Promo', value: 'PROMO' }, ...BASE_CATEGORIES]
-    : BASE_CATEGORIES
+    ? [{ label: 'Promo', value: 'PROMO' }, ...rubriken]
+    : rubriken
 
   // Nur Kollektionen zeigen, in denen auch etwas steht. Eine leere
   // Registerkarte ist ein Versprechen auf ein Regal, das es nicht gibt.
@@ -492,7 +502,8 @@ export default function ShoeCollection() {
   // Stiefel und Sommerschuh Kachel an Kachel, und die Einteilung wäre eine
   // Behauptung der Reiterleiste, die das Raster nicht einlöst.
   const abschnitte = activeCategory === 'ALL' && !suche.trim()
-    ? SAISONS.map(s => ({ ...s, modelle: filtered.filter(p => saisonVon(p) === s.key) }))
+    ? saisonsSortiert(new Date())
+        .map(s => ({ ...s, modelle: filtered.filter(p => saisonVon(p) === s.key) }))
         .filter(a => a.modelle.length > 0)
     : null
   const selectShoe = (product) => navigate(shoePath(product), { state: { product } })
@@ -697,11 +708,19 @@ export default function ShoeCollection() {
           abschnitte.map((abschnitt, i) => (
             <section key={abschnitt.key} className={i > 0 ? 'mt-14 lg:mt-20' : ''}>
               <header className={`px-5 lg:px-0 pb-5 lg:pb-7 ${i > 0 ? 'border-t border-black/[0.09] pt-10 lg:pt-14' : ''}`}>
-                <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight">
+                <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight flex items-baseline gap-2.5 flex-wrap">
                   {abschnitt.titel}
-                  <span className="text-black/20 text-[12px] lg:text-[13px] ml-2.5 font-light">
+                  <span className="text-black/20 text-[12px] lg:text-[13px] font-light">
                     {abschnitt.modelle.length}
                   </span>
+                  {/* Woran man erkennt, warum dieser Block hier steht. Ohne
+                      den Vermerk wirkt die Reihenfolge willkürlich — und im
+                      Januar, wenn sie sich umdreht, wie ein Fehler. */}
+                  {abschnitt.key === jetzt && (
+                    <span className="text-[9px] tracking-[0.18em] uppercase text-black/45 border border-black/15 px-2 py-0.5">
+                      Jetzt
+                    </span>
+                  )}
                 </h2>
                 <p className="text-[11px] lg:text-[12px] text-black/35 font-light mt-1 max-w-md leading-relaxed">
                   {abschnitt.text}
