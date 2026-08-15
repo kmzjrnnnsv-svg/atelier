@@ -532,6 +532,10 @@ function normalizeShoe(r) {
     express_surcharge: r.express_surcharge ?? 100,
     express_weeks: r.express_weeks ?? 2,
     express_groups: r.express_groups ?? '[]',
+    // Nicht `?? null` mit Umweg über einen Vorgabewert: Die Unterscheidung
+    // zwischen „nicht geführt" (null) und „nichts mehr da" (0) muss beim
+    // Hin- und Herwandern erhalten bleiben.
+    express_stock: r.express_stock === null || r.express_stock === undefined ? null : Number(r.express_stock),
     collection: r.collection || 'standard' }
 }
 
@@ -591,6 +595,13 @@ function shoeToApi(s) {
     express.express = Number(s.express) ? 1 : 0
     express.express_surcharge = Number(s.express_surcharge) || 0
     express.express_weeks = Math.max(1, Number(s.express_weeks) || 2)
+    // null heißt „kein Bestand geführt" und ist etwas anderes als 0 („nichts
+    // mehr da"). Der Unterschied entscheidet, ob der Laden weitere
+    // Express-Bestellungen annimmt — eine 0 an dieser Stelle sperrt das
+    // Modell, ein leeres Feld nicht.
+    express.express_stock = (s.express_stock === null || s.express_stock === undefined || s.express_stock === '')
+      ? null
+      : Math.max(0, Number(s.express_stock) || 0)
     // Immer als gültiges JSON-Array, auch wenn im Formular Unsinn steht —
     // ein kaputter Wert in dieser Spalte blendete im Konfigurator sonst
     // sämtliche Auswahl aus, ohne dass jemand den Zusammenhang sähe.

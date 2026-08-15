@@ -26,6 +26,7 @@ const emptyForm = {
  express_surcharge: 100,
  express_weeks: 2,
  express_groups: '[]',
+ express_stock: null,
 }
 
 /**
@@ -884,6 +885,26 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  />
  <p className="text-[10px] text-black/25 font-light mt-1.5 leading-relaxed">
  Richtwert, kein Fixtermin — so steht es auch in den AGB.
+ </p>
+ </div>
+ <div className="col-span-2">
+ <label className="text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-1.5 font-light">Vorbereitete Paare auf Lager</label>
+ <input
+ type="number" step="1" min="0"
+ value={form.express_stock ?? ''}
+ onChange={(e) => set('express_stock', e.target.value === '' ? null : Math.max(0, Number(e.target.value)))}
+ placeholder="leer = nicht geführt"
+ className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
+ />
+ {/* Die zwei Wochen hängen daran, dass in der Werkstatt ein
+ vorbereiteter Schaft liegt. Ohne Zähler nimmt der Laden
+ beliebig viele Express-Bestellungen an, und jede weitere ist
+ ein Versprechen ohne Deckung (AGB 2.1 Abs. 4). */}
+ <p className="text-[10px] text-black/25 font-light mt-1.5 leading-relaxed">
+ Jede Express-Bestellung zieht eins ab, jede Stornierung legt eins zurück.
+ Steht das Feld auf null, nimmt der Laden dieses Modell nicht mehr
+ als Express an — als Maßanfertigung bleibt es bestellbar.
+ Leer lassen heißt: kein Bestand geführt, keine Grenze.
  </p>
  </div>
  </div>

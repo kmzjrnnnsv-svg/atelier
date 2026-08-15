@@ -93,6 +93,19 @@ Der erste Lauf war kein Selbstzweck. Gefunden wurden:
 * Ohne `JWT_ACCESS_SECRET` startete der Server anstandslos und scheiterte erst
   beim ersten Anmeldeversuch mit einem 500er.
 
-Für die Oberfläche liegt daneben `artisan-sole-app/tests-browser.mjs`
-(Playwright, 23 Prüfungen). Es braucht einen laufenden Entwicklungsserver und
-den Chromium-Pfad des Systems; siehe Kopf der Datei.
+Für die Oberfläche liegen daneben zwei Playwright-Skripte. Beide brauchen
+einen laufenden Entwicklungsserver und den Chromium-Pfad des Systems; siehe
+Kopf der jeweiligen Datei.
+
+    artisan-sole-app/tests-browser.mjs
+                         23 Prüfungen: die Wege, die ein Kunde geht.
+    artisan-sole-app/tests-neue-seiten.mjs
+                         26 Prüfungen: dass die Seiten nach dem Kauf und die
+                         neuen Verwaltungsansichten überhaupt aufgehen. Ein
+                         erfolgreicher Build sagt nur, dass sich die Dateien
+                         übersetzen lassen — ob eine Seite beim Öffnen
+                         abstürzt, sagt er nicht, und genau dort sitzen die
+                         Fehler, die im Betrieb ein weißes Fenster ergeben.
+
+Der Entwicklungsserver spricht standardmäßig mit Port 3001. Für einen Lauf
+gegen die Wegwerf-Datenbank auf 3099: `API_PORT=3099 npx vite`.

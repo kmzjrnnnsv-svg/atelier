@@ -226,6 +226,13 @@ export default function Login() {
                 {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {/* Steht bewusst hier und nicht ganz unten: Wer sein Passwort
+                nicht mehr weiß, merkt es in genau diesem Feld. */}
+            <p className="text-right mt-1.5">
+              <Link to="/passwort-neu" className="text-[11px] text-black/35 hover:text-black/70 underline underline-offset-4">
+                Passwort vergessen?
+              </Link>
+            </p>
           </div>
 
           <button

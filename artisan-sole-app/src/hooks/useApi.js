@@ -216,6 +216,11 @@ export async function apiFetch(url, options = {}, _attempt = 0) {
     throw error
   }
 
+  // Wer etwas anderes als JSON erwartet — eine Rechnung als PDF etwa —
+  // bekommt die Antwort selbst. Alles davor gilt trotzdem: Anmeldung,
+  // Token-Erneuerung, Wiederholung bei 429.
+  if (options.raw) return res
+
   const text = await res.text()
   return text ? JSON.parse(text) : null
 }
