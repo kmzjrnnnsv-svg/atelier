@@ -189,6 +189,44 @@ p('Und er kommt zurück', await zeigtMetall())
 p('Immer noch ohne Laufzeitfehler', schlimm().length === 0, schlimm()[0]?.slice(0, 110) || '')
 
 // ════════════════════════════════════════════════════════════════════════
+abschnitt('7. Der Boot')
+
+/*
+ * Die Farbtafel des Boots ist die Probe aufs Exempel für die eigene
+ * Lederzeile: Beim Hersteller heißt sein Leder „Lux Suede" wie unser
+ * Dress-Velours — hingen beide an derselben Zeile, stünden hier die
+ * Dress-Namen („Espresso Heritage") statt der neun Mokassin-Töne.
+ */
+konsole.length = 0
+await page.goto(`${BASIS}/schuhe/moc-flex-sport-boot`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(2500)
+const bootSeite = await page.locator('body').innerText()
+p('Die Seite lädt', bootSeite.length > 200, `${bootSeite.length} Zeichen`)
+p('Gefüttertes Wildleder', bootSeite.includes('Lined Suede'))
+p('Ohne Laufzeitfehler', schlimm().length === 0, schlimm()[0]?.slice(0, 110) || '')
+
+const bootSwatch = page.locator(FARBFELD).first()
+if (await bootSwatch.count()) { await bootSwatch.click({ force: true }); await page.waitForTimeout(900) }
+const bootFarben = await farbtafel()
+p('Neun Wildlederfarben', bootFarben.length === 9, `${bootFarben.length} — ${bootFarben.join(', ')}`)
+p('Keine Dress-Namen darunter',
+  !bootFarben.some(n => /Espresso Heritage|Sandy Taupe|Cognac Classic/.test(n)))
+
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+await page.waitForTimeout(1200)
+const bootUnten = await page.locator('body').innerText()
+// Ohne Rücksicht auf die Schreibweise: Die Beschriftungen werden per
+// Stylesheet in Versalien gesetzt, und `innerText` gibt zurück, was zu SEHEN
+// ist — „FERSENRIEMEN", nicht „Fersenriemen".
+const zeigt = (was) => bootUnten.toLowerCase().includes(was.toLowerCase())
+for (const schritt of ['Fersenriemen', 'Nahtfarbe']) {
+  p(`Schritt „${schritt}" ist da`, zeigt(schritt))
+}
+// Ein Boot trägt auf dem Spann nichts — und damit auch keinen Metallton.
+p('Kein Aufsatz, kein Metall', !zeigt('Accessoires') && !zeigt('Schnallen-Farbe'))
+p('Immer noch ohne Laufzeitfehler', schlimm().length === 0, schlimm()[0]?.slice(0, 110) || '')
+
+// ════════════════════════════════════════════════════════════════════════
 console.log(`\n── Ergebnis ${'─'.repeat(46)}\n`)
 console.log(`  ${ok} bestanden, ${fehler.length} fehlgeschlagen`)
 await br.close()

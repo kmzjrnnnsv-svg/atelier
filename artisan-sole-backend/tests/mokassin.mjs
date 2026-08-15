@@ -265,6 +265,80 @@ if (sport) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
+abschnitt('8. Der Sport-Mokassin als Boot')
+
+/*
+ * Derselbe Leisten, höher geschnitten — und deshalb andere Teile: ein
+ * Fersenriemen, ein Futter (der flache ist ungefüttert) und sechzehn
+ * Nahtfarben statt acht. Dafür nichts auf dem Spann.
+ *
+ * Die heikle Stelle ist das Leder. Beim Hersteller heißt es „Lux Suede" —
+ * so wie unser Dress-Velours, das aber die Farben der Dress-Linie trägt.
+ * Hingen beide an derselben Zeile, bekäme der Oxford in Lux Suede plötzlich
+ * Khaki und Grey dazu. Das prüft dieser Abschnitt in beide Richtungen.
+ */
+const boot = (schuhe || []).find(s => s.category === 'MOC_SPORT_BOOT')
+p('Der Boot steht im Katalog', !!boot, boot ? `${boot.name} (${boot.price})` : 'keiner')
+
+if (boot) {
+  p('Er heißt „Moc Flex Sport Boot"', boot.name === 'Moc Flex Sport Boot', boot.name)
+  p('Einstandspreis hinterlegt', Number(boot.cost_price) > 0, `${boot.cost_price} €`)
+
+  const { daten: bootLeder } = await ruf(`/api/shoes/${boot.id}/materials`)
+  p('Gefüttertes Wildleder', (bootLeder || []).join(',') === 'lined_suede', (bootLeder || []).join(', '))
+
+  const bootFarben = farbenFuer(alleFarben || [], 'lined_suede')
+  p('Dieselben neun Farben wie der flache', bootFarben.length === 9,
+    `${bootFarben.length} — ${bootFarben.map(c => c.name).join(', ')}`)
+
+  // Die Gegenprobe, und sie ist der Grund für die eigene Lederzeile: Das
+  // Dress-Velours darf davon nichts abbekommen.
+  const dressVelours = farbenFuer(alleFarben || [], 'lux_suede')
+  p('Das Dress-Velours behält seine Palette', dressVelours.length >= 10,
+    `${dressVelours.length} Farben`)
+  p('Keine Mokassin-Farbe im Dress-Velours',
+    !dressVelours.some(c => String(c.key).startsWith('moc_')),
+    dressVelours.filter(c => String(c.key).startsWith('moc_')).map(c => c.name).join(', ') || 'keine')
+
+  const { daten: bootGruppen } = await ruf(`/api/shoes/${boot.id}/options`)
+  const bNach = Object.fromEntries((bootGruppen || []).map(g => [g.key, g]))
+  for (const [key, anzahl, name] of [
+    ['back_strap_color',  9,  'Fersenriemen'],
+    ['stitching_color',   16, 'Naht'],
+    ['inner_color',       10, 'Futter'],
+    ['sole_bottom_color', 1,  'Laufsohle'],
+  ]) {
+    const g = bNach[key]
+    p(`${name} mit ${anzahl} Werten`, !!g && g.values.length === anzahl, g ? `${g.values.length}` : 'Gruppe fehlt')
+  }
+
+  // Ein Boot trägt auf dem Spann nichts — kein Bügel, keine Quasten, kein
+  // Metallton. Und keinen Rahmen.
+  for (const nicht of ['loafer_decoration', 'buckle_color', 'welt', 'heel', 'toe', 'sole']) {
+    p(`Kein Schritt „${nicht}"`, !bNach[nicht])
+  }
+
+  // Jeder Farbwert braucht seinen Ton, sonst stehen dort leere Kästchen.
+  const ohneHex = ['back_strap_color', 'stitching_color']
+    .flatMap(k => (bNach[k]?.values || []).filter(v => !v.color_hex).map(v => `${k}:${v.key}`))
+  p('Alle Farbwerte haben einen Ton', ohneHex.length === 0, ohneHex.join(', ') || 'alle gesetzt')
+
+  const ohneVorgabeBoot = (bootGruppen || []).filter(g => !g.values.some(v => v.is_default))
+  p('Jeder Schritt hat eine Vorgabe', ohneVorgabeBoot.length === 0,
+    ohneVorgabeBoot.map(g => g.key).join(', ') || 'alle belegt')
+
+  // Derselbe Leisten wie der flache Bruder.
+  const { daten: bootPass } = await ruf('/api/fit/match?category=MOC_SPORT_BOOT&length=265&girth=244')
+  const bootLeisten = [...new Set((bootPass?.matches || []).map(m => m.last_key))]
+  p('Auf dem Moc-Sport-Leisten', bootLeisten.length === 1 && bootLeisten[0] === 'moc_sport', bootLeisten.join(', '))
+
+  // Und die neuen Nahtfarben dürfen nirgends sonst auftauchen: Der Driver
+  // führt acht, nicht sechzehn.
+  p('Der Driver behält seine acht Nahtfarben', nach.stitching_color?.values?.length === 8,
+    `${nach.stitching_color?.values?.length}`)
+}
+
+// ════════════════════════════════════════════════════════════════════════
 console.log(`\n── Ergebnis ${'─'.repeat(48)}\n`)
 console.log(`  ${ok} bestanden, ${fehler.length} fehlgeschlagen`)
 if (fehler.length) { console.log('\n  ' + fehler.join('\n  ')); process.exit(1) }

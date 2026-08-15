@@ -206,6 +206,7 @@ export default function Customize() {
     // Der Sport-Mokassin gibt es nur ungefüttert — beim Hersteller ist das
     // die einzige Wahl an diesem Modell.
     MOC_SPORT:        ['unlined_suede'],
+    MOC_SPORT_BOOT:   ['lined_suede'],
     DERBY:            ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     DOUBLE_MONK:      ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
     MONK:             ['lux_calf', 'lux_suede', 'painted_full_grain', 'box_calf', 'urban_suede', 'painted_calf'],
