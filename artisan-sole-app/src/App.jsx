@@ -123,6 +123,7 @@ const FAQEditor            = lazy(() => import('./screens/cms/FAQEditor'))
 const LegalEditor          = lazy(() => import('./screens/cms/LegalEditor'))
 const OrdersPanel          = lazy(() => import('./screens/cms/OrdersPanel'))
 const ZahlungsPanel        = lazy(() => import('./screens/cms/ZahlungsPanel'))
+const RechnungsAngaben     = lazy(() => import('./screens/cms/RechnungsAngaben'))
 const AuswertungPanel      = lazy(() => import('./screens/cms/AuswertungPanel'))
 const WerbemittelPanel     = lazy(() => import('./screens/cms/WerbemittelPanel'))
 const MFASetup             = lazy(() => import('./screens/cms/MFASetup'))
@@ -342,6 +343,7 @@ function AppRoutes() {
               <Route path="legal"    element={<LegalEditor />} />
               <Route path="mfa"      element={<AdminRoute><MFASetup /></AdminRoute>} />
               <Route path="bank"     element={<AdminRoute><BankSettings /></AdminRoute>} />
+              <Route path="rechnungsangaben" element={<AdminRoute><RechnungsAngaben /></AdminRoute>} />
               <Route path="email"    element={<AdminRoute><EmailSettings /></AdminRoute>} />
               <Route path="email-templates" element={<EmailTemplatesPanel />} />
               <Route path="leisten"       element={<LastSizeChartEditor />} />

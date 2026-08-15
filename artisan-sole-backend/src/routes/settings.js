@@ -4,10 +4,21 @@ import { getDb } from '../db/database.js'
 import { authenticate, requireRole, requireMFA } from '../middleware/auth.js'
 import { verifyEmailSetup, sendTestEmail, diagnoseSmtp } from '../utils/email.js'
 import { anbieterListe, ANBIETER } from '../utils/mailHttp.js'
+import { firmenAngaben, pflichtangabenFehlen } from '../utils/beleg.js'
+import { protokoll } from '../utils/auftragslauf.js'
 
 const router = Router()
 
 const BANK_KEYS  = ['bank_iban', 'bank_bic', 'bank_holder', 'bank_name']
+
+// Die Angaben über den Aussteller — alles, was § 14 Abs. 4 UStG von uns
+// verlangt und was der Server nicht selbst wissen kann.
+const FIRMA_KEYS = [
+  'firma_name', 'firma_strasse', 'firma_ort', 'firma_land',
+  'firma_email', 'firma_telefon',
+  'firma_ust_id', 'firma_steuernummer',
+  'firma_kleinunternehmer', 'ust_satz',
+]
 const EMAIL_KEYS = ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_manufacturer_email', 'business_inquiry_email', 'app_url',
                     'mail_weg', 'mail_anbieter', 'mail_api_key', 'mail_absender', 'mail_domain', 'mail_region']
 
@@ -52,6 +63,98 @@ router.put('/bank',
     }
 
     res.json({ message: 'Bankdaten gespeichert', ...keys })
+  }
+)
+
+// ─── Rechnungsangaben ────────────────────────────────────────────────────────
+//
+// Wer die Rechnung stellt, und zu welchen steuerlichen Bedingungen. Ohne
+// diese Angaben wird zwar eine Rechnung ausgestellt — die Nummer darf nicht
+// warten —, aber sie trägt nicht, was § 14 Abs. 4 UStG verlangt.
+
+// GET /api/settings/firma — admin + curator
+router.get('/firma', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const db = getDb()
+  const rows = db.prepare(
+    `SELECT key, value FROM settings WHERE key IN (${FIRMA_KEYS.map(() => '?').join(',')})`
+  ).all(...FIRMA_KEYS)
+  const werte = Object.fromEntries(rows.map(r => [r.key, r.value]))
+
+  for (const k of FIRMA_KEYS) if (werte[k] === undefined) werte[k] = ''
+  // Vorgabe: kein Steuerausweis. Wer die Kleinunternehmerregelung nicht
+  // nutzt, stellt das bewusst um — andersherum schuldete er die ausgewiesene
+  // Steuer, ohne sie eingenommen zu haben.
+  if (werte.firma_kleinunternehmer === '') werte.firma_kleinunternehmer = '1'
+  if (werte.ust_satz === '') werte.ust_satz = '19'
+  if (!werte.firma_land) werte.firma_land = 'Deutschland'
+
+  res.json({ ...werte, fehlend: pflichtangabenFehlen(firmenAngaben(db)) })
+})
+
+// PUT /api/settings/firma — admin only + MFA
+//
+// MFA wie bei der Bankverbindung: Wer den Absender einer Rechnung ändert,
+// ändert, in wessen Namen abgerechnet wird.
+router.put('/firma',
+  authenticate,
+  requireRole('admin'),
+  requireMFA,
+  body('firma_name').trim().notEmpty().withMessage('Name des Unternehmens erforderlich'),
+  body('firma_strasse').trim().notEmpty().withMessage('Straße und Hausnummer erforderlich'),
+  body('firma_ort').trim().notEmpty().withMessage('Postleitzahl und Ort erforderlich'),
+  body('firma_email').optional({ values: 'falsy' }).trim().isEmail().withMessage('Diese E-Mail-Adresse sieht nicht richtig aus'),
+  body('ust_satz').optional({ values: 'falsy' }).isFloat({ min: 0, max: 100 }).withMessage('Der Steuersatz muss zwischen 0 und 100 liegen'),
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg, errors: errors.array() })
+
+    const klein = String(req.body.firma_kleinunternehmer ?? '1') === '1'
+    const steuer = String(req.body.firma_steuernummer || '').trim()
+    const ustId  = String(req.body.firma_ust_id || '').trim()
+
+    // Eine der beiden Nummern muss auf jeden Beleg — auch beim
+    // Kleinunternehmer, der keine Steuer ausweist (§ 14 Abs. 4 Nr. 2).
+    if (!steuer && !ustId) {
+      return res.status(400).json({
+        error: 'Bitte tragen Sie Ihre Steuernummer oder Ihre Umsatzsteuer-Identifikationsnummer ein. Eine von beiden muss auf jeder Rechnung stehen.',
+        code: 'STEUERNUMMER_FEHLT',
+      })
+    }
+    // Wer Steuer ausweist, braucht die Umsatzsteuer-Identifikationsnummer
+    // nicht zwingend — aber ohne Satz geht es nicht.
+    if (!klein && !(Number(req.body.ust_satz) > 0)) {
+      return res.status(400).json({
+        error: 'Ohne Kleinunternehmerregelung muss ein Steuersatz größer als null angegeben sein.',
+        code: 'STEUERSATZ_FEHLT',
+      })
+    }
+
+    const db = getDb()
+    const upsert = db.prepare(`
+      INSERT INTO settings (key, value, updated_by, updated_at)
+      VALUES (?, ?, ?, datetime('now'))
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+    `)
+
+    const werte = {}
+    for (const k of FIRMA_KEYS) {
+      werte[k] = k === 'firma_kleinunternehmer'
+        ? (klein ? '1' : '0')
+        : String(req.body[k] ?? '').trim()
+    }
+    for (const [k, v] of Object.entries(werte)) upsert.run(k, v, req.user.id)
+
+    protokoll(db, {
+      entity: 'einstellungen', entityId: 'firma', action: 'rechnungsangaben',
+      detail: klein ? 'Kleinunternehmer nach § 19 UStG' : `Steuerausweis mit ${werte.ust_satz} %`,
+      user: req.user,
+    })
+
+    res.json({
+      message: 'Rechnungsangaben gespeichert',
+      ...werte,
+      fehlend: pflichtangabenFehlen(firmenAngaben(db)),
+    })
   }
 )
 

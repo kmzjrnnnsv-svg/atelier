@@ -29,13 +29,14 @@ im Betrieb, nichts nachgebaut.
                          die sich nicht durch einen Konfigurator mit einem
                          Dutzend Schritten prüfen lassen sollte.
     tests/nachdemkauf.mjs
-                         102 Prüfungen: alles, was nach dem Bestellen kommt —
+                         120 Prüfungen: alles, was nach dem Bestellen kommt —
                          Verlauf mit Datum je Stufe, Zahlungseingang über den
                          Verwendungszweck buchen, Rechnung als PDF samt
                          fortlaufender Nummer, Stornostaffel nach AGB 7.2 auf
                          jeder Stufe, Sendungsnummer, Express-Bestand,
                          Auswertung, Protokoll, Klickzählung und Gutschrift
-                         für Vermittler, Passwort zurücksetzen.
+                         für Vermittler, Rechnungsangaben samt § 19 UStG,
+                         Passwort zurücksetzen.
                          Braucht DB_PATH — für den Zweitfaktor des Admins und
                          die Prüfsumme des Zurücksetzen-Tokens gibt es keine
                          Route, und geraten wird hier nichts.
@@ -100,7 +101,7 @@ Kopf der jeweiligen Datei.
     artisan-sole-app/tests-browser.mjs
                          23 Prüfungen: die Wege, die ein Kunde geht.
     artisan-sole-app/tests-neue-seiten.mjs
-                         26 Prüfungen: dass die Seiten nach dem Kauf und die
+                         32 Prüfungen: dass die Seiten nach dem Kauf und die
                          neuen Verwaltungsansichten überhaupt aufgehen. Ein
                          erfolgreicher Build sagt nur, dass sich die Dateien
                          übersetzen lassen — ob eine Seite beim Öffnen

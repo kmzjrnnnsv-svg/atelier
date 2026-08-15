@@ -65,6 +65,33 @@ export function firmenAngaben(db) {
 }
 
 /**
+ * Was einer Rechnung noch fehlt, um eine zu sein.
+ *
+ * § 14 Abs. 4 UStG zählt auf, was daraufstehen muss. Vier davon kann nur der
+ * Betreiber liefern, und solange sie fehlen, ist der Beleg formal
+ * unbrauchbar — der Empfänger kann daraus keine Vorsteuer ziehen, und bei
+ * einem Firmenkunden kommt die Rechnung zurück.
+ *
+ * Ausgestellt wird trotzdem. Ein Beleg mit Lücken ist besser als gar keiner:
+ * Er lässt sich nachbessern, eine fehlende Rechnungsnummer nicht. Die
+ * Verwaltung bekommt die Liste stattdessen dort zu sehen, wo sie sie braucht.
+ *
+ * Die Steuernummer steht auch dann in der Liste, wenn der Kleinunternehmer
+ * nach § 19 UStG abrechnet: Er weist keine Steuer aus, seine Steuernummer
+ * muss trotzdem auf den Beleg (§ 14 Abs. 4 Nr. 2).
+ */
+export function pflichtangabenFehlen(firma) {
+  const fehlt = []
+  if (!firma.name)    fehlt.push({ feld: 'firma_name',    text: 'Name des Unternehmens' })
+  if (!firma.strasse) fehlt.push({ feld: 'firma_strasse', text: 'Straße und Hausnummer' })
+  if (!firma.ort)     fehlt.push({ feld: 'firma_ort',     text: 'Postleitzahl und Ort' })
+  if (!firma.steuernummer && !firma.ustId) {
+    fehlt.push({ feld: 'firma_steuernummer', text: 'Steuernummer oder Umsatzsteuer-Identifikationsnummer' })
+  }
+  return fehlt
+}
+
+/**
  * Die nächste Rechnungsnummer, vergeben und gleich an die Bestellung
  * geschrieben. Gibt die bestehende zurück, falls die Bestellung schon eine
  * hat — eine zweite wäre ein Beleg über denselben Umsatz.

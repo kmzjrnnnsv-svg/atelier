@@ -107,6 +107,7 @@ export default function CMSLayout() {
             ...(user?.role === 'admin' ? [{ heading: 'Administration', items: [
               { to: '/cms/users', label: 'Benutzer',       icon: Users },
               { to: '/cms/bank',  label: 'Bankverbindung', icon: Landmark },
+              { to: '/cms/rechnungsangaben', label: 'Rechnungsangaben', icon: FileText },
               { to: '/cms/email', label: 'E-Mail / SMTP',  icon: Mail },
               { to: '/cms/mfa',   label: 'MFA-Sicherheit', icon: ShieldCheck },
             ]}] : []),

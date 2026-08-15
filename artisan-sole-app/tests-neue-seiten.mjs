@@ -104,6 +104,24 @@ p('Reiter Protokoll ohne Laufzeitfehler', konsolenFehler.filter(echterFehler).le
   konsolenFehler.filter(echterFehler)[0]?.slice(0, 110) || '')
 
 await oeffne('/cms/werbemittel', 'Werbemittel', 'Werbemittel')
+await oeffne('/cms/rechnungsangaben', 'Rechnungsangaben', 'Rechnungsangaben')
+
+// Der Steuersatz erscheint erst, wenn der Kleinunternehmer abgewählt ist —
+// sonst stünde ein Feld da, das auf dem Beleg nicht vorkommt.
+konsolenFehler = []
+const satzfelder = () => page.locator('input[type="number"]').count()
+// Beide Richtungen, statt vom gespeicherten Stand auszugehen — der haengt
+// davon ab, was vorher geprueft wurde.
+await page.locator('input[name="kleinunternehmer"][value="1"]').check().catch(() => {})
+await page.waitForTimeout(400)
+const alsKlein = await satzfelder()
+await page.locator('input[name="kleinunternehmer"][value="0"]').check().catch(() => {})
+await page.waitForTimeout(400)
+const mitAusweis = await satzfelder()
+p('Kleinunternehmer zeigt keinen Steuersatz', alsKlein === 0, `${alsKlein} Feld(er)`)
+p('Steuerausweis blendet ihn ein', mitAusweis === 1, `${mitAusweis} Feld(er)`)
+p('Umschalten ohne Laufzeitfehler', konsolenFehler.filter(echterFehler).length === 0,
+  konsolenFehler.filter(echterFehler)[0]?.slice(0, 110) || '')
 await oeffne('/cms/orders', 'Bestellungen')
 
 // ════════════════════════════════════════════════════════════════════════

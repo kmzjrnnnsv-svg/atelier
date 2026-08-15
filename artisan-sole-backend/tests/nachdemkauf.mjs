@@ -364,7 +364,72 @@ p('Das Wort Gutschrift steht drauf', gText.includes('Gutschrift'))
 p('Der Hinweis auf § 14 UStG steht drauf', gText.includes('14 Abs. 2 UStG'))
 
 // ════════════════════════════════════════════════════════════════════════
-abschnitt('12. Passwort vergessen')
+abschnitt('12. Rechnungsangaben')
+
+r = await ruf('/api/settings/firma', { token: admin })
+p('Angaben abrufbar', r.status === 200, `HTTP ${r.status}`)
+p('Vorgabe ist der Kleinunternehmer', r.daten?.firma_kleinunternehmer === '1', r.daten?.firma_kleinunternehmer)
+p('Pflichtangaben werden als fehlend gemeldet', (r.daten?.fehlend || []).length > 0,
+  (r.daten?.fehlend || []).map(x => x.feld).join(', '))
+
+const firma = {
+  firma_name: 'Artisan Sole GmbH', firma_strasse: 'Musterweg 7',
+  firma_ort: '10115 Berlin', firma_land: 'Deutschland',
+  firma_email: 'kontakt@artisansole.com', firma_telefon: '+49 30 1234567',
+  firma_steuernummer: '', firma_ust_id: '',
+  firma_kleinunternehmer: '1', ust_satz: '19',
+}
+
+r = await ruf('/api/settings/firma', { method: 'PUT', token: admin, body: firma })
+p('Ohne Zweitfaktor wird nicht gespeichert', r.status === 403, `HTTP ${r.status}`)
+
+r = await ruf('/api/settings/firma', { method: 'PUT', token: admin, mfa: mfaCode(), body: firma })
+p('Ohne Steuernummer wird abgewiesen', r.status === 400, r.daten?.code)
+
+r = await ruf('/api/settings/firma', {
+  method: 'PUT', token: admin, mfa: mfaCode(),
+  body: { ...firma, firma_name: '' },
+})
+p('Ohne Namen wird abgewiesen', r.status === 400, r.daten?.error?.slice(0, 40))
+
+r = await ruf('/api/settings/firma', {
+  method: 'PUT', token: admin, mfa: mfaCode(),
+  body: { ...firma, firma_steuernummer: '12/345/67890', firma_kleinunternehmer: '0', ust_satz: '0' },
+})
+p('Steuerausweis ohne Satz wird abgewiesen', r.status === 400, r.daten?.code)
+
+r = await ruf('/api/settings/firma', {
+  method: 'PUT', token: admin, mfa: mfaCode(),
+  body: { ...firma, firma_steuernummer: '12/345/67890' },
+})
+p('Vollständige Angaben gehen durch', r.status === 200, `HTTP ${r.status} ${r.daten?.error || ''}`)
+p('Nichts fehlt mehr', (r.daten?.fehlend || []).length === 0)
+
+r = await ruf('/api/settings/firma', { method: 'PUT', token: kunde, mfa: mfaCode(), body: firma })
+p('Kunden dürfen das nicht', r.status === 403, `HTTP ${r.status}`)
+
+// Der Beleg muss die Angaben jetzt tragen.
+const belegKlein = await ruf(`/api/orders/${bestellung.id}/rechnung`, { token: kunde, roh: true })
+const bText = belegKlein.puffer.toString('latin1')
+p('Der Firmenname steht auf der Rechnung', bText.includes('Artisan Sole GmbH'))
+p('Die Anschrift steht darauf', bText.includes('Musterweg 7') && bText.includes('10115 Berlin'))
+p('Die Steuernummer steht in der Fußzeile', bText.includes('12/345/67890'))
+p('Hinweis auf § 19 UStG', bText.includes('19 UStG'))
+p('Kein Steuerausweis', !bText.includes('Umsatzsteuer 19'))
+
+// Umgestellt auf Steuerausweis: Der nächste Beleg rechnet heraus.
+await ruf('/api/settings/firma', {
+  method: 'PUT', token: admin, mfa: mfaCode(),
+  body: { ...firma, firma_steuernummer: '12/345/67890', firma_kleinunternehmer: '0', ust_satz: '19' },
+})
+const belegUst = await ruf(`/api/orders/${bestellung.id}/rechnung`, { token: kunde, roh: true })
+const uText = belegUst.puffer.toString('latin1')
+p('Jetzt wird Steuer ausgewiesen', uText.includes('Umsatzsteuer 19'))
+p('Mit Nettobetrag', uText.includes('Nettobetrag'))
+p('Und ohne den §-19-Hinweis', !uText.includes('19 UStG wird keine'))
+
+// ════════════════════════════════════════════════════════════════════════
+abschnitt('13. Passwort vergessen')
 
 r = await ruf('/api/auth/passwort-vergessen', { method: 'POST', body: { email: mail } })
 p('Anforderung wird angenommen', r.status === 200, `HTTP ${r.status}`)

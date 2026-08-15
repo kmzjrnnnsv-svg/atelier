@@ -13,6 +13,7 @@
  * Überweisung.
  */
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { Banknote, Search, RefreshCw, AlertTriangle, CheckCircle2, Copy } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import MFAModal from '../../components/MFAModal'
@@ -50,6 +51,14 @@ export default function ZahlungsPanel() {
   }, [])
 
   useEffect(() => { laden() }, [laden])
+
+  // Mit dem Verbuchen entsteht die Rechnungsnummer, und damit die Rechnung.
+  // Der Hinweis auf fehlende Pflichtangaben gehört deshalb hierher und nicht
+  // nur in die Einstellungen — hier ist der Moment, in dem er etwas ändert.
+  const [fehlend, setFehlend] = useState([])
+  useEffect(() => {
+    apiFetch('/api/settings/firma').then(d => setFehlend(d?.fehlend || [])).catch(() => {})
+  }, [])
 
   const buchen = async (mfaCode) => {
     setBucht(true); setFehler(null); setMfaFehler(null)
@@ -99,6 +108,22 @@ export default function ZahlungsPanel() {
           <RefreshCw size={12} strokeWidth={1.4} className={laed ? 'animate-spin' : ''} /> Neu laden
         </button>
       </div>
+
+      {fehlend.length > 0 && (
+        <div className="flex items-start gap-2.5 px-5 py-4 mb-6 bg-amber-50 border border-amber-200">
+          <AlertTriangle size={14} strokeWidth={1.4} className="text-amber-700 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-[12px] text-amber-900">Ihre Rechnungsangaben sind unvollständig.</p>
+            <p className="text-[11px] text-amber-800 font-light mt-1 leading-relaxed">
+              Es fehlt: {fehlend.map(x => x.text).join(', ')}. Mit dem Buchen entsteht
+              die Rechnung — sie trägt dann nicht, was § 14 UStG verlangt.{' '}
+              <Link to="/cms/rechnungsangaben" className="underline underline-offset-2 text-amber-900">
+                Jetzt ergänzen
+              </Link>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Buchen ─────────────────────────────────────────────────────── */}
       <div className="border border-black/10 p-6 mb-8">
