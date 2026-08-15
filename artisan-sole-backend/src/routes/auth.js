@@ -10,7 +10,7 @@ import {
 } from '../utils/tokens.js'
 import { authLimiter, refreshLimiter, strictLimiter } from '../middleware/rateLimiter.js'
 import { authenticate } from '../middleware/auth.js'
-import { sendEmailVerification } from '../utils/email.js'
+import { sendEmailVerification, sendPasswordReset } from '../utils/email.js'
 import { kampagnenAutomatischBeitreten } from './business.js'
 import crypto from 'crypto'
 
@@ -121,6 +121,95 @@ router.post('/resend-verification', authenticate, (req, res) => {
   sendEmailVerification(req.user.email, row?.name, verifyToken).catch(e => console.error('[email verify resend]', e.message))
   res.json({ ok: true })
 })
+
+// ── Passwort vergessen ──────────────────────────────────────────────────────
+//
+// Gab es nicht, und der Grund dafür ist entfallen: Der Mailversand stand
+// still, also hätte ein Zurücksetzen per Mail ins Leere geführt. Die
+// Kontowiederherstellung (POST /api/auth/recover) weist sich über
+// Bestellnummer und Postleitzahl aus und führt zu einem neuen Passkey — wer
+// sich mit Passwort anmeldet und es vergisst, hatte damit keinen Weg zurück.
+//
+// Drei Dinge sind hier wichtiger als Bequemlichkeit:
+//
+//  1. Die Antwort ist immer dieselbe. Ob es die Adresse gibt, verrät der
+//     Server nicht — sonst wäre dieser Weg ein Werkzeug, um Kundenlisten
+//     abzugleichen.
+//  2. Gespeichert wird der SHA-256 des Tokens. Wer die Datenbank liest, soll
+//     sich damit nicht anmelden können.
+//  3. Beim Setzen des neuen Passworts enden alle Sitzungen. Wenn ein Konto
+//     übernommen war, ist das der Moment, in dem der Angreifer hinausfliegt.
+
+const RESET_STUNDEN = 1
+const tokenHashen = (t) => crypto.createHash('sha256').update(String(t)).digest('hex')
+
+// POST /api/auth/passwort-vergessen
+router.post('/passwort-vergessen',
+  strictLimiter, authLimiter,
+  body('email').isEmail().normalizeEmail(),
+  (req, res) => {
+    const errors = validationResult(req)
+    // Auch ein Formfehler bekommt die freundliche Antwort — sonst ließe sich
+    // an der Fehlermeldung ablesen, welche Eingaben der Server ernst nimmt.
+    if (errors.isEmpty()) {
+      const db = getDb()
+      const user = db.prepare('SELECT id, name, email, is_active FROM users WHERE email = ?').get(req.body.email)
+      if (user && user.is_active) {
+        const token = crypto.randomBytes(32).toString('hex')
+        db.prepare(`
+          UPDATE users SET reset_token_hash = ?,
+            reset_expires_at = datetime('now', ?), updated_at = datetime('now')
+          WHERE id = ?
+        `).run(tokenHashen(token), `+${RESET_STUNDEN} hours`, user.id)
+        sendPasswordReset(user.email, user.name, token, RESET_STUNDEN)
+          .catch(e => console.error('[email reset]', e.message))
+      }
+    }
+    res.json({
+      ok: true,
+      message: 'Wenn es zu dieser Adresse ein Konto gibt, ist eine Nachricht unterwegs.',
+    })
+  }
+)
+
+// POST /api/auth/passwort-neu
+router.post('/passwort-neu',
+  authLimiter,
+  body('token').trim().isLength({ min: 32 }),
+  body('password')
+    .isLength({ min: 8 }).withMessage('Mindestens 8 Zeichen')
+    .matches(/[0-9]/).withMessage('Mindestens eine Ziffer')
+    .matches(/[^a-zA-Z0-9]/).withMessage('Mindestens ein Sonderzeichen'),
+  (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg })
+
+    const db = getDb()
+    const user = db.prepare(`
+      SELECT id, email FROM users
+      WHERE reset_token_hash = ? AND reset_expires_at > datetime('now')
+    `).get(tokenHashen(req.body.token))
+
+    if (!user) {
+      return res.status(400).json({
+        error: 'Dieser Link ist abgelaufen oder wurde bereits benutzt. Fordern Sie einen neuen an.',
+        code: 'TOKEN_UNGUELTIG',
+      })
+    }
+
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE users SET password_hash = ?, reset_token_hash = NULL,
+          reset_expires_at = NULL, updated_at = datetime('now')
+        WHERE id = ?
+      `).run(bcrypt.hashSync(req.body.password, 10), user.id)
+      // Alle Sitzungen beenden — siehe Punkt 3 oben.
+      db.prepare('DELETE FROM refresh_tokens WHERE user_id = ?').run(user.id)
+    })()
+
+    res.json({ ok: true, message: 'Ihr Passwort ist gesetzt. Bitte melden Sie sich neu an.' })
+  }
+)
 
 // POST /api/auth/login
 router.post('/login', authLimiter, validateLogin, (req, res) => {

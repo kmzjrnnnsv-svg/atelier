@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Sieben Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Acht Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -28,6 +28,17 @@ im Betrieb, nichts nachgebaut.
                          steht. Ebenfalls ohne Server: eine reine Funktion,
                          die sich nicht durch einen Konfigurator mit einem
                          Dutzend Schritten prüfen lassen sollte.
+    tests/nachdemkauf.mjs
+                         102 Prüfungen: alles, was nach dem Bestellen kommt —
+                         Verlauf mit Datum je Stufe, Zahlungseingang über den
+                         Verwendungszweck buchen, Rechnung als PDF samt
+                         fortlaufender Nummer, Stornostaffel nach AGB 7.2 auf
+                         jeder Stufe, Sendungsnummer, Express-Bestand,
+                         Auswertung, Protokoll, Klickzählung und Gutschrift
+                         für Vermittler, Passwort zurücksetzen.
+                         Braucht DB_PATH — für den Zweitfaktor des Admins und
+                         die Prüfsumme des Zurücksetzen-Tokens gibt es keine
+                         Route, und geraten wird hier nichts.
     tests/bestaetigung.mjs
                          16 Prüfungen: was in der Bestellbestätigung stehen
                          MUSS — Belehrung über das nicht bestehende
@@ -53,6 +64,14 @@ Bestellungen und Kampagnen an.
     # Terminal 2 — Prüfungen
     node tests/ablaeufe.mjs
     DB_PATH=/tmp/pruef.db node tests/preise.mjs
+    DB_PATH=/tmp/pruef.db node tests/nachdemkauf.mjs
+
+Wichtig: Server und Prüfskript müssen **dieselbe Datei** sehen. Läuft der
+Server in einer Sandbox oder einem Container mit eigenem `/tmp`, legen Sie die
+Wegwerf-Datenbank stattdessen neben das Projekt (`DB_PATH=./pruef.db`) —
+`*.db` steht in der `.gitignore`. Andernfalls schreibt das Prüfskript in eine
+Datei, die der Server nie zu sehen bekommt, und die Fehlermeldungen führen in
+die Irre.
 
 `preise.mjs` braucht den DB-Pfad, weil es den E-Mail-Bestätigungstoken direkt
 ausliest — im Betrieb kommt der per Mail, und ohne bestätigte Adresse gibt es

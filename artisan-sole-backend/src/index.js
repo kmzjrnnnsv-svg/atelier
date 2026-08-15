@@ -47,7 +47,8 @@ import affiliatesRouter from './routes/affiliates.js'
 import passkeysRouter, { makeLoginVerify, makeSignupVerify, makeRecoverVerify, makeAffiliateVerify } from './routes/passkeys.js'
 import recoveryRouter from './routes/recovery.js'
 import configsRouter from './routes/configs.js'
-import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter, collectionsRouter } from './routes/content.js'
+import { shoesRouter, shoeCardRouter, materialsRouter, colorsRouter, solesRouter, accessoriesRouter, collectionsRouter, affiliateAssetsRouter } from './routes/content.js'
+import auswertungRouter from './routes/auswertung.js'
 import scansRouter      from './routes/scans.js'
 import favoritesRouter  from './routes/favorites.js'
 import ordersRouter     from './routes/orders.js'
@@ -214,6 +215,8 @@ app.use('/api/fit', fitRouter)
 app.use('/api/last-size-chart', lastChartRouter)
 app.use('/api/business', businessRouter)
 app.use('/api/chat',     chatRouter)
+app.use('/api/auswertung', auswertungRouter)
+app.use('/api/werbemittel', affiliateAssetsRouter)
 
 // GitHub Webhook — auto-deploy on push to website
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
