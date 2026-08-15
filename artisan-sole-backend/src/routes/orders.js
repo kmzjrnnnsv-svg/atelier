@@ -10,6 +10,7 @@ import {
   protokoll, ZUSTELLER,
 } from '../utils/auftragslauf.js'
 import { rechnungPdf, vergibRechnungsnummer } from '../utils/beleg.js'
+import { GUERTEL_ART, ausSchuh as guertelAusSchuh, pruefe as guertelPruefen } from '../utils/guertel.js'
 import { totpVerify } from '../utils/totp.js'
 import { validateBusinessCode, validateCampaignForUser } from './business.js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -45,6 +46,46 @@ router.get('/mine', authenticate, (req, res) => {
   res.json(rows)
 })
 
+/**
+ * GET /api/orders/mine/guertel-vorlagen
+ *
+ * Die eigenen Bestellungen, soweit sich aus ihnen ein Gürtel ableiten lässt.
+ *
+ * ── Wozu ─────────────────────────────────────────────────────────────────
+ *
+ * Wer den Gürtel erst später bestellt, soll nicht aus dem Gedächtnis
+ * rekonstruieren müssen, welches Leder und welche Farbe seine Schuhe hatten.
+ * Die Angabe steht in seiner Bestellung; hier wird sie zu einer Vorlage.
+ *
+ * Stornierte Bestellungen bleiben draußen — ein Schuh, den es nie gab, ist
+ * keine Vorlage. Alles andere zählt, auch was noch in Fertigung ist: Wer
+ * heute bestellt hat, darf den Gürtel morgen nachbestellen.
+ */
+router.get('/mine/guertel-vorlagen', authenticate, (req, res) => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT * FROM orders
+    WHERE user_id = ? AND status != 'cancelled' AND shoe_id IS NOT NULL
+    ORDER BY created_at DESC LIMIT 40
+  `).all(req.user.id)
+
+  const vorlagen = rows.map(r => guertelAusSchuh(db, r)).filter(v => v?.brauchbar)
+
+  // Zweimal dasselbe Leder in derselben Farbe ergibt zweimal denselben
+  // Gürtel. Die Liste zeigt jede Kombination einmal, mit der jüngsten
+  // Bestellung als Beleg — sonst stünde dort dreimal „Lux Calf in Cognac"
+  // und der Kunde müsste raten, welches davon er anklickt.
+  const gesehen = new Set()
+  const eindeutig = vorlagen.filter(v => {
+    const kennung = `${v.leder}|${v.farbe}|${v.metall || ''}`
+    if (gesehen.has(kennung)) return false
+    gesehen.add(kennung)
+    return true
+  })
+
+  res.json(eindeutig)
+})
+
 // GET /api/orders/all (admin/curator)
 router.get('/all', ...canWrite, (req, res) => {
   const rows = getDb()
@@ -75,11 +116,27 @@ router.post('/',
     //
     // Die Prüfung gehört hierher und nicht nur in die Kasse. Eine Regel, die
     // allein im Browser lebt, ist keine Regel — sie ist eine Bitte.
+    //
+    // Die Ausnahme steht am Artikel, nicht hier: `ships_alone`. Der Gürtel
+    // trägt sein Porto selbst, und wer ein halbes Jahr nach den Schuhen den
+    // passenden Gürtel nachbestellt, soll dafür nicht ein zweites Paar
+    // kaufen müssen. Eine Bestellung ohne Schuh geht durch, wenn ALLES darin
+    // allein reisen darf — ein Gürtel zieht kein Pflegeset mit hinaus.
     if (!req.body.shoe_id) {
-      return res.status(400).json({
-        error: 'Zubehör versenden wir nur zusammen mit einem Paar Schuhe. Bitte legen Sie ein Modell dazu.',
-        code: 'ACCESSORY_ONLY',
+      const db0 = getDb()
+      const positionen = Array.isArray(req.body.accessories) ? req.body.accessories : []
+      const alleineErlaubt = positionen.length > 0 && positionen.every(a => {
+        const key = String(a?.key || '').trim()
+        if (!key) return false
+        const row = db0.prepare('SELECT ships_alone FROM accessories WHERE key = ? AND is_active = 1').get(key)
+        return Number(row?.ships_alone) === 1
       })
+      if (!alleineErlaubt) {
+        return res.status(400).json({
+          error: 'Dieses Zubehör versenden wir nur zusammen mit einem Paar Schuhe. Bitte legen Sie ein Modell dazu.',
+          code: 'ACCESSORY_ONLY',
+        })
+      }
     }
 
     const {
@@ -227,6 +284,50 @@ router.post('/',
       }
     }
 
+    // ── Konfiguriertes Zubehör: Preis und Text macht der Server ──────────
+    //
+    // Der Gürtel ist das erste Zubehör mit einer Konfiguration, und damit das
+    // erste, bei dem eine Position mehr trägt als Name und Betrag. Beides
+    // käme sonst aus dem Browser — und ein Gürtel für 1 € wäre eine Frage von
+    // zwei Zeilen in der Entwicklerkonsole.
+    //
+    // Deshalb: Die Schlüssel kommen von außen, alles andere entsteht hier.
+    // Der Betrag wird gegen den mitgeschickten geprüft, statt ihn still zu
+    // ersetzen — sonst zahlte der Kunde am Ende einen anderen Betrag als den,
+    // den er vor dem Absenden gesehen hat.
+    let zubehoerZeilen = Array.isArray(accessories) ? accessories : []
+    for (let i = 0; i < zubehoerZeilen.length; i++) {
+      const zeile = zubehoerZeilen[i]
+      if (zeile?.belt?.art !== GUERTEL_ART && zeile?.config_kind !== GUERTEL_ART) continue
+
+      const gepruef = guertelPruefen(db, zeile.belt || {}, { mitSchuh: !!shoe_id })
+      if (!gepruef.ok) {
+        return res.status(400).json({ error: gepruef.fehler, code: 'GUERTEL_UNVOLLSTAENDIG', feld: gepruef.feld })
+      }
+
+      const genannt = betragAusText(zeile.price)
+      if (Math.abs(genannt - gepruef.preis) > 0.01) {
+        return res.status(400).json({
+          error: `Der Preis des Gürtels hat sich geändert (${gepruef.preis.toFixed(2)} €). Bitte laden Sie die Seite neu.`,
+          code: 'PRICE_MISMATCH',
+        })
+      }
+
+      zubehoerZeilen[i] = {
+        key: gepruef.artikel.key,
+        name: gepruef.artikel.name,
+        price: `€ ${gepruef.preis.toFixed(2).replace('.', ',')}`,
+        qty: Math.max(1, Number(zeile.qty) || 1),
+        config_kind: GUERTEL_ART,
+        belt: gepruef.wert,
+        // Der Satz, den Kunde, Werkstatt und Beleg lesen. Er steht hier
+        // ausgeschrieben in der Bestellung und wird nicht jedes Mal neu aus
+        // Schlüsseln zusammengesetzt: Ändert jemand später eine Bezeichnung
+        // im CMS, soll auf einer alten Bestellung stehen, was bestellt wurde.
+        beschreibung: gepruef.wert.beschreibung,
+      }
+    }
+
     // ── Deckt der Bestand die Express-Zusage? ────────────────────────────
     //
     // Die zwei Wochen setzen voraus, dass ein vorbereiteter Schaft in der
@@ -304,7 +405,7 @@ router.post('/',
       spec.eu_size || null,
       delivery_address ? JSON.stringify(delivery_address) : null,
       billing_address  ? JSON.stringify(billing_address)  : null,
-      JSON.stringify(accessories || []),
+      JSON.stringify(zubehoerZeilen || []),
       scan_id    || null,
       user_order_number,
       'pending_payment',
@@ -875,6 +976,14 @@ function ruecksendbar(db, order) {
   }
 
   return acc
+    // Konfiguriertes Zubehör ist keine Lagerware.
+    //
+    // Der Gürtel wird aus dem gewählten Leder geschnitten und auf die
+    // gewählte Länge gebracht — für einen anderen Kunden ist er danach so
+    // wenig zu gebrauchen wie ein Maßschuh. Er fällt damit unter dieselbe
+    // Ausnahme wie die Schuhe (§ 312g Abs. 2 Nr. 1 BGB) und steht nicht in
+    // der Liste des Zurückgebbaren.
+    .filter(a => !a?.config_kind && !a?.belt)
     .map(a => {
       const gekauft = Number(a.qty) || 1
       const offen = gekauft - (schonAngemeldet.get(a.name) || 0)

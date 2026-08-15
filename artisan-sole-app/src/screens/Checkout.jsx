@@ -179,6 +179,15 @@ export default function Checkout() {
 
   const product = location.state?.product || {}
   const incomingAccessories = location.state?.accessories || []
+  /**
+   * Der Gürtel aus dem Direktkauf.
+   *
+   * Er lässt sich nicht wie das übrige Zubehör über seine Kennung
+   * mitführen: Von einem Pflegeset gibt es genau eines, von einem Gürtel
+   * einen je Konfiguration. Er reist deshalb als fertige Position mit —
+   * Name, Betrag und Konfiguration in einem.
+   */
+  const guertelDirekt = location.state?.guertel || null
   const startStep = product.id ? 1 : 0
 
   const emptyAddr = { name:'', street:'', house_number:'', zip:'', city:'', country:'Deutschland', phone:'' }
@@ -289,7 +298,8 @@ export default function Checkout() {
   // gibt es weder Nachlass noch Zugabe, und dann soll auch nichts davon
   // versprochen werden.
   const hatSchuh = !!product.id || cart.some(c => !c.isAccessory)
-  const accTotal  = chosenAccessories.reduce((sum, a) => sum + a.priceNum, 0)
+  const guertelPreis = guertelDirekt ? parsePrice(guertelDirekt.price) : 0
+  const accTotal  = chosenAccessories.reduce((sum, a) => sum + a.priceNum, 0) + guertelPreis
   const accPromoDiscount = isPromo && promoDiscountPct > 0 ? Math.round(accTotal * promoDiscountPct / 100) : 0
   const subtotal  = (product.id ? shoePrice : cartTotal) + accTotal - accPromoDiscount
   const discountAmount = couponResult?.valid ? couponResult.discount_amount : 0
@@ -384,7 +394,12 @@ export default function Checkout() {
     setError(null)
     try {
       const billingAddr = sameBilling ? delivery : billing
-      const accList = chosenAccessories.map(a => ({ name: a.name, price: a.price }))
+      const accList = chosenAccessories.map(a => ({ name: a.name, price: a.price, key: a.key || null }))
+      // Der Gürtel aus dem Direktkauf, als eigene Position.
+      const guertelZeilen = guertelDirekt
+        ? [{ name: guertelDirekt.name, price: guertelDirekt.price, key: guertelDirekt.key,
+             config_kind: 'belt', belt: guertelDirekt.belt }]
+        : []
 
       // Die Zugabe des Affiliates fährt als Position zu 0 € mit. Ohne sie
       // stünde sie nur im Warenkorb: Der Kunde hätte sie zugesagt bekommen,
@@ -407,7 +422,7 @@ export default function Checkout() {
           material: product.material, color: product.color || product.selectedColor || '',
           price: `€ ${fmtPrice(total)}`, eu_size: product.euSize || latestScan?.eu_size || null,
           scan_id: latestScan?.id || null, delivery_address: delivery,
-          billing_address: billingAddr, accessories: [...accList, ...zugabeZeile],
+          billing_address: billingAddr, accessories: [...accList, ...guertelZeilen, ...zugabeZeile],
           foot_notes: footNotes || null, coupon_code: appliedCoupon, business_code: appliedBizCode, business_campaign_id: appliedCampaignId,
           // Der Code aus dem Werbelink. Er wurde bislang nirgends
           // mitgeschickt — die Bestellung kam an, die Vermittlung ging
@@ -446,7 +461,14 @@ export default function Checkout() {
           .filter(c => c.isAccessory)
           .flatMap(c => Array.from(
             { length: Math.max(1, c.qty || 1) },
-            () => ({ name: c.name, price: c.price }),
+            // Kennung und Konfiguration reisen mit. Der Server rechnet den
+            // Preis des Gürtels aus den Schlüsseln nach und schreibt den
+            // Beschreibungssatz — ohne sie käme dort eine Position ohne
+            // Angaben an und würde abgewiesen.
+            () => ({
+              name: c.name, price: c.price, key: c.accKey || null,
+              ...(c.belt ? { config_kind: 'belt', belt: c.belt } : {}),
+            }),
           ))
 
         // ── Eine Zahlung je Korb ────────────────────────────────────────
@@ -461,6 +483,31 @@ export default function Checkout() {
         // Verwendungszweck nur einer der Bestellungen: Wer wie angezeigt
         // überwies, hatte eine überzahlte und eine unbezahlte Bestellung.
         const korbKennung = `k-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+
+        // ── Nur Zubehör, das allein reisen darf ─────────────────────────
+        //
+        // Ohne Paar gibt es keine Schuhbestellung, an die sich das Zubehör
+        // hängen könnte. Es wird dann selbst zur Bestellung — mit dem Namen
+        // der ersten Position als Bezeichnung, damit in der Übersicht nicht
+        // „(ohne Modell)" steht.
+        //
+        // Der Server prüft dasselbe noch einmal und weist ab, was nicht
+        // allein reisen darf. Diese Stelle spart dem Kunden den Weg zur
+        // Fehlermeldung, sie ersetzt die Prüfung nicht.
+        if (schuhe.length === 0) {
+          const erste = korbZubehoer[0]
+          lastRow = await placeOrder({
+            shoe_id: null,
+            shoe_name: erste?.name || 'Zubehör',
+            material: erste?.belt ? erste.belt.leder_label : 'Zubehör',
+            color: erste?.belt ? erste.belt.farbe_hex : '#000000',
+            price: `€ ${fmtPrice(total)}`,
+            delivery_address: delivery, billing_address: billingAddr,
+            accessories: [...korbZubehoer, ...accList, ...guertelZeilen],
+            basket_id: korbKennung,
+            ...shippingData,
+          })
+        }
 
         for (let i = 0; i < schuhe.length; i++) {
           const item = schuhe[i]
@@ -485,7 +532,7 @@ export default function Checkout() {
             // Zubehör und Zugabe hängen am ersten Paar. An jede Bestellung
             // gehängt wäre dasselbe Pflegeset dreimal in der Packliste.
             billing_address: billingAddr,
-            accessories: i === 0 ? [...korbZubehoer, ...accList, ...zugabeZeile] : [],
+            accessories: i === 0 ? [...korbZubehoer, ...accList, ...guertelZeilen, ...zugabeZeile] : [],
             foot_notes: footNotes || null, coupon_code: i === 0 ? appliedCoupon : null,
             affiliate_code: affiliate?.code || null,
             last_key: item.last || null, last_label: item.lastLabel || null,
@@ -610,7 +657,31 @@ export default function Checkout() {
   // verschicken kostet rund 30 € Porto — mehr als der Artikel selbst. Statt
   // das am Ende als Fehler zu melden, steht es hier, bevor jemand Adresse und
   // Zahlung ausfüllt.
-  const nurZubehoer = !product.id && cart.length > 0 && cart.every(c => c.isAccessory)
+  /**
+   * Zubehör allein — und die Ausnahme davon.
+   *
+   * Die Regel bleibt: Ein Pflegeset für 23 € einzeln zu verschicken kostet
+   * mehr Porto als der Artikel wert ist. Der Gürtel ist die Ausnahme; er
+   * trägt sein Porto selbst, und wer ein halbes Jahr nach den Schuhen den
+   * passenden Gürtel nachbestellt, soll dafür kein zweites Paar kaufen
+   * müssen.
+   *
+   * Welche Artikel allein reisen dürfen, steht an ihnen (`ships_alone`) und
+   * nicht hier — sonst stünde dieselbe Entscheidung an zwei Stellen, und die
+   * hier wäre die, die niemand pflegt.
+   */
+  const darfAllein = (c) => {
+    // Am Korbeintrag steht, was beim Hineinlegen galt. Der Umweg über den
+    // Bestand ist der Rückfall für ältere Einträge — und er greift nicht bei
+    // einem Gast: Dessen Zubehörliste im Laden ist leer, weil sie erst mit
+    // der Anmeldung geladen wird. Ohne den Eintrag am Korb hinge die Frage
+    // „darf das allein reisen?" also daran, ob jemand angemeldet ist.
+    if (typeof c.shipsAlone === 'boolean') return c.shipsAlone
+    const artikel = allAccessories.find(a => a.key && a.key === c.accKey)
+    return Number(artikel?.ships_alone) === 1
+  }
+  const nurZubehoer = !product.id && cart.length > 0
+    && cart.every(c => c.isAccessory) && !cart.every(darfAllein)
   if (nurZubehoer) {
     return (
       <div className="min-h-full bg-white">

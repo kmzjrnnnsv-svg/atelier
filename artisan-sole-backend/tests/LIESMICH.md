@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Neun Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Zehn Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -53,6 +53,14 @@ im Betrieb, nichts nachgebaut.
                          der Drivers-Leisten, und in beide Richtungen die
                          Abgrenzung zur Dress-Linie: kein Lux Calf am
                          Mokassin, kein Nappa am Oxford.
+    tests/guertel.mjs    44 Prüfungen: der konfigurierte Gürtel — Preis und
+                         Beschreibungssatz entstehen am Server (ein Gürtel für
+                         1 € wird abgewiesen), unvollständige Angaben ebenso,
+                         die Farbe muss es am gewählten Leder geben, allein
+                         reisen darf nur, wer `ships_alone` trägt (ein Gürtel
+                         ja, ein Pflegeset nicht), Vorlagen aus eigenen
+                         Bestellungen sind nicht fremd einsehbar, und der
+                         Gürtel steht nicht unter dem Zurückgebbaren.
 
 ## Aufrufen
 
@@ -71,6 +79,7 @@ Bestellungen und Kampagnen an.
     # Terminal 2 — Prüfungen
     node tests/ablaeufe.mjs
     node tests/mokassin.mjs
+    node tests/guertel.mjs
     DB_PATH=/tmp/pruef.db node tests/preise.mjs
     DB_PATH=/tmp/pruef.db node tests/nachdemkauf.mjs
 

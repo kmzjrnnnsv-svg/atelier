@@ -5,6 +5,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { katalogAnwenden } from './seedExport.js'
 import { frischeInstallationVerbrauchen } from './schema.js'
+import { GUERTEL_KEY, GUERTEL_ART, GROESSEN } from '../utils/guertel.js'
 
 // Verzeichnis dieser Datei — die Rechtstexte liegen im Wurzelverzeichnis des
 // Repositories, nicht neben dem Backend.
@@ -71,6 +72,9 @@ export async function seedDatabase(db) {
   // die es kennt. MOCCASIN steht nicht darin — und soll es auch nicht, sonst
   // bekäme der Mokassin bei jedem Start die Dress-Leder zurück.
   seedMokassin(db)
+  // Nach den Optionen: Der Gürtel gibt `buckle` und `buckle_color` für sich
+  // frei, und die beiden Gruppen entstehen weiter oben.
+  seedGuertel(db)
   seedExpressModelle(db)
   seedLegalDocs(db)
 
@@ -2110,6 +2114,92 @@ export function seedMokassin(db) {
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
   `).run(MOKASSIN_STAND)
   console.log(`✅ Seeded: Mokassin (${MOKASSIN_LEDER.length} Leder, ${MOKASSIN_FARBEN.length} Farben, ${MOKASSIN_GRUPPEN.length} eigene Schritte)`)
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Der Gürtel.
+ *
+ * ── Was ihn von allem anderen Zubehör unterscheidet ──────────────────────
+ *
+ * Ein Pflegeset ist ein Pflegeset. Der Gürtel dagegen wird gefertigt wie ein
+ * Schuh: aus einer Lederart, in einer Farbe, mit einer Schließe in einem
+ * Metallton, in einer Länge. Fünf Angaben, und die ersten beiden sollen zu
+ * den Schuhen passen, zu denen er getragen wird.
+ *
+ * Deshalb steht er zwar im Zubehörbestand — mit Preis, Beschreibung und
+ * Bildern, alles im CMS zu pflegen —, trägt aber drei Felder, die sonst
+ * niemand hat:
+ *
+ *   config_kind = 'belt'   Vor dem Warenkorb kommt eine Maske.
+ *   price_with_shoe        Zusammen mit einem Paar günstiger, weil er im
+ *                          selben Karton hinausgeht.
+ *   ships_alone = 1        Er darf allein reisen. Für Pflegesets gilt das
+ *                          nicht: Deren Porto kostet mehr als der Artikel.
+ *
+ * ── Warum keine eigenen Schließen-Optionen ───────────────────────────────
+ *
+ * Form und Metall kommen aus `buckle` und `buckle_color` — denselben
+ * Gruppen, aus denen der Monk seine Schnalle bekommt. Das ist der Grund,
+ * warum die Übernahme vom Schuh funktioniert: Steht am Double Monk schon
+ * „Nickel", ist das derselbe Wert aus derselben Tabelle, und der Gürtel
+ * übernimmt ihn wortwörtlich. Eine eigene Liste hätte eine
+ * Übersetzungstabelle gebraucht, und jede Übersetzungstabelle ist eine
+ * Stelle, an der später etwas nicht mehr zusammenpasst.
+ * ══════════════════════════════════════════════════════════════════════════ */
+
+const GUERTEL_BESCHREIBUNG = [
+  'Gürtel aus demselben Leder wie Ihre Schuhe, in derselben Farbe — 3,5 cm breit, von Hand',
+  'auf Länge geschnitten und an den Kanten gebrannt.',
+  '',
+  'Sie wählen die Form der Schließe (eckig oder rund), den Metallton und die Länge. Bestellen',
+  'Sie ihn zu einem Paar Schuhe, übernimmt er Lederart und Farbe von dort; bei Modellen mit',
+  'Schnalle — Monk und Double Monk — auch den Metallton, damit Schuh und Gürtel dasselbe',
+  'Metall tragen.',
+  '',
+  'Die Länge wird von der Befestigung des Dorns bis zum mittleren Loch gemessen. Nach beiden',
+  'Seiten bleiben zwei weitere Löcher, je 3 cm — eine Größe daneben ist also noch zu tragen.',
+].join(' ').replace(/\s+/g, ' ').replace(/ {2,}/g, ' ').trim()
+
+export function seedGuertel(db) {
+  const STAND = '1'
+  const vermerk = db.prepare("SELECT value FROM settings WHERE key = 'guertel_zubehoer'").get()
+  if (vermerk?.value === STAND) return
+
+  // Im CMS gelöscht heißt gelöscht. Ein Seed, der einen bewusst entfernten
+  // Artikel beim nächsten Start zurückholt, ist keine Hilfe.
+  const geloescht = db.prepare('SELECT 1 FROM deleted_seed_accessories WHERE key = ?').get(GUERTEL_KEY)
+  if (geloescht) return
+
+  db.transaction(() => {
+    db.prepare(`
+      INSERT OR IGNORE INTO accessories
+        (key, name, description, price, price_with_shoe, config_kind, ships_alone,
+         material_keys, is_active, sort_order)
+      VALUES (?, ?, ?, 150, 125, ?, 1, '*', 1, 10)
+    `).run(GUERTEL_KEY, 'Gürtel Hamptons', GUERTEL_BESCHREIBUNG, GUERTEL_ART)
+
+    // Schließe und Metall gelten bisher nur für Monk und Double Monk. Ohne
+    // diese Zeile stünden dem Gürtel beide Gruppen offen, aber keiner ihrer
+    // Werte — die Maske wäre leer.
+    for (const gruppe of ['buckle', 'buckle_color']) {
+      const werte = db.prepare(`
+        SELECT o.id, o.applicable_categories FROM options o
+        JOIN option_groups g ON g.id = o.group_id WHERE g.key = ?
+      `).all(gruppe)
+      for (const w of werte) {
+        const kat = String(w.applicable_categories || '')
+        if (kat === '*' || kat.split(',').map(s => s.trim()).includes('BELT')) continue
+        db.prepare('UPDATE options SET applicable_categories = ? WHERE id = ?')
+          .run(kat ? `${kat},BELT` : 'BELT', w.id)
+      }
+    }
+  })()
+
+  db.prepare(`
+    INSERT INTO settings (key, value) VALUES ('guertel_zubehoer', ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(STAND)
+  console.log(`✅ Seeded: Gürtel (${GROESSEN.length} Längen, 150 € einzeln / 125 € zum Paar)`)
 }
 
 /**

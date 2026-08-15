@@ -453,6 +453,23 @@ export function runMigrations(db) {
     `ALTER TABLE accessories ADD COLUMN material_keys TEXT`,
     // accessories, optionale Farb-Zuordnung (CSV Schlüsselwörter, z. B. 'schwarz,black')
     `ALTER TABLE accessories ADD COLUMN color_match TEXT`,
+    // accessories, zweiter Preis: was der Artikel kostet, wenn er ZUSAMMEN mit
+    // einem Paar Schuhe bestellt wird. Dann geht er im selben Karton hinaus;
+    // allein braucht er Verpackung und Porto für sich. NULL heißt: ein Preis
+    // für beide Wege, nämlich `price`.
+    `ALTER TABLE accessories ADD COLUMN price_with_shoe REAL`,
+    // accessories, Art der Konfiguration. NULL ist der Normalfall — der
+    // Artikel wandert wie er ist in den Warenkorb. 'belt' heißt: Er wird
+    // vorher konfiguriert (Leder, Farbe, Schließe, Metall, Länge), und die
+    // Oberfläche zeigt dafür eine Maske statt eines Knopfes.
+    `ALTER TABLE accessories ADD COLUMN config_kind TEXT`,
+    // accessories, darf dieser Artikel allein reisen?
+    //
+    // Für Pflegesets und Spanner gilt: nein — das Porto kostet mehr als der
+    // Artikel. Der Gürtel trägt sein Porto selbst, und ein Kunde, der ein
+    // halbes Jahr nach den Schuhen den passenden Gürtel bestellen will, soll
+    // dafür nicht ein zweites Paar kaufen müssen.
+    `ALTER TABLE accessories ADD COLUMN ships_alone INTEGER NOT NULL DEFAULT 0`,
     // orders, B2B-Firmencode-Einlösung
     `ALTER TABLE orders ADD COLUMN business_id          INTEGER REFERENCES businesses(id)`,
     `ALTER TABLE orders ADD COLUMN business_code_id     INTEGER REFERENCES business_codes(id)`,
