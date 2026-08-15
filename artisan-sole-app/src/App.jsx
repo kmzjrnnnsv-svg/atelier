@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute, StartRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
 import RefErfassung from './components/RefErfassung'
+import VermittlerBanner from './components/VermittlerBanner'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
 import useStore from './store/store'
@@ -273,6 +274,21 @@ function AppRoutes() {
   // Eigenständige Vollbild-Seiten (Firmenbereich, Kampagnen-Beitritt) ohne Shop-Nav.
   const isStandalone = location.pathname.startsWith('/business/') || location.pathname.startsWith('/c/')
   const showNav = !isCMS && !isCorporateLanding && !isStandalone && !hidesNav(location.pathname)
+
+  // Der Vermittlerstreifen folgt NICHT der Navigation.
+  //
+  // Der Konfigurator blendet die Navigation aus, damit nichts vom Schuh
+  // ablenkt — dort steht aber der Preis, den die Empfehlung verändert. Wäre
+  // der Streifen an showNav gebunden, verschwände er genau an der Stelle, an
+  // der er etwas erklärt: Der Kunde sähe einen reduzierten Preis ohne Grund.
+  //
+  // Ausgenommen bleiben die Bereiche, in denen ein Werbestreifen nichts zu
+  // suchen hat: Verwaltung, Firmenseiten und der Affiliate-Bereich selbst.
+  const istLaden = !isCMS && !isCorporateLanding && !isStandalone
+    && !location.pathname.startsWith('/affiliate') && !location.pathname.startsWith('/vermittler')
+  const zeigeVermittler = istLaden && (
+    showNav || location.pathname.startsWith('/customize') || location.pathname.startsWith('/schuhe')
+  )
   const FOOTER_PATHS = ['/collection', '/accessories', '/business']
   const showFooter = showNav && FOOTER_PATHS.includes(location.pathname)
   const viewportHeight = useViewportHeight()
@@ -370,6 +386,7 @@ function AppRoutes() {
   if (isNative) {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
+        {zeigeVermittler && <VermittlerBanner />}
         <div className="flex-1 overflow-y-auto relative">
           <Suspense fallback={<DelayedSpinner />}>
             <PageTransition>
@@ -513,6 +530,7 @@ function AppRoutes() {
   if (isMobileWeb) {
     return (
       <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
+        {zeigeVermittler && <VermittlerBanner />}
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
         {showFooter && <Footer />}
@@ -523,6 +541,9 @@ function AppRoutes() {
   // ── Desktop web: fixed container, internal scroll, white bg ──
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: viewportHeight, display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box' }}>
+      {/* Über der Navigation, wie der Streifen bei Apple: Wer über eine
+          Empfehlung hier ist, soll es sehen, bevor er den ersten Preis liest. */}
+      {zeigeVermittler && <VermittlerBanner />}
       {showNav && <TopBar />}
       <div className="flex-1 overflow-y-auto relative">
         <div className="w-full">

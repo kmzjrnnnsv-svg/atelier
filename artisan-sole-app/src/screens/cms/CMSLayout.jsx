@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen, TrendingUp } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
@@ -8,6 +8,7 @@ import { apiFetch } from '../../hooks/useApi'
 
 export default function CMSLayout() {
   const navigate = useNavigate()
+  const { pathname: pfad } = useLocation()
   const { user, logout } = useAuth()
   const { shoes, initStore, resetToDefaults } = useStore()
 
@@ -26,6 +27,26 @@ export default function CMSLayout() {
   }, [])
 
   useEffect(() => { initStore() }, [])
+
+  /**
+   * Welche Gruppen zugeklappt sind.
+   *
+   * Gemerkt wird, was ZU ist, nicht was offen ist: Kommt später eine Gruppe
+   * dazu, ist sie damit von selbst sichtbar. Andersherum wäre sie unsichtbar,
+   * bis jemand sie sucht — und suchen kann man nur, was man kennt.
+   */
+  const [zu, setZu] = useState(() => {
+    try { const l = JSON.parse(localStorage.getItem('cms_nav_zu') || '[]'); return Array.isArray(l) ? l : [] }
+    catch { return [] }
+  })
+  const umschalten = (heading) => setZu(l => {
+    const neu = l.includes(heading) ? l.filter(x => x !== heading) : [...l, heading]
+    try { localStorage.setItem('cms_nav_zu', JSON.stringify(neu)) } catch { /* ohne Speicher gilt es für diese Sitzung */ }
+    return neu
+  })
+  // Die Gruppe, in der man gerade steht, bleibt offen — sonst klappte die
+  // Navigation den eigenen Standort weg.
+  const aktiv = (i) => i.end ? pfad === i.to : pfad.startsWith(i.to)
 
   const handleLogout = () => {
     // Vollständiger Seitenwechsel statt Router-Navigation. Beim Abmelden
@@ -46,7 +67,7 @@ export default function CMSLayout() {
         {/* Logo */}
         <div className="px-7 pt-8 pb-6">
           <p className="font-brand text-[11px] text-white/90">ARTISAN SOLE</p>
-          <p className="text-[9px] text-white/20 tracking-[0.2em] uppercase mt-1 font-light">Content Studio</p>
+          <p className="text-[9px] text-white/45 tracking-[0.2em] uppercase mt-1 font-light">Content Studio</p>
         </div>
 
         {/* Nav */}
@@ -111,22 +132,52 @@ export default function CMSLayout() {
               { to: '/cms/email', label: 'E-Mail / SMTP',  icon: Mail },
               { to: '/cms/mfa',   label: 'MFA-Sicherheit', icon: ShieldCheck },
             ]}] : []),
-          ].map(({ heading, items }, gi) => (
+          ].map(({ heading, items }, gi) => {
+            // Zusammenklappbar, seit die Liste über die sichtbare Höhe
+            // hinausgewachsen ist: Bei acht Gruppen und 33 Einträgen lagen
+            // zuletzt gut zwei Drittel unterhalb des Fensterrands, und
+            // „Benutzer" ganz unten war praktisch nicht mehr zu finden.
+            //
+            // Ohne Überschrift (das Dashboard) gibt es nichts zu klappen.
+            const offen = !heading || !zu.includes(heading)
+            const trefferHier = items.some(i => aktiv(i))
+            return (
             <div key={gi}>
               {heading && (
-                <p className="text-[8px] uppercase tracking-[0.25em] text-white/15 px-3 mb-2.5 mt-7 font-light">{heading}</p>
+                <button
+                  onClick={() => umschalten(heading)}
+                  className="w-full flex items-center gap-1.5 text-[9px] uppercase tracking-[0.22em] text-white/50 hover:text-white/80 px-3 mb-2.5 mt-7 bg-transparent border-0 transition-colors"
+                >
+                  <ChevronRight
+                    size={9} strokeWidth={2}
+                    className={`transition-transform ${offen ? 'rotate-90' : ''}`}
+                  />
+                  <span className="flex-1 text-left">{heading}</span>
+                  {/* Zugeklappt darf eine Gruppe nicht verschlucken, dass in
+                      ihr etwas ungelesen liegt. */}
+                  {!offen && items.some(i => i.badge > 0) && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/85" />
+                  )}
+                  {!offen && trefferHier && <span className="w-1.5 h-1.5 rounded-full bg-white/50" />}
+                </button>
               )}
-              <div className="space-y-0.5">
+              <div className={`space-y-0.5 ${offen ? '' : 'hidden'}`}>
                 {items.map(({ to, label, icon: Icon, end, badge }) => (
                   <NavLink
                     key={to}
                     to={to}
                     end={end}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-[7px] text-[12px] transition-all no-underline tracking-wide ${
+                      // Der aktive Eintrag trägt zusätzlich einen Balken
+                      // links. Der Hintergrundwechsel allein kam auf 1,35:1
+                      // gegen die Leiste — zu wenig, um ihn zu erkennen, und
+                      // wer Farben schlecht unterscheidet, sah gar nichts.
+                      // Der Balken ist immer da, nur durchsichtig, damit die
+                      // Zeilen beim Wechsel nicht springen.
+                      `flex items-center gap-3 pl-2.5 pr-3 py-[7px] text-[12px] border-l-2 transition-all no-underline tracking-wide ${
                         isActive
-                          ? 'bg-white/[0.08] text-white/90 font-normal'
-                          : 'text-white/25 hover:text-white/50 hover:bg-white/[0.03] font-light'
+                          ? 'border-white bg-white/[0.12] text-white font-normal'
+                          : 'border-transparent text-white/55 hover:text-white/90 hover:bg-white/[0.06] font-light'
                       }`
                     }
                   >
@@ -141,31 +192,32 @@ export default function CMSLayout() {
                 ))}
               </div>
             </div>
-          ))}
+            )
+          })}
         </nav>
 
         {/* User footer */}
         <div className="px-6 py-6 border-t border-white/[0.06]">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-7 h-7 bg-white/[0.08] flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-light text-white/50">{user?.name?.[0]?.toUpperCase()}</span>
+            <div className="w-7 h-7 bg-white/[0.12] flex items-center justify-center flex-shrink-0">
+              <span className="text-[10px] font-light text-white/70">{user?.name?.[0]?.toUpperCase()}</span>
             </div>
             <div className="min-w-0">
-              <p className="text-[12px] font-light text-white/60 truncate">{user?.name}</p>
-              <p className="text-[9px] text-white/20 truncate font-light">{user?.role}</p>
+              <p className="text-[12px] font-light text-white/80 truncate">{user?.name}</p>
+              <p className="text-[9px] text-white/45 truncate font-light">{user?.role}</p>
             </div>
           </div>
           <div className="space-y-1">
             <button
               onClick={() => navigate('/collection')}
-              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/20 hover:text-white/45 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
+              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/55 hover:text-white/90 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
             >
               <ExternalLink size={11} strokeWidth={1.25} />
               App ansehen
             </button>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/20 hover:text-white/45 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
+              className="w-full flex items-center gap-2.5 px-0 py-1 text-[11px] text-white/55 hover:text-white/90 transition-colors bg-transparent border-0 text-left font-light tracking-wide"
             >
               <LogOut size={11} strokeWidth={1.25} />
               Abmelden

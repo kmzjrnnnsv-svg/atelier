@@ -43,7 +43,7 @@ const neuesFormular = { _modus: 'neu', email: '', note: '' }
 const DECKEL_STANDARD = 50
 
 const leeresFormular = {
-  full_name: '', email: '', phone: '', code: '',
+  full_name: '', display_name: '', email: '', phone: '', code: '',
   street: '', postal_code: '', city: '', country: 'DE', birth_date: '',
   tax_status: 'small_business', tax_number: '', vat_id: '',
   iban: '', account_holder: '',
@@ -487,6 +487,11 @@ export default function AffiliatesPanel() {
               </Feld>
               <Feld label="Telefon">
                 <input className={eingabe} value={form.phone} onChange={e => setzen('phone', e.target.value)} />
+              </Feld>
+              <Feld label="Anzeigename im Laden"
+                    hint="Steht im Streifen über der Navigation: „Sie sind über … hier.“ Leer lassen, wenn niemand genannt werden soll — der Klarname oben wird dort nie gezeigt.">
+                <input className={eingabe} value={form.display_name || ''} placeholder="z. B. Schuhhaus Müller"
+                       onChange={e => setzen('display_name', e.target.value)} />
               </Feld>
               <Feld label="Geburtsdatum" hint="Laut Ausweis. Trennt Namensgleiche und gehört auf die Gutschrift.">
                 <input type="date" className={eingabe} value={form.birth_date} onChange={e => setzen('birth_date', e.target.value)} />

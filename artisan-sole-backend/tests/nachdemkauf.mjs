@@ -366,6 +366,12 @@ p('Der Hinweis auf § 14 UStG steht drauf', gText.includes('14 Abs. 2 UStG'))
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('12. Rechnungsangaben')
 
+// Der Abschnitt setzt Einstellungen und prüft danach die Vorgaben. Ohne
+// Zurücksetzen wäre er nur beim allerersten Lauf gegen eine frische
+// Datenbank aussagekräftig — beim zweiten stünde schon alles drin, und die
+// Prüfung meldete einen Fehler, den es nicht gibt.
+db.prepare(`DELETE FROM settings WHERE key LIKE 'firma\\_%' ESCAPE '\\' OR key = 'ust_satz'`).run()
+
 r = await ruf('/api/settings/firma', { token: admin })
 p('Angaben abrufbar', r.status === 200, `HTTP ${r.status}`)
 p('Vorgabe ist der Kleinunternehmer', r.daten?.firma_kleinunternehmer === '1', r.daten?.firma_kleinunternehmer)
@@ -429,7 +435,44 @@ p('Mit Nettobetrag', uText.includes('Nettobetrag'))
 p('Und ohne den §-19-Hinweis', !uText.includes('19 UStG wird keine'))
 
 // ════════════════════════════════════════════════════════════════════════
-abschnitt('13. Passwort vergessen')
+abschnitt('13. Vermittler: was der Laden zeigen darf')
+
+const vCode = `zeig${zufall()}`
+db.prepare(`
+  INSERT INTO affiliates (code, status, full_name, email, customer_benefit, customer_discount_pct, cap_per_shoe)
+  VALUES (?, 'active', 'Michael Müller', ?, 'discount', 10, 50)
+`).run(vCode, `zeig-${zufall()}@example.de`)
+
+r = await ruf(`/api/affiliates/validate/${vCode}`)
+p('Code gilt', r.daten?.valid === true, `HTTP ${r.status}`)
+p('Ohne Anzeigename wird keiner genannt', r.daten?.display_name === null, String(r.daten?.display_name))
+p('Der Klarname bleibt drinnen', !JSON.stringify(r.daten).includes('Michael'))
+p('Nachlass und Deckel kommen mit', r.daten?.customer_discount_pct === 10 && r.daten?.discount_cap === 50,
+  `${r.daten?.customer_discount_pct} % / ${r.daten?.discount_cap} €`)
+
+const vId = db.prepare('SELECT id FROM affiliates WHERE code = ?').get(vCode).id
+r = await ruf(`/api/affiliates/${vId}`, {
+  method: 'PUT', token: admin,
+  body: { display_name: 'Schuhhaus Müller', locked_fields: '["iban","street"]' },
+})
+p('Anzeigename lässt sich setzen', r.status === 200, `HTTP ${r.status} ${r.daten?.error || ''}`)
+p('Die Sperrliste überlebt das Speichern', r.daten?.locked_fields === '["iban","street"]', r.daten?.locked_fields)
+
+r = await ruf(`/api/affiliates/validate/${vCode}`)
+p('Jetzt nennt der Laden den Anzeigenamen', r.daten?.display_name === 'Schuhhaus Müller')
+p('Und noch immer nicht den Klarnamen', !JSON.stringify(r.daten).includes('Michael'))
+
+// Nicht bindbare Werte dürfen keinen 500 mehr auslösen — das war der Fehler,
+// den die Verwaltung als „Internal server error" zu sehen bekam.
+r = await ruf(`/api/affiliates/${vId}`, { method: 'PUT', token: admin, body: { note: { a: 1 } } })
+p('Ein Objekt wird benannt statt zu werfen', r.status === 400 && r.daten?.feld === 'note', `HTTP ${r.status}`)
+r = await ruf(`/api/affiliates/${vId}`, { method: 'PUT', token: admin, body: { gift_shoetree: true } })
+p('Ein Ja/Nein-Wert wird umgesetzt', r.status === 200, `HTTP ${r.status}`)
+r = await ruf(`/api/affiliates/${vId}`, { method: 'PUT', token: admin, body: { status: 'quatsch' } })
+p('Ein unzulässiger Status bekommt einen Grund', r.status === 400 && /CHECK/.test(r.daten?.error || ''), `HTTP ${r.status}`)
+
+// ════════════════════════════════════════════════════════════════════════
+abschnitt('14. Passwort vergessen')
 
 r = await ruf('/api/auth/passwort-vergessen', { method: 'POST', body: { email: mail } })
 p('Anforderung wird angenommen', r.status === 200, `HTTP ${r.status}`)

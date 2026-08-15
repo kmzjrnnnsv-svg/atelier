@@ -2457,6 +2457,12 @@ export default function Customize() {
                 </div>
               </div>
               <p className="hidden lg:block text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
+                {/* Der alte Preis gehört daneben, nicht nur ganz oben: Wer
+                    hier zusammenfasst, was er bestellt, soll den Vorteil an
+                    derselben Zahl ablesen können, die er gleich bezahlt. */}
+                {totalDiscount > 0 && (
+                  <span className="text-black/25 line-through mr-2 font-light">{formatPrice(priceBeforeDiscount)}</span>
+                )}
                 {displayPrice}
                 {(extrasPriceTotal > 0 || accessoryTotal > 0) && (
                   <span className="text-[11px] text-black/35 ml-2">
@@ -2552,6 +2558,9 @@ export default function Customize() {
           <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{soleArt?.label}</span>
         </div>
         <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>
+          {totalDiscount > 0 && (
+            <span className="text-black/25 line-through mr-1.5 font-light">{formatPrice(priceBeforeDiscount)}</span>
+          )}
           {displayPrice}
           {accessoryTotal > 0 && <span className="text-[9px] text-black/35 ml-1">(inkl. {selectedAccessories.length}× Zubehör)</span>}
         </p>

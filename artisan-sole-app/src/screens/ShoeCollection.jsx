@@ -14,6 +14,7 @@ import { SHOES } from '../lib/editorialImages'
 import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
+import { vermittlerPreis } from '../lib/vermittlerPreis'
 import Ablauf from '../components/Ablauf'
 
 // Anlass-basierte Kategorien. Jeder Anlass bildet auf mehrere Schuh-Typen ab
@@ -179,6 +180,11 @@ const CARD_ZOOM_HOVER = 'group-hover:scale-[1.16]'
 
 function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, campaign }) {
   const displayPrice = isPromo && product.promotion_price ? product.promotion_price : product.price
+  // Was die Empfehlung an diesem Paar ändert. Je Modell gerechnet, weil der
+  // Nachlass gedeckelt ist: Beim günstigen Paar greift der Prozentsatz, beim
+  // teuren die Obergrenze aus dem Topf des Vermittlers.
+  const affiliate = useStore(s => s.affiliate)
+  const vorteil = vermittlerPreis(product.price, affiliate)
   const campPriceNum = campaign ? (campaign.payment_mode === 'company' ? 0 : Math.round(parsePrice(product.price) * (1 - campaign.discount_pct / 100))) : null
 
   // `touched` bleibt true, sobald der Zeiger die Kachel einmal berührt hat —
@@ -204,6 +210,14 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
     <>
       <span className="line-through opacity-50 mr-1.5">{product.price}</span>
       {product.promotion_price}
+    </>
+  ) : vorteil ? (
+    // Der Vermittlernachlass steht hinter Kampagne und Aktionspreis, weil die
+    // beiden vom Haus kommen und der Nachlass aus dem Topf des Vermittlers.
+    // Zwei Nachlässe übereinander gibt es nicht — es gilt der, der oben steht.
+    <>
+      <span className="line-through opacity-50 mr-1.5">{vorteil.text.grund}</span>
+      {vorteil.text.neu}
     </>
   ) : displayPrice
 
