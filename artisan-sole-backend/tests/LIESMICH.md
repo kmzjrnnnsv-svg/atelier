@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Zehn Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Elf Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -67,6 +67,15 @@ im Betrieb, nichts nachgebaut.
                          ja, ein Pflegeset nicht), Vorlagen aus eigenen
                          Bestellungen sind nicht fremd einsehbar, und der
                          Gürtel steht nicht unter dem Zurückgebbaren.
+    tests/saison.mjs     36 Prüfungen: die drei Rubriken des Ladens — Sommer,
+                         Winter, Ganzjährig. Dass die Regel trifft, was der
+                         Betreiber vorgegeben hat (Stiefel in den Winter,
+                         Mokassins und Walks in den Sommer), dass KEIN Modell
+                         ohne Rubrik dasteht — ein solches wäre im Laden nicht
+                         zu finden, ohne dass irgendwo ein Fehler erscheint —
+                         und dass eine im CMS gesetzte Saison weder vom
+                         nächsten Start noch von einem Speichern ohne das Feld
+                         überschrieben wird.
 
 ## Aufrufen
 
@@ -86,6 +95,7 @@ Bestellungen und Kampagnen an.
     node tests/ablaeufe.mjs
     node tests/mokassin.mjs
     node tests/guertel.mjs
+    node tests/saison.mjs
     DB_PATH=/tmp/pruef.db node tests/preise.mjs
     DB_PATH=/tmp/pruef.db node tests/nachdemkauf.mjs
 

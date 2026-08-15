@@ -463,6 +463,11 @@ export function runMigrations(db) {
     // vorher konfiguriert (Leder, Farbe, Schließe, Metall, Länge), und die
     // Oberfläche zeigt dafür eine Maske statt eines Knopfes.
     `ALTER TABLE accessories ADD COLUMN config_kind TEXT`,
+    // shoes, zu welcher Jahreszeit das Modell gehört: 'summer' | 'winter' |
+    // 'all'. Die einzige Ordnung, die der Kunde noch sieht — die Machart
+    // (OXFORD, LOAFER …) bleibt im Programm, weil an ihr Leisten und
+    // Optionen hängen, verschwindet aber aus dem Laden.
+    `ALTER TABLE shoes ADD COLUMN season TEXT`,
     // accessories, darf dieser Artikel allein reisen?
     //
     // Für Pflegesets und Spanner gilt: nein — das Porto kostet mehr als der
@@ -1898,6 +1903,7 @@ export function runMigrations(db) {
       if (n) console.log(`✅ Umbenannt: ${n}× „Mov Flex Sport" → „Moc Flex Sport"`)
     }
   } catch (e) { console.error('[migrate Moc Flex]', e.message) }
+
 
   // Bestehende Affiliates auf die eine Wahl heben. Der Nachlass hat Vorrang:
   // Er war das Zugesagte, die Zugabe die Beigabe — wer beides trug, behält

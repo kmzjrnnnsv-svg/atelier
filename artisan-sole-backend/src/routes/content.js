@@ -3,6 +3,7 @@ import { body, param, validationResult } from 'express-validator'
 import { getDb } from '../db/database.js'
 import { authenticate, requireRole } from '../middleware/auth.js'
 import { uniqueShoeSlug } from '../utils/slug.js'
+import { saisonFuerKategorie, istSaison } from '../utils/saison.js'
 import {
   guertelArtikel, wahlmoeglichkeiten as guertelWahl, preis as guertelPreis,
 } from '../utils/guertel.js'
@@ -167,8 +168,20 @@ export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
   listExclude: ['hover_image_data', 'default_images'],
   // Slug aus dem Namen ableiten. Nur wenn ein Name im Rumpf steht — ein PUT,
   // das etwa nur Bilder aktualisiert, lässt die Adresse unangetastet.
-  onWrite: (body, { db, id }) =>
-    body.name ? { slug: uniqueShoeSlug(db, body.name, id) } : {},
+  //
+  // Und die Saison vorbelegen, wenn keine mitkommt: Ein im CMS angelegtes
+  // Modell stünde sonst unter keiner der drei Rubriken, bis jemand den
+  // Server neu startet. Eine mitgeschickte Angabe hat Vorrang — die Regel
+  // ist die Vorgabe, nicht das Gesetz.
+  onWrite: (body, { db, id }) => {
+    const zusatz = {}
+    if (body.name) zusatz.slug = uniqueShoeSlug(db, body.name, id)
+    if (!istSaison(body.season)) {
+      const vorhanden = id ? db.prepare('SELECT season FROM shoes WHERE id = ?').get(id)?.season : null
+      if (!istSaison(vorhanden)) zusatz.season = saisonFuerKategorie(body.category)
+    }
+    return zusatz
+  },
   // Löschung vormerken, damit der Seed das Modell nicht beim nächsten Start
   // wieder anlegt — er kennt seine Modelle über den Namen.
   onDelete: (row, { db }) => {

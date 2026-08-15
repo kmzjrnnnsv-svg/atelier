@@ -61,6 +61,11 @@ function writeLocalMeasurements(m) {
 // Client-side cache, source of truth is the backend DB
 const useStore = create((set, get) => ({
   shoes:      [],
+  // Woran die Kollektionsseite ist: 'loading' bis der Katalog da ist, danach
+  // 'ok' oder 'error'. Der Unterschied zwischen „Server antwortet nicht" und
+  // „Server antwortet mit leerer Liste" ist für den Kunden ein anderer Satz.
+  katalogStatus: 'loading',
+  katalogFehler: null,
   favorites:  [],   // string shoe IDs
   orders:     [],
   cart:       warenkorbLesen(),   // items in shopping cart (not yet ordered)
@@ -209,15 +214,46 @@ const useStore = create((set, get) => ({
   },
 
   async initStore() {
-    set({ loading: true, error: null })
+    // Zwei Aufrufe kurz hintereinander holen sonst alles zweimal. Das
+    // passiert leichter, als es klingt: React ruft Effekte im
+    // Entwicklungsbetrieb doppelt auf, und im Betrieb genügt ein schneller
+    // Wechsel zwischen zwei Seiten, die beide den Laden füllen wollen.
+    if (laufenderInitStore) return laufenderInitStore
+    laufenderInitStore = (async () => {
+    set({ loading: true, error: null, katalogStatus: get().shoes.length ? 'ok' : 'loading' })
     try {
       // Die Reihenfolge hier muss Zeile für Zeile zur Liste unten passen.
       // Sie tat es nicht: Eine Stelle für `settings` stand in der Zuweisung,
       // ohne dass etwas abgerufen wurde — ab da war alles um eins verschoben.
       // Die Fußmaße bekamen deshalb nie die Werte vom Server (nur den lokalen
       // Notbehelf), und die gespeicherte Lieferadresse bekam den Warenkorb.
-      const [shoes, favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData, footMeasData, myCampaigns] = await Promise.all([
-        apiFetch('/api/shoes').catch(() => []),
+      // ── Der Katalog zuerst, und zwar allein ──────────────────────────
+      //
+      // Hier stand ein einziges `Promise.all` über siebzehn Abrufe, und die
+      // Schuhe wurden erst gesetzt, wenn ALLE zurück waren. Die
+      // Kollektionsseite zeigte deshalb so lange „Produkte werden geladen …",
+      // wie der langsamste der siebzehn brauchte — die Treuepunkte, die
+      // Fußabdrücke, die Firmenaktionen. Alles Dinge, die auf dieser Seite
+      // niemand sieht.
+      //
+      // Der Katalog kommt jetzt für sich und wird sofort gesetzt. Die Seite
+      // ist damit da, sobald sie da sein kann; alles andere trudelt ein,
+      // während der Kunde schon liest.
+      //
+      // `katalogStatus` sagt der Kollektionsseite, woran sie ist. Sie hat sich
+      // das bisher selbst geholt — mit einem ZWEITEN Abruf derselben Liste,
+      // dessen Ergebnis sie wegwarf und nur am Gelingen ablas, ob der Server
+      // antwortet. Der ganze Katalog, ein zweites Mal über die Leitung, für
+      // ein Ja oder Nein.
+      let shoes = []
+      try {
+        shoes = await apiFetch('/api/shoes')
+        set({ shoes: shoes.map(normalizeShoe), katalogStatus: 'ok', katalogFehler: null })
+      } catch (e) {
+        set({ katalogStatus: 'error', katalogFehler: e?.error || e?.message || 'Verbindung zum Server fehlgeschlagen' })
+      }
+
+      const [favs, orders, faqs, scans, mats, cols, soles, accs, accByShoe, loyaltyTiers, loyaltyStatus, footNotesData, addressData, cartData, footMeasData, myCampaigns] = await Promise.all([
         apiFetch('/api/favorites/mine').catch(() => []),
         apiFetch('/api/orders/mine').catch(() => []),
         apiFetch('/api/faqs').catch(() => []),
@@ -239,7 +275,6 @@ const useStore = create((set, get) => ({
         apiFetch('/api/business/campaigns/mine').catch(() => []),
       ])
       set({
-        shoes:      shoes.map(normalizeShoe),
         favorites:  favs.map(r => String(r.shoe_id)),
         orders,
         faqs,
@@ -265,6 +300,8 @@ const useStore = create((set, get) => ({
     } catch (e) {
       set({ error: e?.error || 'Failed to load', loading: false })
     }
+    })()
+    try { await laufenderInitStore } finally { laufenderInitStore = null }
   },
 
   // --- FAVORITES ---
@@ -538,6 +575,15 @@ const useStore = create((set, get) => ({
 }))
 
 // DB snake_case → app camelCase
+/**
+ * Der gerade laufende Erstabruf, oder null.
+ *
+ * Steht hier und nicht im Zustand: Der Zustand ist das, was die Oberfläche
+ * zeichnet — ein laufender Abruf gehört nicht dazu und würde jedes Mal ein
+ * Neuzeichnen auslösen.
+ */
+let laufenderInitStore = null
+
 function normalizeShoe(r) {
   return { id: String(r.id), slug: r.slug || null, model_3d: r.model_3d || null, name: r.name, category: r.category, price: r.price, material: r.material, match: r.match_pct || '', color: r.color, tag: r.tag || null, image: r.image_data || null, ...('hover_image_data' in r ? { hover_image: r.hover_image_data || null } : {}), cost_price: r.cost_price ?? '', promotion_price: r.promotion_price || '', tagline: r.tagline || '', description: r.description || '', locked_decoration: r.locked_decoration || '',
     express: Number(r.express) ? 1 : 0,
@@ -548,6 +594,11 @@ function normalizeShoe(r) {
     // zwischen „nicht geführt" (null) und „nichts mehr da" (0) muss beim
     // Hin- und Herwandern erhalten bleiben.
     express_stock: r.express_stock === null || r.express_stock === undefined ? null : Number(r.express_stock),
+    // Die Saison MUSS hier stehen. Diese Funktion baut ein neues Objekt aus
+    // benannten Feldern — was sie nicht nennt, existiert im Laden nicht.
+    // Ohne diese Zeile kam jeder Schuh als „ganzjährig" an, und die Rubriken
+    // Sommer und Winter waren leer, ohne dass irgendwo ein Fehler stand.
+    season: r.season || null,
     collection: r.collection || 'standard' }
 }
 
@@ -581,6 +632,11 @@ function loyaltyTierToApi(t) {
 
 
 function shoeToApi(s) {
+  // Die Saison nur mitschicken, wenn das Formular sie kennt — dieselbe
+  // Vorsicht wie bei den Bildern. Ein Speichern aus der Liste heraus dürfte
+  // eine von Hand gesetzte Saison sonst stillschweigend auf die Regel
+  // zurückstellen.
+  const saisonFeld = s.season === undefined ? {} : { season: s.season || null }
   // Bildfelder nur mitschicken, wenn das Formular sie wirklich kennt — sonst
   // überschriebe ein Speichern aus einem Kontext ohne diese Felder (etwa aus
   // der Schuhliste, die sie aus Gewichtsgründen nicht liefert) die
@@ -625,7 +681,7 @@ function shoeToApi(s) {
       } catch { return '[]' }
     })()
   }
-  return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, ...imageFields, ...express, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null, tagline: s.tagline || null, description: s.description || null }
+  return { name: s.name, category: s.category, price: s.price, material: s.material, match_pct: s.match, color: s.color, tag: s.tag || null, image_data: s.image || null, ...imageFields, ...express, ...saisonFeld, cost_price: s.cost_price ? parseFloat(s.cost_price) : null, promotion_price: s.promotion_price || null, tagline: s.tagline || null, description: s.description || null }
 }
 
 // Sort: featured first, then by sortOrder, then by id
