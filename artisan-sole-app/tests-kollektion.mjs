@@ -214,6 +214,78 @@ p('Zurücksetzen bringt alles wieder', await kacheln() === alle, `${await kachel
 p('Ohne Laufzeitfehler', schlimm().length === 0, schlimm()[0]?.slice(0, 110) || '')
 
 // ════════════════════════════════════════════════════════════════════════
+abschnitt('5. Was die Zahlen bedeuten')
+
+// „Alle Modelle32" — die Ziffer klebte am Namen und stand in black/15, also
+// knapp über unsichtbar. Wer sie sah, konnte sie für einen Teil der
+// Beschriftung halten. In Klammern ist sie als Anzahl zu erkennen.
+await feld.fill('')
+await page.waitForTimeout(700)
+
+const reiterAlle = page.getByRole('button', { name: /^Alle Modelle/ }).first()
+const reiterText = (await reiterAlle.innerText()).replace(/\s+/g, ' ')
+p('Die Zahl am Reiter steht in Klammern', /\(\d+\)/.test(reiterText), `„${reiterText}"`)
+p('Und klebt nicht am Namen', !/Modelle\d/.test(reiterText))
+p('Sie nennt den Katalogumfang', reiterText.includes(`(${alle})`), `erwartet (${alle})`)
+
+// Für alle, die den Bildschirm nicht sehen: Der Reiter sagt selbst, was die
+// Zahl ist. Ohne das bliebe „(32)" eine Ziffer ohne Bezugswort.
+const beschriftung = await reiterAlle.getAttribute('aria-label')
+p('Der Reiter erklärt seine Zahl auch vorgelesen',
+  hat(beschriftung || '', 'Modelle'), `„${beschriftung}"`)
+
+// Der Kontrast: black/15 auf Weiß ist rund 1,2:1 und damit weit unter jedem
+// Maßstab. Gemessen wird, was gezeichnet wurde, nicht was im Quelltext steht.
+const deckkraft = await reiterAlle.locator('span').first().evaluate(el => {
+  const m = getComputedStyle(el).color.match(/[\d.]+/g)
+  return m && m.length > 3 ? Number(m[3]) : 1
+})
+p('Die Zahl ist dunkel genug zum Lesen', deckkraft >= 0.28, `Deckkraft ${deckkraft}`)
+
+const ueberschrift = (await page.locator('h2').first().innerText()).replace(/\s+/g, ' ')
+// Die Überschrift steht in Versalien — das macht das Stylesheet, nicht der
+// Text. Beim Vergleich also die Schreibung ignorieren.
+p('Die Abschnittsüberschrift schreibt „Modelle" aus',
+  /\d+\s+modelle?\b/i.test(ueberschrift), `„${ueberschrift}"`)
+
+// ════════════════════════════════════════════════════════════════════════
+abschnitt('6. Solange geladen wird')
+
+// Der Katalog wird künstlich aufgehalten, sonst ist der Zustand vorbei,
+// bevor man ihn sehen kann. Genau dieser Moment war die Beschwerde: Auf dem
+// Telefon dauerte er lang genug, um „Diese Rubrik wird gerade kuratiert" zu
+// lesen und wieder zu gehen.
+const langsam = await c.newPage()
+const langsamFehler = []
+langsam.on('pageerror', e => langsamFehler.push(String(e)))
+await langsam.route(/\/api\/shoes(\?|$)/, async route => {
+  await new Promise(r => setTimeout(r, 3000))
+  await route.continue()
+})
+await langsam.goto(`${BASIS}/collection`, { waitUntil: 'commit' })
+await langsam.waitForTimeout(1200)
+
+const waehrend = await langsam.locator('body').innerText()
+p('Kein „wird gerade kuratiert", während geladen wird', !hat(waehrend, 'kuratiert'),
+  hat(waehrend, 'kuratiert') ? 'steht aber da' : '')
+p('Und kein „0 Modelle"', !/\b0 Modelle\b/.test(waehrend),
+  /\b0 Modelle\b/.test(waehrend) ? 'steht aber da' : '')
+p('Auch kein „Nichts gefunden"', !hat(waehrend, 'haben wir nichts'))
+
+const platzhalter = await langsam.locator('div.grid > div.aspect-square').count()
+p('Stattdessen stehen die Kachelflächen schon da', platzhalter >= 4, `${platzhalter} Flächen`)
+p('Vorgelesen wird der Zustand genannt', hat(waehrend, 'werden geladen'))
+
+// Und danach: dieselbe Seite, gefüllt.
+await langsam.locator(KACHEL).first().waitFor({ timeout: 20000 }).catch(() => {})
+const danach = await langsam.locator(KACHEL).count()
+p('Nach dem Laden stehen die Modelle da', danach === alle, `${danach} von ${alle}`)
+p('Und die Platzhalter sind weg',
+  await langsam.locator('div.grid > div.aspect-square').count() === 0)
+p('Ohne Laufzeitfehler', langsamFehler.length === 0, langsamFehler[0]?.slice(0, 110) || '')
+await langsam.close()
+
+// ════════════════════════════════════════════════════════════════════════
 console.log(`\n── Ergebnis ${'─'.repeat(46)}\n`)
 console.log(`  ${ok} bestanden, ${fehler.length} fehlgeschlagen`)
 await br.close()

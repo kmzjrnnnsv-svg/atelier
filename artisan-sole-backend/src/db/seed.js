@@ -7,6 +7,11 @@ import { katalogAnwenden } from './seedExport.js'
 import { frischeInstallationVerbrauchen } from './schema.js'
 import { GUERTEL_KEY, GUERTEL_ART, GROESSEN } from '../utils/guertel.js'
 import { saisonFuerKategorie } from '../utils/saison.js'
+// Der Seed legt an, was er vermisst — und er erkennt seine Modelle am Namen.
+// Seit ein eindeutiger Index über `lower(trim(name))` liegt, muss er dabei
+// dieselbe Frage stellen wie der Index: Ein zeichengenaues `WHERE name = ?`
+// hätte „Moc Flex Sport " übersehen und beim Anlegen den Start abgebrochen.
+import { schuhVorhanden } from '../utils/schuhname.js'
 
 // Verzeichnis dieser Datei — die Rechtstexte liegen im Wurzelverzeichnis des
 // Repositories, nicht neben dem Backend.
@@ -916,7 +921,7 @@ export function seedMatrixModels(db) {
   ]
 
   // Nur einfügen, was nicht schon (per Name) existiert.
-  const exists = db.prepare('SELECT 1 FROM shoes WHERE name = ?')
+  const exists = db.prepare('SELECT 1 FROM shoes WHERE lower(trim(name)) = lower(trim(?))')
   const insert = db.prepare(`
     INSERT INTO shoes (name, category, price, material, color, tag, image_data)
     VALUES (?, ?, ?, ?, '#1f2937', NULL, NULL)
@@ -1022,7 +1027,7 @@ export function seedLoaferVariants(db) {
       tagline: 'Verzierte Albert-Maske.',
       description: 'Der Albert-Loafer mit dekorativer Maske auf dem Spann setzt ein elegantes Statement. Abendtauglich und dennoch alltagsfähig, individuell konfiguriert nach Ihren Vorstellungen.' },
   ]
-  const findByName = db.prepare('SELECT id, locked_decoration FROM shoes WHERE name = ?')
+  const findByName = db.prepare('SELECT id, locked_decoration FROM shoes WHERE lower(trim(name)) = lower(trim(?))')
   const ins = db.prepare(`
     INSERT INTO shoes (name, category, price, material, match_pct, color, tag, image_data, tagline, description, locked_decoration)
     VALUES (?, 'LOAFER', ?, ?, '98.0%', ?, ?, ?, ?, ?, ?)
@@ -1219,7 +1224,7 @@ export function seedMatrixTemplatesV2(db) {
     'Belgian Slipper', 'Wellington', 'Drake',
     'Moc Flex Sport Laced Boot', 'Laceless Trainer',
   ]
-  const findShoe = db.prepare('SELECT id, category FROM shoes WHERE name = ?')
+  const findShoe = db.prepare('SELECT id, category FROM shoes WHERE lower(trim(name)) = lower(trim(?))')
   const clearOpts = db.prepare('DELETE FROM shoe_options WHERE shoe_id = ?')
   const tplsForCat = (cat) => db.prepare(`
     SELECT option_id, is_default, sort_order
@@ -2099,7 +2104,7 @@ export function seedMokassin(db) {
 
     // ── 5. Das Modell ───────────────────────────────────────────────────
     if (deletedSeedNames(db).has(MOKASSIN_MODELL.name)) return
-    let schuh = db.prepare('SELECT id FROM shoes WHERE name = ?').get(MOKASSIN_MODELL.name)
+    let schuh = db.prepare('SELECT id FROM shoes WHERE lower(trim(name)) = lower(trim(?))').get(MOKASSIN_MODELL.name)
     if (!schuh) {
       const m = MOKASSIN_MODELL
       const info = db.prepare(`
@@ -2289,7 +2294,7 @@ export function seedMocFlexSport(db) {
     // Datenbank gibt es ihn nicht: Er stand in der Matrix-Liste, und die
     // führt ihn nicht mehr — sonst würde ihr Force-Reset seine Konfiguration
     // bei jedem Start abräumen. Also legt ihn dieser Lauf selbst an.
-    if (!db.prepare("SELECT 1 FROM shoes WHERE name = 'Moc Flex Sport'").get()
+    if (!schuhVorhanden(db, 'Moc Flex Sport')
         && !deletedSeedNames(db).has('Moc Flex Sport')) {
       db.prepare(`
         INSERT INTO shoes (name, category, price, material, match_pct, color, tag, slug, collection, season)
@@ -2297,7 +2302,7 @@ export function seedMocFlexSport(db) {
       `).run(KAT, saisonFuerKategorie(KAT))
     }
 
-    const schuh = db.prepare("SELECT id FROM shoes WHERE name = 'Moc Flex Sport'").get()
+    const schuh = db.prepare("SELECT id FROM shoes WHERE lower(trim(name)) = 'moc flex sport'").get()
     if (!schuh) return
 
     db.prepare(`
@@ -2482,14 +2487,14 @@ export function seedMocFlexSportBoot(db) {
     }
 
     // ── 4. Das Modell ───────────────────────────────────────────────────
-    if (!db.prepare("SELECT 1 FROM shoes WHERE name = 'Moc Flex Sport Boot'").get()
+    if (!schuhVorhanden(db, 'Moc Flex Sport Boot')
         && !deletedSeedNames(db).has('Moc Flex Sport Boot')) {
       db.prepare(`
         INSERT INTO shoes (name, category, price, material, match_pct, color, tag, slug, collection, season)
         VALUES ('Moc Flex Sport Boot', ?, '€ 920', 'Lined Suede', '96.0%', '#14110f', NULL, 'moc-flex-sport-boot', 'standard', ?)
       `).run(KAT, saisonFuerKategorie(KAT))
     }
-    const schuh = db.prepare("SELECT id FROM shoes WHERE name = 'Moc Flex Sport Boot'").get()
+    const schuh = db.prepare("SELECT id FROM shoes WHERE lower(trim(name)) = 'moc flex sport boot'").get()
     if (!schuh) return
 
     db.prepare(`
@@ -2747,11 +2752,11 @@ export function seedExpressModelle(db) {
   let unauffindbar = 0
   const anlegen = db.transaction(() => {
     for (const name of EXPRESS_MODELLE) {
-      const quelle = db.prepare("SELECT * FROM shoes WHERE name = ? AND collection = 'standard'").get(name)
+      const quelle = db.prepare("SELECT * FROM shoes WHERE lower(trim(name)) = lower(trim(?)) AND collection = 'standard'").get(name)
       if (!quelle) { unauffindbar++; continue }
 
       const expressName = `${name} Express`
-      if (db.prepare('SELECT id FROM shoes WHERE name = ?').get(expressName)) continue
+      if (schuhVorhanden(db, expressName)) continue
 
       // Der Preis trägt den Aufpreis bereits. Er wird an keiner weiteren
       // Stelle addiert — sonst gäbe es zwei Quellen für einen Betrag.
