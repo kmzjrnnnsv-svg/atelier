@@ -99,7 +99,11 @@ const messwerte = await page.evaluate(() => {
   const raus = []
   const nav = document.querySelector('aside nav')
   const links = [...nav.querySelectorAll('a')]
-  const aktiv = links.find(a => a.className.includes('border-white'))
+  // Über aria-current, nicht über eine Klasse: NavLink setzt das Merkmal von
+  // sich aus, und es überlebt jeden Farbwechsel. Die vorherige Fassung suchte
+  // `border-white` — beim Umstellen auf helle Leiste fand sie nichts mehr und
+  // meldete den fehlenden Balken statt der fehlenden Suche.
+  const aktiv = links.find(a => a.getAttribute('aria-current') === 'page')
   const ruhend = links.find(a => a !== aktiv && a.offsetParent !== null)
   if (ruhend) raus.push(messen(ruhend, 'Eintrag, nicht aktiv'))
   if (aktiv) raus.push(messen(aktiv, 'Eintrag, aktiv'))
@@ -143,10 +147,10 @@ const alsPixel = (el) => {
   const x = c.getContext('2d'); x.fillStyle = getComputedStyle(el).color; x.fillRect(0, 0, 1, 1)
   return [...x.getImageData(0, 0, 1, 1).data].join(',')
 }
-const ruhendFarbe = await page.locator('aside nav a:not(.border-white)').first().evaluate(alsPixel)
-await page.locator('aside nav a:not(.border-white)').first().hover()
+const ruhendFarbe = await page.locator('aside nav a:not([aria-current])').first().evaluate(alsPixel)
+await page.locator('aside nav a:not([aria-current])').first().hover()
 await page.waitForTimeout(300)
-const hoverFarbe = await page.locator('aside nav a:not(.border-white)').first().evaluate(alsPixel)
+const hoverFarbe = await page.locator('aside nav a:not([aria-current])').first().evaluate(alsPixel)
 p('Überfahren wird sichtbar heller', ruhendFarbe !== hoverFarbe, `${ruhendFarbe} → ${hoverFarbe}`)
 
 console.log(`\n── Ergebnis ${'─'.repeat(44)}\n`)
