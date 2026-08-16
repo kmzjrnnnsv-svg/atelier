@@ -254,9 +254,12 @@ export function ausSchuh(db, order) {
   // Schlüssel, und für den Gürtel brauchen wir Schlüssel.
   //
   // Beim Farbwert kommt hinzu, dass er nicht eindeutig ist: „Schwarz" und
-  // „Midnight Black" trugen beide #000000. Deshalb wird zuerst unter den
-  // Farben gesucht, die es an DIESEM Leder überhaupt gibt — dort ist der
-  // Wert eindeutig. Erst wenn das nichts ergibt, zählt der bloße Farbwert.
+  // „Black" tragen beide #000000, und seit die Farbnamen wieder die
+  // ursprünglichen sind, heißen auch Zeilen verschiedener Leder gleich
+  // („Burgundy" an der Dress-Linie und am Mokassin, beide #4f1d24).
+  // Deshalb wird zuerst unter den Farben gesucht, die es an DIESEM Leder
+  // überhaupt gibt, dort ist der Wert eindeutig. Erst wenn das nichts
+  // ergibt, zählt der bloße Farbwert.
   const leder = db.prepare('SELECT key, label FROM shoe_materials WHERE label = ? COLLATE NOCASE')
     .get(String(order.material || '')) || null
 

@@ -385,8 +385,6 @@ function seedConfiguratorOptions(db) {
     // Leisten (Last)
     { group: 'last', key: 'zurigo',    label: 'Zurigo',    description: 'Runde Zehenform für traditionell-englischen Look. Bietet am meisten Platz im Zehenbereich, ideal für breitere Füße oder hohen Spann.', price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
     { group: 'last', key: 'monti',     label: 'Monti',     description: 'Klassische Eleganz mit leicht quadratischer Zehe. Der vielseitige Allrounder, passt zu den meisten Fußformen und jedem Anlass.',     price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,MONK,DOUBLE_MONK' },
-    { group: 'last', key: 'savile',    label: 'Savile',    description: 'Schlanker Look mit leichter Chisel-Zehe. Elegant für normale bis schmale Füße.',                                                       price: 0,  cats: 'OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK' },
-    { group: 'last', key: 'belgravia', label: 'Belgravia', description: 'Chisel-Zehe, schmale Taille und kubanischer Absatz. Markantes Statement, am besten für schlanke Füße.',                                price: 0,  cats: 'OXFORD,WHOLECUT,CHELSEA' },
 
     // Sohle, Beschreibungen mit Anwendungs-Hinweis (wann was sinnvoll ist)
     { group: 'sole', key: 'leather',          label: 'Leather',          description: 'Klassische Ledersohle, elegant für Business, Anzug und drinnen. Die richtige Wahl für die meisten Anlässe.', price: 0,  cats: '*' },
@@ -452,49 +450,49 @@ function seedConfiguratorOptions(db) {
   const TEMPLATES = [
     // category, group/option, is_default
     // OXFORD
-    ['OXFORD', 'last:zurigo', 1], ['OXFORD', 'last:monti'], ['OXFORD', 'last:savile'], ['OXFORD', 'last:belgravia'],
+    ['OXFORD', 'last:zurigo', 1], ['OXFORD', 'last:monti'],
     ['OXFORD', 'sole:leather', 1], ['OXFORD', 'sole:dainite'], ['OXFORD', 'sole:beveled_waist'], ['OXFORD', 'sole:commando'],
     ['OXFORD', 'welt:city', 1], ['OXFORD', 'welt:country'],
     ['OXFORD', 'heel:standard', 1], ['OXFORD', 'heel:higher_heel'],
     ['OXFORD', 'toe:punch_cap', 1], ['OXFORD', 'toe:plain_toe'], ['OXFORD', 'toe:bare'],
     ['OXFORD', 'beveled_waist:no', 1], ['OXFORD', 'beveled_waist:yes'],
     // WHOLECUT
-    ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'], ['WHOLECUT', 'last:savile'], ['WHOLECUT', 'last:belgravia'],
+    ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'],
     ['WHOLECUT', 'sole:leather', 1], ['WHOLECUT', 'sole:dainite'], ['WHOLECUT', 'sole:beveled_waist'],
     ['WHOLECUT', 'welt:city', 1], ['WHOLECUT', 'welt:country'],
     ['WHOLECUT', 'heel:standard', 1], ['WHOLECUT', 'heel:higher_heel'],
     ['WHOLECUT', 'beveled_waist:no', 1], ['WHOLECUT', 'beveled_waist:yes'],
     // DERBY
-    ['DERBY', 'last:zurigo', 1], ['DERBY', 'last:monti'], ['DERBY', 'last:savile'],
+    ['DERBY', 'last:zurigo', 1], ['DERBY', 'last:monti'],
     ['DERBY', 'sole:leather', 1], ['DERBY', 'sole:dainite'], ['DERBY', 'sole:commando'], ['DERBY', 'sole:rocky'],
     ['DERBY', 'welt:city', 1], ['DERBY', 'welt:country'], ['DERBY', 'welt:storm'],
     ['DERBY', 'heel:standard', 1], ['DERBY', 'heel:higher_heel'],
     ['DERBY', 'toe:plain_toe', 1], ['DERBY', 'toe:punch_cap'], ['DERBY', 'toe:cap_toe'],
     // LOAFER
-    ['LOAFER', 'last:zurigo', 1], ['LOAFER', 'last:monti'], ['LOAFER', 'last:savile'],
+    ['LOAFER', 'last:zurigo', 1], ['LOAFER', 'last:monti'],
     ['LOAFER', 'sole:leather', 1], ['LOAFER', 'sole:dainite'], ['LOAFER', 'sole:crepe'], ['LOAFER', 'sole:commando'],
     ['LOAFER', 'welt:city', 1], ['LOAFER', 'welt:country'],
     ['LOAFER', 'heel:standard', 1], ['LOAFER', 'heel:higher_heel'],
     ['LOAFER', 'loafer_decoration:bare', 1], ['LOAFER', 'loafer_decoration:tassels'], ['LOAFER', 'loafer_decoration:metal_bit'], ['LOAFER', 'loafer_decoration:bow'], ['LOAFER', 'loafer_decoration:albert_mask'],
     // CHELSEA (Boot)
-    ['CHELSEA', 'last:zurigo', 1], ['CHELSEA', 'last:savile'], ['CHELSEA', 'last:belgravia'],
+    ['CHELSEA', 'last:zurigo', 1],
     ['CHELSEA', 'sole:leather', 1], ['CHELSEA', 'sole:dainite'], ['CHELSEA', 'sole:commando'], ['CHELSEA', 'sole:rocky'],
     ['CHELSEA', 'welt:city'], ['CHELSEA', 'welt:country', 1], ['CHELSEA', 'welt:storm'],
     ['CHELSEA', 'heel:standard', 1], ['CHELSEA', 'heel:higher_heel'],
     ['CHELSEA', 'toe:plain_toe', 1], ['CHELSEA', 'toe:cap_toe'],
     // MONK / DOUBLE_MONK
-    ['MONK', 'last:zurigo', 1], ['MONK', 'last:monti'], ['MONK', 'last:savile'],
+    ['MONK', 'last:zurigo', 1], ['MONK', 'last:monti'],
     ['MONK', 'sole:leather', 1], ['MONK', 'sole:dainite'], ['MONK', 'sole:beveled_waist'],
     ['MONK', 'welt:city', 1], ['MONK', 'welt:country'],
     ['MONK', 'heel:standard', 1], ['MONK', 'heel:higher_heel'],
     ['MONK', 'buckle:square_buckle', 1], ['MONK', 'buckle:round_buckle'],
-    ['DOUBLE_MONK', 'last:zurigo', 1], ['DOUBLE_MONK', 'last:monti'], ['DOUBLE_MONK', 'last:savile'],
+    ['DOUBLE_MONK', 'last:zurigo', 1], ['DOUBLE_MONK', 'last:monti'],
     ['DOUBLE_MONK', 'sole:leather', 1], ['DOUBLE_MONK', 'sole:dainite'], ['DOUBLE_MONK', 'sole:beveled_waist'],
     ['DOUBLE_MONK', 'welt:city', 1], ['DOUBLE_MONK', 'welt:country'],
     ['DOUBLE_MONK', 'heel:standard', 1], ['DOUBLE_MONK', 'heel:higher_heel'],
     ['DOUBLE_MONK', 'buckle:square_buckle', 1], ['DOUBLE_MONK', 'buckle:round_buckle'],
     // BOOT (Allzweck-Stiefel)
-    ['BOOT', 'last:zurigo', 1], ['BOOT', 'last:savile'],
+    ['BOOT', 'last:zurigo', 1],
     ['BOOT', 'sole:commando', 1], ['BOOT', 'sole:dainite'], ['BOOT', 'sole:rocky'], ['BOOT', 'sole:rubber'],
     ['BOOT', 'welt:country', 1], ['BOOT', 'welt:storm'],
     ['BOOT', 'heel:standard', 1], ['BOOT', 'heel:higher_heel'],
@@ -735,7 +733,7 @@ export function seedExtendedCatalog(db) {
 
   const TEMPLATES = [
     // WHOLECUT
-    ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'], ['WHOLECUT', 'last:savile'], ['WHOLECUT', 'last:belgravia'],
+    ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'],
     ['WHOLECUT', 'wholecut_base:plain', 1], ['WHOLECUT', 'wholecut_base:punched_cap'], ['WHOLECUT', 'wholecut_base:full_punched'],
     ['WHOLECUT', 'sole:leather', 1], ['WHOLECUT', 'sole:dainite'], ['WHOLECUT', 'sole:leather_mountain'], ['WHOLECUT', 'sole:leather_buttons'], ['WHOLECUT', 'sole:leather_rubber'], ['WHOLECUT', 'sole:commando'], ['WHOLECUT', 'sole:crepe'], ['WHOLECUT', 'sole:gummy_sole'], ['WHOLECUT', 'sole:beveled_waist'],
     ['WHOLECUT', 'welt:city', 1], ['WHOLECUT', 'welt:country'], ['WHOLECUT', 'welt:storm'],
@@ -763,11 +761,11 @@ export function seedExtendedCatalog(db) {
     ['LOAFER', 'loafer_decoration:ohne', 1], ['LOAFER', 'loafer_decoration:tassels'], ['LOAFER', 'loafer_decoration:albert_tassels'], ['LOAFER', 'loafer_decoration:horsebit'], ['LOAFER', 'loafer_decoration:albert_mask'],
     // CHELSEA / BALMORAL / JODHPUR / CHUKKA, nur Style + Color
     ['CHELSEA',  'inner_color:black', 1], ['CHELSEA',  'inner_color:brown'], ['CHELSEA',  'sole_bottom_color:black', 1], ['CHELSEA',  'sole_bottom_color:brown'],
-    ['BALMORAL', 'last:zurigo', 1], ['BALMORAL', 'last:monti'], ['BALMORAL', 'last:savile'], ['BALMORAL', 'last:belgravia'],
+    ['BALMORAL', 'last:zurigo', 1], ['BALMORAL', 'last:monti'],
     ['BALMORAL', 'inner_color:black', 1], ['BALMORAL', 'inner_color:brown'],
-    ['JODHPUR',  'last:zurigo', 1], ['JODHPUR',  'last:monti'], ['JODHPUR',  'last:savile'], ['JODHPUR',  'last:belgravia'],
+    ['JODHPUR',  'last:zurigo', 1], ['JODHPUR',  'last:monti'],
     ['JODHPUR',  'inner_color:black', 1], ['JODHPUR',  'inner_color:brown'],
-    ['CHUKKA',   'last:zurigo', 1], ['CHUKKA',   'last:monti'], ['CHUKKA',   'last:savile'], ['CHUKKA',   'last:belgravia'],
+    ['CHUKKA',   'last:zurigo', 1], ['CHUKKA',   'last:monti'],
     ['CHUKKA',   'inner_color:brown', 1], ['CHUKKA',   'inner_color:black'],
     // Slipper-Familie: Belgian Slipper, Wellington, Drake
     ['BELGIAN_SLIPPER', 'loafer_decoration:ohne', 1], ['BELGIAN_SLIPPER', 'loafer_decoration:tassels'], ['BELGIAN_SLIPPER', 'loafer_decoration:bow'],
@@ -1065,7 +1063,7 @@ export function seedMatrixTemplatesV2(db) {
   const INNER_FULL  = ['black', 'brown', 'tan', 'beige', 'red', 'orange', 'navy', 'white', 'lila', 'ochre']
   const BOTTOM_FULL = ['black', 'brown', 'cognac', 'dark_red', 'forest_green', 'lila', 'natural', 'orange']
   const SOLE_COLOR_FULL = ['black', 'brown', 'brick', 'natural']
-  const LAST_FULL  = ['zurigo', 'monti', 'savile', 'belgravia']
+  const LAST_FULL  = ['zurigo', 'monti']
   const HEEL_FULL  = ['standard', 'higher_heel']
   const BUCKLE     = ['square_buckle', 'round_buckle']
   const BUCKLE_COL = ['nickel', 'gold', 'graphite', 'copper']
@@ -1386,9 +1384,7 @@ const LAST_CHART_SPEC = [
   // Herren, Dress-Leisten (D/EE/EEE)
   { key: 'monti',     gender: 'men', widths: [['D', 246.0], ['EE', 255.0], ['EEE', 268.5]] },
   { key: 'zurigo',    gender: 'men', widths: [['D', 250.0], ['EE', 259.0], ['EEE', 272.5]] },
-  { key: 'savile',    gender: 'men', widths: [['D', 244.5], ['EE', 253.5], ['EEE', 267.0]] },
-  { key: 'belgravia', gender: 'men', widths: [['D', 248.0], ['EE', 257.0]] },
-  // Herren, Modell-spezifische Leisten
+      // Herren, Modell-spezifische Leisten
   { key: 'wellington', gender: 'men', widths: [['D', 244.0], ['EE', 253.0]] },
   { key: 'drake',      gender: 'men', widths: [['D', 245.0]] },
   { key: 'venetian',   gender: 'men', widths: [['D', 247.0]] },
@@ -1463,16 +1459,16 @@ function seedLastSizeChart(db) {
 // Kategorie → verfügbare Leisten (für den Matcher). Dress-Modelle nutzen die
 // 4 Dress-Leisten; Modell-spezifische Kategorien ihre eigenen.
 export const CATEGORY_LASTS = {
-  OXFORD:           ['monti', 'zurigo', 'savile', 'belgravia'],
-  WHOLECUT:         ['monti', 'zurigo', 'savile', 'belgravia'],
-  DERBY:            ['monti', 'zurigo', 'savile'],
-  MONK:             ['monti', 'zurigo', 'savile'],
-  DOUBLE_MONK:      ['monti', 'zurigo', 'savile'],
-  CHELSEA:          ['zurigo', 'savile', 'belgravia'],
-  BOOT:             ['zurigo', 'savile'],
-  BALMORAL:         ['zurigo', 'savile', 'belgravia'],
-  JODHPUR:          ['zurigo', 'savile'],
-  CHUKKA:           ['zurigo', 'savile'],
+  OXFORD:           ['monti', 'zurigo'],
+  WHOLECUT:         ['monti', 'zurigo'],
+  DERBY:            ['monti', 'zurigo'],
+  MONK:             ['monti', 'zurigo'],
+  DOUBLE_MONK:      ['monti', 'zurigo'],
+  CHELSEA:          ['zurigo'],
+  BOOT:             ['zurigo'],
+  BALMORAL:         ['zurigo'],
+  JODHPUR:          ['zurigo'],
+  CHUKKA:           ['zurigo'],
   LOAFER:           ['venetian', 'penny_loafer', 'drivers'],
   BELGIAN_SLIPPER:  ['drivers', 'venetian'],
   // Der Mokassin läuft nur auf dem Drivers-Leisten — der einzige, der die
@@ -1926,10 +1922,12 @@ export function seedKollektionen(db) {
  *
  * ── Warum eigene Farben ──────────────────────────────────────────────────
  *
- * Die Farbzeilen sind global und tragen je EINEN Namen. Die Töne der
- * Dress-Linie heißen inzwischen „Espresso Heritage" und „Midnight Black" —
- * Namen, die für Luxe Calf vergeben wurden. Hinge der Mokassin an denselben
- * Zeilen, würde jede spätere Umbenennung dort seine Farben mit umbenennen.
+ * Die Farbzeilen sind global und tragen je EINEN Namen. Dass ein Ton der
+ * Dress-Linie und einer der Mokassin-Linie gleich HEISSEN dürfen („Black"),
+ * heißt nicht, dass sie dieselbe Zeile sein sollen: Hinge der Mokassin an
+ * den Zeilen der Dress-Linie, bekäme er bei jeder Änderung dort deren
+ * Farbwerte und deren Lederbindung mit ab. Der Name ist eine Beschriftung,
+ * die Zeile die Sache.
  * Deshalb ein eigener Satz mit dem Präfix `moc_`, so wie es die Velvet-Töne
  * schon vormachen.
  *
@@ -2429,10 +2427,9 @@ export function seedMocFlexSport(db) {
  *
  * ── Zum Leder ────────────────────────────────────────────────────────────
  *
- * Beim Hersteller heißt es „Lux Suede" — so wie unser Dress-Velours. Es ist
+ * Beim Hersteller heißt es „Lux Suede", so wie unser Dress-Velours. Es ist
  * trotzdem nicht dasselbe: Unseres trägt die Farben der Dress-Linie
- * („Espresso Heritage", „Sandy Taupe"), dieses hier die neun der
- * Mokassin-Linie. Bänden wir beide an dieselbe Zeile, bekäme der Oxford in
+ * („Cognac", „Oxblood"), dieses hier die neun der Mokassin-Linie. Bänden wir beide an dieselbe Zeile, bekäme der Oxford in
  * Lux Suede plötzlich Khaki und Grey dazu.
  *
  * Es bekommt deshalb eine eigene Zeile — und einen Namen, der den

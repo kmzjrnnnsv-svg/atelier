@@ -437,6 +437,9 @@ export function runMigrations(db) {
     `ALTER TABLE options ADD COLUMN icon TEXT`,
     // option_groups, Helper-Text für Schritt-für-Schritt-Erklärung
     `ALTER TABLE option_groups ADD COLUMN helper_text TEXT`,
+    // Siehe den Kommentar an der Tabelle: das Bild, das im Konfigurator
+    // an die Stelle des Schuhs tritt, solange dieser Schritt dran ist.
+    `ALTER TABLE option_groups ADD COLUMN preview_image TEXT`,
     // options, Empfehlung (Badge „EMPFOHLEN" + optionaler Grund)
     `ALTER TABLE options ADD COLUMN recommended INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE options ADD COLUMN recommendation_reason TEXT`,
@@ -1045,7 +1048,7 @@ export function runMigrations(db) {
     );
     INSERT OR IGNORE INTO shoe_colors (key, hex, name, available, tip, pairs_with, rating, sort_order) VALUES
       ('schwarz',  '#000000', 'Schwarz',        1, 'Der Klassiker, passt zu jedem Outfit und jedem Anlass. Business, Formal, Casual, Schwarz geht immer.', 'Grau, Navy, alle dunklen Anzüge', 'good', 0),
-      ('black',    '#111827', 'Midnight Black',  1, 'Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz, perfekt für Smart Casual und kreative Berufe.', 'Dunkle Jeans, Navy Blazer, Charcoal Suits', 'good', 1),
+      ('black',    '#111827', 'Black',           1, 'Dunkles Anthrazit mit leichtem Blauschimmer. Moderner als reines Schwarz, perfekt für Smart Casual und kreative Berufe.', 'Dunkle Jeans, Navy Blazer, Charcoal Suits', 'good', 1),
       ('cognac',   '#92400e', 'Cognac',          1, 'Warmes Braun mit Tiefe, der ideale Business-Casual-Begleiter. Passt hervorragend zu Beige, Navy und Erdtönen.', 'Beige Chinos, Navy Blazer, Jeans', 'good', 2),
       ('oxblood',  '#7b1e1e', 'Oxblood',         1, 'Sattes Bordeaux-Rot, ein Herbst- und Winter-Statement. Elegant zum dunklen Anzug, lässig zur Jeans.', 'Charcoal, Navy, Dunkelgrün, Tweed', 'neutral', 3),
       ('tan',      '#b45309', 'Tan',             1, 'Helles Karamell-Braun, die perfekte Sommerfarbe. Strahlt bei Sonnenlicht und passt zu hellen, leichten Outfits.', 'Weiß, Hellblau, Leinen, Beige', 'neutral', 4),
@@ -1361,6 +1364,12 @@ export function runMigrations(db) {
                     CHECK(ui_type IN ('single','toggle','multi')),
       required      INTEGER NOT NULL DEFAULT 1,
       sort_order    INTEGER NOT NULL DEFAULT 0,
+      -- Ein Bild für die ganze Gruppe. Es tritt im Konfigurator an die Stelle
+      -- der Schuhaufnahme, sobald der Kunde bei diesem Schritt angekommen
+      -- ist: Bei „Laufsohle" nützt ihm eine Aufnahme des Schuhs von der
+      -- Seite nichts, er will die Sohlen sehen. Leer heißt: Der Schuh bleibt
+      -- stehen.
+      preview_image TEXT,
       created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
     );
@@ -1808,72 +1817,99 @@ export function runMigrations(db) {
     if (info.changes) console.log(`✅ Nachgetragen: ${info.changes} Konto/Konten ohne Namen`)
   } catch (e) { console.error('[migrate leere Namen]', e.message) }
 
-  // ── Farbnamen der Luxe-Calf-Reihe ────────────────────────────────────────
+  // ── Farbnamen der Luxe-Calf-Reihe: zurück auf die ursprünglichen ────────
   //
-  // Aus „Black" wird „Midnight Black", aus „Cognac" „Cognac Classic". Die
-  // alten Namen waren Farbbezeichnungen aus dem Gerbereikatalog; die neuen
-  // sind die, unter denen das Haus sie verkauft.
+  // Hier stand einmal die Gegenrichtung: „Black" wurde zu „Midnight Black",
+  // „Cognac" zu „Cognac Classic". Das ist zurückgenommen.
   //
-  // Zwei Dinge dazu, die man wissen muss:
+  // Der Grund ist der Mokassin. Seine drei Leder brachten eigene Farbreihen
+  // mit, und die heißen schlicht „Black", „Dark Brown", „Medium Brown". Im
+  // CMS standen damit zwei Reihen nebeneinander, die dasselbe meinen und
+  // verschieden heißen — wer eine Farbe suchte, musste erst wissen, an
+  // welchem Leder er gerade ist. Ein Name je Farbton ist einfacher, auch
+  // wenn derselbe Name dann an mehreren Ledern hängt.
   //
-  //  1. **Es gibt einen Namen je Farbe, nicht je Leder.** Die Tabelle führt
-  //     jede Farbe einmal und vermerkt daneben, für welche Leder sie gilt.
-  //     „Black" heißt deshalb auch beim Wildleder künftig „Midnight Black".
-  //     Wer je Leder verschiedene Namen will, bräuchte eine zweite Spalte —
-  //     das wäre eine eigene Entscheidung und keine Umbenennung.
+  // Drei Dinge dazu:
   //
-  //  2. **Genau einmal.** Der Merker verhindert, dass ein Neustart eine
-  //     spätere Änderung aus dem CMS wieder überschreibt. Umbenannt wird
-  //     außerdem nur, was noch den alten Namen trägt.
+  //  1. **Umbenannt wird über den SCHLÜSSEL, nicht über den Namen.** Die
+  //     Gegenrichtung ging über den Namen und traf deshalb auch Zeilen, die
+  //     zufällig so hießen. Der Schlüssel gehört zur Zeile und ändert sich
+  //     nie.
   //
-  //  3. **Die neuen Namen stehen zusätzlich in `seed-data.json`.** Diese
-  //     Umbenennung allein reichte nicht: Auf einer FRISCHEN Installation
-  //     laufen die Migrationen zuerst, und danach schreibt `katalogAnwenden`
-  //     die Vorlage mit `ueberschreiben: true` darüber — die eben
-  //     umbenannten Farben trugen anschließend wieder ihre alten Namen, und
-  //     der Merker hier stand bereits auf „erledigt". Im Bestand fiel es
-  //     nicht auf, weil dort nichts überschrieben wird. Beide Stellen tragen
-  //     deshalb dieselben Namen; wer einen ändert, ändert beide.
+  //  2. **Nur, was noch den vergebenen Namen trägt.** Hat jemand im CMS
+  //     einen eigenen gesetzt, bleibt er. Rückgängig gemacht wird die
+  //     Umbenennung, nicht die Arbeit des Betreibers.
+  //
+  //  3. **Die alten Namen stehen wieder in `seed-data.json`.** Auf einer
+  //     frischen Installation laufen die Migrationen zuerst, danach schreibt
+  //     `katalogAnwenden` die Vorlage mit `ueberschreiben: true` darüber.
+  //     Stünden dort noch die neuen Namen, wäre die Rücknahme auf einer
+  //     frischen Datenbank wirkungslos — und genau dieser Fehler ist bei der
+  //     Hinrichtung schon einmal passiert. Beide Stellen tragen dieselben
+  //     Namen; wer einen ändert, ändert beide.
   try {
-    const schonGelaufen = db.prepare("SELECT value FROM settings WHERE key = 'farbnamen_luxe_2026'").get()
-    if (!schonGelaufen) {
-      const NEUE_NAMEN = [
-        ['Black',        'Midnight Black'],
-        ['Grey',         'Silver Mist'],
-        ['Dark Brown',   'Espresso Heritage'],
-        ['Medium Brown', 'Cedar Brown'],
-        ['Syrup',        'Maple Amber'],
-        ['Cognac',       'Cognac Classic'],
-        ['Saffron',      'Saffron Sunset'],
-        ['Light Brown',  'Sandy Taupe'],
-        ['Oxblood',      'Bordeaux Heritage'],
-        ['Burgundy',     'Burgundy Wine'],
-        ['Red',          'Crimson Red'],
-        ['Forest Green', 'Forest Heritage'],
-        // Im Bestand heißt diese Farbe nur „Forest" — beide Schreibweisen
-        // treffen dasselbe und sollen auf denselben neuen Namen laufen.
-        ['Forest',       'Forest Heritage'],
-        ['Olive',        'Olive Grove'],
-        ['Navy',         'Midnight Navy'],
-        ['Medium Navy',  'Ocean Navy'],
-        ['Plain Crust',  'Natural Sand'],
+    const schonZurueck = db.prepare("SELECT value FROM settings WHERE key = 'farbnamen_zurueck_2026'").get()
+    if (!schonZurueck) {
+      const URSPRUENGLICH = [
+        ['black',        'Midnight Black',    'Black'],
+        ['dark_brown',   'Espresso Heritage', 'Dark Brown'],
+        ['medium_brown', 'Cedar Brown',       'Medium Brown'],
+        ['light_brown',  'Sandy Taupe',       'Light Brown'],
+        ['cognac',       'Cognac Classic',    'Cognac'],
+        ['oxblood',      'Bordeaux Heritage', 'Oxblood'],
+        ['burgundy',     'Burgundy Wine',     'Burgundy'],
+        ['red',          'Crimson Red',       'Red'],
+        ['forest',       'Forest Heritage',   'Forest'],
+        ['olive',        'Olive Grove',       'Olive'],
+        ['navy',         'Midnight Navy',     'Navy'],
       ]
-      const um = db.prepare('UPDATE shoe_colors SET name = ? WHERE name = ? COLLATE NOCASE')
-      const getroffen = []
-      const fehlend = []
-      for (const [alt, neu] of NEUE_NAMEN) {
-        const info = um.run(neu, alt)
-        if (info.changes) getroffen.push(`${alt} → ${neu}`)
-        else if (!getroffen.some(g => g.endsWith(neu))) fehlend.push(alt)
+      const um = db.prepare('UPDATE shoe_colors SET name = ? WHERE key = ? AND name = ? COLLATE NOCASE')
+      const zurueck = []
+      for (const [schluessel, vergeben, ursprung] of URSPRUENGLICH) {
+        if (um.run(ursprung, schluessel, vergeben).changes) zurueck.push(`${vergeben} → ${ursprung}`)
       }
-      db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('farbnamen_luxe_2026', ?, datetime('now'))")
-        .run(String(getroffen.length))
-      if (getroffen.length) console.log(`✅ Farbnamen: ${getroffen.length} umbenannt (${getroffen.join(', ')})`)
-      // Ausdrücklich melden, was NICHT gefunden wurde. Eine Umbenennung, die
-      // still nichts tut, sieht aus wie eine, die gewirkt hat.
-      if (fehlend.length) console.log(`ℹ️  Farbnamen: nicht im Bestand, daher unverändert, ${fehlend.join(', ')}`)
+      db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('farbnamen_zurueck_2026', ?, datetime('now'))")
+        .run(String(zurueck.length))
+      // Den Merker der Gegenrichtung mit aufräumen: Er steht auf „erledigt"
+      // und wird nie wieder gelesen, aber wer die Einstellungen ansieht,
+      // soll nicht über einen Vermerk stolpern, der nichts mehr bedeutet.
+      db.prepare("DELETE FROM settings WHERE key = 'farbnamen_luxe_2026'").run()
+      if (zurueck.length) console.log(`✅ Farbnamen zurückgesetzt: ${zurueck.length} (${zurueck.join(', ')})`)
     }
-  } catch (e) { console.error('[migrate Farbnamen]', e.message) }
+  } catch (e) { console.error('[migrate Farbnamen zurück]', e.message) }
+
+  // ── Zwei Leisten weniger ────────────────────────────────────────────────
+  //
+  // „Savile" und „Belgravia" fallen weg. Vier Leisten im ersten Schritt des
+  // Konfigurators waren eine Wahl, die der Kunde nicht treffen kann: Die
+  // Unterschiede sind eine Zehenform und ein paar Millimeter Taille, und wer
+  // sie beurteilen könnte, bräuchte keinen Konfigurator. Zwei genügen.
+  //
+  // Gelöscht werden die Werte selbst und alles, was auf sie zeigt: die
+  // Vorlagen je Machart und die Zuordnungen je Modell. Beides sind
+  // Fremdschlüssel — bliebe eine Zeile stehen, ließe sich der Wert nicht
+  // löschen, und die Leiste stünde weiter zur Wahl.
+  //
+  // Was BLEIBT, sind die Bestellungen. Sie führen ihre Auswahl als Text mit
+  // („Schuhform: Savile") und nicht als Verweis: Ein bereits gefertigtes
+  // Paar soll auch in fünf Jahren noch sagen können, worauf es gebaut wurde.
+  try {
+    {
+      const ids = db.prepare(`
+        SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+         WHERE g.key = 'last' AND o.key IN ('savile', 'belgravia')
+      `).all().map(r => r.id)
+      if (ids.length) {
+        const platz = ids.map(() => '?').join(', ')
+        db.transaction(() => {
+          db.prepare(`DELETE FROM category_templates WHERE option_id IN (${platz})`).run(...ids)
+          db.prepare(`DELETE FROM shoe_options       WHERE option_id IN (${platz})`).run(...ids)
+          db.prepare(`DELETE FROM options            WHERE id        IN (${platz})`).run(...ids)
+        })()
+        console.log(`✅ Leisten entfernt: Savile und Belgravia (${ids.length} Werte)`)
+      }
+    }
+  } catch (e) { console.error('[migrate Leisten]', e.message) }
 
   // ── „Mov Flex Sport" heißt „Moc Flex Sport" ──────────────────────────────
   //

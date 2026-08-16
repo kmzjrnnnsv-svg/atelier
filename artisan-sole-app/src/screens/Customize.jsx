@@ -66,8 +66,7 @@ const WEITEN_WAHL = [
 const LAST_SHAPES = {
   zurigo:    'M9 56 L9 24 Q9 6 21 6 Q33 6 33 24 L33 56 Z',          // runde Spitze
   monti:     'M9 56 L9 22 Q9 9 15 8 L27 8 Q33 9 33 22 L33 56 Z',     // leicht eckig
-  savile:    'M10 56 L10 18 L16 7 L26 7 L32 18 L32 56 Z',           // Chisel
-  belgravia: 'M12 56 L12 17 L17 5 L25 5 L30 17 L30 56 Z',           // scharfe Chisel
+
 }
 function LastShapeIcon({ shapeKey, active }) {
   const path = LAST_SHAPES[shapeKey]
@@ -345,6 +344,60 @@ export default function Customize() {
       || product?.locked_decoration || null
   })()
   const sichtbareGruppen = gruppenFuer(extraOptionGroups, { soleKey: soleArt?.key, dekoKey: dekoWahl })
+
+  // ── Was im großen Feld steht ─────────────────────────────────────────────
+  //
+  // Bis hierher stand dort immer der Schuh. Bei „Laufsohle" nützt eine
+  // Aufnahme von der Seite aber nichts: Wer zwischen glattem Leder und
+  // Profilgummi wählt, will die Sohle sehen, und die ist auf jedem
+  // Schuhfoto genau die Fläche, die auf dem Boden steht.
+  //
+  // Drei Quellen, in dieser Rangfolge:
+  //
+  //   1. Die Kachel, über der der Zeiger gerade steht. Sie ist die
+  //      unmittelbarste Absicht — wer hinzeigt, will genau das sehen.
+  //   2. Der gewählte Wert des Schritts, bei dem der Kunde gerade ist.
+  //      Damit erscheint das Bild auch, wenn jemand eine Sohle auswählt,
+  //      ohne den Schritt vorher angesteuert zu haben.
+  //   3. Das Bild der Gruppe selbst, sobald ihr Schritt im Blick ist —
+  //      die Übersicht über alles, was zur Wahl steht.
+  //
+  // Fällt alles weg, steht wieder der Schuh da. Das ist der Normalfall und
+  // deshalb der letzte Zweig, nicht der erste.
+  const [kachelImZeiger, setKachelImZeiger] = useState(null)
+  const [gruppeImBlick, setGruppeImBlick] = useState(null)
+  const gruppenRefs = useRef({})
+
+  // Welcher Schritt gerade im Blick ist. `root: null` genügt auch am
+  // Schreibtisch, wo die Spalte ihren eigenen Bildlauf hat: Die Kacheln
+  // bewegen sich dabei trotzdem durch das Fenster.
+  useEffect(() => {
+    const knoten = Object.values(gruppenRefs.current).filter(Boolean)
+    if (!knoten.length || typeof IntersectionObserver === 'undefined') return
+    const beobachter = new IntersectionObserver(
+      (eintraege) => {
+        const drin = eintraege.filter(e => e.isIntersecting)
+        if (drin.length) {
+          // Der oberste der sichtbaren: Bei zwei Schritten nebeneinander
+          // gewinnt der, den der Kunde zuerst liest.
+          const oben = drin.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+          setGruppeImBlick(oben.target.dataset.gruppe || null)
+        } else if (eintraege.some(e => e.target.dataset.gruppe === gruppeImBlick)) {
+          setGruppeImBlick(null)
+        }
+      },
+      { rootMargin: '-25% 0px -45% 0px', threshold: 0 },
+    )
+    knoten.forEach(k => beobachter.observe(k))
+    return () => beobachter.disconnect()
+  }, [sichtbareGruppen.length, gruppeImBlick])
+
+  const gruppeJetzt = sichtbareGruppen.find(g => g.key === gruppeImBlick) || null
+  const gewaehlterWert = gruppeJetzt?.values?.find(v => v.id === selectedExtras[gruppeJetzt.key]) || null
+  const schrittBild =
+       kachelImZeiger
+    || (gewaehlterWert?.image ? resolveImg(gewaehlterWert.image) : null)
+    || (gruppeJetzt?.preview_image ? resolveImg(gruppeJetzt.preview_image) : null)
 
   // Summe der Extra-Aufpreise. Steht hinter `sichtbareGruppen`, weil eine
   // ausgeblendete Gruppe auch nichts kosten darf — der Sohlenrand an einer
@@ -952,6 +1005,16 @@ export default function Customize() {
   }
 
   const accessories = (Array.isArray(allAccessories) ? allAccessories : [])
+    // `config_kind` heißt: Dieser Artikel wird konfiguriert, nicht angehakt,
+    // und hat deshalb weiter oben einen eigenen Schritt. Der Gürtel stand
+    // trotzdem noch einmal in der Kachelreihe „Passend dazu" — zweimal
+    // dasselbe Zubehör auf einer Seite, einmal mit Leder, Farbe, Schnalle
+    // und Länge, einmal als Häkchen ohne all das. Wer das Häkchen setzte,
+    // hätte einen Gürtel ohne Konfiguration bestellt.
+    //
+    // Die Regel steht bewusst am Feld und nicht am Namen: Kommt ein zweiter
+    // konfigurierbarer Artikel dazu, ist er von selbst mit erfasst.
+    .filter(a => !a.config_kind)
     .filter(a => a.is_active !== 0 && matMatchesAccessory(a) && colorMatchesAccessory(a) && kategorieMatchesAccessory(a))
     .map(a => ({
       id: a.id,
@@ -1526,7 +1589,19 @@ export default function Customize() {
                 transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             >
-              {gallery[activeSlide] ? (
+              {schrittBild ? (
+                // Kein Wechsel der `src` am selben Bild: Das neue müsste erst
+                // dekodiert werden, und dazwischen stünde die Fläche leer.
+                // Zwei Bilder übereinander, das obere blendet auf.
+                <>
+                  <img src={gallery[activeSlide] || ''} alt=""
+                       className="w-full h-full object-contain"
+                       style={{ opacity: gallery[activeSlide] ? 1 : 0 }} />
+                  <img src={schrittBild} alt=""
+                       className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
+                       style={{ opacity: 1 }} />
+                </>
+              ) : gallery[activeSlide] ? (
                 <img src={gallery[activeSlide]} alt={product.name} className="w-full h-full object-contain" />
               ) : (
                 <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
@@ -2083,6 +2158,8 @@ export default function Customize() {
               return (
               <div
                 key={group.id}
+                ref={el => { gruppenRefs.current[group.key] = el }}
+                data-gruppe={group.key}
                 className="px-5 lg:px-0 mb-6 transition-all duration-500"
                 style={{ opacity: isActive ? 1 : 0.3, pointerEvents: isActive ? 'auto' : 'none' }}
               >
@@ -2105,6 +2182,10 @@ export default function Customize() {
                   <p className="text-[10px] text-black/40 font-light leading-relaxed mb-3 max-w-2xl">{group.helper_text}</p>
                 )}
                 <div className="flex flex-wrap gap-2">
+                  {/* Zeigen genügt, Klicken ist nicht nötig: Wer die Sohlen
+                      vergleicht, will sie sehen, ohne sich bei jedem Blick
+                      festzulegen. Der Tastaturfokus löst dasselbe aus, sonst
+                      wäre die Vorschau nur mit einer Maus zu haben. */}
                   {group.values.map(v => {
                     const isSel = selectedExtras[group.key] === v.id
                     return (
@@ -2112,6 +2193,10 @@ export default function Customize() {
                         key={v.id}
                         type="button"
                         onClick={() => setSelectedExtras(prev => ({ ...prev, [group.key]: v.id }))}
+                        onMouseEnter={() => setKachelImZeiger(v.image ? resolveImg(v.image) : null)}
+                        onMouseLeave={() => setKachelImZeiger(null)}
+                        onFocus={() => setKachelImZeiger(v.image ? resolveImg(v.image) : null)}
+                        onBlur={() => setKachelImZeiger(null)}
                         className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border ${
                           isSel ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30 bg-white'
                         }`}
