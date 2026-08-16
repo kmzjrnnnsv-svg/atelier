@@ -141,7 +141,7 @@ export default function Registration() {
       <div className="text-center mt-3 px-6">
         <h1 className="text-2xl text-black leading-tight uppercase tracking-[0.15em] font-semibold">Step into Perfection</h1>
         <p className="text-xs text-black/50 mt-1.5 leading-relaxed max-w-xs mx-auto" style={{ letterSpacing: '0.15em' }}>
-          Crafting your digital silhouette for custom-made luxury footwear.
+          Crafting your digital silhouette for custom-made footwear.
         </p>
       </div>
 
