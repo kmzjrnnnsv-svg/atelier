@@ -103,9 +103,10 @@ for (const [leder, soll] of [['calf_suede', 17], ['nappa', 13], ['fullgrain', 7]
     `${liste.length} — ${liste.map(c => c.name).join(', ')}`)
 }
 
-// Die Dress-Linie darf davon nichts abbekommen: Ihre Farbzeilen tragen
-// inzwischen eigene Namen („Espresso Heritage"), und der Mokassin hängt
-// bewusst an eigenen Zeilen.
+// Die Dress-Linie darf davon nichts abbekommen. Geprüft wird über den
+// SCHLÜSSEL und nicht über den Namen: Beide Linien führen einen Ton namens
+// „Black", und dass sie gleich heißen, ist gewollt. Getrennt sind die
+// Zeilen, nicht die Bezeichnungen.
 const luxCalf = farbenFuer(alleFarben || [], 'lux_calf')
 p('Keine Mokassin-Farbe an Luxe Calf',
   !luxCalf.some(c => String(c.key).startsWith('moc_')),

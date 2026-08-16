@@ -1926,10 +1926,12 @@ export function seedKollektionen(db) {
  *
  * ── Warum eigene Farben ──────────────────────────────────────────────────
  *
- * Die Farbzeilen sind global und tragen je EINEN Namen. Die Töne der
- * Dress-Linie heißen inzwischen „Espresso Heritage" und „Midnight Black" —
- * Namen, die für Luxe Calf vergeben wurden. Hinge der Mokassin an denselben
- * Zeilen, würde jede spätere Umbenennung dort seine Farben mit umbenennen.
+ * Die Farbzeilen sind global und tragen je EINEN Namen. Dass ein Ton der
+ * Dress-Linie und einer der Mokassin-Linie gleich HEISSEN dürfen („Black"),
+ * heißt nicht, dass sie dieselbe Zeile sein sollen: Hinge der Mokassin an
+ * den Zeilen der Dress-Linie, bekäme er bei jeder Änderung dort deren
+ * Farbwerte und deren Lederbindung mit ab. Der Name ist eine Beschriftung,
+ * die Zeile die Sache.
  * Deshalb ein eigener Satz mit dem Präfix `moc_`, so wie es die Velvet-Töne
  * schon vormachen.
  *
@@ -2429,10 +2431,9 @@ export function seedMocFlexSport(db) {
  *
  * ── Zum Leder ────────────────────────────────────────────────────────────
  *
- * Beim Hersteller heißt es „Lux Suede" — so wie unser Dress-Velours. Es ist
+ * Beim Hersteller heißt es „Lux Suede", so wie unser Dress-Velours. Es ist
  * trotzdem nicht dasselbe: Unseres trägt die Farben der Dress-Linie
- * („Espresso Heritage", „Sandy Taupe"), dieses hier die neun der
- * Mokassin-Linie. Bänden wir beide an dieselbe Zeile, bekäme der Oxford in
+ * („Cognac", „Oxblood"), dieses hier die neun der Mokassin-Linie. Bänden wir beide an dieselbe Zeile, bekäme der Oxford in
  * Lux Suede plötzlich Khaki und Grey dazu.
  *
  * Es bekommt deshalb eine eigene Zeile — und einen Namen, der den

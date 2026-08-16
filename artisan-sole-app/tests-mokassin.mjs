@@ -96,9 +96,12 @@ p('Nappa zeigt „Honey", Calf Suede nicht',
   (zahlen['Nappa'] || []).includes('Honey') && !(zahlen['Calf Suede'] || []).includes('Honey'))
 p('Calf Suede zeigt „Turquoise", Fullgrain nicht',
   (zahlen['Calf Suede'] || []).includes('Turquoise') && !(zahlen['Fullgrain'] || []).includes('Turquoise'))
-// Die Dress-Töne heißen inzwischen anders und gehören einer anderen Linie.
-p('Keine Luxe-Calf-Namen in der Mokassin-Tafel',
-  !Object.values(zahlen).flat().some(n => /Espresso Heritage|Midnight Black|Cognac Classic/.test(n)))
+// Die Dress-Linie hängt an eigenen Farbzeilen. Geprüft wird über die Töne,
+// die es NUR dort gibt: „Black" und „Dark Brown" heißen an beiden Linien
+// gleich (sie meinen dasselbe) und taugen deshalb nicht zur Unterscheidung.
+p('Keine Luxe-Calf-Töne in der Mokassin-Tafel',
+  !Object.values(zahlen).flat().some(n => /^(Schwarz|Cognac|Oxblood|Forest|Light Brown)$/.test(n)),
+  Object.values(zahlen).flat().filter(n => /^(Schwarz|Cognac|Oxblood|Forest|Light Brown)$/.test(n)).join(', ') || 'keiner')
 
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('4. Die eigenen Schritte')
@@ -194,8 +197,8 @@ abschnitt('7. Der Boot')
 /*
  * Die Farbtafel des Boots ist die Probe aufs Exempel für die eigene
  * Lederzeile: Beim Hersteller heißt sein Leder „Lux Suede" wie unser
- * Dress-Velours — hingen beide an derselben Zeile, stünden hier die
- * Dress-Namen („Espresso Heritage") statt der neun Mokassin-Töne.
+ * Dress-Velours, hingen beide an derselben Zeile, stünden hier die
+ * Dress-Töne („Cognac", „Oxblood") statt der neun Mokassin-Farben.
  */
 konsole.length = 0
 await page.goto(`${BASIS}/schuhe/moc-flex-sport-boot`, { waitUntil: 'networkidle' })
@@ -209,8 +212,9 @@ const bootSwatch = page.locator(FARBFELD).first()
 if (await bootSwatch.count()) { await bootSwatch.click({ force: true }); await page.waitForTimeout(900) }
 const bootFarben = await farbtafel()
 p('Neun Wildlederfarben', bootFarben.length === 9, `${bootFarben.length} — ${bootFarben.join(', ')}`)
-p('Keine Dress-Namen darunter',
-  !bootFarben.some(n => /Espresso Heritage|Sandy Taupe|Cognac Classic/.test(n)))
+p('Keine Dress-Töne darunter',
+  !bootFarben.some(n => /^(Schwarz|Cognac|Oxblood|Forest|Light Brown)$/.test(n)),
+  bootFarben.filter(n => /^(Schwarz|Cognac|Oxblood|Forest|Light Brown)$/.test(n)).join(', ') || 'keiner')
 
 await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
 await page.waitForTimeout(1200)
