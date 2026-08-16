@@ -1,5 +1,6 @@
 /**
- * wortlaut.mjs — der Laden sagt „Custom Made", nicht „maßgefertigt".
+ * wortlaut.mjs — der Laden sagt „Custom Made", nicht „maßgefertigt"
+ * oder „maßgeschneidert".
  *
  * ── Warum das eine Prüfung wert ist ──────────────────────────────────────
  *
@@ -37,8 +38,9 @@ const schlecht = (t, extra = '') => { fail++; console.log(`  FEHLER ${t}${extra 
 const pruefe = (bed, t, extra) => bed ? gut(t, extra) : schlecht(t, extra)
 const teil = (t) => console.log(`\n── ${t} ${'─'.repeat(Math.max(0, 56 - t.length))}`)
 
-// Der Begriff in allen Beugungen, auch in der Schreibung ohne Eszett.
-const VERPOENT = /\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/
+// Beide Wörter, die es nicht mehr geben soll, in allen Beugungen und auch
+// in der Schreibung ohne Eszett.
+const VERPOENT = /\b[Mm]a(?:ß|ss)ge(?:fertigt|schneidert)(?:e[rsnm]?)?\b/
 
 // ═════════════════════════════════════════════════════════════════════════
 teil('1. Im Quelltext')
@@ -74,7 +76,7 @@ for (const ordner of ['artisan-sole-app/src', 'artisan-sole-backend/src']) {
     })
   }
 }
-pruefe(funde.length === 0, 'Kein „maßgefertigt" mehr im Quelltext',
+pruefe(funde.length === 0, 'Weder „maßgefertigt" noch „maßgeschneidert" im Quelltext',
   funde.length ? funde.slice(0, 4).join(', ') : `${WURZEL.split('/').pop()} durchsucht`)
 
 // Und die Gegenprobe: Der neue Begriff ist auch wirklich angekommen. Ohne

@@ -1568,6 +1568,10 @@ function cleanLegacyText(s, isSubject) {
     .replace(/\bma(?:ß|ss)gefertigter Schuhe\b/g, 'von Custom Made Schuhen')
     .replace(/\bMa(?:ß|ss)gefertigter Schuhe\b/g, 'Von Custom Made Schuhen')
     .replace(/\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/g, 'Custom Made')
+    // „maßgeschneidert" ebenso: derselbe Fall, dieselbe Beugung.
+    .replace(/\bma(?:ß|ss)geschneiderter Schuhe\b/g, 'von Custom Made Schuhen')
+    .replace(/\bMa(?:ß|ss)geschneiderter Schuhe\b/g, 'Von Custom Made Schuhen')
+    .replace(/\b[Mm]a(?:ß|ss)geschneidert(?:e[rsnm]?)?\b/g, 'Custom Made')
     .replace(/Bespoke Footwear/g, 'Custom Made Footwear')
     .replace(/Bespoke/g, 'Custom Made')
     .replace(/6\s*[–-]\s*8\s*Wochen/g, 'ca. 4 Wochen nach Zahlungseingang')
@@ -1653,6 +1657,10 @@ export function cleanupLegacyWording(db) {
           .replace(/\bma(?:ß|ss)gefertigter Schuhe\b/g, 'von Custom Made Schuhen')
           .replace(/\bMa(?:ß|ss)gefertigter Schuhe\b/g, 'Von Custom Made Schuhen')
           .replace(/\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/g, 'Custom Made')
+          // „maßgeschneidert" ebenso: derselbe Fall, dieselbe Beugung.
+          .replace(/\bma(?:ß|ss)geschneiderter Schuhe\b/g, 'von Custom Made Schuhen')
+          .replace(/\bMa(?:ß|ss)geschneiderter Schuhe\b/g, 'Von Custom Made Schuhen')
+          .replace(/\b[Mm]a(?:ß|ss)geschneidert(?:e[rsnm]?)?\b/g, 'Custom Made')
           // Der Gedankenstrich, aber nur zwischen Wörtern: In einer IBAN oder
           // einer Telefonnummer steht er als Trenner und muss bleiben.
           .replace(/(\p{L}|[.!?)„“"])\s+[—–]\s+(?=\p{L}|[„“"])/gu, '$1, ')
@@ -3060,7 +3068,11 @@ function seedSohlenUndWelt(db) {
   try {
     const SOMMER = ['MOCCASIN', 'MOC_SPORT', 'MOC_SPORT_BOOT',
                     'SNEAKER', 'SNEAKER_LACED', 'SNEAKER_BOOT', 'LACELESS_TRAINER']
-    const WEG = { sole: ['dainite', 'dots', 'art', 'beveled_waist', 'gummy_sole'],
+  // „Crepe" und „Rocky" stehen hier ebenfalls: Sie tauchen in keiner der
+  // Aufnahmen auf, die der Betreiber führt. Der Sommerlinie nehmen sie
+  // nichts weg, sie ist von dieser Liste ausgenommen und führt Dots,
+  // Gummy Sole und Rubber.
+    const WEG = { sole: ['dainite', 'dots', 'art', 'beveled_waist', 'gummy_sole', 'crepe', 'rocky'],
                   welt: ['country', 'storm'] }
     let raus = 0
     for (const [gruppe, schluessel] of Object.entries(WEG)) {

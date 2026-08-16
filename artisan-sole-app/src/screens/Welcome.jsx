@@ -22,7 +22,7 @@ const STEPS = [
   {
     icon: ShoppingBag,
     title: 'Deine Kollektion erwartet dich',
-    desc: 'Entdecke handverlesene Luxusschuhe, speichere Favoriten und stelle Outfits zusammen.',
+    desc: 'Entdecke handgefertigte Schuhe, speichere Favoriten und stelle Outfits zusammen.',
   },
 ]
 
