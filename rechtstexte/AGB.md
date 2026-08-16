@@ -5,7 +5,7 @@
 > Keine Rechtsberatung, vor dem Livegang von einer Anwältin oder einem Anwalt
 > für IT- und Verbraucherrecht prüfen lassen.
 
-**Stand: 11. August 2026**
+**Stand: 16. August 2026**
 
 ---
 
@@ -235,11 +235,11 @@ Arbeit, und den sehen Sie jederzeit unter *Meine Bestellungen*.
 
 | Stand Ihrer Bestellung | Wir behalten ein | Sie erhalten zurück |
 |---|---|---|
-| Zahlung noch nicht eingegangen |, | Der Auftrag verfällt, es ist nichts zu erstatten |
+| Zahlung noch nicht eingegangen | — | Der Auftrag verfällt, es ist nichts zu erstatten |
 | Bezahlt, Freigabe an die Werkstatt noch nicht erteilt | 0 % | **den vollen Betrag** |
 | In Fertigung | 50 % | 50 % |
 | Fertiggestellt, in der Qualitätsprüfung | 75 % | 25 % |
-| Versandt oder zugestellt |, | keine Erstattung; es bleibt die Kulanz nach Ziffer 7.3 |
+| Versandt oder zugestellt | 100 % | keine Erstattung; es bleibt die Kulanz nach Ziffer 7.3 |
 
 (2) **Der Wendepunkt ist die Freigabe an die Werkstatt.** Sie erfolgt, sobald
 Ihre Zahlung eingegangen ist, von da an sind Leisten belegt, Leder
@@ -286,19 +286,24 @@ erfolgt nach Absprache mit uns; die Kosten der Rücksendung tragen Sie.
 Maßgeblich für die Beurteilung sind die Aufnahmen aus der
 Wareneingangskontrolle nach Ziffer 6 Abs. 5.
 
-(4) **Ausgeschlossen sind Schuhe mit persönlicher Kennzeichnung.** Trägt der
-Schuh Initialen, ein Monogramm, einen Namenszug, ein Wappen oder eine andere
-auf Sie zugeschnittene Prägung, entfällt die Kulanz nach dieser Ziffer
-vollständig. Der Grund ist einfach: Ein Paar mit Ihren Initialen lässt sich
-niemandem sonst anbieten. Es ist kein Schuh, der zurück ins Regal kann,
-sondern ein Einzelstück, das nur zu Ihnen gehört. Bei allen übrigen
-Ausführungen, Leder, Farbe, Sohle, Leisten, greift die Kulanz wie oben
-beschrieben.
+(4) **Die Kulanz gilt für jedes Paar, gleich wie es ausgeführt ist.** Auch für
+eines mit Initialen, Monogramm, Namenszug oder Wappen. Hier stand früher das
+Gegenteil, begründet damit, dass ein Paar mit Ihren Initialen sich niemandem
+sonst anbieten lässt — das trifft zu, taugt aber nicht zur Unterscheidung:
+Nach Ziffer 5 Abs. 2 und Ziffer 7.1 gilt dasselbe für **jedes** Paar, das wir
+bauen. Eine Prägung macht aus einem Schuh, der ohnehin ein Einzelstück ist,
+kein anderes. Was für alle gilt, kann nicht die Ausnahme für einen begründen.
 
-(5) Erstattet wird erst, nachdem der Schuh bei uns eingegangen und geprüft
+(5) Bei der Frage, wie viel wir im Einzelfall erstatten (Absatz 2), fällt eine
+persönliche Kennzeichnung ins Gewicht: Ein Paar ohne sie können wir noch als
+Musterpaar zeigen oder weitergeben, ein Paar mit Ihrem Namenszug nicht. Das
+ist ein Punkt in der Abwägung innerhalb der Obergrenze von 50 %, kein
+Ausschluss vorweg.
+
+(6) Erstattet wird erst, nachdem der Schuh bei uns eingegangen und geprüft
 ist.
 
-(6) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
+(7) Diese Kulanz ist **freiwillig**. Es besteht kein Anspruch darauf, weder
 dem Grunde noch der Höhe nach; 50 % ist die Obergrenze, nicht die Regel. Über
 Art und Umfang entscheiden wir im Einzelfall. Aus der Gewährung im Einzelfall
 entsteht kein Anspruch für die Zukunft.
@@ -309,7 +314,7 @@ Zubehör, Pflegemittel, Schuhspanner, Beutel, ist keine Maßanfertigung.
 Dafür gilt Ziffer 7 nicht: Es geht innerhalb von 14 Tagen nach Zustellung
 vollständig und zum vollen Preis zurück.
 
-## 8. Preise, Zahlung, Eigentumsvorbehalt
+## 8. Preise, Zahlung, Eigentum
 
 (1) Alle Preise verstehen sich in Euro.
 Die Preise enthalten die gesetzliche Umsatzsteuer.
@@ -319,7 +324,31 @@ Die Preise enthalten die gesetzliche Umsatzsteuer.
 (3) Zahlbar im Voraus per Überweisung (Vorkasse). Die Fertigung beginnt nach
 Zahlungseingang.
 
-(4) Die Ware bleibt bis zur vollständigen Bezahlung unser Eigentum.
+(4) **Einen Eigentumsvorbehalt gibt es bei uns nicht, und es kann ihn nicht
+geben.** Er sichert den Verkäufer, der die Ware vor der Zahlung aus der Hand
+gibt. Bei uns ist es umgekehrt: Sie zahlen, bevor Ihr Paar überhaupt entsteht
+(Ziffer 2 Abs. 2). In dem Zeitraum, den ein Eigentumsvorbehalt regeln würde,
+existiert die Sache noch nicht — es gibt nichts, woran wir uns Eigentum
+vorbehalten könnten.
+
+(5) Das Eigentum an dem fertigen Paar geht mit der Übergabe an Sie über. Da
+die Zahlung zu diesem Zeitpunkt bereits vollständig bei uns eingegangen ist,
+steht ihr keine Bedingung mehr entgegen.
+
+(6) Sollten wir Ihnen ausnahmsweise vor vollständiger Zahlung liefern, etwa
+gegen Rechnung oder in Teilbeträgen, bleibt die gelieferte Ware bis zur
+vollständigen Zahlung unser Eigentum. Diese Ausnahme vereinbaren wir
+ausdrücklich in Textform; ohne eine solche Vereinbarung gilt Absatz 4.
+
+(7) **Gutscheine.** Codes aus Aktionen, aus unserem Newsletter oder aus
+Empfehlungen sind einmal einlösbar, gelten nur für die Person, an die sie
+ausgegeben wurden, und lassen sich nicht mit anderen Gutscheinen kombinieren.
+Sie werden nicht in bar ausgezahlt und nicht nachträglich auf eine bereits
+abgeschickte Bestellung angerechnet. Was ein einzelner Code wert ist, wie
+lange er gilt und ab welchem Bestellwert, steht in der Nachricht, mit der wir
+ihn Ihnen geschickt haben. Stornieren Sie eine Bestellung, für die ein
+einmaliger Code eingelöst wurde, gilt er als verbraucht; auf Nachfrage geben
+wir ihn aus Kulanz erneut aus.
 
 ## 9. Versand und Gefahrübergang
 

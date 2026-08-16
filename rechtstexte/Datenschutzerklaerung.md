@@ -6,7 +6,7 @@
 > gilt zwingend. Was diese Erklärung leisten kann, ist Vollständigkeit und
 > Ehrlichkeit; beides schützt am besten. Keine Rechtsberatung.
 
-**Stand: 11. August 2026**
+**Stand: 16. August 2026**
 
 ---
 
@@ -34,7 +34,7 @@ Betriebssystem.
 - **Zweck:** Auslieferung der Seite, Sicherheit, Fehlersuche
 - **Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an
   einem sicheren und funktionsfähigen Angebot)
-- **Speicherdauer:** [X] Tage in den Serverprotokollen, danach Löschung
+- **Speicherdauer:** 14 Tage in den Serverprotokollen, danach Löschung
 
 ## 4. Kundenkonto
 
@@ -86,21 +86,23 @@ Personen zu erkennen oder wiederzuerkennen. Eine Verarbeitung besonderer
 Kategorien personenbezogener Daten nach Art. 9 DSGVO findet damit aus unserer
 Sicht nicht statt.
 
-### 6.4 Verbesserung der Messfunktion
+### 6.4 Weiterentwicklung unserer Leisten und der Messfunktion
 
-[**Diesen Abschnitt nur behalten, wenn ihr Scans tatsächlich zur
-Verbesserung auswertet, die Datenbank sieht es vor.** Wenn ja, muss die
-Einwilligung im Scanvorgang aktiv eingeholt werden: ein nicht vorangekreuztes
-Kästchen mit klarem Text. Ohne diese Einwilligung darf die Auswertung nicht
-stattfinden.]
+Maß- und Formdaten verwenden wir zusätzlich in **anonymisierter Form**, um
+unsere Leistentabelle, das Passform-Verfahren und künftige Modelle
+weiterzuentwickeln. Anonymisiert heißt: ohne Ihren Namen, Ihre Anschrift, Ihre
+E-Mail-Adresse und ohne jede Kennung, über die sich ein Bezug zu Ihnen
+herstellen ließe. Solche Daten sind keine personenbezogenen Daten mehr; sie
+bleiben erhalten, auch wenn Sie Ihr Konto löschen lassen, weil sie sich Ihnen
+dann nicht mehr zuordnen lassen. Dasselbe steht in Ziffer 12 unserer AGB.
 
-Mit Ihrer ausdrücklichen Einwilligung verwenden wir Ihre Scanaufnahmen und
-die zugehörigen Maße, um die Genauigkeit unserer Messfunktion zu verbessern.
+**Ihre Scanaufnahmen werten wir dafür nicht aus.** Sie dienen ausschließlich
+der Anfertigung Ihres Paares. Sollten wir das eines Tages ändern wollen,
+fragen wir Sie vorher ausdrücklich, mit einem nicht vorangekreuzten Kästchen
+im Scanvorgang — und ohne Ihr Ja geschieht es nicht.
 
-- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)
-- **Freiwillig:** Die Einwilligung ist für die Bestellung nicht erforderlich.
-  Sie können sie jederzeit mit Wirkung für die Zukunft unter kontakt@artisansole.com
-  widerrufen. Wir löschen die betroffenen Aufnahmen dann.
+- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO für die Anonymisierung
+  selbst; das Ergebnis unterliegt der DSGVO nicht mehr
 
 ### 6.5 Speicherdauer
 
@@ -126,17 +128,73 @@ Erst wenn Sie sich anschließend registrieren, wird der Name Teil Ihres
 Kundenkontos. Rechtsgrundlage ist dann Art. 6 Abs. 1 lit. b DSGVO
 (Vertragserfüllung); es gilt Ziffer 4.
 
-## 8. Cookies
+## 8. Speicherung im Endgerät (Cookies)
 
-Wir setzen ausschließlich technisch notwendige Cookies ein, insbesondere
-eines, das Ihre Anmeldung aufrechterhält. Es ist gegen Auslesen durch Skripte
-geschützt.
+### 8.1 Was gespeichert wird
 
-Wir verwenden **keine** Analyse-, Werbe- oder Tracking-Cookies und binden
-keine Dienste zur Reichweitenmessung ein. Ein Einwilligungsbanner ist deshalb
-nicht erforderlich.
+Wir setzen ausschließlich technisch notwendige Cookies und Speichereinträge
+ein:
 
-- **Rechtsgrundlage:** § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich)
+| Was | Wozu | Wie lange |
+|---|---|---|
+| Anmelde-Cookie | hält Ihre Sitzung aufrecht; gegen Auslesen durch Skripte geschützt | bis zur Abmeldung |
+| Warenkorb und Merkliste | damit Ihre Auswahl beim Neuladen nicht verloren geht | bis Sie sie leeren |
+| Ihre Entscheidung zu diesem Hinweis | damit wir nicht bei jedem Aufruf erneut fragen | 12 Monate |
+| Vorname beim geführten Einstieg | Ansprache auf den folgenden Seiten (Ziffer 7) | bis der Tab geschlossen wird |
+
+Wir verwenden **keine** Analyse-, Werbe- oder Tracking-Cookies, binden keine
+Dienste zur Reichweitenmessung ein und geben nichts davon an Dritte weiter.
+
+- **Rechtsgrundlage:** § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich);
+  eine Einwilligung ist dafür nicht erforderlich
+
+### 8.2 Der Hinweis am unteren Rand
+
+Weil das nicht selbstverständlich ist, sagen wir es: Ein Hinweis am unteren
+Rand nennt Ihnen, was wir speichern, und nimmt Ihre Bestätigung entgegen. Er
+blockiert die Seite nicht — es gibt hier nichts freizuschalten, was ohne Ihre
+Erlaubnis liefe.
+
+**Was wir dazu festhalten.** Ihre Entscheidung, den Zeitpunkt, die Fassung des
+Hinweistextes, eine gekürzte IP-Adresse (das letzte Feld auf Null gesetzt) und
+die Browserkennung. Zugeordnet wird über eine **zufällige Kennung**, die in
+Ihrem Browser liegt; Ihren Namen speichern wir dabei nicht. Sind Sie
+angemeldet, steht Ihr Konto daneben.
+
+- **Zweck:** Nachweis, dass und worüber wir aufgeklärt haben
+- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an
+  der Nachweisbarkeit); die zugrunde liegende Speicherung selbst ist nach
+  § 25 Abs. 2 Nr. 2 TDDDG einwilligungsfrei
+- **Speicherdauer:** 3 Jahre ab der Entscheidung
+- **Widerruf und Änderung:** jederzeit über „Cookie-Einstellungen" in der
+  Fußzeile
+
+## 8a. Schriftart
+
+Die Schriftart *Jost* liefern wir **von unserem eigenen Server** aus. Es
+besteht dabei keine Verbindung zu Google Fonts oder einem anderen fremden
+Anbieter, und es wird keine IP-Adresse an Dritte übermittelt.
+
+## 8b. Platzhalter-Fotos (Unsplash)
+
+Für einzelne redaktionelle Flächen verwenden wir vorläufig Fotos von Unsplash
+(Unsplash Inc., USA), solange dort keine eigene Aufnahme hinterlegt ist. Diese
+Bilder werden **beim Aufruf der Seite von einem Server von Unsplash geladen**;
+dabei erfährt dieser Ihre IP-Adresse, die aufgerufene Seite und technische
+Angaben Ihres Browsers. Cookies setzt Unsplash dabei nicht.
+
+- **Zweck:** Bebilderung, solange eigene Aufnahmen fehlen
+- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an
+  einer vollständig bebilderten Darstellung)
+- **Drittlandübermittlung:** Die Übermittlung in die USA erfolgt auf Grundlage
+  der Standardvertragsklauseln der EU-Kommission und des
+  EU-US Data Privacy Framework.
+- **Widerspruch:** Sie können der Verarbeitung nach Art. 21 DSGVO
+  widersprechen; eine Nachricht an kontakt@artisansole.com genügt.
+
+Diese Einbindung ist ein Übergang. Sobald für eine Fläche eine eigene Aufnahme
+im Verwaltungsbereich hinterlegt ist, wird sie ausgeliefert und der fremde
+Server nicht mehr angesprochen.
 
 ## 9. Affiliate-Programm
 
@@ -157,6 +215,59 @@ Für Bestellbestätigungen, Zahlungshinweise und Statusmeldungen versenden wir
 E-Mails über Hetzner Online GmbH (Postausgang).
 
 - **Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO
+
+## 10a. Newsletter
+
+### 10.1 Wie die Anmeldung abläuft
+
+Tragen Sie Ihre E-Mail-Adresse ein, schicken wir Ihnen zunächst **nur eine
+Nachricht**: die Bitte, die Anmeldung zu bestätigen. Erst mit Ihrem Klick in
+dieser Nachricht gilt die Einwilligung, und erst danach erhalten Sie den
+Newsletter und Ihren Willkommensgutschein (Verfahren der doppelten
+Bestätigung, „Double Opt-in").
+
+Bestätigen Sie nicht, geschieht nichts weiter. Der Eintrag verfällt nach
+30 Tagen von selbst und wird gelöscht.
+
+### 10.2 Was wir verarbeiten
+
+Ihre E-Mail-Adresse sowie, zum Nachweis der Einwilligung: Zeitpunkt der
+Anmeldung und der Bestätigung, die dabei verwendete IP-Adresse, die Stelle,
+an der Sie sich eingetragen haben, und den **Wortlaut**, dem Sie zugestimmt
+haben.
+
+Dass wir die IP-Adresse hier ungekürzt speichern, hat einen Grund: Sie ist
+der Beleg dafür, dass die Anmeldung aus Ihrem Postfach heraus bestätigt
+wurde. Ohne ihn stünde bei einer Beschwerde Aussage gegen Aussage.
+
+- **Zweck:** Versand des Newsletters, Nachweis der Einwilligung
+- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. a DSGVO (Einwilligung) für den
+  Versand; Art. 6 Abs. 1 lit. c in Verbindung mit Art. 7 Abs. 1 DSGVO für den
+  Nachweis
+- **Speicherdauer:** bis zu Ihrem Widerruf. Danach bewahren wir Adresse und
+  Nachweis noch drei Jahre auf — allein dazu, Sie nicht versehentlich erneut
+  anzuschreiben und die frühere Einwilligung belegen zu können. Ein Versand
+  findet ab dem Widerruf nicht mehr statt.
+
+### 10.3 Der Willkommensgutschein
+
+Nach Ihrer Bestätigung erzeugen wir einen persönlichen Gutscheincode und
+speichern ihn zu Ihrer Adresse, damit wir ihn Ihnen nennen können, wenn er
+verlorengeht. Die Bedingungen des Gutscheins stehen in Ziffer 8 unserer AGB.
+
+### 10.4 Widerruf
+
+Sie können die Einwilligung **jederzeit** widerrufen, ohne Angabe von Gründen
+und ohne Anmeldung: Am Ende jeder Nachricht steht ein Abmeldelink, ein Klick
+genügt. Eine E-Mail an kontakt@artisansole.com tut es ebenso. Die
+Rechtmäßigkeit des Versands bis zum Widerruf bleibt davon unberührt.
+
+### 10.5 Keine Weitergabe, keine Auswertung
+
+Wir geben die Adressen nicht weiter und setzen keinen fremden Versanddienst
+ein; der Versand läuft über denselben Postausgang wie unsere übrige Post
+(Ziffer 10). Wir messen nicht, wer eine Nachricht öffnet oder welchen Link
+darin jemand anklickt. Es gibt keine Zählpixel und kein Profil.
 
 ## 11. Empfänger
 

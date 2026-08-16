@@ -6,6 +6,7 @@
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { fenster as einwilligungOeffnen } from '../lib/einwilligung'
 import { ChevronUp } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 
@@ -147,9 +148,21 @@ export default function Footer() {
 
         {/* Bottom-Bar: Copyright links, Land + Sprache rechts */}
         <div className="mt-16 lg:mt-24 pt-6 border-t border-black/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <p className="text-[10px] text-black/30 font-light tracking-[0.1em]">
-            © {new Date().getFullYear()} {cfg.copyright || 'Artisan Sole'}
-          </p>
+          <div className="flex items-center gap-6">
+            <p className="text-[10px] text-black/30 font-light tracking-[0.1em]">
+              © {new Date().getFullYear()} {cfg.copyright || 'Artisan Sole'}
+            </p>
+            {/* Eine Einwilligung, die sich nur erteilen und nie zurücknehmen
+                lässt, ist keine. Der Weg zurück gehört dorthin, wo man ihn
+                sucht: in die Fußzeile, neben das Rechtliche. */}
+            <button
+              type="button"
+              onClick={einwilligungOeffnen}
+              className="text-[10px] text-black/30 font-light tracking-[0.1em] bg-transparent border-0 hover:text-black/60 transition-colors underline"
+            >
+              Cookie-Einstellungen
+            </button>
+          </div>
           <div className="flex items-center gap-8">
             <button
               type="button"

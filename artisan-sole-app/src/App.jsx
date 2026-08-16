@@ -6,6 +6,8 @@ import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute, StartRo
 import BottomNav from './components/BottomNav'
 import RefErfassung from './components/RefErfassung'
 import VermittlerBanner from './components/VermittlerBanner'
+import CookieHinweis from './components/CookieHinweis'
+import NewsletterBanner from './components/NewsletterBanner'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
 import useStore from './store/store'
@@ -129,6 +131,7 @@ const MyScans           = spaet(lazyImports['/my-scans'])
 const Ruecksendungen    = spaet(lazyImports['/ruecksendungen'])
 const Welcome           = spaet(lazyImports['/welcome'])
 const Entdecken         = spaet(lazyImports['/entdecken'])
+const NewsletterBestaetigung = spaet(() => import('./screens/NewsletterBestaetigung'))
 
 // CMS
 const CMSLayout            = spaet(() => import('./screens/cms/CMSLayout'))
@@ -439,6 +442,8 @@ function AppRoutes() {
               <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
               <Route path="/help"        element={<HelpSupport />} />
               <Route path="/legal/:type" element={<LegalDoc />} />
+              <Route path="/newsletter/bestaetigen" element={<NewsletterBestaetigung />} />
+              <Route path="/newsletter/abmelden"    element={<NewsletterBestaetigung />} />
               <Route path="/learn"      element={<Navigate to="/collection" replace />} />
 
               {/* Geschützt, Bestellung & persönliche Daten */}
@@ -524,6 +529,8 @@ function AppRoutes() {
       <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
       <Route path="/help"        element={<HelpSupport />} />
       <Route path="/legal/:type" element={<LegalDoc />} />
+      <Route path="/newsletter/bestaetigen" element={<NewsletterBestaetigung />} />
+      <Route path="/newsletter/abmelden"    element={<NewsletterBestaetigung />} />
       <Route path="/learn"      element={<Navigate to="/collection" replace />} />
 
       {/* Geschützt, Bestellung & persönliche Daten */}
@@ -551,6 +558,8 @@ function AppRoutes() {
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
         {showFooter && <Footer />}
+        {istLaden && <NewsletterBanner />}
+        <CookieHinweis />
       </div>
     )
   }
@@ -568,6 +577,8 @@ function AppRoutes() {
           {showFooter && <Footer />}
         </div>
       </div>
+      {istLaden && <NewsletterBanner />}
+      <CookieHinweis />
     </div>
   )
 }

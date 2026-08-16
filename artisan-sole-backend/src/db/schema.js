@@ -1015,6 +1015,60 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_usage_coupon ON coupon_usages(coupon_id);
     CREATE INDEX IF NOT EXISTS idx_usage_user   ON coupon_usages(user_id);
 
+    -- ── Newsletter ────────────────────────────────────────────────────────
+    -- Angemeldet ist noch nicht eingewilligt: Eine Anschrift, die jemand hier
+    -- einträgt, kann jedem gehören. Erst der Klick im bestätigten Postfach
+    -- macht daraus eine Einwilligung (Double-Opt-in). Bis dahin steht der
+    -- Eintrag auf 'offen' und es geht nichts hinaus außer der Bitte um
+    -- Bestätigung.
+    --
+    -- Die Nachweisfelder sind kein Beiwerk: Wer wirbt, muss die Einwilligung
+    -- belegen können (Art. 7 Abs. 1 DSGVO). Belegt wird der Zeitpunkt beider
+    -- Schritte, die Herkunft und der Wortlaut, dem zugestimmt wurde — ein
+    -- späterer Textwechsel darf die alte Zustimmung nicht umdeuten.
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      email             TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+      status            TEXT    NOT NULL DEFAULT 'offen'
+                          CHECK(status IN ('offen','bestaetigt','abgemeldet')),
+      -- Bestätigungs- und Abmeldeschlüssel; beide nur als Hash abgelegt,
+      -- damit ein Blick in die Datenbank keine fremden Anmeldungen bestätigen
+      -- und keine fremden Abmeldungen auslösen kann.
+      confirm_token     TEXT,
+      unsubscribe_token TEXT,
+      consent_text      TEXT,              -- Wortlaut, dem zugestimmt wurde
+      quelle            TEXT,              -- wo die Anmeldung herkam
+      angemeldet_am     TEXT    NOT NULL DEFAULT (datetime('now')),
+      angemeldet_ip     TEXT,
+      bestaetigt_am     TEXT,
+      bestaetigt_ip     TEXT,
+      abgemeldet_am     TEXT,
+      coupon_code       TEXT,              -- der ausgegebene Willkommensgutschein
+      erinnerung_am     TEXT,              -- wann zuletzt um Bestätigung gebeten
+      updated_at        TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_newsletter_status ON newsletter_subscribers(status);
+
+    -- ── Einwilligungen zur Speicherung im Endgerät (Cookie-Hinweis) ───────
+    -- Ein Protokoll, keine Personenliste: Es hält fest, was entschieden wurde,
+    -- nicht wer entschieden hat. Zugeordnet wird über eine zufällige Kennung,
+    -- die im Browser liegt; ist jemand angemeldet, steht sein Konto daneben.
+    -- So lässt sich eine Entscheidung belegen und widerrufen, ohne aus dem
+    -- Hinweis ein Verzeichnis von Besuchern zu machen.
+    CREATE TABLE IF NOT EXISTS consent_log (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      kennung       TEXT    NOT NULL,      -- zufällige Kennung aus dem Browser
+      user_id       INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      entscheidung  TEXT    NOT NULL,      -- 'notwendig' | 'alle' | 'widerrufen'
+      kategorien    TEXT    NOT NULL,      -- JSON, je Kategorie true/false
+      text_fassung  TEXT    NOT NULL,      -- Fassung des Hinweistexts
+      user_agent    TEXT,
+      ip            TEXT,
+      created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_consent_kennung ON consent_log(kennung);
+    CREATE INDEX IF NOT EXISTS idx_consent_zeit    ON consent_log(created_at);
+
     -- ── Shoe ↔ Accessory join table ────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS shoe_accessories (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1303,3 +1303,112 @@ export async function sendAffiliateInvitation(email, name, inviteToken, code) {
 
   await send({ to: email, subject, html })
 }
+
+// ─── Newsletter ─────────────────────────────────────────────────────────────
+//
+// Drei Nachrichten, in dieser Reihenfolge:
+//
+//   1. Bestätigung — die einzige, die vor einer Einwilligung hinausgeht. Sie
+//      wirbt nicht, sie fragt. Deshalb steht der Wortlaut, dem zugestimmt
+//      wird, wörtlich darin und nicht als Link auf eine Seite, die sich
+//      später ändern lässt.
+//   2. Willkommen — mit dem Gutschein. Geht erst nach dem Klick hinaus.
+//   3. Bereits angemeldet — wenn sich jemand ein zweites Mal einträgt. Sie
+//      erspart die Frage, ob etwas schiefging, und nennt den vorhandenen
+//      Code noch einmal.
+//
+// Jede Nachricht ab Nummer 2 trägt den Abmeldelink. Nicht im Kleingedruckten,
+// sondern lesbar: Wer gehen will, soll nicht suchen müssen.
+
+const ABMELDE_HINWEIS = (link) => `
+    <hr class="divider">
+    <p style="font-size:11px;color:#999;line-height:1.7;margin:0;text-align:center">
+      Sie möchten keine Post mehr von uns?
+      <a href="${link}" style="color:#666">Hier abmelden</a> — ein Klick genügt,
+      ohne Anmeldung und ohne Rückfrage.
+    </p>`
+
+export async function sendNewsletterBestaetigung(email, token, einwilligungstext, rabattProzent) {
+  const cfg  = getEmailConfig()
+  const link = `${cfg.appUrl}/newsletter/bestaetigen?token=${token}`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>ANMELDUNG BESTÄTIGEN</p></div>
+  <div class="body" style="text-align:center">
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Noch ein Schritt.</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">
+      Jemand hat diese Adresse für unseren Newsletter eingetragen. Waren Sie das,
+      bestätigen Sie es bitte hier — danach schicken wir Ihnen Ihren
+      ${rabattProzent}%-Gutschein.
+    </p>
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Anmeldung bestätigen</a>
+    <p style="font-size:11px;color:#999;margin:0 0 24px">Falls der Knopf nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
+    <hr class="divider">
+    <p style="font-size:12px;color:#555;line-height:1.7;margin:0 0 16px;text-align:left">
+      <strong>Dem stimmen Sie zu:</strong><br>${escapeHtml(einwilligungstext)}
+    </p>
+    <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">
+      <strong>Waren Sie das nicht?</strong> Dann tun Sie bitte nichts. Ohne
+      Bestätigung schicken wir Ihnen nichts, und der Eintrag verfällt von allein.
+    </p>
+  </div>
+  <div class="footer">Artisan Sole Custom Made Footwear</div>
+</div>
+</body></html>`
+  await send({ to: email, subject: 'Artisan Sole · Bitte bestätigen Sie Ihre Anmeldung', html })
+}
+
+export async function sendNewsletterWillkommen(email, code, rabattProzent, gueltigBis, abmeldeToken) {
+  const cfg  = getEmailConfig()
+  const abmelden = `${cfg.appUrl}/newsletter/abmelden?token=${abmeldeToken}`
+  const datum = gueltigBis
+    ? new Date(gueltigBis).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })
+    : null
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>WILLKOMMEN</p></div>
+  <div class="body" style="text-align:center">
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Danke für Ihre Bestätigung.</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">
+      Hier ist Ihr Gutschein über ${rabattProzent} % auf Ihr erstes Paar. Geben Sie
+      den Code beim Abschluss der Bestellung im Feld „Gutscheincode" ein.
+    </p>
+    <div style="border:1px solid #111;padding:18px 24px;margin:0 0 20px;display:inline-block">
+      <p style="font-size:11px;color:#888;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px">Ihr Code</p>
+      <p style="font-size:22px;color:#111;letter-spacing:0.12em;margin:0;font-weight:600">${escapeHtml(code)}</p>
+    </div>
+    <p style="font-size:12px;color:#888;margin:0 0 24px">
+      Einmal einlösbar${datum ? `, gültig bis ${datum}` : ''}. Nur für Sie bestimmt.
+    </p>
+    <a href="${cfg.appUrl}/collection" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 8px">Zur Kollektion</a>
+    ${ABMELDE_HINWEIS(abmelden)}
+  </div>
+  <div class="footer">Artisan Sole Custom Made Footwear</div>
+</div>
+</body></html>`
+  await send({ to: email, subject: `Artisan Sole · Ihr ${rabattProzent}%-Gutschein`, html })
+}
+
+export async function sendNewsletterBereitsAngemeldet(email, code, abmeldeToken) {
+  const cfg  = getEmailConfig()
+  const abmelden = `${cfg.appUrl}/newsletter/abmelden?token=${abmeldeToken}`
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
+<div class="wrap">
+  <div class="header"><h1>ARTISAN SOLE</h1><p>SIE SIND SCHON DABEI</p></div>
+  <div class="body" style="text-align:center">
+    <p style="font-size:15px;color:#111;margin:0 0 8px;font-weight:600">Diese Adresse ist bereits angemeldet.</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">
+      Sie haben sich gerade erneut eingetragen — nötig ist das nicht, es ändert
+      sich nichts.${code ? ' Ihr Gutscheincode steht unten, falls er verlorengegangen ist.' : ''}
+    </p>
+    ${code ? `<div style="border:1px solid #111;padding:16px 24px;margin:0 0 20px;display:inline-block">
+      <p style="font-size:11px;color:#888;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px">Ihr Code</p>
+      <p style="font-size:20px;color:#111;letter-spacing:0.12em;margin:0;font-weight:600">${escapeHtml(code)}</p>
+    </div>` : ''}
+    ${ABMELDE_HINWEIS(abmelden)}
+  </div>
+  <div class="footer">Artisan Sole Custom Made Footwear</div>
+</div>
+</body></html>`
+  await send({ to: email, subject: 'Artisan Sole · Sie sind bereits angemeldet', html })
+}
