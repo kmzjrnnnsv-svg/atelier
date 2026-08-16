@@ -1910,7 +1910,6 @@ export function runMigrations(db) {
       }
     }
   } catch (e) { console.error('[migrate Leisten]', e.message) }
-
   // ── „Mov Flex Sport" heißt „Moc Flex Sport" ──────────────────────────────
   //
   // Ein Vertipper, und die eigene Datenbank verrät ihn: Der Leisten, auf dem

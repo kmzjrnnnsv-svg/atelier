@@ -89,6 +89,9 @@ export async function seedDatabase(db) {
   seedLegalDocs(db)
   // Zuletzt: Erst hier stehen alle Modelle, auch die Express-Zweitfassungen.
   seedSaison(db)
+  // Und ganz zuletzt das Aufräumen: Es nimmt weg, was die Schritte davor
+  // angelegt haben, und muss deshalb hinter allen stehen.
+  seedSohlenUndWelt(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -451,50 +454,49 @@ function seedConfiguratorOptions(db) {
     // category, group/option, is_default
     // OXFORD
     ['OXFORD', 'last:zurigo', 1], ['OXFORD', 'last:monti'],
-    ['OXFORD', 'sole:leather', 1], ['OXFORD', 'sole:dainite'], ['OXFORD', 'sole:beveled_waist'], ['OXFORD', 'sole:commando'],
-    ['OXFORD', 'welt:city', 1], ['OXFORD', 'welt:country'],
+    ['OXFORD', 'sole:leather', 1], ['OXFORD', 'sole:commando'],
+    ['OXFORD', 'welt:city', 1],
     ['OXFORD', 'heel:standard', 1], ['OXFORD', 'heel:higher_heel'],
     ['OXFORD', 'toe:punch_cap', 1], ['OXFORD', 'toe:plain_toe'], ['OXFORD', 'toe:bare'],
     ['OXFORD', 'beveled_waist:no', 1], ['OXFORD', 'beveled_waist:yes'],
     // WHOLECUT
     ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'],
-    ['WHOLECUT', 'sole:leather', 1], ['WHOLECUT', 'sole:dainite'], ['WHOLECUT', 'sole:beveled_waist'],
-    ['WHOLECUT', 'welt:city', 1], ['WHOLECUT', 'welt:country'],
+    ['WHOLECUT', 'sole:leather', 1],
+    ['WHOLECUT', 'welt:city', 1],
     ['WHOLECUT', 'heel:standard', 1], ['WHOLECUT', 'heel:higher_heel'],
     ['WHOLECUT', 'beveled_waist:no', 1], ['WHOLECUT', 'beveled_waist:yes'],
     // DERBY
     ['DERBY', 'last:zurigo', 1], ['DERBY', 'last:monti'],
-    ['DERBY', 'sole:leather', 1], ['DERBY', 'sole:dainite'], ['DERBY', 'sole:commando'], ['DERBY', 'sole:rocky'],
-    ['DERBY', 'welt:city', 1], ['DERBY', 'welt:country'], ['DERBY', 'welt:storm'],
+    ['DERBY', 'sole:leather', 1], ['DERBY', 'sole:commando'], ['DERBY', 'sole:rocky'],
+    ['DERBY', 'welt:city', 1],
     ['DERBY', 'heel:standard', 1], ['DERBY', 'heel:higher_heel'],
     ['DERBY', 'toe:plain_toe', 1], ['DERBY', 'toe:punch_cap'], ['DERBY', 'toe:cap_toe'],
     // LOAFER
     ['LOAFER', 'last:zurigo', 1], ['LOAFER', 'last:monti'],
-    ['LOAFER', 'sole:leather', 1], ['LOAFER', 'sole:dainite'], ['LOAFER', 'sole:crepe'], ['LOAFER', 'sole:commando'],
-    ['LOAFER', 'welt:city', 1], ['LOAFER', 'welt:country'],
+    ['LOAFER', 'sole:leather', 1], ['LOAFER', 'sole:crepe'], ['LOAFER', 'sole:commando'],
+    ['LOAFER', 'welt:city', 1],
     ['LOAFER', 'heel:standard', 1], ['LOAFER', 'heel:higher_heel'],
     ['LOAFER', 'loafer_decoration:bare', 1], ['LOAFER', 'loafer_decoration:tassels'], ['LOAFER', 'loafer_decoration:metal_bit'], ['LOAFER', 'loafer_decoration:bow'], ['LOAFER', 'loafer_decoration:albert_mask'],
     // CHELSEA (Boot)
     ['CHELSEA', 'last:zurigo', 1],
-    ['CHELSEA', 'sole:leather', 1], ['CHELSEA', 'sole:dainite'], ['CHELSEA', 'sole:commando'], ['CHELSEA', 'sole:rocky'],
-    ['CHELSEA', 'welt:city'], ['CHELSEA', 'welt:country', 1], ['CHELSEA', 'welt:storm'],
+    ['CHELSEA', 'sole:leather', 1], ['CHELSEA', 'sole:commando'], ['CHELSEA', 'sole:rocky'],
+    ['CHELSEA', 'welt:city', 1],
     ['CHELSEA', 'heel:standard', 1], ['CHELSEA', 'heel:higher_heel'],
     ['CHELSEA', 'toe:plain_toe', 1], ['CHELSEA', 'toe:cap_toe'],
     // MONK / DOUBLE_MONK
     ['MONK', 'last:zurigo', 1], ['MONK', 'last:monti'],
-    ['MONK', 'sole:leather', 1], ['MONK', 'sole:dainite'], ['MONK', 'sole:beveled_waist'],
-    ['MONK', 'welt:city', 1], ['MONK', 'welt:country'],
+    ['MONK', 'sole:leather', 1],
+    ['MONK', 'welt:city', 1],
     ['MONK', 'heel:standard', 1], ['MONK', 'heel:higher_heel'],
     ['MONK', 'buckle:square_buckle', 1], ['MONK', 'buckle:round_buckle'],
     ['DOUBLE_MONK', 'last:zurigo', 1], ['DOUBLE_MONK', 'last:monti'],
-    ['DOUBLE_MONK', 'sole:leather', 1], ['DOUBLE_MONK', 'sole:dainite'], ['DOUBLE_MONK', 'sole:beveled_waist'],
-    ['DOUBLE_MONK', 'welt:city', 1], ['DOUBLE_MONK', 'welt:country'],
+    ['DOUBLE_MONK', 'sole:leather', 1],
+    ['DOUBLE_MONK', 'welt:city', 1],
     ['DOUBLE_MONK', 'heel:standard', 1], ['DOUBLE_MONK', 'heel:higher_heel'],
     ['DOUBLE_MONK', 'buckle:square_buckle', 1], ['DOUBLE_MONK', 'buckle:round_buckle'],
     // BOOT (Allzweck-Stiefel)
     ['BOOT', 'last:zurigo', 1],
-    ['BOOT', 'sole:commando', 1], ['BOOT', 'sole:dainite'], ['BOOT', 'sole:rocky'], ['BOOT', 'sole:rubber'],
-    ['BOOT', 'welt:country', 1], ['BOOT', 'welt:storm'],
+    ['BOOT', 'sole:commando', 1], ['BOOT', 'sole:rocky'], ['BOOT', 'sole:rubber'],
     ['BOOT', 'heel:standard', 1], ['BOOT', 'heel:higher_heel'],
     // SNEAKER
     ['SNEAKER', 'sole:rubber', 1], ['SNEAKER', 'sole:crepe'], ['SNEAKER', 'sole:dots'],
@@ -735,8 +737,8 @@ export function seedExtendedCatalog(db) {
     // WHOLECUT
     ['WHOLECUT', 'last:zurigo', 1], ['WHOLECUT', 'last:monti'],
     ['WHOLECUT', 'wholecut_base:plain', 1], ['WHOLECUT', 'wholecut_base:punched_cap'], ['WHOLECUT', 'wholecut_base:full_punched'],
-    ['WHOLECUT', 'sole:leather', 1], ['WHOLECUT', 'sole:dainite'], ['WHOLECUT', 'sole:leather_mountain'], ['WHOLECUT', 'sole:leather_buttons'], ['WHOLECUT', 'sole:leather_rubber'], ['WHOLECUT', 'sole:commando'], ['WHOLECUT', 'sole:crepe'], ['WHOLECUT', 'sole:gummy_sole'], ['WHOLECUT', 'sole:beveled_waist'],
-    ['WHOLECUT', 'welt:city', 1], ['WHOLECUT', 'welt:country'], ['WHOLECUT', 'welt:storm'],
+    ['WHOLECUT', 'sole:leather', 1], ['WHOLECUT', 'sole:leather_mountain'], ['WHOLECUT', 'sole:leather_buttons'], ['WHOLECUT', 'sole:leather_rubber'], ['WHOLECUT', 'sole:commando'], ['WHOLECUT', 'sole:crepe'],
+    ['WHOLECUT', 'welt:city', 1],
     ['WHOLECUT', 'heel:standard', 1], ['WHOLECUT', 'heel:higher_heel'],
     ['WHOLECUT', 'inner_color:black', 1], ['WHOLECUT', 'inner_color:brown'], ['WHOLECUT', 'inner_color:tan'], ['WHOLECUT', 'inner_color:cognac'],
     ['WHOLECUT', 'sole_bottom_color:natural', 1], ['WHOLECUT', 'sole_bottom_color:black'], ['WHOLECUT', 'sole_bottom_color:brown'], ['WHOLECUT', 'sole_bottom_color:cognac'],
@@ -753,7 +755,7 @@ export function seedExtendedCatalog(db) {
     // OXFORD + DERBY + LOAFER, Innen + Unterseite
     ['OXFORD', 'inner_color:black', 1], ['OXFORD', 'inner_color:brown'], ['OXFORD', 'inner_color:tan'], ['OXFORD', 'inner_color:cognac'], ['OXFORD', 'inner_color:navy'],
     ['OXFORD', 'sole_bottom_color:natural', 1], ['OXFORD', 'sole_bottom_color:black'], ['OXFORD', 'sole_bottom_color:brown'], ['OXFORD', 'sole_bottom_color:cognac'],
-    ['DERBY', 'welt:city', 1], ['DERBY', 'welt:storm'],
+    ['DERBY', 'welt:city', 1],
     ['DERBY', 'inner_color:brown', 1], ['DERBY', 'inner_color:black'], ['DERBY', 'inner_color:tan'],
     ['DERBY', 'sole_bottom_color:natural', 1], ['DERBY', 'sole_bottom_color:brown'],
     ['LOAFER', 'inner_color:brown', 1], ['LOAFER', 'inner_color:black'], ['LOAFER', 'inner_color:tan'],
@@ -3020,4 +3022,85 @@ export function seedLegalDocs(db) {
     console.warn(`⚠️  Rechtstexte NICHT veröffentlicht, es fehlen noch Angaben: ${zurueckgehalten.join(', ')}`)
     console.warn('    Platzhalter in rechtstexte/ ausfüllen, dann erscheinen sie beim nächsten Start.')
   }
+}
+
+/**
+ * Sohlen und Welt: nur bei Ganzjahres- und Wintermodellen.
+ *
+ * ── Warum das ein Seed-Schritt ist und keine Migration ────────────────────
+ *
+ * Migrationen laufen VOR dem Seed. Eine Aufräumregel dort wirkte auf einer
+ * bestehenden Anlage und war auf einer frischen wirkungslos: Der Seed legt
+ * die Zuordnungen danach neu an. Genau daran ist der erste Anlauf
+ * gescheitert, und zwar unbemerkt, weil die bestehende Datenbank richtig
+ * aussah.
+ *
+ * Hier steht der Schritt hinter allen anderen und räumt weg, was sie
+ * angelegt haben.
+ */
+function seedSohlenUndWelt(db) {
+  //
+  // Dainite, Dots, Art, Beveled Waist und Gummy Sole fallen aus der Auswahl,
+  // bei der Welt bleibt „City". Es waren Angebote ohne Deckung: Ein Kunde
+  // konnte etwas bestellen, das so nicht gebaut wird.
+  //
+  // Entscheidend ist, WO das gilt. Die Sommerlinie (Mokassins, Walks) hat
+  // eigene Sohlen — Gummy Sole ist DEREN Sohle. Ein erster Anlauf löschte
+  // die Werte selbst und nahm dem Mokassin damit seinen Sohlenschritt: ein
+  // einziger verbliebener Wert, keine Vorgabe, und der Konfigurator gab den
+  // nächsten Schritt nie frei. Die Prüfung hat es gemeldet, bevor es
+  // ausgerollt wurde.
+  //
+  // Deshalb wird nicht der Wert entfernt, sondern seine Zuordnung zur
+  // Machart. Genau dafür gibt es `category_templates`: Sie sagt je Machart,
+  // was zur Wahl steht. Die Sommer-Macharten bleiben unberührt.
+  //
+  // Ohne Merker, damit die Regel bei jedem Start gilt: Legt eine Vorlage die
+  // Zuordnung erneut an, räumt der nächste Start sie wieder weg.
+  try {
+    const SOMMER = ['MOCCASIN', 'MOC_SPORT', 'MOC_SPORT_BOOT',
+                    'SNEAKER', 'SNEAKER_LACED', 'SNEAKER_BOOT', 'LACELESS_TRAINER']
+    const WEG = { sole: ['dainite', 'dots', 'art', 'beveled_waist', 'gummy_sole'],
+                  welt: ['country', 'storm'] }
+    let raus = 0
+    for (const [gruppe, schluessel] of Object.entries(WEG)) {
+      const pw = schluessel.map(() => '?').join(', ')
+      const ps = SOMMER.map(() => '?').join(', ')
+      const treffer = db.prepare(`
+        SELECT ct.category, ct.option_id, ct.is_default FROM category_templates ct
+          JOIN options o        ON o.id = ct.option_id
+          JOIN option_groups g  ON g.id = o.group_id
+         WHERE g.key = ? AND o.key IN (${pw}) AND ct.category NOT IN (${ps})
+      `).all(gruppe, ...schluessel, ...SOMMER)
+      if (!treffer.length) continue
+      db.transaction(() => {
+        const loesch = db.prepare('DELETE FROM category_templates WHERE category = ? AND option_id = ?')
+        for (const t of treffer) loesch.run(t.category, t.option_id)
+        // War einer davon die Vorgabe, steht die Machart ohne da. Der
+        // Konfigurator gibt den nächsten Schritt erst frei, wenn hier etwas
+        // gewählt ist — deshalb rückt der erste verbliebene Wert nach.
+        for (const kat of [...new Set(treffer.filter(t => t.is_default).map(t => t.category))]) {
+          const hat = db.prepare(`
+            SELECT 1 FROM category_templates ct
+              JOIN options o ON o.id = ct.option_id
+              JOIN option_groups g ON g.id = o.group_id
+             WHERE ct.category = ? AND g.key = ? AND ct.is_default = 1 LIMIT 1
+          `).get(kat, gruppe)
+          if (hat) continue
+          const bleibt = db.prepare(`
+            SELECT ct.option_id FROM category_templates ct
+              JOIN options o ON o.id = ct.option_id
+              JOIN option_groups g ON g.id = o.group_id
+             WHERE ct.category = ? AND g.key = ? ORDER BY ct.sort_order ASC LIMIT 1
+          `).get(kat, gruppe)
+          if (bleibt) {
+            db.prepare('UPDATE category_templates SET is_default = 1 WHERE category = ? AND option_id = ?')
+              .run(kat, bleibt.option_id)
+          }
+        }
+      })()
+      raus += treffer.length
+    }
+    if (raus) console.log(`✅ Sohlen und Welt: ${raus} Zuordnung(en) außerhalb der Sommerlinie entfernt`)
+  } catch (e) { console.error('[Sohlen und Welt]', e.message) }
 }
