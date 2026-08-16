@@ -1568,6 +1568,10 @@ function cleanLegacyText(s, isSubject) {
     .replace(/\bma(?:ß|ss)gefertigter Schuhe\b/g, 'von Custom Made Schuhen')
     .replace(/\bMa(?:ß|ss)gefertigter Schuhe\b/g, 'Von Custom Made Schuhen')
     .replace(/\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/g, 'Custom Made')
+    // „maßgeschneidert" ebenso: derselbe Fall, dieselbe Beugung.
+    .replace(/\bma(?:ß|ss)geschneiderter Schuhe\b/g, 'von Custom Made Schuhen')
+    .replace(/\bMa(?:ß|ss)geschneiderter Schuhe\b/g, 'Von Custom Made Schuhen')
+    .replace(/\b[Mm]a(?:ß|ss)geschneidert(?:e[rsnm]?)?\b/g, 'Custom Made')
     .replace(/Bespoke Footwear/g, 'Custom Made Footwear')
     .replace(/Bespoke/g, 'Custom Made')
     .replace(/6\s*[–-]\s*8\s*Wochen/g, 'ca. 4 Wochen nach Zahlungseingang')
@@ -1653,6 +1657,10 @@ export function cleanupLegacyWording(db) {
           .replace(/\bma(?:ß|ss)gefertigter Schuhe\b/g, 'von Custom Made Schuhen')
           .replace(/\bMa(?:ß|ss)gefertigter Schuhe\b/g, 'Von Custom Made Schuhen')
           .replace(/\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/g, 'Custom Made')
+          // „maßgeschneidert" ebenso: derselbe Fall, dieselbe Beugung.
+          .replace(/\bma(?:ß|ss)geschneiderter Schuhe\b/g, 'von Custom Made Schuhen')
+          .replace(/\bMa(?:ß|ss)geschneiderter Schuhe\b/g, 'Von Custom Made Schuhen')
+          .replace(/\b[Mm]a(?:ß|ss)geschneidert(?:e[rsnm]?)?\b/g, 'Custom Made')
           // Der Gedankenstrich, aber nur zwischen Wörtern: In einer IBAN oder
           // einer Telefonnummer steht er als Trenner und muss bleiben.
           .replace(/(\p{L}|[.!?)„“"])\s+[—–]\s+(?=\p{L}|[„“"])/gu, '$1, ')
