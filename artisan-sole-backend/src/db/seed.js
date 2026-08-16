@@ -3068,7 +3068,11 @@ function seedSohlenUndWelt(db) {
   try {
     const SOMMER = ['MOCCASIN', 'MOC_SPORT', 'MOC_SPORT_BOOT',
                     'SNEAKER', 'SNEAKER_LACED', 'SNEAKER_BOOT', 'LACELESS_TRAINER']
-    const WEG = { sole: ['dainite', 'dots', 'art', 'beveled_waist', 'gummy_sole'],
+  // „Crepe" und „Rocky" stehen hier ebenfalls: Sie tauchen in keiner der
+  // Aufnahmen auf, die der Betreiber führt. Der Sommerlinie nehmen sie
+  // nichts weg, sie ist von dieser Liste ausgenommen und führt Dots,
+  // Gummy Sole und Rubber.
+    const WEG = { sole: ['dainite', 'dots', 'art', 'beveled_waist', 'gummy_sole', 'crepe', 'rocky'],
                   welt: ['country', 'storm'] }
     let raus = 0
     for (const [gruppe, schluessel] of Object.entries(WEG)) {
