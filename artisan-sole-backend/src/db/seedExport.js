@@ -95,7 +95,7 @@ export function katalogSchreiben(db, ziel = EXPORT_PFAD) {
   // soll auch keine Änderung in der Versionsverwaltung erzeugen. Wann die
   // Datei entstanden ist, steht ohnehin im Commit.
   const inhalt = {
-    __hinweis: 'Erzeugt von scripts/seed-export.js. Nicht von Hand bearbeiten — '
+    __hinweis: 'Erzeugt von scripts/seed-export.js. Nicht von Hand bearbeiten, '
       + 'im CMS ändern und neu ausführen.',
     daten,
   }

@@ -156,7 +156,7 @@ function Home({ go, user, onLogout }) {
         <Monitor size={18} strokeWidth={1.3} className="text-black/35 flex-shrink-0" />
         <span className="flex-1 min-w-0">
           <span className="text-[15px] font-light text-black/80 block">Vollständiges CMS</span>
-          <span className="text-[11px] text-black/30 font-light">Schuhe, Inhalte, Scans — besser am Rechner</span>
+          <span className="text-[11px] text-black/30 font-light">Schuhe, Inhalte, Scans, besser am Rechner</span>
         </span>
         <ChevronRight size={16} strokeWidth={1.4} className="text-black/20 flex-shrink-0" />
       </Row>
@@ -513,7 +513,7 @@ function Affiliates({ back }) {
             )}
             <p className="text-[12px] text-black/45 font-light leading-relaxed px-1 mb-3">
               Vom Bildschirm abscannen lassen. {karte.titel === 'Einladung'
-                ? 'Der Affiliate legt damit sein Konto an — ohne Passwort, mit Face ID oder Fingerabdruck.'
+                ? 'Der Affiliate legt damit sein Konto an, ohne Passwort, mit Face ID oder Fingerabdruck.'
                 : 'Damit hinterlegt er ein neues Gerät. Eine Stunde gültig, einmal benutzbar.'}
             </p>
             {karte.link && (
@@ -587,7 +587,7 @@ function ReadOnly({ title, back, endpoint, fields, note }) {
             <div key={f.key} className="bg-white border border-black/[0.06] px-4 py-3 mb-2">
               <p className="text-[10px] text-black/25 uppercase tracking-[0.2em] mb-1">{f.label}</p>
               <p className="text-[14px] font-light text-black/75 break-all">
-                {f.render ? f.render(data) : (data[f.key] || '—')}
+                {f.render ? f.render(data) : (data[f.key] || 'k. A.')}
               </p>
             </div>
           ))}
@@ -622,7 +622,7 @@ export default function MobileAdmin() {
           { key: 'bic', label: 'BIC' },
           { key: 'bank_name', label: 'Bank' },
         ]}
-        note="Änderungen an der Bankverbindung nur am Rechner — sie stehen auf jeder Rechnung." />
+        note="Änderungen an der Bankverbindung nur am Rechner, sie stehen auf jeder Rechnung." />
     case 'smtp':
       return <ReadOnly title="E-Mail-Versand" back={back} endpoint="/api/settings/email"
         fields={[
@@ -636,7 +636,7 @@ export default function MobileAdmin() {
     case 'mfa':
       return <ReadOnly title="Zwei-Faktor" back={back} endpoint="/api/auth/mfa/status"
         fields={[{ key: 'enabled', label: 'Status', render: d => (d.enabled ? 'aktiv' : 'nicht eingerichtet') }]}
-        note="Einrichten und Abschalten am Rechner — dafür wird der QR-Code gebraucht." />
+        note="Einrichten und Abschalten am Rechner, dafür wird der QR-Code gebraucht." />
     default:
       return <Home go={setView} user={user} onLogout={handleLogout} />
   }

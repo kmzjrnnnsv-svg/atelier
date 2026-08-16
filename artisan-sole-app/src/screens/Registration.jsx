@@ -280,7 +280,7 @@ export default function Registration() {
             <ShieldCheck size={13} strokeWidth={1.5} className="text-black/30 mt-0.5 flex-shrink-0" />
             <p className="text-[10px] text-black/45 leading-relaxed">
               Ihr Gerät fragt gleich nach Face ID, Fingerabdruck oder Ihrer Geräte-PIN.
-              Damit ist Ihr Konto geschützt — Sie brauchen kein Passwort und können
+              Damit ist Ihr Konto geschützt, Sie brauchen kein Passwort und können
               keines vergessen.
             </p>
           </div>
@@ -317,7 +317,7 @@ export default function Registration() {
         {!passkeyMoeglich && (
           <p className="text-[10px] text-black/35 leading-relaxed max-w-xs mx-auto">
             Ihr Browser unterstützt die Anmeldung ohne Passwort nicht. In Safari oder
-            Chrome geht es — falls Sie diese Seite gerade aus einer anderen App heraus
+            Chrome geht es, falls Sie diese Seite gerade aus einer anderen App heraus
             geöffnet haben, öffnen Sie sie dort noch einmal.
           </p>
         )}

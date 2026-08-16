@@ -125,7 +125,7 @@ export default function KontoWiederherstellen() {
             <h1 className="text-[24px] font-extralight tracking-tight text-center">Kein Zugriff mehr?</h1>
             <p className="text-[13px] text-black/50 font-light mt-3 mb-7 leading-relaxed text-center">
               Kein Passwort heißt: Es gibt nichts zurückzusetzen. Wir erkennen Sie stattdessen
-              an einer Ihrer Bestellungen — beide Angaben stehen auf Ihrer Bestellbestätigung,
+              an einer Ihrer Bestellungen, beide Angaben stehen auf Ihrer Bestellbestätigung,
               die Bestellnummer außerdem im Verwendungszweck Ihrer Überweisung.
             </p>
 
@@ -164,7 +164,7 @@ export default function KontoWiederherstellen() {
 
             <p className="text-[11px] text-black/40 font-light leading-relaxed mt-6 text-center">
               Sie haben noch nie bestellt oder kommen nicht weiter?{' '}
-              <Link to="/help" className="text-black underline underline-offset-2">Schreiben Sie uns</Link> —
+              <Link to="/help" className="text-black underline underline-offset-2">Schreiben Sie uns</Link>,
               wir schalten Ihnen den Zugang von Hand frei.
             </p>
           </>
@@ -172,7 +172,7 @@ export default function KontoWiederherstellen() {
           <>
             <h1 className="text-[24px] font-extralight tracking-tight text-center">Dieses Gerät hinterlegen</h1>
             <p className="text-[13px] text-black/50 font-light mt-3 mb-7 leading-relaxed text-center">
-              Wir haben Sie erkannt. Hinterlegen Sie jetzt dieses Gerät — danach melden Sie
+              Wir haben Sie erkannt. Hinterlegen Sie jetzt dieses Gerät, danach melden Sie
               sich damit an, ohne Passwort.
             </p>
 
@@ -199,7 +199,7 @@ export default function KontoWiederherstellen() {
                   <ShieldCheck size={13} strokeWidth={1.5} className="text-black/30 mt-0.5 flex-shrink-0" />
                   <p className="text-[11px] text-black/45 leading-relaxed">
                     Ihr Gerät fragt gleich nach Face ID, Fingerabdruck oder Ihrer Geräte-PIN.
-                    Ihre bisherigen Geräte bleiben gültig — falls eines wieder auftaucht,
+                    Ihre bisherigen Geräte bleiben gültig, falls eines wieder auftaucht,
                     funktioniert es weiterhin. Alle offenen Sitzungen werden beendet.
                   </p>
                 </div>
@@ -207,7 +207,7 @@ export default function KontoWiederherstellen() {
             ) : (
               <p className="text-[12px] text-black/50 font-light leading-relaxed text-center">
                 Dieser Browser kann die Anmeldung ohne Passwort nicht. Bitte öffnen Sie diese
-                Seite in Safari oder Chrome — haben Sie sie gerade aus einer anderen App
+                Seite in Safari oder Chrome, haben Sie sie gerade aus einer anderen App
                 heraus geöffnet, dort noch einmal im richtigen Browser.
               </p>
             )}

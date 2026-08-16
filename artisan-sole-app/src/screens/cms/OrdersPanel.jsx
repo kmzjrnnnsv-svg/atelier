@@ -226,7 +226,7 @@ function StornoDialog({ order, onSchliessen, onFertig }) {
                : 'bg-white text-black/50 border-black/15 hover:border-black/40'
              }`}
             >
-             {e} %{e === 100 ? ' — alles' : ''}
+             {e} %{e === 100 ? ', alles' : ''}
             </button>
            )
           })}
@@ -253,7 +253,7 @@ function StornoDialog({ order, onSchliessen, onFertig }) {
        ) : (
         <div className="flex justify-between py-0.5 border-t border-black/[0.06] mt-1 pt-1.5">
          <span className="text-[11px] text-black/60 font-light">Zu erstatten</span>
-         <span className="text-[13px] text-black/60 font-light">nichts — keine Zahlung eingegangen</span>
+         <span className="text-[13px] text-black/60 font-light">nichts, keine Zahlung eingegangen</span>
         </div>
        )}
       </div>
@@ -286,7 +286,7 @@ function StornoDialog({ order, onSchliessen, onFertig }) {
     </div>
     <p className="text-[10px] text-black/25 font-light mt-3 leading-relaxed">
      {bezahlt
-      ? 'Der Kunde bekommt eine Bestätigung mit dem Erstattungsbetrag. Überwiesen wird von Hand — das System löst keine Zahlung aus.'
+      ? 'Der Kunde bekommt eine Bestätigung mit dem Erstattungsbetrag. Überwiesen wird von Hand, das System löst keine Zahlung aus.'
       : 'Der Kunde bekommt eine Bestätigung. Zu erstatten ist nichts, weil keine Zahlung eingegangen ist.'}
     </p>
    </div>

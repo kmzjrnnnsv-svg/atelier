@@ -647,7 +647,7 @@ export default function Profile() {
       {/* ── Aesthetic Profile ───────────────────────────────────── */}
       <div className="px-5 lg:px-16 pt-8">
         <p className="text-[10px] uppercase tracking-[0.25em] text-black/25 font-light mb-4">Aesthetic Profile</p>
-        <p className="text-[12px] text-black/30 mb-4 font-light">Ihr persönlicher Stil für maßgefertigte Schuhe.</p>
+        <p className="text-[12px] text-black/30 mb-4 font-light">Ihr persönlicher Stil für Custom Made Schuhe.</p>
         <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {[
             { label: 'Modern Business', desc: 'Sharp, tailored', active: true, img: SHOES.oxfords },

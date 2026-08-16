@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   User, Mail, Lock, LogOut, ChevronRight,
-  Shield, FileText, HelpCircle, Star, Trash2, Check, X, Eye, EyeOff, MapPin,
+  Shield, Trash2, Check, X, Eye, EyeOff, MapPin,
   Smartphone, Tablet, Monitor, ScanFace,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -451,19 +451,12 @@ export default function Settings() {
         </div>
       )}
 
-      {/* ── APP ──────────────────────────────────────────────────── */}
-      <SectionLabel>App</SectionLabel>
-      <SettingsRow icon={Star} label="App bewerten" sub="Hilfreich? Hinterlassen Sie eine Bewertung" onPress={() => {}} />
-      <Divider />
-      <SettingsRow icon={HelpCircle} label="Hilfe & Support" sub="Häufige Fragen, Kontakt" onPress={() => navigate('/help')} />
-
-      {/* ── RECHTLICHES ──────────────────────────────────────────── */}
-      <SectionLabel>Rechtliches</SectionLabel>
-      <SettingsRow icon={FileText} label="Datenschutzrichtlinie" onPress={() => navigate('/legal/datenschutz')} />
-      <Divider />
-      <SettingsRow icon={FileText} label="Allgemeine Geschäftsbedingungen" onPress={() => navigate('/legal/agb')} />
-      <Divider />
-      <SettingsRow icon={FileText} label="Impressum" onPress={() => navigate('/legal/impressum')} />
+      {/* Hier standen zwei Blöcke, „App" und „Rechtliches": eine
+          Bewertungsschaltfläche ohne Ziel, ein zweiter Weg zur Hilfe und die
+          drei Rechtstexte. Alle drei Rechtstexte stehen im Footer, und der
+          steht unter jeder Seite — auch unter dieser. Zwei Wege zur selben
+          Seite sind kein doppelter Nutzen, sondern eine doppelte Liste, die
+          beim nächsten Umbau auseinanderläuft. */}
 
       {/* ── GERÄT ────────────────────────────────────────────────── */}
       <SectionLabel>Gerät</SectionLabel>

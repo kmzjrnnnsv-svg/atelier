@@ -2,7 +2,7 @@
 
 > **Vor der Verwendung ausfüllen:** Alle `[…]`-Stellen ersetzen. Ein
 > unvollständiges Impressum ist der häufigste und billigste Abmahngrund
-> überhaupt — hier lohnt sich Sorgfalt mehr als irgendwo sonst.
+> überhaupt, hier lohnt sich Sorgfalt mehr als irgendwo sonst.
 > Keine Rechtsberatung.
 
 ## Angaben gemäß § 5 DDG
@@ -20,7 +20,7 @@ Telefon: +49 151 26936500
 E-Mail: kontakt@artisansole.com
 
 > Eine E-Mail-Adresse genügt allein nicht. Es muss ein zweiter, unmittelbarer
-> Weg der Kontaktaufnahme angegeben sein — üblicherweise eine Telefonnummer.
+> Weg der Kontaktaufnahme angegeben sein, üblicherweise eine Telefonnummer.
 > Ein reines Kontaktformular reicht nach der Rechtsprechung nicht sicher aus.
 
 ## Umsatzsteuer

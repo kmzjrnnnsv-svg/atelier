@@ -19,7 +19,7 @@ export default function BusinessDashboard() {
   const cards = [
     { icon: Megaphone, title: 'Kampagnen', desc: 'Sammelbestellungen anlegen, Beitritts-Link teilen und den Fortschritt je Modell verfolgen.', to: '/business/campaigns', active: true },
     { icon: ImageIcon, title: 'Profil & Logo', desc: 'Firmendaten pflegen und Ihr Logo für die Schuhsohle hinterlegen.', to: '/business/profile', active: true },
-    { icon: MessageSquare, title: 'Nachrichten', desc: 'Fragen zu Konditionen, Abrechnung oder einer laufenden Kampagne — direkt an uns, ohne Umweg über das Postfach.', chat: true, active: true, badge: ungelesen },
+    { icon: MessageSquare, title: 'Nachrichten', desc: 'Fragen zu Konditionen, Abrechnung oder einer laufenden Kampagne, direkt an uns, ohne Umweg über das Postfach.', chat: true, active: true, badge: ungelesen },
   ]
 
   return (
@@ -91,11 +91,11 @@ export default function BusinessDashboard() {
             schritte={[
               {
                 titel: 'Profil und Logo hinterlegen',
-                text: 'Unter „Profil & Logo": Firmendaten und, wenn gewünscht, Ihr Logo für die Sohlenprägung. Einmal hinterlegt, gilt es für alle Bestellungen Ihres Hauses. Das ist der einzige Schritt, den Sie vorziehen sollten — ohne Logo geht die erste Kampagne ohne los.',
+                text: 'Unter „Profil & Logo": Firmendaten und, wenn gewünscht, Ihr Logo für die Sohlenprägung. Einmal hinterlegt, gilt es für alle Bestellungen Ihres Hauses. Das ist der einzige Schritt, den Sie vorziehen sollten, ohne Logo geht die erste Kampagne ohne los.',
               },
               {
                 titel: 'Kampagne anlegen',
-                text: 'Unter „Kampagnen": Name, Rabatt, Frist und welche Modelle zur Wahl stehen. Sie entscheiden auch, wer teilnehmen darf — alle mit Ihrer E-Mail-Domain oder eine namentliche Liste.',
+                text: 'Unter „Kampagnen": Name, Rabatt, Frist und welche Modelle zur Wahl stehen. Sie entscheiden auch, wer teilnehmen darf, alle mit Ihrer E-Mail-Domain oder eine namentliche Liste.',
               },
               {
                 titel: 'Zugang öffnen',

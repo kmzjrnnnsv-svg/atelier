@@ -212,7 +212,7 @@ function Rechenbeispiel({ form, zubehoer }) {
         </tbody>
       </table>
       <p className="text-[10px] text-black/35 mt-2.5 leading-relaxed">
-        Das Haus zahlt in jedem Fall {euro(topf)} — was davon der Kunde bekommt und was
+        Das Haus zahlt in jedem Fall {euro(topf)}, was davon der Kunde bekommt und was
         der Affiliate, entscheidet die Zusage.
         {form.commission_type === 'percent' && ' Bei prozentualer Vergütung ändert sich der Topf mit dem Preis des Modells.'}
       </p>
@@ -312,7 +312,7 @@ export default function AffiliatesPanel() {
       setForm(null)
       await laden()
       if (res.existing_user) {
-        setHinweis(`${res.code} angelegt. Die Adresse hatte bereits ein Konto — es wurde verknüpft, eine Einladung war nicht nötig.`)
+        setHinweis(`${res.code} angelegt. Die Adresse hatte bereits ein Konto, es wurde verknüpft, eine Einladung war nicht nötig.`)
       } else if (res.email_sent) {
         setHinweis(`${res.code} angelegt. Die Einladung ist unterwegs.`)
       } else {
@@ -489,7 +489,7 @@ export default function AffiliatesPanel() {
                 <input className={eingabe} value={form.phone} onChange={e => setzen('phone', e.target.value)} />
               </Feld>
               <Feld label="Anzeigename im Laden"
-                    hint="Steht im Streifen über der Navigation: „Sie sind über … hier.“ Leer lassen, wenn niemand genannt werden soll — der Klarname oben wird dort nie gezeigt.">
+                    hint="Steht im Streifen über der Navigation: „Sie sind über … hier.“ Leer lassen, wenn niemand genannt werden soll, der Klarname oben wird dort nie gezeigt.">
                 <input className={eingabe} value={form.display_name || ''} placeholder="z. B. Schuhhaus Müller"
                        onChange={e => setzen('display_name', e.target.value)} />
               </Feld>
@@ -534,7 +534,7 @@ export default function AffiliatesPanel() {
           <section>
             <p className="text-[10px] uppercase tracking-[0.18em] text-black/30 mb-3">Code und Konditionen</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Feld label="Code" required hint="Steckt im Werbelink als ?ref= — Kleinbuchstaben, Ziffern, Bindestriche.">
+              <Feld label="Code" required hint="Steckt im Werbelink als ?ref=, Kleinbuchstaben, Ziffern, Bindestriche.">
                 <input
                   className={eingabe} value={form.code} required minLength={3} maxLength={24}
                   onChange={e => setzen('code', codeVorschlag(e.target.value))}
@@ -568,7 +568,7 @@ export default function AffiliatesPanel() {
                   </div>
                 </Feld>
               ) : (
-                <Feld label="Deckel je Paar (€)" hint="Was eine Vermittlung höchstens kostet — Auszahlung und Kundenvorteil zusammen.">
+                <Feld label="Deckel je Paar (€)" hint="Was eine Vermittlung höchstens kostet, Auszahlung und Kundenvorteil zusammen.">
                   <input type="number" step="1" min="0" className={eingabe} value={form.cap_per_shoe} onChange={e => setzen('cap_per_shoe', e.target.value)} />
                 </Feld>
               )}
@@ -580,7 +580,7 @@ export default function AffiliatesPanel() {
                 </select>
               </Feld>
               {form.customer_benefit === 'discount' && (
-                <Feld label="Nachlass (%)" hint={`Wirkt im Konfigurator, ohne dass der Kunde etwas eingibt. Höchstens ${euro(topfVon(form, 340))} je Paar — mehr gibt der Topf nicht her.`}>
+                <Feld label="Nachlass (%)" hint={`Wirkt im Konfigurator, ohne dass der Kunde etwas eingibt. Höchstens ${euro(topfVon(form, 340))} je Paar, mehr gibt der Topf nicht her.`}>
                   <input type="number" step="1" min="0" max="100" className={eingabe} value={form.customer_discount_pct} onChange={e => setzen('customer_discount_pct', e.target.value)} />
                 </Feld>
               )}
@@ -609,7 +609,7 @@ export default function AffiliatesPanel() {
               <div className="mt-5 pt-4 border-t border-black/[0.08]">
                 <p className="text-[10px] uppercase tracking-[0.14em] text-black/40 mb-1">Geprüft und festgeschrieben</p>
                 <p className="text-[10px] text-black/35 mb-2.5 leading-relaxed max-w-xl">
-                  Was Sie hier sperren, kann der Affiliate nicht mehr selbst ändern — er sieht
+                  Was Sie hier sperren, kann der Affiliate nicht mehr selbst ändern, er sieht
                   einen Hinweis und wird gebeten, sich zu melden. Sie selbst ändern es
                   weiterhin oben in dieser Maske.
                 </p>

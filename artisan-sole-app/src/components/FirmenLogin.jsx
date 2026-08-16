@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom'
 import { LogIn, Clock } from 'lucide-react'
 import { FIRMENBEREICH_OFFEN } from '../lib/freigaben'
 
-const HINWEIS = 'Der Firmenbereich öffnet in Kürze. Schreiben Sie uns — wir melden uns, sobald er steht.'
+const HINWEIS = 'Der Firmenbereich öffnet in Kürze. Schreiben Sie uns, wir melden uns, sobald er steht.'
 
 export default function FirmenLogin({ className = '', groesse = 15, children }) {
   const [offen, setOffen] = useState(false)

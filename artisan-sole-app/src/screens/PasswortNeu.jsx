@@ -85,7 +85,7 @@ export default function PasswortNeu() {
       <div>
         <KeyRound size={28} strokeWidth={0.9} className="text-black/20 mb-4" />
         <p className="text-[14px] text-black/60 font-light leading-relaxed">
-          Ihr neues Passwort gilt. Alle offenen Sitzungen wurden beendet —
+          Ihr neues Passwort gilt. Alle offenen Sitzungen wurden beendet,
           falls jemand anderes an Ihrem Konto war, ist er jetzt draußen.
         </p>
         <Link

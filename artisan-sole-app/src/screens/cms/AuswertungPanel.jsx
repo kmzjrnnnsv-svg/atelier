@@ -128,7 +128,7 @@ function Bestand() {
           <AlertTriangle size={13} strokeWidth={1.4} className="text-amber-700 mt-0.5 flex-shrink-0" />
           <p className="text-[11px] text-amber-900 font-light leading-relaxed">
             Bei {ungefuehrt} von {zeilen.length} Express-Modellen wird kein Bestand geführt. Diese
-            Modelle nehmen unbegrenzt Bestellungen an — die Zusage „rund zwei Wochen"
+            Modelle nehmen unbegrenzt Bestellungen an, die Zusage „rund zwei Wochen"
             ist dort nicht gedeckt. Den Bestand setzen Sie unter <em>Schuhe</em> am Modell.
           </p>
         </div>

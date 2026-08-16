@@ -164,7 +164,7 @@ export default function HealthInfo() {
           <div>
             <p className="text-[8px] text-teal-400" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Die Lösung</p>
             <p className="text-[13px] text-white leading-tight mt-0.5">3D Foot Scan starten</p>
-            <p className="text-[9px] text-white/35 mt-1">Maßgefertigte Schuhe, perfekte Passform garantiert.</p>
+            <p className="text-[9px] text-white/35 mt-1">Custom Made Schuhe, perfekte Passform garantiert.</p>
           </div>
           <div className="w-9 h-9 flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(45,212,191,0.15)' }}>
             <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-teal-400" fill="none" stroke="currentColor" strokeWidth="1.5">

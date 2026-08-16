@@ -36,11 +36,11 @@
 /** Die drei Saisons, in der Reihenfolge, in der sie im Laden stehen. */
 export const SAISONS = [
   { key: 'summer', label: 'Sommer',     kurz: 'Frühling & Sommer',
-    text: 'Leichte Machart, ungefüttert oder dünn gefüttert — für warme Tage.' },
+    text: 'Leichte Machart, ungefüttert oder dünn gefüttert, für warme Tage.' },
   { key: 'winter', label: 'Winter',     kurz: 'Herbst & Winter',
     text: 'Über dem Knöchel, geschlossen, mit Profil unter der Sohle.' },
   { key: 'all',    label: 'Ganzjährig', kurz: 'Das ganze Jahr',
-    text: 'Trägt sich zu jeder Jahreszeit — die Schuhe, die immer gehen.' },
+    text: 'Trägt sich zu jeder Jahreszeit, die Schuhe, die immer gehen.' },
 ]
 
 export const SAISON_KEYS = SAISONS.map(s => s.key)

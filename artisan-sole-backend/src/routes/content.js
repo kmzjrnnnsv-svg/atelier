@@ -220,7 +220,7 @@ export const shoesRouter      = makeContentRouter('shoes', shoeValidators, {
         throw new SchreibAbbruch(409, {
           error: 'SHOE_NAME_DOPPELT',
           detail: `„${belegt.name}" gibt es bereits (Modell Nr. ${belegt.id}). `
-            + 'Zwei Modelle mit demselben Namen wären im Laden nicht auseinanderzuhalten — '
+            + 'Zwei Modelle mit demselben Namen wären im Laden nicht auseinanderzuhalten, '
             + 'bitte einen anderen Namen wählen oder das vorhandene Modell bearbeiten.',
           conflictId: belegt.id,
         })

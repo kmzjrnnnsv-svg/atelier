@@ -102,7 +102,7 @@ export async function seedDatabase(db) {
   const isProd = process.env.NODE_ENV === 'production'
   if (isProd && !process.env.SEED_ADMIN_PASSWORD) {
     throw new Error(
-      'SEED_ADMIN_PASSWORD ist nicht gesetzt — in Produktion wird kein Admin mit ' +
+      'SEED_ADMIN_PASSWORD ist nicht gesetzt, in Produktion wird kein Admin mit ' +
       'Standardpasswort angelegt. Bitte SEED_ADMIN_EMAIL und SEED_ADMIN_PASSWORD setzen.'
     )
   }
@@ -368,7 +368,7 @@ function seedConfiguratorOptions(db) {
     INSERT INTO option_groups (key, label, description, ui_type, required, sort_order)
     VALUES (?, ?, ?, ?, ?, ?)
     -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
-    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- CMS pflegt, Bezeichnung, Beschreibung, Farbwert, Sortierung, bleibt
     -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
     -- schreiben.
     ON CONFLICT(key) DO UPDATE SET
@@ -540,7 +540,7 @@ export function seedExtendedCatalog(db) {
     INSERT INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
     VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
     -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
-    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- CMS pflegt, Bezeichnung, Beschreibung, Farbwert, Sortierung, bleibt
     -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
     -- schreiben.
     ON CONFLICT(key) DO UPDATE SET family=excluded.family,
@@ -605,7 +605,7 @@ export function seedExtendedCatalog(db) {
     INSERT INTO shoe_colors (key, hex, name, available, rating, sort_order, applicable_materials)
     VALUES (?, ?, ?, 1, ?, ?, ?)
     -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
-    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- CMS pflegt, Bezeichnung, Beschreibung, Farbwert, Sortierung, bleibt
     -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
     -- schreiben.
     ON CONFLICT(key) DO UPDATE SET applicable_materials=excluded.applicable_materials,
@@ -625,7 +625,7 @@ export function seedExtendedCatalog(db) {
     INSERT INTO option_groups (key, label, description, ui_type, required, sort_order)
     VALUES (?, ?, ?, ?, ?, ?)
     -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
-    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- CMS pflegt, Bezeichnung, Beschreibung, Farbwert, Sortierung, bleibt
     -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
     -- schreiben.
     ON CONFLICT(key) DO UPDATE SET ui_type=excluded.ui_type, required=excluded.required,
@@ -693,7 +693,7 @@ export function seedExtendedCatalog(db) {
     -- pflegt der Betreiber im CMS, und ein Serverstart darf sie nicht
     -- zurueckschreiben.
     -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
-    -- CMS pflegt — Bezeichnung, Beschreibung, Farbwert, Sortierung —, bleibt
+    -- CMS pflegt, Bezeichnung, Beschreibung, Farbwert, Sortierung, bleibt
     -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
     -- schreiben.
     ON CONFLICT(group_id, key) DO UPDATE SET applicable_categories=excluded.applicable_categories,
@@ -1524,10 +1524,10 @@ function seedFaqs(db) {
       a: 'Schreiben Sie uns über den Nachrichtenbereich in der App (das Sprechblasen-Symbol oben) oder an kontakt@artisansole.com. Wir sperren Ihr Konto daraufhin sofort und löschen es nach dreißig Tagen endgültig. Die Frist ist Ihre Sicherheit: Überlegen Sie es sich anders, holen wir das Konto mit allen Bestellungen zurück. Auf ausdrücklichen Wunsch löschen wir auch sofort. Dasselbe gilt für Firmen- und Affiliate-Konten.',
       category: 'Konto & Daten', sort_order: 20 },
     { q: 'Was passiert mit meinen Fußmaßen, wenn ich mein Konto lösche?',
-      a: 'Ihre Maße und Passformen werden mit dem Konto gelöscht. Was bleibt, sind anonymisierte Maß- und Formdaten, mit denen wir unser Passform-Verfahren weiterentwickeln — ohne Namen, Anschrift, E-Mail oder irgendeine Kennung, über die sich ein Bezug zu Ihnen herstellen ließe. Sie sind damit keine personenbezogenen Daten mehr und lassen sich Ihnen auch nicht wieder zuordnen.',
+      a: 'Ihre Maße und Passformen werden mit dem Konto gelöscht. Was bleibt, sind anonymisierte Maß- und Formdaten, mit denen wir unser Passform-Verfahren weiterentwickeln, ohne Namen, Anschrift, E-Mail oder irgendeine Kennung, über die sich ein Bezug zu Ihnen herstellen ließe. Sie sind damit keine personenbezogenen Daten mehr und lassen sich Ihnen auch nicht wieder zuordnen.',
       category: 'Konto & Daten', sort_order: 21 },
     { q: 'Bleiben meine Bestellungen nach der Löschung erhalten?',
-      a: 'Die Bestellungen selbst ja — sie unterliegen handels- und steuerrechtlichen Aufbewahrungsfristen und dürfen nicht mit dem Konto verschwinden. Ihre Verbindung zu Ihnen verlieren sie aber: Anschrift, Maße und Notizen werden entfernt. Was bleibt, ist eine Bestellung ohne Person dahinter.',
+      a: 'Die Bestellungen selbst ja, sie unterliegen handels- und steuerrechtlichen Aufbewahrungsfristen und dürfen nicht mit dem Konto verschwinden. Ihre Verbindung zu Ihnen verlieren sie aber: Anschrift, Maße und Notizen werden entfernt. Was bleibt, ist eine Bestellung ohne Person dahinter.',
       category: 'Konto & Daten', sort_order: 22 },
     { q: 'Wie genau ist die Passform?',
       a: 'Nach der Vermessung Ihres Fußes wählen wir aus hunderten Leisten die exakt passende aus. So erreichen wir eine Passform von bis zu 100 % auf den Fuß, ganz ohne klassische Konfektionsgröße.',
@@ -1544,9 +1544,10 @@ function seedFaqs(db) {
 
 // ── Einmalige, idempotente Bereinigung bestehender DB-Texte ────────────────
 // Stellt bereits geseedete Inhalte (E-Mail-Templates, Konfigurator-Optionen,
-// Artikel, FAQ, Material-/Farb-Tipps) auf die neue Sprache um: "Maßschuh/
-// Maßanfertigung/Bespoke" → "Custom Made", Lieferzeit → "ca. 4 Wochen nach
-// Zahlungseingang" und entfernt Gedankenstriche. "maßgefertigt" bleibt.
+// Artikel, FAQ, Material-/Farb-Tipps, Treuestufen, Seitentexte) auf die neue
+// Sprache um: "Maßschuh/Maßanfertigung/Bespoke/maßgefertigt" → "Custom Made",
+// Lieferzeit → "ca. 4 Wochen nach Zahlungseingang" und entfernt
+// Gedankenstriche.
 // Achtung: überschreibt entsprechende Stellen auch bei manuellen CMS-Edits.
 function cleanLegacyText(s, isSubject) {
   if (s == null) return s
@@ -1557,21 +1558,66 @@ function cleanLegacyText(s, isSubject) {
     .replace(/Maßschuh\b/g, 'Custom-made Schuh')
     .replace(/Maßanfertigungen/g, 'Custom-Made-Anfertigungen')
     .replace(/Maßanfertigung/g, 'Custom Made')
+    // „maßgefertigt" beugt sich, „Custom Made" nicht — es steht unverändert
+    // vor dem Substantiv, wie „prima" oder „rosa". In allen Fällen bis auf
+    // einen geht das auf, weil das Substantiv sein Kennzeichen selbst trägt.
+    //
+    // Die Ausnahme ist der Genitiv Plural: In „die Präzision maßgefertigter
+    // Schuhe" steckt der Fall AM ADJEKTIV. Fiele die Endung weg, stünde dort
+    // ein Satz ohne Fall. Diese eine Wendung wird deshalb ganz ersetzt —
+    // „von Custom Made Schuhen", Dativ statt Genitiv. Sie kommt in den
+    // geseedeten Texten genau zweimal vor, beide Male mit „Schuhe".
+    .replace(/\bma(?:ß|ss)gefertigter Schuhe\b/g, 'von Custom Made Schuhen')
+    .replace(/\bMa(?:ß|ss)gefertigter Schuhe\b/g, 'Von Custom Made Schuhen')
+    .replace(/\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/g, 'Custom Made')
     .replace(/Bespoke Footwear/g, 'Custom Made Footwear')
     .replace(/Bespoke/g, 'Custom Made')
     .replace(/6\s*[–-]\s*8\s*Wochen/g, 'ca. 4 Wochen nach Zahlungseingang')
     .replace(/(\d)\s*–\s*(\d)/g, '$1 bis $2')
+    // Der schließende Strich eines Paares steht oft direkt vor einem Komma:
+    // „… im selben Ton oder als Kontrast —, die Naht …". Er fällt ersatzlos
+    // weg, sonst stünden dort zwei Kommas hintereinander. Muss VOR der
+    // allgemeinen Regel stehen, die ein Komma einsetzen würde.
+    .replace(/\s*[–—]\s*(?=[,;:.!?])/g, '')
     .replace(/\s[–—]\s/g, isSubject ? ' · ' : ', ')
+    .replace(/,\s+,\s*/g, ', ')
 }
 
-function cleanupLegacyWording(db) {
+// Ausgeführt beim Start; ausgeführt auch von `tests/wortlaut.mjs`, das einen
+// Bestand mit altem Wortlaut nachstellt und den Durchgang darüber laufen
+// lässt. Deshalb nach außen sichtbar.
+export function cleanupLegacyWording(db) {
   const TARGETS = [
     { table: 'email_templates', pk: 'type', cols: ['name', 'description', 'subject', 'intro', 'body'], subjectCols: ['subject'] },
     { table: 'faqs',            pk: 'id',   cols: ['question', 'answer'] },
     { table: 'options',         pk: 'id',   cols: ['label', 'description'] },
     { table: 'shoe_materials',  pk: 'id',   cols: ['label', 'sub', 'tip'] },
     { table: 'shoe_colors',     pk: 'id',   cols: ['name', 'tip', 'pairs_with'] },
+    // Die Treuestufen tragen den Begriff in ihrer Beschreibung und in der
+    // Vorteilsliste. `benefits` ist eine JSON-Liste — ein Textersatz darin
+    // ist unbedenklich, weil weder der alte noch der neue Wortlaut ein
+    // Anführungszeichen oder einen Gegenschrägstrich enthält.
+    { table: 'loyalty_tiers',   pk: 'id',   cols: ['description', 'benefits'] },
+    // Die Texte, die auf einer Kachel, einer Modellseite oder unter einer
+    // Auswahlgruppe stehen. Sie tragen die meisten Gedankenstriche im
+    // Bestand — siebenundzwanzig allein in den Modellbeschreibungen.
+    { table: 'shoes',           pk: 'id',   cols: ['tagline', 'description'] },
+    { table: 'accessories',     pk: 'id',   cols: ['description'] },
+    { table: 'option_groups',   pk: 'id',   cols: ['description'] },
   ]
+  // Zwei Tabellen stehen ABSICHTLICH nicht in dieser Liste:
+  //
+  // `legal_docs` — AGB, Datenschutz, Impressum. Das sind Vertragsdokumente.
+  //   Ein Server, der beim Start den Wortlaut der AGB ändert, ist kein
+  //   Bereinigungslauf, sondern eine stille Vertragsänderung; und die
+  //   Verwaltung könnte hinterher nicht mehr sagen, welche Fassung sie
+  //   veröffentlicht hat. Die Dateien unter `rechtstexte/` sind umgestellt,
+  //   ein frischer Start veröffentlicht sie so. Im Bestand meldet das CMS
+  //   die Abweichung, und ein Mensch übernimmt sie mit einem Klick — genau
+  //   der Weg, den `legal.js` dafür vorsieht.
+  //
+  // `audit_log` — was dort steht, ist festgehalten. Ein Protokoll, das
+  //   nachträglich umformuliert wird, ist keines mehr.
   let changed = 0
   const tableExists = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
   for (const t of TARGETS) {
@@ -1589,6 +1635,35 @@ function cleanupLegacyWording(db) {
       }
     })()
   }
+  // Die Einstellungen bekommen einen eigenen, engeren Durchgang.
+  //
+  // Ihr `value` ist meist JSON — Footer-Spalten, Seitentexte, Bankdaten. Die
+  // volle Bereinigung dort laufen zu lassen wäre gefährlich: Sie zieht auch
+  // Gedankenstriche zu Kommas, und in einem Footer-Eintrag oder einer IBAN
+  // hat das nichts zu suchen. Ersetzt wird deshalb nur der eine Begriff.
+  //
+  // Ohne diesen Durchgang bliebe „Maßgefertigt" als Auszeichnung unter jedem
+  // Konfigurator stehen: Der Text liegt unter `product-texts` und wird aus
+  // dem Programm nur noch geholt, wenn in der Datenbank nichts steht.
+  try {
+    const zeilen = db.prepare('SELECT key, value FROM settings').all()
+    const upd = db.prepare("UPDATE settings SET value = ?, updated_at = datetime('now') WHERE key = ?")
+    let n = 0
+    db.transaction(() => {
+      for (const z of zeilen) {
+        const neu = String(z.value ?? '')
+          .replace(/\bma(?:ß|ss)gefertigter Schuhe\b/g, 'von Custom Made Schuhen')
+          .replace(/\bMa(?:ß|ss)gefertigter Schuhe\b/g, 'Von Custom Made Schuhen')
+          .replace(/\b[Mm]a(?:ß|ss)gefertigt(?:e[rsnm]?)?\b/g, 'Custom Made')
+          // Der Gedankenstrich, aber nur zwischen Wörtern: In einer IBAN oder
+          // einer Telefonnummer steht er als Trenner und muss bleiben.
+          .replace(/(\p{L}|[.!?)„“"])\s+[—–]\s+(?=\p{L}|[„“"])/gu, '$1, ')
+        if (neu !== z.value) { upd.run(neu, z.key); n++ }
+      }
+    })()
+    changed += n
+  } catch (e) { console.error('[Bereinigung Einstellungen]', e.message) }
+
   if (changed) console.log(`✅ Bereinigt: ${changed} DB-Texte (Custom-Made-Wording, keine Gedankenstriche)`)
 }
 
@@ -1615,35 +1690,35 @@ function cleanupLegacyWording(db) {
 
 const MODELL_BESCHREIBUNGEN = {
   'heritage oxford':
-    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, dadurch liegt der Schaft glatt am Fuß und die Linie bleibt ruhig. Vollnarbiges Kalbsleder ist die dichteste Schicht der Haut — es nimmt mit den Jahren die Bewegung Ihres Fußes an, statt sich abzunutzen. Ein Paar, das Sie nicht ersetzen, sondern begleiten werden.',
+    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, dadurch liegt der Schaft glatt am Fuß und die Linie bleibt ruhig. Vollnarbiges Kalbsleder ist die dichteste Schicht der Haut, es nimmt mit den Jahren die Bewegung Ihres Fußes an, statt sich abzunutzen. Ein Paar, das Sie nicht ersetzen, sondern begleiten werden.',
   'balmoral cap-toe':
     'Die umlaufende Naht über dem Rist gibt dem Balmoral seine klare Zäsur, die Kappe darüber fasst die Spitze. Shell Cordovan stammt aus einer besonders dichten Lederschicht: Es knittert nicht, es legt sich in weiche Wellen und gewinnt dabei an Tiefe. Ein Schuh für die Anlässe, an die Sie sich später erinnern.',
   'riviera loafer':
-    'Ein Loafer kommt ohne Schnürung aus — er hält allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir Ihre Maße. Weiches Nubuk nimmt dem Auftritt die Strenge und macht ihn leicht: für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
+    'Ein Loafer kommt ohne Schnürung aus, er hält allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir Ihre Maße. Weiches Nubuk nimmt dem Auftritt die Strenge und macht ihn leicht: für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
   'venetian penny':
-    'Der Penny trägt einen schmalen Riegel über dem Blatt, sonst nichts — der venezianische Schnitt verzichtet auf jede weitere Zutat. Brüniertes Kalbsleder wird an Spitze und Ferse von Hand nachgedunkelt, dadurch bekommt die Farbe Tiefe statt Fläche. Ein Schuh, der leiser spricht und länger bleibt.',
+    'Der Penny trägt einen schmalen Riegel über dem Blatt, sonst nichts, der venezianische Schnitt verzichtet auf jede weitere Zutat. Brüniertes Kalbsleder wird an Spitze und Ferse von Hand nachgedunkelt, dadurch bekommt die Farbe Tiefe statt Fläche. Ein Schuh, der leiser spricht und länger bleibt.',
   'monaco derby':
     'Beim Derby sitzen die Schnürlaschen offen auf dem Blatt: Das gibt dem Spann Raum und macht den Schuh auch für kräftigere Füße bequem. Lackleder fängt das Licht des Abends ein, ohne aufdringlich zu werden. Für den festlichen Auftritt, der Ihnen leichtfallen darf.',
   'brogue derby':
     'Die Lochmuster des Brogue stammen aus dem irischen Hochland, wo sie das Wasser aus dem Leder ließen; heute sind sie Zierde und brechen die Strenge der Form auf. Genarbtes Leder verzeiht Regen und Alltag, ohne müde zu wirken. Ein Begleiter, der schöner wird, je öfter Sie ihn tragen.',
   'chelsea boot':
-    'Der Chelsea hat keinen Verschluss — zwei elastische Einsätze halten ihn, ein Zug an der hinteren Lasche genügt. Cognacfarbenes Cordovan gibt dem knappen Schaft Wärme und einen Glanz, der von innen zu kommen scheint. Angezogen in Sekunden, getragen über Jahre.',
+    'Der Chelsea hat keinen Verschluss, zwei elastische Einsätze halten ihn, ein Zug an der hinteren Lasche genügt. Cognacfarbenes Cordovan gibt dem knappen Schaft Wärme und einen Glanz, der von innen zu kommen scheint. Angezogen in Sekunden, getragen über Jahre.',
   'jodhpur boot':
     'Der Riemen um den Knöchel kommt aus dem Reitsport Rajasthans: Er hält den Schaft dort, wo ein Reißverschluss ihn nur öffnen würde. Antikisiertes Kalbsleder wird von Hand schattiert, deshalb gleicht kein Paar dem anderen. Für alle, die eine Spur eigenwilliger auftreten möchten.',
   'artisan runner':
     'Ein Sneaker aus der Rahmenwerkstatt: gefertigt wie ein Herrenschuh, gedacht für lange Wege. Die Perforation lässt den Fuß atmen, die leichte Sohle federt jeden Schritt ab. Er zeigt, dass Bequemlichkeit keine Ausrede sein muss.',
   'court blanc':
-    'Weiß ist der ehrlichste Ton, den ein Schuh tragen kann — er zeigt jede Naht, deshalb muss jede sitzen. Vollnarbiges weißes Kalbsleder lässt sich reinigen und altert würdig, statt zu vergilben. Der Schuh, der zu fast allem passt, ohne beliebig zu werden.',
+    'Weiß ist der ehrlichste Ton, den ein Schuh tragen kann, er zeigt jede Naht, deshalb muss jede sitzen. Vollnarbiges weißes Kalbsleder lässt sich reinigen und altert würdig, statt zu vergilben. Der Schuh, der zu fast allem passt, ohne beliebig zu werden.',
   'double monk':
-    'Zwei Schnallen statt Schnürsenkel: Der Double Monk stammt aus den Klöstern der Alpen, wo Schuhe schnell sitzen und lange halten mussten. Brüniertes Kalbsleder bringt Bewegung in die geschlossene Fläche. Wer ihn trägt, hat sich entschieden — und das sieht man ihm an.',
+    'Zwei Schnallen statt Schnürsenkel: Der Double Monk stammt aus den Klöstern der Alpen, wo Schuhe schnell sitzen und lange halten mussten. Brüniertes Kalbsleder bringt Bewegung in die geschlossene Fläche. Wer ihn trägt, hat sich entschieden, und das sieht man ihm an.',
   'single monk strap':
-    'Eine Schnalle, ein Riemen, eine klare Linie — der einfache Monk ist die zurückhaltendere Form des doppelten. Die geprägte Narbung fängt das Licht in feinen Kanten, ohne zu glänzen. Für den Auftritt, der Aufmerksamkeit verdient und nicht darum bittet.',
+    'Eine Schnalle, ein Riemen, eine klare Linie, der einfache Monk ist die zurückhaltendere Form des doppelten. Die geprägte Narbung fängt das Licht in feinen Kanten, ohne zu glänzen. Für den Auftritt, der Aufmerksamkeit verdient und nicht darum bittet.',
   'belgian slipper':
-    'Der Belgian Slipper ist der weichste Schuh im Haus: keine Schnürung, kaum Aufbau, ein flacher Schaft, der sich um den Fuß legt statt ihn zu fassen. Aus den Wohnräumen kam er in die Stadt und hat sich seine Leichtigkeit bewahrt. Schlicht, mit Schleife oder mit Quasten — für Abende, an denen nichts drücken soll.',
+    'Der Belgian Slipper ist der weichste Schuh im Haus: keine Schnürung, kaum Aufbau, ein flacher Schaft, der sich um den Fuß legt statt ihn zu fassen. Aus den Wohnräumen kam er in die Stadt und hat sich seine Leichtigkeit bewahrt. Schlicht, mit Schleife oder mit Quasten, für Abende, an denen nichts drücken soll.',
   'wellington':
-    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: Der Wellington kommt ohne Schnürung aus und hält allein über die Passform — deshalb zählen hier Ihre Maße besonders. Schlicht bleibt er streng, mit Quasten, Albert-Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
+    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: Der Wellington kommt ohne Schnürung aus und hält allein über die Passform, deshalb zählen hier Ihre Maße besonders. Schlicht bleibt er streng, mit Quasten, Albert-Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
   'drake':
-    'Kein Verschluss, keine Ösen: Beim Drake steigen Sie hinein und gehen los. Was ihn ausmacht, entscheiden Sie — glatt belassen, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
+    'Kein Verschluss, keine Ösen: Beim Drake steigen Sie hinein und gehen los. Was ihn ausmacht, entscheiden Sie, glatt belassen, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
   'laceless trainer':
     'Ein Sneaker ohne Schnürung: Die Form allein hält ihn am Fuß, weshalb hier jeder Millimeter zählt. Weiches Veloursleder macht ihn leicht, gefertigt wird er dennoch wie ein Herrenschuh. Für Wege, auf denen es schnell gehen darf, ohne nachlässig zu wirken.',
   'mov flex sport':
@@ -1656,15 +1731,15 @@ const MODELL_BESCHREIBUNGEN = {
 
 const KATEGORIE_BESCHREIBUNGEN = {
   OXFORD:
-    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, der Schaft liegt glatt am Fuß, die Linie bleibt ruhig. Das ist die formellste Machart des Schuhbaus — und die, die am meisten von einer genauen Passform lebt. Ein Paar, das mit den Jahren Ihre Bewegung annimmt.',
+    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, der Schaft liegt glatt am Fuß, die Linie bleibt ruhig. Das ist die formellste Machart des Schuhbaus, und die, die am meisten von einer genauen Passform lebt. Ein Paar, das mit den Jahren Ihre Bewegung annimmt.',
   BALMORAL:
     'Die umlaufende Naht über dem Rist trennt Vorder- von Hinterschaft und gibt dem Balmoral seine klare Zäsur. Diese eine Linie streckt den Fuß und lässt ihn schlanker wirken. Ein Schuh für die Anlässe, an die Sie sich später erinnern.',
   WHOLECUT:
-    'Ein Wholecut ist aus einem einzigen Stück Leder gearbeitet — eine Naht an der Ferse, sonst keine. Das gelingt nur mit einer makellosen Haut, weshalb dafür wenige überhaupt infrage kommen. Die ruhigste Linie, die ein Schuh haben kann.',
+    'Ein Wholecut ist aus einem einzigen Stück Leder gearbeitet, eine Naht an der Ferse, sonst keine. Das gelingt nur mit einer makellosen Haut, weshalb dafür wenige überhaupt infrage kommen. Die ruhigste Linie, die ein Schuh haben kann.',
   DERBY:
     'Beim Derby liegen die Schnürlaschen offen auf dem Blatt. Das gibt dem Spann Raum, macht den Schuh auch für kräftigere Füße bequem und lässt sich über den Tag nachjustieren. Formell genug für das Büro, gelassen genug für alles danach.',
   LOAFER:
-    'Ein Loafer hält ohne Schnürung — allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir Ihre Maße. Für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
+    'Ein Loafer hält ohne Schnürung, allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir Ihre Maße. Für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
   MONK:
     'Statt Schnürsenkeln hält den Monk eine Schnalle. Die Form stammt aus den Klöstern der Alpen, wo Schuhe schnell sitzen und lange halten mussten. Ein Schuh, der auffällt, ohne laut zu sein.',
   DOUBLE_MONK:
@@ -1672,7 +1747,7 @@ const KATEGORIE_BESCHREIBUNGEN = {
   CHELSEA:
     'Der Chelsea kommt ohne Verschluss aus: Zwei elastische Einsätze halten ihn, ein Zug an der hinteren Lasche genügt. Der knappe Schaft setzt die Linie des Beins fort, statt sie zu unterbrechen. Angezogen in Sekunden, getragen über Jahre.',
   CHUKKA:
-    'Der Chukka ist der leichteste unter den Stiefeln: zwei oder drei Ösenpaare, ein knapper Schaft, sonst nichts. Er entstand für die Pausen zwischen den Spielabschnitten des Polos und hat sich deren Gelassenheit bewahrt. Der Schuh für die Übergänge — zwischen den Jahreszeiten wie zwischen den Anlässen.',
+    'Der Chukka ist der leichteste unter den Stiefeln: zwei oder drei Ösenpaare, ein knapper Schaft, sonst nichts. Er entstand für die Pausen zwischen den Spielabschnitten des Polos und hat sich deren Gelassenheit bewahrt. Der Schuh für die Übergänge, zwischen den Jahreszeiten wie zwischen den Anlässen.',
   BOOT:
     'Ein Stiefel schützt den Knöchel, ohne ihn festzustellen: Der Schaft endet dort, wo die Bewegung beginnt. Durchgenähte Konstruktion und kräftigeres Leder machen ihn wetterfest, ohne ihn schwer wirken zu lassen. Für die Jahreszeit, in der man den Weg nicht immer aussucht.',
   SNEAKER:
@@ -1682,9 +1757,9 @@ const KATEGORIE_BESCHREIBUNGEN = {
   BELGIAN_SLIPPER:
     'Der Belgian Slipper ist die weichste Machart des Hauses: keine Schnürung, kaum Aufbau, ein flacher Schaft, der sich um den Fuß legt statt ihn zu fassen. Aus den Wohnräumen kam er in die Stadt und hat sich seine Leichtigkeit bewahrt. Für Abende, an denen nichts drücken soll.',
   WELLINGTON:
-    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: ohne Schnürung, gehalten allein von der Passform — deshalb zählen hier Ihre Maße besonders. Schlicht bleibt er streng, mit Quasten, Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
+    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: ohne Schnürung, gehalten allein von der Passform, deshalb zählen hier Ihre Maße besonders. Schlicht bleibt er streng, mit Quasten, Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
   DRAKE:
-    'Kein Verschluss, keine Ösen: Sie steigen hinein und gehen los. Wie viel Schmuck er trägt, entscheiden Sie — glatt, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
+    'Kein Verschluss, keine Ösen: Sie steigen hinein und gehen los. Wie viel Schmuck er trägt, entscheiden Sie, glatt, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
   LACELESS_TRAINER:
     'Ein Sneaker ohne Schnürung: Die Form allein hält ihn am Fuß, weshalb hier jeder Millimeter zählt. Weiches Leder macht ihn leicht, gefertigt wird er dennoch wie ein Herrenschuh. Für Wege, auf denen es schnell gehen darf, ohne nachlässig zu wirken.',
   SNEAKER_BOOT:
@@ -1991,7 +2066,7 @@ const MOKASSIN_MODELL = {
   color: '#3b2314',
   tag: 'NEW',
   tagline: 'Der Fahrer-Mokassin, weich gearbeitet.',
-  description: 'Ungefütterter Mokassin mit umlaufender Naht und Noppensohle — der Schuh für alles, was kein Anzug ist. Sie wählen das Leder aus Calf Suede, Nappa oder Fullgrain, dazu Farbe, Nahtfarbe, Futter, Weichfutter, Kragen und das Vorderteil: schlicht, mit Schleife oder mit Maske. Gefertigt auf dem Drivers-Leisten in Ihrer Länge und Weite.',
+  description: 'Ungefütterter Mokassin mit umlaufender Naht und Noppensohle, der Schuh für alles, was kein Anzug ist. Sie wählen das Leder aus Calf Suede, Nappa oder Fullgrain, dazu Farbe, Nahtfarbe, Futter, Weichfutter, Kragen und das Vorderteil: schlicht, mit Schleife oder mit Maske. Gefertigt auf dem Drivers-Leisten in Ihrer Länge und Weite.',
 }
 
 /**
@@ -2203,7 +2278,7 @@ export function seedMocFlexSport(db) {
     db.prepare(`
       INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
       VALUES ('unlined_suede', 'Unlined Suede', 'Aesthetic', '#c8a97e', 1, ?, 'good', 23, 'aesthetic')
-    `).run('Ungefüttertes Kalbsvelours, weich und leicht. Ohne Futter legt sich der Schuh unmittelbar an den Fuß — am besten bei trockenem Wetter.')
+    `).run('Ungefüttertes Kalbsvelours, weich und leicht. Ohne Futter legt sich der Schuh unmittelbar an den Fuß, am besten bei trockenem Wetter.')
 
     // ── 2. Die Farben ───────────────────────────────────────────────────
     // Acht davon gibt es schon (sie hängen am Driver); ihnen wird das neue
@@ -2311,7 +2386,7 @@ export function seedMocFlexSport(db) {
       WHERE id = ?
     `).run(KAT,
       'Der Mokassin für den Tag, auf weißer Sohle.',
-      'Ungefütterter Mokassin aus Kalbsvelours auf einer leichten weißen Laufsohle — der Schuh für lange Tage, an denen nichts drücken darf. '
+      'Ungefütterter Mokassin aus Kalbsvelours auf einer leichten weißen Laufsohle, der Schuh für lange Tage, an denen nichts drücken darf. '
       + 'Sie wählen die Farbe aus neun Wildledertönen, dazu die Naht (Ton in Ton oder als Kontrast), das Futter und den Aufsatz auf dem Spann: '
       + 'ohne, mit Metallbügel, mit Maske oder mit Quasten. Beim Metallbügel bestimmen Sie auch den Ton des Metalls. '
       + 'Gefertigt auf dem Moc-Sport-Leisten in Ihrer Länge und Weite.',
@@ -2414,7 +2489,7 @@ export function seedMocFlexSportBoot(db) {
     db.prepare(`
       INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
       VALUES ('lined_suede', 'Lined Suede', 'Aesthetic', '#6f6a63', 1, ?, 'good', 24, 'aesthetic')
-    `).run('Gefüttertes Kalbsvelours. Dieselbe Oberfläche wie beim flachen Mokassin, mit Futter — für den höheren Schnitt und die kühlere Jahreszeit.')
+    `).run('Gefüttertes Kalbsvelours. Dieselbe Oberfläche wie beim flachen Mokassin, mit Futter, für den höheren Schnitt und die kühlere Jahreszeit.')
 
     // Dieselben neun Töne wie am flachen Mokassin: Der Hersteller führt für
     // beide dieselbe Reihe, und ein Kunde, der beide nebeneinander trägt,
@@ -2442,7 +2517,7 @@ export function seedMocFlexSportBoot(db) {
     `)
 
     gruppeAnlegen.run('back_strap_color', 'Fersenriemen',
-      'Der Riemen über der Ferse — im Ton des Schafts oder als Kontrast.', 7)
+      'Der Riemen über der Ferse, im Ton des Schafts oder als Kontrast.', 7)
     const riemenId = gruppeId.get('back_strap_color')?.id
     if (riemenId) BOOT_RIEMEN.forEach(([k, l, hex], i) => wertAnlegen.run(riemenId, k, l, KAT, i, hex))
 
@@ -2504,7 +2579,7 @@ export function seedMocFlexSportBoot(db) {
     `).run(KAT,
       'Der Mokassin über dem Knöchel, auf weißer Sohle.',
       'Der höher geschnittene Bruder des Moc Flex Sport: gefüttertes Kalbsvelours über dem Knöchel, dieselbe leichte weiße Laufsohle. '
-      + 'Sie wählen die Farbe aus neun Wildledertönen, dazu den Riemen über der Ferse — im selben Ton oder als Kontrast —, '
+      + 'Sie wählen die Farbe aus neun Wildledertönen, dazu den Riemen über der Ferse, im selben Ton oder als Kontrast, '
       + 'die Naht aus sechzehn Farben und das Futter. Gefertigt auf dem Moc-Sport-Leisten in Ihrer Länge und Weite.',
       schuh.id)
 
@@ -2593,16 +2668,16 @@ function seedSaison(db) {
  * ══════════════════════════════════════════════════════════════════════════ */
 
 const GUERTEL_BESCHREIBUNG = [
-  'Gürtel aus demselben Leder wie Ihre Schuhe, in derselben Farbe — 3,5 cm breit, von Hand',
+  'Gürtel aus demselben Leder wie Ihre Schuhe, in derselben Farbe, 3,5 cm breit, von Hand',
   'auf Länge geschnitten und an den Kanten gebrannt.',
   '',
   'Sie wählen die Form der Schließe (eckig oder rund), den Metallton und die Länge. Bestellen',
   'Sie ihn zu einem Paar Schuhe, übernimmt er Lederart und Farbe von dort; bei Modellen mit',
-  'Schnalle — Monk und Double Monk — auch den Metallton, damit Schuh und Gürtel dasselbe',
+  'Schnalle, Monk und Double Monk, auch den Metallton, damit Schuh und Gürtel dasselbe',
   'Metall tragen.',
   '',
   'Die Länge wird von der Befestigung des Dorns bis zum mittleren Loch gemessen. Nach beiden',
-  'Seiten bleiben zwei weitere Löcher, je 3 cm — eine Größe daneben ist also noch zu tragen.',
+  'Seiten bleiben zwei weitere Löcher, je 3 cm, eine Größe daneben ist also noch zu tragen.',
 ].join(' ').replace(/\s+/g, ' ').replace(/ {2,}/g, ' ').trim()
 
 export function seedGuertel(db) {
@@ -2853,7 +2928,7 @@ function benenneSohlenGruppen(db) {
       key: 'sole_color',
       alt: ['Sohlenfarbe', 'Sohlen Color', 'Outsole'],
       label: 'Sohlenrand',
-      description: 'Die Kante der Sohle — das, was man von der Seite sieht.',
+      description: 'Die Kante der Sohle, das, was man von der Seite sieht.',
     },
     {
       key: 'sole_bottom_color',
@@ -2871,7 +2946,7 @@ function benenneSohlenGruppen(db) {
       .run(label, description, da.id)
     geaendert++
   }
-  if (geaendert) console.log(`✅ Umbenannt: ${geaendert} Sohlengruppe(n) — Sohlenrand und Laufsohle`)
+  if (geaendert) console.log(`✅ Umbenannt: ${geaendert} Sohlengruppe(n), Sohlenrand und Laufsohle`)
 }
 
 export function seedLegalDocs(db) {
@@ -2946,6 +3021,6 @@ export function seedLegalDocs(db) {
   }
   if (zurueckgehalten.length) {
     console.warn(`⚠️  Rechtstexte NICHT veröffentlicht, es fehlen noch Angaben: ${zurueckgehalten.join(', ')}`)
-    console.warn('    Platzhalter in rechtstexte/ ausfüllen — dann erscheinen sie beim nächsten Start.')
+    console.warn('    Platzhalter in rechtstexte/ ausfüllen, dann erscheinen sie beim nächsten Start.')
   }
 }

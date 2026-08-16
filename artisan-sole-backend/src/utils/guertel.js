@@ -56,10 +56,10 @@ export const GROESSEN_HILFE = {
     },
     {
       titel: 'Ohne Vorbild',
-      text: 'Messen Sie über der Hose dort, wo der Gürtel sitzt — durch die Schlaufen. Runden Sie auf die nächste Größe auf.',
+      text: 'Messen Sie über der Hose dort, wo der Gürtel sitzt, durch die Schlaufen. Runden Sie auf die nächste Größe auf.',
     },
   ],
-  hinweis: 'Der mittlere Dorn ist die Vorgabe. Nach beiden Seiten bleiben zwei Löcher Spiel, je 3 cm — eine Größe daneben ist also noch zu tragen.',
+  hinweis: 'Der mittlere Dorn ist die Vorgabe. Nach beiden Seiten bleiben zwei Löcher Spiel, je 3 cm, eine Größe daneben ist also noch zu tragen.',
 }
 
 /** Der Spielraum je Richtung in Zentimetern (zwei Löcher à 3 cm). */

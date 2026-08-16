@@ -27,7 +27,7 @@ const STUFEN = [
 const PROZESS = [
   { n: '01', t: 'Einladung',    d: 'Wir legen Ihr Konto an und schicken Ihnen den Link samt Ihrem Code.' },
   { n: '02', t: 'Aktivierung',  d: 'Passwort festlegen. Danach sind Sie in Ihrem Bereich angemeldet.' },
-  { n: '03', t: 'Angaben',      d: 'Anschrift, Geburtsdatum, Steuernummer und Bankverbindung — ohne sie kann nicht ausgezahlt werden.' },
+  { n: '03', t: 'Angaben',      d: 'Anschrift, Geburtsdatum, Steuernummer und Bankverbindung, ohne sie kann nicht ausgezahlt werden.' },
   { n: '04', t: 'Weitergeben',  d: 'Link oder QR-Code an Ihre Kontakte. Auch bestehende Kunden können darüber profitieren.' },
   { n: '05', t: 'Abrechnung',   d: 'Sind fünf Paare auszahlbar, rechnen wir ab, älteste zuerst. Der Rest zählt weiter.' },
 ]
@@ -101,7 +101,7 @@ export default function AffiliateOverview() {
           <p className={sectionLabel}>02 · Vergütung</p>
           <h2 className={h2cls}>Wie eine Provision reift</h2>
           <p className={`${lead} mt-4 max-w-xl`}>
-            Ein vermitteltes Paar wird nicht sofort ausgezahlt. Es durchläuft drei Stufen —
+            Ein vermitteltes Paar wird nicht sofort ausgezahlt. Es durchläuft drei Stufen,
             erst danach zählt es für eine Abrechnung. Wird zurückgegeben oder reklamiert,
             entfällt die Provision.
           </p>
@@ -121,7 +121,7 @@ export default function AffiliateOverview() {
           </p>
           <p className="text-[12px] text-stone-500 font-light leading-relaxed mt-4 max-w-xl">
             <span className="text-stone-900">Was Sie zusagen, zahlen Sie selbst.</span>{' '}
-            Für jedes vermittelte Paar steht ein fester Betrag bereit — Ihr Prozentsatz,
+            Für jedes vermittelte Paar steht ein fester Betrag bereit, Ihr Prozentsatz,
             gedeckelt je Paar. Daraus wird bezahlt, was Ihr Kunde bekommt: ein Nachlass
             kostet den Nachlass, eine Zugabe ihren Einkaufspreis. Sagen Sie nichts zu,
             zahlt Ihr Kunde den Normalpreis und Ihnen bleibt der volle Betrag.
@@ -151,7 +151,7 @@ export default function AffiliateOverview() {
           <h2 className={h2cls}>Was wir für die Abrechnung brauchen</h2>
           <p className={`${lead} mt-4 max-w-xl`}>
             Wir stellen die Gutschrift aus, nicht Sie die Rechnung. Dafür müssen die
-            Angaben stimmen — fehlt eine davon, bleibt die Auszahlung gesperrt.
+            Angaben stimmen, fehlt eine davon, bleibt die Auszahlung gesperrt.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 max-w-2xl">
             {UNTERLAGEN.map(u => (
@@ -165,7 +165,7 @@ export default function AffiliateOverview() {
             <FileText size={14} strokeWidth={1.5} className="text-stone-400 mt-0.5 shrink-0" />
             <p className="text-[12px] text-stone-500 font-light leading-relaxed">
               Sind Sie Kleinunternehmer nach § 19 UStG, genügt die Steuernummer. Weisen Sie
-              Umsatzsteuer aus, brauchen wir zusätzlich die USt-IdNr. — sie gehört auf die
+              Umsatzsteuer aus, brauchen wir zusätzlich die USt-IdNr., sie gehört auf die
               Gutschrift.
             </p>
           </div>
@@ -176,7 +176,7 @@ export default function AffiliateOverview() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className={h2cls}>Fragen offen?</h2>
           <p className={`${lead} mt-4 max-w-lg mx-auto`}>
-            Zu Konditionen, Abrechnung oder einer bestehenden Zusammenarbeit — schreiben
+            Zu Konditionen, Abrechnung oder einer bestehenden Zusammenarbeit, schreiben
             Sie uns, wir antworten per E-Mail.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 mt-8">

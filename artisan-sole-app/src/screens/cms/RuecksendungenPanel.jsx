@@ -26,7 +26,7 @@ const ZUSTAND = {
 const ERLEDIGT = ['refunded', 'rejected']
 
 const datum = (s) => {
-  if (!s) return '—'
+  if (!s) return 'k. A.'
   const d = new Date(String(s).replace(' ', 'T') + (String(s).endsWith('Z') ? '' : 'Z'))
   return Number.isNaN(d.getTime()) ? s : d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
@@ -95,7 +95,7 @@ export default function RuecksendungenPanel() {
       )}
 
       <p className="text-[11px] text-black/40 font-light leading-relaxed mb-5">
-        Zubehör geht innerhalb von 14 Tagen nach Zustellung zurück. Maßgefertigte
+        Zubehör geht innerhalb von 14 Tagen nach Zustellung zurück. Custom Made
         Schuhe lassen sich nicht zurückgeben und tauchen hier deshalb nie auf.
       </p>
 

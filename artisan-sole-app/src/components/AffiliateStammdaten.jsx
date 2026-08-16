@@ -38,7 +38,7 @@ function Feld({ label, hinweis, children, gesperrt, wert }) {
           {label}
           <Lock size={10} strokeWidth={1.6} className="text-black/30" />
         </span>
-        <p className={gesperrtStil}>{wert || <span className="text-black/25">—</span>}</p>
+        <p className={gesperrtStil}>{wert || <span className="text-black/25">noch offen</span>}</p>
         <span className="block text-[10px] text-black/30 mt-1 leading-relaxed">
           Von uns geprüft und festgeschrieben. Hat sich etwas geändert? Schreiben Sie uns kurz,
           wir tragen es nach.
@@ -141,7 +141,7 @@ export default function AffiliateStammdaten({ affiliate, onGespeichert }) {
       {offen && (
         <form onSubmit={speichern} className="px-5 pb-5 space-y-5 border-t border-black/[0.06] pt-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Feld label="Vor- und Nachname" hinweis="Laut Ausweis — er steht auf der Gutschrift." gesperrt={istZu('full_name')} wert={form.full_name}>
+            <Feld label="Vor- und Nachname" hinweis="Laut Ausweis, er steht auf der Gutschrift." gesperrt={istZu('full_name')} wert={form.full_name}>
               <input className={eingabe} value={form.full_name} onChange={e => setzen('full_name', e.target.value)} />
             </Feld>
             <Feld label="Telefon">

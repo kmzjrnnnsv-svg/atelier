@@ -52,11 +52,11 @@ export const ANBIETER = {
     einrichtung: [
       'Konto anlegen auf brevo.com. Kostenlos, 300 Nachrichten am Tag, keine Karte nötig.',
       'Domain bestätigen: „Senders, Domains & Dedicated IPs" › Domains › Add Domain › artisansole.com. '
-        + 'Brevo zeigt daraufhin die einzutragenden Werte an (Brevo-Code, DKIM, SPF) — die kommen bei Ihrem '
+        + 'Brevo zeigt daraufhin die einzutragenden Werte an (Brevo-Code, DKIM, SPF), die kommen bei Ihrem '
         + 'DNS-Anbieter in die Zone der Domain, danach dort auf „Verify". Meist in Minuten bestätigt, '
         + 'in Ausnahmen dauert die Verteilung im DNS bis zu 48 Stunden.',
       'Schlüssel erzeugen: Settings › SMTP & API › Reiter „API keys" › Generate a new API key. '
-        + 'Er wird genau einmal angezeigt — am besten gleich hier einfügen. '
+        + 'Er wird genau einmal angezeigt, am besten gleich hier einfügen. '
         + 'Nicht zu verwechseln mit dem SMTP-Passwort im Reiter daneben: Die beiden sind verschieden '
         + 'und lassen sich nicht gegeneinander tauschen.',
       'Schlüssel und Absenderadresse hier eintragen, speichern, Testnachricht schicken.',
@@ -89,9 +89,9 @@ export const ANBIETER = {
     einrichtung: [
       'Konto anlegen auf resend.com. Kostenlos, 3.000 Nachrichten im Monat.',
       'Domain bestätigen: Domains › Add Domain › artisansole.com. Resend zeigt die einzutragenden '
-        + 'Werte an (MX, SPF als TXT, DKIM) — die kommen bei Ihrem DNS-Anbieter in die Zone der Domain, '
+        + 'Werte an (MX, SPF als TXT, DKIM), die kommen bei Ihrem DNS-Anbieter in die Zone der Domain, '
         + 'danach dort auf „Verify". In der Regel innerhalb einer Viertelstunde bestätigt.',
-      'Schlüssel erzeugen: API Keys › Create API Key. „Sending access" genügt — mehr Rechte braucht '
+      'Schlüssel erzeugen: API Keys › Create API Key. „Sending access" genügt, mehr Rechte braucht '
         + 'diese Anwendung nicht.',
       'Schlüssel und Absenderadresse hier eintragen, speichern, Testnachricht schicken.',
     ],
@@ -127,7 +127,7 @@ export const ANBIETER = {
         + 'angezeigten DNS-Einträge. Die einzelne Adresse geht schneller, die Domain ist die bessere Wahl, '
         + 'wenn später weitere Absender dazukommen.',
       'Schlüssel holen: beim Server unter „API Tokens" den Server-Token kopieren. '
-        + 'Nicht den Account-Token — der ist für die Kontoverwaltung und wird hier abgewiesen.',
+        + 'Nicht den Account-Token, der ist für die Kontoverwaltung und wird hier abgewiesen.',
       'Token und Absenderadresse hier eintragen, speichern, Testnachricht schicken.',
     ],
     senden: (cfg, m) => ({
@@ -161,7 +161,7 @@ export const ANBIETER = {
     schluesselFeld: 'Private API-Schlüssel',
     brauchtDomain: true,
     einrichtung: [
-      'Konto anlegen auf mailgun.com — bei der Registrierung die Region EU wählen. '
+      'Konto anlegen auf mailgun.com, bei der Registrierung die Region EU wählen. '
         + 'Sie lässt sich später nicht umstellen, und ein EU-Konto ist über den US-Endpunkt nicht erreichbar.',
       'Domain einrichten: Sending › Domains › Add New Domain. Üblich ist eine eigene Unterdomain '
         + 'wie mg.artisansole.com, damit die Zustellung nicht an der Hauptdomain hängt. Die dort '
@@ -223,25 +223,25 @@ function deutung(status, koerper, cfg, a) {
   // hergibt, der Statuscode allein.
   if (/not verified|unverified|sender|signature|from address|domain is not/i.test(text)) {
     return `${a.name} nimmt die Absenderadresse „${cfg.from}" nicht an (HTTP ${status}). `
-      + 'Sie muss beim Dienst einmal bestätigt werden — entweder die Adresse selbst '
+      + 'Sie muss beim Dienst einmal bestätigt werden, entweder die Adresse selbst '
       + `oder die ganze Domain über die dort genannten DNS-Einträge. Antwort: ${text}`
   }
   if (status === 404 && a.brauchtDomain) {
     return `${a.name} kennt die Domain „${cfg.domain}" nicht (HTTP 404). `
-      + 'Bitte prüfen, ob die Schreibweise stimmt und ob die Region richtig gewählt ist — '
+      + 'Bitte prüfen, ob die Schreibweise stimmt und ob die Region richtig gewählt ist, '
       + 'ein EU-Konto ist über den US-Endpunkt nicht erreichbar und umgekehrt.'
   }
   if (status === 401 || status === 403) {
     return `${a.name} weist den Schlüssel zurück (HTTP ${status}). `
-      + 'Am Absender oder am Empfänger liegt es nicht — so weit kommt es gar nicht. '
+      + 'Am Absender oder am Empfänger liegt es nicht, so weit kommt es gar nicht. '
       + `Bitte den ${a.schluesselFeld} neu erzeugen und hier eintragen.`
   }
   if (status === 422) {
-    return `${a.name} hat die Nachricht nicht angenommen (HTTP 422) — meist ist die `
+    return `${a.name} hat die Nachricht nicht angenommen (HTTP 422), meist ist die `
       + `Absenderadresse „${cfg.from}" dort noch nicht bestätigt. Antwort: ${text}`
   }
   if (status === 429) {
-    return `${a.name} bremst uns aus (HTTP 429) — das Kontingent für heute ist erschöpft. `
+    return `${a.name} bremst uns aus (HTTP 429), das Kontingent für heute ist erschöpft. `
       + 'Später erneut versuchen oder das Kontingent erhöhen.'
   }
   if (status >= 500) {

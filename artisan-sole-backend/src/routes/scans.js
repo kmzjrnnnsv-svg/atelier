@@ -348,7 +348,7 @@ Links:  Länge=${cvData.left_length  ?? '?'}mm, Breite=${cvData.left_width  ?? '
           type: 'text',
           text: `Du bist ein präzises Fußvermessungs-System für die Custom-Made-Fertigung. Analysiere diese ${hasLateral ? '6' : '4'} Bilder.
 
-KALIBRIER-VALIDIERUNG (KRITISCH — mache dies ZUERST):
+KALIBRIER-VALIDIERUNG (KRITISCH, mache dies ZUERST):
 Jedes Bild enthält ein A4-Papier (exakt 297.0 × 210.0 mm).
 1. Identifiziere das A4-Papier in jedem Bild.
 2. Miss die LÄNGERE Kante des A4 in Bildpixeln → berechne px_per_mm = pixel_laenge / 297.0
@@ -361,8 +361,8 @@ BILDER:
 - Bild 2: RECHTER Fuß MEDIAL / Innenseite (A4 daneben)
 - Bild 3: LINKER Fuß von OBEN (A4 daneben)
 - Bild 4: LINKER Fuß MEDIAL / Innenseite (A4 daneben)${hasLateral ? `
-- Bild 5: RECHTER Fuß LATERAL / Außenseite (A4 daneben) — für Fersen- und Außenrist-Details
-- Bild 6: LINKER Fuß LATERAL / Außenseite (A4 daneben) — für Fersen- und Außenrist-Details
+- Bild 5: RECHTER Fuß LATERAL / Außenseite (A4 daneben), für Fersen- und Außenrist-Details
+- Bild 6: LINKER Fuß LATERAL / Außenseite (A4 daneben), für Fersen- und Außenrist-Details
 
 IBV 3-WINKEL-METHODE: Du hast 3 Blickwinkel pro Fuß (oben, innen, außen). Nutze alle 3 für maximale Genauigkeit:
 - Top-Ansicht: Fußlänge, -breite, Kontur-Umriss
@@ -371,17 +371,17 @@ IBV 3-WINKEL-METHODE: Du hast 3 Blickwinkel pro Fuß (oben, innen, außen). Nutz
 Vergleiche die Messwerte zwischen medial und lateral für Konsistenz.` : ''}
 
 ${cvHint}
-MESSVERFAHREN — TOP-ANSICHT (Bilder 1 + 3):
+MESSVERFAHREN, TOP-ANSICHT (Bilder 1 + 3):
 Miss jeden Wert in Pixeln, dann teile durch px_per_mm des jeweiligen Bildes:
 1. Fußlänge = Ferse (hinterster Punkt) → längster Zeh (vorderster Punkt)
-2. Fußbreite = breiteste Stelle im Ballenbereich (Metatarsale I–V)
+2. Fußbreite = breiteste Stelle im Ballenbereich (Metatarsale I, V)
 3. Ballenbreite = Breite exakt an der Linie der Zehengrundgelenke
 4. Taillenbreite = schmalste Stelle des Mittelfußes
 5. Ristbreite = Breite bei ~60% der Fußlänge (von Ferse gemessen)
 6. Fersenbreite = Breite bei ~15% der Fußlänge (Calcaneus-Bereich)
 7. Knöchelbreite = Breite bei ~12% der Fußlänge (Malleolen-Ebene)
 
-MESSVERFAHREN — SEITEN-ANSICHT (Bilder 2 + 4):
+MESSVERFAHREN, SEITEN-ANSICHT (Bilder 2 + 4):
 1. Fußhöhe = höchster Punkt des Fußrückens (Dorsum) bis Standfläche
 2. Gewölbehöhe = Höhe des medialen Längsgewölbes (Innenbogen über Boden)
 3. Ballenhöhe = Höhe des Fußes im Metatarsale-Bereich
@@ -389,9 +389,9 @@ MESSVERFAHREN — SEITEN-ANSICHT (Bilder 2 + 4):
 WICHTIG: Gib für jeden Messwert Dezimalstellen an (z.B. 262.3, nicht 262).
 Runde NICHT auf ganze Zahlen. Genauigkeit auf 0.5mm anstreben.
 
-UMFANGSBERECHNUNG NICHT durchführen — das macht der Server mit Superellipse-Modell.
+UMFANGSBERECHNUNG NICHT durchführen, das macht der Server mit Superellipse-Modell.
 
-ZUSÄTZLICHE MESSUNGEN — SEITEN-ANSICHT:
+ZUSÄTZLICHE MESSUNGEN, SEITEN-ANSICHT:
 4. Rist-Höhe (Instep height) = Höhe des Fußrückens bei ~60% Fußlänge
 5. Fersen-Tiefe (Heel depth) = Abstand vom hintersten Fersenpunkt zum Fußrücken vertikal darüber
 
@@ -1395,7 +1395,7 @@ router.patch(
     res.json({
       ok: true, scan: updated,
       _learning: { pairs_stored: pairsStored, calibration_recalculated: pairsStored > 0 },
-      _training: shouldTrain ? { trigger: true, validated_count: validatedCount, message: 'Genügend Daten — ML-Training empfohlen' } : undefined,
+      _training: shouldTrain ? { trigger: true, validated_count: validatedCount, message: 'Genügend Daten, ML-Training empfohlen' } : undefined,
     })
   }
 )
@@ -1624,7 +1624,7 @@ router.get('/learning-stats', authenticate, requireRole('admin'), (req, res) => 
       totalPairs < 10 ? 'Mehr Korrekturen sammeln (min. 10 für Kalibrierung)' : null,
       validatedScans < 20 ? `Noch ${20 - validatedScans} Scans validieren für ML-Training` : null,
       adminPairs === 0 && userPairs > 5 ? 'Admin-Validierungen haben mehr Gewicht als User-Korrekturen' : null,
-      recentMeanError && recentMeanError > 3 ? 'Hoher Fehler — mehr Trainingsdaten oder Kalibrierung nötig' : null,
+      recentMeanError && recentMeanError > 3 ? 'Hoher Fehler, mehr Trainingsdaten oder Kalibrierung nötig' : null,
     ].filter(Boolean),
   })
 })

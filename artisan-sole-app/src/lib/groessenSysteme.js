@@ -68,7 +68,7 @@ const aufHalbe = (n) => Math.round(n * 2) / 2
 
 /** 7 → „7", 7.5 → „7½" */
 export function groessenText(n) {
-  if (!Number.isFinite(n)) return '—'
+  if (!Number.isFinite(n)) return 'k. A.'
   const ganz = Math.floor(n)
   return n - ganz >= 0.5 ? `${ganz}½` : String(ganz)
 }
@@ -125,7 +125,7 @@ export function umrechnen(mm) {
  * „42–42" liest sich wie ein Fehler.
  */
 export const spanneText = (s, fmt = groessenText) =>
-  !s ? '—' : (s.von === s.bis ? fmt(s.von) : `${fmt(s.von)}–${fmt(s.bis)}`)
+  !s ? 'k. A.' : (s.von === s.bis ? fmt(s.von) : `${fmt(s.von)}-${fmt(s.bis)}`)
 
 /**
  * Wer in welchem System nummeriert — und was die Weitenbuchstaben dort
@@ -143,27 +143,27 @@ export const HAEUSER = [
     beispiele: 'Crockett & Jones, Church’s, Loake, Meermin',
     system: 'uk',
     weiten: 'C&J: E normal, G weit · Loake: E schmal, F normal, G weit, H extraweit · Church’s: F, G, H',
-    hinweis: 'Alle vier nummerieren in UK-Größen. Wer von dort kommt, hat seine Zahl bereits im richtigen System — die Umrechnung nach EU ist die Stelle, an der üblicherweise eine Größe verloren geht.',
+    hinweis: 'Alle vier nummerieren in UK-Größen. Wer von dort kommt, hat seine Zahl bereits im richtigen System, die Umrechnung nach EU ist die Stelle, an der üblicherweise eine Größe verloren geht.',
   },
   {
     gruppe: 'Spanische Manufakturen',
     beispiele: 'Carmina, Meermin',
     system: 'uk',
     weiten: 'Carmina: D/E schmal, EE normal, EEE weit',
-    hinweis: 'Ebenfalls UK-Nummerierung. Achtung bei den Weiten: Was dort EE heißt, ist die Normalweite — nicht die weite.',
+    hinweis: 'Ebenfalls UK-Nummerierung. Achtung bei den Weiten: Was dort EE heißt, ist die Normalweite, nicht die weite.',
   },
   {
     gruppe: 'Amerikanische Klassiker',
     beispiele: 'Allen Edmonds, Alden',
     system: 'us',
     weiten: 'B bis EEE, Weite gleichberechtigt neben der Länge',
-    hinweis: 'Rechnen nach Brannock, also genau eine Nummer über UK. Die Weite steht dort wie bei uns als eigene Angabe — nicht als Zugabe zur Länge.',
+    hinweis: 'Rechnen nach Brannock, also genau eine Nummer über UK. Die Weite steht dort wie bei uns als eigene Angabe, nicht als Zugabe zur Länge.',
   },
   {
     gruppe: 'Sneaker',
     beispiele: 'Nike, adidas, New Balance',
     system: 'us',
     weiten: 'meist nur eine Weite, teils D und 2E',
-    hinweis: 'Nummeriert wird nach Brannock wie oben. Die Zentimeterzahl auf dem Karton ist aber die LEISTENLÄNGE, nicht Ihre Fußlänge — sie liegt gut einen Zentimeter darüber. Wer sie für seinen Fuß hält, bestellt eine Nummer zu klein.',
+    hinweis: 'Nummeriert wird nach Brannock wie oben. Die Zentimeterzahl auf dem Karton ist aber die LEISTENLÄNGE, nicht Ihre Fußlänge, sie liegt gut einen Zentimeter darüber. Wer sie für seinen Fuß hält, bestellt eine Nummer zu klein.',
   },
 ]

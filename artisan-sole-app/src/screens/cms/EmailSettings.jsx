@@ -189,7 +189,7 @@ export default function EmailSettings() {
  {nochUnvollstaendig && nochUnvollstaendig.length > 0 && (
  <p className="text-[12px] text-amber-900 font-light leading-relaxed border border-amber-300 bg-amber-50 px-4 py-3 mt-5">
  Es fehlt noch: <strong className="font-normal">{nochUnvollstaendig.join(', ')}</strong>.
- Bis dahin geht der Versand weiter über den Mailserver — und scheitert dort am gesperrten Port.
+ Bis dahin geht der Versand weiter über den Mailserver, und scheitert dort am gesperrten Port.
  </p>
  )}
  </div>
@@ -225,7 +225,7 @@ export default function EmailSettings() {
  </ol>
  <p className="text-[11px] text-black/30 font-light leading-relaxed mt-5 pt-4 border-t border-black/[0.06]">
  Die DNS-Einträge liegen dort, wo die Domain verwaltet wird. Ihre Werte erzeugt der Dienst
- selbst und zeigt sie an — sie lassen sich nicht vorwegnehmen, weil jeder Schlüssel anders
+ selbst und zeigt sie an, sie lassen sich nicht vorwegnehmen, weil jeder Schlüssel anders
  ist. Ein DMARC-Eintrag ist zusätzlich empfehlenswert, aber keine Voraussetzung dafür,
  dass Nachrichten hinausgehen.
  </p>
@@ -287,7 +287,7 @@ export default function EmailSettings() {
  onChange={e => f('mail_absender', e.target.value)}
  />
  <p className="text-[10px] text-black/25 font-light mt-1 leading-relaxed">
- Diese Adresse muss beim Dienst bestätigt sein — entweder einzeln oder über die
+ Diese Adresse muss beim Dienst bestätigt sein, entweder einzeln oder über die
  DNS-Einträge der ganzen Domain. Ohne Bestätigung nimmt keiner der Dienste die
  Nachricht an. Leer = die SMTP-Absenderadresse.
  </p>
@@ -316,7 +316,7 @@ export default function EmailSettings() {
  </select>
  </div>
  <p className="col-span-3 text-[10px] text-black/25 font-light -mt-3 leading-relaxed">
- Ein EU-Konto ist über den US-Endpunkt nicht erreichbar und umgekehrt — die Region
+ Ein EU-Konto ist über den US-Endpunkt nicht erreichbar und umgekehrt, die Region
  muss zu der passen, in der das Konto angelegt wurde.
  </p>
  </div>
@@ -345,20 +345,20 @@ export default function EmailSettings() {
  <div className="px-7 pb-7 -mt-1">
  <p className="text-[12px] text-black/55 font-light leading-relaxed mb-4">
  Hier wird nichts Neues eingerichtet. Die Anwendung meldet sich an dem Postfach an,
- das ohnehin besteht — wie ein Mailprogramm es täte — und übergibt die Nachricht.
+ das ohnehin besteht, wie ein Mailprogramm es täte, und übergibt die Nachricht.
  Zugestellt wird sie dann vom Anbieter dieses Postfachs, nicht von diesem Server.
  </p>
  <ol className="space-y-3.5 list-none p-0 m-0">
  {[
  'Mailserver: die Adresse des Postfach-Anbieters. Bei Namecheap Private Email ist '
- + 'das mail.privateemail.com — dieselbe Angabe, die auch in Outlook oder Apple Mail stünde.',
- 'Port: 587. Nicht 465 — den sperrt Hetzner ausgehend, zusammen mit 25. '
+ + 'das mail.privateemail.com, dieselbe Angabe, die auch in Outlook oder Apple Mail stünde.',
+ 'Port: 587. Nicht 465, den sperrt Hetzner ausgehend, zusammen mit 25. '
  + 'Beide Ports führen zum selben Server, die Verschlüsselung stellt sich nach der Zahl '
  + 'von selbst um. Wenn hier bisher 465 stand, ist das der ganze Fehler.',
  'Absender E-Mail: die vollständige Adresse des Postfachs, nicht nur der Teil vor dem @. '
  + 'Sie ist zugleich der Benutzername für die Anmeldung.',
  'Passwort: das Passwort des Postfachs. Bei Namecheap im Dashboard unter Private Email › '
- + 'Manage bei der jeweiligen Domain — dort lässt es sich auch neu setzen, falls es '
+ + 'Manage bei der jeweiligen Domain, dort lässt es sich auch neu setzen, falls es '
  + 'nicht mehr vorliegt. Ein eigenes App-Passwort braucht es nicht.',
  'Speichern, dann Testnachricht schicken. Kommt sie an, ist der Versand in Betrieb.',
  ].map((schritt, i) => (
@@ -371,7 +371,7 @@ export default function EmailSettings() {
  ))}
  </ol>
  <p className="text-[11px] text-black/30 font-light leading-relaxed mt-5 pt-4 border-t border-black/[0.06]">
- Existiert noch gar kein Postfach, wird es beim Anbieter angelegt — bei Namecheap unter
+ Existiert noch gar kein Postfach, wird es beim Anbieter angelegt, bei Namecheap unter
  Private Email › Manage › Mailboxes. Zum Verschicken genügt eines; erst wenn Kunden auf
  eine Bestätigung antworten sollen, muss auch jemand hineinsehen.
  </p>
@@ -413,7 +413,7 @@ export default function EmailSettings() {
      Unterschied zwischen „geht" und „Connection timeout". */}
  {form.mail_weg === 'smtp' && Number(form.smtp_port) === 465 && (
  <p className="col-span-3 text-[11px] text-amber-900 font-light leading-relaxed border border-amber-300 bg-amber-50 px-4 py-3 -mt-2">
- Port 465 wird von Hetzner ausgehend gesperrt — daher die Zeitüberschreitung.
+ Port 465 wird von Hetzner ausgehend gesperrt, daher die Zeitüberschreitung.
  Fast jeder Mailserver nimmt dieselbe Post auch unter <strong className="font-normal">587</strong> an,
  Namecheap ebenfalls. Zahl ändern, speichern, Testnachricht: Das ist voraussichtlich alles.
  </p>
@@ -519,7 +519,7 @@ export default function EmailSettings() {
  <p className="text-[12px] font-light text-black/70 leading-relaxed">
  {check.ok
  ? (check.weg === 'http'
- ? `${check.anbieter} antwortet — Schlüssel und Verbindung stimmen.`
+ ? `${check.anbieter} antwortet, Schlüssel und Verbindung stimmen.`
  : `Verbindung zu ${check.host}:${check.port} steht.`)
  : `Kein Versand möglich: ${check.reason}`}
  </p>
@@ -528,7 +528,7 @@ export default function EmailSettings() {
      Nachricht, die tatsächlich hinausgeht. */}
  {check.ok && check.weg === 'http' && check.hinweis && (
  <p className="text-[11px] text-black/40 font-light mt-1.5 leading-relaxed">
- {check.hinweis} Absender: <strong className="font-normal">{check.absender || '—'}</strong>
+ {check.hinweis} Absender: <strong className="font-normal">{check.absender || 'k. A.'}</strong>
  </p>
  )}
  {/* Wohin überhaupt verbunden wurde. Bei einer Zeitüberschreitung ist der
@@ -557,7 +557,7 @@ export default function EmailSettings() {
  <p className="text-[11px] text-amber-900 font-light mb-2.5 leading-relaxed">
  Sie misst, welcher Port von diesem Server aus offen ist. Der häufigste Befund
  kostet nichts: Hetzner sperrt ausgehend die Ports 25 und 465, lässt aber
- <strong className="font-normal"> 587</strong> offen — dann genügt es, unten die Zahl
+ <strong className="font-normal"> 587</strong> offen, dann genügt es, unten die Zahl
  zu ändern. Ist wirklich kein Port erreichbar, hilft kein Feld auf dieser Seite;
  dann oben auf <strong className="font-normal">Maildienst (HTTPS)</strong> umstellen,
  der braucht keinen Mail-Port.
@@ -569,7 +569,7 @@ export default function EmailSettings() {
  {diagLaeuft ? 'Leitung wird geprüft …' : 'Leitung prüfen'}
  </button>
  <span className="text-[10px] text-amber-800/70 font-light ml-2.5">
- Baut Testverbindungen zu {check.host} auf — dauert einige Sekunden.
+ Baut Testverbindungen zu {check.host} auf, dauert einige Sekunden.
  </span>
 
  {diag && (
@@ -586,10 +586,10 @@ export default function EmailSettings() {
  Port {p.port}{p.konfiguriert ? ' · eingestellt' : ''}
  </td>
  <td className="pr-4 py-0.5 text-amber-900/70 whitespace-nowrap">
- IPv4: {p.ipv4 ? (p.ipv4.ok ? 'offen' : p.ipv4.grund) : '—'}
+ IPv4: {p.ipv4 ? (p.ipv4.ok ? 'offen' : p.ipv4.grund) : 'k. A.'}
  </td>
  <td className="py-0.5 text-amber-900/70 whitespace-nowrap">
- IPv6: {p.ipv6 ? (p.ipv6.ok ? 'offen' : p.ipv6.grund) : '—'}
+ IPv6: {p.ipv6 ? (p.ipv6.ok ? 'offen' : p.ipv6.grund) : 'k. A.'}
  </td>
  </tr>
  ))}

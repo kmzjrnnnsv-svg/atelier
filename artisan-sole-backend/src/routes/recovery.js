@@ -121,7 +121,7 @@ router.post('/start',
     // Auskunft darüber, welche Adressen es gibt und welche Bestellnummern
     // stimmen — genau das, was ein Angreifer als Erstes sucht.
     const absage = () => res.status(404).json({
-      error: 'Diese Angaben passen nicht zusammen. Bitte prüfen Sie Bestellnummer und Postleitzahl — beide finden Sie auf Ihrer Bestellbestätigung. Kommen Sie nicht weiter, schreiben Sie uns.',
+      error: 'Diese Angaben passen nicht zusammen. Bitte prüfen Sie Bestellnummer und Postleitzahl, beide finden Sie auf Ihrer Bestellbestätigung. Kommen Sie nicht weiter, schreiben Sie uns.',
     })
 
     const user = db.prepare('SELECT id, is_active FROM users WHERE email = ? COLLATE NOCASE').get(email)

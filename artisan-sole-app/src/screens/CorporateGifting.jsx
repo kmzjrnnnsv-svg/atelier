@@ -211,7 +211,7 @@ export default function CorporateGifting() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 lg:mb-16">
             <p className={`${eyebrow} mb-3`}>Custom Made</p>
-            <h2 className={h2cls}>Die Präzision maßgefertigter Schuhe, ohne den Aufwand</h2>
+            <h2 className={h2cls}>Die Präzision von Custom Made Schuhen, ohne den Aufwand</h2>
             <p className={`${lead} mt-4 max-w-xl mx-auto`}>
               Keine Schuhmacher-Termine, kein aufwendiges Vermessen. Zwei Angaben der Empfänger genügen, den Rest übernehmen wir.
             </p>
@@ -416,7 +416,7 @@ export default function CorporateGifting() {
             schritte={[
               {
                 titel: 'Anfrage senden',
-                text: 'Über das Formular oben oder per WhatsApp. Wir melden uns und klären, was Sie vorhaben — Anlass, Anzahl, Zeitrahmen.',
+                text: 'Über das Formular oben oder per WhatsApp. Wir melden uns und klären, was Sie vorhaben, Anlass, Anzahl, Zeitrahmen.',
               },
               {
                 titel: 'Firmenkonto erhalten',
@@ -432,7 +432,7 @@ export default function CorporateGifting() {
               },
               {
                 titel: 'Mitarbeitende teilnehmen lassen',
-                text: 'Wer sich mit der Firmen-E-Mail anmeldet, ist automatisch dabei — der Rabatt steht ohne Code im Konfigurator. Bei der namentlichen Liste verschicken wir die Einladungen per Mail.',
+                text: 'Wer sich mit der Firmen-E-Mail anmeldet, ist automatisch dabei, der Rabatt steht ohne Code im Konfigurator. Bei der namentlichen Liste verschicken wir die Einladungen per Mail.',
               },
               {
                 titel: 'Fortschritt verfolgen',

@@ -156,7 +156,7 @@ export default function GuertelWahl({
           </Feld>
 
           <Feld nummer={++nr} titel="Farbe"
-            hinweis={gLeder ? null : 'Wählen Sie zuerst das Leder — die Farben unterscheiden sich je nach Art.'}>
+            hinweis={gLeder ? null : 'Wählen Sie zuerst das Leder, die Farben unterscheiden sich je nach Art.'}>
             <div className="flex flex-wrap gap-2">
               {farbenHier.map(c => (
                 <button key={c.key} onClick={() => setFarbe(c.key)} title={c.name}
@@ -219,7 +219,7 @@ export default function GuertelWahl({
         </div>
         {sp && (
           <p className="text-[11px] text-black/50 mt-2.5">
-            {groesse} cm — gemessen bis zum mittleren Loch. Sitzt von {sp.von} bis {sp.bis} cm.
+            {groesse} cm, gemessen bis zum mittleren Loch. Sitzt von {sp.von} bis {sp.bis} cm.
           </p>
         )}
 

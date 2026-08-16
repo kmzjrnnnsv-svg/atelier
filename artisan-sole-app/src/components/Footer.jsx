@@ -114,12 +114,35 @@ export default function Footer() {
   return (
     <footer className="bg-[#f7f5f0] text-black">
       <div className="px-6 lg:px-16 xl:px-24 pt-16 lg:pt-20 pb-10">
-        {/* Spalten */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-8 lg:gap-x-16">
+        {/* Spalten. Die Marke steht in derselben Reihe ganz rechts.
+            Rechts und nicht mittig darunter: Die Spalten laufen von links
+            nach rechts aus, und am Ende dieser Bewegung ist der Platz, an dem
+            ein Absender steht — nicht in der Mitte, wo er die Reihe teilen
+            würde. Auf dem Telefon rutscht er unter die Spalten und dort in
+            die Mitte, weil es rechts keine freie Spalte mehr gibt.
+
+            Ein Schriftzug, kein Bild: „ARTISAN SOLE" steht auch in der
+            Kopfleiste als Schrift. Eine Grafik daneben wäre bei jedem
+            Schriftwechsel ein zweiter Ort zum Nachziehen — und sie hätte
+            keinen Text, den eine Vorlesehilfe wiedergeben kann. */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-12 gap-x-8 lg:gap-x-16">
           <Column label={cfg.about_label || 'Über uns'}   links={aboutLinks}  navigate={navigate} />
           <Column label={cfg.help_label  || 'Hilfe'}      links={cfg.help_links}   navigate={navigate} />
           <Column label={cfg.social_label || 'Social'}    links={cfg.social_links} navigate={navigate} />
           <Column label={cfg.legal_label || 'Rechtliches'} links={cfg.legal_links} navigate={navigate} />
+          <div className="col-span-2 md:col-span-4 lg:col-span-1 flex items-start justify-center lg:justify-end">
+            <button
+              type="button"
+              onClick={() => navigate('/collection')}
+              aria-label="Artisan Sole, zur Kollektion"
+              className="bg-transparent border-0 p-0 text-black hover:text-black/55 transition-colors cursor-pointer"
+            >
+              <span className="font-brand text-[13px] lg:text-[14px] whitespace-nowrap"
+                    style={{ letterSpacing: '0.3em' }}>
+                ARTISAN SOLE
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Bottom-Bar: Copyright links, Land + Sprache rechts */}

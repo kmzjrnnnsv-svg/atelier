@@ -116,7 +116,7 @@ export default function ZahlungsPanel() {
             <p className="text-[12px] text-amber-900">Ihre Rechnungsangaben sind unvollständig.</p>
             <p className="text-[11px] text-amber-800 font-light mt-1 leading-relaxed">
               Es fehlt: {fehlend.map(x => x.text).join(', ')}. Mit dem Buchen entsteht
-              die Rechnung — sie trägt dann nicht, was § 14 UStG verlangt.{' '}
+              die Rechnung, sie trägt dann nicht, was § 14 UStG verlangt.{' '}
               <Link to="/cms/rechnungsangaben" className="underline underline-offset-2 text-amber-900">
                 Jetzt ergänzen
               </Link>
@@ -159,7 +159,7 @@ export default function ZahlungsPanel() {
         </label>
         <p className="text-[10px] text-black/25 font-light mt-2 leading-relaxed">
           Ohne Haken wird nur die Zahlung verbucht. Bis zur Freigabe ist eine
-          Stornierung für den Kunden kostenfrei — nach AGB 7.2 ist sie der
+          Stornierung für den Kunden kostenfrei, nach AGB 7.2 ist sie der
           Wendepunkt.
         </p>
 

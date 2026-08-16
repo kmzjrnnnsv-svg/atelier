@@ -546,7 +546,7 @@ export function makeRecoverVerify(issueTokens) {
           thread.id,
           'Für Ihr Konto wurde ein neues Gerät zur Anmeldung hinterlegt und alle offenen '
           + 'Sitzungen wurden beendet. Waren Sie das nicht, melden Sie sich bitte umgehend '
-          + 'bei uns — wir entfernen den Zugang dann sofort.',
+          + 'bei uns, wir entfernen den Zugang dann sofort.',
         )
       } catch { /* ohne Nachrichtenverlauf geht die Wiederherstellung trotzdem */ }
     })()

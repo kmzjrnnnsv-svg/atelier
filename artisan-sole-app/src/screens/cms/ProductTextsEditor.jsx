@@ -11,7 +11,7 @@ const DEFAULTS = {
   durable_title: 'Durable',
   durable_text: 'Robuste Leder, Box Calf, Urban Suede, Painted Calf und Painted Full Grain. Wetterfest, alltagstauglich und langlebig. Ideal für täglichen Einsatz und anspruchsvolle Bedingungen.',
   delivery_items: LIEFERUMFANG,
-  badges: ['Handgenäht', 'Maßgefertigt', '200+ Schritte'],
+  badges: ['Handgenäht', 'Custom Made', '200+ Schritte'],
 }
 
 const lbl = 'text-[10px] uppercase tracking-[0.2em] text-black/30 block mb-1.5 font-light'

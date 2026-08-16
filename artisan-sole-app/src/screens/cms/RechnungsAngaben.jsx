@@ -99,7 +99,7 @@ export default function RechnungsAngaben() {
         <h1 className="text-[28px] font-extralight text-black/85 tracking-tight">Rechnungsangaben</h1>
         <p className="text-[13px] text-black/35 mt-2 font-light leading-relaxed">
           Diese Angaben stehen auf jeder Rechnung und auf jeder Gutschrift an
-          Ihre Vermittler. Änderungen wirken auf Belege, die danach entstehen —
+          Ihre Vermittler. Änderungen wirken auf Belege, die danach entstehen,
           bereits ausgestellte bleiben, wie sie sind.
         </p>
       </div>
@@ -114,8 +114,8 @@ export default function RechnungsAngaben() {
             </p>
             <p className="text-[11px] text-amber-800 font-light mt-1 leading-relaxed">
               Es fehlt: {fehlend.map(x => x.text).join(', ')}. § 14 Abs. 4 UStG
-              verlangt diese Angaben. Ausgestellt werden Rechnungen trotzdem —
-              eine Nummer darf nicht warten —, aber ein Firmenkunde kann daraus
+              verlangt diese Angaben. Ausgestellt werden Rechnungen trotzdem,
+              eine Nummer darf nicht warten, aber ein Firmenkunde kann daraus
               keine Vorsteuer ziehen und wird sie zurückschicken.
             </p>
           </div>
@@ -199,7 +199,7 @@ export default function RechnungsAngaben() {
           </div>
         </div>
         <p className="text-[11px] text-black/30 font-light leading-relaxed -mt-1">
-          Eine von beiden muss auf jede Rechnung — auch dann, wenn Sie keine
+          Eine von beiden muss auf jede Rechnung, auch dann, wenn Sie keine
           Umsatzsteuer ausweisen.
         </p>
 
@@ -246,7 +246,7 @@ export default function RechnungsAngaben() {
                    value={form.ust_satz} onChange={e => f('ust_satz', e.target.value)} />
             <p className="text-[11px] text-black/30 font-light mt-1.5 leading-relaxed">
               Der Preis im Laden gilt als Bruttopreis. Netto und Steuer werden
-              daraus herausgerechnet — die Kunden zahlen also weiterhin, was
+              daraus herausgerechnet, die Kunden zahlen also weiterhin, was
               ausgezeichnet ist.
             </p>
           </div>

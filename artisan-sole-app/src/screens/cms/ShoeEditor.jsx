@@ -64,7 +64,7 @@ function ExpressGruppen({ wert, onChange }) {
     <div className="mt-6">
       <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] mb-2 font-light">Wählbar bleibt</p>
       <p className="text-[11px] text-black/35 font-light mb-3 leading-relaxed max-w-xl">
-        Was hier nicht angehakt ist, legt das vorbereitete Bauteil fest — der Kunde sieht die
+        Was hier nicht angehakt ist, legt das vorbereitete Bauteil fest, der Kunde sieht die
         Gruppe gar nicht. Die Schuhform gehört bewusst nicht dazu: Express gibt es nur auf
         einem Leisten, und den bestimmt das Modell.
       </p>
@@ -84,7 +84,7 @@ function ExpressGruppen({ wert, onChange }) {
       </div>
       {offen.length === 0 && (
         <p className="text-[11px] text-black/30 font-light mt-2.5">
-          Nichts gewählt — der Kunde bestimmt nur Größe und Weite.
+          Nichts gewählt, der Kunde bestimmt nur Größe und Weite.
         </p>
       )}
     </div>
@@ -440,7 +440,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  <p className="text-[10px] text-black/25 font-light mb-3 leading-relaxed max-w-xl">
  Datei im Format .glb oder .gltf, höchstens 40 MB. Nur wenn hier eines
  hinterlegt ist, erscheint auf der Produktseite der Knopf für die
- 3D-Ansicht — sonst bleibt er aus.
+ 3D-Ansicht, sonst bleibt er aus.
  </p>
  {form.model_3d ? (
  <div className="flex items-center gap-3">
@@ -520,10 +520,10 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  </div>
  </div>
  <p className="text-[10px] text-black/25 font-light leading-relaxed max-w-2xl mb-5">
- Die <strong className="font-normal">Machart</strong> steuert, was der Konfigurator zeigt — Leisten,
+ Die <strong className="font-normal">Machart</strong> steuert, was der Konfigurator zeigt, Leisten,
  Sohlen, Optionen. Sie erscheint im Laden nicht mehr. Was der Kunde dort sieht, ist die
  <strong className="font-normal"> Saison</strong>: Sommer, Winter oder ganzjährig.
- „Nach Machart" heißt, dass wir sie ableiten — Stiefel in den Winter, Mokassins und Walks in den
+ „Nach Machart" heißt, dass wir sie ableiten, Stiefel in den Winter, Mokassins und Walks in den
  Sommer, alles andere ins ganze Jahr. Ein ungefütterter Sommerstiefel ist damit nicht erfasst;
  stellen Sie ihn hier von Hand um.
  </p>
@@ -859,7 +859,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
 
  {/* ── Express-Linie ──────────────────────────────────────────────────
      Der Preis oben ist auch beim Express-Modell der volle Preis. Der
-     Aufpreis hier wird NICHT addiert — er wird ausgewiesen, damit der
+     Aufpreis hier wird NICHT addiert, er wird ausgewiesen, damit der
      Kunde sieht, was die kürzere Wartezeit kostet. Zwei Stellen, die
      denselben Preis errechnen, gehen früher oder später auseinander. */}
  <div className="bg-white p-7 mb-6">
@@ -913,7 +913,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  className="w-full h-10 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15"
  />
  <p className="text-[10px] text-black/25 font-light mt-1.5 leading-relaxed">
- Richtwert, kein Fixtermin — so steht es auch in den AGB.
+ Richtwert, kein Fixtermin, so steht es auch in den AGB.
  </p>
  </div>
  <div className="col-span-2">
@@ -932,7 +932,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  <p className="text-[10px] text-black/25 font-light mt-1.5 leading-relaxed">
  Jede Express-Bestellung zieht eins ab, jede Stornierung legt eins zurück.
  Steht das Feld auf null, nimmt der Laden dieses Modell nicht mehr
- als Express an — als Maßanfertigung bleibt es bestellbar.
+ als Express an, als Maßanfertigung bleibt es bestellbar.
  Leer lassen heißt: kein Bestand geführt, keine Grenze.
  </p>
  </div>

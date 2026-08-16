@@ -120,7 +120,7 @@ export default function AffiliatePortal() {
   // Teilen-Auswahl (WhatsApp, Nachrichten, Mail); wo es die nicht gibt —
   // Firefox, ältere Browser, http — bleibt der Weg über die Zwischenablage.
   const shareLink = async () => {
-    const text = `Maßgefertigte Schuhe von Artisan Sole. Mit diesem Link ist mein Code ${data.affiliate.code} beim Bezahlen schon hinterlegt:`
+    const text = `Custom Made Schuhe von Artisan Sole. Mit diesem Link ist mein Code ${data.affiliate.code} beim Bezahlen schon hinterlegt:`
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Artisan Sole', text, url: data.link })
@@ -260,7 +260,7 @@ export default function AffiliatePortal() {
                   <Share2 size={14} strokeWidth={1.5} /> Weitergeben
                 </button>
                 <a
-                  href={`mailto:?subject=${encodeURIComponent('Maßgefertigte Schuhe von Artisan Sole')}&body=${encodeURIComponent(`Mit diesem Link ist mein Code ${a.code} beim Bezahlen schon hinterlegt:\n\n${link}`)}`}
+                  href={`mailto:?subject=${encodeURIComponent('Custom Made Schuhe von Artisan Sole')}&body=${encodeURIComponent(`Mit diesem Link ist mein Code ${a.code} beim Bezahlen schon hinterlegt:\n\n${link}`)}`}
                   className="h-12 flex items-center justify-center gap-2 bg-white text-black/70 border border-black/15 text-[11px] tracking-[0.16em] uppercase no-underline"
                 >
                   <Mail size={14} strokeWidth={1.5} /> Per E-Mail
@@ -268,7 +268,7 @@ export default function AffiliatePortal() {
               </div>
               <p className="text-[11px] text-black/35 font-light mt-3 leading-relaxed">
                 Wer über den Link kommt, hat Ihren Code beim Bezahlen bereits im Warenkorb stehen.
-                Er lässt sich dort auch von Hand eingeben — auf einer Karte, im Laden, im Gespräch.
+                Er lässt sich dort auch von Hand eingeben, auf einer Karte, im Laden, im Gespräch.
               </p>
               {a.customer_benefit === 'gift' && (
                 <p className="text-[11px] text-black/45 font-light mt-2.5 leading-relaxed">
@@ -284,7 +284,7 @@ export default function AffiliatePortal() {
               )}
               {(!a.customer_benefit || a.customer_benefit === 'none') && (
                 <p className="text-[11px] text-black/45 font-light mt-2.5 leading-relaxed">
-                  Ihre Kunden zahlen den Normalpreis — dafür bleibt Ihnen die volle Provision.
+                  Ihre Kunden zahlen den Normalpreis, dafür bleibt Ihnen die volle Provision.
                 </p>
               )}
             </div>
@@ -346,7 +346,7 @@ export default function AffiliatePortal() {
                   <div className="min-w-0">
                     <p className="text-[13px] text-black font-light">{p.pair_count} Paar</p>
                     <p className="text-[11px] text-black/35 font-light mt-0.5 truncate">
-                      {p.paid_at ? new Date(p.paid_at + 'Z').toLocaleDateString('de-DE') : '—'} · {p.document_no || p.reference}
+                      {p.paid_at ? new Date(p.paid_at + 'Z').toLocaleDateString('de-DE') : 'offen'} · {p.document_no || p.reference}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
@@ -368,11 +368,11 @@ export default function AffiliatePortal() {
             Für jedes vermittelte Paar stehen {String(a.commission_value).replace('.', ',')}
             {a.commission_type === 'fixed' ? ' €' : ' % des Kaufpreises'} bereit, höchstens
             {' '}{euro(rules.capPerShoe)}. Aus diesem Betrag zahlen Sie, was Sie Ihrem Kunden
-            zusagen — der Rest wird an Sie ausgezahlt.
+            zusagen, der Rest wird an Sie ausgezahlt.
           </p>
           <p className="text-[13px] text-black/60 font-light leading-relaxed mt-3">
             Sagen Sie nichts zu, bleibt Ihnen alles. Eine Zugabe kostet ihren Einkaufspreis,
-            ein Nachlass kostet genau den Nachlass. Was Sie zusagen, legen Sie fest — sprechen
+            ein Nachlass kostet genau den Nachlass. Was Sie zusagen, legen Sie fest, sprechen
             Sie uns über die Nachrichten an, wenn Sie es ändern möchten.
           </p>
         </div>
@@ -392,7 +392,7 @@ export default function AffiliatePortal() {
             schritte={[
               {
                 titel: 'Angaben vervollständigen',
-                text: 'Anschrift, Geburtsdatum, Steuernummer und Bankverbindung. Fehlt davon etwas, kann nicht ausgezahlt werden — die Gutschrift braucht die Angaben. Melden Sie sich, wenn etwas geändert werden muss.',
+                text: 'Anschrift, Geburtsdatum, Steuernummer und Bankverbindung. Fehlt davon etwas, kann nicht ausgezahlt werden, die Gutschrift braucht die Angaben. Melden Sie sich, wenn etwas geändert werden muss.',
               },
               {
                 titel: 'Link oder QR-Code nehmen',
@@ -400,7 +400,7 @@ export default function AffiliatePortal() {
               },
               {
                 titel: 'Weitergeben',
-                text: 'An wen Sie möchten. Wer über Ihren Link kommt, kauft im regulären Shop; Ihr Code steht sichtbar im Warenkorb, damit die Zuordnung nachvollziehbar bleibt. Auch bestehende Kunden können darüber profitieren — sie müssen den Link nur bekommen haben.',
+                text: 'An wen Sie möchten. Wer über Ihren Link kommt, kauft im regulären Shop; Ihr Code steht sichtbar im Warenkorb, damit die Zuordnung nachvollziehbar bleibt. Auch bestehende Kunden können darüber profitieren, sie müssen den Link nur bekommen haben.',
               },
               {
                 titel: 'Paare reifen sehen',

@@ -1,7 +1,7 @@
 /**
  * Ruecksendungen — Rücksendungen im eigenen Bereich.
  *
- * Der maßgefertigte Schuh entsteht für einen bestimmten Fuß und ist danach für
+ * Der Custom Made Schuh entsteht für einen bestimmten Fuß und ist danach für
  * niemanden sonst zu gebrauchen — er ist vom Widerruf ausgenommen. Zubehör ist
  * Lagerware und geht regulär zurück.
  *
@@ -62,7 +62,7 @@ function Bestellung({ eintrag, onSenden, sendet }) {
           <p className="text-[13px] text-black">{b.shoe_name}</p>
           <p className="text-[11px] text-black/35 font-light mt-0.5">
             {b.order_ref ? `${b.order_ref} · ` : ''}
-            Zugestellt {datum(b.delivered_at) || '—'}
+            Zugestellt {datum(b.delivered_at) || 'noch nicht'}
           </p>
         </div>
         <span className={`text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 border shrink-0 ${b.open ? 'border-black/25 text-black/60' : 'border-black/10 text-black/30'}`}>
@@ -82,7 +82,7 @@ function Bestellung({ eintrag, onSenden, sendet }) {
           <div>
             <p className="text-[12px] text-black/70">{b.shoe_name}</p>
             <p className="text-[11px] text-black/40 font-light leading-relaxed">
-              Maßanfertigung — keine Rückgabe. Bei einem Mangel fertigen wir das
+              Maßanfertigung, keine Rückgabe. Bei einem Mangel fertigen wir das
               Paar neu; gefällt es Ihnen nicht, sehen wir uns das an.
             </p>
           </div>
@@ -228,7 +228,7 @@ export default function Ruecksendungen() {
         <p className="text-[10px] uppercase tracking-[0.3em] text-black/25 mb-3">Rücksendungen</p>
         <h1 className="text-[26px] lg:text-[32px] font-extralight text-black tracking-tight">Etwas zurücksenden</h1>
         <p className="text-[13px] text-black/45 font-light leading-relaxed max-w-xl mt-3">
-          {daten?.shoe_note || 'Maßgefertigte Schuhe können nicht zurückgegeben werden. Zubehör geht regulär zurück.'}
+          {daten?.shoe_note || 'Custom Made Schuhe können nicht zurückgegeben werden. Zubehör geht regulär zurück.'}
           {daten?.window_days ? ` Zubehör innerhalb von ${daten.window_days} Tagen nach Zustellung.` : ''}
         </p>
       </div>

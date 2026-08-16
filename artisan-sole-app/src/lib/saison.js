@@ -25,7 +25,7 @@ export const SAISONS = [
     key: 'summer',
     label: 'Sommer',
     titel: 'Frühling & Sommer',
-    text: 'Leicht gebaut, ungefüttert oder dünn gefüttert — für Tage, an denen nichts drücken darf.',
+    text: 'Leicht gebaut, ungefüttert oder dünn gefüttert, für Tage, an denen nichts drücken darf.',
   },
   {
     key: 'winter',
@@ -37,7 +37,7 @@ export const SAISONS = [
     key: 'all',
     label: 'Ganzjährig',
     titel: 'Das ganze Jahr',
-    text: 'Die Schuhe, die immer gehen — vom Besprechungsraum bis zum Abend.',
+    text: 'Die Schuhe, die immer gehen, vom Besprechungsraum bis zum Abend.',
   },
 ]
 

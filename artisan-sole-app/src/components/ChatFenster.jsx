@@ -122,7 +122,7 @@ export default function ChatFenster({ offen, onClose, onGelesen }) {
           ) : nachrichten.length === 0 ? (
             <div className="py-8">
               <p className="text-[13px] text-black/60 font-light leading-relaxed">
-                Schreiben Sie uns — zu Ihrer Bestellung, zur Passform oder zu allem, was offen ist.
+                Schreiben Sie uns, zu Ihrer Bestellung, zur Passform oder zu allem, was offen ist.
               </p>
               <p className="text-[11px] text-black/30 font-light mt-2">
                 Ihre Nachricht landet direkt bei uns, nicht in einem Postfach.
