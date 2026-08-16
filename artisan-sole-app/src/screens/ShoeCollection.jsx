@@ -17,6 +17,7 @@ import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
 import { SAISONS, saisonsSortiert, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
+import { useSeo } from '../lib/seo'
 
 // Die Rubriken des Ladens: Sommer, Winter, Ganzjährig.
 //
@@ -503,6 +504,13 @@ export default function ShoeCollection() {
   // Betrachtens ändert, gibt es nicht — und ein Wert, der bei jedem
   // Neuzeichnen neu entsteht, wäre eine neue Liste bei jedem Tastendruck im
   // Suchfeld.
+  useSeo({
+    titel: 'Custom Made Schuhe',
+    beschreibung: 'Rahmengenähte Herrenschuhe nach Maß: Oxford, Derby, Loafer, Monk und Stiefel. '
+      + 'Leder, Farbe, Sohle und Innenfutter stellen Sie selbst zusammen, gefertigt für Ihren Fuß.',
+    pfad: '/collection',
+  })
+
   const rubriken = useMemo(() => kategorienFuer(new Date()), [])
   const CATEGORIES = isPromo
     ? [{ label: 'Promo', value: 'PROMO' }, ...rubriken]
