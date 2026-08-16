@@ -66,8 +66,7 @@ const WEITEN_WAHL = [
 const LAST_SHAPES = {
   zurigo:    'M9 56 L9 24 Q9 6 21 6 Q33 6 33 24 L33 56 Z',          // runde Spitze
   monti:     'M9 56 L9 22 Q9 9 15 8 L27 8 Q33 9 33 22 L33 56 Z',     // leicht eckig
-  savile:    'M10 56 L10 18 L16 7 L26 7 L32 18 L32 56 Z',           // Chisel
-  belgravia: 'M12 56 L12 17 L17 5 L25 5 L30 17 L30 56 Z',           // scharfe Chisel
+
 }
 function LastShapeIcon({ shapeKey, active }) {
   const path = LAST_SHAPES[shapeKey]

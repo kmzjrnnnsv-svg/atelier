@@ -18,8 +18,7 @@ import { useAuth } from '../../context/AuthContext'
 const LAST_META = [
   { key: 'monti',        label: 'Monti',         group: 'Herren' },
   { key: 'zurigo',       label: 'Zurigo',        group: 'Herren' },
-  { key: 'savile',       label: 'Saville',       group: 'Herren' },
-  { key: 'belgravia',    label: 'Belgravia',     group: 'Herren' },
+
   { key: 'wellington',   label: 'Wellington',    group: 'Herren' },
   { key: 'drake',        label: 'Drake',         group: 'Herren' },
   { key: 'venetian',     label: 'Venetian',      group: 'Herren' },

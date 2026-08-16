@@ -1878,6 +1878,39 @@ export function runMigrations(db) {
     }
   } catch (e) { console.error('[migrate Farbnamen zurück]', e.message) }
 
+  // ── Zwei Leisten weniger ────────────────────────────────────────────────
+  //
+  // „Savile" und „Belgravia" fallen weg. Vier Leisten im ersten Schritt des
+  // Konfigurators waren eine Wahl, die der Kunde nicht treffen kann: Die
+  // Unterschiede sind eine Zehenform und ein paar Millimeter Taille, und wer
+  // sie beurteilen könnte, bräuchte keinen Konfigurator. Zwei genügen.
+  //
+  // Gelöscht werden die Werte selbst und alles, was auf sie zeigt: die
+  // Vorlagen je Machart und die Zuordnungen je Modell. Beides sind
+  // Fremdschlüssel — bliebe eine Zeile stehen, ließe sich der Wert nicht
+  // löschen, und die Leiste stünde weiter zur Wahl.
+  //
+  // Was BLEIBT, sind die Bestellungen. Sie führen ihre Auswahl als Text mit
+  // („Schuhform: Savile") und nicht als Verweis: Ein bereits gefertigtes
+  // Paar soll auch in fünf Jahren noch sagen können, worauf es gebaut wurde.
+  try {
+    {
+      const ids = db.prepare(`
+        SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+         WHERE g.key = 'last' AND o.key IN ('savile', 'belgravia')
+      `).all().map(r => r.id)
+      if (ids.length) {
+        const platz = ids.map(() => '?').join(', ')
+        db.transaction(() => {
+          db.prepare(`DELETE FROM category_templates WHERE option_id IN (${platz})`).run(...ids)
+          db.prepare(`DELETE FROM shoe_options       WHERE option_id IN (${platz})`).run(...ids)
+          db.prepare(`DELETE FROM options            WHERE id        IN (${platz})`).run(...ids)
+        })()
+        console.log(`✅ Leisten entfernt: Savile und Belgravia (${ids.length} Werte)`)
+      }
+    }
+  } catch (e) { console.error('[migrate Leisten]', e.message) }
+
   // ── „Mov Flex Sport" heißt „Moc Flex Sport" ──────────────────────────────
   //
   // Ein Vertipper, und die eigene Datenbank verrät ihn: Der Leisten, auf dem

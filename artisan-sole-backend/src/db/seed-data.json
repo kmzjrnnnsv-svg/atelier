@@ -598,26 +598,6 @@
         "__gruppe": "last"
       },
       {
-        "key": "savile",
-        "label": "Savile",
-        "description": "Schlanker Look mit leichter Chisel-Zehe. Elegant für normale bis schmale Füße.",
-        "default_price_extra": 0,
-        "applicable_categories": "OXFORD,WHOLECUT,DERBY,LOAFER,CHELSEA,MONK,DOUBLE_MONK",
-        "sort_order": 2,
-        "recommended": 0,
-        "__gruppe": "last"
-      },
-      {
-        "key": "belgravia",
-        "label": "Belgravia",
-        "description": "Chisel-Zehe, schmale Taille und kubanischer Absatz. Markantes Statement, am besten für schlanke Füße.",
-        "default_price_extra": 0,
-        "applicable_categories": "OXFORD,WHOLECUT,CHELSEA",
-        "sort_order": 3,
-        "recommended": 0,
-        "__gruppe": "last"
-      },
-      {
         "key": "leather",
         "label": "Leather",
         "description": "Klassische Ledersohle, elegant für Business, Anzug und drinnen. Die richtige Wahl für die meisten Anlässe.",
