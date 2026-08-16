@@ -15,7 +15,7 @@ import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
-import { SAISONS, saisonsSortiert, laufendeSaison, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
+import { SAISONS, saisonsSortiert, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
 
 // Die Rubriken des Ladens: Sommer, Winter, Ganzjährig.
@@ -504,7 +504,6 @@ export default function ShoeCollection() {
   // Neuzeichnen neu entsteht, wäre eine neue Liste bei jedem Tastendruck im
   // Suchfeld.
   const rubriken = useMemo(() => kategorienFuer(new Date()), [])
-  const jetzt = useMemo(() => laufendeSaison(new Date()), [])
   const CATEGORIES = isPromo
     ? [{ label: 'Promo', value: 'PROMO' }, ...rubriken]
     : rubriken
@@ -799,14 +798,12 @@ export default function ShoeCollection() {
                   <span className="text-black/30 text-[12px] lg:text-[13px] font-light tabular-nums">
                     {abschnitt.modelle.length} {abschnitt.modelle.length === 1 ? 'Modell' : 'Modelle'}
                   </span>
-                  {/* Woran man erkennt, warum dieser Block hier steht. Ohne
-                      den Vermerk wirkt die Reihenfolge willkürlich — und im
-                      Januar, wenn sie sich umdreht, wie ein Fehler. */}
-                  {abschnitt.key === jetzt && (
-                    <span className="text-[9px] tracking-[0.18em] uppercase text-black/45 border border-black/15 px-2 py-0.5">
-                      Jetzt
-                    </span>
-                  )}
+                  {/* Hier stand ein Vermerk „Jetzt" an der laufenden Saison.
+                      Er sollte erklären, warum dieser Block vor dem anderen
+                      steht — aber die Reihenfolge erklärt sich selbst, und
+                      ein umrandetes Wort neben der Überschrift sieht aus wie
+                      eine Schaltfläche, die keine ist. Die Ordnung bleibt:
+                      erst die ganzjährigen, dann die laufende Jahreszeit. */}
                 </h2>
                 <p className="text-[11px] lg:text-[12px] text-black/35 font-light mt-1.5 max-w-md mx-auto leading-relaxed">
                   {abschnitt.text}
