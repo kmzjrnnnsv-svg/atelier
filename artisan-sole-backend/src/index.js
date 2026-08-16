@@ -55,6 +55,7 @@ import ordersRouter     from './routes/orders.js'
 import reviewsRouter    from './routes/reviews.js'
 import faqsRouter       from './routes/faqs.js'
 import legalRouter      from './routes/legal.js'
+import sitemapRouter    from './routes/sitemap.js'
 import settingsRouter   from './routes/settings.js'
 import emailTemplatesRouter from './routes/emailTemplates.js'
 import loyaltyRouter from './routes/loyalty.js'
@@ -199,6 +200,9 @@ app.use('/api/orders',    ordersRouter)
 app.use('/api/reviews',   reviewsRouter)
 app.use('/api/faqs',      faqsRouter)
 app.use('/api/legal',     legalRouter)
+// Ohne `/api`-Vorsatz: Suchmaschinen erwarten beide Dateien im Stammpfad,
+// und zwar genau dort. Ein `/api/sitemap.xml` findet niemand.
+app.use('/',              sitemapRouter)
 app.use('/api/settings',  settingsRouter)
 app.use('/api/email-templates', emailTemplatesRouter)
 app.use('/api/loyalty', loyaltyRouter)
