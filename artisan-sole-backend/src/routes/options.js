@@ -57,13 +57,14 @@ router.post('/option-groups', ...adminOnly,
   (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() })
-    const { key, label, description, ui_type, required, sort_order } = req.body
+    const { key, label, description, ui_type, required, sort_order, preview_image } = req.body
     const db = getDb()
     try {
       const r = db.prepare(`
-        INSERT INTO option_groups (key, label, description, ui_type, required, sort_order)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(key, label, description || null, ui_type || 'single', required ? 1 : 0, sort_order || 0)
+        INSERT INTO option_groups (key, label, description, ui_type, required, sort_order, preview_image)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(key, label, description || null, ui_type || 'single', required ? 1 : 0, sort_order || 0,
+             preview_image || null)
       res.status(201).json(db.prepare('SELECT * FROM option_groups WHERE id = ?').get(r.lastInsertRowid))
     } catch (e) {
       res.status(400).json({ error: e.message })
@@ -78,7 +79,7 @@ router.put('/option-groups/:id', ...adminOnly, param('id').isInt(), (req, res) =
   if (!db.prepare('SELECT id FROM option_groups WHERE id = ?').get(id)) {
     return res.status(404).json({ error: 'Group not found' })
   }
-  const { key, label, description, ui_type, required, sort_order } = req.body
+  const { key, label, description, ui_type, required, sort_order, preview_image } = req.body
   const updates = []
   const vals = []
   if (key !== undefined)         { updates.push('key = ?');         vals.push(key) }
@@ -87,6 +88,9 @@ router.put('/option-groups/:id', ...adminOnly, param('id').isInt(), (req, res) =
   if (ui_type !== undefined)     { updates.push('ui_type = ?');     vals.push(ui_type) }
   if (required !== undefined)    { updates.push('required = ?');    vals.push(required ? 1 : 0) }
   if (sort_order !== undefined)  { updates.push('sort_order = ?');  vals.push(sort_order) }
+  // Leerer String heißt „Bild entfernen", nicht „unverändert" — sonst
+  // ließe sich ein einmal gesetztes Bild nie wieder loswerden.
+  if (preview_image !== undefined) { updates.push('preview_image = ?'); vals.push(preview_image || null) }
   updates.push("updated_at = datetime('now')")
   if (updates.length > 1) {
     db.prepare(`UPDATE option_groups SET ${updates.join(', ')} WHERE id = ?`).run(...vals, id)

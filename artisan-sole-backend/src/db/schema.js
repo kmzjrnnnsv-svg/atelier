@@ -437,6 +437,9 @@ export function runMigrations(db) {
     `ALTER TABLE options ADD COLUMN icon TEXT`,
     // option_groups, Helper-Text für Schritt-für-Schritt-Erklärung
     `ALTER TABLE option_groups ADD COLUMN helper_text TEXT`,
+    // Siehe den Kommentar an der Tabelle: das Bild, das im Konfigurator
+    // an die Stelle des Schuhs tritt, solange dieser Schritt dran ist.
+    `ALTER TABLE option_groups ADD COLUMN preview_image TEXT`,
     // options, Empfehlung (Badge „EMPFOHLEN" + optionaler Grund)
     `ALTER TABLE options ADD COLUMN recommended INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE options ADD COLUMN recommendation_reason TEXT`,
@@ -1361,6 +1364,12 @@ export function runMigrations(db) {
                     CHECK(ui_type IN ('single','toggle','multi')),
       required      INTEGER NOT NULL DEFAULT 1,
       sort_order    INTEGER NOT NULL DEFAULT 0,
+      -- Ein Bild für die ganze Gruppe. Es tritt im Konfigurator an die Stelle
+      -- der Schuhaufnahme, sobald der Kunde bei diesem Schritt angekommen
+      -- ist: Bei „Laufsohle" nützt ihm eine Aufnahme des Schuhs von der
+      -- Seite nichts, er will die Sohlen sehen. Leer heißt: Der Schuh bleibt
+      -- stehen.
+      preview_image TEXT,
       created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at    TEXT    NOT NULL DEFAULT (datetime('now'))
     );
