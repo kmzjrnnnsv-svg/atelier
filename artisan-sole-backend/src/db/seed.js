@@ -7,6 +7,7 @@ import { katalogAnwenden } from './seedExport.js'
 import { frischeInstallationVerbrauchen } from './schema.js'
 import { GUERTEL_KEY, GUERTEL_ART, GROESSEN } from '../utils/guertel.js'
 import { saisonFuerKategorie } from '../utils/saison.js'
+import { uniqueShoeSlug } from '../utils/slug.js'
 // Der Seed legt an, was er vermisst — und er erkennt seine Modelle am Namen.
 // Seit ein eindeutiger Index über `lower(trim(name))` liegt, muss er dabei
 // dieselbe Frage stellen wie der Index: Ein zeichengenaues `WHERE name = ?`
@@ -92,6 +93,7 @@ export async function seedDatabase(db) {
   // Und ganz zuletzt das Aufräumen: Es nimmt weg, was die Schritte davor
   // angelegt haben, und muss deshalb hinter allen stehen.
   seedSohlenUndWelt(db)
+  seedSlugs(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
   if (userCount.count > 0) return
@@ -190,6 +192,11 @@ export async function seedDatabase(db) {
   // ohne diesen zweiten Aufruf fehlte die Hälfte der Express-Fassungen.
   seedExpressModelle(db)
   seedSaison(db)
+  // Auch hier zum Schluss: Dieser Zweig läuft NACH dem oberen und legt die
+  // zwölf Grundmodelle erst an. Stünde der Nachtrag nur oben, blieben genau
+  // sie ohne Adresse — und das fällt erst auf, wenn jemand einen Link auf
+  // „The Heritage Oxford" verschickt.
+  seedSlugs(db)
 }
 
 // ── EMAIL TEMPLATES ────────────────────────────────────────────────────────────
@@ -3115,4 +3122,39 @@ function seedSohlenUndWelt(db) {
     }
     if (raus) console.log(`✅ Sohlen und Welt: ${raus} Zuordnung(en) außerhalb der Sommerlinie entfernt`)
   } catch (e) { console.error('[Sohlen und Welt]', e.message) }
+}
+
+/**
+ * Jedes Modell bekommt seine sprechende Adresse.
+ *
+ * ── Warum das hier steht und nicht (nur) in den Migrationen ───────────────
+ *
+ * Dort steht es auch, und dort greift es für einen Bestand, der schon
+ * Modelle hat. Auf einer FRISCHEN Datenbank läuft es ins Leere: Migrationen
+ * laufen vor dem Seed, und der legt die Modelle erst danach an. Neunund-
+ * zwanzig von achtundvierzig standen deshalb nach dem ersten Start ohne
+ * Slug da.
+ *
+ * Was das anrichtet, sieht man erst zwei Ecken weiter:
+ *
+ *   • `/schuhe/oxford` findet nichts. Der Konfigurator fällt auf den ersten
+ *     Schuh der Liste zurück — der Besucher sieht klaglos ein anderes
+ *     Modell als das, dessen Adresse er aufgerufen hat.
+ *   • Die `sitemap.xml` führt nur Modelle MIT Slug. Nach einer frischen
+ *     Installation wären das neunzehn statt achtundvierzig, und niemand
+ *     merkt es: Eine kurze Landkarte sieht aus wie eine richtige.
+ *   • Beim zweiten Start ist alles in Ordnung. Genau das macht den Fehler
+ *     so schwer zu fassen — wer nach dem Ausrollen einmal neu startet,
+ *     sieht ihn nie.
+ */
+function seedSlugs(db) {
+  try {
+    const fehlend = db.prepare("SELECT id, name FROM shoes WHERE length(coalesce(slug, '')) = 0").all()
+    if (!fehlend.length) return
+    const upd = db.prepare('UPDATE shoes SET slug = ? WHERE id = ?')
+    // Einzeln und nicht gesammelt: `uniqueShoeSlug` liest die bereits
+    // vergebenen Slugs, jeder Schritt muss den vorherigen also sehen.
+    for (const s of fehlend) upd.run(uniqueShoeSlug(db, s.name, s.id), s.id)
+    console.log(`✅ Slugs vergeben: ${fehlend.length} Modell(e)`)
+  } catch (e) { console.error('[Slugs]', e.message) }
 }
