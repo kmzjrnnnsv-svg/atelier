@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2, X, Check, Upload, Gift, ChevronDown, ChevronUp, Layers, AlertCircle } from 'lucide-react'
 import useStore from '../../store/store'
 import { apiFetch } from '../../hooks/useApi'
+import { resolveMediaUrl } from '../../lib/mediaUrl'
 
 const CATEGORIES = ['OXFORD', 'WHOLECUT', 'DERBY', 'MONK', 'DOUBLE_MONK', 'LOAFER', 'MOCCASIN', 'MOC_SPORT', 'MOC_SPORT_BOOT', 'BALMORAL', 'BOOT', 'CHELSEA', 'CHUKKA', 'SNEAKER']
 const TAGS = [null, 'BESTSELLER', 'NEW', 'LIMITED']
@@ -793,7 +794,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
                        isOn ? 'text-black font-medium' : 'text-black/45 hover:text-black/70'
                      }`}
                    >
-                     {v.image_data && <img src={v.image_data} alt="" className="w-4 h-4 object-cover border border-black/10" />}
+                     {v.image_data && <img src={resolveMediaUrl(v.image_data)} alt="" className="w-4 h-4 object-cover border border-black/10" />}
                      {v.label}
                      {effectivePrice > 0 && <span className="opacity-60">+{effectivePrice.toFixed(2).replace('.', ',')}€</span>}
                    </button>

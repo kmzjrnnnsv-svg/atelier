@@ -3,9 +3,9 @@
  * Drei Spalten: Gruppen-Liste · Werte der ausgewählten Gruppe · Detail.
  */
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Check, X, Loader2, Sliders, Star } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, Loader2, Sliders, Star, Upload } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
-import ImagePicker from '../../components/ImagePicker'
+import { resolveMediaUrl } from '../../lib/mediaUrl'
 
 const CATEGORIES = ['*', 'OXFORD', 'WHOLECUT', 'DERBY', 'LOAFER', 'MOCCASIN', 'MOC_SPORT', 'MOC_SPORT_BOOT', 'CHELSEA', 'MONK', 'DOUBLE_MONK', 'BOOT', 'SNEAKER']
 
@@ -179,7 +179,7 @@ export default function OptionsEditor() {
                         style={{ backgroundColor: v.color_hex || '#fafaf9' }}
                       >
                         {v.image_data
-                          ? <img src={v.image_data} alt="" className="w-full h-full object-cover" />
+                          ? <img src={resolveMediaUrl(v.image_data)} alt="" className="w-full h-full object-cover" />
                           : v.color_hex
                             ? null
                             : <Sliders size={14} strokeWidth={1.2} className="text-black/15" />}
@@ -325,7 +325,7 @@ function OptionForm({ initial, onSave, onCancel }) {
         <Field label="Anzeige-Name"    value={form.label} onChange={v => set('label', v)} placeholder="z. B. Zurigo" />
       </div>
       <Field label="Beschreibung" value={form.description} onChange={v => set('description', v)} placeholder="Kurze Erläuterung für Tooltip" />
-      <ImagePicker label="Bild" value={form.image_data || ''} onChange={v => set('image_data', v)} />
+      <BildFeld value={form.image_data || ''} onChange={v => set('image_data', v)} />
       <div className="grid grid-cols-2 gap-5 mt-4">
         <div>
           <Label>Farbe (Hex)</Label>
@@ -412,6 +412,99 @@ function OptionForm({ initial, onSave, onCancel }) {
       </div>
       <ModalActions onCancel={onCancel} onSave={() => onSave(form)} valid={valid} />
     </Modal>
+  )
+}
+
+// ── Bild eines Wertes ───────────────────────────────────────────────────────
+/**
+ * Bild wählen — derselbe Weg wie bei den Schuhbildern.
+ *
+ * ── Warum nicht mehr über die Mediathek ────────────────────────────────────
+ *
+ * Vorher lief das Bild hier durch die Mediathek: Die Datei ging an
+ * /api/media, der Server legte sie unter /uploads ab, und im Datensatz stand
+ * nur der Pfad. Ausgeliefert wird /uploads aber allein vom Backend. Steht
+ * davor ein Webserver, der diesen Pfad nicht durchreicht, bekommt der Browser
+ * statt des Bildes die index.html zurück — und zeigt sein Fragezeichen. Das
+ * Bild war hochgeladen, in der Mediathek vorhanden und trotzdem nirgends zu
+ * sehen. Genau der gemeldete Fall.
+ *
+ * Die Schuhbilder gehen den kürzeren Weg: Die Datei wird im Browser gelesen
+ * und als Data-URL im Datensatz gespeichert. Sie hängt damit an keinem Pfad
+ * und an keiner Auslieferungsregel — wo der Datensatz ankommt, ist auch das
+ * Bild da. Ein Wert des Konfigurators ist ohnehin ein Plättchen von wenigen
+ * Hundert Pixeln, kein Bildband.
+ *
+ * Ältere Werte tragen weiterhin einen /uploads-Pfad. resolveMediaUrl lässt
+ * beide Formen gelten, damit deren Vorschau unverändert funktioniert.
+ */
+const MAX_BILD = 3 * 1024 * 1024   // dieselbe Grenze wie für Schuhbilder (routes/content.js)
+
+function BildFeld({ value, onChange }) {
+  const [fehler, setFehler] = useState(null)
+
+  const dateiLesen = (datei) => {
+    if (!datei) return
+    setFehler(null)
+    // Die Werte gehen mit /api/option-groups an jeden Besucher des
+    // Konfigurators. Ein Foto in voller Größe läge dort in jeder Antwort.
+    if (datei.size > MAX_BILD) {
+      setFehler('Das Bild ist zu groß. Höchstens 3 MB, wie bei den Schuhbildern.')
+      return
+    }
+    const leser = new FileReader()
+    leser.onload = e => onChange(e.target.result)
+    // Ein Fehlschlag wird gesagt. Ein Feld, in das man eine Datei legt und in
+    // dem daraufhin nichts geschieht, ist schlimmer als eine Beschwerde.
+    leser.onerror = () => setFehler('Die Datei ließ sich nicht lesen.')
+    leser.readAsDataURL(datei)
+  }
+
+  // Das Feld wird nach jeder Wahl geleert: Sonst löst dieselbe Datei ein
+  // zweites Mal kein change-Ereignis aus.
+  const feld = (
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={e => { dateiLesen(e.target.files?.[0]); e.target.value = '' }}
+    />
+  )
+
+  return (
+    <div className="mb-4">
+      <Label>Bild</Label>
+      <div className="flex flex-wrap gap-2">
+        {value ? (
+          <div className="relative w-24 group">
+            {/* Das Bild ist selbst die Fläche zum Austauschen. Erst entfernen
+                und dann neu wählen wären zwei Schritte für eine Absicht. */}
+            <label className="block w-24 h-24 overflow-hidden border border-black/10 bg-[#f6f5f3] cursor-pointer">
+              <img src={resolveMediaUrl(value)} alt="" className="w-full h-full object-cover" />
+              <span className="absolute inset-0 hidden group-hover:flex items-center justify-center bg-black/40 text-white text-[8px] tracking-[0.16em] uppercase">
+                Ersetzen
+              </span>
+              {feld}
+            </label>
+            <button
+              type="button"
+              onClick={() => { setFehler(null); onChange('') }}
+              className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-black/20 text-black/60 hover:text-red-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Bild entfernen"
+            >
+              <X size={10} strokeWidth={1.6} />
+            </button>
+          </div>
+        ) : (
+          <label className="w-24 h-24 flex flex-col items-center justify-center border border-dashed border-black/15 text-black/30 hover:border-black/40 hover:text-black/60 cursor-pointer transition-colors">
+            <Upload size={14} strokeWidth={1.4} />
+            <span className="text-[8px] tracking-[0.16em] uppercase mt-1">Hinzufügen</span>
+            {feld}
+          </label>
+        )}
+      </div>
+      {fehler && <p role="alert" className="text-[10px] text-red-600 mt-1.5 leading-relaxed">{fehler}</p>}
+    </div>
   )
 }
 
