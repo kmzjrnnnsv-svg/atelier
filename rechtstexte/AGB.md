@@ -84,6 +84,12 @@ Diese Ziffer ist der Kern des Vertrages. Bitte lesen Sie sie vollständig.
 
 ### 4.1 Sie liefern die Maße
 
+**Grundsatz: Jede Größen-, Weiten- und Leistenangabe, die wir anzeigen, ist
+eine Empfehlung.** Sie beruht auf den Maßen, die Sie angeben, und auf
+Erfahrungswerten. Eine Zusage, dass der Schuh passt, ist damit nicht
+verbunden und kann es nicht sein: Wir haben Ihren Fuß nicht in der Hand,
+und zwei Füße mit denselben Maßen können verschieden gebaut sein.
+
 (1) Die Fertigung erfolgt auf Grundlage der Maße, die Sie selbst eingeben
 oder über die Messfunktion unserer Anwendung ermitteln. **Für die Richtigkeit
 dieser Angaben sind Sie verantwortlich.** Wir prüfen sie nicht nach und
@@ -133,6 +139,13 @@ gesetzlichen Rechte nach Ziffer 6.
 (2) Entspricht der Schuh Ihren freigegebenen Maßen, passt aber dennoch nicht,
 weil die Maße unzutreffend erhoben wurden, liegt **kein Mangel** vor. In
 diesem Fall bieten wir Ihnen freiwillig die Lösung nach Ziffer 7 an.
+
+(3) Dasselbe gilt, wenn der Schuh Ihren Maßen entspricht und dennoch nicht
+sitzt, wie Sie es erwartet haben. Die von uns vorgeschlagene Größe, Weite
+und Leistenform ist nach dem Grundsatz in Ziffer 4.1 eine **Empfehlung**
+und keine zugesicherte Eigenschaft. Weicht der Sitz von dieser Empfehlung ab, ohne
+dass eine Toleranz nach Ziffer 4.2 überschritten ist, begründet das keinen
+Mangel. Auch hier steht Ihnen die Lösung nach Ziffer 7 offen.
 
 ## 5. Kein Widerrufsrecht
 
