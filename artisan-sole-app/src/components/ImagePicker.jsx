@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Upload, X, Image, ChevronDown, Loader2 } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
+import { getAccessToken } from '../context/AuthContext'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
@@ -39,26 +40,61 @@ export default function ImagePicker({ value, onChange, label }) {
     return `${API_BASE}${url}`
   }
 
+  /**
+   * Hochladen.
+   *
+   * ── Warum das nicht über `apiFetch` läuft ──────────────────────────────
+   *
+   * Der Aufruf muss ein `FormData` schicken, und dazu darf man `Content-Type`
+   * NICHT selbst setzen: Der Browser hängt eine Trennmarke an, ohne die der
+   * Server die Teile nicht auseinanderhält. `apiFetch` setzt ihn immer auf
+   * `application/json`.
+   *
+   * ── Was hier gefehlt hat ───────────────────────────────────────────────
+   *
+   * Der Kopf `Authorization`. Der Aufruf ging mit `credentials: 'include'`
+   * hinaus und verließ sich auf ein Sitzungskeks — die Anwendung meldet sich
+   * aber mit einem Token an. Die Medienroute ist für Redakteure gesperrt,
+   * also kam 401 zurück, und der Fehler wurde vom leeren `catch` verschluckt:
+   * kein Bild, keine Meldung, nichts. Genau deshalb ließ sich hier nichts
+   * hochladen, während es beim Schuh ging.
+   *
+   * Der Fehlschlag wird jetzt auch gesagt. Eine Schaltfläche, die man drückt
+   * und bei der nichts geschieht, ist schlimmer als eine, die sich beklagt.
+   */
+  const [fehler, setFehler] = useState(null)
+
   const handleUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
+    setFehler(null)
     const form = new FormData()
     form.append('file', file)
+    const token = getAccessToken()
     try {
-      const res = await fetch(`${API_BASE}/api/media`, {
+      const antwort = await fetch(`${API_BASE}/api/media`, {
         method: 'POST',
         body: form,
         credentials: 'include',
-      }).then(r => r.json())
-      if (res?.id) {
+        headers: {
+          'X-Requested-With': 'ArtisanSole',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      const res = await antwort.json().catch(() => null)
+      if (!antwort.ok || !res?.id) {
+        setFehler(res?.error || res?.detail || `Hochladen fehlgeschlagen (HTTP ${antwort.status})`)
+      } else {
         const newItem = { id: res.id, name: res.name, url: res.url }
         setMedia(prev => [newItem, ...prev])
         onChange(res.url)
+        setOpen(false)
       }
-    } catch {}
+    } catch (err) {
+      setFehler(err?.message || 'Hochladen fehlgeschlagen')
+    }
     setUploading(false)
-    setOpen(false)
     e.target.value = ''
   }
 
@@ -95,21 +131,44 @@ export default function ImagePicker({ value, onChange, label }) {
           </div>
         </div>
       ) : (
-        <button
-          onClick={handleOpen}
-          className="w-full py-6 border border-dashed border-black/[0.08] text-black/25 text-[11px] flex items-center justify-center gap-2 bg-transparent hover:border-black/25 font-light uppercase tracking-[0.15em] transition-all"
-        >
-          <Image size={14} strokeWidth={1.25} />
-          Bild auswählen
-          <ChevronDown size={12} strokeWidth={1.25} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
+        // Zwei Wege nebeneinander statt einem Menü davor. Beim Schuh genügt
+        // ein Klick auf „Hinzufügen", um den Dateidialog zu öffnen; hier
+        // musste man erst ein Menü aufklappen und darin den Punkt zum
+        // Hochladen suchen. Wer ein Bild auf der Platte hat, soll es in
+        // einem Schritt loswerden, und wer eines wiederverwenden will,
+        // bekommt weiter die Auswahl.
+        <div className="flex gap-2">
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="flex-1 py-6 border border-dashed border-black/[0.08] text-black/25 text-[11px] flex items-center justify-center gap-2 bg-transparent hover:border-black/25 hover:text-black/50 font-light uppercase tracking-[0.15em] transition-all disabled:opacity-40"
+          >
+            {uploading ? <Loader2 size={14} strokeWidth={1.25} className="animate-spin" /> : <Upload size={14} strokeWidth={1.25} />}
+            {uploading ? 'Wird hochgeladen …' : 'Hochladen'}
+          </button>
+          <button
+            onClick={handleOpen}
+            className="flex-1 py-6 border border-dashed border-black/[0.08] text-black/25 text-[11px] flex items-center justify-center gap-2 bg-transparent hover:border-black/25 hover:text-black/50 font-light uppercase tracking-[0.15em] transition-all"
+          >
+            <Image size={14} strokeWidth={1.25} />
+            Vorhandenes
+            <ChevronDown size={12} strokeWidth={1.25} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+      )}
+
+      {/* Das Feld liegt außerhalb des Menüs: Der Knopf „Hochladen" oben
+          braucht es auch, wenn das Menü zu ist. */}
+      <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+
+      {fehler && (
+        <p role="alert" className="text-[10px] text-red-600 mt-1.5 leading-relaxed">{fehler}</p>
       )}
 
       {/* Dropdown */}
       {open && (
         <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-black/[0.08] shadow-lg max-h-[320px] overflow-y-auto">
           {/* Upload row */}
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
