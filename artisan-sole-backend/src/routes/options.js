@@ -146,7 +146,9 @@ router.put('/options/:id', ...adminOnly, param('id').isInt(), (req, res) => {
   if (key !== undefined)         { updates.push('key = ?');         vals.push(key) }
   if (label !== undefined)       { updates.push('label = ?');       vals.push(label) }
   if (description !== undefined) { updates.push('description = ?'); vals.push(description) }
-  if (image_data !== undefined)  { updates.push('image_data = ?');  vals.push(image_data) }
+  // Ein entferntes Bild kommt als leerer String an. Der gehört als NULL in die
+  // Spalte, sonst steht dort eine Zeichenkette, die „kein Bild" bedeutet.
+  if (image_data !== undefined)  { updates.push('image_data = ?');  vals.push(image_data || null) }
   if (color_hex !== undefined)   { updates.push('color_hex = ?');   vals.push(color_hex || null) }
   if (icon !== undefined)        { updates.push('icon = ?');        vals.push(icon || null) }
   if (default_price_extra !== undefined) { updates.push('default_price_extra = ?'); vals.push(parseFloat(default_price_extra) || 0) }
