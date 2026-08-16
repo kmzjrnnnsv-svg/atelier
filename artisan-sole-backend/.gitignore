@@ -1,0 +1,6 @@
+
+# Hochgeladene Bilder. Laufzeitdaten des Betriebs, keine Quellen:
+# Sie entstehen im CMS, gehören zur Datenbank und werden mit ihr
+# gesichert. Im Repository wäre jedes Bild eines Betreibers ein
+# Stück fremder Inhalt, das niemand wieder herausbekommt.
+uploads/
