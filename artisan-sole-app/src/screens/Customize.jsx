@@ -80,6 +80,7 @@ function LastShapeIcon({ shapeKey, active }) {
   )
 }
 import useStore from '../store/store'
+import { useSeo, schuhBeschreibung } from '../lib/seo'
 import { accessoryImages } from '../lib/accessoryImages'
 import { LIEFERUMFANG } from '../lib/lieferumfang'
 import GroessenTabelle from '../components/GroessenTabelle'
@@ -171,6 +172,16 @@ export default function Customize() {
       match: '99.4%', color: '#1f2937', image: null,
     }
   const category = product.category || 'OXFORD'
+
+  // Was im Reiter steht und was Google zitiert. Bis hierher trug jede der
+  // achtundvierzig Modellseiten denselben Titel: „ARTISAN SOLE".
+  useSeo({
+    titel: product?.name || null,
+    beschreibung: schuhBeschreibung(product),
+    // Ausdrücklich die sprechende Adresse, auch wenn der Besucher über
+    // /customize?id=13 gekommen ist: Sonst zählte dieselbe Seite zweimal.
+    pfad: product?.slug ? `/schuhe/${product.slug}` : undefined,
+  })
 
   // Unbekannter Slug: Die Auflösungskette oben fällt sonst auf den ersten
   // Schuh im Store zurück — der Besucher sähe unter /schuhe/gibt-es-nicht
