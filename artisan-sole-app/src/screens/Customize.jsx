@@ -1006,6 +1006,16 @@ export default function Customize() {
   }
 
   const accessories = (Array.isArray(allAccessories) ? allAccessories : [])
+    // `config_kind` heißt: Dieser Artikel wird konfiguriert, nicht angehakt,
+    // und hat deshalb weiter oben einen eigenen Schritt. Der Gürtel stand
+    // trotzdem noch einmal in der Kachelreihe „Passend dazu" — zweimal
+    // dasselbe Zubehör auf einer Seite, einmal mit Leder, Farbe, Schnalle
+    // und Länge, einmal als Häkchen ohne all das. Wer das Häkchen setzte,
+    // hätte einen Gürtel ohne Konfiguration bestellt.
+    //
+    // Die Regel steht bewusst am Feld und nicht am Namen: Kommt ein zweiter
+    // konfigurierbarer Artikel dazu, ist er von selbst mit erfasst.
+    .filter(a => !a.config_kind)
     .filter(a => a.is_active !== 0 && matMatchesAccessory(a) && colorMatchesAccessory(a) && kategorieMatchesAccessory(a))
     .map(a => ({
       id: a.id,

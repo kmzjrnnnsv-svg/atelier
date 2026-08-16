@@ -540,6 +540,48 @@ router.put('/:id', ...canAdmin, param('id').isInt(), (req, res) => {
   for (const k of allowed) if (req.body[k] !== undefined) patch[k] = req.body[k]
   if (patch.gift_shoetree !== undefined) patch.gift_shoetree = patch.gift_shoetree ? 1 : 0
 
+  // ── Das verknüpfte Konto ────────────────────────────────────────────────
+  //
+  // `user_id` zeigt auf `users(id)`. Die Maske lädt den Datensatz und
+  // schickt ihn vollständig zurück — mitsamt diesem Feld, das sie gar nicht
+  // bearbeitet. Ist dort nichts hinterlegt, wird aus dem `null` unterwegs
+  // eine leere Zeichenkette, und für SQLite ist "" kein NULL: Es sucht einen
+  // Benutzer mit der Kennung "" , findet keinen und bricht mit
+  // „FOREIGN KEY constraint failed" ab. Dasselbe, wenn das Konto seit dem
+  // Laden der Maske gelöscht wurde.
+  //
+  // Auf dem Bildschirm stand dann eine Datenbankmeldung über einem Formular
+  // voller Felder, von denen keines gemeint war. Nichts ließ sich mehr
+  // speichern, und es gab keinen Hinweis, woran es lag.
+  //
+  // Deshalb hier: Leeres wird zu NULL (kein Konto verknüpft, das ist ein
+  // gültiger Zustand), und ein Verweis auf ein Konto, das es nicht gibt,
+  // wird mit einem lesbaren Satz abgewiesen statt vom Fremdschlüssel.
+  if (patch.user_id !== undefined) {
+    const roh = patch.user_id
+    const leer = roh === null || roh === '' || roh === 0 || roh === '0'
+    if (leer) {
+      patch.user_id = null
+    } else {
+      const id = Number(roh)
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+          error: 'Die Kennung des verknüpften Kontos ist keine gültige Zahl.',
+          code: 'USER_ID_UNGUELTIG', feld: 'user_id',
+        })
+      }
+      if (!db.prepare('SELECT 1 FROM users WHERE id = ?').get(id)) {
+        return res.status(400).json({
+          error: `Das verknüpfte Konto (Nr. ${id}) gibt es nicht mehr. `
+            + 'Es wurde vermutlich gelöscht, während diese Maske offen war. '
+            + 'Bitte die Seite neu laden und noch einmal speichern.',
+          code: 'USER_FEHLT', feld: 'user_id',
+        })
+      }
+      patch.user_id = id
+    }
+  }
+
   // Die Sperrliste kommt in zwei Gestalten, und das war ein stiller Verlust.
   //
   // Die Maske hält sie als JSON-Zeichenkette (so steht sie auch in der
