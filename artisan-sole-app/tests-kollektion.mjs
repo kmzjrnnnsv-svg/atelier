@@ -126,12 +126,12 @@ p('Die Abschnitte stehen in dieser Reihenfolge',
   && gezeigt.every((t, i) => t.toLowerCase().startsWith(erwartet[i].toLowerCase())),
   gezeigt.join(' | '))
 p('Die ganzjährigen stehen oben', /ganze jahr/i.test(gezeigt[0] || ''), gezeigt[0] || '—')
-// Der Vermerk sagt, warum dieser Block dort steht. Ohne ihn wirkt die
-// Reihenfolge willkürlich — und im Januar, wenn sie sich umdreht, wie ein
-// Fehler.
-p('Die laufende Jahreszeit ist als „Jetzt" gekennzeichnet',
-  (gezeigt[1] || '').toUpperCase().includes('JETZT'), gezeigt[1] || '—')
-p('Und die andere nicht', !(gezeigt[2] || '').toUpperCase().includes('JETZT'), gezeigt[2] || '—')
+// An der laufenden Jahreszeit stand ein Vermerk „Jetzt". Er ist weg: Die
+// Reihenfolge erklärt sich selbst, und ein umrandetes Wort neben der
+// Überschrift sieht aus wie eine Schaltfläche, die keine ist. Geprüft wird,
+// dass er nirgends zurückkommt — die Reihenfolge oben trägt die Aussage.
+p('Kein „Jetzt"-Vermerk an den Überschriften',
+  gezeigt.every(t => !t.toUpperCase().includes('JETZT')), gezeigt.join(' | '))
 
 // Auch die Reiterleiste folgt derselben Reihenfolge — zwei verschiedene
 // Ordnungen auf einer Seite wären zwei Behauptungen.
