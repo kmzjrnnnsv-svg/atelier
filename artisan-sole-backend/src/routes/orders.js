@@ -207,12 +207,39 @@ router.post('/',
         }
       }
       if (couponRow) {
-        const priceNum = parseFloat(String(price).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
-        original_price = price
+        // ── Was hier vorher schieflief ──────────────────────────────────
+        //
+        // `price` ist der Betrag, den der Kunde zahlt — der Nachlass ist da
+        // längst abgezogen. Er wurde trotzdem als `original_price` abgelegt
+        // und der Rabatt ein zweites Mal von ihm berechnet. Bei 1.450 € und
+        // zehn Prozent stand in der Bestellung: ursprünglich 1.305 €,
+        // Nachlass 131 €. Beides falsch, und die Rechnung baut darauf auf
+        // (utils/beleg.js: Position = original_price, davon ab der Rabatt) —
+        // sie wies also eine Summe aus, die niemand bezahlt hat.
+        //
+        // Richtig ist die Rückrechnung: Aus dem, was nach dem Abzug übrig
+        // ist, ergibt sich der Abzug selbst. netto = brutto · (1 − p/100),
+        // also rabatt = netto · p/(100 − p). Der Versand bleibt außen vor,
+        // er hat am Nachlass nicht teilgenommen.
+        //
+        // Die eine Eigenschaft, auf die es ankommt: original − rabatt = price.
+        const priceNum   = parseFloat(String(price).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
+        const versandNum = parseFloat(String(shipping_cost ?? '').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0
+        const warenwert  = Math.max(0, priceNum - versandNum)
+
+        let rabatt = 0
         if (couponRow.type === 'percentage') {
-          discount_amount = `€ ${Math.round(priceNum * (couponRow.value / 100))}`
+          const satz = Math.min(99.9, Math.max(0, Number(couponRow.value) || 0))
+          rabatt = satz > 0 ? warenwert * satz / (100 - satz) : 0
         } else if (couponRow.type === 'fixed') {
-          discount_amount = `€ ${Math.min(couponRow.value, priceNum)}`
+          rabatt = Math.max(0, Number(couponRow.value) || 0)
+        }
+        rabatt = Math.round(rabatt * 100) / 100
+
+        if (rabatt > 0) {
+          const geld = (n) => `€ ${n.toFixed(2).replace('.', ',')}`
+          discount_amount = geld(rabatt)
+          original_price  = geld(priceNum + rabatt)
         }
       }
     }
