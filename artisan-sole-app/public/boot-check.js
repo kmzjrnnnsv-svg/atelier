@@ -18,8 +18,31 @@
   }
   function mark() { try { sessionStorage.setItem(KEY, String(Date.now())) } catch (e) {} }
   function clear() { try { sessionStorage.removeItem(KEY) } catch (e) {} }
+  /**
+   * Wenn auch der zweite Anlauf nichts zeigt, bleibt sonst eine weiße Seite
+   * stehen — das Haupt-Bündel ist nicht da, also kann auch die Meldung der
+   * Anwendung nicht erscheinen. Diese hier kommt ohne sie aus: schlichtes
+   * DOM, keine Abhängigkeit, die ihrerseits geladen werden müsste.
+   */
+  function zeigeMeldung() {
+    var wurzel = document.getElementById('root')
+    if (!wurzel || wurzel.childElementCount > 0) return
+    wurzel.innerHTML =
+      '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;' +
+      'justify-content:center;text-align:center;padding:0 2rem;font-family:system-ui,sans-serif;background:#fff">' +
+      '<p style="letter-spacing:.3em;font-size:13px;color:#111;margin-bottom:2.5rem">ARTISAN SOLE</p>' +
+      '<p style="font-size:19px;color:#111;margin:0 0 .75rem">Der Laden lädt gerade nicht</p>' +
+      '<p style="font-size:14px;color:#9ca3af;line-height:1.6;max-width:20rem;margin:0 0 2rem">' +
+      'Ein Teil der Seite kam nicht durch — meist liegt es an einer kurz unterbrochenen Verbindung.</p>' +
+      '<button id="as-neu" style="background:#000;color:#fff;font-size:12px;letter-spacing:.15em;' +
+      'text-transform:uppercase;padding:1rem 2rem;border:0;border-radius:8px">Nochmal versuchen</button>' +
+      '</div>'
+    var knopf = document.getElementById('as-neu')
+    if (knopf) knopf.addEventListener('click', function () { clear(); bustReload() })
+  }
+
   function bustReload() {
-    if (reloadedRecently()) return            // nur einmal pro 30s, kein Loop
+    if (reloadedRecently()) { zeigeMeldung(); return }   // nur einmal pro 30s, kein Loop
     mark()
     try {
       if ('caches' in window) caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k) }) })

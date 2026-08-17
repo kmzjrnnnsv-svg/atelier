@@ -1,10 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
+import { nachladen } from './lib/nachladen'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute, StartRoute } from './components/ProtectedRoute'
 import BottomNav from './components/BottomNav'
 import RefErfassung from './components/RefErfassung'
 import VermittlerBanner from './components/VermittlerBanner'
+import CookieHinweis from './components/CookieHinweis'
+import NewsletterBanner from './components/NewsletterBanner'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
 import useStore from './store/store'
@@ -59,7 +62,12 @@ import Login from './screens/Login'
 import Registration from './screens/Registration'
 import NotFound from './screens/NotFound'
 
-// Lazy import factories, used both by lazy() and prefetchRoute()
+// Jede Seite wird erst beim Betreten geladen. `spaet` legt um jeden dieser
+// Ladevorgänge die Wiederholung aus lib/nachladen: Ein verlorener Abruf
+// kostet damit einen zweiten Versuch statt der ganzen Seite.
+const spaet = (laden) => lazy(nachladen(laden))
+
+// Lazy import factories, used both by spaet() and prefetchRoute()
 const lazyImports = {
   '/collection': () => import('./screens/ShoeCollection'),
   '/customize':  () => import('./screens/Customize'),
@@ -84,85 +92,97 @@ const lazyImports = {
 }
 
 // Prefetch a route's chunk on hover/touch, safe to call multiple times
+//
+// Das Vorausladen ist eine Bequemlichkeit und darf niemals mehr sein. Bisher
+// blieb sein Fehlschlag unbehandelt: Am unteren Rand löst schon das Berühren
+// eines Knopfes (`onTouchStart`) einen Ladevorgang aus — brach der auf einer
+// wackligen Mobilverbindung ab, sah die globale Fehlerbehandlung einen
+// Chunk-Fehler und lud die ganze Seite neu. Dreimal in einer halben Minute,
+// und der Besucher stand vor „Seite kann nicht geladen werden", ohne je
+// etwas angetippt zu haben, das nicht geht.
+//
+// Deshalb: Fehlschlag schlucken und die Adresse wieder freigeben, damit ein
+// späterer echter Aufruf es erneut versuchen darf.
 const prefetched = new Set()
 export function prefetchRoute(path) {
   if (prefetched.has(path) || !lazyImports[path]) return
   prefetched.add(path)
-  lazyImports[path]()
+  Promise.resolve(lazyImports[path]()).catch(() => prefetched.delete(path))
 }
 
 // Lazy: loaded on demand per route
-const ShoeCollection    = lazy(lazyImports['/collection'])
-const Customize         = lazy(lazyImports['/customize'])
-const AffiliatePortal   = lazy(lazyImports['/affiliate'])
-const Profile           = lazy(lazyImports['/profile'])
-const FootScan          = lazy(lazyImports['/scan'])
-const HealthInfo        = lazy(lazyImports['/health'])
-const Settings          = lazy(lazyImports['/settings'])
-const Wishlist          = lazy(lazyImports['/wishlist'])
-const Orders            = lazy(lazyImports['/orders'])
-const Checkout          = lazy(lazyImports['/checkout'])
-const KontoWiederherstellen = lazy(lazyImports['/konto-wiederherstellen'])
-const PasswortNeu       = lazy(lazyImports['/passwort-neu'])
-const Accessories       = lazy(lazyImports['/accessories'])
-const HelpSupport       = lazy(lazyImports['/help'])
-const Feedback          = lazy(lazyImports['/feedback'])
-const LegalDoc          = lazy(lazyImports['/legal'])
-const MyScans           = lazy(lazyImports['/my-scans'])
-const Ruecksendungen    = lazy(lazyImports['/ruecksendungen'])
-const Welcome           = lazy(lazyImports['/welcome'])
-const Entdecken         = lazy(lazyImports['/entdecken'])
+const ShoeCollection    = spaet(lazyImports['/collection'])
+const Customize         = spaet(lazyImports['/customize'])
+const AffiliatePortal   = spaet(lazyImports['/affiliate'])
+const Profile           = spaet(lazyImports['/profile'])
+const FootScan          = spaet(lazyImports['/scan'])
+const HealthInfo        = spaet(lazyImports['/health'])
+const Settings          = spaet(lazyImports['/settings'])
+const Wishlist          = spaet(lazyImports['/wishlist'])
+const Orders            = spaet(lazyImports['/orders'])
+const Checkout          = spaet(lazyImports['/checkout'])
+const KontoWiederherstellen = spaet(lazyImports['/konto-wiederherstellen'])
+const PasswortNeu       = spaet(lazyImports['/passwort-neu'])
+const Accessories       = spaet(lazyImports['/accessories'])
+const HelpSupport       = spaet(lazyImports['/help'])
+const Feedback          = spaet(lazyImports['/feedback'])
+const LegalDoc          = spaet(lazyImports['/legal'])
+const MyScans           = spaet(lazyImports['/my-scans'])
+const Ruecksendungen    = spaet(lazyImports['/ruecksendungen'])
+const Welcome           = spaet(lazyImports['/welcome'])
+const Entdecken         = spaet(lazyImports['/entdecken'])
+const NewsletterBestaetigung = spaet(() => import('./screens/NewsletterBestaetigung'))
 
 // CMS
-const CMSLayout            = lazy(() => import('./screens/cms/CMSLayout'))
-const MobileAdmin          = lazy(() => import('./screens/admin/MobileAdmin'))
-const CMSDashboard         = lazy(() => import('./screens/cms/CMSDashboard'))
-const ShoeEditor           = lazy(() => import('./screens/cms/ShoeEditor'))
-const UsersPanel           = lazy(() => import('./screens/cms/UsersPanel'))
-const ScansPanel           = lazy(() => import('./screens/cms/ScansPanel'))
-const FAQEditor            = lazy(() => import('./screens/cms/FAQEditor'))
-const LegalEditor          = lazy(() => import('./screens/cms/LegalEditor'))
-const OrdersPanel          = lazy(() => import('./screens/cms/OrdersPanel'))
-const ZahlungsPanel        = lazy(() => import('./screens/cms/ZahlungsPanel'))
-const RechnungsAngaben     = lazy(() => import('./screens/cms/RechnungsAngaben'))
-const AuswertungPanel      = lazy(() => import('./screens/cms/AuswertungPanel'))
-const WerbemittelPanel     = lazy(() => import('./screens/cms/WerbemittelPanel'))
-const MFASetup             = lazy(() => import('./screens/cms/MFASetup'))
-const BankSettings         = lazy(() => import('./screens/cms/BankSettings'))
-const EmailSettings        = lazy(() => import('./screens/cms/EmailSettings'))
-const EmailTemplatesPanel  = lazy(() => import('./screens/cms/EmailTemplatesPanel'))
-const LastSizeChartEditor  = lazy(() => import('./screens/cms/LastSizeChartEditor'))
-const ProductConfigEditor  = lazy(() => import('./screens/cms/ProductConfigEditor'))
-const LoyaltyEditor        = lazy(() => import('./screens/cms/LoyaltyEditor'))
-const FeedbackPanel        = lazy(() => import('./screens/cms/FeedbackPanel'))
-const AccessoriesPanel     = lazy(() => import('./screens/cms/AccessoriesPanel'))
-const ShippingPanel        = lazy(() => import('./screens/cms/ShippingPanel'))
-const CouponsPanel         = lazy(() => import('./screens/cms/CouponsPanel'))
-const FooterEditor         = lazy(() => import('./screens/cms/FooterEditor'))
-const ProductTextsEditor   = lazy(() => import('./screens/cms/ProductTextsEditor'))
-const MediaLibrary         = lazy(() => import('./screens/cms/MediaLibrary'))
-const WebsiteImagesPanel   = lazy(() => import('./screens/cms/WebsiteImagesPanel'))
-const OptionsEditor        = lazy(() => import('./screens/cms/OptionsEditor'))
-const ConfiguratorMatrix   = lazy(() => import('./screens/cms/ConfiguratorMatrix'))
-const CtaBannerPanel       = lazy(() => import('./screens/cms/CtaBannerPanel'))
-const NachrichtenPanel     = lazy(() => import('./screens/cms/NachrichtenPanel'))
-const RegisterPromotion    = lazy(() => import('./screens/RegisterPromotion'))
-const CorporateGifting     = lazy(() => import('./screens/CorporateGifting'))
-const CorporateOverview    = lazy(() => import('./screens/business/CorporateOverview'))
-const RegisterBusiness     = lazy(() => import('./screens/RegisterBusiness'))
-const RegisterAffiliate    = lazy(() => import('./screens/RegisterAffiliate'))
-const AffiliateLanding     = lazy(() => import('./screens/AffiliateLanding'))
-const AffiliateOverview    = lazy(() => import('./screens/AffiliateOverview'))
-const BusinessDashboard    = lazy(() => import('./screens/business/BusinessDashboard'))
-const BusinessProfile      = lazy(() => import('./screens/business/BusinessProfile'))
-const BusinessCampaigns    = lazy(() => import('./screens/business/BusinessCampaigns'))
-const CampaignDashboard    = lazy(() => import('./screens/business/CampaignDashboard'))
-const CampaignJoin         = lazy(() => import('./screens/business/CampaignJoin'))
-const VerifyEmail          = lazy(() => import('./screens/VerifyEmail'))
-const BusinessPanel        = lazy(() => import('./screens/cms/BusinessPanel'))
-const AffiliatesPanel      = lazy(() => import('./screens/cms/AffiliatesPanel'))
-const AnfragenPanel        = lazy(() => import('./screens/cms/AnfragenPanel'))
-const RuecksendungenPanel  = lazy(() => import('./screens/cms/RuecksendungenPanel'))
+const CMSLayout            = spaet(() => import('./screens/cms/CMSLayout'))
+const MobileAdmin          = spaet(() => import('./screens/admin/MobileAdmin'))
+const CMSDashboard         = spaet(() => import('./screens/cms/CMSDashboard'))
+const ShoeEditor           = spaet(() => import('./screens/cms/ShoeEditor'))
+const UsersPanel           = spaet(() => import('./screens/cms/UsersPanel'))
+const ScansPanel           = spaet(() => import('./screens/cms/ScansPanel'))
+const FAQEditor            = spaet(() => import('./screens/cms/FAQEditor'))
+const LegalEditor          = spaet(() => import('./screens/cms/LegalEditor'))
+const OrdersPanel          = spaet(() => import('./screens/cms/OrdersPanel'))
+const ZahlungsPanel        = spaet(() => import('./screens/cms/ZahlungsPanel'))
+const RechnungsAngaben     = spaet(() => import('./screens/cms/RechnungsAngaben'))
+const AuswertungPanel      = spaet(() => import('./screens/cms/AuswertungPanel'))
+const WerbemittelPanel     = spaet(() => import('./screens/cms/WerbemittelPanel'))
+const MFASetup             = spaet(() => import('./screens/cms/MFASetup'))
+const BankSettings         = spaet(() => import('./screens/cms/BankSettings'))
+const EmailSettings        = spaet(() => import('./screens/cms/EmailSettings'))
+const EmailTemplatesPanel  = spaet(() => import('./screens/cms/EmailTemplatesPanel'))
+const LastSizeChartEditor  = spaet(() => import('./screens/cms/LastSizeChartEditor'))
+const ProductConfigEditor  = spaet(() => import('./screens/cms/ProductConfigEditor'))
+const LoyaltyEditor        = spaet(() => import('./screens/cms/LoyaltyEditor'))
+const FeedbackPanel        = spaet(() => import('./screens/cms/FeedbackPanel'))
+const AccessoriesPanel     = spaet(() => import('./screens/cms/AccessoriesPanel'))
+const ShippingPanel        = spaet(() => import('./screens/cms/ShippingPanel'))
+const CouponsPanel         = spaet(() => import('./screens/cms/CouponsPanel'))
+const FooterEditor         = spaet(() => import('./screens/cms/FooterEditor'))
+const ProductTextsEditor   = spaet(() => import('./screens/cms/ProductTextsEditor'))
+const MediaLibrary         = spaet(() => import('./screens/cms/MediaLibrary'))
+const WebsiteImagesPanel   = spaet(() => import('./screens/cms/WebsiteImagesPanel'))
+const OptionsEditor        = spaet(() => import('./screens/cms/OptionsEditor'))
+const ConfiguratorMatrix   = spaet(() => import('./screens/cms/ConfiguratorMatrix'))
+const CtaBannerPanel       = spaet(() => import('./screens/cms/CtaBannerPanel'))
+const NachrichtenPanel     = spaet(() => import('./screens/cms/NachrichtenPanel'))
+const RegisterPromotion    = spaet(() => import('./screens/RegisterPromotion'))
+const CorporateGifting     = spaet(() => import('./screens/CorporateGifting'))
+const CorporateOverview    = spaet(() => import('./screens/business/CorporateOverview'))
+const RegisterBusiness     = spaet(() => import('./screens/RegisterBusiness'))
+const RegisterAffiliate    = spaet(() => import('./screens/RegisterAffiliate'))
+const AffiliateLanding     = spaet(() => import('./screens/AffiliateLanding'))
+const AffiliateOverview    = spaet(() => import('./screens/AffiliateOverview'))
+const BusinessDashboard    = spaet(() => import('./screens/business/BusinessDashboard'))
+const BusinessProfile      = spaet(() => import('./screens/business/BusinessProfile'))
+const BusinessCampaigns    = spaet(() => import('./screens/business/BusinessCampaigns'))
+const CampaignDashboard    = spaet(() => import('./screens/business/CampaignDashboard'))
+const CampaignJoin         = spaet(() => import('./screens/business/CampaignJoin'))
+const VerifyEmail          = spaet(() => import('./screens/VerifyEmail'))
+const BusinessPanel        = spaet(() => import('./screens/cms/BusinessPanel'))
+const AffiliatesPanel      = spaet(() => import('./screens/cms/AffiliatesPanel'))
+const AnfragenPanel        = spaet(() => import('./screens/cms/AnfragenPanel'))
+const RuecksendungenPanel  = spaet(() => import('./screens/cms/RuecksendungenPanel'))
 
 // Only show spinner after 300ms to avoid flicker on fast connections
 function DelayedSpinner() {
@@ -422,6 +442,8 @@ function AppRoutes() {
               <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
               <Route path="/help"        element={<HelpSupport />} />
               <Route path="/legal/:type" element={<LegalDoc />} />
+              <Route path="/newsletter/bestaetigen" element={<NewsletterBestaetigung />} />
+              <Route path="/newsletter/abmelden"    element={<NewsletterBestaetigung />} />
               <Route path="/learn"      element={<Navigate to="/collection" replace />} />
 
               {/* Geschützt, Bestellung & persönliche Daten */}
@@ -507,6 +529,8 @@ function AppRoutes() {
       <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
       <Route path="/help"        element={<HelpSupport />} />
       <Route path="/legal/:type" element={<LegalDoc />} />
+      <Route path="/newsletter/bestaetigen" element={<NewsletterBestaetigung />} />
+      <Route path="/newsletter/abmelden"    element={<NewsletterBestaetigung />} />
       <Route path="/learn"      element={<Navigate to="/collection" replace />} />
 
       {/* Geschützt, Bestellung & persönliche Daten */}
@@ -534,6 +558,8 @@ function AppRoutes() {
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
         {showFooter && <Footer />}
+        {istLaden && <NewsletterBanner />}
+        <CookieHinweis />
       </div>
     )
   }
@@ -551,6 +577,8 @@ function AppRoutes() {
           {showFooter && <Footer />}
         </div>
       </div>
+      {istLaden && <NewsletterBanner />}
+      <CookieHinweis />
     </div>
   )
 }

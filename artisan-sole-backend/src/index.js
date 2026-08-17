@@ -62,6 +62,8 @@ import loyaltyRouter from './routes/loyalty.js'
 import feedbackRouter from './routes/feedback.js'
 import shippingRouter from './routes/shipping.js'
 import couponsRouter from './routes/coupons.js'
+import newsletterRouter from './routes/newsletter.js'
+import consentRouter from './routes/consent.js'
 import mediaRouter from './routes/media.js'
 import customRequestsRouter from './routes/customRequests.js'
 import optionsRouter from './routes/options.js'
@@ -82,8 +84,12 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc:  ["'self'"],
-      styleSrc:   ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc:    ["'self'", 'https://fonts.gstatic.com'],
+      // Die Schrift kommt aus dem eigenen Haus (public/schriften), seit der
+      // @import auf fonts.googleapis.com heraus ist. Die beiden Google-Adressen
+      // stehen deshalb nicht mehr hier: Was erlaubt bleibt, obwohl es niemand
+      // braucht, ist eine offene Tür ohne Zweck.
+      styleSrc:   ["'self'", "'unsafe-inline'"],
+      fontSrc:    ["'self'"],
       imgSrc:     ["'self'", 'data:', 'blob:', 'https:'],
       connectSrc: ["'self'", 'https://artisansole.com', 'https://www.artisansole.com', 'https://business.artisansole.com', 'https://affiliate.artisansole.com'],
       frameSrc:   ["'none'"],
@@ -210,6 +216,8 @@ app.use('/api/feedback', feedbackRouter)
 app.use('/api/accessories', accessoriesRouter)
 app.use('/api/shipping', shippingRouter)
 app.use('/api/coupons', couponsRouter)
+app.use('/api/newsletter', newsletterRouter)
+app.use('/api/consent', consentRouter)
 app.use('/api/media', mediaRouter)
 app.use('/api/custom-requests', customRequestsRouter)
 // Konfigurator-Optionen — mountet sowohl /api/option-groups als auch

@@ -1,35 +1,31 @@
 import { Component } from 'react'
+import { istChunkFehler, seiteIstVeraltet } from '../lib/nachladen'
 
 /**
  * ErrorBoundary
  *
- * Strategie für Chunk-Load-Fehler (stale HTML zeigt auf Hashes, die nach
- * einem Deploy nicht mehr existieren):
- *   1. SOFORT hart neu laden, niemals eine Zwischenseite anzeigen.
- *   2. Reload nutzt einen Cache-Bust-Query, damit auch hartnäckige CDN-/
- *      Browser-Caches der index.html umgangen werden.
- *   3. Reload-Counter pro Session: bei mehr als 2 Reloads in 30 s gilt der
- *      Fehler als persistent, dann zeigen wir EINMAL einen Hinweis und
- *      schicken den User zur Startseite. Verhindert Infinite-Reload-Loops
- *      OHNE den User mit der Zwischenseite zu belästigen.
+ * Strategie für Chunk-Load-Fehler (ein Bündel lässt sich nicht nachladen):
+ *
+ *   1. Erst fragen, dann handeln. Nennt der Server ein anderes
+ *      Einstiegsbündel, hält dieser Browser eine veraltete index.html — dann
+ *      und nur dann hilft ein hartes Neuladen, und es geschieht sofort und
+ *      ohne Zwischenseite.
+ *   2. Sonst hat ein Abruf ausgesetzt. Neuladen bringt dagegen nichts; es
+ *      warf den Besucher bisher nur aus dem, was er gerade tat, und beim
+ *      dritten Mal in eine Sackgasse. Also gleich die ehrliche Meldung mit
+ *      einem Knopf, der es noch einmal versucht.
+ *   3. Reload-Zähler pro Sitzung als Schleifenbremse: mehr als 2 Neuladungen
+ *      in 30 s gelten als aussichtslos.
+ *
+ * Der Regelfall wird ohnehin eine Stufe früher abgefangen: `nachladen()` in
+ * lib/nachladen wiederholt einen verlorenen Abruf, bevor er hier ankommt.
  */
-
-const CHUNK_LOAD_PATTERNS = [
-  /Loading chunk \d+ failed/i,
-  /Importing a module script failed/i,
-  /Failed to fetch dynamically imported module/i,
-  /Unable to preload CSS/i,
-  /ChunkLoadError/i,
-]
 
 const RELOAD_COUNT_KEY = '__atelier_chunk_reloads'   // JSON [timestamp, …]
 const RELOAD_WINDOW_MS = 30_000
 const RELOAD_LIMIT     = 2  // 3. Versuch → permanent
 
-function isChunkLoadError(error) {
-  const msg = error?.message || String(error || '')
-  return CHUNK_LOAD_PATTERNS.some(re => re.test(msg))
-}
+const isChunkLoadError = istChunkFehler
 
 function recentReloadCount() {
   try {
@@ -98,6 +94,19 @@ function tryHardReload() {
   return true
 }
 
+/**
+ * Neu laden nur, wenn es etwas ändern kann.
+ *
+ * Ein Neuladen hilft gegen genau eine Ursache: eine veraltete index.html, die
+ * auf Bündel zeigt, die es nicht mehr gibt. Gegen einen ausgesetzten Abruf
+ * hilft es nicht — es kostet den Besucher nur seinen Stand. Deshalb wird
+ * vorher nachgesehen.
+ */
+async function reloadWennEsHilft() {
+  if (!(await seiteIstVeraltet())) return false
+  return tryHardReload()
+}
+
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
@@ -112,8 +121,12 @@ export default class ErrorBoundary extends Component {
   componentDidCatch(error, info) {
     console.error('[ErrorBoundary]', error, info)
     if (isChunkLoadError(error)) {
-      const ok = tryHardReload()
-      if (!ok) this.setState({ reloadFailed: true })
+      // Bis die Antwort da ist, bleibt der Bildschirm leer (siehe render).
+      // Der Besucher soll keine Fehlermeldung sehen, die eine Sekunde später
+      // vom Neuladen weggewischt wird.
+      reloadWennEsHilft()
+        .then(neugeladen => { if (!neugeladen) this.setState({ reloadFailed: true }) })
+        .catch(() => this.setState({ reloadFailed: true }))
     }
   }
 
@@ -137,16 +150,24 @@ export default class ErrorBoundary extends Component {
             </svg>
           </div>
           <h1 className="font-playfair text-2xl text-black mb-3">
-            {chunkErr ? 'Seite kann nicht geladen werden' : 'Etwas ist schiefgelaufen'}
+            {chunkErr ? 'Der Laden lädt gerade nicht' : 'Etwas ist schiefgelaufen'}
           </h1>
+          {/* Der frühere Satz bat um „Cmd/Ctrl + Shift + R". Auf einem Telefon
+              gibt es diese Tasten nicht, und wer zum ersten Mal hier ist, hat
+              keinen Zwischenspeicher, den er leeren könnte — der Rat schickte
+              genau die Besucher ins Leere, die ihn zu sehen bekamen. */}
           <p className="text-sm text-gray-400 leading-relaxed mb-8 max-w-xs">
             {chunkErr
-              ? 'Bitte leeren Sie den Browser-Cache (Cmd/Ctrl + Shift + R) und versuchen Sie es erneut.'
+              ? 'Ein Teil der Seite kam nicht durch — meist liegt es an einer kurz unterbrochenen Verbindung. Bitte noch einmal versuchen.'
               : 'Ein unerwarteter Fehler ist aufgetreten. Bitte laden Sie die Seite neu oder kehren Sie zur Startseite zurück.'}
           </p>
+          {/* Beim Ladefehler steht der zweite Versuch vorn: Er ist es, der in
+              den allermeisten Fällen genügt. Der Weg zur Startseite bleibt
+              daneben stehen, für den Fall, dass er es nicht tut. */}
           <button
             onClick={() => {
               try { sessionStorage.removeItem(RELOAD_COUNT_KEY) } catch {}
+              if (chunkErr) { reloadWithBust(); return }
               // window.location.href = '/' funktioniert nicht, wenn die URL
               // bereits '/' ist (same-doc-Navigation wird unterdrückt).
               // Daher replace() mit Cache-Bust, erzwingt vollständigen Reload.
@@ -156,17 +177,22 @@ export default class ErrorBoundary extends Component {
             }}
             className="bg-black text-white text-xs font-semibold uppercase tracking-widest px-8 py-4 rounded-lg"
           >
-            Zur Startseite
+            {chunkErr ? 'Nochmal versuchen' : 'Zur Startseite'}
           </button>
           <button
             onClick={() => {
               try { sessionStorage.removeItem(RELOAD_COUNT_KEY) } catch {}
-              if (chunkErr) { reloadWithBust(); return }
+              if (chunkErr) {
+                const u = new URL('/', window.location.origin)
+                u.searchParams.set('_v', String(Date.now()))
+                window.location.replace(u.toString())
+                return
+              }
               this.setState({ hasError: false, error: null })
             }}
             className="mt-3 text-xs text-gray-400 underline bg-transparent border-0"
           >
-            {chunkErr ? 'Hart neu laden' : 'Erneut versuchen'}
+            {chunkErr ? 'Zur Startseite' : 'Erneut versuchen'}
           </button>
           {this.state.error && !chunkErr && (
             <pre className="mt-6 text-[10px] text-left text-red-400 bg-red-50 p-3 rounded max-w-xs overflow-auto max-h-32">
@@ -180,20 +206,25 @@ export default class ErrorBoundary extends Component {
   }
 }
 
-// Globale Listener: Chunk-Fehler aus prefetchRoute() oder anderen async-
-// Quellen abfangen UND verhindern, dass sie als unhandled-Error im Browser-
-// Devtools erscheinen. Default-Verhalten unterdrücken, sofort reload.
+// Globale Listener: Chunk-Fehler aus anderen async-Quellen abfangen UND
+// verhindern, dass sie als unhandled-Error in den Entwicklerwerkzeugen
+// erscheinen.
+//
+// Hier wurde bisher blind neu geladen. Das traf auch Ladevorgänge, die
+// niemand angefordert hatte — ein vorausgeladenes Bündel etwa —, und riss dem
+// Besucher die Seite unter den Fingern weg, obwohl er nichts davon merken
+// sollte. Jetzt gilt auch hier: neu laden nur, wenn die Seite veraltet ist.
 if (typeof window !== 'undefined') {
   window.addEventListener('error', (e) => {
     if (isChunkLoadError(e.error || e)) {
       e.preventDefault?.()
-      tryHardReload()
+      reloadWennEsHilft()
     }
   })
   window.addEventListener('unhandledrejection', (e) => {
     if (isChunkLoadError(e.reason)) {
       e.preventDefault?.()
-      tryHardReload()
+      reloadWennEsHilft()
     }
   })
 }
