@@ -17,6 +17,7 @@ import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
 import { SAISONS, saisonsSortiert, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
+import { PreisFuss } from '../lib/preisangabe'
 import { useSeo } from '../lib/seo'
 
 // Die Rubriken des Ladens: Sommer, Winter, Ganzjährig.
@@ -900,6 +901,17 @@ export default function ShoeCollection() {
           </div>
         )}
       </div>
+
+      {/* ── Was zu den Preisen im Raster gehört ───────────────────
+          § 6 Abs. 1 PAngV: Es muss dastehen, dass die Umsatzsteuer im Preis
+          enthalten ist und dass Versandkosten hinzukommen. Am Fuß des
+          Rasters, weil er für alle Kacheln darüber gilt — an jede einzelne
+          geschrieben stünde er zwanzigmal auf einem Bildschirm. */}
+      {!laedt && filtered.length > 0 && (
+        <div className="px-5 lg:px-16 pb-10 -mt-8">
+          <PreisFuss />
+        </div>
+      )}
 
       {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}
       <div className="px-5 lg:px-16 pb-16">

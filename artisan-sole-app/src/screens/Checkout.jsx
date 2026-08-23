@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { isNative } from '../App'
 import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck, Building2, PackageOpen } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
@@ -168,6 +168,19 @@ function fmtPrice(n) {
   return n.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
+/**
+ * Beträge, bei denen die Cents zählen.
+ *
+ * Die Preise im Laden sind runde Zahlen, deshalb zeigt `fmtPrice` keine
+ * Nachkommastellen. Die enthaltene Umsatzsteuer ist keine runde Zahl: In
+ * 1.450 € stecken 231,51 €. Als „232 €" gerundet wäre sie eine andere Zahl
+ * als die auf der Rechnung, und wer beide nebeneinanderlegt, findet einen
+ * Fehler, wo keiner ist.
+ */
+function fmtCent(n) {
+  return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 // ── Main Checkout ─────────────────────────────────────────────────────────────
 export default function Checkout() {
   const navigate  = useNavigate()
@@ -228,6 +241,26 @@ export default function Checkout() {
       return m?.foot_length_mm && !(it.last || it.lastLabel)
     })
   const [passformAkzeptiert, setPassformAkzeptiert] = useState(false)
+
+  // ── Was vor dem Absenden bestätigt sein muss ──────────────────────────
+  //
+  // Zwei getrennte Haken, kein gemeinsamer. Der Ausschluss des
+  // Widerrufsrechts ist eine schwerwiegende Folge und muss ausdrücklich
+  // bestätigt werden (§ 312g Abs. 2 Nr. 1 BGB); ihn mit der AGB-Zustimmung
+  // in einen Satz zu packen, hieße ihn zu verstecken, und genau daran
+  // scheitern solche Klauseln vor Gericht.
+  const [widerrufAkzeptiert, setWiderrufAkzeptiert] = useState(false)
+  const [agbAkzeptiert, setAgbAkzeptiert] = useState(false)
+
+  // Der Steuersatz für die Aufschlüsselung. Er kommt aus den Einstellungen
+  // des Ladens, nicht als Zahl aus dem Programm: Wer ihn dort umstellt, soll
+  // nicht auch noch die Kasse anfassen müssen.
+  const [steuer, setSteuer] = useState(null)
+  useEffect(() => {
+    apiFetch('/api/settings/steuer')
+      .then(d => setSteuer(d))
+      .catch(() => setSteuer(null))
+  }, [])
 
   // Die Passform ist ab hier festgeschrieben. Wer andere Maße braucht, legt
   // eine neue Konfiguration an — sonst stünden Maße und bereits bestimmte
@@ -414,10 +447,16 @@ export default function Checkout() {
       const appliedBizCode = bizResult?.valid && product.id ? bizCode.trim() : null
       const appliedCampaignId = activeCampaign?.id || null
 
+      // Die beiden Bestätigungen gehen an jede Bestellung dieses Kaufs. Der
+      // Server weist ohne sie ab, und er schreibt den Zeitpunkt selbst — was
+      // hier steht, ist die Angabe, dass zugestimmt wurde, nicht der Beleg.
+      const bestaetigungen = { widerruf_bestaetigt: true, agb_bestaetigt: true }
+
       const shippingData = shippingOpt ? { shipping_method: shippingOpt.key, shipping_cost: `€ ${fmtPrice(shippingCost)}` } : {}
 
       if (product.id) {
         lastRow = await placeOrder({
+          ...bestaetigungen,
           shoe_id: product.id, shoe_name: product.name || product.shoe_name,
           material: product.material, color: product.color || product.selectedColor || '',
           price: `€ ${fmtPrice(total)}`, eu_size: product.euSize || latestScan?.eu_size || null,
@@ -497,6 +536,7 @@ export default function Checkout() {
         if (schuhe.length === 0) {
           const erste = korbZubehoer[0]
           lastRow = await placeOrder({
+            ...bestaetigungen,
             shoe_id: null,
             shoe_name: erste?.name || 'Zubehör',
             material: erste?.belt ? erste.belt.leder_label : 'Zubehör',
@@ -525,6 +565,7 @@ export default function Checkout() {
           const preis = i === 0 ? Math.max(0, total - andereSchuhe) : itemTotal
 
           lastRow = await placeOrder({
+            ...bestaetigungen,
             shoe_id: item.shoeId || null, shoe_name: item.name,
             material: item.material || '', color: item.color || '',
             price: `€ ${fmtPrice(preis)}`, eu_size: item.euSize || latestScan?.eu_size || null,
@@ -1219,6 +1260,74 @@ export default function Checkout() {
                 <span className="text-[15px] font-bold text-black">Gesamt</span>
                 <span className="text-[20px] font-bold text-black">€ {fmtPrice(total)}</span>
               </div>
+
+              {/* ── Was von der Summe Umsatzsteuer ist ──────────────────
+                  Der Betrag ändert sich dadurch nicht: Die Preise sind
+                  Bruttopreise, die Steuer steckt darin. Herausgerechnet
+                  gehört sie trotzdem — der Firmenkunde braucht sie für seine
+                  Vorsteuer, und wer sie erst auf der Rechnung entdeckt,
+                  fragt nach. Beim Kleinunternehmer steht stattdessen, warum
+                  keine ausgewiesen wird. */}
+              {steuer && (steuer.kleinunternehmer ? (
+                <p className="text-[10px] text-black/35 font-light mt-1.5">
+                  Kein Ausweis von Umsatzsteuer gemäß § 19 UStG.
+                </p>
+              ) : steuer.satz > 0 && (
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-[10px] text-black/35 font-light">
+                    darin enthaltene MwSt. {steuer.satz} %
+                  </span>
+                  <span className="text-[10px] text-black/35 font-light">
+                    € {fmtCent(total - total / (1 + steuer.satz / 100))}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Die beiden Bestätigungen ──────────────────────────────
+                Sie stehen hier, unmittelbar über dem Bestellknopf, und nicht
+                weiter oben: Was der Kunde bestätigt, muss er im selben Blick
+                haben wie das, was er auslöst.
+
+                Nicht vorangekreuzt, und das ist keine Geschmacksfrage — eine
+                voreingestellte Zustimmung ist keine. */}
+            <div className="bg-white border border-black/[0.06] p-4 space-y-3">
+              <button
+                type="button"
+                onClick={() => setWiderrufAkzeptiert(v => !v)}
+                className="w-full flex items-start gap-2.5 bg-transparent border-0 p-0 text-left"
+              >
+                <span className={`w-4 h-4 mt-0.5 flex-shrink-0 flex items-center justify-center ${
+                  widerrufAkzeptiert ? 'bg-black' : 'border border-black/25'}`}>
+                  {widerrufAkzeptiert && <Check size={11} strokeWidth={2.5} className="text-white" />}
+                </span>
+                <span className="text-[11px] text-black/60 font-light leading-relaxed">
+                  Mir ist bekannt, dass mein Paar nach meinen persönlichen Maßen
+                  angefertigt wird und deshalb <strong className="font-normal text-black/80">kein
+                  Widerrufsrecht</strong> besteht (§ 312g Abs. 2 Nr. 1 BGB). Ich
+                  verlange ausdrücklich, dass die Fertigung sofort beginnt.
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAgbAkzeptiert(v => !v)}
+                className="w-full flex items-start gap-2.5 bg-transparent border-0 p-0 text-left"
+              >
+                <span className={`w-4 h-4 mt-0.5 flex-shrink-0 flex items-center justify-center ${
+                  agbAkzeptiert ? 'bg-black' : 'border border-black/25'}`}>
+                  {agbAkzeptiert && <Check size={11} strokeWidth={2.5} className="text-white" />}
+                </span>
+                <span className="text-[11px] text-black/60 font-light leading-relaxed">
+                  Ich habe die{' '}
+                  <Link to="/legal/agb" target="_blank" onClick={e => e.stopPropagation()}
+                    className="underline underline-offset-2 text-black/80">AGB</Link>
+                  {' '}und die{' '}
+                  <Link to="/legal/datenschutz" target="_blank" onClick={e => e.stopPropagation()}
+                    className="underline underline-offset-2 text-black/80">Datenschutzerklärung</Link>
+                  {' '}gelesen und stimme ihnen zu.
+                </span>
+              </button>
             </div>
 
             {error && <p className="text-[12px] text-red-500 text-center">{error}</p>}
@@ -1236,13 +1345,20 @@ export default function Checkout() {
             {user ? 'Weiter' : 'Anmelden und fortfahren'} <ChevronRight size={14} strokeWidth={1.5} />
           </button>
         ) : (
-          <button onClick={handlePlace} disabled={placing || (ohnePassform.length > 0 && !passformAkzeptiert)}
+          // Die Beschriftung ist Gesetz, nicht Geschmack: § 312j Abs. 3 BGB
+          // verlangt, dass der Knopf ausdrücklich auf die Zahlungspflicht
+          // hinweist — „zahlungspflichtig bestellen" oder eine entsprechend
+          // eindeutige Formulierung. Steht dort nur „Bestellen", kommt der
+          // Vertrag im Zweifel gar nicht zustande, und das Paar ist schon
+          // gefertigt.
+          <button onClick={handlePlace}
+            disabled={placing || (ohnePassform.length > 0 && !passformAkzeptiert) || !widerrufAkzeptiert || !agbAkzeptiert}
             className="w-full py-3.5 flex items-center justify-center gap-2 bg-black text-white text-[12px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300 disabled:opacity-50"
             style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             {placing ? (
               <><div className="w-4 h-4 border border-white/30 border-t-white rounded-full animate-spin" /> Wird verarbeitet…</>
             ) : (
-              <>Bestellen, € {fmtPrice(total)}</>
+              <>Zahlungspflichtig bestellen, € {fmtPrice(total)}</>
             )}
           </button>
         )}

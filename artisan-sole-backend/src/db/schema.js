@@ -631,6 +631,36 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN invoice_no        TEXT`,
     `ALTER TABLE orders ADD COLUMN invoice_issued_at TEXT`,
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_invoice ON orders(invoice_no) WHERE invoice_no IS NOT NULL`,
+    // Die Steuer, wie sie zum Zeitpunkt der Rechnung galt.
+    //
+    // Das PDF entsteht bei jedem Abruf neu. Solange es den Steuersatz aus den
+    // Einstellungen las, war eine einmal ausgestellte Rechnung kein Beleg,
+    // sondern eine Ansicht: Wer vom Kleinunternehmer zur Regelbesteuerung
+    // wechselt, hätte damit rückwirkend auf jede Rechnung des Vorjahres
+    // 19 % gedruckt — auf einen Umsatz, für den nie Steuer erhoben wurde.
+    // Der Kunde hätte daraus Vorsteuer gezogen, die es nicht gab.
+    //
+    // Eine Rechnung ist unveränderlich. Was zum Zeitpunkt der Ausstellung
+    // galt, steht deshalb an der Bestellung und wird nie wieder angefasst.
+    // 'klein' = ohne Ausweis nach § 19 UStG, 'ausweis' = mit Steuerausweis.
+    `ALTER TABLE orders ADD COLUMN tax_mode TEXT`,
+    `ALTER TABLE orders ADD COLUMN tax_rate REAL`,
+
+    // ── Was der Kunde beim Bestellen bestätigt hat ───────────────────────
+    //
+    // Der Ausschluss des Widerrufsrechts (§ 312g Abs. 2 Nr. 1 BGB) ist die
+    // wertvollste Klausel der AGB — ohne ihn wäre ein Maßschuh binnen
+    // vierzehn Tagen zurückzunehmen, und danach ist er für niemanden sonst
+    // zu gebrauchen. Damit er hält, muss der Kunde VOR dem Absenden darüber
+    // belehrt worden sein und ausdrücklich zugestimmt haben.
+    //
+    // Eine Zustimmung, die nur im Browser stattfand, ist im Streitfall
+    // nichts wert: Sie muss belegbar sein. Deshalb der Zeitpunkt an der
+    // Bestellung, nicht bloß ein Haken. Ein leeres Feld heißt „aus der Zeit
+    // davor" — es wird nicht nachträglich gefüllt, das wäre eine erfundene
+    // Zustimmung.
+    `ALTER TABLE orders ADD COLUMN withdrawal_ack_at TEXT`,
+    `ALTER TABLE orders ADD COLUMN terms_ack_at      TEXT`,
 
     // ── Passwort zurücksetzen ────────────────────────────────────────────
     //

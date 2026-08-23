@@ -164,8 +164,13 @@ Ihren Maßen, und erst danach wird das Paar aufgebaut. Die vorbereiteten
 Bauteile nach Ziffer 2.1 verkürzen die Arbeit, nehmen ihr aber nicht den
 Charakter der Einzelanfertigung, ohne Ihre Maße entsteht kein Schuh.
 
-(4) Wir weisen Sie hierauf im Bestellvorgang gesondert hin. Sie bestätigen
-diesen Hinweis vor dem Absenden der Bestellung.
+(4) Wir weisen Sie hierauf im Bestellvorgang gesondert hin. Unmittelbar über
+der Bestellschaltfläche steht ein eigenes, nicht vorangekreuztes Kästchen mit
+diesem Hinweis; ohne Ihre Bestätigung lässt sich die Bestellung nicht
+absenden. Mit der Bestätigung verlangen Sie zugleich ausdrücklich, dass wir
+mit der Fertigung sofort beginnen. Wann Sie bestätigt haben, halten wir zu
+Ihrer und unserer Nachweisbarkeit an der Bestellung fest (siehe Abschnitt 5
+der Datenschutzerklärung).
 
 ## 6. Mängelhaftung
 
@@ -316,13 +321,23 @@ vollständig und zum vollen Preis zurück.
 
 ## 8. Preise, Zahlung, Eigentum
 
-(1) Alle Preise verstehen sich in Euro.
-Die Preise enthalten die gesetzliche Umsatzsteuer.
+(1) Alle Preise verstehen sich in Euro und sind Endpreise: Sie enthalten die
+gesetzliche Umsatzsteuer von derzeit 19 %. Welcher Betrag davon Umsatzsteuer
+ist, weisen wir Ihnen in der Bestellübersicht und auf der Rechnung gesondert
+aus.
 
-(2) Versandkosten werden im Bestellvorgang gesondert ausgewiesen.
+(2) Versandkosten sind im Preis nicht enthalten. Ob und in welcher Höhe sie
+anfallen, sehen Sie im Bestellvorgang, bevor Sie die Bestellung absenden.
 
 (3) Zahlbar im Voraus per Überweisung (Vorkasse). Die Fertigung beginnt nach
 Zahlungseingang.
+
+(3a) **Rechnung.** Sobald Ihre Zahlung verbucht ist, stellen wir eine Rechnung
+mit fortlaufender Nummer aus. Sie steht in Ihrem Konto unter der Bestellung
+zum Abruf bereit und trägt die Angaben nach § 14 Abs. 4 UStG, darunter das
+Entgelt, den Steuersatz und den darauf entfallenden Steuerbetrag. Maßgeblich
+für den Steuerausweis ist die steuerliche Lage am Tag der Ausstellung; eine
+einmal ausgestellte Rechnung ändern wir nicht nachträglich.
 
 (4) **Einen Eigentumsvorbehalt gibt es bei uns nicht, und es kann ihn nicht
 geben.** Er sichert den Verkäufer, der die Ware vor der Zahlung aus der Hand

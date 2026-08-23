@@ -149,7 +149,30 @@ router.post('/',
       // Warenkorb legt sie an und schickt sie an jede Bestellung mit; der
       // Server macht daraus eine gemeinsame Zahlung.
       basket_id,
+      // Die beiden Bestätigungen aus der Kasse.
+      widerruf_bestaetigt, agb_bestaetigt,
     } = req.body
+
+    // ── Ohne Bestätigung keine Bestellung ────────────────────────────────
+    //
+    // Der Ausschluss des Widerrufsrechts trägt nur, wenn der Kunde vor dem
+    // Absenden darüber belehrt wurde und zugestimmt hat (§ 312g Abs. 2 Nr. 1
+    // BGB, Art. 246a § 1 Abs. 3 EGBGB). Ein Haken, der nur im Browser sitzt,
+    // hält im Streit nicht: Wer die Kasse umgeht und direkt auf diese Route
+    // schreibt, hätte nie zugestimmt — und genau das würde vorgetragen.
+    //
+    // Deshalb steht die Prüfung hier. Sie ist keine Schikane gegen den
+    // eigenen Browser, sondern der Grund, warum die Zustimmung etwas wert
+    // ist.
+    const widerrufBestaetigt = widerruf_bestaetigt === true
+    const agbBestaetigt      = agb_bestaetigt === true
+    if (!widerrufBestaetigt || !agbBestaetigt) {
+      return res.status(400).json({
+        error: 'Bitte bestätigen Sie vor dem Bestellen die AGB und den Hinweis zum Widerrufsrecht.',
+        code: 'BESTAETIGUNG_FEHLT',
+      })
+    }
+    const jetzt = new Date().toISOString().replace('T', ' ').slice(0, 19)
 
     // Translate foot notes to English for manufacturer
     const foot_notes_en = foot_notes ? await translateToEnglish(foot_notes) : null
@@ -392,8 +415,9 @@ router.post('/',
          foot_notes, foot_notes_en, shipping_method, shipping_cost, coupon_code, discount_amount, original_price,
          size_type, last_key, last_label, last_width, fit_measurements,
          business_id, business_code_id, business_coverage, business_campaign_id,
-         sole, extras, config_id, fit_profile_id, payment_ref, basket_id)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         sole, extras, config_id, fit_profile_id, payment_ref, basket_id,
+         withdrawal_ack_at, terms_ack_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `)
     const insertParams = [
       uid,
@@ -437,6 +461,11 @@ router.post('/',
       spec.fit_profile_id || null,
       zahlungsKennung,
       basket_id ? String(basket_id).slice(0, 64) : null,
+      // Der Zeitpunkt kommt vom Server, nicht aus der Anfrage. Ein Datum, das
+      // der Browser mitschickt, belegt nichts — es ist genau das, was zu
+      // belegen wäre.
+      widerrufBestaetigt ? jetzt : null,
+      agbBestaetigt      ? jetzt : null,
     ]
 
     let result

@@ -83,6 +83,7 @@ import useStore from '../store/store'
 import { useSeo, schuhBeschreibung } from '../lib/seo'
 import { accessoryImages } from '../lib/accessoryImages'
 import { LIEFERUMFANG } from '../lib/lieferumfang'
+import { Preishinweis } from '../lib/preisangabe'
 import GroessenTabelle from '../components/GroessenTabelle'
 import ExpressHinweis from '../components/ExpressHinweis'
 import { sichtbareGruppen as gruppenFuer, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
@@ -2741,6 +2742,10 @@ export default function Customize() {
                   </span>
                 )}
               </p>
+              {/* Dasselbe auf dem großen Schirm: Die Seite hat zwei Fassungen
+                  dieses Blocks, und ein Hinweis, der nur in einer steht, ist
+                  auf der anderen keiner. */}
+              <Preishinweis className="hidden lg:block mb-3 -mt-2" mitVersandlink />
               <div className="hidden lg:flex gap-3">
                 {needsCustomRequest ? (
                   <button
@@ -2835,6 +2840,10 @@ export default function Customize() {
           {displayPrice}
           {accessoryTotal > 0 && <span className="text-[9px] text-black/35 ml-1">(inkl. {selectedAccessories.length}× Zubehör)</span>}
         </p>
+        {/* Der Preis, den der Kunde gleich in den Warenkorb legt — hier muss
+            nach § 6 Abs. 1 PAngV stehen, was in ihm enthalten ist und was
+            noch dazukommt. */}
+        <Preishinweis className="text-center mb-2.5" mitVersandlink />
         <div className="flex gap-2">
           {needsCustomRequest ? (
             <button

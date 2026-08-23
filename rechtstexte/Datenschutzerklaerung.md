@@ -55,10 +55,25 @@ eingeben müssen.
 Für die Abwicklung verarbeiten wir Ihre Bestelldaten, Anschrift,
 Kontaktdaten, gewählte Ausführung und Zahlungsangaben.
 
-- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO; für die Aufbewahrung von
-  Rechnungen Art. 6 Abs. 1 lit. c DSGVO in Verbindung mit § 147 AO und
-  § 257 HGB
-- **Speicherdauer:** Rechnungsrelevante Unterlagen zehn Jahre
+**Ihre Bestätigungen beim Absenden.** Vor dem Absenden bestätigen Sie zwei
+Dinge: dass Sie die AGB und diese Erklärung gelesen haben, und dass bei
+Maßanfertigung kein Widerrufsrecht besteht. Wir speichern zu jeder Bestellung
+den Zeitpunkt dieser beiden Bestätigungen. Das geschieht nicht, um Ihr
+Verhalten auszuwerten, sondern weil beide Erklärungen im Streitfall zu
+belegen sind — von uns wie von Ihnen. Mehr als der Zeitpunkt wird dafür nicht
+gespeichert.
+
+**Ihre Rechnung.** Mit der Verbuchung Ihrer Zahlung entsteht eine Rechnung mit
+den gesetzlichen Pflichtangaben, darunter Ihr Name und Ihre Rechnungsanschrift.
+Sie ist Teil unserer Buchführung und unterliegt deshalb der steuerlichen
+Aufbewahrungspflicht; sie lässt sich aus diesem Grund auch auf Ihren Wunsch
+nicht vorzeitig löschen.
+
+- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO; für die Bestätigungen und
+  die Aufbewahrung von Rechnungen Art. 6 Abs. 1 lit. c DSGVO in Verbindung
+  mit § 14 UStG, § 147 AO und § 257 HGB
+- **Speicherdauer:** Rechnungsrelevante Unterlagen zehn Jahre; die
+  Bestätigungen so lange wie die Bestellung, zu der sie gehören
 
 ## 6. Fußmaße und Fußscan
 

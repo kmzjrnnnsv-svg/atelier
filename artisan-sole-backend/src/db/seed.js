@@ -88,6 +88,9 @@ export async function seedDatabase(db) {
   seedGuertel(db)
   seedExpressModelle(db)
   seedLegalDocs(db)
+  // Nach den Rechtstexten: Die Rechnungsangaben lesen aus dem Impressum, und
+  // das soll geprüft sein, bevor daraus eine Anschrift auf einer Rechnung wird.
+  seedRechnungsangaben(db)
   // Zuletzt: Erst hier stehen alle Modelle, auch die Express-Zweitfassungen.
   seedSaison(db)
   // Und ganz zuletzt das Aufräumen: Es nimmt weg, was die Schritte davor
@@ -3036,6 +3039,98 @@ export function seedLegalDocs(db) {
   if (zurueckgehalten.length) {
     console.warn(`⚠️  Rechtstexte NICHT veröffentlicht, es fehlen noch Angaben: ${zurueckgehalten.join(', ')}`)
     console.warn('    Platzhalter in rechtstexte/ ausfüllen, dann erscheinen sie beim nächsten Start.')
+  }
+}
+
+/**
+ * Die Rechnungsangaben — einmalig aus dem Impressum vorbelegt.
+ *
+ * Wer die Rechnung stellt, steht schon in `rechtstexte/Impressum.md`: Es ist
+ * dieselbe Anschrift, dieselbe Steuernummer, derselbe Anbieter. Die Angaben
+ * ein zweites Mal von Hand in die Verwaltung zu tippen, hieße, zwei Quellen
+ * für dieselbe Wahrheit zu führen — und ein Beleg ohne diese Angaben ist nach
+ * § 14 Abs. 4 UStG unbrauchbar, während der Laden ansonsten fehlerfrei läuft.
+ * Genau die Sorte Lücke, die niemandem auffällt.
+ *
+ * Nur, was fehlt. Ein einmal in der Verwaltung gesetzter Wert wird nie
+ * überschrieben: Die Rechnungsangaben ändert der Betreiber dort, mit
+ * Zweitfaktor, und ein Neustart darf ihm nicht dazwischenfahren.
+ */
+export function seedRechnungsangaben(db) {
+  const impressum = leseImpressum()
+  if (!impressum) return
+
+  const vorgabe = {
+    firma_name:    impressum.name,
+    firma_strasse: impressum.strasse,
+    firma_ort:     impressum.ort,
+    firma_land:    'Deutschland',
+    firma_email:   impressum.email,
+    firma_telefon: impressum.telefon,
+    firma_ust_id:  impressum.ustId,
+    // Es steht eine Umsatzsteuer-Identifikationsnummer im Impressum, und die
+    // AGB sagen in Ziffer 8, dass die Preise die gesetzliche Umsatzsteuer
+    // enthalten. Beides zusammen ist Regelbesteuerung; die Vorgabe „kein
+    // Ausweis" stammt aus der Zeit davor und hätte auf jeder Rechnung
+    // gestanden, ohne dass jemand widersprochen hätte.
+    firma_kleinunternehmer: '0',
+    ust_satz: '19',
+  }
+
+  const vorhanden = new Set(
+    db.prepare('SELECT key FROM settings').all()
+      .filter(r => String(r.value ?? '').trim() !== '')
+      .map(r => r.key),
+  )
+  const einfuegen = db.prepare(`
+    INSERT INTO settings (key, value) VALUES (?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `)
+
+  let gesetzt = 0
+  for (const [key, wert] of Object.entries(vorgabe)) {
+    if (!wert || vorhanden.has(key)) continue
+    einfuegen.run(key, String(wert))
+    gesetzt++
+  }
+  if (gesetzt) console.log(`✅ Rechnungsangaben aus dem Impressum vorbelegt (${gesetzt} Feld(er))`)
+}
+
+/**
+ * Anbieter, Anschrift und Steuernummer aus dem Impressum.
+ *
+ * Bewusst genügsam: Was sich nicht eindeutig herauslesen lässt, bleibt leer
+ * und wird dann eben in der Verwaltung eingetragen. Eine falsch geratene
+ * Anschrift auf einer Rechnung wäre schlechter als ein leeres Feld, das
+ * auffällt.
+ */
+function leseImpressum() {
+  const { text } = rechtstextAusDatei('Impressum.md')
+  if (!text) return null
+
+  const zeilen = text.split('\n').map(z => z.trim())
+  const nachUeberschrift = (titel, anzahl) => {
+    const i = zeilen.findIndex(z => z.toLowerCase() === `## ${titel}`.toLowerCase())
+    if (i < 0) return []
+    return zeilen.slice(i + 1).filter(z => z && !z.startsWith('#')).slice(0, anzahl)
+  }
+
+  // Der Anbieter steht nicht immer in einer Zeile: „Artisan Sole" und
+  // „Inhaber: Qasim Raza" gehören zusammen, sind aber zwei. Die Straße ist
+  // die erste Zeile mit einer Hausnummer — alles davor ist der Name, die
+  // Zeile danach ist der Ort. Das trägt beide Schreibweisen, ohne zu raten.
+  const anschrift = nachUeberschrift('Angaben gemäß § 5 DDG', 5)
+    .filter(z => !z.startsWith('**'))
+  const strasseAb = anschrift.findIndex(z => /\d/.test(z))
+  const kontakt = nachUeberschrift('Kontakt', 2).join('\n')
+
+  return {
+    name:     strasseAb > 0 ? anschrift.slice(0, strasseAb).join(', ') : (anschrift[0] || ''),
+    strasse:  strasseAb >= 0 ? anschrift[strasseAb] : '',
+    ort:      strasseAb >= 0 ? (anschrift[strasseAb + 1] || '') : '',
+    telefon: (kontakt.match(/Telefon:\s*(.+)/) || [])[1]?.trim() || '',
+    email:   (kontakt.match(/E-Mail:\s*(\S+)/) || [])[1]?.trim() || '',
+    ustId:   (text.match(/\b(DE\d{9})\b/) || [])[1] || '',
   }
 }
 

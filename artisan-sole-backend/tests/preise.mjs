@@ -8,11 +8,22 @@ const p = (was, b, z = '') => { if (b) { ok++; console.log(`  OK     ${was}${z ?
 const abschnitt = t => console.log(`\n── ${t} ${'─'.repeat(Math.max(0, 56 - t.length))}`)
 const zufall = () => Math.random().toString(36).slice(2, 8)
 
+// Die Kasse bestätigt vor jeder Bestellung die AGB und den Hinweis, dass bei
+// Maßanfertigung kein Widerrufsrecht besteht; ohne beides weist der Server
+// ab (§ 312g Abs. 2 Nr. 1 BGB). Damit das nicht in zwanzig Prüfkörpern
+// steht, hängt es hier — geprüft wird das Abweisen an einer Stelle
+// ausdrücklich, siehe „ohne Bestätigung".
+const MIT_BESTAETIGUNG = { widerruf_bestaetigt: true, agb_bestaetigt: true }
+
 async function ruf(pfad, { method = 'GET', body, token } = {}) {
   const res = await fetch(`${BASIS}${pfad}`, {
     method,
     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'ArtisanSole', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    ...(body ? { body: JSON.stringify(
+      pfad === '/api/orders' && method === 'POST' && !('agb_bestaetigt' in body)
+        ? { ...MIT_BESTAETIGUNG, ...body }
+        : body,
+    ) } : {}),
   })
   const t = await res.text()
   let d = null; try { d = JSON.parse(t) } catch { d = t }
