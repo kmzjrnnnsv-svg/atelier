@@ -186,7 +186,7 @@ export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const { user } = useAuth()
-  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, accessories: storeAccessories, shoes, affiliate } = useStore()
+  const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, accessories: storeAccessories, shoes, affiliate, ownerLink } = useStore()
   const isPromo = !!user?.is_promotion
   const promoDiscountPct = user?.promotion_discount_pct || 0
 
@@ -452,11 +452,18 @@ export default function Checkout() {
       // hier steht, ist die Angabe, dass zugestimmt wurde, nicht der Beleg.
       const bestaetigungen = { widerruf_bestaetigt: true, agb_bestaetigt: true }
 
+      // Der Bestelllink des Inhabers. Er geht nur an die Bestellung mit dem
+      // Schuh: Er trägt genau ein Paar, und eine zweite Bestellung desselben
+      // Einkaufs würde der Server mit ihm abweisen. Welche das ist, entscheidet
+      // sich unten je Weg; hier steht nur, was mitzugeben wäre.
+      const ownerCode = ownerLink?.code || null
+
       const shippingData = shippingOpt ? { shipping_method: shippingOpt.key, shipping_cost: `€ ${fmtPrice(shippingCost)}` } : {}
 
       if (product.id) {
         lastRow = await placeOrder({
           ...bestaetigungen,
+          owner_code: ownerCode,
           shoe_id: product.id, shoe_name: product.name || product.shoe_name,
           material: product.material, color: product.color || product.selectedColor || '',
           price: `€ ${fmtPrice(total)}`, eu_size: product.euSize || latestScan?.eu_size || null,
@@ -566,6 +573,10 @@ export default function Checkout() {
 
           lastRow = await placeOrder({
             ...bestaetigungen,
+            // Nur das erste Paar. Der Link trägt eines; an das zweite gehängt
+            // wiese der Server die ganze Bestellung ab, und der Kunde stünde
+            // im letzten Schritt vor einer Absage, die er nicht versteht.
+            owner_code: i === 0 ? ownerCode : null,
             shoe_id: item.shoeId || null, shoe_name: item.name,
             material: item.material || '', color: item.color || '',
             price: `€ ${fmtPrice(preis)}`, eu_size: item.euSize || latestScan?.eu_size || null,

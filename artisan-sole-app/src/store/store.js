@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { apiFetch } from '../hooks/useApi'
 import { refAusUrl, refMerken, refLesen, refVergessen } from '../lib/affiliateCode'
+import { ownerAusUrl, ownerMerken, ownerLesen, ownerVergessen } from '../lib/ownerLink'
 
 /**
  * Der Warenkorb liegt zweimal: im Konto und auf dem Gerät.
@@ -80,6 +81,9 @@ const useStore = create((set, get) => ({
   accessories:  [],          // all accessories from DB
   myCampaigns:  [],          // Firmen-Aktionen, in denen der Kunde Mitglied ist
   affiliate:   null,        // { code, gift, customer_discount_pct, discount_cap } aus ?ref=
+  // Der Bestelllink des Inhabers aus ?owner=. Trägt eine Preisliste, keinen
+  // Nachlass: { code, preise: { shoe_id: preis } }
+  ownerLink:   null,
   shoeAccessoryMap: {},      // { shoeId: [accessory, ...] }
   loyaltyTiers: [],
   loyaltyStatus: { points: 0, tier: 'bronze' },
@@ -211,6 +215,44 @@ const useStore = create((set, get) => ({
   affiliateEntfernen() {
     refVergessen()
     set({ affiliate: null })
+  },
+
+  /**
+   * Den Bestelllink des Inhabers prüfen.
+   *
+   * Getrennt vom Affiliate, weil er etwas anderes tut: Der eine zieht einen
+   * Prozentsatz ab, dieser ERSETZT den Preis. Was der Server liefert, ist
+   * deshalb keine Kondition, sondern eine Preisliste.
+   *
+   * Ein verbrauchter Link wird weggeworfen und nicht bis zur Kasse
+   * mitgeschleppt. Sonst sähe der Kunde die ganze Zeit einen Preis, den er
+   * beim Bestellen nicht bekommt — und erführe es im letzten Schritt.
+   */
+  async ownerPruefen() {
+    const ausUrl = ownerAusUrl()
+    if (ausUrl) ownerMerken(ausUrl)
+    const code = ausUrl || ownerLesen()
+    if (!code) { set({ ownerLink: null }); return null }
+    try {
+      const r = await apiFetch(`/api/owner-links/${encodeURIComponent(code)}`)
+      if (!r?.gueltig) { ownerVergessen(); set({ ownerLink: null }); return null }
+      const v = { code, preise: r.preise || {} }
+      set({ ownerLink: v })
+      return v
+    } catch (e) {
+      // Wie beim Affiliate: Eine klare Absage wird angenommen, ein
+      // Netzwerkfehler nicht. Ein Link, der nur gerade nicht erreichbar war,
+      // soll beim nächsten Start wieder gelten.
+      if (e?.status === 404 || e?.status === 410) ownerVergessen()
+      set({ ownerLink: null })
+      return null
+    }
+  },
+
+  /** Den Bestelllink loswerden. Sichtbar und widerruflich, wie die Empfehlung. */
+  ownerEntfernen() {
+    ownerVergessen()
+    set({ ownerLink: null })
   },
 
   async initStore() {

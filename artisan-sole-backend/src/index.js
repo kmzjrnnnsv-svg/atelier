@@ -44,6 +44,7 @@ import authRouter, { issueTokens } from './routes/auth.js'
 import usersRouter from './routes/users.js'
 import kontoLoeschungRouter from './routes/kontoLoeschung.js'
 import affiliatesRouter from './routes/affiliates.js'
+import ownerLinksRouter from './routes/ownerLinks.js'
 import passkeysRouter, { makeLoginVerify, makeSignupVerify, makeRecoverVerify, makeAffiliateVerify } from './routes/passkeys.js'
 import recoveryRouter from './routes/recovery.js'
 import configsRouter from './routes/configs.js'
@@ -194,6 +195,8 @@ app.use('/api/users',    usersRouter)
 // shoeCardRouter zuerst: shoesRouter hat ein generisches GET /:id, das
 // '/color-summary' sonst als id auffassen und mit 404 beantworten würde.
 app.use('/api/affiliates', affiliatesRouter)
+// Der Bestelllink des Inhabers. Eigener Pfad, weil er kein Affiliate ist.
+app.use('/api/owner-links', ownerLinksRouter)
 app.use('/api/shoes',    shoeCardRouter)
 app.use('/api/shoes',    shoesRouter)
 app.use('/api/scans',     scansRouter)

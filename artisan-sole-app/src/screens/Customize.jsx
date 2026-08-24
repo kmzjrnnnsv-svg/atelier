@@ -84,6 +84,7 @@ import { useSeo, schuhBeschreibung } from '../lib/seo'
 import { accessoryImages } from '../lib/accessoryImages'
 import { LIEFERUMFANG } from '../lib/lieferumfang'
 import { Preishinweis } from '../lib/preisangabe'
+import { ownerPreisFuer } from '../lib/ownerLink'
 import GroessenTabelle from '../components/GroessenTabelle'
 import ExpressHinweis from '../components/ExpressHinweis'
 import { sichtbareGruppen as gruppenFuer, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
@@ -150,7 +151,7 @@ function Stars({ value, size = 14 }) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, affiliate, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
+  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, affiliate, ownerLink, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
   const { user } = useAuth()
 
   // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
@@ -965,6 +966,25 @@ export default function Customize() {
     }
   }, [guertelAn, guertelCfg, guertelOptionen])
 
+  // ── Der Gürtel kostet ab dem Ja, nicht erst ab der letzten Angabe ───────
+  //
+  // Bisher hing der Preis an `guertelZeile`, und die entsteht erst, wenn Form,
+  // Metall und Größe stehen. Wer auf „Ja, ich möchte einen Gürtel dazu"
+  // drückte, sah deshalb: nichts. Derselbe Betrag wie vorher, und erst drei
+  // Angaben später sprang die Summe. Das liest sich wie ein Fehler und im
+  // ungünstigen Fall wie ein versteckter Aufpreis.
+  //
+  // Der Preis steht von Anfang an fest, er hängt an keiner der drei Angaben.
+  // Also wird er auch von Anfang an gezeigt.
+  const guertelPreis = guertelAn && guertelOptionen
+    ? Number(guertelOptionen.preis_zum_paar) || 0
+    : 0
+
+  // Was am Gürtel noch fehlt. Der Preis zählt schon, in den Warenkorb geht er
+  // erst fertig: Eine halbe Konfiguration ist keine Bestellposition, und die
+  // Werkstatt kann mit „Gürtel, Größe offen" nichts anfangen.
+  const guertelUnfertig = guertelAn === true && !guertelCfg
+
   // Zubehör wird nach gewählter Lederart empfohlen (nicht mehr pro Schuhmodell):
   // material_keys '*'/leer = universell; sonst muss das gewählte Material (selMat)
   // enthalten sein. Zusätzlich optionale Farb-Zuordnung (z. B. schwarzer Spanner
@@ -1090,6 +1110,17 @@ export default function Customize() {
   const avg      = reviews.length ? reviews.reduce((s,r) => s + r.rating, 0) / reviews.length : 0
   const myRev    = reviews.find(r => r.user_id === user?.id)
 
+  // ── Der Bestelllink des Inhabers schlägt alles ────────────────────────
+  //
+  // Er zieht nichts ab, er SETZT den Preis. Deshalb steht er hier, VOR jeder
+  // Nachlassrechnung: Wo er gilt, gibt es keinen Katalogpreis mehr, von dem
+  // sich ein Prozentsatz rechnen ließe, und zwei Vergünstigungen übereinander
+  // gäbe es ohnehin nicht.
+  //
+  // Die Aufpreise für Optionen, Gürtel und Zubehör kommen unverändert obendrauf.
+  // Der Festpreis gilt dem Modell, nicht der ganzen Bestellung.
+  const ownerPreis = ownerPreisFuer(ownerLink?.preise, product.id)
+
   // Preis: Basispreis aus DB + Options-Aufpreise (inkl. Sohlen-Art) + Zubehör
   //
   // Zwei Wege zu einem Nachlass, und beide sollen ohne Code-Eingabe wirken:
@@ -1113,18 +1144,22 @@ export default function Customize() {
   // Euro-Grenze: Der Affiliate zahlt ihn aus seiner Provision, und die ist je
   // Paar gedeckelt. Ohne die Grenze wären 10 % auf ein Paar zu 1.450 € eine
   // Zusage über 145 € aus einem Topf von 40.
-  const affiliatePct = Number(affiliate?.customer_discount_pct) || 0
+  const affiliatePct = ownerPreis != null ? 0 : (Number(affiliate?.customer_discount_pct) || 0)
   const affiliateCap = Number(affiliate?.discount_cap) || 0
-  const hausPct = Math.max(userPct, campaignPct)
-  const promoDiscountPct = Math.max(hausPct, affiliatePct)
+  // Über den Bestelllink des Inhabers gibt es keine Nachlässe obendrauf. Der
+  // Festpreis IST der Nachlass; ein Vermittlerrabatt darauf ginge zulasten
+  // einer Provision, die es hier gar nicht gibt.
+  const hausPct = ownerPreis != null ? 0 : Math.max(userPct, campaignPct)
+  const promoDiscountPct = ownerPreis != null ? 0 : Math.max(hausPct, affiliatePct)
   const isPromo = promoDiscountPct > 0 || !!user?.is_promotion
 
   const effectivePrice = user?.is_promotion && product.promotion_price ? product.promotion_price : product.price
-  const basePrice = parseFloat(String(effectivePrice).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
+  const katalogPreis = parseFloat(String(effectivePrice).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
+  const basePrice = ownerPreis != null ? ownerPreis : katalogPreis
   const accessoryTotal = selectedAccessories.reduce((sum, id) => {
     const acc = accessories.find(a => a.id === id)
     return sum + (acc?.price || 0)
-  }, 0) + (guertelZeile ? guertelZeile.priceNum : 0)
+  }, 0) + guertelPreis
 
   // Der Nachlass gilt auf alles, was konfiguriert wurde — Schuh, Optionen und
   // Zubehör. Vorher hing er allein am Zubehör, der Schuhpreis blieb stehen.
@@ -1275,9 +1310,15 @@ export default function Customize() {
       }
     : null
   // Steht eine Größe fest? (Auto-Match, manueller Notausgang oder Legacy-Scan)
-  const fitReady = (sizeType === 'fit' && !!selectedFit)
+  const groesseSteht = (sizeType === 'fit' && !!selectedFit)
     || (sizeType === 'standard' && !!selectedSize)
     || sizeType === 'custom'
+  // In den Warenkorb geht nur, was fertig ist. Das ist die Größe UND, falls
+  // ein Gürtel gewählt wurde, dessen Angaben: Wer „Ja" gedrückt und dann
+  // weitergescrollt hat, hätte sonst einen Gürtel im Warenkorb, den niemand
+  // fertigen kann. Der Preis steht in diesem Zustand bereits, das ist der
+  // Unterschied zwischen „kostet schon" und „ist schon bestellbar".
+  const fitReady = groesseSteht && !guertelUnfertig
   // Maße vorhanden, aber kein Treffer & kein manueller Override → Custom-Anfrage
   const needsCustomRequest = (fitState === 'nomatch' && sizeType !== 'standard') || sizeType === 'custom'
   // Extras als lesbare Liste mit Aufpreissumme, wird in der Bestellung
@@ -2804,9 +2845,11 @@ export default function Customize() {
               <p className="hidden lg:block text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>
                 {needsCustomRequest
                   ? 'Custom Made · persönliche Beratung über WhatsApp Business'
-                  : !fitReady
-                    ? 'Bitte zuerst die Passform ermitteln'
-                    : 'Handgefertigt · Kostenlose Lieferung'}
+                  : guertelUnfertig
+                    ? 'Bitte den Gürtel noch zu Ende wählen, Form, Metall und Größe'
+                    : !fitReady
+                      ? 'Bitte zuerst die Passform ermitteln'
+                      : 'Handgefertigt · Kostenlose Lieferung'}
               </p>
             </div>
           </div>
@@ -2882,9 +2925,11 @@ export default function Customize() {
         <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>
           {needsCustomRequest
             ? 'Custom Made · WhatsApp Business'
-            : !fitReady
-              ? 'Bitte zuerst die Passform ermitteln'
-              : 'Handgefertigt · Kostenlose Lieferung'}
+            : guertelUnfertig
+              ? 'Bitte den Gürtel noch zu Ende wählen, Form, Metall und Größe'
+              : !fitReady
+                ? 'Bitte zuerst die Passform ermitteln'
+                : 'Handgefertigt · Kostenlose Lieferung'}
         </p>
         </div>
       </div>

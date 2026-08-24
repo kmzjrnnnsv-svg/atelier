@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen, TrendingUp, KeyRound } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 import { HOME_PATH } from '../../lib/homePath'
@@ -123,6 +123,17 @@ export default function CMSLayout() {
             { heading: 'Partner', items: [
               { to: '/cms/business', label: 'Firmenkonten', icon: Building2 },
               { to: '/cms/affiliate', label: 'Affiliates',  icon: Users },
+              // Der Owners Link steht bewusst NEBEN den Affiliates und nicht
+              // darin: Er vermittelt nicht, er verkauft. Keine Provision,
+              // kein Prozentsatz, sondern eigene Festpreise und ein Paar je
+              // Link. Als Unterpunkt der Affiliates gelesen, wäre das die
+              // falsche Erwartung.
+              // Nur für den Inhaber: Hinter dem Link stehen Preise, die ein
+              // Kurator nicht setzen können soll. Der Server weist ihn ohnehin
+              // ab; ein Eintrag, der zu einer Absage führt, wäre nur ärgerlich.
+              ...(user?.role === 'admin'
+                ? [{ to: '/cms/owners-link', label: 'Owners Link', icon: KeyRound }]
+                : []),
               { to: '/cms/werbemittel', label: 'Werbemittel', icon: Megaphone },
             ]},
             { heading: 'Kommunikation', items: [

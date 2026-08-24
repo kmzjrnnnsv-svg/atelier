@@ -10,6 +10,7 @@ import {
   protokoll, ZUSTELLER,
 } from '../utils/auftragslauf.js'
 import { rechnungPdf, vergibRechnungsnummer } from '../utils/beleg.js'
+import { pruefeOwnerCode, ownerPreise, verbraucheOwnerLink } from './ownerLinks.js'
 import { GUERTEL_ART, ausSchuh as guertelAusSchuh, pruefe as guertelPruefen } from '../utils/guertel.js'
 import { totpVerify } from '../utils/totp.js'
 import { validateBusinessCode, validateCampaignForUser } from './business.js'
@@ -151,6 +152,8 @@ router.post('/',
       basket_id,
       // Die beiden Bestätigungen aus der Kasse.
       widerruf_bestaetigt, agb_bestaetigt,
+      // Der Bestelllink des Inhabers, falls über einen gekauft wird.
+      owner_code,
     } = req.body
 
     // ── Ohne Bestätigung keine Bestellung ────────────────────────────────
@@ -179,6 +182,51 @@ router.post('/',
 
     const db  = getDb()
     const uid = req.user.id
+
+    // ── Der Bestelllink des Inhabers ─────────────────────────────────────
+    //
+    // Er trägt genau ein Paar. Geprüft wird das hier und nicht im Browser:
+    // Der Link führt zu Preisen, die deutlich unter dem Katalog liegen, und
+    // die Versuchung, ihn ein zweites Mal zu benutzen, ist der ganze Grund
+    // für diese Prüfung.
+    //
+    // Drei Absagen, drei Gründe, jede mit eigenem Code — „ungültig" allein
+    // ließe den Kunden raten, ob er sich vertippt hat oder zu spät kam.
+    let ownerLink = null
+    if (owner_code) {
+      const { gueltig, grund, link } = pruefeOwnerCode(db, owner_code)
+      if (!gueltig) {
+        const texte = {
+          VERBRAUCHT: 'Dieser Bestelllink wurde bereits eingelöst. Jeder Link gilt für genau ein Paar.',
+          GESPERRT:   'Dieser Bestelllink ist nicht mehr gültig.',
+          UNBEKANNT:  'Diesen Bestelllink kennen wir nicht. Bitte prüfen Sie die Adresse.',
+        }
+        return res.status(400).json({ error: texte[grund] || 'Bestelllink ungültig.', code: 'OWNER_LINK_UNGUELTIG' })
+      }
+
+      // Ein Paar je Link und Konto. Der Link stirbt zwar beim Einlösen, aber
+      // zwischen zwei Bestellungen desselben Warenkorbs liegt kein Verkauf —
+      // ohne diese Prüfung gingen zwei Paare in einem Einkauf durch.
+      const schon = db.prepare(
+        'SELECT id FROM orders WHERE owner_link_id = ? AND user_id = ? LIMIT 1',
+      ).get(link.id, uid)
+      if (schon) {
+        return res.status(400).json({
+          error: 'Über diesen Bestelllink haben Sie bereits ein Paar bestellt. Er gilt für genau eines.',
+          code: 'OWNER_LINK_VERBRAUCHT',
+        })
+      }
+
+      // Zubehör darf mit, ein zweites Paar nicht. Eine Bestellung ohne Schuh
+      // (reines Zubehör) hat mit dem Link nichts zu tun und läuft ohne ihn.
+      if (!shoe_id) {
+        return res.status(400).json({
+          error: 'Der Bestelllink gilt für ein Paar Schuhe. Zubehör allein bestellen Sie ohne ihn.',
+          code: 'OWNER_LINK_OHNE_PAAR',
+        })
+      }
+      ownerLink = link
+    }
 
     // ── Die gespeicherte Konfiguration ist maßgeblich ────────────────────
     // Liegt eine vor, werden die Fertigungsangaben von dort genommen und nicht
@@ -291,7 +339,18 @@ router.post('/',
       ]
       const hoechster = Math.min(100, Math.max(0, ...saetze))
 
-      const grund = zahl(modell?.promotion_price) || zahl(modell?.price)
+      // Über einen Owners Link gilt der Festpreis des Inhabers als Maßstab,
+      // nicht der Katalogpreis. Sonst wiese diese Prüfung genau die
+      // Bestellungen ab, für die der Link gemacht ist: 890 € auf ein Paar zu
+      // 1.450 € sähe aus wie eine Manipulation.
+      //
+      // Der Festpreis kommt aus der Datenbank, nicht aus der Anfrage. Das ist
+      // der Punkt der ganzen Prüfung — ein Preis, den der Browser mitschickt,
+      // prüft sich selbst.
+      const ownerPreis = ownerLink ? ownerPreise(db)[Number(shoe_id)] : undefined
+      const grund = Number.isFinite(ownerPreis)
+        ? ownerPreis
+        : (zahl(modell?.promotion_price) || zahl(modell?.price))
       // Zehn Prozent Luft nach unten: Rundungen, Staffelpreise und künftige
       // Nachlässe sollen keine ehrliche Bestellung abweisen. Es geht darum,
       // grobe Manipulation zu stoppen, nicht darum, auf den Cent zu prüfen.
@@ -416,8 +475,8 @@ router.post('/',
          size_type, last_key, last_label, last_width, fit_measurements,
          business_id, business_code_id, business_coverage, business_campaign_id,
          sole, extras, config_id, fit_profile_id, payment_ref, basket_id,
-         withdrawal_ack_at, terms_ack_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         withdrawal_ack_at, terms_ack_at, owner_link_id)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `)
     const insertParams = [
       uid,
@@ -466,28 +525,40 @@ router.post('/',
       // belegen wäre.
       widerrufBestaetigt ? jetzt : null,
       agbBestaetigt      ? jetzt : null,
+      ownerLink ? ownerLink.id : null,
     ]
 
+    // Bestellung, Code-Einlösung und Bestelllink in EINER Transaktion.
+    //
+    // Beide Einlösungen sind Einmal-Vorgänge, und beide haben denselben
+    // Wettlauf: Zwischen der Prüfung weiter oben und dem Schreiben hier darf
+    // niemand dazwischenkommen. Die Bedingungen an den UPDATEs sind der
+    // Riegel, das Werfen bricht die Transaktion ab, und die Bestellung
+    // entsteht dann gar nicht erst.
     let result
-    if (bizCode) {
-      // Bestellung + Code-Einlösung atomar — verhindert Doppeleinlösung (Race).
-      try {
-        result = db.transaction(() => {
-          const r = insertOrder.run(...insertParams)
+    try {
+      result = db.transaction(() => {
+        const r = insertOrder.run(...insertParams)
+        if (bizCode) {
           const upd = db.prepare(`
             UPDATE business_codes
             SET status = 'redeemed', redeemed_by = ?, redeemed_order_id = ?, redeemed_at = datetime('now')
             WHERE id = ? AND status = 'issued'
           `).run(uid, r.lastInsertRowid, bizCode.id)
           if (upd.changes === 0) throw new Error('REDEEM_RACE')
-          return r
-        })()
-      } catch (e) {
-        if (e.message === 'REDEEM_RACE') return res.status(409).json({ error: 'Dieser Code wurde bereits eingelöst' })
-        throw e
+        }
+        if (ownerLink) verbraucheOwnerLink(db, ownerLink, uid, r.lastInsertRowid)
+        return r
+      })()
+    } catch (e) {
+      if (e.message === 'REDEEM_RACE') return res.status(409).json({ error: 'Dieser Code wurde bereits eingelöst' })
+      if (e.message === 'OWNER_RACE') {
+        return res.status(409).json({
+          error: 'Dieser Bestelllink wurde soeben eingelöst. Bitte lassen Sie sich einen neuen geben.',
+          code: 'OWNER_LINK_VERBRAUCHT',
+        })
       }
-    } else {
-      result = insertOrder.run(...insertParams)
+      throw e
     }
 
     // Der Entwurf gehört jetzt zur Bestellung und wird festgeschrieben — ab

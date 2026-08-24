@@ -676,6 +676,11 @@ export function runMigrations(db) {
     // hochgeladen wurden, hat niemand ja gesagt.
     `ALTER TABLE scan_training_data ADD COLUMN consent_at TEXT`,
 
+    // Über welchen Owners Link diese Bestellung kam. Ohne die Spalte ließe
+    // sich später nicht mehr sagen, warum ein Paar zu 890 statt 1.450 € in
+    // den Büchern steht — und genau das ist die Frage, die kommt.
+    `ALTER TABLE orders ADD COLUMN owner_link_id INTEGER REFERENCES owner_links(id)`,
+
     // ── Passwort zurücksetzen ────────────────────────────────────────────
     //
     // Gab es nie, aus einem Grund, der entfallen ist: Der Mailversand stand
@@ -1240,6 +1245,63 @@ export function runMigrations(db) {
       updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_affiliates_status ON affiliates(status);
+
+    -- ── Owners Link ───────────────────────────────────────────────────────
+    --
+    -- Ein Bestelllink des Inhabers, mit eigenen Preisen. Er sieht aus wie ein
+    -- Werbelink und ist etwas anderes, und diese Trennung ist der Grund für
+    -- eigene Tabellen statt eines Häkchens an der Affiliate-Tabelle:
+    --
+    --   Ein Affiliate VERMITTELT. Er bekommt Provision, der Kunde bekommt
+    --   einen Prozentsatz Nachlass vom Katalogpreis, und der Link gilt
+    --   unbegrenzt oft.
+    --
+    --   Ein Owners Link VERKAUFT. Es gibt keine Provision, der Preis ist ein
+    --   Festpreis des Inhabers, und der Link trägt genau ein Paar.
+    --
+    -- Beides in eine Tabelle zu zwingen hieße, an jeder Auswertung „und wenn
+    -- es ein Owners Link ist, dann anders" zu schreiben. Die Provisionsläufe,
+    -- die Gutschriften und die Vermittlerstatistik blieben richtig, solange
+    -- niemand die Bedingung vergisst. Genau die Sorte Abhängigkeit, die man
+    -- ein halbes Jahr später übersieht.
+    --
+    -- Ein Ticket, ein Paar: Ist der Link eingelöst, ist er verbraucht, und
+    -- der Nachfolger steht in replaced_by_id. Ein weitergereichter Link
+    -- lässt sich so nicht zweimal einlösen.
+    CREATE TABLE IF NOT EXISTS owner_links (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      code           TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+      status         TEXT    NOT NULL DEFAULT 'active'
+                             CHECK(status IN ('active','used','revoked')),
+      -- Wofür der Inhaber ihn vergeben hat. Nur für ihn, der Kunde sieht es nie.
+      label          TEXT,
+      used_at        TEXT,
+      used_by        INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      used_order_id  INTEGER REFERENCES orders(id) ON DELETE SET NULL,
+      -- Der Link, der beim Einlösen an seine Stelle getreten ist.
+      replaced_by_id INTEGER REFERENCES owner_links(id) ON DELETE SET NULL,
+      created_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_owner_links_status ON owner_links(status);
+
+    -- Die Preise des Inhabers, je Modell und einmal für alle Links.
+    --
+    -- Bewusst NICHT am einzelnen Link: Der Link ist ein Ticket, das nach
+    -- jedem Verkauf durch ein neues ersetzt wird. Hingen die Preise daran,
+    -- müssten sie bei jeder Ablösung mitkopiert werden, und eine Änderung
+    -- erreichte nur den gerade aktuellen Link. Ein Preis ist eine Ansage des
+    -- Hauses, kein Merkmal eines Tickets.
+    --
+    -- Was hier nicht steht, kostet den Katalogpreis. Ein fehlender Eintrag
+    -- ist damit „nicht verbilligt" und nicht „kostenlos" — der Unterschied
+    -- ist der zwischen einem vergessenen Modell und einem verschenkten.
+    CREATE TABLE IF NOT EXISTS owner_prices (
+      shoe_id    INTEGER PRIMARY KEY REFERENCES shoes(id) ON DELETE CASCADE,
+      price      REAL    NOT NULL CHECK(price >= 0),
+      updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
 
     -- Eine Zeile je vermitteltem Paar. orders trägt ohnehin ein Paar je Zeile,
     -- die Zuordnung ist also eins zu eins.

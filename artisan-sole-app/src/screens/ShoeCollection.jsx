@@ -15,6 +15,7 @@ import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
+import { ownerPreisFuer, alsPreisText } from '../lib/ownerLink'
 import { SAISONS, saisonsSortiert, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
 import { PreisFuss } from '../lib/preisangabe'
@@ -189,6 +190,11 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
   // teuren die Obergrenze aus dem Topf des Vermittlers.
   const affiliate = useStore(s => s.affiliate)
   const vorteil = vermittlerPreis(product.price, affiliate)
+  // Der Bestelllink des Inhabers ERSETZT den Preis, er zieht nichts ab.
+  // Deshalb steht er vor allen anderen Wegen: Wo er gilt, gibt es keinen
+  // Katalogpreis mehr, von dem sich ein Nachlass rechnen ließe.
+  const ownerLink = useStore(s => s.ownerLink)
+  const ownerPreis = ownerPreisFuer(ownerLink?.preise, product.id)
   const campPriceNum = campaign ? (campaign.payment_mode === 'company' ? 0 : Math.round(parsePrice(product.price) * (1 - campaign.discount_pct / 100))) : null
 
   // `touched` bleibt true, sobald der Zeiger die Kachel einmal berührt hat —
@@ -205,7 +211,12 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
   // Overlays nur zeigen, wenn es auch etwas zu wechseln gibt.
   const showSecond = hovered && !!hoverImage
 
-  const priceLine = campaign ? (
+  const priceLine = ownerPreis != null ? (
+    <>
+      <span className="line-through opacity-50 mr-1.5">{product.price}</span>
+      {alsPreisText(ownerPreis)}
+    </>
+  ) : campaign ? (
     <>
       <span className="line-through opacity-50 mr-1.5">{product.price}</span>
       {campaign.payment_mode === 'company' ? 'von Ihrer Firma übernommen' : `€ ${fmtPrice(campPriceNum)}`}
