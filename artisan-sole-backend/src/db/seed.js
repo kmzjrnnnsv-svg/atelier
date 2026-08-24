@@ -1847,19 +1847,32 @@ const RECHTSTEXTE = [
 /**
  * Noch offene Platzhalter.
  *
- * Zwei Formen, und die zweite hat mich einmal erwischt: Neben kurzen Marken
+ * Zwei Formen, und die zweite hat mich zweimal erwischt: Neben kurzen Marken
  * wie [STRASSE] gibt es Entscheidungsblöcke — „[**Variante Kleinunternehmer:**
  * … ]" —, die über mehrere Zeilen laufen. Eine Obergrenze von 80 Zeichen ließ
  * sie durch, und im veröffentlichten Impressum standen beide Steuervarianten
- * untereinander. Deshalb ohne Längengrenze und zusätzlich auf die
- * Entscheidungsmarken geprüft.
+ * untereinander.
+ *
+ * Beim zweiten Mal war die Aufzählung schuld. Die Prüfung kannte drei
+ * Einleitungen — „Variante", „Nur behalten", „Nur aufnehmen" —, und ein Block
+ * mit „Nur ergänzen" lief an ihr vorbei. Auf der Datenschutzseite stand
+ * daraufhin monatelang die Anweisung „Prüft das für jeden Dienstleister
+ * einzeln." Für den Kunden gelesen: kein Rechtstext, sondern eine Notiz an
+ * jemand anderen.
+ *
+ * Eine Aufzählung erlaubter Anfänge ist die falsche Form für diese Prüfung.
+ * Sie muss beim nächsten neuen Wort wieder scheitern, und zwar unbemerkt.
+ * Deshalb gilt jetzt die Form statt der Formulierung: Ein Block, der mit
+ * „[**" beginnt, ist ein Hinweis an uns und niemals Teil des Textes — egal,
+ * wie er weitergeht.
  */
 function offenePlatzhalter(text) {
-  const marken = text.match(/\[\*\*(Variante|Nur behalten|Nur aufnehmen)[^\]]*\]/gs) || []
+  const marken = text.match(/\[\*\*[^\]]*\]/gs) || []
   const kurz = (text.match(/\[[^\]\n]{2,120}\]/g) || [])
     // Markdown-Links [Text](url) sind keine Platzhalter.
     .filter(m => !text.includes(`${m}(`))
-  return [...marken, ...kurz]
+  // Ein Block trägt oft beide Formen in sich; doppelt melden hilft niemandem.
+  return [...new Set([...marken, ...kurz])]
 }
 
 /**

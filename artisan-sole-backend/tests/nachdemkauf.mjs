@@ -385,6 +385,58 @@ p('Das Wort Gutschrift steht drauf', gText.includes('Gutschrift'))
 p('Der Hinweis auf § 14 UStG steht drauf', gText.includes('14 Abs. 2 UStG'))
 
 // ════════════════════════════════════════════════════════════════════════
+abschnitt('11a. Scanaufnahmen nur mit Einwilligung')
+
+// Die Aufnahmen der Füße gingen bei jedem Scan ungefragt an den Server, in
+// eine Tabelle für das Training des Messmodells — während die
+// Datenschutzerklärung fett das Gegenteil versprach. Was hier geprüft wird,
+// ist der Riegel: Das Kästchen im Scanvorgang klärt auf, aber nur diese
+// Prüfung verhindert, dass Bilder ohne Ja ankommen.
+r = await ruf('/api/scans', {
+  method: 'POST', token: kunde,
+  body: {
+    reference_type: 'a4',
+    right_length: 268, right_width: 101, right_arch: 14,
+    left_length: 266, left_width: 100, left_arch: 13,
+    eu_size: '43', uk_size: '9', us_size: '10', accuracy: 88.0,
+  },
+})
+p('Scan angelegt', r.status === 201 || r.status === 200, `HTTP ${r.status} ${r.daten?.error || ''}`)
+const scanId = r.daten?.id
+
+const bild = 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
+const aufnahmen = { rightTopImg: bild, rightSideImg: bild, leftTopImg: bild, leftSideImg: bild }
+
+r = await ruf(`/api/scans/${scanId}/training-images`, { method: 'POST', token: kunde, body: aufnahmen })
+p('Ohne Einwilligung werden die Aufnahmen abgewiesen',
+  r.status === 400 && r.daten?.code === 'EINWILLIGUNG_FEHLT', `HTTP ${r.status} ${r.daten?.code || ''}`)
+p('Und es liegt nichts in der Datenbank',
+  !db.prepare('SELECT id FROM scan_training_data WHERE scan_id = ?').get(scanId))
+
+r = await ruf(`/api/scans/${scanId}/training-images`, {
+  method: 'POST', token: kunde, body: { ...aufnahmen, einwilligung: false },
+})
+p('Ein ausdrückliches Nein zählt auch als Nein',
+  r.status === 400 && r.daten?.code === 'EINWILLIGUNG_FEHLT', `HTTP ${r.status}`)
+
+r = await ruf(`/api/scans/${scanId}/training-images`, {
+  method: 'POST', token: kunde, body: { ...aufnahmen, einwilligung: true },
+})
+p('Mit Einwilligung werden sie angenommen', r.status === 200, `HTTP ${r.status} ${r.daten?.error || ''}`)
+const einwilligung = db.prepare('SELECT consent_at FROM scan_training_data WHERE scan_id = ?').get(scanId)
+p('Der Zeitpunkt der Einwilligung ist belegt', !!einwilligung?.consent_at, einwilligung?.consent_at)
+
+// Der Bestand aus der Zeit davor darf nicht ins Training nachrutschen.
+db.prepare('UPDATE scan_training_data SET consent_at = NULL WHERE scan_id = ?').run(scanId)
+r = await ruf(`/api/scans/${scanId}/validate`, { method: 'PATCH', token: admin })
+p('Aufnahmen ohne Einwilligung lassen sich nicht freigeben',
+  r.status === 409 && r.daten?.code === 'EINWILLIGUNG_FEHLT', `HTTP ${r.status} ${r.daten?.code || ''}`)
+
+r = await ruf('/api/scans/training-export', { token: admin })
+p('Und der Export lässt sie draußen', (r.daten?.data || []).every(z => z.consent_at),
+  `${r.daten?.count} mit, ${r.daten?.ohne_einwilligung} ohne Einwilligung`)
+
+// ════════════════════════════════════════════════════════════════════════
 abschnitt('12. Rechnungsangaben')
 
 // Der Abschnitt setzt Einstellungen und prüft danach die Vorgaben. Ohne

@@ -60,7 +60,7 @@ Dinge: dass Sie die AGB und diese Erklärung gelesen haben, und dass bei
 Maßanfertigung kein Widerrufsrecht besteht. Wir speichern zu jeder Bestellung
 den Zeitpunkt dieser beiden Bestätigungen. Das geschieht nicht, um Ihr
 Verhalten auszuwerten, sondern weil beide Erklärungen im Streitfall zu
-belegen sind — von uns wie von Ihnen. Mehr als der Zeitpunkt wird dafür nicht
+belegen sind, von uns wie von Ihnen. Mehr als der Zeitpunkt wird dafür nicht
 gespeichert.
 
 **Ihre Rechnung.** Mit der Verbuchung Ihrer Zahlung entsteht eine Rechnung mit
@@ -111,13 +111,25 @@ herstellen ließe. Solche Daten sind keine personenbezogenen Daten mehr; sie
 bleiben erhalten, auch wenn Sie Ihr Konto löschen lassen, weil sie sich Ihnen
 dann nicht mehr zuordnen lassen. Dasselbe steht in Ziffer 12 unserer AGB.
 
-**Ihre Scanaufnahmen werten wir dafür nicht aus.** Sie dienen ausschließlich
-der Anfertigung Ihres Paares. Sollten wir das eines Tages ändern wollen,
-fragen wir Sie vorher ausdrücklich, mit einem nicht vorangekreuzten Kästchen
-im Scanvorgang — und ohne Ihr Ja geschieht es nicht.
+**Ihre Scanaufnahmen verwenden wir dafür nur, wenn Sie es erlauben.** Nach
+dem Scan finden Sie am Ende der Ergebnisseite ein Kästchen, das nicht
+vorangekreuzt ist. Setzen Sie es nicht, bleiben die Aufnahmen auf Ihrem Gerät
+und erreichen uns nicht; Ihre Messung, Ihre Größe und Ihr Leisten entstehen
+davon unabhängig und genauso genau. Setzen Sie es, übertragen wir die vier
+Aufnahmen und verwenden sie, um unser Messverfahren zu prüfen und zu
+verbessern.
 
-- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO für die Anonymisierung
-  selbst; das Ergebnis unterliegt der DSGVO nicht mehr
+Die Einwilligung ist freiwillig, und wir halten fest, wann Sie sie erteilt
+haben. Widerrufen können Sie sie jederzeit mit einer Nachricht an
+kontakt@artisansole.com, mit Wirkung für die Zukunft; wir löschen die
+Aufnahmen dann.
+
+- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO für die Anonymisierung der
+  Maßdaten selbst; das Ergebnis unterliegt der DSGVO nicht mehr. Für die
+  Verwendung der Aufnahmen Art. 6 Abs. 1 lit. a DSGVO, also allein Ihre
+  Einwilligung
+- **Speicherdauer der Aufnahmen:** bis zum Widerruf oder bis wir sie für die
+  Verbesserung nicht mehr benötigen
 
 ### 6.5 Speicherdauer
 
@@ -167,7 +179,7 @@ Dienste zur Reichweitenmessung ein und geben nichts davon an Dritte weiter.
 
 Weil das nicht selbstverständlich ist, sagen wir es: Ein Hinweis am unteren
 Rand nennt Ihnen, was wir speichern, und nimmt Ihre Bestätigung entgegen. Er
-blockiert die Seite nicht — es gibt hier nichts freizuschalten, was ohne Ihre
+blockiert die Seite nicht, es gibt hier nichts freizuschalten, was ohne Ihre
 Erlaubnis liefe.
 
 **Was wir dazu festhalten.** Ihre Entscheidung, den Zeitpunkt, die Fassung des
@@ -260,7 +272,7 @@ wurde. Ohne ihn stünde bei einer Beschwerde Aussage gegen Aussage.
   Versand; Art. 6 Abs. 1 lit. c in Verbindung mit Art. 7 Abs. 1 DSGVO für den
   Nachweis
 - **Speicherdauer:** bis zu Ihrem Widerruf. Danach bewahren wir Adresse und
-  Nachweis noch drei Jahre auf — allein dazu, Sie nicht versehentlich erneut
+  Nachweis noch drei Jahre auf, allein dazu, Sie nicht versehentlich erneut
   anzuschreiben und die frühere Einwilligung belegen zu können. Ein Versand
   findet ab dem Widerruf nicht mehr statt.
 
@@ -299,9 +311,10 @@ Wir geben Daten nur weiter, soweit es für die Abwicklung nötig ist:
 Mit Dienstleistern, die in unserem Auftrag verarbeiten, haben wir Verträge zur
 Auftragsverarbeitung nach Art. 28 DSGVO geschlossen.
 
-[**Nur ergänzen, falls ein Empfänger außerhalb der EU sitzt**, dann muss
-hier die Rechtsgrundlage der Übermittlung stehen, etwa
-Standardvertragsklauseln. Prüft das für jeden Dienstleister einzeln.]
+Alle genannten Empfänger sitzen innerhalb der Europäischen Union. Eine
+Übermittlung in ein Drittland findet nicht statt; kommt eines Tages ein
+Empfänger außerhalb der EU hinzu, nennen wir ihn hier zusammen mit der
+Rechtsgrundlage der Übermittlung.
 
 ## 12. Ihre Rechte
 

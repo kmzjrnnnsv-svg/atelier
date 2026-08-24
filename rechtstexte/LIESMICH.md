@@ -136,11 +136,40 @@ einem Umsatz gezogen, für den nie Steuer erhoben wurde.
 - [x] Preise mit Hinweis auf enthaltene Umsatzsteuer und Versandkosten
 - [x] Widerrufs-Hinweis im Checkout eingebaut, mit Nachweis an der Bestellung
 - [x] Schaltfläche nach der Button-Lösung beschriftet (§ 312j Abs. 3 BGB)
-- [ ] Zuständige Landesdatenschutzbehörde eingetragen
+- [x] Zuständige Landesdatenschutzbehörde eingetragen (Hessen, Wiesbaden)
+- [x] Einwilligung für die Scan-Auswertung eingebaut
+- [x] Alle drei Seiten ohne Login erreichbar
 - [ ] Alle Dienstleister in der Empfängertabelle ergänzt
-- [ ] Auftragsverarbeitungsverträge mit Hoster und Versand abgeschlossen
-- [ ] Alle drei Seiten ohne Login erreichbar
-- [ ] Einwilligung für die Scan-Auswertung eingebaut (oder Abschnitt 6.4 gestrichen)
+- [ ] Auftragsverarbeitungsverträge mit Hoster, Manufaktur und Versand abgeschlossen
 - [ ] Anwaltliche Prüfung
 
 Der letzte Punkt ist der wichtigste.
+
+## Die Scanaufnahmen: was war und was jetzt gilt
+
+Hier stand eine Zusage, die das Programm nicht hielt. Abschnitt 6.4 versprach:
+„Ihre Scanaufnahmen werten wir dafür nicht aus", und weiter, man werde vorher
+ausdrücklich fragen. Tatsächlich lud die Anwendung die vier Fotos bei **jedem**
+Scan ungefragt in eine Tabelle namens `scan_training_data`, und die Freigabe
+durch die Verwaltung exportierte sie nach `artisan-sole-ml/data/real/`.
+
+Ein unzutreffender Satz über Aufnahmen der Füße von Kunden ist der teuerste
+Satz, den eine Datenschutzerklärung enthalten kann. Beides ist jetzt in
+Ordnung gebracht, und zwar in der Reihenfolge, in der es zählt:
+
+1. **Das Kästchen** steht am Ende der Ergebnisseite des Scans, nicht
+   vorangekreuzt. Ohne Haken verlassen die Bilder das Gerät nicht.
+2. **Der Riegel** sitzt am Server: Ohne ausdrückliche Einwilligung nimmt
+   `/api/scans/:id/training-images` nichts an. Ein Kästchen ohne Riegel
+   schützt nur, solange niemand daran vorbeigeht.
+3. **Der Bestand** aus der Zeit davor lässt sich nicht freigeben und nicht
+   exportieren. Eine fehlende Einwilligung wird nicht dadurch zu einer, dass
+   die Aufnahme schon da ist.
+4. **Abschnitt 6.4** beschreibt jetzt, was tatsächlich geschieht.
+
+**Was noch zu entscheiden ist:** Die Aufnahmen, die vor dieser Änderung ohne
+Einwilligung hochgeladen wurden, liegen weiter in der Datenbank. Sie zu
+löschen ist eine Entscheidung des Betreibers, kein Programmablauf, deshalb
+tut es niemand von allein. Verwendet werden sie nicht mehr:
+
+    DELETE FROM scan_training_data WHERE consent_at IS NULL;

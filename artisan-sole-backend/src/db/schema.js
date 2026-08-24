@@ -662,6 +662,20 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN withdrawal_ack_at TEXT`,
     `ALTER TABLE orders ADD COLUMN terms_ack_at      TEXT`,
 
+    // ── Die Einwilligung in die Auswertung der Scanaufnahmen ─────────────
+    //
+    // Die Aufnahmen wurden bei jedem Scan hochgeladen, ungefragt, in eine
+    // Tabelle namens `scan_training_data` — während in der veröffentlichten
+    // Datenschutzerklärung fett stand, genau das geschehe nicht. Ein falscher
+    // Satz über Fotos der Füße von Kunden ist der teuerste Satz, den eine
+    // Erklärung enthalten kann.
+    //
+    // Ohne Zeitpunkt in dieser Spalte gibt es keine Einwilligung, und ohne
+    // Einwilligung nimmt der Server die Aufnahmen nicht an. Nachträglich
+    // gefüllt wird sie nie: Für die Bilder, die vor dieser Änderung
+    // hochgeladen wurden, hat niemand ja gesagt.
+    `ALTER TABLE scan_training_data ADD COLUMN consent_at TEXT`,
+
     // ── Passwort zurücksetzen ────────────────────────────────────────────
     //
     // Gab es nie, aus einem Grund, der entfallen ist: Der Mailversand stand

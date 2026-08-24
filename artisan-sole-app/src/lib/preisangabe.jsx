@@ -40,15 +40,6 @@
 import { Link } from 'react-router-dom'
 
 /**
- * Der Satz selbst, ohne Auszeichnung — für Stellen, die ihren Text selbst
- * setzen (Titelangaben, Beschreibungen, Bestätigungsmails).
- */
-export const PREISHINWEIS = 'Alle Preise inkl. gesetzlicher MwSt., zzgl. Versandkosten.'
-
-/** Ein einzelner Preis: der Hinweis gehört direkt darunter. */
-export const PREISHINWEIS_KURZ = 'inkl. MwSt., zzgl. Versand'
-
-/**
  * Der kurze Hinweis unter einem einzelnen Preis.
  *
  * @param {string} [className] Zusätzliche Klassen für den Sitz im Umfeld.

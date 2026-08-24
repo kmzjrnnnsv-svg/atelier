@@ -240,7 +240,7 @@ Arbeit, und den sehen Sie jederzeit unter *Meine Bestellungen*.
 
 | Stand Ihrer Bestellung | Wir behalten ein | Sie erhalten zurück |
 |---|---|---|
-| Zahlung noch nicht eingegangen | — | Der Auftrag verfällt, es ist nichts zu erstatten |
+| Zahlung noch nicht eingegangen | nichts | Der Auftrag verfällt, es ist nichts zu erstatten |
 | Bezahlt, Freigabe an die Werkstatt noch nicht erteilt | 0 % | **den vollen Betrag** |
 | In Fertigung | 50 % | 50 % |
 | Fertiggestellt, in der Qualitätsprüfung | 75 % | 25 % |
@@ -294,7 +294,7 @@ Wareneingangskontrolle nach Ziffer 6 Abs. 5.
 (4) **Die Kulanz gilt für jedes Paar, gleich wie es ausgeführt ist.** Auch für
 eines mit Initialen, Monogramm, Namenszug oder Wappen. Hier stand früher das
 Gegenteil, begründet damit, dass ein Paar mit Ihren Initialen sich niemandem
-sonst anbieten lässt — das trifft zu, taugt aber nicht zur Unterscheidung:
+sonst anbieten lässt, das trifft zu, taugt aber nicht zur Unterscheidung:
 Nach Ziffer 5 Abs. 2 und Ziffer 7.1 gilt dasselbe für **jedes** Paar, das wir
 bauen. Eine Prägung macht aus einem Schuh, der ohnehin ein Einzelstück ist,
 kein anderes. Was für alle gilt, kann nicht die Ausnahme für einen begründen.
@@ -343,7 +343,7 @@ einmal ausgestellte Rechnung ändern wir nicht nachträglich.
 geben.** Er sichert den Verkäufer, der die Ware vor der Zahlung aus der Hand
 gibt. Bei uns ist es umgekehrt: Sie zahlen, bevor Ihr Paar überhaupt entsteht
 (Ziffer 2 Abs. 2). In dem Zeitraum, den ein Eigentumsvorbehalt regeln würde,
-existiert die Sache noch nicht — es gibt nichts, woran wir uns Eigentum
+existiert die Sache noch nicht, es gibt nichts, woran wir uns Eigentum
 vorbehalten könnten.
 
 (5) Das Eigentum an dem fertigen Paar geht mit der Übergabe an Sie über. Da

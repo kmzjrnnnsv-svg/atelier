@@ -15,6 +15,7 @@ import dns from 'dns/promises'
 import { getDb } from '../db/database.js'
 import { versendeUeberHttp, pruefeHttp } from './mailHttp.js'
 import { sendungsLink, stufeInfo } from './auftragslauf.js'
+import { firmenAngaben } from './beleg.js'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 function getEmailConfig() {
@@ -497,6 +498,30 @@ const CSS = `
  * größere Schaden; der Hinweis nennt dann die Adresse, unter der die
  * Bedingungen stehen.
  */
+/**
+ * Was unter den Beträgen in der Bestätigung stehen muss.
+ *
+ * Die Bestätigung ist der dauerhafte Datenträger (§ 312f BGB): Was der Kunde
+ * vor dem Absenden gesehen hat, muss er hier schwarz auf weiß wiederfinden,
+ * und dazu gehört nach Art. 246a § 1 Abs. 1 Nr. 4 EGBGB der Gesamtpreis
+ * einschließlich Steuern. Im Laden steht der Satz unter jedem Preis; in der
+ * Mail stand er nirgends, und ausgerechnet die Mail ist das Stück, das der
+ * Kunde behält.
+ *
+ * Beim Kleinunternehmer steht dort der Grund, warum keine Steuer ausgewiesen
+ * wird — auch das ist eine Pflichtangabe und keine Auslassung.
+ */
+function preisangabe() {
+  let firma
+  try { firma = firmenAngaben(getDb()) } catch { return '' }
+
+  const satz = firma.kleinunternehmer
+    ? 'Kein Ausweis von Umsatzsteuer gemäß § 19 UStG. Versandkosten kommen hinzu, soweit im Bestellvorgang ausgewiesen.'
+    : `Alle Beträge in Euro, inkl. gesetzlicher Umsatzsteuer von ${firma.ustSatz} %. Versandkosten kommen hinzu, soweit im Bestellvorgang ausgewiesen.`
+
+  return `<p style="font-size:11px;color:#888;line-height:1.7;margin:10px 0 0">${satz}</p>`
+}
+
 function vertragsbedingungen(appUrl) {
   let agb = ''
   try {
@@ -583,6 +608,7 @@ export async function sendOrderConfirmation(order, user) {
       </tr>
       ${accessoryRows}
     </table>
+    ${preisangabe()}
     ${addr ? `
     <hr class="divider">
     <div class="label">Lieferadresse</div>

@@ -848,12 +848,33 @@ router.post('/analyze', authenticate, async (req, res) => {
   }
 })
 
-// ─── Save training images ─────────────────────────────────────────────────────
+// ─── Aufnahmen zur Verbesserung der Messfunktion ─────────────────────────────
 // POST /api/scans/:id/training-images
-// Called after scan is saved — stores compressed foot images for ML training.
+//
+// ── Warum hier eine Einwilligung steht ──────────────────────────────────────
+//
+// Diese Route nahm die Fotos der Füße bei jedem Scan entgegen, ohne dass
+// jemand gefragt worden wäre. In der veröffentlichten Datenschutzerklärung
+// stand derweil, fett gesetzt: „Ihre Scanaufnahmen werten wir dafür nicht
+// aus", und weiter, man werde vorher ausdrücklich fragen, mit einem nicht
+// vorangekreuzten Kästchen. Beides war unzutreffend.
+//
+// Aufnahmen des eigenen Körpers zu einem anderen Zweck zu verwenden als dem,
+// für den sie entstanden sind, braucht eine Einwilligung (Art. 6 Abs. 1
+// lit. a DSGVO) — und sie braucht sie, bevor die Daten ankommen, nicht
+// nachher. Deshalb weist diese Route ohne ausdrückliches Ja ab. Das Kästchen
+// im Scanvorgang ist die Aufklärung, diese Prüfung ist der Riegel: Ein
+// Kästchen ohne Riegel schützt nur, solange niemand daran vorbeigeht.
 router.post('/:id/training-images', authenticate, async (req, res) => {
   const scanId = Number(req.params.id)
-  const { rightTopImg, rightSideImg, leftTopImg, leftSideImg } = req.body
+  const { rightTopImg, rightSideImg, leftTopImg, leftSideImg, einwilligung } = req.body
+
+  if (einwilligung !== true) {
+    return res.status(400).json({
+      error: 'Ohne Ihre ausdrückliche Einwilligung verwenden wir Ihre Aufnahmen nicht zur Verbesserung der Messfunktion.',
+      code: 'EINWILLIGUNG_FEHLT',
+    })
+  }
 
   if (!rightTopImg && !leftTopImg) {
     return res.status(400).json({ error: 'Mindestens ein Bild erforderlich' })
@@ -869,9 +890,11 @@ router.post('/:id/training-images', authenticate, async (req, res) => {
   // Delete existing training data for this scan (re-upload)
   db.prepare('DELETE FROM scan_training_data WHERE scan_id = ?').run(scanId)
 
+  // Der Zeitpunkt kommt vom Server. Ein Datum aus der Anfrage belegt nichts.
   db.prepare(`
-    INSERT INTO scan_training_data (scan_id, right_top_img, right_side_img, left_top_img, left_side_img)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO scan_training_data
+      (scan_id, right_top_img, right_side_img, left_top_img, left_side_img, consent_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
   `).run(scanId, rightTopImg ?? null, rightSideImg ?? null, leftTopImg ?? null, leftSideImg ?? null)
 
   res.json({ ok: true, scan_id: scanId })
@@ -882,6 +905,23 @@ router.post('/:id/training-images', authenticate, async (req, res) => {
 // Also saves photos + LiDAR ground truth to artisan-sole-ml/data/real/ for model fine-tuning.
 router.patch('/:id/validate', authenticate, requireRole('admin', 'curator'), (req, res) => {
   const db = getDb()
+
+  // ── Der Bestand aus der Zeit ohne Einwilligung ────────────────────────
+  //
+  // Vor der Einwilligungspflicht wurden die Aufnahmen ungefragt hochgeladen.
+  // Diese Zeilen liegen weiter in der Datenbank, und sie zu löschen ist eine
+  // Entscheidung des Betreibers, nicht eine dieser Route. Verwenden lassen
+  // sie sich aber nicht: Eine fehlende Einwilligung wird nicht dadurch zu
+  // einer, dass die Aufnahme schon da ist.
+  const bestand = db.prepare('SELECT consent_at FROM scan_training_data WHERE scan_id = ?').get(req.params.id)
+  if (!bestand) return res.status(404).json({ error: 'Keine Trainingsdaten für diesen Scan' })
+  if (!bestand.consent_at) {
+    return res.status(409).json({
+      error: 'Für diese Aufnahmen liegt keine Einwilligung vor. Sie stammen aus der Zeit, bevor im Scanvorgang danach gefragt wurde, und dürfen nicht ins Training.',
+      code: 'EINWILLIGUNG_FEHLT',
+    })
+  }
+
   const result = db.prepare('UPDATE scan_training_data SET validated = 1 WHERE scan_id = ?').run(req.params.id)
   if (result.changes === 0) return res.status(404).json({ error: 'Keine Trainingsdaten für diesen Scan' })
 
@@ -940,10 +980,17 @@ router.get('/training-export', authenticate, requireRole('admin'), (req, res) =>
            fs.eu_size, fs.accuracy, fs.created_at AS scan_date
     FROM scan_training_data td
     JOIN foot_scans fs ON fs.id = td.scan_id
-    WHERE td.validated = 1
+    WHERE td.validated = 1 AND td.consent_at IS NOT NULL
     ORDER BY td.created_at DESC
   `).all()
-  res.json({ count: rows.length, data: rows })
+
+  // Was nicht mitgeht, und warum. Ohne diese Zahl sähe ein kleinerer Export
+  // wie ein Fehler aus, und jemand suchte an der falschen Stelle.
+  const ohneEinwilligung = db.prepare(
+    'SELECT COUNT(*) AS n FROM scan_training_data WHERE validated = 1 AND consent_at IS NULL',
+  ).get().n
+
+  res.json({ count: rows.length, ohne_einwilligung: ohneEinwilligung, data: rows })
 })
 
 const saveValidators = [

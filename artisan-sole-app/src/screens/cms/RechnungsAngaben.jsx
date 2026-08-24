@@ -262,6 +262,22 @@ export default function RechnungsAngaben() {
             </p>
           </div>
         )}
+
+        {/* Was eine Umstellung NICHT tut. Ohne diesen Satz ist die
+            naheliegende Annahme, alle Rechnungen richteten sich nach der
+            Einstellung — und wer das glaubt, stellt einmal um und wundert
+            sich, dass der Steuerberater die Belege des Vorjahres
+            unverändert vorfindet. Das ist der Sinn der Sache, nicht ein
+            Versehen. */}
+        <div className="flex items-start gap-2.5 px-4 py-3 bg-black/[0.02] border border-black/[0.06]">
+          <Info size={13} className="text-black/30 flex-shrink-0 mt-0.5" strokeWidth={1.4} />
+          <p className="text-[11px] text-black/40 font-light leading-relaxed">
+            Eine Umstellung wirkt nur nach vorn. Was bei der Ausstellung galt,
+            steht an der Bestellung und bleibt dort: Bereits ausgestellte
+            Rechnungen ändern sich nicht, auch nicht beim erneuten Abruf. Eine
+            Rechnung, die sich nachträglich ändert, wäre keine.
+          </p>
+        </div>
       </div>
 
       <button
