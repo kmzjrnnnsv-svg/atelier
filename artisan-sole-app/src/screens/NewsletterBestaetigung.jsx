@@ -32,7 +32,14 @@ export default function NewsletterBestaetigung() {
       method: 'POST',
       body: JSON.stringify({ token }),
     })
-      .then(a => { setAntwort(a); setZustand('fertig') })
+      .then(a => {
+        setAntwort(a); setZustand('fertig')
+        // Den Code hier ablegen, damit die Kasse ihn von allein einsetzt.
+        // Ein Gutschein, den man erst aus einer E-Mail abschreiben muss, wird
+        // zur Hälfte nie eingelöst — und dann hat der Rabatt seinen Zweck
+        // verfehlt, obwohl alles funktioniert hat.
+        if (a?.code) { try { localStorage.setItem('as_gutschein', a.code) } catch { /* kein Speicher */ } }
+      })
       .catch(e => { setFehler(e?.error || 'Das hat nicht geklappt.'); setZustand('fehler') })
   }, [abmelden, token])
 

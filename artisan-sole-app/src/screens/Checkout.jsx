@@ -329,6 +329,38 @@ export default function Checkout() {
   const shippingCost = isFreeShipping ? 0 : (shippingOpt?.price || 0)
   const total     = Math.max(0, subtotal + shippingCost - discountAmount - bizDiscount - campaignDiscount)
 
+  /**
+   * Der Willkommensgutschein setzt sich selbst ein.
+   *
+   * Wer sich über den Banner eingetragen und im Postfach bestätigt hat, hat
+   * seine zehn Prozent bereits verdient. Sie ihn danach aus einer E-Mail
+   * abschreiben zu lassen, ist die Stelle, an der ein Rabatt in der Praxis
+   * verlorengeht — nicht weil etwas kaputt wäre, sondern weil niemand
+   * abtippt. Also holt die Kasse ihn sich selbst.
+   *
+   * Nur einmal je Seitenaufruf, und still: Geht es schief, weil er schon
+   * verbraucht oder abgelaufen ist, verschwindet er, ohne den Kunden mit
+   * einer Fehlermeldung zu behelligen, die er nicht verursacht hat.
+   */
+  const gutscheinGeholt = useRef(false)
+  useEffect(() => {
+    if (gutscheinGeholt.current || couponCode || couponResult?.valid || subtotal <= 0) return
+    let gespeichert = null
+    try { gespeichert = localStorage.getItem('as_gutschein') } catch { /* kein Speicher */ }
+    if (!gespeichert) return
+    gutscheinGeholt.current = true
+    setCouponCode(gespeichert)
+    validateCoupon(gespeichert, subtotal)
+      .then(res => {
+        if (res?.valid) setCouponResult(res)
+        else {
+          setCouponCode('')
+          try { localStorage.removeItem('as_gutschein') } catch { /* egal */ }
+        }
+      })
+      .catch(() => setCouponCode(''))
+  }, [subtotal, couponCode, couponResult, validateCoupon])
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return
     setCouponLoading(true)
@@ -558,6 +590,11 @@ export default function Checkout() {
         clearCart()
       }
       saveAddresses(delivery, sameBilling ? null : billing).catch(() => {})
+      // Der Willkommensgutschein ist einmal einlösbar. Ist er verbraucht,
+      // gehört er weg — sonst setzt die Kasse beim nächsten Einkauf einen
+      // Code ein, den der Server zu Recht abweist, und der Kunde sucht den
+      // Fehler bei sich.
+      if (appliedCoupon) { try { localStorage.removeItem('as_gutschein') } catch { /* egal */ } }
       setPlaced(lastRow)
     } catch (e) {
       setError(e?.error || 'Bestellung fehlgeschlagen. Bitte erneut versuchen.')

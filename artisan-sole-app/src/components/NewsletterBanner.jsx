@@ -62,6 +62,21 @@ export default function NewsletterBanner() {
     try { localStorage.setItem(ZU, String(Date.now() + RUHE_TAGE * 864e5)) } catch { /* egal */ }
   }
 
+  // Escape schließt. Ein Fenster in der Mitte, das die Tastatur ignoriert,
+  // fühlt sich an wie eines, das einen nicht gehen lassen will. Und solange
+  // es steht, soll der Laden dahinter nicht wegscrollen.
+  useEffect(() => {
+    if (!offen) return
+    const taste = (e) => { if (e.key === 'Escape') schliessen() }
+    document.addEventListener('keydown', taste)
+    const vorher = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', taste)
+      document.body.style.overflow = vorher
+    }
+  }, [offen])
+
   const absenden = async (e) => {
     e.preventDefault()
     if (!zugestimmt || laedt) return
@@ -85,11 +100,19 @@ export default function NewsletterBanner() {
   return (
     <div
       role="dialog"
+      aria-modal="true"
       aria-label="Newsletter mit zehn Prozent Willkommensgutschein"
-      className="fixed z-[880] inset-x-3 bottom-3 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[380px]"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="fixed inset-0 z-[880] flex items-center justify-center p-4"
+      // Der Grund liegt vor dem Laden, nicht daneben: Wer ihn anklickt, meint
+      // „weg damit". Ein Fenster in der Mitte, das sich nur über ein kleines
+      // Kreuz schließen lässt, ist eine Falle, keine Einladung.
+      onClick={schliessen}
     >
-      <div className="bg-white border border-black/10 shadow-[0_2px_40px_rgba(0,0,0,0.12)]">
+      <div className="absolute inset-0 bg-black/25 backdrop-blur-[2px]" />
+      <div
+        onClick={e => e.stopPropagation()}
+        className="relative w-full max-w-[420px] bg-white border border-black/10 shadow-[0_10px_60px_rgba(0,0,0,0.22)]"
+      >
         <div className="flex items-start justify-between px-6 pt-5">
           <p className="text-[9px] text-black/30 uppercase tracking-[0.25em] font-light">
             {ok ? 'Fast geschafft' : 'Willkommen'}
