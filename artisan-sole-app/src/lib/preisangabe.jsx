@@ -29,13 +29,18 @@
  * alle Preise der Seite erkennbar gilt — deshalb `PreisFuss` für ganze
  * Listen und `Preishinweis` für den einzelnen Preis.
  *
- * ── Wohin „Versandkosten" verlinkt ────────────────────────────────────────
+ * ── Was der Satz sagt, seit der Versand enthalten ist ─────────────────────
  *
- * Auf die AGB, nicht auf die Hilfe. Eine Versandkostenseite gibt es nicht,
- * und die Hilfe beantwortet zum Versand derzeit keine einzige Frage — ein
- * Link dorthin sähe nach Auskunft aus und wäre keine. In den AGB steht die
- * Regelung (Ziffer 8 Abs. 2 und Ziffer 9), die Beträge selbst nennt die
- * Kasse, bevor irgendetwas verbindlich wird.
+ * Bis hierher stand unter jedem Preis „zzgl. Versandkosten". Das stimmt
+ * nicht mehr: Der Standardversand nach Deutschland ist im Preis enthalten.
+ * Ein Hinweis auf Kosten, die es nicht gibt, ist kein Formfehler ohne Folgen
+ * — er schreckt ab und ist, weil § 6 Abs. 1 PAngV die Angabe verlangt, „ob"
+ * Versandkosten anfallen, schlicht falsch.
+ *
+ * Extra kostet allein der Express. Deshalb nennt der Satz beides: enthalten,
+ * und wofür doch etwas dazukommt. „Express" verlinkt auf die AGB — die
+ * Regelung steht dort (Ziffer 8 Abs. 2 und Ziffer 9), die Beträge selbst
+ * nennt die Kasse, bevor irgendetwas verbindlich wird.
  */
 import { Link } from 'react-router-dom'
 
@@ -43,21 +48,22 @@ import { Link } from 'react-router-dom'
  * Der kurze Hinweis unter einem einzelnen Preis.
  *
  * @param {string} [className] Zusätzliche Klassen für den Sitz im Umfeld.
- * @param {boolean} [mitVersandlink] Verlinkt „Versandkosten" auf die AGB.
+ * @param {boolean} [mitVersandlink] Verlinkt „Express" auf die AGB.
  *   Auf der Modellseite und im Warenkorb ja; auf einer Kachel nicht, dort
  *   wäre ein Link im Link.
  */
 export function Preishinweis({ className = '', mitVersandlink = false }) {
   return (
     <p className={`text-[10px] text-black/35 font-light leading-snug ${className}`}>
-      inkl. MwSt., zzgl.{' '}
+      inkl. MwSt. und Versand,{' '}
       {mitVersandlink ? (
         <Link to="/legal/agb" className="underline underline-offset-2 text-black/45 hover:text-black">
-          Versandkosten
+          Express
         </Link>
       ) : (
-        'Versand'
+        'Express'
       )}
+      {' '}gegen Aufpreis
     </p>
   )
 }
@@ -71,11 +77,12 @@ export function Preishinweis({ className = '', mitVersandlink = false }) {
 export function PreisFuss({ className = '' }) {
   return (
     <p className={`text-[10px] text-black/30 font-light leading-relaxed text-center ${className}`}>
-      Alle Preise in Euro, inkl. gesetzlicher Umsatzsteuer, zzgl.{' '}
+      Alle Preise in Euro, inkl. gesetzlicher Umsatzsteuer und Versand innerhalb
+      Deutschlands. Nur die{' '}
       <Link to="/legal/agb" className="underline underline-offset-2 text-black/40 hover:text-black">
-        Versandkosten
+        Expresszustellung
       </Link>
-      .
+      {' '}kostet extra.
     </p>
   )
 }

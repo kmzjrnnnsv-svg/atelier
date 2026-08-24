@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Plus, Pencil, Trash2, Check, Circle, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react'
 import useStore from '../../store/store'
+import BildFeld, { MAX_BILD_LISTE } from '../../components/BildFeld'
+import { resolveMediaUrl } from '../../lib/mediaUrl'
 
 // ── Ampel-Rating Badge ──────────────────────────────────────────────────────
 const ratingConfig = {
@@ -49,7 +51,7 @@ const labelCls = 'text-[10px] text-black/30 uppercase tracking-[0.2em] block mb-
 // ═══════════════════════════════════════════════════════════════════════════
 // MATERIAL FORM
 // ═══════════════════════════════════════════════════════════════════════════
-const emptyMat = { key: '', label: '', sub: '', color: '#b45309', available: 1, tip: '', season: '', rating: 'neutral', sort_order: 0, family: '' }
+const emptyMat = { key: '', label: '', sub: '', color: '#b45309', available: 1, tip: '', season: '', rating: 'neutral', sort_order: 0, image: '' }
 
 function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
  const [f, setF] = useState(initial)
@@ -93,20 +95,17 @@ function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
  </button>
  </div>
  </div>
- <div className="grid grid-cols-2 gap-3">
- <div>
- <label className={labelCls}>Familie</label>
- <select value={f.family || ''} onChange={e => s('family', e.target.value)} className={inp}>
-   <option value="">Keine Familie</option>
-   <option value="aesthetic">Aesthetic</option>
-   <option value="durable">Durable</option>
- </select>
- </div>
  <div>
  <label className={labelCls}>Ampel-Bewertung</label>
  <RatingPicker value={f.rating} onChange={v => s('rating', v)} />
  </div>
- </div>
+ {/* Das Bild der Lederart. Es steht im Konfigurator auf der Kachel und tritt
+     beim Überfahren groß an die Stelle des Schuhs — wie bei den Sohlen. Ohne
+     Bild bleibt der Farbwert als Rückfall. */}
+ <BildFeld value={f.image || ''} onChange={v => s('image', v)}
+   maxBytes={MAX_BILD_LISTE}
+   label="Bild der Lederart"
+   hinweis="Eine Nahaufnahme der Oberfläche, quadratisch. Sie erscheint auf der Kachel und groß im Konfigurator, sobald der Kunde die Kachel berührt. Ohne Bild zeigt der Konfigurator den Farbwert." />
  <div>
  <label className={labelCls}>Empfehlungstext (Info-Box in der App)</label>
  <textarea value={f.tip || ''} onChange={e => s('tip', e.target.value)} rows={2} placeholder="Wann passt dieses Material am besten?" className="w-full py-3 px-4 border-b border-black/[0.08] text-[13px] bg-transparent outline-none focus:border-black/25 transition-colors font-light text-black/70 placeholder-black/15 resize-y" style={{ fontFamily: 'inherit' }} />
@@ -125,7 +124,7 @@ function MaterialForm({ initial = emptyMat, onSave, onCancel }) {
 // ═══════════════════════════════════════════════════════════════════════════
 // COLOR FORM
 // ═══════════════════════════════════════════════════════════════════════════
-const emptyCol = { key: '', hex: '#000000', name: '', available: 1, tip: '', pairs_with: '', rating: 'neutral', sort_order: 0, applicable_materials: '*' }
+const emptyCol = { key: '', hex: '#000000', name: '', available: 1, tip: '', pairs_with: '', rating: 'neutral', sort_order: 0, applicable_materials: '*', image: '' }
 
 function ColorForm({ initial = emptyCol, onSave, onCancel }) {
  const [f, setF] = useState(initial)
@@ -184,6 +183,12 @@ function ColorForm({ initial = emptyCol, onSave, onCancel }) {
  <label className={labelCls}>Passt zu (Outfit-Empfehlung)</label>
  <input value={f.pairs_with || ''} onChange={e => s('pairs_with', e.target.value)} placeholder="Grau, Navy, Beige" className={inp} />
  </div>
+ {/* „Dark Brown" und „Cognac" sind an zwei Farbquadraten kaum zu
+     unterscheiden, am fotografierten Leder sehr wohl. */}
+ <BildFeld value={f.image || ''} onChange={v => s('image', v)}
+   maxBytes={MAX_BILD_LISTE}
+   label="Bild der Farbe"
+   hinweis="Das Leder in dieser Farbe, quadratisch. Es erscheint auf der Kachel und groß im Konfigurator. Ohne Bild zeigt der Konfigurator das Farbfeld." />
  <div>
  <label className={labelCls}>Verfügbar bei welchen Material-Typen?</label>
  <p className="text-[10px] text-black/35 mb-2 font-light">
@@ -201,7 +206,6 @@ function ColorForm({ initial = emptyCol, onSave, onCancel }) {
          className={`flex items-center gap-1.5 px-3 h-8 text-[10px] tracking-wider border transition-all ${on ? 'bg-black text-white border-black' : 'border-black/10 text-black/55 hover:border-black/40 bg-transparent'}`}>
          <span className="w-3 h-3 border border-white/30" style={{ backgroundColor: m.color }} />
          {m.label}
-         {m.family && <span className="opacity-50">· {m.family === 'aesthetic' ? 'Aesth.' : 'Dur.'}</span>}
        </button>
      )
    })}
@@ -385,14 +389,16 @@ export default function ProductConfigEditor() {
  onDelete={deleteMaterial}
  renderItem={item => (
  <>
- <div className="w-12 h-12 flex-shrink-0" style={{ background: `radial-gradient(circle at 35% 35%, ${item.color}bb, ${item.color})` }} />
+ {item.image
+ ? <img src={resolveMediaUrl(item.image)} alt="" className="w-12 h-12 flex-shrink-0 object-cover border border-black/[0.06]" />
+ : <div className="w-12 h-12 flex-shrink-0" style={{ background: `radial-gradient(circle at 35% 35%, ${item.color}bb, ${item.color})` }} />}
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2">
  <p className="text-[13px] font-light text-black/70">{item.label}</p>
  <RatingBadge rating={item.rating} />
  {!item.available && <span className="text-[10px] text-black/30 font-light">Nicht verfügbar</span>}
  </div>
- <p className="text-[10px] text-black/30 mt-0.5 font-light">{item.sub} · {item.season || 'ganzjährig'}</p>
+ <p className="text-[10px] text-black/30 mt-0.5 font-light">{[item.sub, item.season || 'ganzjährig'].filter(Boolean).join(' · ')}</p>
  {item.tip && <p className="text-[10px] text-black/25 mt-1 line-clamp-1 font-light">{item.tip}</p>}
  </div>
  </>
@@ -411,7 +417,9 @@ export default function ProductConfigEditor() {
  onDelete={deleteColor}
  renderItem={item => (
  <>
- <div className="w-12 h-12 flex-shrink-0" style={{ backgroundColor: item.hex }} />
+ {item.image
+ ? <img src={resolveMediaUrl(item.image)} alt="" className="w-12 h-12 flex-shrink-0 object-cover border border-black/[0.06]" />
+ : <div className="w-12 h-12 flex-shrink-0" style={{ backgroundColor: item.hex }} />}
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2">
  <p className="text-[13px] font-light text-black/70">{item.name}</p>

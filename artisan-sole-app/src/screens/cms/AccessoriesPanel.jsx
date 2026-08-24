@@ -392,7 +392,7 @@ function MaterialAssigner({ accessory }) {
               <div className="w-7 h-7 flex-shrink-0 rounded-sm" style={{ backgroundColor: m.color || '#f6f5f3' }} />
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-light text-black/80 truncate">{m.label}</p>
-                <p className="text-[9px] text-black/35 tracking-wider">{m.family || m.key}</p>
+                <p className="text-[9px] text-black/35 tracking-wider">{m.key}</p>
               </div>
               {on && <Check size={12} strokeWidth={1.6} className="text-black flex-shrink-0" />}
             </button>

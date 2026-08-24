@@ -97,10 +97,10 @@
       {
         "key": "lux_calf",
         "label": "Lux Calf",
-        "sub": "Aesthetic",
+        "sub": null,
         "color": "#3b1f0a",
         "available": 1,
-        "tip": "Hochglanz-Kalbsleder.",
+        "tip": "Hochglanz-Kalbsleder, handpatiniert. Die feinste Oberfläche im Haus, für Anzug und besondere Anlässe.",
         "rating": "good",
         "sort_order": 0,
         "family": "aesthetic"
@@ -108,10 +108,10 @@
       {
         "key": "lux_suede",
         "label": "Lux Suede",
-        "sub": "Aesthetic",
+        "sub": null,
         "color": "#7c3a1e",
         "available": 1,
-        "tip": "Premium-Veloursleder.",
+        "tip": "Premium-Veloursleder, samtig und leicht. Für trockene Tage und den eleganten, unangestrengten Auftritt.",
         "rating": "good",
         "sort_order": 1,
         "family": "aesthetic"
@@ -119,7 +119,7 @@
       {
         "key": "painted_full_grain",
         "label": "Painted Full Grain",
-        "sub": "Aesthetic",
+        "sub": null,
         "color": "#5b2c0e",
         "available": 1,
         "tip": "Patinierungs-Vollnarbenleder. Robust UND optisch veredelt, die Allzweckwahl.",
@@ -130,10 +130,10 @@
       {
         "key": "patina",
         "label": "Patina",
-        "sub": "Aesthetic",
+        "sub": null,
         "color": "#1c1c1e",
         "available": 1,
-        "tip": "Speziell handpatiniert.",
+        "tip": "Speziell von Hand patiniert, jedes Paar ein Einzelstück. Für den, der die Oberfläche zum Thema machen will.",
         "rating": "neutral",
         "sort_order": 3,
         "family": "aesthetic"
@@ -141,10 +141,10 @@
       {
         "key": "velvet",
         "label": "Velvet",
-        "sub": "Aesthetic",
+        "sub": null,
         "color": "#2d1b3d",
         "available": 1,
-        "tip": "Samt, exklusiv für Slipper, Boots, Drake.",
+        "tip": "Samt, exklusiv für Slipper, Boots und Drake. Abendgarderobe, drinnen.",
         "rating": "neutral",
         "sort_order": 4,
         "family": "aesthetic"
@@ -152,10 +152,10 @@
       {
         "key": "box_calf",
         "label": "Box Calf",
-        "sub": "Durable",
+        "sub": null,
         "color": "#1c1c1e",
         "available": 1,
-        "tip": "Klassisches Box-Calf, robust und matt.",
+        "tip": "Klassisches Box-Calf, robust und matt. Wetterfest und alltagstauglich, das Leder für jeden Tag.",
         "rating": "good",
         "sort_order": 10,
         "family": "durable"
@@ -163,10 +163,10 @@
       {
         "key": "urban_suede",
         "label": "Urban Suede",
-        "sub": "Durable",
+        "sub": null,
         "color": "#7c3a1e",
         "available": 1,
-        "tip": "Wetterbeständiges Veloursleder.",
+        "tip": "Wetterbeständiges Veloursleder. Die Optik des Wildleders, ohne dass Regen es gleich zeichnet.",
         "rating": "good",
         "sort_order": 11,
         "family": "durable"
@@ -174,10 +174,10 @@
       {
         "key": "painted_calf",
         "label": "Painted Calf",
-        "sub": "Durable",
+        "sub": null,
         "color": "#5b2c0e",
         "available": 1,
-        "tip": "Patinierungs-Kalbleder, alltagstauglich.",
+        "tip": "Patinierungs-Kalbleder, alltagstauglich. Farbtiefe der Patina, Härte des Alltagsleders.",
         "rating": "good",
         "sort_order": 12,
         "family": "durable"

@@ -4,12 +4,14 @@ import { LIEFERUMFANG } from '../../lib/lieferumfang'
 
 // Globale Produktseiten-Texte (für alle Schuhe). Tagline + Beschreibung sind
 // dagegen pro Schuh im Schuh-Editor pflegbar.
+// Die Texte zur „Qualitäts-Familie" (Aesthetic/Durable) sind hier
+// verschwunden, weil der Schritt selbst verschwunden ist: Der Konfigurator
+// zeigt alle Lederarten nebeneinander. Was ein Leder auszeichnet, steht am
+// Leder — unter „Produkt-Konfiguration → Lederarten → Empfehlungstext".
+//
+// Bereits gespeicherte Werte bleiben in den Einstellungen liegen und stören
+// dort nicht; gelesen werden sie nirgends mehr.
 const DEFAULTS = {
-  family_intro: 'Beide Familien genügen höchsten Qualitätsansprüchen und werden in der gleichen Manufaktur gefertigt. Sie unterscheiden sich nur in Charakter und Einsatzbereich.',
-  aesthetic_title: 'Aesthetic',
-  aesthetic_text: 'Edelste Leder, Lux Calf, Lux Suede, Painted Full Grain, Patina und Samt. Maximale optische Veredelung mit handpatinierten Oberflächen. Ideal für formelle Anlässe und besondere Momente.',
-  durable_title: 'Durable',
-  durable_text: 'Robuste Leder, Box Calf, Urban Suede, Painted Calf und Painted Full Grain. Wetterfest, alltagstauglich und langlebig. Ideal für täglichen Einsatz und anspruchsvolle Bedingungen.',
   delivery_items: LIEFERUMFANG,
   badges: ['Handgenäht', 'Custom Made', '200+ Schritte'],
 }
@@ -55,26 +57,6 @@ export default function ProductTextsEditor() {
         <div>
           <label className={lbl}>Badges (eine pro Zeile)</label>
           <textarea rows={3} className={`${inp} resize-none`} value={(form.badges || []).join('\n')} onChange={e => setLines('badges', e.target.value)} />
-        </div>
-
-        <div>
-          <label className={lbl}>Qualitäts-Familie · Intro</label>
-          <textarea rows={3} className={`${inp} resize-none`} value={form.family_intro} onChange={e => set('family_intro', e.target.value)} />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label className={lbl}>Aesthetic · Titel</label>
-            <input className={inp} value={form.aesthetic_title} onChange={e => set('aesthetic_title', e.target.value)} />
-            <label className={`${lbl} mt-3`}>Aesthetic · Text</label>
-            <textarea rows={5} className={`${inp} resize-none`} value={form.aesthetic_text} onChange={e => set('aesthetic_text', e.target.value)} />
-          </div>
-          <div>
-            <label className={lbl}>Durable · Titel</label>
-            <input className={inp} value={form.durable_title} onChange={e => set('durable_title', e.target.value)} />
-            <label className={`${lbl} mt-3`}>Durable · Text</label>
-            <textarea rows={5} className={`${inp} resize-none`} value={form.durable_text} onChange={e => set('durable_text', e.target.value)} />
-          </div>
         </div>
 
         <div>

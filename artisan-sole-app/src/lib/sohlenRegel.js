@@ -34,6 +34,40 @@ export const OHNE_LEDERRAND = ['rubber', 'gummy_sole', 'commando', 'crepe', 'dot
 export const FARBGRUPPEN_SOHLE = ['sole_color', 'sole_bottom_color']
 
 /**
+ * Gruppen, die feststehen: nicht gewählt, sondern gesetzt.
+ *
+ * Der Rahmen (Welt) ist an jedem Schuh des Hauses die schmale City-Naht.
+ * „Country" und „Storm" standen im Konfigurator zur Wahl, ohne dass sie
+ * gebaut werden — ein Schritt, der eine Entscheidung verlangte, die es nicht
+ * gibt, und drei Kacheln, die vom Wesentlichen ablenkten.
+ *
+ * Der Wert verschwindet aus der Maske, nicht aus der Bestellung: Die
+ * Werkstatt braucht die Angabe, und eine Bestellung, in der sie fehlt, wäre
+ * unvollständig. Deshalb hier und nicht per Löschen der Gruppe —
+ * `festeWerte()` trägt sie in die Spezifikation ein.
+ */
+export const FESTE_WERTE = { welt: 'city' }
+
+/**
+ * Was der Kunde nicht wählt, aber trotzdem bekommt.
+ *
+ * Liefert je festgelegter Gruppe die Zeile, die in Entwurf und Bestellung
+ * geht — dieselbe Form wie ein gewählter Wert. Fehlt die Gruppe am Modell
+ * oder der festgelegte Wert in ihr, fällt sie weg: Lieber keine Angabe als
+ * eine erfundene.
+ */
+export function festeWerte(gruppen) {
+  const liste = Array.isArray(gruppen) ? gruppen : []
+  const raus = []
+  for (const [gKey, vKey] of Object.entries(FESTE_WERTE)) {
+    const g = liste.find(x => x.key === gKey)
+    const v = g?.values?.find(x => x.key === vKey)
+    if (g && v) raus.push({ group: g.label, key: g.key, value: v.label, price: 0 })
+  }
+  return raus
+}
+
+/**
  * Aufsätze auf dem Spann, an denen Metall sitzt.
  *
  * Nur bei ihnen gibt es einen Metallton zu wählen. „Ohne", „Maske" und
@@ -91,6 +125,7 @@ export function sichtbareGruppen(gruppen, { product, soleKey, dekoKey } = {}) {
   const hatDeko = liste.some(g => g.key === 'loafer_decoration')
   const metall = hatMetall(dekoKey, hatDeko)
   return liste.filter(g => {
+    if (g.key in FESTE_WERTE) return false
     if (frei && !frei.has(g.key)) return false
     if (!rand && FARBGRUPPEN_SOHLE.includes(g.key)) return false
     if (!metall && g.key === 'buckle_color') return false

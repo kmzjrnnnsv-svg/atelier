@@ -326,8 +326,11 @@ gesetzliche Umsatzsteuer von derzeit 19 %. Welcher Betrag davon Umsatzsteuer
 ist, weisen wir Ihnen in der Bestellübersicht und auf der Rechnung gesondert
 aus.
 
-(2) Versandkosten sind im Preis nicht enthalten. Ob und in welcher Höhe sie
-anfallen, sehen Sie im Bestellvorgang, bevor Sie die Bestellung absenden.
+(2) Der Versand innerhalb Deutschlands ist im Preis enthalten; für die
+Standardzustellung fallen keine zusätzlichen Versandkosten an. Wählen Sie
+stattdessen die Expresszustellung, kostet diese extra. Ob und in welcher Höhe
+Versandkosten anfallen, sehen Sie im Bestellvorgang, bevor Sie die Bestellung
+absenden.
 
 (3) Zahlbar im Voraus per Überweisung (Vorkasse). Die Fertigung beginnt nach
 Zahlungseingang.
@@ -367,7 +370,9 @@ wir ihn aus Kulanz erneut aus.
 
 ## 9. Versand und Gefahrübergang
 
-(1) Wir liefern nach Deutschland.
+(1) Wir liefern nach Deutschland. Die Standardzustellung ist im Preis
+enthalten (Ziffer 8 Abs. 2). Eine Expresszustellung bieten wir gegen Aufpreis
+an; den Betrag nennen wir Ihnen im Bestellvorgang.
 
 (2) Gegenüber Verbrauchern geht die Gefahr mit Übergabe an Sie über.
 Gegenüber Unternehmern mit Übergabe an den Versanddienstleister.
