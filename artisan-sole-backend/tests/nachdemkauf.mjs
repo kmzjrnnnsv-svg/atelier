@@ -91,6 +91,9 @@ async function bestelle(m, extra = {}) {
       shoe_id: m.id, shoe_name: m.name, material: 'Luxe Calf', color: 'Schwarz',
       price: `€ ${preis(m)}`, eu_size: '43', accessories: [],
       delivery_address: { name: 'Wanda Probst', street: 'Musterweg 7', zip: '10115', city: 'Berlin', country: 'DE' },
+      // Was die Kasse vor dem Absenden bestätigen lässt; ohne beides weist
+      // der Server ab (§ 312g Abs. 2 Nr. 1 BGB).
+      widerruf_bestaetigt: true, agb_bestaetigt: true,
       ...extra,
     },
   })
@@ -100,9 +103,27 @@ async function bestelle(m, extra = {}) {
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('2. Der Verlauf — Datum je Stufe')
 
+// ── Ohne Bestätigung keine Bestellung ───────────────────────────────────
+//
+// Der Ausschluss des Widerrufsrechts ist die wertvollste Klausel der AGB.
+// Er trägt nur, wenn der Kunde vor dem Absenden zugestimmt hat — und ein
+// Haken, der allein im Browser sitzt, ist im Streitfall keiner. Wer an der
+// Kasse vorbei auf diese Route schreibt, muss abgewiesen werden.
+r = await bestelle(modell, { widerruf_bestaetigt: false, agb_bestaetigt: true })
+p('Ohne Widerrufs-Bestätigung wird abgewiesen', r.status === 400 && r.daten?.code === 'BESTAETIGUNG_FEHLT',
+  `HTTP ${r.status} ${r.daten?.code || ''}`)
+r = await bestelle(modell, { widerruf_bestaetigt: true, agb_bestaetigt: false })
+p('Ohne AGB-Bestätigung wird abgewiesen', r.status === 400 && r.daten?.code === 'BESTAETIGUNG_FEHLT',
+  `HTTP ${r.status} ${r.daten?.code || ''}`)
+
 r = await bestelle(modell, { basket_id: `k-${zufall()}` })
 p('Bestellung angelegt', r.status === 201, `HTTP ${r.status} ${r.daten?.error || ''}`)
 const bestellung = r.daten
+
+// Die Zustimmung muss belegbar sein, nicht nur stattgefunden haben.
+const zustimmung = db.prepare('SELECT withdrawal_ack_at, terms_ack_at FROM orders WHERE id = ?').get(bestellung.id)
+p('Der Widerrufs-Hinweis ist mit Zeitpunkt belegt', !!zustimmung?.withdrawal_ack_at, zustimmung?.withdrawal_ack_at)
+p('Die AGB-Zustimmung ebenso', !!zustimmung?.terms_ack_at, zustimmung?.terms_ack_at)
 const zweck = bestellung?.verwendungszweck
 
 r = await ruf(`/api/orders/${bestellung.id}/verlauf`, { token: kunde })
@@ -364,6 +385,58 @@ p('Das Wort Gutschrift steht drauf', gText.includes('Gutschrift'))
 p('Der Hinweis auf § 14 UStG steht drauf', gText.includes('14 Abs. 2 UStG'))
 
 // ════════════════════════════════════════════════════════════════════════
+abschnitt('11a. Scanaufnahmen nur mit Einwilligung')
+
+// Die Aufnahmen der Füße gingen bei jedem Scan ungefragt an den Server, in
+// eine Tabelle für das Training des Messmodells — während die
+// Datenschutzerklärung fett das Gegenteil versprach. Was hier geprüft wird,
+// ist der Riegel: Das Kästchen im Scanvorgang klärt auf, aber nur diese
+// Prüfung verhindert, dass Bilder ohne Ja ankommen.
+r = await ruf('/api/scans', {
+  method: 'POST', token: kunde,
+  body: {
+    reference_type: 'a4',
+    right_length: 268, right_width: 101, right_arch: 14,
+    left_length: 266, left_width: 100, left_arch: 13,
+    eu_size: '43', uk_size: '9', us_size: '10', accuracy: 88.0,
+  },
+})
+p('Scan angelegt', r.status === 201 || r.status === 200, `HTTP ${r.status} ${r.daten?.error || ''}`)
+const scanId = r.daten?.id
+
+const bild = 'data:image/jpeg;base64,/9j/4AAQSkZJRg=='
+const aufnahmen = { rightTopImg: bild, rightSideImg: bild, leftTopImg: bild, leftSideImg: bild }
+
+r = await ruf(`/api/scans/${scanId}/training-images`, { method: 'POST', token: kunde, body: aufnahmen })
+p('Ohne Einwilligung werden die Aufnahmen abgewiesen',
+  r.status === 400 && r.daten?.code === 'EINWILLIGUNG_FEHLT', `HTTP ${r.status} ${r.daten?.code || ''}`)
+p('Und es liegt nichts in der Datenbank',
+  !db.prepare('SELECT id FROM scan_training_data WHERE scan_id = ?').get(scanId))
+
+r = await ruf(`/api/scans/${scanId}/training-images`, {
+  method: 'POST', token: kunde, body: { ...aufnahmen, einwilligung: false },
+})
+p('Ein ausdrückliches Nein zählt auch als Nein',
+  r.status === 400 && r.daten?.code === 'EINWILLIGUNG_FEHLT', `HTTP ${r.status}`)
+
+r = await ruf(`/api/scans/${scanId}/training-images`, {
+  method: 'POST', token: kunde, body: { ...aufnahmen, einwilligung: true },
+})
+p('Mit Einwilligung werden sie angenommen', r.status === 200, `HTTP ${r.status} ${r.daten?.error || ''}`)
+const einwilligung = db.prepare('SELECT consent_at FROM scan_training_data WHERE scan_id = ?').get(scanId)
+p('Der Zeitpunkt der Einwilligung ist belegt', !!einwilligung?.consent_at, einwilligung?.consent_at)
+
+// Der Bestand aus der Zeit davor darf nicht ins Training nachrutschen.
+db.prepare('UPDATE scan_training_data SET consent_at = NULL WHERE scan_id = ?').run(scanId)
+r = await ruf(`/api/scans/${scanId}/validate`, { method: 'PATCH', token: admin })
+p('Aufnahmen ohne Einwilligung lassen sich nicht freigeben',
+  r.status === 409 && r.daten?.code === 'EINWILLIGUNG_FEHLT', `HTTP ${r.status} ${r.daten?.code || ''}`)
+
+r = await ruf('/api/scans/training-export', { token: admin })
+p('Und der Export lässt sie draußen', (r.daten?.data || []).every(z => z.consent_at),
+  `${r.daten?.count} mit, ${r.daten?.ohne_einwilligung} ohne Einwilligung`)
+
+// ════════════════════════════════════════════════════════════════════════
 abschnitt('12. Rechnungsangaben')
 
 // Der Abschnitt setzt Einstellungen und prüft danach die Vorgaben. Ohne
@@ -420,19 +493,49 @@ const bText = belegKlein.puffer.toString('latin1')
 p('Der Firmenname steht auf der Rechnung', bText.includes('Artisan Sole GmbH'))
 p('Die Anschrift steht darauf', bText.includes('Musterweg 7') && bText.includes('10115 Berlin'))
 p('Die Steuernummer steht in der Fußzeile', bText.includes('12/345/67890'))
-p('Hinweis auf § 19 UStG', bText.includes('19 UStG'))
-p('Kein Steuerausweis', !bText.includes('Umsatzsteuer 19'))
 
-// Umgestellt auf Steuerausweis: Der nächste Beleg rechnet heraus.
+// ── Die Steuer ist eingefroren ──────────────────────────────────────────
+//
+// Das PDF entsteht bei jedem Abruf neu, und solange es den Steuersatz aus
+// den Einstellungen las, war es keine Rechnung, sondern eine Ansicht: Ein
+// Wechsel der Besteuerungsart hätte auf jeden Beleg des Vorjahres
+// rückwirkend 19 % gedruckt. Deshalb steht an der Bestellung, was bei der
+// Ausstellung galt — und nur das zählt.
+const eingefroren = db.prepare('SELECT tax_mode, tax_rate FROM orders WHERE id = ?').get(bestellung.id)
+p('Die Steuerlage steht an der Bestellung', !!eingefroren?.tax_mode,
+  `${eingefroren?.tax_mode} ${eingefroren?.tax_rate}`)
+p('Ausgestellt wurde mit Steuerausweis', eingefroren?.tax_mode === 'ausweis' && eingefroren?.tax_rate === 19)
+p('Der Beleg weist die Steuer aus', bText.includes('Umsatzsteuer 19'))
+p('Mit dem Entgelt als Nettobetrag', bText.includes('Entgelt ohne Umsatzsteuer'))
+p('Aufschlüsselung und Bruttosumme', bText.includes('Gesamtbetrag brutto'))
+
+// Umgestellt auf Kleinunternehmer: Der BESTEHENDE Beleg darf sich davon
+// nicht rühren. Das ist der eigentliche Prüfstein.
+await ruf('/api/settings/firma', {
+  method: 'PUT', token: admin, mfa: mfaCode(),
+  body: { ...firma, firma_steuernummer: '12/345/67890', firma_kleinunternehmer: '1' },
+})
+const nachUmstellung = await ruf(`/api/orders/${bestellung.id}/rechnung`, { token: kunde, roh: true })
+const nText = nachUmstellung.puffer.toString('latin1')
+p('Die Umstellung ändert die alte Rechnung NICHT', nText.includes('Umsatzsteuer 19'))
+p('Und schiebt ihr keinen §-19-Hinweis unter', !nText.includes('19 UStG wird keine'))
+
+// Andersherum: Was unter § 19 ausgestellt wurde, bleibt ohne Steuerausweis,
+// auch wenn der Laden längst Steuer ausweist.
+db.prepare("UPDATE orders SET tax_mode = 'klein', tax_rate = 0 WHERE id = ?").run(bestellung.id)
 await ruf('/api/settings/firma', {
   method: 'PUT', token: admin, mfa: mfaCode(),
   body: { ...firma, firma_steuernummer: '12/345/67890', firma_kleinunternehmer: '0', ust_satz: '19' },
 })
 const belegUst = await ruf(`/api/orders/${bestellung.id}/rechnung`, { token: kunde, roh: true })
 const uText = belegUst.puffer.toString('latin1')
-p('Jetzt wird Steuer ausgewiesen', uText.includes('Umsatzsteuer 19'))
-p('Mit Nettobetrag', uText.includes('Nettobetrag'))
-p('Und ohne den §-19-Hinweis', !uText.includes('19 UStG wird keine'))
+p('Ein §-19-Beleg bleibt ein §-19-Beleg', uText.includes('19 UStG'))
+p('Ohne nachträglichen Steuerausweis', !uText.includes('Umsatzsteuer 19'))
+
+// ── Pflichtangaben nach § 14 Abs. 4 UStG ────────────────────────────────
+p('Der Leistungszeitpunkt steht darauf',
+  uText.includes('Liefer-') || uText.includes('Zeitpunkt der Lieferung'))
+p('Die Positionen tragen eine Menge', uText.includes('Menge'))
 
 // ════════════════════════════════════════════════════════════════════════
 abschnitt('13. Vermittler: was der Laden zeigen darf')

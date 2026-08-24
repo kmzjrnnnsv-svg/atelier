@@ -57,8 +57,8 @@ export default function CookieHinweis() {
               <p className="text-[13px] text-black/70 font-light leading-[1.7] max-w-xl">
                 Wir speichern nur, was der Laden zum Arbeiten braucht: Ihre Anmeldung,
                 Ihren Warenkorb und diese Entscheidung.{' '}
-                <span className="text-black">Keine Analyse, keine Werbung, kein Tracking</span>{' '}
-                — und was wir speichern, bleibt bei uns.
+                <span className="text-black">Keine Analyse, keine Werbung, kein Tracking</span>,
+                und was wir speichern, bleibt bei uns.
               </p>
             </div>
             <button

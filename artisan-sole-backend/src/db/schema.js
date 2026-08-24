@@ -631,6 +631,55 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN invoice_no        TEXT`,
     `ALTER TABLE orders ADD COLUMN invoice_issued_at TEXT`,
     `CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_invoice ON orders(invoice_no) WHERE invoice_no IS NOT NULL`,
+    // Die Steuer, wie sie zum Zeitpunkt der Rechnung galt.
+    //
+    // Das PDF entsteht bei jedem Abruf neu. Solange es den Steuersatz aus den
+    // Einstellungen las, war eine einmal ausgestellte Rechnung kein Beleg,
+    // sondern eine Ansicht: Wer vom Kleinunternehmer zur Regelbesteuerung
+    // wechselt, hätte damit rückwirkend auf jede Rechnung des Vorjahres
+    // 19 % gedruckt — auf einen Umsatz, für den nie Steuer erhoben wurde.
+    // Der Kunde hätte daraus Vorsteuer gezogen, die es nicht gab.
+    //
+    // Eine Rechnung ist unveränderlich. Was zum Zeitpunkt der Ausstellung
+    // galt, steht deshalb an der Bestellung und wird nie wieder angefasst.
+    // 'klein' = ohne Ausweis nach § 19 UStG, 'ausweis' = mit Steuerausweis.
+    `ALTER TABLE orders ADD COLUMN tax_mode TEXT`,
+    `ALTER TABLE orders ADD COLUMN tax_rate REAL`,
+
+    // ── Was der Kunde beim Bestellen bestätigt hat ───────────────────────
+    //
+    // Der Ausschluss des Widerrufsrechts (§ 312g Abs. 2 Nr. 1 BGB) ist die
+    // wertvollste Klausel der AGB — ohne ihn wäre ein Maßschuh binnen
+    // vierzehn Tagen zurückzunehmen, und danach ist er für niemanden sonst
+    // zu gebrauchen. Damit er hält, muss der Kunde VOR dem Absenden darüber
+    // belehrt worden sein und ausdrücklich zugestimmt haben.
+    //
+    // Eine Zustimmung, die nur im Browser stattfand, ist im Streitfall
+    // nichts wert: Sie muss belegbar sein. Deshalb der Zeitpunkt an der
+    // Bestellung, nicht bloß ein Haken. Ein leeres Feld heißt „aus der Zeit
+    // davor" — es wird nicht nachträglich gefüllt, das wäre eine erfundene
+    // Zustimmung.
+    `ALTER TABLE orders ADD COLUMN withdrawal_ack_at TEXT`,
+    `ALTER TABLE orders ADD COLUMN terms_ack_at      TEXT`,
+
+    // ── Die Einwilligung in die Auswertung der Scanaufnahmen ─────────────
+    //
+    // Die Aufnahmen wurden bei jedem Scan hochgeladen, ungefragt, in eine
+    // Tabelle namens `scan_training_data` — während in der veröffentlichten
+    // Datenschutzerklärung fett stand, genau das geschehe nicht. Ein falscher
+    // Satz über Fotos der Füße von Kunden ist der teuerste Satz, den eine
+    // Erklärung enthalten kann.
+    //
+    // Ohne Zeitpunkt in dieser Spalte gibt es keine Einwilligung, und ohne
+    // Einwilligung nimmt der Server die Aufnahmen nicht an. Nachträglich
+    // gefüllt wird sie nie: Für die Bilder, die vor dieser Änderung
+    // hochgeladen wurden, hat niemand ja gesagt.
+    `ALTER TABLE scan_training_data ADD COLUMN consent_at TEXT`,
+
+    // Über welchen Owners Link diese Bestellung kam. Ohne die Spalte ließe
+    // sich später nicht mehr sagen, warum ein Paar zu 890 statt 1.450 € in
+    // den Büchern steht — und genau das ist die Frage, die kommt.
+    `ALTER TABLE orders ADD COLUMN owner_link_id INTEGER REFERENCES owner_links(id)`,
 
     // ── Passwort zurücksetzen ────────────────────────────────────────────
     //
@@ -1196,6 +1245,63 @@ export function runMigrations(db) {
       updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_affiliates_status ON affiliates(status);
+
+    -- ── Owners Link ───────────────────────────────────────────────────────
+    --
+    -- Ein Bestelllink des Inhabers, mit eigenen Preisen. Er sieht aus wie ein
+    -- Werbelink und ist etwas anderes, und diese Trennung ist der Grund für
+    -- eigene Tabellen statt eines Häkchens an der Affiliate-Tabelle:
+    --
+    --   Ein Affiliate VERMITTELT. Er bekommt Provision, der Kunde bekommt
+    --   einen Prozentsatz Nachlass vom Katalogpreis, und der Link gilt
+    --   unbegrenzt oft.
+    --
+    --   Ein Owners Link VERKAUFT. Es gibt keine Provision, der Preis ist ein
+    --   Festpreis des Inhabers, und der Link trägt genau ein Paar.
+    --
+    -- Beides in eine Tabelle zu zwingen hieße, an jeder Auswertung „und wenn
+    -- es ein Owners Link ist, dann anders" zu schreiben. Die Provisionsläufe,
+    -- die Gutschriften und die Vermittlerstatistik blieben richtig, solange
+    -- niemand die Bedingung vergisst. Genau die Sorte Abhängigkeit, die man
+    -- ein halbes Jahr später übersieht.
+    --
+    -- Ein Ticket, ein Paar: Ist der Link eingelöst, ist er verbraucht, und
+    -- der Nachfolger steht in replaced_by_id. Ein weitergereichter Link
+    -- lässt sich so nicht zweimal einlösen.
+    CREATE TABLE IF NOT EXISTS owner_links (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      code           TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+      status         TEXT    NOT NULL DEFAULT 'active'
+                             CHECK(status IN ('active','used','revoked')),
+      -- Wofür der Inhaber ihn vergeben hat. Nur für ihn, der Kunde sieht es nie.
+      label          TEXT,
+      used_at        TEXT,
+      used_by        INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      used_order_id  INTEGER REFERENCES orders(id) ON DELETE SET NULL,
+      -- Der Link, der beim Einlösen an seine Stelle getreten ist.
+      replaced_by_id INTEGER REFERENCES owner_links(id) ON DELETE SET NULL,
+      created_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_owner_links_status ON owner_links(status);
+
+    -- Die Preise des Inhabers, je Modell und einmal für alle Links.
+    --
+    -- Bewusst NICHT am einzelnen Link: Der Link ist ein Ticket, das nach
+    -- jedem Verkauf durch ein neues ersetzt wird. Hingen die Preise daran,
+    -- müssten sie bei jeder Ablösung mitkopiert werden, und eine Änderung
+    -- erreichte nur den gerade aktuellen Link. Ein Preis ist eine Ansage des
+    -- Hauses, kein Merkmal eines Tickets.
+    --
+    -- Was hier nicht steht, kostet den Katalogpreis. Ein fehlender Eintrag
+    -- ist damit „nicht verbilligt" und nicht „kostenlos" — der Unterschied
+    -- ist der zwischen einem vergessenen Modell und einem verschenkten.
+    CREATE TABLE IF NOT EXISTS owner_prices (
+      shoe_id    INTEGER PRIMARY KEY REFERENCES shoes(id) ON DELETE CASCADE,
+      price      REAL    NOT NULL CHECK(price >= 0),
+      updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
 
     -- Eine Zeile je vermitteltem Paar. orders trägt ohnehin ein Paar je Zeile,
     -- die Zuordnung ist also eins zu eins.

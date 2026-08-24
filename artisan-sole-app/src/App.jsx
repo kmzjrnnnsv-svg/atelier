@@ -6,13 +6,13 @@ import { ProtectedRoute, CMSRoute, AdminRoute, BusinessRoute, ShopRoute, StartRo
 import BottomNav from './components/BottomNav'
 import RefErfassung from './components/RefErfassung'
 import VermittlerBanner from './components/VermittlerBanner'
+import OwnerBanner from './components/OwnerBanner'
 import CookieHinweis from './components/CookieHinweis'
 import NewsletterBanner from './components/NewsletterBanner'
 import TopBar from './components/TopBar'
 import Footer from './components/Footer'
 import useStore from './store/store'
 import ErrorBoundary from './components/ErrorBoundary'
-import LogoSplash from './components/LogoSplash'
 import { Capacitor } from '@capacitor/core'
 import useDeviceInfo from './hooks/useDeviceInfo'
 
@@ -146,6 +146,7 @@ const OrdersPanel          = spaet(() => import('./screens/cms/OrdersPanel'))
 const ZahlungsPanel        = spaet(() => import('./screens/cms/ZahlungsPanel'))
 const RechnungsAngaben     = spaet(() => import('./screens/cms/RechnungsAngaben'))
 const AuswertungPanel      = spaet(() => import('./screens/cms/AuswertungPanel'))
+const OwnersLinkPanel      = spaet(() => import('./screens/cms/OwnersLinkPanel'))
 const WerbemittelPanel     = spaet(() => import('./screens/cms/WerbemittelPanel'))
 const MFASetup             = spaet(() => import('./screens/cms/MFASetup'))
 const BankSettings         = spaet(() => import('./screens/cms/BankSettings'))
@@ -286,7 +287,7 @@ function AppRoutes() {
   // Vermittler fertige Links auf einzelne Modelle bekommen, kommt der
   // Besucher woanders an. Rendert nichts, siehe unten im Baum.
   const { user } = useAuth()
-  const { initStore, affiliatePruefen } = useStore()
+  const { initStore, affiliatePruefen, ownerPruefen } = useStore()
   const device = useDeviceInfo()
   const isCMS = location.pathname.startsWith('/cms')
   // Corporate-Onepager bringt eine eigene Kopfzeile mit, globale Shop-Nav ausblenden.
@@ -331,6 +332,10 @@ function AppRoutes() {
     // Werbecode aus ?ref= aufnehmen und prüfen. Muss bei jedem Start laufen,
     // nicht nur bei Anmeldung: Der Link führt Gäste in den Laden.
     affiliatePruefen()
+    // Dasselbe für den Bestelllink des Inhabers aus ?owner=. Er wird
+    // angeklickt, bevor sich jemand anmeldet, und muss die Preise deshalb
+    // auch für einen Gast schon bestimmen.
+    ownerPruefen()
   }, [user])
 
   if (isCMS) {
@@ -362,6 +367,9 @@ function AppRoutes() {
               <Route path="users"    element={<AdminRoute><UsersPanel /></AdminRoute>} />
               <Route path="business" element={<BusinessPanel />} />
               <Route path="affiliate" element={<AffiliatesPanel />} />
+              {/* Kein Affiliate, sondern der Verkaufsweg des Inhabers, und
+                  deshalb auch keine Unterseite von /cms/affiliate. */}
+              <Route path="owners-link" element={<AdminRoute><OwnersLinkPanel /></AdminRoute>} />
               <Route path="affiliate" element={<Navigate to="/cms/affiliate" replace />} />
               {/* Anfragen leben jetzt unter Nachrichten — die Adresse bleibt
                   als Weiterleitung, sie steht in Lesezeichen. */}
@@ -407,6 +415,7 @@ function AppRoutes() {
     return (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
         {zeigeVermittler && <VermittlerBanner />}
+        {zeigeVermittler && <OwnerBanner />}
         <div className="flex-1 overflow-y-auto relative">
           <Suspense fallback={<DelayedSpinner />}>
             <PageTransition>
@@ -555,6 +564,7 @@ function AppRoutes() {
     return (
       <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
         {zeigeVermittler && <VermittlerBanner />}
+        {zeigeVermittler && <OwnerBanner />}
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
         {showFooter && <Footer />}
@@ -570,6 +580,7 @@ function AppRoutes() {
       {/* Über der Navigation, wie der Streifen bei Apple: Wer über eine
           Empfehlung hier ist, soll es sehen, bevor er den ersten Preis liest. */}
       {zeigeVermittler && <VermittlerBanner />}
+        {zeigeVermittler && <OwnerBanner />}
       {showNav && <TopBar />}
       <div className="flex-1 overflow-y-auto relative">
         <div className="w-full">
@@ -590,7 +601,6 @@ export default function App() {
         <BrowserRouter>
           <ScrollToTop />
           <AppRoutes />
-          <LogoSplash />
         </BrowserRouter>
       </AuthProvider>
     </ErrorBoundary>

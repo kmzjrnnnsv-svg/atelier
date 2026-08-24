@@ -11,6 +11,7 @@ import { apiFetch } from '../hooks/useApi'
 import CtaBanner from '../components/CtaBanner'
 import { accessoryImages } from '../lib/accessoryImages'
 import GuertelDialog from '../components/GuertelDialog'
+import { PreisFuss } from '../lib/preisangabe'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
@@ -237,6 +238,9 @@ export default function Accessories() {
               )
             })}
           </div>
+          {/* Auch das Zubehör trägt Preise, also auch hier der Hinweis nach
+              § 6 Abs. 1 PAngV. */}
+          <PreisFuss className="mt-10" />
         </div>
       )}
 

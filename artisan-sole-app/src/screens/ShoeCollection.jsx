@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap, Search, X } from 'lucide-react'
+import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap, Search, X, ArrowRight } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
@@ -15,8 +15,10 @@ import ShoeName from '../lib/shoeName'
 import { useShoeColors, useHoverImage } from '../lib/shoeCards'
 import { shoePath } from '../lib/shoePath'
 import { vermittlerPreis } from '../lib/vermittlerPreis'
+import { ownerPreisFuer, alsPreisText } from '../lib/ownerLink'
 import { SAISONS, saisonsSortiert, saisonVon, passtZurSaison, trifftSuche } from '../lib/saison'
 import Ablauf from '../components/Ablauf'
+import { PreisFuss } from '../lib/preisangabe'
 import { useSeo } from '../lib/seo'
 
 // Die Rubriken des Ladens: Sommer, Winter, Ganzjährig.
@@ -188,6 +190,11 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
   // teuren die Obergrenze aus dem Topf des Vermittlers.
   const affiliate = useStore(s => s.affiliate)
   const vorteil = vermittlerPreis(product.price, affiliate)
+  // Der Bestelllink des Inhabers ERSETZT den Preis, er zieht nichts ab.
+  // Deshalb steht er vor allen anderen Wegen: Wo er gilt, gibt es keinen
+  // Katalogpreis mehr, von dem sich ein Nachlass rechnen ließe.
+  const ownerLink = useStore(s => s.ownerLink)
+  const ownerPreis = ownerPreisFuer(ownerLink?.preise, product.id)
   const campPriceNum = campaign ? (campaign.payment_mode === 'company' ? 0 : Math.round(parsePrice(product.price) * (1 - campaign.discount_pct / 100))) : null
 
   // `touched` bleibt true, sobald der Zeiger die Kachel einmal berührt hat —
@@ -204,7 +211,12 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
   // Overlays nur zeigen, wenn es auch etwas zu wechseln gibt.
   const showSecond = hovered && !!hoverImage
 
-  const priceLine = campaign ? (
+  const priceLine = ownerPreis != null ? (
+    <>
+      <span className="line-through opacity-50 mr-1.5">{product.price}</span>
+      {alsPreisText(ownerPreis)}
+    </>
+  ) : campaign ? (
     <>
       <span className="line-through opacity-50 mr-1.5">{product.price}</span>
       {campaign.payment_mode === 'company' ? 'von Ihrer Firma übernommen' : `€ ${fmtPrice(campPriceNum)}`}
@@ -568,15 +580,63 @@ export default function ShoeCollection() {
         : null
   const selectShoe = (product) => navigate(shoePath(product), { state: { product } })
 
+  // Die beiden Wege aus der Kopfzeile heraus: zu den Modellen und zur
+  // Passform. Beides steht ohnehin auf dieser Seite, der Knopf bringt nur
+  // hin. Bei der Passform klappt er die Leiste gleich auf, sonst landet man
+  // vor einem zugeklappten Streifen und muss noch einmal klicken.
+  const zuDenModellen = () =>
+    document.getElementById('modelle')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+  const zurPassform = () => {
+    setFitOpen(true)
+    // Erst nach dem Ausklappen springen: sonst zielt der Sprung auf die
+    // zugeklappte Höhe und die Eingabefelder stehen unter dem Bildrand.
+    requestAnimationFrame(() =>
+      document.getElementById('passform')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    )
+  }
+
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Hero, image then text below (LV-style) ──────────────── */}
-      <div className="text-center px-5 lg:px-16 pt-10 lg:pt-14 pb-6 lg:pb-8">
-        <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">Artisan Sole Kollektion</p>
+      {/* ── Kopfzeile: sagen, was es gibt, und wo es losgeht ──────
+          Vor der Seite lief eine Logo-Animation, danach stand hier eine
+          Überschrift ohne Anschluss: „Custom Made" — und dann nichts, was
+          man hätte anfassen können. Der erste Blick trägt jetzt die
+          Handlung: ein Satz, worum es geht, und darunter die beiden Wege,
+          die es auf dieser Seite überhaupt gibt — zu den Modellen und zur
+          Passform. Die Ränder sind knapper gesetzt, damit die ersten
+          Kacheln nicht unter den Bildrand rutschen. */}
+      <div className="text-center px-5 lg:px-16 pt-7 lg:pt-10 pb-5 lg:pb-7">
+        <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-2.5">Artisan Sole Kollektion</p>
         <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.05] tracking-tight">
           Custom Made
         </h1>
+        <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-relaxed mt-3 max-w-md mx-auto">
+          Rahmengenähte Schuhe, nach Ihren Maßen gefertigt. Leder, Sohle und
+          Details bestimmen Sie.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mt-5">
+          <button
+            type="button"
+            onClick={zuDenModellen}
+            className="w-full sm:w-auto bg-black text-white border-0 px-8 h-11 text-[11px] uppercase flex items-center justify-center gap-2 hover:bg-black/85 transition-colors"
+            style={{ letterSpacing: '0.18em' }}
+          >
+            Schuh konfigurieren
+            <ArrowRight size={15} strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
+            onClick={zurPassform}
+            className="w-full sm:w-auto bg-transparent border border-black/15 text-black/70 px-8 h-11 text-[11px] uppercase flex items-center justify-center gap-2 hover:border-black/40 hover:text-black transition-colors"
+            style={{ letterSpacing: '0.18em' }}
+          >
+            <Footprints size={15} strokeWidth={1.5} />
+            Passform bestimmen
+          </button>
+        </div>
       </div>
 
       {/* ── Kollektionen ───────────────────────────────────────────
@@ -692,13 +752,15 @@ export default function ShoeCollection() {
       </div>
 
       {/* ── Passform-Leiste (inline, unter den Reitern) ─────────── */}
-      <FitBar
-        value={footMeasurements}
-        open={fitOpen}
-        onToggle={() => setFitOpen(o => !o)}
-        onSave={handleSaveMeasurements}
-        onReset={handleResetMeasurements}
-      />
+      <div id="passform" className="scroll-mt-16">
+        <FitBar
+          value={footMeasurements}
+          open={fitOpen}
+          onToggle={() => setFitOpen(o => !o)}
+          onSave={handleSaveMeasurements}
+          onReset={handleResetMeasurements}
+        />
+      </div>
 
       {/* ── Kampagnen-Banner (Firmen-Aktion) ─────────────────────── */}
       {activeCampaign && (
@@ -742,7 +804,7 @@ export default function ShoeCollection() {
       {/* Der Abstand nach oben sitzt jetzt hier statt an der weggefallenen
           Zählzeile — so bekommt ihn auch das schlichte Raster (Suchtreffer,
           Aktionsmodelle), das keine Überschrift über sich hat. */}
-      <div className="px-0 lg:px-24 xl:px-32 pt-8 lg:pt-10 pb-16">
+      <div id="modelle" className="px-0 lg:px-24 xl:px-32 pt-8 lg:pt-10 pb-16 scroll-mt-16">
         {laedt ? (
           <Ladeflaeche />
         ) : filtered.length === 0 ? (
@@ -850,6 +912,17 @@ export default function ShoeCollection() {
           </div>
         )}
       </div>
+
+      {/* ── Was zu den Preisen im Raster gehört ───────────────────
+          § 6 Abs. 1 PAngV: Es muss dastehen, dass die Umsatzsteuer im Preis
+          enthalten ist und dass Versandkosten hinzukommen. Am Fuß des
+          Rasters, weil er für alle Kacheln darüber gilt — an jede einzelne
+          geschrieben stünde er zwanzigmal auf einem Bildschirm. */}
+      {!laedt && filtered.length > 0 && (
+        <div className="px-5 lg:px-16 pb-10 -mt-8">
+          <PreisFuss />
+        </div>
+      )}
 
       {/* ── CTA Banner (CMS-controlled) ──────────────────────── */}
       <div className="px-5 lg:px-16 pb-16">

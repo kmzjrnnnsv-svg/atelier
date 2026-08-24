@@ -1,7 +1,7 @@
 // @refresh reset
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, CheckCircle2, Download, AlertCircle, CloudUpload, ChevronRight, Scan, ArrowLeft } from 'lucide-react'
+import { X, CheckCircle2, Download, AlertCircle, CloudUpload, ChevronRight, Scan, ArrowLeft, Check } from 'lucide-react'
 import * as THREE from 'three'
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
@@ -1016,6 +1016,15 @@ export default function FootScan() {
   const [result,     setResult]    = useState(null)
   const [saved,      setSaved]     = useState(false)
   const [saveErr,    setSaveErr]   = useState(null)
+  // ── Die Aufnahmen und die Frage danach ────────────────────────────────
+  //
+  // `forschungOk` beginnt bei false, und das ist der ganze Punkt: Ein
+  // vorangekreuztes Kästchen ist keine Einwilligung (Art. 4 Nr. 11 DSGVO,
+  // und der EuGH hat es in „Planet49" ausdrücklich gesagt). Solange hier
+  // false steht, verlassen die Bilder das Gerät nicht.
+  const [forschungOk,  setForschungOk]  = useState(false)
+  const [scanKennung,  setScanKennung]  = useState(null)
+  const [hochgeladen,  setHochgeladen]  = useState(false)
   const [editedValues, setEditedValues] = useState({})  // user overrides for measurements
   const [savingEdits, setSavingEdits]   = useState(false)
   const [camStatus,  setCamStatus] = useState('idle')
@@ -1930,21 +1939,21 @@ export default function FootScan() {
         }
         const saved_scan = await apiFetch('/api/scans', { method: 'POST', body: JSON.stringify(payload) })
         setSaved(true); refreshScan()
+        // Die Kennung merken: An ihr hängt der spätere Upload der Aufnahmen,
+        // falls der Kunde ihn erlaubt.
+        if (saved_scan?.id) setScanKennung(saved_scan.id)
 
-        // Upload compressed training images in background (für ML-Modell)
-        const hasTrainingImgs = frames.rightTop && (frames.rightMedial || frames.rightSide) && frames.leftTop && (frames.leftMedial || frames.leftSide)
-        if (hasTrainingImgs && saved_scan?.id) {
-          const [rT, rS, lT, lS] = await Promise.all([
-            compressImage(frames.rightTop, 800),
-            compressImage(frames.rightMedial || frames.rightSide, 800),
-            compressImage(frames.leftTop, 800),
-            compressImage(frames.leftMedial || frames.leftSide, 800),
-          ])
-          apiFetch(`/api/scans/${saved_scan.id}/training-images`, {
-            method: 'POST',
-            body: JSON.stringify({ rightTopImg: rT, rightSideImg: rS, leftTopImg: lT, leftSideImg: lS }),
-          }).catch(e => console.warn('[FootScan] Training-Upload fehlgeschlagen:', e.message))
-        }
+        // ── Die Aufnahmen gehen hier NICHT mit ────────────────────────────
+        //
+        // An dieser Stelle wurden die Fotos der Füße bei jedem Scan
+        // hochgeladen, ungefragt, in eine Tabelle für das Training des
+        // Messmodells. In der Datenschutzerklärung stand derweil, das
+        // geschehe nicht und man werde vorher fragen.
+        //
+        // Gefragt wird jetzt, unten auf dieser Seite. Der Upload steht in
+        // einem eigenen Effekt und läuft erst, wenn jemand ja gesagt hat.
+        // Die Messung selbst braucht die Aufnahmen nicht: Sie ist zu diesem
+        // Zeitpunkt fertig und gespeichert.
 
         // Phase 5: Store point clouds + cross-sections (fire-and-forget)
         if (saved_scan?.id) {
@@ -1970,6 +1979,50 @@ export default function FootScan() {
     }
     save()
   }, [phase, result, saved]) // eslint-disable-line
+
+  // ── Die Aufnahmen, und nur mit Ja ────────────────────────────────────────
+  //
+  // Ein eigener Effekt, weil die Einwilligung zu einem anderen Zeitpunkt
+  // kommt als der Scan: Gespeichert wird sofort, gefragt wird danach. Wer
+  // das Kästchen setzt, löst hier den Upload aus; wer es nicht setzt, löst
+  // nichts aus, und die Bilder verlassen das Gerät nicht.
+  //
+  // `hochgeladen` verhindert einen zweiten Lauf, wenn jemand das Kästchen
+  // aus- und wieder ansetzt. Zurücknehmen lässt sich die Einwilligung nicht
+  // durch Abwählen — dafür gibt es den Weg über kontakt@artisansole.com,
+  // und so steht es auch in der Datenschutzerklärung.
+  useEffect(() => {
+    if (!forschungOk || !scanKennung || hochgeladen) return
+    const vollstaendig = frames.rightTop && (frames.rightMedial || frames.rightSide)
+      && frames.leftTop && (frames.leftMedial || frames.leftSide)
+    if (!vollstaendig) return
+
+    let abgebrochen = false
+    ;(async () => {
+      try {
+        const [rT, rS, lT, lS] = await Promise.all([
+          compressImage(frames.rightTop, 800),
+          compressImage(frames.rightMedial || frames.rightSide, 800),
+          compressImage(frames.leftTop, 800),
+          compressImage(frames.leftMedial || frames.leftSide, 800),
+        ])
+        if (abgebrochen) return
+        await apiFetch(`/api/scans/${scanKennung}/training-images`, {
+          method: 'POST',
+          body: JSON.stringify({
+            rightTopImg: rT, rightSideImg: rS, leftTopImg: lT, leftSideImg: lS,
+            // Der Server nimmt ohne diese Angabe nichts an. Das Kästchen ist
+            // die Aufklärung, die Prüfung dort ist der Riegel.
+            einwilligung: true,
+          }),
+        })
+        if (!abgebrochen) setHochgeladen(true)
+      } catch (e) {
+        console.warn('[FootScan] Upload der Aufnahmen fehlgeschlagen:', e.message)
+      }
+    })()
+    return () => { abgebrochen = true }
+  }, [forschungOk, scanKennung, hochgeladen]) // eslint-disable-line
 
   // ── Transition screen with auto-continue countdown ──
   const TransitionScreen = ({ onContinue }) => {
@@ -3199,6 +3252,38 @@ export default function FootScan() {
                       }}
                       className="mt-2 px-4 py-2 text-[10px] text-white bg-black border border-black font-light uppercase tracking-[0.15em]"
                     >{footNotes && !notesConfirmed ? 'Bestätigen & Speichern' : 'Notiz speichern'}</button>
+                  )}
+                </div>
+
+                {/* ── Dürfen wir die Aufnahmen behalten? ──────────────────
+                    Die Frage steht hier, nach dem Ergebnis: Vorher wäre sie
+                    eine Hürde vor der Messung, und wer sie wegklickt, um
+                    weiterzukommen, hat nicht eingewilligt, sondern sich
+                    freigekauft. Hier ist die Messung fertig und gespeichert,
+                    das Nein kostet nichts. Genau dann ist ein Ja etwas wert.
+
+                    Nicht vorangekreuzt, und ohne Haken geht nichts hinaus. */}
+                <div className="border border-black/[0.07] bg-[#fafaf9] p-4">
+                  <button
+                    type="button"
+                    onClick={() => setForschungOk(v => !v)}
+                    className="w-full flex items-start gap-2.5 bg-transparent border-0 p-0 text-left"
+                  >
+                    <span className={`w-4 h-4 mt-0.5 flex-shrink-0 flex items-center justify-center ${
+                      forschungOk ? 'bg-black' : 'border border-black/25'}`}>
+                      {forschungOk && <Check size={11} strokeWidth={2.5} className="text-white" />}
+                    </span>
+                    <span className="text-[11px] text-black/60 font-light leading-relaxed">
+                      Meine Aufnahmen dürfen zur Verbesserung der Messfunktion
+                      verwendet werden. Freiwillig, jederzeit widerrufbar an
+                      kontakt@artisansole.com. Ohne Haken bleiben die Bilder auf
+                      diesem Gerät und Ihre Messung funktioniert genauso.
+                    </span>
+                  </button>
+                  {hochgeladen && (
+                    <p className="text-[10px] text-black/35 font-light mt-2.5 pl-[26px]">
+                      Danke. Die Aufnahmen sind übertragen.
+                    </p>
                   )}
                 </div>
 

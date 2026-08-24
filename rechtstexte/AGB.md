@@ -164,8 +164,13 @@ Ihren Maßen, und erst danach wird das Paar aufgebaut. Die vorbereiteten
 Bauteile nach Ziffer 2.1 verkürzen die Arbeit, nehmen ihr aber nicht den
 Charakter der Einzelanfertigung, ohne Ihre Maße entsteht kein Schuh.
 
-(4) Wir weisen Sie hierauf im Bestellvorgang gesondert hin. Sie bestätigen
-diesen Hinweis vor dem Absenden der Bestellung.
+(4) Wir weisen Sie hierauf im Bestellvorgang gesondert hin. Unmittelbar über
+der Bestellschaltfläche steht ein eigenes, nicht vorangekreuztes Kästchen mit
+diesem Hinweis; ohne Ihre Bestätigung lässt sich die Bestellung nicht
+absenden. Mit der Bestätigung verlangen Sie zugleich ausdrücklich, dass wir
+mit der Fertigung sofort beginnen. Wann Sie bestätigt haben, halten wir zu
+Ihrer und unserer Nachweisbarkeit an der Bestellung fest (siehe Abschnitt 5
+der Datenschutzerklärung).
 
 ## 6. Mängelhaftung
 
@@ -235,7 +240,7 @@ Arbeit, und den sehen Sie jederzeit unter *Meine Bestellungen*.
 
 | Stand Ihrer Bestellung | Wir behalten ein | Sie erhalten zurück |
 |---|---|---|
-| Zahlung noch nicht eingegangen | — | Der Auftrag verfällt, es ist nichts zu erstatten |
+| Zahlung noch nicht eingegangen | nichts | Der Auftrag verfällt, es ist nichts zu erstatten |
 | Bezahlt, Freigabe an die Werkstatt noch nicht erteilt | 0 % | **den vollen Betrag** |
 | In Fertigung | 50 % | 50 % |
 | Fertiggestellt, in der Qualitätsprüfung | 75 % | 25 % |
@@ -289,7 +294,7 @@ Wareneingangskontrolle nach Ziffer 6 Abs. 5.
 (4) **Die Kulanz gilt für jedes Paar, gleich wie es ausgeführt ist.** Auch für
 eines mit Initialen, Monogramm, Namenszug oder Wappen. Hier stand früher das
 Gegenteil, begründet damit, dass ein Paar mit Ihren Initialen sich niemandem
-sonst anbieten lässt — das trifft zu, taugt aber nicht zur Unterscheidung:
+sonst anbieten lässt, das trifft zu, taugt aber nicht zur Unterscheidung:
 Nach Ziffer 5 Abs. 2 und Ziffer 7.1 gilt dasselbe für **jedes** Paar, das wir
 bauen. Eine Prägung macht aus einem Schuh, der ohnehin ein Einzelstück ist,
 kein anderes. Was für alle gilt, kann nicht die Ausnahme für einen begründen.
@@ -316,19 +321,29 @@ vollständig und zum vollen Preis zurück.
 
 ## 8. Preise, Zahlung, Eigentum
 
-(1) Alle Preise verstehen sich in Euro.
-Die Preise enthalten die gesetzliche Umsatzsteuer.
+(1) Alle Preise verstehen sich in Euro und sind Endpreise: Sie enthalten die
+gesetzliche Umsatzsteuer von derzeit 19 %. Welcher Betrag davon Umsatzsteuer
+ist, weisen wir Ihnen in der Bestellübersicht und auf der Rechnung gesondert
+aus.
 
-(2) Versandkosten werden im Bestellvorgang gesondert ausgewiesen.
+(2) Versandkosten sind im Preis nicht enthalten. Ob und in welcher Höhe sie
+anfallen, sehen Sie im Bestellvorgang, bevor Sie die Bestellung absenden.
 
 (3) Zahlbar im Voraus per Überweisung (Vorkasse). Die Fertigung beginnt nach
 Zahlungseingang.
+
+(3a) **Rechnung.** Sobald Ihre Zahlung verbucht ist, stellen wir eine Rechnung
+mit fortlaufender Nummer aus. Sie steht in Ihrem Konto unter der Bestellung
+zum Abruf bereit und trägt die Angaben nach § 14 Abs. 4 UStG, darunter das
+Entgelt, den Steuersatz und den darauf entfallenden Steuerbetrag. Maßgeblich
+für den Steuerausweis ist die steuerliche Lage am Tag der Ausstellung; eine
+einmal ausgestellte Rechnung ändern wir nicht nachträglich.
 
 (4) **Einen Eigentumsvorbehalt gibt es bei uns nicht, und es kann ihn nicht
 geben.** Er sichert den Verkäufer, der die Ware vor der Zahlung aus der Hand
 gibt. Bei uns ist es umgekehrt: Sie zahlen, bevor Ihr Paar überhaupt entsteht
 (Ziffer 2 Abs. 2). In dem Zeitraum, den ein Eigentumsvorbehalt regeln würde,
-existiert die Sache noch nicht — es gibt nichts, woran wir uns Eigentum
+existiert die Sache noch nicht, es gibt nichts, woran wir uns Eigentum
 vorbehalten könnten.
 
 (5) Das Eigentum an dem fertigen Paar geht mit der Übergabe an Sie über. Da

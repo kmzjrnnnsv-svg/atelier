@@ -74,15 +74,20 @@ Damit er hält, müssen zwei Dinge stimmen:
 2. **Der Hinweis muss im Bestellvorgang erscheinen**, nicht nur in den AGB.
    Vor dem Absenden der Bestellung, deutlich sichtbar, mit Bestätigung.
 
-Der zweite Punkt fehlt in eurer Anwendung noch. Ein Kästchen im Checkout mit
-etwa diesem Text:
+**Der zweite Punkt ist inzwischen eingebaut.** Unmittelbar über der
+Bestellschaltfläche steht ein eigenes, nicht vorangekreuztes Kästchen:
 
-> ☐ Mir ist bekannt, dass dieser Schuh nach meinen persönlichen Maßen
+> ☐ Mir ist bekannt, dass mein Paar nach meinen persönlichen Maßen
 > angefertigt wird und deshalb **kein Widerrufsrecht** besteht (§ 312g
-> Abs. 2 Nr. 1 BGB). Ich stimme zu, dass die Fertigung sofort beginnt.
+> Abs. 2 Nr. 1 BGB). Ich verlange ausdrücklich, dass die Fertigung sofort
+> beginnt.
 
-Ohne diesen Schritt kann der Ausschluss im Streitfall angreifbar sein. Sag
-Bescheid, dann baue ich ihn ein.
+Daneben ein zweites für AGB und Datenschutzerklärung, beide verlinkt. Ohne
+beide Haken lässt sich nicht bestellen, und zwar nicht nur im Browser: Der
+Server weist eine Bestellung ohne Bestätigung ab (`BESTAETIGUNG_FEHLT`). Der
+Zeitpunkt steht danach an der Bestellung (`withdrawal_ack_at`,
+`terms_ack_at`) — eine Zustimmung, die sich nicht belegen lässt, nützt im
+Streitfall nichts.
 
 ## Zwei Punkte, die dein Anwalt prüfen sollte
 
@@ -98,17 +103,73 @@ Datenschutzerklärung reicht dafür nicht. Solange das Kästchen fehlt, dürft
 ihr die Aufnahmen nicht zur Verbesserung auswerten. Auch das kann ich
 einbauen.
 
+## Umsatzsteuer: was jetzt eingestellt ist
+
+Entschieden ist **Regelbesteuerung mit 19 %**, passend zur
+Umsatzsteuer-Identifikationsnummer im Impressum und zu Ziffer 8 der AGB.
+
+Wie es zusammenhängt:
+
+- Der Laden zeigt **Bruttopreise**. Die Beträge ändern sich dadurch nicht —
+  in 1.450 € stecken 231,51 € Umsatzsteuer, der Kunde zahlt weiterhin
+  1.450 €.
+- Unter jedem Preis steht jetzt „inkl. MwSt., zzgl. Versand" (§ 6 Abs. 1
+  PAngV). In der Kasse steht zusätzlich, wie viel von der Summe Steuer ist.
+- Die Rechnung weist Entgelt, Steuersatz und Steuerbetrag getrennt aus
+  (§ 14 Abs. 4 Nr. 8 UStG).
+- Die Angaben zum Aussteller (Name, Anschrift, USt-IdNr.) liest die
+  Anwendung beim ersten Start aus `Impressum.md`. Ändern lassen sie sich in
+  der Verwaltung unter **Rechnungsangaben**; von dort wird die Datei nicht
+  mehr gelesen.
+
+**Umstellen ist eine bewusste Handlung.** In der Verwaltung, mit Zweitfaktor.
+Und sie wirkt nur nach vorn: Was bei der Ausstellung galt, steht an der
+Bestellung und bleibt dort. Eine Rechnung vom letzten Jahr bekommt durch
+einen Wechsel keine 19 % aufgedruckt — sonst hätte der Kunde Vorsteuer aus
+einem Umsatz gezogen, für den nie Steuer erhoben wurde.
+
 ## Vor dem Livegang
 
-- [ ] Alle `[…]` ersetzt, alle Hinweisblöcke entfernt
-- [ ] Impressum vollständig, mit **Telefonnummer**
-- [ ] Umsatzsteuer-Variante entschieden (Kleinunternehmer oder Regelbesteuerung)
-- [ ] Zuständige Landesdatenschutzbehörde eingetragen
+- [x] Alle `[…]` ersetzt, alle Hinweisblöcke entfernt
+- [x] Impressum vollständig, mit **Telefonnummer**
+- [x] Umsatzsteuer-Variante entschieden (Regelbesteuerung, 19 %)
+- [x] Preise mit Hinweis auf enthaltene Umsatzsteuer und Versandkosten
+- [x] Widerrufs-Hinweis im Checkout eingebaut, mit Nachweis an der Bestellung
+- [x] Schaltfläche nach der Button-Lösung beschriftet (§ 312j Abs. 3 BGB)
+- [x] Zuständige Landesdatenschutzbehörde eingetragen (Hessen, Wiesbaden)
+- [x] Einwilligung für die Scan-Auswertung eingebaut
+- [x] Alle drei Seiten ohne Login erreichbar
 - [ ] Alle Dienstleister in der Empfängertabelle ergänzt
-- [ ] Auftragsverarbeitungsverträge mit Hoster und Versand abgeschlossen
-- [ ] Alle drei Seiten ohne Login erreichbar
-- [ ] Widerrufs-Hinweis im Checkout eingebaut
-- [ ] Einwilligung für die Scan-Auswertung eingebaut (oder Abschnitt 6.4 gestrichen)
+- [ ] Auftragsverarbeitungsverträge mit Hoster, Manufaktur und Versand abgeschlossen
 - [ ] Anwaltliche Prüfung
 
 Der letzte Punkt ist der wichtigste.
+
+## Die Scanaufnahmen: was war und was jetzt gilt
+
+Hier stand eine Zusage, die das Programm nicht hielt. Abschnitt 6.4 versprach:
+„Ihre Scanaufnahmen werten wir dafür nicht aus", und weiter, man werde vorher
+ausdrücklich fragen. Tatsächlich lud die Anwendung die vier Fotos bei **jedem**
+Scan ungefragt in eine Tabelle namens `scan_training_data`, und die Freigabe
+durch die Verwaltung exportierte sie nach `artisan-sole-ml/data/real/`.
+
+Ein unzutreffender Satz über Aufnahmen der Füße von Kunden ist der teuerste
+Satz, den eine Datenschutzerklärung enthalten kann. Beides ist jetzt in
+Ordnung gebracht, und zwar in der Reihenfolge, in der es zählt:
+
+1. **Das Kästchen** steht am Ende der Ergebnisseite des Scans, nicht
+   vorangekreuzt. Ohne Haken verlassen die Bilder das Gerät nicht.
+2. **Der Riegel** sitzt am Server: Ohne ausdrückliche Einwilligung nimmt
+   `/api/scans/:id/training-images` nichts an. Ein Kästchen ohne Riegel
+   schützt nur, solange niemand daran vorbeigeht.
+3. **Der Bestand** aus der Zeit davor lässt sich nicht freigeben und nicht
+   exportieren. Eine fehlende Einwilligung wird nicht dadurch zu einer, dass
+   die Aufnahme schon da ist.
+4. **Abschnitt 6.4** beschreibt jetzt, was tatsächlich geschieht.
+
+**Was noch zu entscheiden ist:** Die Aufnahmen, die vor dieser Änderung ohne
+Einwilligung hochgeladen wurden, liegen weiter in der Datenbank. Sie zu
+löschen ist eine Entscheidung des Betreibers, kein Programmablauf, deshalb
+tut es niemand von allein. Verwendet werden sie nicht mehr:
+
+    DELETE FROM scan_training_data WHERE consent_at IS NULL;

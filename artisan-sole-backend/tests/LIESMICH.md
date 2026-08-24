@@ -1,6 +1,6 @@
 # Ablauf-Prüfungen
 
-Dreizehn Skripte, die die Anwendung durchspielen — dieselben Routen wie
+Vierzehn Skripte, die die Anwendung durchspielen — dieselben Routen wie
 im Betrieb, nichts nachgebaut.
 
     tests/ablaeufe.mjs   95 Prüfungen: Registrierung, Katalog, Fußmaße,
@@ -67,6 +67,14 @@ im Betrieb, nichts nachgebaut.
                          ja, ein Pflegeset nicht), Vorlagen aus eigenen
                          Bestellungen sind nicht fremd einsehbar, und der
                          Gürtel steht nicht unter dem Zurückgebbaren.
+    tests/ownerlink.mjs  21 Prüfungen: der Bestelllink des Inhabers. Dass er
+                         von allein bereitliegt, dass nur der Inhaber ihn
+                         sieht, dass ein leeres Preisfeld „Katalogpreis"
+                         heißt und nicht „kostenlos", und die drei Dinge, an
+                         denen alles hängt: Der Link ist nach EINEM Verkauf
+                         tot, der Nachfolger entsteht von allein, und ohne
+                         Link gilt weiter der Katalogpreis. Braucht keinen
+                         DB-Zugriff.
     tests/saison.mjs     36 Prüfungen: die drei Rubriken des Ladens — Sommer,
                          Winter, Ganzjährig. Dass die Regel trifft, was der
                          Betreiber vorgegeben hat (Stiefel in den Winter,

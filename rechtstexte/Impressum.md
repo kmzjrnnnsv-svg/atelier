@@ -7,12 +7,15 @@
 
 ## Angaben gemäß § 5 DDG
 
-Qasim Raza
+Artisan Sole
+Inhaber: Qasim Raza
 Robert-Mayer-Straße 29
 60486 Frankfurt am Main
 Deutschland
 
 **Vertreten durch:** Qasim Raza
+
+**Rechtsform:** Einzelunternehmen
 
 ## Kontakt
 

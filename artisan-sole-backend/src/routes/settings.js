@@ -479,4 +479,24 @@ router.put('/whatsapp', authenticate, requireRole('admin'), (req, res) => {
   res.json({ number })
 })
 
+// ─── GET /api/settings/steuer, öffentlich ───────────────────────────────────
+//
+// Was der Laden über die Umsatzsteuer sagen darf und muss.
+//
+// § 6 Abs. 1 PAngV verlangt die Angabe, dass die Umsatzsteuer im Preis
+// enthalten ist. Der Satz selbst muss dort nicht stehen — im Warenkorb aber
+// soll er, weil ein Firmenkunde ihn braucht und weil eine Summe ohne
+// Aufschlüsselung bei der Buchhaltung zurückkommt.
+//
+// Öffentlich, und das ist unbedenklich: Der Steuersatz steht ohnehin auf
+// jeder Rechnung. Die übrigen Firmenangaben bleiben hinter der Anmeldung —
+// hier geht nur heraus, was der Laden anzeigen muss.
+router.get('/steuer', (req, res) => {
+  const firma = firmenAngaben(getDb())
+  res.json({
+    kleinunternehmer: firma.kleinunternehmer,
+    satz: firma.kleinunternehmer ? 0 : firma.ustSatz,
+  })
+})
+
 export default router

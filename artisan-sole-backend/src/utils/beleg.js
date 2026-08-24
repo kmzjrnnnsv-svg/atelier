@@ -28,10 +28,15 @@
  * schuldete er sie trotzdem. Vorgabe ist deshalb „kein Ausweis", und das
  * Umschalten ist eine bewusste Handlung in der Verwaltung.
  */
-import { Dokument, SEITE, SEITENRAND as RAND } from './pdf.js'
+import { Dokument, SEITE, SEITENRAND as RAND, textBreite } from './pdf.js'
 import { betragAusText } from './zahlung.js'
 
 const RECHTS = SEITE.breite - RAND
+// Die beiden mittleren Spalten der Positionstabelle, rechtsbündig. Weit genug
+// vom Betrag weg, dass eine dreistellige Menge nicht an ihn stößt, und weit
+// genug von der Bezeichnung, dass ein langer Schuhname nicht hineinläuft.
+const SP_MENGE  = RECHTS - 150
+const SP_EINZEL = RECHTS - 80
 const euro = (n) => `${(Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
 const datum = (s) => {
   const d = s ? new Date(String(s).replace(' ', 'T') + (String(s).includes('Z') ? '' : 'Z')) : new Date()
@@ -92,11 +97,51 @@ export function pflichtangabenFehlen(firma) {
 }
 
 /**
+ * Die Steuer, wie sie für diesen Beleg gilt.
+ *
+ * Für eine Bestellung mit eingefrorenen Werten sind das die eingefrorenen —
+ * immer, ohne Rückgriff auf die Einstellungen. Nur wo nichts eingefroren ist
+ * (Bestellungen von vor dieser Änderung), gelten die aktuellen Angaben; etwas
+ * Besseres gibt es dort nicht, und ein leeres Feld wäre schlechter.
+ */
+function steuerFuer(order, firma) {
+  if (order?.tax_mode === 'klein') return { kleinunternehmer: true,  satz: 0 }
+  if (order?.tax_mode === 'ausweis') {
+    const satz = Number(order.tax_rate)
+    return { kleinunternehmer: false, satz: Number.isFinite(satz) ? satz : firma.ustSatz }
+  }
+  return { kleinunternehmer: firma.kleinunternehmer, satz: firma.kleinunternehmer ? 0 : firma.ustSatz }
+}
+
+/**
+ * Wann das Paar das Haus verlassen hat.
+ *
+ * Eine eigene Spalte dafür gibt es nicht, den Übergang auf „versendet" hält
+ * aber `order_events` fest — und zwar unveränderlich, das ist dort der Zweck.
+ * Der früheste Eintrag zählt: Wird ein Status später noch einmal gesetzt,
+ * bleibt die Lieferung trotzdem beim ersten Mal.
+ */
+function versandTag(db, orderId) {
+  try {
+    return db.prepare(`
+      SELECT created_at FROM order_events
+       WHERE order_id = ? AND status IN ('shipped', 'delivered')
+       ORDER BY created_at ASC LIMIT 1
+    `).get(orderId)?.created_at || null
+  } catch { return null }
+}
+
+/**
  * Die nächste Rechnungsnummer, vergeben und gleich an die Bestellung
  * geschrieben. Gibt die bestehende zurück, falls die Bestellung schon eine
  * hat — eine zweite wäre ein Beleg über denselben Umsatz.
+ *
+ * Im selben Zug wird die steuerliche Lage festgeschrieben (siehe `tax_mode`
+ * im Schema): Nummer und Steuersatz gehören zusammen, beides entsteht in dem
+ * Moment, in dem der Umsatz feststeht, und beides ist danach unveränderlich.
  */
 export function vergibRechnungsnummer(db, orderId) {
+  const firma = firmenAngaben(db)
   const vergeben = db.transaction((id) => {
     const order = db.prepare('SELECT id, invoice_no FROM orders WHERE id = ?').get(id)
     if (!order) return null
@@ -111,8 +156,16 @@ export function vergibRechnungsnummer(db, orderId) {
     const naechste = (Number(String(hoechste?.invoice_no || '').slice(praefix.length)) || 0) + 1
     const nummer = `${praefix}${String(naechste).padStart(4, '0')}`
 
-    db.prepare("UPDATE orders SET invoice_no = ?, invoice_issued_at = datetime('now') WHERE id = ?")
-      .run(nummer, id)
+    db.prepare(`
+      UPDATE orders
+         SET invoice_no = ?, invoice_issued_at = datetime('now'), tax_mode = ?, tax_rate = ?
+       WHERE id = ?
+    `).run(
+      nummer,
+      firma.kleinunternehmer ? 'klein' : 'ausweis',
+      firma.kleinunternehmer ? 0 : firma.ustSatz,
+      id,
+    )
     return nummer
   })
   return vergeben(orderId)
@@ -154,10 +207,20 @@ function briefkopf(d, firma, titel, felder) {
   d.luecke(4)
 
   // Die Kenndaten rechts, damit der Blick sie zuerst findet.
+  //
+  // Die Beschriftungen wichen dem Wert um feste 90 Punkt aus. Das reicht für
+  // ein Datum und für „RE-2026-0001", nicht für eine Bestellnummer wie
+  // „ATL-20260823-QWCUZ7": Sie ist breiter, und auf der Rechnung stand
+  // „BestellnummeATL-20260823-QWCUZ7" — zwei Angaben ineinander. Deshalb
+  // richtet sich der Abstand jetzt nach dem breitesten Wert, den es hier
+  // tatsächlich gibt, plus einer Handbreit Luft.
+  const sichtbar = felder.filter(([, wert]) => wert)
+  const breitester = Math.max(0, ...sichtbar.map(([, wert]) => textBreite(String(wert), 8.5, true)))
+  const beschriftungBis = RECHTS - breitester - 12
+
   let ky = d.y + 30
-  for (const [name, wert] of felder) {
-    if (!wert) continue
-    d.text(name, { y: ky, groesse: 8.5, grau: true, rechts: RECHTS - 90 })
+  for (const [name, wert] of sichtbar) {
+    d.text(name, { y: ky, groesse: 8.5, grau: true, rechts: beschriftungBis })
     d.text(String(wert), { y: ky, groesse: 8.5, fett: true, rechts: RECHTS })
     ky -= 12
   }
@@ -198,9 +261,19 @@ export function rechnungPdf(db, order, kunde) {
                 firma.email].filter(Boolean).join(' · '),
   })
 
+  const steuer = steuerFuer(order, firma)
+
+  // Der Leistungszeitpunkt ist eine Pflichtangabe (§ 14 Abs. 4 Nr. 6 UStG)
+  // und fehlte. Er ist nicht dasselbe wie das Rechnungsdatum: Geliefert ist,
+  // wenn das Paar den Kunden erreicht. Ist es noch in der Fertigung, gibt es
+  // keinen — dann steht darunter der Satz, dass er mit der Zustellung
+  // entsteht. Ein erfundenes Datum wäre schlechter als eine offene Angabe.
+  const geliefert = order.delivered_at || versandTag(db, order.id)
+
   briefkopf(d, firma, 'Rechnung', [
     ['Rechnungsnummer', order.invoice_no],
     ['Rechnungsdatum',  datum(order.invoice_issued_at)],
+    ['Liefer-/Leistungsdatum', geliefert ? datum(geliefert) : null],
     ['Bestellnummer',   order.order_ref],
     ['Bestelldatum',    datum(order.created_at)],
   ])
@@ -215,7 +288,16 @@ export function rechnungPdf(db, order, kunde) {
     adresse.country,
   ])
 
-  tabellenkopf(d, [['Position', RAND], ['Betrag', RECHTS, true]])
+  // Menge und Einzelpreis stehen jetzt in eigenen Spalten. § 14 Abs. 4 Nr. 5
+  // verlangt „die Menge und die Art der gelieferten Gegenstände"; bisher gab
+  // es nur eine Bezeichnung und einen Betrag, und zwei Pflegesets standen als
+  // zwei gleich aussehende Zeilen untereinander.
+  tabellenkopf(d, [
+    ['Position', RAND],
+    ['Menge',    SP_MENGE,  true],
+    ['Einzel',   SP_EINZEL, true],
+    ['Betrag',   RECHTS,    true],
+  ])
 
   const posten = []
   const grund = betragAusText(order.original_price) || betragAusText(order.price)
@@ -223,54 +305,86 @@ export function rechnungPdf(db, order, kunde) {
     text: `${order.shoe_name}, ${order.material}, ${order.color}`,
     zusatz: [order.eu_size && `Größe ${order.eu_size}`, order.sole, order.last_label]
       .filter(Boolean).join(' · '),
-    betrag: grund,
+    menge: 1,
+    einzel: grund,
   })
 
   const rabatt = betragAusText(order.discount_amount)
   if (rabatt > 0) {
-    posten.push({ text: 'Nachlass', zusatz: order.coupon_code ? `Code ${order.coupon_code}` : '', betrag: -rabatt })
+    posten.push({
+      text: 'Nachlass',
+      zusatz: order.coupon_code ? `Code ${order.coupon_code}` : '',
+      menge: 1,
+      einzel: -rabatt,
+    })
   }
 
+  // Das Zubehör kommt aus dem Warenkorb als eine Zeile je Stück. Auf einem
+  // Beleg ist das falsch herum: „Pflegeset, 2 Stück, je 23,70" ist die
+  // handelsübliche Angabe, zweimal dieselbe Zeile sieht nach einem Fehler aus.
   let zubehoer = []
   try { zubehoer = JSON.parse(order.accessories || '[]') } catch { zubehoer = [] }
+  const gebuendelt = new Map()
   for (const z of zubehoer) {
-    posten.push({ text: z.name || 'Zubehör', zusatz: '', betrag: betragAusText(z.price) })
+    const name = z.name || 'Zubehör'
+    const einzel = betragAusText(z.price)
+    const schluessel = `${name}|${einzel}`
+    const vorhanden = gebuendelt.get(schluessel)
+    if (vorhanden) vorhanden.menge += 1
+    else gebuendelt.set(schluessel, { text: name, zusatz: '', menge: 1, einzel })
   }
+  posten.push(...gebuendelt.values())
 
   const versand = betragAusText(order.shipping_cost)
-  if (versand > 0) posten.push({ text: 'Versand', zusatz: order.shipping_method || '', betrag: versand })
+  if (versand > 0) {
+    posten.push({ text: 'Versand', zusatz: order.shipping_method || '', menge: 1, einzel: versand })
+  }
 
   for (const p of posten) {
+    const betrag = p.einzel * p.menge
     d.platz(24)
     d.text(p.text, { y: d.y, groesse: 10 })
-    d.text(euro(p.betrag), { y: d.y, groesse: 10, rechts: RECHTS })
+    d.text(String(p.menge), { y: d.y, groesse: 10, rechts: SP_MENGE })
+    // Der Einzelpreis nur, wo er etwas hinzufügt. Bei einer Menge von eins
+    // stünde derselbe Betrag zweimal nebeneinander.
+    if (p.menge > 1) d.text(euro(p.einzel), { y: d.y, groesse: 10, rechts: SP_EINZEL })
+    d.text(euro(betrag), { y: d.y, groesse: 10, rechts: RECHTS })
     d.y -= 12
     if (p.zusatz) { d.text(p.zusatz, { y: d.y, groesse: 8.5, grau: true }); d.y -= 11 }
     d.y -= 4
   }
 
-  const summe = posten.reduce((s, p) => s + p.betrag, 0)
+  const summe = posten.reduce((s, p) => s + p.einzel * p.menge, 0)
 
   d.luecke(4).linie().luecke(14)
-  if (firma.kleinunternehmer) {
+  if (steuer.kleinunternehmer) {
     d.platz(18)
     d.text('Gesamtbetrag', { y: d.y, groesse: 11, fett: true })
     d.text(euro(summe), { y: d.y, groesse: 11, fett: true, rechts: RECHTS })
     d.y -= 22
     d.absatz('Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.', { groesse: 8.5, grau: true })
   } else {
-    const netto = summe / (1 + firma.ustSatz / 100)
-    const steuer = summe - netto
+    // Aufschlüsselung nach § 14 Abs. 4 Nr. 8: das Entgelt, der Steuersatz und
+    // der darauf entfallende Betrag. Alle Positionen dieses Ladens tragen
+    // denselben Satz — gäbe es einmal einen zweiten, müsste hier je Satz eine
+    // eigene Zeile stehen.
+    const netto  = summe / (1 + steuer.satz / 100)
+    const betrag = summe - netto
     d.platz(46)
-    d.text('Nettobetrag', { y: d.y, groesse: 9.5 })
+    d.text('Entgelt ohne Umsatzsteuer', { y: d.y, groesse: 9.5 })
     d.text(euro(netto), { y: d.y, groesse: 9.5, rechts: RECHTS })
     d.y -= 14
-    d.text(`Umsatzsteuer ${firma.ustSatz} %`, { y: d.y, groesse: 9.5 })
-    d.text(euro(steuer), { y: d.y, groesse: 9.5, rechts: RECHTS })
+    d.text(`zzgl. Umsatzsteuer ${steuer.satz} %`, { y: d.y, groesse: 9.5 })
+    d.text(euro(betrag), { y: d.y, groesse: 9.5, rechts: RECHTS })
     d.y -= 16
-    d.text('Gesamtbetrag', { y: d.y, groesse: 11, fett: true })
+    d.text('Gesamtbetrag brutto', { y: d.y, groesse: 11, fett: true })
     d.text(euro(summe), { y: d.y, groesse: 11, fett: true, rechts: RECHTS })
     d.y -= 22
+  }
+
+  if (!geliefert) {
+    d.absatz('Der Zeitpunkt der Lieferung steht noch nicht fest; er entspricht dem Tag der Zustellung Ihres Paares.', { groesse: 8.5, grau: true })
+    d.luecke(6)
   }
 
   d.luecke(10)
