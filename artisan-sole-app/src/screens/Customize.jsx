@@ -617,6 +617,9 @@ export default function Customize() {
     return list.sort((a, b) => (b.match.fitPercent || 0) - (a.match.fitPercent || 0))
   })()
   const selectedFit = chosenLast ? (bestPerLast.get(chosenLast) || null) : null
+  // Die Form, auf der dieses Paar entsteht. Ermittelt, nicht gewählt — der
+  // Passform-Block nennt sie, stellt sie aber nicht zur Auswahl.
+  const gewaehlteLeiste = availableLasts.find(v => v.key === chosenLast) || null
 
   /**
    * Die Passform, die in Entwurf, Warenkorb und Bestellung geht.
@@ -2546,40 +2549,39 @@ export default function Customize() {
                       </p>
                     </div>
                   )}
-                  {availableLasts.length >= 2 ? (
+                  {/* Die Schuhform wird genannt, nicht zur Wahl gestellt.
+
+                      Hier standen drei Kacheln — „Drivers", „Venetian",
+                      „Penny Loafer" —, sobald mehrere Leisten zu den Maßen
+                      passten. Es war eine Frage, die der Kunde nicht
+                      beantworten kann: Die Leisten unterscheiden sich in
+                      Millimetern an Zehenraum und Taille, und welche davon
+                      seinem Fuß entspricht, hat der Matcher gerade
+                      ausgerechnet. Ihn danach noch einmal zu fragen, hieß,
+                      seine eigene Rechnung zur Diskussion zu stellen.
+
+                      `chosenLast` steht weiterhin auf dem besten Treffer —
+                      `applyMatches` setzt ihn, und der Abgleich weiter oben
+                      hält ihn auf einer Form, die dieses Modell auch führt.
+                      Die Angabe geht unverändert in Entwurf und Bestellung;
+                      die Werkstatt braucht sie.
+
+                      Dieselbe Haltung wie im Größenfenster
+                      (GroessenTabelle.jsx): „Die Schuhform, nicht als
+                      Frage." */}
+                  {gewaehlteLeiste && (
                     <div>
-                      <p className="text-[9px] text-black/35 uppercase tracking-wider mb-2">Schuhform · mehrere passen zu Ihren Maßen</p>
-                      <div className="flex gap-2 flex-wrap">
-                        {availableLasts.map(v => {
-                          const isSel = chosenLast === v.key
-                          return (
-                            <button
-                              key={v.key} type="button" onClick={() => setChosenLast(v.key)}
-                              title={v.description || ''}
-                              className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border ${isSel ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30 bg-white'}`}
-                            >
-                              <div className="w-12 h-12 mb-2 flex items-center justify-center overflow-hidden border border-black/[0.06]" style={{ backgroundColor: v.image ? 'transparent' : '#fafaf9' }}>
-                                {v.image
-                                  ? <img src={resolveImg(v.image)} alt="" className="w-full h-full object-cover" />
-                                  : LAST_SHAPES[v.key]
-                                    ? <div className="w-9 h-11"><LastShapeIcon shapeKey={v.key} active={isSel} /></div>
-                                    : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
-                              </div>
-                              <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
-                              {v.match?.fitPercent != null && (
-                                <p className="text-[9px] text-black/35 font-light mt-0.5">{String(v.match.fitPercent).replace('.', ',')} %</p>
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
-                      {availableLasts.find(v => v.key === chosenLast)?.description && (
-                        <p className="text-[10px] text-black/45 font-light leading-relaxed mt-2.5">{availableLasts.find(v => v.key === chosenLast).description}</p>
+                      <p className="text-[10px] text-black/40 font-light">
+                        Schuhform: <span className="text-black/70">{gewaehlteLeiste.label}</span>
+                        {gewaehlteLeiste.match?.fitPercent != null && (
+                          <span className="text-black/35"> · {String(gewaehlteLeiste.match.fitPercent).replace('.', ',')} % Passgenauigkeit</span>
+                        )}
+                      </p>
+                      {gewaehlteLeiste.description && (
+                        <p className="text-[10px] text-black/45 font-light leading-relaxed mt-1.5">{gewaehlteLeiste.description}</p>
                       )}
                     </div>
-                  ) : availableLasts.length === 1 ? (
-                    <p className="text-[10px] text-black/40 font-light">Schuhform: <span className="text-black/70">{availableLasts[0].label}</span></p>
-                  ) : null}
+                  )}
                   <button type="button" onClick={() => openMeasEdit('passform')} className="text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : fitState === 'error' ? (
