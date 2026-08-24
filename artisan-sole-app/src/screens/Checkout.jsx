@@ -1180,7 +1180,12 @@ export default function Checkout() {
                           </div>
                         </div>
                         <div className="text-right">
-                          {optFree || (couponResult?.valid && couponResult.type === 'free_shipping') ? (
+                          {/* Kostet die Versandart nichts, steht das auch da.
+                              „€ 0" liest sich wie ein Fehler; „Inklusive" ist
+                              die Auskunft, die der Kunde sucht. */}
+                          {Number(opt.price) === 0 ? (
+                            <span className="text-[13px] font-semibold text-black/50">Inklusive</span>
+                          ) : optFree || (couponResult?.valid && couponResult.type === 'free_shipping') ? (
                             <span className="text-[13px] font-semibold text-[#34C759]">Gratis</span>
                           ) : (
                             <span className="text-[13px] font-semibold text-black">€ {fmtPrice(opt.price)}</span>

@@ -22,11 +22,13 @@ im Betrieb, nichts nachgebaut.
                          Das Skript legt ein eigenes `fetch` unter und hält die
                          Anfrage fest, statt sie hinauszugeben.
     tests/sohlenregel.mjs
-                         45 Prüfungen: welche Auswahlgruppen ein Kunde
+                         52 Prüfungen: welche Auswahlgruppen ein Kunde
                          angeboten bekommt — Express-Freigabe und die Regel,
                          dass an einer Gummisohle keine Randfarbe zur Wahl
-                         steht — und dass der Metallton nur erscheint, wo
-                         auch Metall sitzt. Ebenfalls ohne Server: eine reine
+                         steht —, dass der Metallton nur erscheint, wo
+                         auch Metall sitzt, und dass der festgelegte Rahmen
+                         (Welt: City) zwar kein Schritt mehr ist, aber in der
+                         Bestellung steht. Ebenfalls ohne Server: eine reine
                          Funktion, die sich nicht durch einen Konfigurator mit
                          einem Dutzend Schritten prüfen lassen sollte.
     tests/nachdemkauf.mjs

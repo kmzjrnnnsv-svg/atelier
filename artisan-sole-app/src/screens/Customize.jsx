@@ -87,7 +87,7 @@ import { Preishinweis } from '../lib/preisangabe'
 import { ownerPreisFuer } from '../lib/ownerLink'
 import GroessenTabelle from '../components/GroessenTabelle'
 import ExpressHinweis from '../components/ExpressHinweis'
-import { sichtbareGruppen as gruppenFuer, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
+import { sichtbareGruppen as gruppenFuer, festeWerte, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
 import GuertelWahl from '../components/GuertelWahl'
 import { guertelSatz } from '../lib/guertel'
 
@@ -407,10 +407,9 @@ export default function Customize() {
 
   const gruppeJetzt = sichtbareGruppen.find(g => g.key === gruppeImBlick) || null
   const gewaehlterWert = gruppeJetzt?.values?.find(v => v.id === selectedExtras[gruppeJetzt.key]) || null
-  const schrittBild =
-       kachelImZeiger
-    || (gewaehlterWert?.image ? resolveImg(gewaehlterWert.image) : null)
-    || (gruppeJetzt?.preview_image ? resolveImg(gruppeJetzt.preview_image) : null)
+  // `schrittBild` steht weiter unten, bei `mat` und `col`: Leder und Farbe
+  // sind eigene Schritte mit eigenen Bildern, und ihre Auswahl ist an dieser
+  // Stelle noch nicht deklariert.
 
   // Summe der Extra-Aufpreise. Steht hinter `sichtbareGruppen`, weil eine
   // ausgeblendete Gruppe auch nichts kosten darf — der Sohlenrand an einer
@@ -440,8 +439,7 @@ export default function Customize() {
   const globalMatList = shoeMaterials.length
     ? shoeMaterials.filter(m => m.available !== 0)
     : [{ id: 1, key: 'calfskin', label: 'Kalbsleder', sub: 'Full-Grain', color: '#b45309', available: 1, tip: 'Robust und langlebig.', rating: 'good' }]
-  // Schritt 0 (neu): Familie wählen, Aesthetic vs. Durable.
-  // Die Materialliste wird nach dieser Wahl gefiltert.
+  // Welche Leder an diesem Modell überhaupt zur Wahl stehen.
   // Backend-Whitelist hat Vorrang; sonst greift die Kategorie-Whitelist.
   const catWhitelist = MATRIX_MATERIALS_BY_CAT[category]
   const baseMatList = perShoeMaterialKeys && perShoeMaterialKeys.length > 0
@@ -456,27 +454,19 @@ export default function Customize() {
   // Materials (selMat).
   // Auswahl-States müssen vor den Listen deklariert werden, damit der
   // Material-basierte Farb-Filter sie referenzieren kann.
-  // Familie (Schritt 0), Aesthetic vs. Durable. Pre-Filter für matList.
-  const [selFamily, setSelFamily] = useState('')
   const [selMat,  setSelMat]  = useState('')
   const [selCol,  setSelCol]  = useState('')
   const [added,   setAdded]   = useState(false)
 
-  // Materialien nach Familie filtern. Wenn ein Schuh nur Materialien einer
-  // Familie hat (z. B. Sneaker → nur Lux Suede), wird die Familie automatisch
-  // gesetzt und die Familienwahl entfällt.
-  const familiesPresent = [...new Set(baseMatList.map(m => m.family).filter(Boolean))]
-  const matList = selFamily
-    ? baseMatList.filter(m => m.family === selFamily)
-    : baseMatList
-
-  useEffect(() => {
-    if (familiesPresent.length === 1 && !selFamily) {
-      setSelFamily(familiesPresent[0])
-    } else if (familiesPresent.length > 1 && selFamily && !familiesPresent.includes(selFamily)) {
-      setSelFamily('')
-    }
-  }, [familiesPresent.join(',')])
+  // Alle Leder des Modells, in einer Reihe.
+  //
+  // Hier stand einmal ein Vorfilter: Der Kunde musste sich zuerst zwischen
+  // „Aesthetic" und „Durable" entscheiden und sah danach nur die eine
+  // Hälfte. Die Namen sagten ihm nichts, die Entscheidung nahm ihm die
+  // Übersicht — und wer Box Calf neben Lux Calf halten wollte, konnte es
+  // nicht. Jetzt liegt alles nebeneinander; was ein Leder auszeichnet, steht
+  // in seinem Empfehlungstext unter der Reihe.
+  const matList = baseMatList
 
   // Globale Farben können per `applicable_materials` an einzelne Material-
   // Typen gebunden sein (z. B. Velvet-Farben nur bei Material 'velvet').
@@ -890,6 +880,38 @@ export default function Customize() {
   const mat      = matList.find(m => m.key === selMat) || matList[0]
   const col      = colList.find(c => c.key === selCol) || colList[0]
 
+  /**
+   * Das Bild einer Farbe.
+   *
+   * Zwei Quellen, in dieser Reihenfolge: das eigene Bild der Farbe (im CMS
+   * hinterlegt, gilt überall) und — bei den modelleigenen Farbvarianten — die
+   * erste Aufnahme des Modells in dieser Farbe. Die zweite ist der ältere
+   * Weg und bleibt: Wer für ein Modell zwanzig Farbstrecken gepflegt hat,
+   * soll sie nicht ein zweites Mal hochladen müssen.
+   */
+  const farbBild = (c) => {
+    if (!c) return null
+    if (c.image) return resolveImg(c.image)
+    const eimer = c.buckets?.find(b => b.material_key === selMat)
+      || c.buckets?.find(b => b.material_key === null)
+      || c.buckets?.[0]
+    const erstes = eimer?.images?.[0] || c.images?.[0]
+    return erstes ? resolveImg(erstes) : null
+  }
+
+  // Was im großen Feld steht, während der Kunde konfiguriert. Die Reihenfolge
+  // ist die der Absicht: die Kachel unter dem Zeiger, dann der gewählte Wert
+  // des Schritts, bei dem er gerade ist, dann das Bild des Schritts selbst.
+  // Leder und Farbe sind darin zwei Schritte wie jeder andere — sie tragen
+  // die Kennungen `__leder` und `__farbe`, weil sie keine Optionsgruppen des
+  // Servers sind, aber dieselbe Behandlung verdienen.
+  const schrittBild =
+       kachelImZeiger
+    || (gruppeImBlick === '__leder' && mat?.image ? resolveImg(mat.image) : null)
+    || (gruppeImBlick === '__farbe' ? farbBild(col) : null)
+    || (gewaehlterWert?.image ? resolveImg(gewaehlterWert.image) : null)
+    || (gruppeJetzt?.preview_image ? resolveImg(gruppeJetzt.preview_image) : null)
+
   /* ── Der Gürtel ────────────────────────────────────────────────────────
    *
    * Er ist das einzige Zubehör, das nicht angehakt, sondern konfiguriert
@@ -1156,10 +1178,16 @@ export default function Customize() {
   const effectivePrice = user?.is_promotion && product.promotion_price ? product.promotion_price : product.price
   const katalogPreis = parseFloat(String(effectivePrice).replace(/[^0-9.,]/g, '').replace('.', '').replace(',', '.')) || 0
   const basePrice = ownerPreis != null ? ownerPreis : katalogPreis
-  const accessoryTotal = selectedAccessories.reduce((sum, id) => {
+  // Zwei Summen, weil zwei Dinge gemeint sind: `zubehoerTotal` ist, was
+  // angehakt wurde, `accessoryTotal` zählt den Gürtel dazu. Der Gürtel ist
+  // kein angehaktes Zubehör, sondern ein eigener Schritt — stand er in
+  // derselben Summe, las die Zeile unter dem Preis „(inkl. 0× Zubehör)":
+  // Der Betrag war da, das Stück gab es nicht.
+  const zubehoerTotal = selectedAccessories.reduce((sum, id) => {
     const acc = accessories.find(a => a.id === id)
     return sum + (acc?.price || 0)
-  }, 0) + guertelPreis
+  }, 0)
+  const accessoryTotal = zubehoerTotal + guertelPreis
 
   // Der Nachlass gilt auf alles, was konfiguriert wurde — Schuh, Optionen und
   // Zubehör. Vorher hing er allein am Zubehör, der Schuhpreis blieb stehen.
@@ -1173,13 +1201,21 @@ export default function Customize() {
   // Der wirksame Satz kann unter dem zugesagten liegen, wenn die Euro-Grenze
   // greift. Angezeigt wird, was tatsächlich abgezogen wird.
   const wirksamerPct = priceBeforeDiscount > 0 ? (totalDiscount / priceBeforeDiscount) * 100 : 0
-  const accDiscount = Math.round(accessoryTotal * wirksamerPct / 100)
+  const accDiscount = Math.round(zubehoerTotal * wirksamerPct / 100)
   const totalPrice = priceBeforeDiscount - totalDiscount
   const formatPrice = (v) => `€ ${v.toLocaleString('de-DE', { minimumFractionDigits: 0 })}`
   // Eine Nachkommastelle genügt; „9,7 %" ist ehrlicher als „10 %", wenn die
   // Euro-Grenze ein Stück abgeschnitten hat.
   const satzText = (v) => String(Math.round(v * 10) / 10).replace('.', ',')
   const displayPrice = formatPrice(totalPrice)
+  // Was über dem Grundpreis liegt, in Worten. Eine Liste für alle drei
+  // Stellen, an denen der Preis steht (Kopf, Zusammenfassung, Leiste unten) —
+  // stünde sie dreimal, wiche sie nach dem nächsten Umbau an einer ab.
+  const preisAufschlaege = [
+    extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`,
+    guertelPreis > 0 && `+€${guertelPreis} Gürtel`,
+    zubehoerTotal > 0 && `+€${zubehoerTotal} Zubehör`,
+  ].filter(Boolean)
 
   // Swipe
   const matSwipe  = useSwipe(matList, selMat, setSelMat)
@@ -1198,8 +1234,6 @@ export default function Customize() {
     if (String(cfg.shoeId) !== String(product.id)) return
     if (!matList.length) return
     appliedConfigRef.current = true
-    const fam = baseMatList.find(m => m.key === cfg.material)?.family
-    if (fam) setSelFamily(fam)
     if (cfg.material) setSelMat(cfg.material)
     if (cfg.color) setSelCol(cfg.color)
     if (Array.isArray(cfg.accessories)) setSelectedAccessories(cfg.accessories)
@@ -1323,12 +1357,20 @@ export default function Customize() {
   const needsCustomRequest = (fitState === 'nomatch' && sizeType !== 'standard') || sizeType === 'custom'
   // Extras als lesbare Liste mit Aufpreissumme, wird in der Bestellung
   // mitgeführt, damit Admin & Manufaktur die Spezifikation sehen.
-  const extrasForCart = sichtbareGruppen
-    .map(g => {
-      const sel = g.values.find(v => v.id === selectedExtras[g.key])
-      return sel ? { group: g.label, key: g.key, value: sel.label, price: sel.price_extra || 0 } : null
-    })
-    .filter(Boolean)
+  //
+  // `festeWerte` trägt nach, was nicht gewählt, sondern gesetzt ist: der
+  // Rahmen (Welt) ist immer City. Er erscheint nicht als Schritt, muss aber
+  // in der Spezifikation stehen — die Werkstatt liest sie, nicht den
+  // Bildschirm.
+  const extrasForCart = [
+    ...sichtbareGruppen
+      .map(g => {
+        const sel = g.values.find(v => v.id === selectedExtras[g.key])
+        return sel ? { group: g.label, key: g.key, value: sel.label, price: sel.price_extra || 0 } : null
+      })
+      .filter(Boolean),
+    ...festeWerte(extraOptionGroups),
+  ]
   // Was in den Entwurf geht — dieselben Felder, die später die Bestellung
   // trägt. Bewusst eine einzige Stelle: Zwei Stellen waren genau das Problem.
   const draftPayload = () => ({
@@ -1378,7 +1420,7 @@ export default function Customize() {
     setDraftId(d.id)
     if (d.material) {
       const m = globalMatList.find(x => x.label === d.material)
-      if (m) { setSelMat(m.key); if (m.family) setSelFamily(m.family) }
+      if (m) setSelMat(m.key)
     }
     if (d.color) setSelCol(d.color)
     const ex = parse(d.extras, [])
@@ -1405,7 +1447,7 @@ export default function Customize() {
     setOpenDraft(null)
     setDraftRestored(true)
     setDraftId(newDraftId())
-    setSelFamily(''); setSelMat(''); setSelCol(''); setSelectedExtras({})
+    setSelMat(''); setSelCol(''); setSelectedExtras({})
     setSizeType(''); setSelectedSize(''); setSelectedAccessories([])
     setGuertelAn(null); setGuertelCfg(null)
     await discardDraft(id)
@@ -1869,10 +1911,8 @@ export default function Customize() {
                 <span className="text-black/25 line-through mr-2">{formatPrice(priceBeforeDiscount)}</span>
               )}
               {displayPrice}
-              {(extrasPriceTotal > 0 || accessoryTotal > 0) && (
-                <span className="text-[10px] text-black/35 ml-2">
-                  ({[extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
-                </span>
+              {preisAufschlaege.length > 0 && (
+                <span className="text-[10px] text-black/35 ml-2">({preisAufschlaege.join(' · ')})</span>
               )}
             </p>
             {/* Woher der Nachlass kommt — sonst wirkt ein abweichender Preis
@@ -2047,77 +2087,31 @@ export default function Customize() {
             </div>
             )}
 
-            {/* 0. Familie, Aesthetic vs. Durable. Nur sichtbar, wenn der
-                Schuh beide Familien anbietet. */}
-            {familiesPresent.length > 1 && (
-            <div className="px-5 lg:px-0">
-              <p className="text-[10px] lg:text-[11px] text-black/40 mb-2 flex items-center gap-2" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-                <span className="inline-flex items-center justify-center w-4 h-4 border border-black/30 text-[8px] font-normal">1</span>
-                Qualitäts-Familie wählen
-              </p>
-              <p className="text-[10px] text-black/40 font-light leading-relaxed mb-4 max-w-2xl">
-                {pageTexts?.family_intro ||
-                  'Beide Familien genügen höchsten Qualitätsansprüchen und werden in der gleichen Manufaktur gefertigt. Sie unterscheiden sich nur in Charakter und Einsatzbereich.'}
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {familiesPresent.includes('aesthetic') && (
-                  <button
-                    type="button"
-                    onClick={() => { setSelFamily('aesthetic'); setSelMat(''); setSelCol('') }}
-                    className={`text-left p-4 transition-all border ${
-                      selFamily === 'aesthetic'
-                        ? 'border-black bg-black/[0.02]'
-                        : 'border-black/10 hover:border-black/30 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[12px] tracking-[0.18em] uppercase font-medium text-black">{pageTexts?.aesthetic_title || 'Aesthetic'}</p>
-                      {selFamily === 'aesthetic' && <Check size={14} strokeWidth={2} className="text-black" />}
-                    </div>
-                    <p className="text-[11px] text-black/55 leading-relaxed font-light">
-                      {pageTexts?.aesthetic_text ||
-                        'Edelste Leder, Lux Calf, Lux Suede, Painted Full Grain, Patina und Samt. Maximale optische Veredelung mit handpatinierten Oberflächen. Ideal für formelle Anlässe und besondere Momente.'}
-                    </p>
-                  </button>
-                )}
-                {familiesPresent.includes('durable') && (
-                  <button
-                    type="button"
-                    onClick={() => { setSelFamily('durable'); setSelMat(''); setSelCol('') }}
-                    className={`text-left p-4 transition-all border ${
-                      selFamily === 'durable'
-                        ? 'border-black bg-black/[0.02]'
-                        : 'border-black/10 hover:border-black/30 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[12px] tracking-[0.18em] uppercase font-medium text-black">{pageTexts?.durable_title || 'Durable'}</p>
-                      {selFamily === 'durable' && <Check size={14} strokeWidth={2} className="text-black" />}
-                    </div>
-                    <p className="text-[11px] text-black/55 leading-relaxed font-light">
-                      {pageTexts?.durable_text ||
-                        'Robuste Leder, Box Calf, Urban Suede, Painted Calf und Painted Full Grain. Wetterfest, alltagstauglich und langlebig. Ideal für täglichen Einsatz und anspruchsvolle Bedingungen.'}
-                    </p>
-                  </button>
-                )}
-              </div>
-            </div>
-            )}
-
             {/* 1. Leder (Material), nur sichtbar, wenn mehr als 1 Material
                 verfügbar. Bei einer einzigen Auswahl wird Material auto-
                 gesetzt und der Block ausgeblendet.
-                Zusätzlich: solange noch keine Qualitäts-Familie gewählt
-                ist (und der Schuh beide anbietet), bleibt der Leder-Block
-                samt allen Folgeschritten verborgen. */}
-            {matList.length > 1 && (familiesPresent.length <= 1 || selFamily) && (
-            <div {...matSwipe}>
-              <p className="text-[10px] lg:text-[11px] text-black/40 mb-3 px-5 lg:px-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
+
+                Die Kacheln sind dieselben wie bei den Sohlen: ein Bild, groß
+                genug, um die Narbung zu erkennen, und beim Überfahren tritt
+                es an die Stelle des Schuhs. Ein Farbfleck in #7c3a1e sieht
+                aus wie Farbe; Wildleder erkennt man daran nicht. Wo noch
+                kein Bild hinterlegt ist, bleibt der Farbwert als Rückfall —
+                der Konfigurator darf nicht darauf warten, dass jemand
+                fotografiert. */}
+            {matList.length > 1 && (
+            <div {...matSwipe}
+              ref={el => { gruppenRefs.current.__leder = el }}
+              data-gruppe="__leder">
+              <div className="flex items-center justify-between mb-3 px-5 lg:px-0">
+                <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
+                {mat && <span className="text-[10px] lg:text-[11px] text-black/50">{mat.label}</span>}
+              </div>
               <div className="flex flex-wrap gap-2 px-5 lg:px-0">
-                {matList.map((m, i) => {
+                {matList.map((m) => {
                   const id = m.key || String(m.id)
                   const avail = m.available !== 0 && m.available !== false
                   const reminded = hasReminder('material', id)
+                  const bild = m.image ? resolveImg(m.image) : null
                   return (
                     <button key={id}
                       onClick={() => {
@@ -2125,18 +2119,23 @@ export default function Customize() {
                         else if (!reminded) addReminder({ type: 'material', itemId: id, label: m.label })
                         else removeReminder('material', id)
                       }}
-                      className={`w-20 py-2 transition-all bg-transparent flex flex-col items-center gap-1.5 border ${
-                        !avail ? 'border-black/5 opacity-40' : selMat === id ? 'border-black' : 'border-black/8'
+                      onMouseEnter={() => setKachelImZeiger(bild)}
+                      onMouseLeave={() => setKachelImZeiger(null)}
+                      onFocus={() => setKachelImZeiger(bild)}
+                      onBlur={() => setKachelImZeiger(null)}
+                      className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border bg-white ${
+                        !avail ? 'border-black/5 opacity-40' : selMat === id ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30'
                       }`}
+                      title={m.tip || ''}
                     >
-                      <div className="relative">
-                        <div className="w-10 h-10 rounded-lg"
-                          style={{ background: m.color }} />
+                      <div className="relative w-12 h-12 mb-2 overflow-hidden border border-black/[0.06]"
+                        style={{ background: bild ? 'transparent' : m.color }}>
+                        {bild && <img src={bild} alt="" className="w-full h-full object-cover" />}
                         {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/80" />}
                         {!avail && reminded && <BellRing size={10} className="absolute inset-0 m-auto text-teal-500" />}
                       </div>
-                      <span className="text-[10px] text-black/70" style={{ letterSpacing: '0.05em' }}>{m.label}</span>
-                      {!avail && <span className="text-[9px] text-black/30">{reminded ? 'Erinnert' : 'Bald da'}</span>}
+                      <p className={`text-[9px] tracking-wider uppercase text-center leading-tight ${selMat === id ? 'text-black font-medium' : 'text-black/60'}`}>{m.label}</p>
+                      {!avail && <span className="text-[9px] text-black/30 mt-0.5">{reminded ? 'Erinnert' : 'Bald da'}</span>}
                     </button>
                   )
                 })}
@@ -2150,6 +2149,8 @@ export default function Customize() {
             {/* 2. Farbe */}
             <div
               {...(configStep >= 1 ? colSwipe : {})}
+              ref={el => { gruppenRefs.current.__farbe = el }}
+              data-gruppe="__farbe"
               className="transition-all duration-700 ease-out"
               style={{
                 opacity: configStep >= 1 ? 1 : 0.25,
@@ -2162,34 +2163,43 @@ export default function Customize() {
                 <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe wählen</p>
                 {col && <span className="text-[10px] lg:text-[11px] text-black/50">{col.name}</span>}
               </div>
+              {/* Dieselbe Kachel wie beim Leder: Wo ein Bild hinterlegt ist,
+                  steht die Farbe am Leder statt als Quadrat — „Dark Brown"
+                  ist an einem Farbfeld nicht von „Cognac" zu unterscheiden,
+                  am fotografierten Schaft sehr wohl. Ohne Bild bleibt das
+                  Farbfeld. */}
               <div className="flex flex-wrap gap-2 px-5 lg:px-0">
-                {colList.map((c, i) => {
+                {colList.map((c) => {
                   const id = c.key || String(c.id)
                   const avail = c.available !== 0 && c.available !== false
                   const reminded = hasReminder('color', id)
                   const sel = avail && selCol === id
+                  const bild = farbBild(c)
                   return (
-                    <div key={id}
-                      className={`w-12 h-12 flex items-center justify-center border-2 transition-all ${
-                        sel ? 'border-black' : 'border-transparent'
+                    <button key={id}
+                      onClick={() => {
+                        if (avail) setSelCol(id)
+                        else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
+                        else removeReminder('color', id)
+                      }}
+                      onMouseEnter={() => setKachelImZeiger(bild)}
+                      onMouseLeave={() => setKachelImZeiger(null)}
+                      onFocus={() => setKachelImZeiger(bild)}
+                      onBlur={() => setKachelImZeiger(null)}
+                      className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border bg-white ${
+                        !avail ? 'border-black/5 opacity-40' : sel ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30'
                       }`}
+                      title={c.tip || c.name}
                     >
-                      <button
-                        onClick={() => {
-                          if (avail) setSelCol(id)
-                          else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
-                          else removeReminder('color', id)
-                        }}
-                        className={`w-9 h-9 rounded-lg transition-all flex items-center justify-center border-0 ${
-                          !avail ? 'opacity-30' : ''
-                        }`}
-                        style={{ backgroundColor: c.hex }}
-                        title={c.name}
-                      >
-                        {sel && <Check size={14} className="text-white drop-shadow" strokeWidth={2.5} />}
-                        {!avail && <Lock size={10} className="text-white/60" />}
-                      </button>
-                    </div>
+                      <div className="relative w-12 h-12 mb-2 overflow-hidden border border-black/[0.06]"
+                        style={{ backgroundColor: bild ? 'transparent' : c.hex }}>
+                        {bild && <img src={bild} alt="" className="w-full h-full object-cover" />}
+                        {sel && !bild && <Check size={14} className="absolute inset-0 m-auto text-white drop-shadow" strokeWidth={2.5} />}
+                        {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/60" />}
+                      </div>
+                      <p className={`text-[9px] tracking-wider uppercase text-center leading-tight ${sel ? 'text-black font-medium' : 'text-black/60'}`}>{c.name}</p>
+                      {!avail && <span className="text-[9px] text-black/30 mt-0.5">{reminded ? 'Erinnert' : 'Bald da'}</span>}
+                    </button>
                   )
                 })}
               </div>
@@ -2755,14 +2765,24 @@ export default function Customize() {
                       <span className="text-[11px] text-black">EU {selectedSize}</span>
                     </div>
                   )}
+                  {/* Der Gürtel bekommt eine eigene Zeile. Er ist kein
+                      angehaktes Zubehör, sondern eine konfigurierte Position
+                      — und in der Zubehör-Zeile mitgezählt wäre er ein
+                      Betrag ohne Stück. */}
+                  {guertelPreis > 0 && (
+                    <div className="flex items-center justify-between pt-1 mt-1 border-t border-black/5">
+                      <span className="text-[11px] text-black/50">Gürtel</span>
+                      <span className="text-[11px] text-black">+€{guertelPreis}</span>
+                    </div>
+                  )}
                   {selectedAccessories.length > 0 && (
                     <div className="flex items-center justify-between pt-1 mt-1 border-t border-black/5">
                       <span className="text-[11px] text-black/50">Zubehör</span>
                       <span className="text-[11px] text-black">
                         {selectedAccessories.length}×
                         {accDiscount > 0
-                          ? <> <span className="line-through text-black/25">€{accessoryTotal}</span> €{accessoryTotal - accDiscount}</>
-                          : <> (+€{accessoryTotal})</>
+                          ? <> <span className="line-through text-black/25">€{zubehoerTotal}</span> €{zubehoerTotal - accDiscount}</>
+                          : <> (+€{zubehoerTotal})</>
                         }
                       </span>
                     </div>
@@ -2777,10 +2797,8 @@ export default function Customize() {
                   <span className="text-black/25 line-through mr-2 font-light">{formatPrice(priceBeforeDiscount)}</span>
                 )}
                 {displayPrice}
-                {(extrasPriceTotal > 0 || accessoryTotal > 0) && (
-                  <span className="text-[11px] text-black/35 ml-2">
-                    ({[extrasPriceTotal > 0 && `+€${extrasPriceTotal} Optionen`, accessoryTotal > 0 && `+€${accessoryTotal} Zubehör`].filter(Boolean).join(' · ')})
-                  </span>
+                {preisAufschlaege.length > 0 && (
+                  <span className="text-[11px] text-black/35 ml-2">({preisAufschlaege.join(' · ')})</span>
                 )}
               </p>
               {/* Dasselbe auf dem großen Schirm: Die Seite hat zwei Fassungen
@@ -2875,13 +2893,31 @@ export default function Customize() {
           </div>
           <span className="text-black/15">·</span>
           <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{soleArt?.label}</span>
+          {/* Der Gürtel gehört in dieselbe Zeile: Er ist Teil dessen, was
+              gleich in den Warenkorb geht, und wer ihn hinzugenommen hat,
+              soll ihn dort wiederfinden. */}
+          {guertelPreis > 0 && (
+            <>
+              <span className="text-black/15">·</span>
+              <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>+ Gürtel</span>
+            </>
+          )}
         </div>
         <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>
           {totalDiscount > 0 && (
             <span className="text-black/25 line-through mr-1.5 font-light">{formatPrice(priceBeforeDiscount)}</span>
           )}
           {displayPrice}
-          {accessoryTotal > 0 && <span className="text-[9px] text-black/35 ml-1">(inkl. {selectedAccessories.length}× Zubehör)</span>}
+          {/* Nur nennen, was es auch gibt: Gürtel und Zubehör je für sich,
+              und wenn keins von beiden gewählt ist, gar nichts. */}
+          {(guertelPreis > 0 || selectedAccessories.length > 0) && (
+            <span className="text-[9px] text-black/35 ml-1">
+              (inkl. {[
+                guertelPreis > 0 && 'Gürtel',
+                selectedAccessories.length > 0 && `${selectedAccessories.length}× Zubehör`,
+              ].filter(Boolean).join(' · ')})
+            </span>
+          )}
         </p>
         {/* Der Preis, den der Kunde gleich in den Warenkorb legt — hier muss
             nach § 6 Abs. 1 PAngV stehen, was in ihm enthalten ist und was

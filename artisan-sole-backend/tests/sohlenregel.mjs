@@ -15,8 +15,8 @@
  *     node tests/sohlenregel.mjs
  */
 import {
-  sichtbareGruppen, hatLederrand, expressFreigabe, hatMetall,
-  OHNE_LEDERRAND, FARBGRUPPEN_SOHLE, AUFSATZ_MIT_METALL,
+  sichtbareGruppen, hatLederrand, expressFreigabe, hatMetall, festeWerte,
+  OHNE_LEDERRAND, FARBGRUPPEN_SOHLE, AUFSATZ_MIT_METALL, FESTE_WERTE,
 } from '../../artisan-sole-app/src/lib/sohlenRegel.js'
 
 let ok = 0
@@ -46,7 +46,12 @@ const expressSchuh = {
 }
 
 console.log('\n── 1. Ohne Sohle gewählt ─────────────────────────────────────')
-p('Maßschuh zeigt alles', schluessel(sichtbareGruppen(ALLE, { product: massschuh })).length === 9)
+// Neun Gruppen kommen vom Server, acht werden angeboten: Der Rahmen (Welt)
+// steht fest und ist deshalb kein Schritt mehr.
+p('Maßschuh zeigt alles außer dem festgelegten Rahmen',
+  schluessel(sichtbareGruppen(ALLE, { product: massschuh })).length === 8)
+p('Der Rahmen ist kein Schritt',
+  !schluessel(sichtbareGruppen(ALLE, { product: massschuh })).includes('welt'))
 p('Express zeigt nur die Freigabe',
   schluessel(sichtbareGruppen(ALLE, { product: expressSchuh })).join(',')
   === 'sole,sole_color,sole_bottom_color,buckle,buckle_color')
@@ -63,7 +68,7 @@ for (const sohle of OHNE_LEDERRAND) {
   const sicht = schluessel(sichtbareGruppen(ALLE, { product: massschuh, soleKey: sohle }))
   p(`${sohle}: keine Farbwahl an der Sohle`,
     !sicht.includes('sole_color') && !sicht.includes('sole_bottom_color'))
-  p(`${sohle}: alles Übrige bleibt`, sicht.length === 7)
+  p(`${sohle}: alles Übrige bleibt`, sicht.length === 6)
 }
 p('Die Regel gilt auch im Express',
   !schluessel(sichtbareGruppen(ALLE, { product: expressSchuh, soleKey: 'rubber' }))
@@ -92,7 +97,33 @@ p('Fremde Einträge fliegen raus',
 console.log('\n── 6. Kein Eingriff bei fehlenden Daten ──────────────────────')
 p('Leere Liste bleibt leer', sichtbareGruppen([], { product: massschuh }).length === 0)
 p('Kein Array bleibt leer', sichtbareGruppen(null, { product: massschuh }).length === 0)
-p('Ohne Angaben unverändert', sichtbareGruppen(ALLE).length === 9)
+p('Ohne Angaben unverändert', sichtbareGruppen(ALLE).length === 8)
+
+console.log('\n── 6a. Der Rahmen steht fest ─────────────────────────────────')
+
+/*
+ * „Country" und „Storm" standen im Konfigurator zur Wahl, ohne dass sie
+ * gebaut werden. Der Schritt ist weg — der Wert nicht: Die Werkstatt braucht
+ * die Angabe, und eine Bestellung ohne sie wäre unvollständig. Geprüft wird
+ * beides, weil beides einzeln schiefgehen kann: ein Schritt, der wiederkommt,
+ * und eine Angabe, die still verschwindet.
+ */
+const MIT_WERTEN = [
+  { key: 'welt', label: 'Welt', values: [
+    { id: 1, key: 'city', label: 'City' },
+    { id: 2, key: 'country', label: 'Country' },
+  ] },
+  { key: 'sole', label: 'Sohlen-Art', values: [{ id: 3, key: 'leather', label: 'Leather' }] },
+]
+p('Welt steht in der Liste der festgelegten Gruppen', FESTE_WERTE.welt === 'city')
+p('Die feste Angabe geht in die Bestellung',
+  JSON.stringify(festeWerte(MIT_WERTEN)) === JSON.stringify([{ group: 'Welt', key: 'welt', value: 'City', price: 0 }]))
+p('Sie kostet nichts', festeWerte(MIT_WERTEN)[0].price === 0)
+p('Fehlt die Gruppe am Modell, wird nichts erfunden',
+  festeWerte([{ key: 'sole', label: 'Sohlen-Art', values: [] }]).length === 0)
+p('Fehlt der Wert in der Gruppe, wird nichts erfunden',
+  festeWerte([{ key: 'welt', label: 'Welt', values: [{ id: 2, key: 'country', label: 'Country' }] }]).length === 0)
+p('Ohne Liste bleibt es bei nichts', festeWerte(null).length === 0)
 
 console.log('\n── 7. Metall nur, wo Metall sitzt ────────────────────────────')
 

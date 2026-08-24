@@ -427,8 +427,23 @@ export function runMigrations(db) {
     `ALTER TABLE orders ADD COLUMN size_type TEXT DEFAULT 'standard'`,
     // shoe_color_variants, optional Material-Bindung (suede, calfskin, …)
     `ALTER TABLE shoe_color_variants ADD COLUMN material_key TEXT`,
-    // shoe_materials, Familie (Aesthetic / Durable)
-    `ALTER TABLE shoe_materials ADD COLUMN family TEXT`,
+    // Hier stand `shoe_materials ADD COLUMN family` — die Einteilung in
+    // „Aesthetic" und „Durable". Sie ist ersatzlos weg: Der Kunde soll alle
+    // Lederarten des Modells auf einen Blick sehen, statt sich vorher für
+    // eine Familie zu entscheiden, deren Namen ihm nichts sagen. Die Zeile
+    // darf nicht bloß auskommentiert werden — sie legte die Spalte bei jedem
+    // Start wieder an, und die Aufräum-Migration weiter unten hätte gegen
+    // sie angearbeitet.
+    //
+    // shoe_materials / shoe_colors, eigenes Bild.
+    //
+    // Bisher trug eine Lederart nur einen Farbwert und eine Farbe nur ihren
+    // Hexwert. Beides sind Behauptungen über eine Oberfläche: Ein Rechteck
+    // in #7c3a1e sieht aus wie Farbe, nicht wie Wildleder. Wer sich für ein
+    // Leder entscheidet, will die Narbung sehen; wer eine Farbe wählt, will
+    // sie am Leder sehen. Wie bei den Sohlen: ein Foto, groß.
+    `ALTER TABLE shoe_materials ADD COLUMN image TEXT`,
+    `ALTER TABLE shoe_colors    ADD COLUMN image TEXT`,
     // shoe_colors, auf welche Materialien anwendbar (CSV der material_keys)
     `ALTER TABLE shoe_colors ADD COLUMN applicable_materials TEXT NOT NULL DEFAULT '*'`,
     // options, Hex-Farbe für visuelle Vorschau (Innen-/Unter-/Sohlen-/Buckle-Farben)
@@ -1030,8 +1045,12 @@ export function runMigrations(db) {
       created_by      INTEGER REFERENCES users(id),
       updated_at      TEXT    NOT NULL DEFAULT (datetime('now'))
     );
+    -- Der Standardversand ist im Preis enthalten, deshalb steht hier 0,00 und
+    -- keine Freigrenze: Eine Schwelle, ab der etwas kostenlos wird, das ohnehin
+    -- nichts kostet, wäre nur ein Rätsel an der Kasse. Extra kostet allein der
+    -- Express — wer schneller beliefert werden will, zahlt die Eilzustellung.
     INSERT OR IGNORE INTO shipping_config (key, label, description, price, free_above, is_default, is_active) VALUES
-      ('standard', 'Standardversand', 'Lieferung in 3 bis 5 Werktagen', 9.90, 500, 1, 1),
+      ('standard', 'Standardversand', 'Im Preis enthalten, Lieferung in 3 bis 5 Werktagen', 0, NULL, 1, 1),
       ('express',  'Expressversand',  'Lieferung in 1 bis 2 Werktagen', 19.90, NULL, 0, 1);
 
     -- ── Coupons ──────────────────────────────────────────────────────────
@@ -1954,6 +1973,61 @@ export function runMigrations(db) {
   ]) {
     try { db.exec(sql) } catch { /* Spalte bereits vorhanden */ }
   }
+
+  // ── Die Lederfamilien fallen weg ─────────────────────────────────────────
+  //
+  // „Aesthetic" oder „Durable" war der erste Schritt des Konfigurators, und
+  // er war der falsche: Zwei Kästen mit Fließtext, bevor der Kunde ein
+  // einziges Leder gesehen hat, und danach sah er nur die Hälfte. Die
+  // Unterscheidung gehört an die Lederart selbst (dafür ist `tip` da), nicht
+  // vor die Auswahl.
+  //
+  // Die Spalte wird entfernt, nicht nur geleert. Eine Spalte, die niemand
+  // mehr liest, in der aber noch Werte stehen, ist die Einladung, die
+  // Einteilung später versehentlich wiederzubeleben.
+  try {
+    const spalten = db.prepare('PRAGMA table_info(shoe_materials)').all().map(c => c.name)
+    if (spalten.includes('family')) {
+      db.exec('ALTER TABLE shoe_materials DROP COLUMN family')
+      console.log('✅ Lederfamilien (Aesthetic/Durable) entfernt')
+    }
+  } catch (e) {
+    // Ältere SQLite-Fassungen können keine Spalte entfernen. Dann bleibt sie
+    // stehen, aber leer — gelesen wird sie nirgends mehr.
+    try { db.prepare('UPDATE shoe_materials SET family = NULL').run() } catch { /* egal */ }
+    console.error('[migrate Lederfamilie]', e.message)
+  }
+  // Der Untertitel wiederholte bei den Matrix-Ledern nur die Familie. „Lux
+  // Calf · Aesthetic" sagt nichts über das Leder; leer ist ehrlicher.
+  try {
+    db.prepare(`UPDATE shoe_materials SET sub = NULL, updated_at = datetime('now')
+                 WHERE sub IN ('Aesthetic', 'Durable')`).run()
+  } catch { /* Tabelle noch nicht da */ }
+
+  // ── Der Versand ist im Preis enthalten ───────────────────────────────────
+  //
+  // Bisher standen 9,90 € Standardversand in der Tabelle, kostenlos erst ab
+  // 500 € Warenwert. Beides gilt nicht mehr: Der Standardversand nach
+  // Deutschland ist im Preis enthalten, extra kostet allein der Express.
+  //
+  // Einmalig über einen Merker, nicht bei jedem Start: Setzt der Betreiber
+  // später wieder einen Betrag, ist das seine Entscheidung und keine, die
+  // ein Serverstart stillschweigend zurücknimmt.
+  try {
+    const erledigt = db.prepare("SELECT value FROM settings WHERE key = 'versand_inklusive_2026'").get()
+    if (!erledigt) {
+      const info = db.prepare(`
+        UPDATE shipping_config
+           SET price = 0, free_above = NULL,
+               description = 'Im Preis enthalten, Lieferung in 3 bis 5 Werktagen',
+               updated_at = datetime('now')
+         WHERE key = 'standard'
+      `).run()
+      db.prepare(`INSERT OR REPLACE INTO settings (key, value, updated_at)
+                  VALUES ('versand_inklusive_2026', ?, datetime('now'))`).run(String(info.changes))
+      if (info.changes) console.log('✅ Standardversand ist im Preis enthalten (0,00 €)')
+    }
+  } catch (e) { console.error('[migrate Versand inklusive]', e.message) }
 
   // ── Konten ohne Namen nachtragen ─────────────────────────────────────────
   //

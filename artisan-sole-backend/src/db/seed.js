@@ -369,7 +369,11 @@ function seedConfiguratorOptions(db) {
     { key: 'loafer_decoration', label: 'Accessoires',    ui_type: 'single', required: 0, sort_order: 4,  description: 'Dekoration bei Loafer-Modellen.' },
     { key: 'sole',              label: 'Sohlen-Art',     ui_type: 'single', required: 1, sort_order: 5,  description: 'Art der Sohle, z. B. Leder, Gummi, Dainite oder Crepe.' },
     { key: 'sole_color',        label: 'Sohlen Color',   ui_type: 'single', required: 0, sort_order: 6,  description: 'Farbe der Außensohle (sichtbarer Rand).' },
-    { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 7,  description: 'Rahmen, City für glatten Look, Country/Storm für robusten Auftritt.' },
+    // Der Rahmen steht fest: City. Er erscheint deshalb nicht mehr als
+    // Schritt im Konfigurator (siehe FESTE_WERTE in sohlenRegel.js), wird
+    // aber weiter an der Bestellung geführt — die Werkstatt braucht die
+    // Angabe, der Kunde hat dazu nichts zu entscheiden.
+    { key: 'welt',              label: 'Welt',           ui_type: 'single', required: 1, sort_order: 7,  description: 'Rahmen. Fest auf City, dem schmalen, eleganten Rahmen.' },
     { key: 'buckle',            label: 'Buckle',         ui_type: 'single', required: 1, sort_order: 8,  description: 'Schnallenform (für Monk-Modelle).' },
     { key: 'buckle_color',      label: 'Buckle Farbe',   ui_type: 'single', required: 0, sort_order: 9,  description: 'Material der Schnalle (nur Monk).' },
     { key: 'inner_color',       label: 'Farbe Innen',    ui_type: 'single', required: 0, sort_order: 10, description: 'Farbe des Futters.' },
@@ -413,10 +417,10 @@ function seedConfiguratorOptions(db) {
     { group: 'sole', key: 'beveled_waist',    label: 'Beveled Waist',    description: 'Schlanke, geschwungene Taille, Markenzeichen feinster Schuhmacherkunst, rein optisch.',                    price: 35, cats: 'OXFORD,WHOLECUT,DERBY,MONK,DOUBLE_MONK' },
     { group: 'sole', key: 'art',              label: 'Art',              description: 'Handbemalte Spezialsohle, auffälliges Einzelstück für Individualisten.',                                  price: 17, cats: '*' },
 
-    // Welt (Rahmen), in den meisten Fällen reicht City
-    { group: 'welt', key: 'city',    label: 'City',    description: 'Schmaler, eleganter Rahmen, für Business, Anzug und Alltag. Für die meisten Anlässe die richtige Wahl.', price: 0, cats: '*' },
-    { group: 'welt', key: 'country', label: 'Country', description: 'Breiterer, robusterer Rahmen, für legere Outfits und kräftigere Schuhe.',                              price: 0, cats: '*' },
-    { group: 'welt', key: 'storm',   label: 'Storm',   description: 'Wasserabweisender Rahmen, schützt bei Regen und Outdoor.',                                            price: 0, cats: '*' },
+    // Welt (Rahmen). Nur noch City. „Country" und „Storm" bleiben als Werte
+    // bestehen, damit alte Bestellungen lesbar bleiben, sind aber keiner
+    // Machart mehr zugeordnet (seedSohlenUndWelt räumt das bei jedem Start).
+    { group: 'welt', key: 'city',    label: 'City',    description: 'Schmaler, eleganter Rahmen, für Business, Anzug und Alltag.', price: 0, cats: '*' },
 
     // Heel (Absatz)
     { group: 'heel', key: 'standard',    label: 'Standard',    description: 'Klassische Absatzhöhe.',  price: 0, cats: '*' },
@@ -527,36 +531,40 @@ function seedConfiguratorOptions(db) {
 
 // ─────────────────────────────────────────────────────────────────────
 // seedExtendedCatalog, vollständiges Material/Farb/Konfig-Setup
-// gemäß Matrix mit Familie (Aesthetic/Durable), Material-Typen und
-// allen Optionsgruppen für jedes Schuhmodell.
+// gemäß Matrix mit Material-Typen und allen Optionsgruppen für jedes
+// Schuhmodell.
 // Idempotent: aktualisiert nur fehlende Datensätze.
+//
+// Ohne Familien. Die Einteilung in „Aesthetic" und „Durable" ist weg: Sie
+// stand als erster Schritt vor der Lederwahl und halbierte, was der Kunde zu
+// sehen bekam. Was ein Leder auszeichnet, steht jetzt an ihm selbst — im
+// Empfehlungstext, den der Konfigurator unter der Reihe zeigt.
 // ─────────────────────────────────────────────────────────────────────
 export function seedExtendedCatalog(db) {
-  // ── 1) Material-Familien + Typen ────────────────────────────────
+  // ── 1) Material-Typen ───────────────────────────────────────────
+  //
+  // Der Empfehlungstext trägt jetzt, was vorher der Kasten der Familie
+  // erklärte: wofür das Leder taugt und bei welchem Wetter.
   const MATERIALS = [
-    // Aesthetic
-    { key: 'lux_calf',            label: 'Lux Calf',            sub: 'Aesthetic', family: 'aesthetic', color: '#3b1f0a', tip: 'Hochglanz-Kalbsleder.',                          rating: 'good',    sort: 0 },
-    { key: 'lux_suede',           label: 'Lux Suede',           sub: 'Aesthetic', family: 'aesthetic', color: '#7c3a1e', tip: 'Premium-Veloursleder.',                          rating: 'good',    sort: 1 },
-    { key: 'painted_full_grain',  label: 'Painted Full Grain',  sub: 'Aesthetic', family: 'aesthetic', color: '#5b2c0e', tip: 'Patinierungs-Vollnarbenleder. Robust UND optisch veredelt, die Allzweckwahl.', rating: 'good', sort: 2 },
-    { key: 'patina',              label: 'Patina',              sub: 'Aesthetic', family: 'aesthetic', color: '#1c1c1e', tip: 'Speziell handpatiniert.',                        rating: 'neutral', sort: 3 },
-    { key: 'velvet',              label: 'Velvet',              sub: 'Aesthetic', family: 'aesthetic', color: '#2d1b3d', tip: 'Samt, exklusiv für Slipper, Boots, Drake.',     rating: 'neutral', sort: 4 },
-    // Durable
-    { key: 'box_calf',            label: 'Box Calf',            sub: 'Durable',   family: 'durable',   color: '#1c1c1e', tip: 'Klassisches Box-Calf, robust und matt.',        rating: 'good',    sort: 10 },
-    { key: 'urban_suede',         label: 'Urban Suede',         sub: 'Durable',   family: 'durable',   color: '#7c3a1e', tip: 'Wetterbeständiges Veloursleder.',                rating: 'good',    sort: 11 },
-    { key: 'painted_calf',        label: 'Painted Calf',        sub: 'Durable',   family: 'durable',   color: '#5b2c0e', tip: 'Patinierungs-Kalbleder, alltagstauglich.',       rating: 'good',    sort: 12 },
-    // Painted Full Grain (Durable) wurde mit Aesthetic-Variante zusammengeführt
+    { key: 'lux_calf',            label: 'Lux Calf',            color: '#3b1f0a', tip: 'Hochglanz-Kalbsleder, handpatiniert. Die feinste Oberfläche im Haus, für Anzug und besondere Anlässe.',        rating: 'good',    sort: 0 },
+    { key: 'lux_suede',           label: 'Lux Suede',           color: '#7c3a1e', tip: 'Premium-Veloursleder, samtig und leicht. Für trockene Tage und den eleganten, unangestrengten Auftritt.',       rating: 'good',    sort: 1 },
+    { key: 'painted_full_grain',  label: 'Painted Full Grain',  color: '#5b2c0e', tip: 'Patinierungs-Vollnarbenleder. Robust UND optisch veredelt, die Allzweckwahl.',                                  rating: 'good',    sort: 2 },
+    { key: 'patina',              label: 'Patina',              color: '#1c1c1e', tip: 'Speziell von Hand patiniert, jedes Paar ein Einzelstück. Für den, der die Oberfläche zum Thema machen will.',   rating: 'neutral', sort: 3 },
+    { key: 'velvet',              label: 'Velvet',              color: '#2d1b3d', tip: 'Samt, exklusiv für Slipper, Boots und Drake. Abendgarderobe, drinnen.',                                         rating: 'neutral', sort: 4 },
+    { key: 'box_calf',            label: 'Box Calf',            color: '#1c1c1e', tip: 'Klassisches Box-Calf, robust und matt. Wetterfest und alltagstauglich, das Leder für jeden Tag.',               rating: 'good',    sort: 10 },
+    { key: 'urban_suede',         label: 'Urban Suede',         color: '#7c3a1e', tip: 'Wetterbeständiges Veloursleder. Die Optik des Wildleders, ohne dass Regen es gleich zeichnet.',                 rating: 'good',    sort: 11 },
+    { key: 'painted_calf',        label: 'Painted Calf',        color: '#5b2c0e', tip: 'Patinierungs-Kalbleder, alltagstauglich. Farbtiefe der Patina, Härte des Alltagsleders.',                       rating: 'good',    sort: 12 },
   ]
   const insMat = db.prepare(`
-    INSERT INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
-    VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
-    -- Nur technische Felder werden nachgezogen. Alles, was der Betreiber im
-    -- CMS pflegt, Bezeichnung, Beschreibung, Farbwert, Sortierung, bleibt
-    -- unangetastet: Ein Serverstart darf eingetragene Werte nicht zurueck-
-    -- schreiben.
-    ON CONFLICT(key) DO UPDATE SET family=excluded.family,
-      updated_at = datetime('now')
+    INSERT INTO shoe_materials (key, label, color, available, tip, rating, sort_order)
+    VALUES (?, ?, ?, 1, ?, ?, ?)
+    -- Nichts wird nachgezogen. Alles, was der Betreiber im CMS pflegt —
+    -- Bezeichnung, Beschreibung, Farbwert, Bild, Sortierung — bleibt
+    -- unangetastet: Ein Serverstart darf eingetragene Werte nicht
+    -- zurueckschreiben.
+    ON CONFLICT(key) DO NOTHING
   `)
-  MATERIALS.forEach(m => insMat.run(m.key, m.label, m.sub, m.color, m.tip, m.rating, m.sort, m.family))
+  MATERIALS.forEach(m => insMat.run(m.key, m.label, m.color, m.tip, m.rating, m.sort))
 
   // Die abgelösten Lederarten stilllegen — beim Namen genannt.
   //
@@ -1105,7 +1113,7 @@ export function seedMatrixTemplatesV2(db) {
     OXFORD: [
       ...mk('OXFORD', 'last', LAST_FULL),
       ...mk('OXFORD', 'heel', HEEL_FULL),
-      ...mk('OXFORD', 'welt', ['city', 'country', 'storm']),
+      ...mk('OXFORD', 'welt', ['city']),
       ...soleForCat('OXFORD'),
       ...mk('OXFORD', 'sole_color', SOLE_COLOR_FULL),
       ...mk('OXFORD', 'inner_color', INNER_FULL),
@@ -1117,7 +1125,7 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('WHOLECUT', 'heel', HEEL_FULL),
       ...soleForCat('WHOLECUT'),
       ...mk('WHOLECUT', 'sole_color', SOLE_COLOR_FULL),
-      ...mk('WHOLECUT', 'welt', ['city', 'country', 'storm']),
+      ...mk('WHOLECUT', 'welt', ['city']),
       ...mk('WHOLECUT', 'inner_color', INNER_FULL),
       ...mk('WHOLECUT', 'sole_bottom_color', BOTTOM_FULL),
     ],
@@ -1127,7 +1135,7 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('LOAFER', 'loafer_decoration', ['ohne', 'tassels', 'albert_tassels', 'albert_mask', 'horsebit']),
       ...soleForCat('LOAFER'),
       ...mk('LOAFER', 'sole_color', SOLE_COLOR_FULL),
-      ...mk('LOAFER', 'welt', ['city', 'country', 'storm']),
+      ...mk('LOAFER', 'welt', ['city']),
       ...mk('LOAFER', 'inner_color', INNER_FULL),
       ...mk('LOAFER', 'sole_bottom_color', BOTTOM_FULL),
     ],
@@ -1136,7 +1144,7 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('DERBY', 'heel', HEEL_FULL),
       ...soleForCat('DERBY'),
       ...mk('DERBY', 'sole_color', SOLE_COLOR_FULL),
-      ...mk('DERBY', 'welt', ['city', 'storm']), // Matrix: nur City + Storm
+      ...mk('DERBY', 'welt', ['city']),
       ...mk('DERBY', 'inner_color', INNER_FULL),
       ...mk('DERBY', 'sole_bottom_color', BOTTOM_FULL),
     ],
@@ -1145,7 +1153,7 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('DOUBLE_MONK', 'heel', HEEL_FULL),
       ...soleForCat('DOUBLE_MONK'),
       ...mk('DOUBLE_MONK', 'sole_color', SOLE_COLOR_FULL),
-      ...mk('DOUBLE_MONK', 'welt', ['city', 'country', 'storm']),
+      ...mk('DOUBLE_MONK', 'welt', ['city']),
       ...mk('DOUBLE_MONK', 'buckle', BUCKLE),
       ...mk('DOUBLE_MONK', 'buckle_color', BUCKLE_COL),
       ...mk('DOUBLE_MONK', 'inner_color', INNER_FULL),
@@ -1157,7 +1165,7 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('MONK', 'heel', HEEL_FULL),
       ...soleForCat('MONK'),
       ...mk('MONK', 'sole_color', SOLE_COLOR_FULL),
-      ...mk('MONK', 'welt', ['city', 'country', 'storm']),
+      ...mk('MONK', 'welt', ['city']),
       ...mk('MONK', 'buckle', BUCKLE),
       ...mk('MONK', 'buckle_color', BUCKLE_COL),
       ...mk('MONK', 'inner_color', INNER_FULL),
@@ -2130,8 +2138,8 @@ export function seedMokassin(db) {
     // der CMS-Liste als eigener Block stehen und sich nicht dazwischen
     // schieben.
     const insLeder = db.prepare(`
-      INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
-      VALUES (?, ?, 'Aesthetic', ?, 1, ?, 'good', ?, 'aesthetic')
+      INSERT OR IGNORE INTO shoe_materials (key, label, color, available, tip, rating, sort_order)
+      VALUES (?, ?, ?, 1, ?, 'good', ?)
     `)
     MOKASSIN_LEDER.forEach((l, i) => insLeder.run(l.key, l.label, l.color, l.tip, 20 + i))
 
@@ -2307,8 +2315,8 @@ export function seedMocFlexSport(db) {
     // Ungefüttertes Wildleder — beim Hersteller die einzige Wahl an diesem
     // Modell, und deshalb auch hier die einzige.
     db.prepare(`
-      INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
-      VALUES ('unlined_suede', 'Unlined Suede', 'Aesthetic', '#c8a97e', 1, ?, 'good', 23, 'aesthetic')
+      INSERT OR IGNORE INTO shoe_materials (key, label, color, available, tip, rating, sort_order)
+      VALUES ('unlined_suede', 'Unlined Suede', '#c8a97e', 1, ?, 'good', 23)
     `).run('Ungefüttertes Kalbsvelours, weich und leicht. Ohne Futter legt sich der Schuh unmittelbar an den Fuß, am besten bei trockenem Wetter.')
 
     // ── 2. Die Farben ───────────────────────────────────────────────────
@@ -2517,8 +2525,8 @@ export function seedMocFlexSportBoot(db) {
   const einrichten = db.transaction(() => {
     // ── 1. Das Leder ────────────────────────────────────────────────────
     db.prepare(`
-      INSERT OR IGNORE INTO shoe_materials (key, label, sub, color, available, tip, rating, sort_order, family)
-      VALUES ('lined_suede', 'Lined Suede', 'Aesthetic', '#6f6a63', 1, ?, 'good', 24, 'aesthetic')
+      INSERT OR IGNORE INTO shoe_materials (key, label, color, available, tip, rating, sort_order)
+      VALUES ('lined_suede', 'Lined Suede', '#6f6a63', 1, ?, 'good', 24)
     `).run('Gefüttertes Kalbsvelours. Dieselbe Oberfläche wie beim flachen Mokassin, mit Futter, für den höheren Schnitt und die kühlere Jahreszeit.')
 
     // Dieselben neun Töne wie am flachen Mokassin: Der Hersteller führt für
@@ -3187,18 +3195,27 @@ function seedSohlenUndWelt(db) {
   // Aufnahmen auf, die der Betreiber führt. Der Sommerlinie nehmen sie
   // nichts weg, sie ist von dieser Liste ausgenommen und führt Dots,
   // Gummy Sole und Rubber.
+    //
+    // Bei der Welt gilt die Ausnahme für die Sommerlinie NICHT mehr. Der
+    // Rahmen ist überall City: Er verschwindet als Schritt aus dem
+    // Konfigurator, und ein Wert, den niemand mehr wählen kann, darf auch
+    // keiner Machart mehr zugeordnet sein — sonst stünde in einer alten
+    // Vorlage weiter „Storm", ohne dass es dafür eine Auswahl gibt.
     const WEG = { sole: ['dainite', 'dots', 'art', 'beveled_waist', 'gummy_sole', 'crepe', 'rocky'],
                   welt: ['country', 'storm'] }
+    const UEBERALL = ['welt']   // Gruppen, bei denen auch die Sommerlinie mitgeht
     let raus = 0
     for (const [gruppe, schluessel] of Object.entries(WEG)) {
+      const ausnahme = UEBERALL.includes(gruppe) ? [] : SOMMER
       const pw = schluessel.map(() => '?').join(', ')
-      const ps = SOMMER.map(() => '?').join(', ')
+      const ps = ausnahme.map(() => '?').join(', ')
       const treffer = db.prepare(`
         SELECT ct.category, ct.option_id, ct.is_default FROM category_templates ct
           JOIN options o        ON o.id = ct.option_id
           JOIN option_groups g  ON g.id = o.group_id
-         WHERE g.key = ? AND o.key IN (${pw}) AND ct.category NOT IN (${ps})
-      `).all(gruppe, ...schluessel, ...SOMMER)
+         WHERE g.key = ? AND o.key IN (${pw})
+           ${ausnahme.length ? `AND ct.category NOT IN (${ps})` : ''}
+      `).all(gruppe, ...schluessel, ...ausnahme)
       if (!treffer.length) continue
       db.transaction(() => {
         const loesch = db.prepare('DELETE FROM category_templates WHERE category = ? AND option_id = ?')
@@ -3228,7 +3245,17 @@ function seedSohlenUndWelt(db) {
       })()
       raus += treffer.length
     }
-    if (raus) console.log(`✅ Sohlen und Welt: ${raus} Zuordnung(en) außerhalb der Sommerlinie entfernt`)
+    // Dieselben Werte auch an den einzelnen Modellen abräumen. Die Vorlage
+    // sagt, was eine Machart anbietet; `shoe_options` sagt, was DIESES
+    // Modell anbietet — wer nur die Vorlage aufräumt, lässt „Storm" an
+    // jedem Schuh stehen, an dem es einmal freigegeben wurde.
+    const einzeln = db.prepare(`
+      DELETE FROM shoe_options WHERE option_id IN (
+        SELECT o.id FROM options o JOIN option_groups g ON g.id = o.group_id
+         WHERE g.key = 'welt' AND o.key IN ('country', 'storm'))
+    `).run()
+    if (einzeln.changes) raus += einzeln.changes
+    if (raus) console.log(`✅ Sohlen und Welt: ${raus} Zuordnung(en) entfernt`)
   } catch (e) { console.error('[Sohlen und Welt]', e.message) }
 }
 

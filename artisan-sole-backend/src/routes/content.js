@@ -266,8 +266,47 @@ export const affiliateAssetsRouter = makeContentRouter('affiliate_assets', [
   body('kind').optional().isIn(['bild', 'text']).withMessage('Art: Bild oder Text'),
 ])
 
-export const materialsRouter  = makeContentRouter('shoe_materials', [], { publicRead: true })
-export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true })
+/**
+ * Lederarten und Farben — beide mit eigenem Bild.
+ *
+ * Die Grenze ist enger als bei den Schuhbildern (3 MB), und zwar aus einem
+ * Grund, den man der Zahl nicht ansieht: Diese beiden Listen werden als
+ * Ganzes ausgeliefert. `GET /api/colors` gibt jedem Besucher alle Farben,
+ * und ein Konfigurator, der vierzig Bilder zu je drei Megabyte herunterlädt,
+ * geht auf dem Telefon nicht mehr auf. Ein Plättchen von wenigen Hundert
+ * Pixeln bleibt weit darunter.
+ *
+ * Dieselbe Grenze steht im Laden (BildFeld, MAX_BILD_LISTE) — dort, damit
+ * der Redakteur es erfährt, bevor er wartet; hier, weil eine Grenze, die
+ * nur im Browser gilt, keine ist.
+ */
+const LISTENBILD_MAX = 1024 * 1024
+/**
+ * Geprüft wird in `onWrite`, nicht mit einem express-validator.
+ *
+ * Der Grund ist die Fehlermeldung: express-validator legt den beanstandeten
+ * Wert in die Antwort. Bei einem zu großen Bild wären das zwei Megabyte
+ * Base64, zurückgeschickt an denjenigen, der sie gerade geschickt hat — eine
+ * Antwort, die das Problem wiederholt, das sie meldet.
+ */
+function bildPruefen(body) {
+  const v = body?.image
+  if (!v) return {}
+  // Data-URL: Nur der Nutzlast-Teil zählt, der Kopf („data:image/png;base64,")
+  // sind ein paar Dutzend Zeichen.
+  const nutzlast = String(v).includes(',') ? String(v).split(',').pop() : String(v)
+  if (Buffer.byteLength(nutzlast, 'base64') > LISTENBILD_MAX) {
+    throw new SchreibAbbruch(400, {
+      error: 'BILD_ZU_GROSS',
+      detail: 'Das Bild ist zu groß. Höchstens 1 MB — die Liste wird als Ganzes '
+        + 'an jeden Besucher ausgeliefert, ein Foto in voller Größe läge dort in jeder Antwort.',
+    })
+  }
+  return {}
+}
+
+export const materialsRouter  = makeContentRouter('shoe_materials', [], { publicRead: true, onWrite: bildPruefen })
+export const colorsRouter     = makeContentRouter('shoe_colors', [], { publicRead: true, onWrite: bildPruefen })
 export const solesRouter      = makeContentRouter('shoe_soles', [], { publicRead: true })
 /**
  * Alle Zuordnungen Modell → Zubehör auf einmal.

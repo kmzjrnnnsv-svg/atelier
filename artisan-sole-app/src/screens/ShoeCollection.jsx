@@ -915,7 +915,8 @@ export default function ShoeCollection() {
 
       {/* ── Was zu den Preisen im Raster gehört ───────────────────
           § 6 Abs. 1 PAngV: Es muss dastehen, dass die Umsatzsteuer im Preis
-          enthalten ist und dass Versandkosten hinzukommen. Am Fuß des
+          enthalten ist und ob Versandkosten hinzukommen — hier: der
+          Standardversand ist enthalten, nur der Express kostet extra. Am Fuß des
           Rasters, weil er für alle Kacheln darüber gilt — an jede einzelne
           geschrieben stünde er zwanzigmal auf einem Bildschirm. */}
       {!laedt && filtered.length > 0 && (

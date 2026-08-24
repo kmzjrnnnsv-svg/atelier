@@ -15,6 +15,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { Loader2, Check, ChevronDown, RefreshCw, Search } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 import useStore from '../../store/store'
+import { FESTE_WERTE } from '../../lib/sohlenRegel'
 
 const STAR = '★'
 
@@ -198,6 +199,16 @@ export default function ConfiguratorMatrix() {
                   title={g.helper_text || g.description}
                 >
                   {g.label}
+                  {/* Festgelegte Gruppen erscheinen im Laden nicht als
+                      Schritt. Sie bleiben hier sichtbar, weil sie in der
+                      Bestellung stehen — aber ohne diesen Hinweis wundert
+                      sich der Redakteur, warum sein Häkchen nirgends
+                      auftaucht. */}
+                  {g.key in FESTE_WERTE && (
+                    <span className="block text-[8px] tracking-[0.14em] text-black/25 normal-case mt-0.5">
+                      fest auf {FESTE_WERTE[g.key]} · kein Schritt im Konfigurator
+                    </span>
+                  )}
                 </th>
               ))}
               <th className="text-left font-light text-[9px] tracking-[0.2em] uppercase text-black/40 px-3 py-3 border border-black/[0.06] min-w-[100px]">Aktion</th>
