@@ -59,14 +59,13 @@ const WEITEN_WAHL = [
   { key: 'EEE', titel: 'Sehr breit', kurz: 'Auch weite drücken', hinweis: 'Auch als weit ausgewiesene Schuhe sind Ihnen zu eng, oder Sie tragen üblicherweise Spezialweiten.' },
 ]
 
-// Leisten-Zehenform als Draufsicht-Silhouette. Visualisiert die Unterschiede
-// zwischen Zurigo (rund), Monti (leicht eckig), Savile (Chisel) und
-// Belgravia (scharfe Chisel). Wird angezeigt, wenn kein echtes Foto
+// Leisten-Zehenform als Draufsicht-Silhouette. Visualisiert den Unterschied
+// zwischen Zurigo (rund) und Monti (leicht eckig) — den beiden Leisten, auf
+// denen die Dress-Linie läuft. Wird angezeigt, wenn kein echtes Foto
 // hochgeladen wurde.
 const LAST_SHAPES = {
   zurigo:    'M9 56 L9 24 Q9 6 21 6 Q33 6 33 24 L33 56 Z',          // runde Spitze
-  monti:     'M9 56 L9 22 Q9 9 15 8 L27 8 Q33 9 33 22 L33 56 Z',     // leicht eckig
-
+  monti:     'M9 56 L9 22 Q9 9 15 8 L27 8 Q33 9 33 22 L33 56 Z',    // leicht eckig
 }
 function LastShapeIcon({ shapeKey, active }) {
   const path = LAST_SHAPES[shapeKey]

@@ -1376,12 +1376,23 @@ export function seedMatrixTemplatesV2(db) {
 //  • Ballenumfang steigt +2,25 mm je Halbgröße (= +4,5 je ganze Größe); je
 //    Leisten×Weite ist nur der Anker an der Referenzgröße nötig
 //    (Herren-Ref = EU42, Damen-Ref = EU39).
-//  • Penny Loafer: nur US-Größen, eigene Werte.
 //
 // Versioniert: bei Versionssprung wird die Tabelle einmalig autoritativ neu
 // aufgebaut (DELETE + Insert); danach bleiben CMS-Edits über Deploys erhalten.
+//
+// v3: Vier Leisten sind weggefallen — „Venetian", „Penny Loafer",
+// „Wellington" und „Drake". Sie trugen je ein bis zwei Modelle der
+// Dress-Linie, und der Kunde bekam sie im Konfigurator als Wahl vorgesetzt,
+// die er nicht treffen kann. Die Dress-Linie läuft jetzt vollständig auf
+// Monti und Zurigo.
+//
+// Die Sommerlinie behält ihre eigenen: Ein Mokassin auf einem Dress-Leisten
+// wäre kein Mokassin mehr, und für einen Walk gibt es weder einen Monti noch
+// einen Zurigo. `drivers`, `moc_sport`, `sneaker` und `chunky` bleiben
+// deshalb, ebenso die drei Damen-Leisten, die zu keiner Machart gehören und
+// im Laden nirgends angeboten werden.
 // ─────────────────────────────────────────────────────────────────────
-export const LAST_SIZE_CHART_VERSION = '2'
+export const LAST_SIZE_CHART_VERSION = '3'
 const GIRTH_STEP = 2.25
 const round1 = (n) => Math.round(n * 10) / 10
 
@@ -1391,12 +1402,6 @@ const FOOT_MEN = [238.4,241.7,245.0,248.4,251.7,255.0,258.3,261.7,265.0,268.3,27
 const EU_LADIES = ['35','35.5','36','36.5','37','37.5','38','38.5','39','39.5','40','40.5','41','41.5','42']
 const FOOT_LADIES = [226.7,230.0,233.3,236.7,240.0,243.3,246.7,250.0,253.3,256.7,260.0,263.3,266.6,270.0,273.3]
 
-// Penny Loafer, nur US-Größen. [US-Label, foot_length, ball_girth]
-const PENNY_US = [
-  ['7', 256.5, 242.7], ['8', 260.8, 245.9], ['9', 265.0, 249.1],
-  ['10', 273.5, 255.5], ['11', 282.0, 261.8], ['12', 290.4, 268.2],
-  ['13', 298.9, 274.5], ['14', 307.4, 280.9], ['15', 315.9, 287.3],
-]
 
 // Spec je Leiste. widths: [width, anchorGirthAtRef, optionalRange]
 // optionalRange überschreibt den Default-Bereich (Herren 38 bis 50, Damen 35 bis 42).
@@ -1404,10 +1409,9 @@ const LAST_CHART_SPEC = [
   // Herren, Dress-Leisten (D/EE/EEE)
   { key: 'monti',     gender: 'men', widths: [['D', 246.0], ['EE', 255.0], ['EEE', 268.5]] },
   { key: 'zurigo',    gender: 'men', widths: [['D', 250.0], ['EE', 259.0], ['EEE', 272.5]] },
-      // Herren, Modell-spezifische Leisten
-  { key: 'wellington', gender: 'men', widths: [['D', 244.0], ['EE', 253.0]] },
-  { key: 'drake',      gender: 'men', widths: [['D', 245.0]] },
-  { key: 'venetian',   gender: 'men', widths: [['D', 247.0]] },
+  // Herren, die Sommerlinie auf ihren eigenen Leisten. „Wellington",
+  // „Drake", „Venetian" und „Penny Loafer" standen hier ebenfalls; sie
+  // trugen Modelle der Dress-Linie und sind weggefallen (siehe v3 oben).
   { key: 'drivers',    gender: 'men', range: ['38', '48'], widths: [['D', 246.0]] },
   { key: 'sneaker',    gender: 'men', fullOnly: true, widths: [['D', 248.0, ['38', '49']], ['EE', 257.0, ['39', '49']]] },
   { key: 'moc_sport',  gender: 'men', range: ['39', '46'], widths: [['D', 244.0]] },
@@ -1440,9 +1444,6 @@ export function buildLastSizeChartRows() {
         })
       }
     }
-  }
-  for (const [label, len, girth] of PENNY_US) {
-    rows.push({ last_key: 'penny_loafer', width: 'D', size_system: 'US', size_label: label, foot_length_mm: len, ball_girth_mm: girth })
   }
   return rows
 }
@@ -1489,17 +1490,25 @@ export const CATEGORY_LASTS = {
   BALMORAL:         ['zurigo'],
   JODHPUR:          ['zurigo'],
   CHUKKA:           ['zurigo'],
-  LOAFER:           ['venetian', 'penny_loafer', 'drivers'],
-  BELGIAN_SLIPPER:  ['drivers', 'venetian'],
+  // Loafer und Belgian Slipper gehören zur Dress-Linie und laufen wie sie
+  // auf Monti und Zurigo. Hier standen „Venetian", „Penny Loafer" und
+  // „Drivers": drei Leisten, zwischen denen der Kunde wählen sollte, obwohl
+  // der Matcher längst ausgerechnet hatte, welcher zu seinem Fuß passt.
+  LOAFER:           ['monti', 'zurigo'],
+  BELGIAN_SLIPPER:  ['monti', 'zurigo'],
   // Der Mokassin läuft nur auf dem Drivers-Leisten — der einzige, der die
   // Machart trägt. Die Maßtabelle führt ihn bereits (EU 38 bis 48, Weite D).
+  // Er bleibt deshalb, obwohl er aus dem Loafer verschwunden ist: Ein
+  // Driving-Mokassin auf einem Dress-Leisten wäre kein Mokassin mehr.
   MOCCASIN:         ['drivers'],
   // Der Sport-Mokassin auf seinem eigenen: `moc_sport`, EU 39 bis 46.
   MOC_SPORT:        ['moc_sport'],
   // Der Boot dazu — dieselbe Machart, derselbe Leisten, nur höher geschnitten.
   MOC_SPORT_BOOT:   ['moc_sport'],
-  WELLINGTON:       ['wellington'],
-  DRAKE:            ['drake'],
+  // Der Wellington ist ein Stiefel und folgt der Stiefel-Regel dieser
+  // Tabelle: Zurigo. Der Drake gehört zur Dress-Linie.
+  WELLINGTON:       ['zurigo'],
+  DRAKE:            ['monti', 'zurigo'],
   SNEAKER:          ['sneaker', 'moc_sport', 'chunky'],
   SNEAKER_LACED:    ['sneaker', 'chunky'],
   SNEAKER_BOOT:     ['sneaker', 'chunky'],

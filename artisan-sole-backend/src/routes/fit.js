@@ -21,12 +21,21 @@ export function fitPercent(dLenMm, dGirthMm) {
 }
 
 
+/**
+ * Die Beschriftungen der Leisten.
+ *
+ * Die abgelösten bleiben stehen: „Savile", „Belgravia", „Wellington",
+ * „Drake", „Venetian" und „Penny Loafer" werden nicht mehr angeboten, aber
+ * es gibt Bestellungen, die auf ihnen gefertigt wurden. Fehlt der Name,
+ * stünde in der alten Bestellung „penny_loafer" statt „Penny Loafer".
+ */
 const LAST_LABELS = {
-  monti: 'Monti', zurigo: 'Zurigo', savile: 'Savile', belgravia: 'Belgravia',
-  wellington: 'Wellington', drake: 'Drake', sneaker: 'Sneaker',
-  moc_sport: 'Moc Sport', chunky: 'Chunky', drivers: 'Drivers',
-  venetian: 'Venetian', penny_loafer: 'Penny Loafer',
+  monti: 'Monti', zurigo: 'Zurigo',
+  drivers: 'Drivers', sneaker: 'Sneaker', moc_sport: 'Moc Sport', chunky: 'Chunky',
   audrey_rose: 'Audrey & Rose', chenoa: 'Chenoa', carola: 'Carola B',
+  // Nicht mehr im Angebot, nur noch für den Blick zurück.
+  savile: 'Savile', belgravia: 'Belgravia', wellington: 'Wellington',
+  drake: 'Drake', venetian: 'Venetian', penny_loafer: 'Penny Loafer',
 }
 
 /**

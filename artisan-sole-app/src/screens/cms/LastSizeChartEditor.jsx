@@ -18,12 +18,10 @@ import { useAuth } from '../../context/AuthContext'
 const LAST_META = [
   { key: 'monti',        label: 'Monti',         group: 'Herren' },
   { key: 'zurigo',       label: 'Zurigo',        group: 'Herren' },
-
-  { key: 'wellington',   label: 'Wellington',    group: 'Herren' },
-  { key: 'drake',        label: 'Drake',         group: 'Herren' },
-  { key: 'venetian',     label: 'Venetian',      group: 'Herren' },
+  // Die Sommerlinie. „Wellington", „Drake", „Venetian" und „Penny Loafer"
+  // standen hier ebenfalls; sie werden nicht mehr gefertigt, seit die
+  // Dress-Linie vollständig auf Monti und Zurigo läuft.
   { key: 'drivers',      label: 'Drivers & Mocs', group: 'Herren' },
-  { key: 'penny_loafer', label: 'Penny Loafer',  group: 'Herren' },
   { key: 'sneaker',      label: 'Sneaker',       group: 'Herren' },
   { key: 'moc_sport',    label: 'Moc Sport',     group: 'Herren' },
   { key: 'chunky',       label: 'Chunky Trainer', group: 'Herren' },
