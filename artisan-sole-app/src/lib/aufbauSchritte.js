@@ -25,8 +25,8 @@ export const AUFBAU = [
   },
   {
     titel: 'Schaft und Futter',
-    text: 'Werden über den Leisten gezogen und nach innen gezwickt — so bekommt '
-        + 'der Schuh seine Form, bevor irgendetwas hält.',
+    text: 'Werden über den Leisten gezogen und nach innen gezwickt. Hier bekommt '
+        + 'der Schuh die Form, die er behalten wird.',
   },
   {
     titel: 'Rahmen und Einstechnaht',
@@ -40,13 +40,13 @@ export const AUFBAU = [
   },
   {
     titel: 'Die Laufsohle',
-    text: 'Wird aufgelegt. Bis hierher ist kein Klebstoff im Spiel, der etwas '
-        + 'tragen müsste.',
+    text: 'Wird aufgelegt und gleich darauf festgenäht. Was diesen Schuh '
+        + 'zusammenhält, ist Garn.',
   },
   {
     titel: 'Die Doppelnaht',
-    text: 'Läuft durch den Rahmen in die Laufsohle. Sie lässt sich auftrennen, '
-        + 'ohne den Schaft zu berühren — deshalb bekommt dieser Schuh eine neue '
-        + 'Sohle und ein geklebter nicht.',
+    text: 'Läuft durch den Rahmen in die Laufsohle. Ein Schuhmacher trennt sie '
+        + 'auf, ohne den Schaft zu berühren — und dein Paar bekommt eine neue '
+        + 'Sohle, so oft du willst.',
   },
 ]
