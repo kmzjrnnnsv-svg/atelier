@@ -33,12 +33,7 @@
  * abgeschwächte Fassung, gar keine.
  */
 import { useEffect, useRef, useState } from 'react'
-
-/** Einmal gefragt, für alle Einblendungen der Seite. */
-function wenigerBewegung() {
-  if (typeof window === 'undefined' || !window.matchMedia) return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
+import { wenigerBewegung } from '../lib/bewegung'
 
 /**
  * @param {number}  [verzoegerung=0]  Millisekunden. Für gestaffelte Reihen:
