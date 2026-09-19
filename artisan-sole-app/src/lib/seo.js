@@ -96,7 +96,13 @@ export function kuerze(text, max = 160) {
  * bekommt den allgemeinen Titel — das ist der richtige Wert für eine Seite,
  * die noch lädt und deren Namen wir noch nicht kennen.
  */
-export function useSeo({ titel, beschreibung, pfad } = {}) {
+/**
+ * @param {boolean} [indexieren=true]  Auf `false` bittet die Seite darum,
+ *   nicht in den Index zu geraten. Gedacht für Entwürfe und Testfassungen:
+ *   Zwei Seiten mit demselben Inhalt schwächen einander, und die falsche
+ *   von beiden im Suchergebnis ist schlimmer als gar keine.
+ */
+export function useSeo({ titel, beschreibung, pfad, indexieren = true } = {}) {
   useEffect(() => {
     if (typeof document === 'undefined') return
     const voll = titel ? `${titel} · ${MARKE}` : `ARTISAN SOLE · Rahmengenähte Schuhe, Custom Made`
@@ -111,7 +117,15 @@ export function useSeo({ titel, beschreibung, pfad } = {}) {
     // einzigen Eintrag zusammen und zeigt überall denselben Text.
     setzeMeta('meta[property="og:url"]', 'property', 'og:url', adresse(pfad))
     setzeKanonisch(pfad)
-  }, [titel, beschreibung, pfad])
+
+    // `robots` wird gesetzt und beim Verlassen wieder auf den Normalwert
+    // gestellt. Ohne das Zurückstellen trüge die nächste Seite, die der
+    // Besucher aufruft, das noindex der vorigen mit sich — und zwar genau so
+    // lange, bis die Anwendung einmal neu geladen wird.
+    setzeMeta('meta[name="robots"]', 'name', 'robots',
+      indexieren ? 'index, follow' : 'noindex, nofollow')
+    return () => setzeMeta('meta[name="robots"]', 'name', 'robots', 'index, follow')
+  }, [titel, beschreibung, pfad, indexieren])
 }
 
 /**
