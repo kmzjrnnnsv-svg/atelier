@@ -64,6 +64,23 @@
  * „Zwei Nähte halten diesen Schuh zusammen." „Gehalten wird er allein von
  * seiner Form."
  *
+ * Und die Regel darüber, die noch wichtiger ist: JEDER SATZ SAGT EINE SACHE.
+ *
+ * Es gab hier einen Satz, der lautete: „Die letzte Woche Arbeit an deinem
+ * Paar machst du selbst. Sie beginnt, wenn du es zum ersten Mal anziehst."
+ * Er klingt nach etwas. Er bedeutet nichts. Wer ihn liest, weiß danach
+ * genauso viel wie vorher, und er merkt es — das ist der Moment, in dem eine
+ * Seite anfängt, nach Werbetext zu klingen.
+ *
+ * An derselben Stelle steht jetzt: „Die ersten Wochen fühlt sich ein
+ * rahmengenähter Schuh fest an. Das ist der Kork, der noch nachgibt — trag
+ * ihn anfangs nur ein paar Stunden am Tag." Das ist dieselbe Länge und
+ * dasselbe Thema, aber es ist ein Rat. Wer ihn liest, weiß etwas, das er
+ * vorher nicht wusste, und traut dem Absender ab da ein Handwerk zu.
+ *
+ * Die Probe ist einfach: Streiche den Satz und frage, ob jemand etwas
+ * verliert. Verliert niemand etwas, war es Schmuck.
+ *
  * Die Stimme ist die eines guten Herrenausstatters: Er redet mit dir und
  * nicht über die Ware, er sagt dir eine Sache, die du noch nicht wusstest,
  * als Höflichkeit und nicht als Belehrung, und er wird nie laut. Was er
@@ -173,7 +190,7 @@ const FAKTEN = [
 const ZAHLEN = [
   { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Daraus bauen wir Leisten, Größe und Weite für genau deinen Fuß.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. An einem einzelnen Paar.' },
-  { zahl: '4–6',  einheit: 'Wochen',          text: 'So lange dauert ein Paar, das es vorher nicht gab. Wir fangen an, wenn du bestellst.' },
+  { zahl: '4–6',  einheit: 'Wochen',          text: 'Wir fangen an, wenn du bestellst. In der Zeit wird zugeschnitten, gezwickt, genäht und geprüft.' },
 ]
 
 /**
@@ -250,53 +267,61 @@ const LEDER = [
  * Was NICHT erfunden ist, bleibt wie gehabt: keine Geschichte über das Haus,
  * kein Gründungsjahr, kein Name, kein Ort außer Spanien.
  *
- * ── Zur Alterung ──────────────────────────────────────────────────────────
+ * ── Warum der zweite Satz ein Hinweis ist und kein Bild ───────────────────
  *
- * Der zweite Gedanke („nach Jahren") ist der stärkste, den ein Schuh hat, und
- * der einzige, den ein Foto nicht zeigen kann. Er gilt für Leder und für die
- * rahmengenähte Machart — deshalb steht der Satz übers Neubesohlen nur bei
- * den Macharten, für die er zutrifft. Ein Mokassin bekommt ihn nicht.
+ * Unter jeder Geschichte stand ein Satz darüber, was nach Jahren aus dem Paar
+ * wird. Er war schön und sagte nichts: „Man sieht dem Paar dann an, wem es
+ * gehört." Wer so etwas liest, weiß danach genauso viel wie vorher.
+ *
+ * Jetzt steht dort, was ein Schuhmacher sagen würde, wenn er das Paar in der
+ * Hand hält: dass die Doppelnaht sich auftrennen lässt, dass Streusalz weiße
+ * Ränder hinterlässt, wenn es eintrocknet, dass ungefütterte Schuhe sich
+ * stärker dehnen. Lauter Kleinigkeiten, die niemand erfinden kann, ohne das
+ * Handwerk zu kennen — und genau deshalb tragen sie mehr als jedes Bild.
+ *
+ * Es bleibt Sachwissen über Schuhe und wird nie zur Auskunft über dieses
+ * Haus: kein Versprechen, keine Garantie, keine Frist.
  */
 const ERZAEHLUNG = {
   OXFORD: {
     titel: 'Es gibt Räume, in denen man nichts erklären muss.',
-    zeit: 'Nach zwei Jahren ist das Leder dort dunkler, wo dein Fuß arbeitet. Man '
-        + 'sieht dem Paar dann an, wem es gehört.',
+    rat: 'Nach zwei Jahren ist das Leder dort dunkler, wo der Fuß beim Gehen knickt. '
+       + 'Creme auf diese Falten aufzutragen bringt am meisten.',
   },
   DERBY: {
     titel: 'Der Tag wird länger als geplant.',
-    zeit: 'Wenn die Sohle durch ist, kommt eine neue. Der Schaft bleibt, und den kennst '
-        + 'du dann schon besser als jeden Schuh, den du je gekauft hast.',
+    rat: 'Ist die Sohle durch, trennt ein Schuhmacher die Doppelnaht auf und näht eine '
+       + 'neue an. Der Schaft bleibt, wie er ist.',
   },
   LOAFER: {
     titel: 'Gehalten wird er allein von seiner Form.',
-    zeit: 'Ein Loafer verrät seinen Träger schneller als jeder andere Schuh. Er nimmt '
-        + 'die Bewegung des Fußes an, und das sieht man ihm nach einem Sommer an.',
+    rat: 'Ein Loafer hat nichts, womit sich die Weite nachstellen ließe. Auf den '
+       + 'Ballenumfang kommt es hier mehr an als bei jedem anderen Modell.',
   },
   BOOT: {
     titel: 'Das Wetter darf von mir aus schlecht sein.',
-    zeit: 'Wenn die Sohle durch ist, kommt eine neue. Ein Stiefel, der zehn Winter '
-        + 'gesehen hat, sieht danach besser aus als am ersten Tag.',
+    rat: 'Gegen Streusalz hilft nur eines: abends mit klarem Wasser abwischen, solange '
+       + 'der Rand feucht ist. Trocknet es ein, bleiben weiße Ränder im Leder.',
   },
   MONK: {
     titel: 'Eine Schnalle sagt mehr als zwei Reihen Ösen.',
-    zeit: 'Der Riemen bekommt mit den Jahren eine eigene Falte, dort wo er täglich '
-        + 'schließt. Sie gehört ab dann zum Schuh.',
+    rat: 'Der Riemen bekommt dort eine Falte, wo er täglich schließt. Nach ein paar '
+       + 'Wochen findest du das Loch, ohne hinzusehen.',
   },
   SNEAKER: {
-    titel: 'Manche Tage sind länger als ihr Anlass.',
-    zeit: 'Weiches Leder legt sich nach wenigen Wochen um den Fuß. Ab da sitzt es, '
-        + 'als wäre es für dich gebaut worden — was es ja auch ist.',
+    titel: 'Auch ein Sneaker kann rahmengenäht sein.',
+    rat: 'Weiches Leder legt sich nach wenigen Wochen um den Fuß. Danach ändert sich '
+       + 'an der Passform kaum noch etwas.',
   },
   MOCCASIN: {
     titel: 'Ein Schuh, der nichts von dir verlangt.',
-    zeit: 'Ungefüttertes Leder nimmt die Form des Fußes am schnellsten an — nach einem '
-        + 'Sommer sitzt es, als wäre es darauf gebaut worden.',
+    rat: 'Ungefütterte Schuhe dehnen sich stärker als gefütterte. Am Anfang dürfen sie '
+       + 'deshalb ruhig eng sitzen.',
   },
   STANDARD: {
     titel: 'Eine Form, die älter ist als jedes Haus, das sie verkauft.',
-    zeit: 'Gutes Leder nimmt mit den Jahren eine eigene Farbe an. Zwei gleiche Paare '
-        + 'sehen nach drei Jahren verschieden aus.',
+    rat: 'Gutes Leder nimmt mit den Jahren eine eigene Farbe an. Zwei gleiche Paare '
+       + 'sehen nach drei Jahren verschieden aus.',
   },
 }
 
@@ -853,7 +878,7 @@ export default function TestHomepage() {
                         <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[2] mt-8">
                           {schuh.description}
                         </p>
-                        <Nachsatz text={erz.zeit} className="mt-10" />
+                        <Nachsatz text={erz.rat} className="mt-10" />
                         <div className="max-w-xs mx-auto mt-12">
                           <Kapitelfuss schuh={schuh} oeffnen={oeffnen} mittig />
                         </div>
@@ -898,7 +923,7 @@ export default function TestHomepage() {
                         Hälften — und nicht in einer davon. */}
                     <Enthuellen richtung="ruhig">
                       <div className="max-w-6xl mx-auto mt-16 lg:mt-24 pt-10 border-t border-black/[0.08]">
-                        <Nachsatz text={erz.zeit} className="max-w-2xl" gross />
+                        <Nachsatz text={erz.rat} className="max-w-2xl" gross />
                       </div>
                     </Enthuellen>
                   </section>
@@ -943,7 +968,7 @@ export default function TestHomepage() {
                         </p>
                         {/* Hier steht der Nachsatz mit in der Spalte — die
                             Form hat keinen Fuß, über den er laufen könnte. */}
-                        <Nachsatz text={erz.zeit} className="mt-9" />
+                        <Nachsatz text={erz.rat} className="mt-9" />
                         <div className="mt-11">
                           <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
                         </div>
@@ -987,7 +1012,7 @@ export default function TestHomepage() {
                         <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2]">
                           {schuh.description}
                         </p>
-                        <Nachsatz text={erz.zeit} />
+                        <Nachsatz text={erz.rat} />
                       </div>
                       <div className="max-w-6xl mx-auto mt-14 lg:mt-20">
                         <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
@@ -1015,8 +1040,9 @@ export default function TestHomepage() {
             />
             <div className="relative px-5 lg:px-16 py-20 max-w-3xl mx-auto text-center">
               <p className="satz-titel text-[24px] lg:text-[40px] leading-[1.4] text-white">
-                Die letzte Woche Arbeit an deinem Paar machst du selbst.
-                Sie beginnt, wenn du es zum ersten Mal anziehst.
+                Die ersten Wochen fühlt sich ein rahmengenähter Schuh fest an.
+                Das ist der Kork, der noch nachgibt — trag ihn anfangs
+                nur ein paar Stunden am Tag.
               </p>
             </div>
           </section>
@@ -1143,8 +1169,8 @@ export default function TestHomepage() {
           <Enthuellen verzoegerung={220}>
             <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5] mt-12 lg:mt-16 max-w-2xl mx-auto text-center">
               „Vollnarbig" heißt, dass diese oberste Schicht ganz geblieben ist —
-              ungeschliffen, ohne Folie darüber. Sie ist der Grund, warum ein gutes
-              Paar mit den Jahren schöner wird.
+              ungeschliffen, ohne Folie darüber. Sie ist der Grund, warum sich
+              Kratzer in so einem Leder auspolieren lassen.
             </p>
           </Enthuellen>
 
