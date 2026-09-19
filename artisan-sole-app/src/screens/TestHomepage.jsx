@@ -22,7 +22,7 @@
  *   4  Das Handwerk    Warum hält das länger als Geklebtes?
  *   5  Das Leder       Woraus besteht es?
  *   6  In eigener Sache Was behaupten wir NICHT?
- *   7  Der Ablauf      Was passiert, wenn ich bestelle?
+ *   7  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
  *   8  Der Anfang      Wo fange ich an?
  *
  * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
@@ -73,7 +73,7 @@
  */
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Footprints, Ruler, Hammer, CalendarDays } from 'lucide-react'
+import { ArrowRight, Footprints, Ruler, Hammer, CalendarDays, Check } from 'lucide-react'
 import useStore from '../store/store'
 import { useSeo } from '../lib/seo'
 import { shoePath } from '../lib/shoePath'
@@ -83,7 +83,6 @@ import { resolveMediaUrl } from '../lib/mediaUrl'
 import { SHOES, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import Enthuellen from '../components/Enthuellen'
 import RahmenSchnitt from '../components/RahmenSchnitt'
-import Ablauf from '../components/Ablauf'
 
 /* ── Bausteine ──────────────────────────────────────────────────────────── */
 
@@ -148,6 +147,8 @@ const LEDER = [
 export default function TestHomepage() {
   const navigate = useNavigate()
   const shoes = useStore(s => s.shoes)
+  const shoeMaterials = useStore(s => s.shoeMaterials)
+  const shoeColors = useStore(s => s.shoeColors)
   const katalogStatus = useStore(s => s.katalogStatus)
   const initStore = useStore(s => s.initStore)
 
@@ -209,6 +210,75 @@ export default function TestHomepage() {
     const preise = shoes.map(s => preisAlsZahl(s.price)).filter(p => p > 0)
     return preise.length ? Math.min(...preise) : null
   }, [shoes])
+
+  /**
+   * Die sechs Stationen des Wegs.
+   *
+   * Reihenfolge und Inhalt folgen dem Konfigurator: erst Leder, dann Farbe,
+   * dann die Optionsgruppen, dann die Passform, dann die Kasse (siehe
+   * `sichtbareGruppen` in Customize.jsx). Wer hier eine Station erfindet,
+   * setzt eine Erwartung, die der Laden nicht einlöst.
+   *
+   * Die Zahlen kommen aus dem Katalog und nicht aus einer gepflegten Zeile.
+   * Solange er lädt, stehen sie noch nicht fest — dann entfällt der Beleg,
+   * statt eine 0 zu zeigen.
+   */
+  const stationen = useMemo(() => {
+    const leder = shoeMaterials.filter(m => m.available !== 0 && m.available !== false)
+    // Nach Farbwert eindeutig: Der Katalog führt „Schwarz" und „Black", beide
+    // auf #000000. Zwei gleiche Punkte nebeneinander sehen nach einem Fehler
+    // aus, nicht nach Auswahl.
+    const farbtoene = [...new Map(
+      shoeColors
+        .filter(c => (c.available !== 0 && c.available !== false) && c.hex)
+        .map(c => [String(c.hex).toLowerCase(), c.hex]),
+    ).values()].slice(0, 16)
+
+    return [
+      {
+        titel: 'Das Modell',
+        text: 'Die Form zuerst, denn sie entscheidet über alles Weitere: Welche Leder, '
+            + 'welche Sohlen und welche Details zur Wahl stehen, hängt an der Machart.',
+        schlagworte: ['Oxford', 'Derby', 'Monk', 'Loafer', 'Boot', 'Sneaker'],
+        hinweis: shoes.length ? `${shoes.length} Modelle im Katalog.` : null,
+      },
+      {
+        titel: 'Das Leder',
+        text: 'Kalbsleder, Cordovan, Nubuk, Velours, Lackleder. Es bestimmt, wie das '
+            + 'Paar aussieht, wie es altert und was es kostet.',
+        hinweis: leder.length
+          ? `${leder.length} Leder im Katalog, je nach Modell eine Auswahl daraus.`
+          : null,
+      },
+      {
+        titel: 'Die Farbe',
+        text: 'Zu jedem Leder die Töne, die es in dieser Gerbung gibt. Dieselbe Farbe '
+            + 'fällt auf Velours anders aus als auf Box Calf — deshalb hängt die Auswahl '
+            + 'am Leder und nicht am Modell.',
+        farben: farbtoene.length ? farbtoene : null,
+        hinweis: farbtoene.length ? `${farbtoene.length} Töne, hier ohne Namen.` : null,
+      },
+      {
+        titel: 'Sohle, Rahmen und Details',
+        text: 'Ab hier wird es fein. Jeder Schritt zeigt sofort, was er am Preis ändert, '
+            + 'und keiner ist vorausgewählt — was dasteht, hast du gewählt.',
+        schlagworte: ['Sohlen-Art', 'Rahmen', 'Nahtfarbe', 'Sohlenrand', 'Laufsohle', 'Innenfutter', 'Zehenkappe'],
+        hinweis: 'Welche Schritte erscheinen, hängt vom Modell ab.',
+      },
+      {
+        titel: 'Deine Maße',
+        text: 'Fußlänge und Ballenumfang, mehr nicht. Daraus bestimmen wir Leisten, '
+            + 'Größe und Weite. Eine Größentabelle brauchst du nicht, weil wir nicht raten.',
+        hinweis: '±0,5 cm genügen. Ein Schnürsenkel und ein Lineal reichen zum Messen.',
+      },
+      {
+        titel: 'Prüfen und bestellen',
+        text: 'Vor dem Abschluss steht deine vollständige Zusammenstellung noch einmal da, '
+            + 'jede Farbe, jede Option, jedes Zubehör. Erst dieser Klick ist verbindlich.',
+        hinweis: 'Bis hierher kostet nichts und verpflichtet nichts.',
+      },
+    ]
+  }, [shoes.length, shoeMaterials, shoeColors])
 
   const zurKollektion = () => navigate('/collection')
 
@@ -658,29 +728,131 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 7 · Der Ablauf ════════════════════════════════════════════════
-          Dieselbe Darstellung wie unter der Kollektion und im Firmenbereich.
-          Eine eigene Gestaltung nur hier hieße, dieselbe Erklärung an der
-          vierten Stelle anders aussehen zu lassen. */}
+      {/* ══ 7 · Der Weg ═══════════════════════════════════════════════════
+          Die Frage, die nach allem Vorherigen noch offen ist: „Und wie läuft
+          das jetzt ab?" Sie stand bisher als vierstufige Aufzählung da —
+          dieselbe Darstellung wie unter der Kollektion und im Firmenbereich,
+          und für diese Seite zu wenig.
+
+          Denn hier ist der Weg nicht eine Nebenauskunft, sondern die
+          Handlung: Wer 1.300 Euro ausgibt, will vorher wissen, wie viele
+          Entscheidungen auf ihn zukommen und an welcher Stelle es
+          verbindlich wird. Deshalb eine eigene Darstellung — eine
+          durchgehende Linie mit sechs Stationen und einem Ziel. Die
+          gemeinsame Ablauf-Darstellung bleibt, wo sie hingehört: an den
+          drei anderen Stellen, wo derselbe Vorgang nur erklärt und nicht
+          erzählt wird.
+
+          Die Stationen sind die echten Schritte des Konfigurators, in
+          seiner Reihenfolge: erst Leder, dann Farbe, dann die Optionsgruppen
+          (siehe sichtbareGruppen in Customize.jsx), dann die Passform, dann
+          die Kasse. Die Zahlen darin kommen aus dem Katalog und nicht aus
+          einer gepflegten Zeile — ein Leder mehr im CMS, und hier steht es. */}
       <section className="px-5 lg:px-16 py-16 lg:py-28">
-        <Enthuellen>
-          <Ablauf
-            titel="Vom Klick zum Paar"
-            intro="Vier Schritte, und du weißt nach jedem, woran du bist."
-            breite="max-w-2xl"
-            schritte={[
-              { titel: 'Modell und Ausführung',
-                text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Unterbrechen und später weitermachen geht, der Stand bleibt gespeichert.' },
-              { titel: 'Maße statt Größe',
-                text: 'Fußlänge und Ballenumfang, ±0,5 cm genügen. Daraus ermitteln wir Leisten und Größe. Eine Größentabelle brauchst du nicht, weil wir nicht raten.' },
-              { titel: 'Fertigung',
-                text: 'Nach Zahlungseingang geht die Bestellung in die Manufaktur. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht.' },
-              { titel: 'Endkontrolle und Versand',
-                text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.' },
-            ]}
-            fuss="Vier bis sechs Wochen ab Zahlungseingang. Versand innerhalb Deutschlands ist inbegriffen. Ein Schuh für einen bestimmten Fuß lässt sich nicht zurückgeben — ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für dich. Die Einzelheiten stehen in den AGB."
-          />
-        </Enthuellen>
+        <div className="max-w-3xl mx-auto">
+          <Enthuellen>
+            <Kapitelmarke>Der Weg</Kapitelmarke>
+            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3">
+              Sechs Entscheidungen,<br className="hidden sm:block" /> dann gehört er dir.
+            </h2>
+          </Enthuellen>
+          <Enthuellen verzoegerung={120}>
+            <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
+              Keine davon musst du auf einmal treffen. Der Konfigurator merkt sich
+              jeden Stand, und verbindlich wird nichts davon bis zur letzten Station.
+            </p>
+          </Enthuellen>
+
+          <ol className="mt-12 lg:mt-16">
+            {stationen.map((st, i) => (
+              <Enthuellen key={st.titel} verzoegerung={Math.min(i, 5) * 70}>
+                <li className="relative flex gap-5 lg:gap-8 pb-10 lg:pb-12">
+                  {/* Die Linie zwischen den Stationen.
+                      Sie hängt am <li> und nicht an der Marke: Die Marke ist
+                      36 Pixel hoch, und eine Linie, die sich daran ausrichtet,
+                      hört 36 Pixel weiter unten auf — sie endete im Leeren,
+                      statt die nächste Station zu erreichen. 18 Pixel ist die
+                      Mitte der Marke, die als erstes Kind am linken Rand
+                      steht. */}
+                  <span
+                    className="absolute left-[18px] top-9 bottom-0 w-px bg-black/[0.12]"
+                    aria-hidden="true"
+                  />
+                  <div className="relative shrink-0">
+                    <span className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full border border-black/15 bg-white text-[10px] text-black/55"
+                          style={{ letterSpacing: '0.12em' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+
+                  <div className="pt-1 min-w-0">
+                    <p className="text-[15px] lg:text-[17px] text-black font-light leading-snug">{st.titel}</p>
+                    <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
+                      {st.text}
+                    </p>
+
+                    {/* Der Beleg zur Station: echte Farbtöne aus dem Katalog,
+                        die Namen der Optionsgruppen, eine Zahl. Eine
+                        Aufzählung ohne Beleg ist eine Behauptung. */}
+                    {st.farben && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-4">
+                        {st.farben.map(hex => (
+                          <span
+                            key={hex}
+                            className="inline-block w-5 h-5 rounded-full border border-black/10"
+                            style={{ background: hex }}
+                            aria-hidden="true"
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {st.schlagworte && (
+                      <div className="flex flex-wrap gap-1.5 mt-4">
+                        {st.schlagworte.map(w => (
+                          <span
+                            key={w}
+                            className="text-[10px] uppercase tracking-[0.14em] text-black/45 border border-black/[0.12] px-2.5 py-1"
+                          >
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {st.hinweis && (
+                      <p className="text-[11px] text-black/35 font-light mt-3">{st.hinweis}</p>
+                    )}
+                  </div>
+                </li>
+              </Enthuellen>
+            ))}
+
+            {/* ── Das Ziel ──────────────────────────────────────────────
+                Gefüllte Marke statt Umriss, und keine Linie darunter: Hier
+                endet der Weg, und das soll man sehen, ohne es zu lesen. */}
+            <Enthuellen verzoegerung={140}>
+              <li className="relative flex gap-5 lg:gap-8">
+                <span className="shrink-0 relative z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black text-white" aria-hidden="true">
+                  <Check size={15} strokeWidth={1.8} />
+                </span>
+                <div className="pt-1">
+                  <p className="text-[17px] lg:text-[20px] text-black font-light leading-snug">Dein Paar</p>
+                  <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
+                    Vier bis sechs Wochen nach Zahlungseingang, einzeln gefertigt in
+                    einer spanischen Manufaktur. Du bekommst Nachricht, wenn die
+                    Fertigung beginnt, wenn dein Paar in die Endkontrolle geht und
+                    wenn es das Haus verlässt. Der Versand innerhalb Deutschlands ist
+                    inbegriffen.
+                  </p>
+                  <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
+                    Ein Schuh für einen bestimmten Fuß lässt sich nicht zurückgeben.
+                    Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für
+                    dich. Die Einzelheiten stehen in den AGB.
+                  </p>
+                </div>
+              </li>
+            </Enthuellen>
+          </ol>
+        </div>
       </section>
 
       {/* ══ 8 · Der Anfang ════════════════════════════════════════════════
@@ -697,13 +869,13 @@ export default function TestHomepage() {
         <div className="relative px-5 lg:px-16 py-20 lg:py-32 text-center">
           <Enthuellen>
             <h2 className="text-[26px] lg:text-[42px] font-extralight leading-[1.1] tracking-tight text-white max-w-2xl mx-auto">
-              Fang mit dem Modell an.<br className="hidden sm:block" /> Die Maße kommen später.
+              Sechs Entscheidungen.<br className="hidden sm:block" /> Fang mit der ersten an.
             </h2>
           </Enthuellen>
           <Enthuellen verzoegerung={120}>
             <p className="text-[13px] lg:text-[14px] text-white/55 font-light mt-5 max-w-md mx-auto leading-relaxed">
-              Konfigurieren kostet nichts und verpflichtet zu nichts. Erst am Ende stehen
-              Preis und Lieferzeit fest.
+              Die Form zuerst — alles andere baut darauf auf. Konfigurieren kostet
+              nichts und verpflichtet zu nichts.
             </p>
           </Enthuellen>
           <Enthuellen verzoegerung={200}>
