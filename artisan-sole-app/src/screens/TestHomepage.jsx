@@ -466,54 +466,58 @@ export default function TestHomepage() {
       </section>
 
       {/* ══ 3 · Die Modelle ═══════════════════════════════════════════════
-          Kapitel, keine Kacheln. Jedes Modell bekommt eine ganze Fläche: die
-          Aufnahme bis an den Seitenrand, daneben die Geschichte, die im
-          Katalog für genau dieses Modell steht, und darunter die Angaben,
-          die vor dem Klick zählen.
+          Der Abschnitt, an dem sich entscheidet, ob die Seite ein Katalog ist
+          oder ein Heft.
 
-          Die erste Fassung setzte Bild und Text in zwei gleich breite
-          Spalten mit Rand ringsum. Das sah aufgeräumt aus und wirkte leer:
-          Ein Foto mit Luft an allen vier Seiten ist eine Abbildung, eines
-          bis an die Kante ist eine Fläche, in der man steht. Dazu kommt der
-          Wechsel des Grundes — vier weiße Abschnitte hintereinander haben
-          keinen Takt.
+          Drei Regeln, abgeschaut bei Häusern, die davon leben:
 
-          Die Angaben unter der Geschichte stammen ausnahmslos aus dem
-          Katalog. Was dort nicht steht, steht auch hier nicht: keine
-          Machart je Modell, denn ein Mokassin ist nicht rahmengenäht, und
-          eine Zeile, die das behauptete, wäre an der einen Stelle falsch,
-          an der es jemand nachprüfen kann. */}
+          LUFT IST DER STOFF. Eine Fläche wirkt nicht teuer, weil viel darauf
+          steht, sondern weil wenig darauf steht und das wenige Platz hat.
+          Jedes Kapitel füllt deshalb fast einen Bildschirm, und die Textspalte
+          ist schmaler als der Platz, den sie hätte — kurze Zeilen lesen sich
+          ruhiger, und der Rand ist kein verschenkter Raum, sondern der
+          eigentliche Eindruck.
+
+          EIN GEDANKE JE FLÄCHE. In der ersten Fassung standen sieben Dinge
+          untereinander: Marke, Überschrift, Name, Geschichte, Anlass,
+          Alterung, Angaben, Knopf. Das ist eine Produktseite. Der Gedanke zur
+          Alterung steht jetzt für sich, mittig, in einem eigenen ruhigen Band
+          unter dem Kapitel — er ist der stärkste Satz, den ein Schuh hat, und
+          im Stapel ging er unter.
+
+          DIE PAUSE GEHÖRT DAZU. Zwischen Kapiteln und Auswahl liegt eine
+          Fläche ohne Produkt, ohne Preis, ohne Knopf. */}
       <section>
-        <div className="px-5 lg:px-16 py-14 lg:py-24 max-w-3xl">
+        {/* Der Einstieg: mittig, viel Luft, ein Gedanke. Er stand links mit
+            Vorspann daneben — das liest sich wie ein Artikel, nicht wie der
+            Beginn eines Kapitels. */}
+        <div className="px-5 lg:px-16 pt-20 pb-16 lg:pt-36 lg:pb-28 text-center">
           <Enthuellen>
             <Kapitelmarke>Die Modelle</Kapitelmarke>
-            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3">
-              Jede Form hat einen Grund.<br className="hidden sm:block" /> Meist einen älteren als wir.
+            <h2 className="text-[28px] lg:text-[46px] font-extralight leading-[1.12] tracking-tight mt-5 max-w-3xl mx-auto">
+              Jede Form hat einen Grund. Meist einen älteren als wir.
             </h2>
           </Enthuellen>
-          <Enthuellen verzoegerung={120}>
-            <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
-              Oxford, Derby, Monk, Chelsea: Diese Formen sind älter als jedes Haus, das
-              sie heute verkauft. Keine ist als Entwurf entstanden, jede aus einer
+          <Enthuellen verzoegerung={140}>
+            <p className="text-[13px] lg:text-[15px] text-black/45 font-light leading-[2] mt-8 max-w-xl mx-auto">
+              Keine dieser Formen ist als Entwurf entstanden. Jede kommt aus einer
               Notwendigkeit — die geschlossene Schnürung für die Strenge der Etikette,
-              die offene für den kräftigen Spann, der Riemen für den Steigbügel, der
-              Gummizug für den schnellen Aufbruch. Wer weiß, wofür eine Form gemacht
-              wurde, wählt nicht mehr nach Geschmack allein.
+              die offene für den kräftigen Spann, der Riemen für den Steigbügel.
             </p>
           </Enthuellen>
         </div>
 
         {katalogStatus === 'loading' && !kapitel.length ? (
-          <p className="px-5 lg:px-16 py-16 text-center text-[12px] text-black/30 font-light">
+          <p className="px-5 lg:px-16 py-24 text-center text-[12px] text-black/30 font-light">
             Modelle werden geladen …
           </p>
         ) : katalogStatus === 'error' && !kapitel.length ? (
-          <div className="px-5 lg:px-16 py-12 text-center">
+          <div className="px-5 lg:px-16 py-20 text-center">
             <p className="text-[12px] text-black/45 font-light">Die Modelle lassen sich gerade nicht laden.</p>
             <button
               type="button"
               onClick={() => initStore?.()}
-              className="mt-3 bg-transparent border border-black/15 text-black/70 px-6 h-10 text-[11px] uppercase hover:border-black/40 hover:text-black transition-colors"
+              className="mt-4 bg-transparent border border-black/15 text-black/70 px-6 h-10 text-[11px] uppercase hover:border-black/40 hover:text-black transition-colors"
               style={{ letterSpacing: '0.16em' }}
             >
               Noch einmal versuchen
@@ -523,137 +527,152 @@ export default function TestHomepage() {
           <div>
             {kapitel.map((schuh, i) => {
               const bildLinks = i % 2 === 0
-              const hell = i % 2 === 1
+              const grund = i % 2 === 1 ? 'bg-[#F5F3F0]' : 'bg-white'
               const nummer = String(i + 1).padStart(2, '0')
               const erz = erzaehlungZu(schuh.category)
               const oeffnen = () => navigate(shoePath(schuh))
 
               return (
-                <article
-                  key={schuh.id}
-                  className={`lg:flex lg:items-stretch lg:min-h-[680px] ${
-                    bildLinks ? '' : 'lg:flex-row-reverse'
-                  } ${hell ? 'bg-[#F5F3F0]' : 'bg-white'}`}
-                >
-                  {/* ── Die Aufnahme, bis an den Seitenrand ────────────── */}
-                  <Enthuellen
-                    richtung={bildLinks ? 'links' : 'rechts'}
-                    className="lg:w-[58%] relative"
+                <div key={schuh.id} className={grund}>
+                  <article
+                    className={`lg:flex lg:items-stretch lg:min-h-[86vh] ${
+                      bildLinks ? '' : 'lg:flex-row-reverse'
+                    }`}
                   >
-                    <button
-                      type="button"
-                      onClick={oeffnen}
-                      className="group block w-full h-full bg-transparent border-0 p-0 text-left"
-                      aria-label={`${schuh.name} ansehen und konfigurieren`}
+                    {/* ── Die Aufnahme ──────────────────────────────────── */}
+                    <Enthuellen
+                      richtung={bildLinks ? 'links' : 'rechts'}
+                      className="lg:w-[56%] relative"
                     >
-                      <div className="relative aspect-[4/3] lg:aspect-auto lg:h-full overflow-hidden bg-[#EDEAE3]">
-                        <img
-                          src={resolveMediaUrl(schuh.image)}
-                          alt={`${schuh.name}, nach Maß gefertigt`}
-                          loading="lazy"
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.05]"
-                        />
-                        {schuh.tag && (
-                          <span
-                            className="absolute top-5 right-5 lg:top-8 lg:right-8 text-[9px] uppercase text-black bg-white/90 px-2.5 py-1"
-                            style={{ letterSpacing: '0.2em' }}
-                          >
-                            {schuh.tag}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  </Enthuellen>
-
-                  {/* ── Das Kapitel ───────────────────────────────────────
-                      Oben ein Satz, kein Name. Der Name steht darunter,
-                      klein — wer das Modell sucht, findet ihn; wer noch
-                      nicht weiß, warum er hier ist, liest zuerst den Satz. */}
-                  <Enthuellen
-                    verzoegerung={140}
-                    className="lg:w-[42%] flex items-center px-5 lg:px-12 xl:px-16 py-12 lg:py-20"
-                  >
-                    <div className="w-full max-w-md">
-                      <Kapitelmarke>
-                        {`${nummer} — ${String(schuh.category || 'Custom Made').replace(/_/g, ' ')}`}
-                      </Kapitelmarke>
-
-                      <h3 className="text-[27px] lg:text-[36px] font-extralight leading-[1.12] tracking-tight mt-4">
-                        {erz.titel}
-                      </h3>
-
-                      <p className="text-[11px] uppercase tracking-[0.22em] text-black/40 mt-6">
-                        {schuh.name}
-                      </p>
-
-                      <p className="text-[13px] lg:text-[14px] text-black/55 font-light leading-[1.95] mt-4">
-                        {schuh.description}
-                      </p>
-
-                      {/* Wofür. Der Satz, der aus einer Machart einen Anlass
-                          macht — und aus einem Schuh eine Entscheidung. */}
-                      <p className="text-[14px] lg:text-[16px] text-black/80 font-light leading-[1.7] mt-7 pl-5 border-l border-black/20">
-                        {erz.wofuer}
-                      </p>
-
-                      {/* Und was daraus wird. Das Einzige an einem Schuh, das
-                          kein Foto zeigen kann, und das Stärkste, was er hat. */}
-                      <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-[1.9] mt-7">
-                        {erz.zeit}
-                      </p>
-
-                      {/* Die harten Angaben. Eine ruhige Zeile, keine
-                          Aufstellung: Vier Zeilen mit Haarlinien machten aus
-                          dem Kapitel ein Datenblatt. */}
-                      <p className="text-[11px] text-black/40 font-light mt-8 pt-5 border-t border-black/[0.09]">
-                        {[
-                          schuh.material,
-                          Number(schuh.express) === 1
-                            ? `rund ${schuh.express_weeks || 2} Wochen`
-                            : 'vier bis sechs Wochen',
-                          schuh.price ? `ab ${schuh.price}` : null,
-                        ].filter(Boolean).join('   ·   ')}
-                      </p>
-
                       <button
                         type="button"
                         onClick={oeffnen}
-                        className="group mt-6 bg-black text-white border-0 px-8 h-12 text-[11px] uppercase inline-flex items-center gap-3 hover:bg-black/85 transition-colors"
-                        style={{ letterSpacing: '0.18em' }}
+                        className="group block w-full h-full bg-transparent border-0 p-0 text-left"
+                        aria-label={`${schuh.name} ansehen und konfigurieren`}
                       >
-                        Konfigurieren
-                        <ArrowRight
-                          size={15}
-                          strokeWidth={1.5}
-                          className="transition-transform duration-500 group-hover:translate-x-1"
-                        />
+                        <div className="relative aspect-[4/3] lg:aspect-auto lg:h-full overflow-hidden bg-[#EDEAE3]">
+                          <img
+                            src={resolveMediaUrl(schuh.image)}
+                            alt={`${schuh.name}, nach Maß gefertigt`}
+                            loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-[1.04]"
+                          />
+                          {schuh.tag && (
+                            <span
+                              className="absolute top-6 right-6 lg:top-10 lg:right-10 text-[9px] uppercase text-black bg-white/90 px-3 py-1.5"
+                              style={{ letterSpacing: '0.22em' }}
+                            >
+                              {schuh.tag}
+                            </span>
+                          )}
+                        </div>
                       </button>
+                    </Enthuellen>
+
+                    {/* ── Das Kapitel ───────────────────────────────────────
+                        Schmaler als die Spalte, die zur Verfügung stünde: Eine
+                        Zeile von 45 Zeichen liest sich ruhig, eine von 75
+                        hastig — und der Rand daneben ist der Eindruck. */}
+                    <Enthuellen
+                      verzoegerung={160}
+                      className="lg:w-[44%] flex items-center px-5 lg:px-16 xl:px-24 py-16 lg:py-32"
+                    >
+                      <div className="w-full max-w-[26rem]">
+                        <Kapitelmarke>
+                          {`${nummer} — ${String(schuh.category || 'Custom Made').replace(/_/g, ' ')}`}
+                        </Kapitelmarke>
+
+                        <h3 className="text-[29px] lg:text-[40px] font-extralight leading-[1.14] tracking-tight mt-6">
+                          {erz.titel}
+                        </h3>
+
+                        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
+                          {schuh.description}
+                        </p>
+
+                        <p className="text-[15px] lg:text-[17px] text-black/80 font-light leading-[1.65] mt-10">
+                          {erz.wofuer}
+                        </p>
+
+                        {/* Name, Angaben und Weg — eine Fußzeile, kein Block.
+                            Der Name steht hier und nicht oben: Wer bis hierher
+                            gelesen hat, will wissen, wie das Ding heißt; wer
+                            oben ankommt, noch nicht. */}
+                        <div className="mt-12 pt-6 border-t border-black/[0.09]">
+                          <p className="text-[11px] uppercase tracking-[0.24em] text-black/50">
+                            {schuh.name}
+                          </p>
+                          <p className="text-[11px] text-black/35 font-light mt-2">
+                            {[
+                              schuh.material,
+                              Number(schuh.express) === 1
+                                ? `rund ${schuh.express_weeks || 2} Wochen`
+                                : 'vier bis sechs Wochen',
+                              schuh.price ? `ab ${schuh.price}` : null,
+                            ].filter(Boolean).join('   ·   ')}
+                          </p>
+
+                          {/* Ein Wortlink statt eines schwarzen Blocks. Ein
+                              gefüllter Knopf in jedem Kapitel macht aus der
+                              Reihe einen Verkaufsprospekt; der Strich, der
+                              beim Überfahren aufzieht, tut dasselbe leiser. */}
+                          <button
+                            type="button"
+                            onClick={oeffnen}
+                            className="group mt-7 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
+                            style={{ letterSpacing: '0.22em' }}
+                          >
+                            <span className="relative pb-1">
+                              Konfigurieren
+                              <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
+                            </span>
+                            <ArrowRight
+                              size={14}
+                              strokeWidth={1.5}
+                              className="transition-transform duration-500 group-hover:translate-x-1.5"
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </Enthuellen>
+                  </article>
+
+                  {/* ── Der Nachsatz ────────────────────────────────────────
+                      Was nach Jahren aus dem Paar wird — mittig, allein, mit
+                      Luft. Im Stapel der Textspalte war er die sechste Zeile
+                      von acht und ging unter; hier ist er das Letzte, was von
+                      diesem Modell bleibt. */}
+                  <Enthuellen richtung="ruhig">
+                    {/* Kein negativer Abstand nach oben: Die Bildspalte
+                        reicht bis zur Unterkante des Kapitels, und ein
+                        Hochziehen schob den Satz über das Foto. */}
+                    <div className="px-5 lg:px-16 pt-14 pb-20 lg:pt-20 lg:pb-32">
+                      <p className="text-[15px] lg:text-[19px] text-black/55 font-extralight leading-[1.75] text-center max-w-2xl mx-auto">
+                        {erz.zeit}
+                      </p>
                     </div>
                   </Enthuellen>
-                </article>
+                </div>
               )
             })}
           </div>
         )}
 
-        {/* ── Zwischenbild ────────────────────────────────────────────────
-            Eine Fläche ohne Produkt, ohne Preis, ohne Knopf.
-
-            Vier Kapitel in gleichem Aufbau hintereinander lesen sich wie ein
-            Katalog, auch wenn jedes für sich gut ist. Hier hält die Seite
-            einmal an: ein Bild, ein Satz, sonst nichts. Erst danach kommt
-            die Auswahl. */}
+        {/* ── Die Pause ───────────────────────────────────────────────────
+            Eine Fläche ohne Produkt, ohne Preis, ohne Knopf. Vier Kapitel in
+            gleichem Aufbau lesen sich wie ein Katalog, auch wenn jedes für
+            sich trägt — hier hält die Seite an, bevor die Auswahl kommt. */}
         <Enthuellen richtung="ruhig">
-          <section className="relative overflow-hidden bg-[#111] min-h-[52vh] lg:min-h-[60vh] flex items-center">
+          <section className="relative overflow-hidden bg-[#111] min-h-[62vh] lg:min-h-[72vh] flex items-center">
             <img
               src={CRAFT.hands}
               alt=""
               aria-hidden="true"
               loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover opacity-[0.38]"
+              className="absolute inset-0 w-full h-full object-cover opacity-[0.34]"
             />
-            <div className="relative px-5 lg:px-16 py-16 max-w-3xl mx-auto text-center">
-              <p className="text-[19px] lg:text-[30px] font-extralight leading-[1.35] tracking-tight text-white">
+            <div className="relative px-5 lg:px-16 py-20 max-w-3xl mx-auto text-center">
+              <p className="text-[21px] lg:text-[34px] font-extralight leading-[1.4] tracking-tight text-white">
                 Ein Schuh wird nicht gekauft und dann getragen.
                 Er wird getragen und dabei fertig.
               </p>
@@ -661,27 +680,27 @@ export default function TestHomepage() {
           </section>
         </Enthuellen>
 
-        {/* Der Rest der Auswahl, klein. Wer bis hierher gelesen hat, will
-            nicht noch vier Kapitel, sondern sehen, was es sonst gibt. */}
+        {/* ── Und außerdem ───────────────────────────────────────────────
+            Die restliche Auswahl. Sie darf klein sein — wer bis hierher
+            gelesen hat, sucht keine vier weiteren Kapitel, sondern will
+            sehen, was es sonst gibt.
+
+            Vier statt sechs Kacheln, dafür größer und mit Abstand
+            dazwischen: Ein Raster ohne Fugen ist ein Regal. Die Überschrift
+            steht mittig darüber, wie an jeder anderen Stelle dieser Seite —
+            links mit einem Verweis rechts daneben war die einzige Zeile der
+            Seite, die nach Verwaltung aussah. */}
         {weitere.length > 0 && (
-          <div className="px-5 lg:px-16 mt-16 lg:mt-28">
+          <div className="px-5 lg:px-16 py-20 lg:py-32">
             <Enthuellen>
-              <div className="flex items-end justify-between mb-5">
+              <div className="text-center">
                 <Kapitelmarke>Und außerdem</Kapitelmarke>
-                <button
-                  type="button"
-                  onClick={zurKollektion}
-                  className="bg-transparent border-0 p-0 text-[11px] text-black/45 hover:text-black transition-colors flex items-center gap-1.5"
-                >
-                  Alle Modelle
-                  <ArrowRight size={13} strokeWidth={1.5} />
-                </button>
               </div>
             </Enthuellen>
 
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-px bg-black/[0.07]">
-              {weitere.map((schuh, i) => (
-                <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 5) * 60} className="bg-white">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10 mt-10 lg:mt-14">
+              {weitere.slice(0, 4).map((schuh, i) => (
+                <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 3) * 80}>
                   <button
                     type="button"
                     onClick={() => navigate(shoePath(schuh))}
@@ -690,24 +709,39 @@ export default function TestHomepage() {
                     <div className="aspect-[4/5] overflow-hidden bg-[#EDEAE3]">
                       <img
                         src={resolveMediaUrl(schuh.image)}
-                        alt={`${schuh.name}, rahmengenäht, nach Maß gefertigt`}
+                        alt={`${schuh.name}, nach Maß gefertigt`}
                         loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                        className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
                       />
                     </div>
-                    <div className="px-3 py-3">
-                      <p className="text-[12px] text-black font-normal leading-snug line-clamp-2 min-h-[2.6em]">
-                        {schuh.name}
-                      </p>
-                      <p className="text-[12px] text-black/50 font-light mt-0.5">
-                        {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
-                      </p>
-                    </div>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-5 line-clamp-2 min-h-[2.8em]">
+                      {schuh.name}
+                    </p>
+                    <p className="text-[12px] text-black/40 font-light mt-1.5">
+                      {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
+                    </p>
                   </button>
                 </Enthuellen>
               ))}
             </div>
-            <PreisFuss className="mt-3" />
+
+            <Enthuellen verzoegerung={120}>
+              <div className="text-center mt-14 lg:mt-20">
+                <button
+                  type="button"
+                  onClick={zurKollektion}
+                  className="group bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
+                  style={{ letterSpacing: '0.22em' }}
+                >
+                  <span className="relative pb-1">
+                    {shoes.length ? `Alle ${shoes.length} Modelle` : 'Alle Modelle'}
+                    <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
+                  </span>
+                  <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+                </button>
+              </div>
+              <PreisFuss className="mt-10 text-center" />
+            </Enthuellen>
           </div>
         )}
       </section>
