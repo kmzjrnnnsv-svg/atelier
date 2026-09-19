@@ -42,7 +42,7 @@ export default function PasswortNeu() {
       })
       setGesendet(true)
     } catch (err) {
-      setFehler(err.error || 'Das hat nicht geklappt. Bitte versuchen Sie es erneut.')
+      setFehler(err.error || 'Das hat nicht geklappt. Bitte versuch es erneut.')
     } finally {
       setLaeuft(false)
     }
@@ -85,8 +85,8 @@ export default function PasswortNeu() {
       <div>
         <KeyRound size={28} strokeWidth={0.9} className="text-black/20 mb-4" />
         <p className="text-[14px] text-black/60 font-light leading-relaxed">
-          Ihr neues Passwort gilt. Alle offenen Sitzungen wurden beendet,
-          falls jemand anderes an Ihrem Konto war, ist er jetzt draußen.
+          Dein neues Passwort gilt. Alle offenen Sitzungen wurden beendet,
+          falls jemand anderes an deinem Konto war, ist er jetzt draußen.
         </p>
         <Link
           to="/login"
@@ -108,7 +108,7 @@ export default function PasswortNeu() {
           Der Link darin gilt eine Stunde und nur einmal.
         </p>
         <p className="text-[12px] text-black/35 font-light leading-relaxed mt-4">
-          Nichts angekommen? Sehen Sie im Spam-Ordner nach. Steht dort auch
+          Nichts angekommen? Sieh im Spam-Ordner nach. Steht dort auch
           nichts, wurde das Konto möglicherweise mit einer anderen Adresse
           angelegt.
         </p>
@@ -175,8 +175,8 @@ export default function PasswortNeu() {
   return rahmen('Passwort vergessen', (
     <form onSubmit={anfordern} className="flex flex-col gap-5">
       <p className="text-[13px] text-black/50 font-light leading-relaxed -mt-3">
-        Geben Sie die Adresse an, mit der Sie Ihr Konto angelegt haben. Wir
-        schicken Ihnen einen Link, mit dem Sie ein neues Passwort setzen.
+        Gib die Adresse an, mit der du dein Konto angelegt hast. Wir
+        schicken dir einen Link, mit dem du ein neues Passwort setzt.
       </p>
 
       <div>

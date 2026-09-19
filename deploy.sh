@@ -70,6 +70,32 @@ NODE_OPTIONS="--max-old-space-size=2048" npm run build -- --outDir dist-new --em
 # Lazy-Laden alter Chunk-Hashes (während/kurz nach dem Deploy) nicht 404en.
 #   -n: niemals frisch gebaute Dateien überschreiben · -p: mtime erhalten (Prune)
 if [ -d dist/assets ]; then cp -rpn dist/assets/. dist-new/assets/ 2>/dev/null || true; fi
+
+# Vorrenderung: aus der leeren Huelle fertige Seiten machen, damit eine
+# Suchmaschine und eine Linkvorschau Text vorfinden statt eines leeren <div>.
+#
+# Ausdruecklich einzuschalten (PRERENDER=1 ./deploy.sh) und aus zwei Gruenden
+# absichtlich nicht der Normalfall:
+#   • Der Schritt braucht Playwright und einen Browser auf diesem Rechner,
+#     einmalig:  npm install --no-save playwright && npx playwright install chromium
+#   • Er oeffnet jede oeffentliche Seite in einem echten Browser. Auf einer
+#     kleinen Maschine ist das die speicherhungrigste Stelle des Deploys.
+#
+# Faellt er aus, bleibt dist-new/ vollstaendig und wird trotzdem live
+# geschaltet — die Seite verliert die Vorrenderung, nicht ihren Betrieb.
+# Deshalb `|| echo` statt eines Abbruchs: `set -e` wuerde hier sonst einen
+# funktionierenden Build wegen einer Zusatzleistung verwerfen.
+if [ "${PRERENDER:-0}" = "1" ]; then
+  echo "→ Seiten vorrendern..."
+  # Das Skript schreibt nach dist/, gebaut wird aber nach dist-new/ — also
+  # erst umbenennen, vorrendern, zurueck. Die Seite laeuft derweil aus dem
+  # alten dist/, das hier noch unangetastet ist.
+  mv dist-new dist-prerender
+  DIST_DIR=dist-prerender API="http://127.0.0.1:${API_PORT:-3001}" \
+    node scripts/prerender.mjs \
+    || echo "  Vorrenderung übersprungen, dist bleibt gültig"
+  mv dist-prerender dist-new
+fi
 # Atomarer Wechsel (zwei mv = Sub-Millisekunden-Fenster).
 rm -rf dist-old
 [ -d dist ] && mv dist dist-old

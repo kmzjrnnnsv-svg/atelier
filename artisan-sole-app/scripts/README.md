@@ -85,3 +85,44 @@ der Seite doch zuschneiden muss.
 
 Ein Deployment ist dafür nicht nötig; die Header liegen in den Settings, nicht
 mehr im Code.
+
+---
+
+# Symbole und Vorschaubild erzeugen
+
+Zwei Vorlagen, beide HTML, beide ohne npm-Paket. Sie werden von einem
+Chromium ohne Fensterrahmen abgegriffen („headless shell") — das normale
+Chromium rechnet seine Leiste in `--window-size` hinein, und der Ausschnitt
+säße dann falsch. Playwright bringt die passende Fassung mit; sie liegt unter
+`<playwright-browsers>/chromium_headless_shell-*/chrome-linux/headless_shell`.
+
+## `og-image.html` — das Bild beim Teilen
+
+```bash
+headless_shell --headless --no-sandbox --hide-scrollbars \
+  --force-device-scale-factor=1 --window-size=1200,630 \
+  --screenshot=public/og-image.png scripts/og-image.html
+```
+
+Eine Typo-Karte, kein Produktbild. Sobald es eine gute Aufnahme eines Paares
+gibt, gehört sie an diese Stelle — ein Foto verkauft besser als ein
+Schriftzug.
+
+## `icon.html` — die Symbole der Anwendung
+
+```bash
+headless_shell --headless --no-sandbox --hide-scrollbars \
+  --window-size=192,192 --screenshot=public/icon-192.png scripts/icon.html
+headless_shell --headless --no-sandbox --hide-scrollbars \
+  --window-size=512,512 --screenshot=public/icon-512.png scripts/icon.html
+headless_shell --headless --no-sandbox --hide-scrollbars \
+  --window-size=180,180 --screenshot=public/apple-touch-icon.png scripts/icon.html
+```
+
+Android verlangt für „Zum Startbildschirm" PNG in 192 und 512, iOS ein
+`apple-touch-icon` in 180. Ein SVG allein genügt beiden nicht: Android zeigt
+dann gar kein Symbol, iOS ein unscharfes Abbild der Seite.
+
+Wer das Motiv ändert, ändert es in **beiden** Dateien — `scripts/icon.html`
+und `public/favicon.svg` tragen dasselbe Zeichen, und sie fallen sonst
+auseinander.

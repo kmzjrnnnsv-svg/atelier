@@ -1,6 +1,20 @@
 import { useNavigate } from 'react-router-dom'
+import { useSeo } from '../lib/seo'
 
 export default function NotFound() {
+  // Auch die Fehlerseite braucht einen eigenen Titel — sonst steht in einem
+  // Suchergebnis der Name des Ladens über einer Seite, die es nicht gibt.
+  //
+  // Und sie gehört nicht in den Index. Ein Webserver, der eine einzige Seite
+  // ausliefert, kann keine 404 senden: Er weiß nicht, welche Adressen es
+  // gibt — das entscheidet erst die Anwendung im Browser. Für Google ist
+  // jede Falschschreibung damit eine gültige Seite („Soft 404"), und
+  // /schuhe/oxfrod steht irgendwann neben /schuhe/oxford im Index.
+  // `noindex` ist in einer Anwendung dieser Bauart der belastbare Weg; eine
+  // echte 404 gäbe es erst mit vorgerenderten Seiten und einer Regel im
+  // Webserver, die alles Unbekannte abweist.
+  useSeo({ titel: 'Seite nicht gefunden', indexieren: false })
+
   const navigate = useNavigate()
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white px-8 text-center">
@@ -10,7 +24,7 @@ export default function NotFound() {
       <p className="text-7xl font-playfair text-black/10 font-bold mb-2">404</p>
       <h1 className="font-playfair text-2xl text-black mb-3">Seite nicht gefunden</h1>
       <p className="text-sm text-black/35 leading-relaxed mb-8 max-w-xs">
-        Die von Ihnen gesuchte Seite existiert nicht oder wurde verschoben.
+        Die von dir gesuchte Seite existiert nicht oder wurde verschoben.
       </p>
       <button
         onClick={() => navigate(-1)}

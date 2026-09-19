@@ -122,10 +122,10 @@ export default function ChatFenster({ offen, onClose, onGelesen }) {
           ) : nachrichten.length === 0 ? (
             <div className="py-8">
               <p className="text-[13px] text-black/60 font-light leading-relaxed">
-                Schreiben Sie uns, zu Ihrer Bestellung, zur Passform oder zu allem, was offen ist.
+                Schreib uns, zu deiner Bestellung, zur Passform oder zu allem, was offen ist.
               </p>
               <p className="text-[11px] text-black/30 font-light mt-2">
-                Ihre Nachricht landet direkt bei uns, nicht in einem Postfach.
+                Deine Nachricht landet direkt bei uns, nicht in einem Postfach.
               </p>
             </div>
           ) : nachrichten.map(m => (
@@ -135,7 +135,7 @@ export default function ChatFenster({ offen, onClose, onGelesen }) {
               }`}>
                 <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">{m.text}</p>
                 <p className={`text-[9px] mt-1.5 ${m.von === 'kunde' ? 'text-white/40' : 'text-black/30'}`}>
-                  {m.von === 'kunde' ? 'Sie' : (m.autor_name || 'Artisan Sole')} · {zeit(m.created_at)}
+                  {m.von === 'kunde' ? 'Du' : (m.autor_name || 'Artisan Sole')} · {zeit(m.created_at)}
                 </p>
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function ChatFenster({ offen, onClose, onGelesen }) {
               rows={2}
               value={text}
               onChange={e => setText(e.target.value)}
-              placeholder="Ihre Nachricht …"
+              placeholder="Deine Nachricht …"
               className="flex-1 border border-black/12 px-3 py-2 text-[13px] outline-none focus:border-black/40 resize-none"
             />
             <button

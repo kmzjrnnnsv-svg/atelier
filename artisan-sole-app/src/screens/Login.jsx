@@ -169,7 +169,7 @@ export default function Login() {
                   auffindbar — wer ihn braucht, sucht ihn gezielt. */}
               <p className="text-center">
                 <Link to="/konto-wiederherstellen" className="text-[11px] text-black/35 hover:text-black/70 underline underline-offset-4">
-                  Kein Zugriff mehr auf Ihre Geräte?
+                  Kein Zugriff mehr auf deine Geräte?
                 </Link>
               </p>
               {!passwortWeg && (

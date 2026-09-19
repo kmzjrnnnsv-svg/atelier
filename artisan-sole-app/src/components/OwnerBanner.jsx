@@ -46,9 +46,9 @@ export default function OwnerBanner() {
       <div className="max-w-[1400px] mx-auto px-5 lg:px-16 py-2 flex items-center gap-3">
         <KeyRound size={13} strokeWidth={1.4} className="flex-shrink-0 text-white/60" />
         <p className="text-[11px] sm:text-[12px] font-light leading-snug flex-1 min-w-0">
-          Sie sind über einen persönlichen Bestelllink hier.{' '}
+          Du bist über einen persönlichen Bestelllink hier.{' '}
           <span className="text-white/70">
-            Die Preise unten gelten für Sie und sind bereits angepasst. Der Link
+            Die Preise unten gelten für dich und sind bereits angepasst. Der Link
             gilt für <span className="text-white">ein Paar</span>; danach verfällt er.
           </span>
         </p>

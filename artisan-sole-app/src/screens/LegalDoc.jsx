@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { FileText } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import { useSeitentitel } from '../store/seitentitel'
+import { useSeo } from '../lib/seo'
 
 const TITLES = {
   datenschutz: 'Datenschutzrichtlinie',
@@ -18,6 +19,9 @@ export default function LegalDoc() {
   const title = TITLES[type] || type
   // Die Überschrift steht in der oberen Leiste, zusammen mit dem Zurück-Pfeil.
   useSeitentitel(title)
+  // Und noch einmal für Reiter und Suchergebnis: Ohne das hießen alle drei
+  // Rechtstexte gleich, und eine Suchmaschine bekäme dreimal denselben Namen.
+  useSeo({ titel: title, pfad: `/legal/${type}` })
 
   useEffect(() => {
     setLoading(true)

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isNative } from '../App'
+import { useSeo } from '../lib/seo'
 import { ArrowRight, Footprints, Sparkles, Ruler, ShoppingBag } from 'lucide-react'
 
 const STEPS = [
@@ -22,11 +23,18 @@ const STEPS = [
   {
     icon: ShoppingBag,
     title: 'Deine Kollektion erwartet dich',
-    desc: 'Entdecke handgefertigte Schuhe, speichere Favoriten und stelle Outfits zusammen.',
+    desc: 'Entdecke rahmengenähte Schuhe, speichere Favoriten und stelle Outfits zusammen.',
   },
 ]
 
 export default function Welcome() {
+  useSeo({
+    titel: 'Willkommen',
+    beschreibung: 'Rahmengenähte Schuhe nach deinen Maßen: Leder, Sohle und Details '
+      + 'stellst du selbst zusammen, gefertigt wird einzeln in einer spanischen Manufaktur.',
+    pfad: '/welcome',
+  })
+
   const navigate = useNavigate()
   const [current, setCurrent] = useState(0)
   const step = STEPS[current]

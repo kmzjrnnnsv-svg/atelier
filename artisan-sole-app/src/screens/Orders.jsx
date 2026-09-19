@@ -14,12 +14,12 @@ import AuftragsAbschluss from '../components/AuftragsAbschluss'
 
 // ── Journey stages ────────────────────────────────────────────────────────────
 const JOURNEY_STAGES = [
-  { key: 'ordered',    label: 'Bestellung aufgegeben', icon: ShoppingBag,  desc: 'Ihre Bestellung wurde erfolgreich registriert' },
+  { key: 'ordered',    label: 'Bestellung aufgegeben', icon: ShoppingBag,  desc: 'Deine Bestellung wurde erfolgreich registriert' },
   { key: 'paid',       label: 'Zahlung bestätigt',     icon: CreditCard,   desc: 'Der Zahlungseingang wurde verifiziert' },
-  { key: 'crafting',   label: 'In Fertigung',          icon: Scissors,     desc: 'Ihr Schuh wird von Hand gefertigt' },
+  { key: 'crafting',   label: 'In Fertigung',          icon: Scissors,     desc: 'Dein Schuh wird gefertigt, Leisten, Rahmen, Sohle' },
   { key: 'quality',    label: 'Qualitätskontrolle',    icon: SearchCheck,  desc: 'Jedes Detail wird geprüft' },
-  { key: 'shipped',    label: 'Auf dem Weg zu Ihnen',  icon: Truck,        desc: 'Ihr Schuh ist unterwegs' },
-  { key: 'delivered',  label: 'Angekommen',            icon: CheckCircle2, desc: 'Viel Freude mit Ihrem Schuh' },
+  { key: 'shipped',    label: 'Auf dem Weg zu dir',  icon: Truck,        desc: 'Dein Schuh ist unterwegs' },
+  { key: 'delivered',  label: 'Angekommen',            icon: CheckCircle2, desc: 'Viel Freude mit deinem Schuh' },
 ]
 
 // Welcher Punkt der Reise zu welchem Status gehört. Gebraucht, seit der
@@ -98,7 +98,7 @@ function JourneyMap({ order, onBack }) {
           <div>
             {/* Title */}
             <div className="text-center mb-10">
-              <p className="text-[10px] uppercase tracking-[0.25em] text-black/30 mb-3">Die Reise Ihres Schuhs</p>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-black/30 mb-3">Die Reise deines Schuhs</p>
               <p className="text-[24px] lg:text-[28px] font-extralight text-black tracking-tight">{order.shoe_name}</p>
               <p className="text-[12px] text-black/35 mt-2 font-light">{order.material} · {order.color}</p>
             </div>
@@ -187,7 +187,7 @@ function JourneyMap({ order, onBack }) {
                 nach dem Bestellen weniger, als er beim Konfigurieren gewählt
                 hatte, und konnte nichts mehr nachprüfen. */}
             <div className="max-w-lg mx-auto mt-10 pt-6 border-t border-black/[0.06]">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-black/25 font-light mb-3">Ihre Konfiguration</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-black/25 font-light mb-3">Deine Konfiguration</p>
               {orderSpec(order).map(([k, v]) => (
                 <div key={k} className="flex justify-between items-start gap-4 py-1.5">
                   <span className="text-[11px] text-black/35 font-light flex-shrink-0">{k}</span>
@@ -196,7 +196,7 @@ function JourneyMap({ order, onBack }) {
               ))}
               {order.foot_notes && (
                 <div className="mt-3 bg-amber-50 border border-amber-200 px-3 py-2.5">
-                  <p className="text-[9px] text-amber-800 uppercase tracking-[0.18em] mb-1">Ihr Hinweis</p>
+                  <p className="text-[9px] text-amber-800 uppercase tracking-[0.18em] mb-1">Dein Hinweis</p>
                   <p className="text-[12px] text-amber-900 font-light leading-relaxed whitespace-pre-line">{order.foot_notes}</p>
                 </div>
               )}
@@ -318,7 +318,7 @@ export default function Orders() {
           Bestellungen
         </h1>
         <p className="text-[13px] lg:text-[15px] text-black/40 mt-3 lg:mt-4 max-w-lg leading-[1.7] font-light">
-          Verfolgen Sie den Status Ihrer Bestellungen.
+          Verfolge den Status deiner Bestellungen.
         </p>
       </div>
 
@@ -326,7 +326,7 @@ export default function Orders() {
           älteres Paar anders sitzt, findet hier die Maße von damals. */}
       {passformen.length > 0 && (
         <div className="px-5 lg:px-16 pb-6">
-          <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">Ihre Passformen</p>
+          <p className="text-[10px] text-black/30 uppercase tracking-[0.25em] mb-3">Deine Passformen</p>
           <div className="border border-black/[0.06]">
             {passformen.map((p, i) => (
               <div key={p.id} className={`flex items-center justify-between px-4 py-3 ${i ? 'border-t border-black/[0.05]' : ''}`}>
@@ -384,7 +384,7 @@ export default function Orders() {
           <ShoppingBag size={32} className="text-black/10 mb-4" strokeWidth={1} />
           <p className="text-[14px] font-light text-black/60">Noch keine Bestellungen</p>
           <p className="text-[12px] text-black/30 mt-2 max-w-[260px] leading-relaxed font-light">
-            Ihre Custom-made Schuhe erscheinen hier nach der Bestellung.
+            Deine Custom-made Schuhe erscheinen hier nach der Bestellung.
           </p>
           <button
             onClick={() => navigate('/collection')}

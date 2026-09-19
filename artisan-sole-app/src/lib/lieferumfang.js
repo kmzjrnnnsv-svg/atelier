@@ -17,6 +17,6 @@
  * Im CMS unter „Produktseite-Texte" überschreibbar; steht dort etwas, gilt das.
  */
 export const LIEFERUMFANG = [
-  'Handgefertigte Schuhe',
+  'Rahmengenähte Schuhe',
   'Schuhbeutel aus Baumwolle',
 ]

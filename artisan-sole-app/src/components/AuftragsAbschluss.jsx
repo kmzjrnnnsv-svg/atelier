@@ -19,7 +19,7 @@ function Sendung({ sendung }) {
   if (!sendung) return null
   return (
     <div className="max-w-lg mx-auto mt-6 pt-6 border-t border-black/[0.06]">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-black/25 font-light mb-3">Ihre Sendung</p>
+      <p className="text-[10px] uppercase tracking-[0.2em] text-black/25 font-light mb-3">Deine Sendung</p>
       <div className="flex items-start gap-3">
         <Truck size={16} strokeWidth={1.2} className="text-black/40 mt-0.5 flex-shrink-0" />
         <div className="min-w-0 flex-1">
@@ -119,7 +119,7 @@ function Storno({ orderId, storno, aufFrisch }) {
         {storno.erstattung > 0 && (
           <p className="text-[11px] text-black/35 font-light mt-2.5 leading-relaxed">
             Wir überweisen den Betrag innerhalb von fünf Werktagen auf das Konto,
-            von dem Ihre Zahlung kam.
+            von dem deine Zahlung kam.
           </p>
         )}
       </div>
@@ -184,7 +184,7 @@ function Storno({ orderId, storno, aufFrisch }) {
                   <span className="text-[12px] text-black/70 font-light">− {geld(storno.gebuehr)}</span>
                 </div>
                 <div className="flex justify-between py-1 border-t border-amber-200 mt-1 pt-2">
-                  <span className="text-[11px] text-black/60 font-light">Sie erhalten zurück</span>
+                  <span className="text-[11px] text-black/60 font-light">Du bekommst zurück</span>
                   <span className="text-[14px] text-black font-normal">{geld(storno.erstattung)}</span>
                 </div>
               </>

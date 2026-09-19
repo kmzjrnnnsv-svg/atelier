@@ -159,7 +159,7 @@ export default class ErrorBoundary extends Component {
           <p className="text-sm text-gray-400 leading-relaxed mb-8 max-w-xs">
             {chunkErr
               ? 'Ein Teil der Seite kam nicht durch — meist liegt es an einer kurz unterbrochenen Verbindung. Bitte noch einmal versuchen.'
-              : 'Ein unerwarteter Fehler ist aufgetreten. Bitte laden Sie die Seite neu oder kehren Sie zur Startseite zurück.'}
+              : 'Ein unerwarteter Fehler ist aufgetreten. Bitte lade die Seite neu oder kehre zur Startseite zurück.'}
           </p>
           {/* Beim Ladefehler steht der zweite Versuch vorn: Er ist es, der in
               den allermeisten Fällen genügt. Der Weg zur Startseite bleibt

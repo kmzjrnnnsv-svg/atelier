@@ -57,17 +57,39 @@
 import fs from 'fs'
 import path from 'path'
 import http from 'http'
-import { chromium } from 'playwright'
+let chromium
+try {
+  ({ chromium } = await import('playwright'))
+} catch {
+  console.error('✖  Playwright ist nicht installiert. Einmalig auf diesem Rechner:')
+  console.error('     npm install --no-save playwright && npx playwright install chromium')
+  console.error('   Ohne Vorrenderung bleibt dist/ vollständig und ausliefertbar.')
+  process.exit(2)
+}
 
 const WURZEL = path.resolve(new URL('..', import.meta.url).pathname)
-const DIST = path.join(WURZEL, 'dist')
+// Wohin gebaut wurde. Das Deploy baut nach `dist-new/` und schaltet erst nach
+// erfolgreichem Bau um; die Vorrenderung muss deshalb auf das Verzeichnis
+// zeigen koennen, das gerade entsteht, und nicht auf das laufende.
+const DIST = path.resolve(WURZEL, process.env.DIST_DIR || 'dist')
 const API = process.env.API || 'http://127.0.0.1:3099'
-const CHROMIUM = process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
+/**
+ * Der Browser, mit dem vorgerendert wird.
+ *
+ * Fest verdrahtet stand hier ein Pfad mit Versionsnummer. Er zeigte auf die
+ * Entwicklungsumgebung und auf keinen anderen Rechner; auf dem Server brach
+ * das Skript damit ab, bevor es die erste Seite geöffnet hatte.
+ *
+ * CHROMIUM=… setzt den Pfad ausdrücklich. Ohne Angabe sucht Playwright den
+ * Browser selbst — das ist der Normalfall nach `npx playwright install
+ * chromium` und überlebt jedes Update.
+ */
+const CHROMIUM = process.env.CHROMIUM || undefined
 
 // Feste Adressen. Dieselbe Liste wie in der `sitemap.xml` des Servers, und
 // aus demselben Grund: Was eine Suchmaschine besuchen soll, soll sie auch
 // fertig vorfinden.
-const FESTE = ['/', '/collection', '/accessories', '/help',
+const FESTE = ['/', '/collection', '/accessories', '/entdecken', '/help',
                '/legal/agb', '/legal/datenschutz', '/legal/impressum']
 
 // Wie lange nach dem Laden gewartet wird, bevor die Seite abgegriffen wird.
@@ -126,7 +148,7 @@ const zielDatei = (route) =>
                 : path.join(DIST, route.replace(/^\//, ''), 'index.html')
 
 if (!fs.existsSync(path.join(DIST, 'index.html'))) {
-  console.error('✖  dist/index.html fehlt. Erst `npx vite build`, dann dieses Skript.')
+  console.error(`✖  ${path.join(DIST, 'index.html')} fehlt. Erst \`npx vite build\`, dann dieses Skript.`)
   process.exit(1)
 }
 
@@ -134,7 +156,7 @@ const port = Number(process.env.PORT || 4173)
 const server = await starteServer(port)
 const routen = [...FESTE, ...(await modellAdressen())]
 
-const browser = await chromium.launch({ executablePath: CHROMIUM })
+const browser = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {})
 const kontext = await browser.newContext()
 let fertig = 0, leer = 0
 const fehler = []

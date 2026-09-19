@@ -372,28 +372,28 @@ export async function sendTestEmail(to) {
 const DEFAULTS = {
   order_confirmation: {
     subject: 'Artisan Sole · Bestellbestätigung {{order_ref}}',
-    intro:   'Vielen Dank, {{name}}. Ihre Bestellung wurde aufgenommen und wird individuell für Sie angefertigt.',
-    body:    'Ihre Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu Ihnen geliefert.\nDen aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.',
+    intro:   'Vielen Dank, {{name}}. Deine Bestellung wurde aufgenommen und wird individuell für dich angefertigt.',
+    body:    'Deine Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu dir geliefert.\nDen aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.',
   },
   payment: {
     subject: 'Artisan Sole · Zahlungsinformationen {{order_ref}}',
-    intro:   'Vielen Dank, {{name}}. Ihre Bestellung wurde erfasst und wartet auf Ihre Zahlung.\nBitte überweisen Sie den folgenden Betrag an das unten angegebene Konto. Verwenden Sie dabei zwingend den angegebenen Verwendungszweck, damit wir Ihre Zahlung korrekt zuordnen können.',
-    body:    'Nach Zahlungseingang werden Ihre Schuhe umgehend in die Fertigung gegeben.\nSie erhalten eine Bestätigung, sobald Ihre Zahlung bei uns eingegangen ist.',
+    intro:   'Vielen Dank, {{name}}. Deine Bestellung wurde erfasst und wartet auf deine Zahlung.\nBitte überweise den folgenden Betrag an das unten angegebene Konto. Verwende dabei zwingend den angegebenen Verwendungszweck, damit wir deine Zahlung korrekt zuordnen können.',
+    body:    'Nach Zahlungseingang werden deine Schuhe umgehend in die Fertigung gegeben.\nDu bekommst eine Bestätigung, sobald deine Zahlung bei uns eingegangen ist.',
   },
   order_confirmed: {
     subject: 'Artisan Sole · Zahlung bestätigt & Bestellung in Fertigung {{order_ref}}',
-    intro:   'Ihre Zahlung wurde bestätigt. Ihre Schuhe {{shoe_name}} sind nun in der Fertigung.',
-    body:    'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.',
+    intro:   'Deine Zahlung wurde bestätigt. Deine Schuhe {{shoe_name}} sind nun in der Fertigung.',
+    body:    'Den aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.',
   },
   shipping: {
-    subject: 'Artisan Sole · Ihre Schuhe sind unterwegs! {{order_ref}}',
-    intro:   '{{shoe_name}} wurden soeben versandt und befinden sich auf dem Weg zu Ihnen.',
-    body:    'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.\nBei Fragen wenden Sie sich an unser Team, wir sind gerne für Sie da.',
+    subject: 'Artisan Sole · Deine Schuhe sind unterwegs! {{order_ref}}',
+    intro:   '{{shoe_name}} wurden soeben versandt und befinden sich auf dem Weg zu dir.',
+    body:    'Den aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.\nBei Fragen wende dich an unser Team, wir sind gerne für dich da.',
   },
   quality_check: {
-    subject: 'Artisan Sole · Ihre Schuhe in der Qualitätskontrolle {{order_ref}}',
-    intro:   'Ihre Schuhe {{shoe_name}} wurden erfolgreich gefertigt und befinden sich jetzt in unserer Qualitätskontrolle.',
-    body:    'Jedes Detail wird geprüft, von der Nahtführung bis zur Passform. Nach bestandener Kontrolle werden Ihre Schuhe umgehend versandt.\nDen aktuellen Status finden Sie jederzeit in der Artisan Sole App.',
+    subject: 'Artisan Sole · Deine Schuhe in der Qualitätskontrolle {{order_ref}}',
+    intro:   'Deine Schuhe {{shoe_name}} wurden erfolgreich gefertigt und befinden sich jetzt in unserer Qualitätskontrolle.',
+    body:    'Jedes Detail wird geprüft, von der Nahtführung bis zur Passform. Nach bestandener Kontrolle werden deine Schuhe umgehend versandt.\nDen aktuellen Status findest du jederzeit in der Artisan Sole App.',
   },
   manufacturer: {
     subject: '[Artisan Sole] Neue Bestellung {{order_ref}} · USER-{{user_id_padded}} · {{shoe_name}}',
@@ -532,14 +532,14 @@ function vertragsbedingungen(appUrl) {
     <div style="border:1px solid #e5e0d8;background:#faf9f7;padding:16px 18px;margin:24px 0">
       <p style="font-size:13px;color:#111;font-weight:600;margin:0 0 8px">Kein Widerrufsrecht</p>
       <p style="font-size:12px;color:#555;line-height:1.7;margin:0">
-        Ihr Paar entsteht einzeln nach Ihren Maßen und Ihrer Konfiguration. Bei solchen Waren
+        Dein Paar entsteht einzeln nach deinen Maßen und deiner Konfiguration. Bei solchen Waren
         besteht nach § 312g Abs. 2 Nr. 1 BGB kein Widerrufsrecht, auch nicht in der
-        Express-Linie, denn auch dort wird auf dem für Ihren Fuß bestimmten Leisten
-        gearbeitet. Ein Paar auf Ihrem Leisten lässt sich an niemanden sonst verkaufen.
+        Express-Linie, denn auch dort wird auf dem für deinen Fuß bestimmten Leisten
+        gearbeitet. Ein Paar auf deinem Leisten lässt sich an niemanden sonst verkaufen.
       </p>
       <p style="font-size:12px;color:#555;line-height:1.7;margin:8px 0 0">
-        Freiwillig bieten wir Ihnen bei Nichtgefallen eine Lösung an, Anpassung,
-        Neuanfertigung, Gutschrift oder eine Erstattung von höchstens 50 %. Melden Sie sich
+        Freiwillig bieten wir dir bei Nichtgefallen eine Lösung an, Anpassung,
+        Neuanfertigung, Gutschrift oder eine Erstattung von höchstens 50 %. Meld dich
         dafür innerhalb von 14 Tagen nach Erhalt. Die Einzelheiten stehen in Ziffer 7 unten.
       </p>
       <p style="font-size:12px;color:#555;line-height:1.7;margin:8px 0 0">
@@ -552,16 +552,16 @@ function vertragsbedingungen(appUrl) {
   if (!agb.trim()) {
     return widerruf + `
     <p style="font-size:11px;color:#888;line-height:1.7;margin:16px 0 0">
-      Unsere Allgemeinen Geschäftsbedingungen finden Sie unter
+      Unsere Allgemeinen Geschäftsbedingungen findest du unter
       <a href="${escapeHtml(appUrl)}/legal/agb" style="color:#555">${escapeHtml(appUrl)}/legal/agb</a>.
-      Auf Wunsch senden wir sie Ihnen in Textform zu, schreiben Sie uns kurz.
+      Auf Wunsch senden wir sie dir in Textform zu, schreib uns kurz.
     </p>`
   }
 
   return widerruf + `
     <hr class="divider">
     <p style="font-size:11px;color:#888;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px">
-      Allgemeine Geschäftsbedingungen · Stand Ihrer Bestellung
+      Allgemeine Geschäftsbedingungen · Stand deiner Bestellung
     </p>
     <div style="font-size:11px;color:#666;line-height:1.75;white-space:pre-wrap;word-wrap:break-word">${escapeHtml(agb)}</div>`
 }
@@ -598,7 +598,7 @@ export async function sendOrderConfirmation(order, user) {
     <div class="val">${escapeHtml(order.shoe_name)}</div>
     <div class="label">Material · Farbe</div>
     <div class="val">${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
-    <div class="label">Ihre Größe (aus 3D-Scan)</div>
+    <div class="label">Deine Größe (aus 3D-Scan)</div>
     <div class="val">EU ${order.eu_size || '-'}</div>
     <hr class="divider">
     <table>
@@ -686,7 +686,7 @@ export async function sendPaymentInstructions(order, user) {
     <hr class="divider">
     <div class="label">Bestellte Schuhe</div>
     <div class="val">${escapeHtml(order.shoe_name)}</div>
-    <div class="label">Ihr ${order.user_order_number}. Schuh bei Artisan Sole</div>
+    <div class="label">Dein ${order.user_order_number}. Schuh bei Artisan Sole</div>
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0">${closing}</p>
   </div>
@@ -722,7 +722,7 @@ export async function sendOrderConfirmed(order, user) {
     <div style="text-align:left">
       <div class="label">Bestellnummer</div>
       <div class="val">${ref}</div>
-      <div class="label">Ihr ${order.user_order_number}. Schuh bei Artisan Sole</div>
+      <div class="label">Dein ${order.user_order_number}. Schuh bei Artisan Sole</div>
       <div class="val">${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
       <div class="label">Geschätzte Lieferzeit</div>
       <div class="val">ca. 4 Wochen nach Zahlungseingang</div>
@@ -758,12 +758,12 @@ export async function sendQualityCheckNotification(order, user) {
   </div>
   <div class="body" style="text-align:center">
     <div class="badge" style="background:#8b5cf6;color:#fff">✓ QUALITÄTSKONTROLLE</div>
-    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Ihre Schuhe werden geprüft.</p>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Deine Schuhe werden geprüft.</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">${intro}</p>
     <div style="text-align:left">
       <div class="label">Bestellnummer</div>
       <div class="val">${ref}</div>
-      <div class="label">Ihr Schuh</div>
+      <div class="label">Dein Schuh</div>
       <div class="val">${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
     </div>
     <hr class="divider">
@@ -805,12 +805,12 @@ export async function sendShippingNotification(order, user) {
   </div>
   <div class="body" style="text-align:center">
     <div class="badge" style="background:#3b82f6;color:#fff">✈ AUF DEM WEG ZU IHNEN</div>
-    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Ihre Schuhe sind unterwegs.</p>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Deine Schuhe sind unterwegs.</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">${intro}</p>
     <div style="text-align:left">
       <div class="label">Bestellnummer</div>
       <div class="val">${ref}</div>
-      <div class="label">Ihr Schuh</div>
+      <div class="label">Dein Schuh</div>
       <div class="val">${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
       ${addr ? `
       <div class="label">Lieferadresse</div>
@@ -868,7 +868,7 @@ export async function sendCancellation(order, user, storno) {
   </div>
   <div class="body">
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">
-      ${durchKunde ? 'Ihre Stornierung ist eingegangen.' : 'Wir haben Ihren Auftrag storniert.'}
+      ${durchKunde ? 'Deine Stornierung ist eingegangen.' : 'Wir haben deinen Auftrag storniert.'}
     </p>
     <p style="font-size:14px;color:#555;margin:0 0 20px">
       ${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}
@@ -883,7 +883,7 @@ export async function sendCancellation(order, user, storno) {
     ${storno.erstattung > 0 ? `
     <p style="font-size:14px;color:#555;margin:0 0 16px">
       Wir überweisen den Betrag innerhalb von fünf Werktagen auf das Konto, von dem
-      Ihre Zahlung kam. Sie müssen dafür nichts tun.
+      deine Zahlung kam. Du musst dafür nichts tun.
     </p>` : `
     <p style="font-size:14px;color:#555;margin:0 0 16px">
       Es ist nichts zu erstatten, für diesen Auftrag war noch keine Zahlung eingegangen.
@@ -892,14 +892,14 @@ export async function sendCancellation(order, user, storno) {
     ${storno.gebuehr > 0 ? `
     <p style="font-size:12px;color:#888;line-height:1.7">
       Der einbehaltene Anteil deckt Material, Arbeitszeit und die belegte
-      Fertigungskapazität. Ein Paar auf Ihrem Leisten lässt sich an niemanden
+      Fertigungskapazität. Ein Paar auf deinem Leisten lässt sich an niemanden
       sonst verkaufen, was wir erstatten, tragen wir vollständig selbst.
     </p>` : ''}
 
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0">
-      Wenn Sie glauben, dass hier etwas nicht stimmt, antworten Sie einfach auf
-      diese Nachricht oder melden Sie sich über <em>Nachrichten</em> in Ihrem Konto.
+      Wenn du glaubst, dass hier etwas nicht stimmt, antworte einfach auf
+      diese Nachricht oder meld dich über <em>Nachrichten</em> in deinem Konto.
     </p>
   </div>
   <div class="footer">Artisan Sole Custom Made Footwear · Alle Schuhe sind Einzelanfertigungen</div>
@@ -1096,7 +1096,7 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
   const link = `${cfg.appUrl}/register-promotion?token=${inviteToken}`
   const discountText = discountPct ? `${discountPct}% Sonderkonditionen` : 'exklusive Sonderkonditionen'
 
-  const subject = 'Artisan Sole · Ihr exklusiver Promotion-Zugang'
+  const subject = 'Artisan Sole · Dein exklusiver Promotion-Zugang'
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
   <div class="header">
@@ -1107,10 +1107,10 @@ export async function sendPromotionInvitation(email, name, inviteToken, discount
     <div class="badge" style="background:#d97706;color:#fff">★ PROMOTION</div>
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Willkommen, ${name}!</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">
-      Sie wurden eingeladen, ein Artisan Sole Promotion-Konto mit ${discountText} zu erstellen.
+      Du wurdest eingeladen, ein Artisan Sole Promotion-Konto mit ${discountText} zu erstellen.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto erstellen</a>
-    <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
+    <p style="font-size:11px;color:#999;margin:0">Falls der Knopf nicht funktioniert, kopier diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
   </div>
   <div class="footer">Artisan Sole Custom Made Footwear · Vertrauliche Einladung</div>
 </div>
@@ -1140,16 +1140,16 @@ export async function sendPasswordReset(email, name, token, stunden = 1) {
   <div class="body" style="text-align:center">
     <p style="font-size:15px;color:#111;margin:0 0 8px;font-weight:600">Hallo${name ? ` ${escapeHtml(name)}` : ''},</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">
-      über den Knopf unten setzen Sie ein neues Passwort. Der Link gilt
+      über den Knopf unten setzt du ein neues Passwort. Der Link gilt
       ${stunden === 1 ? 'eine Stunde' : `${stunden} Stunden`} und nur einmal.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Neues Passwort setzen</a>
     <p style="font-size:11px;color:#999;margin:0 0 24px">Falls der Knopf nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">
-      <strong>Sie haben das nicht angefordert?</strong> Dann tun Sie nichts, Ihr
+      <strong>Du hast das nicht angefordert?</strong> Dann tu nichts, dein
       bisheriges Passwort gilt weiter, und der Link verfällt von allein. Bekommen
-      Sie diese Nachricht öfter, melden Sie sich bitte bei uns.
+      du diese Nachricht öfter, meld dich bitte bei uns.
     </p>
   </div>
   <div class="footer">Artisan Sole Custom Made Footwear</div>
@@ -1167,7 +1167,7 @@ export async function sendEmailVerification(email, name, token) {
   <div class="header"><h1>ARTISAN SOLE</h1><p>E-MAIL BESTÄTIGEN</p></div>
   <div class="body" style="text-align:center">
     <p style="font-size:15px;color:#111;margin:0 0 8px;font-weight:600">Hallo${name ? ` ${name}` : ''},</p>
-    <p style="font-size:14px;color:#555;margin:0 0 24px">bitte bestätigen Sie Ihre E-Mail-Adresse, um an Firmen-Aktionen teilnehmen zu können.</p>
+    <p style="font-size:14px;color:#555;margin:0 0 24px">bitte bestätige deine E-Mail-Adresse, um an Firmen-Aktionen teilnehmen zu können.</p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">E-Mail bestätigen</a>
     <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
   </div>
@@ -1196,7 +1196,7 @@ export async function sendBusinessInvitation(email, companyName, inviteToken) {
       Profil, Ihr Logo und Ihre Einmal-Codes. Legen Sie jetzt Ihr Passwort fest.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Konto aktivieren</a>
-    <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
+    <p style="font-size:11px;color:#999;margin:0">Falls der Knopf nicht funktioniert, kopier diesen Link:<br><a href="${link}" style="color:#666">${link}</a></p>
   </div>
   <div class="footer">Artisan Sole Custom Made Footwear · Vertrauliche Einladung</div>
 </div>
@@ -1245,15 +1245,15 @@ export async function sendInquiryNotification(request) {
 export async function sendInquiryAck(request) {
   if (!request.customer_email) return
   const name = request.customer_name ? ` ${escapeHtml(request.customer_name)}` : ''
-  const subject = 'Artisan Sole · Ihre Anfrage ist eingegangen'
+  const subject = 'Artisan Sole · Deine Anfrage ist eingegangen'
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>
 <div class="wrap">
   <div class="header"><h1>ARTISAN SOLE</h1><p>ANFRAGE EINGEGANGEN</p></div>
   <div class="body" style="text-align:center">
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Vielen Dank${name}!</p>
     <p style="font-size:14px;color:#555;margin:0 0 8px;line-height:1.6">
-      Ihre Anfrage ist bei uns eingegangen. Wir melden uns in Kürze persönlich mit
-      einem passenden Vorschlag bei Ihnen, unverbindlich.
+      Deine Anfrage ist bei uns eingegangen. Wir melden uns in Kürze persönlich mit
+      einem passenden Vorschlag bei dir, unverbindlich.
     </p>
   </div>
   <div class="footer">Artisan Sole Custom Made Footwear · Made in Spain</div>
@@ -1283,8 +1283,8 @@ export async function sendCampaignInvitation(email, campaign, businessName) {
   <div class="body" style="text-align:center">
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">${escapeHtml(campaign.name)}</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">
-      ${businessName ? `${escapeHtml(businessName)} lädt Sie ein` : 'Sie sind eingeladen'}, an dieser Aktion
-      teilzunehmen${rabatt ? `, mit ${rabatt} auf Ihr Custom Made Paar` : ''}.
+      ${businessName ? `${escapeHtml(businessName)} lädt dich ein` : 'Du bist eingeladen'}, an dieser Aktion
+      teilzunehmen${rabatt ? `, mit ${rabatt} auf dein Custom Made Paar` : ''}.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Jetzt teilnehmen</a>
     <p style="font-size:11px;color:#999;margin:0">Falls der Button nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
@@ -1349,7 +1349,7 @@ export async function sendAffiliateInvitation(email, name, inviteToken, code) {
 const ABMELDE_HINWEIS = (link) => `
     <hr class="divider">
     <p style="font-size:11px;color:#999;line-height:1.7;margin:0;text-align:center">
-      Sie möchten keine Post mehr von uns?
+      Du möchtest keine Post mehr von uns?
       <a href="${link}" style="color:#666">Hier abmelden</a> — ein Klick genügt,
       ohne Anmeldung und ohne Rückfrage.
     </p>`
@@ -1363,25 +1363,25 @@ export async function sendNewsletterBestaetigung(email, token, einwilligungstext
   <div class="body" style="text-align:center">
     <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Noch ein Schritt.</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">
-      Jemand hat diese Adresse für unseren Newsletter eingetragen. Waren Sie das,
-      bestätigen Sie es bitte hier — danach schicken wir Ihnen Ihren
+      Jemand hat diese Adresse für unseren Newsletter eingetragen. Warst du das,
+      bestätige es bitte hier — danach schicken wir dir deinen
       ${rabattProzent}%-Gutschein.
     </p>
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 24px">Anmeldung bestätigen</a>
     <p style="font-size:11px;color:#999;margin:0 0 24px">Falls der Knopf nicht funktioniert:<br><a href="${link}" style="color:#666">${link}</a></p>
     <hr class="divider">
     <p style="font-size:12px;color:#555;line-height:1.7;margin:0 0 16px;text-align:left">
-      <strong>Dem stimmen Sie zu:</strong><br>${escapeHtml(einwilligungstext)}
+      <strong>Dem stimmst du zu:</strong><br>${escapeHtml(einwilligungstext)}
     </p>
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">
-      <strong>Waren Sie das nicht?</strong> Dann tun Sie bitte nichts. Ohne
-      Bestätigung schicken wir Ihnen nichts, und der Eintrag verfällt von allein.
+      <strong>Warst du das nicht?</strong> Dann tu bitte nichts. Ohne
+      Bestätigung schicken wir dir nichts, und der Eintrag verfällt von allein.
     </p>
   </div>
   <div class="footer">Artisan Sole Custom Made Footwear</div>
 </div>
 </body></html>`
-  await send({ to: email, subject: 'Artisan Sole · Bitte bestätigen Sie Ihre Anmeldung', html })
+  await send({ to: email, subject: 'Artisan Sole · Bitte bestätige deine Anmeldung', html })
 }
 
 export async function sendNewsletterWillkommen(email, code, rabattProzent, gueltigBis, abmeldeToken) {
@@ -1394,17 +1394,17 @@ export async function sendNewsletterWillkommen(email, code, rabattProzent, guelt
 <div class="wrap">
   <div class="header"><h1>ARTISAN SOLE</h1><p>WILLKOMMEN</p></div>
   <div class="body" style="text-align:center">
-    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Danke für Ihre Bestätigung.</p>
+    <p style="font-size:16px;color:#111;margin:0 0 8px;font-weight:600">Danke für deine Bestätigung.</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">
-      Hier ist Ihr Gutschein über ${rabattProzent} % auf Ihr erstes Paar. Geben Sie
+      Hier ist dein Gutschein über ${rabattProzent} % auf dein erstes Paar. Gib
       den Code beim Abschluss der Bestellung im Feld „Gutscheincode" ein.
     </p>
     <div style="border:1px solid #111;padding:18px 24px;margin:0 0 20px;display:inline-block">
-      <p style="font-size:11px;color:#888;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px">Ihr Code</p>
+      <p style="font-size:11px;color:#888;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px">Dein Code</p>
       <p style="font-size:22px;color:#111;letter-spacing:0.12em;margin:0;font-weight:600">${escapeHtml(code)}</p>
     </div>
     <p style="font-size:12px;color:#888;margin:0 0 24px">
-      Einmal einlösbar${datum ? `, gültig bis ${datum}` : ''}. Nur für Sie bestimmt.
+      Einmal einlösbar${datum ? `, gültig bis ${datum}` : ''}. Nur für dich bestimmt.
     </p>
     <a href="${cfg.appUrl}/collection" style="display:inline-block;padding:14px 32px;background:#111;color:#fff;text-decoration:none;font-size:13px;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 8px">Zur Kollektion</a>
     ${ABMELDE_HINWEIS(abmelden)}
@@ -1412,7 +1412,7 @@ export async function sendNewsletterWillkommen(email, code, rabattProzent, guelt
   <div class="footer">Artisan Sole Custom Made Footwear</div>
 </div>
 </body></html>`
-  await send({ to: email, subject: `Artisan Sole · Ihr ${rabattProzent}%-Gutschein`, html })
+  await send({ to: email, subject: `Artisan Sole · Dein ${rabattProzent}%-Gutschein`, html })
 }
 
 export async function sendNewsletterBereitsAngemeldet(email, code, abmeldeToken) {
@@ -1424,11 +1424,11 @@ export async function sendNewsletterBereitsAngemeldet(email, code, abmeldeToken)
   <div class="body" style="text-align:center">
     <p style="font-size:15px;color:#111;margin:0 0 8px;font-weight:600">Diese Adresse ist bereits angemeldet.</p>
     <p style="font-size:14px;color:#555;margin:0 0 24px">
-      Sie haben sich gerade erneut eingetragen — nötig ist das nicht, es ändert
-      sich nichts.${code ? ' Ihr Gutscheincode steht unten, falls er verlorengegangen ist.' : ''}
+      Du hast dich gerade erneut eingetragen — nötig ist das nicht, es ändert
+      sich nichts.${code ? ' Dein Gutscheincode steht unten, falls er verlorengegangen ist.' : ''}
     </p>
     ${code ? `<div style="border:1px solid #111;padding:16px 24px;margin:0 0 20px;display:inline-block">
-      <p style="font-size:11px;color:#888;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px">Ihr Code</p>
+      <p style="font-size:11px;color:#888;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 6px">Dein Code</p>
       <p style="font-size:20px;color:#111;letter-spacing:0.12em;margin:0;font-weight:600">${escapeHtml(code)}</p>
     </div>` : ''}
     ${ABMELDE_HINWEIS(abmelden)}
@@ -1436,5 +1436,5 @@ export async function sendNewsletterBereitsAngemeldet(email, code, abmeldeToken)
   <div class="footer">Artisan Sole Custom Made Footwear</div>
 </div>
 </body></html>`
-  await send({ to: email, subject: 'Artisan Sole · Sie sind bereits angemeldet', html })
+  await send({ to: email, subject: 'Artisan Sole · Du bist bereits angemeldet', html })
 }

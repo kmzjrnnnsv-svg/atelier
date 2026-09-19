@@ -55,8 +55,8 @@ export default function CookieHinweis() {
                 Speicherung im Endgerät
               </p>
               <p className="text-[13px] text-black/70 font-light leading-[1.7] max-w-xl">
-                Wir speichern nur, was der Laden zum Arbeiten braucht: Ihre Anmeldung,
-                Ihren Warenkorb und diese Entscheidung.{' '}
+                Wir speichern nur, was der Laden zum Arbeiten braucht: deine Anmeldung,
+                deinen Warenkorb und diese Entscheidung.{' '}
                 <span className="text-black">Keine Analyse, keine Werbung, kein Tracking</span>,
                 und was wir speichern, bleibt bei uns.
               </p>
@@ -90,11 +90,11 @@ export default function CookieHinweis() {
               <p className="text-[11px] text-black/40 font-light leading-[1.7]">
                 Auf einzelnen Flächen liegen noch Platzhalter-Fotos von Unsplash,
                 bis eigene Aufnahmen hinterlegt sind. Deren Server erfährt dabei
-                Ihre IP-Adresse. Cookies setzt er nicht.
+                Deine IP-Adresse. Cookies setzt er nicht.
               </p>
               <p className="text-[11px] text-black/40 font-light leading-[1.7]">
-                Ihre Entscheidung halten wir zum Nachweis fest — mit Zeitpunkt und
-                Wortlaut, aber ohne Ihren Namen. Sie können sie jederzeit über die
+                Deine Entscheidung halten wir zum Nachweis fest — mit Zeitpunkt und
+                Wortlaut, aber ohne deinen Namen. Du kannst sie jederzeit über die
                 Fußzeile widerrufen. Mehr dazu in der{' '}
                 <Link to="/legal/datenschutz" className="underline text-black/60 hover:text-black">
                   Datenschutzerklärung

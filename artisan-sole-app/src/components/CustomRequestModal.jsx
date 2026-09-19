@@ -127,7 +127,7 @@ export default function CustomRequestModal({
             <p className="text-[10px] text-black/30 uppercase mb-2" style={{ letterSpacing: '0.25em' }}>Anfrage #{success.id}</p>
             <h3 className="text-[18px] font-light tracking-[0.12em] uppercase text-black mb-3">Vielen Dank</h3>
             <p className="text-[13px] text-black/55 font-light leading-relaxed max-w-md mx-auto">
-              Ihre Custom-Anfrage ist eingegangen. Unser Atelier meldet sich in Kürze
+              Deine Custom-Anfrage ist eingegangen. Unser Atelier meldet sich in Kürze
               {form.phone
                 ? <> unter <span className="text-black">{form.phone}</span>.</>
                 : <> per E-Mail an <span className="text-black">{form.email}</span>.</>}
@@ -157,8 +157,8 @@ export default function CustomRequestModal({
           <div className="px-5 py-5">
             {/* Konfiguration-Übersicht */}
             <div className="bg-[#f6f5f3] p-4 mb-5 text-[12px] text-black/70 font-light">
-              <p className="text-[9px] text-black/35 uppercase mb-2" style={{ letterSpacing: '0.2em' }}>Ihre Konfiguration</p>
-              <p className="text-[13px] text-black mb-1">{product?.name || 'Ihr Modell'}</p>
+              <p className="text-[9px] text-black/35 uppercase mb-2" style={{ letterSpacing: '0.2em' }}>Deine Konfiguration</p>
+              <p className="text-[13px] text-black mb-1">{product?.name || 'Dein Modell'}</p>
               <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                 {config?.material && <span>{config.material}</span>}
                 {config?.color    && <span>· {config.color}</span>}
@@ -186,12 +186,12 @@ export default function CustomRequestModal({
               value={form.phone}
               onChange={v => setForm({ ...form, phone: v })}
               placeholder="+49 …"
-              hint="Wird ausschließlich für die Bearbeitung Ihrer Anfrage verwendet."
+              hint="Wird ausschließlich für die Bearbeitung deiner Anfrage verwendet."
             />
 
             <label className="block">
               <span className="text-[9px] text-black/40 uppercase tracking-[0.18em] mb-1.5 block">
-                Ihr Anliegen<span className="text-black/25"> · Pflicht</span>
+                Dein Anliegen<span className="text-black/25"> · Pflicht</span>
               </span>
               <textarea
                 value={form.notes}
@@ -205,7 +205,7 @@ export default function CustomRequestModal({
             </label>
 
             <p className="text-[10px] text-black/35 leading-relaxed mt-3">
-              Mit dem Absenden willigen Sie ein, dass wir Sie zur Bearbeitung Ihrer Anfrage telefonisch
+              Mit dem Absenden willigst du ein, dass wir dich zur Bearbeitung deiner Anfrage telefonisch
               oder per WhatsApp Business kontaktieren.
             </p>
 

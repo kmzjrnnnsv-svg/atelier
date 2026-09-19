@@ -29,7 +29,7 @@ export default function VerifyEmail() {
           <>
             <div className="w-12 h-12 bg-green-600 flex items-center justify-center mx-auto mb-4"><Check size={22} className="text-white" strokeWidth={2} /></div>
             <p className="text-[18px] font-extralight text-stone-900 tracking-tight">E-Mail bestätigt</p>
-            <p className="text-[12px] text-stone-500 font-light mt-2">Sie können jetzt an Firmen-Aktionen teilnehmen.</p>
+            <p className="text-[12px] text-stone-500 font-light mt-2">Du kannst jetzt an Firmen-Aktionen teilnehmen.</p>
             <button onClick={() => navigate('/collection')} className="mt-6 w-full h-11 bg-stone-900 text-white border-0" style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px' }}>Weiter</button>
           </>
         )}

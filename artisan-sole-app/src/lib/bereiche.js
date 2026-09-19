@@ -60,7 +60,7 @@ export function bereicheFuer(user) {
     liste.push({
       schluessel: 'affiliate',
       name: 'Affiliate-Bereich',
-      hinweis: 'Ihr Code, vermittelte Paare, Auszahlungen',
+      hinweis: 'Dein Code, vermittelte Paare, Auszahlungen',
       pfad: '/affiliate',
       passt: (pfad) => pfad.startsWith('/affiliate') && pfad !== '/affiliate-konto',
     })

@@ -279,8 +279,8 @@ export default function Registration() {
           <div className="flex items-start gap-2 pt-0.5">
             <ShieldCheck size={13} strokeWidth={1.5} className="text-black/30 mt-0.5 flex-shrink-0" />
             <p className="text-[10px] text-black/45 leading-relaxed">
-              Ihr Gerät fragt gleich nach Face ID, Fingerabdruck oder Ihrer Geräte-PIN.
-              Damit ist Ihr Konto geschützt, Sie brauchen kein Passwort und können
+              Dein Gerät fragt gleich nach Face ID, Fingerabdruck oder deiner Geräte-PIN.
+              Damit ist dein Konto geschützt, du brauchst kein Passwort und kannst
               keines vergessen.
             </p>
           </div>
@@ -290,7 +290,7 @@ export default function Registration() {
       {/* Footer */}
       <div className="text-center mt-4 pb-6 px-5 space-y-3">
         <p className="text-xs text-black/50">
-          Sie haben bereits ein Konto?{' '}
+          Du hast bereits ein Konto?{' '}
           <Link to="/login" className="text-black font-semibold no-underline">Anmelden</Link>
         </p>
 
@@ -316,9 +316,9 @@ export default function Registration() {
         )}
         {!passkeyMoeglich && (
           <p className="text-[10px] text-black/35 leading-relaxed max-w-xs mx-auto">
-            Ihr Browser unterstützt die Anmeldung ohne Passwort nicht. In Safari oder
-            Chrome geht es, falls Sie diese Seite gerade aus einer anderen App heraus
-            geöffnet haben, öffnen Sie sie dort noch einmal.
+            Dein Browser unterstützt die Anmeldung ohne Passwort nicht. In Safari oder
+            Chrome geht es, falls du diese Seite gerade aus einer anderen App heraus
+            geöffnet hast, öffne sie dort noch einmal.
           </p>
         )}
       </div>

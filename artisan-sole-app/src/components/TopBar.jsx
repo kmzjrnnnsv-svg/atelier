@@ -274,7 +274,7 @@ export default function TopBar() {
                 onClick={() => go('/help')}
                 className="text-[13px] font-light text-black/35 bg-transparent border-0 p-0 hover:text-black transition-colors"
               >
-                Wünschen Sie Beratung?
+                Brauchst du Beratung?
               </button>
             </div>
           </div>

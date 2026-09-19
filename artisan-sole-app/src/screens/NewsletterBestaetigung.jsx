@@ -79,20 +79,20 @@ export default function NewsletterBestaetigung() {
             <Check size={18} strokeWidth={1.4} className="text-black/70" />
           </div>
           <h1 className="text-[24px] font-extralight text-black mb-3 tracking-tight">
-            {abmelden ? 'Sie sind abgemeldet' : 'Danke, das war’s'}
+            {abmelden ? 'Du bist abgemeldet' : 'Danke, das war’s'}
           </h1>
           <p className="text-[13px] text-black/45 font-light leading-[1.75] max-w-sm mb-8">
             {abmelden
-              ? 'Wir schreiben Ihnen nicht mehr. Ihre Adresse bleibt nur noch dort stehen, wo sie stehen muss, damit wir sie nicht versehentlich erneut anschreiben.'
+              ? 'Wir schreiben dir nicht mehr. Deine Adresse bleibt nur noch dort stehen, wo sie stehen muss, damit wir sie nicht versehentlich erneut anschreiben.'
               : antwort?.bereits
-                ? 'Ihre Anmeldung war bereits bestätigt. Ihr Code steht unten, er gilt weiterhin.'
-                : 'Ihre Anmeldung ist bestätigt. Hier ist Ihr Gutschein — er liegt zusätzlich in Ihrem Postfach.'}
+                ? 'Deine Anmeldung war bereits bestätigt. Dein Code steht unten, er gilt weiterhin.'
+                : 'Deine Anmeldung ist bestätigt. Hier ist dein Gutschein — er liegt zusätzlich in deinem Postfach.'}
           </p>
 
           {code && (
             <div className="border border-black/15 px-8 py-6 mb-6">
               <p className="text-[9px] text-black/30 uppercase tracking-[0.25em] font-light mb-2">
-                {antwort.rabatt} % auf Ihr erstes Paar
+                {antwort.rabatt} % auf dein erstes Paar
               </p>
               <p className="text-[26px] font-light text-black tracking-[0.12em]">{code}</p>
               <button
@@ -115,8 +115,8 @@ export default function NewsletterBestaetigung() {
 
           {!abmelden && (
             <p className="text-[11px] text-black/30 font-light mt-8 max-w-xs leading-[1.7]">
-              Den Code geben Sie beim Abschluss der Bestellung im Feld
-              „Gutscheincode" ein. Er ist einmal einlösbar und nur für Sie bestimmt.
+              Den Code gibst du beim Abschluss der Bestellung im Feld
+              „Gutscheincode" ein. Er ist einmal einlösbar und nur für dich bestimmt.
             </p>
           )}
         </>

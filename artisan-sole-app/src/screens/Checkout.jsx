@@ -731,7 +731,7 @@ export default function Checkout() {
         <div className="flex flex-col items-center justify-center py-20 text-center px-5">
           <ShoppingBag size={32} strokeWidth={0.8} className="text-black/10 mb-4" />
           <p className="text-[14px] font-light text-black/50">Noch keine Artikel</p>
-          <p className="text-[12px] text-black/25 mt-2 max-w-[240px] leading-relaxed font-light">Entdecken Sie unsere Kollektion und finden Sie Ihren Schuh.</p>
+          <p className="text-[12px] text-black/25 mt-2 max-w-[240px] leading-relaxed font-light">Entdecke unsere Kollektion und finde deinen Schuh.</p>
           <button onClick={() => navigate('/collection')}
             className="mt-6 px-8 py-3 bg-black text-white text-[11px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300"
             style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
@@ -784,13 +784,13 @@ export default function Checkout() {
             <p className="text-[15px] font-light text-black">Zubehör gibt es nur zusammen mit einem Paar.</p>
             <p className="text-[12px] text-black/50 font-light leading-relaxed mt-3 max-w-md">
               Der Versand eines einzelnen Pflegesets kostet uns rund 30 €, mehr als
-              der Artikel selbst. Das wollen wir niemandem berechnen. Legen Sie ein
-              Modell dazu, dann geht Ihr Zubehör im selben Paket mit, ohne
+              der Artikel selbst. Das wollen wir niemandem berechnen. Leg ein
+              Modell dazu, dann geht dein Zubehör im selben Paket mit, ohne
               zusätzlichen Versand.
             </p>
 
             <div className="mt-6 pt-5 border-t border-black/[0.07]">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-black/30 mb-2.5">In Ihrer Tasche</p>
+              <p className="text-[10px] uppercase tracking-[0.14em] text-black/30 mb-2.5">In deiner Tasche</p>
               {cart.map(c => (
                 <div key={c.id} className="flex items-center justify-between py-1.5">
                   <span className="text-[12px] text-black/70">{c.qty}× {c.name}</span>
@@ -803,7 +803,7 @@ export default function Checkout() {
                 </div>
               ))}
               <p className="text-[11px] text-black/35 font-light mt-3">
-                Es bleibt liegen, bis Sie ein Paar dazulegen.
+                Es bleibt liegen, bis du ein Paar dazulegst.
               </p>
             </div>
 
@@ -913,7 +913,7 @@ export default function Checkout() {
               <div className="border border-black/[0.06] px-4 py-3">
                 <p className="text-[12px] text-black/55 font-light leading-relaxed">
                   Zum Bestellen brauchen wir ein Konto, für Lieferadresse und Fertigungsstand.
-                  Ihr Warenkorb bleibt dabei erhalten{affiliate?.code ? ', Ihr Vorteil ebenfalls' : ''}.
+                  Dein Warenkorb bleibt dabei erhalten{affiliate?.code ? ', dein Vorteil ebenfalls' : ''}.
                 </p>
               </div>
             )}
@@ -935,7 +935,7 @@ export default function Checkout() {
                   hinterlegt. Wer bestellt, hat sie ohnehin angegeben, und beim
                   nächsten Mal steht sie sofort da. */}
               <p className="text-[11px] text-black/30 mt-3 font-light">
-                Die Anschrift wird in Ihrem Konto gespeichert.
+                Die Anschrift wird in deinem Konto gespeichert.
               </p>
             </div>
           </div>
@@ -1026,7 +1026,7 @@ export default function Checkout() {
               return (
                 <div key={item.id || idx} className="bg-white p-4 border border-black/[0.06]">
                   <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">
-                    Ihre Konfiguration{(product.id ? false : cart.length > 1) ? ` · ${item.name}` : ''}
+                    Deine Konfiguration{(product.id ? false : cart.length > 1) ? ` · ${item.name}` : ''}
                   </p>
                   <table className="w-full">
                     <tbody>
@@ -1045,17 +1045,17 @@ export default function Checkout() {
             {ohnePassform.length > 0 && (
               <div className="bg-amber-50 border border-amber-300 p-4">
                 <p className="text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1.5">
-                  Dieser Schuh passt nicht zu Ihren Maßen
+                  Dieser Schuh passt nicht zu deinen Maßen
                 </p>
                 <p className="text-[12px] text-amber-900 leading-relaxed font-light">
                   Für die hinterlegten Maße können wir bei diesem Modell keine passende Form
-                  anbieten. Bestellen Sie trotzdem, wird der Schuh mit hoher Wahrscheinlichkeit
+                  anbieten. Bestellst du trotzdem, wird der Schuh mit hoher Wahrscheinlichkeit
                   nicht richtig sitzen, ein Umtausch aus diesem Grund ist bei Maßanfertigungen
                   nicht möglich.
                 </p>
                 <p className="text-[12px] text-amber-900 leading-relaxed font-light mt-2">
-                  Bitte prüfen Sie Ihre Maße oder wählen Sie ein anderes Modell. Gern beraten
-                  wir Sie auch persönlich.
+                  Bitte prüf deine Maße oder wähl ein anderes Modell. Gern beraten
+                  wir dich auch persönlich.
                 </p>
                 <button
                   onClick={() => setPassformAkzeptiert(v => !v)}
@@ -1092,7 +1092,7 @@ export default function Checkout() {
                       </p>
                       <p className="text-[10px] text-black/30 mt-1.5 font-light leading-relaxed">
                         Diese Maße gehören zu dieser Konfiguration und lassen sich hier nicht mehr
-                        ändern. Für andere Maße stellen Sie den Schuh bitte neu zusammen, nur so
+                        ändern. Für andere Maße stell den Schuh bitte neu zusammen, nur so
                         werden Leisten, Weite und Größe passend dazu bestimmt.
                       </p>
                       <button
@@ -1251,7 +1251,7 @@ export default function Checkout() {
                   <div className="flex gap-2">
                     <input
                       className="flex-1 bg-black/[0.03] border-0 px-3 py-2.5 text-[14px] uppercase placeholder-black/25 focus:outline-none"
-                      placeholder="Code Ihres Unternehmens" value={bizCode}
+                      placeholder="Code deines Unternehmens" value={bizCode}
                       onChange={e => setBizCode(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleApplyBizCode()} />
                     <button onClick={handleApplyBizCode} disabled={bizLoading || !bizCode.trim()}

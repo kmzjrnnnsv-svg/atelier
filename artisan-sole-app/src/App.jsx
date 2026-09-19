@@ -87,6 +87,7 @@ const lazyImports = {
   '/ruecksendungen': () => import('./screens/Ruecksendungen'),
   '/welcome':    () => import('./screens/Welcome'),
   '/entdecken':  () => import('./screens/Entdecken'),
+  '/test-homepage': () => import('./screens/TestHomepage'),
   '/konto-wiederherstellen': () => import('./screens/KontoWiederherstellen'),
   '/passwort-neu': () => import('./screens/PasswortNeu'),
 }
@@ -131,6 +132,7 @@ const MyScans           = spaet(lazyImports['/my-scans'])
 const Ruecksendungen    = spaet(lazyImports['/ruecksendungen'])
 const Welcome           = spaet(lazyImports['/welcome'])
 const Entdecken         = spaet(lazyImports['/entdecken'])
+const TestHomepage      = spaet(lazyImports['/test-homepage'])
 const NewsletterBestaetigung = spaet(() => import('./screens/NewsletterBestaetigung'))
 
 // CMS
@@ -446,6 +448,12 @@ function AppRoutes() {
               <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
               <Route path="/welcome"    element={<Welcome />} />
               <Route path="/entdecken"  element={<Entdecken />} />
+              {/* Startseite zur Ansicht. `/` leitet weiter auf die Kollektion;
+                  diese Fassung zeigt, wie eine eigene Startseite aussähe.
+                  Sie steht auf noindex und in der robots.txt unter Disallow,
+                  damit sie der echten Startseite keine Suchbegriffe streitig
+                  macht. Siehe Kopf von TestHomepage.jsx. */}
+              <Route path="/test-homepage" element={<ShopRoute><TestHomepage /></ShopRoute>} />
               {/* Entdecken/Wissen sind entfallen — alte Adressen führen zur Kollektion. */}
               <Route path="/explore"    element={<Navigate to="/collection" replace />} />
               <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
@@ -534,6 +542,12 @@ function AppRoutes() {
       <Route path="/customize"  element={<ShopRoute><Customize /></ShopRoute>} />
       <Route path="/welcome"    element={<Welcome />} />
       <Route path="/entdecken"  element={<Entdecken />} />
+      {/* Startseite zur Ansicht — siehe Kopf von TestHomepage.jsx.
+          Steht in BEIDEN Routentabellen: die weiter oben gilt für die App
+          (Capacitor), diese für den Browser. Wer nur eine ändert, baut eine
+          Adresse, die auf dem Telefon führt und am Rechner auf der
+          Fehlerseite endet. */}
+      <Route path="/test-homepage" element={<ShopRoute><TestHomepage /></ShopRoute>} />
       <Route path="/explore"    element={<Navigate to="/collection" replace />} />
       <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
       <Route path="/help"        element={<HelpSupport />} />

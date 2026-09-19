@@ -1,0 +1,116 @@
+<!doctype html>
+<!--
+  og-image.html — die Vorlage für das Bild, das beim Teilen eines Links erscheint.
+
+  Warum eine HTML-Datei und kein Grafikprogramm: Der Schriftzug soll derselbe
+  sein wie im Laden (Jost, 0.35em Sperrung, Versalien) und der Grund derselbe
+  greige Ton wie hinter den Kopfbildern (#EDEAE3). Beides steht hier im Code
+  und geht bei einer Änderung der Marke nicht auseinander.
+
+  Neu erzeugen (Chromium, kein npm-Paket nötig):
+
+    chromium --headless --no-sandbox --hide-scrollbars \
+      --force-device-scale-factor=1 --window-size=1200,630 \
+      --screenshot=public/og-image.png \
+      scripts/og-image.html
+
+  Wichtig ist eine Chromium-Fassung OHNE Fensterrahmen („headless shell"). Das
+  normale Chromium rechnet seine Leiste in --window-size hinein: Der Ausschnitt
+  wird zwar 1200x630 groß, die Seite darin aber nur 1200x540 — unten bleibt ein
+  weißer Streifen. Playwright bringt die passende Fassung mit, sie liegt unter
+    <playwright-browsers>/chromium_headless_shell-*/chrome-linux/headless_shell
+
+  Maße 1200x630: das Format, das Facebook, WhatsApp und LinkedIn als große
+  Vorschau zeigen. Kleiner, und es wird auf ein Briefmarkenbild zurückgestuft.
+
+  Dies ist eine Typo-Karte, kein Produktbild. Sobald es eine gute Aufnahme
+  eines Paares gibt, gehört sie hierher — ein Foto verkauft besser als ein
+  Schriftzug. Bis dahin ist diese Karte allemal besser als das, was vorher da
+  war: nämlich nichts.
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face {
+    font-family: 'Jost';
+    font-style: normal;
+    font-weight: 300;
+    src: url(../public/schriften/jost-300-latin.woff2) format('woff2');
+  }
+  @font-face {
+    font-family: 'Jost';
+    font-style: normal;
+    font-weight: 400;
+    src: url(../public/schriften/jost-400-latin.woff2) format('woff2');
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+
+  /* Der Rahmen sitzt auf einem eigenen Element, nicht auf dem Seitenkörper:
+     Ein Rand dort wird beim Abgriff mitgezählt und schiebt die rechte Kante
+     aus dem Bild. */
+  .karte {
+    /* Fest an den Bildrand geheftet statt auf feste Pixelmaße gesetzt: Der
+       Abgriff bestimmt die Größe des Ausschnitts, und die Karte soll ihn
+       ganz ausfüllen — sonst steht unten ein weißer Streifen. */
+    position: fixed;
+    inset: 0;
+    background: #EDEAE3;
+    font-family: 'Jost', 'Futura', 'Century Gothic', sans-serif;
+    color: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Ein schmaler dunkler Rahmen: Auf den hellgrauen Kartenflächen von
+       WhatsApp und LinkedIn verschwimmt ein greiger Grund sonst mit dem
+       Hintergrund der Vorschau, und das Bild sieht aus wie ein Ladefehler. */
+    border: 14px solid #1A1A1A;
+  }
+
+  .marke {
+    font-weight: 400;
+    font-size: 78px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    /* Die Sperrung setzt den Abstand rechts neben den letzten Buchstaben;
+       ohne Ausgleich steht der Schriftzug sichtbar links von der Mitte. */
+    text-indent: 0.35em;
+  }
+
+  .strich {
+    width: 120px;
+    height: 1px;
+    background: rgba(0,0,0,0.35);
+    margin: 42px 0;
+  }
+
+  .zeile {
+    font-weight: 300;
+    font-size: 34px;
+    letter-spacing: 0.08em;
+    color: rgba(0,0,0,0.78);
+  }
+
+  .fuss {
+    margin-top: 30px;
+    font-weight: 300;
+    font-size: 21px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.45);
+  }
+</style>
+</head>
+<body>
+  <div class="karte">
+    <div class="marke">Artisan Sole</div>
+    <div class="strich"></div>
+    <div class="zeile">Rahmengenähte Schuhe nach deinen Maßen</div>
+    <div class="fuss">Custom made · Spanische Manufaktur</div>
+  </div>
+</body>
+</html>

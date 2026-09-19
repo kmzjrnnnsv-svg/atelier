@@ -383,19 +383,19 @@ export function rechnungPdf(db, order, kunde) {
   }
 
   if (!geliefert) {
-    d.absatz('Der Zeitpunkt der Lieferung steht noch nicht fest; er entspricht dem Tag der Zustellung Ihres Paares.', { groesse: 8.5, grau: true })
+    d.absatz('Der Zeitpunkt der Lieferung steht noch nicht fest; er entspricht dem Tag der Zustellung deines Paares.', { groesse: 8.5, grau: true })
     d.luecke(6)
   }
 
   d.luecke(10)
   if (order.paid_at) {
-    d.absatz(`Der Betrag ist am ${datum(order.paid_at)} eingegangen. Diese Rechnung ist bezahlt; bitte überweisen Sie nichts erneut.`, { groesse: 9 })
+    d.absatz(`Der Betrag ist am ${datum(order.paid_at)} eingegangen. Diese Rechnung ist bezahlt; bitte überweise nichts erneut.`, { groesse: 9 })
   } else {
-    d.absatz(`Bitte überweisen Sie den Betrag unter Angabe von „${order.payment_ref || order.order_ref}" auf ${firma.iban ? `IBAN ${firma.iban}${firma.bank ? `, ${firma.bank}` : ''}` : 'unser Konto'}.`, { groesse: 9 })
+    d.absatz(`Bitte überweise den Betrag unter Angabe von „${order.payment_ref || order.order_ref}" auf ${firma.iban ? `IBAN ${firma.iban}${firma.bank ? `, ${firma.bank}` : ''}` : 'unser Konto'}.`, { groesse: 9 })
   }
 
   d.luecke(12)
-  d.absatz('Ihr Paar wurde für Sie angefertigt. Es besteht kein Widerrufsrecht (§ 312g Abs. 2 Nr. 1 BGB); die Einzelheiten samt Stornostaffel stehen in Ziffer 7 unserer AGB, die Ihrer Bestellbestätigung beilagen.', { groesse: 8, grau: true })
+  d.absatz('Dein Paar wurde für dich angefertigt. Es besteht kein Widerrufsrecht (§ 312g Abs. 2 Nr. 1 BGB); die Einzelheiten samt Stornostaffel stehen in Ziffer 7 unserer AGB, die deiner Bestellbestätigung beilagen.', { groesse: 8, grau: true })
 
   return d.buffer()
 }
