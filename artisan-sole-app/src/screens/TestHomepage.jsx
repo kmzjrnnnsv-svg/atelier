@@ -84,7 +84,7 @@ import { resolveMediaUrl } from '../lib/mediaUrl'
 import { SHOES, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import Enthuellen from '../components/Enthuellen'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
-import RahmenSchnitt from '../components/RahmenSchnitt'
+import SchuhAufbau from '../components/SchuhAufbau'
 import LederSchnitt from '../components/LederSchnitt'
 import FussMass from '../components/FussMass'
 
@@ -991,53 +991,38 @@ export default function TestHomepage() {
           Der Abschnitt, der den Preis trägt. „Rahmengenäht statt geklebt"
           ist der entscheidende Satz und zugleich der unanschaulichste — was
           ein Rahmen ist, sieht man am fertigen Schuh nicht. Deshalb der
-          Schnitt. */}
-      <section className="bg-[#111] text-white px-5 lg:px-16 py-16 lg:py-28">
-        <div className="max-w-5xl mx-auto">
-          <Enthuellen>
-            <Kapitelmarke hell>Das Handwerk</Kapitelmarke>
-            <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
-              Die Sohle hängt an einer Naht,<br className="hidden sm:block" /> nicht an einem Klebstoff.
-            </h2>
-          </Enthuellen>
+          Schnitt.
 
-          <Enthuellen verzoegerung={150}>
-            <div className="mt-12 lg:mt-16 text-white">
-              <Tafelflaeche randlos>
-                <RahmenSchnitt className="max-w-2xl mx-auto" />
-              </Tafelflaeche>
-              <Schiebehinweis />
-            </div>
-          </Enthuellen>
+          Und deshalb setzt er sich jetzt zusammen, statt fertig dazustehen:
+          Ein Schnitt besteht aus Lagen, und diese Lagen entstehen in einer
+          Reihenfolge — in der, in der ein Schuhmacher sie anlegt. Wer sie
+          scrollend sieht, versteht in zwanzig Sekunden, wofür sonst zwei
+          Absätze nötig waren. Die zwei Absätze sind deshalb weg; ihr Inhalt
+          steht in den sechs Schritten (lib/aufbauSchritte.js).
 
-          <div className="grid sm:grid-cols-2 gap-x-14 gap-y-8 mt-12 lg:mt-16 max-w-3xl">
-            <Enthuellen verzoegerung={80}>
-              <p className="text-[13px] lg:text-[14px] text-white/60 font-light leading-[1.85]">
-                Der Schaft wird über den Leisten gezogen und nach innen gezwickt. Eine
-                aufgestellte Rippe auf der Brandsohle nimmt die Einstechnaht auf — sie
-                fasst Schaft, Futter und den Rahmen, jenen schmalen Lederstreifen, der
-                rundherum seitlich heraussteht.
-              </p>
-            </Enthuellen>
-            <Enthuellen verzoegerung={160}>
-              <p className="text-[13px] lg:text-[14px] text-white/60 font-light leading-[1.85]">
-                Durch den Rahmen läuft die zweite Naht in die Laufsohle. Sie lässt sich
-                auftrennen, ohne den Schaft zu berühren. Genau daran hängt der
-                Unterschied: Ein geklebter Schuh ist am Ende seiner Sohle am Ende,
-                dieser bekommt eine neue und läuft weiter.
-              </p>
-            </Enthuellen>
-          </div>
-
-          <Enthuellen verzoegerung={220}>
-            <p className="text-[12px] text-white/35 font-light leading-relaxed mt-10 max-w-2xl">
+          Was bleibt, bleibt aus gutem Grund: Wer keine Bewegung will,
+          bekommt denselben Abschnitt ohne Bühne, mit allen sechs Schritten
+          als Liste. Siehe SchuhAufbau. */}
+      <section className="bg-[#111] text-white">
+        <SchuhAufbau
+          kopf={
+            <>
+              <Kapitelmarke hell>Das Handwerk</Kapitelmarke>
+              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+                Die Sohle hängt an einer Naht,<br className="hidden sm:block" /> nicht an einem Klebstoff.
+              </h2>
+            </>
+          }
+          fuss={
+            <p className="text-[12px] text-white/35 font-light leading-relaxed max-w-2xl">
               Zwischen Brand- und Laufsohle liegt Kork. Er gibt unter dem Gewicht nach
               und nimmt nach einigen Wochen die Form des Fußes an — der Grund, warum ein
               rahmengenähter Schuh mit der Zeit bequemer wird statt ausgelatschter.
             </p>
-          </Enthuellen>
-        </div>
+          }
+        />
       </section>
+
 
       {/* ══ 5 · Das Leder ═════════════════════════════════════════════════
           Hier standen drei Stockfotos von Lederoberflächen nebeneinander.
