@@ -4,98 +4,146 @@
  * ── Warum es sie gibt ─────────────────────────────────────────────────────
  *
  * Der Laden hat keine Startseite. `/` leitet weiter auf `/collection`
- * (siehe StartRoute), das heißt: Wer artisansole.com eintippt, steht sofort
- * im Regal. Das ist für jemanden, der die Marke schon kennt, der kürzeste
- * Weg — und für alle anderen der Moment, in dem die Seite nichts erklärt.
- * Warum rahmengenäht besser ist als geklebt, warum es vier bis sechs Wochen
- * dauert und was „nach deinen Maßen" bedeutet, steht verstreut auf
- * /entdecken und unter dem Raster der Kollektion.
+ * (siehe StartRoute): Wer artisansole.com eintippt, steht sofort im Regal.
+ * Für jemanden, der die Marke kennt, ist das der kürzeste Weg — für alle
+ * anderen der Moment, in dem die Seite nichts erklärt. Und für die Suche ist
+ * es ungünstig: Die Adresse mit dem stärksten Gewicht trägt keinen eigenen
+ * Inhalt.
  *
- * Für die Suche ist die Weiterleitung zusätzlich ungünstig: Die Adresse mit
- * dem stärksten Gewicht trägt keinen eigenen Inhalt, und in der sitemap.xml
- * stehen `/` und `/collection` als zwei Einträge für dieselbe Seite.
+ * ── Was diese Fassung versucht ────────────────────────────────────────────
  *
- * ── Was sie anders macht ──────────────────────────────────────────────────
+ * Bei 1.300 Euro für ein Paar Schuhe entscheidet nicht der Preis, sondern
+ * ob jemand versteht, wofür er ihn zahlt. Diese Seite erzählt das in
+ * Kapiteln, und jedes beantwortet eine Frage, die sonst offenbliebe:
  *
- * Drei Entscheidungen, über die es sich zu streiten lohnt:
+ *   1  Erster Blick    Was ist das, und was kostet es?
+ *   2  Drei Zahlen     Woran hängt der Preis?
+ *   3  Die Modelle     Wie sieht es aus, und wofür ist es gemacht?
+ *   4  Das Handwerk    Warum hält das länger als Geklebtes?
+ *   5  Das Leder       Woraus besteht es?
+ *   6  In eigener Sache Was behaupten wir NICHT?
+ *   7  Der Ablauf      Was passiert, wenn ich bestelle?
+ *   8  Der Anfang      Wo fange ich an?
  *
- *   1. Der erste Bildschirm nennt den Einwand, statt ihn zu umgehen.
- *      „Rahmengenäht, nicht geklebt" und der Preis stehen oben, nicht
- *      hinter einem Klick. Wer 450 Euro für Schuhe nicht ausgeben will,
- *      soll das hier erfahren und nicht erst im Konfigurator.
- *   2. Die Modelle kommen vor der Erklärung. Ein Laden, der zuerst von sich
- *      erzählt, verliert die Hälfte; die Kacheln stehen deshalb direkt unter
- *      dem Kopf und führen in den Konfigurator.
- *   3. Die Offenheit über die Machart ist das Verkaufsargument, nicht das
- *      Kleingedruckte. Der Abschnitt „Was wir nicht behaupten" sagt
- *      ausdrücklich, dass maschinell rahmengenäht wird — dieselbe Zusage,
- *      die überall sonst im Laden steht, hier aber als Haltung.
+ * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
+ * wenn hier von einer geschlossenen Geschichte die Rede ist.
  *
- * ── Was bewusst fehlt ─────────────────────────────────────────────────────
+ * ── Woher die Texte kommen ────────────────────────────────────────────────
  *
- * Keine Kopfbild-Fotostrecke. Die Aufnahmen im Bestand sind Stockfotos
- * (siehe lib/editorialImages.js); ein bildschirmfüllendes fremdes Foto
- * verspricht eine Marke, die es noch nicht gibt. Bis es eigene Aufnahmen
- * gibt, trägt der Kopf Schrift — dieselbe Entscheidung wie beim
- * Vorschaubild.
+ * Die Geschichte zu jedem Modell ist NICHT erfunden: Sie steht als
+ * `description` im Katalog, geschrieben für genau dieses Modell, und wird
+ * hier nur größer gesetzt. Fehlt sie, entfällt das Kapitel — lieber drei
+ * Modelle mit Geschichte als sechs mit Füllsatz.
+ *
+ * Erfunden ist das, was über die Machart gesagt wird: was ein Rahmen ist,
+ * was Shell Cordovan von Kalbsleder unterscheidet, warum ein Leisten zählt.
+ * Das ist Sachwissen über Schuhe und gilt unabhängig von diesem Haus.
+ *
+ * Bewusst NICHT erfunden ist alles, was sich nachprüfen ließe und dem Haus
+ * zugeschrieben würde: kein Gründungsjahr, kein Name einer Manufaktur, kein
+ * Ort außer Spanien, keine Auszeichnung, keine Stückzahl, keine Kundenstimme.
+ * Eine Marke, deren Alleinstellung die Offenheit über die Machart ist, darf
+ * sich keine Geschichte erfinden — der erste, der nachfragt, nimmt ihr damit
+ * auch das, was stimmt.
+ *
+ * ── Die Bilder ────────────────────────────────────────────────────────────
+ *
+ * Die Modellkapitel tragen die echte Aufnahme aus dem Katalog. Die
+ * Stimmungsflächen greifen auf `lib/editorialImages.js` zurück — Stockfotos,
+ * als solche im Bestand vermerkt. Sie sind ein Platzhalter, kein Ziel: Was
+ * diese Seite trägt, sind eigene Aufnahmen, und dieser Aufbau ist so
+ * gebaut, dass sie nur ausgetauscht werden müssen.
+ *
+ * ── Bewegung ──────────────────────────────────────────────────────────────
+ *
+ * Über `Enthuellen` und zwei Regeln in index.css, beide zurückhaltend und
+ * beide abgeschaltet, wenn das Gerät `prefers-reduced-motion` meldet. Nichts
+ * hält jemanden auf — der Inhalt ist von der ersten Sekunde an da. Aus
+ * diesem Laden ist einmal eine blockierende Animation entfernt worden, und
+ * das zu Recht.
  *
  * ── Nicht indexieren ──────────────────────────────────────────────────────
  *
- * `indexieren: false`. Solange zwei Startseiten nebeneinander stehen, darf
- * nur eine in den Index: Sonst konkurrieren sie um dieselben Suchbegriffe
- * und schwächen sich gegenseitig. In der robots.txt steht der Pfad
- * zusätzlich unter Disallow — die Angabe hier gilt für den, der die Seite
- * doch abruft, die robots.txt für den, der sie gar nicht erst besucht.
+ * `indexieren: false`, dazu ein Disallow in der robots.txt. Solange zwei
+ * Startseiten nebeneinander stehen, gehört nur eine in den Index.
  *
- * Wird aus dieser Fassung die echte Startseite, gehört sie an `/` statt an
- * StartRoute, `indexieren` fällt weg, der Disallow-Eintrag fällt weg, und
- * `/collection` verliert seinen Eintrag in der sitemap.xml an `/`.
+ * Wird dies die echte Startseite: Route auf `/` statt StartRoute,
+ * `indexieren` weg, Disallow weg, und `/collection` gibt seinen
+ * Sitemap-Eintrag an `/` ab.
  */
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Footprints, Ruler, Scissors, Truck, RefreshCw } from 'lucide-react'
+import { ArrowRight, Footprints, Ruler, Hammer, CalendarDays } from 'lucide-react'
 import useStore from '../store/store'
 import { useSeo } from '../lib/seo'
 import { shoePath } from '../lib/shoePath'
 import { PreisFuss } from '../lib/preisangabe'
 import { preisAlsZahl, preisAlsText } from '../lib/preis'
+import { resolveMediaUrl } from '../lib/mediaUrl'
+import { SHOES, CRAFT, LIFESTYLE } from '../lib/editorialImages'
+import Enthuellen from '../components/Enthuellen'
+import RahmenSchnitt from '../components/RahmenSchnitt'
 import Ablauf from '../components/Ablauf'
 
+/* ── Bausteine ──────────────────────────────────────────────────────────── */
+
+/** Die kleine gesperrte Zeile über jeder Überschrift. Gliedert die Seite. */
+function Kapitelmarke({ children, hell = false }) {
+  return (
+    <p
+      className={`text-[10px] uppercase tracking-[0.3em] ${hell ? 'text-white/45' : 'text-black/30'}`}
+    >
+      {children}
+    </p>
+  )
+}
+
 /**
- * Die Machart in vier Sätzen, je einer pro Punkt.
+ * Drei Zahlen, die den Preis erklären.
  *
- * Bewusst keine Kacheln mit Symbolen und drei Wörtern: Was einen
- * rahmengenähten Schuh von einem geklebten unterscheidet, lässt sich in drei
- * Wörtern nicht sagen, und wer es nicht weiß, kauft nicht.
+ * Keine Werbeworte — Zahlen, die jeder nachhalten kann. „Über 200
+ * Arbeitsschritte" steht auch im Konfigurator und im Ablauf; sie hier zu
+ * nennen ist keine neue Behauptung, sondern dieselbe an der Stelle, an der
+ * jemand zum ersten Mal auf den Preis trifft.
  */
-const MACHART = [
+const ZAHLEN = [
+  { icon: Ruler,        zahl: '2',      einheit: 'Maße',           text: 'Fußlänge und Ballenumfang. Daraus Leisten, Größe und Weite — keine Konfektionsnummer.' },
+  { icon: Hammer,       zahl: '200+',   einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt über das Zwicken bis zur Endkontrolle. Jeder einzeln, an einem einzelnen Paar.' },
+  { icon: CalendarDays, zahl: '4–6',    einheit: 'Wochen',         text: 'So lange dauert ein Paar, das es vorher nicht gab. Wir haben kein Lager, aus dem wir greifen.' },
+]
+
+/**
+ * Die Leder. Sachwissen über Häute, nicht über dieses Haus.
+ *
+ * Die Auswahl im Konfigurator ist größer und ändert sich; hier stehen die
+ * drei, an denen sich der Unterschied erklären lässt. Wer mehr will, findet
+ * alles im Konfigurator — darauf verweist der Abschnitt auch.
+ */
+const LEDER = [
   {
-    icon: Scissors,
-    titel: 'Rahmengenäht, nicht geklebt',
-    text: 'Sohle und Schaft sind über einen Lederstreifen vernäht, den Rahmen. '
-        + 'Ein geklebter Schuh ist am Ende seiner Sohle am Ende; dieser wird neu besohlt '
-        + 'und läuft weiter.',
+    bild: CRAFT.leather,
+    name: 'Vollnarbiges Kalbsleder',
+    text: 'Die äußerste, dichteste Schicht der Haut, ungeschliffen. Sie trägt ihre Narbung noch, '
+        + 'nimmt mit den Jahren die Bewegung des Fußes an und bekommt dabei eine Patina, '
+        + 'die kein neues Paar hat.',
   },
   {
-    icon: Ruler,
-    titel: 'Zwei Maße statt einer Größe',
-    text: 'Fußlänge und Ballenumfang. Daraus bestimmen wir Leisten und Weite, '
-        + 'statt dich in eine Nummer zu sortieren, die in jedem Haus etwas anderes bedeutet.',
+    bild: LIFESTYLE.darkLeather,
+    name: 'Shell Cordovan',
+    text: 'Aus einer besonderen, sehr dichten Lage der Pferdehaut. Es knittert nicht in scharfen '
+        + 'Falten, sondern legt sich in weiche Wellen, und es gewinnt beim Tragen an Tiefe. '
+        + 'Die Gerbung dauert Monate — daran hängt der Aufpreis.',
   },
   {
-    icon: Truck,
-    titel: 'Erst bestellt, dann gebaut',
-    text: 'Wir haben kein Lager. Dein Paar entsteht einzeln in einer spanischen Manufaktur, '
-        + 'in vier bis sechs Wochen. Versand ist inbegriffen.',
-  },
-  {
-    icon: RefreshCw,
-    titel: 'Und wenn es nicht passt',
-    text: 'Ein Schuh für einen bestimmten Fuß lässt sich nicht zurückgeben. '
-        + 'Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für dich. '
-        + 'Die Einzelheiten stehen in den AGB.',
+    bild: CRAFT.stitching,
+    name: 'Nubuk und Velours',
+    text: 'Angeschliffene Oberflächen mit kurzem, mattem Flor. Sie nehmen der Form die Strenge '
+        + 'und machen einen strengen Schuh tragbar an Tagen, an denen Sorgfalt nicht nach '
+        + 'Anstrengung aussehen soll.',
   },
 ]
+
+/* ── Die Seite ──────────────────────────────────────────────────────────── */
 
 export default function TestHomepage() {
   const navigate = useNavigate()
@@ -111,96 +159,162 @@ export default function TestHomepage() {
     indexieren: false,
   })
 
-  // Der Katalog wird sonst erst von der Kollektionsseite geholt. Diese Seite
-  // kann die erste sein, die jemand öffnet — dann ist er noch leer.
+  // Der Katalog wird sonst erst von der Kollektionsseite geholt; diese Seite
+  // kann die erste sein, die jemand öffnet.
   useEffect(() => { initStore?.() }, [initStore])
 
-  // Sechs Modelle, keine Auswahl nach Beliebtheit: Die gibt es in den Daten
-  // nicht, und eine erfundene Reihenfolge wäre schlechter als die eigene.
-  // Modelle ohne Bild fallen heraus — eine Kachel mit grauer Fläche verkauft
-  // nichts und sieht nach einem Fehler aus.
-  const gezeigt = useMemo(
-    () => shoes.filter(s => s.image).slice(0, 6),
-    [shoes],
-  )
+  /**
+   * Die Modelle, die ein eigenes Kapitel bekommen.
+   *
+   * Bedingung: eine Aufnahme UND eine eigene Beschreibung. Ein Kapitel ohne
+   * Bild ist eine leere Fläche, eines ohne Text eine Überschrift ohne
+   * Geschichte — beides ist schlechter als ein Kapitel weniger. Vier, weil
+   * die Seite danach noch fünf Kapitel trägt und niemand acht Modelle liest,
+   * bevor er das Handwerk verstanden hat.
+   */
+  const kapitel = useMemo(() => {
+    // Gleiche Geschichte nur einmal. Die Express-Fassungen tragen denselben
+    // Beschreibungstext wie ihr Grundmodell; standen beide hier, läse man
+    // zwei Kapitel weit denselben Absatz und hielte die Seite für kaputt.
+    const gesehen = new Set()
+    const treffer = []
+    for (const s of shoes) {
+      const text = String(s.description || '').trim()
+      if (!s.image || text.length < 80 || gesehen.has(text)) continue
+      gesehen.add(text)
+      treffer.push(s)
+      if (treffer.length === 4) break
+    }
+    return treffer
+  }, [shoes])
 
-  // Der niedrigste Preis im Katalog. Er steht im Kopf, weil die Frage „was
-  // kostet das" sonst bis zur Modellseite offen bleibt — und wer sie dort
-  // zum ersten Mal beantwortet bekommt, ist zweimal enttäuscht.
+  /** Der Rest der Auswahl, klein und in einer Reihe. */
+  const weitere = useMemo(() => {
+    const gezeigt = new Set(kapitel.map(s => s.id))
+    return shoes.filter(s => s.image && !gezeigt.has(s.id)).slice(0, 6)
+  }, [shoes, kapitel])
+
   const abPreis = useMemo(() => {
     const preise = shoes.map(s => preisAlsZahl(s.price)).filter(p => p > 0)
     return preise.length ? Math.min(...preise) : null
   }, [shoes])
 
+  const zurKollektion = () => navigate('/collection')
+
   return (
     <div className="min-h-full bg-white">
 
-      {/* ── Kopf ──────────────────────────────────────────────────────
-          Drei Zeilen und zwei Wege. Die Überschrift nennt das Produkt, nicht
-          die Marke: „Artisan Sole" steht ohnehin in der Leiste darüber, und
-          wer den Namen noch nicht kennt, sucht nicht danach. */}
-      <header className="px-5 lg:px-16 pt-10 lg:pt-20 pb-9 lg:pb-14 text-center">
-        <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-3">
-          Custom Made · Made in Spain
-        </p>
-        <h1 className="text-[30px] lg:text-[46px] font-extralight text-black leading-[1.05] tracking-tight max-w-3xl mx-auto">
-          Rahmengenähte Schuhe,<br className="hidden sm:block" /> nach deinen Maßen gebaut.
-        </h1>
-        <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-relaxed mt-5 max-w-xl mx-auto">
-          Kein Lager, keine Konfektionsgröße. Du stellst Leder, Sohle und Details
-          zusammen, wir messen deinen Fuß über zwei Maße.
-          {abPreis ? <> Ab <span className="text-black/75">€&nbsp;{preisAlsText(abPreis)}</span>.</> : null}
-        </p>
+      {/* ══ 1 · Erster Blick ══════════════════════════════════════════════
+          Bildschirmfüllend, ein Bild, ein Satz, zwei Wege. Die Überschrift
+          nennt das Produkt und nicht die Marke: Der Name steht ohnehin in
+          der Leiste, und wer ihn nicht kennt, sucht auch nicht danach. */}
+      <header className="relative min-h-[82vh] flex items-end overflow-hidden bg-[#111]">
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src={SHOES.hero}
+            alt=""
+            aria-hidden="true"
+            className="bild-heran w-full h-full object-cover opacity-[0.55]"
+          />
+        </div>
+        {/* Der Verlauf trägt die Schrift. Ohne ihn hinge die Lesbarkeit am
+            Motiv, und ein ausgetauschtes Bild machte die Seite unlesbar. */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.15) 100%)' }}
+        />
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mt-7">
-          <button
-            type="button"
-            onClick={() => navigate('/collection')}
-            className="w-full sm:w-auto bg-black text-white border-0 px-8 h-11 text-[11px] uppercase flex items-center justify-center gap-2 hover:bg-black/85 transition-colors"
-            style={{ letterSpacing: '0.18em' }}
-          >
-            Modelle ansehen
-            <ArrowRight size={15} strokeWidth={1.5} />
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/scan')}
-            className="w-full sm:w-auto bg-transparent border border-black/15 text-black/70 px-8 h-11 text-[11px] uppercase flex items-center justify-center gap-2 hover:border-black/40 hover:text-black transition-colors"
-            style={{ letterSpacing: '0.18em' }}
-          >
-            <Footprints size={15} strokeWidth={1.5} />
-            Passform bestimmen
-          </button>
+        <div className="relative w-full px-5 lg:px-16 pb-14 lg:pb-20">
+          <Enthuellen>
+            <Kapitelmarke hell>Custom Made · Made in Spain</Kapitelmarke>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={120}>
+            <h1 className="text-[34px] lg:text-[64px] font-extralight text-white leading-[1.02] tracking-tight mt-4 max-w-3xl">
+              Ein Paar, das es<br />vorher nicht gab.
+            </h1>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={220}>
+            <p className="text-[14px] lg:text-[17px] text-white/70 font-light leading-relaxed mt-6 max-w-lg">
+              Rahmengenäht, nach deinen Maßen gebaut, einzeln gefertigt in einer
+              spanischen Manufaktur.
+              {abPreis ? <> Ab <span className="text-white">€&nbsp;{preisAlsText(abPreis)}</span>.</> : null}
+            </p>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={320}>
+            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 mt-8 max-w-md sm:max-w-none">
+              <button
+                type="button"
+                onClick={zurKollektion}
+                className="w-full sm:w-auto bg-white text-black border-0 px-9 h-12 text-[11px] uppercase flex items-center justify-center gap-2 whitespace-nowrap hover:bg-white/85 transition-colors"
+                style={{ letterSpacing: '0.18em' }}
+              >
+                Modelle ansehen
+                <ArrowRight size={15} strokeWidth={1.5} />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/scan')}
+                className="w-full sm:w-auto bg-transparent border border-white/30 text-white/85 px-9 h-12 text-[11px] uppercase flex items-center justify-center gap-2 whitespace-nowrap hover:border-white/70 hover:text-white transition-colors"
+                style={{ letterSpacing: '0.18em' }}
+              >
+                <Footprints size={15} strokeWidth={1.5} />
+                Passform bestimmen
+              </button>
+            </div>
+          </Enthuellen>
+        </div>
+
+        {/* Der Hinweis, dass es weitergeht. Auf dem Telefon steht er im Weg
+            und entfällt dort. */}
+        <div className="hidden lg:block absolute right-16 bottom-20 w-px h-14 bg-white/25 overflow-hidden">
+          <div className="strich-wandert w-px h-full bg-white/80" />
         </div>
       </header>
 
-      {/* ── Modelle ───────────────────────────────────────────────────
-          Vor der Erklärung, nicht danach. Wer schon weiß, was er will, soll
-          nicht an einem Absatz über Handwerk vorbei müssen. */}
-      <section className="px-5 lg:px-16 pb-12 lg:pb-20">
-        <div className="flex items-end justify-between mb-4 lg:mb-6">
-          <p className="text-[10px] text-black/35 uppercase tracking-[0.22em]">Aus der Kollektion</p>
-          <button
-            type="button"
-            onClick={() => navigate('/collection')}
-            className="bg-transparent border-0 p-0 text-[11px] text-black/45 hover:text-black transition-colors flex items-center gap-1.5"
-          >
-            Alle Modelle
-            <ArrowRight size={13} strokeWidth={1.5} />
-          </button>
+      {/* ══ 2 · Drei Zahlen ═══════════════════════════════════════════════
+          Der Preis steht oben. Hier steht, woran er hängt — bevor jemand
+          weiterscrollt und die Frage mitnimmt. */}
+      <section className="px-5 lg:px-16 py-14 lg:py-24 border-b border-black/[0.07]">
+        <div className="grid sm:grid-cols-3 gap-10 lg:gap-16 max-w-5xl mx-auto">
+          {ZAHLEN.map((z, i) => (
+            <Enthuellen key={z.einheit} verzoegerung={i * 90}>
+              <z.icon size={18} strokeWidth={1.3} className="text-black/35" />
+              <p className="text-[34px] lg:text-[44px] font-extralight leading-none tracking-tight mt-4">
+                {z.zahl}
+              </p>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-black/40 mt-2">{z.einheit}</p>
+              <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-relaxed mt-4 max-w-xs">
+                {z.text}
+              </p>
+            </Enthuellen>
+          ))}
+        </div>
+      </section>
+
+      {/* ══ 3 · Die Modelle ═══════════════════════════════════════════════
+          Jedes mit seiner eigenen Geschichte, abwechselnd links und rechts.
+          Der Text kommt aus dem Katalog — er ist für dieses eine Modell
+          geschrieben und sagt mehr als jede Zeile, die hier stünde. */}
+      <section className="py-14 lg:py-24">
+        <div className="px-5 lg:px-16 max-w-5xl mx-auto mb-12 lg:mb-20">
+          <Enthuellen>
+            <Kapitelmarke>Die Modelle</Kapitelmarke>
+            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3 max-w-2xl">
+              Jede Form hat einen Grund.<br className="hidden sm:block" /> Meist einen älteren als wir.
+            </h2>
+          </Enthuellen>
         </div>
 
-        {katalogStatus === 'loading' && !gezeigt.length ? (
-          <div className="py-16 text-center text-[12px] text-black/30 font-light">
+        {katalogStatus === 'loading' && !kapitel.length ? (
+          <p className="px-5 lg:px-16 py-16 text-center text-[12px] text-black/30 font-light">
             Modelle werden geladen …
-          </div>
-        ) : katalogStatus === 'error' && !gezeigt.length ? (
-          // Kein leeres Raster und kein Spinner ohne Ende: Sagen, was ist,
-          // und den Weg offen lassen, der ohne Katalog funktioniert.
-          <div className="py-12 text-center">
-            <p className="text-[12px] text-black/45 font-light">
-              Die Modelle lassen sich gerade nicht laden.
-            </p>
+          </p>
+        ) : katalogStatus === 'error' && !kapitel.length ? (
+          <div className="px-5 lg:px-16 py-12 text-center">
+            <p className="text-[12px] text-black/45 font-light">Die Modelle lassen sich gerade nicht laden.</p>
             <button
               type="button"
               onClick={() => initStore?.()}
@@ -211,138 +325,302 @@ export default function TestHomepage() {
             </button>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-black/[0.07]">
-              {gezeigt.map(schuh => (
-                <button
-                  key={schuh.id}
-                  type="button"
-                  onClick={() => navigate(shoePath(schuh))}
-                  className="group relative bg-white border-0 p-0 text-left overflow-hidden"
-                >
-                  <div className="aspect-[4/5] overflow-hidden bg-[#EDEAE3]">
-                    <img
-                      src={schuh.image}
-                      alt={`${schuh.name}, rahmengenäht, nach Maß gefertigt`}
-                      loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                    />
-                  </div>
-                  <div className="px-3.5 py-3">
-                    <p className="text-[12px] lg:text-[13px] text-black font-normal leading-snug line-clamp-2 min-h-[2.6em]">
+          <div className="space-y-16 lg:space-y-28">
+            {kapitel.map((schuh, i) => {
+              const linksBild = i % 2 === 0
+              return (
+                <article key={schuh.id} className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-16 px-5 lg:px-16">
+                  <Enthuellen
+                    richtung={linksBild ? 'links' : 'rechts'}
+                    className={linksBild ? '' : 'lg:order-2'}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => navigate(shoePath(schuh))}
+                      className="group block w-full bg-transparent border-0 p-0 text-left"
+                      aria-label={`${schuh.name} ansehen und konfigurieren`}
+                    >
+                      <div className="aspect-[5/4] lg:aspect-[4/5] overflow-hidden bg-[#EDEAE3]">
+                        <img
+                          src={resolveMediaUrl(schuh.image)}
+                          alt={`${schuh.name}, rahmengenäht, nach Maß gefertigt`}
+                          loading="lazy"
+                          className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+                        />
+                      </div>
+                    </button>
+                  </Enthuellen>
+
+                  <Enthuellen
+                    verzoegerung={120}
+                    className={`mt-7 lg:mt-0 ${linksBild ? '' : 'lg:order-1'}`}
+                  >
+                    <Kapitelmarke>
+                      {String(schuh.category || 'Custom Made').replace(/_/g, ' ')}
+                      {schuh.material ? ` · ${schuh.material}` : ''}
+                    </Kapitelmarke>
+                    <h3 className="text-[24px] lg:text-[34px] font-extralight leading-[1.1] tracking-tight mt-3">
                       {schuh.name}
+                    </h3>
+                    <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.85] mt-5">
+                      {schuh.description}
                     </p>
-                    <p className="text-[12px] lg:text-[13px] text-black/55 font-light mt-0.5">
-                      {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
-                    </p>
-                  </div>
+
+                    <div className="flex items-center gap-6 mt-7 pt-6 border-t border-black/[0.08]">
+                      <div>
+                        <p className="text-[9px] uppercase tracking-[0.2em] text-black/30">Ab</p>
+                        <p className="text-[15px] text-black font-light mt-1">{schuh.price || 'auf Anfrage'}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navigate(shoePath(schuh))}
+                        className="ml-auto bg-transparent border border-black/15 text-black/70 px-7 h-11 text-[11px] uppercase flex items-center gap-2 hover:border-black/45 hover:text-black transition-colors"
+                        style={{ letterSpacing: '0.16em' }}
+                      >
+                        Konfigurieren
+                        <ArrowRight size={14} strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  </Enthuellen>
+                </article>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Der Rest der Auswahl, klein. Wer bis hierher gelesen hat, will
+            nicht noch vier Kapitel, sondern sehen, was es sonst gibt. */}
+        {weitere.length > 0 && (
+          <div className="px-5 lg:px-16 mt-16 lg:mt-28">
+            <Enthuellen>
+              <div className="flex items-end justify-between mb-5">
+                <Kapitelmarke>Und außerdem</Kapitelmarke>
+                <button
+                  type="button"
+                  onClick={zurKollektion}
+                  className="bg-transparent border-0 p-0 text-[11px] text-black/45 hover:text-black transition-colors flex items-center gap-1.5"
+                >
+                  Alle Modelle
+                  <ArrowRight size={13} strokeWidth={1.5} />
                 </button>
+              </div>
+            </Enthuellen>
+
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-px bg-black/[0.07]">
+              {weitere.map((schuh, i) => (
+                <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 5) * 60} className="bg-white">
+                  <button
+                    type="button"
+                    onClick={() => navigate(shoePath(schuh))}
+                    className="group block w-full bg-transparent border-0 p-0 text-left"
+                  >
+                    <div className="aspect-[4/5] overflow-hidden bg-[#EDEAE3]">
+                      <img
+                        src={resolveMediaUrl(schuh.image)}
+                        alt={`${schuh.name}, rahmengenäht, nach Maß gefertigt`}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                      />
+                    </div>
+                    <div className="px-3 py-3">
+                      <p className="text-[12px] text-black font-normal leading-snug line-clamp-2 min-h-[2.6em]">
+                        {schuh.name}
+                      </p>
+                      <p className="text-[12px] text-black/50 font-light mt-0.5">
+                        {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
+                      </p>
+                    </div>
+                  </button>
+                </Enthuellen>
               ))}
             </div>
-            {gezeigt.length > 0 && <PreisFuss className="mt-3" />}
-          </>
+            <PreisFuss className="mt-3" />
+          </div>
         )}
       </section>
 
-      {/* ── Machart ───────────────────────────────────────────────────
-          Der Teil, der den Preis erklärt. Auf einem hellen Grund abgesetzt,
-          damit er als zusammenhängender Text gelesen wird und nicht als
-          weitere Reihe Kacheln. */}
-      <section className="bg-[#fafaf9] border-y border-black/[0.06] px-5 lg:px-16 py-12 lg:py-20">
-        <div className="max-w-4xl mx-auto">
-          <p className="text-[10px] text-black/35 uppercase tracking-[0.22em] mb-2">Worin der Unterschied liegt</p>
-          <h2 className="text-[22px] lg:text-[30px] font-extralight leading-[1.15] tracking-tight max-w-2xl">
-            Ein Schuh, der sich reparieren lässt, ist ein anderes Produkt
-            als einer, den man ersetzt.
-          </h2>
+      {/* ══ 4 · Das Handwerk ══════════════════════════════════════════════
+          Der Abschnitt, der den Preis trägt. „Rahmengenäht statt geklebt"
+          ist der entscheidende Satz und zugleich der unanschaulichste — was
+          ein Rahmen ist, sieht man am fertigen Schuh nicht. Deshalb der
+          Schnitt. */}
+      <section className="bg-[#111] text-white px-5 lg:px-16 py-16 lg:py-28">
+        <div className="max-w-5xl mx-auto">
+          <Enthuellen>
+            <Kapitelmarke hell>Das Handwerk</Kapitelmarke>
+            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3 max-w-2xl">
+              Die Sohle hängt an einer Naht,<br className="hidden sm:block" /> nicht an einem Klebstoff.
+            </h2>
+          </Enthuellen>
 
-          <div className="grid sm:grid-cols-2 gap-x-10 gap-y-8 mt-9 lg:mt-12">
-            {/* `punkt.icon` als Element statt einer umbenannten Destrukturierung:
-                ESLint hält das umbenannte `Icon` sonst für unbenutzt und meldet
-                einen Fehler, den es nicht gibt — dieselbe Falschmeldung steht
-                schon zweimal im CMS. */}
-            {MACHART.map(punkt => (
-              <div key={punkt.titel}>
-                <punkt.icon size={17} strokeWidth={1.4} className="text-black/40" />
-                <p className="text-[13px] lg:text-[14px] text-black font-normal mt-3">{punkt.titel}</p>
-                <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-relaxed mt-1.5">
-                  {punkt.text}
+          <Enthuellen verzoegerung={150}>
+            <div className="mt-12 lg:mt-16 text-white">
+              <RahmenSchnitt className="max-w-2xl mx-auto" />
+            </div>
+          </Enthuellen>
+
+          <div className="grid sm:grid-cols-2 gap-x-14 gap-y-8 mt-12 lg:mt-16 max-w-3xl">
+            <Enthuellen verzoegerung={80}>
+              <p className="text-[13px] lg:text-[14px] text-white/60 font-light leading-[1.85]">
+                Der Schaft wird über den Leisten gezogen und nach innen gezwickt. Eine
+                aufgestellte Rippe auf der Brandsohle nimmt die Einstechnaht auf — sie
+                fasst Schaft, Futter und den Rahmen, jenen schmalen Lederstreifen, der
+                rundherum seitlich heraussteht.
+              </p>
+            </Enthuellen>
+            <Enthuellen verzoegerung={160}>
+              <p className="text-[13px] lg:text-[14px] text-white/60 font-light leading-[1.85]">
+                Durch den Rahmen läuft die zweite Naht in die Laufsohle. Sie lässt sich
+                auftrennen, ohne den Schaft zu berühren. Genau daran hängt der
+                Unterschied: Ein geklebter Schuh ist am Ende seiner Sohle am Ende,
+                dieser bekommt eine neue und läuft weiter.
+              </p>
+            </Enthuellen>
+          </div>
+
+          <Enthuellen verzoegerung={220}>
+            <p className="text-[12px] text-white/35 font-light leading-relaxed mt-10 max-w-2xl">
+              Zwischen Brand- und Laufsohle liegt Kork. Er gibt unter dem Gewicht nach
+              und nimmt nach einigen Wochen die Form des Fußes an — der Grund, warum ein
+              rahmengenähter Schuh mit der Zeit bequemer wird statt ausgelatschter.
+            </p>
+          </Enthuellen>
+        </div>
+      </section>
+
+      {/* ══ 5 · Das Leder ═════════════════════════════════════════════════ */}
+      <section className="px-5 lg:px-16 py-16 lg:py-28">
+        <div className="max-w-5xl mx-auto">
+          <Enthuellen>
+            <Kapitelmarke>Das Leder</Kapitelmarke>
+            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3 max-w-2xl">
+              Die Haut entscheidet, wie das Paar altert.
+            </h2>
+          </Enthuellen>
+
+          <div className="grid sm:grid-cols-3 gap-8 lg:gap-12 mt-12 lg:mt-16">
+            {LEDER.map((l, i) => (
+              <Enthuellen key={l.name} verzoegerung={i * 90}>
+                <div className="aspect-[4/3] overflow-hidden bg-[#EDEAE3]">
+                  <img src={l.bild} alt="" aria-hidden="true" loading="lazy" className="w-full h-full object-cover" />
+                </div>
+                <p className="text-[13px] lg:text-[14px] text-black font-normal mt-5">{l.name}</p>
+                <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
+                  {l.text}
                 </p>
-              </div>
+              </Enthuellen>
             ))}
           </div>
+
+          <Enthuellen verzoegerung={140}>
+            <p className="text-[12px] text-black/40 font-light mt-10">
+              Welche Leder und Farben an welchem Modell zur Wahl stehen, zeigt der
+              Konfigurator — die Auswahl unterscheidet sich je nach Machart.
+            </p>
+          </Enthuellen>
         </div>
       </section>
 
-      {/* ── Was wir nicht behaupten ───────────────────────────────────
-          Der Abschnitt, der diese Fassung von der bisherigen Seite trennt.
-          Die Offenheit über die Machart war bisher eine Selbstauskunft im
-          Kleingedruckten; hier ist sie ein Verkaufsargument. Wer „handmade"
+      {/* ══ 6 · In eigener Sache ══════════════════════════════════════════
+          Der Abschnitt, der diese Fassung von jeder anderen trennt. Die
+          Offenheit über die Machart war bisher eine Selbstauskunft im
+          Kleingedruckten; hier ist sie das Verkaufsargument. Wer „handmade"
           liest und später erfährt, dass Maschinen im Spiel waren, zieht den
           Rest der Zusagen in Zweifel — auch die, die stimmen. */}
-      <section className="px-5 lg:px-16 py-12 lg:py-20">
+      <section className="bg-[#fafaf9] border-y border-black/[0.06] px-5 lg:px-16 py-16 lg:py-28">
         <div className="max-w-2xl mx-auto">
-          <p className="text-[10px] text-black/35 uppercase tracking-[0.22em] mb-2">In eigener Sache</p>
-          <h2 className="text-[20px] lg:text-[26px] font-extralight leading-[1.2] tracking-tight">
-            Was wir nicht behaupten
-          </h2>
-          <p className="text-[13px] lg:text-[14px] text-black/55 font-light leading-relaxed mt-5">
-            Wir schreiben nicht „handgefertigt". Der Rahmen wird maschinell genäht,
-            wie in fast jeder Manufaktur, die in dieser Preisklasse arbeitet. Von Hand
-            kommen Zuschnitt, Zwicken, Finish und die Endkontrolle — über zweihundert
-            Arbeitsschritte, von denen wir keinen erfunden haben.
-          </p>
-          <p className="text-[13px] lg:text-[14px] text-black/55 font-light leading-relaxed mt-4">
-            Wir sagen es, weil der Unterschied zwischen einem rahmengenähten und
-            einem geklebten Schuh groß genug ist. Er braucht kein Wort, das ihn
-            größer macht.
-          </p>
+          <Enthuellen>
+            <Kapitelmarke>In eigener Sache</Kapitelmarke>
+            <h2 className="text-[22px] lg:text-[32px] font-extralight leading-[1.15] tracking-tight mt-3">
+              Was wir nicht behaupten
+            </h2>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={100}>
+            <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-7">
+              Wir schreiben nicht „handgefertigt". Der Rahmen wird maschinell genäht, wie
+              in fast jeder Manufaktur, die in dieser Preisklasse arbeitet. Von Hand
+              kommen Zuschnitt, Zwicken, Finish und die Endkontrolle — über zweihundert
+              Arbeitsschritte, von denen wir keinen erfunden haben.
+            </p>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={180}>
+            <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-5">
+              Wir sagen es, weil der Unterschied zwischen einem rahmengenähten und einem
+              geklebten Schuh groß genug ist. Er braucht kein Wort, das ihn größer macht.
+            </p>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={240}>
+            <p className="text-[12px] text-black/35 font-light leading-relaxed mt-8 pt-6 border-t border-black/[0.08]">
+              Dasselbe gilt für alles andere auf dieser Seite: Wo eine Zahl steht, ist
+              sie nachgehalten. Wo keine steht, haben wir keine.
+            </p>
+          </Enthuellen>
         </div>
       </section>
 
-      {/* ── Ablauf ────────────────────────────────────────────────────
+      {/* ══ 7 · Der Ablauf ════════════════════════════════════════════════
           Dieselbe Darstellung wie unter der Kollektion und im Firmenbereich.
-          Eine eigene Gestaltung nur für diese Seite hieße, dieselbe
-          Erklärung an der vierten Stelle anders aussehen zu lassen. */}
-      <section className="bg-[#fafaf9] border-y border-black/[0.06] px-5 lg:px-16 py-12 lg:py-20">
-        <Ablauf
-          titel="Vom Klick zum Paar"
-          intro="Vier Schritte, und du weißt nach jedem, woran du bist."
-          breite="max-w-2xl"
-          schritte={[
-            { titel: 'Modell und Ausführung',
-              text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Unterbrechen und später weitermachen geht, der Stand bleibt gespeichert.' },
-            { titel: 'Maße statt Größe',
-              text: 'Fußlänge und Ballenumfang, ±0,5 cm genügen. Daraus ermitteln wir Leisten und Größe. Eine Größentabelle brauchst du nicht, weil wir nicht raten.' },
-            { titel: 'Fertigung',
-              text: 'Nach Zahlungseingang geht die Bestellung in die Manufaktur. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht.' },
-            { titel: 'Endkontrolle und Versand',
-              text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.' },
-          ]}
-          fuss="Vier bis sechs Wochen ab Zahlungseingang. Versand innerhalb Deutschlands ist inbegriffen."
-        />
+          Eine eigene Gestaltung nur hier hieße, dieselbe Erklärung an der
+          vierten Stelle anders aussehen zu lassen. */}
+      <section className="px-5 lg:px-16 py-16 lg:py-28">
+        <Enthuellen>
+          <Ablauf
+            titel="Vom Klick zum Paar"
+            intro="Vier Schritte, und du weißt nach jedem, woran du bist."
+            breite="max-w-2xl"
+            schritte={[
+              { titel: 'Modell und Ausführung',
+                text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Unterbrechen und später weitermachen geht, der Stand bleibt gespeichert.' },
+              { titel: 'Maße statt Größe',
+                text: 'Fußlänge und Ballenumfang, ±0,5 cm genügen. Daraus ermitteln wir Leisten und Größe. Eine Größentabelle brauchst du nicht, weil wir nicht raten.' },
+              { titel: 'Fertigung',
+                text: 'Nach Zahlungseingang geht die Bestellung in die Manufaktur. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht.' },
+              { titel: 'Endkontrolle und Versand',
+                text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.' },
+            ]}
+            fuss="Vier bis sechs Wochen ab Zahlungseingang. Versand innerhalb Deutschlands ist inbegriffen. Ein Schuh für einen bestimmten Fuß lässt sich nicht zurückgeben — ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für dich. Die Einzelheiten stehen in den AGB."
+          />
+        </Enthuellen>
       </section>
 
-      {/* ── Abschluss ─────────────────────────────────────────────────
+      {/* ══ 8 · Der Anfang ════════════════════════════════════════════════
           Ein Weg, nicht drei. Wer bis hierher gelesen hat, sucht keine
-          Auswahl mehr, sondern den Anfang. */}
-      <section className="px-5 lg:px-16 py-14 lg:py-24 text-center">
-        <h2 className="text-[22px] lg:text-[30px] font-extralight leading-[1.15] tracking-tight max-w-lg mx-auto">
-          Fang mit dem Modell an. Die Maße kommen später.
-        </h2>
-        <p className="text-[12px] lg:text-[13px] text-black/45 font-light mt-4 max-w-md mx-auto leading-relaxed">
-          Konfigurieren kostet nichts und verpflichtet zu nichts. Erst am Ende
-          stehen Preis und Lieferzeit fest.
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate('/collection')}
-          className="mt-7 bg-black text-white border-0 px-10 h-12 text-[11px] uppercase inline-flex items-center justify-center gap-2 hover:bg-black/85 transition-colors"
-          style={{ letterSpacing: '0.18em' }}
-        >
-          Schuh konfigurieren
-          <ArrowRight size={15} strokeWidth={1.5} />
-        </button>
+          Auswahl mehr, sondern die Stelle, an der es losgeht. */}
+      <section className="relative overflow-hidden bg-[#111]">
+        <img
+          src={LIFESTYLE.walking}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.32]"
+        />
+        <div className="relative px-5 lg:px-16 py-20 lg:py-32 text-center">
+          <Enthuellen>
+            <h2 className="text-[26px] lg:text-[42px] font-extralight leading-[1.1] tracking-tight text-white max-w-2xl mx-auto">
+              Fang mit dem Modell an.<br className="hidden sm:block" /> Die Maße kommen später.
+            </h2>
+          </Enthuellen>
+          <Enthuellen verzoegerung={120}>
+            <p className="text-[13px] lg:text-[14px] text-white/55 font-light mt-5 max-w-md mx-auto leading-relaxed">
+              Konfigurieren kostet nichts und verpflichtet zu nichts. Erst am Ende stehen
+              Preis und Lieferzeit fest.
+            </p>
+          </Enthuellen>
+          <Enthuellen verzoegerung={200}>
+            <button
+              type="button"
+              onClick={zurKollektion}
+              className="mt-9 bg-white text-black border-0 px-12 h-12 text-[11px] uppercase inline-flex items-center justify-center gap-2 hover:bg-white/85 transition-colors"
+              style={{ letterSpacing: '0.18em' }}
+            >
+              Schuh konfigurieren
+              <ArrowRight size={15} strokeWidth={1.5} />
+            </button>
+          </Enthuellen>
+        </div>
       </section>
     </div>
   )

@@ -1035,15 +1035,15 @@ export function seedLoaferVariants(db) {
     { name: 'The Horsebit Loafer', deco: 'horsebit', price: '€ 1.320', color: '#3b1f0a', tag: 'NEW',
       material: 'Lux Calf', image: 'https://images.unsplash.com/photo-1616406432452-07bc5938759d?w=600&q=85&fit=crop&auto=format',
       tagline: 'Ikonische Metalltrense.',
-      description: 'Der Horsebit-Loafer vereint italienische Lässigkeit mit klassischer Eleganz. Die handgesetzte Metalltrense ist das unverwechselbare Detail, der Rest folgt Ihrer Konfiguration: Leder, Farbe, Sohle und Innenfutter.' },
+      description: 'Der Horsebit-Loafer vereint italienische Lässigkeit mit klassischer Eleganz. Die handgesetzte Metalltrense ist das unverwechselbare Detail, der Rest folgt deiner Konfiguration: Leder, Farbe, Sohle und Innenfutter.' },
     { name: 'The Tassel Loafer', deco: 'tassels', price: '€ 1.290', color: '#78350f', tag: null,
       material: 'Lux Calf', image: 'https://images.unsplash.com/photo-1615979474401-8a6a344de5bd?w=600&q=85&fit=crop&auto=format',
       tagline: 'Quasten mit Charakter.',
-      description: 'Ein Klassiker der gehobenen Garderobe: der Tassel-Loafer mit fein gearbeiteten Quasten. Zeitlos zum Anzug wie zur Chino, gefertigt aus Ihrem Wunschleder mit durchgenähter Konstruktion.' },
+      description: 'Ein Klassiker der gehobenen Garderobe: der Tassel-Loafer mit fein gearbeiteten Quasten. Zeitlos zum Anzug wie zur Chino, gefertigt aus deinem Wunschleder mit durchgenähter Konstruktion.' },
     { name: 'The Albert Loafer', deco: 'albert_mask', price: '€ 1.350', color: '#1c1c1e', tag: null,
       material: 'Lux Calf', image: 'https://images.unsplash.com/photo-1616406432452-07bc5938759d?w=600&q=85&fit=crop&auto=format',
       tagline: 'Verzierte Albert-Maske.',
-      description: 'Der Albert-Loafer mit dekorativer Maske auf dem Spann setzt ein elegantes Statement. Abendtauglich und dennoch alltagsfähig, individuell konfiguriert nach Ihren Vorstellungen.' },
+      description: 'Der Albert-Loafer mit dekorativer Maske auf dem Spann setzt ein elegantes Statement. Abendtauglich und dennoch alltagsfähig, individuell konfiguriert nach deinen Vorstellungen.' },
   ]
   const findByName = db.prepare('SELECT id, locked_decoration FROM shoes WHERE lower(trim(name)) = lower(trim(?))')
   const ins = db.prepare(`
@@ -1690,12 +1690,59 @@ const DU_TEXTE = [
    'Ihre Verbindung zu dir verlieren sie aber:'],
   ['Nach der Vermessung Ihres Fußes wählen wir aus hunderten Leisten die exakt passende aus.',
    'Nach der Vermessung deines Fußes wählen wir aus hunderten Leisten die exakt passende aus.'],
+
+  // ── Modell- und Kategorietexte ─────────────────────────────────────────
+  // Sie stehen auf der Modellseite und, seit es sie gibt, als Geschichte
+  // auf der Startseite. Ein Modelltext, der siezt, fällt dort besonders auf:
+  // Er steht unmittelbar neben einem Knopf, der duzt.
+  ['es nimmt mit den Jahren die Bewegung Ihres Fußes an, statt sich abzunutzen. Ein Paar, das Sie nicht ersetzen, sondern begleiten werden.',
+   'es nimmt mit den Jahren die Bewegung deines Fußes an, statt sich abzunutzen. Ein Paar, das du nicht ersetzt, sondern begleitest.'],
+  ['Ein Schuh für die Anlässe, an die Sie sich später erinnern.',
+   'Ein Schuh für die Anlässe, an die du dich später erinnerst.'],
+  ['Genau dafür nehmen wir Ihre Maße.', 'Genau dafür nehmen wir deine Maße.'],
+  ['Für den festlichen Auftritt, der Ihnen leichtfallen darf.',
+   'Für den festlichen Auftritt, der dir leichtfallen darf.'],
+  ['Ein Begleiter, der schöner wird, je öfter Sie ihn tragen.',
+   'Ein Begleiter, der schöner wird, je öfter du ihn trägst.'],
+  ['deshalb zählen hier Ihre Maße besonders.', 'deshalb zählen hier deine Maße besonders.'],
+  ['Beim Drake steigen Sie hinein und gehen los. Was ihn ausmacht, entscheiden Sie, glatt belassen,',
+   'Beim Drake steigst du hinein und gehst los. Was ihn ausmacht, entscheidest du, glatt belassen,'],
+  ['Für kühlere Tage, an denen Sie auf Bequemlichkeit nicht verzichten möchten.',
+   'Für kühlere Tage, an denen du auf Bequemlichkeit nicht verzichten möchtest.'],
+  ['Über die Ösen legen Sie den Schaft genau an den Knöchel, fester oder lockerer,',
+   'Über die Ösen legst du den Schaft genau an den Knöchel, fester oder lockerer,'],
+  ['Ein Paar, das mit den Jahren Ihre Bewegung annimmt.',
+   'Ein Paar, das mit den Jahren deine Bewegung annimmt.'],
+  ['Kein Verschluss, keine Ösen: Sie steigen hinein und gehen los. Wie viel Schmuck er trägt, entscheiden Sie, glatt,',
+   'Kein Verschluss, keine Ösen: Du steigst hinein und gehst los. Wie viel Schmuck er trägt, entscheidest du, glatt,'],
+
+  // Die Beschreibungen der Loafer- und Mokassin-Linie stammen aus dem
+  // Katalog der Manufaktur und siezen noch.
+  ['der Rest folgt Ihrer Konfiguration: Leder, Farbe, Sohle und Innenfutter.',
+   'der Rest folgt deiner Konfiguration: Leder, Farbe, Sohle und Innenfutter.'],
+  ['gefertigt aus Ihrem Wunschleder mit durchgenähter Konstruktion.',
+   'gefertigt aus deinem Wunschleder mit durchgenähter Konstruktion.'],
+  ['individuell konfiguriert nach Ihren Vorstellungen.',
+   'individuell konfiguriert nach deinen Vorstellungen.'],
+  ['Sie wählen das Leder aus Calf Suede, Nappa oder Fullgrain,',
+   'Du wählst das Leder aus Calf Suede, Nappa oder Fullgrain,'],
+  ['Gefertigt auf dem Drivers-Leisten in Ihrer Länge und Weite.',
+   'Gefertigt auf dem Drivers-Leisten in deiner Länge und Weite.'],
+  ['Sie wählen die Farbe aus neun Wildledertönen, dazu die Naht',
+   'Du wählst die Farbe aus neun Wildledertönen, dazu die Naht'],
+  ['Beim Metallbügel bestimmen Sie auch den Ton des Metalls.',
+   'Beim Metallbügel bestimmst du auch den Ton des Metalls.'],
+  ['Sie wählen die Farbe aus neun Wildledertönen, dazu den Riemen',
+   'Du wählst die Farbe aus neun Wildledertönen, dazu den Riemen'],
+  ['Gefertigt auf dem Moc-Sport-Leisten in Ihrer Länge und Weite.',
+   'Gefertigt auf dem Moc-Sport-Leisten in deiner Länge und Weite.'],
 ]
 
 export function umstellungAufDu(db) {
   const ZIELE = [
     { table: 'email_templates', pk: 'type', cols: ['subject', 'intro', 'body'] },
     { table: 'faqs',            pk: 'id',   cols: ['question', 'answer'] },
+    { table: 'shoes',           pk: 'id',   cols: ['tagline', 'description'] },
   ]
   const tableExists = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
   let geaendert = 0
@@ -1834,17 +1881,17 @@ export function cleanupLegacyWording(db) {
 
 const MODELL_BESCHREIBUNGEN = {
   'heritage oxford':
-    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, dadurch liegt der Schaft glatt am Fuß und die Linie bleibt ruhig. Vollnarbiges Kalbsleder ist die dichteste Schicht der Haut, es nimmt mit den Jahren die Bewegung Ihres Fußes an, statt sich abzunutzen. Ein Paar, das Sie nicht ersetzen, sondern begleiten werden.',
+    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, dadurch liegt der Schaft glatt am Fuß und die Linie bleibt ruhig. Vollnarbiges Kalbsleder ist die dichteste Schicht der Haut, es nimmt mit den Jahren die Bewegung deines Fußes an, statt sich abzunutzen. Ein Paar, das du nicht ersetzt, sondern begleitest.',
   'balmoral cap-toe':
-    'Die umlaufende Naht über dem Rist gibt dem Balmoral seine klare Zäsur, die Kappe darüber fasst die Spitze. Shell Cordovan stammt aus einer besonders dichten Lederschicht: Es knittert nicht, es legt sich in weiche Wellen und gewinnt dabei an Tiefe. Ein Schuh für die Anlässe, an die Sie sich später erinnern.',
+    'Die umlaufende Naht über dem Rist gibt dem Balmoral seine klare Zäsur, die Kappe darüber fasst die Spitze. Shell Cordovan stammt aus einer besonders dichten Lederschicht: Es knittert nicht, es legt sich in weiche Wellen und gewinnt dabei an Tiefe. Ein Schuh für die Anlässe, an die du dich später erinnerst.',
   'riviera loafer':
-    'Ein Loafer kommt ohne Schnürung aus, er hält allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir Ihre Maße. Weiches Nubuk nimmt dem Auftritt die Strenge und macht ihn leicht: für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
+    'Ein Loafer kommt ohne Schnürung aus, er hält allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir deine Maße. Weiches Nubuk nimmt dem Auftritt die Strenge und macht ihn leicht: für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
   'venetian penny':
     'Der Penny trägt einen schmalen Riegel über dem Blatt, sonst nichts, der venezianische Schnitt verzichtet auf jede weitere Zutat. Brüniertes Kalbsleder wird an Spitze und Ferse von Hand nachgedunkelt, dadurch bekommt die Farbe Tiefe statt Fläche. Ein Schuh, der leiser spricht und länger bleibt.',
   'monaco derby':
-    'Beim Derby sitzen die Schnürlaschen offen auf dem Blatt: Das gibt dem Spann Raum und macht den Schuh auch für kräftigere Füße bequem. Lackleder fängt das Licht des Abends ein, ohne aufdringlich zu werden. Für den festlichen Auftritt, der Ihnen leichtfallen darf.',
+    'Beim Derby sitzen die Schnürlaschen offen auf dem Blatt: Das gibt dem Spann Raum und macht den Schuh auch für kräftigere Füße bequem. Lackleder fängt das Licht des Abends ein, ohne aufdringlich zu werden. Für den festlichen Auftritt, der dir leichtfallen darf.',
   'brogue derby':
-    'Die Lochmuster des Brogue stammen aus dem irischen Hochland, wo sie das Wasser aus dem Leder ließen; heute sind sie Zierde und brechen die Strenge der Form auf. Genarbtes Leder verzeiht Regen und Alltag, ohne müde zu wirken. Ein Begleiter, der schöner wird, je öfter Sie ihn tragen.',
+    'Die Lochmuster des Brogue stammen aus dem irischen Hochland, wo sie das Wasser aus dem Leder ließen; heute sind sie Zierde und brechen die Strenge der Form auf. Genarbtes Leder verzeiht Regen und Alltag, ohne müde zu wirken. Ein Begleiter, der schöner wird, je öfter du ihn trägst.',
   'chelsea boot':
     'Der Chelsea hat keinen Verschluss, zwei elastische Einsätze halten ihn, ein Zug an der hinteren Lasche genügt. Cognacfarbenes Cordovan gibt dem knappen Schaft Wärme und einen Glanz, der von innen zu kommen scheint. Angezogen in Sekunden, getragen über Jahre.',
   'jodhpur boot':
@@ -1860,30 +1907,30 @@ const MODELL_BESCHREIBUNGEN = {
   'belgian slipper':
     'Der Belgian Slipper ist der weichste Schuh im Haus: keine Schnürung, kaum Aufbau, ein flacher Schaft, der sich um den Fuß legt statt ihn zu fassen. Aus den Wohnräumen kam er in die Stadt und hat sich seine Leichtigkeit bewahrt. Schlicht, mit Schleife oder mit Quasten, für Abende, an denen nichts drücken soll.',
   'wellington':
-    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: Der Wellington kommt ohne Schnürung aus und hält allein über die Passform, deshalb zählen hier Ihre Maße besonders. Schlicht bleibt er streng, mit Quasten, Albert-Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
+    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: Der Wellington kommt ohne Schnürung aus und hält allein über die Passform, deshalb zählen hier deine Maße besonders. Schlicht bleibt er streng, mit Quasten, Albert-Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
   'drake':
-    'Kein Verschluss, keine Ösen: Beim Drake steigen Sie hinein und gehen los. Was ihn ausmacht, entscheiden Sie, glatt belassen, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
+    'Kein Verschluss, keine Ösen: Beim Drake steigst du hinein und gehst los. Was ihn ausmacht, entscheidest du, glatt belassen, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
   'laceless trainer':
     'Ein Sneaker ohne Schnürung: Die Form allein hält ihn am Fuß, weshalb hier jeder Millimeter zählt. Weiches Veloursleder macht ihn leicht, gefertigt wird er dennoch wie ein Herrenschuh. Für Wege, auf denen es schnell gehen darf, ohne nachlässig zu wirken.',
   'mov flex sport':
     'Ein Sneaker aus der Rahmenwerkstatt: die Machart eines Herrenschuhs, das Gewicht eines Sportschuhs. Weiches Veloursleder und eine nachgiebige Sohle nehmen dem Tag seine Länge. Für alle, die viel unterwegs sind und trotzdem gut angezogen sein wollen.',
   'mov flex sport boot':
-    'Die hohe Form der Mov-Flex-Familie: Der Schaft reicht über den Knöchel und gibt ihm Halt, die leichte Sohle bleibt die eines Sneakers. Weiches Veloursleder hält die Silhouette weich statt klobig. Für kühlere Tage, an denen Sie auf Bequemlichkeit nicht verzichten möchten.',
+    'Die hohe Form der Mov-Flex-Familie: Der Schaft reicht über den Knöchel und gibt ihm Halt, die leichte Sohle bleibt die eines Sneakers. Weiches Veloursleder hält die Silhouette weich statt klobig. Für kühlere Tage, an denen du auf Bequemlichkeit nicht verzichten möchtest.',
   'mov flex sport laced boot':
-    'Dieselbe hohe Form, hier mit Schnürung: Über die Ösen legen Sie den Schaft genau an den Knöchel, fester oder lockerer, je nach Tag. Veloursleder und leichte Sohle halten ihn dabei sportlich. Der Stiefel für lange Wege, die bequem bleiben sollen.',
+    'Dieselbe hohe Form, hier mit Schnürung: Über die Ösen legst du den Schaft genau an den Knöchel, fester oder lockerer, je nach Tag. Veloursleder und leichte Sohle halten ihn dabei sportlich. Der Stiefel für lange Wege, die bequem bleiben sollen.',
 }
 
 const KATEGORIE_BESCHREIBUNGEN = {
   OXFORD:
-    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, der Schaft liegt glatt am Fuß, die Linie bleibt ruhig. Das ist die formellste Machart des Schuhbaus, und die, die am meisten von einer genauen Passform lebt. Ein Paar, das mit den Jahren Ihre Bewegung annimmt.',
+    'Der Oxford trägt seine Schnürung geschlossen: Die Laschen sind unter dem Blatt vernäht, der Schaft liegt glatt am Fuß, die Linie bleibt ruhig. Das ist die formellste Machart des Schuhbaus, und die, die am meisten von einer genauen Passform lebt. Ein Paar, das mit den Jahren deine Bewegung annimmt.',
   BALMORAL:
-    'Die umlaufende Naht über dem Rist trennt Vorder- von Hinterschaft und gibt dem Balmoral seine klare Zäsur. Diese eine Linie streckt den Fuß und lässt ihn schlanker wirken. Ein Schuh für die Anlässe, an die Sie sich später erinnern.',
+    'Die umlaufende Naht über dem Rist trennt Vorder- von Hinterschaft und gibt dem Balmoral seine klare Zäsur. Diese eine Linie streckt den Fuß und lässt ihn schlanker wirken. Ein Schuh für die Anlässe, an die du dich später erinnerst.',
   WHOLECUT:
     'Ein Wholecut ist aus einem einzigen Stück Leder gearbeitet, eine Naht an der Ferse, sonst keine. Das gelingt nur mit einer makellosen Haut, weshalb dafür wenige überhaupt infrage kommen. Die ruhigste Linie, die ein Schuh haben kann.',
   DERBY:
     'Beim Derby liegen die Schnürlaschen offen auf dem Blatt. Das gibt dem Spann Raum, macht den Schuh auch für kräftigere Füße bequem und lässt sich über den Tag nachjustieren. Formell genug für das Büro, gelassen genug für alles danach.',
   LOAFER:
-    'Ein Loafer hält ohne Schnürung, allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir Ihre Maße. Für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
+    'Ein Loafer hält ohne Schnürung, allein über die Passform, weshalb an ihm nichts ungefähr sein darf. Genau dafür nehmen wir deine Maße. Für Tage, an denen Sorgfalt nicht nach Anstrengung aussehen soll.',
   MONK:
     'Statt Schnürsenkeln hält den Monk eine Schnalle. Die Form stammt aus den Klöstern der Alpen, wo Schuhe schnell sitzen und lange halten mussten. Ein Schuh, der auffällt, ohne laut zu sein.',
   DOUBLE_MONK:
@@ -1901,15 +1948,15 @@ const KATEGORIE_BESCHREIBUNGEN = {
   BELGIAN_SLIPPER:
     'Der Belgian Slipper ist die weichste Machart des Hauses: keine Schnürung, kaum Aufbau, ein flacher Schaft, der sich um den Fuß legt statt ihn zu fassen. Aus den Wohnräumen kam er in die Stadt und hat sich seine Leichtigkeit bewahrt. Für Abende, an denen nichts drücken soll.',
   WELLINGTON:
-    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: ohne Schnürung, gehalten allein von der Passform, deshalb zählen hier Ihre Maße besonders. Schlicht bleibt er streng, mit Quasten, Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
+    'Ein Schlupfschuh mit ruhiger, geschlossener Linie: ohne Schnürung, gehalten allein von der Passform, deshalb zählen hier deine Maße besonders. Schlicht bleibt er streng, mit Quasten, Maske oder Zierspange wird er festlich. Ein Schuh, der sich dem Abend anpasst.',
   DRAKE:
-    'Kein Verschluss, keine Ösen: Sie steigen hinein und gehen los. Wie viel Schmuck er trägt, entscheiden Sie, glatt, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
+    'Kein Verschluss, keine Ösen: Du steigst hinein und gehst los. Wie viel Schmuck er trägt, entscheidest du, glatt, mit Quasten, mit Maske oder mit Zierspange. Der unkomplizierteste Weg, gut angezogen zu sein.',
   LACELESS_TRAINER:
     'Ein Sneaker ohne Schnürung: Die Form allein hält ihn am Fuß, weshalb hier jeder Millimeter zählt. Weiches Leder macht ihn leicht, gefertigt wird er dennoch wie ein Herrenschuh. Für Wege, auf denen es schnell gehen darf, ohne nachlässig zu wirken.',
   SNEAKER_BOOT:
-    'Die hohe Form des Sneakers: Der Schaft reicht über den Knöchel und gibt ihm Halt, die leichte Sohle bleibt sportlich. Weiches Leder hält die Silhouette weich statt klobig. Für kühlere Tage, an denen Sie auf Bequemlichkeit nicht verzichten möchten.',
+    'Die hohe Form des Sneakers: Der Schaft reicht über den Knöchel und gibt ihm Halt, die leichte Sohle bleibt sportlich. Weiches Leder hält die Silhouette weich statt klobig. Für kühlere Tage, an denen du auf Bequemlichkeit nicht verzichten möchtest.',
   SNEAKER_LACED:
-    'Dieselbe hohe Form, hier mit Schnürung: Über die Ösen legen Sie den Schaft genau an den Knöchel, fester oder lockerer, je nach Tag. Leichte Sohle, weiches Leder, die Machart eines Herrenschuhs. Der Stiefel für lange Wege, die bequem bleiben sollen.',
+    'Dieselbe hohe Form, hier mit Schnürung: Über die Ösen legst du den Schaft genau an den Knöchel, fester oder lockerer, je nach Tag. Leichte Sohle, weiches Leder, die Machart eines Herrenschuhs. Der Stiefel für lange Wege, die bequem bleiben sollen.',
 }
 
 /** Vergleichsform des Namens: „The Heritage Oxford" und „Heritage Oxford"
@@ -2225,7 +2272,7 @@ const MOKASSIN_MODELL = {
   color: '#3b2314',
   tag: 'NEW',
   tagline: 'Der Fahrer-Mokassin, weich gearbeitet.',
-  description: 'Ungefütterter Mokassin mit umlaufender Naht und Noppensohle, der Schuh für alles, was kein Anzug ist. Sie wählen das Leder aus Calf Suede, Nappa oder Fullgrain, dazu Farbe, Nahtfarbe, Futter, Weichfutter, Kragen und das Vorderteil: schlicht, mit Schleife oder mit Maske. Gefertigt auf dem Drivers-Leisten in Ihrer Länge und Weite.',
+  description: 'Ungefütterter Mokassin mit umlaufender Naht und Noppensohle, der Schuh für alles, was kein Anzug ist. Du wählst das Leder aus Calf Suede, Nappa oder Fullgrain, dazu Farbe, Nahtfarbe, Futter, Weichfutter, Kragen und das Vorderteil: schlicht, mit Schleife oder mit Maske. Gefertigt auf dem Drivers-Leisten in deiner Länge und Weite.',
 }
 
 /**
@@ -2546,9 +2593,9 @@ export function seedMocFlexSport(db) {
     `).run(KAT,
       'Der Mokassin für den Tag, auf weißer Sohle.',
       'Ungefütterter Mokassin aus Kalbsvelours auf einer leichten weißen Laufsohle, der Schuh für lange Tage, an denen nichts drücken darf. '
-      + 'Sie wählen die Farbe aus neun Wildledertönen, dazu die Naht (Ton in Ton oder als Kontrast), das Futter und den Aufsatz auf dem Spann: '
-      + 'ohne, mit Metallbügel, mit Maske oder mit Quasten. Beim Metallbügel bestimmen Sie auch den Ton des Metalls. '
-      + 'Gefertigt auf dem Moc-Sport-Leisten in Ihrer Länge und Weite.',
+      + 'Du wählst die Farbe aus neun Wildledertönen, dazu die Naht (Ton in Ton oder als Kontrast), das Futter und den Aufsatz auf dem Spann: '
+      + 'ohne, mit Metallbügel, mit Maske oder mit Quasten. Beim Metallbügel bestimmst du auch den Ton des Metalls. '
+      + 'Gefertigt auf dem Moc-Sport-Leisten in deiner Länge und Weite.',
       schuh.id)
 
     db.prepare('DELETE FROM shoe_material_options WHERE shoe_id = ?').run(schuh.id)
@@ -2737,8 +2784,8 @@ export function seedMocFlexSportBoot(db) {
     `).run(KAT,
       'Der Mokassin über dem Knöchel, auf weißer Sohle.',
       'Der höher geschnittene Bruder des Moc Flex Sport: gefüttertes Kalbsvelours über dem Knöchel, dieselbe leichte weiße Laufsohle. '
-      + 'Sie wählen die Farbe aus neun Wildledertönen, dazu den Riemen über der Ferse, im selben Ton oder als Kontrast, '
-      + 'die Naht aus sechzehn Farben und das Futter. Gefertigt auf dem Moc-Sport-Leisten in Ihrer Länge und Weite.',
+      + 'Du wählst die Farbe aus neun Wildledertönen, dazu den Riemen über der Ferse, im selben Ton oder als Kontrast, '
+      + 'die Naht aus sechzehn Farben und das Futter. Gefertigt auf dem Moc-Sport-Leisten in deiner Länge und Weite.',
       schuh.id)
 
     db.prepare('DELETE FROM shoe_material_options WHERE shoe_id = ?').run(schuh.id)
