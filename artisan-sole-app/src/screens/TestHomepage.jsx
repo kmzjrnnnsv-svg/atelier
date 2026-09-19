@@ -48,6 +48,31 @@
  * Mitte. Was jemand zuletzt liest, bevor er sich entscheidet, sollte das
  * sein, was ihm zeigt, dass hier niemand zu viel verspricht.
  *
+ * ── Zum Ton ───────────────────────────────────────────────────────────────
+ *
+ * Eine Regel, und sie ist wichtiger als sie klingt: KEINE ZANGENSÄTZE.
+ *
+ * Gemeint ist die Bauform „X ist nicht A. Es ist B." — „Leder ist kein
+ * Material. Es ist eine Schichtung.", „Das ist kein Verschleiß. Das ist die
+ * Form.", „Bequem ist kein Gegenteil von gut gemacht." Sie klingt beim
+ * Schreiben klug und liest sich beim Lesen wie eine Maschine: Der Satz nimmt
+ * erst etwas weg, um es dann zurückzugeben, und der Leser muss beide Hälften
+ * zusammenrechnen, um bei dem anzukommen, was gemeint war. Einmal ist das
+ * eine Pointe. Neunmal auf einer Seite ist es ein Tic.
+ *
+ * Stattdessen: Sagen, was ist. „Das Beste an einer Haut liegt ganz oben."
+ * „Zwei Nähte halten diesen Schuh zusammen." „Gehalten wird er allein von
+ * seiner Form."
+ *
+ * Die Stimme ist die eines guten Herrenausstatters: Er redet mit dir und
+ * nicht über die Ware, er sagt dir eine Sache, die du noch nicht wusstest,
+ * als Höflichkeit und nicht als Belehrung, und er wird nie laut. Was er
+ * verkauft, verkauft sich über das, was es kann — deshalb kann er es ruhig
+ * aussprechen.
+ *
+ * Daraus folgt auch: „dein Paar" statt „das Paar", wo es passt. Ein Schuh,
+ * der jemandem gehört, liest sich anders als einer, der beschrieben wird.
+ *
  * ── Woher die Texte kommen ────────────────────────────────────────────────
  *
  * Die Geschichte zu jedem Modell ist NICHT erfunden: Sie steht als
@@ -146,9 +171,9 @@ const FAKTEN = [
 ]
 
 const ZAHLEN = [
-  { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Daraus Leisten, Größe und Weite — keine Konfektionsnummer.' },
+  { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Daraus bauen wir Leisten, Größe und Weite für genau deinen Fuß.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. An einem einzelnen Paar.' },
-  { zahl: '4–6',  einheit: 'Wochen',          text: 'Wir haben kein Lager, aus dem wir greifen. Dein Paar entsteht nach der Bestellung.' },
+  { zahl: '4–6',  einheit: 'Wochen',          text: 'So lange dauert ein Paar, das es vorher nicht gab. Wir fangen an, wenn du bestellst.' },
 ]
 
 /**
@@ -174,22 +199,22 @@ const LEDER = [
   {
     name: 'Vollnarbiges Kalbsleder',
     herkunft: 'Äußerste Schicht, ungeschliffen',
-    text: 'Die dichteste Lage der Haut, mit ihrer Narbung. Sie nimmt mit den Jahren die '
-        + 'Bewegung des Fußes an und bekommt dabei eine Patina, die kein neues Paar hat.',
+    text: 'Die dichteste Lage der Haut, mit ihrer gewachsenen Narbung. Sie nimmt mit '
+        + 'den Jahren die Bewegung deines Fußes an und bekommt dabei eine Patina, für '
+        + 'die es keine Abkürzung gibt.',
   },
   {
     name: 'Shell Cordovan',
     herkunft: 'Pferdehaut, Monate in der Gerbung',
-    text: 'Aus einer besonderen, sehr dichten Lage unter der Haut der Kruppe. Es knittert '
-        + 'nicht in scharfen Falten, sondern legt sich in weiche Wellen, und es gewinnt '
-        + 'beim Tragen an Tiefe. Die Gerbdauer erklärt den Aufpreis.',
+    text: 'Aus einer besonders dichten Lage unter der Haut der Kruppe. Es legt sich in '
+        + 'weiche, runde Wellen und gewinnt beim Tragen an Tiefe. Die Gerbdauer '
+        + 'erklärt den Aufpreis.',
   },
   {
     name: 'Nubuk und Velours',
     herkunft: 'Angeschliffen, kurzer matter Flor',
-    text: 'Die Oberfläche ist gebürstet statt glatt. Sie nimmt der Form die Strenge und '
-        + 'macht einen strengen Schuh tragbar an Tagen, an denen Sorgfalt nicht nach '
-        + 'Anstrengung aussehen soll.',
+    text: 'Die gebürstete Oberfläche nimmt der Form die Strenge. Damit wird aus einem '
+        + 'strengen Schuh einer, den du auch am Samstag anziehst.',
   },
 ]
 
@@ -235,8 +260,8 @@ const LEDER = [
 const ERZAEHLUNG = {
   OXFORD: {
     titel: 'Es gibt Räume, in denen man nichts erklären muss.',
-    zeit: 'Nach zwei Jahren ist das Leder an den Stellen dunkler, an denen dein Fuß arbeitet. '
-        + 'Das ist kein Verschleiß. Das ist die Form, die er angenommen hat.',
+    zeit: 'Nach zwei Jahren ist das Leder dort dunkler, wo dein Fuß arbeitet. Man '
+        + 'sieht dem Paar dann an, wem es gehört.',
   },
   DERBY: {
     titel: 'Der Tag wird länger als geplant.',
@@ -244,12 +269,12 @@ const ERZAEHLUNG = {
         + 'du dann schon besser als jeden Schuh, den du je gekauft hast.',
   },
   LOAFER: {
-    titel: 'Kein Verschluss. Nur die Form, die hält.',
-    zeit: 'Ein Loafer verrät seinen Träger schneller als jeder andere Schuh: Er nimmt '
-        + 'die Bewegung des Fußes an, weil ihn nichts anderes hält.',
+    titel: 'Gehalten wird er allein von seiner Form.',
+    zeit: 'Ein Loafer verrät seinen Träger schneller als jeder andere Schuh. Er nimmt '
+        + 'die Bewegung des Fußes an, und das sieht man ihm nach einem Sommer an.',
   },
   BOOT: {
-    titel: 'Das Wetter entscheidet nicht mehr mit.',
+    titel: 'Das Wetter darf von mir aus schlecht sein.',
     zeit: 'Wenn die Sohle durch ist, kommt eine neue. Ein Stiefel, der zehn Winter '
         + 'gesehen hat, sieht danach besser aus als am ersten Tag.',
   },
@@ -259,9 +284,9 @@ const ERZAEHLUNG = {
         + 'schließt. Sie gehört ab dann zum Schuh.',
   },
   SNEAKER: {
-    titel: 'Bequem ist kein Gegenteil von gut gemacht.',
-    zeit: 'Weiches Leder legt sich nach wenigen Wochen um den Fuß. Ab da ist es dein '
-        + 'Paar und keins mehr aus dem Regal.',
+    titel: 'Manche Tage sind länger als ihr Anlass.',
+    zeit: 'Weiches Leder legt sich nach wenigen Wochen um den Fuß. Ab da sitzt es, '
+        + 'als wäre es für dich gebaut worden — was es ja auch ist.',
   },
   MOCCASIN: {
     titel: 'Ein Schuh, der nichts von dir verlangt.',
@@ -270,8 +295,8 @@ const ERZAEHLUNG = {
   },
   STANDARD: {
     titel: 'Eine Form, die älter ist als jedes Haus, das sie verkauft.',
-    zeit: 'Gutes Leder wird nicht alt, es wird eigen. Nach zwei Jahren sieht man, '
-        + 'wem das Paar gehört.',
+    zeit: 'Gutes Leder nimmt mit den Jahren eine eigene Farbe an. Zwei gleiche Paare '
+        + 'sehen nach drei Jahren verschieden aus.',
   },
 }
 
@@ -528,15 +553,15 @@ export default function TestHomepage() {
       },
       {
         titel: 'Sohle, Rahmen und Details',
-        text: 'Jeder Schritt zeigt sofort, was er am Preis ändert. Keiner ist '
-            + 'vorausgewählt — was dasteht, hast du gewählt.',
+        text: 'Jeder Schritt zeigt sofort, was er am Preis ändert. Und was am Ende '
+            + 'dasteht, hast du selbst gewählt.',
         schlagworte: ['Sohlen-Art', 'Rahmen', 'Nahtfarbe', 'Sohlenrand', 'Laufsohle', 'Innenfutter', 'Zehenkappe'],
         hinweis: 'Welche Schritte erscheinen, hängt vom Modell ab.',
       },
       {
         titel: 'Deine Maße',
-        text: 'Fußlänge und Ballenumfang, mehr nicht. Daraus bestimmen wir Leisten, '
-            + 'Größe und Weite. Eine Größentabelle brauchst du nicht, weil wir nicht raten.',
+        text: 'Fußlänge und Ballenumfang, mehr brauchen wir nicht. Daraus bestimmen '
+            + 'wir Leisten, Größe und Weite — für deinen Fuß und für keinen anderen.',
         // Der Beleg zu dieser Station ist eine Zeichnung und keine Zeile.
         //
         // „Ballenumfang" ist das Wort, an dem ein Kauf hängen bleibt: Wer noch
@@ -722,15 +747,15 @@ export default function TestHomepage() {
             <>
               <Kapitelmarke hell>Das Handwerk</Kapitelmarke>
               <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
-                Die Sohle hängt an einer Naht,<br className="hidden sm:block" /> nicht an einem Klebstoff.
+                Zwei Nähte halten<br className="hidden sm:block" /> diesen Schuh zusammen.
               </h2>
             </>
           }
           fuss={
             <p className="text-[12px] text-white/35 font-light leading-relaxed max-w-2xl">
               Zwischen Brand- und Laufsohle liegt Kork. Er gibt unter dem Gewicht nach
-              und nimmt nach einigen Wochen die Form des Fußes an — der Grund, warum ein
-              rahmengenähter Schuh mit der Zeit bequemer wird statt ausgelatschter.
+              und nimmt nach einigen Wochen die Form deines Fußes an. Das ist der Grund,
+              warum so ein Paar mit der Zeit bequemer wird.
             </p>
           }
         />
@@ -772,9 +797,9 @@ export default function TestHomepage() {
           </Enthuellen>
           <Enthuellen verzoegerung={140}>
             <p className="text-[13px] lg:text-[15px] text-black/45 font-light leading-[2] mt-8 max-w-xl mx-auto">
-              Keine dieser Formen ist als Entwurf entstanden: die geschlossene
-              Schnürung für die Strenge der Etikette, die offene für den kräftigen
-              Spann, der Riemen für den Steigbügel.
+              Jede dieser Formen ist aus einer Notwendigkeit entstanden: die
+              geschlossene Schnürung für die Strenge der Etikette, die offene für den
+              kräftigen Spann, der Riemen für den Steigbügel.
             </p>
           </Enthuellen>
         </div>
@@ -990,8 +1015,8 @@ export default function TestHomepage() {
             />
             <div className="relative px-5 lg:px-16 py-20 max-w-3xl mx-auto text-center">
               <p className="satz-titel text-[24px] lg:text-[40px] leading-[1.4] text-white">
-                Ein Schuh wird nicht gekauft und dann getragen.
-                Er wird getragen und dabei fertig.
+                Die letzte Woche Arbeit an deinem Paar machst du selbst.
+                Sie beginnt, wenn du es zum ersten Mal anziehst.
               </p>
             </div>
           </section>
@@ -1092,16 +1117,16 @@ export default function TestHomepage() {
             <Enthuellen className="lg:col-span-6">
               <Kapitelmarke>Das Leder</Kapitelmarke>
               <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
-                Leder ist kein Material. Es ist eine Schichtung.
+                Das Beste an einer Haut liegt ganz oben.
               </h2>
             </Enthuellen>
 
             <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
               <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
-                Oben die Narbe: die gewachsene Oberfläche, die einzige Stelle mit
-                dichter, senkrechter Faser. Nach unten wird das Gefüge loser. Wo eine
-                Haut geteilt wird, entscheidet sich, was der Schuh in zehn Jahren
-                noch ist.
+                Ganz oben liegt die Narbe — die Seite, die gewachsen ist, mit der
+                dichtesten Faser. Darunter wird das Gefüge mit jedem Millimeter
+                lockerer. Wo eine Gerberei die Haut teilt, entscheidet sich, wie dein
+                Paar in zehn Jahren aussieht.
               </p>
             </Enthuellen>
           </div>
@@ -1117,9 +1142,9 @@ export default function TestHomepage() {
 
           <Enthuellen verzoegerung={220}>
             <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5] mt-12 lg:mt-16 max-w-2xl mx-auto text-center">
-              „Vollnarbig" heißt: Diese oberste Schicht ist ganz geblieben. Nicht
-              abgeschliffen, nicht mit einer Folie überzogen. Deshalb altert sie,
-              statt abzublättern.
+              „Vollnarbig" heißt, dass diese oberste Schicht ganz geblieben ist —
+              ungeschliffen, ohne Folie darüber. Sie ist der Grund, warum ein gutes
+              Paar mit den Jahren schöner wird.
             </p>
           </Enthuellen>
 
@@ -1150,10 +1175,10 @@ export default function TestHomepage() {
 
           <Enthuellen verzoegerung={140}>
             <p className="text-[12px] text-black/40 font-light mt-12 lg:mt-16 max-w-xl">
-              Was unterhalb der Spaltlinie bleibt, wird ebenfalls verkauft — mit
-              aufgeprägter Narbung. Der Unterschied zeigt sich nicht im Laden, sondern
-              im dritten Jahr. Welche Leder an welchem Modell zur Wahl stehen, zeigt
-              der Konfigurator.
+              Auch was unterhalb der Spaltlinie bleibt, wird zu Schuhen verarbeitet,
+              mit aufgeprägter Narbung. Im Laden sieht man den Unterschied kaum, im
+              dritten Jahr sieht ihn jeder. Welche Leder an welchem Modell zur Wahl
+              stehen, zeigt der Konfigurator.
             </p>
           </Enthuellen>
         </div>
@@ -1190,8 +1215,8 @@ export default function TestHomepage() {
           </Enthuellen>
           <Enthuellen verzoegerung={120}>
             <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
-              Keine davon musst du auf einmal treffen. Der Konfigurator merkt sich
-              jeden Stand, und verbindlich wird nichts bis zur letzten Station.
+              Du musst keine davon auf einmal treffen. Der Konfigurator merkt sich
+              jeden Stand, und verbindlich wird es erst an der letzten Station.
             </p>
           </Enthuellen>
 
@@ -1284,9 +1309,9 @@ export default function TestHomepage() {
                     inbegriffen.
                   </p>
                   <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
-                    Ein Schuh für einen bestimmten Fuß lässt sich nicht zurückgeben.
-                    Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für
-                    dich. Die Einzelheiten stehen in den AGB.
+                    Ein Paar, das für einen bestimmten Fuß gebaut ist, lässt sich nicht
+                    zurückgeben. Stimmt etwas nicht, fertigen wir es neu, ohne Kosten
+                    für dich. Die Einzelheiten stehen in den AGB.
                   </p>
                 </div>
               </li>
@@ -1306,22 +1331,24 @@ export default function TestHomepage() {
           <Enthuellen>
             <Kapitelmarke>In eigener Sache</Kapitelmarke>
             <h2 className="satz-titel text-[25px] lg:text-[38px] leading-[1.18] mt-4">
-              Was wir nicht behaupten
+              Bevor es jemand anders sagt
             </h2>
           </Enthuellen>
 
           <Enthuellen verzoegerung={100}>
             <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-7">
               Wir schreiben nicht „handgefertigt". Der Rahmen wird maschinell genäht,
-              wie in jeder Manufaktur dieser Preisklasse. Von Hand kommen Zuschnitt,
-              Zwicken, Finish und Endkontrolle.
+              so wie in jeder Manufaktur dieser Preisklasse. Von Hand kommen Zuschnitt,
+              Zwicken, Finish und die Endkontrolle — und das sind die Schritte, an
+              denen sich ein Schuh entscheidet.
             </p>
           </Enthuellen>
 
           <Enthuellen verzoegerung={180}>
             <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-5">
-              Wir sagen es, weil der Unterschied zwischen einem rahmengenähten und einem
-              geklebten Schuh groß genug ist. Er braucht kein Wort, das ihn größer macht.
+              Wir sagen es, weil der Unterschied zwischen einem rahmengenähten und
+              einem geklebten Schuh für sich spricht. Er braucht kein Wort, das ihn
+              größer macht.
             </p>
           </Enthuellen>
 
