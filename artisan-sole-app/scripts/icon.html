@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+  icon.html — die Vorlage für die Symbole der Anwendung.
+
+  Dasselbe Motiv wie favicon.svg, nur als Rasterbild: Android verlangt für
+  „Zum Startbildschirm" PNG in 192 und 512 Pixeln, iOS ein apple-touch-icon
+  in 180. Ein SVG allein genügt beiden nicht — Android zeigt dann gar kein
+  Symbol, iOS ein unscharfes Abbild der Seite.
+
+  Die Größe kommt über --window-size; das Motiv skaliert mit.
+
+    chromium --headless --no-sandbox --hide-scrollbars \
+      --window-size=512,512 --screenshot=public/icon-512.png scripts/icon.html
+
+  Erzeugt werden (siehe scripts/README.md):
+    public/icon-192.png · public/icon-512.png · public/apple-touch-icon.png
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  .flaeche {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Kein abgerundeter Rahmen: iOS und Android runden selbst, und eine
+       zweite Rundung darunter gibt einen grauen Saum. */
+  }
+  .buchstabe {
+    /* Georgia wie im favicon.svg — das Symbol soll dasselbe bleiben, egal
+       in welcher Größe es erscheint. */
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 700;
+    /* 62 % der Kantenlänge: So steht der Buchstabe in jeder Größe gleich im
+       Feld. Eine feste Pixelangabe säße bei 192 zu groß und bei 512 zu klein. */
+    font-size: 62vmin;
+    line-height: 1;
+    color: #fff;
+    /* Georgia setzt die Grundlinie tief; ohne den Versatz sitzt das A
+       sichtbar unter der Mitte. */
+    transform: translateY(-0.04em);
+  }
+</style>
+</head>
+<body>
+  <div class="flaeche"><span class="buchstabe">A</span></div>
+</body>
+</html>

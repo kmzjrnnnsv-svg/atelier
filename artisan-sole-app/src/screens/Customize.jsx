@@ -80,6 +80,8 @@ function LastShapeIcon({ shapeKey, active }) {
   )
 }
 import useStore from '../store/store'
+import { resolveMediaUrl } from '../lib/mediaUrl'
+import { useJsonLd, produktDaten } from '../lib/jsonld'
 import { useSeo, schuhBeschreibung } from '../lib/seo'
 import { accessoryImages } from '../lib/accessoryImages'
 import { LIEFERUMFANG } from '../lib/lieferumfang'
@@ -183,7 +185,24 @@ export default function Customize() {
     // Ausdrücklich die sprechende Adresse, auch wenn der Besucher über
     // /customize?id=13 gekommen ist: Sonst zählte dieselbe Seite zweimal.
     pfad: product?.slug ? `/schuhe/${product.slug}` : undefined,
+    // Wer ein Modell in einen Chat schickt, soll den Schuh sehen und nicht
+    // den Schriftzug der Marke. Über resolveMediaUrl, weil die Aufnahmen aus
+    // dem CMS als „/uploads/…" gespeichert sind — die Adresse muss die der
+    // Programmierschnittstelle sein, nicht die der Seite.
+    bild: product?.image ? resolveMediaUrl(product.image) : undefined,
+    bildText: product?.name ? `${product.name}, rahmengenäht, nach Maß gefertigt` : undefined,
   })
+
+  // Preis und Währung für das Suchergebnis. Ohne diesen Block steht die
+  // Modellseite bei Google als graue Zeile neben Wettbewerbern, bei denen
+  // „ab 1.290 €" danebensteht.
+  useJsonLd(
+    produktDaten(product, {
+      url: product?.slug ? `${window.location.origin}/schuhe/${product.slug}` : undefined,
+      bild: product?.image ? resolveMediaUrl(product.image) : undefined,
+    }),
+    'produkt',
+  )
 
   // Unbekannter Slug: Die Auflösungskette oben fällt sonst auf den ersten
   // Schuh im Store zurück — der Besucher sähe unter /schuhe/gibt-es-nicht

@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Mobile-first viewport: viewport-fit=cover für iPhone Notch/Dynamic Island.
@@ -49,6 +50,40 @@
     <meta name="twitter:title" content="ARTISAN SOLE · Rahmengenähte Schuhe nach Maß" />
     <meta name="twitter:description" content="Rahmengenäht in einer spanischen Manufaktur, custom made nach deinen Maßen. Leder, Sohle und Details bestimmst du selbst." />
     <meta name="twitter:image" content="https://artisansole.com/og-image.png" />
+
+    <!-- Strukturierte Daten über den Laden selbst.
+         Statisch und nicht erst im Browser gesetzt: Diese Angaben ändern sich
+         nie, und was im ausgelieferten HTML steht, sieht auch ein Abnehmer,
+         der kein JavaScript ausführt. Die Angaben zu den einzelnen Modellen
+         entstehen dagegen zur Laufzeit (siehe src/lib/jsonld.js), weil sie
+         aus dem Katalog kommen.
+
+         Bewusst ohne Bewertungen: Es gibt keine, und erfundene sind der
+         häufigste Grund, warum Google die Auszeichnung einer ganzen Domain
+         sperrt. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://artisansole.com/#organisation",
+          "name": "Artisan Sole",
+          "url": "https://artisansole.com/",
+          "logo": "https://artisansole.com/og-image.png",
+          "description": "Rahmengenähte Schuhe, custom made nach den Maßen des Kunden. Einzeln gefertigt in einer spanischen Manufaktur."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://artisansole.com/#website",
+          "url": "https://artisansole.com/",
+          "name": "ARTISAN SOLE",
+          "inLanguage": "de-DE",
+          "publisher": { "@id": "https://artisansole.com/#organisation" }
+        }
+      ]
+    }
+    </script>
 
     <!-- Der Titel trägt die Wörter, nach denen gesucht wird. seo.js setzt ihn
          pro Seite neu, sobald die Anwendung läuft; dieser hier ist der, den ein

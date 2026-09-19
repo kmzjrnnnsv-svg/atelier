@@ -216,32 +216,32 @@ function seedEmailTemplates(db) {
       'Bestellbestätigung',
       'Wird direkt nach Aufgabe der Bestellung an den Kunden gesendet.',
       'Artisan Sole ·Bestellbestätigung #{{order_id}}',
-      'Vielen Dank, {{name}}. Ihre Bestellung wurde aufgenommen und wird individuell für Sie angefertigt.',
-      'Ihre Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu Ihnen geliefert.\nDen aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.'
+      'Vielen Dank, {{name}}. Deine Bestellung wurde aufgenommen und wird individuell für dich angefertigt.',
+      'Deine Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu dir geliefert.\nDen aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.'
     )
     stmt.run(
       'payment',
       'Zahlungsanweisung',
       'Enthält Bankdaten und Verwendungszweck, wird gleichzeitig mit der Bestellbestätigung gesendet.',
       'Artisan Sole ·Zahlungsinformationen Bestellung #{{order_id}}',
-      'Vielen Dank, {{name}}. Ihre Bestellung wurde erfasst und wartet auf Ihre Zahlung.\nBitte überweisen Sie den folgenden Betrag an das unten angegebene Konto. Verwenden Sie dabei zwingend den angegebenen Verwendungszweck, damit wir Ihre Zahlung korrekt zuordnen können.',
-      'Nach Zahlungseingang werden Ihre Schuhe umgehend in die Fertigung gegeben.\nSie erhalten eine Bestätigung, sobald Ihre Zahlung bei uns eingegangen ist.'
+      'Vielen Dank, {{name}}. Deine Bestellung wurde erfasst und wartet auf deine Zahlung.\nBitte überweise den folgenden Betrag an das unten angegebene Konto. Verwende dabei zwingend den angegebenen Verwendungszweck, damit wir deine Zahlung korrekt zuordnen können.',
+      'Nach Zahlungseingang werden deine Schuhe umgehend in die Fertigung gegeben.\nDu bekommst eine Bestätigung, sobald deine Zahlung bei uns eingegangen ist.'
     )
     stmt.run(
       'order_confirmed',
       'Zahlung bestätigt',
       'Wird gesendet, wenn der Admin den Zahlungseingang bestätigt und die Fertigung startet.',
       'Artisan Sole ·Zahlung bestätigt & Bestellung in Fertigung #{{order_id}}',
-      'Ihre Zahlung wurde bestätigt. Ihre Schuhe {{shoe_name}} sind nun in der Fertigung.',
+      'Deine Zahlung wurde bestätigt. Deine Schuhe {{shoe_name}} sind nun in der Fertigung.',
       'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.'
     )
     stmt.run(
       'shipping',
       'Versandbestätigung',
       'Wird gesendet, wenn Admin oder Curator die Bestellung als versandt markiert.',
-      'Artisan Sole ·Ihre Schuhe sind unterwegs! Bestellung #{{order_id}}',
-      '{{shoe_name}} wurden soeben versandt und befinden sich auf dem Weg zu Ihnen.',
-      'Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.\nBei Fragen wenden Sie sich an unser Team, wir sind gerne für Sie da.'
+      'Artisan Sole ·Deine Schuhe sind unterwegs! Bestellung #{{order_id}}',
+      '{{shoe_name}} wurden soeben versandt und befinden sich auf dem Weg zu dir.',
+      'Den aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.\nBei Fragen wende dich an unser Team, wir sind gerne für dich da.'
     )
     stmt.run(
       'manufacturer',
@@ -1513,40 +1513,40 @@ export const CATEGORY_LASTS = {
 function seedFaqs(db) {
   const FAQS = [
     { q: 'Woher wisst ihr, welche Größe und Passform ich brauche?',
-      a: 'Wir fertigen jeden Schuh anhand von zwei Maßen: Ihrer Fußlänge und Ihrem Ballenumfang. Daraus bestimmen wir Länge und Weite automatisch, sodass der Schuh dem Fuß ein passendes Bett gibt. Sie wählen keine Konfektionsgröße; die richtige Passform ermitteln wir für Sie.',
+      a: 'Wir fertigen jeden Schuh anhand von zwei Maßen: deiner Fußlänge und deinem Ballenumfang. Daraus bestimmen wir Länge und Weite automatisch, sodass der Schuh dem Fuß ein passendes Bett gibt. Du wählst keine Konfektionsgröße; die richtige Passform ermitteln wir für dich.',
       category: 'Passform', sort_order: 0 },
     { q: 'Wie messe ich Fußlänge und Ballenumfang richtig?',
-      a: 'Fußlänge: Stellen Sie sich auf ein Blatt Papier und messen Sie vom äußersten Fersenpunkt bis zur längsten Zehe. Ballenumfang: Legen Sie ein Maßband einmal um den breitesten Teil des Vorfußes (über den Ballen). Messen Sie beide Füße und geben Sie die Werte in Millimetern in der Kollektion unter „Passform" ein.',
+      a: 'Fußlänge: Stell dich auf ein Blatt Papier und miss vom äußersten Fersenpunkt bis zur längsten Zehe. Ballenumfang: Leg ein Maßband einmal um den breitesten Teil des Vorfußes (über den Ballen). Miss beide Füße und gib die Werte in Millimetern in der Kollektion unter „Passform" ein.',
       category: 'Passform', sort_order: 1 },
     { q: 'Was ist, wenn meine Füße unterschiedlich groß sind?',
-      a: 'Das ist völlig normal. Geben Sie beide Füße getrennt an. Für die Fertigung verwenden wir den jeweils größeren Wert, damit nichts drückt.',
+      a: 'Das ist völlig normal. Gib beide Füße getrennt an. Für die Fertigung verwenden wir den jeweils größeren Wert, damit nichts drückt.',
       category: 'Passform', sort_order: 2 },
     { q: 'Wie lange dauert die Produktion?',
-      a: 'Da wir jedes Paar einzeln auf Bestellung in unserer Manufaktur in Spanien fertigen, dauert die Produktion bei Firmenbestellungen rund 8 Wochen. Die genaue Lieferzeit nennen wir Ihnen mit der Bestellbestätigung.',
+      a: 'Da wir jedes Paar einzeln auf Bestellung in unserer Manufaktur in Spanien fertigen, dauert die Produktion bei Firmenbestellungen rund 8 Wochen. Die genaue Lieferzeit nennen wir dir mit der Bestellbestätigung.',
       category: 'Bestellung & Produktion', sort_order: 3 },
     { q: 'Kann ich umtauschen, wenn die Passform nicht stimmt?',
-      a: 'Da jeder Schuh individuell nach Ihren Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, melden Sie sich bei uns; wir finden gemeinsam eine Lösung.',
+      a: 'Da jeder Schuh individuell nach deinen Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, meld dich bei uns; wir finden gemeinsam eine Lösung.',
       category: 'Bestellung & Produktion', sort_order: 4 },
     { q: 'Was bedeutet Custom Made bei Artisan Sole?',
-      a: 'Custom made heißt: kein Schuh von der Stange. Wir fertigen Ihr Paar custom-made und erst auf Bestellung, abgestimmt auf Ihre Maße und Ihre Konfiguration aus Leder, Farbe und Sohle.',
+      a: 'Custom made heißt: kein Schuh von der Stange. Wir fertigen dein Paar custom-made und erst auf Bestellung, abgestimmt auf deine Maße und deine Konfiguration aus Leder, Farbe und Sohle.',
       category: 'Bestellung & Produktion', sort_order: 5 },
     { q: 'Wie nachhaltig wird produziert?',
-      a: 'Wir fertigen jedes Paar erst, nachdem Sie bestellt haben (made to order). Dadurch entsteht keine Überproduktion und kein Lagerüberschuss: Jeder Schuh wird gezielt für einen Kunden gefertigt.',
+      a: 'Wir fertigen jedes Paar erst, nachdem du bestellt hast (made to order). Dadurch entsteht keine Überproduktion und kein Lagerüberschuss: Jeder Schuh wird gezielt für einen Kunden gefertigt.',
       category: 'Bestellung & Produktion', sort_order: 6 },
     { q: 'Wie lange dauert es, bis mein Schuh bei mir ist?',
-      a: 'In der Regel rund 4 Wochen nach Zahlungseingang, von der Produktion bis zur Lieferung zu Ihnen. Da wir custom-made und erst auf Bestellung fertigen, gibt es keine Lagerhaltung.',
+      a: 'In der Regel rund 4 Wochen nach Zahlungseingang, von der Produktion bis zur Lieferung zu dir. Da wir custom-made und erst auf Bestellung fertigen, gibt es keine Lagerhaltung.',
       category: 'Bestellung & Produktion', sort_order: 7 },
     { q: 'Wie lösche ich mein Konto?',
-      a: 'Schreiben Sie uns über den Nachrichtenbereich in der App (das Sprechblasen-Symbol oben) oder an kontakt@artisansole.com. Wir sperren Ihr Konto daraufhin sofort und löschen es nach dreißig Tagen endgültig. Die Frist ist Ihre Sicherheit: Überlegen Sie es sich anders, holen wir das Konto mit allen Bestellungen zurück. Auf ausdrücklichen Wunsch löschen wir auch sofort. Dasselbe gilt für Firmen- und Affiliate-Konten.',
+      a: 'Schreib uns über den Nachrichtenbereich in der App (das Sprechblasen-Symbol oben) oder an kontakt@artisansole.com. Wir sperren dein Konto daraufhin sofort und löschen es nach dreißig Tagen endgültig. Die Frist ist deine Sicherheit: Überlegst du es dir anders, holen wir das Konto mit allen Bestellungen zurück. Auf ausdrücklichen Wunsch löschen wir auch sofort. Dasselbe gilt für Firmen- und Affiliate-Konten.',
       category: 'Konto & Daten', sort_order: 20 },
     { q: 'Was passiert mit meinen Fußmaßen, wenn ich mein Konto lösche?',
-      a: 'Ihre Maße und Passformen werden mit dem Konto gelöscht. Was bleibt, sind anonymisierte Maß- und Formdaten, mit denen wir unser Passform-Verfahren weiterentwickeln, ohne Namen, Anschrift, E-Mail oder irgendeine Kennung, über die sich ein Bezug zu Ihnen herstellen ließe. Sie sind damit keine personenbezogenen Daten mehr und lassen sich Ihnen auch nicht wieder zuordnen.',
+      a: 'Deine Maße und Passformen werden mit dem Konto gelöscht. Was bleibt, sind anonymisierte Maß- und Formdaten, mit denen wir unser Passform-Verfahren weiterentwickeln, ohne Namen, Anschrift, E-Mail oder irgendeine Kennung, über die sich ein Bezug zu dir herstellen ließe. Sie sind damit keine personenbezogenen Daten mehr und lassen sich dir auch nicht wieder zuordnen.',
       category: 'Konto & Daten', sort_order: 21 },
     { q: 'Bleiben meine Bestellungen nach der Löschung erhalten?',
-      a: 'Die Bestellungen selbst ja, sie unterliegen handels- und steuerrechtlichen Aufbewahrungsfristen und dürfen nicht mit dem Konto verschwinden. Ihre Verbindung zu Ihnen verlieren sie aber: Anschrift, Maße und Notizen werden entfernt. Was bleibt, ist eine Bestellung ohne Person dahinter.',
+      a: 'Die Bestellungen selbst ja, sie unterliegen handels- und steuerrechtlichen Aufbewahrungsfristen und dürfen nicht mit dem Konto verschwinden. Ihre Verbindung zu dir verlieren sie aber: Anschrift, Maße und Notizen werden entfernt. Was bleibt, ist eine Bestellung ohne Person dahinter.',
       category: 'Konto & Daten', sort_order: 22 },
     { q: 'Wie genau ist die Passform?',
-      a: 'Nach der Vermessung Ihres Fußes wählen wir aus hunderten Leisten die exakt passende aus. So erreichen wir eine Passform von bis zu 100 % auf den Fuß, ganz ohne klassische Konfektionsgröße.',
+      a: 'Nach der Vermessung deines Fußes wählen wir aus hunderten Leisten die exakt passende aus. So erreichen wir eine Passform von bis zu 100 % auf den Fuß, ganz ohne klassische Konfektionsgröße.',
       category: 'Passform', sort_order: 8 },
   ]
   const exists = db.prepare('SELECT 1 FROM faqs WHERE question = ? LIMIT 1')
@@ -1601,6 +1601,124 @@ function cleanLegacyText(s, isSubject) {
     .replace(/\s*[–—]\s*(?=[,;:.!?])/g, '')
     .replace(/\s[–—]\s/g, isSubject ? ' · ' : ', ')
     .replace(/,\s+,\s*/g, ', ')
+}
+
+/**
+ * Die Anrede in den gepflegten Texten: von Sie auf Du.
+ *
+ * ── Warum das hier steht und nicht nur oben in den Vorgaben ───────────────
+ *
+ * Die E-Mail-Vorlagen und die Fragen und Antworten werden mit
+ * `INSERT OR IGNORE` angelegt. In einer Datenbank, die schon läuft, tut das
+ * nichts — die Zeilen sind da. Wer also nur die Vorgaben weiter oben
+ * umschreibt, hat die Anrede in einer frischen Installation geändert und im
+ * laufenden Laden gar nichts: Der Kunde wird auf der Website geduzt und in
+ * der Bestellbestätigung gesiezt.
+ *
+ * ── Warum ganze Sätze und keine Wortregeln ────────────────────────────────
+ *
+ * Aus „Sie" wird „du", aber aus „Bitte überweisen Sie" wird „Bitte
+ * überweise" — das Verb beugt sich mit. Eine Regel, die nur die Anrede
+ * tauscht, hinterlässt „Bitte überweisen du". Ersetzt werden deshalb genau
+ * die Sätze, die hier stehen, und zwar so, wie sie ausgeliefert wurden.
+ *
+ * Das hat eine Folge, die so gewollt ist: Ein Text, den die Verwaltung im
+ * CMS selbst umgeschrieben hat, passt auf keinen dieser Sätze mehr und
+ * bleibt unangetastet. Eigene Formulierungen zu überschreiben wäre schlimmer
+ * als eine Anrede, die an einer Stelle noch siezt.
+ *
+ * ── Warum nur zwei Tabellen ───────────────────────────────────────────────
+ *
+ * E-Mail-Vorlagen und Fragen und Antworten. Die Rechtstexte bleiben außen
+ * vor, aus demselben Grund wie oben — sie sind Vertragsdokumente. Die
+ * Modell- und Zubehörbeschreibungen ebenfalls: Sie tragen keine Anrede, und
+ * eine Liste von Sätzen für Texte, die es noch gar nicht gibt, wäre eine
+ * Einladung zum Danebengreifen.
+ */
+const DU_TEXTE = [
+  // ── E-Mail-Vorlagen ────────────────────────────────────────────────────
+  ['Ihre Bestellung wurde aufgenommen und wird individuell für Sie angefertigt.',
+   'Deine Bestellung wurde aufgenommen und wird individuell für dich angefertigt.'],
+  ['Ihre Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu Ihnen geliefert.',
+   'Deine Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu dir geliefert.'],
+  ['Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.',
+   'Den aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.'],
+  ['Ihre Bestellung wurde erfasst und wartet auf Ihre Zahlung.',
+   'Deine Bestellung wurde erfasst und wartet auf deine Zahlung.'],
+  ['Bitte überweisen Sie den folgenden Betrag an das unten angegebene Konto. Verwenden Sie dabei zwingend den angegebenen Verwendungszweck, damit wir Ihre Zahlung korrekt zuordnen können.',
+   'Bitte überweise den folgenden Betrag an das unten angegebene Konto. Verwende dabei zwingend den angegebenen Verwendungszweck, damit wir deine Zahlung korrekt zuordnen können.'],
+  ['Nach Zahlungseingang werden Ihre Schuhe umgehend in die Fertigung gegeben.',
+   'Nach Zahlungseingang werden deine Schuhe umgehend in die Fertigung gegeben.'],
+  ['Sie erhalten eine Bestätigung, sobald Ihre Zahlung bei uns eingegangen ist.',
+   'Du bekommst eine Bestätigung, sobald deine Zahlung bei uns eingegangen ist.'],
+  ['Ihre Zahlung wurde bestätigt. Ihre Schuhe',
+   'Deine Zahlung wurde bestätigt. Deine Schuhe'],
+  ['Ihre Schuhe sind unterwegs!', 'Deine Schuhe sind unterwegs!'],
+  ['wurden soeben versandt und befinden sich auf dem Weg zu Ihnen.',
+   'wurden soeben versandt und befinden sich auf dem Weg zu dir.'],
+  ['Bei Fragen wenden Sie sich an unser Team, wir sind gerne für Sie da.',
+   'Bei Fragen wende dich an unser Team, wir sind gerne für dich da.'],
+
+  // ── Fragen und Antworten ───────────────────────────────────────────────
+  ['Wir fertigen jeden Schuh anhand von zwei Maßen: Ihrer Fußlänge und Ihrem Ballenumfang.',
+   'Wir fertigen jeden Schuh anhand von zwei Maßen: deiner Fußlänge und deinem Ballenumfang.'],
+  ['Sie wählen keine Konfektionsgröße; die richtige Passform ermitteln wir für Sie.',
+   'Du wählst keine Konfektionsgröße; die richtige Passform ermitteln wir für dich.'],
+  ['Fußlänge: Stellen Sie sich auf ein Blatt Papier und messen Sie vom äußersten Fersenpunkt bis zur längsten Zehe.',
+   'Fußlänge: Stell dich auf ein Blatt Papier und miss vom äußersten Fersenpunkt bis zur längsten Zehe.'],
+  ['Ballenumfang: Legen Sie ein Maßband einmal um den breitesten Teil des Vorfußes (über den Ballen). Messen Sie beide Füße und geben Sie die Werte in Millimetern in der Kollektion unter „Passform" ein.',
+   'Ballenumfang: Leg ein Maßband einmal um den breitesten Teil des Vorfußes (über den Ballen). Miss beide Füße und gib die Werte in Millimetern in der Kollektion unter „Passform" ein.'],
+  ['Das ist völlig normal. Geben Sie beide Füße getrennt an.',
+   'Das ist völlig normal. Gib beide Füße getrennt an.'],
+  ['Die genaue Lieferzeit nennen wir Ihnen mit der Bestellbestätigung.',
+   'Die genaue Lieferzeit nennen wir dir mit der Bestellbestätigung.'],
+  ['Da jeder Schuh individuell nach Ihren Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, melden Sie sich bei uns; wir finden gemeinsam eine Lösung.',
+   'Da jeder Schuh individuell nach deinen Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, meld dich bei uns; wir finden gemeinsam eine Lösung.'],
+  ['Wir fertigen Ihr Paar custom-made und erst auf Bestellung, abgestimmt auf Ihre Maße und Ihre Konfiguration aus Leder, Farbe und Sohle.',
+   'Wir fertigen dein Paar custom-made und erst auf Bestellung, abgestimmt auf deine Maße und deine Konfiguration aus Leder, Farbe und Sohle.'],
+  ['Wir fertigen jedes Paar erst, nachdem Sie bestellt haben (made to order).',
+   'Wir fertigen jedes Paar erst, nachdem du bestellt hast (made to order).'],
+  ['von der Produktion bis zur Lieferung zu Ihnen.',
+   'von der Produktion bis zur Lieferung zu dir.'],
+  ['Schreiben Sie uns über den Nachrichtenbereich in der App (das Sprechblasen-Symbol oben) oder an kontakt@artisansole.com. Wir sperren Ihr Konto daraufhin sofort und löschen es nach dreißig Tagen endgültig. Die Frist ist Ihre Sicherheit: Überlegen Sie es sich anders, holen wir das Konto mit allen Bestellungen zurück.',
+   'Schreib uns über den Nachrichtenbereich in der App (das Sprechblasen-Symbol oben) oder an kontakt@artisansole.com. Wir sperren dein Konto daraufhin sofort und löschen es nach dreißig Tagen endgültig. Die Frist ist deine Sicherheit: Überlegst du es dir anders, holen wir das Konto mit allen Bestellungen zurück.'],
+  ['Ihre Maße und Passformen werden mit dem Konto gelöscht.',
+   'Deine Maße und Passformen werden mit dem Konto gelöscht.'],
+  ['über die sich ein Bezug zu Ihnen herstellen ließe. Sie sind damit keine personenbezogenen Daten mehr und lassen sich Ihnen auch nicht wieder zuordnen.',
+   'über die sich ein Bezug zu dir herstellen ließe. Sie sind damit keine personenbezogenen Daten mehr und lassen sich dir auch nicht wieder zuordnen.'],
+  ['Ihre Verbindung zu Ihnen verlieren sie aber:',
+   'Ihre Verbindung zu dir verlieren sie aber:'],
+  ['Nach der Vermessung Ihres Fußes wählen wir aus hunderten Leisten die exakt passende aus.',
+   'Nach der Vermessung deines Fußes wählen wir aus hunderten Leisten die exakt passende aus.'],
+]
+
+export function umstellungAufDu(db) {
+  const ZIELE = [
+    { table: 'email_templates', pk: 'type', cols: ['subject', 'intro', 'body'] },
+    { table: 'faqs',            pk: 'id',   cols: ['question', 'answer'] },
+  ]
+  const tableExists = db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
+  let geaendert = 0
+  for (const z of ZIELE) {
+    if (!tableExists.get(z.table)) continue
+    const zeilen = db.prepare(`SELECT ${z.pk}, ${z.cols.join(', ')} FROM ${z.table}`).all()
+    const upd = db.prepare(`UPDATE ${z.table} SET ${z.cols.map(c => `${c} = ?`).join(', ')} WHERE ${z.pk} = ?`)
+    db.transaction(() => {
+      for (const zeile of zeilen) {
+        const neu = z.cols.map(c => {
+          let t = zeile[c]
+          if (typeof t !== 'string') return t
+          for (const [alt, ersatz] of DU_TEXTE) t = t.split(alt).join(ersatz)
+          return t
+        })
+        if (neu.some((v, i) => v !== zeile[z.cols[i]])) {
+          upd.run(...neu, zeile[z.pk])
+          geaendert++
+        }
+      }
+    })()
+  }
+  return geaendert
 }
 
 // Ausgeführt beim Start; ausgeführt auch von `tests/wortlaut.mjs`, das einen
@@ -1687,6 +1805,8 @@ export function cleanupLegacyWording(db) {
     })()
     changed += n
   } catch (e) { console.error('[Bereinigung Einstellungen]', e.message) }
+
+  changed += umstellungAufDu(db)
 
   if (changed) console.log(`✅ Bereinigt: ${changed} DB-Texte (Custom-Made-Wording, keine Gedankenstriche)`)
 }
