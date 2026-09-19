@@ -37,6 +37,7 @@
  */
 import { useMemo, useRef } from 'react'
 import RahmenSchnitt from './RahmenSchnitt'
+import Kapitelmarke from './Kapitelmarke'
 import Enthuellen from './Enthuellen'
 import { AUFBAU } from '../lib/aufbauSchritte'
 import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
@@ -45,8 +46,15 @@ import { useScrollBuehne } from '../lib/scrollbuehne'
 /* Vorlauf und Nachlauf: Am Anfang steht die Brandsohle einen Moment allein
    da, am Ende der fertige Schuh. Ohne diese Ruhe beginnt die Folge, bevor
    der Abschnitt richtig im Bild ist, und endet, bevor man sie gesehen hat. */
-const VORLAUF = 0.1
-const NACHLAUF = 0.14
+const VORLAUF = 0.08
+const NACHLAUF = 0.10
+
+/* Wie viel Bildschirmhöhe ein Schritt bekommt.
+   0,62 war zu viel: Sechs Schritte ergaben fast fünf Bildschirme Scrollen,
+   und weil die Bühne dabei stehen bleibt, fühlte sich das an wie eine Seite,
+   die klemmt. 0,38 sind rund drei Mausrad-Rasten je Schritt — zügig genug,
+   dass es läuft, langsam genug, dass man die Beschriftung liest. */
+const PRO_SCHRITT = 0.38
 
 function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
@@ -137,73 +145,71 @@ export default function SchuhAufbau({ kopf, fuss }) {
 
   return (
     <>
+      {/* Der Vorspann. Er sagt, was gleich passiert — ohne ihn beginnt die
+          Folge unangekündigt, und eine klebende Bühne, die man nicht
+          erwartet hat, liest sich als Fehler. */}
+      <Enthuellen>
+        <div className="px-5 lg:px-16 pt-16 lg:pt-28 pb-6 lg:pb-10">
+          <div className="max-w-6xl mx-auto">{kopf}</div>
+        </div>
+      </Enthuellen>
+
       <div
         ref={ref}
         /* Die Höhe des Abschnitts ist die Strecke der Folge: eine Bühne für
            das Bild plus gut eine halbe je Schritt. Steht die gemessene Höhe
            noch nicht fest (erster Anlauf), trägt die Klasse. */
-        className="relative h-[360vh] lg:h-[460vh]"
-        style={buehnenHoehe ? { height: buehnenHoehe * (1 + AUFBAU.length * 0.62) } : undefined}
+        className="relative h-[300vh] lg:h-[330vh]"
+        style={buehnenHoehe ? { height: buehnenHoehe * (1 + AUFBAU.length * PRO_SCHRITT) } : undefined}
       >
         <div
           className="sticky top-0 flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-12 lg:py-16"
           style={buehnenHoehe ? { height: buehnenHoehe } : undefined}
         >
-          {/* Die Bühne ist eine Fläche, kein Raster: Überschrift oben
-              links, der Schnitt mittig und groß, die Bildunterschrift unten
-              rechts, das Laufband unten links. Ein Raster verteilt; eine
-              Bühne komponiert — und nur so bekommt der Schnitt die Größe,
-              die ihn zur Hauptsache macht.
+          {/* Auf der Bühne steht nur noch, was sich bewegt.
 
-              Auf dem Telefon fällt das weg: Dort stehen dieselben vier
-              Dinge untereinander, weil überlagerte Ecken auf 390 Pixeln
-              kein Bild ergeben, sondern ein Gedränge. */}
-          <div className="relative h-full w-full max-w-6xl mx-auto flex flex-col lg:block">
-            <div className="lg:absolute lg:top-0 lg:left-0 lg:max-w-[54%] lg:z-10">
-              {kopf}
+              Vorher stand hier auch die Überschrift. Sie nahm die obere
+              Hälfte, und der Schnitt — das Einzige, worum es geht — saß
+              klein in der Mitte zwischen zwei Textecken. Jetzt steht die
+              Überschrift im Vorspann darüber, wo sie ankündigt, was kommt,
+              und die Bühne gehört der Zeichnung. */}
+          <div className="relative h-full w-full max-w-6xl mx-auto flex flex-col justify-center">
+            <div className="hidden lg:block absolute top-0 left-0">
+              <Kapitelmarke hell>Goodyear-rahmengenäht</Kapitelmarke>
             </div>
 
-            {/* Der Schnitt. Er liegt über allem anderen und darf die
-                Überschrift an ihrer Unterkante streifen — diese Überlagerung
-                ist es, die aus zwei Elementen ein Bild macht. */}
-            <div className="mt-10 lg:mt-0 lg:absolute lg:inset-0 lg:flex lg:items-center lg:justify-center lg:pointer-events-none">
-              <RahmenSchnitt
-                schritt={schritt}
-                ausschnitt={schmal ? 'eng' : 'weit'}
-                className="w-full lg:max-w-4xl"
-              />
-            </div>
+            <RahmenSchnitt
+              schritt={schritt}
+              ausschnitt={schmal ? 'eng' : 'weit'}
+              className="w-full lg:max-w-5xl lg:mx-auto"
+            />
 
-            {/* Die Bildunterschrift. Alle sechs stehen im Dokument und liegen
-                übereinander — nur so bleibt die Höhe ruhig, während der Text
-                wechselt, und nur so steht der ganze Inhalt auch dann da, wenn
-                niemand scrollt. */}
-            <div className="relative mt-8 lg:mt-0 lg:absolute lg:bottom-0 lg:right-0 lg:w-[23rem] lg:text-right lg:z-10 min-h-[150px] sm:min-h-[128px] lg:min-h-[164px]">
-              {AUFBAU.map((s, i) => (
-                <div
-                  key={s.titel}
-                  aria-hidden={i !== schritt}
-                  className="absolute inset-0 transition-opacity duration-500"
-                  style={{
-                    opacity: i === schritt ? 1 : 0,
-                    pointerEvents: i === schritt ? 'auto' : 'none',
-                  }}
-                >
-                  <p className="text-[10px] tracking-[0.3em] text-white/35">
-                    {String(i + 1).padStart(2, '0')} / {String(AUFBAU.length).padStart(2, '0')}
-                  </p>
-                  <p className="satz-titel text-[23px] lg:text-[30px] text-white leading-[1.2] mt-3">
-                    {s.titel}
-                  </p>
-                  <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.85] mt-3">
-                    {s.text}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 lg:mt-0 lg:absolute lg:bottom-0 lg:left-0 lg:z-10">
+            {/* Unten eine Zeile: links das Laufband, rechts der Schritt.
+                Nebeneinander statt in zwei Ecken — so liest man beides in
+                einer Augenbewegung. */}
+            <div className="mt-10 lg:mt-0 lg:absolute lg:bottom-0 lg:inset-x-0 lg:flex lg:items-end lg:justify-between lg:gap-16">
               <Laufband schritt={schritt} fortschritt={fortschritt} />
+
+              <div className="relative mt-8 lg:mt-0 lg:w-[24rem] lg:text-right min-h-[120px] sm:min-h-[104px]">
+                {AUFBAU.map((s, i) => (
+                  <div
+                    key={s.titel}
+                    aria-hidden={i !== schritt}
+                    className="absolute inset-0 transition-opacity duration-500"
+                    style={{
+                      opacity: i === schritt ? 1 : 0,
+                      pointerEvents: i === schritt ? 'auto' : 'none',
+                    }}
+                  >
+                    <p className="satz-titel text-[22px] lg:text-[28px] text-white leading-[1.2]">
+                      {s.titel}
+                    </p>
+                    <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.8] mt-3">
+                      {s.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

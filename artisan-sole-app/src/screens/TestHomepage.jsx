@@ -20,7 +20,7 @@
  *   1  Erster Blick    Was ist das, und was kostet es?
  *   2  Drei Zahlen     Woran hängt der Preis?
  *   3  Das Handwerk    Warum hält das länger als Geklebtes?
- *   4  Die Modelle     Wofür ist es gemacht, und was wird daraus?
+ *   4  Die Kollektionen Wofür ist es gemacht, und wann trägt man es?
  *   5  Das Leder       Woraus besteht es?
  *   6  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
  *   7  In eigener Sache Was behaupten wir NICHT?
@@ -133,7 +133,7 @@
  * `indexieren` weg, Disallow weg, und `/collection` gibt seinen
  * Sitemap-Eintrag an `/` ab.
  */
-import { useEffect, useMemo } from 'react'
+import { Fragment, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Footprints, Check } from 'lucide-react'
 import useStore from '../store/store'
@@ -144,6 +144,7 @@ import { preisAlsZahl, preisAlsText } from '../lib/preis'
 import { resolveMediaUrl } from '../lib/mediaUrl'
 import { SHOES, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import Enthuellen from '../components/Enthuellen'
+import Kapitelmarke from '../components/Kapitelmarke'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import SchuhAufbau from '../components/SchuhAufbau'
 import LederSchnitt from '../components/LederSchnitt'
@@ -151,25 +152,6 @@ import FussMass from '../components/FussMass'
 
 /* ── Bausteine ──────────────────────────────────────────────────────────── */
 
-/** Die kleine gesperrte Zeile über jeder Überschrift. Gliedert die Seite. */
-function Kapitelmarke({ children, hell = false }) {
-  return (
-    <p
-      className={`text-[10px] uppercase tracking-[0.3em] ${hell ? 'text-white/45' : 'text-black/30'}`}
-    >
-      {children}
-    </p>
-  )
-}
-
-/**
- * Drei Zahlen, die den Preis erklären.
- *
- * Keine Werbeworte — Zahlen, die jeder nachhalten kann. „Über 200
- * Arbeitsschritte" steht auch im Konfigurator und im Ablauf; sie hier zu
- * nennen ist keine neue Behauptung, sondern dieselbe an der Stelle, an der
- * jemand zum ersten Mal auf den Preis trifft.
- */
 /**
  * Die Faktenzeile unter der Überschrift.
  *
@@ -232,6 +214,61 @@ const LEDER = [
     herkunft: 'Angeschliffen, kurzer matter Flor',
     text: 'Die gebürstete Oberfläche nimmt der Form die Strenge. Damit wird aus einem '
         + 'strengen Schuh einer, den du auch am Samstag anziehst.',
+  },
+]
+
+/**
+ * Die drei Kollektionen, in der Reihenfolge, in der sie auf der Seite stehen.
+ *
+ * Die Schlüssel sind die des Ladens (lib/saison.js): Am Modell steht `season`,
+ * vorbelegt nach der Machart — Stiefel in den Winter, Mokassins und Walks in
+ * den Sommer, alles andere ganzjährig — und im CMS je Modell zu ändern.
+ *
+ * ── Die Zwischenspiele ────────────────────────────────────────────────────
+ *
+ * Zwischen zwei Kollektionen steht eine Fläche ohne Produkt, ohne Preis, ohne
+ * Knopf. Sie tut zweierlei: Sie unterbricht die Folge von Kapiteln, die sonst
+ * zum Katalog wird, und sie sagt, worauf es in den Monaten ankommt, die
+ * gleich kommen. Damit liest man die nächste Kollektion nicht als „noch mehr
+ * Schuhe", sondern als Antwort auf etwas, das man gerade erfahren hat.
+ *
+ * Beide Sätze sind Sachwissen über Schuhe, keine Auskunft über dieses Haus —
+ * und beide knüpfen an den Aufbau an, den man zwei Abschnitte vorher gesehen
+ * hat: das Futter, das der Schaft bekommt, und die Sohle, die an der
+ * Doppelnaht hängt.
+ */
+const SAISONFOLGE = [
+  {
+    key: 'all',
+    marke: 'Ganzjährig',
+    titel: 'Die Formen für jeden Monat.',
+    text: 'Was man im Januar und im Juli trägt, unterscheidet sich weniger in der '
+        + 'Form als im Leder darunter.',
+  },
+  {
+    key: 'summer',
+    marke: 'Sommer',
+    titel: 'Wenn der Schuh leichter sein darf.',
+    text: 'Leicht gebaut, ungefüttert oder dünn gefüttert — für Tage, an denen '
+        + 'nichts drücken darf.',
+    zwischenspiel: {
+      bild: LIFESTYLE.detail,
+      text: 'Ab Mai entscheidet das Futter mehr als die Form. Ein ungefütterter '
+          + 'Schaft gibt Feuchtigkeit nach außen ab, ein gefütterter hält sie. '
+          + 'Das merkt man am dritten heißen Tag.',
+    },
+  },
+  {
+    key: 'winter',
+    marke: 'Winter',
+    titel: 'Wenn der Boden nass ist.',
+    text: 'Über dem Knöchel, geschlossen, mit Profil unter der Sohle.',
+    zwischenspiel: {
+      bild: CRAFT.workshop,
+      text: 'Ab November entscheidet die Sohle. Eine Doppelsohle hält den nassen '
+          + 'Boden weiter weg — und eine Gummilaufsohle lässt sich auf einen '
+          + 'gerahmten Schuh genauso aufnähen wie Leder.',
+    },
   },
 ]
 
@@ -418,6 +455,104 @@ function Kapitelbild({ schuh, oeffnen, className = '', hoehe = 'max-h-[62vh]' })
   )
 }
 
+/**
+ * Die übrigen Modelle einer Kollektion.
+ *
+ * Ein Kapitel macht noch keine Kollektion. Sommer und Winter führen im
+ * Katalog je nur eine Machart und bekommen deshalb nur ein Kapitel — was
+ * dort sonst noch steht, steht hier: klein, in einer Reihe, mit Namen und
+ * Preis. Kein erfundenes Wort, nur der Bestand.
+ */
+function SaisonReihe({ schuhe, oeffnen }) {
+  if (!schuhe.length) return null
+  return (
+    <div className="px-5 lg:px-16 pb-16 lg:pb-24">
+      <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
+        {schuhe.map((schuh, i) => (
+          <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 3) * 80}>
+            <button
+              type="button"
+              onClick={() => oeffnen(schuh)}
+              className="group block w-full bg-transparent border-0 p-0 text-left"
+            >
+              {/* Festes Maß, weil vier Kacheln nebeneinander auf einer Linie
+                  stehen müssen. `contain` verkleinert den Schuh hinein,
+                  statt ihn an den Kanten abzuschneiden. */}
+              <div className="aspect-[4/3] overflow-hidden bg-[#EDEAE3]">
+                <img
+                  src={resolveMediaUrl(schuh.image)}
+                  alt={`${schuh.name}, nach Maß gefertigt`}
+                  loading="lazy"
+                  className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+                />
+              </div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-5 line-clamp-2 min-h-[2.8em]">
+                {schuh.name}
+              </p>
+              <p className="text-[12px] text-black/40 font-light mt-1.5">
+                {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
+              </p>
+            </button>
+          </Enthuellen>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Der Kopf einer Kollektion.
+ *
+ * Mittig, viel Luft, und darüber ein Haarstrich über die ganze Breite: Er
+ * trennt zwei Kollektionen deutlicher, als jeder Abstand es könnte, und
+ * kostet eine Linie.
+ */
+function SaisonKopf({ marke, titel, text }) {
+  return (
+    <Enthuellen>
+      <div className="px-5 lg:px-16 pt-16 pb-12 lg:pt-28 lg:pb-20">
+        <div className="max-w-6xl mx-auto border-t border-black/[0.10] pt-12 lg:pt-16 text-center">
+          <Kapitelmarke>{marke}</Kapitelmarke>
+          <h3 className="satz-titel text-[27px] lg:text-[40px] leading-[1.16] mt-5 max-w-2xl mx-auto">
+            {titel}
+          </h3>
+          <p className="text-[13px] lg:text-[14px] text-black/45 font-light leading-[1.95] mt-6 max-w-lg mx-auto">
+            {text}
+          </p>
+        </div>
+      </div>
+    </Enthuellen>
+  )
+}
+
+/**
+ * Das Zwischenspiel zwischen zwei Kollektionen.
+ *
+ * Ein Bild über die volle Breite, ein Satz darauf, sonst nichts. Wer hier
+ * ankommt, hat zwei Kapitel gelesen; das Auge braucht eine Fläche, auf der
+ * es nichts zu entscheiden gibt, bevor die nächsten beiden kommen.
+ */
+function Zwischenspiel({ bild, text }) {
+  return (
+    <Enthuellen richtung="ruhig">
+      <section className="relative overflow-hidden bg-[#111] min-h-[58vh] lg:min-h-[66vh] flex items-center">
+        <img
+          src={bild}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.3]"
+        />
+        <div className="relative px-5 lg:px-16 py-20 max-w-3xl mx-auto text-center">
+          <p className="satz-titel text-[21px] lg:text-[32px] leading-[1.45] text-white">
+            {text}
+          </p>
+        </div>
+      </section>
+    </Enthuellen>
+  )
+}
+
 /** Name, Angaben und der Weg in den Konfigurator. */
 function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
   return (
@@ -484,46 +619,84 @@ export default function TestHomepage() {
   useEffect(() => { initStore?.() }, [initStore])
 
   /**
-   * Die Modelle, die ein eigenes Kapitel bekommen.
+   * Die Kollektionen: drei Saisons, je zwei Kapitel.
    *
-   * Bedingung: eine Aufnahme UND eine eigene Beschreibung. Ein Kapitel ohne
-   * Bild ist eine leere Fläche, eines ohne Text eine Überschrift ohne
-   * Geschichte — beides ist schlechter als ein Kapitel weniger. Vier, weil
-   * die Seite danach noch fünf Kapitel trägt und niemand acht Modelle liest,
-   * bevor er das Handwerk verstanden hat.
+   * ── Warum nach Saison ─────────────────────────────────────────────────
+   *
+   * Vorher standen hier vier Kapitel hintereinander, ausgewählt nach der
+   * Machart. Das las sich wie eine Auswahl ohne Grund: vier Schuhe, weil
+   * vier Schuhe. Die Saison ist der einzige Ordnungsbegriff, den ein Käufer
+   * ohnehin im Kopf hat — er weiß, ob er etwas für den Juli oder für den
+   * Januar sucht —, und der Laden führt sie bereits als Feld am Modell
+   * (utils/saison.js im Backend, lib/saison.js hier).
+   *
+   * Die Reihenfolge ist fest: ganzjährig, Sommer, Winter. Das Ganzjährige
+   * zuerst, weil es auf die meisten zutrifft; danach die beiden Hälften des
+   * Jahres. Zwischen ihnen steht je ein Zwischenspiel, das auf die nächste
+   * Kollektion vorbereitet.
+   *
+   * ── Die Regeln für ein Kapitel ────────────────────────────────────────
+   *
+   * Eine Aufnahme UND eine eigene Beschreibung: Ein Kapitel ohne Bild ist
+   * eine leere Fläche, eines ohne Text eine Überschrift ohne Geschichte.
+   *
+   * Höchstens eines je Machart, und jede Geschichte nur einmal — über alle
+   * Saisons hinweg. Ohne die erste Regel stünden hier vier Loafer (der
+   * Katalog führt zehn davon, und sie kommen zuerst); ohne die zweite
+   * stünde ein Modell zweimal da, weil die Express-Fassungen denselben
+   * Beschreibungstext tragen wie ihr Grundmodell.
+   *
+   * `form` läuft über alle Saisons durch und bestimmt die Komposition (A bis
+   * D im Wechsel). Bliebe der Zähler je Saison bei null, begänne jede
+   * Kollektion mit derselben Form.
    */
-  const kapitel = useMemo(() => {
-    // Höchstens eines je Machart, und jede Geschichte nur einmal.
-    //
-    // Ohne die erste Regel standen hier vier Loafer: Der Katalog führt zehn
-    // davon, und sie kommen zuerst. Vier Kapitel, die sich in einer
-    // Schnallenform unterscheiden, zeigen keine Bandbreite — sie zeigen,
-    // dass niemand ausgewählt hat.
-    //
-    // Die zweite fängt die Express-Fassungen: Sie tragen denselben
-    // Beschreibungstext wie ihr Grundmodell, und zwei Kapitel mit demselben
-    // Absatz lassen eine Seite kaputt wirken.
+  const kollektionen = useMemo(() => {
     const machartGesehen = new Set()
     const textGesehen = new Set()
-    const treffer = []
-    for (const s of shoes) {
-      const text = String(s.description || '').trim()
-      const machart = String(s.category || '').toUpperCase()
-      if (!s.image || text.length < 80) continue
-      if (textGesehen.has(text) || machartGesehen.has(machart)) continue
-      machartGesehen.add(machart)
-      textGesehen.add(text)
-      treffer.push(s)
-      if (treffer.length === 4) break
-    }
-    return treffer
-  }, [shoes])
+    let form = 0
 
-  /** Der Rest der Auswahl, klein und in einer Reihe. */
-  const weitere = useMemo(() => {
-    const gezeigt = new Set(kapitel.map(s => s.id))
-    return shoes.filter(s => s.image && !gezeigt.has(s.id)).slice(0, 6)
-  }, [shoes, kapitel])
+    // Eine Machart bekommt auf der ganzen Seite ein Kapitel. Ohne diese
+    // Regel stünden im ganzjährigen Block vier Loafer, weil der Katalog zehn
+    // davon führt und sie zuerst kommen.
+    //
+    // Zwei Kapitel derselben Machart aufzufüllen wurde versucht und wieder
+    // verworfen: Die Überschrift eines Kapitels kommt aus ERZAEHLUNG und
+    // hängt an der Machart — zwei Stiefel hintereinander trugen dieselbe
+    // Zeile. Sommer und Winter führen im Katalog je nur eine Machart und
+    // bekommen deshalb ein Kapitel. Was dort sonst noch steht, steht als
+    // Kachelreihe darunter.
+    const waehlen = (key, anzahl) => {
+      const treffer = []
+      for (const sch of shoes) {
+        if (treffer.length >= anzahl) break
+        if ((sch.season || 'all') !== key) continue
+        const text = String(sch.description || '').trim()
+        const machart = String(sch.category || '').toUpperCase()
+        if (!sch.image || text.length < 80) continue
+        if (textGesehen.has(text) || machartGesehen.has(machart)) continue
+        machartGesehen.add(machart)
+        textGesehen.add(text)
+        treffer.push({ schuh: sch, form: form++ })
+      }
+      return treffer
+    }
+
+    return SAISONFOLGE
+      .map(def => {
+        const schuhe = waehlen(def.key, 2)
+        const imKapitel = new Set(schuhe.map(e => e.schuh.id))
+        // Der Rest derselben Saison. Er macht aus einem Kapitel eine
+        // Kollektion, ohne dass dafür ein Wort erfunden werden müsste.
+        const rest = shoes
+          .filter(sch => (sch.season || 'all') === def.key && sch.image && !imKapitel.has(sch.id))
+          .slice(0, 4)
+        return { ...def, schuhe, rest }
+      })
+      // Eine Kollektion ohne Kapitel bekommt keine Überschrift. Führt der
+      // Katalog einmal keine Sommermodelle mit Beschreibung, fehlt der
+      // Abschnitt — er steht nicht leer da.
+      .filter(k => k.schuhe.length > 0)
+  }, [shoes])
 
   const abPreis = useMemo(() => {
     const preise = shoes.map(s => preisAlsZahl(s.price)).filter(p => p > 0)
@@ -608,6 +781,195 @@ export default function TestHomepage() {
       },
     ]
   }, [shoes.length, shoeMaterials, shoeColors])
+
+  /**
+   * Ein Modellkapitel.
+   *
+   * Der Rumpf stand als Rückgabewert direkt in der Schleife. Seit die
+   * Kapitel nach Saison gruppiert sind, steht zwischen ihnen mal eine
+   * Saisonüberschrift und mal ein Zwischenspiel — dafür muss sich das
+   * Kapitel einzeln aufrufen lassen.
+   *
+   * `i` bestimmt weiter die Form (A bis D im Wechsel) und läuft über alle
+   * Saisons hinweg durch: Sonst begänne jede Kollektion wieder mit Form A,
+   * und drei gleich gebaute Auftakte hintereinander sind genau das Muster,
+   * das hier vermieden werden soll.
+   */
+  const kapitelInhalt = (schuh, i) => {
+          const nummer = String(i + 1).padStart(2, '0')
+          const erz = erzaehlungZu(schuh.category)
+          const oeffnen = () => navigate(shoePath(schuh))
+          const marke = <Kapitelzeile nummer={nummer} machart={schuh.category} hinweis={schuh.tag} />
+
+          /* ══ Form A · Mittig ══════════════════════════════════════
+             Der erste Auftritt. Die Aufnahme steht in der Fläche statt
+             an ihrem Rand, mit Luft ringsum, und alles darunter ist
+             mittig gesetzt. Die ruhigste der vier Formen — sie trägt am
+             meisten, weil sie am wenigsten tut. */
+          if (i % 4 === 0) {
+            return (
+              <section key={schuh.id} className="bg-white px-5 lg:px-16 py-16 lg:py-28">
+                <Enthuellen>
+                  <Kapitelbild
+                    schuh={schuh}
+                    oeffnen={oeffnen}
+                    className="max-w-4xl mx-auto"
+                    hoehe="max-h-[56vh] lg:max-h-[62vh]"
+                  />
+                </Enthuellen>
+                <Enthuellen verzoegerung={140}>
+                  <div className="max-w-2xl mx-auto text-center mt-14 lg:mt-20">
+                    {marke}
+                    <h3 className="satz-titel text-[33px] lg:text-[54px] leading-[1.14] mt-6">
+                      {erz.titel}
+                    </h3>
+                    <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[2] mt-8">
+                      {schuh.description}
+                    </p>
+                    <Nachsatz text={erz.rat} className="mt-10" />
+                    <div className="max-w-xs mx-auto mt-12">
+                      <Kapitelfuss schuh={schuh} oeffnen={oeffnen} mittig />
+                    </div>
+                  </div>
+                </Enthuellen>
+              </section>
+            )
+          }
+
+          /* ══ Form B · Diptychon ═══════════════════════════════════
+             Zwei Hälften, aber beide eingefasst: Die Aufnahme reicht
+             nicht bis an den Seitenrand, sondern steht wie ein Blatt auf
+             dem farbigen Grund. Der Text beginnt oben statt in der
+             Mitte, dadurch entsteht unter ihm eine offene Ecke. */
+          if (i % 4 === 1) {
+            return (
+              <section key={schuh.id} className="bg-[#F5F3F0] px-5 lg:px-16 py-16 lg:py-28">
+                <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-start max-w-6xl mx-auto">
+                  <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:pt-10">
+                    {marke}
+                    <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
+                      {erz.titel}
+                    </h3>
+                    <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8 max-w-[24rem]">
+                      {schuh.description}
+                    </p>
+                    <div className="mt-12 max-w-[24rem]">
+                      <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
+                    </div>
+                  </Enthuellen>
+
+                  <Enthuellen richtung="rechts" className="lg:col-span-7 mt-12 lg:mt-0">
+                    <Kapitelbild
+                      schuh={schuh}
+                      oeffnen={oeffnen}
+                      hoehe="max-h-[60vh] lg:max-h-[68vh]"
+                    />
+                  </Enthuellen>
+                </div>
+
+                {/* Der Nachsatz sitzt hier am Fuß, quer über beide
+                    Hälften — und nicht in einer davon. */}
+                <Enthuellen richtung="ruhig">
+                  <div className="max-w-6xl mx-auto mt-16 lg:mt-24 pt-10 border-t border-black/[0.08]">
+                    <Nachsatz text={erz.rat} className="max-w-2xl" gross />
+                  </div>
+                </Enthuellen>
+              </section>
+            )
+          }
+
+          /* ══ Form C · Versetzt ════════════════════════════════════
+             Die Aufnahme läuft bis an den rechten Seitenrand, der Text
+             steht schmal daneben und beginnt deutlich tiefer. Die
+             unruhigste der vier Formen, deshalb steht sie in der Mitte
+             der Folge.
+
+             Sie hat einmal anders funktioniert: Das Textblatt lag mit
+             `z-10` ÜBER dem Bild. Auf dem Entwurf war das eine schöne
+             Geste, mit den echten Aufnahmen legte es sich dem Schuh auf
+             die Ferse. Eine Komposition, die ihr eigenes Motiv verdeckt,
+             ist keine. Der Versatz bleibt, die Überdeckung nicht: Die
+             beiden Spalten stehen jetzt nebeneinander, nur eben auf
+             verschiedener Höhe. */
+          if (i % 4 === 2) {
+            return (
+              <section key={schuh.id} className="bg-white py-16 lg:py-28 px-5 lg:pl-16 lg:pr-0">
+                <div className="lg:grid lg:grid-cols-12 lg:gap-x-14 lg:items-start">
+                  <Enthuellen richtung="rechts" className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
+                    <Kapitelbild
+                      schuh={schuh}
+                      oeffnen={oeffnen}
+                      hoehe="max-h-[62vh] lg:max-h-[74vh]"
+                    />
+                  </Enthuellen>
+
+                  <Enthuellen
+                    verzoegerung={160}
+                    className="lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:pt-28 mt-12 lg:mt-0"
+                  >
+                    {marke}
+                    <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
+                      {erz.titel}
+                    </h3>
+                    <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
+                      {schuh.description}
+                    </p>
+                    {/* Hier steht der Nachsatz mit in der Spalte — die
+                        Form hat keinen Fuß, über den er laufen könnte. */}
+                    <Nachsatz text={erz.rat} className="mt-9" />
+                    <div className="mt-11">
+                      <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
+                    </div>
+                  </Enthuellen>
+                </div>
+              </section>
+            )
+          }
+
+          /* ══ Form D · Breitband ═══════════════════════════════════
+             Eine breite Aufnahme über die volle Seite, Überschrift
+             darüber, und darunter drei Spalten: Geschichte, Anlass,
+             Nachsatz. Die Form leitet zur Auswahl über — sie liest sich
+             schon wie eine Seite, auf der mehreres nebeneinander steht. */
+          return (
+            <section key={schuh.id} className="bg-[#F5F3F0] py-16 lg:py-28">
+              <Enthuellen>
+                <div className="px-5 lg:px-16 text-center max-w-3xl mx-auto">
+                  {marke}
+                  <h3 className="satz-titel text-[32px] lg:text-[52px] leading-[1.14] mt-6">
+                    {erz.titel}
+                  </h3>
+                </div>
+              </Enthuellen>
+
+              <Enthuellen verzoegerung={140} className="mt-12 lg:mt-16 px-5 lg:px-16">
+                {/* Auf derselben Breite wie die drei Spalten darunter —
+                    eine Aufnahme, die über sie hinausragt, liest sich
+                    nicht als Kopf der Seite, sondern als Ausrutscher. */}
+                <Kapitelbild
+                  schuh={schuh}
+                  oeffnen={oeffnen}
+                  className="max-w-6xl mx-auto"
+                  hoehe="max-h-[54vh] lg:max-h-[66vh]"
+                />
+              </Enthuellen>
+
+              <Enthuellen verzoegerung={200}>
+                <div className="px-5 lg:px-16 mt-14 lg:mt-20">
+                  <div className="max-w-6xl mx-auto grid gap-10 lg:gap-20 lg:grid-cols-2">
+                    <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2]">
+                      {schuh.description}
+                    </p>
+                    <Nachsatz text={erz.rat} />
+                  </div>
+                  <div className="max-w-6xl mx-auto mt-14 lg:mt-20">
+                    <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
+                  </div>
+                </div>
+              </Enthuellen>
+            </section>
+          )
+  }
 
   const zurKollektion = () => navigate('/collection')
 
@@ -774,6 +1136,15 @@ export default function TestHomepage() {
               <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
                 Zwei Nähte halten<br className="hidden sm:block" /> diesen Schuh zusammen.
               </h2>
+              {/* Der Satz, der die Folge ankündigt. Ohne ihn beginnt die
+                  Bühne unangekündigt zu kleben, und wer das nicht erwartet,
+                  hält es für einen Fehler. Er nennt außerdem das Wort, unter
+                  dem man diese Machart nachschlägt. */}
+              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
+                So entsteht ein Goodyear-rahmengenähter Schuh: in sechs Schritten,
+                von der Brandsohle bis zur Doppelnaht. Scroll weiter, dann setzt er
+                sich zusammen.
+              </p>
             </>
           }
           fuss={
@@ -787,7 +1158,7 @@ export default function TestHomepage() {
       </section>
 
 
-      {/* ══ 4 · Die Modelle ═══════════════════════════════════════════════
+      {/* ══ 4 · Die Kollektionen ══════════════════════════════════════════
           Der Abschnitt, an dem sich entscheidet, ob die Seite ein Katalog ist
           oder ein Heft.
 
@@ -807,15 +1178,29 @@ export default function TestHomepage() {
           unter dem Kapitel — er ist der stärkste Satz, den ein Schuh hat, und
           im Stapel ging er unter.
 
-          DIE PAUSE GEHÖRT DAZU. Zwischen Kapiteln und Auswahl liegt eine
-          Fläche ohne Produkt, ohne Preis, ohne Knopf. */}
+          DIE PAUSE GEHÖRT DAZU. Zwischen zwei Kollektionen liegt eine Fläche
+          ohne Produkt, ohne Preis, ohne Knopf.
+
+          ── Warum nach Saison geordnet ──────────────────────────────────
+
+          Vorher standen hier vier Kapitel hintereinander, ausgewählt nach
+          der Machart. Das las sich wie eine Auswahl ohne Grund: vier Schuhe,
+          weil vier Schuhe. Jetzt stehen drei Kollektionen — ganzjährig,
+          Sommer, Winter —, und dazwischen sagt je ein Satz, worauf es in den
+          Monaten ankommt, die gleich kommen. Damit liest man die nächste
+          Kollektion nicht als „noch mehr Schuhe", sondern als Antwort auf
+          etwas, das man gerade erfahren hat.
+
+          Die Saison steht als Feld am Modell und ist im CMS zu ändern
+          (lib/saison.js). Führt der Katalog zu einer Saison kein Modell mit
+          Beschreibung, fällt die Kollektion weg — sie steht nicht leer da. */}
       <section>
         {/* Der Einstieg: mittig, viel Luft, ein Gedanke. Er stand links mit
             Vorspann daneben — das liest sich wie ein Artikel, nicht wie der
             Beginn eines Kapitels. */}
         <div className="px-5 lg:px-16 pt-20 pb-16 lg:pt-36 lg:pb-28 text-center">
           <Enthuellen>
-            <Kapitelmarke>Die Modelle</Kapitelmarke>
+            <Kapitelmarke>Die Kollektionen</Kapitelmarke>
             <h2 className="satz-titel text-[31px] lg:text-[54px] leading-[1.14] mt-6 max-w-3xl mx-auto">
               Jede Form hat einen Grund. Meist einen älteren als wir.
             </h2>
@@ -829,11 +1214,11 @@ export default function TestHomepage() {
           </Enthuellen>
         </div>
 
-        {katalogStatus === 'loading' && !kapitel.length ? (
+        {katalogStatus === 'loading' && !kollektionen.length ? (
           <p className="px-5 lg:px-16 py-24 text-center text-[12px] text-black/30 font-light">
             Modelle werden geladen …
           </p>
-        ) : katalogStatus === 'error' && !kapitel.length ? (
+        ) : katalogStatus === 'error' && !kollektionen.length ? (
           <div className="px-5 lg:px-16 py-20 text-center">
             <p className="text-[12px] text-black/45 font-light">Die Modelle lassen sich gerade nicht laden.</p>
             <button
@@ -847,279 +1232,62 @@ export default function TestHomepage() {
           </div>
         ) : (
           <div>
-            {kapitel.map((schuh, i) => {
-              const nummer = String(i + 1).padStart(2, '0')
-              const erz = erzaehlungZu(schuh.category)
-              const oeffnen = () => navigate(shoePath(schuh))
-              const marke = <Kapitelzeile nummer={nummer} machart={schuh.category} hinweis={schuh.tag} />
+            {kollektionen.map((kol) => (
+              <Fragment key={kol.key}>
+                {/* Vor jeder Saison außer der ersten ein Zwischenspiel: eine
+                    Fläche ohne Produkt, ohne Preis, ohne Knopf — und ein Satz,
+                    der sagt, worauf es in den nächsten Monaten ankommt. Er
+                    führt in die Kollektion hinein, die gleich kommt. */}
+                {kol.zwischenspiel && (
+                  <Zwischenspiel bild={kol.zwischenspiel.bild} text={kol.zwischenspiel.text} />
+                )}
 
-              /* ══ Form A · Mittig ══════════════════════════════════════
-                 Der erste Auftritt. Die Aufnahme steht in der Fläche statt
-                 an ihrem Rand, mit Luft ringsum, und alles darunter ist
-                 mittig gesetzt. Die ruhigste der vier Formen — sie trägt am
-                 meisten, weil sie am wenigsten tut. */
-              if (i % 4 === 0) {
-                return (
-                  <section key={schuh.id} className="bg-white px-5 lg:px-16 py-16 lg:py-28">
-                    <Enthuellen>
-                      <Kapitelbild
-                        schuh={schuh}
-                        oeffnen={oeffnen}
-                        className="max-w-4xl mx-auto"
-                        hoehe="max-h-[56vh] lg:max-h-[62vh]"
-                      />
-                    </Enthuellen>
-                    <Enthuellen verzoegerung={140}>
-                      <div className="max-w-2xl mx-auto text-center mt-14 lg:mt-20">
-                        {marke}
-                        <h3 className="satz-titel text-[33px] lg:text-[54px] leading-[1.14] mt-6">
-                          {erz.titel}
-                        </h3>
-                        <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[2] mt-8">
-                          {schuh.description}
-                        </p>
-                        <Nachsatz text={erz.rat} className="mt-10" />
-                        <div className="max-w-xs mx-auto mt-12">
-                          <Kapitelfuss schuh={schuh} oeffnen={oeffnen} mittig />
-                        </div>
-                      </div>
-                    </Enthuellen>
-                  </section>
-                )
-              }
+                <SaisonKopf marke={kol.marke} titel={kol.titel} text={kol.text} />
 
-              /* ══ Form B · Diptychon ═══════════════════════════════════
-                 Zwei Hälften, aber beide eingefasst: Die Aufnahme reicht
-                 nicht bis an den Seitenrand, sondern steht wie ein Blatt auf
-                 dem farbigen Grund. Der Text beginnt oben statt in der
-                 Mitte, dadurch entsteht unter ihm eine offene Ecke. */
-              if (i % 4 === 1) {
-                return (
-                  <section key={schuh.id} className="bg-[#F5F3F0] px-5 lg:px-16 py-16 lg:py-28">
-                    <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-start max-w-6xl mx-auto">
-                      <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:pt-10">
-                        {marke}
-                        <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
-                          {erz.titel}
-                        </h3>
-                        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8 max-w-[24rem]">
-                          {schuh.description}
-                        </p>
-                        <div className="mt-12 max-w-[24rem]">
-                          <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
-                        </div>
-                      </Enthuellen>
+                {kol.schuhe.map(({ schuh, form }) => (
+                  <Fragment key={schuh.id}>{kapitelInhalt(schuh, form)}</Fragment>
+                ))}
 
-                      <Enthuellen richtung="rechts" className="lg:col-span-7 mt-12 lg:mt-0">
-                        <Kapitelbild
-                          schuh={schuh}
-                          oeffnen={oeffnen}
-                          hoehe="max-h-[60vh] lg:max-h-[68vh]"
-                        />
-                      </Enthuellen>
-                    </div>
-
-                    {/* Der Nachsatz sitzt hier am Fuß, quer über beide
-                        Hälften — und nicht in einer davon. */}
-                    <Enthuellen richtung="ruhig">
-                      <div className="max-w-6xl mx-auto mt-16 lg:mt-24 pt-10 border-t border-black/[0.08]">
-                        <Nachsatz text={erz.rat} className="max-w-2xl" gross />
-                      </div>
-                    </Enthuellen>
-                  </section>
-                )
-              }
-
-              /* ══ Form C · Versetzt ════════════════════════════════════
-                 Die Aufnahme läuft bis an den rechten Seitenrand, der Text
-                 steht schmal daneben und beginnt deutlich tiefer. Die
-                 unruhigste der vier Formen, deshalb steht sie in der Mitte
-                 der Folge.
-
-                 Sie hat einmal anders funktioniert: Das Textblatt lag mit
-                 `z-10` ÜBER dem Bild. Auf dem Entwurf war das eine schöne
-                 Geste, mit den echten Aufnahmen legte es sich dem Schuh auf
-                 die Ferse. Eine Komposition, die ihr eigenes Motiv verdeckt,
-                 ist keine. Der Versatz bleibt, die Überdeckung nicht: Die
-                 beiden Spalten stehen jetzt nebeneinander, nur eben auf
-                 verschiedener Höhe. */
-              if (i % 4 === 2) {
-                return (
-                  <section key={schuh.id} className="bg-white py-16 lg:py-28 px-5 lg:pl-16 lg:pr-0">
-                    <div className="lg:grid lg:grid-cols-12 lg:gap-x-14 lg:items-start">
-                      <Enthuellen richtung="rechts" className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
-                        <Kapitelbild
-                          schuh={schuh}
-                          oeffnen={oeffnen}
-                          hoehe="max-h-[62vh] lg:max-h-[74vh]"
-                        />
-                      </Enthuellen>
-
-                      <Enthuellen
-                        verzoegerung={160}
-                        className="lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:pt-28 mt-12 lg:mt-0"
-                      >
-                        {marke}
-                        <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
-                          {erz.titel}
-                        </h3>
-                        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
-                          {schuh.description}
-                        </p>
-                        {/* Hier steht der Nachsatz mit in der Spalte — die
-                            Form hat keinen Fuß, über den er laufen könnte. */}
-                        <Nachsatz text={erz.rat} className="mt-9" />
-                        <div className="mt-11">
-                          <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
-                        </div>
-                      </Enthuellen>
-                    </div>
-                  </section>
-                )
-              }
-
-              /* ══ Form D · Breitband ═══════════════════════════════════
-                 Eine breite Aufnahme über die volle Seite, Überschrift
-                 darüber, und darunter drei Spalten: Geschichte, Anlass,
-                 Nachsatz. Die Form leitet zur Auswahl über — sie liest sich
-                 schon wie eine Seite, auf der mehreres nebeneinander steht. */
-              return (
-                <section key={schuh.id} className="bg-[#F5F3F0] py-16 lg:py-28">
-                  <Enthuellen>
-                    <div className="px-5 lg:px-16 text-center max-w-3xl mx-auto">
-                      {marke}
-                      <h3 className="satz-titel text-[32px] lg:text-[52px] leading-[1.14] mt-6">
-                        {erz.titel}
-                      </h3>
-                    </div>
-                  </Enthuellen>
-
-                  <Enthuellen verzoegerung={140} className="mt-12 lg:mt-16 px-5 lg:px-16">
-                    {/* Auf derselben Breite wie die drei Spalten darunter —
-                        eine Aufnahme, die über sie hinausragt, liest sich
-                        nicht als Kopf der Seite, sondern als Ausrutscher. */}
-                    <Kapitelbild
-                      schuh={schuh}
-                      oeffnen={oeffnen}
-                      className="max-w-6xl mx-auto"
-                      hoehe="max-h-[54vh] lg:max-h-[66vh]"
-                    />
-                  </Enthuellen>
-
-                  <Enthuellen verzoegerung={200}>
-                    <div className="px-5 lg:px-16 mt-14 lg:mt-20">
-                      <div className="max-w-6xl mx-auto grid gap-10 lg:gap-20 lg:grid-cols-2">
-                        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2]">
-                          {schuh.description}
-                        </p>
-                        <Nachsatz text={erz.rat} />
-                      </div>
-                      <div className="max-w-6xl mx-auto mt-14 lg:mt-20">
-                        <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
-                      </div>
-                    </div>
-                  </Enthuellen>
-                </section>
-              )
-            })}
+                <SaisonReihe schuhe={kol.rest} oeffnen={sch => navigate(shoePath(sch))} />
+              </Fragment>
+            ))}
           </div>
         )}
 
-        {/* ── Die Pause ───────────────────────────────────────────────────
-            Eine Fläche ohne Produkt, ohne Preis, ohne Knopf. Vier Kapitel in
-            gleichem Aufbau lesen sich wie ein Katalog, auch wenn jedes für
-            sich trägt — hier hält die Seite an, bevor die Auswahl kommt. */}
-        <Enthuellen richtung="ruhig">
-          <section className="relative overflow-hidden bg-[#111] min-h-[62vh] lg:min-h-[72vh] flex items-center">
-            <img
-              src={CRAFT.hands}
-              alt=""
-              aria-hidden="true"
-              loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover opacity-[0.34]"
-            />
-            <div className="relative px-5 lg:px-16 py-20 max-w-3xl mx-auto text-center">
-              <p className="satz-titel text-[24px] lg:text-[40px] leading-[1.4] text-white">
-                Die ersten Wochen fühlt sich ein rahmengenähter Schuh fest an.
-                Das ist der Kork, der noch nachgibt — trag ihn anfangs
-                nur ein paar Stunden am Tag.
-              </p>
-            </div>
-          </section>
+        {/* Das letzte Zwischenspiel, nach der dritten Kollektion: der eine
+            Hinweis, den jeder braucht, der zum ersten Mal ein solches Paar
+            trägt — und der die Ungeduld nimmt, bevor sie entsteht. */}
+        <Zwischenspiel
+          bild={CRAFT.hands}
+          text={'Die ersten Wochen fühlt sich ein rahmengenähter Schuh fest an. '
+              + 'Das ist der Kork, der noch nachgibt — trag ihn anfangs nur ein '
+              + 'paar Stunden am Tag.'}
+        />
+
+        {/* Der Abschluss des Abschnitts: der Weg in den ganzen Katalog.
+
+            „Und außerdem" stand hier als eigene Kachelreihe. Sie ist weg —
+            seit die Modelle nach Saison geordnet sind, steht jedes in seiner
+            Kollektion, und eine Restekiste dahinter hätte nur wiederholt,
+            was oben schon steht. */}
+        <Enthuellen verzoegerung={120}>
+          <div className="px-5 lg:px-16 pb-20 lg:pb-32 text-center">
+            <button
+              type="button"
+              onClick={zurKollektion}
+              className="group bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
+              style={{ letterSpacing: '0.22em' }}
+            >
+              <span className="relative pb-1">
+                {shoes.length ? `Alle ${shoes.length} Modelle` : 'Alle Modelle'}
+                <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
+              </span>
+              <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+            </button>
+            <PreisFuss className="mt-10" />
+          </div>
         </Enthuellen>
-
-        {/* ── Und außerdem ───────────────────────────────────────────────
-            Die restliche Auswahl. Sie darf klein sein — wer bis hierher
-            gelesen hat, sucht keine vier weiteren Kapitel, sondern will
-            sehen, was es sonst gibt.
-
-            Vier statt sechs Kacheln, dafür größer und mit Abstand
-            dazwischen: Ein Raster ohne Fugen ist ein Regal. Die Überschrift
-            steht mittig darüber, wie an jeder anderen Stelle dieser Seite —
-            links mit einem Verweis rechts daneben war die einzige Zeile der
-            Seite, die nach Verwaltung aussah. */}
-        {weitere.length > 0 && (
-          <div className="px-5 lg:px-16 py-20 lg:py-32">
-            <Enthuellen>
-              <div className="text-center">
-                <Kapitelmarke>Und außerdem</Kapitelmarke>
-              </div>
-            </Enthuellen>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10 mt-10 lg:mt-14">
-              {weitere.slice(0, 4).map((schuh, i) => (
-                <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 3) * 80}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(shoePath(schuh))}
-                    className="group block w-full bg-transparent border-0 p-0 text-left"
-                  >
-                    {/* Hier ist ein festes Maß richtig — vier Kacheln
-                        nebeneinander müssen auf einer Linie stehen. Der
-                        Schuh wird trotzdem nicht beschnitten: `contain`
-                        verkleinert ihn in die Kachel, statt ihn an ihren
-                        Kanten abzuschneiden. Das Querformat ist gewählt,
-                        weil ein Schuh breiter als hoch ist. */}
-                    <div className="aspect-[4/3] overflow-hidden bg-[#EDEAE3]">
-                      <img
-                        src={resolveMediaUrl(schuh.image)}
-                        alt={`${schuh.name}, nach Maß gefertigt`}
-                        loading="lazy"
-                        className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
-                      />
-                    </div>
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-5 line-clamp-2 min-h-[2.8em]">
-                      {schuh.name}
-                    </p>
-                    <p className="text-[12px] text-black/40 font-light mt-1.5">
-                      {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
-                    </p>
-                  </button>
-                </Enthuellen>
-              ))}
-            </div>
-
-            <Enthuellen verzoegerung={120}>
-              <div className="text-center mt-14 lg:mt-20">
-                <button
-                  type="button"
-                  onClick={zurKollektion}
-                  className="group bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
-                  style={{ letterSpacing: '0.22em' }}
-                >
-                  <span className="relative pb-1">
-                    {shoes.length ? `Alle ${shoes.length} Modelle` : 'Alle Modelle'}
-                    <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
-                  </span>
-                  <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
-                </button>
-              </div>
-              <PreisFuss className="mt-10 text-center" />
-            </Enthuellen>
-          </div>
-        )}
       </section>
-
 
       {/* ══ 5 · Das Leder ═════════════════════════════════════════════════
           Hier standen drei Stockfotos von Lederoberflächen nebeneinander.
