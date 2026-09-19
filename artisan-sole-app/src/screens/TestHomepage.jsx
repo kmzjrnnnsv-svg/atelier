@@ -257,40 +257,67 @@ const erzaehlungZu = (machart) =>
  * liest.
  */
 
-/** Die Zeile über jeder Überschrift: Nummer und Machart. */
-function Kapitelzeile({ nummer, machart, hell = false }) {
+/**
+ * Die Zeile über jeder Überschrift: Nummer, Machart — und, falls vorhanden,
+ * der Hinweis („Neu", „Bestseller").
+ *
+ * Der Hinweis stand vorher als weißer Aufkleber in der Ecke der Aufnahme.
+ * Das ist die Geste eines Katalogs, und sie stand ausgerechnet auf dem
+ * einzigen Bild des Kapitels. Hier steht sie in der Zeile, in der ohnehin
+ * die Einordnung steht, und lässt das Foto in Ruhe.
+ */
+function Kapitelzeile({ nummer, machart, hinweis, hell = false }) {
+  const machartText = String(machart || 'Custom Made').replace(/_/g, ' ')
   return (
     <Kapitelmarke hell={hell}>
-      {`${nummer} — ${String(machart || 'Custom Made').replace(/_/g, ' ')}`}
+      {[`${nummer} — ${machartText}`, hinweis].filter(Boolean).join('   ·   ')}
     </Kapitelmarke>
   )
 }
 
-/** Die Aufnahme, klickbar, mit dem ruhigen Heranzoomen beim Überfahren. */
-function Kapitelbild({ schuh, oeffnen, className = '', bildKlasse = '' }) {
+/**
+ * Kapitelbild — die Aufnahme, klickbar, mit dem ruhigen Heranzoomen.
+ *
+ * ── Warum hier nichts beschnitten wird ────────────────────────────────────
+ *
+ * Diese Fassung hat zuvor jede Aufnahme mit `object-cover` in ein fest
+ * vorgegebenes Seitenverhältnis gezwungen — 16/10, 4/5, 21/9, einmal 82 vh
+ * Höhe. Das funktioniert bei Reportagefotos, die man überall anschneiden
+ * kann. Die Modellaufnahmen sind das Gegenteil davon: Studioaufnahmen, bei
+ * denen der Schuh mittig steht und die Luft um ihn herum mitkomponiert ist.
+ * Ein erzwungener Ausschnitt nimmt genau diese Luft weg und schneidet im
+ * schlimmsten Fall die Ferse ab.
+ *
+ * Deshalb bestimmt jetzt das Bild seine Höhe selbst (`h-auto`). Die Breite
+ * gibt die Spalte vor, eine Obergrenze in Bildschirmhöhen verhindert, dass
+ * ein hochformatiges Bild die ganze Seite füllt; greift sie, sorgt
+ * `object-contain` dafür, dass verkleinert und nicht abgeschnitten wird.
+ * Beschnitten wird in keinem Fall.
+ *
+ * ── Warum kein eigener Grund mehr ─────────────────────────────────────────
+ *
+ * Die Kachel hatte eine eigene Hintergrundfarbe (#EDEAE3). Solange das Bild
+ * die Fläche füllte, sah man sie nie; sobald es das nicht mehr tut, wäre sie
+ * ein zweiter Farbton neben dem des Abschnitts und dem der Aufnahme selbst.
+ * Der Grund ist jetzt der des Abschnitts, und die Aufnahme liegt darauf wie
+ * eine Tafel in einem Buch.
+ */
+function Kapitelbild({ schuh, oeffnen, className = '', hoehe = 'max-h-[62vh]' }) {
   return (
     <button
       type="button"
       onClick={oeffnen}
-      className={`group block bg-transparent border-0 p-0 text-left ${className}`}
+      className={`group block w-full bg-transparent border-0 p-0 text-left ${className}`}
       aria-label={`${schuh.name} ansehen und konfigurieren`}
     >
-      <div className={`relative overflow-hidden bg-[#EDEAE3] h-full ${bildKlasse}`}>
+      <span className="block overflow-hidden">
         <img
           src={resolveMediaUrl(schuh.image)}
           alt={`${schuh.name}, nach Maß gefertigt`}
           loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-[1.04]"
+          className={`block w-full h-auto object-contain ${hoehe} transition-transform duration-[1600ms] ease-out group-hover:scale-[1.03]`}
         />
-        {schuh.tag && (
-          <span
-            className="absolute top-5 right-5 lg:top-8 lg:right-8 text-[9px] uppercase text-black bg-white/90 px-3 py-1.5"
-            style={{ letterSpacing: '0.22em' }}
-          >
-            {schuh.tag}
-          </span>
-        )}
-      </div>
+      </span>
     </button>
   )
 }
@@ -635,13 +662,13 @@ export default function TestHomepage() {
               const nummer = String(i + 1).padStart(2, '0')
               const erz = erzaehlungZu(schuh.category)
               const oeffnen = () => navigate(shoePath(schuh))
-              const marke = <Kapitelzeile nummer={nummer} machart={schuh.category} />
+              const marke = <Kapitelzeile nummer={nummer} machart={schuh.category} hinweis={schuh.tag} />
 
               /* ══ Form A · Mittig ══════════════════════════════════════
-                 Der erste Auftritt. Das Bild steht in der Fläche statt an
-                 ihrem Rand, mit Luft ringsum, und alles darunter ist mittig
-                 gesetzt. Die ruhigste der vier Formen — sie trägt am meisten,
-                 weil sie am wenigsten tut. */
+                 Der erste Auftritt. Die Aufnahme steht in der Fläche statt
+                 an ihrem Rand, mit Luft ringsum, und alles darunter ist
+                 mittig gesetzt. Die ruhigste der vier Formen — sie trägt am
+                 meisten, weil sie am wenigsten tut. */
               if (i % 4 === 0) {
                 return (
                   <section key={schuh.id} className="bg-white px-5 lg:px-16 py-16 lg:py-28">
@@ -649,8 +676,8 @@ export default function TestHomepage() {
                       <Kapitelbild
                         schuh={schuh}
                         oeffnen={oeffnen}
-                        className="w-full max-w-5xl mx-auto"
-                        bildKlasse="aspect-[16/10]"
+                        className="max-w-4xl mx-auto"
+                        hoehe="max-h-[56vh] lg:max-h-[62vh]"
                       />
                     </Enthuellen>
                     <Enthuellen verzoegerung={140}>
@@ -676,10 +703,10 @@ export default function TestHomepage() {
               }
 
               /* ══ Form B · Diptychon ═══════════════════════════════════
-                 Zwei Hälften, aber beide eingefasst: Das Bild reicht nicht
-                 bis an den Seitenrand, sondern steht wie ein Blatt auf dem
-                 farbigen Grund. Der Text beginnt oben statt in der Mitte,
-                 dadurch entsteht unter ihm eine offene Ecke. */
+                 Zwei Hälften, aber beide eingefasst: Die Aufnahme reicht
+                 nicht bis an den Seitenrand, sondern steht wie ein Blatt auf
+                 dem farbigen Grund. Der Text beginnt oben statt in der
+                 Mitte, dadurch entsteht unter ihm eine offene Ecke. */
               if (i % 4 === 1) {
                 return (
                   <section key={schuh.id} className="bg-[#F5F3F0] px-5 lg:px-16 py-16 lg:py-28">
@@ -701,7 +728,11 @@ export default function TestHomepage() {
                       </Enthuellen>
 
                       <Enthuellen richtung="rechts" className="lg:col-span-7 mt-12 lg:mt-0">
-                        <Kapitelbild schuh={schuh} oeffnen={oeffnen} className="w-full" bildKlasse="aspect-[4/5]" />
+                        <Kapitelbild
+                          schuh={schuh}
+                          oeffnen={oeffnen}
+                          hoehe="max-h-[60vh] lg:max-h-[68vh]"
+                        />
                       </Enthuellen>
                     </div>
 
@@ -716,51 +747,50 @@ export default function TestHomepage() {
                 )
               }
 
-              /* ══ Form C · Übereinandergeschoben ═══════════════════════
-                 Das Bild läuft bis an den rechten Rand und über die ganze
-                 Höhe; der Text liegt als Blatt darüber, nach unten versetzt
-                 und mit der linken Kante darüber hinausragend. Die
+              /* ══ Form C · Versetzt ════════════════════════════════════
+                 Die Aufnahme läuft bis an den rechten Seitenrand, der Text
+                 steht schmal daneben und beginnt deutlich tiefer. Die
                  unruhigste der vier Formen, deshalb steht sie in der Mitte
-                 der Folge. */
+                 der Folge.
+
+                 Sie hat einmal anders funktioniert: Das Textblatt lag mit
+                 `z-10` ÜBER dem Bild. Auf dem Entwurf war das eine schöne
+                 Geste, mit den echten Aufnahmen legte es sich dem Schuh auf
+                 die Ferse. Eine Komposition, die ihr eigenes Motiv verdeckt,
+                 ist keine. Der Versatz bleibt, die Überdeckung nicht: Die
+                 beiden Spalten stehen jetzt nebeneinander, nur eben auf
+                 verschiedener Höhe. */
               if (i % 4 === 2) {
                 return (
-                  <section key={schuh.id} className="bg-white relative">
-                    <div className="lg:grid lg:grid-cols-12 lg:items-center">
-                      <Enthuellen richtung="rechts" className="lg:col-span-8 lg:col-start-5 lg:row-start-1">
+                  <section key={schuh.id} className="bg-white py-16 lg:py-28 px-5 lg:pl-16 lg:pr-0">
+                    <div className="lg:grid lg:grid-cols-12 lg:gap-x-14 lg:items-start">
+                      <Enthuellen richtung="rechts" className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
                         <Kapitelbild
                           schuh={schuh}
                           oeffnen={oeffnen}
-                          className="w-full"
-                          /* Feste Höhe statt Seitenverhältnis: Mit
-                             `aspect-[3/4]` und einer Höhenbegrenzung rechnete
-                             der Browser die BREITE zurück, und das Bild hörte
-                             mitten in seiner Spalte auf, statt den rechten
-                             Seitenrand zu erreichen. */
-                          bildKlasse="aspect-[4/3] lg:aspect-auto lg:h-[82vh]"
+                          hoehe="max-h-[62vh] lg:max-h-[74vh]"
                         />
                       </Enthuellen>
 
                       <Enthuellen
                         verzoegerung={160}
-                        className="lg:col-span-6 lg:col-start-1 lg:row-start-1 lg:z-10 relative"
+                        className="lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:pt-28 mt-12 lg:mt-0"
                       >
-                        <div className="bg-white px-5 py-12 lg:px-14 lg:py-16 lg:mt-24 lg:shadow-[0_30px_80px_-40px_rgba(0,0,0,0.35)]">
-                          {marke}
-                          <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
-                            {erz.titel}
-                          </h3>
-                          <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
-                            {schuh.description}
-                          </p>
-                          <p className="satz-titel text-[18px] lg:text-[23px] text-black/85 leading-[1.5] mt-9">
-                            {erz.wofuer}
-                          </p>
-                          {/* Hier steht der Nachsatz mit im Blatt — die Form
-                              hat keinen Fuß, über den er laufen könnte. */}
-                          <Nachsatz text={erz.zeit} className="mt-9" />
-                          <div className="mt-11">
-                            <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
-                          </div>
+                        {marke}
+                        <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
+                          {erz.titel}
+                        </h3>
+                        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
+                          {schuh.description}
+                        </p>
+                        <p className="satz-titel text-[18px] lg:text-[23px] text-black/85 leading-[1.5] mt-9">
+                          {erz.wofuer}
+                        </p>
+                        {/* Hier steht der Nachsatz mit in der Spalte — die
+                            Form hat keinen Fuß, über den er laufen könnte. */}
+                        <Nachsatz text={erz.zeit} className="mt-9" />
+                        <div className="mt-11">
+                          <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
                         </div>
                       </Enthuellen>
                     </div>
@@ -769,7 +799,7 @@ export default function TestHomepage() {
               }
 
               /* ══ Form D · Breitband ═══════════════════════════════════
-                 Ein flaches, breites Bild über die volle Seite, Überschrift
+                 Eine breite Aufnahme über die volle Seite, Überschrift
                  darüber, und darunter drei Spalten: Geschichte, Anlass,
                  Nachsatz. Die Form leitet zur Auswahl über — sie liest sich
                  schon wie eine Seite, auf der mehreres nebeneinander steht. */
@@ -784,12 +814,15 @@ export default function TestHomepage() {
                     </div>
                   </Enthuellen>
 
-                  <Enthuellen verzoegerung={140} className="mt-12 lg:mt-16">
+                  <Enthuellen verzoegerung={140} className="mt-12 lg:mt-16 px-5 lg:px-16">
+                    {/* Auf derselben Breite wie die drei Spalten darunter —
+                        eine Aufnahme, die über sie hinausragt, liest sich
+                        nicht als Kopf der Seite, sondern als Ausrutscher. */}
                     <Kapitelbild
                       schuh={schuh}
                       oeffnen={oeffnen}
-                      className="w-full"
-                      bildKlasse="aspect-[4/3] lg:aspect-[21/9]"
+                      className="max-w-6xl mx-auto"
+                      hoehe="max-h-[54vh] lg:max-h-[66vh]"
                     />
                   </Enthuellen>
 
@@ -863,12 +896,18 @@ export default function TestHomepage() {
                     onClick={() => navigate(shoePath(schuh))}
                     className="group block w-full bg-transparent border-0 p-0 text-left"
                   >
-                    <div className="aspect-[4/5] overflow-hidden bg-[#EDEAE3]">
+                    {/* Hier ist ein festes Maß richtig — vier Kacheln
+                        nebeneinander müssen auf einer Linie stehen. Der
+                        Schuh wird trotzdem nicht beschnitten: `contain`
+                        verkleinert ihn in die Kachel, statt ihn an ihren
+                        Kanten abzuschneiden. Das Querformat ist gewählt,
+                        weil ein Schuh breiter als hoch ist. */}
+                    <div className="aspect-[4/3] overflow-hidden bg-[#EDEAE3]">
                       <img
                         src={resolveMediaUrl(schuh.image)}
                         alt={`${schuh.name}, nach Maß gefertigt`}
                         loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+                        className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
                       />
                     </div>
                     <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-5 line-clamp-2 min-h-[2.8em]">
