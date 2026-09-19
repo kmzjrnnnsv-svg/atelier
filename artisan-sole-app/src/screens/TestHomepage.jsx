@@ -19,15 +19,34 @@
  *
  *   1  Erster Blick    Was ist das, und was kostet es?
  *   2  Drei Zahlen     Woran hängt der Preis?
- *   3  Die Modelle     Wofür ist es gemacht, und was wird daraus?
- *   4  Das Handwerk    Warum hält das länger als Geklebtes?
+ *   3  Das Handwerk    Warum hält das länger als Geklebtes?
+ *   4  Die Modelle     Wofür ist es gemacht, und was wird daraus?
  *   5  Das Leder       Woraus besteht es?
- *   6  In eigener Sache Was behaupten wir NICHT?
- *   7  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
+ *   6  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
+ *   7  In eigener Sache Was behaupten wir NICHT?
  *   8  Der Anfang      Wo fange ich an?
  *
  * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
  * wenn hier von einer geschlossenen Geschichte die Rede ist.
+ *
+ * ── Warum diese Reihenfolge und nicht die erste ───────────────────────────
+ *
+ * Die erste Fassung stellte die Modelle an dritte Stelle und das Handwerk an
+ * vierte. Damit stand der Beweis hinter der Auswahl: Man las vier lange
+ * Kapitel über Schuhe, bevor irgendetwas erklärte, warum diese Schuhe das
+ * Geld wert sind. Wer an dieser Stelle absprang — und an dieser Stelle
+ * springen die meisten ab —, nahm von der Seite nichts mit als vier
+ * Stimmungsbilder.
+ *
+ * Jetzt kommt der Schnitt, der sich beim Scrollen zusammensetzt, direkt nach
+ * den drei Zahlen. Er ist der stärkste Abschnitt der Seite und er kostet
+ * keinen Absatz Lesen: Man sieht in zwanzig Sekunden, dass hier etwas anderes
+ * gebaut wird. Danach tragen die Modelle mehr, weil man weiß, was in ihnen
+ * steckt.
+ *
+ * Und „In eigener Sache" steht jetzt unmittelbar vor dem Knopf statt in der
+ * Mitte. Was jemand zuletzt liest, bevor er sich entscheidet, sollte das
+ * sein, was ihm zeigt, dass hier niemand zu viel verspricht.
  *
  * ── Woher die Texte kommen ────────────────────────────────────────────────
  *
@@ -109,10 +128,27 @@ function Kapitelmarke({ children, hell = false }) {
  * nennen ist keine neue Behauptung, sondern dieselbe an der Stelle, an der
  * jemand zum ersten Mal auf den Preis trifft.
  */
+/**
+ * Die Faktenzeile unter der Überschrift.
+ *
+ * Keine Werbeworte, keine Sätze — fünf Angaben, von denen jede anderswo auf
+ * dieser Seite belegt wird. „Neu besohlbar" ist nicht Behauptung, sondern die
+ * Folge der Machart und im Handwerk-Abschnitt gezeigt; „Made in Spain" ist
+ * die einzige Ortsangabe, die dieses Haus über sich macht, und sie steht so
+ * schon im Untertitel.
+ */
+const FAKTEN = [
+  'Rahmengenäht',
+  'Nach Maß gebaut',
+  'Made in Spain',
+  '4–6 Wochen',
+  'Neu besohlbar',
+]
+
 const ZAHLEN = [
   { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Daraus Leisten, Größe und Weite — keine Konfektionsnummer.' },
-  { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt über das Zwicken bis zur Endkontrolle. Jeder einzeln, an einem einzelnen Paar.' },
-  { zahl: '4–6',  einheit: 'Wochen',          text: 'So lange dauert ein Paar, das es vorher nicht gab. Wir haben kein Lager, aus dem wir greifen.' },
+  { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. An einem einzelnen Paar.' },
+  { zahl: '4–6',  einheit: 'Wochen',          text: 'Wir haben kein Lager, aus dem wir greifen. Dein Paar entsteht nach der Bestellung.' },
 ]
 
 /**
@@ -170,10 +206,14 @@ const LEDER = [
  * einer Welt, und sie verkaufen nicht die Eigenschaft, sondern das Gefühl,
  * das sie erzeugt.
  *
- * Deshalb steht jetzt über jedem Modell kein Name, sondern ein Satz, und
- * unter der Geschichte nicht eine Tabelle, sondern zwei Gedanken: wofür die
- * Form gemacht ist, und was nach Jahren aus dem Paar geworden ist. Die harten
+ * Deshalb steht über jedem Modell kein Name, sondern ein Satz. Die harten
  * Angaben bleiben — als eine ruhige Zeile, nicht als Aufstellung.
+ *
+ * Ein dritter Satz stand einmal dazwischen: der Anlass („Für den Termin, bei
+ * dem …"). Er ist weg. Neben dem Gedanken darüber sagte er fast überall
+ * dasselbe noch einmal, und drei Stimmungssätze übereinander sind keine
+ * Erzählung mehr, sondern Geschwafel. Geblieben sind ein Gedanke, die Sache
+ * und die Zukunft — und dazwischen atmet die Fläche.
  *
  * ── Was hier erfunden ist ─────────────────────────────────────────────────
  *
@@ -195,49 +235,41 @@ const LEDER = [
 const ERZAEHLUNG = {
   OXFORD: {
     titel: 'Es gibt Räume, in denen man nichts erklären muss.',
-    wofuer: 'Für den Termin, bei dem das Erste, was zählt, nicht gesagt wird.',
     zeit: 'Nach zwei Jahren ist das Leder an den Stellen dunkler, an denen dein Fuß arbeitet. '
         + 'Das ist kein Verschleiß. Das ist die Form, die er angenommen hat.',
   },
   DERBY: {
     titel: 'Der Tag wird länger als geplant.',
-    wofuer: 'Für das Büro — und für alles, was danach noch dazukommt.',
     zeit: 'Wenn die Sohle durch ist, kommt eine neue. Der Schaft bleibt, und den kennst '
         + 'du dann schon besser als jeden Schuh, den du je gekauft hast.',
   },
   LOAFER: {
     titel: 'Kein Verschluss. Nur die Form, die hält.',
-    wofuer: 'Für die Monate, in denen niemand mehr fragt, ob es formell genug ist.',
     zeit: 'Ein Loafer verrät seinen Träger schneller als jeder andere Schuh: Er nimmt '
         + 'die Bewegung des Fußes an, weil ihn nichts anderes hält.',
   },
   BOOT: {
     titel: 'Das Wetter entscheidet nicht mehr mit.',
-    wofuer: 'Für die Jahreszeit, in der andere Schuhe im Schrank bleiben.',
     zeit: 'Wenn die Sohle durch ist, kommt eine neue. Ein Stiefel, der zehn Winter '
         + 'gesehen hat, sieht danach besser aus als am ersten Tag.',
   },
   MONK: {
     titel: 'Eine Schnalle sagt mehr als zwei Reihen Ösen.',
-    wofuer: 'Für den, der einmal anders aussehen will, ohne aufzufallen.',
     zeit: 'Der Riemen bekommt mit den Jahren eine eigene Falte, dort wo er täglich '
         + 'schließt. Sie gehört ab dann zum Schuh.',
   },
   SNEAKER: {
     titel: 'Bequem ist kein Gegenteil von gut gemacht.',
-    wofuer: 'Für die Tage, an denen der Weg länger ist als der Anlass.',
     zeit: 'Weiches Leder legt sich nach wenigen Wochen um den Fuß. Ab da ist es dein '
         + 'Paar und keins mehr aus dem Regal.',
   },
   MOCCASIN: {
     titel: 'Ein Schuh, der nichts von dir verlangt.',
-    wofuer: 'Für alles, was kein Anzug ist.',
     zeit: 'Ungefüttertes Leder nimmt die Form des Fußes am schnellsten an — nach einem '
         + 'Sommer sitzt es, als wäre es darauf gebaut worden.',
   },
   STANDARD: {
     titel: 'Eine Form, die älter ist als jedes Haus, das sie verkauft.',
-    wofuer: 'Für die Tage, an denen es auf die Füße ankommt.',
     zeit: 'Gutes Leder wird nicht alt, es wird eigen. Nach zwei Jahren sieht man, '
         + 'wem das Paar gehört.',
   },
@@ -474,8 +506,8 @@ export default function TestHomepage() {
     return [
       {
         titel: 'Das Modell',
-        text: 'Die Form zuerst, denn sie entscheidet über alles Weitere: Welche Leder, '
-            + 'welche Sohlen und welche Details zur Wahl stehen, hängt an der Machart.',
+        text: 'Die Form zuerst: Welche Leder, Sohlen und Details zur Wahl stehen, '
+            + 'hängt an der Machart.',
         schlagworte: ['Oxford', 'Derby', 'Monk', 'Loafer', 'Boot', 'Sneaker'],
         hinweis: shoes.length ? `${shoes.length} Modelle im Katalog.` : null,
       },
@@ -489,16 +521,15 @@ export default function TestHomepage() {
       },
       {
         titel: 'Die Farbe',
-        text: 'Zu jedem Leder die Töne, die es in dieser Gerbung gibt. Dieselbe Farbe '
-            + 'fällt auf Velours anders aus als auf Box Calf — deshalb hängt die Auswahl '
-            + 'am Leder und nicht am Modell.',
+        text: 'Dieselbe Farbe fällt auf Velours anders aus als auf Box Calf — deshalb '
+            + 'hängt die Auswahl am Leder und nicht am Modell.',
         farben: farbtoene.length ? farbtoene : null,
         hinweis: farbtoene.length ? `${farbtoene.length} Töne, hier ohne Namen.` : null,
       },
       {
         titel: 'Sohle, Rahmen und Details',
-        text: 'Ab hier wird es fein. Jeder Schritt zeigt sofort, was er am Preis ändert, '
-            + 'und keiner ist vorausgewählt — was dasteht, hast du gewählt.',
+        text: 'Jeder Schritt zeigt sofort, was er am Preis ändert. Keiner ist '
+            + 'vorausgewählt — was dasteht, hast du gewählt.',
         schlagworte: ['Sohlen-Art', 'Rahmen', 'Nahtfarbe', 'Sohlenrand', 'Laufsohle', 'Innenfutter', 'Zehenkappe'],
         hinweis: 'Welche Schritte erscheinen, hängt vom Modell ab.',
       },
@@ -521,8 +552,8 @@ export default function TestHomepage() {
       },
       {
         titel: 'Prüfen und bestellen',
-        text: 'Vor dem Abschluss steht deine vollständige Zusammenstellung noch einmal da, '
-            + 'jede Farbe, jede Option, jedes Zubehör. Erst dieser Klick ist verbindlich.',
+        text: 'Deine ganze Zusammenstellung steht noch einmal da, jede Farbe, jede '
+            + 'Option. Erst dieser Klick ist verbindlich.',
         hinweis: 'Bis hierher kostet nichts und verpflichtet nichts.',
       },
     ]
@@ -553,7 +584,7 @@ export default function TestHomepage() {
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.15) 100%)' }}
         />
 
-        <div className="relative w-full px-5 lg:px-16 pb-14 lg:pb-20">
+        <div className="relative w-full px-5 lg:px-16 pb-10 lg:pb-14">
           <Enthuellen>
             <Kapitelmarke hell>Custom Made · Made in Spain</Kapitelmarke>
           </Enthuellen>
@@ -594,6 +625,30 @@ export default function TestHomepage() {
               </button>
             </div>
           </Enthuellen>
+
+          {/* Die Faktenzeile.
+
+              Fünf Angaben, keine davon ein Satz. Sie beantwortet in zwei
+              Sekunden, was sonst drei Absätze brauchen: was das ist, wo es
+              herkommt, wie lange es dauert und was in zehn Jahren damit ist.
+
+              Jede der fünf steht weiter unten ausführlich — hier steht sie
+              nur als Wort. Das ist der Unterschied zwischen „wir versprechen
+              viel" und „du weißt, was du bekommst": Das Versprechen wird
+              nicht lauter, es wird kürzer.
+
+              Getrennt durch Mittelpunkte und nicht durch Striche: Ein Strich
+              ist ein eigenes Element und steht nach einem Zeilenumbruch als
+              Erstes in der neuen Zeile — ein Trennzeichen, das nichts trennt.
+              Ein Mittelpunkt gehört zum Text und bricht mit ihm um. */}
+          <Enthuellen verzoegerung={420} richtung="ruhig">
+            <p
+              className="text-[9px] lg:text-[10px] uppercase text-white/45 mt-10 lg:mt-12 max-w-2xl leading-[2.2]"
+              style={{ letterSpacing: '0.22em' }}
+            >
+              {FAKTEN.join('   ·   ')}
+            </p>
+          </Enthuellen>
         </div>
 
         {/* Der Hinweis, dass es weitergeht. Auf dem Telefon steht er im Weg
@@ -602,6 +657,7 @@ export default function TestHomepage() {
           <div className="strich-wandert w-px h-full bg-white/80" />
         </div>
       </header>
+
 
       {/* ══ 2 · Drei Zahlen ═══════════════════════════════════════════════
           Der Preis steht oben. Hier steht, woran er hängt — bevor jemand
@@ -643,7 +699,45 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 3 · Die Modelle ═══════════════════════════════════════════════
+
+      {/* ══ 3 · Das Handwerk ══════════════════════════════════════════════
+          Der Abschnitt, der den Preis trägt. „Rahmengenäht statt geklebt"
+          ist der entscheidende Satz und zugleich der unanschaulichste — was
+          ein Rahmen ist, sieht man am fertigen Schuh nicht. Deshalb der
+          Schnitt.
+
+          Und deshalb setzt er sich jetzt zusammen, statt fertig dazustehen:
+          Ein Schnitt besteht aus Lagen, und diese Lagen entstehen in einer
+          Reihenfolge — in der, in der ein Schuhmacher sie anlegt. Wer sie
+          scrollend sieht, versteht in zwanzig Sekunden, wofür sonst zwei
+          Absätze nötig waren. Die zwei Absätze sind deshalb weg; ihr Inhalt
+          steht in den sechs Schritten (lib/aufbauSchritte.js).
+
+          Was bleibt, bleibt aus gutem Grund: Wer keine Bewegung will,
+          bekommt denselben Abschnitt ohne Bühne, mit allen sechs Schritten
+          als Liste. Siehe SchuhAufbau. */}
+      <section className="bg-[#111] text-white">
+        <SchuhAufbau
+          kopf={
+            <>
+              <Kapitelmarke hell>Das Handwerk</Kapitelmarke>
+              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+                Die Sohle hängt an einer Naht,<br className="hidden sm:block" /> nicht an einem Klebstoff.
+              </h2>
+            </>
+          }
+          fuss={
+            <p className="text-[12px] text-white/35 font-light leading-relaxed max-w-2xl">
+              Zwischen Brand- und Laufsohle liegt Kork. Er gibt unter dem Gewicht nach
+              und nimmt nach einigen Wochen die Form des Fußes an — der Grund, warum ein
+              rahmengenähter Schuh mit der Zeit bequemer wird statt ausgelatschter.
+            </p>
+          }
+        />
+      </section>
+
+
+      {/* ══ 4 · Die Modelle ═══════════════════════════════════════════════
           Der Abschnitt, an dem sich entscheidet, ob die Seite ein Katalog ist
           oder ein Heft.
 
@@ -678,9 +772,9 @@ export default function TestHomepage() {
           </Enthuellen>
           <Enthuellen verzoegerung={140}>
             <p className="text-[13px] lg:text-[15px] text-black/45 font-light leading-[2] mt-8 max-w-xl mx-auto">
-              Keine dieser Formen ist als Entwurf entstanden. Jede kommt aus einer
-              Notwendigkeit — die geschlossene Schnürung für die Strenge der Etikette,
-              die offene für den kräftigen Spann, der Riemen für den Steigbügel.
+              Keine dieser Formen ist als Entwurf entstanden: die geschlossene
+              Schnürung für die Strenge der Etikette, die offene für den kräftigen
+              Spann, der Riemen für den Steigbügel.
             </p>
           </Enthuellen>
         </div>
@@ -734,9 +828,6 @@ export default function TestHomepage() {
                         <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[2] mt-8">
                           {schuh.description}
                         </p>
-                        <p className="satz-titel text-[19px] lg:text-[24px] text-black/85 leading-[1.5] mt-10">
-                          {erz.wofuer}
-                        </p>
                         <Nachsatz text={erz.zeit} className="mt-10" />
                         <div className="max-w-xs mx-auto mt-12">
                           <Kapitelfuss schuh={schuh} oeffnen={oeffnen} mittig />
@@ -763,9 +854,6 @@ export default function TestHomepage() {
                         </h3>
                         <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8 max-w-[24rem]">
                           {schuh.description}
-                        </p>
-                        <p className="satz-titel text-[18px] lg:text-[23px] text-black/85 leading-[1.5] mt-9 max-w-[24rem]">
-                          {erz.wofuer}
                         </p>
                         <div className="mt-12 max-w-[24rem]">
                           <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
@@ -828,9 +916,6 @@ export default function TestHomepage() {
                         <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
                           {schuh.description}
                         </p>
-                        <p className="satz-titel text-[18px] lg:text-[23px] text-black/85 leading-[1.5] mt-9">
-                          {erz.wofuer}
-                        </p>
                         {/* Hier steht der Nachsatz mit in der Spalte — die
                             Form hat keinen Fuß, über den er laufen könnte. */}
                         <Nachsatz text={erz.zeit} className="mt-9" />
@@ -873,12 +958,9 @@ export default function TestHomepage() {
 
                   <Enthuellen verzoegerung={200}>
                     <div className="px-5 lg:px-16 mt-14 lg:mt-20">
-                      <div className="max-w-6xl mx-auto grid gap-10 lg:gap-16 lg:grid-cols-3">
+                      <div className="max-w-6xl mx-auto grid gap-10 lg:gap-20 lg:grid-cols-2">
                         <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2]">
                           {schuh.description}
-                        </p>
-                        <p className="satz-titel text-[18px] lg:text-[23px] text-black/85 leading-[1.5]">
-                          {erz.wofuer}
                         </p>
                         <Nachsatz text={erz.zeit} />
                       </div>
@@ -987,42 +1069,6 @@ export default function TestHomepage() {
         )}
       </section>
 
-      {/* ══ 4 · Das Handwerk ══════════════════════════════════════════════
-          Der Abschnitt, der den Preis trägt. „Rahmengenäht statt geklebt"
-          ist der entscheidende Satz und zugleich der unanschaulichste — was
-          ein Rahmen ist, sieht man am fertigen Schuh nicht. Deshalb der
-          Schnitt.
-
-          Und deshalb setzt er sich jetzt zusammen, statt fertig dazustehen:
-          Ein Schnitt besteht aus Lagen, und diese Lagen entstehen in einer
-          Reihenfolge — in der, in der ein Schuhmacher sie anlegt. Wer sie
-          scrollend sieht, versteht in zwanzig Sekunden, wofür sonst zwei
-          Absätze nötig waren. Die zwei Absätze sind deshalb weg; ihr Inhalt
-          steht in den sechs Schritten (lib/aufbauSchritte.js).
-
-          Was bleibt, bleibt aus gutem Grund: Wer keine Bewegung will,
-          bekommt denselben Abschnitt ohne Bühne, mit allen sechs Schritten
-          als Liste. Siehe SchuhAufbau. */}
-      <section className="bg-[#111] text-white">
-        <SchuhAufbau
-          kopf={
-            <>
-              <Kapitelmarke hell>Das Handwerk</Kapitelmarke>
-              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
-                Die Sohle hängt an einer Naht,<br className="hidden sm:block" /> nicht an einem Klebstoff.
-              </h2>
-            </>
-          }
-          fuss={
-            <p className="text-[12px] text-white/35 font-light leading-relaxed max-w-2xl">
-              Zwischen Brand- und Laufsohle liegt Kork. Er gibt unter dem Gewicht nach
-              und nimmt nach einigen Wochen die Form des Fußes an — der Grund, warum ein
-              rahmengenähter Schuh mit der Zeit bequemer wird statt ausgelatschter.
-            </p>
-          }
-        />
-      </section>
-
 
       {/* ══ 5 · Das Leder ═════════════════════════════════════════════════
           Hier standen drei Stockfotos von Lederoberflächen nebeneinander.
@@ -1052,10 +1098,10 @@ export default function TestHomepage() {
 
             <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
               <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
-                Ganz oben sitzt die Narbe: die gewachsene Oberfläche, und die einzige
-                Stelle, an der die Fasern dicht und senkrecht stehen. Nach unten wird
-                das Gefüge loser. Wo eine Haut geteilt wird, entscheidet sich, was
-                der Schuh in zehn Jahren noch ist.
+                Oben die Narbe: die gewachsene Oberfläche, die einzige Stelle mit
+                dichter, senkrechter Faser. Nach unten wird das Gefüge loser. Wo eine
+                Haut geteilt wird, entscheidet sich, was der Schuh in zehn Jahren
+                noch ist.
               </p>
             </Enthuellen>
           </div>
@@ -1104,55 +1150,17 @@ export default function TestHomepage() {
 
           <Enthuellen verzoegerung={140}>
             <p className="text-[12px] text-black/40 font-light mt-12 lg:mt-16 max-w-xl">
-              Welche Leder und Farben an welchem Modell zur Wahl stehen, zeigt der
-              Konfigurator — die Auswahl unterscheidet sich je nach Machart.
+              Was unterhalb der Spaltlinie bleibt, wird ebenfalls verkauft — mit
+              aufgeprägter Narbung. Der Unterschied zeigt sich nicht im Laden, sondern
+              im dritten Jahr. Welche Leder an welchem Modell zur Wahl stehen, zeigt
+              der Konfigurator.
             </p>
           </Enthuellen>
         </div>
       </section>
 
 
-      {/* ══ 6 · In eigener Sache ══════════════════════════════════════════
-          Der Abschnitt, der diese Fassung von jeder anderen trennt. Die
-          Offenheit über die Machart war bisher eine Selbstauskunft im
-          Kleingedruckten; hier ist sie das Verkaufsargument. Wer „handmade"
-          liest und später erfährt, dass Maschinen im Spiel waren, zieht den
-          Rest der Zusagen in Zweifel — auch die, die stimmen. */}
-      <section className="bg-[#fafaf9] border-y border-black/[0.06] px-5 lg:px-16 py-16 lg:py-28">
-        <div className="max-w-2xl mx-auto">
-          <Enthuellen>
-            <Kapitelmarke>In eigener Sache</Kapitelmarke>
-            <h2 className="satz-titel text-[25px] lg:text-[38px] leading-[1.18] mt-4">
-              Was wir nicht behaupten
-            </h2>
-          </Enthuellen>
-
-          <Enthuellen verzoegerung={100}>
-            <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-7">
-              Wir schreiben nicht „handgefertigt". Der Rahmen wird maschinell genäht, wie
-              in fast jeder Manufaktur, die in dieser Preisklasse arbeitet. Von Hand
-              kommen Zuschnitt, Zwicken, Finish und die Endkontrolle — über zweihundert
-              Arbeitsschritte, von denen wir keinen erfunden haben.
-            </p>
-          </Enthuellen>
-
-          <Enthuellen verzoegerung={180}>
-            <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-5">
-              Wir sagen es, weil der Unterschied zwischen einem rahmengenähten und einem
-              geklebten Schuh groß genug ist. Er braucht kein Wort, das ihn größer macht.
-            </p>
-          </Enthuellen>
-
-          <Enthuellen verzoegerung={240}>
-            <p className="text-[12px] text-black/35 font-light leading-relaxed mt-8 pt-6 border-t border-black/[0.08]">
-              Dasselbe gilt für alles andere auf dieser Seite: Wo eine Zahl steht, ist
-              sie nachgehalten. Wo keine steht, haben wir keine.
-            </p>
-          </Enthuellen>
-        </div>
-      </section>
-
-      {/* ══ 7 · Der Weg ═══════════════════════════════════════════════════
+      {/* ══ 6 · Der Weg ═══════════════════════════════════════════════════
           Die Frage, die nach allem Vorherigen noch offen ist: „Und wie läuft
           das jetzt ab?" Sie stand bisher als vierstufige Aufzählung da —
           dieselbe Darstellung wie unter der Kollektion und im Firmenbereich,
@@ -1183,7 +1191,7 @@ export default function TestHomepage() {
           <Enthuellen verzoegerung={120}>
             <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
               Keine davon musst du auf einmal treffen. Der Konfigurator merkt sich
-              jeden Stand, und verbindlich wird nichts davon bis zur letzten Station.
+              jeden Stand, und verbindlich wird nichts bis zur letzten Station.
             </p>
           </Enthuellen>
 
@@ -1287,6 +1295,45 @@ export default function TestHomepage() {
         </div>
       </section>
 
+      {/* ══ 7 · In eigener Sache ══════════════════════════════════════════
+          Der Abschnitt, der diese Fassung von jeder anderen trennt. Die
+          Offenheit über die Machart war bisher eine Selbstauskunft im
+          Kleingedruckten; hier ist sie das Verkaufsargument. Wer „handmade"
+          liest und später erfährt, dass Maschinen im Spiel waren, zieht den
+          Rest der Zusagen in Zweifel — auch die, die stimmen. */}
+      <section className="bg-[#fafaf9] border-y border-black/[0.06] px-5 lg:px-16 py-16 lg:py-28">
+        <div className="max-w-2xl mx-auto">
+          <Enthuellen>
+            <Kapitelmarke>In eigener Sache</Kapitelmarke>
+            <h2 className="satz-titel text-[25px] lg:text-[38px] leading-[1.18] mt-4">
+              Was wir nicht behaupten
+            </h2>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={100}>
+            <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-7">
+              Wir schreiben nicht „handgefertigt". Der Rahmen wird maschinell genäht,
+              wie in jeder Manufaktur dieser Preisklasse. Von Hand kommen Zuschnitt,
+              Zwicken, Finish und Endkontrolle.
+            </p>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={180}>
+            <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-5">
+              Wir sagen es, weil der Unterschied zwischen einem rahmengenähten und einem
+              geklebten Schuh groß genug ist. Er braucht kein Wort, das ihn größer macht.
+            </p>
+          </Enthuellen>
+
+          <Enthuellen verzoegerung={240}>
+            <p className="text-[12px] text-black/35 font-light leading-relaxed mt-8 pt-6 border-t border-black/[0.08]">
+              Dasselbe gilt für alles andere auf dieser Seite: Wo eine Zahl steht, ist
+              sie nachgehalten. Wo keine steht, haben wir keine.
+            </p>
+          </Enthuellen>
+        </div>
+      </section>
+
       {/* ══ 8 · Der Anfang ════════════════════════════════════════════════
           Ein Weg, nicht drei. Wer bis hierher gelesen hat, sucht keine
           Auswahl mehr, sondern die Stelle, an der es losgeht. */}
@@ -1306,8 +1353,8 @@ export default function TestHomepage() {
           </Enthuellen>
           <Enthuellen verzoegerung={120}>
             <p className="text-[13px] lg:text-[14px] text-white/55 font-light mt-5 max-w-md mx-auto leading-relaxed">
-              Die Form zuerst — alles andere baut darauf auf. Konfigurieren kostet
-              nichts und verpflichtet zu nichts.
+              Die Form zuerst, alles andere baut darauf auf. Konfigurieren kostet
+              nichts.
             </p>
           </Enthuellen>
           <Enthuellen verzoegerung={200}>
