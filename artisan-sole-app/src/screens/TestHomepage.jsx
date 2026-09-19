@@ -329,8 +329,8 @@ function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
 function Nachsatz({ text, className = '', gross = false }) {
   return (
     <p
-      className={`font-extralight text-black/55 leading-[1.75] ${
-        gross ? 'text-[16px] lg:text-[21px]' : 'text-[14px] lg:text-[16px]'
+      className={`satz-titel italic text-black/50 leading-[1.7] ${
+        gross ? 'text-[18px] lg:text-[24px]' : 'text-[17px] lg:text-[20px]'
       } ${className}`}
     >
       {text}
@@ -507,7 +507,7 @@ export default function TestHomepage() {
           </Enthuellen>
 
           <Enthuellen verzoegerung={120}>
-            <h1 className="text-[34px] lg:text-[64px] font-extralight text-white leading-[1.02] tracking-tight mt-4 max-w-3xl">
+            <h1 className="satz-titel text-[38px] lg:text-[76px] text-white leading-[1.04] mt-5 max-w-3xl">
               Ein Paar, das es<br />vorher nicht gab.
             </h1>
           </Enthuellen>
@@ -600,7 +600,7 @@ export default function TestHomepage() {
         <div className="px-5 lg:px-16 pt-20 pb-16 lg:pt-36 lg:pb-28 text-center">
           <Enthuellen>
             <Kapitelmarke>Die Modelle</Kapitelmarke>
-            <h2 className="text-[28px] lg:text-[46px] font-extralight leading-[1.12] tracking-tight mt-5 max-w-3xl mx-auto">
+            <h2 className="satz-titel text-[31px] lg:text-[54px] leading-[1.14] mt-6 max-w-3xl mx-auto">
               Jede Form hat einen Grund. Meist einen älteren als wir.
             </h2>
           </Enthuellen>
@@ -656,13 +656,13 @@ export default function TestHomepage() {
                     <Enthuellen verzoegerung={140}>
                       <div className="max-w-2xl mx-auto text-center mt-14 lg:mt-20">
                         {marke}
-                        <h3 className="text-[30px] lg:text-[46px] font-extralight leading-[1.12] tracking-tight mt-5">
+                        <h3 className="satz-titel text-[33px] lg:text-[54px] leading-[1.14] mt-6">
                           {erz.titel}
                         </h3>
                         <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[2] mt-8">
                           {schuh.description}
                         </p>
-                        <p className="text-[16px] lg:text-[19px] text-black/80 font-light leading-[1.6] mt-10">
+                        <p className="satz-titel text-[19px] lg:text-[24px] text-black/85 leading-[1.5] mt-10">
                           {erz.wofuer}
                         </p>
                         <Nachsatz text={erz.zeit} className="mt-10" />
@@ -686,13 +686,13 @@ export default function TestHomepage() {
                     <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-start max-w-6xl mx-auto">
                       <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:pt-10">
                         {marke}
-                        <h3 className="text-[29px] lg:text-[42px] font-extralight leading-[1.1] tracking-tight mt-5">
+                        <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
                           {erz.titel}
                         </h3>
                         <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8 max-w-[24rem]">
                           {schuh.description}
                         </p>
-                        <p className="text-[15px] lg:text-[18px] text-black/80 font-light leading-[1.6] mt-9 max-w-[24rem]">
+                        <p className="satz-titel text-[18px] lg:text-[23px] text-black/85 leading-[1.5] mt-9 max-w-[24rem]">
                           {erz.wofuer}
                         </p>
                         <div className="mt-12 max-w-[24rem]">
@@ -746,13 +746,13 @@ export default function TestHomepage() {
                       >
                         <div className="bg-white px-5 py-12 lg:px-14 lg:py-16 lg:mt-24 lg:shadow-[0_30px_80px_-40px_rgba(0,0,0,0.35)]">
                           {marke}
-                          <h3 className="text-[29px] lg:text-[42px] font-extralight leading-[1.1] tracking-tight mt-5">
+                          <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
                             {erz.titel}
                           </h3>
                           <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
                             {schuh.description}
                           </p>
-                          <p className="text-[15px] lg:text-[18px] text-black/80 font-light leading-[1.6] mt-9">
+                          <p className="satz-titel text-[18px] lg:text-[23px] text-black/85 leading-[1.5] mt-9">
                             {erz.wofuer}
                           </p>
                           {/* Hier steht der Nachsatz mit im Blatt — die Form
@@ -778,7 +778,7 @@ export default function TestHomepage() {
                   <Enthuellen>
                     <div className="px-5 lg:px-16 text-center max-w-3xl mx-auto">
                       {marke}
-                      <h3 className="text-[29px] lg:text-[44px] font-extralight leading-[1.12] tracking-tight mt-5">
+                      <h3 className="satz-titel text-[32px] lg:text-[52px] leading-[1.14] mt-6">
                         {erz.titel}
                       </h3>
                     </div>
@@ -799,7 +799,7 @@ export default function TestHomepage() {
                         <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2]">
                           {schuh.description}
                         </p>
-                        <p className="text-[15px] lg:text-[18px] text-black/80 font-light leading-[1.6]">
+                        <p className="satz-titel text-[18px] lg:text-[23px] text-black/85 leading-[1.5]">
                           {erz.wofuer}
                         </p>
                         <Nachsatz text={erz.zeit} />
@@ -829,7 +829,7 @@ export default function TestHomepage() {
               className="absolute inset-0 w-full h-full object-cover opacity-[0.34]"
             />
             <div className="relative px-5 lg:px-16 py-20 max-w-3xl mx-auto text-center">
-              <p className="text-[21px] lg:text-[34px] font-extralight leading-[1.4] tracking-tight text-white">
+              <p className="satz-titel text-[24px] lg:text-[40px] leading-[1.4] text-white">
                 Ein Schuh wird nicht gekauft und dann getragen.
                 Er wird getragen und dabei fertig.
               </p>
@@ -912,7 +912,7 @@ export default function TestHomepage() {
         <div className="max-w-5xl mx-auto">
           <Enthuellen>
             <Kapitelmarke hell>Das Handwerk</Kapitelmarke>
-            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3 max-w-2xl">
+            <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
               Die Sohle hängt an einer Naht,<br className="hidden sm:block" /> nicht an einem Klebstoff.
             </h2>
           </Enthuellen>
@@ -957,7 +957,7 @@ export default function TestHomepage() {
         <div className="max-w-5xl mx-auto">
           <Enthuellen>
             <Kapitelmarke>Das Leder</Kapitelmarke>
-            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3 max-w-2xl">
+            <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
               Die Haut entscheidet, wie das Paar altert.
             </h2>
           </Enthuellen>
@@ -995,7 +995,7 @@ export default function TestHomepage() {
         <div className="max-w-2xl mx-auto">
           <Enthuellen>
             <Kapitelmarke>In eigener Sache</Kapitelmarke>
-            <h2 className="text-[22px] lg:text-[32px] font-extralight leading-[1.15] tracking-tight mt-3">
+            <h2 className="satz-titel text-[25px] lg:text-[38px] leading-[1.18] mt-4">
               Was wir nicht behaupten
             </h2>
           </Enthuellen>
@@ -1049,7 +1049,7 @@ export default function TestHomepage() {
         <div className="max-w-3xl mx-auto">
           <Enthuellen>
             <Kapitelmarke>Der Weg</Kapitelmarke>
-            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3">
+            <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
               Sechs Entscheidungen,<br className="hidden sm:block" /> dann gehört er dir.
             </h2>
           </Enthuellen>
@@ -1165,7 +1165,7 @@ export default function TestHomepage() {
         />
         <div className="relative px-5 lg:px-16 py-20 lg:py-32 text-center">
           <Enthuellen>
-            <h2 className="text-[26px] lg:text-[42px] font-extralight leading-[1.1] tracking-tight text-white max-w-2xl mx-auto">
+            <h2 className="satz-titel text-[29px] lg:text-[50px] leading-[1.14] text-white max-w-2xl mx-auto">
               Sechs Entscheidungen.<br className="hidden sm:block" /> Fang mit der ersten an.
             </h2>
           </Enthuellen>
