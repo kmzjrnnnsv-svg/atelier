@@ -56,19 +56,19 @@ const WEITEN = [
     key: 'D',
     titel: 'Normal',
     kurz: 'Die meisten Füße',
-    hinweis: 'Sie kaufen Schuhe von der Stange und es passt meistens.',
+    hinweis: 'Du kaufst Schuhe von der Stange und es passt meistens.',
   },
   {
     key: 'EE',
     titel: 'Breit',
     kurz: 'Drückt am Ballen',
-    hinweis: 'Neue Schuhe drücken seitlich am Fußballen, obwohl die Länge stimmt. Oft kaufen Sie deshalb eine Nummer größer.',
+    hinweis: 'Neue Schuhe drücken seitlich am Fußballen, obwohl die Länge stimmt. Oft kaufst du deshalb eine Nummer größer.',
   },
   {
     key: 'EEE',
     titel: 'Sehr breit',
     kurz: 'Auch weite drücken',
-    hinweis: 'Auch als weit ausgewiesene Schuhe sind Ihnen zu eng, oder Sie tragen üblicherweise Spezialweiten.',
+    hinweis: 'Auch als weit ausgewiesene Schuhe sind dir zu eng, oder du trägst üblicherweise Spezialweiten.',
   },
 ]
 
@@ -85,7 +85,7 @@ const WEITEN = [
  */
 const SNEAKER_TEST = [
   { key: 'D',   frage: 'Samba oder Gazelle passen mir gut',           folge: 'Beide sind schmal geschnitten, wem sie passen, der hat keinen breiten Fuß.' },
-  { key: 'EE',  frage: 'Samba drückt seitlich, Air Force 1 sitzt gut', folge: 'Genau der Unterschied zwischen schmal und großzügig. Sie brauchen Platz am Ballen.' },
+  { key: 'EE',  frage: 'Samba drückt seitlich, Air Force 1 sitzt gut', folge: 'Genau der Unterschied zwischen schmal und großzügig. Du brauchst Platz am Ballen.' },
   { key: 'EEE', frage: 'Auch der Air Force 1 ist mir zu eng',          folge: 'Der gilt als einer der geräumigsten überhaupt. Dann ist es die weiteste Ausführung.' },
 ]
 
@@ -308,7 +308,7 @@ export default function GroessenTabelle({
 
                 {/* Schritt 1 — Weite */}
                 <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-0.5">
-                  1 · Welche Weite brauchen Sie?
+                  1 · Welche Weite brauchst du?
                 </p>
                 <p className="text-[10px] text-black/35 font-light mb-2">
                   Die Zahl ist der Ballenumfang, nicht die Breite.
@@ -357,7 +357,7 @@ export default function GroessenTabelle({
                     niemand richtig ein, Schuhe aus dem eigenen Schrank schon. */}
                 <div className="mb-6 pt-3 border-t border-black/[0.06]">
                   <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">
-                    Nicht sicher? Woran Sie es merken
+                    Nicht sicher? Woran du es merkst
                   </p>
                   <div className="space-y-1">
                     {SNEAKER_TEST.filter(t => weitenDa.some(w => w.key === t.key)).map(t => {
@@ -384,7 +384,7 @@ export default function GroessenTabelle({
 
                 {/* Schritt 2: Größe */}
                 <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">
-                  2 · Welche Größe tragen Sie? (EU)
+                  2 · Welche Größe trägst du? (EU)
                 </p>
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {groessen.map(r => {
@@ -411,7 +411,7 @@ export default function GroessenTabelle({
                 {/* Schritt 3: was dabei herauskommt */}
                 {treffer && (
                   <div className="mt-5 border border-black/12 bg-[#fafaf9] p-4">
-                    <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">3 · Ihre Größe</p>
+                    <p className="text-[9px] text-black/35 uppercase tracking-[0.14em] mb-2">3 · Deine Größe</p>
                     <p className="text-[22px] font-extralight tracking-tight text-black">
                       EU {String(treffer.size_label).replace('.', ',')}
                       <span className="text-[13px] text-black/45 ml-2">
@@ -421,7 +421,7 @@ export default function GroessenTabelle({
                     <p className="text-[11px] text-black/50 font-light leading-relaxed mt-2">
                       Dafür bauen wir auf {zahl(treffer.foot_length_mm)} mm Fußlänge und
                       {' '}{zahl(treffer.ball_girth_mm)} mm Ballenumfang. Passt das ungefähr zu
-                      Ihrem Fuß, sind Sie richtig.
+                      deinem Fuß, bist du richtig.
                     </p>
                     {um && (
                       <p className="text-[11px] text-black/45 font-light mt-2">
@@ -457,7 +457,7 @@ export default function GroessenTabelle({
           {aktiv === 'vergleich' && (
             <>
               <p className="text-[11px] text-black/50 font-light leading-relaxed mb-4">
-                Was Ihre Fußlänge anderswo für eine Nummer ergibt. Gerechnet nach den
+                Was deine Fußlänge anderswo für eine Nummer ergibt. Gerechnet nach den
                 Regeln, nach denen die Häuser ihre Größen vergeben, nicht aus fremden
                 Tabellen abgeschrieben.
               </p>
@@ -468,7 +468,7 @@ export default function GroessenTabelle({
                   müssen, die er noch nicht kennt. */}
               <label className="block mb-5">
                 <span className="block text-[9px] text-black/35 uppercase tracking-[0.14em] mb-1.5">
-                  Ihre Fußlänge
+                  Deine Fußlänge
                 </span>
                 <div className="flex items-center gap-2">
                   <input
@@ -485,7 +485,7 @@ export default function GroessenTabelle({
                       onClick={() => setLaenge('')}
                       className="text-[10px] text-black/35 hover:text-black underline underline-offset-2 bg-transparent border-0 p-0 ml-1"
                     >
-                      aus Ihrer Größe übernehmen
+                      aus deiner Größe übernehmen
                     </button>
                   )}
                 </div>
@@ -523,7 +523,7 @@ export default function GroessenTabelle({
                   {/* Wer wie nummeriert. Der Weitenteil ist der nützlichste:
                       Dieselben Buchstaben bedeuten je nach Haus anderes. */}
                   <p className="text-[11px] text-black/50 font-light leading-relaxed mb-4">
-                    Und so hieße Ihre Größe bei den Häusern, mit denen wir am häufigsten
+                    Und so hieße deine Größe bei den Häusern, mit denen wir am häufigsten
                     verglichen werden:
                   </p>
                   <div className="space-y-4">
@@ -551,8 +551,8 @@ export default function GroessenTabelle({
 
               <p className="text-[10px] text-black/35 font-light leading-relaxed mt-6">
                 Zur Orientierung. Auch innerhalb eines Hauses fällt nicht jeder Leisten
-                gleich aus, und keine Umrechnung kennt Ihren Ballenumfang, deshalb messen
-                wir lieber, als zu rechnen. Für Ihr Paar zählt allein unsere eigene
+                gleich aus, und keine Umrechnung kennt deinen Ballenumfang, deshalb messen
+                wir lieber, als zu rechnen. Für dein Paar zählt allein unsere eigene
                 Leistentabelle.
               </p>
             </>
@@ -564,7 +564,7 @@ export default function GroessenTabelle({
           <p className="text-[11px] text-black/50 font-light leading-relaxed">
             Eine Größenzahl kennt nur die Länge. Zwei Maße, Fußlänge und Ballenumfang,
             genügen uns für Leisten, Weite und Größe, und das Ergebnis sitzt spürbar
-            besser. Bei einem Schuh, der eigens für Sie gebaut wird, lohnt sich das Maßband.
+            besser. Bei einem Schuh, der eigens für dich gebaut wird, lohnt sich das Maßband.
           </p>
         </div>
       </div>

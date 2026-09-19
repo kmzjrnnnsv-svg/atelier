@@ -45,7 +45,7 @@ export const KATEGORIEN = [
     key: 'notwendig',
     titel: 'Notwendig',
     aktivierbar: false,
-    text: 'Hält Ihre Anmeldung aufrecht, merkt sich Warenkorb und Merkliste und ' +
+    text: 'Hält deine Anmeldung aufrecht, merkt sich Warenkorb und Merkliste und ' +
           'speichert diese Entscheidung. Ohne das funktioniert der Laden nicht.',
     beispiele: 'Anmelde-Cookie, Warenkorb, diese Auswahl',
   },

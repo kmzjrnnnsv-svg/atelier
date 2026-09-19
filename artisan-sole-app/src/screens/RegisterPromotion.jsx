@@ -57,12 +57,12 @@ export default function RegisterPromotion() {
           <div className="mt-3 inline-block px-3 py-1 bg-amber-600/20">
             <p className="text-[9px] text-amber-400" style={{ letterSpacing: '0.2em', textTransform: 'uppercase' }}>Promotion-Zugang</p>
           </div>
-          <p className="text-white/40 text-xs mt-4">Erstellen Sie Ihr exklusives Konto</p>
+          <p className="text-white/40 text-xs mt-4">Erstelle dein exklusives Konto</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
-            type="text" placeholder="Ihr Name" value={name} onChange={e => setName(e.target.value)}
+            type="text" placeholder="Dein Name" value={name} onChange={e => setName(e.target.value)}
             required minLength={2} className={inp}
           />
           <input

@@ -3277,7 +3277,7 @@ export default function FootScan() {
                       Meine Aufnahmen dürfen zur Verbesserung der Messfunktion
                       verwendet werden. Freiwillig, jederzeit widerrufbar an
                       kontakt@artisansole.com. Ohne Haken bleiben die Bilder auf
-                      diesem Gerät und Ihre Messung funktioniert genauso.
+                      diesem Gerät und deine Messung funktioniert genauso.
                     </span>
                   </button>
                   {hochgeladen && (

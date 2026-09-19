@@ -36,7 +36,7 @@ export default function Wishlist() {
           <Heart size={32} className="text-black/10 mb-4" strokeWidth={1} />
           <p className="text-[14px] font-light text-black/60">Noch keine Favoriten</p>
           <p className="text-[12px] text-black/30 mt-2 max-w-[260px] leading-relaxed font-light">
-            Markieren Sie Schuhe in der Kollektion mit einem Herz.
+            Markiere Schuhe in der Kollektion mit einem Herz.
           </p>
           <button
             onClick={() => navigate('/collection')}

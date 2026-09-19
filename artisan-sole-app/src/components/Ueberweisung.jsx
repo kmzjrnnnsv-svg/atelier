@@ -88,8 +88,8 @@ export default function Ueberweisung({ orderId }) {
       <div className="px-5 pt-3 pb-1">
         <p className="text-[22px] font-extralight tracking-tight text-black">{euro(daten.betrag)}</p>
         <p className="text-[11px] text-black/45 font-light mt-1 leading-relaxed">
-          Ihre Schuhe gehen nach Zahlungseingang in die Fertigung. Bitte geben Sie den
-          Verwendungszweck genau so an, daran erkennen wir, zu welcher Bestellung Ihre
+          Deine Schuhe gehen nach Zahlungseingang in die Fertigung. Bitte gib den
+          Verwendungszweck genau so an, daran erkennen wir, zu welcher Bestellung deine
           Zahlung gehört.
         </p>
       </div>
@@ -123,7 +123,7 @@ export default function Ueberweisung({ orderId }) {
             <AlertTriangle size={13} className="text-amber-600 flex-shrink-0 mt-0.5" strokeWidth={1.6} />
             <p className="text-[11px] text-amber-900 font-light leading-relaxed">
               Für diese Bestellung liegt uns noch keine vollständige Bankverbindung vor.
-              Bitte melden Sie sich kurz bei uns, dann schicken wir sie Ihnen zu.
+              Bitte meld dich kurz bei uns, dann schicken wir sie dir zu.
             </p>
           </div>
           <Zeile label="Betrag" wert={euro(daten.betrag)} />

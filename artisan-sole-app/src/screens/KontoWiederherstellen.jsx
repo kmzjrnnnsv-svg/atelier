@@ -115,18 +115,18 @@ export default function KontoWiederherstellen() {
         {fertig ? (
           <div className="text-center">
             <Check size={30} strokeWidth={1.2} className="text-black mx-auto" />
-            <h1 className="text-[22px] font-extralight tracking-tight mt-4">Ihr Zugang steht wieder.</h1>
+            <h1 className="text-[22px] font-extralight tracking-tight mt-4">Dein Zugang steht wieder.</h1>
             <p className="text-[13px] text-black/50 font-light mt-3 leading-relaxed">
-              Dieses Gerät meldet Sie ab jetzt an. Einen Augenblick, wir bringen Sie weiter.
+              Dieses Gerät meldet dich ab jetzt an. Einen Augenblick, wir bringen dich weiter.
             </p>
           </div>
         ) : !kennung ? (
           <>
             <h1 className="text-[24px] font-extralight tracking-tight text-center">Kein Zugriff mehr?</h1>
             <p className="text-[13px] text-black/50 font-light mt-3 mb-7 leading-relaxed text-center">
-              Kein Passwort heißt: Es gibt nichts zurückzusetzen. Wir erkennen Sie stattdessen
-              an einer Ihrer Bestellungen, beide Angaben stehen auf Ihrer Bestellbestätigung,
-              die Bestellnummer außerdem im Verwendungszweck Ihrer Überweisung.
+              Kein Passwort heißt: Es gibt nichts zurückzusetzen. Wir erkennen dich stattdessen
+              an einer deiner Bestellungen, beide Angaben stehen auf deiner Bestellbestätigung,
+              die Bestellnummer außerdem im Verwendungszweck deiner Überweisung.
             </p>
 
             {fehler && (
@@ -138,7 +138,7 @@ export default function KontoWiederherstellen() {
 
             <form onSubmit={ausweisen} className="space-y-4">
               <div>
-                <label className={marke}>E-Mail Ihres Kontos</label>
+                <label className={marke}>E-Mail deines Kontos</label>
                 <input type="email" autoComplete="email" className={feld} value={form.email}
                   onChange={e => setForm({ ...form, email: e.target.value })} placeholder="ihre@email.com" />
               </div>
@@ -163,17 +163,17 @@ export default function KontoWiederherstellen() {
             </form>
 
             <p className="text-[11px] text-black/40 font-light leading-relaxed mt-6 text-center">
-              Sie haben noch nie bestellt oder kommen nicht weiter?{' '}
-              <Link to="/help" className="text-black underline underline-offset-2">Schreiben Sie uns</Link>,
-              wir schalten Ihnen den Zugang von Hand frei.
+              Du hast noch nie bestellt oder kommst nicht weiter?{' '}
+              <Link to="/help" className="text-black underline underline-offset-2">Schreib uns</Link>,
+              wir schalten dir den Zugang von Hand frei.
             </p>
           </>
         ) : (
           <>
             <h1 className="text-[24px] font-extralight tracking-tight text-center">Dieses Gerät hinterlegen</h1>
             <p className="text-[13px] text-black/50 font-light mt-3 mb-7 leading-relaxed text-center">
-              Wir haben Sie erkannt. Hinterlegen Sie jetzt dieses Gerät, danach melden Sie
-              sich damit an, ohne Passwort.
+              Wir haben dich erkannt. Hinterleg jetzt dieses Gerät, danach meldest du
+              dich damit an, ohne Passwort.
             </p>
 
             {fehler && (
@@ -198,16 +198,16 @@ export default function KontoWiederherstellen() {
                 <div className="flex items-start gap-2 mt-4">
                   <ShieldCheck size={13} strokeWidth={1.5} className="text-black/30 mt-0.5 flex-shrink-0" />
                   <p className="text-[11px] text-black/45 leading-relaxed">
-                    Ihr Gerät fragt gleich nach Face ID, Fingerabdruck oder Ihrer Geräte-PIN.
-                    Ihre bisherigen Geräte bleiben gültig, falls eines wieder auftaucht,
+                    Dein Gerät fragt gleich nach Face ID, Fingerabdruck oder deiner Geräte-PIN.
+                    Deine bisherigen Geräte bleiben gültig, falls eines wieder auftaucht,
                     funktioniert es weiterhin. Alle offenen Sitzungen werden beendet.
                   </p>
                 </div>
               </>
             ) : (
               <p className="text-[12px] text-black/50 font-light leading-relaxed text-center">
-                Dieser Browser kann die Anmeldung ohne Passwort nicht. Bitte öffnen Sie diese
-                Seite in Safari oder Chrome, haben Sie sie gerade aus einer anderen App
+                Dieser Browser kann die Anmeldung ohne Passwort nicht. Bitte öffne diese
+                Seite in Safari oder Chrome, hast du sie gerade aus einer anderen App
                 heraus geöffnet, dort noch einmal im richtigen Browser.
               </p>
             )}

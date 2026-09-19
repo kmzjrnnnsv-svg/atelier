@@ -5,8 +5,12 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Mobile-first viewport: viewport-fit=cover für iPhone Notch/Dynamic Island -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- Mobile-first viewport: viewport-fit=cover für iPhone Notch/Dynamic Island.
+         Kein maximum-scale/user-scalable: Wer ein Leder oder eine Naht genauer
+         ansehen will, muss aufziehen können. Die Sperre verstieß außerdem gegen
+         WCAG 1.4.4 (Text auf 200 % vergrößerbar). Der Notch-Rand hängt allein an
+         viewport-fit, nicht an der Zoom-Sperre. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- PWA / Home Screen -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -14,20 +18,42 @@
     <meta name="apple-mobile-web-app-title" content="ARTISAN SOLE" />
     <meta name="mobile-web-app-capable" content="yes" />
 
-    <!-- Theme color (Browser-Chrome / Safari Toolbar) -->
+    <!-- Theme color (Browser-Chrome / Safari Toolbar).
+         Derselbe Wert wie der Seitenhintergrund in index.css und wie
+         theme_color in manifest.json — die drei dürfen nicht auseinanderlaufen,
+         sonst sitzt unter der Browserleiste eine Kante. -->
     <meta name="theme-color" content="#F2F2F7" />
 
     <!-- SEO -->
-    <meta name="description" content="ARTISAN SOLE · Rahmengenähte Schuhe, Custom Made nach Ihren Maßen. Leder, Sohle und Details bestimmen Sie." />
+    <meta name="description" content="Rahmengenähte Schuhe, custom made nach deinen Maßen. Leder, Sohle und Details bestimmst du selbst. Einzeln gefertigt in einer spanischen Manufaktur." />
     <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://artisansole.com/" />
 
-    <!-- Open Graph -->
+    <!-- Open Graph.
+         Absolute Adressen, keine relativen: Facebook, WhatsApp und LinkedIn
+         lesen dieses HTML außerhalb jedes Seitenkontexts und lösen „/og-image.png"
+         nicht auf — das Bild fiele beim Teilen still aus. -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="ARTISAN SOLE · Rahmengenähte Schuhe, Custom Made" />
-    <meta property="og:description" content="Konfigurieren Sie Ihren individuellen Custom Made Schuh. Handgefertigt nach Ihren Wünschen." />
-    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:site_name" content="ARTISAN SOLE" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:url" content="https://artisansole.com/" />
+    <meta property="og:title" content="ARTISAN SOLE · Rahmengenähte Schuhe nach Maß" />
+    <meta property="og:description" content="Rahmengenäht in einer spanischen Manufaktur, custom made nach deinen Maßen. Leder, Sohle und Details bestimmst du selbst." />
+    <meta property="og:image" content="https://artisansole.com/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ARTISAN SOLE — rahmengenähte Schuhe nach Maß" />
 
-    <title>ARTISAN SOLE</title>
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ARTISAN SOLE · Rahmengenähte Schuhe nach Maß" />
+    <meta name="twitter:description" content="Rahmengenäht in einer spanischen Manufaktur, custom made nach deinen Maßen. Leder, Sohle und Details bestimmst du selbst." />
+    <meta name="twitter:image" content="https://artisansole.com/og-image.png" />
+
+    <!-- Der Titel trägt die Wörter, nach denen gesucht wird. seo.js setzt ihn
+         pro Seite neu, sobald die Anwendung läuft; dieser hier ist der, den ein
+         Messenger und ein Crawler ohne JavaScript zu sehen bekommen. -->
+    <title>ARTISAN SOLE · Rahmengenähte Schuhe nach Maß</title>
     <!-- Selbstheilung gegen weiße Seite nach Deploy (lädt bei fehlendem Bundle einmal neu) -->
     <script src="/boot-check.js"></script>
   </head>

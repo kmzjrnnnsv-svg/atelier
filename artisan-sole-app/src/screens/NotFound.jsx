@@ -1,6 +1,11 @@
 import { useNavigate } from 'react-router-dom'
+import { useSeo } from '../lib/seo'
 
 export default function NotFound() {
+  // Auch die Fehlerseite braucht einen eigenen Titel — sonst steht in einem
+  // Suchergebnis der Name des Ladens über einer Seite, die es nicht gibt.
+  useSeo({ titel: 'Seite nicht gefunden' })
+
   const navigate = useNavigate()
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white px-8 text-center">
@@ -10,7 +15,7 @@ export default function NotFound() {
       <p className="text-7xl font-playfair text-black/10 font-bold mb-2">404</p>
       <h1 className="font-playfair text-2xl text-black mb-3">Seite nicht gefunden</h1>
       <p className="text-sm text-black/35 leading-relaxed mb-8 max-w-xs">
-        Die von Ihnen gesuchte Seite existiert nicht oder wurde verschoben.
+        Die von dir gesuchte Seite existiert nicht oder wurde verschoben.
       </p>
       <button
         onClick={() => navigate(-1)}

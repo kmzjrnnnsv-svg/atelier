@@ -65,7 +65,7 @@ export default function GuertelWahl({
   vorgabe = {},      // was schon feststeht (leder, farbe, metall, form …)
   lederListe = [],   // für die freie Wahl: verfügbare Lederarten
   farbListe = [],    // für die freie Wahl: verfügbare Farben (global)
-  woher = 'wie Ihr Schuh',
+  woher = 'wie dein Schuh',
   onChange,
 }) {
   const [form, setForm]       = useState('')
@@ -156,7 +156,7 @@ export default function GuertelWahl({
           </Feld>
 
           <Feld nummer={++nr} titel="Farbe"
-            hinweis={gLeder ? null : 'Wählen Sie zuerst das Leder, die Farben unterscheiden sich je nach Art.'}>
+            hinweis={gLeder ? null : 'Wähl zuerst das Leder, die Farben unterscheiden sich je nach Art.'}>
             <div className="flex flex-wrap gap-2">
               {farbenHier.map(c => (
                 <button key={c.key} onClick={() => setFarbe(c.key)} title={c.name}
@@ -190,7 +190,7 @@ export default function GuertelWahl({
       {/* ── Metall ────────────────────────────────────────────────────── */}
       {metallFest ? (
         <Uebernommen titel="Metall" wert={vorgabe.metall_label} hex={vorgabe.metall_hex}
-          woher="wie die Schnalle Ihres Schuhs" />
+          woher="wie die Schnalle deines Schuhs" />
       ) : (
         <Feld nummer={++nr} titel="Farbe des Metalls">
           <div className="flex flex-wrap gap-2">
@@ -250,7 +250,7 @@ export default function GuertelWahl({
       {/* ── Was dabei herauskommt ─────────────────────────────────────── */}
       {gewaehlt && (
         <div className="mt-6 border border-black/10 bg-black/[0.02] px-3.5 py-3">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-black/35 mb-1.5">Ihr Gürtel</p>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-black/35 mb-1.5">Dein Gürtel</p>
           <p className="text-[12px] text-black/75 leading-relaxed">{guertelSatz(gewaehlt, spielraum)}</p>
         </div>
       )}

@@ -137,7 +137,7 @@ export default function Profile() {
       {/* Kopfbereich. Das frühere Bannerbild ist entfallen; mit ihm das
           negative -mt-16, das den Namen zuvor ins Bild geschoben hat. */}
       <div className="px-5 lg:px-16 pt-8 lg:pt-12 pb-6 lg:pb-8">
-        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Ihr Profil</p>
+        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Dein Profil</p>
 
         {/* Profile info */}
         <div className="flex items-center gap-5">
@@ -264,7 +264,7 @@ export default function Profile() {
 
                     {isActive && tier.benefits?.length > 0 && (
                       <div className="mt-4 pt-4 border-t border-black/[0.06] space-y-2">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-black/20 font-light">Ihre Vorteile</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-black/20 font-light">Deine Vorteile</p>
                         {tier.benefits.map((b, i) => (
                           <div key={i} className="flex items-start gap-2">
                             <div className="w-1 h-1 bg-black/20 mt-1.5 flex-shrink-0" />
@@ -299,7 +299,7 @@ export default function Profile() {
                 <p className="text-[10px] uppercase tracking-[0.25em] text-white/25 mb-2">3D-Technologie</p>
                 <p className="text-[16px] font-extralight text-white">3D Foot Scan</p>
                 <p className="text-[11px] text-white/30 mt-1 font-light leading-relaxed">
-                  Aktualisieren Sie Ihr Präzisionsmodell für die perfekte Passform.
+                  Aktualisiere dein Präzisionsmodell für die perfekte Passform.
                 </p>
                 <button
                   onClick={e => { e.stopPropagation(); navigate('/scan') }}
@@ -453,7 +453,7 @@ export default function Profile() {
                     </button>
                   )}
                   {editMode && Object.keys(editedValues).length === 0 && (
-                    <p className="text-[10px] text-black/20 text-center mt-4 font-light">Ändern Sie einen Wert oder ergänzen Sie fehlende Maße</p>
+                    <p className="text-[10px] text-black/20 text-center mt-4 font-light">Ändere einen Wert oder ergänze fehlende Maße</p>
                   )}
                 </div>
               )}
@@ -481,7 +481,7 @@ export default function Profile() {
                           <p className={`text-[11px] ${a.key === scanArchtype ? 'text-black' : 'text-black/35'} font-light`}>{a.label}</p>
                           <p className="text-[10px] text-black/20 mt-0.5 font-light">{a.desc}</p>
                         </div>
-                        {a.key === scanArchtype && <span className="text-[9px] uppercase tracking-[0.15em] text-black/30 font-light">Ihr Typ</span>}
+                        {a.key === scanArchtype && <span className="text-[9px] uppercase tracking-[0.15em] text-black/30 font-light">Dein Typ</span>}
                       </div>
                     ))}
                   </div>
@@ -497,7 +497,7 @@ export default function Profile() {
                         maxLength={1000}
                         className="w-full border border-black/[0.06] bg-[#f6f5f3] p-4 text-[12px] text-black leading-relaxed resize-none focus:outline-none focus:border-black/15 font-light"
                         rows={4}
-                        placeholder="Persönliche Notizen zu Ihren Füßen..."
+                        placeholder="Persönliche Notizen zu deinen Füßen..."
                         autoFocus
                       />
                       <div className="flex items-center justify-between">
@@ -528,7 +528,7 @@ export default function Profile() {
                       ) : (
                         <div className="flex items-center gap-2 py-2 text-black/20">
                           <Edit3 size={13} strokeWidth={1.5} />
-                          <span className="text-[11px] font-light">Tippen Sie hier, um persönliche Notizen hinzuzufügen…</span>
+                          <span className="text-[11px] font-light">Tipp hier, um persönliche Notizen hinzuzufügen…</span>
                         </div>
                       )}
                     </button>
@@ -544,7 +544,7 @@ export default function Profile() {
       <div className="px-5 lg:px-16 pt-8">
         <p className="text-[10px] uppercase tracking-[0.25em] text-black/25 font-light mb-1">Fußmaße & Passform</p>
         <p className="text-[12px] text-black/30 mb-4 font-light">
-          Wir bestimmen Ihre Größe und Leistenform aus zwei Maßen, statt zu raten.
+          Wir bestimmen deine Größe und Leistenform aus zwei Maßen, statt zu raten.
         </p>
         <div className="border border-black/[0.06] p-5 space-y-4">
           {/* Maß-Eingabe */}
@@ -577,7 +577,7 @@ export default function Profile() {
           {/* Gespeicherte Passform */}
           {footMeasurements?.saved_fit && (
             <div className="border-t border-black/[0.06] pt-4">
-              <p className="text-[10px] text-black/30 uppercase tracking-wider mb-1">Ihre Passform</p>
+              <p className="text-[10px] text-black/30 uppercase tracking-wider mb-1">Deine Passform</p>
               <p className="text-[13px] text-black/70 font-light">
                 {[
                   footMeasurements.saved_fit.last_label,
@@ -647,7 +647,7 @@ export default function Profile() {
       {/* ── Aesthetic Profile ───────────────────────────────────── */}
       <div className="px-5 lg:px-16 pt-8">
         <p className="text-[10px] uppercase tracking-[0.25em] text-black/25 font-light mb-4">Aesthetic Profile</p>
-        <p className="text-[12px] text-black/30 mb-4 font-light">Ihr persönlicher Stil für Custom Made Schuhe.</p>
+        <p className="text-[12px] text-black/30 mb-4 font-light">Dein persönlicher Stil für Custom Made Schuhe.</p>
         <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {[
             { label: 'Modern Business', desc: 'Sharp, tailored', active: true, img: SHOES.oxfords },

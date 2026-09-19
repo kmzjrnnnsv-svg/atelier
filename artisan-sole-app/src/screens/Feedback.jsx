@@ -149,7 +149,7 @@ export default function Feedback() {
             <textarea
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder="Beschreiben Sie Ihr Anliegen..."
+              placeholder="Beschreib dein Anliegen..."
               rows={4}
               className="w-full border border-black/5 px-3 py-2.5 text-[11px] text-black placeholder:text-black/20 outline-none bg-transparent resize-none leading-relaxed"
               style={{ borderRadius: 0 }}
@@ -171,7 +171,7 @@ export default function Feedback() {
           {submitted && (
             <div className="flex items-center gap-2 mt-4 p-3 bg-black/5">
               <CheckCircle2 size={14} className="text-black/50" strokeWidth={1.5} />
-              <p className="text-[10px] text-black/60">Ihre Anfrage wurde erfolgreich gesendet.</p>
+              <p className="text-[10px] text-black/60">Deine Anfrage wurde erfolgreich gesendet.</p>
             </div>
           )}
         </div>
@@ -193,7 +193,7 @@ export default function Feedback() {
                 <MessageSquare size={24} className="text-black/15" strokeWidth={1.5} />
               </div>
               <p className="text-[12px] text-black">Keine Anfragen</p>
-              <p className="text-[10px] text-black/35 mt-1">Ihre Anfragen erscheinen hier</p>
+              <p className="text-[10px] text-black/35 mt-1">Deine Anfragen erscheinen hier</p>
             </div>
           ) : (
             <div className="space-y-2">

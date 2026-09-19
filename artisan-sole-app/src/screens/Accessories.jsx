@@ -12,6 +12,7 @@ import CtaBanner from '../components/CtaBanner'
 import { accessoryImages } from '../lib/accessoryImages'
 import GuertelDialog from '../components/GuertelDialog'
 import { PreisFuss } from '../lib/preisangabe'
+import { useSeo } from '../lib/seo'
 
 const CATEGORY_LABELS = {
   OXFORD: 'Oxford', DERBY: 'Derby', LOAFER: 'Loafer',
@@ -20,6 +21,13 @@ const CATEGORY_LABELS = {
 
 
 export default function Accessories() {
+  useSeo({
+    titel: 'Zubehör',
+    beschreibung: 'Gürtel, Schuhspanner und Pflege aus demselben Leder wie die Schuhe. '
+      + 'Passend zu deinem Paar bestellt.',
+    pfad: '/accessories',
+  })
+
   const navigate = useNavigate()
   const { cart, addToCart, removeFromCart, shoeMaterials, shoeColors } = useStore()
   const { user } = useAuth()

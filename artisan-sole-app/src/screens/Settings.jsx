@@ -241,7 +241,7 @@ export default function Settings() {
 
       {/* ── Hero header ─────────────────────────────────────────── */}
       <div className="px-5 lg:px-16 pt-8 lg:pt-14 pb-6 lg:pb-10">
-        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Ihr Konto</p>
+        <p className="text-[10px] lg:text-[11px] text-black/30 uppercase tracking-[0.25em] mb-3">Dein Konto</p>
         <h1 className="text-[32px] lg:text-[44px] font-extralight text-black leading-[1.1] tracking-tight">
           Einstellungen
         </h1>
@@ -280,7 +280,7 @@ export default function Settings() {
       />
       {profileOpen && (
         <div className="bg-[#f6f5f3]/50 border-y border-black/[0.04]">
-          <EditableField label="Name" value={profileName} placeholder="Ihr Name" onChange={setProfileName} />
+          <EditableField label="Name" value={profileName} placeholder="Dein Name" onChange={setProfileName} />
           <EditableField label="E-Mail" value={profileEmail} type="email" placeholder="ihre@email.de" onChange={setProfileEmail} />
           <div className="px-5 lg:px-16 pb-5 pt-2 flex gap-3">
             <button onClick={() => setProfileOpen(false)}
@@ -321,7 +321,7 @@ export default function Settings() {
       <SettingsRow
         icon={Lock}
         label="Passwort ändern"
-        sub="Sicherheit Ihres Kontos"
+        sub="Sicherheit deines Kontos"
         onPress={() => { setPwOpen(o => !o); setProfileOpen(false) }}
         rightEl={
           <ChevronRight size={15} className={`text-black/15 flex-shrink-0 transition-transform ${pwOpen ? 'rotate-90' : ''}`} />
@@ -484,7 +484,7 @@ export default function Settings() {
       {/* ── Delete account ───────────────────────────────────────── */}
       <div className="mb-8 pb-8">
         <button
-          onClick={() => showToast('Bitte kontaktieren Sie den Support für die Konto-Löschung', 'error')}
+          onClick={() => showToast('Bitte wende dich für die Konto-Löschung an den Support', 'error')}
           className="w-full py-3 text-[10px] uppercase tracking-[0.15em] text-black/25 bg-transparent border-0 font-light hover:text-black/40 transition-colors"
         >
           Konto löschen

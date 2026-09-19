@@ -24,7 +24,7 @@ const euro = (n) => `€ ${Number(n || 0).toLocaleString('de-DE', { minimumFract
 
 const STATUS = {
   requested: { text: 'Angemeldet',  hint: 'Wir melden uns mit dem Rücksendeschein.' },
-  approved:  { text: 'Bestätigt',   hint: 'Bitte senden Sie die Ware zurück.' },
+  approved:  { text: 'Bestätigt',   hint: 'Bitte sende die Ware zurück.' },
   received:  { text: 'Eingegangen', hint: 'Die Rücksendung ist bei uns angekommen.' },
   refunded:  { text: 'Erstattet',   hint: 'Der Betrag ist erstattet.' },
   rejected:  { text: 'Abgelehnt',   hint: '' },
@@ -83,7 +83,7 @@ function Bestellung({ eintrag, onSenden, sendet }) {
             <p className="text-[12px] text-black/70">{b.shoe_name}</p>
             <p className="text-[11px] text-black/40 font-light leading-relaxed">
               Maßanfertigung, keine Rückgabe. Bei einem Mangel fertigen wir das
-              Paar neu; gefällt es Ihnen nicht, sehen wir uns das an.
+              Paar neu; gefällt es dir nicht, sehen wir uns das an.
             </p>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function Ruecksendungen() {
         method: 'POST',
         body: JSON.stringify({ items, reason: reason || undefined }),
       })
-      setErfolg('Ihre Rücksendung ist angemeldet. Wir melden uns mit dem Rücksendeschein.')
+      setErfolg('Deine Rücksendung ist angemeldet. Wir melden uns mit dem Rücksendeschein.')
       await laden()
       return true
     } catch (e) {
@@ -272,7 +272,7 @@ export default function Ruecksendungen() {
         {bestellungen.length > 0 && (
           <p className="flex items-start gap-2 text-[11px] text-black/35 font-light leading-relaxed pt-2">
             <Clock size={12} strokeWidth={1.5} className="mt-0.5 shrink-0" />
-            Die Frist läuft ab Zustellung. Nach der Anmeldung erhalten Sie den
+            Die Frist läuft ab Zustellung. Nach der Anmeldung bekommst du den
             Rücksendeschein per E-Mail; erstattet wird, sobald die Ware bei uns
             eingegangen ist.
           </p>

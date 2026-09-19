@@ -212,6 +212,24 @@ server {
         proxy_pass http://127.0.0.1:3001/api/health;
     }
 
+    # robots.txt und sitemap.xml kommen aus dem Backend (routes/sitemap.js).
+    # Sie MUESSEN hier stehen: Ohne eigene location greift weiter unten der
+    # SPA-Fallback, und beide Adressen liefern die leere index.html aus. Eine
+    # Suchmaschine bekommt dann HTML, wo sie eine Landkarte erwartet, und
+    # verwirft sie — die Karte war zwar programmiert, aber nie erreichbar.
+    # Kein Praefix, sondern exakte Treffer: Sonst faengt /robots.txt auch
+    # /robots.txt.bak ab.
+    location = /robots.txt {
+        proxy_pass http://127.0.0.1:3001/robots.txt;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location = /sitemap.xml {
+        proxy_pass http://127.0.0.1:3001/sitemap.xml;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     # Assets tragen einen Inhalts-Hash im Dateinamen. Unter gleichem Namen
     # ändert sich ihr Inhalt nie, sie dürfen also dauerhaft gecacht werden.
     location /assets/ {
@@ -228,9 +246,14 @@ server {
         add_header Cache-Control "no-cache";
     }
 
-    # SPA Fallback — alle anderen Routen an index.html
+    # SPA Fallback — alle anderen Routen an index.html.
+    #
+    # $uri/index.html steht vor $uri/: Liegt eine vorgerenderte Seite
+    # (dist/collection/index.html), wird sie direkt ausgeliefert. Ueber $uri/
+    # allein kaeme sie auch, aber erst nach einer 301 auf /collection/ — eine
+    # Umleitung, die jede Suchmaschine mitgeht und jeder Besucher bezahlt.
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri/index.html $uri/ /index.html;
     }
 }
 NGINX

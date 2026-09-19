@@ -82,21 +82,21 @@ export async function refreshAccessToken() {
  */
 function statusSatz(status) {
   switch (status) {
-    case 400: return 'Ihre Angaben sind unvollständig oder nicht im erwarteten Format. Bitte prüfen Sie die Felder.'
-    case 401: return 'Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.'
+    case 400: return 'Deine Angaben sind unvollständig oder nicht im erwarteten Format. Bitte prüf die Felder.'
+    case 401: return 'Deine Sitzung ist abgelaufen. Bitte meld dich erneut an.'
     case 403: return 'Für diesen Schritt fehlt die Berechtigung.'
     case 404: return 'Das Gesuchte gibt es nicht (mehr).'
     case 409: return 'Das lässt sich so nicht speichern, etwas ist bereits vergeben oder hat sich inzwischen geändert.'
     case 413: return 'Die Datei ist zu groß.'
-    case 422: return 'Die Angaben konnten nicht verarbeitet werden. Bitte prüfen Sie die Felder.'
-    case 429: return 'Zu viele Versuche in kurzer Zeit. Bitte warten Sie einen Moment, an Ihren Angaben liegt es nicht.'
-    case 500: return 'Auf unserer Seite ist etwas schiefgegangen. Ihre Angaben sind in Ordnung, bitte versuchen Sie es in einigen Minuten erneut.'
+    case 422: return 'Die Angaben konnten nicht verarbeitet werden. Bitte prüf die Felder.'
+    case 429: return 'Zu viele Versuche in kurzer Zeit. Bitte warte einen Moment, an deinen Angaben liegt es nicht.'
+    case 500: return 'Auf unserer Seite ist etwas schiefgegangen. Deine Angaben sind in Ordnung, bitte versuch es in einigen Minuten erneut.'
     case 502:
     case 503:
-    case 504: return 'Unser Server ist gerade nicht erreichbar. Das liegt nicht an Ihren Angaben, bitte versuchen Sie es in einigen Minuten erneut.'
+    case 504: return 'Unser Server ist gerade nicht erreichbar. Das liegt nicht an deinen Angaben, bitte versuch es in einigen Minuten erneut.'
     default:  return status >= 500
-      ? 'Auf unserer Seite ist etwas schiefgegangen. Ihre Angaben sind in Ordnung, bitte versuchen Sie es später erneut.'
-      : 'Die Anfrage konnte nicht verarbeitet werden. Bitte prüfen Sie Ihre Angaben.'
+      ? 'Auf unserer Seite ist etwas schiefgegangen. Deine Angaben sind in Ordnung, bitte versuch es später erneut.'
+      : 'Die Anfrage konnte nicht verarbeitet werden. Bitte prüf deine Angaben.'
   }
 }
 
@@ -153,8 +153,8 @@ export async function apiFetch(url, options = {}, _attempt = 0) {
     // liegt.
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false
     const fehler = new Error(offline
-      ? 'Keine Internetverbindung. Ihre Angaben bleiben erhalten, bitte versuchen Sie es erneut, sobald Sie wieder online sind.'
-      : 'Wir konnten unseren Server nicht erreichen. Das liegt nicht an Ihren Angaben, bitte versuchen Sie es in einigen Minuten erneut.')
+      ? 'Keine Internetverbindung. Deine Angaben bleiben erhalten, bitte versuch es erneut, sobald du wieder online bist.'
+      : 'Wir konnten unseren Server nicht erreichen. Das liegt nicht an deinen Angaben, bitte versuch es in einigen Minuten erneut.')
     fehler.status = 0
     fehler.herkunft = offline ? 'verbindung' : 'system'
     fehler.error = fehler.message

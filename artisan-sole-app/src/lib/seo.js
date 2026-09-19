@@ -37,7 +37,7 @@ import { useEffect } from 'react'
 
 const MARKE = 'Artisan Sole'
 const STANDARD_BESCHREIBUNG =
-  'Rahmengenähte Schuhe, Custom Made nach Ihren Maßen. Leder, Sohle und Details bestimmen Sie.'
+  'Rahmengenähte Schuhe, custom made nach deinen Maßen. Leder, Sohle und Details bestimmst du selbst.'
 
 /** Setzt ein `<meta>`-Element oder legt es an, wenn es noch fehlt. */
 function setzeMeta(auswahl, attribut, wert, inhalt) {
@@ -67,8 +67,12 @@ function setzeKanonisch(pfad) {
     el.setAttribute('rel', 'canonical')
     document.head.appendChild(el)
   }
-  el.setAttribute('href', `${window.location.origin}${pfad || window.location.pathname}`)
+  el.setAttribute('href', adresse(pfad))
 }
+
+/** Die vollständige Adresse dieser Seite, mit Schema und Hostnamen. */
+const adresse = (pfad) =>
+  `${window.location.origin}${pfad || window.location.pathname}`
 
 /**
  * Eine Beschreibung auf ein Maß bringen, das ein Suchergebnis auch zeigt.
@@ -102,6 +106,10 @@ export function useSeo({ titel, beschreibung, pfad } = {}) {
     setzeMeta('meta[name="description"]', 'name', 'description', text)
     setzeMeta('meta[property="og:title"]', 'property', 'og:title', voll)
     setzeMeta('meta[property="og:description"]', 'property', 'og:description', text)
+    // og:url muss mitwandern. Bleibt hier die Startseite stehen, meldet jede
+    // geteilte Modellseite dieselbe Adresse — Facebook fasst sie dann zu einem
+    // einzigen Eintrag zusammen und zeigt überall denselben Text.
+    setzeMeta('meta[property="og:url"]', 'property', 'og:url', adresse(pfad))
     setzeKanonisch(pfad)
   }, [titel, beschreibung, pfad])
 }
@@ -119,9 +127,9 @@ export function schuhBeschreibung(schuh) {
   const eigen = String(schuh?.description || schuh?.tagline || '').trim()
   if (eigen.length > 60) return eigen
   const teile = [
-    schuh?.name && `${schuh.name}, rahmengenäht und nach Ihren Maßen gefertigt`,
+    schuh?.name && `${schuh.name}, rahmengenäht und nach deinen Maßen gefertigt`,
     schuh?.material && `Leder: ${schuh.material}`,
     schuh?.price && `ab ${schuh.price}`,
   ].filter(Boolean)
-  return teile.length ? `${teile.join('. ')}. Leder, Farbe und Sohle stellen Sie selbst zusammen.` : ''
+  return teile.length ? `${teile.join('. ')}. Leder, Farbe und Sohle stellst du selbst zusammen.` : ''
 }

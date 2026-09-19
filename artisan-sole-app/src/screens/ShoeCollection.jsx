@@ -114,7 +114,7 @@ function FitBar({ value, open, onToggle, onSave, onReset }) {
           <div className="max-w-2xl mx-auto">
             <p className="text-[11px] text-black/40 font-light leading-relaxed mb-4 text-center">
               Zwei Maße genügen, wir finden Größe und Leistenform automatisch und
-              blenden Modelle aus, die Ihrem Fuß nicht schmeicheln.
+              blenden Modelle aus, die deinem Fuß nicht schmeicheln.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
@@ -219,7 +219,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
   ) : campaign ? (
     <>
       <span className="line-through opacity-50 mr-1.5">{product.price}</span>
-      {campaign.payment_mode === 'company' ? 'von Ihrer Firma übernommen' : `€ ${fmtPrice(campPriceNum)}`}
+      {campaign.payment_mode === 'company' ? 'von deiner Firma übernommen' : `€ ${fmtPrice(campPriceNum)}`}
     </>
   ) : isPromo && product.promotion_price ? (
     <>
@@ -319,7 +319,7 @@ function ProductCard({ product, onSelect, isFav, onToggleFav, isPromo, dimmed, c
           {dimmed ? (
             <span className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] text-amber-900 bg-amber-50/95 border border-amber-300/70 px-2 py-0.5 font-normal" style={{ letterSpacing: '0.02em' }}>
               <AlertTriangle size={11} strokeWidth={1.8} className="text-amber-600 flex-shrink-0" />
-              Passt nicht zu Ihren Maßen
+              Passt nicht zu deinen Maßen
             </span>
           ) : campaign ? (
             <span className="mt-1.5 inline-block text-[10px] text-white bg-stone-900/90 px-2 py-0.5 font-normal" style={{ letterSpacing: '0.05em' }}>
@@ -519,7 +519,7 @@ export default function ShoeCollection() {
   useSeo({
     titel: 'Custom Made Schuhe',
     beschreibung: 'Rahmengenähte Herrenschuhe nach Maß: Oxford, Derby, Loafer, Monk und Stiefel. '
-      + 'Leder, Farbe, Sohle und Innenfutter stellen Sie selbst zusammen, gefertigt für Ihren Fuß.',
+      + 'Leder, Farbe, Sohle und Innenfutter stellst du selbst zusammen, gefertigt für deinen Fuß.',
     pfad: '/collection',
   })
 
@@ -613,8 +613,8 @@ export default function ShoeCollection() {
           Custom Made
         </h1>
         <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-relaxed mt-3 max-w-md mx-auto">
-          Rahmengenähte Schuhe, nach Ihren Maßen gefertigt. Leder, Sohle und
-          Details bestimmen Sie.
+          Rahmengenähte Schuhe, nach deinen Maßen gefertigt. Leder, Sohle und
+          Details bestimmst du.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mt-5">
@@ -772,8 +772,8 @@ export default function ShoeCollection() {
               </p>
               <p className="text-[11px] text-white/60 font-light mt-0.5">
                 {activeCampaign.payment_mode === 'company'
-                  ? 'Ihr Schuh wird von Ihrer Firma übernommen.'
-                  : `${activeCampaign.discount_pct}% Firmenrabatt auf Ihren Custom-made Schuh.`}
+                  ? 'Dein Schuh wird von deiner Firma übernommen.'
+                  : `${activeCampaign.discount_pct}% Firmenrabatt auf deinen Custom-made Schuh.`}
                 {activeCampaign.allowed_shoe_ids?.length ? ' Auswahl auf die Aktionsmodelle beschränkt.' : ''}
               </p>
             </div>
@@ -942,26 +942,26 @@ export default function ShoeCollection() {
           schritte={[
             {
               titel: 'Modell wählen und konfigurieren',
-              text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Was Sie einstellen, wird im Hintergrund gespeichert, Sie können jederzeit unterbrechen und später weitermachen.',
+              text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Was du einstellst, wird im Hintergrund gespeichert, du kannst jederzeit unterbrechen und später weitermachen.',
             },
             {
               titel: 'Fußmaße angeben',
-              text: 'Zwei Maße genügen: Fußlänge und Ballenumfang, ±0,5 cm sind völlig in Ordnung. Daraus ermitteln wir Leisten und Größe. Eine Größentabelle brauchen Sie nicht, weil wir nicht raten.',
+              text: 'Zwei Maße genügen: Fußlänge und Ballenumfang, ±0,5 cm sind völlig in Ordnung. Daraus ermitteln wir Leisten und Größe. Eine Größentabelle brauchst du nicht, weil wir nicht raten.',
             },
             {
               titel: 'Bestellen und bezahlen',
-              text: 'Vor dem Abschluss steht Ihre vollständige Konfiguration noch einmal da, jede Farbe, jede Option, jedes Zubehör. Erst dann geht die Bestellung in die Fertigung.',
+              text: 'Vor dem Abschluss steht deine vollständige Konfiguration noch einmal da, jede Farbe, jede Option, jedes Zubehör. Erst dann geht die Bestellung in die Fertigung.',
             },
             {
               titel: 'Fertigung in der Manufaktur',
-              text: 'Über 200 Arbeitsschritte von Hand. Sie bekommen Nachricht, wenn die Fertigung beginnt und wenn Ihr Paar in die Endkontrolle geht.',
+              text: 'Über 200 Arbeitsschritte. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht.',
             },
             {
               titel: 'Endkontrolle und Versand',
               text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.',
             },
           ]}
-          fuss="Ein Custom Made Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen, zurückgeben lässt er sich deshalb nicht. Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für Sie. Gefällt es Ihnen schlicht nicht, erstatten wir aus Kulanz bis zur Hälfte des Kaufpreises; dasselbe gilt bei einer Stornierung nach Fertigungsbeginn. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung vollständig zurück. Die Einzelheiten stehen in den AGB."
+          fuss="Ein Custom Made Schuh entsteht für einen bestimmten Fuß und ist danach für niemanden sonst zu gebrauchen, zurückgeben lässt er sich deshalb nicht. Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für dich. Gefällt es dir schlicht nicht, erstatten wir aus Kulanz bis zur Hälfte des Kaufpreises; dasselbe gilt bei einer Stornierung nach Fertigungsbeginn. Zubehör ist davon unberührt und geht innerhalb von 14 Tagen nach Zustellung vollständig zurück. Die Einzelheiten stehen in den AGB."
         />
       </div>
     </div>

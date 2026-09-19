@@ -49,14 +49,14 @@ const WEITEN_NAME = { D: 'Normal', EE: 'Breit', EEE: 'Sehr breit' }
  */
 const SNEAKER_TEST = [
   { key: 'D',   frage: 'Samba oder Gazelle passen mir gut',          folge: 'Beide sind schmal geschnitten, wem sie passen, der hat keinen breiten Fuß.' },
-  { key: 'EE',  frage: 'Samba drückt seitlich, Air Force 1 sitzt gut', folge: 'Genau der Unterschied zwischen schmal und großzügig. Sie brauchen Platz am Ballen.' },
+  { key: 'EE',  frage: 'Samba drückt seitlich, Air Force 1 sitzt gut', folge: 'Genau der Unterschied zwischen schmal und großzügig. Du brauchst Platz am Ballen.' },
   { key: 'EEE', frage: 'Auch der Air Force 1 ist mir zu eng',          folge: 'Der gilt als einer der geräumigsten überhaupt. Dann ist es die weiteste Ausführung.' },
 ]
 
 const WEITEN_WAHL = [
-  { key: 'D',   titel: 'Normal',     kurz: 'Die meisten Füße', hinweis: 'Sie kaufen Schuhe von der Stange und es passt meistens.' },
-  { key: 'EE',  titel: 'Breit',      kurz: 'Drückt am Ballen', hinweis: 'Neue Schuhe drücken seitlich am Fußballen, obwohl die Länge stimmt. Oft kaufen Sie deshalb eine Nummer größer.' },
-  { key: 'EEE', titel: 'Sehr breit', kurz: 'Auch weite drücken', hinweis: 'Auch als weit ausgewiesene Schuhe sind Ihnen zu eng, oder Sie tragen üblicherweise Spezialweiten.' },
+  { key: 'D',   titel: 'Normal',     kurz: 'Die meisten Füße', hinweis: 'Du kaufst Schuhe von der Stange und es passt meistens.' },
+  { key: 'EE',  titel: 'Breit',      kurz: 'Drückt am Ballen', hinweis: 'Neue Schuhe drücken seitlich am Fußballen, obwohl die Länge stimmt. Oft kaufst du deshalb eine Nummer größer.' },
+  { key: 'EEE', titel: 'Sehr breit', kurz: 'Auch weite drücken', hinweis: 'Auch als weit ausgewiesene Schuhe sind dir zu eng, oder du trägst üblicherweise Spezialweiten.' },
 ]
 
 // Leisten-Zehenform als Draufsicht-Silhouette. Visualisiert die Unterschiede
@@ -703,7 +703,7 @@ export default function Customize() {
               <p className="text-[10px] text-black/40 font-light mb-2 leading-relaxed">
                 Die Fußlänge genügt uns für die Größe, ±0,5 cm sind völlig in Ordnung.
                 Kommt der Ballenumfang dazu, bestimmen wir auch die Weite und den Leisten;
-                ohne ihn fragen wir Sie danach.
+                ohne ihn fragen wir dich danach.
               </p>
               <div className="flex items-end gap-2">
                 <label className="flex-1">
@@ -1587,7 +1587,7 @@ export default function Customize() {
         <div className="bg-white w-full max-w-md p-6">
           <p className="text-[10px] uppercase tracking-[0.25em] text-black/30 mb-3">Unfertige Konfiguration</p>
           <p className="text-[15px] font-light text-black/80 leading-relaxed">
-            Sie haben diesen Schuh schon einmal zusammengestellt und nicht in den
+            Du hast diesen Schuh schon einmal zusammengestellt und nicht in den
             Warenkorb gelegt. Dort fortfahren?
           </p>
           <div className="mt-4 mb-5 border border-black/[0.08] px-4 py-3 space-y-1">
@@ -1927,7 +1927,7 @@ export default function Customize() {
                   : campaignForShoe && campaignPct >= userPct
                     ? <>{campaignForShoe.business_name || campaignForShoe.name} · {satzText(wirksamerPct)} % Firmenkondition</>
                     : <>{satzText(wirksamerPct)} % Sonderkondition</>}
-                {' '}, Sie sparen {formatPrice(totalDiscount)}
+                {' '}, du sparst {formatPrice(totalDiscount)}
               </p>
             )}
             <div className="flex items-center gap-4 mt-2 lg:mt-3">
@@ -1986,7 +1986,7 @@ export default function Customize() {
                   <thead>
                     <tr className="text-black/35" style={{ letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                       <th className="text-left font-normal py-1 pr-2"></th>
-                      <th className="text-right font-normal py-1 px-2">Ihre Maße</th>
+                      <th className="text-right font-normal py-1 px-2">Deine Maße</th>
                       <th className="text-right font-normal py-1 px-2">Leiste {selectedFit.last_label} {selectedFit.width}</th>
                       <th className="text-right font-normal py-1 pl-2">Abweichung</th>
                     </tr>
@@ -2012,8 +2012,8 @@ export default function Customize() {
             {/* Nomatch: gespeicherte Maße bleiben sichtbar (zur Kontrolle/Änderung) */}
             {fitState === 'nomatch' && footMeasurements?.foot_length_mm && (
               <p className="text-[10px] text-black/40 font-light mt-1.5 leading-relaxed">
-                Ihre gespeicherten Maße: {footMeasurements.foot_length_mm} mm Länge · {footMeasurements.ball_girth_mm} mm Ballenumfang.
-                {' '}Für dieses Modell liegt keine Standard-Leiste in Ihrem Bereich vor, wir fertigen es custom-made auf Bestellung.
+                Deine gespeicherten Maße: {footMeasurements.foot_length_mm} mm Länge · {footMeasurements.ball_girth_mm} mm Ballenumfang.
+                {' '}Für dieses Modell liegt keine Standard-Leiste in deinem Bereich vor, wir fertigen es custom-made auf Bestellung.
               </p>
             )}
 
@@ -2028,9 +2028,9 @@ export default function Customize() {
             <p className="text-[11px] lg:text-[12px] text-black/50 leading-[1.8]" style={{ letterSpacing: '0.02em' }}>
               {product.description || (
                 <>
-                  Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> wird in unserer Manufaktur von Hand gefertigt, mit über 200 präzisen Arbeitsschritten.
-                  Dank unserer <span className="text-black/70">3D-Fußvermessung</span> wird jedes Paar exakt auf Ihre Fußform zugeschnitten.
-                  Ausgesuchtes europäisches Leder, durchgenähte Konstruktion und eine ergonomische Passform, die Sie vom ersten Schritt an spüren.
+                  Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> entsteht einzeln auf Bestellung in unserer spanischen Manufaktur, in über 200 Arbeitsschritten.
+                  Dank unserer <span className="text-black/70">3D-Fußvermessung</span> wird jedes Paar exakt auf deine Fußform zugeschnitten.
+                  Ausgesuchtes europäisches Leder, durchgenähte Konstruktion und eine ergonomische Passform, die du vom ersten Schritt an spürst.
                 </>
               )}
             </p>
@@ -2333,7 +2333,7 @@ export default function Customize() {
                   Passender Gürtel
                 </p>
                 <p className="text-[11px] text-black/45 font-light leading-relaxed mb-3">
-                  Aus demselben Leder in derselben Farbe wie Ihre Schuhe, 3,5 cm breit.
+                  Aus demselben Leder in derselben Farbe wie deine Schuhe, 3,5 cm breit.
                   {' '}Zusammen mit dem Paar {' '}
                   <span className="text-black/70">
                     € {Number(guertelOptionen.preis_zum_paar).toLocaleString('de-DE')}
@@ -2387,7 +2387,7 @@ export default function Customize() {
                     </span>
                   </p>
                   <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2">
-                    Ohne Maße bauen wir nach der Tabelle. Wenn Sie uns Fußlänge und
+                    Ohne Maße bauen wir nach der Tabelle. Wenn du uns Fußlänge und
                     Ballenumfang nennen, wählen wir Leisten und Weite passend dazu, das
                     sitzt spürbar besser.
                   </p>
@@ -2415,8 +2415,8 @@ export default function Customize() {
                   ) : (
                     <>
                       <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
-                        Für die perfekte Passform messen wir Ihren Fuß statt zu raten.
-                        Geben Sie Fußlänge und Ballenumfang ein, die passende Schuhform
+                        Für die perfekte Passform messen wir deinen Fuß statt zu raten.
+                        Gib Fußlänge und Ballenumfang ein, die passende Schuhform
                         und Größe ermitteln wir automatisch.
                       </p>
                       <button onClick={() => openMeasEdit('passform')} className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0">
@@ -2444,7 +2444,7 @@ export default function Customize() {
                     <span>
                       {hatUmfang
                         ? 'Passform automatisch ermittelt, keine Größenwahl nötig.'
-                        : `Größe aus Ihrer Fußlänge: ${selectedFit?.size_label ? `EU ${String(selectedFit.size_label).replace('.', ',')}` : 'noch offen'}.`}
+                        : `Größe aus deiner Fußlänge: ${selectedFit?.size_label ? `EU ${String(selectedFit.size_label).replace('.', ',')}` : 'noch offen'}.`}
                     </span>
                   </div>
 
@@ -2455,7 +2455,7 @@ export default function Customize() {
                   {!hatUmfang && (
                     <div className="border border-black/10 p-3.5">
                       <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-0.5">
-                        Welche Weite brauchen Sie?
+                        Welche Weite brauchst du?
                       </p>
                       <p className="text-[10px] text-black/35 font-light mb-2">
                         Die Zahl ist der Ballenumfang, nicht die Breite.
@@ -2495,9 +2495,9 @@ export default function Customize() {
                         <p className="text-[10px] text-black/50 font-light leading-relaxed mt-2.5">
                           Der Ballenumfang ist einmal um den Fuß herum gemessen, an der
                           breitesten Stelle, dort wo der große Zeh ansetzt, nicht die Breite
-                          quer über den Fuß. Sie brauchen kein Maßband: Legen Sie einen
-                          Schnürsenkel um den Ballen, markieren Sie die Stelle, wo er sich
-                          trifft, und halten Sie ihn an ein Lineal.
+                          quer über den Fuß. Du brauchst kein Maßband: Leg einen
+                          Schnürsenkel um den Ballen, markier die Stelle, wo er sich
+                          trifft, und halt ihn an ein Lineal.
                         </p>
                       )}
                       <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2">
@@ -2509,7 +2509,7 @@ export default function Customize() {
                           beurteilen, die man getragen hat, dagegen jedem. */}
                       <div className="mt-3 pt-3 border-t border-black/[0.06]">
                         <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-2">
-                          Nicht sicher? Woran Sie es merken
+                          Nicht sicher? Woran du es merkst
                         </p>
                         <div className="space-y-1">
                           {SNEAKER_TEST.filter(t => WEITEN_WAHL.some(w => w.key === t.key)
@@ -2535,7 +2535,7 @@ export default function Customize() {
                         </p>
                       </div>
                       <p className="text-[10px] text-black/35 font-light leading-relaxed mt-2 pt-2 border-t border-black/[0.06]">
-                        Die Länge haben Sie gemessen, die Weite geschätzt. Wir merken uns das
+                        Die Länge hast du gemessen, die Weite geschätzt. Wir merken uns das
                         und fragen vor der Fertigung nach, wenn etwas unstimmig wirkt, der
                         Schuh entsteht ohnehin erst in den Wochen danach. Genauer wird es mit
                         dem gemessenen Ballenumfang.
@@ -2588,8 +2588,8 @@ export default function Customize() {
                 /* Transienter Fehler, KEINE Custom-Anfrage vorschnell anbieten */
                 <div className="border border-black/10 p-4">
                   <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
-                    Die Passform konnte gerade nicht geladen werden. Bitte versuchen
-                    Sie es noch einmal, Ihre gespeicherten Maße bleiben erhalten.
+                    Die Passform konnte gerade nicht geladen werden. Bitte versuch
+                    es noch einmal, deine gespeicherten Maße bleiben erhalten.
                   </p>
                   <button
                     onClick={() => setFitRetryKey(k => k + 1)}
@@ -2603,8 +2603,8 @@ export default function Customize() {
                 /* Maße vorhanden, aber kein Treffer, Custom-Anfrage */
                 <div className="border border-black/10 p-4">
                   <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
-                    Für Ihre Maße finden wir keine Standard-Passform. Wir fertigen
-                    diesen Schuh gerne custom-made für Sie an.
+                    Für deine Maße finden wir keine Standard-Passform. Wir fertigen
+                    diesen Schuh gerne custom-made für dich an.
                   </p>
                   <button
                     onClick={() => setCustomRequestOpen(true)}
@@ -2701,7 +2701,7 @@ export default function Customize() {
               }}
             >
               <div className="border border-black/8 p-4 mb-4">
-                <p className="text-[10px] text-black/40 mb-2.5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Ihre Konfiguration</p>
+                <p className="text-[10px] text-black/40 mb-2.5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Deine Konfiguration</p>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-black/50">Leder</span>
@@ -2869,7 +2869,7 @@ export default function Customize() {
                     ? 'Bitte den Gürtel noch zu Ende wählen, Form, Metall und Größe'
                     : !fitReady
                       ? 'Bitte zuerst die Passform ermitteln'
-                      : 'Handgefertigt · Kostenlose Lieferung'}
+                      : 'Rahmengenäht · Kostenlose Lieferung'}
               </p>
             </div>
           </div>
@@ -2967,7 +2967,7 @@ export default function Customize() {
               ? 'Bitte den Gürtel noch zu Ende wählen, Form, Metall und Größe'
               : !fitReady
                 ? 'Bitte zuerst die Passform ermitteln'
-                : 'Handgefertigt · Kostenlose Lieferung'}
+                : 'Rahmengenäht · Kostenlose Lieferung'}
         </p>
         </div>
       </div>
@@ -2988,11 +2988,11 @@ export default function Customize() {
           <div className="bg-white mx-4 w-full max-w-md p-7" onClick={e => e.stopPropagation()}>
             <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-3 font-light">Warenkorb</p>
             <p className="text-[16px] font-extralight text-black tracking-tight leading-snug mb-2">
-              Dieser Schuh befindet sich bereits in Ihrem Warenkorb
+              Dieser Schuh befindet sich bereits in deinem Warenkorb
             </p>
             <p className="text-[12px] text-black/35 font-light leading-relaxed mb-6">
               {product.name} in derselben Konfiguration liegt bereits im Warenkorb.
-              Möchten Sie nur das Zubehör hinzufügen oder den Schuh erneut?
+              Möchtest du nur das Zubehör hinzufügen oder den Schuh erneut?
             </p>
             <div className="flex gap-3">
               <button

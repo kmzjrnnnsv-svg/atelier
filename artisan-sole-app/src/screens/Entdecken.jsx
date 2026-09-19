@@ -18,6 +18,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ArrowRight, ArrowLeft, Check } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
+import { useSeo } from '../lib/seo'
 import { refAusUrl, refMerken, refLesen } from '../lib/affiliateCode'
 import { nameMerken, nameLesen, nameSaeubern } from '../lib/besucherName'
 
@@ -33,6 +34,13 @@ const ZUGABE_NAMEN = {
 const anrede = (name) => (name ? `${name}, ` : '')
 
 export default function Entdecken() {
+  useSeo({
+    titel: 'Wie ein Paar entsteht',
+    beschreibung: 'Rahmengenäht statt geklebt, einzeln gefertigt in einer spanischen '
+      + 'Manufaktur, in vier bis sechs Wochen. Was das für die Haltbarkeit deiner Schuhe bedeutet.',
+    pfad: '/entdecken',
+  })
+
   const navigate = useNavigate()
   const { search } = useLocation()
 
@@ -116,16 +124,16 @@ export default function Entdecken() {
         {/* ── 1 · Wer wir sind, und wie heißen Sie? ───────────────────────── */}
         {folie === 0 && (
           <>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-black/30">Schön, dass Sie da sind</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-black/30">Schön, dass du da bist</p>
             <h1 className="text-[27px] lg:text-[34px] font-extralight leading-[1.15] tracking-tight mt-4">
               Wir sind Artisan Sole, und wir lassen die Seele des Handwerks wieder aufleben.
             </h1>
             <p className="text-[14px] text-black/50 font-light leading-relaxed mt-5">
-              Das Paar, das Sie gerade in der Hand halten, ist kein Serienschuh. Wir nehmen uns
-              dafür ein paar Sätze Zeit, und würden Sie dabei gern beim Namen nennen.
+              Das Paar, das du gerade in der Hand hältst, ist kein Serienschuh. Wir nehmen uns
+              dafür ein paar Sätze Zeit, und würden dich dabei gern beim Namen nennen.
             </p>
             <form onSubmit={nameUebernehmen} className="mt-8">
-              <label className="block text-[10px] uppercase tracking-[0.18em] text-black/40 mb-2">Ihr Vorname</label>
+              <label className="block text-[10px] uppercase tracking-[0.18em] text-black/40 mb-2">Dein Vorname</label>
               <input
                 value={eingabe}
                 onChange={e => setEingabe(e.target.value)}
@@ -135,7 +143,7 @@ export default function Entdecken() {
                 className="w-full border-0 border-b border-black/20 focus:border-black outline-none py-2.5 text-[19px] font-light bg-transparent transition-colors"
               />
               <p className="text-[10px] text-black/30 mt-2 leading-relaxed">
-                Bleibt auf Ihrem Gerät, bis Sie den Tab schließen. Wir übertragen ihn nicht.
+                Bleibt auf deinem Gerät, bis du den Tab schließt. Wir übertragen ihn nicht.
               </p>
             </form>
             <div className="flex items-center gap-5 mt-8">
@@ -165,8 +173,8 @@ export default function Entdecken() {
               {name ? `${name}, dieses Paar gibt es noch nicht.` : 'Dieses Paar gibt es noch nicht.'}
             </h2>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-5">
-              Wir haben kein Lager, aus dem wir greifen. Jeder Schuh entsteht erst nach Ihrer
-              Bestellung, von Hand, in einer Manufaktur in Spanien, in vier bis sechs Wochen.
+              Wir haben kein Lager, aus dem wir greifen. Jeder Schuh entsteht erst nach deiner
+              Bestellung, einzeln, in einer Manufaktur in Spanien, in vier bis sechs Wochen.
             </p>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-4">
               Rahmengenäht statt geklebt: Sohle und Schaft sind über einen Lederstreifen
@@ -174,9 +182,9 @@ export default function Entdecken() {
               Ein geklebter Schuh wäre an dieser Stelle Abfall.
             </p>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-4">
-              Und weil er ohnehin erst für Sie gebaut wird, bestimmen Sie, wie er aussieht:
+              Und weil er ohnehin erst für dich gebaut wird, bestimmst du, wie er aussieht:
               Leder und Farbe, die Sohle, die Lochung, die Farbe des Fadens, auf Wunsch mit
-              Ihren Initialen im Schaft. Kein Aufpreis für eine Entscheidung, die vor der
+              deinen Initialen im Schaft. Kein Aufpreis für eine Entscheidung, die vor der
               Fertigung fällt.
             </p>
             <Knopf onClick={weiter} />
@@ -191,13 +199,13 @@ export default function Entdecken() {
               Ein Bett für den Fuß, kein Behälter.
             </h2>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-5">
-              {anrede(name)}Ihre Füße tragen Sie ein Leben lang. Ein zu enger Schuh drückt die
+              {anrede(name)}{name ? 'deine' : 'Deine'} Füße tragen dich ein Leben lang. Ein zu enger Schuh drückt die
               Zehen dauerhaft in eine Stellung, die sie nicht wieder verlassen; ein zu weiter
               lässt den Fuß arbeiten und scheuert. Beides merkt man erst nach Jahren.
             </p>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-4">
               Deshalb fragen wir nicht nach einer Größe, sondern nach Maßen: Länge, Ballenweite
-              und Rist getrennt. Daraus wird der Leisten, auf dem Ihr Paar entsteht.
+              und Rist getrennt. Daraus wird der Leisten, auf dem dein Paar entsteht.
             </p>
             <Knopf onClick={weiter} />
           </>
@@ -207,11 +215,11 @@ export default function Entdecken() {
         {folie === 3 && (
           <>
             <p className="text-[10px] uppercase tracking-[0.3em] text-black/30">
-              {laden ? `Ihr Vorteil bei ${laden}` : 'Ihr Vorteil'}
+              {laden ? `Dein Vorteil bei ${laden}` : 'Dein Vorteil'}
             </p>
             <h2 className="text-[26px] lg:text-[32px] font-extralight leading-[1.15] tracking-tight mt-4">
               {hatVorteil
-                ? (name ? `${name}, das gilt für Ihr erstes Paar.` : 'Das gilt für Ihr erstes Paar.')
+                ? (name ? `${name}, das gilt für dein erstes Paar.` : 'Das gilt für dein erstes Paar.')
                 : (name ? `${name}, sehen wir uns die Modelle an.` : 'Sehen wir uns die Modelle an.')}
             </h2>
 
@@ -222,10 +230,10 @@ export default function Entdecken() {
                     <Check size={15} strokeWidth={1.6} className="text-black/60 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-[15px] text-black">
-                        {String(vorteil.rabatt).replace('.', ',')} % auf Ihr erstes Paar
+                        {String(vorteil.rabatt).replace('.', ',')} % auf dein erstes Paar
                       </p>
                       <p className="text-[11px] text-black/40 font-light mt-0.5">
-                        Wird im Konfigurator abgezogen. Sie müssen nichts eingeben.
+                        Wird im Konfigurator abgezogen. Du musst nichts eingeben.
                         {vorteil.deckel > 0 && ` Höchstens € ${vorteil.deckel} je Paar.`}
                       </p>
                     </div>
@@ -239,7 +247,7 @@ export default function Entdecken() {
                         {ZUGABE_NAMEN[vorteil.gift] || 'Zugabe'}, kostenlos dazu
                       </p>
                       <p className="text-[11px] text-black/40 font-light mt-0.5">
-                        Liegt Ihrem ersten Paar bei.
+                        Liegt deinem ersten Paar bei.
                       </p>
                     </div>
                   </div>
@@ -248,8 +256,8 @@ export default function Entdecken() {
             )}
 
             <p className="text-[13px] text-black/45 font-light leading-relaxed mt-6">
-              Im Konfigurator wählen Sie Leder, Farbe, Sohle, Lochung und, wenn Sie mögen,
-              Ihre Initialen. Größe und Maße nehmen wir Schritt für Schritt mit Ihnen auf.
+              Im Konfigurator wählst du Leder, Farbe, Sohle, Lochung und, wenn du magst,
+              deine Initialen. Größe und Maße nehmen wir Schritt für Schritt mit dir auf.
             </p>
 
             <button

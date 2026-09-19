@@ -164,6 +164,6 @@ export const HAEUSER = [
     beispiele: 'Nike, adidas, New Balance',
     system: 'us',
     weiten: 'meist nur eine Weite, teils D und 2E',
-    hinweis: 'Nummeriert wird nach Brannock wie oben. Die Zentimeterzahl auf dem Karton ist aber die LEISTENLÄNGE, nicht Ihre Fußlänge, sie liegt gut einen Zentimeter darüber. Wer sie für seinen Fuß hält, bestellt eine Nummer zu klein.',
+    hinweis: 'Nummeriert wird nach Brannock wie oben. Die Zentimeterzahl auf dem Karton ist aber die LEISTENLÄNGE, nicht deine Fußlänge, sie liegt gut einen Zentimeter darüber. Wer sie für seinen Fuß hält, bestellt eine Nummer zu klein.',
   },
 ]

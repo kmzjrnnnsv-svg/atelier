@@ -1,10 +1,10 @@
 {
-  "name": "ARTISAN SOLE — Maßgeschneiderte Luxusschuhe",
+  "name": "ARTISAN SOLE — Rahmengenähte Schuhe nach Maß",
   "short_name": "Artisan Sole",
   "start_url": "/collection",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
   "icons": [
     { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
   ]

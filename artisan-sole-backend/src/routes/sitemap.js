@@ -54,6 +54,7 @@ const FESTE_SEITEN = [
   { pfad: '/',                    prio: '1.0', freq: 'weekly' },
   { pfad: '/collection',          prio: '0.9', freq: 'weekly' },
   { pfad: '/accessories',         prio: '0.6', freq: 'monthly' },
+  { pfad: '/entdecken',           prio: '0.5', freq: 'monthly' },
   { pfad: '/help',                prio: '0.4', freq: 'monthly' },
   { pfad: '/legal/agb',           prio: '0.2', freq: 'yearly' },
   { pfad: '/legal/datenschutz',   prio: '0.2', freq: 'yearly' },

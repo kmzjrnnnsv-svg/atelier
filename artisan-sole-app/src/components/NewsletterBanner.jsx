@@ -86,10 +86,10 @@ export default function NewsletterBanner() {
         method: 'POST',
         body: JSON.stringify({ email: email.trim(), quelle: `banner:${pathname}` }),
       })
-      setOk(antwort?.message || 'Bitte sehen Sie in Ihr Postfach.')
+      setOk(antwort?.message || 'Bitte sieh in dein Postfach.')
       try { localStorage.setItem(EINGETRAGEN, '1') } catch { /* egal */ }
     } catch (err) {
-      setFehler(err?.error || 'Das hat gerade nicht geklappt. Bitte versuchen Sie es später erneut.')
+      setFehler(err?.error || 'Das hat gerade nicht geklappt. Bitte versuch es später erneut.')
     } finally {
       setLaedt(false)
     }
@@ -132,22 +132,22 @@ export default function NewsletterBanner() {
               <Check size={16} strokeWidth={1.4} className="text-black/70" />
             </div>
             <p className="text-[15px] font-extralight text-black leading-[1.4] mb-2">
-              Sehen Sie bitte in Ihr Postfach.
+              Sieh bitte in dein Postfach.
             </p>
             <p className="text-[12px] text-black/45 font-light leading-[1.75]">
-              {ok} Erst nach Ihrer Bestätigung schicken wir Ihnen den Gutschein —
+              {ok} Erst nach deiner Bestätigung schicken wir dir den Gutschein —
               so kommt niemand ungefragt auf unsere Liste.
             </p>
           </div>
         ) : (
           <form onSubmit={absenden} className="px-6 pb-6 pt-2">
             <p className="text-[22px] font-extralight text-black leading-[1.2] tracking-tight">
-              10 % auf Ihr erstes Paar
+              10 % auf dein erstes Paar
             </p>
             <p className="text-[12px] text-black/45 font-light leading-[1.75] mt-2 mb-4">
-              Tragen Sie sich in unseren Newsletter ein. Sie bekommen eine E-Mail
-              zur Bestätigung, danach Ihren persönlichen Code — einlösbar beim
-              Abschluss Ihrer Bestellung.
+              Trag dich in unseren Newsletter ein. Du bekommst eine E-Mail
+              zur Bestätigung, danach deinen persönlichen Code — einlösbar beim
+              Abschluss deiner Bestellung.
             </p>
 
             <input

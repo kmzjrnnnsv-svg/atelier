@@ -95,14 +95,14 @@ export default function GuertelDialog({ optionen, materialien = [], farben = [],
 
           {vorlagen === null ? (
             <div className="flex items-center gap-2 text-[12px] text-black/40 py-6">
-              <Loader2 size={14} className="animate-spin" /> Ihre Bestellungen werden gelesen …
+              <Loader2 size={14} className="animate-spin" /> Deine Bestellungen werden gelesen …
             </div>
           ) : (
             <>
               {vorlagen.length > 0 && (
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.18em] text-black/45 mb-2.5">
-                    Passend zu einem Ihrer Paare
+                    Passend zu einem deiner Paare
                   </p>
                   <div className="space-y-2">
                     {vorlagen.map(v => {
@@ -142,7 +142,7 @@ export default function GuertelDialog({ optionen, materialien = [], farben = [],
                   vorgabe={frei ? {} : vorgabe}
                   lederListe={materialien}
                   farbListe={farben}
-                  woher={`wie Ihr ${vorgabe.schuh || 'Paar'}`}
+                  woher={`wie dein ${vorgabe.schuh || 'Paar'}`}
                   onChange={setCfg}
                 />
               )}

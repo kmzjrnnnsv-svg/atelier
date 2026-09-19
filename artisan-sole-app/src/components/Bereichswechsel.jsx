@@ -78,7 +78,7 @@ export default function Bereichswechsel({ kompakt = false, oeffne, className = '
 
   return (
     <div className={className}>
-      <p className="text-[10px] uppercase tracking-[0.25em] text-black/25 mb-3">Ihre Bereiche</p>
+      <p className="text-[10px] uppercase tracking-[0.25em] text-black/25 mb-3">Deine Bereiche</p>
       {bereiche.map(b => {
         const Symbol = SYMBOL[b.schluessel] || ArrowUpRight
         const offen = b.schluessel === hier?.schluessel
@@ -96,7 +96,7 @@ export default function Bereichswechsel({ kompakt = false, oeffne, className = '
             <span className="min-w-0">
               <span className={`block text-[14px] font-light transition-colors ${offen ? 'text-black' : 'text-black/50 group-hover:text-black'}`}>
                 {b.name}
-                {offen && <span className="text-[11px] text-black/30 ml-2">Sie sind hier</span>}
+                {offen && <span className="text-[11px] text-black/30 ml-2">Du bist hier</span>}
               </span>
               <span className="block text-[11px] text-black/30 font-light mt-0.5 leading-snug">{b.hinweis}</span>
             </span>

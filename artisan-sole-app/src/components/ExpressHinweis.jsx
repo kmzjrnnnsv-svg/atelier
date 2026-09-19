@@ -32,7 +32,7 @@ export default function ExpressHinweis({ wochen = 2, aufpreis = 100, offenGruppe
       </div>
 
       <p className="text-[15px] font-light text-black leading-snug">
-        In rund {wochen} Wochen bei Ihnen statt in vier bis sechs.
+        In rund {wochen} Wochen bei dir statt in vier bis sechs.
       </p>
 
       <div className="mt-4 space-y-3">
@@ -47,18 +47,18 @@ export default function ExpressHinweis({ wochen = 2, aufpreis = 100, offenGruppe
         <div className="flex gap-3">
           <Layers size={14} strokeWidth={1.5} className="text-black/30 flex-shrink-0 mt-0.5" />
           <p className="text-[12px] text-black/55 font-light leading-relaxed">
-            <strong className="font-normal text-black/75">Dafür haben Sie weniger zu entscheiden.</strong>{' '}
+            <strong className="font-normal text-black/75">Dafür hast du weniger zu entscheiden.</strong>{' '}
             {offenGruppen > 0
-              ? 'Was an diesem Modell wählbar bleibt, sehen Sie unten, alles Übrige ist durch das vorbereitete Bauteil festgelegt.'
-              : 'Leder, Farbe und Ausführung sind durch die vorbereiteten Bauteile festgelegt. Sie wählen Größe und Weite.'}
+              ? 'Was an diesem Modell wählbar bleibt, siehst du unten, alles Übrige ist durch das vorbereitete Bauteil festgelegt.'
+              : 'Leder, Farbe und Ausführung sind durch die vorbereiteten Bauteile festgelegt. Du wählst Größe und Weite.'}
             {' '}Ein Paar aus der Maßanfertigung ist individueller; dieses hier ist schneller.
           </p>
         </div>
       </div>
 
       <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 pt-4 border-t border-black/[0.07]">
-        Gezwickt und ausgearbeitet wird trotzdem auf dem Leisten, der für Ihren Fuß bestimmt
-        ist, nach Ihren Maßen, in Ihrer Größe und Weite. Es bleibt eine Einzelanfertigung
+        Gezwickt und ausgearbeitet wird trotzdem auf dem Leisten, der für deinen Fuß bestimmt
+        ist, nach deinen Maßen, in deiner Größe und Weite. Es bleibt eine Einzelanfertigung
         und ist deshalb ebenso wenig rückgabefähig wie ein Paar aus der Maßanfertigung.
         {aufpreis > 0 && ` Die kürzere Wartezeit ist mit ${aufpreis} € im Preis enthalten.`}
       </p>

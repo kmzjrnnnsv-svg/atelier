@@ -7,8 +7,16 @@ import { useNavigate } from 'react-router-dom'
 import { HelpCircle, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
+import { useSeo } from '../lib/seo'
 
 export default function HelpSupport() {
+  useSeo({
+    titel: 'Hilfe',
+    beschreibung: 'Antworten zu Größen und Passform, Lieferzeit, Rückgabe und Pflege '
+      + 'rahmengenähter Schuhe nach Maß.',
+    pfad: '/help',
+  })
+
   const navigate = useNavigate()
   const { faqs, fetchFaqs } = useStore()
   const [activeFilter, setActiveFilter] = useState('Alle')
