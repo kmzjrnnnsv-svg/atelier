@@ -22,7 +22,7 @@
  *   4  Das Handwerk    Warum hält das länger als Geklebtes?
  *   5  Das Leder       Woraus besteht es?
  *   6  In eigener Sache Was behaupten wir NICHT?
- *   7  Der Ablauf      Was passiert, wenn ich bestelle?
+ *   7  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
  *   8  Der Anfang      Wo fange ich an?
  *
  * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
@@ -73,7 +73,7 @@
  */
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Footprints, Ruler, Hammer, CalendarDays } from 'lucide-react'
+import { ArrowRight, Footprints, Ruler, Hammer, CalendarDays, Check } from 'lucide-react'
 import useStore from '../store/store'
 import { useSeo } from '../lib/seo'
 import { shoePath } from '../lib/shoePath'
@@ -83,7 +83,6 @@ import { resolveMediaUrl } from '../lib/mediaUrl'
 import { SHOES, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import Enthuellen from '../components/Enthuellen'
 import RahmenSchnitt from '../components/RahmenSchnitt'
-import Ablauf from '../components/Ablauf'
 
 /* ── Bausteine ──────────────────────────────────────────────────────────── */
 
@@ -148,6 +147,8 @@ const LEDER = [
 export default function TestHomepage() {
   const navigate = useNavigate()
   const shoes = useStore(s => s.shoes)
+  const shoeMaterials = useStore(s => s.shoeMaterials)
+  const shoeColors = useStore(s => s.shoeColors)
   const katalogStatus = useStore(s => s.katalogStatus)
   const initStore = useStore(s => s.initStore)
 
@@ -173,15 +174,26 @@ export default function TestHomepage() {
    * bevor er das Handwerk verstanden hat.
    */
   const kapitel = useMemo(() => {
-    // Gleiche Geschichte nur einmal. Die Express-Fassungen tragen denselben
-    // Beschreibungstext wie ihr Grundmodell; standen beide hier, läse man
-    // zwei Kapitel weit denselben Absatz und hielte die Seite für kaputt.
-    const gesehen = new Set()
+    // Höchstens eines je Machart, und jede Geschichte nur einmal.
+    //
+    // Ohne die erste Regel standen hier vier Loafer: Der Katalog führt zehn
+    // davon, und sie kommen zuerst. Vier Kapitel, die sich in einer
+    // Schnallenform unterscheiden, zeigen keine Bandbreite — sie zeigen,
+    // dass niemand ausgewählt hat.
+    //
+    // Die zweite fängt die Express-Fassungen: Sie tragen denselben
+    // Beschreibungstext wie ihr Grundmodell, und zwei Kapitel mit demselben
+    // Absatz lassen eine Seite kaputt wirken.
+    const machartGesehen = new Set()
+    const textGesehen = new Set()
     const treffer = []
     for (const s of shoes) {
       const text = String(s.description || '').trim()
-      if (!s.image || text.length < 80 || gesehen.has(text)) continue
-      gesehen.add(text)
+      const machart = String(s.category || '').toUpperCase()
+      if (!s.image || text.length < 80) continue
+      if (textGesehen.has(text) || machartGesehen.has(machart)) continue
+      machartGesehen.add(machart)
+      textGesehen.add(text)
       treffer.push(s)
       if (treffer.length === 4) break
     }
@@ -198,6 +210,75 @@ export default function TestHomepage() {
     const preise = shoes.map(s => preisAlsZahl(s.price)).filter(p => p > 0)
     return preise.length ? Math.min(...preise) : null
   }, [shoes])
+
+  /**
+   * Die sechs Stationen des Wegs.
+   *
+   * Reihenfolge und Inhalt folgen dem Konfigurator: erst Leder, dann Farbe,
+   * dann die Optionsgruppen, dann die Passform, dann die Kasse (siehe
+   * `sichtbareGruppen` in Customize.jsx). Wer hier eine Station erfindet,
+   * setzt eine Erwartung, die der Laden nicht einlöst.
+   *
+   * Die Zahlen kommen aus dem Katalog und nicht aus einer gepflegten Zeile.
+   * Solange er lädt, stehen sie noch nicht fest — dann entfällt der Beleg,
+   * statt eine 0 zu zeigen.
+   */
+  const stationen = useMemo(() => {
+    const leder = shoeMaterials.filter(m => m.available !== 0 && m.available !== false)
+    // Nach Farbwert eindeutig: Der Katalog führt „Schwarz" und „Black", beide
+    // auf #000000. Zwei gleiche Punkte nebeneinander sehen nach einem Fehler
+    // aus, nicht nach Auswahl.
+    const farbtoene = [...new Map(
+      shoeColors
+        .filter(c => (c.available !== 0 && c.available !== false) && c.hex)
+        .map(c => [String(c.hex).toLowerCase(), c.hex]),
+    ).values()].slice(0, 16)
+
+    return [
+      {
+        titel: 'Das Modell',
+        text: 'Die Form zuerst, denn sie entscheidet über alles Weitere: Welche Leder, '
+            + 'welche Sohlen und welche Details zur Wahl stehen, hängt an der Machart.',
+        schlagworte: ['Oxford', 'Derby', 'Monk', 'Loafer', 'Boot', 'Sneaker'],
+        hinweis: shoes.length ? `${shoes.length} Modelle im Katalog.` : null,
+      },
+      {
+        titel: 'Das Leder',
+        text: 'Kalbsleder, Cordovan, Nubuk, Velours, Lackleder. Es bestimmt, wie das '
+            + 'Paar aussieht, wie es altert und was es kostet.',
+        hinweis: leder.length
+          ? `${leder.length} Leder im Katalog, je nach Modell eine Auswahl daraus.`
+          : null,
+      },
+      {
+        titel: 'Die Farbe',
+        text: 'Zu jedem Leder die Töne, die es in dieser Gerbung gibt. Dieselbe Farbe '
+            + 'fällt auf Velours anders aus als auf Box Calf — deshalb hängt die Auswahl '
+            + 'am Leder und nicht am Modell.',
+        farben: farbtoene.length ? farbtoene : null,
+        hinweis: farbtoene.length ? `${farbtoene.length} Töne, hier ohne Namen.` : null,
+      },
+      {
+        titel: 'Sohle, Rahmen und Details',
+        text: 'Ab hier wird es fein. Jeder Schritt zeigt sofort, was er am Preis ändert, '
+            + 'und keiner ist vorausgewählt — was dasteht, hast du gewählt.',
+        schlagworte: ['Sohlen-Art', 'Rahmen', 'Nahtfarbe', 'Sohlenrand', 'Laufsohle', 'Innenfutter', 'Zehenkappe'],
+        hinweis: 'Welche Schritte erscheinen, hängt vom Modell ab.',
+      },
+      {
+        titel: 'Deine Maße',
+        text: 'Fußlänge und Ballenumfang, mehr nicht. Daraus bestimmen wir Leisten, '
+            + 'Größe und Weite. Eine Größentabelle brauchst du nicht, weil wir nicht raten.',
+        hinweis: '±0,5 cm genügen. Ein Schnürsenkel und ein Lineal reichen zum Messen.',
+      },
+      {
+        titel: 'Prüfen und bestellen',
+        text: 'Vor dem Abschluss steht deine vollständige Zusammenstellung noch einmal da, '
+            + 'jede Farbe, jede Option, jedes Zubehör. Erst dieser Klick ist verbindlich.',
+        hinweis: 'Bis hierher kostet nichts und verpflichtet nichts.',
+      },
+    ]
+  }, [shoes.length, shoeMaterials, shoeColors])
 
   const zurKollektion = () => navigate('/collection')
 
@@ -295,16 +376,40 @@ export default function TestHomepage() {
       </section>
 
       {/* ══ 3 · Die Modelle ═══════════════════════════════════════════════
-          Jedes mit seiner eigenen Geschichte, abwechselnd links und rechts.
-          Der Text kommt aus dem Katalog — er ist für dieses eine Modell
-          geschrieben und sagt mehr als jede Zeile, die hier stünde. */}
-      <section className="py-14 lg:py-24">
-        <div className="px-5 lg:px-16 max-w-5xl mx-auto mb-12 lg:mb-20">
+          Kapitel, keine Kacheln. Jedes Modell bekommt eine ganze Fläche: die
+          Aufnahme bis an den Seitenrand, daneben die Geschichte, die im
+          Katalog für genau dieses Modell steht, und darunter die Angaben,
+          die vor dem Klick zählen.
+
+          Die erste Fassung setzte Bild und Text in zwei gleich breite
+          Spalten mit Rand ringsum. Das sah aufgeräumt aus und wirkte leer:
+          Ein Foto mit Luft an allen vier Seiten ist eine Abbildung, eines
+          bis an die Kante ist eine Fläche, in der man steht. Dazu kommt der
+          Wechsel des Grundes — vier weiße Abschnitte hintereinander haben
+          keinen Takt.
+
+          Die Angaben unter der Geschichte stammen ausnahmslos aus dem
+          Katalog. Was dort nicht steht, steht auch hier nicht: keine
+          Machart je Modell, denn ein Mokassin ist nicht rahmengenäht, und
+          eine Zeile, die das behauptete, wäre an der einen Stelle falsch,
+          an der es jemand nachprüfen kann. */}
+      <section>
+        <div className="px-5 lg:px-16 py-14 lg:py-24 max-w-3xl">
           <Enthuellen>
             <Kapitelmarke>Die Modelle</Kapitelmarke>
-            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3 max-w-2xl">
+            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3">
               Jede Form hat einen Grund.<br className="hidden sm:block" /> Meist einen älteren als wir.
             </h2>
+          </Enthuellen>
+          <Enthuellen verzoegerung={120}>
+            <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
+              Oxford, Derby, Monk, Chelsea: Diese Formen sind älter als jedes Haus, das
+              sie heute verkauft. Keine ist als Entwurf entstanden, jede aus einer
+              Notwendigkeit — die geschlossene Schnürung für die Strenge der Etikette,
+              die offene für den kräftigen Spann, der Riemen für den Steigbügel, der
+              Gummizug für den schnellen Aufbruch. Wer weiß, wofür eine Form gemacht
+              wurde, wählt nicht mehr nach Geschmack allein.
+            </p>
           </Enthuellen>
         </div>
 
@@ -325,60 +430,122 @@ export default function TestHomepage() {
             </button>
           </div>
         ) : (
-          <div className="space-y-16 lg:space-y-28">
+          <div>
             {kapitel.map((schuh, i) => {
-              const linksBild = i % 2 === 0
+              const bildLinks = i % 2 === 0
+              const hell = i % 2 === 1
+              const nummer = String(i + 1).padStart(2, '0')
+              const oeffnen = () => navigate(shoePath(schuh))
+
               return (
-                <article key={schuh.id} className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-16 px-5 lg:px-16">
+                <article
+                  key={schuh.id}
+                  className={`lg:flex lg:items-stretch lg:min-h-[640px] ${
+                    bildLinks ? '' : 'lg:flex-row-reverse'
+                  } ${hell ? 'bg-[#F5F3F0]' : 'bg-white'}`}
+                >
+                  {/* ── Die Aufnahme, bis an den Seitenrand ────────────── */}
                   <Enthuellen
-                    richtung={linksBild ? 'links' : 'rechts'}
-                    className={linksBild ? '' : 'lg:order-2'}
+                    richtung={bildLinks ? 'links' : 'rechts'}
+                    className="lg:w-[56%] relative"
                   >
                     <button
                       type="button"
-                      onClick={() => navigate(shoePath(schuh))}
-                      className="group block w-full bg-transparent border-0 p-0 text-left"
+                      onClick={oeffnen}
+                      className="group block w-full h-full bg-transparent border-0 p-0 text-left"
                       aria-label={`${schuh.name} ansehen und konfigurieren`}
                     >
-                      <div className="aspect-[5/4] lg:aspect-[4/5] overflow-hidden bg-[#EDEAE3]">
+                      <div className="relative aspect-[4/3] lg:aspect-auto lg:h-full overflow-hidden bg-[#EDEAE3]">
                         <img
                           src={resolveMediaUrl(schuh.image)}
-                          alt={`${schuh.name}, rahmengenäht, nach Maß gefertigt`}
+                          alt={`${schuh.name}, nach Maß gefertigt`}
                           loading="lazy"
-                          className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.05]"
                         />
+                        {/* Hier stand die Kapitelnummer auf dem Bild. Sie ist
+                            wieder weg: Weiß auf einer hellen Produktaufnahme
+                            ist nicht zu lesen, und daneben steht sie ohnehin
+                            schon in der Zeile „01 — Loafer". */}
+                        {schuh.tag && (
+                          <span
+                            className="absolute top-5 right-5 lg:top-8 lg:right-8 text-[9px] uppercase text-black bg-white/90 px-2.5 py-1"
+                            style={{ letterSpacing: '0.2em' }}
+                          >
+                            {schuh.tag}
+                          </span>
+                        )}
                       </div>
                     </button>
                   </Enthuellen>
 
+                  {/* ── Die Geschichte ────────────────────────────────── */}
                   <Enthuellen
-                    verzoegerung={120}
-                    className={`mt-7 lg:mt-0 ${linksBild ? '' : 'lg:order-1'}`}
+                    verzoegerung={140}
+                    className="lg:w-[44%] flex items-center px-5 lg:px-14 xl:px-20 py-11 lg:py-20"
                   >
-                    <Kapitelmarke>
-                      {String(schuh.category || 'Custom Made').replace(/_/g, ' ')}
-                      {schuh.material ? ` · ${schuh.material}` : ''}
-                    </Kapitelmarke>
-                    <h3 className="text-[24px] lg:text-[34px] font-extralight leading-[1.1] tracking-tight mt-3">
-                      {schuh.name}
-                    </h3>
-                    <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.85] mt-5">
-                      {schuh.description}
-                    </p>
+                    <div className="w-full max-w-md">
+                      <Kapitelmarke>
+                        {`${nummer} — ${String(schuh.category || 'Custom Made').replace(/_/g, ' ')}`}
+                      </Kapitelmarke>
 
-                    <div className="flex items-center gap-6 mt-7 pt-6 border-t border-black/[0.08]">
-                      <div>
-                        <p className="text-[9px] uppercase tracking-[0.2em] text-black/30">Ab</p>
-                        <p className="text-[15px] text-black font-light mt-1">{schuh.price || 'auf Anfrage'}</p>
-                      </div>
+                      <h3 className="text-[26px] lg:text-[38px] font-extralight leading-[1.08] tracking-tight mt-3">
+                        {schuh.name}
+                      </h3>
+
+                      <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.9] mt-6">
+                        {schuh.description}
+                      </p>
+
+                      {/* ── Die Angaben ──────────────────────────────────
+                          Vier Zeilen, alle aus dem Katalog. Eine Zeile ohne
+                          Wert entfällt, statt „—" zu zeigen: Ein leeres Feld
+                          in einer Aufstellung sieht nach einem Fehler aus. */}
+                      <dl className="mt-8 border-t border-black/[0.09]">
+                        {schuh.material && (
+                          <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
+                            <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Leder</dt>
+                            <dd className="text-[13px] text-black/70 font-light">{schuh.material}</dd>
+                          </div>
+                        )}
+                        {schuh.color && (
+                          <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
+                            <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Grundton</dt>
+                            <dd className="flex items-center gap-2.5 text-[13px] text-black/70 font-light">
+                              <span
+                                className="inline-block w-3.5 h-3.5 rounded-full border border-black/15"
+                                style={{ background: schuh.color }}
+                                aria-hidden="true"
+                              />
+                              im Konfigurator wählbar
+                            </dd>
+                          </div>
+                        )}
+                        <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
+                          <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Fertigung</dt>
+                          <dd className="text-[13px] text-black/70 font-light">
+                            {Number(schuh.express) === 1
+                              ? `rund ${schuh.express_weeks || 2} Wochen`
+                              : 'vier bis sechs Wochen'}
+                          </dd>
+                        </div>
+                        <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
+                          <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Ab</dt>
+                          <dd className="text-[13px] text-black font-light">{schuh.price || 'auf Anfrage'}</dd>
+                        </div>
+                      </dl>
+
                       <button
                         type="button"
-                        onClick={() => navigate(shoePath(schuh))}
-                        className="ml-auto bg-transparent border border-black/15 text-black/70 px-7 h-11 text-[11px] uppercase flex items-center gap-2 hover:border-black/45 hover:text-black transition-colors"
-                        style={{ letterSpacing: '0.16em' }}
+                        onClick={oeffnen}
+                        className="group mt-8 bg-black text-white border-0 px-8 h-12 text-[11px] uppercase inline-flex items-center gap-3 hover:bg-black/85 transition-colors"
+                        style={{ letterSpacing: '0.18em' }}
                       >
                         Konfigurieren
-                        <ArrowRight size={14} strokeWidth={1.5} />
+                        <ArrowRight
+                          size={15}
+                          strokeWidth={1.5}
+                          className="transition-transform duration-500 group-hover:translate-x-1"
+                        />
                       </button>
                     </div>
                   </Enthuellen>
@@ -561,29 +728,131 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 7 · Der Ablauf ════════════════════════════════════════════════
-          Dieselbe Darstellung wie unter der Kollektion und im Firmenbereich.
-          Eine eigene Gestaltung nur hier hieße, dieselbe Erklärung an der
-          vierten Stelle anders aussehen zu lassen. */}
+      {/* ══ 7 · Der Weg ═══════════════════════════════════════════════════
+          Die Frage, die nach allem Vorherigen noch offen ist: „Und wie läuft
+          das jetzt ab?" Sie stand bisher als vierstufige Aufzählung da —
+          dieselbe Darstellung wie unter der Kollektion und im Firmenbereich,
+          und für diese Seite zu wenig.
+
+          Denn hier ist der Weg nicht eine Nebenauskunft, sondern die
+          Handlung: Wer 1.300 Euro ausgibt, will vorher wissen, wie viele
+          Entscheidungen auf ihn zukommen und an welcher Stelle es
+          verbindlich wird. Deshalb eine eigene Darstellung — eine
+          durchgehende Linie mit sechs Stationen und einem Ziel. Die
+          gemeinsame Ablauf-Darstellung bleibt, wo sie hingehört: an den
+          drei anderen Stellen, wo derselbe Vorgang nur erklärt und nicht
+          erzählt wird.
+
+          Die Stationen sind die echten Schritte des Konfigurators, in
+          seiner Reihenfolge: erst Leder, dann Farbe, dann die Optionsgruppen
+          (siehe sichtbareGruppen in Customize.jsx), dann die Passform, dann
+          die Kasse. Die Zahlen darin kommen aus dem Katalog und nicht aus
+          einer gepflegten Zeile — ein Leder mehr im CMS, und hier steht es. */}
       <section className="px-5 lg:px-16 py-16 lg:py-28">
-        <Enthuellen>
-          <Ablauf
-            titel="Vom Klick zum Paar"
-            intro="Vier Schritte, und du weißt nach jedem, woran du bist."
-            breite="max-w-2xl"
-            schritte={[
-              { titel: 'Modell und Ausführung',
-                text: 'Leder, Farbe, Sohle, Absatz, Innenfutter und die Details. Jede Änderung ist sofort am Preis zu sehen. Unterbrechen und später weitermachen geht, der Stand bleibt gespeichert.' },
-              { titel: 'Maße statt Größe',
-                text: 'Fußlänge und Ballenumfang, ±0,5 cm genügen. Daraus ermitteln wir Leisten und Größe. Eine Größentabelle brauchst du nicht, weil wir nicht raten.' },
-              { titel: 'Fertigung',
-                text: 'Nach Zahlungseingang geht die Bestellung in die Manufaktur. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht.' },
-              { titel: 'Endkontrolle und Versand',
-                text: 'Wir prüfen jedes Paar einzeln, bevor es das Haus verlässt. Mit dem Versand kommt die Sendungsverfolgung.' },
-            ]}
-            fuss="Vier bis sechs Wochen ab Zahlungseingang. Versand innerhalb Deutschlands ist inbegriffen. Ein Schuh für einen bestimmten Fuß lässt sich nicht zurückgeben — ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für dich. Die Einzelheiten stehen in den AGB."
-          />
-        </Enthuellen>
+        <div className="max-w-3xl mx-auto">
+          <Enthuellen>
+            <Kapitelmarke>Der Weg</Kapitelmarke>
+            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3">
+              Sechs Entscheidungen,<br className="hidden sm:block" /> dann gehört er dir.
+            </h2>
+          </Enthuellen>
+          <Enthuellen verzoegerung={120}>
+            <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
+              Keine davon musst du auf einmal treffen. Der Konfigurator merkt sich
+              jeden Stand, und verbindlich wird nichts davon bis zur letzten Station.
+            </p>
+          </Enthuellen>
+
+          <ol className="mt-12 lg:mt-16">
+            {stationen.map((st, i) => (
+              <Enthuellen key={st.titel} verzoegerung={Math.min(i, 5) * 70}>
+                <li className="relative flex gap-5 lg:gap-8 pb-10 lg:pb-12">
+                  {/* Die Linie zwischen den Stationen.
+                      Sie hängt am <li> und nicht an der Marke: Die Marke ist
+                      36 Pixel hoch, und eine Linie, die sich daran ausrichtet,
+                      hört 36 Pixel weiter unten auf — sie endete im Leeren,
+                      statt die nächste Station zu erreichen. 18 Pixel ist die
+                      Mitte der Marke, die als erstes Kind am linken Rand
+                      steht. */}
+                  <span
+                    className="absolute left-[18px] top-9 bottom-0 w-px bg-black/[0.12]"
+                    aria-hidden="true"
+                  />
+                  <div className="relative shrink-0">
+                    <span className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full border border-black/15 bg-white text-[10px] text-black/55"
+                          style={{ letterSpacing: '0.12em' }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+
+                  <div className="pt-1 min-w-0">
+                    <p className="text-[15px] lg:text-[17px] text-black font-light leading-snug">{st.titel}</p>
+                    <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
+                      {st.text}
+                    </p>
+
+                    {/* Der Beleg zur Station: echte Farbtöne aus dem Katalog,
+                        die Namen der Optionsgruppen, eine Zahl. Eine
+                        Aufzählung ohne Beleg ist eine Behauptung. */}
+                    {st.farben && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-4">
+                        {st.farben.map(hex => (
+                          <span
+                            key={hex}
+                            className="inline-block w-5 h-5 rounded-full border border-black/10"
+                            style={{ background: hex }}
+                            aria-hidden="true"
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {st.schlagworte && (
+                      <div className="flex flex-wrap gap-1.5 mt-4">
+                        {st.schlagworte.map(w => (
+                          <span
+                            key={w}
+                            className="text-[10px] uppercase tracking-[0.14em] text-black/45 border border-black/[0.12] px-2.5 py-1"
+                          >
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {st.hinweis && (
+                      <p className="text-[11px] text-black/35 font-light mt-3">{st.hinweis}</p>
+                    )}
+                  </div>
+                </li>
+              </Enthuellen>
+            ))}
+
+            {/* ── Das Ziel ──────────────────────────────────────────────
+                Gefüllte Marke statt Umriss, und keine Linie darunter: Hier
+                endet der Weg, und das soll man sehen, ohne es zu lesen. */}
+            <Enthuellen verzoegerung={140}>
+              <li className="relative flex gap-5 lg:gap-8">
+                <span className="shrink-0 relative z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black text-white" aria-hidden="true">
+                  <Check size={15} strokeWidth={1.8} />
+                </span>
+                <div className="pt-1">
+                  <p className="text-[17px] lg:text-[20px] text-black font-light leading-snug">Dein Paar</p>
+                  <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
+                    Vier bis sechs Wochen nach Zahlungseingang, einzeln gefertigt in
+                    einer spanischen Manufaktur. Du bekommst Nachricht, wenn die
+                    Fertigung beginnt, wenn dein Paar in die Endkontrolle geht und
+                    wenn es das Haus verlässt. Der Versand innerhalb Deutschlands ist
+                    inbegriffen.
+                  </p>
+                  <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
+                    Ein Schuh für einen bestimmten Fuß lässt sich nicht zurückgeben.
+                    Ist etwas mangelhaft, fertigen wir das Paar neu, ohne Kosten für
+                    dich. Die Einzelheiten stehen in den AGB.
+                  </p>
+                </div>
+              </li>
+            </Enthuellen>
+          </ol>
+        </div>
       </section>
 
       {/* ══ 8 · Der Anfang ════════════════════════════════════════════════
@@ -600,13 +869,13 @@ export default function TestHomepage() {
         <div className="relative px-5 lg:px-16 py-20 lg:py-32 text-center">
           <Enthuellen>
             <h2 className="text-[26px] lg:text-[42px] font-extralight leading-[1.1] tracking-tight text-white max-w-2xl mx-auto">
-              Fang mit dem Modell an.<br className="hidden sm:block" /> Die Maße kommen später.
+              Sechs Entscheidungen.<br className="hidden sm:block" /> Fang mit der ersten an.
             </h2>
           </Enthuellen>
           <Enthuellen verzoegerung={120}>
             <p className="text-[13px] lg:text-[14px] text-white/55 font-light mt-5 max-w-md mx-auto leading-relaxed">
-              Konfigurieren kostet nichts und verpflichtet zu nichts. Erst am Ende stehen
-              Preis und Lieferzeit fest.
+              Die Form zuerst — alles andere baut darauf auf. Konfigurieren kostet
+              nichts und verpflichtet zu nichts.
             </p>
           </Enthuellen>
           <Enthuellen verzoegerung={200}>
