@@ -12,13 +12,14 @@
  *
  * ── Was diese Fassung versucht ────────────────────────────────────────────
  *
- * Bei 1.300 Euro für ein Paar Schuhe entscheidet nicht der Preis, sondern
- * ob jemand versteht, wofür er ihn zahlt. Diese Seite erzählt das in
- * Kapiteln, und jedes beantwortet eine Frage, die sonst offenbliebe:
+ * Bei einem Paar Schuhe in dieser Preisklasse entscheidet nicht der Preis,
+ * sondern ob jemand versteht, wofür er ihn zahlt — und ob er sich vorstellen
+ * kann, wie es ist, damit zu leben. Diese Seite erzählt das in Kapiteln, und
+ * jedes beantwortet eine Frage, die sonst offenbliebe:
  *
  *   1  Erster Blick    Was ist das, und was kostet es?
  *   2  Drei Zahlen     Woran hängt der Preis?
- *   3  Die Modelle     Wie sieht es aus, und wofür ist es gemacht?
+ *   3  Die Modelle     Wofür ist es gemacht, und was wird daraus?
  *   4  Das Handwerk    Warum hält das länger als Geklebtes?
  *   5  Das Leder       Woraus besteht es?
  *   6  In eigener Sache Was behaupten wir NICHT?
@@ -141,6 +142,95 @@ const LEDER = [
         + 'Anstrengung aussehen soll.',
   },
 ]
+
+/**
+ * Was ein Modell erzählt, jenseits dessen, was es ist.
+ *
+ * ── Warum es das braucht ──────────────────────────────────────────────────
+ *
+ * Die erste Fassung dieser Kapitel stellte unter jede Geschichte eine
+ * Aufstellung: Leder, Grundton, Fertigung, Preis. Sie füllte die Fläche und
+ * machte aus einem Kapitel ein Datenblatt — „das sind unsere Produkte" statt
+ * „so ist es, damit zu leben". Genau der Unterschied, den Häuser dieser
+ * Preisklasse ausmacht: Sie zeigen das Stück nicht für sich, sondern in
+ * einer Welt, und sie verkaufen nicht die Eigenschaft, sondern das Gefühl,
+ * das sie erzeugt.
+ *
+ * Deshalb steht jetzt über jedem Modell kein Name, sondern ein Satz, und
+ * unter der Geschichte nicht eine Tabelle, sondern zwei Gedanken: wofür die
+ * Form gemacht ist, und was nach Jahren aus dem Paar geworden ist. Die harten
+ * Angaben bleiben — als eine ruhige Zeile, nicht als Aufstellung.
+ *
+ * ── Was hier erfunden ist ─────────────────────────────────────────────────
+ *
+ * Die Sätze. Sie sind Interpretation einer Schuhform, nicht Auskunft über
+ * dieses Haus: Ein Derby gibt dem Spann Raum, also trägt er sich länger; ein
+ * Oxford ist die formellste Machart, also steht er für Räume, in denen die
+ * Kleidung vorher spricht. Das ist Sachwissen, in Erfahrung übersetzt.
+ *
+ * Was NICHT erfunden ist, bleibt wie gehabt: keine Geschichte über das Haus,
+ * kein Gründungsjahr, kein Name, kein Ort außer Spanien.
+ *
+ * ── Zur Alterung ──────────────────────────────────────────────────────────
+ *
+ * Der zweite Gedanke („nach Jahren") ist der stärkste, den ein Schuh hat, und
+ * der einzige, den ein Foto nicht zeigen kann. Er gilt für Leder und für die
+ * rahmengenähte Machart — deshalb steht der Satz übers Neubesohlen nur bei
+ * den Macharten, für die er zutrifft. Ein Mokassin bekommt ihn nicht.
+ */
+const ERZAEHLUNG = {
+  OXFORD: {
+    titel: 'Es gibt Räume, in denen man nichts erklären muss.',
+    wofuer: 'Für den Termin, bei dem das Erste, was zählt, nicht gesagt wird.',
+    zeit: 'Nach zwei Jahren ist das Leder an den Stellen dunkler, an denen dein Fuß arbeitet. '
+        + 'Das ist kein Verschleiß. Das ist die Form, die er angenommen hat.',
+  },
+  DERBY: {
+    titel: 'Der Tag wird länger als geplant.',
+    wofuer: 'Für das Büro — und für alles, was danach noch dazukommt.',
+    zeit: 'Wenn die Sohle durch ist, kommt eine neue. Der Schaft bleibt, und den kennst '
+        + 'du dann schon besser als jeden Schuh, den du je gekauft hast.',
+  },
+  LOAFER: {
+    titel: 'Kein Verschluss. Nur die Form, die hält.',
+    wofuer: 'Für die Monate, in denen niemand mehr fragt, ob es formell genug ist.',
+    zeit: 'Ein Loafer verrät seinen Träger schneller als jeder andere Schuh: Er nimmt '
+        + 'die Bewegung des Fußes an, weil ihn nichts anderes hält.',
+  },
+  BOOT: {
+    titel: 'Das Wetter entscheidet nicht mehr mit.',
+    wofuer: 'Für die Jahreszeit, in der andere Schuhe im Schrank bleiben.',
+    zeit: 'Wenn die Sohle durch ist, kommt eine neue. Ein Stiefel, der zehn Winter '
+        + 'gesehen hat, sieht danach besser aus als am ersten Tag.',
+  },
+  MONK: {
+    titel: 'Eine Schnalle sagt mehr als zwei Reihen Ösen.',
+    wofuer: 'Für den, der einmal anders aussehen will, ohne aufzufallen.',
+    zeit: 'Der Riemen bekommt mit den Jahren eine eigene Falte, dort wo er täglich '
+        + 'schließt. Sie gehört ab dann zum Schuh.',
+  },
+  SNEAKER: {
+    titel: 'Bequem ist kein Gegenteil von gut gemacht.',
+    wofuer: 'Für die Tage, an denen der Weg länger ist als der Anlass.',
+    zeit: 'Weiches Leder legt sich nach wenigen Wochen um den Fuß. Ab da ist es dein '
+        + 'Paar und keins mehr aus dem Regal.',
+  },
+  MOCCASIN: {
+    titel: 'Ein Schuh, der nichts von dir verlangt.',
+    wofuer: 'Für alles, was kein Anzug ist.',
+    zeit: 'Ungefüttertes Leder nimmt die Form des Fußes am schnellsten an — nach einem '
+        + 'Sommer sitzt es, als wäre es darauf gebaut worden.',
+  },
+  STANDARD: {
+    titel: 'Eine Form, die älter ist als jedes Haus, das sie verkauft.',
+    wofuer: 'Für die Tage, an denen es auf die Füße ankommt.',
+    zeit: 'Gutes Leder wird nicht alt, es wird eigen. Nach zwei Jahren sieht man, '
+        + 'wem das Paar gehört.',
+  },
+}
+
+const erzaehlungZu = (machart) =>
+  ERZAEHLUNG[String(machart || '').toUpperCase()] || ERZAEHLUNG.STANDARD
 
 /* ── Die Seite ──────────────────────────────────────────────────────────── */
 
@@ -435,19 +525,20 @@ export default function TestHomepage() {
               const bildLinks = i % 2 === 0
               const hell = i % 2 === 1
               const nummer = String(i + 1).padStart(2, '0')
+              const erz = erzaehlungZu(schuh.category)
               const oeffnen = () => navigate(shoePath(schuh))
 
               return (
                 <article
                   key={schuh.id}
-                  className={`lg:flex lg:items-stretch lg:min-h-[640px] ${
+                  className={`lg:flex lg:items-stretch lg:min-h-[680px] ${
                     bildLinks ? '' : 'lg:flex-row-reverse'
                   } ${hell ? 'bg-[#F5F3F0]' : 'bg-white'}`}
                 >
                   {/* ── Die Aufnahme, bis an den Seitenrand ────────────── */}
                   <Enthuellen
                     richtung={bildLinks ? 'links' : 'rechts'}
-                    className="lg:w-[56%] relative"
+                    className="lg:w-[58%] relative"
                   >
                     <button
                       type="button"
@@ -462,10 +553,6 @@ export default function TestHomepage() {
                           loading="lazy"
                           className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.05]"
                         />
-                        {/* Hier stand die Kapitelnummer auf dem Bild. Sie ist
-                            wieder weg: Weiß auf einer hellen Produktaufnahme
-                            ist nicht zu lesen, und daneben steht sie ohnehin
-                            schon in der Zeile „01 — Loafer". */}
                         {schuh.tag && (
                           <span
                             className="absolute top-5 right-5 lg:top-8 lg:right-8 text-[9px] uppercase text-black bg-white/90 px-2.5 py-1"
@@ -478,66 +565,60 @@ export default function TestHomepage() {
                     </button>
                   </Enthuellen>
 
-                  {/* ── Die Geschichte ────────────────────────────────── */}
+                  {/* ── Das Kapitel ───────────────────────────────────────
+                      Oben ein Satz, kein Name. Der Name steht darunter,
+                      klein — wer das Modell sucht, findet ihn; wer noch
+                      nicht weiß, warum er hier ist, liest zuerst den Satz. */}
                   <Enthuellen
                     verzoegerung={140}
-                    className="lg:w-[44%] flex items-center px-5 lg:px-14 xl:px-20 py-11 lg:py-20"
+                    className="lg:w-[42%] flex items-center px-5 lg:px-12 xl:px-16 py-12 lg:py-20"
                   >
                     <div className="w-full max-w-md">
                       <Kapitelmarke>
                         {`${nummer} — ${String(schuh.category || 'Custom Made').replace(/_/g, ' ')}`}
                       </Kapitelmarke>
 
-                      <h3 className="text-[26px] lg:text-[38px] font-extralight leading-[1.08] tracking-tight mt-3">
-                        {schuh.name}
+                      <h3 className="text-[27px] lg:text-[36px] font-extralight leading-[1.12] tracking-tight mt-4">
+                        {erz.titel}
                       </h3>
 
-                      <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.9] mt-6">
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-black/40 mt-6">
+                        {schuh.name}
+                      </p>
+
+                      <p className="text-[13px] lg:text-[14px] text-black/55 font-light leading-[1.95] mt-4">
                         {schuh.description}
                       </p>
 
-                      {/* ── Die Angaben ──────────────────────────────────
-                          Vier Zeilen, alle aus dem Katalog. Eine Zeile ohne
-                          Wert entfällt, statt „—" zu zeigen: Ein leeres Feld
-                          in einer Aufstellung sieht nach einem Fehler aus. */}
-                      <dl className="mt-8 border-t border-black/[0.09]">
-                        {schuh.material && (
-                          <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
-                            <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Leder</dt>
-                            <dd className="text-[13px] text-black/70 font-light">{schuh.material}</dd>
-                          </div>
-                        )}
-                        {schuh.color && (
-                          <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
-                            <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Grundton</dt>
-                            <dd className="flex items-center gap-2.5 text-[13px] text-black/70 font-light">
-                              <span
-                                className="inline-block w-3.5 h-3.5 rounded-full border border-black/15"
-                                style={{ background: schuh.color }}
-                                aria-hidden="true"
-                              />
-                              im Konfigurator wählbar
-                            </dd>
-                          </div>
-                        )}
-                        <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
-                          <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Fertigung</dt>
-                          <dd className="text-[13px] text-black/70 font-light">
-                            {Number(schuh.express) === 1
-                              ? `rund ${schuh.express_weeks || 2} Wochen`
-                              : 'vier bis sechs Wochen'}
-                          </dd>
-                        </div>
-                        <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
-                          <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Ab</dt>
-                          <dd className="text-[13px] text-black font-light">{schuh.price || 'auf Anfrage'}</dd>
-                        </div>
-                      </dl>
+                      {/* Wofür. Der Satz, der aus einer Machart einen Anlass
+                          macht — und aus einem Schuh eine Entscheidung. */}
+                      <p className="text-[14px] lg:text-[16px] text-black/80 font-light leading-[1.7] mt-7 pl-5 border-l border-black/20">
+                        {erz.wofuer}
+                      </p>
+
+                      {/* Und was daraus wird. Das Einzige an einem Schuh, das
+                          kein Foto zeigen kann, und das Stärkste, was er hat. */}
+                      <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-[1.9] mt-7">
+                        {erz.zeit}
+                      </p>
+
+                      {/* Die harten Angaben. Eine ruhige Zeile, keine
+                          Aufstellung: Vier Zeilen mit Haarlinien machten aus
+                          dem Kapitel ein Datenblatt. */}
+                      <p className="text-[11px] text-black/40 font-light mt-8 pt-5 border-t border-black/[0.09]">
+                        {[
+                          schuh.material,
+                          Number(schuh.express) === 1
+                            ? `rund ${schuh.express_weeks || 2} Wochen`
+                            : 'vier bis sechs Wochen',
+                          schuh.price ? `ab ${schuh.price}` : null,
+                        ].filter(Boolean).join('   ·   ')}
+                      </p>
 
                       <button
                         type="button"
                         onClick={oeffnen}
-                        className="group mt-8 bg-black text-white border-0 px-8 h-12 text-[11px] uppercase inline-flex items-center gap-3 hover:bg-black/85 transition-colors"
+                        className="group mt-6 bg-black text-white border-0 px-8 h-12 text-[11px] uppercase inline-flex items-center gap-3 hover:bg-black/85 transition-colors"
                         style={{ letterSpacing: '0.18em' }}
                       >
                         Konfigurieren
@@ -554,6 +635,31 @@ export default function TestHomepage() {
             })}
           </div>
         )}
+
+        {/* ── Zwischenbild ────────────────────────────────────────────────
+            Eine Fläche ohne Produkt, ohne Preis, ohne Knopf.
+
+            Vier Kapitel in gleichem Aufbau hintereinander lesen sich wie ein
+            Katalog, auch wenn jedes für sich gut ist. Hier hält die Seite
+            einmal an: ein Bild, ein Satz, sonst nichts. Erst danach kommt
+            die Auswahl. */}
+        <Enthuellen richtung="ruhig">
+          <section className="relative overflow-hidden bg-[#111] min-h-[52vh] lg:min-h-[60vh] flex items-center">
+            <img
+              src={CRAFT.hands}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover opacity-[0.38]"
+            />
+            <div className="relative px-5 lg:px-16 py-16 max-w-3xl mx-auto text-center">
+              <p className="text-[19px] lg:text-[30px] font-extralight leading-[1.35] tracking-tight text-white">
+                Ein Schuh wird nicht gekauft und dann getragen.
+                Er wird getragen und dabei fertig.
+              </p>
+            </div>
+          </section>
+        </Enthuellen>
 
         {/* Der Rest der Auswahl, klein. Wer bis hierher gelesen hat, will
             nicht noch vier Kapitel, sondern sehen, was es sonst gibt. */}
