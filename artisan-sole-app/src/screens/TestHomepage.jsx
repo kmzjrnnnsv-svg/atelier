@@ -142,7 +142,6 @@ import { shoePath } from '../lib/shoePath'
 import { PreisFuss } from '../lib/preisangabe'
 import { preisAlsZahl, preisAlsText } from '../lib/preis'
 import { resolveMediaUrl } from '../lib/mediaUrl'
-import { SHOES, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import Enthuellen from '../components/Enthuellen'
 import Kapitelmarke from '../components/Kapitelmarke'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
@@ -241,34 +240,23 @@ const SAISONFOLGE = [
   {
     key: 'all',
     marke: 'Ganzjährig',
-    titel: 'Die Formen für jeden Monat.',
-    text: 'Was man im Januar und im Juli trägt, unterscheidet sich weniger in der '
-        + 'Form als im Leder darunter.',
+    titel: 'Die Formen, die keine Jahreszeit kennen.',
   },
   {
     key: 'summer',
     marke: 'Sommer',
-    titel: 'Wenn der Schuh leichter sein darf.',
-    text: 'Leicht gebaut, ungefüttert oder dünn gefüttert — für Tage, an denen '
-        + 'nichts drücken darf.',
-    zwischenspiel: {
-      bild: LIFESTYLE.detail,
-      text: 'Ab Mai entscheidet das Futter mehr als die Form. Ein ungefütterter '
-          + 'Schaft gibt Feuchtigkeit nach außen ab, ein gefütterter hält sie. '
-          + 'Das merkt man am dritten heißen Tag.',
-    },
+    titel: 'Leicht gebaut, dünn gefüttert.',
+    zwischenspiel: 'Ab Mai entscheidet das Futter mehr als die Form. Ein ungefütterter '
+                 + 'Schaft gibt Feuchtigkeit nach außen ab, ein gefütterter hält sie. '
+                 + 'Das merkt man am dritten heißen Tag.',
   },
   {
     key: 'winter',
     marke: 'Winter',
-    titel: 'Wenn der Boden nass ist.',
-    text: 'Über dem Knöchel, geschlossen, mit Profil unter der Sohle.',
-    zwischenspiel: {
-      bild: CRAFT.workshop,
-      text: 'Ab November entscheidet die Sohle. Eine Doppelsohle hält den nassen '
-          + 'Boden weiter weg — und eine Gummilaufsohle lässt sich auf einen '
-          + 'gerahmten Schuh genauso aufnähen wie Leder.',
-    },
+    titel: 'Über dem Knöchel, mit Profil darunter.',
+    zwischenspiel: 'Ab November entscheidet die Sohle. Eine Doppelsohle hält den nassen '
+                 + 'Boden weiter weg — und eine Gummilaufsohle lässt sich auf einen '
+                 + 'gerahmten Schuh genauso aufnähen wie Leder.',
   },
 ]
 
@@ -325,35 +313,100 @@ const ERZAEHLUNG = {
     rat: 'Nach zwei Jahren ist das Leder dort dunkler, wo der Fuß beim Gehen knickt. '
        + 'Creme auf diese Falten aufzutragen bringt am meisten.',
   },
+  WHOLECUT: {
+    titel: 'Ein Stück Leder, eine Naht an der Ferse.',
+    rat: 'Ohne Trennnähte hat ein Wholecut nichts, was eine Druckstelle abfangen '
+       + 'könnte. Die Passform muss von Anfang an stimmen.',
+  },
   DERBY: {
     titel: 'Der Tag wird länger als geplant.',
     rat: 'Ist die Sohle durch, trennt ein Schuhmacher die Doppelnaht auf und näht eine '
        + 'neue an. Der Schaft bleibt, wie er ist.',
   },
-  LOAFER: {
-    titel: 'Gehalten wird er allein von seiner Form.',
-    rat: 'Ein Loafer hat nichts, womit sich die Weite nachstellen ließe. Auf den '
-       + 'Ballenumfang kommt es hier mehr an als bei jedem anderen Modell.',
-  },
-  BOOT: {
-    titel: 'Das Wetter darf von mir aus schlecht sein.',
-    rat: 'Gegen Streusalz hilft nur eines: abends mit klarem Wasser abwischen, solange '
-       + 'der Rand feucht ist. Trocknet es ein, bleiben weiße Ränder im Leder.',
+  BALMORAL: {
+    titel: 'Eine Naht, die den Schuh in zwei Hälften teilt.',
+    rat: 'Die umlaufende Naht über dem Rist ist die Stelle, an der sich der Schaft am '
+       + 'wenigsten dehnt. Über den Spann muss der Schuh deshalb gleich passen.',
   },
   MONK: {
     titel: 'Eine Schnalle sagt mehr als zwei Reihen Ösen.',
     rat: 'Der Riemen bekommt dort eine Falte, wo er täglich schließt. Nach ein paar '
        + 'Wochen findest du das Loch, ohne hinzusehen.',
   },
-  SNEAKER: {
-    titel: 'Auch ein Sneaker kann rahmengenäht sein.',
-    rat: 'Weiches Leder legt sich nach wenigen Wochen um den Fuß. Danach ändert sich '
-       + 'an der Passform kaum noch etwas.',
+  DOUBLE_MONK: {
+    titel: 'Zweimal schließen, einmal entscheiden.',
+    rat: 'Zieh die untere Schnalle fester als die obere. Sie hält den Fuß, die obere '
+       + 'legt nur noch an.',
+  },
+  LOAFER: {
+    titel: 'Gehalten wird er allein von seiner Form.',
+    rat: 'Ein Loafer hat nichts, womit sich die Weite nachstellen ließe. Auf den '
+       + 'Ballenumfang kommt es hier mehr an als bei jedem anderen Modell.',
+  },
+  BELGIAN_SLIPPER: {
+    titel: 'Der leiseste Schuh, den es gibt.',
+    rat: 'Weiche Machart, wenig Verstärkung: Er sitzt vom ersten Tag an, und er '
+       + 'verzeiht einen halben Zentimeter zu viel nicht.',
   },
   MOCCASIN: {
     titel: 'Ein Schuh, der nichts von dir verlangt.',
     rat: 'Ungefütterte Schuhe dehnen sich stärker als gefütterte. Am Anfang dürfen sie '
        + 'deshalb ruhig eng sitzen.',
+  },
+  MOC_SPORT: {
+    titel: 'Die Machart eines Mokassins, die Sohle eines Turnschuhs.',
+    rat: 'Die helle Sohle nimmt Farbe an, wo sie am Rand aufsetzt. Mit einer weichen '
+       + 'Bürste geht das meiste davon wieder weg.',
+  },
+  MOC_SPORT_BOOT: {
+    titel: 'Derselbe Schuh, einen Knöchel höher.',
+    rat: 'Der höhere Schaft hält den Fuß stärker. Öffne ihn beim Ausziehen ganz, sonst '
+       + 'knickt die Ferse mit der Zeit ein.',
+  },
+  SNEAKER: {
+    titel: 'Auch ein Sneaker kann rahmengenäht sein.',
+    rat: 'Weiches Leder legt sich nach wenigen Wochen um den Fuß. Danach ändert sich '
+       + 'an der Passform kaum noch etwas.',
+  },
+  SNEAKER_LACED: {
+    titel: 'Geschnürt, aber nicht förmlich.',
+    rat: 'Zieh die unteren Ösen fester als die oberen. Der Fuß wird am Ballen '
+       + 'gehalten, nicht am Spann.',
+  },
+  LACELESS_TRAINER: {
+    titel: 'Reinschlüpfen, losgehen.',
+    rat: 'Ohne Schnürung arbeitet der Einstieg am meisten. Zieh ihn nie über die '
+       + 'Ferse aus, sondern öffne ihn erst.',
+  },
+  BOOT: {
+    titel: 'Das Wetter darf von mir aus schlecht sein.',
+    rat: 'Gegen Streusalz hilft nur eines: abends mit klarem Wasser abwischen, solange '
+       + 'der Rand feucht ist. Trocknet es ein, bleiben weiße Ränder im Leder.',
+  },
+  CHELSEA: {
+    titel: 'Kein Verschluss, zwei Gummizüge, drei Sekunden.',
+    rat: 'Die elastischen Einsätze sind das Erste, was ermüdet. Fass beim Anziehen an '
+       + 'die hintere Lasche und nicht an den Gummi.',
+  },
+  CHUKKA: {
+    titel: 'Zwei Ösenpaare, mehr braucht es nicht.',
+    rat: 'Der knappe Schaft lässt den Knöchel frei. Bei Nässe ist das die Stelle, an '
+       + 'der Wasser zuerst hineinläuft.',
+  },
+  JODHPUR: {
+    titel: 'Ein Riemen, der um den Knöchel läuft.',
+    rat: 'Der Riemen hält den Schaft, nicht den Fuß. Zu fest geschlossen drückt er auf '
+       + 'den Knöchel, statt zu stützen.',
+  },
+  WELLINGTON: {
+    titel: 'Der Stiefel, der unter der Hose verschwindet.',
+    rat: 'Der hohe Schaft steht, wenn er nicht getragen wird. Ein Spanner hält ihn '
+       + 'gerade, sonst knickt er über dem Rist.',
+  },
+  DRAKE: {
+    titel: 'Ein Schaft, der höher sitzt, als man denkt.',
+    rat: 'Je höher der Schaft, desto mehr arbeitet das Leder über dem Rist. Genau dort '
+       + 'braucht es die Creme.',
   },
   STANDARD: {
     titel: 'Eine Form, die älter ist als jedes Haus, das sie verkauft.',
@@ -465,9 +518,20 @@ function Kapitelbild({ schuh, oeffnen, className = '', hoehe = 'max-h-[62vh]' })
  */
 function SaisonReihe({ schuhe, oeffnen }) {
   if (!schuhe.length) return null
+
+  // Die Spaltenzahl folgt der Anzahl. Ein festes Vierer-Raster mit einer
+  // einzigen Kachel darin sieht aus wie ein Ladefehler — drei leere Spalten
+  // neben einem Schuh. Die Klassen stehen ausgeschrieben da, weil Tailwind
+  // zusammengesetzte Namen nicht findet und sie aus dem Stylesheet wirft.
+  const raster = {
+    1: 'grid-cols-1 max-w-xs mx-auto',
+    2: 'grid-cols-2 max-w-2xl mx-auto',
+    3: 'grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto',
+  }[schuhe.length] || 'grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto'
+
   return (
-    <div className="px-5 lg:px-16 pb-16 lg:pb-24">
-      <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10">
+    <div className="px-5 lg:px-16 pb-14 lg:pb-20">
+      <div className={`grid gap-6 lg:gap-10 ${raster}`}>
         {schuhe.map((schuh, i) => (
           <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 3) * 80}>
             <button
@@ -475,7 +539,7 @@ function SaisonReihe({ schuhe, oeffnen }) {
               onClick={() => oeffnen(schuh)}
               className="group block w-full bg-transparent border-0 p-0 text-left"
             >
-              {/* Festes Maß, weil vier Kacheln nebeneinander auf einer Linie
+              {/* Festes Maß, weil die Kacheln einer Reihe auf einer Linie
                   stehen müssen. `contain` verkleinert den Schuh hinein,
                   statt ihn an den Kanten abzuschneiden. */}
               <div className="aspect-[4/3] overflow-hidden bg-[#EDEAE3]">
@@ -486,10 +550,10 @@ function SaisonReihe({ schuhe, oeffnen }) {
                   className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
                 />
               </div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-5 line-clamp-2 min-h-[2.8em]">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-4 line-clamp-2 min-h-[2.8em]">
                 {schuh.name}
               </p>
-              <p className="text-[12px] text-black/40 font-light mt-1.5">
+              <p className="text-[12px] text-black/40 font-light mt-1">
                 {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
               </p>
             </button>
@@ -507,18 +571,15 @@ function SaisonReihe({ schuhe, oeffnen }) {
  * trennt zwei Kollektionen deutlicher, als jeder Abstand es könnte, und
  * kostet eine Linie.
  */
-function SaisonKopf({ marke, titel, text }) {
+function SaisonKopf({ marke, titel }) {
   return (
     <Enthuellen>
-      <div className="px-5 lg:px-16 pt-16 pb-12 lg:pt-28 lg:pb-20">
-        <div className="max-w-6xl mx-auto border-t border-black/[0.10] pt-12 lg:pt-16 text-center">
+      <div className="px-5 lg:px-16 pt-14 pb-10 lg:pt-20 lg:pb-14">
+        <div className="max-w-6xl mx-auto border-t border-black/[0.10] pt-10 lg:pt-14 text-center">
           <Kapitelmarke>{marke}</Kapitelmarke>
-          <h3 className="satz-titel text-[27px] lg:text-[40px] leading-[1.16] mt-5 max-w-2xl mx-auto">
+          <h3 className="satz-titel text-[26px] lg:text-[38px] leading-[1.16] mt-4 max-w-2xl mx-auto">
             {titel}
           </h3>
-          <p className="text-[13px] lg:text-[14px] text-black/45 font-light leading-[1.95] mt-6 max-w-lg mx-auto">
-            {text}
-          </p>
         </div>
       </div>
     </Enthuellen>
@@ -532,19 +593,17 @@ function SaisonKopf({ marke, titel, text }) {
  * ankommt, hat zwei Kapitel gelesen; das Auge braucht eine Fläche, auf der
  * es nichts zu entscheiden gibt, bevor die nächsten beiden kommen.
  */
-function Zwischenspiel({ bild, text }) {
+function Zwischenspiel({ text }) {
   return (
     <Enthuellen richtung="ruhig">
-      <section className="relative overflow-hidden bg-[#111] min-h-[58vh] lg:min-h-[66vh] flex items-center">
-        <img
-          src={bild}
-          alt=""
+      <section className="relative overflow-hidden bg-[#0E0E0E]">
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(100% 80% at 50% 0%, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 60%)' }}
           aria-hidden="true"
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover opacity-[0.3]"
         />
-        <div className="relative px-5 lg:px-16 py-20 max-w-3xl mx-auto text-center">
-          <p className="satz-titel text-[21px] lg:text-[32px] leading-[1.45] text-white">
+        <div className="relative px-5 lg:px-16 py-24 lg:py-36 max-w-3xl mx-auto text-center">
+          <p className="satz-titel text-[21px] lg:text-[30px] leading-[1.5] text-white/90">
             {text}
           </p>
         </div>
@@ -683,7 +742,7 @@ export default function TestHomepage() {
 
     return SAISONFOLGE
       .map(def => {
-        const schuhe = waehlen(def.key, 2)
+        const schuhe = waehlen(def.key, 1)
         const imKapitel = new Set(schuhe.map(e => e.schuh.id))
         // Der Rest derselben Saison. Er macht aus einem Kapitel eine
         // Kollektion, ohne dass dafür ein Wort erfunden werden müsste.
@@ -808,7 +867,7 @@ export default function TestHomepage() {
              meisten, weil sie am wenigsten tut. */
           if (i % 4 === 0) {
             return (
-              <section key={schuh.id} className="bg-white px-5 lg:px-16 py-16 lg:py-28">
+              <section key={schuh.id} className="bg-white px-5 lg:px-16 py-14 lg:py-20">
                 <Enthuellen>
                   <Kapitelbild
                     schuh={schuh}
@@ -843,7 +902,7 @@ export default function TestHomepage() {
              Mitte, dadurch entsteht unter ihm eine offene Ecke. */
           if (i % 4 === 1) {
             return (
-              <section key={schuh.id} className="bg-[#F5F3F0] px-5 lg:px-16 py-16 lg:py-28">
+              <section key={schuh.id} className="bg-[#F5F3F0] px-5 lg:px-16 py-14 lg:py-20">
                 <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-start max-w-6xl mx-auto">
                   <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:pt-10">
                     {marke}
@@ -893,7 +952,7 @@ export default function TestHomepage() {
              verschiedener Höhe. */
           if (i % 4 === 2) {
             return (
-              <section key={schuh.id} className="bg-white py-16 lg:py-28 px-5 lg:pl-16 lg:pr-0">
+              <section key={schuh.id} className="bg-white py-14 lg:py-20 px-5 lg:pl-16 lg:pr-0">
                 <div className="lg:grid lg:grid-cols-12 lg:gap-x-14 lg:items-start">
                   <Enthuellen richtung="rechts" className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
                     <Kapitelbild
@@ -932,7 +991,7 @@ export default function TestHomepage() {
              Nachsatz. Die Form leitet zur Auswahl über — sie liest sich
              schon wie eine Seite, auf der mehreres nebeneinander steht. */
           return (
-            <section key={schuh.id} className="bg-[#F5F3F0] py-16 lg:py-28">
+            <section key={schuh.id} className="bg-[#F5F3F0] py-14 lg:py-20">
               <Enthuellen>
                 <div className="px-5 lg:px-16 text-center max-w-3xl mx-auto">
                   {marke}
@@ -977,23 +1036,31 @@ export default function TestHomepage() {
     <div className="min-h-full bg-white">
 
       {/* ══ 1 · Erster Blick ══════════════════════════════════════════════
-          Bildschirmfüllend, ein Bild, ein Satz, zwei Wege. Die Überschrift
-          nennt das Produkt und nicht die Marke: Der Name steht ohnehin in
-          der Leiste, und wer ihn nicht kennt, sucht auch nicht danach. */}
-      <header className="relative min-h-[82vh] flex items-end overflow-hidden bg-[#111]">
-        <div className="absolute inset-0 overflow-hidden">
-          <img
-            src={SHOES.hero}
-            alt=""
-            aria-hidden="true"
-            className="bild-heran w-full h-full object-cover opacity-[0.55]"
-          />
-        </div>
-        {/* Der Verlauf trägt die Schrift. Ohne ihn hinge die Lesbarkeit am
-            Motiv, und ein ausgetauschtes Bild machte die Seite unlesbar. */}
+          Ein Satz, fünf Angaben, zwei Wege — und kein Bild.
+
+          ── Warum kein Bild ───────────────────────────────────────────────
+
+          Hier lag ein Stockfoto, und auf dieser Seite lagen sieben davon.
+          Weil Unsplash seine Kennungen über die Jahre neu belegt, zeigten
+          sie zuletzt einen LKW-Parkplatz, eine Fotokamera mit Postkarten
+          und einen Sneaker einer anderen Marke — unter Sätzen über
+          rahmengenähte Maßschuhe.
+
+          Bessere Kennungen lösen das nicht. Dieses Haus hat noch keine
+          eigene Fotografie, und geliehene Stimmung ist schlechter als
+          keine: Eine dunkle Fläche behauptet nichts, ein fremdes Foto
+          behauptet etwas Falsches.
+
+          Was die Seite trägt, sind die echten Aufnahmen aus dem Katalog,
+          die drei Zeichnungen und die Schrift. Kommen eigene Bilder, steht
+          hier wieder eines — es ist eine Zeile. */}
+      <header className="relative min-h-[76vh] flex items-end overflow-hidden bg-[#0E0E0E]">
+        {/* Ein sehr flacher Lichtschein, damit die Fläche Tiefe bekommt,
+            ohne dass man ihn als Verlauf erkennt. */}
         <div
           className="absolute inset-0"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.15) 100%)' }}
+          style={{ background: 'radial-gradient(120% 90% at 18% 0%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 62%)' }}
+          aria-hidden="true"
         />
 
         <div className="relative w-full px-5 lg:px-16 pb-10 lg:pb-14">
@@ -1198,7 +1265,7 @@ export default function TestHomepage() {
         {/* Der Einstieg: mittig, viel Luft, ein Gedanke. Er stand links mit
             Vorspann daneben — das liest sich wie ein Artikel, nicht wie der
             Beginn eines Kapitels. */}
-        <div className="px-5 lg:px-16 pt-20 pb-16 lg:pt-36 lg:pb-28 text-center">
+        <div className="px-5 lg:px-16 pt-16 pb-10 lg:pt-28 lg:pb-14 text-center">
           <Enthuellen>
             <Kapitelmarke>Die Kollektionen</Kapitelmarke>
             <h2 className="satz-titel text-[31px] lg:text-[54px] leading-[1.14] mt-6 max-w-3xl mx-auto">
@@ -1239,10 +1306,10 @@ export default function TestHomepage() {
                     der sagt, worauf es in den nächsten Monaten ankommt. Er
                     führt in die Kollektion hinein, die gleich kommt. */}
                 {kol.zwischenspiel && (
-                  <Zwischenspiel bild={kol.zwischenspiel.bild} text={kol.zwischenspiel.text} />
+                  <Zwischenspiel text={kol.zwischenspiel} />
                 )}
 
-                <SaisonKopf marke={kol.marke} titel={kol.titel} text={kol.text} />
+                <SaisonKopf marke={kol.marke} titel={kol.titel} />
 
                 {kol.schuhe.map(({ schuh, form }) => (
                   <Fragment key={schuh.id}>{kapitelInhalt(schuh, form)}</Fragment>
@@ -1258,7 +1325,6 @@ export default function TestHomepage() {
             Hinweis, den jeder braucht, der zum ersten Mal ein solches Paar
             trägt — und der die Ungeduld nimmt, bevor sie entsteht. */}
         <Zwischenspiel
-          bild={CRAFT.hands}
           text={'Die ersten Wochen fühlt sich ein rahmengenähter Schuh fest an. '
               + 'Das ist der Kork, der noch nachgibt — trag ihn anfangs nur ein '
               + 'paar Stunden am Tag.'}
@@ -1558,15 +1624,13 @@ export default function TestHomepage() {
       {/* ══ 8 · Der Anfang ════════════════════════════════════════════════
           Ein Weg, nicht drei. Wer bis hierher gelesen hat, sucht keine
           Auswahl mehr, sondern die Stelle, an der es losgeht. */}
-      <section className="relative overflow-hidden bg-[#111]">
-        <img
-          src={LIFESTYLE.walking}
-          alt=""
+      <section className="relative overflow-hidden bg-[#0E0E0E]">
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(110% 80% at 50% 0%, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0) 60%)' }}
           aria-hidden="true"
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover opacity-[0.32]"
         />
-        <div className="relative px-5 lg:px-16 py-20 lg:py-32 text-center">
+        <div className="relative px-5 lg:px-16 py-24 lg:py-36 text-center">
           <Enthuellen>
             <h2 className="satz-titel text-[29px] lg:text-[50px] leading-[1.14] text-white max-w-2xl mx-auto">
               Sechs Entscheidungen.<br className="hidden sm:block" /> Fang mit der ersten an.
