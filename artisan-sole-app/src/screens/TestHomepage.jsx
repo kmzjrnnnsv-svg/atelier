@@ -74,7 +74,7 @@
  */
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Footprints, Ruler, Hammer, CalendarDays, Check } from 'lucide-react'
+import { ArrowRight, Footprints, Check } from 'lucide-react'
 import useStore from '../store/store'
 import { useSeo } from '../lib/seo'
 import { shoePath } from '../lib/shoePath'
@@ -83,7 +83,10 @@ import { preisAlsZahl, preisAlsText } from '../lib/preis'
 import { resolveMediaUrl } from '../lib/mediaUrl'
 import { SHOES, CRAFT, LIFESTYLE } from '../lib/editorialImages'
 import Enthuellen from '../components/Enthuellen'
+import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import RahmenSchnitt from '../components/RahmenSchnitt'
+import LederSchnitt from '../components/LederSchnitt'
+import FussMass from '../components/FussMass'
 
 /* ── Bausteine ──────────────────────────────────────────────────────────── */
 
@@ -107,38 +110,49 @@ function Kapitelmarke({ children, hell = false }) {
  * jemand zum ersten Mal auf den Preis trifft.
  */
 const ZAHLEN = [
-  { icon: Ruler,        zahl: '2',      einheit: 'Maße',           text: 'Fußlänge und Ballenumfang. Daraus Leisten, Größe und Weite — keine Konfektionsnummer.' },
-  { icon: Hammer,       zahl: '200+',   einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt über das Zwicken bis zur Endkontrolle. Jeder einzeln, an einem einzelnen Paar.' },
-  { icon: CalendarDays, zahl: '4–6',    einheit: 'Wochen',         text: 'So lange dauert ein Paar, das es vorher nicht gab. Wir haben kein Lager, aus dem wir greifen.' },
+  { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Daraus Leisten, Größe und Weite — keine Konfektionsnummer.' },
+  { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt über das Zwicken bis zur Endkontrolle. Jeder einzeln, an einem einzelnen Paar.' },
+  { zahl: '4–6',  einheit: 'Wochen',          text: 'So lange dauert ein Paar, das es vorher nicht gab. Wir haben kein Lager, aus dem wir greifen.' },
 ]
 
 /**
  * Die Leder. Sachwissen über Häute, nicht über dieses Haus.
  *
+ * ── Warum hier keine Fotos mehr stehen ────────────────────────────────────
+ *
+ * Neben jedem dieser Absätze stand eine Aufnahme einer Lederoberfläche. Drei
+ * Fotos, die alle aussahen wie Leder, und von denen eines — eine Naht in
+ * Nahaufnahme — gar kein Nubuk zeigte, sondern eine Naht. Ein Foto einer
+ * Oberfläche zeigt eine Struktur und sonst nichts; wer den Unterschied
+ * zwischen Kalbsleder und Cordovan nicht kennt, kennt ihn danach immer noch
+ * nicht.
+ *
+ * Was ihn erklärt, ist die Herkunft: aus welcher Schicht, von welchem Tier,
+ * wie lange gegerbt. Das steht im Text, und die Zeichnung darüber zeigt den
+ * Teil davon, der jeden Preis dieser Seite mitbestimmt.
+ *
  * Die Auswahl im Konfigurator ist größer und ändert sich; hier stehen die
- * drei, an denen sich der Unterschied erklären lässt. Wer mehr will, findet
- * alles im Konfigurator — darauf verweist der Abschnitt auch.
+ * drei, an denen sich der Unterschied erklären lässt.
  */
 const LEDER = [
   {
-    bild: CRAFT.leather,
     name: 'Vollnarbiges Kalbsleder',
-    text: 'Die äußerste, dichteste Schicht der Haut, ungeschliffen. Sie trägt ihre Narbung noch, '
-        + 'nimmt mit den Jahren die Bewegung des Fußes an und bekommt dabei eine Patina, '
-        + 'die kein neues Paar hat.',
+    herkunft: 'Äußerste Schicht, ungeschliffen',
+    text: 'Die dichteste Lage der Haut, mit ihrer Narbung. Sie nimmt mit den Jahren die '
+        + 'Bewegung des Fußes an und bekommt dabei eine Patina, die kein neues Paar hat.',
   },
   {
-    bild: LIFESTYLE.darkLeather,
     name: 'Shell Cordovan',
-    text: 'Aus einer besonderen, sehr dichten Lage der Pferdehaut. Es knittert nicht in scharfen '
-        + 'Falten, sondern legt sich in weiche Wellen, und es gewinnt beim Tragen an Tiefe. '
-        + 'Die Gerbung dauert Monate — daran hängt der Aufpreis.',
+    herkunft: 'Pferdehaut, Monate in der Gerbung',
+    text: 'Aus einer besonderen, sehr dichten Lage unter der Haut der Kruppe. Es knittert '
+        + 'nicht in scharfen Falten, sondern legt sich in weiche Wellen, und es gewinnt '
+        + 'beim Tragen an Tiefe. Die Gerbdauer erklärt den Aufpreis.',
   },
   {
-    bild: CRAFT.stitching,
     name: 'Nubuk und Velours',
-    text: 'Angeschliffene Oberflächen mit kurzem, mattem Flor. Sie nehmen der Form die Strenge '
-        + 'und machen einen strengen Schuh tragbar an Tagen, an denen Sorgfalt nicht nach '
+    herkunft: 'Angeschliffen, kurzer matter Flor',
+    text: 'Die Oberfläche ist gebürstet statt glatt. Sie nimmt der Form die Strenge und '
+        + 'macht einen strengen Schuh tragbar an Tagen, an denen Sorgfalt nicht nach '
         + 'Anstrengung aussehen soll.',
   },
 ]
@@ -492,6 +506,17 @@ export default function TestHomepage() {
         titel: 'Deine Maße',
         text: 'Fußlänge und Ballenumfang, mehr nicht. Daraus bestimmen wir Leisten, '
             + 'Größe und Weite. Eine Größentabelle brauchst du nicht, weil wir nicht raten.',
+        // Der Beleg zu dieser Station ist eine Zeichnung und keine Zeile.
+        //
+        // „Ballenumfang" ist das Wort, an dem ein Kauf hängen bleibt: Wer noch
+        // nie Maß genommen hat, weiß nicht, was gemeint ist, und wer es nicht
+        // weiß, glaubt auch nicht, dass zwei Maße reichen. Ein Absatz mehr
+        // hilft dagegen nicht — eine Skizze mit beiden Maßen schon.
+        //
+        // Sie steht außerdem an der einzigen Station, die eine hat. Sechs
+        // gleich gebaute Stationen untereinander sind eine Aufzählung; eine,
+        // die aus der Reihe fällt, macht daraus einen Weg.
+        zeichnung: FussMass,
         hinweis: '±0,5 cm genügen. Ein Schnürsenkel und ein Lineal reichen zum Messen.',
       },
       {
@@ -580,19 +605,39 @@ export default function TestHomepage() {
 
       {/* ══ 2 · Drei Zahlen ═══════════════════════════════════════════════
           Der Preis steht oben. Hier steht, woran er hängt — bevor jemand
-          weiterscrollt und die Frage mitnimmt. */}
+          weiterscrollt und die Frage mitnimmt.
+
+          Über jeder Zahl stand ein Strichsymbol aus dem Symbolsatz: Lineal,
+          Hammer, Kalenderblatt. Genau diese drei stehen in jedem Baukasten
+          über genau solchen Zahlen, und sie sagten nichts, was die Zahl
+          darunter nicht schon sagte. Ohne sie trägt die Zahl den Abschnitt,
+          und das ist der Sinn eines Abschnitts, der aus drei Zahlen besteht.
+
+          Statt drei Kacheln nebeneinander jetzt ein Band mit senkrechten
+          Haarlinien dazwischen — ein Register, keine Karten. */}
       <section className="px-5 lg:px-16 py-14 lg:py-24 border-b border-black/[0.07]">
-        <div className="grid sm:grid-cols-3 gap-10 lg:gap-16 max-w-5xl mx-auto">
+        <div className="grid sm:grid-cols-3 max-w-5xl mx-auto">
           {ZAHLEN.map((z, i) => (
             <Enthuellen key={z.einheit} verzoegerung={i * 90}>
-              <z.icon size={18} strokeWidth={1.3} className="text-black/35" />
-              <p className="text-[34px] lg:text-[44px] font-extralight leading-none tracking-tight mt-4">
-                {z.zahl}
-              </p>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-black/40 mt-2">{z.einheit}</p>
-              <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-relaxed mt-4 max-w-xs">
-                {z.text}
-              </p>
+              {/* Die Trennlinie gehört links an die zweite und dritte Zahl —
+                  eine Linie rechts an der letzten wäre ein Rand ohne Nachbarn.
+                  Auf dem Telefon stehen die drei untereinander, dort trennt
+                  eine waagerechte Linie oben. */}
+              <div className={`py-8 sm:py-0 ${
+                i > 0
+                  ? 'border-t border-black/[0.08] sm:border-t-0 sm:border-l sm:pl-10 lg:pl-16'
+                  : ''
+              } ${i < 2 ? 'sm:pr-10 lg:pr-16' : ''} sm:border-black/[0.08]`}>
+                <p className="satz-titel text-[52px] lg:text-[76px] leading-[0.9] tracking-[-0.02em]">
+                  {z.zahl}
+                </p>
+                <p className="text-[10px] uppercase tracking-[0.28em] text-black/40 mt-4">
+                  {z.einheit}
+                </p>
+                <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.85] mt-5 max-w-xs">
+                  {z.text}
+                </p>
+              </div>
             </Enthuellen>
           ))}
         </div>
@@ -958,7 +1003,10 @@ export default function TestHomepage() {
 
           <Enthuellen verzoegerung={150}>
             <div className="mt-12 lg:mt-16 text-white">
-              <RahmenSchnitt className="max-w-2xl mx-auto" />
+              <Tafelflaeche randlos>
+                <RahmenSchnitt className="max-w-2xl mx-auto" />
+              </Tafelflaeche>
+              <Schiebehinweis />
             </div>
           </Enthuellen>
 
@@ -991,38 +1039,93 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 5 · Das Leder ═════════════════════════════════════════════════ */}
+      {/* ══ 5 · Das Leder ═════════════════════════════════════════════════
+          Hier standen drei Stockfotos von Lederoberflächen nebeneinander.
+          Sie füllten die Fläche und erklärten nichts: Drei Oberflächen sehen
+          aus wie Leder, und der Unterschied zwischen ihnen liegt nicht in
+          der Struktur, sondern in der Herkunft.
+
+          Also dasselbe Mittel wie beim Handwerk, das als einziger Abschnitt
+          dieser Seite getragen hat: ein Schnitt durch etwas, das man am
+          fertigen Schuh nicht sieht. Dort der Rahmen, hier die Haut — dass
+          sie eine Schichtung ist und nicht ein Material, ist der Grund für
+          jeden Lederpreis dieser Seite und für das Wort „vollnarbig".
+
+          Der Aufbau ist bewusst ein anderer als beim Handwerk, damit die
+          beiden Abschnitte nicht zur Schablone werden: dort mittig gesetzt
+          mit der Zeichnung in der Mitte, hier ein Kopf aus zwei ungleichen
+          Spalten und die drei Leder als nummerierte Blätter am Fuß. */}
       <section className="px-5 lg:px-16 py-16 lg:py-28">
-        <div className="max-w-5xl mx-auto">
-          <Enthuellen>
-            <Kapitelmarke>Das Leder</Kapitelmarke>
-            <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
-              Die Haut entscheidet, wie das Paar altert.
-            </h2>
+        <div className="max-w-6xl mx-auto">
+          <div className="lg:grid lg:grid-cols-12 lg:gap-16 lg:items-end">
+            <Enthuellen className="lg:col-span-6">
+              <Kapitelmarke>Das Leder</Kapitelmarke>
+              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
+                Leder ist kein Material. Es ist eine Schichtung.
+              </h2>
+            </Enthuellen>
+
+            <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
+              <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
+                Ganz oben sitzt die Narbe: die gewachsene Oberfläche, und die einzige
+                Stelle, an der die Fasern dicht und senkrecht stehen. Nach unten wird
+                das Gefüge loser. Wo eine Haut geteilt wird, entscheidet sich, was
+                der Schuh in zehn Jahren noch ist.
+              </p>
+            </Enthuellen>
+          </div>
+
+          <Enthuellen verzoegerung={180}>
+            <div className="mt-14 lg:mt-20 text-black">
+              <Tafelflaeche randlos>
+                <LederSchnitt className="max-w-3xl mx-auto" />
+              </Tafelflaeche>
+              <Schiebehinweis />
+            </div>
           </Enthuellen>
 
-          <div className="grid sm:grid-cols-3 gap-8 lg:gap-12 mt-12 lg:mt-16">
+          <Enthuellen verzoegerung={220}>
+            <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5] mt-12 lg:mt-16 max-w-2xl mx-auto text-center">
+              „Vollnarbig" heißt: Diese oberste Schicht ist ganz geblieben. Nicht
+              abgeschliffen, nicht mit einer Folie überzogen. Deshalb altert sie,
+              statt abzublättern.
+            </p>
+          </Enthuellen>
+
+          {/* Die drei Leder als Blätter, nicht als Kacheln: eine Nummer, ein
+              Name, eine Herkunftszeile, ein Absatz. Getrennt durch eine feine
+              Linie oben, nicht durch einen Rahmen ringsum — ein Rahmen macht
+              aus einem Absatz eine Karte, und aus drei Karten ein Regal. */}
+          <div className="grid sm:grid-cols-3 gap-10 lg:gap-14 mt-16 lg:mt-24">
             {LEDER.map((l, i) => (
               <Enthuellen key={l.name} verzoegerung={i * 90}>
-                <div className="aspect-[4/3] overflow-hidden bg-[#EDEAE3]">
-                  <img src={l.bild} alt="" aria-hidden="true" loading="lazy" className="w-full h-full object-cover" />
+                <div className="pt-6 border-t border-black/[0.12]">
+                  <p className="text-[10px] tracking-[0.3em] text-black/30">
+                    {String(i + 1).padStart(2, '0')}
+                  </p>
+                  <p className="satz-titel text-[19px] lg:text-[23px] text-black leading-[1.3] mt-4">
+                    {l.name}
+                  </p>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-black/40 mt-3">
+                    {l.herkunft}
+                  </p>
+                  <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.9] mt-5">
+                    {l.text}
+                  </p>
                 </div>
-                <p className="text-[13px] lg:text-[14px] text-black font-normal mt-5">{l.name}</p>
-                <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
-                  {l.text}
-                </p>
               </Enthuellen>
             ))}
           </div>
 
           <Enthuellen verzoegerung={140}>
-            <p className="text-[12px] text-black/40 font-light mt-10">
+            <p className="text-[12px] text-black/40 font-light mt-12 lg:mt-16 max-w-xl">
               Welche Leder und Farben an welchem Modell zur Wahl stehen, zeigt der
               Konfigurator — die Auswahl unterscheidet sich je nach Machart.
             </p>
           </Enthuellen>
         </div>
       </section>
+
 
       {/* ══ 6 · In eigener Sache ══════════════════════════════════════════
           Der Abschnitt, der diese Fassung von jeder anderen trennt. Die
@@ -1152,6 +1255,14 @@ export default function TestHomepage() {
                             {w}
                           </span>
                         ))}
+                      </div>
+                    )}
+                    {st.zeichnung && (
+                      <div className="mt-6 text-black">
+                        <Tafelflaeche>
+                          <st.zeichnung className="max-w-md" />
+                        </Tafelflaeche>
+                        <Schiebehinweis />
                       </div>
                     )}
                     {st.hinweis && (
