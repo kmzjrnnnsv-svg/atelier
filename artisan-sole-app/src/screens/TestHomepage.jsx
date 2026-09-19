@@ -232,6 +232,112 @@ const ERZAEHLUNG = {
 const erzaehlungZu = (machart) =>
   ERZAEHLUNG[String(machart || '').toUpperCase()] || ERZAEHLUNG.STANDARD
 
+/* ── Bausteine der Modellkapitel ────────────────────────────────────────── */
+
+/**
+ * Warum es vier verschiedene Kapitelformen gibt und nicht eine gespiegelte.
+ *
+ * Die Fassung davor setzte jedes Modell in dieselbe Zweiteilung und drehte
+ * nur die Seite. Genau das ist der Eindruck „nach Vorlage gemacht": Wer das
+ * erste Kapitel gelesen hat, kennt das Muster, und ab da scrollt er, statt zu
+ * lesen. Ein gespiegeltes Raster ist keine Abwechslung, es ist dasselbe
+ * Raster von hinten.
+ *
+ * Ein Heft komponiert stattdessen jede Doppelseite eigens: einmal groß und
+ * mittig, einmal als Diptychon, einmal übereinandergeschoben, einmal als
+ * breites Band. Die vier Formen unten sind genau das. Sie tragen dieselben
+ * Bausteine — Marke, Überschrift, Geschichte, Anlass, Angaben, Nachsatz —
+ * und setzen sie jedes Mal anders zusammen, auch der Nachsatz sitzt jedes
+ * Mal woanders.
+ *
+ * Die Reihenfolge ist fest und nicht zufällig: Der erste Auftritt trägt am
+ * meisten (mittig, viel Luft), das Band am Ende leitet zur Auswahl über.
+ * Gäbe es ein fünftes Kapitel, begänne die Folge von vorn — das ist
+ * hingenommen, weil vier die sinnvolle Zahl ist und niemand acht Kapitel
+ * liest.
+ */
+
+/** Die Zeile über jeder Überschrift: Nummer und Machart. */
+function Kapitelzeile({ nummer, machart, hell = false }) {
+  return (
+    <Kapitelmarke hell={hell}>
+      {`${nummer} — ${String(machart || 'Custom Made').replace(/_/g, ' ')}`}
+    </Kapitelmarke>
+  )
+}
+
+/** Die Aufnahme, klickbar, mit dem ruhigen Heranzoomen beim Überfahren. */
+function Kapitelbild({ schuh, oeffnen, className = '', bildKlasse = '' }) {
+  return (
+    <button
+      type="button"
+      onClick={oeffnen}
+      className={`group block bg-transparent border-0 p-0 text-left ${className}`}
+      aria-label={`${schuh.name} ansehen und konfigurieren`}
+    >
+      <div className={`relative overflow-hidden bg-[#EDEAE3] h-full ${bildKlasse}`}>
+        <img
+          src={resolveMediaUrl(schuh.image)}
+          alt={`${schuh.name}, nach Maß gefertigt`}
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-[1.04]"
+        />
+        {schuh.tag && (
+          <span
+            className="absolute top-5 right-5 lg:top-8 lg:right-8 text-[9px] uppercase text-black bg-white/90 px-3 py-1.5"
+            style={{ letterSpacing: '0.22em' }}
+          >
+            {schuh.tag}
+          </span>
+        )}
+      </div>
+    </button>
+  )
+}
+
+/** Name, Angaben und der Weg in den Konfigurator. */
+function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
+  return (
+    <div className={`pt-6 border-t border-black/[0.09] ${mittig ? 'text-center' : ''}`}>
+      <p className="text-[11px] uppercase tracking-[0.24em] text-black/50">{schuh.name}</p>
+      <p className="text-[11px] text-black/35 font-light mt-2">
+        {[
+          schuh.material,
+          Number(schuh.express) === 1
+            ? `rund ${schuh.express_weeks || 2} Wochen`
+            : 'vier bis sechs Wochen',
+          schuh.price ? `ab ${schuh.price}` : null,
+        ].filter(Boolean).join('   ·   ')}
+      </p>
+      <button
+        type="button"
+        onClick={oeffnen}
+        className="group mt-6 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
+        style={{ letterSpacing: '0.22em' }}
+      >
+        <span className="relative pb-1">
+          Konfigurieren
+          <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
+        </span>
+        <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+      </button>
+    </div>
+  )
+}
+
+/** Der Satz darüber, was nach Jahren aus dem Paar wird. */
+function Nachsatz({ text, className = '', gross = false }) {
+  return (
+    <p
+      className={`font-extralight text-black/55 leading-[1.75] ${
+        gross ? 'text-[16px] lg:text-[21px]' : 'text-[14px] lg:text-[16px]'
+      } ${className}`}
+    >
+      {text}
+    </p>
+  )
+}
+
 /* ── Die Seite ──────────────────────────────────────────────────────────── */
 
 export default function TestHomepage() {
@@ -526,133 +632,184 @@ export default function TestHomepage() {
         ) : (
           <div>
             {kapitel.map((schuh, i) => {
-              const bildLinks = i % 2 === 0
-              const grund = i % 2 === 1 ? 'bg-[#F5F3F0]' : 'bg-white'
               const nummer = String(i + 1).padStart(2, '0')
               const erz = erzaehlungZu(schuh.category)
               const oeffnen = () => navigate(shoePath(schuh))
+              const marke = <Kapitelzeile nummer={nummer} machart={schuh.category} />
 
-              return (
-                <div key={schuh.id} className={grund}>
-                  <article
-                    className={`lg:flex lg:items-stretch lg:min-h-[86vh] ${
-                      bildLinks ? '' : 'lg:flex-row-reverse'
-                    }`}
-                  >
-                    {/* ── Die Aufnahme ──────────────────────────────────── */}
-                    <Enthuellen
-                      richtung={bildLinks ? 'links' : 'rechts'}
-                      className="lg:w-[56%] relative"
-                    >
-                      <button
-                        type="button"
-                        onClick={oeffnen}
-                        className="group block w-full h-full bg-transparent border-0 p-0 text-left"
-                        aria-label={`${schuh.name} ansehen und konfigurieren`}
-                      >
-                        <div className="relative aspect-[4/3] lg:aspect-auto lg:h-full overflow-hidden bg-[#EDEAE3]">
-                          <img
-                            src={resolveMediaUrl(schuh.image)}
-                            alt={`${schuh.name}, nach Maß gefertigt`}
-                            loading="lazy"
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-[1.04]"
-                          />
-                          {schuh.tag && (
-                            <span
-                              className="absolute top-6 right-6 lg:top-10 lg:right-10 text-[9px] uppercase text-black bg-white/90 px-3 py-1.5"
-                              style={{ letterSpacing: '0.22em' }}
-                            >
-                              {schuh.tag}
-                            </span>
-                          )}
-                        </div>
-                      </button>
+              /* ══ Form A · Mittig ══════════════════════════════════════
+                 Der erste Auftritt. Das Bild steht in der Fläche statt an
+                 ihrem Rand, mit Luft ringsum, und alles darunter ist mittig
+                 gesetzt. Die ruhigste der vier Formen — sie trägt am meisten,
+                 weil sie am wenigsten tut. */
+              if (i % 4 === 0) {
+                return (
+                  <section key={schuh.id} className="bg-white px-5 lg:px-16 py-16 lg:py-28">
+                    <Enthuellen>
+                      <Kapitelbild
+                        schuh={schuh}
+                        oeffnen={oeffnen}
+                        className="w-full max-w-5xl mx-auto"
+                        bildKlasse="aspect-[16/10]"
+                      />
                     </Enthuellen>
-
-                    {/* ── Das Kapitel ───────────────────────────────────────
-                        Schmaler als die Spalte, die zur Verfügung stünde: Eine
-                        Zeile von 45 Zeichen liest sich ruhig, eine von 75
-                        hastig — und der Rand daneben ist der Eindruck. */}
-                    <Enthuellen
-                      verzoegerung={160}
-                      className="lg:w-[44%] flex items-center px-5 lg:px-16 xl:px-24 py-16 lg:py-32"
-                    >
-                      <div className="w-full max-w-[26rem]">
-                        <Kapitelmarke>
-                          {`${nummer} — ${String(schuh.category || 'Custom Made').replace(/_/g, ' ')}`}
-                        </Kapitelmarke>
-
-                        <h3 className="text-[29px] lg:text-[40px] font-extralight leading-[1.14] tracking-tight mt-6">
+                    <Enthuellen verzoegerung={140}>
+                      <div className="max-w-2xl mx-auto text-center mt-14 lg:mt-20">
+                        {marke}
+                        <h3 className="text-[30px] lg:text-[46px] font-extralight leading-[1.12] tracking-tight mt-5">
                           {erz.titel}
                         </h3>
-
-                        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
+                        <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[2] mt-8">
                           {schuh.description}
                         </p>
-
-                        <p className="text-[15px] lg:text-[17px] text-black/80 font-light leading-[1.65] mt-10">
+                        <p className="text-[16px] lg:text-[19px] text-black/80 font-light leading-[1.6] mt-10">
                           {erz.wofuer}
                         </p>
-
-                        {/* Name, Angaben und Weg — eine Fußzeile, kein Block.
-                            Der Name steht hier und nicht oben: Wer bis hierher
-                            gelesen hat, will wissen, wie das Ding heißt; wer
-                            oben ankommt, noch nicht. */}
-                        <div className="mt-12 pt-6 border-t border-black/[0.09]">
-                          <p className="text-[11px] uppercase tracking-[0.24em] text-black/50">
-                            {schuh.name}
-                          </p>
-                          <p className="text-[11px] text-black/35 font-light mt-2">
-                            {[
-                              schuh.material,
-                              Number(schuh.express) === 1
-                                ? `rund ${schuh.express_weeks || 2} Wochen`
-                                : 'vier bis sechs Wochen',
-                              schuh.price ? `ab ${schuh.price}` : null,
-                            ].filter(Boolean).join('   ·   ')}
-                          </p>
-
-                          {/* Ein Wortlink statt eines schwarzen Blocks. Ein
-                              gefüllter Knopf in jedem Kapitel macht aus der
-                              Reihe einen Verkaufsprospekt; der Strich, der
-                              beim Überfahren aufzieht, tut dasselbe leiser. */}
-                          <button
-                            type="button"
-                            onClick={oeffnen}
-                            className="group mt-7 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
-                            style={{ letterSpacing: '0.22em' }}
-                          >
-                            <span className="relative pb-1">
-                              Konfigurieren
-                              <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
-                            </span>
-                            <ArrowRight
-                              size={14}
-                              strokeWidth={1.5}
-                              className="transition-transform duration-500 group-hover:translate-x-1.5"
-                            />
-                          </button>
+                        <Nachsatz text={erz.zeit} className="mt-10" />
+                        <div className="max-w-xs mx-auto mt-12">
+                          <Kapitelfuss schuh={schuh} oeffnen={oeffnen} mittig />
                         </div>
                       </div>
                     </Enthuellen>
-                  </article>
+                  </section>
+                )
+              }
 
-                  {/* ── Der Nachsatz ────────────────────────────────────────
-                      Was nach Jahren aus dem Paar wird — mittig, allein, mit
-                      Luft. Im Stapel der Textspalte war er die sechste Zeile
-                      von acht und ging unter; hier ist er das Letzte, was von
-                      diesem Modell bleibt. */}
-                  <Enthuellen richtung="ruhig">
-                    {/* Kein negativer Abstand nach oben: Die Bildspalte
-                        reicht bis zur Unterkante des Kapitels, und ein
-                        Hochziehen schob den Satz über das Foto. */}
-                    <div className="px-5 lg:px-16 pt-14 pb-20 lg:pt-20 lg:pb-32">
-                      <p className="text-[15px] lg:text-[19px] text-black/55 font-extralight leading-[1.75] text-center max-w-2xl mx-auto">
-                        {erz.zeit}
-                      </p>
+              /* ══ Form B · Diptychon ═══════════════════════════════════
+                 Zwei Hälften, aber beide eingefasst: Das Bild reicht nicht
+                 bis an den Seitenrand, sondern steht wie ein Blatt auf dem
+                 farbigen Grund. Der Text beginnt oben statt in der Mitte,
+                 dadurch entsteht unter ihm eine offene Ecke. */
+              if (i % 4 === 1) {
+                return (
+                  <section key={schuh.id} className="bg-[#F5F3F0] px-5 lg:px-16 py-16 lg:py-28">
+                    <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-start max-w-6xl mx-auto">
+                      <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:pt-10">
+                        {marke}
+                        <h3 className="text-[29px] lg:text-[42px] font-extralight leading-[1.1] tracking-tight mt-5">
+                          {erz.titel}
+                        </h3>
+                        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8 max-w-[24rem]">
+                          {schuh.description}
+                        </p>
+                        <p className="text-[15px] lg:text-[18px] text-black/80 font-light leading-[1.6] mt-9 max-w-[24rem]">
+                          {erz.wofuer}
+                        </p>
+                        <div className="mt-12 max-w-[24rem]">
+                          <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
+                        </div>
+                      </Enthuellen>
+
+                      <Enthuellen richtung="rechts" className="lg:col-span-7 mt-12 lg:mt-0">
+                        <Kapitelbild schuh={schuh} oeffnen={oeffnen} className="w-full" bildKlasse="aspect-[4/5]" />
+                      </Enthuellen>
+                    </div>
+
+                    {/* Der Nachsatz sitzt hier am Fuß, quer über beide
+                        Hälften — und nicht in einer davon. */}
+                    <Enthuellen richtung="ruhig">
+                      <div className="max-w-6xl mx-auto mt-16 lg:mt-24 pt-10 border-t border-black/[0.08]">
+                        <Nachsatz text={erz.zeit} className="max-w-2xl" gross />
+                      </div>
+                    </Enthuellen>
+                  </section>
+                )
+              }
+
+              /* ══ Form C · Übereinandergeschoben ═══════════════════════
+                 Das Bild läuft bis an den rechten Rand und über die ganze
+                 Höhe; der Text liegt als Blatt darüber, nach unten versetzt
+                 und mit der linken Kante darüber hinausragend. Die
+                 unruhigste der vier Formen, deshalb steht sie in der Mitte
+                 der Folge. */
+              if (i % 4 === 2) {
+                return (
+                  <section key={schuh.id} className="bg-white relative">
+                    <div className="lg:grid lg:grid-cols-12 lg:items-center">
+                      <Enthuellen richtung="rechts" className="lg:col-span-8 lg:col-start-5 lg:row-start-1">
+                        <Kapitelbild
+                          schuh={schuh}
+                          oeffnen={oeffnen}
+                          className="w-full"
+                          /* Feste Höhe statt Seitenverhältnis: Mit
+                             `aspect-[3/4]` und einer Höhenbegrenzung rechnete
+                             der Browser die BREITE zurück, und das Bild hörte
+                             mitten in seiner Spalte auf, statt den rechten
+                             Seitenrand zu erreichen. */
+                          bildKlasse="aspect-[4/3] lg:aspect-auto lg:h-[82vh]"
+                        />
+                      </Enthuellen>
+
+                      <Enthuellen
+                        verzoegerung={160}
+                        className="lg:col-span-6 lg:col-start-1 lg:row-start-1 lg:z-10 relative"
+                      >
+                        <div className="bg-white px-5 py-12 lg:px-14 lg:py-16 lg:mt-24 lg:shadow-[0_30px_80px_-40px_rgba(0,0,0,0.35)]">
+                          {marke}
+                          <h3 className="text-[29px] lg:text-[42px] font-extralight leading-[1.1] tracking-tight mt-5">
+                            {erz.titel}
+                          </h3>
+                          <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
+                            {schuh.description}
+                          </p>
+                          <p className="text-[15px] lg:text-[18px] text-black/80 font-light leading-[1.6] mt-9">
+                            {erz.wofuer}
+                          </p>
+                          {/* Hier steht der Nachsatz mit im Blatt — die Form
+                              hat keinen Fuß, über den er laufen könnte. */}
+                          <Nachsatz text={erz.zeit} className="mt-9" />
+                          <div className="mt-11">
+                            <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
+                          </div>
+                        </div>
+                      </Enthuellen>
+                    </div>
+                  </section>
+                )
+              }
+
+              /* ══ Form D · Breitband ═══════════════════════════════════
+                 Ein flaches, breites Bild über die volle Seite, Überschrift
+                 darüber, und darunter drei Spalten: Geschichte, Anlass,
+                 Nachsatz. Die Form leitet zur Auswahl über — sie liest sich
+                 schon wie eine Seite, auf der mehreres nebeneinander steht. */
+              return (
+                <section key={schuh.id} className="bg-[#F5F3F0] py-16 lg:py-28">
+                  <Enthuellen>
+                    <div className="px-5 lg:px-16 text-center max-w-3xl mx-auto">
+                      {marke}
+                      <h3 className="text-[29px] lg:text-[44px] font-extralight leading-[1.12] tracking-tight mt-5">
+                        {erz.titel}
+                      </h3>
                     </div>
                   </Enthuellen>
-                </div>
+
+                  <Enthuellen verzoegerung={140} className="mt-12 lg:mt-16">
+                    <Kapitelbild
+                      schuh={schuh}
+                      oeffnen={oeffnen}
+                      className="w-full"
+                      bildKlasse="aspect-[4/3] lg:aspect-[21/9]"
+                    />
+                  </Enthuellen>
+
+                  <Enthuellen verzoegerung={200}>
+                    <div className="px-5 lg:px-16 mt-14 lg:mt-20">
+                      <div className="max-w-6xl mx-auto grid gap-10 lg:gap-16 lg:grid-cols-3">
+                        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2]">
+                          {schuh.description}
+                        </p>
+                        <p className="text-[15px] lg:text-[18px] text-black/80 font-light leading-[1.6]">
+                          {erz.wofuer}
+                        </p>
+                        <Nachsatz text={erz.zeit} />
+                      </div>
+                      <div className="max-w-6xl mx-auto mt-14 lg:mt-20">
+                        <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
+                      </div>
+                    </div>
+                  </Enthuellen>
+                </section>
               )
             })}
           </div>
