@@ -38,53 +38,11 @@
  * Text daneben sagt dasselbe in Worten.
  */
 
-/** Ein Strich von der Beschriftung zu der Stelle, die sie meint. */
-function Fuehrung({ x1, y1, x2, y2 }) {
-  return (
-    <path
-      d={`M ${x1} ${y1} L ${x2} ${y2}`}
-      stroke="currentColor" strokeWidth="0.7" opacity="0.28" fill="none"
-    />
-  )
-}
-
-function Beschriftung({ x, y, anker = 'start', children }) {
-  return (
-    <text
-      x={x} y={y}
-      textAnchor={anker}
-      fill="currentColor"
-      opacity="0.7"
-      fontSize="10"
-      letterSpacing="1.8"
-      style={{ textTransform: 'uppercase', fontWeight: 300 }}
-    >
-      {children}
-    </text>
-  )
-}
-
-/** Eine Lage des Aufbaus: Fläche in gedämpfter, Kante in klarer Deckkraft. */
-function Lage({ d, fuellung = 0.14, kante = 0.4 }) {
-  return (
-    <path
-      d={d}
-      fill="currentColor" fillOpacity={fuellung}
-      stroke="currentColor" strokeOpacity={kante} strokeWidth="1"
-      strokeLinejoin="round"
-    />
-  )
-}
+import { Fuehrung, Beschriftung, Lage, Tafel } from './Zeichnung'
 
 export default function RahmenSchnitt({ className = '' }) {
   return (
-    <svg
-      viewBox="0 62 520 214"
-      className={className}
-      role="img"
-      aria-hidden="true"
-      style={{ width: '100%', height: 'auto' }}
-    >
+    <Tafel viewBox="0 62 520 214" className={className}>
       {/* ── Laufsohle ───────────────────────────────────────────────── */}
       <Lage d="M 118 232 L 402 232 L 402 252 Q 402 258 396 258 L 124 258 Q 118 258 118 252 Z" fuellung={0.22} kante={0.5} />
 
@@ -145,6 +103,6 @@ export default function RahmenSchnitt({ className = '' }) {
 
       <Beschriftung x="508" y="249" anker="end">Laufsohle</Beschriftung>
       <Fuehrung x1="456" y1="245" x2="398" y2="247" />
-    </svg>
+    </Tafel>
   )
 }
