@@ -173,15 +173,26 @@ export default function TestHomepage() {
    * bevor er das Handwerk verstanden hat.
    */
   const kapitel = useMemo(() => {
-    // Gleiche Geschichte nur einmal. Die Express-Fassungen tragen denselben
-    // Beschreibungstext wie ihr Grundmodell; standen beide hier, läse man
-    // zwei Kapitel weit denselben Absatz und hielte die Seite für kaputt.
-    const gesehen = new Set()
+    // Höchstens eines je Machart, und jede Geschichte nur einmal.
+    //
+    // Ohne die erste Regel standen hier vier Loafer: Der Katalog führt zehn
+    // davon, und sie kommen zuerst. Vier Kapitel, die sich in einer
+    // Schnallenform unterscheiden, zeigen keine Bandbreite — sie zeigen,
+    // dass niemand ausgewählt hat.
+    //
+    // Die zweite fängt die Express-Fassungen: Sie tragen denselben
+    // Beschreibungstext wie ihr Grundmodell, und zwei Kapitel mit demselben
+    // Absatz lassen eine Seite kaputt wirken.
+    const machartGesehen = new Set()
+    const textGesehen = new Set()
     const treffer = []
     for (const s of shoes) {
       const text = String(s.description || '').trim()
-      if (!s.image || text.length < 80 || gesehen.has(text)) continue
-      gesehen.add(text)
+      const machart = String(s.category || '').toUpperCase()
+      if (!s.image || text.length < 80) continue
+      if (textGesehen.has(text) || machartGesehen.has(machart)) continue
+      machartGesehen.add(machart)
+      textGesehen.add(text)
       treffer.push(s)
       if (treffer.length === 4) break
     }
@@ -295,16 +306,40 @@ export default function TestHomepage() {
       </section>
 
       {/* ══ 3 · Die Modelle ═══════════════════════════════════════════════
-          Jedes mit seiner eigenen Geschichte, abwechselnd links und rechts.
-          Der Text kommt aus dem Katalog — er ist für dieses eine Modell
-          geschrieben und sagt mehr als jede Zeile, die hier stünde. */}
-      <section className="py-14 lg:py-24">
-        <div className="px-5 lg:px-16 max-w-5xl mx-auto mb-12 lg:mb-20">
+          Kapitel, keine Kacheln. Jedes Modell bekommt eine ganze Fläche: die
+          Aufnahme bis an den Seitenrand, daneben die Geschichte, die im
+          Katalog für genau dieses Modell steht, und darunter die Angaben,
+          die vor dem Klick zählen.
+
+          Die erste Fassung setzte Bild und Text in zwei gleich breite
+          Spalten mit Rand ringsum. Das sah aufgeräumt aus und wirkte leer:
+          Ein Foto mit Luft an allen vier Seiten ist eine Abbildung, eines
+          bis an die Kante ist eine Fläche, in der man steht. Dazu kommt der
+          Wechsel des Grundes — vier weiße Abschnitte hintereinander haben
+          keinen Takt.
+
+          Die Angaben unter der Geschichte stammen ausnahmslos aus dem
+          Katalog. Was dort nicht steht, steht auch hier nicht: keine
+          Machart je Modell, denn ein Mokassin ist nicht rahmengenäht, und
+          eine Zeile, die das behauptete, wäre an der einen Stelle falsch,
+          an der es jemand nachprüfen kann. */}
+      <section>
+        <div className="px-5 lg:px-16 py-14 lg:py-24 max-w-3xl">
           <Enthuellen>
             <Kapitelmarke>Die Modelle</Kapitelmarke>
-            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3 max-w-2xl">
+            <h2 className="text-[26px] lg:text-[40px] font-extralight leading-[1.1] tracking-tight mt-3">
               Jede Form hat einen Grund.<br className="hidden sm:block" /> Meist einen älteren als wir.
             </h2>
+          </Enthuellen>
+          <Enthuellen verzoegerung={120}>
+            <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
+              Oxford, Derby, Monk, Chelsea: Diese Formen sind älter als jedes Haus, das
+              sie heute verkauft. Keine ist als Entwurf entstanden, jede aus einer
+              Notwendigkeit — die geschlossene Schnürung für die Strenge der Etikette,
+              die offene für den kräftigen Spann, der Riemen für den Steigbügel, der
+              Gummizug für den schnellen Aufbruch. Wer weiß, wofür eine Form gemacht
+              wurde, wählt nicht mehr nach Geschmack allein.
+            </p>
           </Enthuellen>
         </div>
 
@@ -325,60 +360,122 @@ export default function TestHomepage() {
             </button>
           </div>
         ) : (
-          <div className="space-y-16 lg:space-y-28">
+          <div>
             {kapitel.map((schuh, i) => {
-              const linksBild = i % 2 === 0
+              const bildLinks = i % 2 === 0
+              const hell = i % 2 === 1
+              const nummer = String(i + 1).padStart(2, '0')
+              const oeffnen = () => navigate(shoePath(schuh))
+
               return (
-                <article key={schuh.id} className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-16 px-5 lg:px-16">
+                <article
+                  key={schuh.id}
+                  className={`lg:flex lg:items-stretch lg:min-h-[640px] ${
+                    bildLinks ? '' : 'lg:flex-row-reverse'
+                  } ${hell ? 'bg-[#F5F3F0]' : 'bg-white'}`}
+                >
+                  {/* ── Die Aufnahme, bis an den Seitenrand ────────────── */}
                   <Enthuellen
-                    richtung={linksBild ? 'links' : 'rechts'}
-                    className={linksBild ? '' : 'lg:order-2'}
+                    richtung={bildLinks ? 'links' : 'rechts'}
+                    className="lg:w-[56%] relative"
                   >
                     <button
                       type="button"
-                      onClick={() => navigate(shoePath(schuh))}
-                      className="group block w-full bg-transparent border-0 p-0 text-left"
+                      onClick={oeffnen}
+                      className="group block w-full h-full bg-transparent border-0 p-0 text-left"
                       aria-label={`${schuh.name} ansehen und konfigurieren`}
                     >
-                      <div className="aspect-[5/4] lg:aspect-[4/5] overflow-hidden bg-[#EDEAE3]">
+                      <div className="relative aspect-[4/3] lg:aspect-auto lg:h-full overflow-hidden bg-[#EDEAE3]">
                         <img
                           src={resolveMediaUrl(schuh.image)}
-                          alt={`${schuh.name}, rahmengenäht, nach Maß gefertigt`}
+                          alt={`${schuh.name}, nach Maß gefertigt`}
                           loading="lazy"
-                          className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.05]"
                         />
+                        {/* Hier stand die Kapitelnummer auf dem Bild. Sie ist
+                            wieder weg: Weiß auf einer hellen Produktaufnahme
+                            ist nicht zu lesen, und daneben steht sie ohnehin
+                            schon in der Zeile „01 — Loafer". */}
+                        {schuh.tag && (
+                          <span
+                            className="absolute top-5 right-5 lg:top-8 lg:right-8 text-[9px] uppercase text-black bg-white/90 px-2.5 py-1"
+                            style={{ letterSpacing: '0.2em' }}
+                          >
+                            {schuh.tag}
+                          </span>
+                        )}
                       </div>
                     </button>
                   </Enthuellen>
 
+                  {/* ── Die Geschichte ────────────────────────────────── */}
                   <Enthuellen
-                    verzoegerung={120}
-                    className={`mt-7 lg:mt-0 ${linksBild ? '' : 'lg:order-1'}`}
+                    verzoegerung={140}
+                    className="lg:w-[44%] flex items-center px-5 lg:px-14 xl:px-20 py-11 lg:py-20"
                   >
-                    <Kapitelmarke>
-                      {String(schuh.category || 'Custom Made').replace(/_/g, ' ')}
-                      {schuh.material ? ` · ${schuh.material}` : ''}
-                    </Kapitelmarke>
-                    <h3 className="text-[24px] lg:text-[34px] font-extralight leading-[1.1] tracking-tight mt-3">
-                      {schuh.name}
-                    </h3>
-                    <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.85] mt-5">
-                      {schuh.description}
-                    </p>
+                    <div className="w-full max-w-md">
+                      <Kapitelmarke>
+                        {`${nummer} — ${String(schuh.category || 'Custom Made').replace(/_/g, ' ')}`}
+                      </Kapitelmarke>
 
-                    <div className="flex items-center gap-6 mt-7 pt-6 border-t border-black/[0.08]">
-                      <div>
-                        <p className="text-[9px] uppercase tracking-[0.2em] text-black/30">Ab</p>
-                        <p className="text-[15px] text-black font-light mt-1">{schuh.price || 'auf Anfrage'}</p>
-                      </div>
+                      <h3 className="text-[26px] lg:text-[38px] font-extralight leading-[1.08] tracking-tight mt-3">
+                        {schuh.name}
+                      </h3>
+
+                      <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.9] mt-6">
+                        {schuh.description}
+                      </p>
+
+                      {/* ── Die Angaben ──────────────────────────────────
+                          Vier Zeilen, alle aus dem Katalog. Eine Zeile ohne
+                          Wert entfällt, statt „—" zu zeigen: Ein leeres Feld
+                          in einer Aufstellung sieht nach einem Fehler aus. */}
+                      <dl className="mt-8 border-t border-black/[0.09]">
+                        {schuh.material && (
+                          <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
+                            <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Leder</dt>
+                            <dd className="text-[13px] text-black/70 font-light">{schuh.material}</dd>
+                          </div>
+                        )}
+                        {schuh.color && (
+                          <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
+                            <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Grundton</dt>
+                            <dd className="flex items-center gap-2.5 text-[13px] text-black/70 font-light">
+                              <span
+                                className="inline-block w-3.5 h-3.5 rounded-full border border-black/15"
+                                style={{ background: schuh.color }}
+                                aria-hidden="true"
+                              />
+                              im Konfigurator wählbar
+                            </dd>
+                          </div>
+                        )}
+                        <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
+                          <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Fertigung</dt>
+                          <dd className="text-[13px] text-black/70 font-light">
+                            {Number(schuh.express) === 1
+                              ? `rund ${schuh.express_weeks || 2} Wochen`
+                              : 'vier bis sechs Wochen'}
+                          </dd>
+                        </div>
+                        <div className="flex items-baseline gap-6 py-3 border-b border-black/[0.06]">
+                          <dt className="w-24 shrink-0 text-[10px] uppercase tracking-[0.18em] text-black/35">Ab</dt>
+                          <dd className="text-[13px] text-black font-light">{schuh.price || 'auf Anfrage'}</dd>
+                        </div>
+                      </dl>
+
                       <button
                         type="button"
-                        onClick={() => navigate(shoePath(schuh))}
-                        className="ml-auto bg-transparent border border-black/15 text-black/70 px-7 h-11 text-[11px] uppercase flex items-center gap-2 hover:border-black/45 hover:text-black transition-colors"
-                        style={{ letterSpacing: '0.16em' }}
+                        onClick={oeffnen}
+                        className="group mt-8 bg-black text-white border-0 px-8 h-12 text-[11px] uppercase inline-flex items-center gap-3 hover:bg-black/85 transition-colors"
+                        style={{ letterSpacing: '0.18em' }}
                       >
                         Konfigurieren
-                        <ArrowRight size={14} strokeWidth={1.5} />
+                        <ArrowRight
+                          size={15}
+                          strokeWidth={1.5}
+                          className="transition-transform duration-500 group-hover:translate-x-1"
+                        />
                       </button>
                     </div>
                   </Enthuellen>
