@@ -530,7 +530,7 @@ function SaisonReihe({ schuhe, oeffnen }) {
   }[schuhe.length] || 'grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto'
 
   return (
-    <div className="px-5 lg:px-16 pb-14 lg:pb-20">
+    <div className="px-5 lg:px-16 pt-12 pb-10 lg:pt-16 lg:pb-14">
       <div className={`grid gap-6 lg:gap-10 ${raster}`}>
         {schuhe.map((schuh, i) => (
           <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 3) * 80}>
@@ -539,10 +539,20 @@ function SaisonReihe({ schuhe, oeffnen }) {
               onClick={() => oeffnen(schuh)}
               className="group block w-full bg-transparent border-0 p-0 text-left"
             >
-              {/* Festes Maß, weil die Kacheln einer Reihe auf einer Linie
-                  stehen müssen. `contain` verkleinert den Schuh hinein,
-                  statt ihn an den Kanten abzuschneiden. */}
-              <div className="aspect-[4/3] overflow-hidden bg-[#EDEAE3]">
+              {/* ── Warum quadratisch und ohne eigenen Grund ─────────────
+                  Die Kachel war 4:3 und hatte eine eigene Hintergrundfarbe
+                  (#EDEAE3). Die Aufnahmen aus dem Katalog sind quadratisch
+                  und stehen auf ihrem eigenen, dunkleren Graugrün — also
+                  erschien links und rechts je ein heller Streifen in einem
+                  dritten Ton. Drei Grautöne nebeneinander, und keiner
+                  davon gewollt.
+
+                  Quadratisch passt die Aufnahme genau hinein. Der eigene
+                  Grund ist weg: Bringt ein Foto einmal ein anderes Maß mit,
+                  liegt der Rest jetzt auf der Fläche des Abschnitts statt
+                  auf einer vierten Farbe. Beschnitten wird weiterhin nichts
+                  — `contain` verkleinert, es schneidet nicht. */}
+              <div className="aspect-square overflow-hidden">
                 <img
                   src={resolveMediaUrl(schuh.image)}
                   alt={`${schuh.name}, nach Maß gefertigt`}
@@ -550,10 +560,12 @@ function SaisonReihe({ schuhe, oeffnen }) {
                   className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
                 />
               </div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-4 line-clamp-2 min-h-[2.8em]">
+              {/* Dicht unter der Aufnahme: Name und Preis gehören zum Bild,
+                  nicht zur Fläche darunter. */}
+              <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-3 line-clamp-2 min-h-[2.4em]">
                 {schuh.name}
               </p>
-              <p className="text-[12px] text-black/40 font-light mt-1">
+              <p className="text-[12px] text-black/40 font-light mt-0.5">
                 {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
               </p>
             </button>
