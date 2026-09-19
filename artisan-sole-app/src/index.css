@@ -141,6 +141,94 @@ html:not(.mobile-web), html:not(.mobile-web) body, html:not(.mobile-web) #root {
   overscroll-behavior: none;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   EB Garamond — die Schrift der Überschriften
+
+   Der Laden setzte bis hierher alles in Jost, einer geometrischen Grotesk
+   in der Art der Futura, und zwang jede Überschrift zusätzlich in
+   Versalien mit weiter Sperrung (siehe die Regel für h1–h6 weiter unten).
+   Das ist genau die Kombination, die eine Seite austauschbar macht: Sie
+   steht so auf jeder zweiten Vorlage, die „Luxus" verspricht.
+
+   Die Häuser, mit denen sich dieser Laden vergleichen lassen will, machen
+   es anders. John Lobb — Hermès-Gruppe, dasselbe Produkt — führt seit dem
+   Auftritt von 2014 Domaine Text, eine kontrastarme lateinische Antiqua,
+   die französische und britische Schriftgeschichte verbindet. Hermès setzt
+   seinen Namen in einer gesperrten Antiqua und hat daran seit Jahrzehnten
+   nichts geändert. Die Antiqua ist im Luxussegment das Vertrauenszeichen,
+   nicht die Grotesk.
+
+   EB Garamond ist die freie Schrift, die dem am nächsten kommt: eine
+   Renaissance-Antiqua nach Claude Garamond, kontrastarm, warm, ohne die
+   Modejahrgänge von Playfair oder Cormorant. Sie liegt als Datei im Haus,
+   wie Jost auch — keine fremde Adresse im Kopf der Seite, nichts, was beim
+   Laden blockiert.
+
+   Jost bleibt. Der Wechsel ist nicht Ersatz, sondern Paarung: Antiqua für
+   das, was gelesen wird, gesperrte Grotesk-Versalien für die kleinen
+   Marken darüber. Genau dieser Zweiklang ist das Gegenteil der Vorlage.
+   ───────────────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/schriften/eb-garamond-latin-400-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/schriften/eb-garamond-latin-ext-400-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/schriften/eb-garamond-latin-400-italic.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/schriften/eb-garamond-latin-500-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/schriften/eb-garamond-latin-ext-500-normal.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/**
+ * Eine Überschrift, die ein Satz bleiben darf.
+ *
+ * Hebt die Regel für h1–h6 weiter unten auf: keine Versalien, keine weite
+ * Sperrung, dafür Antiqua. Versalien nehmen einem Satz die Wortbilder —
+ * Ober- und Unterlängen —, und ohne sie liest man Buchstabe für Buchstabe
+ * statt Wort für Wort. Bei einer Zeile über einem Knopf ist das gleich; bei
+ * einem Satz, der wirken soll, ist es der Unterschied.
+ *
+ * Bewusst nur eine Klasse und keine Änderung an der Regel selbst: Die gilt
+ * für den ganzen Laden, von der Kollektion bis zur Verwaltung. Sie
+ * umzustellen ist eine Entscheidung über die Marke, nicht über eine Seite.
+ */
+.satz-titel {
+  font-family: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.005em;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
 body {
   font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-weight: 400;
