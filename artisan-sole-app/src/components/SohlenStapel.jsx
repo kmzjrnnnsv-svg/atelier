@@ -43,14 +43,22 @@ import { TAFELFARBEN } from '../zeichnungen/farben'
 
    Die Zahlen sind gemessen und nicht geschätzt: Der längste Name ist
    „Brandsohle" und bei 16 Einheiten Schriftgröße mit 2,2 Sperrung 114
-   Einheiten breit; die Beschriftung rechts beginnt bei 768 und endet damit
-   bei 882, zwanzig vor dem Rand. Wer einen längeren Namen einträgt, muss
-   hier nachziehen — sonst steht er halb außerhalb der Tafel. */
-const AUSSCHNITT = '90 6 814 742'
+   Einheiten breit. Links endet die Beschriftung bei 186, rechts beginnt sie
+   bei 798 — dreiunddreißig Einheiten Abstand zu den Blättern, die bei 219
+   anfangen und bei 765 aufhören. Vorher waren es drei, und da sah es aus,
+   als klebten die Namen an den Sohlen. Wer einen längeren Namen einträgt,
+   muss hier nachziehen, sonst steht er halb außerhalb der Tafel. */
+const AUSSCHNITT = '48 6 906 742'
 
 /* Ohne Beschriftung fallen die beiden Ränder weg. Unten bleiben die
    sechzig Einheiten, um die die Sohle abrückt. */
 const AUSSCHNITT_SCHMAL = '198 14 586 736'
+
+/* Ein Achtel der Szenenhöhe, wie im Schnitt des Handwerkskapitels. Mit den
+   34 Einheiten, die vorher galten, stand ein Blatt plötzlich da, statt
+   aufzusteigen — auf 742 Einheiten Höhe sieht man so wenig Weg nicht. */
+const WEG = 92
+const DAUER = 820
 
 /** Um wie viel Laufsohle und Absatz im letzten Schritt abrücken. */
 /* Sechzig und nicht vierzig: In die Lücke kommen zwei Zeilen und eine
@@ -60,12 +68,14 @@ const ABRUECKEN = 60
 const TRENNUNG = 7
 
 const PLAN = {
-  'absatz':     { ab: 5, aus: 'unten', verzug: 120, rueckenAb: TRENNUNG, ruecken: ABRUECKEN },
+  // Der Absatz liegt zuunterst und kommt zuletzt — man sieht die Laufsohle
+  // aufsteigen und darunter den Absatz nachrücken.
+  'absatz':     { ab: 5, aus: 'unten', verzug: 200, rueckenAb: TRENNUNG, ruecken: ABRUECKEN },
   'laufsohle':  { ab: 5, aus: 'unten',              rueckenAb: TRENNUNG, ruecken: ABRUECKEN },
   'kork':       { ab: 4, aus: 'unten' },
   // Der Rahmen wird seitlich angelegt und rundherum angenäht — er kommt
   // als einziges Teil von der Seite.
-  'rahmen':     { ab: 3, aus: 'links' },
+  'rahmen':     { ab: 3, aus: 'links', weg: 170, dauer: 900 },
   'brandsohle': { ab: 2, aus: 'unten' },
   'oberschuh':  { ab: 1, aus: 'still' },
 }
@@ -73,20 +83,20 @@ const PLAN = {
 /* Links, rechts, links … — siehe oben. Die Punkte liegen auf den Teilen;
    ihre Maße stehen in der Mappe unter MASSE. */
 const MARKEN = [
-  { name: 'Oberschuh',  zusatz: 'Schaft und Futter', ab: 1, punkt: [300, 150], text: [216, 112], anker: 'end' },
-  { name: 'Brandsohle', zusatz: 'mit der Rippe',     ab: 2, punkt: [640, 272], text: [768, 264] },
+  { name: 'Oberschuh',  zusatz: 'Schaft und Futter', ab: 1, punkt: [300, 150], text: [186, 112], anker: 'end' },
+  { name: 'Brandsohle', zusatz: 'mit der Rippe',     ab: 2, punkt: [640, 272], text: [798, 264] },
   // Der Punkt sitzt auf dem Band und nicht im Loch: Der Rahmen IST das
   // Band, und ein Punkt in der Mitte zeigte auf nichts.
-  { name: 'Rahmen',     zusatz: 'steht heraus',      ab: 3, punkt: [300, 330], text: [216, 348], anker: 'end' },
-  { name: 'Kork',       zusatz: 'passt sich an',     ab: 4, punkt: [620, 440], text: [768, 432] },
+  { name: 'Rahmen',     zusatz: 'steht heraus',      ab: 3, punkt: [300, 330], text: [186, 348], anker: 'end' },
+  { name: 'Kork',       zusatz: 'passt sich an',     ab: 4, punkt: [620, 440], text: [798, 432] },
   {
     name: 'Laufsohle', zusatz: 'mit Doppelnaht',
-    ab: 5, punkt: [300, 528], text: [216, 520], anker: 'end',
+    ab: 5, punkt: [300, 528], text: [186, 520], anker: 'end',
     rueckenAb: TRENNUNG, ruecken: ABRUECKEN,
   },
   {
     name: 'Absatz', zusatz: 'geschichtet',
-    ab: 5, punkt: [340, 624], text: [416, 616],
+    ab: 5, punkt: [340, 624], text: [430, 616],
     rueckenAb: TRENNUNG, ruecken: ABRUECKEN,
   },
 ]
@@ -117,6 +127,8 @@ export default function SohlenStapel({ className = '', schritt = null, schmal = 
       viewBox={AUSSCHNITT}
       viewBoxSchmal={AUSSCHNITT_SCHMAL}
       schmal={schmal}
+      weg={WEG}
+      dauer={DAUER}
       stil={STIL}
       teile={TEILE}
       reihenfolge={REIHENFOLGE}

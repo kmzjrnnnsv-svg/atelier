@@ -63,18 +63,29 @@
  */
 
 /* Die Bewegung, einmal für alle Tafeln dieser Seite. Wer hier etwas ändert,
-   ändert beide Abschnitte — und das ist der Sinn. */
-const DAUER = 620
+   ändert beide Abschnitte — und das ist der Sinn.
+
+   Die Kurve ist dieselbe wie beim Schnitt im Handwerkskapitel: schnell los,
+   lang aus. Sie ist der Grund, warum sich das dort weich anfühlt, und nicht
+   die Dauer.
+
+   Der Weg dagegen MUSS je Szene anders sein, und das ist der Fehler, der
+   hier zuerst drinsteckte: 34 Einheiten sind im Schnitt (214 hoch) ein
+   Sechstel der Tafel und gut zu sehen — im Stapel (742 hoch) sind sie ein
+   Zweiundzwanzigstel, und dann erscheint ein Teil einfach, statt zu kommen.
+   Der Weg gehört deshalb zur Szene und wird nach ihrer Höhe bemessen: rund
+   ein Achtel, wie im Schnitt. */
 const KURVE = 'cubic-bezier(.22,1,.36,1)'
+const DAUER = 620
 const WEG = 34
 
-const RICHTUNG = {
-  unten:  `translateY(${WEG}px)`,
-  oben:   `translateY(-${WEG}px)`,
-  links:  `translateX(-${WEG * 1.4}px)`,
-  rechts: `translateX(${WEG * 1.4}px)`,
+const richtungAus = (aus, weg) => ({
+  unten:  `translateY(${weg}px)`,
+  oben:   `translateY(-${weg}px)`,
+  links:  `translateX(-${weg}px)`,
+  rechts: `translateX(${weg}px)`,
   still:  'none',
-}
+}[aus] || 'none')
 
 /** Die Schritte, in denen ein Eintrag sichtbar ist. */
 const sichtbarIn = (eintrag, schritte) =>
@@ -93,10 +104,15 @@ const sichtbarIn = (eintrag, schritte) =>
  * @param {string} stil Verlauf und Stilblatt der Szene (aus der Mappe).
  * @param {Object} teile Name → Markup, aus der Mappe.
  * @param {string[]} reihenfolge Stapelreihenfolge, unten zuerst.
- * @param {Object} plan Name → `{ ab, bis?, aus, verzug?, rueckenAb?, ruecken? }`.
- *   `ab` ist der erste Schritt (eins-basiert), in dem das Teil dasteht.
- *   `aus` sagt, woher es kommt. `verzug` in Millisekunden, für Teile, die
- *   zusammen kommen und trotzdem nacheinander landen sollen.
+ * @param {number} [weg] Wie weit ein Teil reist, in Einheiten der Szene.
+ *   Rund ein Achtel ihrer Höhe.
+ * @param {number} [dauer] Wie lange es dafür braucht.
+ * @param {Object} plan Name → `{ ab, bis?, aus, verzug?, weg?, dauer?,
+ *   rueckenAb?, ruecken? }`. `ab` ist der erste Schritt (eins-basiert), in
+ *   dem das Teil dasteht. `aus` sagt, woher es kommt. `verzug` in
+ *   Millisekunden, für Teile, die zusammen kommen und trotzdem nacheinander
+ *   landen sollen. `weg` und `dauer` überschreiben die Werte der Szene — für
+ *   das eine Stück, das nicht einblendet, sondern einfährt.
  * @param {Array} marken `{ name, zusatz, ab, bis?, punkt: [x,y], text: [x,y],
  *   anker?, ruecken? }`.
  * @param {string} [extra] Markup, das hinter die Teile kommt (z. B. eine
@@ -108,6 +124,7 @@ const sichtbarIn = (eintrag, schritte) =>
  */
 export default function Zeichentafel({
   kennung, viewBox, viewBoxSchmal, schmal = false,
+  weg = WEG, dauer = DAUER,
   stil, teile, reihenfolge, plan, marken: markenRoh = [],
   extra = '', extraAb = null, schritt = null, schritte, className = '', farben,
 }) {
@@ -131,9 +148,9 @@ export default function Zeichentafel({
 
   const regeln = [
     // Grundzustand und gemeinsame Bewegung
-    `.as-teil,.as-marke,.as-extra{opacity:0;transition:opacity ${DAUER}ms ease,transform ${DAUER + 100}ms ${KURVE}}`,
+    `.as-teil,.as-marke,.as-extra{opacity:0;transition:opacity ${dauer}ms ease,transform ${dauer + 120}ms ${KURVE}}`,
     '.as-strich{fill:none;stroke:var(--as-label,#6d6658);stroke-width:.9;opacity:.5;'
-      + `stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset ${DAUER + 180}ms ${KURVE} 240ms}`,
+      + `stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset ${dauer + 200}ms ${KURVE} 240ms}`,
     '.as-punkt{fill:var(--as-label,#6d6658);opacity:.75}',
     // 16 und nicht 19: Bei 19 ist „Brandsohle" 135 Einheiten breit, und so
     // viel Rand kostet die Zeichnung mehr, als die größere Schrift bringt.
@@ -143,9 +160,14 @@ export default function Zeichentafel({
       + 'letter-spacing:.3px;fill:var(--as-label,#6d6658);opacity:.72}',
 
     // Woher jedes Teil kommt, und wie lange es sich Zeit lässt
+    // Woher, wie weit, wie lange. Die Reihenfolge der Angaben ist wichtig:
+    // Das Kurzschreiben `transition` setzt die Verzögerung auf null zurück,
+    // also muss `transition-delay` danach kommen.
     ...reihenfolge.map((n) => {
       const p = plan[n]
-      return `#${teilId(n)}{transform:${RICHTUNG[p.aus] || 'none'}`
+      const eigen = p.dauer ?? dauer
+      return `#${teilId(n)}{transform:${richtungAus(p.aus, p.weg ?? weg)}`
+        + (p.dauer ? `;transition:opacity ${Math.min(eigen, 700)}ms ease,transform ${eigen}ms ${KURVE}` : '')
         + (p.verzug ? `;transition-delay:${p.verzug}ms` : '') + '}'
     }),
 

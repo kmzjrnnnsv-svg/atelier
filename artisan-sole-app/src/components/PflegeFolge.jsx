@@ -40,11 +40,13 @@ import { useScrollBuehne } from '../lib/scrollbuehne'
 const VORLAUF = 0.08
 const NACHLAUF = 0.10
 
-/* Wie viel Bildschirmhöhe ein Schritt bekommt. Etwas weniger als beim Aufbau
-   (0,38): Dort kommt in jedem Schritt ein Bauteil dazu, das man ansehen will;
-   hier ist die Änderung feiner, und fünf Schritte sollen zusammen kürzer
-   ausfallen als die sechs davor. */
-const PRO_SCHRITT = 0.32
+/* Wie viel Bildschirmhöhe ein Schritt bekommt.
+
+   0,32 war zu knapp, seit der Spanner von links einfährt: Er ist gut eine
+   Sekunde unterwegs, und bei 0,32 Bildschirmen je Schritt schnitt ein
+   zügiger Daumen ihn auf halbem Weg ab. Eine abgeschnittene Bewegung ist
+   das Gegenteil von weich. */
+const PRO_SCHRITT = 0.40
 
 function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
