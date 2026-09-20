@@ -1,127 +1,133 @@
 /**
  * SohlenStapel — derselbe Schuh, in seine sechs Teile gelegt.
  *
- * ── Woher die Zeichnung kommt ─────────────────────────────────────────────
+ * ── Was hier steht und was nicht ──────────────────────────────────────────
  *
- * Aus der Zeichenmappe (zeichnungen/aufbauTafel.js). Hier standen vorher von
- * Hand gesetzte Konturen; die gelieferte Tafel zeichnet dieselben sechs
- * Teile sauberer, mit Dicke, Rippe, Körnung und Doppelnaht.
+ * Nur die Angaben dieser Szene: wann welches Teil kommt, woher, und was
+ * daneben steht. Die Bewegung liegt in Zeichentafel.jsx, damit sie mit dem
+ * Pflegeabschnitt dieselbe ist. Die Teile liegen in
+ * zeichnungen/aufbauTeile.js.
  *
- * Die sechs Gruppen tragen Kennungen — `as-oberschuh-au`, `as-brandsohle-au`,
- * `as-rahmen-au`, `as-kork-au`, `as-laufsohle-au`, `as-absatz-au` —, und
- * genau daran hängt die Folge.
+ * ── Warum die Beschriftung die Seite wechselt ─────────────────────────────
  *
- * ── Warum die Steuerung hier als CSS steht und nicht als Eigenschaften ────
+ * Sechs Marken untereinander an einem Rand ergeben eine Liste, und eine
+ * Liste neben einer Zeichnung liest man als Legende — man geht sie durch,
+ * statt hinzusehen. Wechseln sie die Seite, führt jeder Strich das Auge quer
+ * über die Tafel, und man sieht dabei das Teil, um das es geht. So machen es
+ * die Tafeln in Werkstattbüchern, und zwar nicht aus Laune.
  *
- * Die Tafel kommt als Zeichenkette herein und wird als Ganzes eingesetzt.
- * Von außen lässt sich einzelnen Gruppen darin nichts anheften — wohl aber
- * über ihre Kennung. Deshalb schreibt dieses Bauteil ein Blatt Regeln, das
- * mit der Tafel zusammen eingesetzt wird: `[data-schritt="n"] #teil`.
- *
- * Die Regeln werden erzeugt und nicht abgetippt. Sechs Teile mal sieben
- * Schritte wären achtzig Zeilen, in denen genau ein Fehler steckt, den
- * niemand findet.
+ * Die Ränder links und rechts sind deshalb gleich breit. Das kostet der
+ * Zeichnung ein knappes Drittel der Fläche und ist es wert.
  *
  * ── Der siebte Schritt ────────────────────────────────────────────────────
  *
  * Der Grund für die ganze Tafel: Laufsohle und Absatz rücken ab, dazwischen
- * läuft eine Strichlinie, und zwei Klammern sagen, was gemeint ist — oben
- * bleibt, unten wird gewechselt. Diese Teile zeichnet das Bauteil selbst
- * und hängt sie hinten an die Tafel; in der gelieferten Mappe stehen sie
- * nicht, weil sie keine Schuhteile sind, sondern eine Aussage darüber.
- *
- * Die Beschriftung steht senkrecht neben den Klammern. Waagerecht bräuchte
- * „wird gewechselt" hundertfünfunddreißig Einheiten Rand, und die gingen
- * der Zeichnung verloren.
+ * läuft eine Strichlinie, und zwei Wörter sagen, was gemeint ist. Sie
+ * gehören nicht in die Zeichenmappe — das sind keine Schuhteile, sondern
+ * eine Aussage darüber —, deshalb stehen sie hier.
  *
  * ── Eine Falle, die zweimal zuschlägt ─────────────────────────────────────
  *
  * Ein <style> in einem SVG gilt für das ganze Dokument, nicht für sein SVG.
- * Die Pflegetafel bringt eine Regel mit, die den Schaft zurücknimmt, solange
- * ihre Folge läuft — und die griff auch auf den Oberschuh hier, weil er
- * dieselbe Klasse trägt. In zeichnungen/pflegeTafel.js steht deshalb
- * `svg[data-step]:not(…)` statt `svg:not(…)`: Eine Tafel ohne `data-step`
- * ist dann nicht gemeint.
- *
- * Wer eine weitere Tafel dazunimmt, prüfe dasselbe. Die Klassen tragen alle
- * `as-`, aber innerhalb dieses Präfixes teilen sie sich einen Namensraum.
+ * Deshalb tragen alle Klassen und Kennungen der Mappe `as-` und das Kürzel
+ * ihrer Szene. Wer eine weitere Tafel dazunimmt, prüfe dasselbe: Innerhalb
+ * des Präfixes teilen sie sich einen Namensraum.
  */
-import { MARKUP } from '../zeichnungen/aufbauTafel'
+import Zeichentafel from './Zeichentafel'
+import { STIL, TEILE, REIHENFOLGE } from '../zeichnungen/aufbauTeile'
 import { TAFELFARBEN } from '../zeichnungen/farben'
 
-/* Ab welchem Schritt (eins-basiert) jedes Teil dasteht. Laufsohle und
-   Absatz kommen zusammen — sie sind ein Schritt, weil sie zusammen
-   gewechselt werden. */
-const AB = {
-  'as-oberschuh-au': 1,
-  'as-brandsohle-au': 2,
-  'as-rahmen-au': 3,
-  'as-kork-au': 4,
-  'as-laufsohle-au': 5,
-  'as-absatz-au': 5,
+/* Szenenausschnitt der Mappe ist `198 22 586 660`. Links und rechts kommen
+   je rund 135 Einheiten für die Beschriftung dazu, unten die vierzig, um
+   die die Sohle im letzten Schritt abrückt.
+
+   Die Zahlen sind gemessen und nicht geschätzt: Der längste Name ist
+   „Brandsohle" und bei 16 Einheiten Schriftgröße mit 2,2 Sperrung 114
+   Einheiten breit; die Beschriftung rechts beginnt bei 768 und endet damit
+   bei 882, zwanzig vor dem Rand. Wer einen längeren Namen einträgt, muss
+   hier nachziehen — sonst steht er halb außerhalb der Tafel. */
+const AUSSCHNITT = '90 6 814 742'
+
+/* Ohne Beschriftung fallen die beiden Ränder weg. Unten bleiben die
+   sechzig Einheiten, um die die Sohle abrückt. */
+const AUSSCHNITT_SCHMAL = '198 14 586 736'
+
+/** Um wie viel Laufsohle und Absatz im letzten Schritt abrücken. */
+/* Sechzig und nicht vierzig: In die Lücke kommen zwei Zeilen und eine
+   Linie, und bei vierzig Einheiten stoßen sie oben an den Kork und unten an
+   die Laufsohle. */
+const ABRUECKEN = 60
+const TRENNUNG = 7
+
+const PLAN = {
+  'absatz':     { ab: 5, aus: 'unten', verzug: 120, rueckenAb: TRENNUNG, ruecken: ABRUECKEN },
+  'laufsohle':  { ab: 5, aus: 'unten',              rueckenAb: TRENNUNG, ruecken: ABRUECKEN },
+  'kork':       { ab: 4, aus: 'unten' },
+  // Der Rahmen wird seitlich angelegt und rundherum angenäht — er kommt
+  // als einziges Teil von der Seite.
+  'rahmen':     { ab: 3, aus: 'links' },
+  'brandsohle': { ab: 2, aus: 'unten' },
+  'oberschuh':  { ab: 1, aus: 'still' },
 }
 
-/* Die Höhen aus der Tafel, gemessen: Unterkante Kork 473, Oberkante
-   Laufsohle 488, Unterkante Absatz 662. Wer die Tafel austauscht, muss hier
-   nachmessen — deshalb stehen die Zahlen an einer Stelle und nicht verteilt. */
-const KORK_UNTEN = 473
-const SOHLE_OBEN = 488
-const ABSATZ_UNTEN = 662
-const OBERSCHUH_OBEN = 36
+/* Links, rechts, links … — siehe oben. Die Punkte liegen auf den Teilen;
+   ihre Maße stehen in der Mappe unter MASSE. */
+const MARKEN = [
+  { name: 'Oberschuh',  zusatz: 'Schaft und Futter', ab: 1, punkt: [300, 150], text: [216, 112], anker: 'end' },
+  { name: 'Brandsohle', zusatz: 'mit der Rippe',     ab: 2, punkt: [640, 272], text: [768, 264] },
+  // Der Punkt sitzt auf dem Band und nicht im Loch: Der Rahmen IST das
+  // Band, und ein Punkt in der Mitte zeigte auf nichts.
+  { name: 'Rahmen',     zusatz: 'steht heraus',      ab: 3, punkt: [300, 330], text: [216, 348], anker: 'end' },
+  { name: 'Kork',       zusatz: 'passt sich an',     ab: 4, punkt: [620, 440], text: [768, 432] },
+  {
+    name: 'Laufsohle', zusatz: 'mit Doppelnaht',
+    ab: 5, punkt: [300, 528], text: [216, 520], anker: 'end',
+    rueckenAb: TRENNUNG, ruecken: ABRUECKEN,
+  },
+  {
+    name: 'Absatz', zusatz: 'geschichtet',
+    ab: 5, punkt: [340, 624], text: [416, 616],
+    rueckenAb: TRENNUNG, ruecken: ABRUECKEN,
+  },
+]
 
-/** Um wie viel die Sohle im letzten Schritt abrückt. */
-const ABRUECKEN = 40
+/* Unterkante Kork 473, Oberkante Laufsohle 488 — nach dem Abrücken liegt
+   dazwischen eine Lücke von 75 Einheiten. Genau dort läuft die Linie.
 
-/* Der Oberschuh trägt in der Tafel schon ein eigenes `transform`. Eine
-   CSS-Regel würde es überschreiben und ihn verschieben — er bekommt
-   deshalb nie eine, und er braucht auch keine: Er ist ab Schritt eins da. */
-const REGELN = [
-  Object.keys(AB).map(id => `#${id}{transition:opacity .62s ease,transform .78s cubic-bezier(.22,1,.36,1)}`).join(''),
-  Object.entries(AB).flatMap(([id, ab]) =>
-    Array.from({ length: ab - 1 }, (_, i) =>
-      `[data-schritt="${i + 1}"] #${id}{opacity:0${id === 'as-oberschuh-au' ? '' : ';transform:translateY(34px)'}}`),
-  ).join(''),
-  `[data-schritt="7"] #as-laufsohle-au,[data-schritt="7"] #as-absatz-au{transform:translateY(${ABRUECKEN}px)}`,
-  '.as-trennung{opacity:0;transition:opacity .62s ease}',
-  '[data-schritt="7"] .as-trennung{opacity:1}',
-  '@media (prefers-reduced-motion:reduce){[id^="as-"],.as-trennung{transition:none}}',
-].join('')
+   Sie ist kräftiger gesetzt als die Führungsstriche der Beschriftung: Die
+   führen das Auge zu einem Teil, diese hier ist die Aussage des ganzen
+   Abschnitts. Mit derselben Feinheit wie ein Führungsstrich war sie auf dem
+   Bildschirm nicht zu sehen. */
+const LINIE = 510
 
-const MITTE_BLEIBT = (OBERSCHUH_OBEN + KORK_UNTEN) / 2
-const MITTE_WEG = (SOHLE_OBEN + ABRUECKEN + ABSATZ_UNTEN + ABRUECKEN) / 2
-
-const TRENNUNG = `
-<g class="as-trennung">
-  <path class="as-leader" d="M 205 ${(KORK_UNTEN + SOHLE_OBEN + ABRUECKEN) / 2} L 780 ${(KORK_UNTEN + SOHLE_OBEN + ABRUECKEN) / 2}"
-        stroke-dasharray="7 6"/>
-  <path class="as-leader" d="M 770 ${OBERSCHUH_OBEN} L 780 ${OBERSCHUH_OBEN} L 780 ${KORK_UNTEN} L 770 ${KORK_UNTEN}"/>
-  <path class="as-leader" d="M 770 ${SOHLE_OBEN + ABRUECKEN} L 780 ${SOHLE_OBEN + ABRUECKEN} L 780 ${ABSATZ_UNTEN + ABRUECKEN} L 770 ${ABSATZ_UNTEN + ABRUECKEN}"/>
-  <text class="as-label" text-anchor="middle" transform="translate(802 ${MITTE_BLEIBT}) rotate(90)">bleibt</text>
-  <text class="as-label" text-anchor="middle" transform="translate(802 ${MITTE_WEG}) rotate(90)">wird gewechselt</text>
-</g>`
-
-/* Der Ausschnitt der Tafel ist 198 22 586 660. Rechts kommen die Klammern
-   dazu, unten die vierzig Einheiten, um die die Sohle abrückt.
-
-   Die Ränder sind mit Absicht fast gleich breit — links 29 Einheiten,
-   rechts 51. Ein Blatt, das in sechs von sieben Schritten rechts einen
-   handbreiten leeren Streifen hat, sieht aus, als wäre es verrutscht. */
-const AUSSCHNITT = '190 14 626 710'
+const TRENNMARKUP = `
+  <path class="as-strich" pathLength="1" d="M 219 ${LINIE} L 765 ${LINIE}"
+        style="stroke-dasharray:9 7;stroke-dashoffset:0;opacity:.75;stroke-width:1.5"/>
+  <text class="as-marke-name" x="762" y="${LINIE - 16}" text-anchor="end">bleibt</text>
+  <text class="as-marke-name" x="762" y="${LINIE + 30}" text-anchor="end">wird gewechselt</text>`
 
 /**
  * @param {number|null} [schritt] 0 … 6. `null` zeigt den fertigen Stapel
  *   ohne Trennung — der Fall des Vorrenderers und der Fall „keine Bewegung".
  */
-export default function SohlenStapel({ className = '', schritt = null }) {
+export default function SohlenStapel({ className = '', schritt = null, schmal = false }) {
   return (
-    <svg
+    <Zeichentafel
+      kennung="au"
       viewBox={AUSSCHNITT}
+      viewBoxSchmal={AUSSCHNITT_SCHMAL}
+      schmal={schmal}
+      stil={STIL}
+      teile={TEILE}
+      reihenfolge={REIHENFOLGE}
+      plan={PLAN}
+      marken={MARKEN}
+      extra={TRENNMARKUP}
+      extraAb={TRENNUNG}
+      schritt={schritt}
+      schritte={7}
+      farben={TAFELFARBEN}
       className={className}
-      role="img"
-      aria-hidden="true"
-      data-schritt={schritt == null ? 6 : schritt + 1}
-      style={{ width: '100%', height: 'auto', ...TAFELFARBEN }}
-      dangerouslySetInnerHTML={{ __html: `${MARKUP}${TRENNUNG}<style>${REGELN}</style>` }}
     />
   )
 }

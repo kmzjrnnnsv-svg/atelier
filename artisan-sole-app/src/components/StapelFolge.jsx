@@ -29,7 +29,7 @@ import { useMemo, useRef } from 'react'
 import SohlenStapel from './SohlenStapel'
 import Enthuellen from './Enthuellen'
 import { STAPEL } from '../lib/stapelSchritte'
-import { useWenigerBewegung } from '../lib/bewegung'
+import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 const VORLAUF = 0.08
@@ -69,8 +69,12 @@ function OhneBewegung({ kopf, fuss }) {
     <div className="px-5 lg:px-16 py-16 lg:py-28">
       <div className="max-w-5xl mx-auto">
         {kopf}
+        {/* Breiter als in der Folge: Hier trägt die Tafel die Beschriftung
+            an beiden Rändern und hat keinen Text daneben, der ihr Platz
+            wegnimmt. Bei max-w-md stießen „wird gewechselt" und die
+            Laufsohle aneinander. */}
         <div className="mt-12 lg:mt-16">
-          <SohlenStapel className="max-w-md mx-auto" />
+          <SohlenStapel className="max-w-2xl mx-auto" />
         </div>
         <ol className="grid sm:grid-cols-2 gap-x-14 gap-y-8 mt-12 lg:mt-16 max-w-3xl">
           {STAPEL.map((s, i) => (
@@ -96,6 +100,7 @@ function OhneBewegung({ kopf, fuss }) {
 export default function StapelFolge({ kopf, fuss }) {
   const ref = useRef(null)
   const ruhig = useWenigerBewegung()
+  const schmal = useSchmal()
   const { fortschritt, buehnenHoehe } = useScrollBuehne(ref, ruhig)
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
@@ -119,18 +124,23 @@ export default function StapelFolge({ kopf, fuss }) {
           className="sticky top-0 flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-10 lg:py-14"
           style={buehnenHoehe ? { height: buehnenHoehe } : undefined}
         >
-          <div className="w-full max-w-6xl mx-auto lg:grid lg:grid-cols-12 lg:gap-16 lg:items-center">
+          <div className="w-full max-w-6xl mx-auto lg:grid lg:grid-cols-12 lg:gap-10 lg:items-center">
             {/* Die Tafel steht links und hoch. Sie zählt selbst mit: Wie
-                viel noch fehlt, sieht man am Stapel. */}
-            <div className="lg:col-span-6 text-black flex justify-center">
+                viel noch fehlt, sieht man am Stapel.
+
+                Sieben von zwölf Spalten, nicht sechs: Seit die Teile
+                beschriftet sind, trägt die Tafel an beiden Rändern Schrift,
+                und die will gelesen werden. */}
+            <div className="lg:col-span-7 text-black flex justify-center">
               <SohlenStapel
                 schritt={schritt}
-                className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-none"
+                schmal={schmal}
+                className="w-full max-w-[300px] sm:max-w-[340px] lg:max-w-none"
               />
             </div>
 
             {/* Rechts nur der Schritt, der gerade dran ist. */}
-            <div className="lg:col-span-5 lg:col-start-8 mt-8 lg:mt-0">
+            <div className="lg:col-span-4 lg:col-start-9 mt-8 lg:mt-0">
               <Zaehler schritt={schritt} />
               <div className="relative mt-6 min-h-[150px] sm:min-h-[120px]">
                 {STAPEL.map((s, i) => (

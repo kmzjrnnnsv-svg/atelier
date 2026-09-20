@@ -1,39 +1,82 @@
 /**
  * SpannerSchnitt — der Loafer mit dem Spanner darin, in fünf Schritten.
  *
- * ── Woher die Zeichnung kommt ─────────────────────────────────────────────
+ * ── Was hier steht und was nicht ──────────────────────────────────────────
  *
- * Aus der Zeichenmappe (zeichnungen/pflegeTafel.js), nicht mehr aus diesem
- * Bauteil. Hier standen vorher von Hand gesetzte Pfade; sie waren dreimal
- * nachgezogen worden und wurden trotzdem kein Schuh, den man wiedererkennt.
- * Die gelieferte Tafel ist ein gezeichneter Penny Loafer mit Sattel,
- * Futterkante, Mokassinnaht und flachem Absatz, dazu der zweiteilige
- * Zedernspanner mit Spindel und Bohrungen, die Feuchtigkeit, die Bürste und
- * der Cremetiegel.
+ * Nur die Angaben, die diese Szene ausmachen: wann welches Teil kommt, woher
+ * es kommt, und was auf der Tafel daneben steht. Die Bewegung selbst — Dauer,
+ * Kurve, Weg — liegt in Zeichentafel.jsx, damit sie mit der anderen Szene
+ * dieselbe ist. Die Teile liegen in zeichnungen/pflegeTeile.js.
  *
- * ── Wie die Schritte laufen ───────────────────────────────────────────────
+ * ── Warum die Teile aus verschiedenen Richtungen kommen ───────────────────
  *
- * Die Tafel bringt ihre eigene Folge mit: `data-step="1"` bis `"5"` am
- * <svg>, und im Blatt schaltet eine Regel je Schritt die Gruppen
- * `.as-s1` … `.as-s5`. Dieses Bauteil setzt also nur eine Zahl — es
- * zeichnet nichts und rechnet nichts.
+ * Weil sie es in Wirklichkeit auch tun. Das Vorderteil des Spanners wird von
+ * hinten durch die Öffnung geschoben, das Fersenteil von oben eingesetzt, die
+ * Feder dazwischen gespannt. Eine Folge, in der alles von unten einblendet,
+ * ist eine Diaschau; eine, in der jedes Stück den Weg nimmt, den eine Hand
+ * ihm gäbe, ist ein Vorgang.
  *
- * Das ist der Grund, warum hier nur noch dreißig Zeilen stehen: Die
- * Zeichnung gehört in die Mappe, die Steuerung in die Folge (PflegeFolge),
- * und dazwischen liegt eine Zahl.
+ * ── Zur Beschriftung ──────────────────────────────────────────────────────
  *
- * ── Farbe ─────────────────────────────────────────────────────────────────
+ * Vier Marken, und jede sagt etwas, das im Text daneben NICHT steht: dass
+ * der Spanner zweiteilig ist, woher die Feuchtigkeit kommt, wo genau die
+ * Falte sitzt, wofür die Bürste gedacht ist. Eine Beschriftung, die den
+ * Absatz daneben wiederholt, ist Zierrat.
  *
- * Die Tafel malt mit CSS-Eigenschaften und hat neutrales Grau als
- * Rückfallwert. Gesetzt werden sie hier, aus zeichnungen/farben.js — ein
- * warmes Beigegrau, damit die Tafel auf dem gebrochenen Weiß dieser Seite
- * nicht kalt wirkt.
- *
- * Für eine Vorleseroutine ist die Zeichnung Beiwerk; was sie zeigt, sagt
- * der Text daneben in Worten.
+ * Ihre Plätze sind gesucht, nicht gerechnet: Der Schuh füllt die Fläche
+ * fast ganz, und die vier freien Ecken sind oben links (über der Ferse),
+ * oben über dem Rist, oben rechts (über dem Werkzeug) und rechts über dem
+ * Blatt. Die Maße der Teile stehen in der Mappe unter MASSE.
  */
-import { VIEWBOX, MARKUP } from '../zeichnungen/pflegeTafel'
+import Zeichentafel from './Zeichentafel'
+import { STIL, TEILE, REIHENFOLGE } from '../zeichnungen/pflegeTeile'
 import { TAFELFARBEN } from '../zeichnungen/farben'
+
+/* Szenenausschnitt der Mappe ist `12 26 766 328`. Oben kommen 50 Einheiten
+   für die Beschriftung dazu, unten 14 für den Schatten der Sohle. */
+const AUSSCHNITT = '12 -24 766 372'
+
+/* Ohne Beschriftung braucht die Tafel den Rand oben nicht. */
+const AUSSCHNITT_SCHMAL = '12 22 766 336'
+
+const PLAN = {
+  'sohle':              { ab: 1, aus: 'still' },
+  'oberschuh':          { ab: 1, aus: 'still' },
+  'riemen':             { ab: 1, aus: 'still' },
+  // Die Falte ist der Grund für den ganzen Abschnitt — und verschwindet,
+  // sobald der Spanner seine Arbeit getan hat.
+  'falten':             { ab: 1, bis: 2, aus: 'still' },
+  // Der Spanner: Ferse von oben eingesetzt, Vorderteil von hinten durch die
+  // Öffnung geschoben, die Feder dazwischen. In dieser Reihenfolge, mit
+  // einem Achtelsekunden-Abstand, damit man drei Handgriffe sieht und nicht
+  // ein Aufblitzen.
+  'spanner-vorderteil': { ab: 2, aus: 'links' },
+  'spanner-ferse':      { ab: 2, aus: 'oben',  verzug: 130 },
+  'spanner-feder':      { ab: 2, aus: 'links', verzug: 260 },
+  'feuchtigkeit':       { ab: 4, aus: 'unten' },
+  'buerste':            { ab: 5, aus: 'oben' },
+  'creme':              { ab: 5, aus: 'oben',  verzug: 120 },
+  'glanz':              { ab: 5, aus: 'still', verzug: 380 },
+}
+
+const MARKEN = [
+  {
+    name: 'Falte', zusatz: 'über dem Ballen',
+    ab: 1, bis: 2, punkt: [582, 200], text: [660, 112],
+  },
+  {
+    name: 'Zedernholz', zusatz: 'zweiteilig, mit Feder',
+    ab: 2, punkt: [112, 152], text: [22, 40],
+  },
+  {
+    name: 'Feuchtigkeit', zusatz: 'aus dem Futter',
+    ab: 4, punkt: [216, 52], text: [198, 2],
+  },
+  {
+    name: 'Bürste und Creme', zusatz: 'für glatte Leder',
+    ab: 5, punkt: [520, 50], text: [470, 2],
+  },
+]
 
 /**
  * @param {number|null} [schritt] 0 … 4. `null` zeigt den letzten Schritt —
@@ -41,16 +84,22 @@ import { TAFELFARBEN } from '../zeichnungen/farben'
  *   der Fall „keine Bewegung": Wer die Folge nicht sieht, soll das fertige
  *   Bild sehen und nicht das erste.
  */
-export default function SpannerSchnitt({ className = '', schritt = null }) {
+export default function SpannerSchnitt({ className = '', schritt = null, schmal = false }) {
   return (
-    <svg
-      viewBox={VIEWBOX}
+    <Zeichentafel
+      kennung="pf"
+      viewBox={AUSSCHNITT}
+      viewBoxSchmal={AUSSCHNITT_SCHMAL}
+      schmal={schmal}
+      stil={STIL}
+      teile={TEILE}
+      reihenfolge={REIHENFOLGE}
+      plan={PLAN}
+      marken={MARKEN}
+      schritt={schritt}
+      schritte={5}
+      farben={TAFELFARBEN}
       className={className}
-      role="img"
-      aria-hidden="true"
-      data-step={schritt == null ? 5 : schritt + 1}
-      style={{ width: '100%', height: 'auto', ...TAFELFARBEN }}
-      dangerouslySetInnerHTML={{ __html: MARKUP }}
     />
   )
 }
