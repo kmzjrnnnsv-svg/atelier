@@ -19,15 +19,29 @@
  *
  *   1  Erster Blick    Was ist das, und was kostet es?
  *   2  Drei Zahlen     Woran hängt der Preis?
- *   3  Das Handwerk    Warum hält das länger als Geklebtes?
- *   4  Die Kollektionen Wofür ist es gemacht, und wann trägt man es?
- *   5  Das Leder       Woraus besteht es?
- *   6  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
- *   7  Almansa         Wer baut es, und warum dauert es so lange?
- *   8  Die Pflege      Was muss ich dafür tun, damit es hält?
- *   9  Nach Jahren     Und wenn die Sohle doch durch ist?
+ *   3  Die Teile       Woraus besteht ein Schuh?
+ *   4  Die Machart     Was hält ihn zusammen, und warum so?
+ *   5  Die Kollektionen Wofür ist es gemacht, und wann trägt man es?
+ *   6  Das Leder       Woraus ist die Haut?
+ *   7  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
+ *   8  Almansa         Wer baut es, und warum dauert es so lange?
+ *   9  Die Pflege      Wie sieht ein Tag mit diesen Schuhen aus?
  *  10  In eigener Sache Was behaupten wir NICHT?
  *  11  Der Anfang      Wo fange ich an?
+ *
+ * ── Die drei Folgen ───────────────────────────────────────────────────────
+ *
+ * Drei Abschnitte bewegen sich beim Scrollen, und ihre Reihenfolge ist die
+ * eines Werkstücks und nicht die eines Zufalls:
+ *
+ *   3  Die Teile    Woraus — der Stapel, flach, bis zur Trennlinie
+ *   4  Die Machart  Wie — der Schnitt, Lage für Lage, plus der Vergleich
+ *   9  Die Pflege   Und du — ein Tag, von morgens bis über Nacht
+ *
+ * Die ersten beiden gehören zusammen und stehen deshalb nebeneinander: Erst
+ * sieht man, was da ist, dann, was es zusammenhält. Die dritte steht am
+ * anderen Ende der Seite, weil sie nicht mehr vom Schuh handelt, sondern von
+ * dem, der ihn trägt.
  *
  * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
  * wenn hier von einer geschlossenen Geschichte die Rede ist.
@@ -48,15 +62,15 @@
  *
  * Kapitel 1, 4 und 11 haben ihre eigene: den Knopf im Aufmacher, „Alle N
  * Modelle" unter den Kollektionen (die trägt die echte Zahl und ist an der
- * Stelle die bessere) und den Abschluss. Kapitel 8 führt ins Zubehör und
+ * Stelle die bessere) und den Abschluss. Kapitel 9 führt ins Zubehör und
  * sagt das auch — eine Tür, die anderswo hingeht und trotzdem dasselbe Wort
  * trägt, wäre eine Falle. Die übrigen bekommen diese.
  *
  * ── Warum die Haut zweimal vorkommt ───────────────────────────────────────
  *
- * Kapitel 5 sagt, dass ein Leder eine Haut ist wie die eigene: dieselben
+ * Kapitel 6 sagt, dass ein Leder eine Haut ist wie die eigene: dieselben
  * Poren, dieselbe Patina, ein Kratzer, der sich auspolieren lässt wie eine
- * Schramme verheilt. Kapitel 8 zieht daraus die Folgerung, die sich jeder
+ * Schramme verheilt. Kapitel 9 zieht daraus die Folgerung, die sich jeder
  * selbst schon gedacht hat — eine Haut, die getragen wird, will gepflegt
  * werden. Ohne das erste wäre das zweite ein Zubehörregal.
  *
@@ -218,6 +232,82 @@ const FAKTEN = [
   'Almansa, Spanien',
   '4–6 Wochen',
   'Neu besohlbar',
+]
+
+/**
+ * Die drei Wege, eine Sohle an einen Schaft zu bringen.
+ *
+ * ── Warum das auf einer Verkaufsseite steht ───────────────────────────────
+ *
+ * „Rahmengenäht" ist das teuerste Wort dieser Seite und für die meisten ein
+ * Fachwort ohne Gegenstück. Man kann es glauben oder nicht glauben — prüfen
+ * kann man es nicht, solange nicht danebensteht, wogegen. Erst mit Blake und
+ * geklebt daneben wird aus einer Behauptung ein Vergleich, und ein Vergleich
+ * überzeugt jemanden, der Geld ausgibt, anders als ein Versprechen.
+ *
+ * ── Was hier nicht passiert ───────────────────────────────────────────────
+ *
+ * Die anderen beiden werden nicht schlechtgemacht. Blake ist eine gute
+ * Machart für einen schlanken, biegsamen Schuh, und wer einen leichten
+ * Sommerschuh sucht, ist damit richtig bedient. Jeder Eintrag sagt deshalb,
+ * wofür die Machart taugt, bevor er sagt, was sie kostet.
+ *
+ * Eine vierte gibt es — den von Hand genähten Rahmen. Sie steht als Zeile
+ * unter den dreien, obwohl dieses Haus sie nicht baut. Wer die Stufe über
+ * sich verschweigt und anderswo davon liest, hat auch den Rest verspielt.
+ *
+ * Sachwissen über Schuhe, nicht Auskunft über dieses Haus.
+ */
+const MACHARTEN = [
+  {
+    name: 'Geklebt',
+    zusatz: 'Cemented',
+    text: 'Sohle und Schaft werden verklebt, ohne Naht. Leicht, biegsam und in '
+        + 'jeder Preisklasse zu haben. Ist die Sohle durch, ist der Schuh durch.',
+  },
+  {
+    name: 'Blake',
+    zusatz: 'Eine Naht',
+    text: 'Eine Naht führt von der Laufsohle durch die Brandsohle in den Schaft. '
+        + 'Ergibt den schlanksten Rand, den es gibt. Sie läuft allerdings durch '
+        + 'den Innenraum, und neu besohlen kann sie nur, wer die Maschine dafür hat.',
+  },
+  {
+    name: 'Rahmengenäht',
+    zusatz: 'Goodyear welted · unsere Wahl',
+    text: 'Zwei Nähte statt einer. Die erste fasst Schaft, Futter und Rahmen an '
+        + 'der Brandsohle, die zweite nur Rahmen und Laufsohle. Schwerer als die '
+        + 'anderen beiden, und die ersten Wochen fester.',
+  },
+]
+
+/**
+ * Die drei Gründe. Drei und nicht fünf — der vierte wäre „Tradition", und
+ * das ist kein Grund, sondern eine Ausrede für einen, den man nicht nennen
+ * kann.
+ *
+ * Jeder folgt aus dem Schnitt darüber und ist dort zu sehen: die Trennlinie
+ * im Stapel, die fehlende Durchstechung der Brandsohle, der Hohlraum, der
+ * mit Kork gefüllt wird.
+ */
+const WARUM_RAHMEN = [
+  {
+    titel: 'Die Sohle ist ein eigenes Teil',
+    text: 'Die Doppelnaht fasst nur Rahmen und Laufsohle. Ein Schuhmacher trennt '
+        + 'sie auf, nimmt die Sohle ab und näht eine neue an — den Schaft fasst er '
+        + 'dabei nicht an. Das ist die Linie aus dem Abschnitt davor.',
+  },
+  {
+    titel: 'Nichts geht durch den Innenraum',
+    text: 'Keine Naht durchstößt die Brandsohle. Wo kein Loch ist, kommt von unten '
+        + 'auch kein Wasser herein, und unter deinem Fuß liegt kein Faden.',
+  },
+  {
+    titel: 'Der Hohlraum wird zu deiner Form',
+    text: 'Zwischen Brandsohle und Laufsohle bleibt Platz. Er wird mit Kork '
+        + 'gefüllt, der unter dem Gewicht nachgibt und nach einigen Wochen den '
+        + 'Abdruck deines Fußes behält.',
+  },
 ]
 
 const ZAHLEN = [
@@ -1363,18 +1453,92 @@ export default function TestHomepage() {
       </section>
 
 
-      {/* ══ 3 · Das Handwerk ══════════════════════════════════════════════
+      {/* ══ 3 · Die Teile ════════════════════════════════════════════════
+          Die erste der beiden Tafeln, und jetzt die erste Bewegung der Seite
+          überhaupt.
+
+          Sie stand lange am Ende, als Nachtrag zum Pflegekapitel: „Und wenn
+          die Sohle doch durch ist?" Das war eine gute Frage an der falschen
+          Stelle. Denn diese Tafel beantwortet keine Frage über das Alter
+          eines Schuhs, sondern die einfachste, die es gibt — woraus besteht
+          das Ding? —, und eine Seite, die erklären will, warum ein Schuh
+          teuer ist, beantwortet die zuerst.
+
+          Die Reihenfolge der beiden Tafeln ist damit die eines Werkstücks:
+          Hier liegen die Teile flach übereinander, jedes mit eigener Kontur,
+          wie auf dem Tisch eines Schuhmachers. Am Ende läuft der Stapel auf
+          eine Trennlinie hinaus — oben, was bleibt; unten, was gewechselt
+          wird. Der Abschnitt danach zeigt im Schnitt, WARUM es diese Linie
+          gibt: weil eine bestimmte Naht sie macht.
+
+          Andersherum ging es nicht. Wer den Schnitt zuerst sieht, sieht
+          sechs Lagen ineinandergreifen und weiß hinterher nicht, welche
+          davon zusammengehören. */}
+      <section className="bg-white border-t border-black/[0.06]">
+        <StapelFolge
+          kopf={
+            <>
+              <Kapitelmarke>Die Teile</Kapitelmarke>
+              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+                Ein Schuh,<br className="hidden sm:block" /> zwei Teile.
+              </h2>
+              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+                Sieben Lagen, flach übereinandergelegt. Scroll weiter — am Ende
+                siehst du, welche davon ein Leben lang bleiben und welche ein
+                Schuhmacher wechselt.
+              </p>
+            </>
+          }
+          fuss={
+            <div className="max-w-3xl">
+              <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5]">
+                Oben, was bleibt. Unten, was gewechselt wird. Dass es diese Linie
+                überhaupt gibt, liegt an einer einzigen Naht.
+              </p>
+              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-6">
+                Die kommt gleich — und mit ihr die Frage, warum wir uns
+                ausgerechnet für diese Machart entschieden haben.
+              </p>
+              <ZurKollektion
+                className="mt-10 lg:mt-12"
+                satz="So gebaut ist jedes Paar, das hier steht."
+                auf={zurKollektion}
+              />
+            </div>
+          }
+        />
+      </section>
+
+
+      {/* ══ 4 · Die Machart ══════════════════════════════════════════════
           Der Abschnitt, der den Preis trägt. „Rahmengenäht statt geklebt"
           ist der entscheidende Satz und zugleich der unanschaulichste — was
           ein Rahmen ist, sieht man am fertigen Schuh nicht. Deshalb der
           Schnitt.
 
-          Und deshalb setzt er sich jetzt zusammen, statt fertig dazustehen:
-          Ein Schnitt besteht aus Lagen, und diese Lagen entstehen in einer
+          Und deshalb setzt er sich zusammen, statt fertig dazustehen: Ein
+          Schnitt besteht aus Lagen, und diese Lagen entstehen in einer
           Reihenfolge — in der, in der ein Schuhmacher sie anlegt. Wer sie
           scrollend sieht, versteht in zwanzig Sekunden, wofür sonst zwei
           Absätze nötig waren. Die zwei Absätze sind deshalb weg; ihr Inhalt
           steht in den sechs Schritten (lib/aufbauSchritte.js).
+
+          ── Warum hier ein Vergleich steht ────────────────────────────────
+
+          Die Folge zeigt, WIE dieser Schuh gebaut ist. Was sie nicht zeigen
+          kann, ist, wogegen — und ohne das ist „rahmengenäht" ein Fachwort,
+          das man glauben oder nicht glauben kann. Deshalb steht unter der
+          Bühne, welche drei Wege es gibt, eine Sohle an einen Schaft zu
+          bringen, und was an jedem gut und schlecht ist.
+
+          Der vierte, der handgenähte Rahmen, steht mit dazu, obwohl dieses
+          Haus ihn nicht baut. Eine Seite, deren Argument die Offenheit ist,
+          darf die Stufe über sich nicht verschweigen — wer sie anderswo
+          findet, glaubt danach auch den Rest nicht mehr.
+
+          Und die drei Gründe sind drei und nicht fünf. Der vierte wäre
+          „Tradition", und Tradition ist kein Grund, sondern eine Ausrede
+          für einen, den man nicht nennen kann.
 
           Was bleibt, bleibt aus gutem Grund: Wer keine Bewegung will,
           bekommt denselben Abschnitt ohne Bühne, mit allen sechs Schritten
@@ -1383,32 +1547,113 @@ export default function TestHomepage() {
         <SchuhAufbau
           kopf={
             <>
-              <Kapitelmarke hell>Das Handwerk</Kapitelmarke>
+              <Kapitelmarke hell>Die Machart</Kapitelmarke>
               <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
                 Zwei Nähte halten<br className="hidden sm:block" /> diesen Schuh zusammen.
               </h2>
               {/* Der Satz, der die Folge ankündigt. Ohne ihn beginnt die
                   Bühne unangekündigt zu kleben, und wer das nicht erwartet,
-                  hält es für einen Fehler. Er nennt außerdem das Wort, unter
-                  dem man diese Machart nachschlägt. */}
+                  hält es für einen Fehler. Er nennt außerdem beide Wörter,
+                  unter denen man diese Machart nachschlägt — das deutsche und
+                  das englische. Ab hier steht auf der Seite immer eines von
+                  beiden und nie etwas Drittes. */}
               <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
-                Sechs Schritte, von der Brandsohle bis zur Doppelnaht. Scroll
-                weiter, dann setzt sich ein Goodyear-rahmengenähter Schuh zusammen.
+                Rahmengenäht, auf Englisch Goodyear welted. Sechs Schritte, von der
+                Brandsohle bis zur Doppelnaht — scroll weiter, dann setzt er sich
+                zusammen.
               </p>
             </>
           }
           fuss={
-            <ZurKollektion
-              hell
-              satz="So aufgebaut ist jedes Paar, das hier steht."
-              auf={zurKollektion}
-            />
+            <div>
+              <p className="satz-titel text-[20px] lg:text-[30px] text-white/90 leading-[1.45] max-w-3xl">
+                Eine Sohle lässt sich auf drei Arten an einen Schaft bringen.
+                Wir haben uns für die aufwendigste entschieden.
+              </p>
+
+              {/* Die drei Macharten als Blätter, wie die Leder weiter unten:
+                  eine Haarlinie oben, kein Rahmen ringsum. Die unsere steht
+                  an dritter Stelle und nicht an erster — erst das Feld,
+                  dann die Wahl. */}
+              <div className="grid sm:grid-cols-3 gap-10 lg:gap-14 mt-12 lg:mt-16">
+                {MACHARTEN.map((m, i) => {
+                  const unsere = i === MACHARTEN.length - 1
+                  return (
+                    <div
+                      key={m.name}
+                      className={`pt-6 border-t ${unsere ? 'border-white/40' : 'border-white/[0.14]'}`}
+                    >
+                      <p className="text-[10px] tracking-[0.3em] text-white/25">
+                        {String(i + 1).padStart(2, '0')}
+                      </p>
+                      <p className={`satz-titel text-[19px] lg:text-[23px] leading-[1.3] mt-4 ${
+                        unsere ? 'text-white' : 'text-white/60'
+                      }`}>
+                        {m.name}
+                      </p>
+                      <p className={`text-[10px] uppercase tracking-[0.2em] mt-3 ${
+                        unsere ? 'text-white/60' : 'text-white/30'
+                      }`}>
+                        {m.zusatz}
+                      </p>
+                      <p className="text-[12px] lg:text-[13px] text-white/50 font-light leading-[1.9] mt-5">
+                        {m.text}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Die vierte Machart, die dieses Haus nicht baut. Sie steht
+                  klein und trotzdem da. */}
+              <p className="text-[12px] text-white/35 font-light leading-[1.9] mt-10 lg:mt-12 max-w-2xl">
+                Es gibt eine vierte: den von Hand genähten Rahmen, bei dem die
+                Lippe nicht aufgeklebt, sondern aus der Brandsohle
+                herausgearbeitet wird. Dasselbe Prinzip, mehr Handarbeit, ein
+                Preis in einer anderen Klasse. Wir bauen sie nicht.
+              </p>
+
+              <div className="mt-14 lg:mt-20 border-t border-white/[0.14] pt-10 lg:pt-14">
+                <Kapitelmarke hell>Warum rahmengenäht</Kapitelmarke>
+                <ol className="grid sm:grid-cols-3 gap-10 lg:gap-14 mt-8 lg:mt-10">
+                  {WARUM_RAHMEN.map((g, i) => (
+                    <li key={g.titel}>
+                      <p className="text-[10px] tracking-[0.3em] text-white/25">
+                        {String(i + 1).padStart(2, '0')}
+                      </p>
+                      <p className="text-[15px] lg:text-[17px] text-white font-light leading-snug mt-4">
+                        {g.titel}
+                      </p>
+                      <p className="text-[12px] lg:text-[13px] text-white/50 font-light leading-[1.9] mt-4">
+                        {g.text}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+
+                {/* Was es kostet. Ohne diesen Satz wären die drei Gründe
+                    Werbung; mit ihm sind sie eine Abwägung. */}
+                <p className="text-[12px] lg:text-[13px] text-white/40 font-light leading-[1.9] mt-12 lg:mt-14 max-w-2xl">
+                  Was es kostet: Ein rahmengenähter Schuh ist schwerer als ein
+                  geklebter und die ersten Wochen fester. Beides legt sich, sobald
+                  der Kork nachgegeben hat. Und er braucht länger in der Werkstatt
+                  — auch deshalb sind es vier bis sechs Wochen.
+                </p>
+              </div>
+
+              <ZurKollektion
+                className="mt-14 lg:mt-20"
+                hell
+                satz="So aufgebaut ist jedes Paar, das hier steht."
+                auf={zurKollektion}
+              />
+            </div>
           }
         />
       </section>
 
 
-      {/* ══ 4 · Die Kollektionen ══════════════════════════════════════════
+      {/* ══ 5 · Die Kollektionen ══════════════════════════════════════════
           Der Abschnitt, an dem sich entscheidet, ob die Seite ein Katalog ist
           oder ein Heft.
 
@@ -1549,7 +1794,7 @@ export default function TestHomepage() {
         </Enthuellen>
       </section>
 
-      {/* ══ 5 · Das Leder ═════════════════════════════════════════════════
+      {/* ══ 6 · Das Leder ═════════════════════════════════════════════════
           Hier standen drei Stockfotos von Lederoberflächen nebeneinander.
           Sie füllten die Fläche und erklärten nichts: Drei Oberflächen sehen
           aus wie Leder, und der Unterschied zwischen ihnen liegt nicht in
@@ -1655,7 +1900,7 @@ export default function TestHomepage() {
       </section>
 
 
-      {/* ══ 6 · Der Weg ═══════════════════════════════════════════════════
+      {/* ══ 7 · Der Weg ═══════════════════════════════════════════════════
           Die Frage, die nach allem Vorherigen noch offen ist: „Und wie läuft
           das jetzt ab?" Sie stand bisher als vierstufige Aufzählung da —
           dieselbe Darstellung wie unter der Kollektion und im Firmenbereich,
@@ -1794,7 +2039,7 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 7 · Almansa ═══════════════════════════════════════════════════
+      {/* ══ 8 · Almansa ═══════════════════════════════════════════════════
           Die Frage, die jeder stellt, der eben sechs Entscheidungen gelesen
           hat: „Und dann warte ich anderthalb Monate?"
 
@@ -1892,7 +2137,7 @@ export default function TestHomepage() {
       </section>
 
 
-      {/* ══ 8 · Die Pflege ════════════════════════════════════════════════
+      {/* ══ 9 · Die Pflege ════════════════════════════════════════════════
           Das Kapitel, das nach dem Kauf anfängt — und genau deshalb steht es
           davor.
 
@@ -1908,6 +2153,25 @@ export default function TestHomepage() {
           aufmacht. Dort heißt es, eine Haut sei wie die eigene; hier kommt,
           was daraus folgt. Ohne das Lederkapitel wäre das ein Zubehörregal —
           mit ihm ist es der Satz, den man ohnehin schon denkt.
+
+          ── Warum hier ein Tag erzählt wird ───────────────────────────────
+
+          Die Folge hieß einmal: feucht nach Hause, Spanner hinein, Form
+          kommt zurück, Zedernholz zieht, Creme. Fünf richtige Angaben über
+          ein Ding — und damit eine Gebrauchsanweisung. Niemand liest eine
+          Gebrauchsanweisung, bevor er gekauft hat.
+
+          Jetzt ist es derselbe Inhalt als Tag: morgens, tagsüber, abends,
+          über Nacht. Dieselben Abstände, dieselben Handgriffe, aber der, der
+          sie liest, kommt darin vor. Das ist der Unterschied zwischen „so
+          pflegt man Schuhe" und „so ist es, diese Schuhe zu haben" — und es
+          ist der letzte Abschnitt vor dem Knopf, an dem sich jemand selbst
+          in einem Paar sehen kann.
+
+          Die Zeichnung macht denselben Tag mit: Sie beginnt jetzt mit dem
+          Schuh in Ordnung, die Falte entsteht im zweiten Schritt beim Gehen,
+          und erst im dritten fährt der Spanner ein. Vorher stand die Falte
+          schon im ersten Bild — hübsch und falsch herum.
 
           Und es ist die ehrlichste Stelle, um Spanner und Pflege-Sets zu
           zeigen: nicht als Zusatzverkauf neben dem Knopf, sondern als
@@ -1925,9 +2189,9 @@ export default function TestHomepage() {
                 Auch diese Haut<br className="hidden sm:block" /> will gepflegt werden.
               </h2>
               <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
-                Über dem Ballen legt sich ein Leder in Falten, genau wie deine Hand
-                über den Knöcheln. Ob daraus eine Linie wird oder eine Kerbe,
-                entscheiden fünf Minuten am Abend.
+                Morgens schlüpfst du hinein, tagsüber denkst du nicht an sie, und
+                abends entscheiden fünf Minuten, ob aus der Falte über dem Ballen
+                eine Linie wird oder eine Kerbe.
               </p>
             </>
           }
@@ -1960,52 +2224,6 @@ export default function TestHomepage() {
                 auf={() => navigate('/accessories')}
               />
             </>
-          }
-        />
-      </section>
-
-
-      {/* ══ 9 · Wenn die Sohle durch ist ═══════════════════════════════════
-          Er stand als „Zum Vergleich" ganz unten, hinter der Offenheit über
-          die Machart, als Anhang. Das war die falsche Stelle.
-
-          Denn er beantwortet keine Frage über die Bauweise — die hat der
-          Schnitt oben beantwortet —, sondern die Frage, die nach dem
-          Pflegekapitel von selbst aufkommt: Und wenn die Sohle irgendwann
-          doch durch ist? Deshalb steht er jetzt direkt dahinter. Pflege hält
-          den Schuh; hier steht, was passiert, wenn Halten nicht mehr reicht.
-
-          Der Schnitt oben zeigt, WIE es zusammenhängt. Diese Tafel zeigt,
-          WORAUS — dieselben Teile flach übereinander, jedes mit seiner
-          eigenen Kontur, wie auf dem Tisch eines Schuhmachers — und läuft
-          auf die Trennlinie hinaus: oben, was bleibt; unten, was gewechselt
-          wird. */}
-      <section className="bg-white border-t border-black/[0.06]">
-        <StapelFolge
-          kopf={
-            <>
-              <Kapitelmarke>Nach Jahren</Kapitelmarke>
-              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
-                Und wenn die Sohle<br className="hidden sm:block" /> durch ist?
-              </h2>
-              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
-                Dann kommt eine neue dran. Derselbe Schuh wie oben, nur
-                auseinandergelegt — am Ende siehst du, wo ein Schuhmacher ansetzt.
-              </p>
-            </>
-          }
-          fuss={
-            <div className="max-w-3xl">
-              <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5]">
-                Beim geklebten Schuh gibt es diese Linie nicht. Dort sitzt die Sohle
-                direkt am Schaft, und was verklebt ist, geht nur zusammen kaputt.
-              </p>
-              <ZurKollektion
-                className="mt-10 lg:mt-12"
-                satz="So gebaut ist jedes Paar, das hier steht."
-                auf={zurKollektion}
-              />
-            </div>
           }
         />
       </section>

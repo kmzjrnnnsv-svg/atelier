@@ -175,7 +175,7 @@ export default function SchuhAufbau({ kopf, fuss }) {
               und die Bühne gehört der Zeichnung. */}
           <div className="relative h-full w-full max-w-6xl mx-auto flex flex-col justify-center">
             <div className="hidden lg:block absolute top-0 left-0">
-              <Kapitelmarke hell>Goodyear-rahmengenäht</Kapitelmarke>
+              <Kapitelmarke hell>Rahmengenäht · Goodyear welted</Kapitelmarke>
             </div>
 
             <RahmenSchnitt

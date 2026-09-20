@@ -1,11 +1,17 @@
 /**
  * Derselbe Aufbau wie in lib/aufbauSchritte.js — nur von der anderen Seite
- * angesehen.
+ * angesehen, und auf der Seite VOR ihm.
  *
- * Der Schnitt dort erzählt, WIE die Lagen ineinandergreifen. Dieser Stapel
- * erzählt, WAS zusammenkommt, und läuft auf etwas hinaus, das der Schnitt
- * nur nebenbei sagt: dass ein rahmengenähter Schuh aus zwei Teilen besteht,
- * von denen eines bleibt und eines gewechselt wird.
+ * Dieser Stapel erzählt, WORAUS ein Schuh besteht: sieben Teile, flach
+ * übereinandergelegt, jedes mit eigener Kontur. Er läuft auf eine Trennlinie
+ * hinaus — oben, was bleibt; unten, was gewechselt wird. Der Schnitt danach
+ * erzählt, WIE die Lagen ineinandergreifen, und beantwortet damit die Frage,
+ * die diese Tafel offen lässt: warum es diese Linie überhaupt gibt.
+ *
+ * Die Reihenfolge war lange umgekehrt, und das war der Fehler. Wer den
+ * Schnitt zuerst sieht, sieht sechs Lagen ineinandergreifen und weiß
+ * hinterher nicht, welche davon zusammengehören. Wer den Stapel zuerst
+ * sieht, weiß es — und schaut den Schnitt danach mit einer Frage an.
  *
  * Die Schritte müssen deshalb nicht dieselben sein wie dort. Hier sind es
  * sieben, und der siebte ist der eigentliche Grund für die ganze Tafel.
