@@ -29,6 +29,24 @@
  * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
  * wenn hier von einer geschlossenen Geschichte die Rede ist.
  *
+ * ── Warum jedes Kapitel eine Tür hat ──────────────────────────────────────
+ *
+ * Überzeugt wird nicht am Ende, sondern irgendwo unterwegs: Der eine ist es
+ * beim Schnitt, der nächste beim Leder, der dritte bei dem Satz darüber, was
+ * wir nicht behaupten. Wer an seiner Stelle überzeugt ist und dort nichts
+ * findet, wohin er gehen kann, scrollt weiter und verliert sie wieder.
+ *
+ * Deshalb steht am Fuß jedes Kapitels dieselbe Tür (siehe ZurKollektion):
+ * ein Wort mit einer Haarlinie darunter, ein Pfeil, und darüber ein Satz in
+ * der Sprache des Kapitels — beim Leder „Welches dieser Leder zur Wahl
+ * steht, hängt am Modell", beim Handwerk „So aufgebaut ist jedes Paar, das
+ * hier steht". Das Wort bleibt jedes Mal dasselbe, damit man es beim zweiten
+ * Mal wiedererkennt und nicht mehr liest.
+ *
+ * Kapitel 1, 4 und 8 haben ihre eigene: den Knopf im Aufmacher, „Alle N
+ * Modelle" unter den Kollektionen (die trägt die echte Zahl und ist an der
+ * Stelle die bessere) und den Abschluss. Die übrigen fünf bekommen diese.
+ *
  * ── Warum diese Reihenfolge und nicht die erste ───────────────────────────
  *
  * Die erste Fassung stellte die Modelle an dritte Stelle und das Handwerk an
@@ -662,6 +680,63 @@ function Notiz({ marke, text, letzte = false }) {
   )
 }
 
+/**
+ * Die Tür zur Kollektion, am Fuß jedes Kapitels.
+ *
+ * ── Warum sie überall steht ───────────────────────────────────────────────
+ *
+ * Diese Seite erklärt sieben Kapitel lang, was ein rahmengenähter Schuh ist
+ * und wie er entsteht — und ließ den Leser danach allein. Wer beim Leder
+ * überzeugt war, musste bis ans Ende scrollen, um irgendwo hinzukommen. Das
+ * ist der Fehler, den ein Herrenausstatter nie macht: Er lässt einen den
+ * Schnitt betrachten und legt dabei die Hand auf den Türgriff.
+ *
+ * ── Warum sie leise ist ───────────────────────────────────────────────────
+ *
+ * Sechsmal derselbe schwarze Knopf wäre Verkäuferei. Hier ist es ein Wort
+ * mit einer Haarlinie darunter und ein Pfeil — dieselbe Form, die schon
+ * unter jedem Modellkapitel steht, damit die Seite eine Hand behält.
+ *
+ * Der Reiz liegt im Satz darüber, nicht im Knopf: Jedes Kapitel nimmt die
+ * Tür mit seinen eigenen Worten auf, so wie jemand, der über Leder redet,
+ * nicht „Jetzt kaufen" sagt, sondern „Welches du bekommst, hängt am Modell".
+ * Das Wort auf der Tür bleibt dabei immer dasselbe — man soll es beim
+ * zweiten Mal wiedererkennen und nicht lesen müssen.
+ *
+ * @param {string} satz Die Zeile darüber, in der Sprache des Kapitels.
+ * @param {boolean} [hell] Für die dunklen Abschnitte.
+ * @param {boolean} [mittig] Für die mittig gesetzten Kapitel.
+ */
+function ZurKollektion({ satz, auf, hell = false, mittig = false, className = '' }) {
+  return (
+    <Enthuellen verzoegerung={120} className={className}>
+      <div className={mittig ? 'text-center' : ''}>
+        <p className={`text-[13px] lg:text-[15px] font-light leading-[1.8] ${
+          hell ? 'text-white/50' : 'text-black/45'
+        }`}>
+          {satz}
+        </p>
+        <button
+          type="button"
+          onClick={auf}
+          className={`group mt-4 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase transition-colors ${
+            hell ? 'text-white hover:text-white/60' : 'text-black hover:text-black/60'
+          }`}
+          style={{ letterSpacing: '0.22em' }}
+        >
+          <span className="relative pb-1">
+            Kollektion ansehen
+            <span className={`absolute left-0 bottom-0 h-px w-full transition-colors ${
+              hell ? 'bg-white/30 group-hover:bg-white/60' : 'bg-black/25 group-hover:bg-black/50'
+            }`} />
+          </span>
+          <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+        </button>
+      </div>
+    </Enthuellen>
+  )
+}
+
 /** Name, Angaben und der Weg in den Konfigurator. */
 function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
   return (
@@ -1225,6 +1300,12 @@ export default function TestHomepage() {
             </Enthuellen>
           ))}
         </div>
+
+        <ZurKollektion
+          className="max-w-5xl mx-auto mt-12 lg:mt-16"
+          satz="So gebaut wird hier jedes Paar."
+          auf={zurKollektion}
+        />
       </section>
 
 
@@ -1261,6 +1342,13 @@ export default function TestHomepage() {
                 weiter, dann setzt sich ein Goodyear-rahmengenähter Schuh zusammen.
               </p>
             </>
+          }
+          fuss={
+            <ZurKollektion
+              hell
+              satz="So aufgebaut ist jedes Paar, das hier steht."
+              auf={zurKollektion}
+            />
           }
         />
       </section>
@@ -1477,6 +1565,12 @@ export default function TestHomepage() {
               dritten Jahr jeder.
             </p>
           </Enthuellen>
+
+          <ZurKollektion
+            className="mt-14 lg:mt-20"
+            satz="Welches dieser Leder zur Wahl steht, hängt am Modell."
+            auf={zurKollektion}
+          />
         </div>
       </section>
 
@@ -1611,6 +1705,12 @@ export default function TestHomepage() {
               </li>
             </Enthuellen>
           </ol>
+
+          <ZurKollektion
+            className="mt-4"
+            satz="Die erste dieser sechs Entscheidungen ist die Form."
+            auf={zurKollektion}
+          />
         </div>
       </section>
 
@@ -1650,6 +1750,12 @@ export default function TestHomepage() {
               steht, haben wir keine.
             </p>
           </Enthuellen>
+
+          <ZurKollektion
+            className="mt-10"
+            satz="Und jetzt sieh es dir selbst an."
+            auf={zurKollektion}
+          />
         </div>
       </section>
 
