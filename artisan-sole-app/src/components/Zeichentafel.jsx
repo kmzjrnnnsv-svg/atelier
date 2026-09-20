@@ -46,6 +46,24 @@
  *
  * `kennung` ist deshalb keine Bequemlichkeit, sondern Pflicht.
  *
+ * ── Warum das Markup eingefroren wird ────────────────────────────────────
+ *
+ * Das hier ist der Fehler, der die ganze Bewegung stillgelegt hat, und er
+ * ist von außen nicht zu sehen: Die Tafel kommt als Zeichenkette herein und
+ * wird über `dangerouslySetInnerHTML` gesetzt. Wird sie bei jedem Zeichnen
+ * neu zusammengesetzt, ist das Objekt `{ __html: … }` jedes Mal ein anderes,
+ * und React schreibt das Innenleben des <svg> neu — auch wenn derselbe Text
+ * darin steht.
+ *
+ * Neu geschrieben heißt: neue Knoten. Ein Knoten, der gerade erst entstanden
+ * ist, hat keinen vorherigen Wert, von dem aus er laufen könnte; er steht
+ * sofort da, wo er hin soll. Der Spanner fuhr deshalb nicht ein — er war
+ * einfach da, und zwar genau in dem Bild, in dem der Schritt wechselte.
+ *
+ * Die Tafel wird deshalb eingefroren und hängt nur noch an dem, was sie
+ * wirklich ausmacht. Was sich je Schritt ändert, ist ein einziges Attribut
+ * am <svg>: `data-schritt`. Alles andere macht das Blatt Regeln.
+ *
  * ── Auf dem Telefon ──────────────────────────────────────────────────────
  *
  * Dort fällt die Beschriftung weg, und der Ausschnitt rückt an die Zeichnung
@@ -122,14 +140,17 @@ const sichtbarIn = (eintrag, schritte) =>
  *   alles.
  * @param {number} schritte Anzahl der Schritte.
  */
-export default function Zeichentafel({
-  kennung, viewBox, viewBoxSchmal, schmal = false,
-  weg = WEG, dauer = DAUER,
-  stil, teile, reihenfolge, plan, marken: markenRoh = [],
-  extra = '', extraAb = null, schritt = null, schritte, className = '', farben,
-}) {
-  const marken = schmal ? [] : markenRoh
-  const jetzt = schritt == null ? schritte : schritt + 1
+import { useMemo } from 'react'
+
+/**
+ * Baut Tafel und Regelblatt.
+ *
+ * Steht außerhalb des Bauteils und bekommt alles als Argumente, damit klar
+ * ist, woran das Ergebnis hängt — und damit useMemo genau diese Dinge als
+ * Abhängigkeiten führen kann. `schritt` gehört ausdrücklich NICHT dazu: Was
+ * sich je Schritt ändert, ist das Attribut am <svg>, nicht die Tafel.
+ */
+function tafelBauen({ kennung, stil, teile, reihenfolge, plan, marken, extra, extraAb, schritte, weg, dauer }) {
   const teilId = n => `as-teil-${kennung}-${n}`
   const markeId = i => `as-marke-${kennung}-${i}`
 
@@ -159,7 +180,6 @@ export default function Zeichentafel({
     '.as-marke-zusatz{font-family:Jost,Futura,"Helvetica Neue",Arial,sans-serif;font-size:12px;'
       + 'letter-spacing:.3px;fill:var(--as-label,#6d6658);opacity:.72}',
 
-    // Woher jedes Teil kommt, und wie lange es sich Zeit lässt
     // Woher, wie weit, wie lange. Die Reihenfolge der Angaben ist wichtig:
     // Das Kurzschreiben `transition` setzt die Verzögerung auf null zurück,
     // also muss `transition-delay` danach kommen.
@@ -205,19 +225,45 @@ export default function Zeichentafel({
       + '.as-strich{transition:none;stroke-dashoffset:0}}',
   ].filter(Boolean).join('')
 
+  return `${stil}${teileMarkup}`
+    + (extra ? `<g class="as-extra" id="as-extra-${kennung}">${extra}</g>` : '')
+    + `${markenMarkup}<style>${regeln}</style>`
+}
+
+export default function Zeichentafel({
+  kennung, viewBox, viewBoxSchmal, schmal = false,
+  weg = WEG, dauer = DAUER,
+  stil, teile, reihenfolge, plan, marken = [],
+  extra = '', extraAb = null, schritt = null, schritte, className = '', farben,
+}) {
+  /* Eingefroren — siehe oben. `schritt` steht mit Absicht nicht in der
+     Liste: Änderte sich die Tafel mit ihm, schriebe React das Innenleben
+     neu, und die Bewegung fände nicht statt. */
+  const innenHtml = useMemo(() => ({
+    __html: tafelBauen({
+      kennung, stil, teile, reihenfolge, plan,
+      marken: schmal ? [] : marken,
+      extra, extraAb, schritte, weg, dauer,
+    }),
+  }), [kennung, stil, teile, reihenfolge, plan, marken, schmal, extra, extraAb, schritte, weg, dauer])
+
+  /* Aus demselben Grund: Ein neues Stilobjekt bei jedem Zeichnen ist für
+     React eine Änderung, und die kostet hier zwar keine Knoten, aber Arbeit
+     in jedem Bild — und die Schleife läuft sechzig Mal in der Sekunde. */
+  const stilObjekt = useMemo(
+    () => ({ width: '100%', height: 'auto', ...farben }),
+    [farben],
+  )
+
   return (
     <svg
       viewBox={(schmal && viewBoxSchmal) || viewBox}
       className={className}
       role="img"
       aria-hidden="true"
-      data-schritt={jetzt}
-      style={{ width: '100%', height: 'auto', ...farben }}
-      dangerouslySetInnerHTML={{
-        __html: `${stil}${teileMarkup}`
-          + (extra ? `<g class="as-extra" id="as-extra-${kennung}">${extra}</g>` : '')
-          + `${markenMarkup}<style>${regeln}</style>`,
-      }}
+      data-schritt={schritt == null ? schritte : schritt + 1}
+      style={stilObjekt}
+      dangerouslySetInnerHTML={innenHtml}
     />
   )
 }
