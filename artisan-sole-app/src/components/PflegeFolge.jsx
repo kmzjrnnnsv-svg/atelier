@@ -31,7 +31,7 @@ import { useMemo, useRef } from 'react'
 import SpannerSchnitt from './SpannerSchnitt'
 import Enthuellen from './Enthuellen'
 import { PFLEGE } from '../lib/pflegeSchritte'
-import { useWenigerBewegung } from '../lib/bewegung'
+import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 /* Vorlauf und Nachlauf: Am Anfang steht der eingesackte Schuh einen Moment
@@ -115,6 +115,7 @@ function OhneBewegung({ kopf, fuss }) {
 export default function PflegeFolge({ kopf, fuss }) {
   const ref = useRef(null)
   const ruhig = useWenigerBewegung()
+  const schmal = useSchmal()
   const { fortschritt, buehnenHoehe } = useScrollBuehne(ref, ruhig)
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
@@ -147,11 +148,7 @@ export default function PflegeFolge({ kopf, fuss }) {
             </div>
 
             <div className="lg:col-span-8 text-black">
-              {/* Kein eigener Ausschnitt mehr für schmale Geräte: Die
-                  gelieferte Tafel trägt keine Beschriftung, die dort zu
-                  klein würde, und ihr Format liegt quer — auf dem Telefon
-                  passt sie wie sie ist. */}
-              <SpannerSchnitt schritt={schritt} className="w-full" />
+              <SpannerSchnitt schritt={schritt} schmal={schmal} className="w-full" />
 
               {/* Der Satz zum Schritt. Er steht in einem Kasten fester Höhe,
                   damit die Zeichnung nicht bei jedem Schritt springt, wenn
