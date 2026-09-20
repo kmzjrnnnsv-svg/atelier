@@ -169,7 +169,7 @@ const FAKTEN = [
 ]
 
 const ZAHLEN = [
-  { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Daraus bauen wir Leisten, Größe und Weite für genau deinen Fuß.' },
+  { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Mehr brauchen wir nicht.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. An einem einzelnen Paar.' },
   { zahl: '4–6',  einheit: 'Wochen',          text: 'Wir fangen an, wenn du bestellst. In der Zeit wird zugeschnitten, gezwickt, genäht und geprüft.' },
 ]
@@ -197,9 +197,8 @@ const LEDER = [
   {
     name: 'Vollnarbiges Kalbsleder',
     herkunft: 'Äußerste Schicht, ungeschliffen',
-    text: 'Die dichteste Lage der Haut, mit ihrer gewachsenen Narbung. Sie nimmt mit '
-        + 'den Jahren die Bewegung deines Fußes an und bekommt dabei eine Patina, für '
-        + 'die es keine Abkürzung gibt.',
+    text: 'Die dichteste Lage der Haut, mit ihrer gewachsenen Narbung. Sie bekommt mit '
+        + 'den Jahren eine Patina, für die es keine Abkürzung gibt.',
   },
   {
     name: 'Shell Cordovan',
@@ -413,6 +412,37 @@ const ERZAEHLUNG = {
     rat: 'Gutes Leder nimmt mit den Jahren eine eigene Farbe an. Zwei gleiche Paare '
        + 'sehen nach drei Jahren verschieden aus.',
   },
+}
+
+/**
+ * Die ersten Sätze einer Beschreibung, bis rund 25 Wörter voll sind.
+ *
+ * Die Texte kommen aus dem Katalog und sind für die Produktseite
+ * geschrieben, wo sie richtig sind: „Der Chelsea hat keinen Verschluss,
+ * zwei elastische Einsätze halten ihn, ein Zug an der hinteren Lasche
+ * genügt. Cognacfarbenes Cordovan gibt dem knappen Schaft …" — 39 Wörter,
+ * der längste Block der ganzen Startseite.
+ *
+ * Ein Kapitel ist aber kein Datenblatt, sondern ein Anriss: Überschrift,
+ * ein paar Sätze, der Hinweis vom Schuhmacher, der Weg in den
+ * Konfigurator. Wer mehr will, klickt — und dort steht der ganze Text.
+ *
+ * Gekürzt wird an Satzgrenzen und nicht mitten im Wort. Ein Text, der mit
+ * „…" aufhört, sieht aus wie ein Fehler; einer, der nach zwei Sätzen
+ * aufhört, sieht aus wie eine Entscheidung.
+ */
+function anriss(text, hoechstens = 25) {
+  const ganz = String(text || '').trim()
+  const saetze = ganz.match(/[^.!?]+[.!?]+/g)
+  if (!saetze) return ganz
+
+  let aus = ''
+  for (const satz of saetze) {
+    const naechste = (aus + satz).trim()
+    if (aus && naechste.split(/\s+/).length > hoechstens) break
+    aus = naechste + ' '
+  }
+  return aus.trim() || saetze[0].trim()
 }
 
 const erzaehlungZu = (machart) =>
@@ -895,7 +925,7 @@ export default function TestHomepage() {
                       {erz.titel}
                     </h3>
                     <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[2] mt-8">
-                      {schuh.description}
+                      {anriss(schuh.description)}
                     </p>
                     <Nachsatz text={erz.rat} className="mt-10" />
                     <div className="max-w-xs mx-auto mt-12">
@@ -922,7 +952,7 @@ export default function TestHomepage() {
                       {erz.titel}
                     </h3>
                     <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8 max-w-[24rem]">
-                      {schuh.description}
+                      {anriss(schuh.description)}
                     </p>
                     <div className="mt-12 max-w-[24rem]">
                       <Kapitelfuss schuh={schuh} oeffnen={oeffnen} />
@@ -983,7 +1013,7 @@ export default function TestHomepage() {
                       {erz.titel}
                     </h3>
                     <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
-                      {schuh.description}
+                      {anriss(schuh.description)}
                     </p>
                     {/* Hier steht der Nachsatz mit in der Spalte — die
                         Form hat keinen Fuß, über den er laufen könnte. */}
@@ -1029,7 +1059,7 @@ export default function TestHomepage() {
                 <div className="px-5 lg:px-16 mt-14 lg:mt-20">
                   <div className="max-w-6xl mx-auto grid gap-10 lg:gap-20 lg:grid-cols-2">
                     <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2]">
-                      {schuh.description}
+                      {anriss(schuh.description)}
                     </p>
                     <Nachsatz text={erz.rat} />
                   </div>
@@ -1226,13 +1256,6 @@ export default function TestHomepage() {
               </p>
             </>
           }
-          fuss={
-            <p className="text-[12px] text-white/35 font-light leading-relaxed max-w-2xl">
-              Zwischen Brand- und Laufsohle liegt Kork. Er gibt unter dem Gewicht nach
-              und nimmt nach einigen Wochen die Form deines Fußes an. Das ist der Grund,
-              warum so ein Paar mit der Zeit bequemer wird.
-            </p>
-          }
         />
       </section>
 
@@ -1395,10 +1418,9 @@ export default function TestHomepage() {
 
             <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
               <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
-                Ganz oben liegt die Narbe — die Seite, die gewachsen ist, mit der
-                dichtesten Faser. Darunter wird das Gefüge mit jedem Millimeter
-                lockerer. Wo eine Gerberei die Haut teilt, entscheidet sich, wie dein
-                Paar in zehn Jahren aussieht.
+                Oben die gewachsene Seite mit der dichtesten Faser, darunter ein immer
+                lockereres Gefüge. Wo eine Gerberei die Haut teilt, entscheidet sich,
+                wie dein Paar in zehn Jahren aussieht.
               </p>
             </Enthuellen>
           </div>
@@ -1449,8 +1471,7 @@ export default function TestHomepage() {
             <p className="text-[12px] text-black/40 font-light mt-12 lg:mt-16 max-w-xl">
               Auch was unterhalb der Spaltlinie bleibt, wird zu Schuhen verarbeitet,
               mit aufgeprägter Narbung. Im Laden sieht man den Unterschied kaum, im
-              dritten Jahr sieht ihn jeder. Welche Leder an welchem Modell zur Wahl
-              stehen, zeigt der Konfigurator.
+              dritten Jahr sieht ihn jeder.
             </p>
           </Enthuellen>
         </div>
@@ -1574,11 +1595,9 @@ export default function TestHomepage() {
                 <div className="pt-1">
                   <p className="text-[17px] lg:text-[20px] text-black font-light leading-snug">Dein Paar</p>
                   <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
-                    Vier bis sechs Wochen nach Zahlungseingang, einzeln gefertigt in
-                    einer spanischen Manufaktur. Du bekommst Nachricht, wenn die
-                    Fertigung beginnt, wenn dein Paar in die Endkontrolle geht und
-                    wenn es das Haus verlässt. Der Versand innerhalb Deutschlands ist
-                    inbegriffen.
+                    Vier bis sechs Wochen, einzeln gefertigt in Spanien. Du bekommst
+                    Nachricht, wenn die Fertigung beginnt und wenn dein Paar das Haus
+                    verlässt. Versand innerhalb Deutschlands inbegriffen.
                   </p>
                   <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
                     Ein Paar, das für einen bestimmten Fuß gebaut ist, lässt sich nicht
@@ -1611,8 +1630,7 @@ export default function TestHomepage() {
             <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-7">
               Wir schreiben nicht „handgefertigt". Der Rahmen wird maschinell genäht,
               so wie in jeder Manufaktur dieser Preisklasse. Von Hand kommen Zuschnitt,
-              Zwicken, Finish und die Endkontrolle — und das sind die Schritte, an
-              denen sich ein Schuh entscheidet.
+              Zwicken, Finish und die Endkontrolle.
             </p>
           </Enthuellen>
 
