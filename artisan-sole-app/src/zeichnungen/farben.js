@@ -25,3 +25,17 @@ export const TAFELFARBEN = {
   '--as-stitch': '#7d7668',  // Nähte
   '--as-label':  '#6d6658',  // Beschriftung
 }
+
+/**
+ * Dieselbe Tafel auf dunklem Grund.
+ *
+ * Der Querschnitt im Handwerkskapitel steht auf #111. Seine Teile malen mit
+ * `currentColor` und brauchen deshalb nur zweierlei: eine Farbe für die
+ * Zeichnung und eine für die Beschriftung. Beide sind warm gebrochen, damit
+ * sie zum gebrochenen Weiß der übrigen Seite passen und nicht nach
+ * Bildschirmgrau aussehen.
+ */
+export const TAFELFARBEN_DUNKEL = {
+  color: '#dcd9d0',      // die Zeichnung selbst
+  '--as-label': '#9b968a',  // Beschriftung und Führungsstriche
+}

@@ -21,6 +21,24 @@
  * nicht abgetippt: Elf Teile mal fünf Schritte wären fünfzig Zeilen, in
  * denen genau ein Fehler steckt, den niemand findet.
  *
+ * ── Wo ein Führungsstrich anfängt ────────────────────────────────────────
+ *
+ * Nicht dort, wo es der Rechnung am leichtesten fällt, sondern an der Kante
+ * der Marke, die zum Punkt zeigt. Klingt selbstverständlich und war es
+ * nicht: Der Strich begann an der Grundlinie des Namens, und wenn der Punkt
+ * unter der Marke lag, lief er quer durch die Zeile darunter. „Bürste und
+ * Creme" hatte einen Strich mitten durch „für glatte Leder".
+ *
+ * Drei Fälle, und die Schwelle von 45 Einheiten trennt sie:
+ *   • Der Punkt liegt weit unter der Marke  → Start unter der zweiten Zeile.
+ *   • Der Punkt liegt weit über ihr         → Start über dem Namen.
+ *   • Sonst                                 → Start an der Seite, auf halber
+ *     Höhe, und zwar an der Seite, auf der der Punkt liegt.
+ *
+ * Der letzte Fall braucht die Ausrichtung: Bei `anker="end"` steht die
+ * Marke LINKS von ihrem x, der Strich muss also rechts davon beginnen.
+ * Vorher zog er nach links und lag damit auf dem letzten Buchstaben.
+ *
  * ── Zur Beschriftung ──────────────────────────────────────────────────────
  *
  * Jede Marke ist ein Name, eine Zeile darunter und ein Strich zu einem Punkt
@@ -158,14 +176,23 @@ function tafelBauen({ kennung, stil, teile, reihenfolge, plan, marken, extra, ex
     .map(n => `<g class="as-teil" id="${teilId(n)}">${teile[n]}</g>`)
     .join('')
 
-  const markenMarkup = marken.map((m, i) => `
+  const markenMarkup = marken.map((m, i) => {
+    const [px, py] = m.punkt
+    const [tx, ty] = m.text
+    const nachLinks = m.anker === 'end'
+    // Siehe oben: drei Fälle, Schwelle 45.
+    const start = py > ty + 45 ? [tx + (nachLinks ? -34 : 34), ty + 26]
+      : py < ty - 45 ? [tx + (nachLinks ? -34 : 34), ty - 18]
+        : [tx + (px < tx ? -8 : 8), ty + 4]
+    return `
     <g class="as-marke" id="${markeId(i)}">
       <path class="as-strich" pathLength="1"
-            d="M ${m.text[0] + (m.anker === 'end' ? -6 : 6)} ${m.text[1] - 4} L ${m.punkt[0]} ${m.punkt[1]}"/>
+            d="M ${start[0]} ${start[1]} L ${px} ${py}"/>
       <circle class="as-punkt" cx="${m.punkt[0]}" cy="${m.punkt[1]}" r="2.6"/>
       <text class="as-marke-name" x="${m.text[0]}" y="${m.text[1]}" text-anchor="${m.anker || 'start'}">${m.name}</text>
       <text class="as-marke-zusatz" x="${m.text[0]}" y="${m.text[1] + 17}" text-anchor="${m.anker || 'start'}">${m.zusatz}</text>
-    </g>`).join('')
+    </g>`
+  }).join('')
 
   const regeln = [
     // Grundzustand und gemeinsame Bewegung
