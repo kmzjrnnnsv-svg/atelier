@@ -29,7 +29,7 @@ import { useMemo, useRef } from 'react'
 import SohlenStapel from './SohlenStapel'
 import Enthuellen from './Enthuellen'
 import { STAPEL } from '../lib/stapelSchritte'
-import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
+import { useWenigerBewegung } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 const VORLAUF = 0.08
@@ -96,7 +96,6 @@ function OhneBewegung({ kopf, fuss }) {
 export default function StapelFolge({ kopf, fuss }) {
   const ref = useRef(null)
   const ruhig = useWenigerBewegung()
-  const schmal = useSchmal()
   const { fortschritt, buehnenHoehe } = useScrollBuehne(ref, ruhig)
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
@@ -126,8 +125,7 @@ export default function StapelFolge({ kopf, fuss }) {
             <div className="lg:col-span-6 text-black flex justify-center">
               <SohlenStapel
                 schritt={schritt}
-                ausschnitt={schmal ? 'eng' : 'weit'}
-                className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-none"
+                className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-none"
               />
             </div>
 
