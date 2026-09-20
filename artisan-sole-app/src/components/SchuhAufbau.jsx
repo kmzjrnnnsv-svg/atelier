@@ -180,7 +180,7 @@ export default function SchuhAufbau({ kopf, fuss }) {
 
             <RahmenSchnitt
               schritt={schritt}
-              ausschnitt={schmal ? 'eng' : 'weit'}
+              schmal={schmal}
               className="w-full lg:max-w-5xl lg:mx-auto"
             />
 
