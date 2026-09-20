@@ -23,8 +23,9 @@
  *   4  Die Kollektionen Wofür ist es gemacht, und wann trägt man es?
  *   5  Das Leder       Woraus besteht es?
  *   6  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
- *   7  In eigener Sache Was behaupten wir NICHT?
- *   8  Der Anfang      Wo fange ich an?
+ *   7  Die Pflege      Was muss ich dafür tun, damit es hält?
+ *   8  In eigener Sache Was behaupten wir NICHT?
+ *   9  Der Anfang      Wo fange ich an?
  *
  * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
  * wenn hier von einer geschlossenen Geschichte die Rede ist.
@@ -43,9 +44,19 @@
  * hier steht". Das Wort bleibt jedes Mal dasselbe, damit man es beim zweiten
  * Mal wiedererkennt und nicht mehr liest.
  *
- * Kapitel 1, 4 und 8 haben ihre eigene: den Knopf im Aufmacher, „Alle N
+ * Kapitel 1, 4 und 9 haben ihre eigene: den Knopf im Aufmacher, „Alle N
  * Modelle" unter den Kollektionen (die trägt die echte Zahl und ist an der
- * Stelle die bessere) und den Abschluss. Die übrigen fünf bekommen diese.
+ * Stelle die bessere) und den Abschluss. Kapitel 7 führt ins Zubehör und
+ * sagt das auch — eine Tür, die anderswo hingeht und trotzdem dasselbe Wort
+ * trägt, wäre eine Falle. Die übrigen bekommen diese.
+ *
+ * ── Warum die Haut zweimal vorkommt ───────────────────────────────────────
+ *
+ * Kapitel 5 sagt, dass ein Leder eine Haut ist wie die eigene: dieselben
+ * Poren, dieselbe Patina, ein Kratzer, der sich auspolieren lässt wie eine
+ * Schramme verheilt. Kapitel 7 zieht daraus die Folgerung, die sich jeder
+ * selbst schon gedacht hat — eine Haut, die getragen wird, will gepflegt
+ * werden. Ohne das erste wäre das zweite ein Zubehörregal.
  *
  * ── Warum diese Reihenfolge und nicht die erste ───────────────────────────
  *
@@ -164,6 +175,7 @@ import Enthuellen from '../components/Enthuellen'
 import Kapitelmarke from '../components/Kapitelmarke'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import SchuhAufbau from '../components/SchuhAufbau'
+import PflegeFolge from '../components/PflegeFolge'
 import LederSchnitt from '../components/LederSchnitt'
 import FussMass from '../components/FussMass'
 
@@ -211,24 +223,53 @@ const ZAHLEN = [
  * Die Auswahl im Konfigurator ist größer und ändert sich; hier stehen die
  * drei, an denen sich der Unterschied erklären lässt.
  */
-const LEDER = [
+/**
+ * Die drei Lederfamilien.
+ *
+ * ── Warum Familien und keine Namen ────────────────────────────────────────
+ *
+ * Hier standen drei Leder mit Namen, und eines davon — Shell Cordovan —
+ * führt der Laden gar nicht. Das ist der schlimmste Fehler, den diese Seite
+ * machen kann: Sie verspricht etwas, das im Konfigurator nicht auftaucht,
+ * und nimmt damit auch allem anderen den Boden, was stimmt.
+ *
+ * Jetzt stehen drei Familien, und die Namen darunter kommen aus dem Katalog
+ * (`keys` → `shoeMaterials`). Streicht jemand im CMS ein Leder, verschwindet
+ * es hier; kommt eines dazu, muss es einmal in eine Familie eingetragen
+ * werden. Das ist der Preis dafür, dass unter jedem Namen ein Satz steht,
+ * der wirklich für ihn gilt.
+ *
+ * ── Warum die Haut vorkommt ───────────────────────────────────────────────
+ *
+ * Ein Leder ist eine Haut, und jeder, der das liest, trägt selbst eine. Wer
+ * einmal begriffen hat, dass die Narbung dieselben Poren sind wie auf dem
+ * eigenen Handrücken, sieht ein Paar Schuhe anders an — und begreift ohne
+ * weiteres Wort, warum es gepflegt werden will. Deshalb hat jeder dieser
+ * Absätze einen Satz, der beim Leser selbst anfängt.
+ */
+const LEDERFAMILIEN = [
   {
-    name: 'Vollnarbiges Kalbsleder',
-    herkunft: 'Äußerste Schicht, ungeschliffen',
-    text: 'Die dichteste Lage der Haut, mit ihrer gewachsenen Narbung. Sie bekommt mit '
-        + 'den Jahren eine Patina, für die es keine Abkürzung gibt.',
+    name: 'Vollnarbig',
+    herkunft: 'Oben geblieben, wie gewachsen',
+    keys: ['box_calf', 'fullgrain', 'painted_full_grain', 'nappa'],
+    text: 'Die Zeichnung darauf sind die Poren, aus denen einmal Haare kamen — '
+        + 'dasselbe Muster wie auf deinem Handrücken, nur gröber. Sie bekommt eine '
+        + 'Patina, für die es keine Abkürzung gibt.',
   },
   {
-    name: 'Shell Cordovan',
-    herkunft: 'Pferdehaut, Monate in der Gerbung',
-    text: 'Aus einer besonders dichten Lage unter der Haut der Kruppe. Es wirft '
-        + 'weiche, runde Wellen statt Falten. Die lange Gerbung erklärt den Aufpreis.',
+    name: 'Patiniert',
+    herkunft: 'Farbe von Hand, Schicht über Schicht',
+    keys: ['patina', 'painted_calf', 'lux_calf'],
+    text: 'An den Kanten heller, in den Tiefen dunkler, jedes Paar ein eigener '
+        + 'Verlauf. So wird auch Haut in der Sonne dunkel: überall ein bisschen '
+        + 'anders.',
   },
   {
-    name: 'Nubuk und Velours',
+    name: 'Velours und Nubuk',
     herkunft: 'Angeschliffen, kurzer matter Flor',
-    text: 'Die gebürstete Oberfläche nimmt der Form die Strenge. Den Schuh ziehst du '
-        + 'auch am Samstag an.',
+    keys: ['lux_suede', 'urban_suede', 'calf_suede', 'unlined_suede', 'lined_suede'],
+    text: 'Das ist die Faserseite, die bei dir unter der Haut liegt. Sie ist weich, '
+        + 'und aus demselben Grund nimmt sie Wasser — ein Leder für trockene Tage.',
   },
 ]
 
@@ -704,10 +745,24 @@ function Notiz({ marke, text, letzte = false }) {
  * zweiten Mal wiedererkennen und nicht lesen müssen.
  *
  * @param {string} satz Die Zeile darüber, in der Sprache des Kapitels.
+ * @param {string} [wort] Was auf der Tür steht. Nur zu ändern, wenn sie
+ *   woandershin führt als alle anderen — im Pflegekapitel ins Zubehör. Eine
+ *   Tür, die anderswo hingeht und trotzdem dasselbe Wort trägt, ist eine
+ *   Falle.
  * @param {boolean} [hell] Für die dunklen Abschnitte.
  * @param {boolean} [mittig] Für die mittig gesetzten Kapitel.
  */
-function ZurKollektion({ satz, auf, hell = false, mittig = false, className = '' }) {
+/**
+ * Ein Zubehörpreis.
+ *
+ * `preisAlsText` rundet auf ganze Euro — richtig für ein Paar Schuhe, falsch
+ * für einen Tiegel Creme: Aus 23,70 würde 24, und wer dann 23,70 im
+ * Warenkorb sieht, glaubt der Seite die nächste Zahl nicht mehr.
+ */
+const euro = (n) =>
+  `€ ${Number(n).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+function ZurKollektion({ satz, auf, wort = 'Kollektion ansehen', hell = false, mittig = false, className = '' }) {
   return (
     <Enthuellen verzoegerung={120} className={className}>
       <div className={mittig ? 'text-center' : ''}>
@@ -725,7 +780,7 @@ function ZurKollektion({ satz, auf, hell = false, mittig = false, className = ''
           style={{ letterSpacing: '0.22em' }}
         >
           <span className="relative pb-1">
-            Kollektion ansehen
+            {wort}
             <span className={`absolute left-0 bottom-0 h-px w-full transition-colors ${
               hell ? 'bg-white/30 group-hover:bg-white/60' : 'bg-black/25 group-hover:bg-black/50'
             }`} />
@@ -787,6 +842,7 @@ export default function TestHomepage() {
   const shoes = useStore(s => s.shoes)
   const shoeMaterials = useStore(s => s.shoeMaterials)
   const shoeColors = useStore(s => s.shoeColors)
+  const accessories = useStore(s => s.accessories)
   const katalogStatus = useStore(s => s.katalogStatus)
   const initStore = useStore(s => s.initStore)
 
@@ -899,6 +955,53 @@ export default function TestHomepage() {
    * Solange er lädt, stehen sie noch nicht fest — dann entfällt der Beleg,
    * statt eine 0 zu zeigen.
    */
+  /**
+   * Die Lederfamilien mit den Namen, die der Katalog wirklich führt.
+   *
+   * Solange er lädt, bleibt die Namenszeile leer — lieber kein Name als ein
+   * erfundener. Die Familie selbst steht trotzdem da: Was eine Vollnarbe ist,
+   * stimmt auch ohne Katalog.
+   */
+  const lederFamilien = useMemo(() => {
+    const vorhanden = new Map(
+      shoeMaterials
+        .filter(m => m.available !== 0 && m.available !== false && m.key && m.label)
+        .map(m => [String(m.key), String(m.label)]),
+    )
+    return LEDERFAMILIEN.map(f => ({
+      ...f,
+      namen: f.keys.map(k => vorhanden.get(k)).filter(Boolean),
+    }))
+  }, [shoeMaterials])
+
+  /**
+   * Das Pflege-Zubehör, wie es der Laden wirklich führt.
+   *
+   * Namen und Preise kommen aus `accessories` (CMS → /api/accessories), die
+   * Zeile darunter steht hier: Die Katalogbeschreibungen sind Verkaufstexte
+   * mit Maßangaben und Inhaltsverzeichnis, und an dieser Stelle braucht es
+   * einen Satz, der sagt, wofür das Ding gut ist.
+   *
+   * Führt der Laden eines davon nicht mehr, fällt es hier heraus. Das ist
+   * der Grund, warum die Liste nicht hier gepflegt wird: Ein Zubehör auf der
+   * Startseite anzubieten, das im Warenkorb fehlt, ist schlimmer, als es
+   * gar nicht zu zeigen.
+   */
+  const zubehoer = useMemo(() => {
+    const nach = new Map(
+      accessories
+        .filter(a => a.is_active !== 0 && a.is_active !== false)
+        .map(a => [String(a.key), a]),
+    )
+    return [
+      { key: 'shoe_tree_cedar', satz: 'Unbehandeltes Zedernholz, für jeden Schuh außer Sneakern.' },
+      { key: 'care_kit_leather', satz: 'Creme, Bürsten und Poliertuch für glatte Leder.' },
+      { key: 'care_kit_suede', satz: 'Kreppbürste, Radierer und Auffrischer für Velours und Nubuk.' },
+    ]
+      .map(z => ({ ...z, ware: nach.get(z.key) }))
+      .filter(z => z.ware)
+  }, [accessories])
+
   const stationen = useMemo(() => {
     const leder = shoeMaterials.filter(m => m.available !== 0 && m.available !== false)
     // Nach Farbwert eindeutig: Der Katalog führt „Schwarz" und „Black", beide
@@ -920,8 +1023,8 @@ export default function TestHomepage() {
       },
       {
         titel: 'Das Leder',
-        text: 'Kalbsleder, Cordovan, Nubuk, Velours, Lackleder. Es bestimmt, wie das '
-            + 'Paar aussieht, wie es altert und was es kostet.',
+        text: 'Vollnarbig, patiniert oder als Velours. Es bestimmt, wie das Paar '
+            + 'aussieht, wie es altert und was es kostet.',
         hinweis: leder.length
           ? `${leder.length} Leder im Katalog, je nach Modell eine Auswahl daraus.`
           : null,
@@ -1509,9 +1612,10 @@ export default function TestHomepage() {
 
             <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
               <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
-                Oben die gewachsene Seite mit der dichtesten Faser, darunter ein
-                lockereres Gefüge. Wo die Gerberei teilt, entscheidet sich, wie dein
-                Paar in zehn Jahren aussieht.
+                Sieh dir deinen Handrücken an: oben die feine Zeichnung, darunter ein
+                Geflecht aus Fasern. Eine Rinderhaut ist genauso gebaut, nur dicker —
+                und wo die Gerberei sie teilt, entscheidet sich, wie dein Paar in zehn
+                Jahren aussieht.
               </p>
             </Enthuellen>
           </div>
@@ -1528,8 +1632,8 @@ export default function TestHomepage() {
           <Enthuellen verzoegerung={220}>
             <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5] mt-12 lg:mt-16 max-w-2xl mx-auto text-center">
               „Vollnarbig" heißt: Diese oberste Schicht ist ganz geblieben,
-              ungeschliffen und ohne Folie darüber. Deshalb lassen sich Kratzer
-              auspolieren.
+              ungeschliffen und ohne Folie darüber. Ein Kratzer darin lässt sich
+              auspolieren, wie eine Schramme, die verheilt.
             </p>
           </Enthuellen>
 
@@ -1538,9 +1642,13 @@ export default function TestHomepage() {
               Linie oben, nicht durch einen Rahmen ringsum — ein Rahmen macht
               aus einem Absatz eine Karte, und aus drei Karten ein Regal. */}
           <div className="grid sm:grid-cols-3 gap-10 lg:gap-14 mt-16 lg:mt-24">
-            {LEDER.map((l, i) => (
-              <Enthuellen key={l.name} verzoegerung={i * 90}>
-                <div className="pt-6 border-t border-black/[0.12]">
+            {lederFamilien.map((l, i) => (
+              <Enthuellen key={l.name} verzoegerung={i * 90} className="h-full">
+                {/* h-full und mt-auto: Die drei Absätze sind verschieden lang,
+                    und ohne das säßen die drei Namenszeilen auf drei
+                    verschiedenen Höhen. Drei Haarlinien, die nicht fluchten,
+                    sehen aus wie ein Fehler. */}
+                <div className="pt-6 border-t border-black/[0.12] h-full flex flex-col">
                   <p className="text-[10px] tracking-[0.3em] text-black/30">
                     {String(i + 1).padStart(2, '0')}
                   </p>
@@ -1550,9 +1658,17 @@ export default function TestHomepage() {
                   <p className="text-[10px] uppercase tracking-[0.2em] text-black/40 mt-3">
                     {l.herkunft}
                   </p>
-                  <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.9] mt-5">
+                  <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.9] mt-5 mb-8">
                     {l.text}
                   </p>
+                  {/* Die Namen aus dem Katalog. Sie stehen unter dem Absatz und
+                      nicht darüber: Erst soll man wissen, worum es sich
+                      handelt, dann, wie es im Konfigurator heißt. */}
+                  {l.namen.length > 0 && (
+                    <p className="text-[11px] text-black/40 font-light leading-[1.9] mt-auto pt-4 border-t border-black/[0.07]">
+                      {l.namen.join('   ·   ')}
+                    </p>
+                  )}
                 </div>
               </Enthuellen>
             ))}
@@ -1714,7 +1830,80 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 7 · In eigener Sache ══════════════════════════════════════════
+      {/* ══ 7 · Die Pflege ════════════════════════════════════════════════
+          Das Kapitel, das nach dem Kauf anfängt — und genau deshalb steht es
+          davor.
+
+          Wer 1.300 Euro für ein Paar ausgibt, will wissen, dass es hält. Die
+          vorigen Kapitel haben das über die Machart beantwortet: Rahmen,
+          Doppelnaht, neu besohlbar. Was sie offenlassen, ist der Teil, der an
+          ihm selbst hängt. Und der entscheidet mehr über die nächsten zehn
+          Jahre als jede Naht: Ein rahmengenähter Schuh ohne Spanner ist nach
+          zwei Jahren ein Schuh mit einer Kerbe über dem Ballen, und die geht
+          nicht mehr weg.
+
+          Der Abschnitt schließt damit den Bogen, den das Lederkapitel
+          aufmacht. Dort heißt es, eine Haut sei wie die eigene; hier kommt,
+          was daraus folgt. Ohne das Lederkapitel wäre das ein Zubehörregal —
+          mit ihm ist es der Satz, den man ohnehin schon denkt.
+
+          Und es ist die ehrlichste Stelle, um Spanner und Pflege-Sets zu
+          zeigen: nicht als Zusatzverkauf neben dem Knopf, sondern als
+          Antwort auf eine Frage, die zwei Absätze vorher entstanden ist.
+          Namen und Preise kommen aus dem Katalog (siehe zubehoer).
+
+          Zur Folge selbst — warum sie dieselbe Mechanik hat wie der Aufbau
+          und trotzdem anders aussieht — steht alles in PflegeFolge.jsx. */}
+      <section className="bg-[#fafaf9] border-y border-black/[0.06]">
+        <PflegeFolge
+          kopf={
+            <>
+              <Kapitelmarke>Die Pflege</Kapitelmarke>
+              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+                Auch diese Haut<br className="hidden sm:block" /> will gepflegt werden.
+              </h2>
+              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+                Über dem Ballen legt sich ein Leder in Falten, genau wie deine Hand
+                über den Knöcheln. Ob daraus eine Linie wird oder eine Kerbe,
+                entscheiden fünf Minuten am Abend.
+              </p>
+            </>
+          }
+          fuss={
+            <>
+              {zubehoer.length > 0 && (
+                <div className="grid sm:grid-cols-3 gap-10 lg:gap-14">
+                  {zubehoer.map(({ key, satz, ware }) => (
+                    <div key={key} className="pt-6 border-t border-black/[0.12]">
+                      <p className="satz-titel text-[18px] lg:text-[21px] text-black leading-[1.3]">
+                        {ware.name}
+                      </p>
+                      <p className="text-[11px] text-black/40 font-light mt-2">
+                        {euro(ware.price)}
+                      </p>
+                      <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.9] mt-4">
+                        {satz}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Die einzige Tür dieser Seite, die nicht in die Kollektion
+                  führt — deshalb steht ein anderes Wort darauf. */}
+              <ZurKollektion
+                className="mt-14 lg:mt-20"
+                satz="Für Stiefel gibt es den hohen Spanner, der auch den Schaft hält."
+                wort="Zubehör ansehen"
+                auf={() => navigate('/accessories')}
+              />
+            </>
+          }
+        />
+      </section>
+
+
+      {/* ══ 8 · In eigener Sache ══════════════════════════════════════════
           Der Abschnitt, der diese Fassung von jeder anderen trennt. Die
           Offenheit über die Machart war bisher eine Selbstauskunft im
           Kleingedruckten; hier ist sie das Verkaufsargument. Wer „handmade"
@@ -1744,13 +1933,6 @@ export default function TestHomepage() {
             </p>
           </Enthuellen>
 
-          <Enthuellen verzoegerung={240}>
-            <p className="text-[12px] text-black/35 font-light leading-relaxed mt-8 pt-6 border-t border-black/[0.08]">
-              Wo auf dieser Seite eine Zahl steht, ist sie nachgehalten. Wo keine
-              steht, haben wir keine.
-            </p>
-          </Enthuellen>
-
           <ZurKollektion
             className="mt-10"
             satz="Und jetzt sieh es dir selbst an."
@@ -1759,7 +1941,7 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 8 · Der Anfang ════════════════════════════════════════════════
+      {/* ══ 9 · Der Anfang ════════════════════════════════════════════════
           Ein Weg, nicht drei. Wer bis hierher gelesen hat, sucht keine
           Auswahl mehr, sondern die Stelle, an der es losgeht. */}
       <section className="relative overflow-hidden bg-[#0E0E0E]">
