@@ -110,11 +110,11 @@
  *
  * ── Die Bilder ────────────────────────────────────────────────────────────
  *
- * Die Modellkapitel tragen die echte Aufnahme aus dem Katalog. Die
- * Stimmungsflächen greifen auf `lib/editorialImages.js` zurück — Stockfotos,
- * als solche im Bestand vermerkt. Sie sind ein Platzhalter, kein Ziel: Was
- * diese Seite trägt, sind eigene Aufnahmen, und dieser Aufbau ist so
- * gebaut, dass sie nur ausgetauscht werden müssen.
+ * Auf dieser Seite steht nur, was der Laden selbst hat: die Aufnahmen aus dem
+ * Katalog und die Zeichnungen. Die Stimmungsflächen aus fremden Beständen
+ * sind weg — ein Lastwagenparkplatz unter einer Überschrift über Handwerk
+ * kostet mehr Glaubwürdigkeit, als er Fläche füllt. Wo nichts Eigenes da ist,
+ * steht lieber nichts.
  *
  * ── Bewegung ──────────────────────────────────────────────────────────────
  *
@@ -171,7 +171,7 @@ const FAKTEN = [
 const ZAHLEN = [
   { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Mehr brauchen wir nicht.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. An einem einzelnen Paar.' },
-  { zahl: '4–6',  einheit: 'Wochen',          text: 'Wir fangen an, wenn du bestellst. In der Zeit wird zugeschnitten, gezwickt, genäht und geprüft.' },
+  { zahl: '4–6',  einheit: 'Wochen',          text: 'Wir fangen an, wenn du bestellst. Dann wird zugeschnitten, gezwickt, genäht und geprüft.' },
 ]
 
 /**
@@ -203,15 +203,14 @@ const LEDER = [
   {
     name: 'Shell Cordovan',
     herkunft: 'Pferdehaut, Monate in der Gerbung',
-    text: 'Aus einer besonders dichten Lage unter der Haut der Kruppe. Es legt sich in '
-        + 'weiche, runde Wellen und gewinnt beim Tragen an Tiefe. Die Gerbdauer '
-        + 'erklärt den Aufpreis.',
+    text: 'Aus einer besonders dichten Lage unter der Haut der Kruppe. Es wirft '
+        + 'weiche, runde Wellen statt Falten. Die lange Gerbung erklärt den Aufpreis.',
   },
   {
     name: 'Nubuk und Velours',
     herkunft: 'Angeschliffen, kurzer matter Flor',
-    text: 'Die gebürstete Oberfläche nimmt der Form die Strenge. Damit wird aus einem '
-        + 'strengen Schuh einer, den du auch am Samstag anziehst.',
+    text: 'Die gebürstete Oberfläche nimmt der Form die Strenge. Den Schuh ziehst du '
+        + 'auch am Samstag an.',
   },
 ]
 
@@ -222,18 +221,16 @@ const LEDER = [
  * vorbelegt nach der Machart — Stiefel in den Winter, Mokassins und Walks in
  * den Sommer, alles andere ganzjährig — und im CMS je Modell zu ändern.
  *
- * ── Die Zwischenspiele ────────────────────────────────────────────────────
+ * ── Die Notizen ───────────────────────────────────────────────────────────
  *
- * Zwischen zwei Kollektionen steht eine Fläche ohne Produkt, ohne Preis, ohne
- * Knopf. Sie tut zweierlei: Sie unterbricht die Folge von Kapiteln, die sonst
- * zum Katalog wird, und sie sagt, worauf es in den Monaten ankommt, die
- * gleich kommen. Damit liest man die nächste Kollektion nicht als „noch mehr
- * Schuhe", sondern als Antwort auf etwas, das man gerade erfahren hat.
+ * Vor jeder Kollektion außer der ersten steht eine Randnotiz: ein Stichwort
+ * und eine Zeile. Sie sagt, worauf es in den Monaten ankommt, die gleich
+ * kommen — und knüpft an den Aufbau an, den man zwei Abschnitte vorher hat
+ * entstehen sehen: an das Futter und an die Sohle.
  *
- * Beide Sätze sind Sachwissen über Schuhe, keine Auskunft über dieses Haus —
- * und beide knüpfen an den Aufbau an, den man zwei Abschnitte vorher gesehen
- * hat: das Futter, das der Schaft bekommt, und die Sohle, die an der
- * Doppelnaht hängt.
+ * Hier standen drei ausgewachsene Absätze auf schwarzem Grund. Was sie
+ * sagten, stimmte; wie sie es sagten, war für die Sache zu feierlich. Eine
+ * Zeile am Rand sagt dasselbe und hält die Seite nicht an.
  */
 const SAISONFOLGE = [
   {
@@ -245,17 +242,13 @@ const SAISONFOLGE = [
     key: 'summer',
     marke: 'Sommer',
     titel: 'Leicht gebaut, dünn gefüttert.',
-    zwischenspiel: 'Ab Mai entscheidet das Futter mehr als die Form. Ein ungefütterter '
-                 + 'Schaft gibt Feuchtigkeit nach außen ab, ein gefütterter hält sie. '
-                 + 'Das merkt man am dritten heißen Tag.',
+    notiz: { marke: 'Zum Futter', text: 'Ein ungefütterter Schaft trocknet über Nacht durch.' },
   },
   {
     key: 'winter',
     marke: 'Winter',
     titel: 'Über dem Knöchel, mit Profil darunter.',
-    zwischenspiel: 'Ab November entscheidet die Sohle. Eine Doppelsohle hält den nassen '
-                 + 'Boden weiter weg — und eine Gummilaufsohle lässt sich auf einen '
-                 + 'gerahmten Schuh genauso aufnähen wie Leder.',
+    notiz: { marke: 'Zur Sohle', text: 'Eine Doppelsohle hält den nassen Boden weiter weg.' },
   },
 ]
 
@@ -340,7 +333,7 @@ const ERZAEHLUNG = {
   LOAFER: {
     titel: 'Gehalten wird er allein von seiner Form.',
     rat: 'Ein Loafer hat nichts, womit sich die Weite nachstellen ließe. Auf den '
-       + 'Ballenumfang kommt es hier mehr an als bei jedem anderen Modell.',
+       + 'Ballenumfang kommt es hier besonders an.',
   },
   BELGIAN_SLIPPER: {
     titel: 'Der leiseste Schuh, den es gibt.',
@@ -379,8 +372,8 @@ const ERZAEHLUNG = {
   },
   BOOT: {
     titel: 'Das Wetter darf von mir aus schlecht sein.',
-    rat: 'Gegen Streusalz hilft nur eines: abends mit klarem Wasser abwischen, solange '
-       + 'der Rand feucht ist. Trocknet es ein, bleiben weiße Ränder im Leder.',
+    rat: 'Gegen Streusalz hilft nur eines: abends mit klarem Wasser abwischen, '
+       + 'solange der Rand feucht ist. Eingetrocknet bleibt es im Leder.',
   },
   CHELSEA: {
     titel: 'Kein Verschluss, zwei Gummizüge, drei Sekunden.',
@@ -629,27 +622,42 @@ function SaisonKopf({ marke, titel }) {
 }
 
 /**
- * Das Zwischenspiel zwischen zwei Kollektionen.
+ * Die Randnotiz zwischen zwei Kollektionen.
  *
- * Ein Bild über die volle Breite, ein Satz darauf, sonst nichts. Wer hier
- * ankommt, hat zwei Kapitel gelesen; das Auge braucht eine Fläche, auf der
- * es nichts zu entscheiden gibt, bevor die nächsten beiden kommen.
+ * Hier lag eine schwarze Fläche über die volle Breite, mit einem Satz in
+ * Schaugröße darauf. Dreimal hintereinander hielt die Seite damit an, wurde
+ * dunkel und sagte einen Nebensatz, als wäre er ein Motto. Ein Hinweis über
+ * das Futter verträgt diese Lautstärke nicht.
+ *
+ * Jetzt steht er, wo so etwas in einem Werkstattbuch steht: am Rand, an einer
+ * feinen Senkrechten, klein. Ein Stichwort und eine Zeile. Wer sie überliest,
+ * verliert nichts; wer sie liest, weiß, worauf er gleich achten kann.
+ *
+ * Senkrecht und nicht waagerecht, weil die Saisonüberschrift darunter schon
+ * eine Linie über sich trägt — zwei Striche übereinander sind kein Register,
+ * sondern ein Versehen. Und eingerückt, weil alles ringsum mittig steht: Eine
+ * Notiz, die sich in die Achse stellt, ist keine Notiz mehr.
+ *
+ * @param {boolean} [letzte] Die Notiz nach der dritten Kollektion. Unter ihr
+ *   kommt keine Saisonüberschrift mehr, sondern der Weg in den Katalog — der
+ *   braucht mehr Abstand, sonst klebt der Knopf an der Zeile.
  */
-function Zwischenspiel({ text }) {
+function Notiz({ marke, text, letzte = false }) {
   return (
     <Enthuellen richtung="ruhig">
-      <section className="relative overflow-hidden bg-[#0E0E0E]">
-        <div
-          className="absolute inset-0"
-          style={{ background: 'radial-gradient(100% 80% at 50% 0%, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 60%)' }}
-          aria-hidden="true"
-        />
-        <div className="relative px-5 lg:px-16 py-24 lg:py-36 max-w-3xl mx-auto text-center">
-          <p className="satz-titel text-[21px] lg:text-[30px] leading-[1.5] text-white/90">
-            {text}
-          </p>
+      <div className={`px-5 lg:px-16 pt-14 lg:pt-24 ${letzte ? 'pb-14 lg:pb-24' : 'pb-2 lg:pb-6'}`}>
+        <div className="max-w-6xl mx-auto">
+          <div className="max-w-md border-l border-black/[0.18] pl-5 lg:pl-8 lg:ml-[14%]">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-black/35">{marke}</p>
+            {/* text-balance: Die Zeile ist so kurz, dass sie auf dem Telefon in
+                zwei bricht — und ohne Ausgleich steht in der zweiten ein
+                einzelnes Wort. Eine Notiz mit Schlepp ist keine. */}
+            <p className="text-[15px] lg:text-[17px] text-black/70 font-light leading-[1.75] mt-3 text-balance">
+              {text}
+            </p>
+          </div>
         </div>
-      </section>
+      </div>
     </Enthuellen>
   )
 }
@@ -733,7 +741,7 @@ export default function TestHomepage() {
    *
    * Die Reihenfolge ist fest: ganzjährig, Sommer, Winter. Das Ganzjährige
    * zuerst, weil es auf die meisten zutrifft; danach die beiden Hälften des
-   * Jahres. Zwischen ihnen steht je ein Zwischenspiel, das auf die nächste
+   * Jahres. Zwischen ihnen steht je eine Randnotiz, die auf die nächste
    * Kollektion vorbereitet.
    *
    * ── Die Regeln für ein Kapitel ────────────────────────────────────────
@@ -845,22 +853,21 @@ export default function TestHomepage() {
       },
       {
         titel: 'Die Farbe',
-        text: 'Dieselbe Farbe fällt auf Velours anders aus als auf Box Calf — deshalb '
-            + 'hängt die Auswahl am Leder und nicht am Modell.',
+        text: 'Dieselbe Farbe fällt auf Velours anders aus als auf Box Calf. Die '
+            + 'Auswahl hängt deshalb am Leder.',
         farben: farbtoene.length ? farbtoene : null,
         hinweis: farbtoene.length ? `${farbtoene.length} Töne, hier ohne Namen.` : null,
       },
       {
         titel: 'Sohle, Rahmen und Details',
-        text: 'Jeder Schritt zeigt sofort, was er am Preis ändert. Und was am Ende '
-            + 'dasteht, hast du selbst gewählt.',
+        text: 'Jeder Schritt zeigt sofort, was er am Preis ändert.',
         schlagworte: ['Sohlen-Art', 'Rahmen', 'Nahtfarbe', 'Sohlenrand', 'Laufsohle', 'Innenfutter', 'Zehenkappe'],
         hinweis: 'Welche Schritte erscheinen, hängt vom Modell ab.',
       },
       {
         titel: 'Deine Maße',
-        text: 'Fußlänge und Ballenumfang, mehr brauchen wir nicht. Daraus bestimmen '
-            + 'wir Leisten, Größe und Weite — für deinen Fuß und für keinen anderen.',
+        text: 'Aus zwei Zahlen bestimmen wir Leisten, Größe und Weite — für deinen '
+            + 'Fuß und für keinen anderen.',
         // Der Beleg zu dieser Station ist eine Zeichnung und keine Zeile.
         //
         // „Ballenumfang" ist das Wort, an dem ein Kauf hängen bleibt: Wer noch
@@ -888,7 +895,7 @@ export default function TestHomepage() {
    *
    * Der Rumpf stand als Rückgabewert direkt in der Schleife. Seit die
    * Kapitel nach Saison gruppiert sind, steht zwischen ihnen mal eine
-   * Saisonüberschrift und mal ein Zwischenspiel — dafür muss sich das
+   * Saisonüberschrift und mal eine Randnotiz — dafür muss sich das
    * Kapitel einzeln aufrufen lassen.
    *
    * `i` bestimmt weiter die Form (A bis D im Wechsel) und läuft über alle
@@ -1250,9 +1257,8 @@ export default function TestHomepage() {
                   hält es für einen Fehler. Er nennt außerdem das Wort, unter
                   dem man diese Machart nachschlägt. */}
               <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
-                So entsteht ein Goodyear-rahmengenähter Schuh: in sechs Schritten,
-                von der Brandsohle bis zur Doppelnaht. Scroll weiter, dann setzt er
-                sich zusammen.
+                Sechs Schritte, von der Brandsohle bis zur Doppelnaht. Scroll
+                weiter, dann setzt sich ein Goodyear-rahmengenähter Schuh zusammen.
               </p>
             </>
           }
@@ -1280,18 +1286,18 @@ export default function TestHomepage() {
           unter dem Kapitel — er ist der stärkste Satz, den ein Schuh hat, und
           im Stapel ging er unter.
 
-          DIE PAUSE GEHÖRT DAZU. Zwischen zwei Kollektionen liegt eine Fläche
-          ohne Produkt, ohne Preis, ohne Knopf.
+          DIE PAUSE GEHÖRT DAZU. Zwischen zwei Kollektionen steht nichts zu
+          kaufen — nur eine Zeile am Rand.
 
           ── Warum nach Saison geordnet ──────────────────────────────────
 
           Vorher standen hier vier Kapitel hintereinander, ausgewählt nach
           der Machart. Das las sich wie eine Auswahl ohne Grund: vier Schuhe,
           weil vier Schuhe. Jetzt stehen drei Kollektionen — ganzjährig,
-          Sommer, Winter —, und dazwischen sagt je ein Satz, worauf es in den
-          Monaten ankommt, die gleich kommen. Damit liest man die nächste
-          Kollektion nicht als „noch mehr Schuhe", sondern als Antwort auf
-          etwas, das man gerade erfahren hat.
+          Sommer, Winter —, und dazwischen sagt je eine Randnotiz, worauf es
+          in den Monaten ankommt, die gleich kommen. Damit liest man die
+          nächste Kollektion als Antwort auf etwas, das man gerade erfahren
+          hat, und nicht als „noch mehr Schuhe".
 
           Die Saison steht als Feld am Modell und ist im CMS zu ändern
           (lib/saison.js). Führt der Katalog zu einer Saison kein Modell mit
@@ -1309,9 +1315,8 @@ export default function TestHomepage() {
           </Enthuellen>
           <Enthuellen verzoegerung={140}>
             <p className="text-[13px] lg:text-[15px] text-black/45 font-light leading-[2] mt-8 max-w-xl mx-auto">
-              Jede dieser Formen ist aus einer Notwendigkeit entstanden: die
-              geschlossene Schnürung für die Strenge der Etikette, die offene für den
-              kräftigen Spann, der Riemen für den Steigbügel.
+              Die geschlossene Schnürung kommt von der Etikette, die offene vom
+              kräftigen Spann, der Riemen vom Steigbügel.
             </p>
           </Enthuellen>
         </div>
@@ -1336,13 +1341,10 @@ export default function TestHomepage() {
           <div>
             {kollektionen.map((kol) => (
               <Fragment key={kol.key}>
-                {/* Vor jeder Saison außer der ersten ein Zwischenspiel: eine
-                    Fläche ohne Produkt, ohne Preis, ohne Knopf — und ein Satz,
-                    der sagt, worauf es in den nächsten Monaten ankommt. Er
-                    führt in die Kollektion hinein, die gleich kommt. */}
-                {kol.zwischenspiel && (
-                  <Zwischenspiel text={kol.zwischenspiel} />
-                )}
+                {/* Vor jeder Saison außer der ersten eine Randnotiz: ein
+                    Stichwort und eine Zeile, die sagt, worauf es in den
+                    nächsten Monaten ankommt. */}
+                {kol.notiz && <Notiz {...kol.notiz} />}
 
                 <SaisonKopf marke={kol.marke} titel={kol.titel} />
 
@@ -1356,13 +1358,14 @@ export default function TestHomepage() {
           </div>
         )}
 
-        {/* Das letzte Zwischenspiel, nach der dritten Kollektion: der eine
-            Hinweis, den jeder braucht, der zum ersten Mal ein solches Paar
-            trägt — und der die Ungeduld nimmt, bevor sie entsteht. */}
-        <Zwischenspiel
-          text={'Die ersten Wochen fühlt sich ein rahmengenähter Schuh fest an. '
-              + 'Das ist der Kork, der noch nachgibt — trag ihn anfangs nur ein '
-              + 'paar Stunden am Tag.'}
+        {/* Die letzte Notiz, nach der dritten Kollektion: der eine Hinweis,
+            den jeder braucht, der zum ersten Mal ein solches Paar trägt. Er
+            zeigt zurück auf die Korkbettung aus dem Schnitt — dort hat man
+            sie einziehen sehen, hier merkt man sie. */}
+        <Notiz
+          letzte
+          marke="Zum Einlaufen"
+          text="Der Kork unter der Brandsohle gibt nach, bis er deinen Fuß abgebildet hat."
         />
 
         {/* Der Abschluss des Abschnitts: der Weg in den ganzen Katalog.
@@ -1418,9 +1421,9 @@ export default function TestHomepage() {
 
             <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
               <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
-                Oben die gewachsene Seite mit der dichtesten Faser, darunter ein immer
-                lockereres Gefüge. Wo eine Gerberei die Haut teilt, entscheidet sich,
-                wie dein Paar in zehn Jahren aussieht.
+                Oben die gewachsene Seite mit der dichtesten Faser, darunter ein
+                lockereres Gefüge. Wo die Gerberei teilt, entscheidet sich, wie dein
+                Paar in zehn Jahren aussieht.
               </p>
             </Enthuellen>
           </div>
@@ -1436,9 +1439,9 @@ export default function TestHomepage() {
 
           <Enthuellen verzoegerung={220}>
             <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5] mt-12 lg:mt-16 max-w-2xl mx-auto text-center">
-              „Vollnarbig" heißt, dass diese oberste Schicht ganz geblieben ist —
-              ungeschliffen, ohne Folie darüber. Sie ist der Grund, warum sich
-              Kratzer in so einem Leder auspolieren lassen.
+              „Vollnarbig" heißt: Diese oberste Schicht ist ganz geblieben,
+              ungeschliffen und ohne Folie darüber. Deshalb lassen sich Kratzer
+              auspolieren.
             </p>
           </Enthuellen>
 
@@ -1469,9 +1472,9 @@ export default function TestHomepage() {
 
           <Enthuellen verzoegerung={140}>
             <p className="text-[12px] text-black/40 font-light mt-12 lg:mt-16 max-w-xl">
-              Auch was unterhalb der Spaltlinie bleibt, wird zu Schuhen verarbeitet,
-              mit aufgeprägter Narbung. Im Laden sieht man den Unterschied kaum, im
-              dritten Jahr sieht ihn jeder.
+              Was unterhalb der Spaltlinie bleibt, wird auch zu Schuhen, mit
+              aufgeprägter Narbung. Im Laden sieht man den Unterschied kaum, im
+              dritten Jahr jeder.
             </p>
           </Enthuellen>
         </div>
@@ -1508,8 +1511,8 @@ export default function TestHomepage() {
           </Enthuellen>
           <Enthuellen verzoegerung={120}>
             <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
-              Du musst keine davon auf einmal treffen. Der Konfigurator merkt sich
-              jeden Stand, und verbindlich wird es erst an der letzten Station.
+              Der Konfigurator merkt sich jeden Stand. Verbindlich wird es erst an
+              der letzten Station.
             </p>
           </Enthuellen>
 
@@ -1595,14 +1598,14 @@ export default function TestHomepage() {
                 <div className="pt-1">
                   <p className="text-[17px] lg:text-[20px] text-black font-light leading-snug">Dein Paar</p>
                   <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
-                    Vier bis sechs Wochen, einzeln gefertigt in Spanien. Du bekommst
-                    Nachricht, wenn die Fertigung beginnt und wenn dein Paar das Haus
-                    verlässt. Versand innerhalb Deutschlands inbegriffen.
+                    Vier bis sechs Wochen, einzeln gefertigt in Spanien. Du hörst von
+                    uns, wenn dein Paar das Haus verlässt. Versand innerhalb
+                    Deutschlands inbegriffen.
                   </p>
                   <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
                     Ein Paar, das für einen bestimmten Fuß gebaut ist, lässt sich nicht
-                    zurückgeben. Stimmt etwas nicht, fertigen wir es neu, ohne Kosten
-                    für dich. Die Einzelheiten stehen in den AGB.
+                    zurückgeben. Stimmt etwas nicht, fertigen wir neu, ohne Kosten für
+                    dich. Einzelheiten in den AGB.
                   </p>
                 </div>
               </li>
@@ -1629,23 +1632,22 @@ export default function TestHomepage() {
           <Enthuellen verzoegerung={100}>
             <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-7">
               Wir schreiben nicht „handgefertigt". Der Rahmen wird maschinell genäht,
-              so wie in jeder Manufaktur dieser Preisklasse. Von Hand kommen Zuschnitt,
-              Zwicken, Finish und die Endkontrolle.
+              wie in jeder Manufaktur dieser Preisklasse. Von Hand kommen Zuschnitt,
+              Zwicken und Finish.
             </p>
           </Enthuellen>
 
           <Enthuellen verzoegerung={180}>
             <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-5">
-              Wir sagen es, weil der Unterschied zwischen einem rahmengenähten und
-              einem geklebten Schuh für sich spricht. Er braucht kein Wort, das ihn
-              größer macht.
+              Der Unterschied zum geklebten Schuh spricht für sich. Er braucht kein
+              Wort, das ihn größer macht.
             </p>
           </Enthuellen>
 
           <Enthuellen verzoegerung={240}>
             <p className="text-[12px] text-black/35 font-light leading-relaxed mt-8 pt-6 border-t border-black/[0.08]">
-              Dasselbe gilt für alles andere auf dieser Seite: Wo eine Zahl steht, ist
-              sie nachgehalten. Wo keine steht, haben wir keine.
+              Wo auf dieser Seite eine Zahl steht, ist sie nachgehalten. Wo keine
+              steht, haben wir keine.
             </p>
           </Enthuellen>
         </div>
