@@ -4,7 +4,7 @@
  *
  * ── Warum das nicht bloß ein Werbebanner ist ──────────────────────────────
  *
- * „Rund zwei Wochen statt sechs" liest sich wie ein reiner Vorteil. Ist es
+ * „Rund zwei Wochen statt vier" liest sich wie ein reiner Vorteil. Ist es
  * aber nicht: Die Zeit wird nicht schneller gearbeitet, sie wird vorweg-
  * genommen. Häufig gewählte Bauteile liegen fertig da, und wer sie nutzt,
  * nimmt damit die Entscheidungen an, die bei ihrer Herstellung getroffen
@@ -32,7 +32,7 @@ export default function ExpressHinweis({ wochen = 2, aufpreis = 100, offenGruppe
       </div>
 
       <p className="text-[15px] font-light text-black leading-snug">
-        In rund {wochen} Wochen bei dir statt in vier bis sechs.
+        In rund {wochen} Wochen bei dir statt in rund vier.
       </p>
 
       <div className="mt-4 space-y-3">

@@ -29,7 +29,7 @@
  * Angabe eigens für Auftragsfertigung wäre genauer, ließ sich aber aus
  * dieser Umgebung nicht gegen die Norm prüfen (schema.org ist hier
  * gesperrt), und eine geratene Aufzählungsangabe macht den ganzen Block
- * ungültig. Die vier bis sechs Wochen stehen im sichtbaren Text der Seite.
+ * ungültig. Die rund vier Wochen stehen im sichtbaren Text der Seite.
  */
 import { useEffect } from 'react'
 import { preisAlsZahl } from './preis'

@@ -235,11 +235,17 @@ import FussMass from '../components/FussMass'
  * Die Faktenzeile unter der Überschrift.
  *
  * Keine Werbeworte, keine Sätze — fünf Angaben, von denen jede anderswo auf
- * dieser Seite belegt wird. Bei den Wochen steht seit Neuestem das Wort
- * „Produktionszeit" dabei: Eine nackte Spanne liest sich wie eine
- * Lieferfrist, und eine Lieferfrist von sechs Wochen ist ein Mangel. Die
- * Zeit, in der gebaut wird, ist das Gegenteil davon — aber das muss
- * dastehen, und zwar hier oben und nicht erst in Kapitel 8. „Neu besohlbar" ist nicht Behauptung, sondern die
+ * dieser Seite belegt wird. Bei den Wochen steht das Wort „Produktion"
+ * dabei: Eine nackte Zahl liest sich wie eine Lieferfrist, und eine
+ * Lieferfrist ist etwas, das man abwartet. Die Zeit, in der gebaut wird, ist
+ * das Gegenteil davon — aber das muss dastehen, und zwar hier oben und nicht
+ * erst in Kapitel 8.
+ *
+ * „Rund" und nicht „bis zu": „Bis zu vier Wochen" ist eine Obergrenze, und
+ * eine Obergrenze, die eine Werkstatt manchmal reißt, ist schlimmer als gar
+ * keine Angabe — sie macht aus einer normalen Verzögerung einen gebrochenen
+ * Satz. „Rund vier Wochen" sagt dasselbe und hält auch dann, wenn es fünf
+ * werden. Dass das vorkommt, steht in Kapitel 8 ausdrücklich da. „Neu besohlbar" ist nicht Behauptung, sondern die
  * Folge der Machart und im Handwerk-Abschnitt gezeigt; „Almansa, Spanien"
  * ist die Ortsangabe, die dieses Haus über sich macht, und sie steht so schon
  * im Untertitel. Sie hieß hier lange „Made in Spain" — dieselbe Auskunft,
@@ -249,7 +255,7 @@ const FAKTEN = [
   'Rahmengenäht',
   'Nach Maß gebaut',
   'Almansa, Spanien',
-  '4–6 Wochen Produktionszeit',
+  'Rund 4 Wochen Produktion',
   'Neu besohlbar',
 ]
 
@@ -343,7 +349,7 @@ const WARUM_RAHMEN = [
 const ZAHLEN = [
   { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Die Weite sitzt am Ballen, nicht an der Länge — deshalb reichen zwei.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. Für dieses eine Paar.' },
-  { zahl: '4–6',  einheit: 'Wochen Produktion', text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
+  { zahl: '4',    einheit: 'Wochen Produktion', text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
 ]
 
 /**
@@ -876,7 +882,7 @@ function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
           schuh.material,
           Number(schuh.express) === 1
             ? `rund ${schuh.express_weeks || 2} Wochen Produktion`
-            : 'vier bis sechs Wochen Produktion',
+            : 'rund vier Wochen Produktion',
           schuh.price ? `ab ${schuh.price}` : null,
         ].filter(Boolean).join('   ·   ')}
       </p>
@@ -1710,7 +1716,7 @@ export default function TestHomepage() {
                   Was es kostet: Ein rahmengenähter Schuh ist schwerer als ein
                   geklebter und die ersten Wochen fester. Beides legt sich, sobald
                   der Kork nachgegeben hat. Und er braucht länger in der Werkstatt
-                  — auch deshalb sind es vier bis sechs Wochen.
+                  — auch deshalb sind es rund vier Wochen.
                 </p>
               </div>
 
@@ -2090,9 +2096,9 @@ export default function TestHomepage() {
                 <div className="pt-1">
                   <p className="text-[17px] lg:text-[20px] text-black font-light leading-snug">Dein Paar</p>
                   <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
-                    Vier bis sechs Wochen, einzeln gefertigt in Almansa. Du hörst von
-                    uns, wenn dein Paar die Werkstatt verlässt. Versand innerhalb
-                    Deutschlands inbegriffen.
+                    Rund vier Wochen, einzeln gefertigt in Almansa. Du hörst von uns,
+                    wenn dein Paar die Werkstatt verlässt — und auch dann, wenn es
+                    länger wird. Versand innerhalb Deutschlands inbegriffen.
                   </p>
                   <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
                     Ein Paar, das für einen bestimmten Fuß gebaut ist, lässt sich nicht
@@ -2114,7 +2120,7 @@ export default function TestHomepage() {
 
       {/* ══ 8 · Almansa ═══════════════════════════════════════════════════
           Die Frage, die jeder stellt, der eben sechs Entscheidungen gelesen
-          hat: „Und dann warte ich anderthalb Monate?"
+          hat: „Und dann warte ich einen Monat?"
 
           Sie lässt sich auf zwei Arten beantworten. Man kann sich
           entschuldigen — dann klingt die Wartezeit wie ein Mangel, den man in
@@ -2148,7 +2154,7 @@ export default function TestHomepage() {
               <Enthuellen className="lg:col-span-6">
                 <Kapitelmarke hell>Almansa · Produktionszeit</Kapitelmarke>
                 <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
-                  Was in diesen vier bis<br className="hidden sm:block" /> sechs Wochen passiert.
+                  Was in diesen<br className="hidden sm:block" /> vier Wochen passiert.
                 </h2>
               </Enthuellen>
 
@@ -2192,7 +2198,20 @@ export default function TestHomepage() {
                   Lager, es wird für niemand sonst gebaut, und es verlässt Almansa in
                   einem einzigen Karton.
                 </p>
-                <p className="text-[11px] text-white/35 font-light leading-[1.9] mt-6">
+                {/* Der Satz, der die Zahl ehrlich macht.
+
+                    Eine Werkstatt, die einzeln baut, hat Wochen, in denen ein
+                    Leder fehlt oder eine Sohle zweimal gemacht werden muss.
+                    Wer das verschweigt und dann fünf Wochen braucht, hat
+                    einen Satz gebrochen; wer es hinschreibt, hat keinen. Das
+                    ist dieselbe Rechnung wie in Kapitel 10. */}
+                <p className="text-[12px] lg:text-[13px] text-white/45 font-light leading-[1.9] mt-8">
+                  Vier Wochen sind der Normalfall und keine Zusage. Fehlt ein Leder
+                  oder muss eine Sohle zweimal gemacht werden, werden fünf daraus.
+                  Dann hörst du das von uns, sobald wir es wissen — und nicht erst,
+                  wenn du fragst.
+                </p>
+                <p className="text-[11px] text-white/30 font-light leading-[1.9] mt-5">
                   Einzelne Modelle sind vorbereitet und in rund zwei Wochen fertig.
                   Am Modell steht, welche.
                 </p>
