@@ -46,7 +46,6 @@ export const AUFBAU = [
   {
     titel: 'Die Doppelnaht',
     text: 'Läuft durch den Rahmen in die Laufsohle. Ein Schuhmacher trennt sie '
-        + 'auf, ohne den Schaft zu berühren — und dein Paar bekommt eine neue '
-        + 'Sohle, so oft du willst.',
+        + 'auf, ohne den Schaft zu berühren — so oft du willst.',
   },
 ]
