@@ -1,5 +1,18 @@
 /**
- * SpannerSchnitt — der Loafer mit dem Spanner darin, in fünf Schritten.
+ * SpannerSchnitt — ein Tag mit einem Loafer, in fünf Schritten.
+ *
+ * ── Die fünf Schritte sind ein Tag ────────────────────────────────────────
+ *
+ * 1 morgens (der Schuh, wie er vom Spanner kommt), 2 tagsüber (die Falte
+ * über dem Ballen entsteht), 3 abends (der Spanner fährt ein, die Falte
+ * geht), 4 über Nacht (die Feuchtigkeit steigt ins Holz), 5 alle zehn bis
+ * fünfzehn Male (Bürste und Creme).
+ *
+ * Vorher begann die Szene mit der Falte, gleich im ersten Bild. Das war
+ * hübsch und falsch herum: Ein Schuh, der morgens vom Spanner kommt, HAT
+ * keine Falte — sie entsteht erst beim Gehen. Jetzt steht am Anfang der
+ * Schuh in Ordnung, und man sieht, was der Tag aus ihm macht. Die Texte
+ * dazu in lib/pflegeSchritte.js.
  *
  * ── Was hier steht und was nicht ──────────────────────────────────────────
  *
@@ -56,16 +69,17 @@ const PLAN = {
   'sohle':              { ab: 1, aus: 'still' },
   'oberschuh':          { ab: 1, aus: 'still' },
   'riemen':             { ab: 1, aus: 'still' },
-  // Die Falte ist der Grund für den ganzen Abschnitt — und verschwindet,
-  // sobald der Spanner seine Arbeit getan hat.
-  'falten':             { ab: 1, bis: 2, aus: 'still' },
+  // Die Falte entsteht tagsüber beim Gehen, bleibt noch da, während der
+  // Spanner einfährt, und ist im Schritt danach weg. Das ist der ganze
+  // Abschnitt in drei Bildern.
+  'falten':             { ab: 2, bis: 3, aus: 'still' },
   // Der Spanner: Ferse von oben eingesetzt, Vorderteil von hinten durch die
   // Öffnung geschoben, die Feder dazwischen. In dieser Reihenfolge, mit
   // einem Achtelsekunden-Abstand, damit man drei Handgriffe sieht und nicht
   // ein Aufblitzen.
-  'spanner-vorderteil': { ab: 2, aus: 'links', weg: 440, dauer: 1150 },
-  'spanner-ferse':      { ab: 2, aus: 'links', weg: 300, dauer: 1000, verzug: 160 },
-  'spanner-feder':      { ab: 2, aus: 'links', weg: 380, dauer: 1050, verzug: 320 },
+  'spanner-vorderteil': { ab: 3, aus: 'links', weg: 440, dauer: 1150 },
+  'spanner-ferse':      { ab: 3, aus: 'links', weg: 300, dauer: 1000, verzug: 160 },
+  'spanner-feder':      { ab: 3, aus: 'links', weg: 380, dauer: 1050, verzug: 320 },
   'feuchtigkeit':       { ab: 4, aus: 'unten' },
   'buerste':            { ab: 5, aus: 'oben' },
   'creme':              { ab: 5, aus: 'oben',  verzug: 120 },
@@ -75,11 +89,11 @@ const PLAN = {
 const MARKEN = [
   {
     name: 'Falte', zusatz: 'über dem Ballen',
-    ab: 1, bis: 2, punkt: [578, 198], text: [646, 58],
+    ab: 2, bis: 3, punkt: [578, 198], text: [646, 58],
   },
   {
     name: 'Zedernholz', zusatz: 'zweiteilig, mit Feder',
-    ab: 2, punkt: [112, 152], text: [22, 12],
+    ab: 3, punkt: [112, 152], text: [22, 12],
   },
   {
     name: 'Feuchtigkeit', zusatz: 'aus dem Futter',
@@ -92,7 +106,8 @@ const MARKEN = [
 ]
 
 /**
- * @param {number|null} [schritt] 0 … 4. `null` zeigt den letzten Schritt —
+ * @param {number|null} [schritt] 0 … 4, also der Tag von morgens bis zur
+ *   Creme. `null` zeigt den letzten Schritt —
  *   den gespannten, gepflegten Schuh. Das ist der Fall des Vorrenderers und
  *   der Fall „keine Bewegung": Wer die Folge nicht sieht, soll das fertige
  *   Bild sehen und nicht das erste.

@@ -26,7 +26,8 @@ export const AUFBAU = [
     // beiden Macharten, und eine Seite, die mit Offenheit wirbt, darf ihn
     // nicht verwischen.
     text: 'Auf ihr steht alles. Unter sie wird eine Lippe geklebt — ein Band '
-        + 'mit L-Profil, das rundherum läuft und die erste Naht aufnimmt.',
+        + 'mit L-Profil, das rundherum läuft und die erste Naht aufnimmt. Sie '
+        + 'macht aus einem Rahmen einen Goodyear-Rahmen.',
   },
   {
     titel: 'Schaft und Futter',
@@ -51,6 +52,6 @@ export const AUFBAU = [
   {
     titel: 'Die Doppelnaht',
     text: 'Läuft durch den Rahmen in die Laufsohle. Ein Schuhmacher trennt sie '
-        + 'auf, ohne den Schaft zu berühren — so oft du willst.',
+        + 'auf, ohne den Schaft zu berühren. Wie oft, hängt am Oberleder.',
   },
 ]
