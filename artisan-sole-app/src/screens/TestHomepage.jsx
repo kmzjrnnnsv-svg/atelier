@@ -24,8 +24,8 @@
  *   5  Das Leder       Woraus besteht es?
  *   6  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
  *   7  Die Pflege      Was muss ich dafür tun, damit es hält?
- *   8  In eigener Sache Was behaupten wir NICHT?
- *   9  Zum Vergleich   Derselbe Aufbau, anders gezeigt (zur Ansicht)
+ *   8  Nach Jahren     Und wenn die Sohle doch durch ist?
+ *   9  In eigener Sache Was behaupten wir NICHT?
  *  10  Der Anfang      Wo fange ich an?
  *
  * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
@@ -178,6 +178,7 @@ import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import SchuhAufbau from '../components/SchuhAufbau'
 import PflegeFolge from '../components/PflegeFolge'
 import StapelFolge from '../components/StapelFolge'
+import Modellwahl from '../components/Modellwahl'
 import LederSchnitt from '../components/LederSchnitt'
 import FussMass from '../components/FussMass'
 
@@ -254,9 +255,8 @@ const LEDERFAMILIEN = [
     name: 'Vollnarbig',
     herkunft: 'Oben geblieben, wie gewachsen',
     keys: ['box_calf', 'fullgrain', 'painted_full_grain', 'nappa'],
-    text: 'Die Zeichnung darauf sind die Poren, aus denen einmal Haare kamen — '
-        + 'dasselbe Muster wie auf deinem Handrücken, nur gröber. Sie bekommt eine '
-        + 'Patina, für die es keine Abkürzung gibt.',
+    text: 'Die Zeichnung darauf sind die Poren, aus denen einmal Haare kamen. Sie '
+        + 'bekommt eine Patina, für die es keine Abkürzung gibt.',
   },
   {
     name: 'Patiniert',
@@ -592,73 +592,6 @@ function Kapitelbild({ schuh, oeffnen, className = '', hoehe = 'max-h-[62vh]' })
   )
 }
 
-/**
- * Die übrigen Modelle einer Kollektion.
- *
- * Ein Kapitel macht noch keine Kollektion. Sommer und Winter führen im
- * Katalog je nur eine Machart und bekommen deshalb nur ein Kapitel — was
- * dort sonst noch steht, steht hier: klein, in einer Reihe, mit Namen und
- * Preis. Kein erfundenes Wort, nur der Bestand.
- */
-function SaisonReihe({ schuhe, oeffnen }) {
-  if (!schuhe.length) return null
-
-  // Die Spaltenzahl folgt der Anzahl. Ein festes Vierer-Raster mit einer
-  // einzigen Kachel darin sieht aus wie ein Ladefehler — drei leere Spalten
-  // neben einem Schuh. Die Klassen stehen ausgeschrieben da, weil Tailwind
-  // zusammengesetzte Namen nicht findet und sie aus dem Stylesheet wirft.
-  const raster = {
-    1: 'grid-cols-1 max-w-xs mx-auto',
-    2: 'grid-cols-2 max-w-2xl mx-auto',
-    3: 'grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto',
-  }[schuhe.length] || 'grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto'
-
-  return (
-    <div className="px-5 lg:px-16 pt-12 pb-10 lg:pt-16 lg:pb-14">
-      <div className={`grid gap-6 lg:gap-10 ${raster}`}>
-        {schuhe.map((schuh, i) => (
-          <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 3) * 80}>
-            <button
-              type="button"
-              onClick={() => oeffnen(schuh)}
-              className="group block w-full bg-transparent border-0 p-0 text-left"
-            >
-              {/* ── Warum quadratisch und ohne eigenen Grund ─────────────
-                  Die Kachel war 4:3 und hatte eine eigene Hintergrundfarbe
-                  (#EDEAE3). Die Aufnahmen aus dem Katalog sind quadratisch
-                  und stehen auf ihrem eigenen, dunkleren Graugrün — also
-                  erschien links und rechts je ein heller Streifen in einem
-                  dritten Ton. Drei Grautöne nebeneinander, und keiner
-                  davon gewollt.
-
-                  Quadratisch passt die Aufnahme genau hinein. Der eigene
-                  Grund ist weg: Bringt ein Foto einmal ein anderes Maß mit,
-                  liegt der Rest jetzt auf der Fläche des Abschnitts statt
-                  auf einer vierten Farbe. Beschnitten wird weiterhin nichts
-                  — `contain` verkleinert, es schneidet nicht. */}
-              <div className="aspect-square overflow-hidden">
-                <img
-                  src={resolveMediaUrl(schuh.image)}
-                  alt={`${schuh.name}, nach Maß gefertigt`}
-                  loading="lazy"
-                  className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
-                />
-              </div>
-              {/* Dicht unter der Aufnahme: Name und Preis gehören zum Bild,
-                  nicht zur Fläche darunter. */}
-              <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-3 line-clamp-2 min-h-[2.4em]">
-                {schuh.name}
-              </p>
-              <p className="text-[12px] text-black/40 font-light mt-0.5">
-                {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
-              </p>
-            </button>
-          </Enthuellen>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 /**
  * Der Kopf einer Kollektion.
@@ -925,14 +858,12 @@ export default function TestHomepage() {
 
     return SAISONFOLGE
       .map(def => {
-        const schuhe = waehlen(def.key, 1)
-        const imKapitel = new Set(schuhe.map(e => e.schuh.id))
-        // Der Rest derselben Saison. Er macht aus einem Kapitel eine
-        // Kollektion, ohne dass dafür ein Wort erfunden werden müsste.
-        const rest = shoes
-          .filter(sch => (sch.season || 'all') === def.key && sch.image && !imKapitel.has(sch.id))
-          .slice(0, 4)
-        return { ...def, schuhe, rest }
+        // Nur noch das Kapitelmodell: Der Rest derselben Saison stand
+        // darunter als Kachelreihe und ist der Modellwahl am Ende des
+        // Abschnitts gewichen — die zeigt alle achtundvierzig statt vier je
+        // Jahreszeit, und zwar nach der Form geordnet, nach der ein Käufer
+        // sucht.
+        return { ...def, schuhe: waehlen(def.key, 1) }
       })
       // Eine Kollektion ohne Kapitel bekommt keine Überschrift. Führt der
       // Katalog einmal keine Sommermodelle mit Beschreibung, fehlt der
@@ -1408,7 +1339,7 @@ export default function TestHomepage() {
 
         <ZurKollektion
           className="max-w-5xl mx-auto mt-12 lg:mt-16"
-          satz="So gebaut wird hier jedes Paar."
+          satz="Dieselben drei Zahlen stehen hinter jedem Paar."
           auf={zurKollektion}
         />
       </section>
@@ -1544,21 +1475,35 @@ export default function TestHomepage() {
                 {kol.schuhe.map(({ schuh, form }) => (
                   <Fragment key={schuh.id}>{kapitelInhalt(schuh, form)}</Fragment>
                 ))}
-
-                <SaisonReihe schuhe={kol.rest} oeffnen={sch => navigate(shoePath(sch))} />
               </Fragment>
             ))}
           </div>
         )}
 
+        {/* Die Auswahl.
+
+            Hier standen drei Kachelreihen, eine je Jahreszeit, mit dem
+            Rest der Modelle dieser Saison. Sie hatten zwei Fehler: Sie
+            zeigten immer nur einen Ausschnitt, und sie waren nach einem
+            Begriff sortiert, nach dem niemand sucht — ein Käufer denkt
+            „Loafer", nicht „Sommer".
+
+            Jetzt steht am Ende des Kapitels eine Zeile, in der alle
+            achtundvierzig Modelle liegen, geordnet nach der Form. Die
+            Kapitel darüber führen heran, diese Zeile lässt wählen; das
+            eine ersetzt das andere nicht. */}
+        <Modellwahl
+          shoes={shoes}
+          oeffnen={sch => navigate(shoePath(sch))}
+          zumKatalog={zurKollektion}
+        />
+
         {/* Die letzte Notiz, nach der dritten Kollektion: der eine Hinweis,
-            den jeder braucht, der zum ersten Mal ein solches Paar trägt. Er
-            zeigt zurück auf die Korkbettung aus dem Schnitt — dort hat man
-            sie einziehen sehen, hier merkt man sie. */}
+            den jeder braucht, der zum ersten Mal ein solches Paar trägt. */}
         <Notiz
           letzte
-          marke="Zum Einlaufen"
-          text="Der Kork unter der Brandsohle gibt nach, bis er deinen Fuß abgebildet hat."
+          marke="Zur ersten Woche"
+          text="Eine neue Ledersohle ist glatt. Auf nassem Stein die ersten Tage vorsichtig."
         />
 
         {/* Der Abschluss des Abschnitts: der Weg in den ganzen Katalog.
@@ -1614,10 +1559,9 @@ export default function TestHomepage() {
 
             <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
               <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
-                Sieh dir deinen Handrücken an: oben die feine Zeichnung, darunter ein
-                Geflecht aus Fasern. Eine Rinderhaut ist genauso gebaut, nur dicker —
-                und wo die Gerberei sie teilt, entscheidet sich, wie dein Paar in zehn
-                Jahren aussieht.
+                Dein Handrücken ist genauso gebaut, nur dünner: oben die feine
+                Zeichnung, darunter ein Geflecht aus Fasern. Wo die Gerberei eine Haut
+                teilt, entscheidet sich, wie dein Paar in zehn Jahren aussieht.
               </p>
             </Enthuellen>
           </div>
@@ -1905,7 +1849,53 @@ export default function TestHomepage() {
       </section>
 
 
-      {/* ══ 8 · In eigener Sache ══════════════════════════════════════════
+      {/* ══ 8 · Wenn die Sohle durch ist ═══════════════════════════════════
+          Er stand als „Zum Vergleich" ganz unten, hinter der Offenheit über
+          die Machart, als Anhang. Das war die falsche Stelle.
+
+          Denn er beantwortet keine Frage über die Bauweise — die hat der
+          Schnitt oben beantwortet —, sondern die Frage, die nach dem
+          Pflegekapitel von selbst aufkommt: Und wenn die Sohle irgendwann
+          doch durch ist? Deshalb steht er jetzt direkt dahinter. Pflege hält
+          den Schuh; hier steht, was passiert, wenn Halten nicht mehr reicht.
+
+          Der Schnitt oben zeigt, WIE es zusammenhängt. Diese Tafel zeigt,
+          WORAUS — dieselben Teile flach übereinander, jedes mit seiner
+          eigenen Kontur, wie auf dem Tisch eines Schuhmachers — und läuft
+          auf die Trennlinie hinaus: oben, was bleibt; unten, was gewechselt
+          wird. */}
+      <section className="bg-white border-t border-black/[0.06]">
+        <StapelFolge
+          kopf={
+            <>
+              <Kapitelmarke>Nach Jahren</Kapitelmarke>
+              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+                Und wenn die Sohle<br className="hidden sm:block" /> durch ist?
+              </h2>
+              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+                Dann kommt eine neue dran. Derselbe Schuh wie oben, nur
+                auseinandergelegt — am Ende siehst du, wo ein Schuhmacher ansetzt.
+              </p>
+            </>
+          }
+          fuss={
+            <div className="max-w-3xl">
+              <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5]">
+                Beim geklebten Schuh gibt es diese Linie nicht. Dort sitzt die Sohle
+                direkt am Schaft, und was verklebt ist, geht nur zusammen kaputt.
+              </p>
+              <ZurKollektion
+                className="mt-10 lg:mt-12"
+                satz="So gebaut ist jedes Paar, das hier steht."
+                auf={zurKollektion}
+              />
+            </div>
+          }
+        />
+      </section>
+
+
+      {/* ══ 9 · In eigener Sache ══════════════════════════════════════════
           Der Abschnitt, der diese Fassung von jeder anderen trennt. Die
           Offenheit über die Machart war bisher eine Selbstauskunft im
           Kleingedruckten; hier ist sie das Verkaufsargument. Wer „handmade"
@@ -1942,54 +1932,6 @@ export default function TestHomepage() {
           />
         </div>
       </section>
-
-      {/* ══ 9 · Zum Vergleich ═════════════════════════════════════════════
-          Derselbe Aufbau ein zweites Mal, anders gezeigt — und bewusst ganz
-          unten, damit das Handwerkskapitel oben bleibt, wie es ist.
-
-          Der Schnitt dort beantwortet „wie hält das zusammen?". Was er
-          offenlässt, ist „woraus besteht das eigentlich?" — ein Querschnitt
-          ist zwei Millimeter Schuh, und die Form eines Teils sieht man darin
-          nicht. Hier liegen dieselben Teile flach übereinander, jedes mit
-          seiner eigenen Kontur, wie auf dem Tisch eines Schuhmachers.
-
-          Und er läuft auf den Satz hinaus, der im Schnitt nur zwischen den
-          Zeilen steht: Ein rahmengenähter Schuh besteht aus zwei Teilen. Das
-          obere bleibt ein Leben lang beieinander, das untere wird gewechselt,
-          und dazwischen liegt eine Naht, die nichts hält außer der Sohle.
-
-          Welche der beiden Darstellungen bleibt, entscheidet sich beim
-          Ansehen. Solange stehen beide da. */}
-      <section className="bg-white border-t border-black/[0.06]">
-        <StapelFolge
-          kopf={
-            <>
-              <Kapitelmarke>Zum Vergleich</Kapitelmarke>
-              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
-                Ein Oberschuh<br className="hidden sm:block" /> und eine Sohle.
-              </h2>
-              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
-                Derselbe Schuh wie oben, nur auseinandergelegt statt aufgeschnitten.
-                Sieben Teile, und am Ende siehst du, wo ein Schuhmacher ansetzt.
-              </p>
-            </>
-          }
-          fuss={
-            <div className="max-w-3xl">
-              <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5]">
-                Beim geklebten Schuh gibt es diese Linie nicht. Dort sitzt die Sohle
-                direkt am Schaft, und was verklebt ist, geht nur zusammen kaputt.
-              </p>
-              <ZurKollektion
-                className="mt-10 lg:mt-12"
-                satz="So gebaut ist jedes Paar, das hier steht."
-                auf={zurKollektion}
-              />
-            </div>
-          }
-        />
-      </section>
-
 
       {/* ══ 10 · Der Anfang ═══════════════════════════════════════════════
           Ein Weg, nicht drei. Wer bis hierher gelesen hat, sucht keine

@@ -18,12 +18,12 @@ export const STAPEL = [
   },
   {
     titel: 'Die Brandsohle',
-    text: 'Sie liegt unter dem Fuß. Aus ihr ist eine Rippe aufgestellt, die '
+    text: 'Sie liegt unter dem Fuß. Unter ihr klebt die Lippe, ein Band, das '
         + 'rundherum läuft — die gestrichelte Linie auf dem Blatt.',
   },
   {
     titel: 'Der Rahmen',
-    text: 'Ein schmaler Lederstreifen, rundherum an die Rippe genäht. Er steht '
+    text: 'Ein schmaler Lederstreifen, rundherum an die Lippe genäht. Er steht '
         + 'seitlich heraus; das ist der Rand, den man am fertigen Schuh sieht.',
   },
   {

@@ -84,7 +84,7 @@ const PLAN = {
    ihre Maße stehen in der Mappe unter MASSE. */
 const MARKEN = [
   { name: 'Oberschuh',  zusatz: 'Schaft und Futter', ab: 1, punkt: [300, 150], text: [186, 112], anker: 'end' },
-  { name: 'Brandsohle', zusatz: 'mit der Rippe',     ab: 2, punkt: [640, 272], text: [798, 264] },
+  { name: 'Brandsohle', zusatz: 'mit der Lippe',     ab: 2, punkt: [640, 272], text: [798, 264] },
   // Der Punkt sitzt auf dem Band und nicht im Loch: Der Rahmen IST das
   // Band, und ein Punkt in der Mitte zeigte auf nichts.
   { name: 'Rahmen',     zusatz: 'steht heraus',      ab: 3, punkt: [300, 330], text: [186, 348], anker: 'end' },
