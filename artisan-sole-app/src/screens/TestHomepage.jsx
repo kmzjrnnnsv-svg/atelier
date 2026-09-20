@@ -25,7 +25,8 @@
  *   6  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
  *   7  Die Pflege      Was muss ich dafür tun, damit es hält?
  *   8  In eigener Sache Was behaupten wir NICHT?
- *   9  Der Anfang      Wo fange ich an?
+ *   9  Zum Vergleich   Derselbe Aufbau, anders gezeigt (zur Ansicht)
+ *  10  Der Anfang      Wo fange ich an?
  *
  * Am Ende ist keine Frage offen, die vor dem Kauf zählt. Das ist gemeint,
  * wenn hier von einer geschlossenen Geschichte die Rede ist.
@@ -44,7 +45,7 @@
  * hier steht". Das Wort bleibt jedes Mal dasselbe, damit man es beim zweiten
  * Mal wiedererkennt und nicht mehr liest.
  *
- * Kapitel 1, 4 und 9 haben ihre eigene: den Knopf im Aufmacher, „Alle N
+ * Kapitel 1, 4 und 10 haben ihre eigene: den Knopf im Aufmacher, „Alle N
  * Modelle" unter den Kollektionen (die trägt die echte Zahl und ist an der
  * Stelle die bessere) und den Abschluss. Kapitel 7 führt ins Zubehör und
  * sagt das auch — eine Tür, die anderswo hingeht und trotzdem dasselbe Wort
@@ -176,6 +177,7 @@ import Kapitelmarke from '../components/Kapitelmarke'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import SchuhAufbau from '../components/SchuhAufbau'
 import PflegeFolge from '../components/PflegeFolge'
+import StapelFolge from '../components/StapelFolge'
 import LederSchnitt from '../components/LederSchnitt'
 import FussMass from '../components/FussMass'
 
@@ -1941,7 +1943,55 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 9 · Der Anfang ════════════════════════════════════════════════
+      {/* ══ 9 · Zum Vergleich ═════════════════════════════════════════════
+          Derselbe Aufbau ein zweites Mal, anders gezeigt — und bewusst ganz
+          unten, damit das Handwerkskapitel oben bleibt, wie es ist.
+
+          Der Schnitt dort beantwortet „wie hält das zusammen?". Was er
+          offenlässt, ist „woraus besteht das eigentlich?" — ein Querschnitt
+          ist zwei Millimeter Schuh, und die Form eines Teils sieht man darin
+          nicht. Hier liegen dieselben Teile flach übereinander, jedes mit
+          seiner eigenen Kontur, wie auf dem Tisch eines Schuhmachers.
+
+          Und er läuft auf den Satz hinaus, der im Schnitt nur zwischen den
+          Zeilen steht: Ein rahmengenähter Schuh besteht aus zwei Teilen. Das
+          obere bleibt ein Leben lang beieinander, das untere wird gewechselt,
+          und dazwischen liegt eine Naht, die nichts hält außer der Sohle.
+
+          Welche der beiden Darstellungen bleibt, entscheidet sich beim
+          Ansehen. Solange stehen beide da. */}
+      <section className="bg-white border-t border-black/[0.06]">
+        <StapelFolge
+          kopf={
+            <>
+              <Kapitelmarke>Zum Vergleich</Kapitelmarke>
+              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+                Ein Oberschuh<br className="hidden sm:block" /> und eine Sohle.
+              </h2>
+              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+                Derselbe Schuh wie oben, nur auseinandergelegt statt aufgeschnitten.
+                Sieben Teile, und am Ende siehst du, wo ein Schuhmacher ansetzt.
+              </p>
+            </>
+          }
+          fuss={
+            <div className="max-w-3xl">
+              <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5]">
+                Beim geklebten Schuh gibt es diese Linie nicht. Dort sitzt die Sohle
+                direkt am Schaft, und was verklebt ist, geht nur zusammen kaputt.
+              </p>
+              <ZurKollektion
+                className="mt-10 lg:mt-12"
+                satz="So gebaut ist jedes Paar, das hier steht."
+                auf={zurKollektion}
+              />
+            </div>
+          }
+        />
+      </section>
+
+
+      {/* ══ 10 · Der Anfang ═══════════════════════════════════════════════
           Ein Weg, nicht drei. Wer bis hierher gelesen hat, sucht keine
           Auswahl mehr, sondern die Stelle, an der es losgeht. */}
       <section className="relative overflow-hidden bg-[#0E0E0E]">
