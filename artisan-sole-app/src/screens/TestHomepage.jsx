@@ -24,7 +24,7 @@
  *   5  Die Kollektionen Wofür ist es gemacht, und wann trägt man es?
  *   6  Das Leder       Woraus ist die Haut?
  *   7  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
- *   8  Almansa         Wer baut es, und warum dauert es so lange?
+ *   8  Almansa         Wer baut es, und was passiert in den Wochen?
  *   9  Die Pflege      Wie sieht ein Tag mit diesen Schuhen aus?
  *  10  In eigener Sache Was behaupten wir NICHT?
  *  11  Der Anfang      Wo fange ich an?
@@ -60,11 +60,24 @@
  * hier steht". Das Wort bleibt jedes Mal dasselbe, damit man es beim zweiten
  * Mal wiedererkennt und nicht mehr liest.
  *
- * Kapitel 1, 4 und 11 haben ihre eigene: den Knopf im Aufmacher, „Alle N
+ * Kapitel 1, 5 und 11 haben ihre eigene: den Knopf im Aufmacher, „Alle N
  * Modelle" unter den Kollektionen (die trägt die echte Zahl und ist an der
  * Stelle die bessere) und den Abschluss. Kapitel 9 führt ins Zubehör und
  * sagt das auch — eine Tür, die anderswo hingeht und trotzdem dasselbe Wort
  * trägt, wäre eine Falle. Die übrigen bekommen diese.
+ *
+ * ── Und einmal stehen Schuhe dazwischen ───────────────────────────────────
+ *
+ * Zwischen Kapitel 3 und 4 lagen zwei Bildschirme Weiß: die Pause nach dem
+ * Stapel, bevor der Schnitt beginnt. Genau dort hat jemand gerade begriffen,
+ * dass die Sohle ein eigenes Teil ist — und fand nichts, wohin er damit
+ * gehen kann. Dort steht jetzt ein Band aus vier Paaren, quer durch die
+ * Macharten, mit Namen und Preis (siehe ModellStreifen).
+ *
+ * Es ist keine zweite Modellwahl. Die steht am Ende von Kapitel 5 mit allen
+ * achtundvierzig und zum Durchklicken; dieselbe Geste zweimal wäre ein
+ * Katalog an zwei Stellen. Das Band hat weder Überschrift noch Reiter: eine
+ * Zeile, vier Bilder, eine Tür.
  *
  * ── Warum die Haut zweimal vorkommt ───────────────────────────────────────
  *
@@ -204,6 +217,7 @@ import { shoePath } from '../lib/shoePath'
 import { PreisFuss } from '../lib/preisangabe'
 import { preisAlsZahl, preisAlsText } from '../lib/preis'
 import { resolveMediaUrl } from '../lib/mediaUrl'
+import { familieVon } from '../lib/machartFamilien'
 import Enthuellen from '../components/Enthuellen'
 import Kapitelmarke from '../components/Kapitelmarke'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
@@ -211,6 +225,7 @@ import SchuhAufbau from '../components/SchuhAufbau'
 import PflegeFolge from '../components/PflegeFolge'
 import StapelFolge from '../components/StapelFolge'
 import Modellwahl from '../components/Modellwahl'
+import ModellStreifen from '../components/ModellStreifen'
 import LederSchnitt from '../components/LederSchnitt'
 import FussMass from '../components/FussMass'
 
@@ -220,7 +235,17 @@ import FussMass from '../components/FussMass'
  * Die Faktenzeile unter der Überschrift.
  *
  * Keine Werbeworte, keine Sätze — fünf Angaben, von denen jede anderswo auf
- * dieser Seite belegt wird. „Neu besohlbar" ist nicht Behauptung, sondern die
+ * dieser Seite belegt wird. Bei den Wochen steht das Wort „Produktion"
+ * dabei: Eine nackte Zahl liest sich wie eine Lieferfrist, und eine
+ * Lieferfrist ist etwas, das man abwartet. Die Zeit, in der gebaut wird, ist
+ * das Gegenteil davon — aber das muss dastehen, und zwar hier oben und nicht
+ * erst in Kapitel 8.
+ *
+ * „Rund" und nicht „bis zu": „Bis zu vier Wochen" ist eine Obergrenze, und
+ * eine Obergrenze, die eine Werkstatt manchmal reißt, ist schlimmer als gar
+ * keine Angabe — sie macht aus einer normalen Verzögerung einen gebrochenen
+ * Satz. „Rund vier Wochen" sagt dasselbe und hält auch dann, wenn es fünf
+ * werden. Dass das vorkommt, steht in Kapitel 8 ausdrücklich da. „Neu besohlbar" ist nicht Behauptung, sondern die
  * Folge der Machart und im Handwerk-Abschnitt gezeigt; „Almansa, Spanien"
  * ist die Ortsangabe, die dieses Haus über sich macht, und sie steht so schon
  * im Untertitel. Sie hieß hier lange „Made in Spain" — dieselbe Auskunft,
@@ -230,9 +255,20 @@ const FAKTEN = [
   'Rahmengenäht',
   'Nach Maß gebaut',
   'Almansa, Spanien',
-  '4–6 Wochen',
+  'Rund 4 Wochen Produktion',
   'Neu besohlbar',
 ]
+
+/**
+ * Die fünf Angaben, fertig gesetzt.
+ *
+ * Innerhalb einer Angabe wird nicht umgebrochen: „Neu / besohlbar" über zwei
+ * Zeilen liest sich als zwei Angaben, die es nicht gibt, und seit
+ * „Produktionszeit" dabeisteht, passiert das auf jedem zweiten Fenster.
+ * Geschützte Leerzeichen binden jede Angabe zusammen; umgebrochen wird nur
+ * an den Mittelpunkten dazwischen, und genau dort gehört der Umbruch hin.
+ */
+const FAKTENZEILE = FAKTEN.map(f => f.replace(/ /g, '\u00A0')).join('   ·   ')
 
 /**
  * Die drei Wege, eine Sohle an einen Schaft zu bringen.
@@ -313,7 +349,7 @@ const WARUM_RAHMEN = [
 const ZAHLEN = [
   { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Die Weite sitzt am Ballen, nicht an der Länge — deshalb reichen zwei.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. Für dieses eine Paar.' },
-  { zahl: '4–6',  einheit: 'Wochen',          text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
+  { zahl: '4',    einheit: 'Wochen Produktion', text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
 ]
 
 /**
@@ -845,8 +881,8 @@ function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
         {[
           schuh.material,
           Number(schuh.express) === 1
-            ? `rund ${schuh.express_weeks || 2} Wochen`
-            : 'vier bis sechs Wochen',
+            ? `rund ${schuh.express_weeks || 2} Wochen Produktion`
+            : 'rund vier Wochen Produktion',
           schuh.price ? `ab ${schuh.price}` : null,
         ].filter(Boolean).join('   ·   ')}
       </p>
@@ -979,6 +1015,31 @@ export default function TestHomepage() {
       // Abschnitt — er steht nicht leer da.
       .filter(k => k.schuhe.length > 0)
   }, [shoes])
+
+  /**
+   * Die vier Paare für das Band zwischen dem Stapel und dem Schnitt.
+   *
+   * Quer durch die Macharten und nicht nach Preis oder Reihenfolge: ein
+   * Schnürschuh, ein Loafer, ein Stiefel, ein Sneaker. Vier Oxfords
+   * nebeneinander sähen aus, als gäbe es hier nur Oxfords.
+   *
+   * Was weiter unten schon ein eigenes Kapitel hat, fällt heraus — sonst
+   * steht dasselbe Modell zweimal auf derselben Seite, einmal groß und
+   * einmal klein, und das sieht nach einem Fehler aus.
+   *
+   * Ohne Bild kommt keines ins Band: Eine Kachel ohne Aufnahme ist ein Loch.
+   */
+  const streifenModelle = useMemo(() => {
+    const belegt = new Set(kollektionen.flatMap(k => k.schuhe.map(x => x.schuh.id)))
+    const aus = []
+    for (const key of ['schnuer', 'loafer', 'stiefel', 'sneaker']) {
+      const treffer = shoes.find(
+        sch => sch.image && !belegt.has(sch.id) && familieVon(sch) === key,
+      )
+      if (treffer) aus.push(treffer)
+    }
+    return aus
+  }, [shoes, kollektionen])
 
   const abPreis = useMemo(() => {
     const preise = shoes.map(s => preisAlsZahl(s.price)).filter(p => p > 0)
@@ -1390,10 +1451,10 @@ export default function TestHomepage() {
               Ein Mittelpunkt gehört zum Text und bricht mit ihm um. */}
           <Enthuellen verzoegerung={420} richtung="ruhig">
             <p
-              className="text-[9px] lg:text-[10px] uppercase text-white/45 mt-10 lg:mt-12 max-w-2xl leading-[2.2]"
+              className="text-[9px] lg:text-[10px] uppercase text-white/45 mt-10 lg:mt-12 max-w-3xl leading-[2.2]"
               style={{ letterSpacing: '0.22em' }}
             >
-              {FAKTEN.join('   ·   ')}
+              {FAKTENZEILE}
             </p>
           </Enthuellen>
         </div>
@@ -1508,6 +1569,24 @@ export default function TestHomepage() {
           }
         />
       </section>
+
+      {/* ── Zwischen den beiden Tafeln: vier Paare ────────────────────────
+          Hier lagen zwei Bildschirme Weiß. Die Pause nach einem langen
+          Gedanken gehört dazu — aber an dieser Stelle hat gerade jemand
+          begriffen, dass die Sohle ein eigenes Teil ist, und findet nichts,
+          wohin er damit gehen kann.
+
+          Kein zweites Auswahlfeld: eine Zeile, vier Bilder, eine Tür. Die
+          Modellwahl mit allen achtundvierzig steht weiter unten, und
+          dieselbe Geste zweimal wäre ein Katalog an zwei Stellen. Siehe
+          ModellStreifen. */}
+      <ModellStreifen
+        schuhe={streifenModelle}
+        gesamt={shoes.length}
+        satz="Jedes dieser Paare ist so gebaut — und lässt sich so wieder aufmachen."
+        oeffnen={sch => navigate(shoePath(sch))}
+        zumKatalog={zurKollektion}
+      />
 
 
       {/* ══ 4 · Die Machart ══════════════════════════════════════════════
@@ -1637,7 +1716,7 @@ export default function TestHomepage() {
                   Was es kostet: Ein rahmengenähter Schuh ist schwerer als ein
                   geklebter und die ersten Wochen fester. Beides legt sich, sobald
                   der Kork nachgegeben hat. Und er braucht länger in der Werkstatt
-                  — auch deshalb sind es vier bis sechs Wochen.
+                  — auch deshalb sind es rund vier Wochen.
                 </p>
               </div>
 
@@ -2017,9 +2096,9 @@ export default function TestHomepage() {
                 <div className="pt-1">
                   <p className="text-[17px] lg:text-[20px] text-black font-light leading-snug">Dein Paar</p>
                   <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
-                    Vier bis sechs Wochen, einzeln gefertigt in Almansa. Du hörst von
-                    uns, wenn dein Paar die Werkstatt verlässt. Versand innerhalb
-                    Deutschlands inbegriffen.
+                    Rund vier Wochen, einzeln gefertigt in Almansa. Du hörst von uns,
+                    wenn dein Paar die Werkstatt verlässt — und auch dann, wenn es
+                    länger wird. Versand innerhalb Deutschlands inbegriffen.
                   </p>
                   <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
                     Ein Paar, das für einen bestimmten Fuß gebaut ist, lässt sich nicht
@@ -2041,7 +2120,7 @@ export default function TestHomepage() {
 
       {/* ══ 8 · Almansa ═══════════════════════════════════════════════════
           Die Frage, die jeder stellt, der eben sechs Entscheidungen gelesen
-          hat: „Und dann warte ich anderthalb Monate?"
+          hat: „Und dann warte ich einen Monat?"
 
           Sie lässt sich auf zwei Arten beantworten. Man kann sich
           entschuldigen — dann klingt die Wartezeit wie ein Mangel, den man in
@@ -2073,9 +2152,9 @@ export default function TestHomepage() {
           <div className="max-w-6xl mx-auto">
             <div className="lg:grid lg:grid-cols-12 lg:gap-16 lg:items-end">
               <Enthuellen className="lg:col-span-6">
-                <Kapitelmarke hell>Almansa</Kapitelmarke>
+                <Kapitelmarke hell>Almansa · Produktionszeit</Kapitelmarke>
                 <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
-                  Warum es vier bis<br className="hidden sm:block" /> sechs Wochen dauert.
+                  Was in diesen<br className="hidden sm:block" /> vier Wochen passiert.
                 </h2>
               </Enthuellen>
 
@@ -2119,7 +2198,20 @@ export default function TestHomepage() {
                   Lager, es wird für niemand sonst gebaut, und es verlässt Almansa in
                   einem einzigen Karton.
                 </p>
-                <p className="text-[11px] text-white/35 font-light leading-[1.9] mt-6">
+                {/* Der Satz, der die Zahl ehrlich macht.
+
+                    Eine Werkstatt, die einzeln baut, hat Wochen, in denen ein
+                    Leder fehlt oder eine Sohle zweimal gemacht werden muss.
+                    Wer das verschweigt und dann fünf Wochen braucht, hat
+                    einen Satz gebrochen; wer es hinschreibt, hat keinen. Das
+                    ist dieselbe Rechnung wie in Kapitel 10. */}
+                <p className="text-[12px] lg:text-[13px] text-white/45 font-light leading-[1.9] mt-8">
+                  Vier Wochen sind der Normalfall und keine Zusage. Fehlt ein Leder
+                  oder muss eine Sohle zweimal gemacht werden, werden fünf daraus.
+                  Dann hörst du das von uns, sobald wir es wissen — und nicht erst,
+                  wenn du fragst.
+                </p>
+                <p className="text-[11px] text-white/30 font-light leading-[1.9] mt-5">
                   Einzelne Modelle sind vorbereitet und in rund zwei Wochen fertig.
                   Am Modell steht, welche.
                 </p>
