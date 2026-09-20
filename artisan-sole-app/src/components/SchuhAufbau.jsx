@@ -122,7 +122,7 @@ function OhneBewegung({ kopf, fuss }) {
             </li>
           ))}
         </ol>
-        {fuss}
+        {fuss && <div className="mt-14 lg:mt-20">{fuss}</div>}
       </div>
     </div>
   )
@@ -219,7 +219,7 @@ export default function SchuhAufbau({ kopf, fuss }) {
           ganzen Aufbau, nicht für einen Schritt. */}
       {fuss && (
         <Enthuellen>
-          <div className="px-5 lg:px-16 pb-16 lg:pb-28">
+          <div className="px-5 lg:px-16 pt-10 lg:pt-16 pb-16 lg:pb-28">
             <div className="max-w-5xl mx-auto">{fuss}</div>
           </div>
         </Enthuellen>
