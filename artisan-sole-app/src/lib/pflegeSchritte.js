@@ -24,8 +24,7 @@ export const PFLEGE = [
     wann: 'Am Abend',
     titel: 'Der Schuh kommt feucht nach Hause',
     text: 'Ein Fuß gibt am Tag Feuchtigkeit ab, und sie steht im Futter. Leder, '
-        + 'das feucht zusammenfällt, behält diese Form — genau da, wo der Schuh '
-        + 'sich beim Gehen biegt.',
+        + 'das feucht zusammenfällt, behält diese Form.',
   },
   {
     wann: 'Sofort danach',

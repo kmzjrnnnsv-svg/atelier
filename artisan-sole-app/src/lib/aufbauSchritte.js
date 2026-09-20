@@ -20,8 +20,13 @@
 export const AUFBAU = [
   {
     titel: 'Die Brandsohle',
-    text: 'Auf ihr steht alles. Aus ihr wird eine Rippe aufgestellt, die gleich '
-        + 'die erste Naht aufnimmt.',
+    // „Aus ihr wird eine Rippe aufgestellt" stand hier und war falsch. Das
+    // macht der handgenähte Rahmen; beim Goodyear-Rahmen wird ein Band mit
+    // L-Profil untergeklebt. Genau das ist der Unterschied zwischen den
+    // beiden Macharten, und eine Seite, die mit Offenheit wirbt, darf ihn
+    // nicht verwischen.
+    text: 'Auf ihr steht alles. Unter sie wird eine Lippe geklebt — ein Band '
+        + 'mit L-Profil, das rundherum läuft und die erste Naht aufnimmt.',
   },
   {
     titel: 'Schaft und Futter',
@@ -31,7 +36,7 @@ export const AUFBAU = [
   {
     titel: 'Rahmen und Einstechnaht',
     text: 'Ein schmaler Lederstreifen läuft rundherum. Die Einstechnaht fasst '
-        + 'Schaft, Futter und Rahmen an der Rippe zusammen.',
+        + 'Schaft, Futter und Rahmen an der Lippe zusammen.',
   },
   {
     titel: 'Die Korkbettung',

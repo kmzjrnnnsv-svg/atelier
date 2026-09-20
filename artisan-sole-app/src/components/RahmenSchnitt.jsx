@@ -66,6 +66,10 @@ const DAUER = 700
 const PLAN = {
   // Alles beginnt mit der Brandsohle: Auf ihr steht der Rest.
   'brandsohle':   { ab: 1, aus: 'unten' },
+  // Die Lippe wird darunter geklebt — ein Rippenband mit L-Profil. Sie
+  // kommt im selben Schritt, einen Wimpernschlag später, weil sie ohne die
+  // Brandsohle nichts wäre, worauf sie kleben könnte.
+  'lippe':        { ab: 1, aus: 'unten', verzug: 220 },
   // Der Fuß ist der Grund für die ganze Bauweise. Er kommt mit dem Schaft,
   // gestrichelt und zurückgenommen — eine Orientierung, kein Bauteil.
   'fuss':         { ab: 2, aus: 'oben', verzug: 260 },
@@ -86,10 +90,10 @@ const PLAN = {
 const MARKEN = [
   { name: 'Schaft',       zusatz: 'über den Leisten',  ab: 2, punkt: [218, 132], text: [150, 112], anker: 'end' },
   { name: 'Futter',       zusatz: 'bis an die Lippe',  ab: 2, punkt: [238, 186], text: [150, 176], anker: 'end' },
-  { name: 'Brandsohle',   zusatz: 'mit der Lippe',     ab: 1, punkt: [292, 212], text: [150, 240], anker: 'end' },
-  { name: 'Einstechnaht', zusatz: 'fasst drei Lagen',  ab: 3, punkt: [578, 259], text: [650, 112] },
-  { name: 'Kork',         zusatz: 'füllt den Raum',    ab: 4, punkt: [452, 250], text: [650, 176] },
-  { name: 'Rahmen',       zusatz: 'steht heraus',      ab: 3, punkt: [608, 262], text: [650, 240] },
+  { name: 'Brandsohle',   zusatz: 'mit der Lippe',     ab: 1, punkt: [300, 214], text: [150, 240], anker: 'end' },
+  { name: 'Einstechnaht', zusatz: 'fasst drei Lagen',  ab: 3, punkt: [570, 252], text: [650, 112] },
+  { name: 'Kork',         zusatz: 'füllt den Raum',    ab: 4, punkt: [420, 252], text: [650, 176] },
+  { name: 'Rahmen',       zusatz: 'steht heraus',      ab: 3, punkt: [606, 261], text: [650, 240] },
   { name: 'Laufsohle',    zusatz: 'hängt an der Naht', ab: 5, punkt: [250, 290], text: [188, 352] },
   { name: 'Doppelnaht',   zusatz: 'Rahmen und Sohle',  ab: 6, punkt: [604, 292], text: [612, 352], anker: 'end' },
 ]
