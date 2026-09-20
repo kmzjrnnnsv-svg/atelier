@@ -36,8 +36,13 @@ const VORLAUF = 0.08
 const NACHLAUF = 0.12
 
 /* Etwas mehr als bei den anderen beiden Folgen: Jeder Schritt legt hier ein
-   ganzes Teil hin, und das will man ansehen, bevor das nächste kommt. */
-const PRO_SCHRITT = 0.34
+   ganzes Teil hin, und das will man ansehen, bevor das nächste kommt.
+
+   Seit die Teile 92 Einheiten weit reisen und dafür gut acht Zehntelsekunden
+   brauchen, ist das auch eine Frage der Ruhe: Bei 0,34 Bildschirmen je
+   Schritt schnitt ein zügiger Daumen die Bewegung ab, und abgeschnittene
+   Bewegung ist das Gegenteil von weich. */
+const PRO_SCHRITT = 0.42
 
 function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
