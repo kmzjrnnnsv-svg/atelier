@@ -47,8 +47,9 @@ export const PFLEGE = [
   },
   {
     wann: 'Alle zehn bis fünfzehn Male',
-    titel: 'Bürste und Creme',
-    text: 'Erst den Staub aus der Narbung bürsten, dann dünn Creme auftragen und '
-        + 'ziehen lassen. Der Glanz kommt danach vom Bürsten, nicht von der Menge.',
+    titel: 'Creme, dann Bürste',
+    text: 'Erst den Staub aus der Narbung bürsten, dann dünn Creme auftragen und zehn '
+        + 'Minuten ziehen lassen. Der Glanz kommt danach vom Bürsten, nicht von der '
+        + 'Menge.',
   },
 ]

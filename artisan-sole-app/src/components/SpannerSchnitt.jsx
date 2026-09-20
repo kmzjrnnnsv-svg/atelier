@@ -56,61 +56,74 @@ function Teil({ da, aus = 'still', children }) {
   )
 }
 
-/* ── Der Schaft in zwei Fassungen ──────────────────────────────────────────
+/* ── Der Schuh ─────────────────────────────────────────────────────────────
 
-   Diese Zeichnung ist dreimal danebengegangen, bevor sie ein Schuh wurde.
-   Drei Dinge machen den Unterschied, und alle drei sind unscheinbar:
+   Ein Loafer, weil der Laden vor allem Loafer baut und weil er im Profil
+   das dankbarste Modell ist: kein Schnürsenkel, dafür der Sattel als
+   Erkennungszeichen.
 
-   1. DIE ÖFFNUNG. Ohne sie ist jeder Umriss ein Gegenstand — eine Maus, ein
-      Bügeleisen, ein Auto. Die schmale Sichel vom Fersenrand bis zum Rist
-      ist das Einzige, was aus der Fläche einen Schuh macht, und sie ist
-      nebenbei die Stelle, durch die der Spanner hineinfährt.
+   Diese Zeichnung ist mehrmals danebengegangen, bevor sie ein Schuh wurde.
+   Vier Dinge machen den Unterschied, und alle vier sind unscheinbar:
 
-   2. DIE FERSENKAPPE IST SCHMAL. Sie steht über den ersten vierzehn Prozent
-      der Länge fast senkrecht. Als Kuppel über dem ersten Drittel sah das
-      Ganze aus wie eine Computermaus.
+   1. DIE FUTTERKANTE. Ohne sie ist jeder Umriss ein Gegenstand — eine Maus,
+      ein Bügeleisen. Die schmale Sichel vom Fersenrand bis zum Rist ist das
+      Einzige, was aus der Fläche einen Schuh macht, und sie ist nebenbei die
+      Stelle, durch die der Spanner hineinfährt.
 
-   3. DIE LINIE FÄLLT DURCHGEHEND. Vom Fersenrand bis zur Spitze geht es
-      immer abwärts — erst schnell, dann flach, dann wieder etwas steiler.
-      Lässt man sie über der Kappe noch einmal ansteigen, entsteht ein
-      Buckel, den kein Schuh hat.
+   2. DIE SPITZE IST STUMPF. Die Blattlinie bleibt bis etwa neunzig Prozent
+      der Länge oben und fällt erst dann. Läuft sie gleichmäßig aus, entsteht
+      ein Keil, der aussieht wie ein Schlittschuh.
 
-   Beide Wege haben denselben Anfang, dasselbe Ende und dieselbe Fersenlinie
-   — nur zwischen Rist und Kappe hängt der eine durch. Nur so blendet die
-   eine Fassung sauber in die andere.
+   3. DIE LINIE FÄLLT DURCHGEHEND. Vom Fersenrand bis zur Kappe geht es immer
+      abwärts. Lässt man sie dazwischen ansteigen, entsteht ein Buckel, den
+      kein Schuh hat.
 
-   Maße: Sohlenoberkante y = 238, Länge x = 96 … 424, Kappenhöhe 92. */
-const SACKT = 'M 96 238 '
-            + 'C 90 210, 94 176, 110 158 '
-            + 'C 118 149, 132 146, 146 150 '
-            + 'C 158 163, 176 178, 200 189 '
-            + 'C 232 201, 262 208, 292 210 '
-            + 'C 330 218, 372 220, 402 226 '
-            + 'Q 420 231, 424 238 Z'
+   4. DER SATTEL SITZT VORN. Bei etwa sechzig Prozent der Länge, nicht in der
+      Mitte, und er ragt über die Futterkante hinaus — sonst liegt er wie ein
+      Pflaster auf dem Blatt.
 
-const STRAFF = 'M 96 238 '
-             + 'C 90 208, 94 172, 110 154 '
-             + 'C 118 145, 132 142, 146 146 '
-             + 'C 158 158, 176 172, 200 182 '
-             + 'C 232 194, 262 200, 292 200 '
-             + 'C 330 202, 372 212, 402 224 '
-             + 'Q 420 230, 424 238 Z'
+   Maße: Sohlenoberkante y = 238, Länge x = 90 … 428, Kappenhöhe 87. */
+const SACKT = 'M 90 238 '
+            + 'C 83 214, 85 182, 98 164 '
+            + 'C 105 154, 115 149, 128 152 '
+            + 'C 170 158, 214 166, 256 174 '
+            + 'C 292 181, 318 190, 340 200 '
+            + 'C 362 206, 380 208, 396 212 '
+            + 'C 412 218, 424 227, 428 238 Z'
 
-/* Die Öffnung, zu jeder der beiden Fassungen. Sie liegt auf der Blattkante
-   und ist nur sieben Einheiten dick — mehr wäre ein Schlitz, weniger ein
-   Strich. */
-const SPALT_SACKT = 'M 146 150 C 160 164, 180 178, 204 188 C 236 200, 264 206, 292 210 '
-                  + 'C 262 212, 228 208, 196 195 C 170 185, 152 168, 142 154 Z'
+const STRAFF = 'M 90 238 '
+             + 'C 83 212, 85 176, 98 158 '
+             + 'C 105 148, 115 143, 128 145 '
+             + 'C 170 150, 214 156, 256 162 '
+             + 'C 292 168, 318 177, 340 190 '
+             + 'C 362 196, 380 200, 396 207 '
+             + 'C 412 215, 424 226, 428 238 Z'
 
-const SPALT_STRAFF = 'M 146 146 C 160 160, 180 174, 204 184 C 236 196, 264 200, 292 200 '
-                   + 'C 262 204, 228 200, 196 188 C 170 178, 152 162, 142 150 Z'
+/* Die Futterkante, zu jeder der beiden Fassungen. Sie liegt auf der
+   Blattkante und ist nur sechs Einheiten dick — mehr wäre ein Schlitz,
+   weniger ein Strich. */
+const SPALT_SACKT = 'M 128 152 C 170 158, 214 166, 256 174 C 278 177, 296 182, 308 188 '
+                  + 'C 292 189, 268 186, 244 182 C 204 175, 164 167, 124 158 Z'
+
+const SPALT_STRAFF = 'M 128 145 C 170 150, 214 156, 256 162 C 278 165, 296 170, 308 176 '
+                   + 'C 292 177, 268 174, 244 170 C 204 164, 164 158, 124 151 Z'
+
+/* Der Sattel mit dem Schlitz. Er sitzt bei sechzig Prozent der Länge und
+   ragt über die Futterkante hinaus, wie beim echten Penny Loafer. */
+const SATTEL_SACKT = 'M 278 194 L 286 169 Q 288 164 294 164 L 306 165 Q 311 165 312 170 '
+                   + 'L 314 180 L 326 179 L 327 169 Q 328 164 334 164 L 346 166 '
+                   + 'Q 351 167 352 172 L 358 200 Z'
+
+const SATTEL_STRAFF = 'M 278 184 L 286 159 Q 288 154 294 154 L 306 155 Q 311 155 312 160 '
+                    + 'L 314 170 L 326 169 L 327 159 Q 328 154 334 154 L 346 156 '
+                    + 'Q 351 157 352 162 L 358 192 Z'
 
 /** Die zwei Falten über dem Ballen — das, was bleibt, wenn nichts passiert. */
 function Falten() {
   return (
     <g stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.5" strokeLinecap="round">
-      <path d="M 316 216 Q 326 227 322 238" />
-      <path d="M 340 219 Q 350 229 346 238" />
+      <path d="M 366 212 Q 374 225 370 238" />
+      <path d="M 386 215 Q 394 227 390 238" />
     </g>
   )
 }
@@ -119,30 +132,46 @@ function Falten() {
 function Feuchte() {
   return (
     <g stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.45" strokeLinecap="round">
-      <path d="M 152 142 q 7 -13 0 -24 q -7 -12 0 -22" />
-      <path d="M 178 164 q 7 -13 0 -24 q -7 -12 0 -22" />
-      <path d="M 204 178 q 7 -13 0 -24 q -7 -12 0 -22" />
+      <path d="M 150 140 q 7 -13 0 -24 q -7 -12 0 -22" />
+      <path d="M 178 148 q 7 -13 0 -24 q -7 -12 0 -22" />
+      <path d="M 206 156 q 7 -13 0 -24 q -7 -12 0 -22" />
     </g>
   )
 }
 
-/** Die Bürste, während gebürstet wird. */
-function Buerste() {
+/**
+ * Bürste und Cremetiegel.
+ *
+ * Die erste Fassung war ein Rechteck mit siebzehn gleich langen Strichen
+ * darunter — ein Kamm. Eine Bürste erkennt man an zwei Dingen: am
+ * gerundeten Holzblock, der in der Hand liegt, und daran, dass die Borsten
+ * nicht alle gleich lang sind. Die Längen kommen aus einem Sinus und nicht
+ * aus Math.random, damit die Zeichnung bei jedem Bild dieselbe ist.
+ *
+ * Und daneben steht der Tiegel. Der Schritt heißt „Creme, dann Bürste" —
+ * dann sollte die Creme auch zu sehen sein.
+ */
+function Pflegezeug() {
   return (
     <g>
-      <Lage d="M 290 152 Q 290 140 304 140 L 400 140 Q 414 140 414 152 L 414 166 L 290 166 Z" fuellung={0.3} kante={0.5} />
-      <g stroke="currentColor" strokeWidth="1.1" opacity="0.4" strokeLinecap="round">
-        {Array.from({ length: 18 }, (_, i) => 296 + i * 6.7).map(x => (
-          <path key={x} d={`M ${x} 166 L ${x} 188`} />
+      {/* Der Block: ein Oval, kein Kasten */}
+      <Lage d="M 296 100 L 376 100 Q 388 100 388 112 Q 388 124 376 124 L 296 124 Q 284 124 284 112 Q 284 100 296 100 Z" fuellung={0.22} kante={0.5} />
+      <g stroke="currentColor" strokeWidth="1.2" opacity="0.42" strokeLinecap="round">
+        {Array.from({ length: 27 }, (_, i) => 292 + i * 3.4).map((x, i) => (
+          <path key={x} d={`M ${x} 124 L ${x} ${146 + Math.sin(i * 1.7) * 2.4}`} />
         ))}
       </g>
+
+      {/* Der Tiegel: flache Dose mit übergreifendem Deckel */}
+      <Lage d="M 404 104 L 448 104 Q 452 104 452 108 L 452 114 L 400 114 L 400 108 Q 400 104 404 104 Z" fuellung={0.28} kante={0.5} />
+      <Lage d="M 402 114 L 450 114 L 450 132 Q 450 136 446 136 L 406 136 Q 402 136 402 132 Z" fuellung={0.14} kante={0.45} />
     </g>
   )
 }
 
 const AUSSCHNITT = {
-  weit: '0 80 540 228',    // mit der Beschriftung am Rand
-  eng:  '84 126 358 162',  // nur der Schuh — für schmale Geräte
+  weit: '0 84 540 228',    // mit der Beschriftung am Rand
+  eng:  '84 94 378 190',   // nur der Schuh — für schmale Geräte
 }
 
 /**
@@ -160,52 +189,62 @@ export default function SpannerSchnitt({ className = '', schritt = null, ausschn
 
   return (
     <Tafel viewBox={AUSSCHNITT[eng ? 'eng' : 'weit']} className={className}>
-      {/* ── Laufsohle und Absatz ──────────────────────────────────────
-          Der Absatz sitzt hinten und trägt bis unter die Ferse; davor
-          läuft die Sohle als schmaler Streifen bis über die Spitze
-          hinaus — der Rand, der bei einem gerahmten Schuh übersteht. */}
+      {/* ── Laufsohle und flacher Absatz ──────────────────────────────
+          Ein Loafer trägt keinen hohen Absatz; der Block hinten ist
+          niedrig, davor läuft die Sohle als schmaler Streifen aus. */}
       <Lage
-        d="M 92 238 L 424 238 Q 434 238 434 245 Q 434 252 424 252 L 156 252 L 156 274 Q 156 278 152 278 L 96 278 Q 92 278 92 274 Z"
+        d="M 88 238 L 432 238 Q 440 238 440 243 Q 440 248 432 248 L 188 248 L 188 264 Q 188 268 184 268 L 92 268 Q 88 268 88 264 Z"
         fuellung={0.2} kante={0.5}
       />
 
-      {/* ── Der Spanner, von hinten eingeschoben ─────────────────────── */}
+      {/* ── Der Spanner, von hinten eingeschoben ──────────────────────
+          Zwei Teile und eine Spindel, wie das Stück aus dem Katalog:
+          hinten der Block mit dem Haken, vorn das Leistenstück mit der
+          Finne und der Kerbe dahinter. Er liegt unter dem Schaft und
+          scheint durch ihn hindurch — deshalb dünner Strich. */}
       <Teil da={spanner} aus="hinten">
-        {/* Fersenteil: füllt den hinteren Kegel bis unter die Kappe */}
-        <Lage d="M 106 236 C 100 208, 106 178, 120 162 C 128 154, 140 154, 148 166 L 160 188 L 160 236 Z" fuellung={0.16} kante={0.45} />
-        {/* Vorderteil, das in die Spitze greift */}
-        <Lage d="M 286 214 C 324 210, 368 217, 398 227 Q 408 231, 410 236 L 286 236 Z" fuellung={0.16} kante={0.45} />
-        {/* Die Spindel dazwischen, die beide auseinanderdrückt */}
-        <Lage d="M 160 214 L 288 214 L 288 224 L 160 224 Z" fuellung={0.24} kante={0.5} />
-        <circle cx="224" cy="219" r="9" fill="currentColor" fillOpacity="0.24" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1" />
+        <Lage d="M 110 234 C 104 208, 112 182, 130 170 C 141 163, 152 168, 157 180 C 159 190, 151 198, 140 199 C 148 206, 159 210, 171 211 L 178 211 L 178 234 Z" fuellung={0.15} kante={0.34} strich={0.9} />
+        <Lage d="M 176 204 L 238 204 L 238 211 L 176 211 Z" fuellung={0.22} kante={0.38} strich={0.9} />
+        <Lage d="M 236 234 L 236 196 C 236 186, 246 182, 253 189 C 256 197, 257 204, 261 209 C 267 214, 275 213, 280 207 C 285 201, 292 200, 298 204 C 326 210, 356 216, 382 224 C 396 228, 404 232, 406 234 Z" fuellung={0.15} kante={0.34} strich={0.9} />
+        {/* Die Bohrungen im Leistenstück */}
+        <g fill="currentColor" fillOpacity="0.3">
+          <circle cx="320" cy="220" r="2.4" />
+          <circle cx="338" cy="223" r="3.4" />
+          <circle cx="356" cy="226" r="2.4" />
+        </g>
       </Teil>
 
       {/* ── Der Schaft: zwei Fassungen, eine blendet in die andere ───── */}
       <g style={{ opacity: straff ? 0 : 1, transition: blende }}>
-        <Lage d={SACKT} fuellung={0.09} kante={0.5} />
-        <Lage d={SPALT_SACKT} fuellung={0.3} kante={0.45} strich={0.8} />
+        <Lage d={SACKT} fuellung={0.08} kante={0.7} strich={1.1} />
+        <Lage d={SPALT_SACKT} fuellung={0.22} kante={0.45} strich={0.8} />
+        <Lage d={SATTEL_SACKT} fuellung={0.2} kante={0.6} />
         <Falten />
       </g>
       <g style={{ opacity: straff ? 1 : 0, transition: blende }}>
-        <Lage d={STRAFF} fuellung={0.09} kante={0.55} />
-        <Lage d={SPALT_STRAFF} fuellung={0.3} kante={0.45} strich={0.8} />
+        <Lage d={STRAFF} fuellung={0.08} kante={0.7} strich={1.1} />
+        <Lage d={SPALT_STRAFF} fuellung={0.22} kante={0.45} strich={0.8} />
+        <Lage d={SATTEL_STRAFF} fuellung={0.2} kante={0.6} />
       </g>
 
-      {/* ── Die Nähte ─────────────────────────────────────────────────
-          Kappennaht vorn, Fersenkappe hinten, drei Striche für die
-          Schnürung. Sie gehören zu keinem Schritt — sie sind immer da. */}
-      <g stroke="currentColor" strokeWidth="1" fill="none" opacity="0.36" strokeLinecap="round">
-        <path d="M 362 213 Q 369 226 367 238" />
-        <path d="M 144 150 Q 132 194 137 238" />
-        <path d="M 186 188 L 199 179" />
-        <path d="M 204 197 L 217 188" />
-        <path d="M 224 203 L 237 195" />
+      {/* ── Mokassinnaht und Fersenkappe ──────────────────────────────
+          Die Naht ist gestrichelt, weil sie genäht ist; die Fersenkappe
+          steht durchgezogen. Ohne beides bliebe der Umriss eine Fläche. */}
+      <g stroke="currentColor" strokeWidth="1" fill="none" opacity="0.4" strokeLinecap="round">
+        <path
+          d={straff
+            ? 'M 358 192 C 376 198, 392 204, 406 214 C 418 223, 426 232, 428 238'
+            : 'M 358 200 C 376 206, 392 212, 406 220 C 418 227, 426 234, 428 238'}
+          strokeDasharray="3 3.5"
+          style={{ transition: 'all 620ms cubic-bezier(0.22, 1, 0.36, 1)' }}
+        />
+        <path d="M 124 151 Q 114 194 118 238" />
       </g>
 
       {/* ── Der Glanz auf der Kappe, wenn gepflegt ist ───────────────── */}
       <Teil da={ab(4)}>
         <path
-          d="M 376 217 C 388 214, 400 219, 408 227"
+          d="M 392 206 C 402 205, 412 210, 418 218"
           stroke="currentColor" strokeOpacity="0.55" strokeWidth="2.6" fill="none" strokeLinecap="round"
         />
       </Teil>
@@ -213,23 +252,23 @@ export default function SpannerSchnitt({ className = '', schritt = null, ausschn
       {/* ── Die Feuchtigkeit ─────────────────────────────────────────── */}
       <Teil da={ab(3)} aus="oben"><Feuchte /></Teil>
 
-      {/* ── Die Bürste, nur solange gebürstet wird ───────────────────── */}
-      <Teil da={schritt === 4} aus="oben"><Buerste /></Teil>
+      {/* ── Bürste und Creme, nur solange gepflegt wird ──────────────── */}
+      <Teil da={schritt === 4} aus="oben"><Pflegezeug /></Teil>
 
       {/* ── Beschriftung ─────────────────────────────────────────────── */}
       {!eng && (
         <>
           <Teil da={!straff}>
-            <Beschriftung x="524" y="266" anker="end">Falte über dem Ballen</Beschriftung>
-            <Fuehrung x1={372} y1={262} x2={330} y2={240} />
+            <Beschriftung x="524" y="286" anker="end">Falte über dem Ballen</Beschriftung>
+            <Fuehrung x1={378} y1={282} x2={372} y2={242} />
           </Teil>
           <Teil da={spanner}>
-            <Beschriftung x="12" y="296">Zedernholz</Beschriftung>
-            <Fuehrung x1={88} y1={292} x2={130} y2={232} />
+            <Beschriftung x="12" y="300">Zedernholz</Beschriftung>
+            <Fuehrung x1={88} y1={296} x2={140} y2={214} />
           </Teil>
           <Teil da={ab(3)}>
-            <Beschriftung x="12" y="98">Feuchtigkeit</Beschriftung>
-            <Fuehrung x1={86} y1={94} x2={148} y2={104} />
+            <Beschriftung x="12" y="104">Feuchtigkeit</Beschriftung>
+            <Fuehrung x1={86} y1={100} x2={146} y2={112} />
           </Teil>
         </>
       )}
