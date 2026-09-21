@@ -10,6 +10,10 @@ import { useAuth } from '../context/AuthContext'
 
 // ── Navigation structure (LV-style) ─────────────────────────────────────────
 const NAV_ITEMS = [
+  // „Start" steht erst hier, seit es eine Startseite gibt: Bis dahin führte
+  // `/` nur weiter ins Regal, und ein Menüpunkt, der dasselbe tut wie der
+  // daneben, ist einer zu viel.
+  { label: 'Start',          path: '/' },
   { label: 'Kollektion',     path: '/collection' },
   { label: 'Zubehör',        path: '/accessories' },
 ]
@@ -22,7 +26,10 @@ const SECONDARY_ITEMS = [
 ]
 
 // Pages that are "main" tabs, show burger. Others show back arrow.
-const MAIN_PAGES = new Set(['/collection', '/accessories', '/checkout'])
+// Hauptseiten tragen links das Menü statt eines Zurück. `/` gehört seit der
+// Startseite dazu: Ein Zurück auf der Startseite führt aus dem Laden heraus
+// — meistens dorthin, woher jemand kam, und das ist nie gemeint.
+const MAIN_PAGES = new Set(['/', '/collection', '/accessories', '/checkout'])
 
 const ANIM_DURATION = 280 // ms, must match CSS
 

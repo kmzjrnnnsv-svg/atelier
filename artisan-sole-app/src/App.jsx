@@ -87,7 +87,11 @@ const lazyImports = {
   '/ruecksendungen': () => import('./screens/Ruecksendungen'),
   '/welcome':    () => import('./screens/Welcome'),
   '/entdecken':  () => import('./screens/Entdecken'),
-  '/test-homepage': () => import('./screens/TestHomepage'),
+  '/':              () => import('./screens/Startseite'),
+  // Dieselbe Seite, zweite Adresse zum Ausprobieren. Zwei Einträge auf
+  // dasselbe Modul sind gewollt: So lädt das Vorausladen für beide Wege,
+  // und der Bündler legt trotzdem nur ein Stück an.
+  '/test-homepage': () => import('./screens/Startseite'),
   '/konto-wiederherstellen': () => import('./screens/KontoWiederherstellen'),
   '/passwort-neu': () => import('./screens/PasswortNeu'),
 }
@@ -132,7 +136,7 @@ const MyScans           = spaet(lazyImports['/my-scans'])
 const Ruecksendungen    = spaet(lazyImports['/ruecksendungen'])
 const Welcome           = spaet(lazyImports['/welcome'])
 const Entdecken         = spaet(lazyImports['/entdecken'])
-const TestHomepage      = spaet(lazyImports['/test-homepage'])
+const Startseite        = spaet(lazyImports['/'])
 const NewsletterBestaetigung = spaet(() => import('./screens/NewsletterBestaetigung'))
 
 // CMS
@@ -423,7 +427,7 @@ function AppRoutes() {
             <PageTransition>
             <RefErfassung />
             <Routes>
-              <Route path="/"           element={<StartRoute />} />
+              <Route path="/"           element={<StartRoute><Startseite /></StartRoute>} />
               <Route path="/login"      element={<Login />} />
               <Route path="/register"   element={<Registration />} />
               <Route path="/register-promotion" element={<RegisterPromotion />} />
@@ -453,7 +457,7 @@ function AppRoutes() {
                   Sie steht auf noindex und in der robots.txt unter Disallow,
                   damit sie der echten Startseite keine Suchbegriffe streitig
                   macht. Siehe Kopf von TestHomepage.jsx. */}
-              <Route path="/test-homepage" element={<ShopRoute><TestHomepage /></ShopRoute>} />
+              <Route path="/test-homepage" element={<ShopRoute><Startseite /></ShopRoute>} />
               {/* Entdecken/Wissen sind entfallen — alte Adressen führen zur Kollektion. */}
               <Route path="/explore"    element={<Navigate to="/collection" replace />} />
               <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
@@ -490,10 +494,14 @@ function AppRoutes() {
     <>
     <RefErfassung />
     <Routes>
+      {/* Die Wurzel trägt jetzt die Startseite statt einer Weiterleitung ins
+          Regal. Die beiden Sonderfälle bleiben: Auf einer Vermittler-Domäne
+          steht deren eigene Startseite, und ein Firmenkonto landet in seinem
+          Bereich — beide suchen nichts, was diese Seite erklärt. */}
       <Route path="/" element={
         isAffiliateHost
           ? <AffiliateStart />
-          : <ShopRoute>{isBusiness ? <CorporateGifting /> : <Navigate to="/collection" replace />}</ShopRoute>
+          : <ShopRoute>{isBusiness ? <CorporateGifting /> : <Startseite />}</ShopRoute>
       } />
       {/* Verwaltung fürs Telefon. Bewusst außerhalb des /cms-Zweigs: Der
           blendet sich unter 768 px vollständig aus und zeigt nur den Hinweis
@@ -547,7 +555,7 @@ function AppRoutes() {
           (Capacitor), diese für den Browser. Wer nur eine ändert, baut eine
           Adresse, die auf dem Telefon führt und am Rechner auf der
           Fehlerseite endet. */}
-      <Route path="/test-homepage" element={<ShopRoute><TestHomepage /></ShopRoute>} />
+      <Route path="/test-homepage" element={<ShopRoute><Startseite /></ShopRoute>} />
       <Route path="/explore"    element={<Navigate to="/collection" replace />} />
       <Route path="/accessories" element={<ShopRoute><Accessories /></ShopRoute>} />
       <Route path="/help"        element={<HelpSupport />} />

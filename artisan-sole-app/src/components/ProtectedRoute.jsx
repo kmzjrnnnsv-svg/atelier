@@ -93,14 +93,26 @@ export function ShopRoute({ children }) {
 }
 
 /**
- * Die Wurzel der Domain: Jeder landet in seinem Bereich, alle anderen in der
- * Kollektion. Diese Weiterleitung trug vorher ShopRoute — sie gehört aber nur
- * hierher, sonst sperrt sie den Laden gleich mit zu.
+ * Die Wurzel der Domain.
+ *
+ * Wer einen eigenen Bereich hat — Firmenkonto, Vermittler —, landet dort.
+ * Alle anderen bekommen, was als `children` hereingereicht wird: die
+ * Startseite.
+ *
+ * Bis hierher leitete diese Route jeden ins Regal (`/collection`) weiter.
+ * Das war die kürzeste Antwort auf „was gibt es hier" und zugleich die
+ * schlechteste für jemanden, der die Marke nicht kennt. Seit es eine
+ * Startseite gibt, steht sie hier.
+ *
+ * Die Weiterleitung in den eigenen Bereich bleibt: Ein Firmenkonto sucht
+ * keine Erzählung über Machart und Leder, sondern sein Dashboard.
  */
-export function StartRoute() {
+export function StartRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <Spinner />
-  return <Navigate to={ownAreaFor(user) || '/collection'} replace />
+  const eigen = ownAreaFor(user)
+  if (eigen) return <Navigate to={eigen} replace />
+  return children
 }
 
 // Admin only
