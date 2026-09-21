@@ -1,14 +1,26 @@
 /**
- * TestHomepage — eine Startseite zur Ansicht, unter /test-homepage.
+ * Startseite — was unter artisansole.com steht.
  *
  * ── Warum es sie gibt ─────────────────────────────────────────────────────
  *
- * Der Laden hat keine Startseite. `/` leitet weiter auf `/collection`
- * (siehe StartRoute): Wer artisansole.com eintippt, steht sofort im Regal.
- * Für jemanden, der die Marke kennt, ist das der kürzeste Weg — für alle
- * anderen der Moment, in dem die Seite nichts erklärt. Und für die Suche ist
- * es ungünstig: Die Adresse mit dem stärksten Gewicht trägt keinen eigenen
- * Inhalt.
+ * Der Laden hatte keine. `/` leitete weiter auf `/collection`: Wer
+ * artisansole.com eintippte, stand sofort im Regal. Für jemanden, der die
+ * Marke kennt, ist das der kürzeste Weg — für alle anderen der Moment, in
+ * dem die Seite nichts erklärt. Und für die Suche war es ungünstig: Die
+ * Adresse mit dem stärksten Gewicht trug keinen eigenen Inhalt.
+ *
+ * ── Zwei Adressen, eine Seite ─────────────────────────────────────────────
+ *
+ * Sie hängt unter `/` und weiterhin unter `/test-homepage`. Die zweite
+ * bleibt zum Ausprobieren: Wer etwas umbauen will, ohne die Startseite
+ * anzufassen, hat dort eine Adresse, die niemand verlinkt.
+ *
+ * Damit daraus kein doppelter Inhalt wird, trägt nur `/` die kanonische
+ * Adresse und die Freigabe für den Index; `/test-homepage` trägt ein
+ * `noindex` und steht als Disallow in der robots.txt (siehe
+ * routes/sitemap.js im Backend). Zwei Adressen mit demselben Text
+ * konkurrieren sonst um dieselben Suchbegriffe, und die Suchmaschine
+ * entscheidet, welche gewinnt — meistens die falsche.
  *
  * ── Was diese Fassung versucht ────────────────────────────────────────────
  *
@@ -25,10 +37,11 @@
  *   6  Die Kollektionen Wofür ist es gemacht, und wann trägt man es?
  *   7  Das Leder       Woraus ist die Haut?
  *   8  Der Weg         Wie viele Entscheidungen kommen auf mich zu?
- *   9  Almansa         Wer baut es, und was passiert in den Wochen?
- *  10  Die Pflege      Wie sieht ein Tag mit diesen Schuhen aus?
- *  11  In eigener Sache Was behaupten wir NICHT?
- *  12  Der Anfang      Wo fange ich an?
+ *   9  Maß nehmen      Wie komme ich an die zwei Zahlen?
+ *  10  Almansa         Wer baut es, und was passiert in den Wochen?
+ *  11  Die Pflege      Wie sieht ein Tag mit diesen Schuhen aus?
+ *  12  In eigener Sache Was behaupten wir NICHT?
+ *  13  Der Anfang      Wo fange ich an?
  *
  * ── Die drei Folgen ───────────────────────────────────────────────────────
  *
@@ -37,7 +50,8 @@
  *
  *   4  Die Teile    Woraus — der Stapel, flach, bis zur Trennlinie
  *   5  Die Machart  Wie — der Schnitt, Lage für Lage, plus der Vergleich
- *  10  Die Pflege   Und du — ein Tag, von morgens bis über Nacht
+ *   9  Maß nehmen   Und dein Fuß — zwei Maße, eines nach dem anderen
+ *  11  Die Pflege   Und du — ein Tag, von morgens bis über Nacht
  *
  * Die ersten beiden gehören zusammen und stehen deshalb nebeneinander: Erst
  * sieht man, was da ist, dann, was es zusammenhält. Die dritte steht am
@@ -202,17 +216,9 @@
  * diesem Laden ist einmal eine blockierende Animation entfernt worden, und
  * das zu Recht.
  *
- * ── Nicht indexieren ──────────────────────────────────────────────────────
- *
- * `indexieren: false`, dazu ein Disallow in der robots.txt. Solange zwei
- * Startseiten nebeneinander stehen, gehört nur eine in den Index.
- *
- * Wird dies die echte Startseite: Route auf `/` statt StartRoute,
- * `indexieren` weg, Disallow weg, und `/collection` gibt seinen
- * Sitemap-Eintrag an `/` ab.
  */
 import { Fragment, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Footprints, Check } from 'lucide-react'
 import useStore from '../store/store'
 import { useSeo } from '../lib/seo'
@@ -233,6 +239,7 @@ import ModellStreifen from '../components/ModellStreifen'
 import Angebot from '../components/Angebot'
 import LederSchnitt from '../components/LederSchnitt'
 import FussMass from '../components/FussMass'
+import MassNehmen from '../components/MassNehmen'
 
 /* ── Bausteine ──────────────────────────────────────────────────────────── */
 
@@ -959,8 +966,14 @@ function Nachsatz({ text, className = '', gross = false }) {
 
 /* ── Die Seite ──────────────────────────────────────────────────────────── */
 
-export default function TestHomepage() {
+export default function Startseite() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  // Dieselbe Seite unter zwei Adressen. In den Index gehört nur eine —
+  // welche, entscheidet hier der Pfad und nicht eine gepflegte Zeile, die
+  // beim nächsten Umzug stehen bleibt.
+  const istProbeadresse = pathname === '/test-homepage' 
   const shoes = useStore(s => s.shoes)
   const shoeMaterials = useStore(s => s.shoeMaterials)
   const shoeColors = useStore(s => s.shoeColors)
@@ -972,8 +985,8 @@ export default function TestHomepage() {
     titel: 'Rahmengenähte Schuhe nach deinen Maßen',
     beschreibung: 'Rahmengenäht statt geklebt, einzeln gefertigt in Almansa in Spanien, '
       + 'nach deinen Maßen. Leder, Sohle und Details stellst du selbst zusammen.',
-    pfad: '/test-homepage',
-    indexieren: false,
+    pfad: istProbeadresse ? '/test-homepage' : '/',
+    indexieren: !istProbeadresse,
   })
 
   // Der Katalog wird sonst erst von der Kollektionsseite geholt; diese Seite
@@ -2372,7 +2385,72 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 9 · Almansa ═══════════════════════════════════════════════════
+      {/* ══ 9 · Maß nehmen ═════════════════════════════════════════════
+          Der Abschnitt, an dem ein Kauf hängt.
+
+          „Fußlänge und Ballenumfang, mehr brauchen wir nicht" steht viermal
+          auf dieser Seite — in der Faktenzeile, bei den drei Zahlen, im
+          Register und als Station des Wegs. Es ist der stärkste Satz, den
+          die Seite über die Passform hat, und bis hierher war er eine
+          Behauptung: Nirgends stand, wie man an die zwei Zahlen kommt.
+
+          Genau dort bricht ein Kauf ab. Ein Paar nach Maß im Netz zu
+          bestellen scheitert nicht am Preis, sondern an der Frage, ob es
+          passt — und ein Paar, das für einen bestimmten Fuß gebaut wurde,
+          ist danach für niemanden sonst zu gebrauchen. Wer daneben misst,
+          hat ein Paar, das niemandem passt.
+
+          Deshalb steht der Abschnitt direkt hinter dem Weg: Dessen fünfte
+          Station heißt „Deine Maße" und sagt, dass zwei Zahlen genügen.
+          Hier steht, wie man sie bekommt.
+
+          ── Warum eine vierte Folge ──────────────────────────────────────
+
+          Drei kleben schon. Eine vierte derselben Bauart ist die Stelle, an
+          der ein Mittel zur Masche wird — deshalb ist diese die kürzeste:
+          drei Schritte, weniger Strecke je Schritt, rund zweieinhalb
+          Bildschirme statt fünf. Und sie baut nichts auf, sondern hebt
+          nacheinander hervor, wovon gerade die Rede ist. Auf einer Skizze
+          mit zwei Maßen weiß sonst niemand, welches gemeint ist.
+
+          Siehe MassNehmen und lib/massSchritte.js. */}
+      <section className="bg-[#fafaf9] border-y border-black/[0.06]">
+        <MassNehmen
+          kopf={
+            <>
+              <Kapitelmarke>Maß nehmen</Kapitelmarke>
+              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+                Zwei Zahlen.<br className="hidden sm:block" /> So kommst du dran.
+              </h2>
+              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+                Zehn Minuten, ein Blatt Papier und ein Maßband. Wer kein Maßband
+                hat, nimmt einen Schnürsenkel und legt ihn danach ans Lineal.
+              </p>
+            </>
+          }
+          fuss={
+            <div className="max-w-3xl">
+              <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5]">
+                Ein halber Zentimeter Abweichung ist in Ordnung. Ein ganzer nicht —
+                das ist eine halbe Größe.
+              </p>
+              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-6">
+                Aus den zwei Zahlen bestimmen wir Leisten, Größe und Weite. Trag sie
+                einmal ein, dann stehen sie bei jeder weiteren Bestellung schon da.
+              </p>
+              <ZurKollektion
+                className="mt-10 lg:mt-12"
+                satz="Gemessen wird einmal, und danach nie wieder."
+                wort="Passform bestimmen"
+                auf={() => navigate('/scan')}
+              />
+            </div>
+          }
+        />
+      </section>
+
+
+      {/* ══ 10 · Almansa ═══════════════════════════════════════════════════
           Die Frage, die jeder stellt, der eben sechs Entscheidungen gelesen
           hat: „Und dann warte ich einen Monat?"
 
@@ -2483,7 +2561,7 @@ export default function TestHomepage() {
       </section>
 
 
-      {/* ══ 10 · Die Pflege ════════════════════════════════════════════════
+      {/* ══ 11 · Die Pflege ════════════════════════════════════════════════
           Das Kapitel, das nach dem Kauf anfängt — und genau deshalb steht es
           davor.
 
@@ -2575,7 +2653,7 @@ export default function TestHomepage() {
       </section>
 
 
-      {/* ══ 11 · In eigener Sache ══════════════════════════════════════════
+      {/* ══ 12 · In eigener Sache ══════════════════════════════════════════
           Der Abschnitt, der diese Fassung von jeder anderen trennt. Die
           Offenheit über die Machart war bisher eine Selbstauskunft im
           Kleingedruckten; hier ist sie das Verkaufsargument. Wer „handmade"
@@ -2613,7 +2691,7 @@ export default function TestHomepage() {
         </div>
       </section>
 
-      {/* ══ 12 · Der Anfang ═══════════════════════════════════════════════
+      {/* ══ 13 · Der Anfang ═══════════════════════════════════════════════
           Ein Weg, nicht drei. Wer bis hierher gelesen hat, sucht keine
           Auswahl mehr, sondern die Stelle, an der es losgeht. */}
       <section className="relative overflow-hidden bg-[#0E0E0E]">
