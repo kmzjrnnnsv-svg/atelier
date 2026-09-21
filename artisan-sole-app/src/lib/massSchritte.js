@@ -24,14 +24,28 @@
  * ── Was hier steht und was nicht ──────────────────────────────────────────
  *
  * Handgriffe, die jeder zu Hause machen kann, mit Dingen, die jeder hat:
- * Papier, Stift, Lineal, ein Schnürsenkel. Kein Gerät, keine App, keine
- * Genauigkeit in Millimetern — was der Laden dazu zusagt (±0,5 cm genügen),
- * steht im Abschnitt und nicht hier.
+ * Papier, Stift, Lineal, ein Maßband oder ein Schnürsenkel. Kein Gerät,
+ * keine App, keine Genauigkeit in Millimetern — was der Laden dazu zusagt
+ * (±0,5 cm genügen), steht im Abschnitt und nicht hier.
  *
- * Der dritte Schritt ist der, den keine Anleitung im Netz weglässt und den
- * trotzdem jeder überliest: Füße sind abends größer und selten gleich groß.
- * Wer morgens den kleineren misst, bestellt ein Paar, das ab drei Uhr
- * nachmittags drückt.
+ * ── Warum der Umriss und nicht die Wand ───────────────────────────────────
+ *
+ * Hier stand einmal „Ferse an die Wand, längste Zehe anzeichnen". Das geht
+ * auch, ist aber der schlechtere Weg: Man steht schief, sieht an sich herab
+ * und zeichnet dabei einen Strich neben den eigenen Fuß. Wer stattdessen
+ * einmal ganz herumfährt, bekommt eine Linie, die er danach in Ruhe
+ * betrachten kann — und die Marken setzt er nicht am Fuß, sondern am Papier.
+ *
+ * Das ist auch das Verfahren, das die Werkstatt selbst aufschreibt.
+ *
+ * ── Die drei Dinge, an denen es sonst scheitert ───────────────────────────
+ *
+ * Die Socken, mit denen der Schuh getragen wird (eine dicke Socke ist eine
+ * halbe Größe). Der Stift senkrecht (schräg gehalten wird der Fuß größer,
+ * als er ist). Und beide Füße, am Abend — sie sind selten gleich, und sie
+ * sind abends größer. Jeder dieser drei Punkte steht deshalb in dem
+ * Schritt, in dem er gebraucht wird, und nicht gesammelt am Ende, wo ihn
+ * niemand mehr liest.
  *
  * `schritt` in components/FussMass.jsx sind die Nummern dieser Liste, von
  * eins an gezählt: 1 hebt die Länge hervor, 2 den Umfang, 3 beides.
@@ -39,24 +53,36 @@
 export const MASSNEHMEN = [
   {
     wann: 'Erstens',
-    titel: 'Die Länge',
-    text: 'Ein Blatt Papier an die Wand legen, mit der Ferse dagegenstellen, '
-        + 'im Stehen. Wo die längste Zehe endet, einen Strich — das ist nicht '
-        + 'bei jedem die große. Dann vom Blattrand bis zum Strich messen.',
+    titel: 'Den Umriss zeichnen',
+    text: 'Ein Blatt Papier auf den Boden, draufstellen — mit den Socken, die '
+        + 'du auch im Schuh trägst. Einmal mit dem Stift ganz herumfahren, und '
+        + 'dabei senkrecht halten: Schräg gehalten wird der Fuß größer, als er '
+        + 'ist.',
   },
   {
     wann: 'Zweitens',
-    titel: 'Der Ballenumfang',
-    text: 'Das Maßband einmal um die breiteste Stelle, dort, wo der Fuß beim '
-        + 'Gehen knickt. Anliegend, nicht stramm, und ebenfalls im Stehen: '
-        + 'Unter dem Gewicht wird der Ballen breiter, und getragen wird der '
-        + 'Schuh stehend.',
+    titel: 'Die Länge messen',
+    text: 'Zwei Striche quer über das Blatt: einer an der Ferse, einer an der '
+        + 'längsten Zehe — das ist nicht bei jedem die große. Der Abstand '
+        + 'dazwischen ist die Fußlänge.',
   },
   {
-    wann: 'Und dann',
-    titel: 'Beide Füße, am Abend',
-    text: 'Füße sind selten gleich groß, und abends sind sie größer als '
-        + 'morgens. Gemessen wird der größere, und zwar dann. Ein Schuh, der '
-        + 'um neun passt, drückt sonst um sechs.',
+    wann: 'Drittens',
+    titel: 'Der Ballenumfang',
+    text: 'Das Maßband einmal ganz um die breiteste Stelle, dort, wo der Fuß '
+        + 'beim Gehen knickt. Anliegend, nicht stramm, und im Stehen: Unter dem '
+        + 'Gewicht wird der Ballen breiter, und getragen wird der Schuh stehend.',
   },
 ]
+
+/**
+ * Der Satz, der unter der Folge steht — und der wichtigste von allen.
+ *
+ * Füße sind selten gleich groß, und abends sind sie größer als morgens. Wer
+ * das nicht weiß, misst morgens den kleineren und bestellt ein Paar, das ab
+ * drei Uhr nachmittags drückt. Es steht bewusst NICHT als vierter Schritt:
+ * Es ist kein Handgriff, sondern eine Bedingung für alle drei.
+ */
+export const BEIDE_FUESSE =
+  'Miss beide Füße, und miss am Abend. Sie sind selten gleich groß und '
+  + 'abends größer als morgens — gebaut wird nach dem größeren.' 

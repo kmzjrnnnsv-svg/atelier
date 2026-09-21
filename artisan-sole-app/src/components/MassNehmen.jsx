@@ -29,9 +29,9 @@
  * ohne Bewegung vollständig ist — dasselbe sieht der Vorrenderer.
  */
 import { useMemo, useRef } from 'react'
-import FussMass from './FussMass'
+import MassAnleitung from './MassAnleitung'
 import Enthuellen from './Enthuellen'
-import { MASSNEHMEN } from '../lib/massSchritte'
+import { MASSNEHMEN, BEIDE_FUESSE } from '../lib/massSchritte'
 import { useWenigerBewegung } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
@@ -41,9 +41,8 @@ const VORLAUF = 0.10
 const NACHLAUF = 0.12
 
 /* Strecke je Schritt. Knapper als bei den anderen drei Folgen (0,40 bis
-   0,50): Hier wechselt nur die Betonung innerhalb einer Zeichnung, es fährt
-   nichts ein und es baut sich nichts auf. Wer wenig zu zeigen hat, darf
-   dafür nicht viel Weg verlangen. */
+   0,50): Hier baut sich nichts auf, es wechselt das Bild. Wer wenig Weg
+   braucht, darf nicht viel verlangen. */
 const PRO_SCHRITT = 0.34
 
 function schrittAus(fortschritt) {
@@ -80,7 +79,7 @@ function OhneBewegung({ kopf, fuss }) {
       <div className="max-w-5xl mx-auto">
         {kopf}
         <div className="mt-12 lg:mt-16 text-black">
-          <FussMass className="max-w-2xl mx-auto" />
+          <MassAnleitung className="max-w-2xl mx-auto" />
         </div>
         <ol className="grid sm:grid-cols-3 gap-x-12 gap-y-8 mt-12 lg:mt-16">
           {MASSNEHMEN.map(s => (
@@ -91,6 +90,9 @@ function OhneBewegung({ kopf, fuss }) {
             </li>
           ))}
         </ol>
+        <p className="text-[13px] text-black/45 font-light leading-[1.9] mt-10 max-w-lg">
+          {BEIDE_FUESSE}
+        </p>
         {fuss && <div className="mt-14 lg:mt-20">{fuss}</div>}
       </div>
     </div>
@@ -136,7 +138,7 @@ export default function MassNehmen({ kopf, fuss }) {
             </div>
 
             <div className="lg:col-span-8 text-black">
-              <FussMass schritt={schritt + 1} className="w-full" />
+              <MassAnleitung schritt={schritt + 1} className="w-full" />
 
               {/* Fester Kasten, damit die Zeichnung nicht springt, wenn ein
                   Text eine Zeile länger ist als der andere. */}
@@ -156,6 +158,12 @@ export default function MassNehmen({ kopf, fuss }) {
                   </div>
                 ))}
               </div>
+
+              {/* Gilt für alle drei Schritte und steht deshalb fest da,
+                  nicht in der wechselnden Folge. */}
+              <p className="text-[12px] lg:text-[13px] text-black/40 font-light leading-[1.85] mt-5 max-w-xl">
+                {BEIDE_FUESSE}
+              </p>
             </div>
           </div>
         </div>
