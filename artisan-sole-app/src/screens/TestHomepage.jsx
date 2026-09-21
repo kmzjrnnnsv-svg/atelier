@@ -220,7 +220,8 @@ import { shoePath } from '../lib/shoePath'
 import { PreisFuss } from '../lib/preisangabe'
 import { preisAlsZahl, preisAlsText } from '../lib/preis'
 import { resolveMediaUrl } from '../lib/mediaUrl'
-import { FAMILIEN, familieVon } from '../lib/machartFamilien'
+import { familieVon } from '../lib/machartFamilien'
+import { laufendeSaison } from '../lib/saison'
 import Enthuellen from '../components/Enthuellen'
 import Kapitelmarke from '../components/Kapitelmarke'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
@@ -350,6 +351,41 @@ const WARUM_RAHMEN = [
         + 'gefüllt, der unter dem Gewicht nachgibt und nach einigen Wochen den '
         + 'Abdruck deines Fußes behält.',
   },
+]
+
+/**
+ * Die Formen, nach denen im Register gefragt wird.
+ *
+ * ── Warum hier keine Familien mehr stehen ─────────────────────────────────
+ *
+ * Bis eben führte das Register die fünf Macharten-Familien: Schnürschuh,
+ * Monk, Loafer, Stiefel, Sneaker. Die Zeile „SCHNÜRSCHUH" trug als Zusatz
+ * „Oxford, Derby, Wholecut" — und genau das war das Eingeständnis, dass die
+ * Familie nichts erklärt: Sie musste in derselben Zeile übersetzt werden.
+ *
+ * „Schnürschuh" ist ein Oberbegriff, den wir uns ausgedacht haben. „Oxford"
+ * ist das Wort, das jemand im Kopf hat, wenn er sucht, und das er in eine
+ * Suchmaschine tippt. Wer eine Auswahl einfacher machen will, nennt die
+ * Dinge so, wie der Käufer sie nennt.
+ *
+ * ── Was das kostet ────────────────────────────────────────────────────────
+ *
+ * Das Register deckt damit nicht mehr den ganzen Katalog ab: Monks, Chukkas,
+ * Sneaker und die übrigen Macharten stehen nicht mehr in einer eigenen
+ * Zeile. Deshalb sagt der Vorspann ausdrücklich, dass es die häufigsten
+ * fünf sind, und die Tür darunter trägt weiterhin die echte Gesamtzahl.
+ * Eine Auswahl, die sich für vollständig ausgibt, wäre der schlechtere
+ * Tausch.
+ *
+ * Die Reihenfolge steht so, wie sie bestellt wurde. Führt der Katalog zu
+ * einer Form kein Modell, fällt die Zeile weg (siehe angebotZeilen).
+ */
+const ANGEBOTSFORMEN = [
+  { key: 'OXFORD',   name: 'Oxford',   satz: 'Geschlossene Schnürung. Die formellste Form, die es gibt.' },
+  { key: 'DERBY',    name: 'Derby',    satz: 'Offene Schnürung, mehr Raum über dem Spann.' },
+  { key: 'WHOLECUT', name: 'Wholecut', satz: 'Ein Stück Leder, eine Naht an der Ferse.' },
+  { key: 'CHELSEA',  name: 'Chelsea',  satz: 'Kein Verschluss, zwei Gummizüge, drei Sekunden.' },
+  { key: 'LOAFER',   name: 'Loafer',   satz: 'Hineinschlüpfen. Gehalten wird er von seiner Form.' },
 ]
 
 const ZAHLEN = [
@@ -1023,6 +1059,86 @@ export default function TestHomepage() {
   }, [shoes])
 
   /**
+   * Die vier Paare direkt unter dem Aufmacher: zwei Klassiker, zwei für die
+   * Jahreszeit.
+   *
+   * ── Warum sie dort stehen ─────────────────────────────────────────────
+   *
+   * Nachgemessen: Ohne diese Reihe sah man auf dem Telefon die erste
+   * Aufnahme eines Schuhs nach 6.605 Pixeln — knapp acht Bildschirmen. Acht
+   * Bildschirme Schrift und Zeichnung auf der Startseite eines Ladens, der
+   * Schuhe verkauft, bevor überhaupt ein Schuh zu sehen ist.
+   *
+   * Jetzt steht die erste Aufnahme vor dem ersten Scrollen. Das ändert an
+   * der Erzählung nichts — die Kapitel kommen unverändert danach —, aber es
+   * beantwortet die Frage, die jeder zuerst hat: Wie sieht das aus?
+   *
+   * ── Warum zwei und zwei ───────────────────────────────────────────────
+   *
+   * Vier gleiche Schnürschuhe wären eine Auskunft über ein Modell. Zwei
+   * Ganzjährige und zwei der laufenden Jahreszeit sind eine über den Laden:
+   * Es gibt etwas, das immer geht, und es gibt etwas für gerade jetzt.
+   *
+   * Welche Jahreszeit läuft, sagt lib/saison.js (April bis September
+   * Sommer). Die Regel steht dort mit ihrer Begründung und wird hier nicht
+   * noch einmal erfunden.
+   *
+   * Express-Fassungen bleiben draußen: Sie tragen denselben Namen wie ihr
+   * Grundmodell mit einem Wort dahinter, und zwei fast gleiche Kacheln
+   * nebeneinander sehen nach einem Fehler aus.
+   */
+  const kopfModelle = useMemo(() => {
+    const saison = laufendeSaison()
+    const brauchbar = shoes.filter(sch => sch.image && Number(sch.express) !== 1)
+    const genommen = new Set()
+
+    // Keine Machart zweimal in derselben Reihe. Ohne diese Regel standen
+    // hier ein Oxford, ein Balmoral und zwei Sneaker: vier Kacheln, zwei
+    // Formen. Eine Reihe, die zeigen soll, was es gibt, muss vier
+    // verschiedene Dinge zeigen.
+    //
+    // Zwei Durchgänge, damit die Regel nie eine Lücke erzeugt: erst nur
+    // ungenutzte Familien, dann notfalls der Rest.
+    const familien = new Set()
+    const nimm = (kandidaten, anzahl) => {
+      const aus = []
+      for (const nurNeue of [true, false]) {
+        for (const sch of kandidaten) {
+          if (aus.length >= anzahl) break
+          if (genommen.has(sch.id)) continue
+          const fam = familieVon(sch)
+          if (nurNeue && fam && familien.has(fam)) continue
+          genommen.add(sch.id)
+          if (fam) familien.add(fam)
+          aus.push(sch)
+        }
+        if (aus.length >= anzahl) break
+      }
+      return aus
+    }
+
+    // Klassiker: ganzjährig, und darunter zuerst, was der Katalog selbst
+    // hervorhebt. Ohne Auszeichnung entscheidet die Machart — ein Oxford
+    // und ein Derby sind die beiden Formen, die jeder kennt.
+    const ganzjaehrig = brauchbar.filter(sch => (sch.season || 'all') === 'all')
+    const rang = (sch) => {
+      if (String(sch.tag || '').toUpperCase() === 'BESTSELLER') return 0
+      const k = String(sch.category || '').toUpperCase()
+      return k === 'OXFORD' ? 1 : k === 'DERBY' ? 2 : k === 'LOAFER' ? 3 : 4
+    }
+    const klassiker = nimm([...ganzjaehrig].sort((a, b) => rang(a) - rang(b)), 2)
+
+    // Und zwei, die zu den Monaten passen, die gerade laufen.
+    const zeit = nimm(brauchbar.filter(sch => (sch.season || 'all') === saison), 2)
+
+    // Führt der Katalog für die Jahreszeit nichts, wird mit Ganzjährigen
+    // aufgefüllt. Eine Reihe mit zwei Lücken ist schlechter als eine mit
+    // vier Klassikern.
+    const rest = zeit.length < 2 ? nimm(ganzjaehrig, 2 - zeit.length) : []
+    return [...klassiker, ...zeit, ...rest]
+  }, [shoes])
+
+  /**
    * Das Register: je Machart die Anzahl und der Einstiegspreis.
    *
    * Beides kommt aus dem Katalog. Der Einstieg ist nicht die kleinste Zahl
@@ -1030,17 +1146,16 @@ export default function TestHomepage() {
    * das diesen Preis hat. Ein Klick auf die Zeile öffnet es, und damit hält
    * der Preis, was die Zeile verspricht.
    *
-   * Die Reihenfolge ist die der Familien (lib/machartFamilien.js) und nicht
-   * die der Preise. Dieselbe Folge steht in der Modellwahl am Ende von
-   * Kapitel 5 als Wortreihe — zweimal dieselbe Ordnung liest sich als eine
-   * Seite, zwei verschiedene als zwei.
+   * Die Reihenfolge ist die von ANGEBOTSFORMEN und nicht die der Preise: Wer
+   * vergleicht, soll die Formen in einer festen Ordnung wiederfinden und
+   * nicht raten, wonach sortiert wurde.
    *
-   * Eine Machart, die der Katalog gerade nicht führt, fällt heraus. Eine
-   * Zeile mit einer Null ist keine Auskunft, sondern eine Lücke.
+   * Eine Form, die der Katalog gerade nicht führt, fällt heraus. Eine Zeile
+   * mit einer Null ist keine Auskunft, sondern eine Lücke.
    */
-  const angebotZeilen = useMemo(() => FAMILIEN
+  const angebotZeilen = useMemo(() => ANGEBOTSFORMEN
     .map((f) => {
-      const treffer = shoes.filter(sch => familieVon(sch) === f.key)
+      const treffer = shoes.filter(sch => String(sch.category || '').toUpperCase() === f.key)
       const mitPreis = treffer.filter(sch => preisAlsZahl(sch.price) > 0)
       const einstieg = mitPreis.length
         ? mitPreis.reduce((a, b) => (preisAlsZahl(b.price) < preisAlsZahl(a.price) ? b : a))
@@ -1098,7 +1213,10 @@ export default function TestHomepage() {
    * Ohne Bild kommt keines ins Band: Eine Kachel ohne Aufnahme ist ein Loch.
    */
   const streifenModelle = useMemo(() => {
-    const belegt = new Set(kollektionen.flatMap(k => k.schuhe.map(x => x.schuh.id)))
+    const belegt = new Set([
+      ...kollektionen.flatMap(k => k.schuhe.map(x => x.schuh.id)),
+      ...kopfModelle.map(sch => sch.id),
+    ])
     const aus = []
     for (const key of ['schnuer', 'loafer', 'stiefel', 'sneaker']) {
       const treffer = shoes.find(
@@ -1107,7 +1225,7 @@ export default function TestHomepage() {
       if (treffer) aus.push(treffer)
     }
     return aus
-  }, [shoes, kollektionen])
+  }, [shoes, kollektionen, kopfModelle])
 
   const abPreis = useMemo(() => {
     const preise = shoes.map(s => preisAlsZahl(s.price)).filter(p => p > 0)
@@ -1535,6 +1653,32 @@ export default function TestHomepage() {
       </header>
 
 
+      {/* ── Unter dem Aufmacher: vier Paare ──────────────────────────────
+          Die erste Aufnahme eines Schuhs lag nachgemessen bei 6.605 Pixeln,
+          also knapp acht Telefonbildschirme weit. Acht Bildschirme Schrift
+          und Zeichnung, bevor auf der Startseite eines Schuhladens ein Schuh
+          zu sehen ist.
+
+          Jetzt steht sie vor dem ersten Scrollen. An der Erzählung ändert
+          das nichts, die Kapitel kommen unverändert danach — aber die erste
+          Frage, die jeder hat, ist beantwortet, bevor die erste Erklärung
+          anfängt.
+
+          Zwei Ganzjährige und zwei der laufenden Jahreszeit: Das eine sagt,
+          dass es hier etwas gibt, das immer geht, das andere, dass es etwas
+          für gerade jetzt gibt. Ohne Haarlinie oben — darüber steht die
+          Kante des dunklen Aufmachers, und zwei Trennungen übereinander sind
+          eine zu viel. */}
+      <ModellStreifen
+        schuhe={kopfModelle}
+        gesamt={shoes.length}
+        randOben={false}
+        satz="Zwei, die immer gehen — und zwei für die Jahreszeit."
+        oeffnen={sch => navigate(shoePath(sch))}
+        zumKatalog={zurKollektion}
+      />
+
+
       {/* ══ 2 · Drei Zahlen ═══════════════════════════════════════════════
           Der Preis steht oben. Hier steht, woran er hängt — bevor jemand
           weiterscrollt und die Frage mitnimmt.
@@ -1620,6 +1764,7 @@ export default function TestHomepage() {
         gesamt={shoes.length}
         oeffnen={sch => navigate(shoePath(sch))}
         zumKatalog={zurKollektion}
+        zurPassform={() => navigate('/scan')}
       />
 
 
@@ -2211,8 +2356,8 @@ export default function TestHomepage() {
                   </p>
                   <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
                     Ein Paar, das für einen bestimmten Fuß gebaut ist, lässt sich nicht
-                    zurückgeben. Stimmt etwas nicht, fertigen wir neu, ohne Kosten für
-                    dich. Einzelheiten in den AGB.
+                    zurückgeben. Ist etwas mangelhaft, fertigen wir neu, ohne Kosten
+                    für dich. Einzelheiten in den AGB.
                   </p>
                 </div>
               </li>

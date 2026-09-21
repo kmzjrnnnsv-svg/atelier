@@ -50,8 +50,9 @@ import Kapitelmarke from './Kapitelmarke'
  *   Zeile öffnet genau dieses, damit der Preis hält, was die Zeile sagt.
  * @param {Object|null} express `{ anzahl, wochen, aufpreis }` oder null.
  * @param {number} [gesamt] Die echte Zahl für die Tür.
+ * @param {() => void} [zurPassform] Der Weg zum Maßnehmen.
  */
-export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt }) {
+export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, zurPassform }) {
   if (!zeilen?.length) return null
 
   return (
@@ -60,14 +61,15 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt }
         <Enthuellen>
           <Kapitelmarke>Das Angebot</Kapitelmarke>
           <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
-            Fünf Macharten.<br className="hidden sm:block" /> Und was jede kostet.
+            Fünf Formen.<br className="hidden sm:block" /> Und was jede kostet.
           </h2>
         </Enthuellen>
 
         <Enthuellen verzoegerung={120}>
           <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
-            Gebaut wird jede gleich. Den Preis machen die Form, das Leder und wie
-            viel Arbeit in der Sohle steckt.
+            Die fünf, nach denen am häufigsten gefragt wird. Gebaut wird jede
+            gleich — den Preis machen die Form, das Leder und wie viel Arbeit in
+            der Sohle steckt.
           </p>
         </Enthuellen>
 
@@ -153,10 +155,41 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt }
               Katalog und nicht den Satz über den Versand. Am Bildschirm
               stehen beide nebeneinander, und dort gilt die Leserichtung. */}
           <div className="mt-10 lg:mt-14 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-6 sm:gap-5">
-            <p className="order-2 sm:order-none text-[12px] text-black/40 font-light leading-[1.9] max-w-md">
-              Im Preis: Versand innerhalb Deutschlands. Stimmt die Passform nicht,
-              fertigen wir neu, ohne Kosten für dich.
-            </p>
+            {/* ── Was hier NICHT mehr steht ────────────────────────────
+
+                „Stimmt die Passform nicht, fertigen wir neu, ohne Kosten
+                für dich." Das war eine Passform-Garantie, und der Laden
+                gibt keine: Die maßgebliche Zusage (siehe ShoeCollection und
+                die AGB) sagt „Ist etwas mangelhaft" — das ist
+                Gewährleistung für einen Fehler am Schuh, nicht für einen
+                Fehler beim Messen.
+
+                Ein Paar entsteht für einen bestimmten Fuß; wer daneben
+                misst, hat ein Paar, das niemandem passt. Deshalb steht hier
+                jetzt kein Versprechen, sondern der Weg, es gar nicht erst
+                so weit kommen zu lassen — die ehrlichere Auskunft und die
+                nützlichere dazu. */}
+            <div className="order-2 sm:order-none max-w-md">
+              <p className="text-[12px] text-black/40 font-light leading-[1.9]">
+                Im Preis: Versand innerhalb Deutschlands. Damit die Größe stimmt,
+                nimm vorher Maß — Fußlänge und Ballenumfang genügen, ein
+                Schnürsenkel und ein Lineal reichen dafür.
+              </p>
+              {zurPassform && (
+                <button
+                  type="button"
+                  onClick={zurPassform}
+                  className="group mt-4 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black/60 hover:text-black transition-colors"
+                  style={{ letterSpacing: '0.22em' }}
+                >
+                  <span className="relative pb-1">
+                    Passform bestimmen
+                    <span className="absolute left-0 bottom-0 h-px w-full bg-black/20 group-hover:bg-black/45 transition-colors" />
+                  </span>
+                  <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+                </button>
+              )}
+            </div>
             <button
               type="button"
               onClick={zumKatalog}

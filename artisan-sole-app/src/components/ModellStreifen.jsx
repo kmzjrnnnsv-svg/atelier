@@ -43,14 +43,18 @@ import { resolveMediaUrl } from '../lib/mediaUrl'
  * @param {(schuh: Object) => void} oeffnen
  * @param {() => void} zumKatalog
  * @param {number} [gesamt] Die echte Zahl für die Tür rechts.
+ * @param {boolean} [randOben=true] Die Haarlinie über dem Band. Sie trennt
+ *   es vom Kapitel darüber. Direkt unter dem dunklen Aufmacher wäre sie
+ *   falsch: Dort trennt schon die Farbkante, und eine Linie zwei Millimeter
+ *   darunter sieht aus wie ein Versehen.
  */
-export default function ModellStreifen({ schuhe, satz, oeffnen, zumKatalog, gesamt }) {
+export default function ModellStreifen({ schuhe, satz, oeffnen, zumKatalog, gesamt, randOben = true }) {
   if (!schuhe?.length) return null
 
   return (
     <Enthuellen richtung="ruhig">
-      <div className="px-5 lg:px-16 pb-16 lg:pb-24">
-        <div className="max-w-6xl mx-auto border-t border-black/[0.10] pt-10 lg:pt-14">
+      <div className={`px-5 lg:px-16 ${randOben ? 'pb-16 lg:pb-24' : 'pt-12 lg:pt-16 pb-14 lg:pb-20'}`}>
+        <div className={`max-w-6xl mx-auto ${randOben ? 'border-t border-black/[0.10] pt-10 lg:pt-14' : ''}`}>
           {/* Zeile und Tür in einer Zeile, auf dem Telefon untereinander.
               `items-baseline`, damit der kleine Knopf auf der Schriftlinie
               des Satzes sitzt und nicht auf halber Höhe schwebt. */}
