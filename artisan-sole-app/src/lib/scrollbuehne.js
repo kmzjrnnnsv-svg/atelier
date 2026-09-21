@@ -25,15 +25,63 @@
  */
 import { useEffect, useRef, useState } from 'react'
 
-/** Der nächste Vorfahre, in dem wirklich gescrollt wird. */
+/**
+ * Der nächste Vorfahre, in dem wirklich gescrollt wird.
+ *
+ * ── Warum die Höhe mitgeprüft wird ────────────────────────────────────────
+ *
+ * Hier stand einmal nur: computed `overflow-y` ist `auto` oder `scroll`, und
+ * es gibt mehr Inhalt als Platz. Das hat die Seite auf dem Telefon zerlegt,
+ * und zwar so gründlich, dass man es kaum glaubt.
+ *
+ * Der Grund ist eine Regel, die man nicht im Kopf hat: Steht auf einem
+ * Element `overflow-x: hidden` und daneben `overflow-y: visible`, macht CSS
+ * aus dem `visible` ein `auto`. Der Kasten scrollt nicht, er sieht nur so
+ * aus. Auf der Telefonfassung (Dokumentscroll, siehe App.jsx) ist der
+ * Seitenrahmen genau so ein Element — und sein `clientHeight` ist nicht die
+ * Höhe eines Fensters, sondern die der ganzen Seite.
+ *
+ * Damit wurde die Bühnenhöhe ein Vielfaches der Seitenhöhe. Der Abschnitt
+ * wuchs, dadurch wuchs die Seite, dadurch die nächste Messung — in ein paar
+ * Bildern war das Dokument 2,9 Millionen Pixel hoch. Wer scrollte, landete
+ * nach dem dritten Kapitel in einer endlosen weißen Fläche.
+ *
+ * Deshalb zwei Bedingungen mehr: Ein Kasten, in dem gescrollt wird, ist nie
+ * höher als das Fenster (sonst müsste man ihn nicht scrollen), und er hat
+ * überhaupt eine Höhe. Beides zusammen schließt die Scheinbehälter aus.
+ */
 function scrollBehaelter(el) {
+  const sicht = window.innerHeight
   let n = el?.parentElement
-  while (n && n !== document.body) {
+  while (n && n !== document.body && n !== document.documentElement) {
     const style = getComputedStyle(n)
-    if (/(auto|scroll)/.test(style.overflowY) && n.scrollHeight > n.clientHeight + 1) return n
+    if (/(auto|scroll)/.test(style.overflowY)
+      && n.clientHeight > 0
+      && n.clientHeight <= sicht + 1
+      && n.scrollHeight > n.clientHeight + 1) return n
     n = n.parentElement
   }
   return null
+}
+
+/**
+ * Wie weit oben im Fenster die Bühne anfangen kann.
+ *
+ * In der Telefonfassung scrollt das Dokument, und die Kopfleiste klebt mit
+ * `position: sticky` oben im Bild (siehe TopBar). Eine Bühne, die bei 0
+ * klebt, liegt dann unter ihr: Die oberen sechzig Pixel jeder Zeichnung sind
+ * verdeckt. In der Bildschirmfassung steht die Kopfleiste außerhalb des
+ * Scrollkastens, dort ist der Wert 0.
+ *
+ * Gemessen wird an `[data-kopfleiste]` und nicht an „irgendetwas, das oben
+ * klebt": Eine Suche über alle Elemente je Bild wäre teuer, und sie fände
+ * beim nächsten eingeblendeten Banner das Falsche.
+ */
+function kopfHoehe() {
+  const kopf = document.querySelector('[data-kopfleiste]')
+  if (!kopf) return 0
+  const r = kopf.getBoundingClientRect()
+  return r.top <= 1 && r.bottom > 0 ? Math.round(r.bottom) : 0
 }
 
 const klemmen = (n) => (n < 0 ? 0 : n > 1 ? 1 : n)
@@ -45,7 +93,9 @@ const klemmen = (n) => (n < 0 ? 0 : n > 1 ? 1 : n)
  *   keine Bewegung will). Der Fortschritt bleibt dann auf 1 — nicht auf 0:
  *   Wer die Folge nicht sieht, soll das fertige Bild sehen und nicht das
  *   leere.
- * @returns {{fortschritt: number, buehnenHoehe: number|null}}
+ * @returns {{fortschritt: number, buehnenHoehe: number|null, buehnenOben: number}}
+ *   `buehnenOben` ist der Abstand von der Fensteroberkante, bei dem die Bühne
+ *   kleben soll — 0 im Scrollkasten, sonst unter der Kopfleiste.
  */
 export function useScrollBuehne(ref, aus = false) {
   // Ob überhaupt gemessen werden kann, steht schon beim ersten Zeichnen fest.
@@ -59,6 +109,7 @@ export function useScrollBuehne(ref, aus = false) {
 
   const [gemessen, setGemessen] = useState(0)
   const [buehnenHoehe, setBuehnenHoehe] = useState(null)
+  const [buehnenOben, setBuehnenOben] = useState(0)
   const laeuft = useRef(0)
 
   useEffect(() => {
@@ -69,10 +120,29 @@ export function useScrollBuehne(ref, aus = false) {
 
     const messen = () => {
       const r = el.getBoundingClientRect()
-      const oben = behaelter ? behaelter.getBoundingClientRect().top : 0
-      const hoehe = behaelter ? behaelter.clientHeight : window.innerHeight
+
+      // Zwei verschiedene Größen, die man leicht verwechselt:
+      //
+      // `oben` ist die Stelle IM FENSTER, an der das Band anfängt — im
+      // Scrollkasten dessen Oberkante, sonst die Unterkante der klebenden
+      // Kopfleiste. Sie geht in die Fortschrittsrechnung.
+      //
+      // `klebt` ist der Abstand, den `position: sticky` bekommt, und der
+      // zählt im Scrollkasten von dessen eigener Oberkante — dort also 0,
+      // egal wo der Kasten im Fenster sitzt. Nur beim Dokumentscroll sind
+      // beide gleich.
+      const kopf = behaelter ? 0 : kopfHoehe()
+      const oben = behaelter ? behaelter.getBoundingClientRect().top : kopf
+
+      // Und niemals höher als das, was man sieht. Der Riegel ist nicht
+      // Vorsicht, sondern die zweite Sicherung gegen den Aufschaukler oben:
+      // Selbst wenn ein Behälter falsch erkannt würde, kann der Abschnitt
+      // dann nicht mehr wachsen, als ein Fenster hoch ist.
+      const gemessenHoehe = behaelter ? behaelter.clientHeight : window.innerHeight - kopf
+      const hoehe = Math.max(1, Math.min(gemessenHoehe, window.innerHeight))
 
       setBuehnenHoehe((alt) => (alt === hoehe ? alt : hoehe))
+      setBuehnenOben((alt) => (alt === kopf ? alt : kopf))
 
       // Wie weit der Abschnitt schon hochgeschoben ist, geteilt durch die
       // Strecke, die er schieben kann. Ist der Abschnitt nicht höher als die
@@ -114,5 +184,6 @@ export function useScrollBuehne(ref, aus = false) {
   return {
     fortschritt: (aus || !kannMessen) ? 1 : gemessen,
     buehnenHoehe,
+    buehnenOben,
   }
 }
