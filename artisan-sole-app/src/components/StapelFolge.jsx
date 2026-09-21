@@ -106,7 +106,7 @@ export default function StapelFolge({ kopf, fuss }) {
   const ref = useRef(null)
   const ruhig = useWenigerBewegung()
   const schmal = useSchmal()
-  const { fortschritt, buehnenHoehe } = useScrollBuehne(ref, ruhig)
+  const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
 
@@ -126,8 +126,8 @@ export default function StapelFolge({ kopf, fuss }) {
         style={buehnenHoehe ? { height: buehnenHoehe * (1 + STAPEL.length * PRO_SCHRITT) } : undefined}
       >
         <div
-          className="sticky top-0 flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-10 lg:py-14"
-          style={buehnenHoehe ? { height: buehnenHoehe } : undefined}
+          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-10 lg:py-14"
+          style={{ top: buehnenOben, ...(buehnenHoehe ? { height: buehnenHoehe } : null) }}
         >
           <div className="w-full max-w-6xl mx-auto lg:grid lg:grid-cols-12 lg:gap-10 lg:items-center">
             {/* Die Tafel steht links und hoch. Sie zählt selbst mit: Wie

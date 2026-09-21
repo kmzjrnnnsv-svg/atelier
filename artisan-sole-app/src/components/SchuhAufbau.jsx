@@ -137,7 +137,7 @@ export default function SchuhAufbau({ kopf, fuss }) {
   const ref = useRef(null)
   const ruhig = useWenigerBewegung()
   const schmal = useSchmal()
-  const { fortschritt, buehnenHoehe } = useScrollBuehne(ref, ruhig)
+  const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
 
@@ -163,8 +163,8 @@ export default function SchuhAufbau({ kopf, fuss }) {
         style={buehnenHoehe ? { height: buehnenHoehe * (1 + AUFBAU.length * PRO_SCHRITT) } : undefined}
       >
         <div
-          className="sticky top-0 flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-12 lg:py-16"
-          style={buehnenHoehe ? { height: buehnenHoehe } : undefined}
+          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-12 lg:py-16"
+          style={{ top: buehnenOben, ...(buehnenHoehe ? { height: buehnenHoehe } : null) }}
         >
           {/* Auf der Bühne steht nur noch, was sich bewegt.
 

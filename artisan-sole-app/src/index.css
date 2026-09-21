@@ -131,6 +131,44 @@ html, body, #root {
   padding: 0;
   width: 100%;
   max-width: 100vw;
+}
+
+/* Seitwärts wird nirgends gescrollt — und zwar nur auf `html`.
+
+   Auf `body` darf es nicht stehen. Der Wert von `body` wandert nämlich nur
+   dann an den Viewport, wenn `html` selbst `visible` ist; steht er auf
+   beiden, behält `body` seinen eigenen und wird damit zum Scrollrahmen für
+   jedes `position: sticky` darin. Genau das hat auf dem Telefon die
+   klebenden Bühnen der Startseite aus dem Bild wandern lassen — derselbe
+   Fehler wie eine Zeile tiefer bei `#root`, nur eine Ebene höher.
+
+   `html` allein genügt: Es beschneidet den Viewport waagerecht, und mehr
+   war nie gemeint. */
+html {
+  overflow-x: hidden;
+}
+
+/* ── Warum `#root` das NICHT in der Telefonfassung bekommt ────────────────
+
+   Hier stand `overflow-x: hidden` auch auf `#root`, und das hat auf dem
+   Telefon jede klebende Bühne der Startseite zerstört.
+
+   Der Grund ist eine Regel, die man selten braucht und dann teuer bezahlt:
+   Ein Element mit irgendeinem Overflow außer `visible` wird zum Bezugsrahmen
+   für `position: sticky` darin. `#root` scrollt in der Telefonfassung aber
+   nicht — gescrollt wird das Dokument. Die Bühnen klebten also an einem
+   Rahmen, der stillsteht, und wanderten einfach mit aus dem Bild: Nach dem
+   dritten Kapitel sah man eine Bildschirmhöhe lang nichts.
+
+   Dasselbe `overflow-x: hidden` machte `#root` nebenbei zu einem falschen
+   Treffer bei der Behältersuche — CSS macht aus `overflow-y: visible` ein
+   `auto`, sobald die andere Achse `hidden` ist. Beides ist in
+   lib/scrollbuehne.js beschrieben.
+
+   In der Bildschirmfassung darf es bleiben: Dort bekommt `#root` ohnehin
+   `overflow: hidden` (Regel darunter), und die Bühnen kleben im echten
+   Scrollkasten darin. */
+html:not(.mobile-web) #root {
   overflow-x: hidden;
 }
 

@@ -79,7 +79,12 @@ export default function TopBar() {
   return (
     <>
       {/* ── Header bar ── */}
+      {/* `data-kopfleiste`: In der Telefonfassung scrollt das Dokument, und
+          diese Leiste klebt oben im Bild. Die klebenden Bühnen der Startseite
+          müssen wissen, wo sie anfangen dürfen, sonst liegen sie darunter
+          (siehe lib/scrollbuehne.js). */}
       <header
+        data-kopfleiste
         className="flex items-center justify-between bg-white flex-shrink-0"
         style={{
           position: 'sticky', top: 0, zIndex: 50,

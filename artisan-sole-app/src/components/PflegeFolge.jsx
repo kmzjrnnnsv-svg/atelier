@@ -118,7 +118,7 @@ export default function PflegeFolge({ kopf, fuss }) {
   const ref = useRef(null)
   const ruhig = useWenigerBewegung()
   const schmal = useSchmal()
-  const { fortschritt, buehnenHoehe } = useScrollBuehne(ref, ruhig)
+  const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
 
@@ -138,8 +138,8 @@ export default function PflegeFolge({ kopf, fuss }) {
         style={buehnenHoehe ? { height: buehnenHoehe * (1 + PFLEGE.length * PRO_SCHRITT) } : undefined}
       >
         <div
-          className="sticky top-0 flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-12 lg:py-16"
-          style={buehnenHoehe ? { height: buehnenHoehe } : undefined}
+          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-12 lg:py-16"
+          style={{ top: buehnenOben, ...(buehnenHoehe ? { height: buehnenHoehe } : null) }}
         >
           <div className="w-full max-w-6xl mx-auto lg:grid lg:grid-cols-12 lg:gap-14 lg:items-center">
             {/* Links der ganze Rhythmus. Auf dem Telefon hat er keinen Platz
