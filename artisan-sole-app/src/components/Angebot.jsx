@@ -80,25 +80,46 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt }
                 disabled={!z.einstieg}
                 className="group block w-full bg-transparent border-0 border-t border-black/[0.10] p-0 text-left py-6 lg:py-7 disabled:cursor-default"
               >
-                <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-baseline">
-                  <p className="lg:col-span-3 text-[12px] lg:text-[13px] uppercase text-black group-hover:text-black/55 transition-colors"
+                {/* Zwei Spalten auf dem Telefon, zwölf am Bildschirm — aber
+                    dieselben vier Angaben und dieselbe DOM-Folge. Platziert
+                    wird über `col-start` und `row-start`, nicht über zwei
+                    Fassungen, von denen eine versteckt ist: Was doppelt im
+                    Markup steht, läuft beim nächsten Textwechsel
+                    auseinander. */}
+                <div className="grid grid-cols-[1fr_auto] gap-x-5 gap-y-2.5 lg:grid-cols-12 lg:gap-8 lg:items-baseline">
+                  {/* Name und Anzahl in einer Zeile — dieselbe Geste wie die
+                      Wortreihe der Modellwahl in Kapitel 6. Eine eigene
+                      Spalte für die Anzahl kostete auf dem Telefon eine
+                      vierte Zeile und sagte nichts, was die Ziffer nicht
+                      auch sagt. */}
+                  <p className="lg:col-span-4 text-[12px] lg:text-[13px] uppercase text-black group-hover:text-black/55 transition-colors"
                      style={{ letterSpacing: '0.22em' }}>
                     {z.name}
+                    <span className="ml-2.5 text-[10px] tabular-nums text-black/30 tracking-normal">
+                      {z.anzahl}
+                    </span>
                   </p>
 
-                  {/* Der Satz zur Machart. Auf dem Telefon steht er unter dem
-                      Namen, auf dem Bildschirm dazwischen — dort ist Platz,
-                      und ohne ihn wäre das Register eine Preisliste. */}
-                  <p className="lg:col-span-5 text-[13px] text-black/45 font-light leading-[1.8] mt-2 lg:mt-0">
-                    {z.satz}
-                  </p>
+                  {/* Der Preis steht im Markup vor dem Satz, damit er auf dem
+                      Telefon in dieselbe Zeile rutscht wie der Name. Am
+                      Bildschirm setzt ihn `col-start-11` wieder ganz nach
+                      rechts.
 
-                  <p className="lg:col-span-2 text-[11px] text-black/30 font-light mt-2 lg:mt-0 tabular-nums">
-                    {z.anzahl} {z.anzahl === 1 ? 'Modell' : 'Modelle'}
-                  </p>
-
-                  <p className="lg:col-span-2 lg:text-right text-[14px] lg:text-[16px] text-black/70 font-light mt-2 lg:mt-0 tabular-nums">
+                      Rechtsbündig und mit gleichen Ziffernbreiten: Eine
+                      Preisspalte, in der die Zahlen nicht untereinander
+                      stehen, ist keine Spalte — und genau das Untereinander
+                      ist der Grund, warum hier ein Register steht und keine
+                      Kacheln. */}
+                  <p className="text-right tabular-nums text-[15px] lg:text-[16px] text-black/70 font-light lg:col-span-2 lg:col-start-11">
                     {z.preis ? `ab ${z.preis}` : 'auf Anfrage'}
+                  </p>
+
+                  {/* Der Satz zur Machart: auf dem Telefon über beide Spalten
+                      unter der Kopfzeile, am Bildschirm in derselben Zeile
+                      zwischen Name und Preis. Ohne ihn wäre das Register
+                      eine Preisliste. */}
+                  <p className="col-span-2 text-[13px] text-black/45 font-light leading-[1.8] lg:col-span-5 lg:col-start-6 lg:row-start-1">
+                    {z.satz}
                   </p>
                 </div>
               </button>
@@ -127,15 +148,19 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt }
         )}
 
         <Enthuellen verzoegerung={180}>
-          <div className="mt-10 lg:mt-14 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-5">
-            <p className="text-[12px] text-black/40 font-light leading-[1.9] max-w-md">
+          {/* Auf dem Telefon steht die Tür über dem Kleingedruckten
+              (`order`): Wer bis hierher gescrollt ist, sucht den Weg in den
+              Katalog und nicht den Satz über den Versand. Am Bildschirm
+              stehen beide nebeneinander, und dort gilt die Leserichtung. */}
+          <div className="mt-10 lg:mt-14 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-6 sm:gap-5">
+            <p className="order-2 sm:order-none text-[12px] text-black/40 font-light leading-[1.9] max-w-md">
               Im Preis: Versand innerhalb Deutschlands. Stimmt die Passform nicht,
               fertigen wir neu, ohne Kosten für dich.
             </p>
             <button
               type="button"
               onClick={zumKatalog}
-              className="group shrink-0 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
+              className="group order-1 sm:order-none shrink-0 self-start bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
               style={{ letterSpacing: '0.22em' }}
             >
               <span className="relative pb-1">
