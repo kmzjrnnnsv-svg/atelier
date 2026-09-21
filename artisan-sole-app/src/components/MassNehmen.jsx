@@ -36,14 +36,30 @@ import { useWenigerBewegung } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 /* Vor- und Nachlauf, damit die Folge nicht anfängt, bevor der Abschnitt im
-   Bild ist, und am Ende einen Moment stehen bleibt. */
-const VORLAUF = 0.10
-const NACHLAUF = 0.12
+   Bild ist, und am Ende einen Moment stehen bleibt.
 
-/* Strecke je Schritt. Knapper als bei den anderen drei Folgen (0,40 bis
-   0,50): Hier baut sich nichts auf, es wechselt das Bild. Wer wenig Weg
-   braucht, darf nicht viel verlangen. */
-const PRO_SCHRITT = 0.34
+   Der Nachlauf war 0,12 und ist kürzer geworden — siehe die Rechnung unten.
+   Er und der Vorlauf nehmen dem mittleren Schritt am meisten weg: Der erste
+   und der letzte bekommen zusätzlich die Strecke, auf der die Bühne noch
+   nicht oder nicht mehr klebt, der mittlere nichts davon. */
+const VORLAUF = 0.10
+const NACHLAUF = 0.08
+
+/* Strecke je Schritt.
+
+   Hier stand 0,34 — knapper als bei den anderen Folgen, mit dem Gedanken,
+   dass hier nichts aufgebaut wird, sondern nur das Bild wechselt. Nachgemessen
+   war das falsch: Bei 0,34 und drei Schritten bleiben nach Abzug der
+   Bühnenhöhe rund 870 Pixel zum Verteilen, und davon fielen auf den
+   MITTLEREN Schritt 240. Ein Schritt, der 240 Pixel lang ist, wird bei
+   jedem zügigen Wischen übersprungen — wer schnell scrollt, sah „Umriss"
+   und dann „Ballenumfang", und das Lineal nie.
+   
+   Der erste und der letzte Schritt fallen das nicht auf, weil sie die
+   Strecke davor und danach mitbekommen, auf der die Bühne noch nicht oder
+   nicht mehr klebt. Gemessen wird deshalb am mittleren. Mit 0,60 bekommt
+   er rund 400 Pixel, also etwa einen halben Bildschirm. */
+const PRO_SCHRITT = 0.60
 
 function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
@@ -79,7 +95,7 @@ function OhneBewegung({ kopf, fuss }) {
       <div className="max-w-5xl mx-auto">
         {kopf}
         <div className="mt-12 lg:mt-16 text-black">
-          <MassAnleitung className="max-w-2xl mx-auto" />
+          <MassAnleitung className="max-w-[300px] mx-auto" />
         </div>
         <ol className="grid sm:grid-cols-3 gap-x-12 gap-y-8 mt-12 lg:mt-16">
           {MASSNEHMEN.map(s => (
@@ -138,7 +154,14 @@ export default function MassNehmen({ kopf, fuss }) {
             </div>
 
             <div className="lg:col-span-8 text-black">
-              <MassAnleitung schritt={schritt + 1} className="w-full" />
+              {/* Hochformat, 450 zu 569. Ohne Deckel wird aus der vollen
+                  Spaltenbreite eine Zeichnung, die höher ist als das
+                  Fenster — die anderen Tafeln dieser Seite sind breit und
+                  vertragen `w-full`, diese nicht. */}
+              <MassAnleitung
+                schritt={schritt}
+                className="w-full max-w-[236px] sm:max-w-[272px] lg:max-w-[312px] mx-auto"
+              />
 
               {/* Fester Kasten, damit die Zeichnung nicht springt, wenn ein
                   Text eine Zeile länger ist als der andere. */}

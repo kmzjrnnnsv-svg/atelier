@@ -27,6 +27,23 @@ export const TAFELFARBEN = {
 }
 
 /**
+ * Die Mappe auf hellem Grund.
+ *
+ * Wie die dunkle Fassung darunter, nur andersherum: Teile, die mit
+ * `currentColor` malen, brauchen eine Farbe für die Zeichnung und eine für
+ * die Beschriftung. Gebraucht wird sie beim Maßnehmen — das Kapitel steht
+ * auf #fafaf9.
+ *
+ * Der Wert ist nicht schwarz, sondern dasselbe warme Dunkel wie `--as-line`
+ * oben, eine Spur aufgehellt. Reines Schwarz auf gebrochenem Weiß sieht
+ * hart aus und gehört nicht zu dieser Seite.
+ */
+export const TAFELFARBEN_HELL = {
+  color: '#3a362e',         // die Zeichnung selbst
+  '--as-label': '#6d6658',  // Beschriftung und Führungsstriche
+}
+
+/**
  * Dieselbe Tafel auf dunklem Grund.
  *
  * Der Querschnitt im Handwerkskapitel steht auf #111. Seine Teile malen mit

@@ -82,7 +82,9 @@ export default function MassHilfe({ className = '' }) {
           </div>
 
           <div className="mt-3 text-black">
-            <MassAnleitung schritt={schritt + 1} className="w-full max-w-sm" />
+            {/* Klein halten: Das Feld, um das es geht, steht darüber und
+                soll im Bild bleiben. */}
+            <MassAnleitung schritt={schritt} className="w-full max-w-[186px]" />
           </div>
 
           {/* Fester Kasten, damit das Bild beim Wechsel nicht springt. */}
