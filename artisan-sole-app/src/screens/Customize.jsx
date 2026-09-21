@@ -108,6 +108,7 @@ import { useAuth } from '../context/AuthContext'
 import ShoeName, { cleanShoeName } from '../lib/shoeName'
 import CustomRequestModal from '../components/CustomRequestModal'
 import ShoeModelViewer from '../components/ShoeModelViewer'
+import MassHilfe from '../components/MassHilfe'
 import { newDraftId, saveDraft, flushDraft, findOpenDraft, discardDraft, markInCart } from '../lib/configDraft'
 
 // ── Swipe: wische links/rechts um Option zu wechseln ────────────────────────
@@ -752,8 +753,14 @@ export default function Customize() {
                   {measSaving ? '…' : 'Übernehmen'}
                 </button>
               </div>
+              {/* Die Anleitung steht unter den Feldern und nicht darüber:
+                  Wer seine Maße kennt, tippt sie ein und ist fertig; wer sie
+                  nicht kennt, sucht genau hier nach dem Grund, warum er
+                  gerade nicht weiterkommt. Siehe MassHilfe. */}
+              <MassHilfe className="mt-4 pt-3 border-t border-black/[0.08]" />
+
               {footMeasurements?.foot_length_mm && (
-                <button type="button" onClick={() => setMeasOpen(false)} className="mt-2 text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">
+                <button type="button" onClick={() => setMeasOpen(false)} className="mt-3 text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">
                   Abbrechen
                 </button>
               )}

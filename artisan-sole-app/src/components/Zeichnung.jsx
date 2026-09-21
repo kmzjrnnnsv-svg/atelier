@@ -75,19 +75,37 @@ export function Lage({ d, fuellung = 0.14, kante = 0.4, strich = 1 }) {
  * eine. Zwei kurze Querstriche sagen dasselbe und können nicht kollidieren.
  */
 export function Massband({ x1, y1, x2, y2, quer = 5 }) {
+  // ── Warum hier umgerechnet wird ──────────────────────────────────────
+  //
+  // Weil es sonst falsch war, und zwar unbemerkt. Geschrieben wird dieses
+  // Bauteil als `<Massband x1="196" y1="34" … />` — die Werte kommen also
+  // als Zeichenketten herein. In `x2 - x1` macht das nichts, das Minus
+  // rechnet von sich aus um. In `x1 + qx` macht es alles kaputt: Aus
+  // "390" + (-9) wird die Zeichenkette "390-9", und der Pfad lautet dann
+  // `M 399 58 L 390-9 580`. So etwas zeichnet der Browser nicht, er
+  // verschluckt es — die Maßlinie stand da, ihre beiden Endstriche nicht.
+  //
+  // Der Fehler saß von Anfang an drin und hat in jeder Zeichnung dieser
+  // Seite die Endstriche gefressen. Deshalb steht die Umrechnung hier und
+  // nicht bei den Aufrufern: Ein Baustein, der nur mit Zahlen umgehen
+  // kann, aber wie Schriftzeichen geschrieben wird, ist eine Falle, die
+  // beim nächsten Mal wieder zuschnappt.
+  const ax = Number(x1), ay = Number(y1)
+  const bx = Number(x2), by = Number(y2)
+
   // Der Endstrich steht senkrecht auf der Maßlinie, gleich in welche
   // Richtung sie läuft.
-  const dx = x2 - x1
-  const dy = y2 - y1
+  const dx = bx - ax
+  const dy = by - ay
   const laenge = Math.hypot(dx, dy) || 1
   const qx = (-dy / laenge) * quer
   const qy = (dx / laenge) * quer
 
   return (
     <g stroke="currentColor" strokeOpacity="0.55" strokeWidth="1" fill="none">
-      <path d={`M ${x1} ${y1} L ${x2} ${y2}`} />
-      <path d={`M ${x1 - qx} ${y1 - qy} L ${x1 + qx} ${y1 + qy}`} />
-      <path d={`M ${x2 - qx} ${y2 - qy} L ${x2 + qx} ${y2 + qy}`} />
+      <path d={`M ${ax} ${ay} L ${bx} ${by}`} />
+      <path d={`M ${ax - qx} ${ay - qy} L ${ax + qx} ${ay + qy}`} />
+      <path d={`M ${bx - qx} ${by - qy} L ${bx + qx} ${by + qy}`} />
     </g>
   )
 }
