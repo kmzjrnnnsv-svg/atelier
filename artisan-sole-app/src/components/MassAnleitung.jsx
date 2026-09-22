@@ -1,144 +1,92 @@
 /**
  * MassAnleitung — wie man die zwei Maße nimmt, in drei Bildern.
  *
- * ── Warum nicht dieselbe Zeichnung wie FussMass ───────────────────────────
+ * ── Was hier vorher stand ─────────────────────────────────────────────────
  *
- * FussMass zeigt, WELCHE zwei Maße genommen werden: eine Skizze mit Länge
- * und Umfang, beide eingetragen. Das beantwortet „was misst ihr" und nichts
- * weiter. Wer noch nie Maß genommen hat, steht danach vor der Frage, die
- * wirklich zählt: wie denn.
+ * Eine selbstgezeichnete Fassung: Papier als Viereck, Fuß aus der
+ * Maßskizze, ein Bleistift aus vier Linien. Sie hat ihren Zweck erfüllt und
+ * ist ersetzt, sobald die richtige Mappe da war. Hier liegen jetzt acht
+ * Teile aus der Zeichenmappe (zeichnungen/fussTeile.js), alle im selben
+ * Ausschnitt und schon an der richtigen Stelle.
  *
- * Deshalb hier drei Bilder statt eines: Blatt und Stift, dann die zwei
- * Striche und das Lineal, dann das Maßband. Es ist dasselbe Verfahren, das
- * jeder Schuhmacher aufschreibt — Umriss nachzeichnen, Länge zwischen zwei
- * Marken messen, Umfang mit dem Band.
+ * ── Der Ablauf ────────────────────────────────────────────────────────────
  *
- * ── Drei Bilder in einem Rahmen ───────────────────────────────────────────
+ * 1  Papier liegt da, der Fuß kommt von oben darauf, der Bleistift
+ *    erscheint an der Kontur — und die Kontur wird gezeichnet, nicht
+ *    eingeblendet (`zeichnen`, siehe Zeichentafel).
+ * 2  Fuß und Stift gehen weg, die Bleistiftlinie bleibt stehen. Die zwei
+ *    Markierungen kommen nacheinander, dann schiebt sich das Lineal längs
+ *    herein.
+ * 3  Markierungen und Lineal gehen, der Fuß kommt zurück, das Maßband legt
+ *    sich quer über den Ballen.
  *
- * Alle drei liegen übereinander im selben Ausschnitt und werden geblendet,
- * statt nebeneinanderzustehen. Nebeneinander wäre jedes ein Drittel so groß
- * — auf dem Telefon unlesbar —, und die Folge würde ihren Sinn verlieren:
- * Man soll einen Handgriff nach dem anderen sehen, nicht drei auf einmal.
+ * Der Fuß steht damit in Schritt 1 und 3, aber nicht in 2. Dafür gibt es
+ * `nur` im Plan — eine Aufzählung statt einer Strecke. Ohne das müsste
+ * derselbe Fuß zweimal in der Mappe liegen.
  *
- * Der Rahmen bleibt dabei fest. Springt der Ausschnitt zwischen den Bildern,
- * sieht es aus, als wechselte das Thema, und nicht, als ginge es weiter.
+ * ── Einfarbig ─────────────────────────────────────────────────────────────
  *
- * ── Was nicht dargestellt ist ─────────────────────────────────────────────
- *
- * Keine Zahlen, keine Millimeter, keine Größentabelle. Die Zeichnung zeigt
- * Handgriffe; was dabei herauskommt und wie genau es sein muss, steht im
- * Text daneben (lib/massSchritte.js).
+ * Die Mappe sieht für Markierungen und Maßband einen Akzentton vor
+ * (`--as-accent`, vorgeschlagen war ein Terrakotta). Diese Seite setzt ihn
+ * nicht: Sie ist von der ersten Zeichnung an einfarbig, und ein zweiter
+ * Farbton wäre hier das einzige Bunt auf der ganzen Seite. Der Rückfall auf
+ * `currentColor` genügt — die Markierungen heben sich ab, weil sie als
+ * Einzige voll deckend und doppelt so stark gezeichnet sind.
  */
-import { Beschriftung, Lage, Massband, Tafel } from './Zeichnung'
-import { FUSS_OBEN, FUSS_SCHNITT, MASSBAND_UM_DEN_BALLEN } from '../zeichnungen/fussFormen'
+import Zeichentafel from './Zeichentafel'
+import { VIEWBOX, STIL, TEILE, REIHENFOLGE } from '../zeichnungen/fussTeile'
+import { TAFELFARBEN_HELL } from '../zeichnungen/farben'
 
-/* Der Fuß von oben, hineingerückt und etwas verkleinert. Ein Wert an einer
-   Stelle: Wer die Zahlen in jedes Bild einzeln schreibt, hat nach der ersten
-   Korrektur drei verschieden große Füße. */
-const FUSS_LAGE = 'translate(152 26) scale(0.82)'
+/* Die Szene ist 569 Einheiten hoch. Ein Achtel davon ist der Weg, den ein
+   Teil reist — dieselbe Regel wie in den anderen Tafeln dieser Seite. */
+const WEG = 70
+const DAUER = 700
 
-/* Der abgezeichnete Umriss: derselbe Fuß, eine Spur größer. Genau so sieht
-   es aus, wenn man mit dem Stift außen herumfährt — ein Bleistift hat eine
-   Dicke, und man hält ihn nie ganz senkrecht. */
-const UMRISS_LAGE = 'translate(146 20) scale(0.855)'
+/* Die Kontur ist lang. In der üblichen Dauer herumgefahren sieht es aus wie
+   ein Zucken, nicht wie jemand, der zeichnet. */
+const KONTUR_DAUER = 1600
 
-/* Das Blatt Papier. Leicht gedreht, weil ein Blatt auf dem Boden nie gerade
-   liegt — und weil eine Zeichnung, in der alles rechtwinklig steht, wie ein
-   Bauplan aussieht und nicht wie eine Anleitung. */
-const BLATT = 'M 168 30 L 344 38 L 336 246 L 160 238 Z'
-
-/* Der Bleistift, rechts am Fuß, Spitze auf dem Umriss. Sechseckig angedeutet
-   durch den Mittelstrich — ohne ihn ist es ein Stab. */
-const STIFT_KOERPER = 'M 322 96 L 338 100 L 314 186 L 298 182 Z'
-const STIFT_SPITZE  = 'M 298 182 L 314 186 L 302 206 Z'
-const STIFT_MITTE   = 'M 330 98 L 306 184'
-
-const SZENEN = [1, 2, 3]
-const UEBERBLENDUNG = { transition: 'opacity 620ms cubic-bezier(.22,1,.36,1)' }
+const PLAN = {
+  'papier':            { ab: 1, aus: 'still' },
+  'kontur':            { ab: 1, aus: 'still', zeichnen: true, dauer: KONTUR_DAUER },
+  // Der Fuß steht auf dem Papier, geht zum Messen weg und kommt fürs
+  // Maßband zurück.
+  'fuss':              { nur: [1, 3], ab: 1, aus: 'oben', dauer: 760 },
+  // Der Stift kommt eine Idee später als der Fuß: erst steht man, dann
+  // greift man zum Bleistift.
+  'stift':             { nur: [1], ab: 1, aus: 'oben', verzug: 240 },
+  'markierung-ferse':  { nur: [2], ab: 2, aus: 'still', verzug: 120 },
+  'markierung-spitze': { nur: [2], ab: 2, aus: 'still', verzug: 300 },
+  // Das Lineal schiebt sich längs herein, in der Richtung, in der es misst.
+  'lineal':            { nur: [2], ab: 2, aus: 'unten', verzug: 460, dauer: 820 },
+  'massband':          { nur: [3], ab: 3, aus: 'rechts', verzug: 300, dauer: 820 },
+}
 
 /**
- * @param {number|null} [schritt] 1 Umriss, 2 Länge, 3 Umfang. `null` zeigt
- *   das letzte Bild — der Fall ohne Folge und der des Vorrenderers.
+ * @param {number|null} [schritt] 0 Kontur, 1 Länge, 2 Umfang — von null an
+ *   gezählt wie bei allen Tafeln dieser Seite, weil Zeichentafel selbst
+ *   eins dazuzählt. Hier stand kurzzeitig eine Zählung von eins an, und die
+ *   beiden Erhöhungen summierten sich: Aus Schritt 3 wurde `data-schritt=4`,
+ *   und weil es dafür keine Regel gibt, stand die Tafel leer da.
+ *
+ *   `null` zeigt den letzten Schritt — der Fall ohne Folge und der des
+ *   Vorrenderers.
  */
 export default function MassAnleitung({ className = '', schritt = null }) {
-  const jetzt = schritt == null ? 3 : Math.min(3, Math.max(1, schritt))
-
   return (
-    <Tafel viewBox="0 0 520 268" className={className}>
-      {SZENEN.map(n => (
-        <g
-          key={n}
-          style={{ ...UEBERBLENDUNG, opacity: n === jetzt ? 1 : 0 }}
-          aria-hidden={n !== jetzt}
-          pointerEvents="none"
-        >
-          {/* ── Das Blatt. In allen drei Bildern dasselbe, damit der Boden
-                unter der Folge nicht wechselt. Im dritten fehlt es: Dort
-                steht man nicht mehr auf dem Papier. */}
-          {n < 3 && (
-            <path d={BLATT} fill="currentColor" fillOpacity="0.045"
-                  stroke="currentColor" strokeOpacity="0.28" strokeWidth="1" />
-          )}
-
-          {/* ── 1 · Der Umriss wird gezeichnet ───────────────────────── */}
-          {n === 1 && (
-            <>
-              <g transform={UMRISS_LAGE}>
-                <path d={FUSS_OBEN} fill="none" stroke="currentColor"
-                      strokeOpacity="0.5" strokeWidth="1.4" strokeDasharray="5 4" />
-              </g>
-              <g transform={FUSS_LAGE}>
-                <Lage d={FUSS_OBEN} fuellung={0.12} kante={0.45} />
-              </g>
-              <path d={STIFT_KOERPER} fill="currentColor" fillOpacity="0.12"
-                    stroke="currentColor" strokeOpacity="0.55" strokeWidth="1" />
-              <path d={STIFT_SPITZE} fill="currentColor" fillOpacity="0.55"
-                    stroke="currentColor" strokeOpacity="0.55" strokeWidth="1" />
-              <path d={STIFT_MITTE} stroke="currentColor" strokeOpacity="0.3" strokeWidth="1" fill="none" />
-              <Beschriftung x="20" y="44">Umriss</Beschriftung>
-              <Beschriftung x="380" y="120">Stift senkrecht</Beschriftung>
-            </>
-          )}
-
-          {/* ── 2 · Zwei Striche, dazwischen gemessen ────────────────── */}
-          {n === 2 && (
-            <>
-              <g transform={UMRISS_LAGE}>
-                <path d={FUSS_OBEN} fill="none" stroke="currentColor"
-                      strokeOpacity="0.4" strokeWidth="1.4" strokeDasharray="5 4" />
-              </g>
-              {/* Die zwei Marken: an der Ferse und an der längsten Zehe.
-                  Quer über das Blatt, wie man sie mit dem Lineal zieht. */}
-              <path d="M 166 220 L 340 226" stroke="currentColor" strokeOpacity="0.75" strokeWidth="1.6" fill="none" />
-              <path d="M 170 52 L 344 60" stroke="currentColor" strokeOpacity="0.75" strokeWidth="1.6" fill="none" />
-              <Massband x1="390" y1="58" x2="390" y2="224" quer={9} />
-              <Beschriftung x="406" y="146" stark>Länge</Beschriftung>
-              <Beschriftung x="20" y="238">Ferse</Beschriftung>
-              <Beschriftung x="20" y="44">Längste Zehe</Beschriftung>
-            </>
-          )}
-
-          {/* ── 3 · Das Maßband um den Ballen ────────────────────────── */}
-          {n === 3 && (
-            <g transform="translate(-388 -66) scale(1.7)">
-              <Lage d={FUSS_SCHNITT} fuellung={0.12} kante={0.45} />
-              <path d="M 292 164 L 470 164" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1" fill="none" />
-              <path
-                d={MASSBAND_UM_DEN_BALLEN}
-                stroke="currentColor" strokeOpacity="0.85" strokeWidth="1.5"
-                strokeDasharray="3 3.5" fill="none" strokeLinecap="round"
-              />
-            </g>
-          )}
-          {n === 3 && (
-            <>
-              <Beschriftung x="20" y="44">Breiteste Stelle</Beschriftung>
-              <Beschriftung x="500" y="44" anker="end" stark>Ballenumfang</Beschriftung>
-              <Beschriftung x="260" y="248" anker="middle">Einmal ganz herum</Beschriftung>
-            </>
-          )}
-        </g>
-      ))}
-    </Tafel>
+    <Zeichentafel
+      kennung="fm"
+      viewBox={VIEWBOX}
+      weg={WEG}
+      dauer={DAUER}
+      stil={STIL}
+      teile={TEILE}
+      reihenfolge={REIHENFOLGE}
+      plan={PLAN}
+      schritt={schritt}
+      schritte={3}
+      farben={TAFELFARBEN_HELL}
+      className={className}
+    />
   )
 }

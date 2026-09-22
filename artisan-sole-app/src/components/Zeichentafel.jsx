@@ -134,10 +134,22 @@ const richtungAus = (aus, weg) => ({
   still:  'none',
 }[aus] || 'none')
 
-/** Die Schritte, in denen ein Eintrag sichtbar ist. */
+/**
+ * Die Schritte, in denen ein Eintrag sichtbar ist.
+ *
+ * Normalfall ist eine Strecke: ab hier, bis dort. `nur` bricht damit und
+ * zählt die Schritte einzeln auf — gebraucht für Teile, die zwischendurch
+ * weggehen und wiederkommen. Beim Maßnehmen ist das der Fuß: Er steht im
+ * ersten Bild auf dem Papier, geht im zweiten weg, damit man die
+ * Bleistiftlinie ausmessen kann, und kommt im dritten für das Maßband
+ * zurück. Als Strecke ließe sich das nur beschreiben, indem man dasselbe
+ * Teil zweimal in die Mappe legt.
+ */
 const sichtbarIn = (eintrag, schritte) =>
   Array.from({ length: schritte }, (_, i) => i + 1)
-    .filter(s => s >= eintrag.ab && s <= (eintrag.bis ?? schritte))
+    .filter(s => (Array.isArray(eintrag.nur)
+      ? eintrag.nur.includes(s)
+      : s >= eintrag.ab && s <= (eintrag.bis ?? schritte)))
 
 /**
  * @param {string} kennung Zwei Buchstaben je Szene, damit die erzeugten
@@ -154,10 +166,13 @@ const sichtbarIn = (eintrag, schritte) =>
  * @param {number} [weg] Wie weit ein Teil reist, in Einheiten der Szene.
  *   Rund ein Achtel ihrer Höhe.
  * @param {number} [dauer] Wie lange es dafür braucht.
- * @param {Object} plan Name → `{ ab, bis?, aus, verzug?, weg?, dauer?,
- *   rueckenAb?, ruecken? }`. `ab` ist der erste Schritt (eins-basiert), in
- *   dem das Teil dasteht. `aus` sagt, woher es kommt. `verzug` in
- *   Millisekunden, für Teile, die zusammen kommen und trotzdem nacheinander
+ * @param {Object} plan Name → `{ ab, bis?, nur?, aus, verzug?, weg?, dauer?,
+ *   zeichnen?, rueckenAb?, ruecken? }`. `ab` ist der erste Schritt
+ *   (eins-basiert), in dem das Teil dasteht; `nur` zählt stattdessen
+ *   einzelne Schritte auf, für Teile, die zwischendurch weggehen.
+ *   `zeichnen` zieht die Linien des Teils nach, statt sie einzublenden —
+ *   das Teil braucht dafür `pathLength="1"`. `aus` sagt, woher es kommt.
+ *   `verzug` in Millisekunden, für Teile, die zusammen kommen und trotzdem nacheinander
  *   landen sollen. `weg` und `dauer` überschreiben die Werte der Szene — für
  *   das eine Stück, das nicht einblendet, sondern einfährt.
  * @param {Array} marken `{ name, zusatz, ab, bis?, punkt: [x,y], text: [x,y],
@@ -240,6 +255,29 @@ function tafelBauen({ kennung, stil, teile, reihenfolge, plan, marken, extra, ex
         + '{opacity:1;transform:none}'
     }).filter(Boolean),
 
+    // Teile, die gezeichnet werden statt aufzublenden.
+    //
+    // Eine Bleistiftlinie, die erscheint, ist eine Linie; eine, die sich
+    // aufbaut, ist jemand, der zeichnet. Möglich wird das durch
+    // `pathLength="1"` in der Mappe: Damit ist die Länge jedes Pfades
+    // rechnerisch eins, und ein Strichmuster von 1 mit einem Versatz von 1
+    // versteckt ihn ganz. Läuft der Versatz auf 0, wächst er von vorn.
+    //
+    // Die Dauer ist ein Vielfaches der üblichen: Ein Umriss ist lang, und
+    // in 620 Millisekunden herumgefahren sieht es aus wie ein Zucken.
+    ...reihenfolge.filter(n => plan[n].zeichnen).flatMap((n) => {
+      const auf = sichtbarIn(plan[n], schritte)
+      const eigen = plan[n].dauer ?? dauer
+      return [
+        `#${teilId(n)} path{stroke-dasharray:1;stroke-dashoffset:1;`
+          + `transition:stroke-dashoffset ${eigen}ms ${KURVE}}`,
+        auf.length
+          ? auf.map(s => `[data-schritt="${s}"] #${teilId(n)} path`).join(',')
+            + '{stroke-dashoffset:0}'
+          : '',
+      ].filter(Boolean)
+    }),
+
     // Was im letzten Schritt abrückt — nach den Regeln oben, damit es gewinnt
     ...reihenfolge.filter(n => plan[n].rueckenAb).map(n =>
       `[data-schritt="${plan[n].rueckenAb}"] #${teilId(n)}{transform:translateY(${plan[n].ruecken}px)}`),
@@ -263,7 +301,8 @@ function tafelBauen({ kennung, stil, teile, reihenfolge, plan, marken, extra, ex
 
     // Wer keine Bewegung will, bekommt nur die Überblendung.
     '@media (prefers-reduced-motion:reduce){.as-teil,.as-marke,.as-extra{transform:none!important}'
-      + '.as-strich{transition:none;stroke-dashoffset:0}}',
+      + '.as-strich{transition:none;stroke-dashoffset:0}'
+      + '.as-teil path{transition:none!important;stroke-dashoffset:0!important}}',
   ].filter(Boolean).join('')
 
   return `${stil}${teileMarkup}`
