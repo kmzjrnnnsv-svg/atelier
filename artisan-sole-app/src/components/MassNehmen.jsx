@@ -75,9 +75,9 @@ function Folgeliste({ schritt }) {
         const jetzt = i === schritt
         return (
           <li key={s.titel} className="transition-opacity duration-500" style={{ opacity: jetzt ? 1 : 0.3 }}>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-black/45">{s.wann}</p>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
             <p className={`satz-titel leading-[1.3] mt-1.5 transition-all duration-500 ${
-              jetzt ? 'text-[19px] lg:text-[22px] text-black' : 'text-[17px] lg:text-[19px] text-black/70'
+              jetzt ? 'text-[19px] lg:text-[22px] text-white' : 'text-[17px] lg:text-[19px] text-white/70'
             }`}>
               {s.titel}
             </p>
@@ -94,19 +94,19 @@ function OhneBewegung({ kopf, fuss }) {
     <div className="px-5 lg:px-16 py-16 lg:py-28">
       <div className="max-w-5xl mx-auto">
         {kopf}
-        <div className="mt-12 lg:mt-16 text-black">
-          <MassAnleitung className="max-w-[300px] mx-auto" />
+        <div className="mt-12 lg:mt-16 text-white">
+          <MassAnleitung dunkel className="max-w-[300px] mx-auto" />
         </div>
         <ol className="grid sm:grid-cols-3 gap-x-12 gap-y-8 mt-12 lg:mt-16">
           {MASSNEHMEN.map(s => (
             <li key={s.titel}>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-black/45">{s.wann}</p>
-              <p className="satz-titel text-[19px] lg:text-[22px] text-black mt-2">{s.titel}</p>
-              <p className="text-[13px] text-black/50 font-light leading-[1.85] mt-2">{s.text}</p>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
+              <p className="satz-titel text-[19px] lg:text-[22px] text-white mt-2">{s.titel}</p>
+              <p className="text-[13px] text-white/50 font-light leading-[1.85] mt-2">{s.text}</p>
             </li>
           ))}
         </ol>
-        <p className="text-[13px] text-black/45 font-light leading-[1.9] mt-10 max-w-lg">
+        <p className="text-[13px] text-white/45 font-light leading-[1.9] mt-10 max-w-lg">
           {BEIDE_FUESSE}
         </p>
         {fuss && <div className="mt-14 lg:mt-20">{fuss}</div>}
@@ -153,12 +153,13 @@ export default function MassNehmen({ kopf, fuss }) {
               <Folgeliste schritt={schritt} />
             </div>
 
-            <div className="lg:col-span-8 text-black">
+            <div className="lg:col-span-8 text-white">
               {/* Hochformat, 450 zu 569. Ohne Deckel wird aus der vollen
                   Spaltenbreite eine Zeichnung, die höher ist als das
                   Fenster — die anderen Tafeln dieser Seite sind breit und
                   vertragen `w-full`, diese nicht. */}
               <MassAnleitung
+                dunkel
                 schritt={schritt}
                 className="w-full max-w-[236px] sm:max-w-[272px] lg:max-w-[312px] mx-auto"
               />
@@ -173,9 +174,9 @@ export default function MassNehmen({ kopf, fuss }) {
                     className="absolute inset-0 transition-opacity duration-500"
                     style={{ opacity: i === schritt ? 1 : 0, pointerEvents: i === schritt ? 'auto' : 'none' }}
                   >
-                    <p className="lg:hidden text-[10px] uppercase tracking-[0.24em] text-black/45">{s.wann}</p>
-                    <p className="lg:hidden satz-titel text-[20px] text-black leading-[1.3] mt-1.5">{s.titel}</p>
-                    <p className="text-[13px] lg:text-[14px] text-black/55 font-light leading-[1.85] mt-2.5 lg:mt-0 max-w-xl">
+                    <p className="lg:hidden text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
+                    <p className="lg:hidden satz-titel text-[20px] text-white leading-[1.3] mt-1.5">{s.titel}</p>
+                    <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.85] mt-2.5 lg:mt-0 max-w-xl">
                       {s.text}
                     </p>
                   </div>
@@ -184,7 +185,7 @@ export default function MassNehmen({ kopf, fuss }) {
 
               {/* Gilt für alle drei Schritte und steht deshalb fest da,
                   nicht in der wechselnden Folge. */}
-              <p className="text-[12px] lg:text-[13px] text-black/40 font-light leading-[1.85] mt-5 max-w-xl">
+              <p className="text-[12px] lg:text-[13px] text-white/40 font-light leading-[1.85] mt-5 max-w-xl">
                 {BEIDE_FUESSE}
               </p>
             </div>

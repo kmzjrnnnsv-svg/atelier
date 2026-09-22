@@ -1431,7 +1431,7 @@ export default function Startseite() {
              Mitte, dadurch entsteht unter ihm eine offene Ecke. */
           if (i % 4 === 1) {
             return (
-              <section key={schuh.id} className="bg-[#F5F3F0] px-5 lg:px-16 py-14 lg:py-20">
+              <section key={schuh.id} className="bg-white px-5 lg:px-16 py-14 lg:py-20">
                 <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-start max-w-6xl mx-auto">
                   <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:pt-10">
                     {marke}
@@ -1520,7 +1520,7 @@ export default function Startseite() {
              Nachsatz. Die Form leitet zur Auswahl über — sie liest sich
              schon wie eine Seite, auf der mehreres nebeneinander steht. */
           return (
-            <section key={schuh.id} className="bg-[#F5F3F0] py-14 lg:py-20">
+            <section key={schuh.id} className="bg-white py-14 lg:py-20">
               <Enthuellen>
                 <div className="px-5 lg:px-16 text-center max-w-3xl mx-auto">
                   {marke}
@@ -1562,7 +1562,7 @@ export default function Startseite() {
   const zurKollektion = () => navigate('/collection')
 
   return (
-    <div className="min-h-full bg-white">
+    <div className="min-h-full bg-[#F4F2ED]">
 
       {/* ══ 1 · Erster Blick ══════════════════════════════════════════════
           Ein Satz, fünf Angaben, zwei Wege — und kein Bild.
@@ -1682,14 +1682,16 @@ export default function Startseite() {
           für gerade jetzt gibt. Ohne Haarlinie oben — darüber steht die
           Kante des dunklen Aufmachers, und zwei Trennungen übereinander sind
           eine zu viel. */}
-      <ModellStreifen
-        schuhe={kopfModelle}
-        gesamt={shoes.length}
-        randOben={false}
-        satz="Zwei, die immer gehen — und zwei für die Jahreszeit."
-        oeffnen={sch => navigate(shoePath(sch))}
-        zumKatalog={zurKollektion}
-      />
+      <div className="bg-white">
+        <ModellStreifen
+          schuhe={kopfModelle}
+          gesamt={shoes.length}
+          randOben={false}
+          satz="Zwei, die immer gehen — und zwei für die Jahreszeit."
+          oeffnen={sch => navigate(shoePath(sch))}
+          zumKatalog={zurKollektion}
+        />
+      </div>
 
 
       {/* ══ 2 · Drei Zahlen ═══════════════════════════════════════════════
@@ -1771,14 +1773,16 @@ export default function Startseite() {
           einem Kundenkonto. Ein Streichpreis, den es nicht gibt, wäre auf
           einer Seite, deren Argument die Offenheit ist, der teuerste Satz
           überhaupt. Siehe Angebot.jsx. */}
-      <Angebot
-        zeilen={angebotZeilen}
-        express={expressAngabe}
-        gesamt={shoes.length}
-        oeffnen={sch => navigate(shoePath(sch))}
-        zumKatalog={zurKollektion}
-        zurPassform={() => navigate('/scan')}
-      />
+      <div className="bg-white">
+        <Angebot
+          zeilen={angebotZeilen}
+          express={expressAngabe}
+          gesamt={shoes.length}
+          oeffnen={sch => navigate(shoePath(sch))}
+          zumKatalog={zurKollektion}
+          zurPassform={() => navigate('/scan')}
+        />
+      </div>
 
 
       {/* ══ 4 · Die Teile ════════════════════════════════════════════════
@@ -1802,15 +1806,15 @@ export default function Startseite() {
           Andersherum ging es nicht. Wer den Schnitt zuerst sieht, sieht
           sechs Lagen ineinandergreifen und weiß hinterher nicht, welche
           davon zusammengehören. */}
-      <section className="bg-white border-t border-black/[0.06]">
+      <section className="bg-[#111] text-white">
         <StapelFolge
           kopf={
             <>
-              <Kapitelmarke>Die Teile</Kapitelmarke>
+              <Kapitelmarke hell>Die Teile</Kapitelmarke>
               <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
                 Ein Schuh,<br className="hidden sm:block" /> zwei Teile.
               </h2>
-              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
                 Sieben Lagen, flach übereinandergelegt. Scroll weiter — am Ende
                 siehst du, welche davon ein Leben lang bleiben und welche ein
                 Schuhmacher wechselt.
@@ -1819,15 +1823,16 @@ export default function Startseite() {
           }
           fuss={
             <div className="max-w-3xl">
-              <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5]">
+              <p className="satz-titel text-[18px] lg:text-[24px] text-white/90 leading-[1.5]">
                 Oben, was bleibt. Unten, was gewechselt wird. Dass es diese Linie
                 überhaupt gibt, liegt an einer einzigen Naht.
               </p>
-              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-6">
+              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-6">
                 Die kommt gleich — und mit ihr die Frage, warum wir uns
                 ausgerechnet für diese Machart entschieden haben.
               </p>
               <ZurKollektion
+                hell
                 className="mt-10 lg:mt-12"
                 satz="So gebaut ist jedes Paar, das hier steht."
                 auf={zurKollektion}
@@ -1847,13 +1852,15 @@ export default function Startseite() {
           Modellwahl mit allen achtundvierzig steht weiter unten, und
           dieselbe Geste zweimal wäre ein Katalog an zwei Stellen. Siehe
           ModellStreifen. */}
-      <ModellStreifen
-        schuhe={streifenModelle}
-        gesamt={shoes.length}
-        satz="Jedes dieser Paare ist so gebaut — und lässt sich so wieder aufmachen."
-        oeffnen={sch => navigate(shoePath(sch))}
-        zumKatalog={zurKollektion}
-      />
+      <div className="bg-white">
+        <ModellStreifen
+          schuhe={streifenModelle}
+          gesamt={shoes.length}
+          satz="Jedes dieser Paare ist so gebaut — und lässt sich so wieder aufmachen."
+          oeffnen={sch => navigate(shoePath(sch))}
+          zumKatalog={zurKollektion}
+        />
+      </div>
 
 
       {/* ══ 5 · Die Machart ══════════════════════════════════════════════
@@ -2035,7 +2042,7 @@ export default function Startseite() {
           Die Saison steht als Feld am Modell und ist im CMS zu ändern
           (lib/saison.js). Führt der Katalog zu einer Saison kein Modell mit
           Beschreibung, fällt die Kollektion weg — sie steht nicht leer da. */}
-      <section>
+      <section className="bg-white">
         {/* Der Einstieg: mittig, viel Luft, ein Gedanke. Er stand links mit
             Vorspann daneben — das liest sich wie ein Artikel, nicht wie der
             Beginn eines Kapitels. */}
@@ -2297,7 +2304,7 @@ export default function Startseite() {
                     aria-hidden="true"
                   />
                   <div className="relative shrink-0">
-                    <span className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full border border-black/15 bg-white text-[10px] text-black/55"
+                    <span className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full border border-black/15 bg-[#F4F2ED] text-[10px] text-black/55"
                           style={{ letterSpacing: '0.12em' }}>
                       {String(i + 1).padStart(2, '0')}
                     </span>
@@ -2414,15 +2421,15 @@ export default function Startseite() {
           mit zwei Maßen weiß sonst niemand, welches gemeint ist.
 
           Siehe MassNehmen und lib/massSchritte.js. */}
-      <section className="bg-[#fafaf9] border-y border-black/[0.06]">
+      <section className="bg-[#111] text-white">
         <MassNehmen
           kopf={
             <>
-              <Kapitelmarke>Maß nehmen</Kapitelmarke>
+              <Kapitelmarke hell>Maß nehmen</Kapitelmarke>
               <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
                 Zwei Zahlen.<br className="hidden sm:block" /> So kommst du dran.
               </h2>
-              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
                 Zehn Minuten, ein Blatt Papier und ein Maßband. Wer kein Maßband
                 hat, nimmt einen Schnürsenkel und legt ihn danach ans Lineal.
               </p>
@@ -2430,15 +2437,16 @@ export default function Startseite() {
           }
           fuss={
             <div className="max-w-3xl">
-              <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5]">
+              <p className="satz-titel text-[18px] lg:text-[24px] text-white/90 leading-[1.5]">
                 Ein halber Zentimeter Abweichung ist in Ordnung. Ein ganzer nicht —
                 das ist eine halbe Größe.
               </p>
-              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-6">
+              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-6">
                 Aus den zwei Zahlen bestimmen wir Leisten, Größe und Weite. Trag sie
                 einmal ein, dann stehen sie bei jeder weiteren Bestellung schon da.
               </p>
               <ZurKollektion
+                hell
                 className="mt-10 lg:mt-12"
                 satz="Gemessen wird einmal, und danach nie wieder."
                 wort="Passform bestimmen"
@@ -2472,26 +2480,25 @@ export default function Startseite() {
           sagen, gilt der Stadt und ist nachzulesen; was über das Warten
           gesagt wird, gilt dem Handwerk und nicht diesem Haus.
 
-          Dunkel gesetzt wie der Aufmacher und das Handwerk. Die drei tragen
-          die Seite, und sie sollen als dieselbe Stimme erkennbar sein. */}
-      <section className="relative overflow-hidden bg-[#111] text-white">
-        <div
-          className="absolute inset-0"
-          style={{ background: 'radial-gradient(110% 80% at 80% 0%, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0) 60%)' }}
-          aria-hidden="true"
-        />
+          Dieses Kapitel stand lange dunkel, wie der Aufmacher und das
+          Handwerk. Seit die Seite drei Gründe hat und jeder etwas bedeutet —
+          Weiß, wo Schuhe angeboten werden, Schwarz unter den Tafeln, Beige
+          für alles, was erzählt —, gehört es zum Beige: Hier bewegt sich
+          nichts und hier steht kein Preis, hier wird erklärt. Schwarz an
+          dieser Stelle hieße, dass gleich eine Zeichnung kommt. */}
+      <section className="border-y border-black/[0.06]">
         <div className="relative px-5 lg:px-16 py-16 lg:py-28">
           <div className="max-w-6xl mx-auto">
             <div className="lg:grid lg:grid-cols-12 lg:gap-16 lg:items-end">
               <Enthuellen className="lg:col-span-6">
-                <Kapitelmarke hell>Almansa · Produktionszeit</Kapitelmarke>
+                <Kapitelmarke>Almansa · Produktionszeit</Kapitelmarke>
                 <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
                   Was in diesen<br className="hidden sm:block" /> vier Wochen passiert.
                 </h2>
               </Enthuellen>
 
               <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
-                <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95]">
+                <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
                   Almansa liegt in der Provinz Albacete und ist eine der Städte, in
                   denen Spanien seine Schuhe macht. Dort wird deiner gebaut — nicht
                   aus einem Regal geholt, sondern angefangen, wenn deine Bestellung
@@ -2506,7 +2513,7 @@ export default function Startseite() {
                 ist, was eine Schwäche in ein Argument verwandelt. Und weil er
                 etwas sagt, das man nur weiß, wenn man zugesehen hat. */}
             <Enthuellen verzoegerung={180}>
-              <p className="satz-titel text-[20px] lg:text-[30px] text-white/90 leading-[1.45] mt-14 lg:mt-24 max-w-3xl">
+              <p className="satz-titel text-[20px] lg:text-[30px] text-black/90 leading-[1.45] mt-14 lg:mt-24 max-w-3xl">
                 Den längsten Teil dieser Zeit steht dein Schuh auf dem Leisten
                 und tut nichts.
               </p>
@@ -2514,7 +2521,7 @@ export default function Startseite() {
 
             <div className="mt-10 lg:mt-14 lg:grid lg:grid-cols-12 lg:gap-16">
               <Enthuellen verzoegerung={220} className="lg:col-span-6">
-                <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95]">
+                <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
                   Zuschneiden und Zwicken sind eine Sache von Tagen. Danach muss das
                   Leder, das über die Form gespannt wurde, sie annehmen. Nimmt man es
                   zu früh herunter, zieht es sich zurück und die Kappe verliert ihre
@@ -2525,7 +2532,7 @@ export default function Startseite() {
               </Enthuellen>
 
               <Enthuellen verzoegerung={280} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
-                <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95]">
+                <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
                   Bis dahin gibt es dein Paar nur als Bestellung. Es liegt in keinem
                   Lager, es wird für niemand sonst gebaut, und es verlässt Almansa in
                   einem einzigen Karton.
@@ -2537,13 +2544,13 @@ export default function Startseite() {
                     Wer das verschweigt und dann fünf Wochen braucht, hat
                     einen Satz gebrochen; wer es hinschreibt, hat keinen. Das
                     ist dieselbe Rechnung wie in Kapitel 10. */}
-                <p className="text-[12px] lg:text-[13px] text-white/45 font-light leading-[1.9] mt-8">
+                <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-[1.9] mt-8">
                   Vier Wochen sind der Normalfall und keine Zusage. Fehlt ein Leder
                   oder muss eine Sohle zweimal gemacht werden, werden fünf daraus.
                   Dann hörst du das von uns, sobald wir es wissen — und nicht erst,
                   wenn du fragst.
                 </p>
-                <p className="text-[11px] text-white/30 font-light leading-[1.9] mt-5">
+                <p className="text-[11px] text-black/35 font-light leading-[1.9] mt-5">
                   Einzelne Modelle sind vorbereitet und in rund zwei Wochen fertig.
                   Am Modell steht, welche.
                 </p>
@@ -2552,7 +2559,6 @@ export default function Startseite() {
 
             <ZurKollektion
               className="mt-14 lg:mt-20"
-              hell
               satz="Angefangen wird, sobald du dich für eine Form entschieden hast."
               auf={zurKollektion}
             />
@@ -2604,15 +2610,15 @@ export default function Startseite() {
 
           Zur Folge selbst — warum sie dieselbe Mechanik hat wie der Aufbau
           und trotzdem anders aussieht — steht alles in PflegeFolge.jsx. */}
-      <section className="bg-[#fafaf9] border-y border-black/[0.06]">
+      <section className="bg-[#111] text-white">
         <PflegeFolge
           kopf={
             <>
-              <Kapitelmarke>Die Pflege</Kapitelmarke>
+              <Kapitelmarke hell>Die Pflege</Kapitelmarke>
               <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
                 Auch diese Haut<br className="hidden sm:block" /> will gepflegt werden.
               </h2>
-              <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
                 Morgens schlüpfst du hinein, tagsüber denkst du nicht an sie, und
                 abends entscheiden fünf Minuten, ob aus der Falte über dem Ballen
                 eine Linie wird oder eine Kerbe.
@@ -2624,14 +2630,14 @@ export default function Startseite() {
               {zubehoer.length > 0 && (
                 <div className="grid sm:grid-cols-3 gap-10 lg:gap-14">
                   {zubehoer.map(({ key, satz, ware }) => (
-                    <div key={key} className="pt-6 border-t border-black/[0.12]">
-                      <p className="satz-titel text-[18px] lg:text-[21px] text-black leading-[1.3]">
+                    <div key={key} className="pt-6 border-t border-white/[0.18]">
+                      <p className="satz-titel text-[18px] lg:text-[21px] text-white leading-[1.3]">
                         {ware.name}
                       </p>
-                      <p className="text-[11px] text-black/40 font-light mt-2">
+                      <p className="text-[11px] text-white/40 font-light mt-2">
                         {euro(ware.price)}
                       </p>
-                      <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.9] mt-4">
+                      <p className="text-[12px] lg:text-[13px] text-white/55 font-light leading-[1.9] mt-4">
                         {satz}
                       </p>
                     </div>
@@ -2643,6 +2649,7 @@ export default function Startseite() {
                   führt — deshalb steht ein anderes Wort darauf. */}
               <ZurKollektion
                 className="mt-14 lg:mt-20"
+                hell
                 satz="Für Stiefel gibt es den hohen Spanner, der auch den Schaft hält."
                 wort="Zubehör ansehen"
                 auf={() => navigate('/accessories')}
@@ -2659,7 +2666,7 @@ export default function Startseite() {
           Kleingedruckten; hier ist sie das Verkaufsargument. Wer „handmade"
           liest und später erfährt, dass Maschinen im Spiel waren, zieht den
           Rest der Zusagen in Zweifel — auch die, die stimmen. */}
-      <section className="bg-[#fafaf9] border-y border-black/[0.06] px-5 lg:px-16 py-16 lg:py-28">
+      <section className="border-y border-black/[0.06] px-5 lg:px-16 py-16 lg:py-28">
         <div className="max-w-2xl mx-auto">
           <Enthuellen>
             <Kapitelmarke>In eigener Sache</Kapitelmarke>

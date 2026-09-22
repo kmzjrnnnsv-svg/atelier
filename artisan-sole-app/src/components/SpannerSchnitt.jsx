@@ -48,7 +48,7 @@
  */
 import Zeichentafel from './Zeichentafel'
 import { STIL, TEILE, REIHENFOLGE } from '../zeichnungen/pflegeTeile'
-import { TAFELFARBEN } from '../zeichnungen/farben'
+import { TAFELFARBEN_STUFEN_DUNKEL } from '../zeichnungen/farben'
 
 /* Szenenausschnitt der Mappe ist `12 26 766 328`. Oben kommen 78 Einheiten
    für die Beschriftung dazu, unten 14 für den Schatten der Sohle.
@@ -128,7 +128,7 @@ export default function SpannerSchnitt({ className = '', schritt = null, schmal 
       marken={MARKEN}
       schritt={schritt}
       schritte={5}
-      farben={TAFELFARBEN}
+      farben={TAFELFARBEN_STUFEN_DUNKEL}
       className={className}
     />
   )

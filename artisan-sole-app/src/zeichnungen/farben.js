@@ -27,6 +27,41 @@ export const TAFELFARBEN = {
 }
 
 /**
+ * Die volle Leiter auf dunklem Grund.
+ *
+ * ── Warum es vier Paletten gibt und nicht zwei ────────────────────────────
+ *
+ * Die Mappen dieser Seite malen auf zweierlei Art. Die einen (Querschnitt,
+ * Maßnehmen) kommen mit `currentColor` und Deckkraft aus; ihnen genügen zwei
+ * Werte, und dafür stehen TAFELFARBEN_HELL und TAFELFARBEN_DUNKEL. Die
+ * anderen (Aufbau, Stapel, Pflege) malen über die ganze Leiter — Umriss,
+ * Schaft, Futter, Sohle, Rahmen, Kante, Naht.
+ *
+ * Als der Stapel auf schwarzen Grund wanderte, bekam er TAFELFARBEN_DUNKEL,
+ * und das war zu wenig: Gesetzt wurden nur `color` und `--as-label`, alle
+ * übrigen Stufen fielen auf ihre Vorgaben zurück — und die sind für weißen
+ * Grund gemacht. Der Schuh leuchtete weiß statt zu liegen.
+ *
+ * ── Warum gespiegelt und nicht einfach heller ─────────────────────────────
+ *
+ * Auf Weiß ist der Umriss das Dunkelste und die große Fläche das Hellste.
+ * Auf Schwarz ist es umgekehrt: Der Umriss trägt das Bild und muss hell
+ * sein, die Fläche liegt knapp über dem Grund. Dieselben acht Stufen,
+ * von der anderen Seite gelesen — und dieselbe warme Brechung, damit die
+ * Tafel zu #111 gehört und nicht nach Bildschirmgrau aussieht.
+ */
+export const TAFELFARBEN_STUFEN_DUNKEL = {
+  '--as-line':   '#d6d2c8',  // Umrisse — auf Schwarz das Hellste
+  '--as-light':  '#2a2824',  // Schaft, Sattel — knapp über dem Grund
+  '--as-mid':    '#35322c',  // Futter
+  '--as-tone':   '#43403a',  // Sohle, Holz, Werkzeug
+  '--as-deep':   '#565249',  // Rahmen, Kanten
+  '--as-dark':   '#6d685c',  // Absatzkante
+  '--as-stitch': '#8a8375',  // Nähte
+  '--as-label':  '#9b968a',  // Beschriftung
+}
+
+/**
  * Die Mappe auf hellem Grund.
  *
  * Wie die dunkle Fassung darunter, nur andersherum: Teile, die mit
