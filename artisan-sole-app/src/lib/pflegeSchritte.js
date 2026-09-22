@@ -49,7 +49,7 @@ export const PFLEGE = [
     wann: 'Tagsüber',
     titel: 'Du denkst nicht an sie',
     text: 'Genau dafür sind sie gebaut. Unter dem Fuß gibt der Kork nach, über dem '
-        + 'Ballen knickt das Leder bei jedem Schritt — am Abend sitzt dort eine '
+        + 'Ballen knickt das Leder bei jedem Schritt, und am Abend sitzt dort eine '
         + 'Falte.',
   },
   {

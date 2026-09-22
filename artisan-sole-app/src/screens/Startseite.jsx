@@ -219,7 +219,7 @@
  */
 import { Fragment, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowRight, Footprints, Check } from 'lucide-react'
+import { Footprints, Check } from 'lucide-react'
 import useStore from '../store/store'
 import { useSeo } from '../lib/seo'
 import { shoePath } from '../lib/shoePath'
@@ -230,6 +230,7 @@ import { familieVon } from '../lib/machartFamilien'
 import { laufendeSaison } from '../lib/saison'
 import Enthuellen from '../components/Enthuellen'
 import Kapitelmarke from '../components/Kapitelmarke'
+import Strichpfeil from '../components/Strichpfeil'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import SchuhAufbau from '../components/SchuhAufbau'
 import PflegeFolge from '../components/PflegeFolge'
@@ -344,7 +345,7 @@ const WARUM_RAHMEN = [
   {
     titel: 'Die Sohle ist ein eigenes Teil',
     text: 'Die Doppelnaht fasst nur Rahmen und Laufsohle. Ein Schuhmacher trennt '
-        + 'sie auf, nimmt die Sohle ab und näht eine neue an — den Schaft fasst er '
+        + 'sie auf, nimmt die Sohle ab und näht eine neue an. Den Schaft fasst er '
         + 'dabei nicht an. Das ist die Linie aus dem Abschnitt davor.',
   },
   {
@@ -396,7 +397,7 @@ const ANGEBOTSFORMEN = [
 ]
 
 const ZAHLEN = [
-  { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Die Weite sitzt am Ballen, nicht an der Länge — deshalb reichen zwei.' },
+  { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Die Weite sitzt am Ballen, nicht an der Länge. Deshalb reichen zwei.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. Für dieses eine Paar.' },
   { zahl: '4',    einheit: 'Wochen Produktion', text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
 ]
@@ -465,7 +466,7 @@ const LEDERFAMILIEN = [
     herkunft: 'Angeschliffen, kurzer matter Flor',
     keys: ['lux_suede', 'urban_suede', 'calf_suede', 'unlined_suede', 'lined_suede'],
     text: 'Das ist die Faserseite, die bei dir unter der Haut liegt. Sie ist weich, '
-        + 'und aus demselben Grund nimmt sie Wasser — ein Leder für trockene Tage.',
+        + 'und aus demselben Grund nimmt sie Wasser. Ein Leder für trockene Tage.',
   },
 ]
 
@@ -734,7 +735,7 @@ function Kapitelzeile({ nummer, machart, hinweis, hell = false }) {
   const machartText = String(machart || 'Custom Made').replace(/_/g, ' ')
   return (
     <Kapitelmarke hell={hell}>
-      {[`${nummer} — ${machartText}`, hinweis].filter(Boolean).join('   ·   ')}
+      {[nummer, machartText, hinweis].filter(Boolean).join('   ·   ')}
     </Kapitelmarke>
   )
 }
@@ -914,7 +915,7 @@ function ZurKollektion({ satz, auf, wort = 'Kollektion ansehen', hell = false, m
               hell ? 'bg-white/30 group-hover:bg-white/60' : 'bg-black/25 group-hover:bg-black/50'
             }`} />
           </span>
-          <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+          <Strichpfeil />
         </button>
       </div>
     </Enthuellen>
@@ -945,7 +946,7 @@ function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
           Konfigurieren
           <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
         </span>
-        <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+        <Strichpfeil />
       </button>
     </div>
   )
@@ -1346,7 +1347,7 @@ export default function Startseite() {
       },
       {
         titel: 'Deine Maße',
-        text: 'Aus zwei Zahlen bestimmen wir Leisten, Größe und Weite — für deinen '
+        text: 'Aus zwei Zahlen bestimmen wir Leisten, Größe und Weite. Für deinen '
             + 'Fuß und für keinen anderen.',
         // Der Beleg zu dieser Station ist eine Zeichnung und keine Zeile.
         //
@@ -1615,11 +1616,11 @@ export default function Startseite() {
               <button
                 type="button"
                 onClick={zurKollektion}
-                className="w-full sm:w-auto bg-white text-black border-0 px-9 h-12 text-[11px] uppercase flex items-center justify-center gap-2 whitespace-nowrap hover:bg-white/85 transition-colors"
+                className="group w-full sm:w-auto bg-white text-black border-0 px-9 h-12 text-[11px] uppercase flex items-center justify-center gap-3 whitespace-nowrap hover:bg-white/85 transition-colors"
                 style={{ letterSpacing: '0.18em' }}
               >
                 Modelle ansehen
-                <ArrowRight size={15} strokeWidth={1.5} />
+                <Strichpfeil />
               </button>
               <button
                 type="button"
@@ -1687,7 +1688,7 @@ export default function Startseite() {
           schuhe={kopfModelle}
           gesamt={shoes.length}
           randOben={false}
-          satz="Zwei, die immer gehen — und zwei für die Jahreszeit."
+          satz="Zwei, die immer gehen. Und zwei für die Jahreszeit."
           oeffnen={sch => navigate(shoePath(sch))}
           zumKatalog={zurKollektion}
         />
@@ -1815,7 +1816,7 @@ export default function Startseite() {
                 Ein Schuh,<br className="hidden sm:block" /> zwei Teile.
               </h2>
               <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
-                Sieben Lagen, flach übereinandergelegt. Scroll weiter — am Ende
+                Sieben Lagen, flach übereinandergelegt. Scroll weiter. Am Ende
                 siehst du, welche davon ein Leben lang bleiben und welche ein
                 Schuhmacher wechselt.
               </p>
@@ -1828,7 +1829,7 @@ export default function Startseite() {
                 überhaupt gibt, liegt an einer einzigen Naht.
               </p>
               <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-6">
-                Die kommt gleich — und mit ihr die Frage, warum wir uns
+                Die kommt gleich, und mit ihr die Frage, warum wir uns
                 ausgerechnet für diese Machart entschieden haben.
               </p>
               <ZurKollektion
@@ -1856,7 +1857,7 @@ export default function Startseite() {
         <ModellStreifen
           schuhe={streifenModelle}
           gesamt={shoes.length}
-          satz="Jedes dieser Paare ist so gebaut — und lässt sich so wieder aufmachen."
+          satz="So ist jedes dieser Paare gebaut. Und so lässt es sich wieder aufmachen."
           oeffnen={sch => navigate(shoePath(sch))}
           zumKatalog={zurKollektion}
         />
@@ -1912,7 +1913,7 @@ export default function Startseite() {
                   beiden und nie etwas Drittes. */}
               <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
                 Rahmengenäht, auf Englisch Goodyear welted. Sechs Schritte, von der
-                Brandsohle bis zur Doppelnaht — scroll weiter, dann setzt er sich
+                Brandsohle bis zur Doppelnaht. Scroll weiter, dann setzt er sich
                 zusammen.
               </p>
             </>
@@ -1989,8 +1990,8 @@ export default function Startseite() {
                 <p className="text-[12px] lg:text-[13px] text-white/40 font-light leading-[1.9] mt-12 lg:mt-14 max-w-2xl">
                   Was es kostet: Ein rahmengenähter Schuh ist schwerer als ein
                   geklebter und die ersten Wochen fester. Beides legt sich, sobald
-                  der Kork nachgegeben hat. Und er braucht länger in der Werkstatt
-                  — auch deshalb sind es rund vier Wochen.
+                  der Kork nachgegeben hat. Und er braucht länger in der
+                  Werkstatt. Auch deshalb sind es rund vier Wochen.
                 </p>
               </div>
 
@@ -2140,7 +2141,7 @@ export default function Startseite() {
                 {shoes.length ? `Alle ${shoes.length} Modelle` : 'Alle Modelle'}
                 <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
               </span>
-              <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+              <Strichpfeil />
             </button>
             <PreisFuss className="mt-10" />
           </div>
@@ -2371,7 +2372,7 @@ export default function Startseite() {
                   <p className="text-[17px] lg:text-[20px] text-black font-light leading-snug">Dein Paar</p>
                   <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
                     Rund vier Wochen, einzeln gefertigt in Almansa. Du hörst von uns,
-                    wenn dein Paar die Werkstatt verlässt — und auch dann, wenn es
+                    wenn dein Paar die Werkstatt verlässt, und auch dann, wenn es
                     länger wird. Versand innerhalb Deutschlands inbegriffen.
                   </p>
                   <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
@@ -2438,8 +2439,8 @@ export default function Startseite() {
           fuss={
             <div className="max-w-3xl">
               <p className="satz-titel text-[18px] lg:text-[24px] text-white/90 leading-[1.5]">
-                Ein halber Zentimeter Abweichung ist in Ordnung. Ein ganzer nicht —
-                das ist eine halbe Größe.
+                Ein halber Zentimeter Abweichung ist in Ordnung. Ein ganzer nicht:
+                Das ist eine halbe Größe.
               </p>
               <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-6">
                 Aus den zwei Zahlen bestimmen wir Leisten, Größe und Weite. Trag sie
@@ -2500,7 +2501,7 @@ export default function Startseite() {
               <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
                 <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
                   Almansa liegt in der Provinz Albacete und ist eine der Städte, in
-                  denen Spanien seine Schuhe macht. Dort wird deiner gebaut — nicht
+                  denen Spanien seine Schuhe macht. Dort wird deiner gebaut: nicht
                   aus einem Regal geholt, sondern angefangen, wenn deine Bestellung
                   ankommt.
                 </p>
@@ -2525,7 +2526,7 @@ export default function Startseite() {
                   Zuschneiden und Zwicken sind eine Sache von Tagen. Danach muss das
                   Leder, das über die Form gespannt wurde, sie annehmen. Nimmt man es
                   zu früh herunter, zieht es sich zurück und die Kappe verliert ihre
-                  Linie. Dieses Stehen lässt sich nicht abkürzen — es ist der Grund,
+                  Linie. Dieses Stehen lässt sich nicht abkürzen. Es ist der Grund,
                   warum dein Paar nicht nächste Woche kommt, und derselbe Grund,
                   warum es in zehn Jahren noch seine Form hat.
                 </p>
@@ -2547,7 +2548,7 @@ export default function Startseite() {
                 <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-[1.9] mt-8">
                   Vier Wochen sind der Normalfall und keine Zusage. Fehlt ein Leder
                   oder muss eine Sohle zweimal gemacht werden, werden fünf daraus.
-                  Dann hörst du das von uns, sobald wir es wissen — und nicht erst,
+                  Dann hörst du das von uns, sobald wir es wissen. Nicht erst,
                   wenn du fragst.
                 </p>
                 <p className="text-[11px] text-black/35 font-light leading-[1.9] mt-5">
@@ -2716,18 +2717,18 @@ export default function Startseite() {
           <Enthuellen verzoegerung={120}>
             <p className="text-[13px] lg:text-[14px] text-white/55 font-light mt-5 max-w-md mx-auto leading-relaxed">
               Die Form zuerst, alles andere baut darauf auf. Konfigurieren kostet
-              nichts — gebaut wird erst, wenn du es sagst.
+              nichts. Gebaut wird erst, wenn du es sagst.
             </p>
           </Enthuellen>
           <Enthuellen verzoegerung={200}>
             <button
               type="button"
               onClick={zurKollektion}
-              className="mt-9 bg-white text-black border-0 px-12 h-12 text-[11px] uppercase inline-flex items-center justify-center gap-2 hover:bg-white/85 transition-colors"
+              className="group mt-9 bg-white text-black border-0 px-12 h-12 text-[11px] uppercase inline-flex items-center justify-center gap-3 hover:bg-white/85 transition-colors"
               style={{ letterSpacing: '0.18em' }}
             >
               Schuh konfigurieren
-              <ArrowRight size={15} strokeWidth={1.5} />
+              <Strichpfeil />
             </button>
           </Enthuellen>
         </div>

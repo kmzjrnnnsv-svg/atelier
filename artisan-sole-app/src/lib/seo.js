@@ -43,7 +43,7 @@ const MARKE = 'Artisan Sole'
  * mitändern, sonst zeigt die Startseite etwas anderes als der Rest.
  */
 const STANDARD_BILD = '/og-image.png'
-const STANDARD_BILD_TEXT = 'ARTISAN SOLE — rahmengenähte Schuhe nach Maß'
+const STANDARD_BILD_TEXT = 'ARTISAN SOLE · rahmengenähte Schuhe nach Maß'
 const STANDARD_BESCHREIBUNG =
   'Rahmengenähte Schuhe, custom made nach deinen Maßen. Leder, Sohle und Details bestimmst du selbst.'
 

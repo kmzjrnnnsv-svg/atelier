@@ -25,7 +25,7 @@ export const FAMILIEN = [
   {
     key: 'schnuer',
     name: 'Schnürschuh',
-    satz: 'Oxford, Derby, Wholecut — was man zum Anzug trägt.',
+    satz: 'Oxford, Derby, Wholecut. Was man zum Anzug trägt.',
     kategorien: ['OXFORD', 'DERBY', 'WHOLECUT', 'BALMORAL'],
   },
   {

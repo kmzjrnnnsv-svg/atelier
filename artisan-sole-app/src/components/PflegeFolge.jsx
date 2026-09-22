@@ -30,6 +30,7 @@
 import { useMemo, useRef } from 'react'
 import SpannerSchnitt from './SpannerSchnitt'
 import Enthuellen from './Enthuellen'
+import Laufband from './Laufband'
 import { PFLEGE } from '../lib/pflegeSchritte'
 import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
@@ -152,10 +153,19 @@ export default function PflegeFolge({ kopf, fuss }) {
             <div className="lg:col-span-8 text-white">
               <SpannerSchnitt schritt={schritt} schmal={schmal} className="w-full" />
 
+              {/* Der Stand. Dieselbe Begründung wie beim Maßnehmen: Die
+                  Liste links gibt es auf dem Telefon nicht, und ohne sie
+                  gäbe es dort gar keinen Fortschritt zu sehen. */}
+              <Laufband
+                titel={`Schritt ${String(schritt + 1).padStart(2, '0')} von ${String(PFLEGE.length).padStart(2, '0')}`}
+                fortschritt={fortschritt}
+                className="mt-8 lg:mt-7"
+              />
+
               {/* Der Satz zum Schritt. Er steht in einem Kasten fester Höhe,
                   damit die Zeichnung nicht bei jedem Schritt springt, wenn
                   der eine Text eine Zeile länger ist als der andere. */}
-              <div className="relative mt-8 lg:mt-6 min-h-[150px] sm:min-h-[112px] lg:min-h-[92px]">
+              <div className="relative mt-7 lg:mt-6 min-h-[150px] sm:min-h-[112px] lg:min-h-[92px]">
                 {PFLEGE.map((s, i) => (
                   <div
                     key={s.titel}

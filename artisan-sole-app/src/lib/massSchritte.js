@@ -54,7 +54,7 @@ export const MASSNEHMEN = [
   {
     wann: 'Erstens',
     titel: 'Den Umriss zeichnen',
-    text: 'Ein Blatt Papier auf den Boden, draufstellen — mit den Socken, die '
+    text: 'Ein Blatt Papier auf den Boden, draufstellen, mit den Socken, die '
         + 'du auch im Schuh trägst. Einmal mit dem Stift ganz herumfahren, und '
         + 'dabei senkrecht halten: Schräg gehalten wird der Fuß größer, als er '
         + 'ist.',
@@ -63,7 +63,7 @@ export const MASSNEHMEN = [
     wann: 'Zweitens',
     titel: 'Die Länge messen',
     text: 'Zwei Striche quer über das Blatt: einer an der Ferse, einer an der '
-        + 'längsten Zehe — das ist nicht bei jedem die große. Der Abstand '
+        + 'längsten Zehe. Das ist nicht bei jedem die große. Der Abstand '
         + 'dazwischen ist die Fußlänge.',
   },
   {
@@ -85,4 +85,4 @@ export const MASSNEHMEN = [
  */
 export const BEIDE_FUESSE =
   'Miss beide Füße, und miss am Abend. Sie sind selten gleich groß und '
-  + 'abends größer als morgens — gebaut wird nach dem größeren.' 
+  + 'abends größer als morgens. Gebaut wird nach dem größeren.' 
