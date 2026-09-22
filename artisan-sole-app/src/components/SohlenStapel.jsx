@@ -35,7 +35,7 @@
  */
 import Zeichentafel from './Zeichentafel'
 import { STIL, TEILE, REIHENFOLGE } from '../zeichnungen/aufbauTeile'
-import { TAFELFARBEN } from '../zeichnungen/farben'
+import { TAFELFARBEN_STUFEN_DUNKEL } from '../zeichnungen/farben'
 
 /* Szenenausschnitt der Mappe ist `198 22 586 660`. Links und rechts kommen
    je rund 135 Einheiten für die Beschriftung dazu, unten die vierzig, um
@@ -143,7 +143,7 @@ export default function SohlenStapel({ className = '', schritt = null, schmal = 
       extraAb={TRENNUNG}
       schritt={schritt}
       schritte={7}
-      farben={TAFELFARBEN}
+      farben={TAFELFARBEN_STUFEN_DUNKEL}
       className={className}
     />
   )

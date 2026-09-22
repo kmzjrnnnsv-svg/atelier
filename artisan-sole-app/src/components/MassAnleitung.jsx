@@ -35,7 +35,7 @@
  */
 import Zeichentafel from './Zeichentafel'
 import { VIEWBOX, STIL, TEILE, REIHENFOLGE } from '../zeichnungen/fussTeile'
-import { TAFELFARBEN_HELL } from '../zeichnungen/farben'
+import { TAFELFARBEN_HELL, TAFELFARBEN_DUNKEL } from '../zeichnungen/farben'
 
 /* Die Szene ist 569 Einheiten hoch. Ein Achtel davon ist der Weg, den ein
    Teil reist — dieselbe Regel wie in den anderen Tafeln dieser Seite. */
@@ -71,8 +71,12 @@ const PLAN = {
  *
  *   `null` zeigt den letzten Schritt — der Fall ohne Folge und der des
  *   Vorrenderers.
+ * @param {boolean} [dunkel] Für den dunklen Grund des Kapitels auf der
+ *   Startseite. Dieselbe Zeichnung steht auch im Konfigurator, und dort
+ *   steht sie auf Weiß — deshalb hängt die Farbe an einem Übergabewert und
+ *   nicht fest im Bauteil.
  */
-export default function MassAnleitung({ className = '', schritt = null }) {
+export default function MassAnleitung({ className = '', schritt = null, dunkel = false }) {
   return (
     <Zeichentafel
       kennung="fm"
@@ -85,7 +89,7 @@ export default function MassAnleitung({ className = '', schritt = null }) {
       plan={PLAN}
       schritt={schritt}
       schritte={3}
-      farben={TAFELFARBEN_HELL}
+      farben={dunkel ? TAFELFARBEN_DUNKEL : TAFELFARBEN_HELL}
       className={className}
     />
   )

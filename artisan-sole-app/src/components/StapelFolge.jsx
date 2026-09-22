@@ -84,11 +84,11 @@ function OhneBewegung({ kopf, fuss }) {
         <ol className="grid sm:grid-cols-2 gap-x-14 gap-y-8 mt-12 lg:mt-16 max-w-3xl">
           {STAPEL.map((s, i) => (
             <li key={s.titel}>
-              <p className="text-[10px] tracking-[0.3em] text-black/30">
+              <p className="text-[10px] tracking-[0.3em] text-white/30">
                 {String(i + 1).padStart(2, '0')}
               </p>
-              <p className="satz-titel text-[19px] lg:text-[22px] text-black mt-2">{s.titel}</p>
-              <p className="text-[13px] text-black/50 font-light leading-[1.85] mt-2">{s.text}</p>
+              <p className="satz-titel text-[19px] lg:text-[22px] text-white mt-2">{s.titel}</p>
+              <p className="text-[13px] text-white/50 font-light leading-[1.85] mt-2">{s.text}</p>
             </li>
           ))}
         </ol>
@@ -136,7 +136,7 @@ export default function StapelFolge({ kopf, fuss }) {
                 Sieben von zwölf Spalten, nicht sechs: Seit die Teile
                 beschriftet sind, trägt die Tafel an beiden Rändern Schrift,
                 und die will gelesen werden. */}
-            <div className="lg:col-span-7 text-black flex justify-center">
+            <div className="lg:col-span-7 text-white flex justify-center">
               <SohlenStapel
                 schritt={schritt}
                 schmal={schmal}
@@ -158,13 +158,13 @@ export default function StapelFolge({ kopf, fuss }) {
                       pointerEvents: i === schritt ? 'auto' : 'none',
                     }}
                   >
-                    <p className="text-[10px] tracking-[0.3em] text-black/30">
+                    <p className="text-[10px] tracking-[0.3em] text-white/30">
                       {String(i + 1).padStart(2, '0')}
                     </p>
-                    <p className="satz-titel text-[22px] lg:text-[30px] text-black leading-[1.2] mt-3">
+                    <p className="satz-titel text-[22px] lg:text-[30px] text-white leading-[1.2] mt-3">
                       {s.titel}
                     </p>
-                    <p className="text-[13px] lg:text-[14px] text-black/55 font-light leading-[1.85] mt-3 max-w-sm">
+                    <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.85] mt-3 max-w-sm">
                       {s.text}
                     </p>
                   </div>

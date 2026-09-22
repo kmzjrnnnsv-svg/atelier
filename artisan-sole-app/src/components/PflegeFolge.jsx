@@ -72,9 +72,9 @@ function Folgeliste({ schritt }) {
             className="transition-opacity duration-500"
             style={{ opacity: jetzt ? 1 : 0.3 }}
           >
-            <p className="text-[10px] uppercase tracking-[0.24em] text-black/45">{s.wann}</p>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
             <p className={`satz-titel leading-[1.3] mt-1.5 transition-all duration-500 ${
-              jetzt ? 'text-[19px] lg:text-[22px] text-black' : 'text-[17px] lg:text-[19px] text-black/70'
+              jetzt ? 'text-[19px] lg:text-[22px] text-white' : 'text-[17px] lg:text-[19px] text-white/70'
             }`}>
               {s.titel}
             </p>
@@ -97,9 +97,9 @@ function OhneBewegung({ kopf, fuss }) {
         <ol className="grid sm:grid-cols-2 gap-x-14 gap-y-8 mt-12 lg:mt-16 max-w-3xl">
           {PFLEGE.map(s => (
             <li key={s.titel}>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-black/45">{s.wann}</p>
-              <p className="satz-titel text-[19px] lg:text-[22px] text-black mt-2">{s.titel}</p>
-              <p className="text-[13px] text-black/50 font-light leading-[1.85] mt-2">{s.text}</p>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
+              <p className="satz-titel text-[19px] lg:text-[22px] text-white mt-2">{s.titel}</p>
+              <p className="text-[13px] text-white/50 font-light leading-[1.85] mt-2">{s.text}</p>
             </li>
           ))}
         </ol>
@@ -149,7 +149,7 @@ export default function PflegeFolge({ kopf, fuss }) {
               <Folgeliste schritt={schritt} />
             </div>
 
-            <div className="lg:col-span-8 text-black">
+            <div className="lg:col-span-8 text-white">
               <SpannerSchnitt schritt={schritt} schmal={schmal} className="w-full" />
 
               {/* Der Satz zum Schritt. Er steht in einem Kasten fester Höhe,
@@ -168,13 +168,13 @@ export default function PflegeFolge({ kopf, fuss }) {
                   >
                     {/* Auf dem Telefon trägt dieser Kasten auch den Abstand
                         und den Titel — die Liste links gibt es dort nicht. */}
-                    <p className="lg:hidden text-[10px] uppercase tracking-[0.24em] text-black/45">
+                    <p className="lg:hidden text-[10px] uppercase tracking-[0.24em] text-white/45">
                       {s.wann}
                     </p>
-                    <p className="lg:hidden satz-titel text-[20px] text-black leading-[1.3] mt-1.5">
+                    <p className="lg:hidden satz-titel text-[20px] text-white leading-[1.3] mt-1.5">
                       {s.titel}
                     </p>
-                    <p className="text-[13px] lg:text-[14px] text-black/55 font-light leading-[1.85] mt-2.5 lg:mt-0 max-w-xl">
+                    <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.85] mt-2.5 lg:mt-0 max-w-xl">
                       {s.text}
                     </p>
                   </div>
