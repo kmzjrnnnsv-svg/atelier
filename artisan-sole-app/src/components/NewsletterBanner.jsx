@@ -135,8 +135,8 @@ export default function NewsletterBanner() {
               Sieh bitte in dein Postfach.
             </p>
             <p className="text-[12px] text-black/45 font-light leading-[1.75]">
-              {ok} Erst nach deiner Bestätigung schicken wir dir den Gutschein —
-              so kommt niemand ungefragt auf unsere Liste.
+              {ok} Erst nach deiner Bestätigung schicken wir dir den Gutschein.
+              So kommt niemand ungefragt auf unsere Liste.
             </p>
           </div>
         ) : (
@@ -146,7 +146,7 @@ export default function NewsletterBanner() {
             </p>
             <p className="text-[12px] text-black/45 font-light leading-[1.75] mt-2 mb-4">
               Trag dich in unseren Newsletter ein. Du bekommst eine E-Mail
-              zur Bestätigung, danach deinen persönlichen Code — einlösbar beim
+              zur Bestätigung, danach deinen persönlichen Code, einlösbar beim
               Abschluss deiner Bestellung.
             </p>
 

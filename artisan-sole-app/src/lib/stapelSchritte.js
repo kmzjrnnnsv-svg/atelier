@@ -25,7 +25,7 @@ export const STAPEL = [
   {
     titel: 'Die Brandsohle',
     text: 'Sie liegt unter dem Fuß. Unter ihr klebt die Lippe, ein Band, das '
-        + 'rundherum läuft — die gestrichelte Linie auf dem Blatt.',
+        + 'rundherum läuft: die gestrichelte Linie auf dem Blatt.',
   },
   {
     titel: 'Der Rahmen',
@@ -45,7 +45,7 @@ export const STAPEL = [
   {
     titel: 'Die Doppelnaht',
     text: 'Läuft rundherum durch den Rahmen in die Laufsohle. Sie fasst nur '
-        + 'diese beiden — der Schaft hängt nicht daran.',
+        + 'diese beiden. Der Schaft hängt nicht daran.',
   },
   {
     titel: 'Und hier wird getrennt',

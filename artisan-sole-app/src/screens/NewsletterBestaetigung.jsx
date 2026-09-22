@@ -86,7 +86,7 @@ export default function NewsletterBestaetigung() {
               ? 'Wir schreiben dir nicht mehr. Deine Adresse bleibt nur noch dort stehen, wo sie stehen muss, damit wir sie nicht versehentlich erneut anschreiben.'
               : antwort?.bereits
                 ? 'Deine Anmeldung war bereits bestätigt. Dein Code steht unten, er gilt weiterhin.'
-                : 'Deine Anmeldung ist bestätigt. Hier ist dein Gutschein — er liegt zusätzlich in deinem Postfach.'}
+                : 'Deine Anmeldung ist bestätigt. Hier ist dein Gutschein. Er liegt zusätzlich in deinem Postfach.'}
           </p>
 
           {code && (

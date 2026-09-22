@@ -93,7 +93,7 @@ export default function CookieHinweis() {
                 Deine IP-Adresse. Cookies setzt er nicht.
               </p>
               <p className="text-[11px] text-black/40 font-light leading-[1.7]">
-                Deine Entscheidung halten wir zum Nachweis fest — mit Zeitpunkt und
+                Deine Entscheidung halten wir zum Nachweis fest, mit Zeitpunkt und
                 Wortlaut, aber ohne deinen Namen. Du kannst sie jederzeit über die
                 Fußzeile widerrufen. Mehr dazu in der{' '}
                 <Link to="/legal/datenschutz" className="underline text-black/60 hover:text-black">

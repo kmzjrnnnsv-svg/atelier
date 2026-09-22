@@ -19,8 +19,13 @@
  * Weil sie stimmt: Eine Folge, die man mit dem Daumen steuert, liest sich
  * schneller als drei Absätze. Damit es trotzdem nicht dreimal dasselbe Bild
  * ist, liegt die Tafel hier links und hoch statt breit, und rechts steht nur
- * der eine Schritt, der gerade dran ist — kein Laufband, keine Liste. Die
- * Tafel selbst zählt mit: Man sieht am Stapel, wie viel noch fehlt.
+ * der eine Schritt, der gerade dran ist, statt der ganzen Liste.
+ *
+ * Der Stand steht seit Neuestem im gemeinsamen Laufband (siehe Laufband.jsx).
+ * Vorher waren es sieben Haarstriche, einer je Teil. Das Argument dafür war,
+ * die Tafel zaehle ohnehin selbst mit: Man sehe am Stapel, wie viel fehlt.
+ * Das stimmt, wenn man weiß, dass sieben Teile kommen, und sonst nicht, und
+ * die Striche sagten es nicht.
  *
  * Ohne Bewegung und im Vorrenderer: der fertige Stapel und alle Schritte
  * als Liste.
@@ -28,6 +33,7 @@
 import { useMemo, useRef } from 'react'
 import SohlenStapel from './SohlenStapel'
 import Enthuellen from './Enthuellen'
+import Laufband from './Laufband'
 import { STAPEL } from '../lib/stapelSchritte'
 import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
@@ -48,24 +54,6 @@ function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
   const n = Math.floor(roh * STAPEL.length)
   return Math.min(STAPEL.length - 1, Math.max(0, n))
-}
-
-/** Der Zähler: wie viele Teile liegen, wie viele kommen noch. */
-function Zaehler({ schritt }) {
-  return (
-    <div className="flex items-center gap-2" aria-hidden="true">
-      {STAPEL.map((s, i) => (
-        <span
-          key={s.titel}
-          className="block h-px transition-all duration-500"
-          style={{
-            width: i === schritt ? 26 : 12,
-            background: i <= schritt ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.16)',
-          }}
-        />
-      ))}
-    </div>
-  )
 }
 
 /** Die Fassung ohne Bewegung: fertiger Stapel, alle Schritte als Liste. */
@@ -146,7 +134,10 @@ export default function StapelFolge({ kopf, fuss }) {
 
             {/* Rechts nur der Schritt, der gerade dran ist. */}
             <div className="lg:col-span-4 lg:col-start-9 mt-8 lg:mt-0">
-              <Zaehler schritt={schritt} />
+              <Laufband
+                titel={`Teil ${String(schritt + 1).padStart(2, '0')} von ${String(STAPEL.length).padStart(2, '0')}`}
+                fortschritt={fortschritt}
+              />
               <div className="relative mt-6 min-h-[150px] sm:min-h-[120px]">
                 {STAPEL.map((s, i) => (
                   <div
@@ -158,10 +149,9 @@ export default function StapelFolge({ kopf, fuss }) {
                       pointerEvents: i === schritt ? 'auto' : 'none',
                     }}
                   >
-                    <p className="text-[10px] tracking-[0.3em] text-white/30">
-                      {String(i + 1).padStart(2, '0')}
-                    </p>
-                    <p className="satz-titel text-[22px] lg:text-[30px] text-white leading-[1.2] mt-3">
+                    {/* Ohne eigene Ziffer: Die steht seit dem Laufband
+                        darüber, und zwar mit der Gesamtzahl dazu. */}
+                    <p className="satz-titel text-[22px] lg:text-[30px] text-white leading-[1.2]">
                       {s.titel}
                     </p>
                     <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.85] mt-3 max-w-sm">

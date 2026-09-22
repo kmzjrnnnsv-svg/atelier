@@ -25,7 +25,7 @@ export const AUFBAU = [
     // L-Profil untergeklebt. Genau das ist der Unterschied zwischen den
     // beiden Macharten, und eine Seite, die mit Offenheit wirbt, darf ihn
     // nicht verwischen.
-    text: 'Auf ihr steht alles. Unter sie wird eine Lippe geklebt — ein Band '
+    text: 'Auf ihr steht alles. Unter sie wird eine Lippe geklebt: ein Band '
         + 'mit L-Profil, das rundherum läuft und die erste Naht aufnimmt. Sie '
         + 'macht aus einem Rahmen einen Goodyear-Rahmen.',
   },

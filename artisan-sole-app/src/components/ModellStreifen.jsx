@@ -31,8 +31,8 @@
  * Oxfords — vier verschiedene Formen sagen in einem Blick, wie weit das
  * Feld ist, ohne dass ein Wort darüber fällt.
  */
-import { ArrowRight } from 'lucide-react'
 import Enthuellen from './Enthuellen'
+import Strichpfeil from './Strichpfeil'
 import { resolveMediaUrl } from '../lib/mediaUrl'
 
 /**
@@ -72,7 +72,7 @@ export default function ModellStreifen({ schuhe, satz, oeffnen, zumKatalog, gesa
                 {gesamt ? `Alle ${gesamt} Modelle` : 'Alle Modelle'}
                 <span className="absolute left-0 bottom-0 h-px w-full bg-black/20 group-hover:bg-black/45 transition-colors" />
               </span>
-              <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+              <Strichpfeil />
             </button>
           </div>
 

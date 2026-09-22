@@ -40,8 +40,8 @@
  * „Angebot" heißt hier, was es im Schaufenster eines guten Hauses heißt:
  * das, was angeboten wird.
  */
-import { ArrowRight } from 'lucide-react'
 import Enthuellen from './Enthuellen'
+import Strichpfeil from './Strichpfeil'
 import Kapitelmarke from './Kapitelmarke'
 
 /**
@@ -68,7 +68,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
         <Enthuellen verzoegerung={120}>
           <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
             Die fünf, nach denen am häufigsten gefragt wird. Gebaut wird jede
-            gleich — den Preis machen die Form, das Leder und wie viel Arbeit in
+            gleich. Den Preis machen die Form, das Leder und wie viel Arbeit in
             der Sohle steckt.
           </p>
         </Enthuellen>
@@ -142,7 +142,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                 {express.anzahl} Modelle gibt es als Express-Fassung: rund{' '}
                 {express.wochen} Wochen statt rund vier
                 {express.aufpreis ? `, € ${express.aufpreis} Aufpreis` : ''}. Möglich wird
-                das durch vorbereitete Bauteile — welche Entscheidungen damit schon
+                das durch vorbereitete Bauteile. Welche Entscheidungen damit schon
                 getroffen sind, steht am Modell.
               </p>
             </div>
@@ -172,7 +172,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
             <div className="order-2 sm:order-none max-w-md">
               <p className="text-[12px] text-black/40 font-light leading-[1.9]">
                 Im Preis: Versand innerhalb Deutschlands. Damit die Größe stimmt,
-                nimm vorher Maß — Fußlänge und Ballenumfang genügen, ein
+                nimm vorher Maß. Fußlänge und Ballenumfang genügen, ein
                 Schnürsenkel und ein Lineal reichen dafür.
               </p>
               {zurPassform && (
@@ -186,7 +186,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                     Passform bestimmen
                     <span className="absolute left-0 bottom-0 h-px w-full bg-black/20 group-hover:bg-black/45 transition-colors" />
                   </span>
-                  <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+                  <Strichpfeil />
                 </button>
               )}
             </div>
@@ -200,7 +200,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                 {gesamt ? `Alle ${gesamt} Modelle` : 'Alle Modelle'}
                 <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
               </span>
-              <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-500 group-hover:translate-x-1.5" />
+              <Strichpfeil />
             </button>
           </div>
         </Enthuellen>

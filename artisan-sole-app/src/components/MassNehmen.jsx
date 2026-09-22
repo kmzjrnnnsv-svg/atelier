@@ -31,6 +31,7 @@
 import { useMemo, useRef } from 'react'
 import MassAnleitung from './MassAnleitung'
 import Enthuellen from './Enthuellen'
+import Laufband from './Laufband'
 import { MASSNEHMEN, BEIDE_FUESSE } from '../lib/massSchritte'
 import { useWenigerBewegung } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
@@ -164,9 +165,19 @@ export default function MassNehmen({ kopf, fuss }) {
                 className="w-full max-w-[236px] sm:max-w-[272px] lg:max-w-[312px] mx-auto"
               />
 
+              {/* Der Stand. Er steht unter der Zeichnung und nicht neben der
+                  Liste, weil die Liste auf dem Telefon fehlt — und das ist
+                  genau das Gerät, auf dem eine klebende Bühne ohne
+                  sichtbares Ende wie eine hängende Seite aussieht. */}
+              <Laufband
+                titel={`Schritt ${String(schritt + 1).padStart(2, '0')} von ${String(MASSNEHMEN.length).padStart(2, '0')}`}
+                fortschritt={fortschritt}
+                className="mt-8 lg:mt-7 mx-auto lg:mx-0"
+              />
+
               {/* Fester Kasten, damit die Zeichnung nicht springt, wenn ein
                   Text eine Zeile länger ist als der andere. */}
-              <div className="relative mt-8 lg:mt-6 min-h-[168px] sm:min-h-[124px] lg:min-h-[104px]">
+              <div className="relative mt-7 lg:mt-6 min-h-[168px] sm:min-h-[124px] lg:min-h-[104px]">
                 {MASSNEHMEN.map((s, i) => (
                   <div
                     key={s.titel}

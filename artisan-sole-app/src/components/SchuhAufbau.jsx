@@ -39,6 +39,7 @@ import { useMemo, useRef } from 'react'
 import RahmenSchnitt from './RahmenSchnitt'
 import Kapitelmarke from './Kapitelmarke'
 import Enthuellen from './Enthuellen'
+import Laufband from './Laufband'
 import { AUFBAU } from '../lib/aufbauSchritte'
 import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
@@ -60,41 +61,6 @@ function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
   const n = Math.floor(roh * AUFBAU.length)
   return Math.min(AUFBAU.length - 1, Math.max(0, n))
-}
-
-/**
- * Das Laufband: Phasenname, Zähler, Balken.
- *
- * Es sagt dreierlei auf einmal — woran gerade gearbeitet wird, wie weit die
- * Folge ist, und dass sie ein Ende hat. Das Letzte ist das Wichtigste: Eine
- * klebende Bühne ohne sichtbares Ende fühlt sich an wie eine Seite, die
- * hängt. Mit einem Balken, der auf 100 zuläuft, scrollt man weiter, um ihn
- * vollzumachen.
- *
- * Der Zähler zählt den echten Fortschritt und nicht die Schritte: Er läuft
- * durch, während der Name springt, und genau dieser Unterschied macht, dass
- * es sich nach Maschine anfühlt und nicht nach Diaschau.
- */
-function Laufband({ schritt, fortschritt }) {
-  const stand = Math.round(fortschritt * 100)
-  return (
-    <div className="w-full max-w-xs">
-      <div className="flex items-baseline justify-between gap-6">
-        <p className="text-[10px] uppercase tracking-[0.26em] text-white/70 truncate">
-          {AUFBAU[schritt].titel}
-        </p>
-        <p className="text-[11px] tabular-nums text-white/40 tracking-[0.1em] shrink-0">
-          {String(stand).padStart(3, '0')}
-        </p>
-      </div>
-      <div className="relative h-px bg-white/15 mt-3" aria-hidden="true">
-        <div
-          className="absolute left-0 top-0 h-px bg-white/70"
-          style={{ width: `${stand}%` }}
-        />
-      </div>
-    </div>
-  )
 }
 
 /**
@@ -188,7 +154,7 @@ export default function SchuhAufbau({ kopf, fuss }) {
                 Nebeneinander statt in zwei Ecken — so liest man beides in
                 einer Augenbewegung. */}
             <div className="mt-10 lg:mt-0 lg:absolute lg:bottom-0 lg:inset-x-0 lg:flex lg:items-end lg:justify-between lg:gap-16">
-              <Laufband schritt={schritt} fortschritt={fortschritt} />
+              <Laufband titel={AUFBAU[schritt].titel} fortschritt={fortschritt} />
 
               <div className="relative mt-8 lg:mt-0 lg:w-[24rem] lg:text-right min-h-[120px] sm:min-h-[104px]">
                 {AUFBAU.map((s, i) => (
