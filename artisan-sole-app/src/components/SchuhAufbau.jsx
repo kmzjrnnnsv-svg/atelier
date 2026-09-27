@@ -107,6 +107,24 @@ export default function SchuhAufbau({ kopf, fuss }) {
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
 
+  /* Wie hoch die Zeichnung höchstens sein darf.
+
+     Die klebende Bühne ist so hoch wie das Fenster, und ihr Inhalt war es
+     nicht: Die Zeichnung stand in fester Größe da, darunter Laufband, Text
+     und Nachsatz. Auf einem hohen Fenster ging das auf. Auf einem niedrigen
+     — iPhone SE, oder jedes iPhone, solange Safari seine beiden Leisten
+     zeigt — lief der Inhalt unten aus der Bühne heraus, und weil die Bühne
+     `overflow-hidden` trägt, war er einfach weg. Gemessen: 163 Pixel
+     abgeschnitten bei 375×527.
+
+     Jetzt bekommt die Zeichnung eine Obergrenze, die sich nach der Bühne
+     richtet. Eine Tafel mit viewBox wird dadurch kleiner und bleibt mittig,
+     nicht verzerrt. Steht die Bühnenhöhe noch nicht fest, gilt keine
+     Grenze — dann ist die Seite ohnehin noch beim ersten Messen. */
+  const tafelHoehe = buehnenHoehe
+    ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.50, buehnenHoehe - 345)))
+    : 0
+
   if (ruhig) return <OhneBewegung kopf={kopf} fuss={fuss} />
 
   return (
@@ -129,7 +147,7 @@ export default function SchuhAufbau({ kopf, fuss }) {
         style={buehnenHoehe ? { height: buehnenHoehe * (1 + AUFBAU.length * PRO_SCHRITT) } : undefined}
       >
         <div
-          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-12 lg:py-16"
+          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-5 sm:py-12 lg:py-16"
           style={{ top: buehnenOben, ...(buehnenHoehe ? { height: buehnenHoehe } : null) }}
         >
           {/* Auf der Bühne steht nur noch, was sich bewegt.
@@ -145,6 +163,7 @@ export default function SchuhAufbau({ kopf, fuss }) {
             </div>
 
             <RahmenSchnitt
+              maxHoehe={tafelHoehe}
               schritt={schritt}
               schmal={schmal}
               className="w-full lg:max-w-5xl lg:mx-auto"
@@ -156,7 +175,7 @@ export default function SchuhAufbau({ kopf, fuss }) {
             <div className="mt-10 lg:mt-0 lg:absolute lg:bottom-0 lg:inset-x-0 lg:flex lg:items-end lg:justify-between lg:gap-16">
               <Laufband titel={AUFBAU[schritt].titel} fortschritt={fortschritt} />
 
-              <div className="relative mt-8 lg:mt-0 lg:w-[24rem] lg:text-right min-h-[120px] sm:min-h-[104px]">
+              <div className="relative [@media(max-height:600px)]:min-h-0 mt-8 lg:mt-0 lg:w-[24rem] lg:text-right min-h-[120px] sm:min-h-[104px]">
                 {AUFBAU.map((s, i) => (
                   <div
                     key={s.titel}

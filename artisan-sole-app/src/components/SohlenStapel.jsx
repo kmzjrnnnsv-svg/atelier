@@ -125,7 +125,7 @@ const TRENNMARKUP = `
  * @param {number|null} [schritt] 0 … 6. `null` zeigt den fertigen Stapel
  *   ohne Trennung — der Fall des Vorrenderers und der Fall „keine Bewegung".
  */
-export default function SohlenStapel({ className = '', schritt = null, schmal = false }) {
+export default function SohlenStapel({ className = '', schritt = null, schmal = false, maxHoehe = 0 }) {
   return (
     <Zeichentafel
       kennung="au"
@@ -144,6 +144,7 @@ export default function SohlenStapel({ className = '', schritt = null, schmal = 
       schritt={schritt}
       schritte={7}
       farben={TAFELFARBEN_STUFEN_DUNKEL}
+      maxHoehe={maxHoehe}
       className={className}
     />
   )

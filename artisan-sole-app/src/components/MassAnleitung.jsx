@@ -76,7 +76,7 @@ const PLAN = {
  *   steht sie auf Weiß — deshalb hängt die Farbe an einem Übergabewert und
  *   nicht fest im Bauteil.
  */
-export default function MassAnleitung({ className = '', schritt = null, dunkel = false }) {
+export default function MassAnleitung({ className = '', schritt = null, dunkel = false, maxHoehe = 0 }) {
   return (
     <Zeichentafel
       kennung="fm"
@@ -90,6 +90,7 @@ export default function MassAnleitung({ className = '', schritt = null, dunkel =
       schritt={schritt}
       schritte={3}
       farben={dunkel ? TAFELFARBEN_DUNKEL : TAFELFARBEN_HELL}
+      maxHoehe={maxHoehe}
       className={className}
     />
   )

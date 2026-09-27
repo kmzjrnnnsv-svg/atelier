@@ -98,6 +98,24 @@ export default function StapelFolge({ kopf, fuss }) {
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
 
+  /* Wie hoch die Zeichnung höchstens sein darf.
+
+     Die klebende Bühne ist so hoch wie das Fenster, und ihr Inhalt war es
+     nicht: Die Zeichnung stand in fester Größe da, darunter Laufband, Text
+     und Nachsatz. Auf einem hohen Fenster ging das auf. Auf einem niedrigen
+     — iPhone SE, oder jedes iPhone, solange Safari seine beiden Leisten
+     zeigt — lief der Inhalt unten aus der Bühne heraus, und weil die Bühne
+     `overflow-hidden` trägt, war er einfach weg. Gemessen: 163 Pixel
+     abgeschnitten bei 375×527.
+
+     Jetzt bekommt die Zeichnung eine Obergrenze, die sich nach der Bühne
+     richtet. Eine Tafel mit viewBox wird dadurch kleiner und bleibt mittig,
+     nicht verzerrt. Steht die Bühnenhöhe noch nicht fest, gilt keine
+     Grenze — dann ist die Seite ohnehin noch beim ersten Messen. */
+  const tafelHoehe = buehnenHoehe
+    ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.46, buehnenHoehe - 290)))
+    : 0
+
   if (ruhig) return <OhneBewegung kopf={kopf} fuss={fuss} />
 
   return (
@@ -114,7 +132,7 @@ export default function StapelFolge({ kopf, fuss }) {
         style={buehnenHoehe ? { height: buehnenHoehe * (1 + STAPEL.length * PRO_SCHRITT) } : undefined}
       >
         <div
-          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-10 lg:py-14"
+          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-5 sm:py-10 lg:py-14"
           style={{ top: buehnenOben, ...(buehnenHoehe ? { height: buehnenHoehe } : null) }}
         >
           <div className="w-full max-w-6xl mx-auto lg:grid lg:grid-cols-12 lg:gap-10 lg:items-center">
@@ -126,6 +144,7 @@ export default function StapelFolge({ kopf, fuss }) {
                 und die will gelesen werden. */}
             <div className="lg:col-span-7 text-white flex justify-center">
               <SohlenStapel
+                maxHoehe={tafelHoehe}
                 schritt={schritt}
                 schmal={schmal}
                 className="w-full max-w-[300px] sm:max-w-[340px] lg:max-w-none"
@@ -138,7 +157,7 @@ export default function StapelFolge({ kopf, fuss }) {
                 titel={`Teil ${String(schritt + 1).padStart(2, '0')} von ${String(STAPEL.length).padStart(2, '0')}`}
                 fortschritt={fortschritt}
               />
-              <div className="relative mt-6 min-h-[150px] sm:min-h-[120px]">
+              <div className="relative [@media(max-height:600px)]:min-h-0 mt-6 min-h-[150px] sm:min-h-[120px]">
                 {STAPEL.map((s, i) => (
                   <div
                     key={s.titel}

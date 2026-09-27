@@ -127,6 +127,24 @@ export default function MassNehmen({ kopf, fuss }) {
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
 
+  /* Wie hoch die Zeichnung höchstens sein darf.
+
+     Die klebende Bühne ist so hoch wie das Fenster, und ihr Inhalt war es
+     nicht: Die Zeichnung stand in fester Größe da, darunter Laufband, Text
+     und Nachsatz. Auf einem hohen Fenster ging das auf. Auf einem niedrigen
+     — iPhone SE, oder jedes iPhone, solange Safari seine beiden Leisten
+     zeigt — lief der Inhalt unten aus der Bühne heraus, und weil die Bühne
+     `overflow-hidden` trägt, war er einfach weg. Gemessen: 163 Pixel
+     abgeschnitten bei 375×527.
+
+     Jetzt bekommt die Zeichnung eine Obergrenze, die sich nach der Bühne
+     richtet. Eine Tafel mit viewBox wird dadurch kleiner und bleibt mittig,
+     nicht verzerrt. Steht die Bühnenhöhe noch nicht fest, gilt keine
+     Grenze — dann ist die Seite ohnehin noch beim ersten Messen. */
+  const tafelHoehe = buehnenHoehe
+    ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.34, buehnenHoehe - 270)))
+    : 0
+
   if (ruhig) return <OhneBewegung kopf={kopf} fuss={fuss} />
 
   return (
@@ -143,7 +161,7 @@ export default function MassNehmen({ kopf, fuss }) {
         style={buehnenHoehe ? { height: buehnenHoehe * (1 + MASSNEHMEN.length * PRO_SCHRITT) } : undefined}
       >
         <div
-          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-12 lg:py-16"
+          className="sticky flex flex-col justify-center overflow-hidden px-5 lg:px-16 py-5 sm:py-12 lg:py-16"
           style={{ top: buehnenOben, ...(buehnenHoehe ? { height: buehnenHoehe } : null) }}
         >
           <div className="w-full max-w-6xl mx-auto lg:grid lg:grid-cols-12 lg:gap-14 lg:items-center">
@@ -160,6 +178,7 @@ export default function MassNehmen({ kopf, fuss }) {
                   Fenster — die anderen Tafeln dieser Seite sind breit und
                   vertragen `w-full`, diese nicht. */}
               <MassAnleitung
+                maxHoehe={tafelHoehe}
                 dunkel
                 schritt={schritt}
                 className="w-full max-w-[236px] sm:max-w-[272px] lg:max-w-[312px] mx-auto"
@@ -172,12 +191,12 @@ export default function MassNehmen({ kopf, fuss }) {
               <Laufband
                 titel={`Schritt ${String(schritt + 1).padStart(2, '0')} von ${String(MASSNEHMEN.length).padStart(2, '0')}`}
                 fortschritt={fortschritt}
-                className="mt-8 lg:mt-7 mx-auto lg:mx-0"
+                className="mt-6 lg:mt-7 mx-auto lg:mx-0"
               />
 
               {/* Fester Kasten, damit die Zeichnung nicht springt, wenn ein
                   Text eine Zeile länger ist als der andere. */}
-              <div className="relative mt-7 lg:mt-6 min-h-[168px] sm:min-h-[124px] lg:min-h-[104px]">
+              <div className="relative [@media(max-height:600px)]:min-h-0 mt-6 lg:mt-6 min-h-[146px] sm:min-h-[124px] lg:min-h-[104px]">
                 {MASSNEHMEN.map((s, i) => (
                   <div
                     key={s.titel}
