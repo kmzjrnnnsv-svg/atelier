@@ -315,6 +315,7 @@ export default function Zeichentafel({
   weg = WEG, dauer = DAUER,
   stil, teile, reihenfolge, plan, marken = [],
   extra = '', extraAb = null, schritt = null, schritte, className = '', farben,
+  maxHoehe = 0,
 }) {
   /* Eingefroren — siehe oben. `schritt` steht mit Absicht nicht in der
      Liste: Änderte sich die Tafel mit ihm, schriebe React das Innenleben
@@ -330,9 +331,13 @@ export default function Zeichentafel({
   /* Aus demselben Grund: Ein neues Stilobjekt bei jedem Zeichnen ist für
      React eine Änderung, und die kostet hier zwar keine Knoten, aber Arbeit
      in jedem Bild — und die Schleife läuft sechzig Mal in der Sekunde. */
+  /* `maxHoehe` gehört hierher und nicht an eine Klasse: Die beiden Maße
+     darüber stehen inline und schlagen jede Klasse. Eine Tafel mit viewBox
+     bekommt dadurch keine Verzerrung — `preserveAspectRatio` steht auf
+     „meet", die Zeichnung wird also kleiner und bleibt mittig. */
   const stilObjekt = useMemo(
-    () => ({ width: '100%', height: 'auto', ...farben }),
-    [farben],
+    () => ({ width: '100%', height: 'auto', ...(maxHoehe ? { maxHeight: maxHoehe } : null), ...farben }),
+    [farben, maxHoehe],
   )
 
   return (

@@ -104,7 +104,7 @@ const MARKEN = [
  * @param {boolean} [schmal] Lässt die Beschriftung weg und rückt an den
  *   Schnitt heran.
  */
-export default function RahmenSchnitt({ className = '', schritt = null, schmal = false }) {
+export default function RahmenSchnitt({ className = '', schritt = null, schmal = false, maxHoehe = 0 }) {
   return (
     <Zeichentafel
       kennung="qs"
@@ -121,6 +121,7 @@ export default function RahmenSchnitt({ className = '', schritt = null, schmal =
       schritt={schritt}
       schritte={6}
       farben={TAFELFARBEN_DUNKEL}
+      maxHoehe={maxHoehe}
       className={className}
     />
   )

@@ -54,9 +54,25 @@ export default function Laufband({ titel, fortschritt, className = '' }) {
         </p>
       </div>
       <div className="relative h-px bg-white/15 mt-3" aria-hidden="true">
+        {/* Der Balken wird gestaucht, nicht schmaler gemacht.
+
+            Hier stand `width: X%` mit einer Überblendung darauf. Beides war
+            falsch, und zusammen war es schädlich: Die Breite ändert sich in
+            JEDEM Einzelbild, das die Bühne meldet — eine Überblendung darauf
+            wird also sechzigmal in der Sekunde abgebrochen und neu
+            angesetzt. `width` ist außerdem eine Größe, für die der Browser
+            neu umbrechen muss, und das Ganze steckt in einem klebenden
+            Kasten. Auf dem Schreibtisch fällt das nicht auf, auf einem
+            Telefon hängt daran der Finger: Das Scrollen wurde zäh bis
+            unbenutzbar.
+
+            `scaleX` verlangt keinen Umbruch, sondern nur ein Zeichnen, und
+            das macht die Grafikkarte. Ohne Überblendung folgt der Balken
+            außerdem dem Daumen genau, statt ihm ein Zehntel hinterherzu-
+            laufen — das war ohnehin die bessere Bewegung. */}
         <div
-          className="absolute left-0 top-0 h-px bg-white/70 transition-[width] duration-150 ease-out"
-          style={{ width: `${stand}%` }}
+          className="absolute left-0 top-0 h-px w-full bg-white/70 origin-left"
+          style={{ transform: `scaleX(${stand / 100})` }}
         />
       </div>
     </div>

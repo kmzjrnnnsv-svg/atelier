@@ -112,7 +112,7 @@ const MARKEN = [
  *   der Fall „keine Bewegung": Wer die Folge nicht sieht, soll das fertige
  *   Bild sehen und nicht das erste.
  */
-export default function SpannerSchnitt({ className = '', schritt = null, schmal = false }) {
+export default function SpannerSchnitt({ className = '', schritt = null, schmal = false, maxHoehe = 0 }) {
   return (
     <Zeichentafel
       kennung="pf"
@@ -129,6 +129,7 @@ export default function SpannerSchnitt({ className = '', schritt = null, schmal 
       schritt={schritt}
       schritte={5}
       farben={TAFELFARBEN_STUFEN_DUNKEL}
+      maxHoehe={maxHoehe}
       className={className}
     />
   )
