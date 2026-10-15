@@ -33,7 +33,7 @@ import MassAnleitung from './MassAnleitung'
 import Enthuellen from './Enthuellen'
 import Laufband from './Laufband'
 import { MASSNEHMEN, BEIDE_FUESSE } from '../lib/massSchritte'
-import { useWenigerBewegung } from '../lib/bewegung'
+import { useWenigerBewegungFolge } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 /* Vor- und Nachlauf, damit die Folge nicht anfängt, bevor der Abschnitt im
@@ -122,7 +122,7 @@ function OhneBewegung({ kopf, fuss }) {
  */
 export default function MassNehmen({ kopf, fuss }) {
   const ref = useRef(null)
-  const ruhig = useWenigerBewegung()
+  const ruhig = useWenigerBewegungFolge()
   const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])

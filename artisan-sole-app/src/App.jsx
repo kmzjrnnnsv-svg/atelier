@@ -13,6 +13,7 @@ import TopBar from './components/TopBar'
 import Footer from './components/Footer'
 import useStore from './store/store'
 import ErrorBoundary from './components/ErrorBoundary'
+import StartBanner from './components/StartBanner'
 import { Capacitor } from '@capacitor/core'
 import useDeviceInfo from './hooks/useDeviceInfo'
 import { seiteZaehlen } from './lib/seitenzaehler'
@@ -604,6 +605,7 @@ function AppRoutes() {
       <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
         {zeigeVermittler && <VermittlerBanner />}
         {zeigeVermittler && <OwnerBanner />}
+        {istLaden && <StartBanner />}
         {showNav && <TopBar />}
         <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
         {showFooter && <Footer />}
@@ -620,6 +622,7 @@ function AppRoutes() {
           Empfehlung hier ist, soll es sehen, bevor er den ersten Preis liest. */}
       {zeigeVermittler && <VermittlerBanner />}
         {zeigeVermittler && <OwnerBanner />}
+      {istLaden && <StartBanner />}
       {showNav && <TopBar />}
       <div className="flex-1 overflow-y-auto relative">
         <div className="w-full">

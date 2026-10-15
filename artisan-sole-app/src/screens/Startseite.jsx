@@ -231,7 +231,6 @@ import { laufendeSaison } from '../lib/saison'
 import Enthuellen from '../components/Enthuellen'
 import Kapitelmarke from '../components/Kapitelmarke'
 import Strichpfeil from '../components/Strichpfeil'
-import Hinweisband from '../components/Hinweisband'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import SchuhAufbau from '../components/SchuhAufbau'
 import PflegeFolge from '../components/PflegeFolge'
@@ -1668,11 +1667,6 @@ export default function Startseite() {
       </header>
 
 
-      {/* ── Unter dem Aufmacher: was gerade gilt ─────────────────────────
-          Verkaufsstart und der Weg zu uns, bevor irgendetwas anderes kommt.
-          Inhalt und Schalter stehen in der Verwaltung, weil ein Satz über
-          einen Monat ein Verfallsdatum hat. Siehe Hinweisband.jsx. */}
-      <Hinweisband />
 
 
       {/* ── Unter dem Aufmacher: vier Paare ──────────────────────────────

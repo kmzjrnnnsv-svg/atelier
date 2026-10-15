@@ -511,3 +511,56 @@ html.mobile-web body {
     animation: none;
   }
 }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Vier Regeln aus den Web Interface Guidelines
+
+   Geprüft gegen vercel-labs/web-interface-guidelines. Der Bestand hatte
+   vierundsechzig Dateien mit `outline-none` und genau eine mit
+   `focus-visible` — wer mit der Tastatur durch den Laden geht, sah also
+   nirgends, wo er steht. Das einzeln an jedem Knopf nachzutragen wären
+   Hunderte Stellen; hier steht es einmal.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Sichtbarer Fokus, überall ──────────────────────────────────────────
+   `:focus-visible` und nicht `:focus`: Der Ring soll beim Tabben erscheinen
+   und nicht bei jedem Mausklick. Zwei Ringe, heller und dunkler übereinander,
+   damit er auf dem weißen Grund des Ladens UND auf den schwarzen Kapiteln
+   der Startseite zu sehen ist — ein einfarbiger wäre auf einem der beiden
+   unsichtbar. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.75);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
+  border-radius: 2px;
+}
+/* Auf dunklem Grund umgekehrt. */
+.bg-\[\#111\] :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
+.bg-\[\#0E0E0E\] :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ── Kein Zögern beim Tippen ────────────────────────────────────────────
+   Ohne `manipulation` wartet ein Telefon nach jedem Tippen rund 300 ms, ob
+   ein zweites folgt (Doppeltipp zum Zoomen). Das Zoomen der Seite selbst
+   bleibt erlaubt — wer ein Leder oder eine Naht genauer ansehen will, soll
+   das können; abgeschaltet wird nur die Wartezeit auf Bedienelementen. */
+:where(a, button, [role='button'], input, select, textarea, label, summary) {
+  touch-action: manipulation;
+}
+
+/* ── Überschriften ohne Schusterjungen ──────────────────────────────────
+   `balance` verteilt die Zeilen einer Überschrift gleichmäßig, statt ein
+   einzelnes Wort allein in die letzte Zeile zu stellen. Nur bis vier Zeilen
+   wirksam, und genau dafür ist es hier gedacht. */
+:where(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+/* ── Was der Browser über die Farben wissen muss ────────────────────────
+   Der Laden ist hell. Ohne diese Angabe setzt ein Gerät im Dunkelmodus
+   Bildlaufleisten und Formularfelder dunkel in eine helle Seite. */
+:root {
+  color-scheme: light;
+}
