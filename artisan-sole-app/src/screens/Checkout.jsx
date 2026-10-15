@@ -9,6 +9,7 @@ import { shoePath } from '../lib/shoePath'
 import { toFormAddress, streetLine } from '../lib/address'
 import { specFromCartItem } from '../lib/orderSpec'
 import { accessoryImages } from '../lib/accessoryImages'
+import Hinweisband from '../components/Hinweisband'
 import AffiliateVorteil from '../components/AffiliateVorteil'
 
 // Zubehör kommt aus dem Store (dieselbe Quelle wie die Zubehörseite).
@@ -822,6 +823,14 @@ export default function Checkout() {
 
   return (
     <div className="flex flex-col min-h-full bg-white">
+
+      {/* Der Hinweis auf den Verkaufsstart gehoert auch hierher, und zwar
+          vor den ersten Schritt. Wer bis in die Kasse kommt, hat die
+          Startseite oft nie gesehen - ueber einen geteilten Link, eine
+          Suche oder eine wiederaufgenommene Einkaufstasche. Eine Angabe
+          darueber, ab wann geliefert wird, erst in der Bestaetigung zu
+          machen, ist genau einen Schritt zu spaet. */}
+      <Hinweisband />
 
       {/* Header */}
       <div className={`${SHELL} pt-4 pb-2 flex items-center gap-3 flex-shrink-0`}>

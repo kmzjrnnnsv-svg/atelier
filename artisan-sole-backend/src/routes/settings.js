@@ -479,6 +479,72 @@ router.put('/whatsapp', authenticate, requireRole('admin'), (req, res) => {
   res.json({ number })
 })
 
+// ─── Der Hinweis über dem Laden ─────────────────────────────────────────────
+//
+// Ein Band unter dem Aufmacher der Startseite, das zweierlei sagt: ab wann
+// verkauft wird, und wohin man schreiben kann.
+//
+// ── Warum das in die Datenbank gehört und nicht in den Quelltext ──────────
+//
+// Weil es ein Datum ist. „Verkaufsstart im Februar" stimmt bis Ende Februar
+// und ist danach falsch, und falsch stehenbleiben ist hier besonders teuer:
+// Ein Laden, der im April noch ankündigt, er fange im Februar an, wirkt
+// verlassen. In der Datenbank kann der Satz an dem Tag weg, an dem er nicht
+// mehr stimmt — ohne Deploy, ohne uns.
+//
+// Deshalb auch der Schalter: Nicht leeren müssen, um ihn verschwinden zu
+// lassen. Wer ihn ausschaltet, behält den Text für das nächste Mal.
+//
+// ── Warum die Vorgabe schon gefüllt ist ───────────────────────────────────
+//
+// Ein leerer Hinweis beim ersten Start sähe aus wie ein Fehler. Die Vorgabe
+// ist das, was gerade gilt; sie wird überschrieben, sobald jemand speichert.
+const HINWEIS_VORGABE = 'Verkaufsstart im Februar. Ein Teil der Paare wird noch im Februar ausgeliefert.'
+const HINWEIS_WA_VORGABE = 'Fragen vorab? Schreib uns auf WhatsApp.'
+
+function hinweisLesen(db) {
+  const rows = db.prepare(
+    "SELECT key, value FROM settings WHERE key IN ('hinweis_an','hinweis_text','hinweis_whatsapp_satz','whatsapp_business_number')",
+  ).all()
+  const w = Object.fromEntries(rows.map(r => [r.key, r.value]))
+  return {
+    // Nur eine ausdrücklich gespeicherte 0 schaltet ab. Fehlt der Schlüssel,
+    // ist der Hinweis an — sonst wäre er nach dem Einspielen unsichtbar und
+    // niemand wüsste, dass es ihn gibt.
+    an: w.hinweis_an !== '0',
+    text: w.hinweis_text ?? HINWEIS_VORGABE,
+    whatsappSatz: w.hinweis_whatsapp_satz ?? HINWEIS_WA_VORGABE,
+    whatsapp: w.whatsapp_business_number || '',
+  }
+}
+
+// GET /api/settings/hinweis — öffentlich. Die Startseite holt beides in einem
+// Aufruf; zwei Abrufe für ein Band wären einer zu viel.
+router.get('/hinweis', (req, res) => {
+  res.json(hinweisLesen(getDb()))
+})
+
+// PUT /api/settings/hinweis — nur Verwaltung.
+router.put('/hinweis', authenticate, requireRole('admin', 'curator'), (req, res) => {
+  const text = String(req.body.text ?? '').trim().slice(0, 300)
+  const satz = String(req.body.whatsappSatz ?? '').trim().slice(0, 200)
+  const an   = req.body.an ? '1' : '0'
+
+  const db = getDb()
+  const setz = db.prepare(`
+    INSERT INTO settings (key, value, updated_by, updated_at)
+    VALUES (?, ?, ?, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = datetime('now')
+  `)
+  db.transaction(() => {
+    setz.run('hinweis_an', an, req.user.id)
+    setz.run('hinweis_text', text, req.user.id)
+    setz.run('hinweis_whatsapp_satz', satz, req.user.id)
+  })()
+
+  res.json(hinweisLesen(db))
+})
+
 // ─── GET /api/settings/steuer, öffentlich ───────────────────────────────────
 //
 // Was der Laden über die Umsatzsteuer sagen darf und muss.

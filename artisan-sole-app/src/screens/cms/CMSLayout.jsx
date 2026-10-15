@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen, TrendingUp, KeyRound } from 'lucide-react'
+import { LayoutDashboard, Footprints, Image, ImagePlus, LogOut, Users, Shield, ScanLine, HelpCircle, FileText, ShoppingBag, ShieldCheck, Landmark, Mail, Ruler, Palette, Award, MessageSquare, Truck, Ticket, Gift, Megaphone, ExternalLink, Sliders, Building2, Smartphone, ChevronRight, Inbox, PackageOpen, TrendingUp, KeyRound, MessageCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import useStore from '../../store/store'
 import { HOME_PATH } from '../../lib/homePath'
@@ -98,6 +98,7 @@ export default function CMSLayout() {
               { to: '/cms/coupons',  label: 'Gutscheine',   icon: Ticket },
             ]},
             { heading: 'Inhalte', items: [
+              { to: '/cms/kontakt',     label: 'Kontakt & Hinweis', icon: MessageCircle },
               { to: '/cms/cta-banner', label: 'CTA-Banner',     icon: Megaphone },
               { to: '/cms/product-texts', label: 'Produktseite-Texte', icon: FileText },
               { to: '/cms/footer',     label: 'Footer & Service', icon: FileText },

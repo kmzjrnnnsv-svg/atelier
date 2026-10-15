@@ -15,6 +15,7 @@ import useStore from './store/store'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Capacitor } from '@capacitor/core'
 import useDeviceInfo from './hooks/useDeviceInfo'
+import { seiteZaehlen } from './lib/seitenzaehler'
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -46,6 +47,20 @@ function ScrollToTop() {
     // Also reset after React has rendered the new route content
     requestAnimationFrame(resetContainers)
   }, [pathname, hash])
+  return null
+}
+
+/**
+ * Der Seitenzähler.
+ *
+ * Er hängt am Pfad und nicht an der Suche oder am Anker: Dieselbe Seite mit
+ * `?ref=` eines Vermittlers ist derselbe Aufruf, und ein Sprung zu einem
+ * Anker ist gar keiner. Was gezählt werden darf, entscheidet der Server
+ * (siehe routes/auswertung.js) — hier steht nur, wann gemeldet wird.
+ */
+function Seitenzaehler() {
+  const { pathname } = useLocation()
+  useEffect(() => { seiteZaehlen(pathname) }, [pathname])
   return null
 }
 
@@ -172,6 +187,7 @@ const WebsiteImagesPanel   = spaet(() => import('./screens/cms/WebsiteImagesPane
 const OptionsEditor        = spaet(() => import('./screens/cms/OptionsEditor'))
 const ConfiguratorMatrix   = spaet(() => import('./screens/cms/ConfiguratorMatrix'))
 const CtaBannerPanel       = spaet(() => import('./screens/cms/CtaBannerPanel'))
+const KontaktPanel         = spaet(() => import('./screens/cms/KontaktPanel'))
 const NachrichtenPanel     = spaet(() => import('./screens/cms/NachrichtenPanel'))
 const RegisterPromotion    = spaet(() => import('./screens/RegisterPromotion'))
 const CorporateGifting     = spaet(() => import('./screens/CorporateGifting'))
@@ -385,6 +401,7 @@ function AppRoutes() {
               <Route path="scans"    element={<ScansPanel />} />
               <Route path="loyalty"  element={<LoyaltyEditor />} />
               <Route path="cta-banner" element={<CtaBannerPanel />} />
+              <Route path="kontakt" element={<KontaktPanel />} />
               <Route path="orders"   element={<OrdersPanel />} />
               <Route path="zahlungen" element={<AdminRoute><ZahlungsPanel /></AdminRoute>} />
               <Route path="auswertung" element={<AuswertungPanel />} />
@@ -622,6 +639,7 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <Seitenzaehler />
           <AppRoutes />
         </BrowserRouter>
       </AuthProvider>

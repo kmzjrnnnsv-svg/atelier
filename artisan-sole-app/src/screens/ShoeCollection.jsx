@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap, Search, X, ArrowRight } from 'lucide-react'
 import useStore from '../store/store'
+import Hinweisband from '../components/Hinweisband'
 import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../hooks/useApi'
@@ -599,6 +600,12 @@ export default function ShoeCollection() {
   return (
     <div className="min-h-full bg-white">
 
+      {/* Der Hinweis auf den Verkaufsstart steht auch hier und nicht nur auf
+          der Startseite: Wer über eine Suche oder einen geteilten Link
+          hereinkommt, landet oft genau hier und hat den Aufmacher nie
+          gesehen. Ein Termin, den nur die Startseite kennt, ist keiner. */}
+      <Hinweisband />
+
       {/* ── Kopfzeile: sagen, was es gibt, und wo es losgeht ──────
           Vor der Seite lief eine Logo-Animation, danach stand hier eine
           Überschrift ohne Anschluss: „Custom Made" — und dann nichts, was
@@ -953,8 +960,8 @@ export default function ShoeCollection() {
               text: 'Vor dem Abschluss steht deine vollständige Konfiguration noch einmal da, jede Farbe, jede Option, jedes Zubehör. Erst dann geht die Bestellung in die Fertigung.',
             },
             {
-              titel: 'Fertigung in der Manufaktur',
-              text: 'Über 200 Arbeitsschritte. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht.',
+              titel: 'Fertigung in Almansa',
+              text: 'Über 200 Arbeitsschritte, rund vier Wochen. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht — und auch dann, wenn es länger wird.',
             },
             {
               titel: 'Endkontrolle und Versand',
