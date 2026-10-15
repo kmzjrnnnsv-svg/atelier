@@ -1830,6 +1830,41 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_configs_open   ON shoe_configs(user_id, shoe_id, status, in_cart);
   `)
 
+  // ── Seitenaufrufe ────────────────────────────────────────────────────────
+  //
+  // Ein Zähler, kein Besucherprotokoll — und das ist hier keine Feinheit,
+  // sondern die Bedingung, unter der es ihn überhaupt gibt.
+  //
+  // Auf dem Hinweis zum Speichern steht in Fettschrift: „Keine Analyse, keine
+  // Werbung, kein Tracking." Ein übliches Statistikwerkzeug würde den Satz zur
+  // Lüge machen, denn es braucht eine Kennung je Besucher, um Besuche von
+  // Aufrufen zu unterscheiden. Diese Tabelle hat keine. Sie hat einen Tag,
+  // einen Pfad und eine Zahl.
+  //
+  // Was dadurch NICHT geht und auch nicht gehen soll: Wiederkehrer erkennen,
+  // Wege durch die Seite verfolgen, Verweildauer messen, nach Herkunft oder
+  // Gerät aufschlüsseln. Dafür bräuchte es ein Merkmal am einzelnen Menschen,
+  // und sobald es das gibt, ist es eine Verarbeitung personenbezogener Daten
+  // mit allem, was daran hängt.
+  //
+  // Was geht: Wie viele Aufrufe hatte welche Seite an welchem Tag. Für einen
+  // Laden, der wissen will, ob die Startseite ankommt und welches Modell
+  // angesehen wird, ist das die Zahl, auf die es ankommt.
+  //
+  // Der Pfad wird vor dem Zählen auf eine feste Liste gebracht (siehe
+  // routes/auswertung.js). Ohne das stünden hier Adressen mit Kennungen
+  // darin, und eine selten aufgerufene Adresse mit einer Kennung ist wieder
+  // ein Merkmal am Einzelnen.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS seitenaufrufe (
+      tag     TEXT    NOT NULL,            -- JJJJ-MM-TT, Serverzeit
+      pfad    TEXT    NOT NULL,            -- normalisiert, siehe oben
+      anzahl  INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (tag, pfad)
+    );
+    CREATE INDEX IF NOT EXISTS idx_seitenaufrufe_tag ON seitenaufrufe(tag);
+  `)
+
   // ── Passkeys ─────────────────────────────────────────────────────────────
   // Ein Konto kann mehrere haben — Telefon und Rechner sollten getrennt
   // hinterlegt sein, sonst sperrt ein verlorenes Gerät den Zugang aus.

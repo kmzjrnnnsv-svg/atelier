@@ -200,4 +200,122 @@ router.get('/bestand', ...canRead, (req, res) => {
   `).all())
 })
 
+/* ══ Seitenaufrufe ═══════════════════════════════════════════════════════
+ *
+ * ── Warum der Browser zählt und nicht der Server ─────────────────────────
+ *
+ * Die Seite ist eine einzige Anwendung: Nach dem ersten Laden wechselt sie
+ * die Ansicht, ohne den Server zu fragen. Der Server sähe also genau einen
+ * Aufruf je Besuch und nie, welche Seite angesehen wurde. Deshalb meldet der
+ * Browser den Wechsel — eine Zeile, ohne Antwort, die niemanden aufhält.
+ *
+ * ── Was hier bewusst NICHT ankommt ───────────────────────────────────────
+ *
+ * Keine Kennung, keine IP, kein Browserkennzeichen, keine Herkunft, keine
+ * Verweildauer. Der Zähler ist eine Zahl je Tag und Pfad (siehe schema.js).
+ * Das ist die Bedingung dafür, dass der Satz „Keine Analyse, keine Werbung,
+ * kein Tracking" auf dem Speicherhinweis weiter stimmt.
+ *
+ * Express hält die IP im Aufruf, das lässt sich nicht abschalten — sie wird
+ * hier nur nicht angefasst. Was der Webserver davor in sein eigenes
+ * Zugriffsprotokoll schreibt, ist eine andere Frage und steht in der
+ * Datenschutzerklärung.
+ */
+
+/* Die Liste der Seiten, die gezählt werden. Alles, was nicht daraufsteht,
+   wird verworfen — nicht unter „sonstiges" gesammelt.
+
+   Der Grund ist nicht Ordnungssinn: Eine Adresse mit einer Kennung darin
+   („/order/8412") ist, wenn sie selten vorkommt, ein Merkmal an einer
+   einzelnen Person. Eine feste Liste kann das nicht passieren. Modelle
+   werden deshalb auf „/shoe" zusammengefasst — ob ein bestimmtes Modell oft
+   angesehen wird, steht ohnehin woanders.
+
+   Bereiche hinter der Anmeldung stehen nicht darauf. Wie oft jemand seine
+   Bestellungen ansieht, geht niemanden etwas an, auch uns nicht. */
+const GEZAEHLTE_PFADE = new Set([
+  '/', '/test-homepage', '/collection', '/accessories', '/explore',
+  '/shoe', '/customize', '/cart', '/checkout',
+  '/scan', '/passform', '/corporate', '/affiliate',
+  '/legal', '/faq', '/newsletter',
+])
+
+/** Aus der Adresse des Browsers einen Eintrag der Liste machen, oder nichts. */
+function pfadNormalisieren(roh) {
+  let p = String(roh || '').split('?')[0].split('#')[0].trim()
+  if (!p.startsWith('/')) return null
+  if (p.length > 1) p = p.replace(/\/+$/, '')
+  if (p === '') p = '/'
+  if (GEZAEHLTE_PFADE.has(p)) return p
+  // Die erste Ebene genügt: „/shoe/heritage-oxford" wird zu „/shoe".
+  const erste = '/' + p.split('/')[1]
+  return GEZAEHLTE_PFADE.has(erste) ? erste : null
+}
+
+/**
+ * POST /api/auswertung/aufruf — öffentlich.
+ *
+ * Antwortet mit 204 und ohne Inhalt, auch wenn der Pfad verworfen wurde. Ein
+ * Zähler, der dem Browser erzählt, was er zählt, lädt dazu ein, ihn zu füllen.
+ */
+router.post('/aufruf', (req, res) => {
+  const pfad = pfadNormalisieren(req.body?.pfad)
+  if (pfad) {
+    try {
+      getDb().prepare(`
+        INSERT INTO seitenaufrufe (tag, pfad, anzahl)
+        VALUES (date('now'), ?, 1)
+        ON CONFLICT(tag, pfad) DO UPDATE SET anzahl = anzahl + 1
+      `).run(pfad)
+    } catch (e) {
+      // Ein Zähler darf nichts aufhalten. Fällt er aus, fehlt eine Zahl.
+      console.error('[seitenaufruf]', e.message)
+    }
+  }
+  res.status(204).end()
+})
+
+/**
+ * GET /api/auswertung/besucher?tage=30 — für die Verwaltung.
+ *
+ * Drei Dinge, in der Reihenfolge, in der man sie liest: die Summen (heute,
+ * sieben Tage, der ganze Zeitraum), der Verlauf je Tag für die Balken, und
+ * welche Seiten es waren.
+ */
+router.get('/besucher', ...canRead, (req, res) => {
+  const db = getDb()
+  const tage = Math.min(365, Math.max(7, Number(req.query.tage) || 30))
+  const von = `-${tage - 1} days`
+
+  const verlauf = db.prepare(`
+    SELECT tag, SUM(anzahl) AS anzahl
+      FROM seitenaufrufe
+     WHERE tag >= date('now', ?)
+     GROUP BY tag
+     ORDER BY tag
+  `).all(von)
+
+  const seiten = db.prepare(`
+    SELECT pfad, SUM(anzahl) AS anzahl
+      FROM seitenaufrufe
+     WHERE tag >= date('now', ?)
+     GROUP BY pfad
+     ORDER BY anzahl DESC
+  `).all(von)
+
+  const heute = db.prepare(
+    "SELECT COALESCE(SUM(anzahl), 0) AS n FROM seitenaufrufe WHERE tag = date('now')",
+  ).get().n
+  const woche = db.prepare(
+    "SELECT COALESCE(SUM(anzahl), 0) AS n FROM seitenaufrufe WHERE tag >= date('now', '-6 days')",
+  ).get().n
+  const gesamt = verlauf.reduce((s, r) => s + r.anzahl, 0)
+
+  // Seit wann überhaupt gezählt wird. Ohne diese Angabe liest sich ein
+  // niedriger Wert wie ein schlechter Tag und nicht wie ein junger Zähler.
+  const seit = db.prepare('SELECT MIN(tag) AS t FROM seitenaufrufe').get().t
+
+  res.json({ tage, heute, woche, gesamt, seit, verlauf, seiten })
+})
+
 export default router

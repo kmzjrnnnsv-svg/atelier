@@ -54,11 +54,28 @@ export default function CookieHinweis() {
               <p className="text-[9px] text-black/30 uppercase tracking-[0.25em] font-light mb-2">
                 Speicherung im Endgerät
               </p>
+              {/* ── Warum hier nicht mehr „keine Analyse" steht ──────────────
+
+                  Der Satz stand so lange, wie überhaupt nichts gezählt wurde.
+                  Seit es einen Seitenzähler gibt, wäre er spitzfindig: Der
+                  Zähler legt nichts im Gerät ab und kennt niemanden, aber
+                  „keine Analyse" würde ein Leser so verstehen, dass auch
+                  nicht gezählt wird.
+
+                  Also steht es jetzt da. Lieber ein Satz mehr als eine Zusage,
+                  die man verteidigen muss — dasselbe Argument wie im Kapitel
+                  „In eigener Sache" über das Wort „handgefertigt".
+
+                  Was bleibt, ist das Entscheidende: kein Wiedererkennen. Die
+                  Zahl weiß, dass eine Seite aufgerufen wurde, und nicht, von
+                  wem. Siehe lib/seitenzaehler.js. */}
               <p className="text-[13px] text-black/70 font-light leading-[1.7] max-w-xl">
                 Wir speichern nur, was der Laden zum Arbeiten braucht: deine Anmeldung,
                 deinen Warenkorb und diese Entscheidung.{' '}
-                <span className="text-black">Keine Analyse, keine Werbung, kein Tracking</span>,
-                und was wir speichern, bleibt bei uns.
+                <span className="text-black">Keine Werbung, kein Tracking, kein Wiedererkennen</span>,
+                und was wir speichern, bleibt bei uns. Wie oft eine Seite aufgerufen
+                wird, zählen wir — als nackte Zahl, ohne Kennung und ohne etwas in
+                deinem Gerät.
               </p>
             </div>
             <button
