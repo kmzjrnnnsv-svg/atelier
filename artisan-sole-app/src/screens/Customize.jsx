@@ -2054,14 +2054,14 @@ export default function Customize() {
             <p className="text-[11px] lg:text-[12px] text-black/50 leading-[1.8]" style={{ letterSpacing: '0.02em' }}>
               {product.description || (
                 <>
-                  Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> entsteht einzeln auf Bestellung in unserer spanischen Manufaktur, in über 200 Arbeitsschritten.
-                  Dank unserer <span className="text-black/70">3D-Fußvermessung</span> wird jedes Paar exakt auf deine Fußform zugeschnitten.
-                  Ausgesuchtes europäisches Leder, durchgenähte Konstruktion und eine ergonomische Passform, die du vom ersten Schritt an spürst.
+                  Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> entsteht einzeln auf Bestellung in Almansa, Spanien, in über 200 Arbeitsschritten.
+                  Aus <span className="text-black/70">Fußlänge und Ballenumfang</span> bestimmen wir Leisten, Größe und Weite.
+                  Ausgesuchtes europäisches Leder, rahmengenähte Konstruktion und eine Passform, die du vom ersten Schritt an spürst.
                 </>
               )}
             </p>
             <div className="flex items-center gap-4 mt-3">
-              {(pageTexts?.badges?.length ? pageTexts.badges : ['Handgenäht', 'Custom Made', '200+ Schritte']).map((b, i, arr) => (
+              {(pageTexts?.badges?.length ? pageTexts.badges : ['Rahmengenäht', 'Custom Made', '200+ Schritte']).map((b, i, arr) => (
                 <span key={b} className="flex items-center gap-4">
                   <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>{b}</span>
                   {i < arr.length - 1 && <span className="text-black/10">·</span>}

@@ -2091,9 +2091,9 @@ export const rechtstextDatei = (type) => RECHTSTEXTE.find(r => r.type === type) 
 export function seedKollektionen(db) {
   const vorgabe = [
     { key: 'standard', label: 'Maßanfertigung', sort_order: 1,
-      description: 'Von Grund auf für Sie gefertigt, volle Auswahl, 4 bis 6 Wochen.' },
+      description: 'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, rund vier Wochen.' },
     { key: 'express',  label: 'Express',        sort_order: 2,
-      description: 'Aus vorbereiteten Bauteilen auf Ihren Leisten vollendet, rund 2 Wochen.' },
+      description: 'Aus vorbereiteten Bauteilen auf deinem Leisten vollendet, rund zwei Wochen.' },
   ]
   const einfuegen = db.prepare(`
     INSERT OR IGNORE INTO collections (key, label, description, sort_order) VALUES (?, ?, ?, ?)

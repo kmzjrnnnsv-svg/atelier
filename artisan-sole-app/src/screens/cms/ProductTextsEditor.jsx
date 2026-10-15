@@ -13,7 +13,11 @@ import { LIEFERUMFANG } from '../../lib/lieferumfang'
 // dort nicht; gelesen werden sie nirgends mehr.
 const DEFAULTS = {
   delivery_items: LIEFERUMFANG,
-  badges: ['Handgenäht', 'Custom Made', '200+ Schritte'],
+  // „Handgenäht“ stand hier als Vorgabe, und das Kapitel „In eigener
+  // Sache“ auf der Startseite sagt wörtlich das Gegenteil: Der Rahmen
+  // wird maschinell genäht. Zwei Seiten desselben Ladens, die sich
+  // widersprechen, kosten mehr als das Wort einbringt.
+  badges: ['Rahmengenäht', 'Custom Made', '200+ Schritte'],
 }
 
 const lbl = 'text-[10px] uppercase tracking-[0.2em] text-black/30 block mb-1.5 font-light'

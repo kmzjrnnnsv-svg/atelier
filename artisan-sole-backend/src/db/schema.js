@@ -2368,4 +2368,37 @@ export function runMigrations(db) {
       }
     }
   } catch (e) { console.error('[migrate footer legal links]', e.message) }
+
+  // ── Die Beschreibung der beiden Kollektionen ─────────────────────────────
+  //
+  // Auf der Kollektionsseite stand unter „Maßanfertigung": „Von Grund auf
+  // für Sie gefertigt, volle Auswahl, 4 bis 6 Wochen." Zwei Dinge daran
+  // stimmten nicht mehr.
+  //
+  // Die Anrede: Der ganze Laden duzt, dieser eine Satz siezte. Er stammt aus
+  // der ersten Fassung und ist seither nie wieder gelesen worden.
+  //
+  // Die Dauer: Die Seite nennt an sieben Stellen rund vier Wochen, hier
+  // standen sechs. Ein Käufer, der beides sieht, glaubt keiner von beiden
+  // Zahlen — und die Angabe mit der größten Spanne ist die, an die er sich
+  // erinnert.
+  //
+  // Angelegt werden die Zeilen mit INSERT OR IGNORE, eine neue Vorgabe allein
+  // ändert an einem bestehenden Laden also nichts. Deshalb hier, und deshalb
+  // nur dann, wenn der alte Wortlaut noch unverändert dasteht: Wer die
+  // Beschreibung in der Verwaltung angefasst hat, behält seine Fassung.
+  try {
+    const ALT_NEU = [
+      ['standard',
+       'Von Grund auf für Sie gefertigt, volle Auswahl, 4 bis 6 Wochen.',
+       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, rund vier Wochen.'],
+      ['express',
+       'Aus vorbereiteten Bauteilen auf Ihren Leisten vollendet, rund 2 Wochen.',
+       'Aus vorbereiteten Bauteilen auf deinem Leisten vollendet, rund zwei Wochen.'],
+    ]
+    const setz = db.prepare('UPDATE collections SET description = ? WHERE key = ? AND description = ?')
+    let n = 0
+    for (const [key, alt, neu] of ALT_NEU) n += setz.run(neu, key, alt).changes
+    if (n) console.log(`[migrate Kollektionstexte] ${n} Beschreibung(en) auf du und vier Wochen gebracht`)
+  } catch (e) { console.error('[migrate Kollektionstexte]', e.message) }
 }
