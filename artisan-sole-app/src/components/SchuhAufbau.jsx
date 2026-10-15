@@ -41,7 +41,7 @@ import Kapitelmarke from './Kapitelmarke'
 import Enthuellen from './Enthuellen'
 import Laufband from './Laufband'
 import { AUFBAU } from '../lib/aufbauSchritte'
-import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
+import { useWenigerBewegungFolge, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 /* Vorlauf und Nachlauf: Am Anfang steht die Brandsohle einen Moment allein
@@ -55,7 +55,21 @@ const NACHLAUF = 0.10
    und weil die Bühne dabei stehen bleibt, fühlte sich das an wie eine Seite,
    die klemmt. 0,38 sind rund drei Mausrad-Rasten je Schritt — zügig genug,
    dass es läuft, langsam genug, dass man die Beschriftung liest. */
-const PRO_SCHRITT = 0.38
+/* Nachgemessen auf einem iPhone 13: Bei diesem Wert bekam jeder Schritt der
+   Folge noch zweihundertvierzig bis zweihundertachtzig Pixel Scrollweg. Ein
+   normaler Wisch mit dem Daumen legt achthundert bis fünfzehnhundert zurück
+   — er übersprang also ein bis zwei Schritte vollständig, und die Abnahme
+   fand auf diesem Gerät nur fünf von sechs.
+
+   0,65 gibt jedem Schritt rund eine halbe Bildschirmhöhe. Das ist der Wert,
+   bei dem das Maßnehmen schon stand, und dort war es richtig. Die Seite wird
+   dadurch rund ein Zehntel länger; eine Folge, die man überspringt, ist aber
+   keine Folge, sondern nur Höhe.
+
+   Die beiden Randschritte sind davon unberührt: Sie schlucken, was vor und
+   nach der klebenden Strecke liegt, und sind deshalb immer am längsten. Zu
+   messen ist einer aus der Mitte. */
+const PRO_SCHRITT = 0.65
 
 function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
@@ -101,7 +115,7 @@ function OhneBewegung({ kopf, fuss }) {
  */
 export default function SchuhAufbau({ kopf, fuss }) {
   const ref = useRef(null)
-  const ruhig = useWenigerBewegung()
+  const ruhig = useWenigerBewegungFolge()
   const schmal = useSchmal()
   const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 

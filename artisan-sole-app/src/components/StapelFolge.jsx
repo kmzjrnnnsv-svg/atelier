@@ -35,7 +35,7 @@ import SohlenStapel from './SohlenStapel'
 import Enthuellen from './Enthuellen'
 import Laufband from './Laufband'
 import { STAPEL } from '../lib/stapelSchritte'
-import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
+import { useWenigerBewegungFolge, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 const VORLAUF = 0.08
@@ -48,7 +48,21 @@ const NACHLAUF = 0.12
    brauchen, ist das auch eine Frage der Ruhe: Bei 0,34 Bildschirmen je
    Schritt schnitt ein zügiger Daumen die Bewegung ab, und abgeschnittene
    Bewegung ist das Gegenteil von weich. */
-const PRO_SCHRITT = 0.42
+/* Nachgemessen auf einem iPhone 13: Bei diesem Wert bekam jeder Schritt der
+   Folge noch zweihundertvierzig bis zweihundertachtzig Pixel Scrollweg. Ein
+   normaler Wisch mit dem Daumen legt achthundert bis fünfzehnhundert zurück
+   — er übersprang also ein bis zwei Schritte vollständig, und die Abnahme
+   fand auf diesem Gerät nur fünf von sechs.
+
+   0,65 gibt jedem Schritt rund eine halbe Bildschirmhöhe. Das ist der Wert,
+   bei dem das Maßnehmen schon stand, und dort war es richtig. Die Seite wird
+   dadurch rund ein Zehntel länger; eine Folge, die man überspringt, ist aber
+   keine Folge, sondern nur Höhe.
+
+   Die beiden Randschritte sind davon unberührt: Sie schlucken, was vor und
+   nach der klebenden Strecke liegt, und sind deshalb immer am längsten. Zu
+   messen ist einer aus der Mitte. */
+const PRO_SCHRITT = 0.65
 
 function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
@@ -92,7 +106,7 @@ function OhneBewegung({ kopf, fuss }) {
  */
 export default function StapelFolge({ kopf, fuss }) {
   const ref = useRef(null)
-  const ruhig = useWenigerBewegung()
+  const ruhig = useWenigerBewegungFolge()
   const schmal = useSchmal()
   const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 

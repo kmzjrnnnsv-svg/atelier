@@ -185,6 +185,7 @@ const sichtbarIn = (eintrag, schritte) =>
  * @param {number} schritte Anzahl der Schritte.
  */
 import { useMemo } from 'react'
+import { FOLGEN_TROTZDEM } from '../lib/bewegung'
 
 /**
  * Baut Tafel und Regelblatt.
@@ -299,8 +300,13 @@ function tafelBauen({ kennung, stil, teile, reihenfolge, plan, marken, extra, ex
 
     extraAb ? `[data-schritt="${extraAb}"] #as-extra-${kennung}{opacity:1;transform:none}` : '',
 
-    // Wer keine Bewegung will, bekommt nur die Überblendung.
-    '@media (prefers-reduced-motion:reduce){.as-teil,.as-marke,.as-extra{transform:none!important}'
+    // Wer keine Bewegung will, bekommt nur die Überblendung — es sei denn,
+    // die Folgen sollen trotzdem laufen. Diese Regel hier stehenzulassen,
+    // während die Bühne gebaut wird, wäre das Schlechteste von beidem: Die
+    // Seite klebte über drei Bildschirme und das Bild darauf stünde still.
+    // Die Entscheidung und ihr Preis stehen in lib/bewegung.js.
+    FOLGEN_TROTZDEM ? '' :
+      '@media (prefers-reduced-motion:reduce){.as-teil,.as-marke,.as-extra{transform:none!important}'
       + '.as-strich{transition:none;stroke-dashoffset:0}'
       + '.as-teil path{transition:none!important;stroke-dashoffset:0!important}}',
   ].filter(Boolean).join('')
