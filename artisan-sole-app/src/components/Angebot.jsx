@@ -138,7 +138,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
               <p className="t-klein c-leise">Schneller</p>
               <p className="t-text c-tinte mt-3">
                 {express.anzahl} Modelle gibt es als Express-Fassung: rund{' '}
-                {express.wochen} Wochen statt rund vier
+                {express.wochen} Wochen statt 4 bis 6
                 {express.aufpreis ? `, € ${express.aufpreis} Aufpreis` : ''}. Möglich wird
                 das durch vorbereitete Bauteile. Welche Entscheidungen damit schon
                 getroffen sind, steht am Modell.

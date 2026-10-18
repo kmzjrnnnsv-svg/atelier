@@ -12,5 +12,8 @@ const IMG_API_BASE = import.meta.env.VITE_API_URL || ''
 export function resolveMediaUrl(url) {
   if (!url) return url
   if (url.startsWith('http') || url.startsWith('data:')) return url
+  // Die Ledermuster liegen im Frontend selbst (public/leder), nicht beim
+  // Server. Im iOS-Build gehören sie zum Paket der App.
+  if (url.startsWith('/leder/')) return url
   return `${IMG_API_BASE}${url}`
 }

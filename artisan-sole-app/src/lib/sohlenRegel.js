@@ -194,6 +194,56 @@ export function nurMitBild(gruppe, { behalten = null } = {}) {
   return { ...gruppe, values: werte.filter(v => hatBild(v) || (behalten && v.key === behalten)) }
 }
 
+/** Hat eine Lederfarbe ein Bild: ein eigenes Muster oder eine Aufnahme des Modells. */
+export const hatFarbBild = (c) => Boolean(
+  c?.image || c?.images?.length || c?.buckets?.some(b => b?.images?.length)
+)
+
+/**
+ * Dieselbe Regel für die Lederfarben: Hat ein Leder Farben mit Bild, stehen
+ * nur diese zur Wahl. Die alten Farbflächen ohne Muster sahen neben den
+ * Ledertexturen aus wie Platzhalter, und ein Schwarz stand doppelt da, einmal
+ * als Fläche, einmal als Leder. Ein Leder ganz ohne Bilder (die Mokassins,
+ * bis es ihre Muster gibt) behält seine Flächen.
+ */
+export function farbenMitBild(farben) {
+  const liste = Array.isArray(farben) ? farben : []
+  return liste.some(hatFarbBild) ? liste.filter(hatFarbBild) : liste
+}
+
+/** Englische und deutsche Farbnamen auf ein Wort gebracht, für den Abgleich. */
+const FARBWORT = {
+  black: 'schwarz', 'dark brown': 'dunkelbraun', darkbrown: 'dunkelbraun',
+  'medium brown': 'mittelbraun', medbrown: 'mittelbraun', brown: 'mittelbraun', braun: 'mittelbraun',
+  burgundy: 'bordeaux', camel: 'kamel', grey: 'grau', gray: 'grau', navy: 'marine',
+  'navy blue': 'marine', dunkelblau: 'marine', red: 'rot', green: 'grün', olive: 'oliv',
+  'forest green': 'waldgrün', oxblood: 'ochsenblut', yellow: 'gelb', purple: 'lila',
+  beige: 'beige', sand: 'sand', khaki: 'khaki', cognac: 'cognac', tan: 'cognac',
+}
+export const farbWort = (name) => {
+  const n = String(name || '').trim().toLowerCase().replace(/\s+/g, ' ')
+  return FARBWORT[n] || n
+}
+
+/**
+ * Das Ledermuster für eine Farbe, die selbst keins hat.
+ *
+ * Modelle mit eigenen Farbstrecken (Fotos des Schuhs je Farbe) führen ihre
+ * Farben als Varianten. Deren erstes Foto taugt als Großbild, nicht als
+ * Muster: Ein kleiner Kreis mit einem ganzen Schuh darin ist nicht zu lesen.
+ * Gesucht wird deshalb die gleichnamige Farbe desselben Leders aus dem
+ * Musterkatalog; gibt es keine, bleibt es beim Foto.
+ */
+export function musterFuer(farbe, lederKey, katalog) {
+  if (!farbe || farbe.image) return farbe?.image || null
+  if (!lederKey || !Array.isArray(katalog)) return null
+  const wort = farbWort(farbe.name)
+  const treffer = katalog.find(c => c.image
+    && String(c.applicable_materials || '').split(',').map(x => x.trim()).includes(lederKey)
+    && farbWort(c.name) === wort)
+  return treffer?.image || null
+}
+
 /**
  * Aufsätze auf dem Spann, an denen Metall sitzt.
  *

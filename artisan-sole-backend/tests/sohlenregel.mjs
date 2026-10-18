@@ -16,7 +16,7 @@
  */
 import {
   sichtbareGruppen, hatLederrand, expressFreigabe, hatMetall, festeWerte,
-  randfarbeFuer, abgeleiteteWerte, nurMitBild, hatBild,
+  randfarbeFuer, abgeleiteteWerte, nurMitBild, hatBild, farbenMitBild, musterFuer, farbWort,
   OHNE_LEDERRAND, FARBGRUPPEN_SOHLE, AUFSATZ_MIT_METALL, FESTE_WERTE, ABGELEITET,
 } from '../../artisan-sole-app/src/lib/sohlenRegel.js'
 
@@ -166,6 +166,13 @@ p('Festgelegte Gruppe bleibt ganz, auch gemischt (Rahmen)', nurMitBild(WELT).val
 const RAND_G = { key: 'sole_color', values: [{ key: 'black', color_hex: '#000' }, { key: 'x' }] }
 p('Abgeleitete Gruppe bleibt ganz (Sohlenrand)', nurMitBild(RAND_G).values.length === 2)
 p('Farbfeld zählt als Bild', hatBild({ color_hex: '#5b3a1d' }) && !hatBild({ key: 'x' }))
+// Die Mokassins führen im Futter neben den acht Mustern noch Tan und Weiß
+// als Farbfläche. Die bleiben: Eine Fläche ist etwas, das man sehen kann.
+const FUTTER = { key: 'inner_color', values: [
+  { key: 'black', color_hex: '#000', image: '/leder/inner_color/black.webp' },
+  { key: 'tan', color_hex: '#a0734a' }, { key: 'x' },
+] }
+p('Futter: Muster und Farbflächen bleiben, nur das Leere fällt', nurMitBild(FUTTER).values.map(v => v.key).join() === 'black,tan')
 const DEKO = { key: 'loafer_decoration', values: [{ key: 'tassel', image: '/u/t.jpg' }, { key: 'penny' }] }
 p('Ein festgelegter Wert bleibt, auch ohne Bild',
   nurMitBild(DEKO, { behalten: 'penny' }).values.length === 2)
@@ -238,6 +245,34 @@ p('hatMetall: Quasten nein', hatMetall('tassels', true) === false)
 p('hatMetall: ohne Gruppe immer ja', hatMetall('tassels', false) === true)
 p('Die Liste nennt beide Metallteile',
   AUFSATZ_MIT_METALL.includes('metal_bit') && AUFSATZ_MIT_METALL.includes('horsebit'))
+
+console.log('\n── Lederfarben mit Bild ──────────────────────────────────────\n')
+{
+  const box = [
+    { key: 'black', name: 'Black', hex: '#000' },
+    { key: 'box_calf__black', name: 'Schwarz', hex: '#323232', image: '/leder/box_calf/black.webp' },
+    { key: 'box_calf__cognac', name: 'Cognac', hex: '#926134', image: '/leder/box_calf/cognac.webp' },
+  ]
+  p('Mit Mustern: nur die Muster', farbenMitBild(box).map(c => c.key).join() === 'box_calf__black,box_calf__cognac')
+  const moc = [{ key: 'moc_black', name: 'Black', hex: '#000' }, { key: 'moc_navy', name: 'Navy', hex: '#123' }]
+  p('Ohne Muster: alle Flächen bleiben', farbenMitBild(moc).length === 2)
+  p('Modellfotos zählen als Bild', farbenMitBild([{ name: 'A', buckets: [{ images: ['x'] }] }, { name: 'B' }]).length === 1)
+  p('Leere Liste bleibt leer', farbenMitBild(null).length === 0)
+
+  p('Farbwort: Black = Schwarz', farbWort('Black') === farbWort('Schwarz'))
+  p('Farbwort: Dark Brown = Dunkelbraun', farbWort('Dark  Brown') === farbWort('Dunkelbraun'))
+  const katalog = [
+    { name: 'Kamel', image: '/leder/lux_suede/camel.webp', applicable_materials: 'lux_suede' },
+    { name: 'Schwarz', image: '/leder/lux_suede/black.webp', applicable_materials: 'lux_suede' },
+    { name: 'Schwarz', image: '/leder/box_calf/black.webp', applicable_materials: 'box_calf' },
+  ]
+  p('Marina Walk: Variante „Black" bekommt das Lux-Suede-Muster',
+    musterFuer({ name: 'Black', buckets: [{ images: ['foto'] }] }, 'lux_suede', katalog) === '/leder/lux_suede/black.webp')
+  p('Gleiche Farbe, anderes Leder: das richtige Muster',
+    musterFuer({ name: 'Schwarz' }, 'box_calf', katalog) === '/leder/box_calf/black.webp')
+  p('Unbekannte Farbe: kein Muster', musterFuer({ name: 'Petrol' }, 'lux_suede', katalog) === null)
+  p('Eigenes Bild geht vor', musterFuer({ name: 'Kamel', image: 'eigen' }, 'lux_suede', katalog) === 'eigen')
+}
 
 console.log('\n── Ergebnis ──────────────────────────────────────────────────\n')
 console.log(`  ${ok} bestanden, ${bad.length} fehlgeschlagen`)

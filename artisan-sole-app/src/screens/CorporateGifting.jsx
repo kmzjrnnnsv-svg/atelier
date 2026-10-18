@@ -220,7 +220,7 @@ export default function CorporateGifting() {
             {[
               { n: '01', t: 'Maße nehmen', d: 'Fußlänge und Ballenumfang, in wenigen Augenblicken erfasst, ganz ohne Spezialwerkzeug.' },
               { n: '02', t: 'Auf den Fuß abgestimmt', d: 'Wir bestimmen die ideale Leistenform und stimmen Länge und Weite präzise auf den individuellen Fuß ab.' },
-              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird einzeln in Almansa produziert. Einzelbestellungen rund 4 Wochen, größere Sammelbestellungen bis zu 8 Wochen, jeweils nach Zahlungseingang. Vier Wochen sind der Normalfall und keine Zusage; wird es mehr, hören Sie das von uns, sobald wir es wissen. Lieferung direkt an die Empfänger.' },
+              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird einzeln in Almansa produziert. Einzelbestellungen 4 bis 6 Wochen, größere Sammelbestellungen bis zu 8 Wochen, jeweils nach Zahlungseingang. Vier Wochen sind der Normalfall und keine Zusage; wird es mehr, hören Sie das von uns, sobald wir es wissen. Lieferung direkt an die Empfänger.' },
             ].map(s => (
               <div key={s.n} className="text-center sm:text-left">
                 <p className="text-[34px] font-extralight text-stone-300 leading-none mb-4">{s.n}</p>

@@ -656,4 +656,4 @@ html.mobile-web body {
    und bliebe weiß. Echte Fotos mit eigenem Hintergrund verändert das kaum. */
 .haus { --grund: var(--grund-erzaehlung); }
 .bild-im-grund { background-color: var(--grund, transparent); }
-.bild-im-grund > img { mix-blend-mode: multiply; }
+.bild-im-grund img { mix-blend-mode: multiply; }

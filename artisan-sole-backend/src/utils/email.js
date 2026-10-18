@@ -373,7 +373,7 @@ const DEFAULTS = {
   order_confirmation: {
     subject: 'Artisan Sole · Bestellbestätigung {{order_ref}}',
     intro:   'Vielen Dank, {{name}}. Deine Bestellung wurde aufgenommen und wird individuell für dich angefertigt.',
-    body:    'Deine Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu dir geliefert.\nDen aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.',
+    body:    'Deine Schuhe werden custom-made gefertigt und in der Regel 4 bis 6 Wochen nach Zahlungseingang direkt zu dir geliefert.\nDen aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.',
   },
   payment: {
     subject: 'Artisan Sole · Zahlungsinformationen {{order_ref}}',
@@ -725,7 +725,7 @@ export async function sendOrderConfirmed(order, user) {
       <div class="label">Dein ${order.user_order_number}. Schuh bei Artisan Sole</div>
       <div class="val">${escapeHtml(order.shoe_name)} · ${escapeHtml(order.material)} · ${escapeHtml(order.color)}</div>
       <div class="label">Geschätzte Lieferzeit</div>
-      <div class="val">ca. 4 Wochen nach Zahlungseingang</div>
+      <div class="val">4 bis 6 Wochen nach Zahlungseingang</div>
     </div>
     <hr class="divider">
     <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:left">${closing}</p>

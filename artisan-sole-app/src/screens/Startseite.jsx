@@ -255,11 +255,10 @@ import MassNehmen from '../components/MassNehmen'
  * das Gegenteil davon — aber das muss dastehen, und zwar hier oben und nicht
  * erst in Kapitel 9.
  *
- * „Rund" und nicht „bis zu": „Bis zu vier Wochen" ist eine Obergrenze, und
- * eine Obergrenze, die eine Werkstatt manchmal reißt, ist schlimmer als gar
- * keine Angabe — sie macht aus einer normalen Verzögerung einen gebrochenen
- * Satz. „Rund vier Wochen" sagt dasselbe und hält auch dann, wenn es fünf
- * werden. Dass das vorkommt, steht in Kapitel 9 ausdrücklich da.
+ * „4 bis 6 Wochen", wie in den AGB. Eine Spanne statt „rund vier": Die
+ * Seite sagte vier, die AGB vier bis sechs, und ein Käufer, der beides
+ * liest, erinnert sich an die Zahl, die ihm nicht gehalten wurde. Jetzt
+ * steht überall dieselbe Angabe.
  *
  * „Neu besohlbar" ist nicht Behauptung, sondern die
  * Folge der Machart und im Machart-Abschnitt gezeigt; „Almansa, Spanien"
@@ -271,7 +270,7 @@ const FAKTEN = [
   'Rahmengenäht',
   'Nach Maß gebaut',
   'Almansa, Spanien',
-  'Rund 4 Wochen Produktion',
+  '4 bis 6 Wochen Produktion',
   'Neu besohlbar',
 ]
 
@@ -400,7 +399,7 @@ const ANGEBOTSFORMEN = [
 const ZAHLEN = [
   { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Die Weite sitzt am Ballen, nicht an der Länge. Deshalb reichen zwei.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. Für dieses eine Paar.' },
-  { zahl: '4',    einheit: 'Wochen Produktion', text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
+  { zahl: '4 bis 6', einheit: 'Wochen Produktion', text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
 ]
 
 /**
@@ -933,7 +932,7 @@ function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
           schuh.material,
           Number(schuh.express) === 1
             ? `rund ${schuh.express_weeks || 2} Wochen Produktion`
-            : 'rund vier Wochen Produktion',
+            : '4 bis 6 Wochen Produktion',
           schuh.price ? `ab ${schuh.price}` : null,
         ].filter(Boolean).join('   ·   ')}
       </p>
@@ -1318,11 +1317,18 @@ export default function Startseite() {
     // Nach Farbwert eindeutig: Der Katalog führt „Schwarz" und „Black", beide
     // auf #000000. Zwei gleiche Punkte nebeneinander sehen nach einem Fehler
     // aus, nicht nach Auswahl.
-    const farbtoene = [...new Map(
-      shoeColors
-        .filter(c => (c.available !== 0 && c.available !== false) && c.hex)
-        .map(c => [String(c.hex).toLowerCase(), c.hex]),
-    ).values()].slice(0, 16)
+    //
+    // Gibt es Ledermuster (die Farben mit Bild), stehen diese da: ein Kreis
+    // Box Calf in Cognac sagt mehr als ein Kreis in #926134. Sonst die Flächen.
+    const nutzbar = shoeColors.filter(c => (c.available !== 0 && c.available !== false) && c.hex)
+    const mitMuster = nutzbar.filter(c => c.image)
+    const farbtoene = (mitMuster.length ? mitMuster : nutzbar)
+      .reduce((liste, c) => {
+        const k = c.image || String(c.hex).toLowerCase()
+        if (!liste.some(x => x.k === k)) liste.push({ k, hex: c.hex, bild: c.image ? resolveMediaUrl(c.image) : null, name: c.name })
+        return liste
+      }, [])
+      .slice(0, 16)
 
     return [
       {
@@ -1345,7 +1351,7 @@ export default function Startseite() {
         text: 'Dieselbe Farbe fällt auf Velours anders aus als auf Box Calf. Die '
             + 'Auswahl hängt deshalb am Leder.',
         farben: farbtoene.length ? farbtoene : null,
-        hinweis: farbtoene.length ? `${farbtoene.length} Töne, hier ohne Namen.` : null,
+        hinweis: farbtoene.length ? (mitMuster.length ? `${mitMuster.length} Farben über alle Leder, hier eine Auswahl.` : `${farbtoene.length} Töne, hier ohne Namen.`) : null,
       },
       {
         titel: 'Sohle, Rahmen und Details',
@@ -2006,7 +2012,7 @@ export default function Startseite() {
                   Was es kostet: Ein rahmengenähter Schuh ist schwerer als ein
                   geklebter und die ersten Wochen fester. Beides legt sich, sobald
                   der Kork nachgegeben hat. Und er braucht länger in der
-                  Werkstatt. Auch deshalb sind es rund vier Wochen.
+                  Werkstatt. Auch deshalb sind es 4 bis 6 Wochen.
                 </p>
               </div>
 
@@ -2322,13 +2328,16 @@ export default function Startseite() {
                         Aufzählung ohne Beleg ist eine Behauptung. */}
                     {st.farben && (
                       <div className="flex flex-wrap items-center gap-2 mt-5">
-                        {st.farben.map(hex => (
+                        {st.farben.map(f => (
                           <span
-                            key={hex}
-                            className="inline-block w-6 h-6 rounded-full border border-black/10"
-                            style={{ background: hex }}
+                            key={f.k}
+                            title={f.name}
+                            className="inline-block w-9 h-9 rounded-full overflow-hidden shadow-[0_0_0_1px_rgba(35,28,23,0.12)]"
+                            style={{ background: f.hex }}
                             aria-hidden="true"
-                          />
+                          >
+                            {f.bild && <img src={f.bild} alt="" loading="lazy" className="w-full h-full object-cover" />}
+                          </span>
                         ))}
                       </div>
                     )}
@@ -2365,7 +2374,7 @@ export default function Startseite() {
                 </p>
                 <div className="lg:col-span-8 mt-3 lg:mt-1 masz">
                   <p className="t-text">
-                    Rund vier Wochen, einzeln gefertigt in Almansa. Du hörst von uns,
+                    4 bis 6 Wochen, einzeln gefertigt in Almansa. Du hörst von uns,
                     wenn dein Paar die Werkstatt verlässt, und auch dann, wenn es
                     länger wird. Versand innerhalb Deutschlands inbegriffen.
                   </p>
@@ -2488,7 +2497,7 @@ export default function Startseite() {
               <Enthuellen className="lg:col-span-6">
                 <Kapitelmarke>Almansa · Produktionszeit</Kapitelmarke>
                 <h2 className="t-kopf satz-titel mt-4">
-                  Was in diesen<br className="hidden sm:block" /> vier Wochen passiert.
+                  Was in diesen<br className="hidden sm:block" /> Wochen passiert.
                 </h2>
               </Enthuellen>
 
@@ -2540,7 +2549,7 @@ export default function Startseite() {
                     einen Satz gebrochen; wer es hinschreibt, hat keinen. Das
                     ist dieselbe Rechnung wie in Kapitel 10. */}
                 <p className="t-text c-leise mt-8">
-                  Vier Wochen sind der Normalfall und keine Zusage. Fehlt ein Leder
+                  4 bis 6 Wochen sind der Normalfall und keine Zusage. Fehlt ein Leder
                   oder muss eine Sohle zweimal gemacht werden, werden fünf daraus.
                   Dann hörst du das von uns, sobald wir es wissen. Nicht erst,
                   wenn du fragst.
