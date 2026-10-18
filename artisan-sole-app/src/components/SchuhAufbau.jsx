@@ -92,13 +92,10 @@ function OhneBewegung({ kopf, fuss }) {
           <RahmenSchnitt className="max-w-2xl mx-auto" />
         </div>
         <ol className="grid sm:grid-cols-2 gap-x-14 gap-y-8 mt-12 lg:mt-16 max-w-3xl">
-          {AUFBAU.map((s, i) => (
+          {AUFBAU.map(s => (
             <li key={s.titel}>
-              <p className="text-[10px] tracking-[0.3em] text-white/30">
-                {String(i + 1).padStart(2, '0')}
-              </p>
-              <p className="satz-titel text-[19px] lg:text-[22px] text-white mt-3">{s.titel}</p>
-              <p className="text-[13px] text-white/55 font-light leading-[1.85] mt-2">{s.text}</p>
+              <p className="t-lead satz-titel c-hell mt-3">{s.titel}</p>
+              <p className="t-text c-hell mt-2">{s.text}</p>
             </li>
           ))}
         </ol>
@@ -135,9 +132,15 @@ export default function SchuhAufbau({ kopf, fuss }) {
      richtet. Eine Tafel mit viewBox wird dadurch kleiner und bleibt mittig,
      nicht verzerrt. Steht die Bühnenhöhe noch nicht fest, gilt keine
      Grenze — dann ist die Seite ohnehin noch beim ersten Messen. */
-  const tafelHoehe = buehnenHoehe
-    ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.50, buehnenHoehe - 345)))
-    : 0
+  /* Auf breiten Fenstern steht der Text NEBEN der Zeichnung, nicht darunter
+     — dort braucht er ihr keine Höhe abzunehmen. Die erste Fassung dieser
+     Grenze galt überall und machte die Tafeln am Schreibtisch klein und
+     matt, mitten auf einer dunklen Fläche. Jetzt gilt am Schreibtisch nur,
+     dass die Zeichnung in die Bühne passt (82 % ihrer Höhe), und die enge
+     Rechnung bleibt den Telefonen. */
+  const tafelHoehe = !buehnenHoehe ? 0
+    : schmal ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.50, buehnenHoehe - 345)))
+    : Math.round(buehnenHoehe * 0.82)
 
   if (ruhig) return <OhneBewegung kopf={kopf} fuss={fuss} />
 
@@ -200,10 +203,10 @@ export default function SchuhAufbau({ kopf, fuss }) {
                       pointerEvents: i === schritt ? 'auto' : 'none',
                     }}
                   >
-                    <p className="satz-titel text-[22px] lg:text-[28px] text-white leading-[1.2]">
+                    <p className="t-lead satz-titel c-hell">
                       {s.titel}
                     </p>
-                    <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.8] mt-3">
+                    <p className="t-text c-hell mt-3">
                       {s.text}
                     </p>
                   </div>
