@@ -89,7 +89,7 @@ import { Preishinweis } from '../lib/preisangabe'
 import { ownerPreisFuer } from '../lib/ownerLink'
 import GroessenTabelle from '../components/GroessenTabelle'
 import ExpressHinweis from '../components/ExpressHinweis'
-import { sichtbareGruppen as gruppenFuer, festeWerte, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
+import { sichtbareGruppen as gruppenFuer, festeWerte, abgeleiteteWerte, nurMitBild, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
 import GuertelWahl from '../components/GuertelWahl'
 import { guertelSatz } from '../lib/guertel'
 
@@ -311,6 +311,11 @@ export default function Customize() {
       (Array.isArray(groups) ? groups : [])
         .filter(g => !['material', 'color', 'last'].includes(g.key))
         .filter(g => !expressOffen || expressOffen.has(g.key))
+        // Nur zur Wahl, was man sehen kann — die Regel und ihre Ausnahmen
+        // stehen in lib/sohlenRegel.js, wo sie geprüft werden.
+        .map(g => nurMitBild(g, {
+          behalten: g.key === 'loafer_decoration' ? product?.locked_decoration : null,
+        }))
 
     // Optionen laden: zuerst per-Schuh, bei leer → Kategorie-Vorlage.
     const loadOptions = async () => {
@@ -1399,6 +1404,9 @@ export default function Customize() {
       })
       .filter(Boolean),
     ...festeWerte(extraOptionGroups),
+    // Der Sohlenrand folgt dem Oberleder und ist deshalb kein Schritt mehr.
+    // Er steht trotzdem in der Bestellung — siehe abgeleiteteWerte().
+    ...abgeleiteteWerte(extraOptionGroups, { oberHex: col?.hex, soleKey: soleArt?.key }),
   ]
   // Was in den Entwurf geht — dieselben Felder, die später die Bestellung
   // trägt. Bewusst eine einzige Stelle: Zwei Stellen waren genau das Problem.
@@ -2051,7 +2059,7 @@ export default function Customize() {
 
           {/* ── Produktbeschreibung ────────────────────────────── */}
           <div className="px-5 py-4 lg:px-0 lg:py-2">
-            <p className="text-[11px] lg:text-[12px] text-black/50 leading-[1.8]" style={{ letterSpacing: '0.02em' }}>
+            <p className="text-[14px] lg:text-[15px] text-black/70 font-light leading-[1.75]">
               {product.description || (
                 <>
                   Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> entsteht einzeln auf Bestellung in Almansa, Spanien, in über 200 Arbeitsschritten.
@@ -2063,7 +2071,7 @@ export default function Customize() {
             <div className="flex items-center gap-4 mt-3">
               {(pageTexts?.badges?.length ? pageTexts.badges : ['Rahmengenäht', 'Custom Made', '200+ Schritte']).map((b, i, arr) => (
                 <span key={b} className="flex items-center gap-4">
-                  <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>{b}</span>
+                  <span className="text-[10px] text-black/55" style={{ letterSpacing: '0.14em', textTransform: 'uppercase' }}>{b}</span>
                   {i < arr.length - 1 && <span className="text-black/10">·</span>}
                 </span>
               ))}
@@ -2132,8 +2140,8 @@ export default function Customize() {
               ref={el => { gruppenRefs.current.__leder = el }}
               data-gruppe="__leder">
               <div className="flex items-center justify-between mb-3 px-5 lg:px-0">
-                <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
-                {mat && <span className="text-[10px] lg:text-[11px] text-black/50">{mat.label}</span>}
+                <p className="text-[11px] lg:text-[12px] text-black/60" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
+                {mat && <span className="text-[13px] lg:text-[14px] text-black/75">{mat.label}</span>}
               </div>
               <div className="flex flex-wrap gap-2 px-5 lg:px-0">
                 {matList.map((m) => {
@@ -2163,14 +2171,18 @@ export default function Customize() {
                         {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/80" />}
                         {!avail && reminded && <BellRing size={10} className="absolute inset-0 m-auto text-teal-500" />}
                       </div>
-                      <p className={`text-[9px] tracking-wider uppercase text-center leading-tight ${selMat === id ? 'text-black font-medium' : 'text-black/60'}`}>{m.label}</p>
+                      <p className={`text-[11px] tracking-wider uppercase text-center leading-tight ${selMat === id ? 'text-black font-medium' : 'text-black/70'}`}>{m.label}</p>
                       {!avail && <span className="text-[9px] text-black/30 mt-0.5">{reminded ? 'Erinnert' : 'Bald da'}</span>}
                     </button>
                   )
                 })}
               </div>
+              {/* Der Satz, der das Leder erklärt — für jemanden, der kaufen
+                  will, die wichtigste Zeile dieses Schritts. Er stand in 10 px
+                  bei 35 % Deckkraft, rechnerisch ein Kontrast von 2,3 : 1;
+                  lesbar sind ab 4,5. */}
               {mat?.tip && (
-                <p className="text-[10px] text-black/35 mt-2 leading-relaxed px-5 lg:px-0">{mat.tip}</p>
+                <p className="text-[14px] lg:text-[15px] text-black/70 font-light mt-4 leading-[1.7] px-5 lg:px-0 max-w-xl">{mat.tip}</p>
               )}
             </div>
             )}
@@ -2189,8 +2201,8 @@ export default function Customize() {
               }}
             >
               <div className="flex items-center justify-between mb-3 px-5 lg:px-0">
-                <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe wählen</p>
-                {col && <span className="text-[10px] lg:text-[11px] text-black/50">{col.name}</span>}
+                <p className="text-[11px] lg:text-[12px] text-black/60" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe wählen</p>
+                {col && <span className="text-[13px] lg:text-[14px] text-black/75">{col.name}</span>}
               </div>
               {/* Dieselbe Kachel wie beim Leder: Wo ein Bild hinterlegt ist,
                   steht die Farbe am Leder statt als Quadrat — „Dark Brown"
@@ -2256,7 +2268,7 @@ export default function Customize() {
                 style={{ opacity: isActive ? 1 : 0.3, pointerEvents: isActive ? 'auto' : 'none' }}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-black/45 uppercase flex items-center gap-2" style={{ letterSpacing: '0.18em' }}>
+                  <p className="text-[11px] lg:text-[12px] text-black/60 uppercase flex items-center gap-2" style={{ letterSpacing: '0.18em' }}>
                     <span className="inline-flex items-center justify-center w-4 h-4 border border-black/30 text-[8px] font-normal">
                       {gIdx + 1}
                     </span>
@@ -2267,11 +2279,11 @@ export default function Customize() {
                     {group.label}
                   </p>
                   {currentSelection && (
-                    <span className="text-[10px] text-black/60 font-light tracking-wider">{currentSelection.label}</span>
+                    <span className="text-[13px] lg:text-[14px] text-black/75 font-light">{currentSelection.label}</span>
                   )}
                 </div>
                 {group.helper_text && (
-                  <p className="text-[10px] text-black/40 font-light leading-relaxed mb-3 max-w-2xl">{group.helper_text}</p>
+                  <p className="text-[13px] lg:text-[14px] text-black/65 font-light leading-[1.7] mb-4 max-w-2xl">{group.helper_text}</p>
                 )}
                 <div className="flex flex-wrap gap-2">
                   {/* Zeigen genügt, Klicken ist nicht nötig: Wer die Sohlen
@@ -2306,9 +2318,9 @@ export default function Customize() {
                                 ? null
                                 : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
                         </div>
-                        <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
+                        <p className={`text-[11px] tracking-wider uppercase text-center leading-tight ${isSel ? 'text-black font-medium' : 'text-black/70'}`}>{v.label}</p>
                         {v.price_extra > 0 && (
-                          <p className="text-[9px] text-black/35 font-light mt-0.5">+{v.price_extra.toFixed(2).replace('.', ',')} €</p>
+                          <p className="text-[11px] text-black/55 font-light mt-1 tabular-nums">+{v.price_extra.toFixed(2).replace('.', ',')} €</p>
                         )}
                         {/* Empfehlung des Hauses. In einer Gruppe dürfen
                             mehrere Werte sie tragen — es ist eine Vorauswahl,

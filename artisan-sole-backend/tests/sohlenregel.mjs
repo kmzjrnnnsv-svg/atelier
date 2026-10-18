@@ -16,7 +16,8 @@
  */
 import {
   sichtbareGruppen, hatLederrand, expressFreigabe, hatMetall, festeWerte,
-  OHNE_LEDERRAND, FARBGRUPPEN_SOHLE, AUFSATZ_MIT_METALL, FESTE_WERTE,
+  randfarbeFuer, abgeleiteteWerte, nurMitBild, hatBild,
+  OHNE_LEDERRAND, FARBGRUPPEN_SOHLE, AUFSATZ_MIT_METALL, FESTE_WERTE, ABGELEITET,
 } from '../../artisan-sole-app/src/lib/sohlenRegel.js'
 
 let ok = 0
@@ -46,21 +47,23 @@ const expressSchuh = {
 }
 
 console.log('\n── 1. Ohne Sohle gewählt ─────────────────────────────────────')
-// Neun Gruppen kommen vom Server, acht werden angeboten: Der Rahmen (Welt)
-// steht fest und ist deshalb kein Schritt mehr.
-p('Maßschuh zeigt alles außer dem festgelegten Rahmen',
-  schluessel(sichtbareGruppen(ALLE, { product: massschuh })).length === 8)
+// Neun Gruppen kommen vom Server, sieben werden angeboten: Der Rahmen (Welt)
+// steht fest, der Sohlenrand folgt dem Oberleder — beides kein Schritt mehr.
+p('Maßschuh zeigt alles außer Rahmen und Sohlenrand',
+  schluessel(sichtbareGruppen(ALLE, { product: massschuh })).length === 7)
+p('Der Sohlenrand ist kein Schritt',
+  !schluessel(sichtbareGruppen(ALLE, { product: massschuh })).includes('sole_color'))
 p('Der Rahmen ist kein Schritt',
   !schluessel(sichtbareGruppen(ALLE, { product: massschuh })).includes('welt'))
-p('Express zeigt nur die Freigabe',
+p('Express zeigt nur die Freigabe (ohne den abgeleiteten Rand)',
   schluessel(sichtbareGruppen(ALLE, { product: expressSchuh })).join(',')
-  === 'sole,sole_color,sole_bottom_color,buckle,buckle_color')
+  === 'sole,sole_bottom_color,buckle,buckle_color')
 
 console.log('\n── 2. Ledersohle ─────────────────────────────────────────────')
 for (const sohle of ['leather', 'leather_rubber', 'leather_mountain', 'dainite', 'beveled_waist']) {
   const sicht = schluessel(sichtbareGruppen(ALLE, { product: massschuh, soleKey: sohle }))
-  p(`${sohle}: Rand und Lauffläche bleiben`,
-    sicht.includes('sole_color') && sicht.includes('sole_bottom_color'))
+  p(`${sohle}: Lauffläche bleibt wählbar, Rand wird abgeleitet`,
+    !sicht.includes('sole_color') && sicht.includes('sole_bottom_color'))
 }
 
 console.log('\n── 3. Gummisohle ─────────────────────────────────────────────')
@@ -97,7 +100,77 @@ p('Fremde Einträge fliegen raus',
 console.log('\n── 6. Kein Eingriff bei fehlenden Daten ──────────────────────')
 p('Leere Liste bleibt leer', sichtbareGruppen([], { product: massschuh }).length === 0)
 p('Kein Array bleibt leer', sichtbareGruppen(null, { product: massschuh }).length === 0)
-p('Ohne Angaben unverändert', sichtbareGruppen(ALLE).length === 8)
+p('Ohne Angaben: alles außer Rahmen und Rand', sichtbareGruppen(ALLE).length === 7)
+
+console.log('\n── 5a. Der Sohlenrand folgt dem Oberleder ───────────────────')
+
+/*
+ * Die Zuordnung, wie eine Werkstatt sie trifft. Die Farben sind die Felder
+ * des Katalogs und die üblichen Verdächtigen dazu. Verschiebt jemand eine
+ * Grenze in randfarbeFuer(), steht hier, welche Farbe dadurch den Rand
+ * wechselt — und ob das gewollt ist.
+ */
+const ZUORDNUNG = [
+  ['Schwarz', '#0a0a0a', 'black'], ['Box Calf schwarz', '#1c1c1e', 'black'],
+  ['Dunkelbraun', '#3b2314', 'brown'], ['Lux Calf', '#3a2010', 'brown'],
+  ['Painted Calf', '#5a2d16', 'brown'], ['Lux Suede', '#774027', 'brown'],
+  ['Cognac', '#9a5a2a', 'brown'], ['Taupe', '#8b7d6b', 'brown'],
+  ['Bordeaux', '#5a1a22', 'brick'], ['Oxblood', '#4a0e14', 'brick'],
+  ['Marine', '#1f2a44', 'black'], ['Grau', '#888888', 'black'], ['Oliv', '#4b5320', 'black'],
+  ['Sand', '#d8c4a4', 'natural'], ['Weiß', '#f2f2f2', 'natural'],
+]
+for (const [name, hex, soll] of ZUORDNUNG) {
+  const ist = randfarbeFuer(hex)
+  p(`${name} ${hex} → ${soll}`, ist === soll, ist === soll ? '' : `(ist ${ist})`)
+}
+p('Ohne Farbe keine Zuordnung', randfarbeFuer('') === null && randfarbeFuer(undefined) === null)
+p('Unlesbare Farbe keine Zuordnung', randfarbeFuer('braun') === null)
+p('Der Rand steht in der Liste der abgeleiteten Gruppen', ABGELEITET.includes('sole_color'))
+
+const RAND = [{ key: 'sole_color', label: 'Sohlenrand', values: [
+  { id: 36, key: 'black', label: 'Black' }, { id: 37, key: 'brown', label: 'Brown' },
+  { id: 38, key: 'brick', label: 'Brick', price_extra: 25 }, { id: 39, key: 'natural', label: 'Natural' },
+] }]
+p('Braunes Leder: brauner Rand in der Bestellung',
+  JSON.stringify(abgeleiteteWerte(RAND, { oberHex: '#5a2d16', soleKey: 'leather' }))
+  === JSON.stringify([{ group: 'Sohlenrand', key: 'sole_color', value: 'Brown', price: 0 }]))
+p('Ein abgeleiteter Rand kostet nichts, auch wenn das CMS einen Aufpreis trägt',
+  abgeleiteteWerte(RAND, { oberHex: '#5a1a22', soleKey: 'leather' })[0]?.price === 0)
+p('Gummisohle: kein Rand in der Bestellung',
+  abgeleiteteWerte(RAND, { oberHex: '#5a2d16', soleKey: 'rubber' }).length === 0)
+p('Unlesbare Farbe: Schwarz als Vorgabe der Werkstatt',
+  abgeleiteteWerte(RAND, { oberHex: null, soleKey: 'leather' })[0]?.value === 'Black')
+p('Modell ohne Randgruppe: keine erfundene Angabe',
+  abgeleiteteWerte([], { oberHex: '#5a2d16', soleKey: 'leather' }).length === 0)
+
+console.log('\n── 5b. Nur zur Wahl, was man sehen kann ─────────────────────')
+
+/* Genau die Sohlen-Auswahl, wie sie im Konfigurator stand: sechs mit Foto,
+   fünf mit drei Buchstaben als Platzhalter. */
+const SOHLEN = { key: 'sole', label: 'Sohlen-Art', values: [
+  { key: 'rubber', image: '/u/rubber.jpg' }, { key: 'leather', image: '/u/leather.jpg' },
+  { key: 'leather_mountain', image: '/u/lm.jpg' }, { key: 'leather_buttons', image: '/u/lb.jpg' },
+  { key: 'leather_rubber', image: '/u/lr.jpg' }, { key: 'commando', image: '/u/co.jpg' },
+  { key: 'dainite' }, { key: 'dots' }, { key: 'beveled_waist' }, { key: 'art' }, { key: 'gummy_sole' },
+] }
+{
+  const raus = nurMitBild(SOHLEN).values.map(v => v.key)
+  p('Gemischte Gruppe: die sechs mit Foto bleiben', raus.length === 6)
+  p('Gemischte Gruppe: kein Platzhalter mehr',
+    !raus.some(k => ['dainite', 'dots', 'beveled_waist', 'art', 'gummy_sole'].includes(k)))
+}
+const ABSATZ = { key: 'heel', label: 'Absatz', values: [{ key: 'standard' }, { key: 'higher_heel' }] }
+p('Reine Textgruppe bleibt ganz (Absatz)', nurMitBild(ABSATZ).values.length === 2)
+const WELT = { key: 'welt', label: 'Welt', values: [{ key: 'city' }, { key: 'country', image: '/u/c.jpg' }] }
+p('Festgelegte Gruppe bleibt ganz, auch gemischt (Rahmen)', nurMitBild(WELT).values.length === 2)
+const RAND_G = { key: 'sole_color', values: [{ key: 'black', color_hex: '#000' }, { key: 'x' }] }
+p('Abgeleitete Gruppe bleibt ganz (Sohlenrand)', nurMitBild(RAND_G).values.length === 2)
+p('Farbfeld zählt als Bild', hatBild({ color_hex: '#5b3a1d' }) && !hatBild({ key: 'x' }))
+const DEKO = { key: 'loafer_decoration', values: [{ key: 'tassel', image: '/u/t.jpg' }, { key: 'penny' }] }
+p('Ein festgelegter Wert bleibt, auch ohne Bild',
+  nurMitBild(DEKO, { behalten: 'penny' }).values.length === 2)
+p('Ohne Festlegung fällt er heraus', nurMitBild(DEKO).values.length === 1)
+p('Leere Gruppe bleibt leer', nurMitBild({ key: 'sole', values: [] }).values.length === 0)
 
 console.log('\n── 6a. Der Rahmen steht fest ─────────────────────────────────')
 

@@ -89,11 +89,12 @@ function Monatsverlauf({ daten }) {
  */
 const PFADNAMEN = {
   '/': 'Startseite', '/test-homepage': 'Startseite (Probe)',
-  '/collection': 'Kollektion', '/accessories': 'Zubehör', '/explore': 'Entdecken',
-  '/shoe': 'Modellseiten', '/customize': 'Konfigurator', '/cart': 'Warenkorb',
-  '/checkout': 'Kasse', '/scan': 'Fußmessung', '/passform': 'Passform',
-  '/corporate': 'Firmenkunden', '/affiliate': 'Vermittler',
-  '/legal': 'Rechtliches', '/faq': 'Fragen', '/newsletter': 'Newsletter',
+  '/collection': 'Kollektion', '/accessories': 'Zubehör',
+  '/explore': 'Entdecken', '/entdecken': 'Entdecken',
+  '/schuhe': 'Modellseiten', '/customize': 'Konfigurator', '/checkout': 'Kasse',
+  '/business': 'Firmenkunden', '/affiliate': 'Vermittler',
+  '/legal': 'Rechtliches', '/help': 'Hilfe', '/learn': 'Wissen',
+  '/welcome': 'Willkommen', '/newsletter': 'Newsletter',
 }
 const TAGNAME = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
 const tagKurz = (iso) => {
