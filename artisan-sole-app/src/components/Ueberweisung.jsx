@@ -37,17 +37,17 @@ function Zeile({ label, wert, kopierbar = true }) {
     } catch { /* ohne Zwischenablage bleibt das Ablesen */ }
   }
   return (
-    <div className="flex items-start justify-between gap-3 py-2 border-b border-black/[0.05] last:border-0">
-      <span className="text-[10px] uppercase tracking-[0.14em] text-black/35 pt-0.5 flex-shrink-0">{label}</span>
-      <div className="flex items-start gap-2 min-w-0">
-        <span className="text-[13px] text-black text-right break-all">{wert}</span>
+    <div className="flex items-center justify-between gap-3 py-2.5 border-b border-black/[0.08] last:border-0">
+      <span className="t-klein c-leise flex-shrink-0">{label}</span>
+      <div className="flex items-center gap-1 min-w-0">
+        <span className="t-feld text-right break-all">{wert}</span>
         {kopierbar && (
           <button
             onClick={kopieren}
             aria-label={`${label} kopieren`}
-            className="bg-transparent border-0 p-0 text-black/25 hover:text-black flex-shrink-0 mt-0.5"
+            className="w-9 h-9 flex items-center justify-center bg-transparent border-0 p-0 c-leise hover:text-black flex-shrink-0"
           >
-            {kopiert ? <Check size={12} strokeWidth={2} /> : <Copy size={12} strokeWidth={1.5} />}
+            {kopiert ? <Check size={15} strokeWidth={2} /> : <Copy size={15} strokeWidth={1.5} />}
           </button>
         )}
       </div>
@@ -69,25 +69,25 @@ export default function Ueberweisung({ orderId }) {
 
   if (fehler) {
     return (
-      <div className="border border-black/10 p-5">
-        <p className="text-[12px] text-black/55 font-light leading-relaxed">{fehler}</p>
+      <div className="rounded-md bg-white shadow-[0_0_0_1px_rgba(35,28,23,0.15)] p-5">
+        <p className="t-text c-tinte">{fehler}</p>
       </div>
     )
   }
   if (!daten) {
-    return <div className="border border-black/10 p-5"><p className="text-[12px] text-black/30">Wird geladen…</p></div>
+    return <div className="rounded-md bg-white shadow-[0_0_0_1px_rgba(35,28,23,0.15)] p-5"><p className="t-klein c-leise">Wird geladen …</p></div>
   }
 
   return (
-    <div className="border border-black/12">
-      <div className="flex items-center gap-2 px-5 pt-4">
-        <Landmark size={13} strokeWidth={1.5} className="text-black/45" />
-        <p className="text-[10px] uppercase tracking-[0.2em] text-black/35">Überweisung</p>
+    <div className="rounded-md bg-white shadow-[0_0_0_1px_rgba(35,28,23,0.15)]">
+      <div className="flex items-center gap-2 px-5 pt-5">
+        <Landmark size={16} strokeWidth={1.4} className="c-leise" />
+        <p className="t-klein c-leise">Überweisung</p>
       </div>
 
-      <div className="px-5 pt-3 pb-1">
-        <p className="text-[22px] font-extralight tracking-tight text-black">{euro(daten.betrag)}</p>
-        <p className="text-[11px] text-black/45 font-light mt-1 leading-relaxed">
+      <div className="px-5 pt-2 pb-1">
+        <p className="t-kopf c-tinte tabular-nums">{euro(daten.betrag)}</p>
+        <p className="t-klein c-tinte mt-2">
           Deine Schuhe gehen nach Zahlungseingang in die Fertigung. Bitte gib den
           Verwendungszweck genau so an, daran erkennen wir, zu welcher Bestellung deine
           Zahlung gehört.
@@ -100,9 +100,9 @@ export default function Ueberweisung({ orderId }) {
             <img
               src={daten.giro_qr}
               alt="GiroCode zum Scannen mit der Banking-App"
-              className="w-[168px] h-[168px] border border-black/[0.07]"
+              className="w-[176px] h-[176px] rounded-md shadow-[0_0_0_1px_rgba(35,28,23,0.12)]"
             />
-            <p className="text-[10px] text-black/35 font-light text-center mt-1.5 leading-relaxed max-w-[168px]">
+            <p className="t-klein c-leise text-center mt-2 max-w-[176px]">
               Mit der Banking-App scannen, alles ausgefüllt.
             </p>
           </div>
@@ -119,9 +119,9 @@ export default function Ueberweisung({ orderId }) {
           {/* Ohne vollständige Bankverbindung keinen Code zeigen, der ins Leere
               führt. Die Banking-App füllt aus, was im Code steht — auch eine
               halbe Bankverbindung. */}
-          <div className="flex items-start gap-2 border border-amber-300 bg-amber-50 p-3 mb-4">
-            <AlertTriangle size={13} className="text-amber-600 flex-shrink-0 mt-0.5" strokeWidth={1.6} />
-            <p className="text-[11px] text-amber-900 font-light leading-relaxed">
+          <div className="flex items-start gap-2.5 rounded-md bg-[#FBF1E4] shadow-[0_0_0_1px_#C9A46A] p-4 mb-4">
+            <AlertTriangle size={16} className="text-[#8A5A12] flex-shrink-0 mt-0.5" strokeWidth={1.6} />
+            <p className="t-klein text-[#5C3B0A]">
               Für diese Bestellung liegt uns noch keine vollständige Bankverbindung vor.
               Bitte meld dich kurz bei uns, dann schicken wir sie dir zu.
             </p>

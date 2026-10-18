@@ -621,8 +621,23 @@ html.mobile-web body {
   font-feature-settings: 'liga' 1, 'kern' 1, 'onum' 1;
 }
 
+/* Überschriften im Haus. Die alte Regel für h1 bis h6 (Jost, gesperrte
+   Versalien) steht außerhalb der Ebenen und schlägt deshalb jede t-Klasse.
+   Auf der Startseite fängt `.satz-titel` das ab; hier gilt es für alles, was
+   im neuen System gebaut ist, ohne dass jede Überschrift daran denken muss.
+   Die Größe bleibt bei der t-Klasse, die setzt diese Regel nicht. */
+.haus :is(h1, h2, h3, h4, h5, h6) {
+  font-family: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+
 @layer utilities {
   .t-klein   { font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: var(--s-klein); line-height: 1.5; letter-spacing: 0.01em; font-weight: 400; }
+  /* Eingabefelder: 16 px, sonst zoomt Safari auf dem iPhone beim Antippen
+     in die Seite hinein. Dieselbe Schrift wie die Beschriftungen. */
+  .t-feld    { font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 16px; line-height: 1.4; letter-spacing: 0.005em; font-weight: 400; color: var(--tinte); }
   .t-text    { font-size: var(--s-text);    line-height: 1.55; font-weight: 400; }
   .t-lead    { font-size: var(--s-lead);    line-height: 1.35; font-weight: 400; }
   .t-kopf    { font-size: var(--s-kopf);    line-height: 1.08; letter-spacing: -0.015em; font-weight: 400; }

@@ -46,8 +46,8 @@ einen Pfad, zum Beispiel `/kollektion`. Mehr nicht: keine Kennung, kein
 Zeitstempel, keine Herkunftsseite, keine Browserkennung, keine Verweildauer.
 In Ihrem Gerät wird dafür nichts gespeichert und nichts ausgelesen.
 
-**Was daraus wird.** Wir erhöhen eine Zahl in einer Zeile aus Datum und Pfad
-— etwa „15.02.2026, /kollektion, 37". Der Pfad wird vorher auf eine feste
+**Was daraus wird.** Wir erhöhen eine Zahl in einer Zeile aus Datum und Pfad,
+etwa „15.02.2026, /kollektion, 37". Der Pfad wird vorher auf eine feste
 Liste gebracht: Adressen mit einer Kennung darin (Bestell- oder
 Modellnummern) werden zusammengefasst oder verworfen, Bereiche hinter der
 Anmeldung werden gar nicht gezählt.

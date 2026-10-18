@@ -74,7 +74,12 @@ const aufKonfigurator = page.url().includes('/schuhe/') || page.url().includes('
 p('Modell öffnet den Konfigurator', aufKonfigurator, page.url().replace(BASIS, ''))
 
 if (aufKonfigurator) {
-  p('Passform-Block vorhanden', await page.getByText('Passform').count() > 0)
+  // Der Konfigurator führt Schritt für Schritt; die Passform ist einer davon
+  // und steht im Menü aller Schritte.
+  await page.locator('button[aria-label="Alle Schritte"]:visible').first().click().catch(() => {})
+  await page.waitForTimeout(400)
+  p('Passform-Schritt vorhanden', await page.getByRole('dialog').getByText('Passform').count() > 0)
+  await page.keyboard.press('Escape')
   const groessenLink = page.getByText(/Zur Größentabelle/)
   p('Link zur Größentabelle', await groessenLink.count() > 0)
 

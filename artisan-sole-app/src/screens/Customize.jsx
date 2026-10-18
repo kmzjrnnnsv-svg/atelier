@@ -1512,6 +1512,9 @@ export default function Customize() {
       state: {
         product: {
           id: product.id, name: cleanShoeName(product.name),
+          // Das Bild für die Bestellübersicht der Kasse. Ohne stand dort beim
+          // Direktkauf ein leerer Kasten, beim Weg über den Warenkorb nicht.
+          image: product.image || null,
           material: mat?.label || product.material,
           color, colorName: col?.name || null, price: formatPrice(basePrice + extrasPriceTotal),
           sole: soleArt?.label || 'Standard',

@@ -80,7 +80,7 @@ export default function CookieHinweis() {
                 deinen Warenkorb und diese Entscheidung.{' '}
                 <span className="font-medium">Keine Werbung, kein Tracking, kein Wiedererkennen</span>,
                 und was wir speichern, bleibt bei uns. Wie oft eine Seite aufgerufen
-                wird, zählen wir — als nackte Zahl, ohne Kennung und ohne etwas in
+                wird, zählen wir: als nackte Zahl, ohne Kennung und ohne etwas in
                 deinem Gerät.
               </p>
             </div>

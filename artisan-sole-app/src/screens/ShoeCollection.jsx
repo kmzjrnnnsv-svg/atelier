@@ -955,7 +955,7 @@ export default function ShoeCollection() {
             },
             {
               titel: 'Fertigung in Almansa',
-              text: 'Über 200 Arbeitsschritte, 4 bis 6 Wochen. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht — und auch dann, wenn es länger wird.',
+              text: 'Über 200 Arbeitsschritte, 4 bis 6 Wochen. Du bekommst Nachricht, wenn die Fertigung beginnt und wenn dein Paar in die Endkontrolle geht, und auch dann, wenn es länger wird.',
             },
             {
               titel: 'Endkontrolle und Versand',
