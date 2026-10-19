@@ -1830,6 +1830,41 @@ export function runMigrations(db) {
     CREATE INDEX IF NOT EXISTS idx_configs_open   ON shoe_configs(user_id, shoe_id, status, in_cart);
   `)
 
+  // ── Seitenaufrufe ────────────────────────────────────────────────────────
+  //
+  // Ein Zähler, kein Besucherprotokoll — und das ist hier keine Feinheit,
+  // sondern die Bedingung, unter der es ihn überhaupt gibt.
+  //
+  // Auf dem Hinweis zum Speichern steht in Fettschrift: „Keine Analyse, keine
+  // Werbung, kein Tracking." Ein übliches Statistikwerkzeug würde den Satz zur
+  // Lüge machen, denn es braucht eine Kennung je Besucher, um Besuche von
+  // Aufrufen zu unterscheiden. Diese Tabelle hat keine. Sie hat einen Tag,
+  // einen Pfad und eine Zahl.
+  //
+  // Was dadurch NICHT geht und auch nicht gehen soll: Wiederkehrer erkennen,
+  // Wege durch die Seite verfolgen, Verweildauer messen, nach Herkunft oder
+  // Gerät aufschlüsseln. Dafür bräuchte es ein Merkmal am einzelnen Menschen,
+  // und sobald es das gibt, ist es eine Verarbeitung personenbezogener Daten
+  // mit allem, was daran hängt.
+  //
+  // Was geht: Wie viele Aufrufe hatte welche Seite an welchem Tag. Für einen
+  // Laden, der wissen will, ob die Startseite ankommt und welches Modell
+  // angesehen wird, ist das die Zahl, auf die es ankommt.
+  //
+  // Der Pfad wird vor dem Zählen auf eine feste Liste gebracht (siehe
+  // routes/auswertung.js). Ohne das stünden hier Adressen mit Kennungen
+  // darin, und eine selten aufgerufene Adresse mit einer Kennung ist wieder
+  // ein Merkmal am Einzelnen.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS seitenaufrufe (
+      tag     TEXT    NOT NULL,            -- JJJJ-MM-TT, Serverzeit
+      pfad    TEXT    NOT NULL,            -- normalisiert, siehe oben
+      anzahl  INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (tag, pfad)
+    );
+    CREATE INDEX IF NOT EXISTS idx_seitenaufrufe_tag ON seitenaufrufe(tag);
+  `)
+
   // ── Passkeys ─────────────────────────────────────────────────────────────
   // Ein Konto kann mehrere haben — Telefon und Rechner sollten getrennt
   // hinterlegt sein, sonst sperrt ein verlorenes Gerät den Zugang aus.
@@ -2333,4 +2368,43 @@ export function runMigrations(db) {
       }
     }
   } catch (e) { console.error('[migrate footer legal links]', e.message) }
+
+  // ── Die Beschreibung der beiden Kollektionen ─────────────────────────────
+  //
+  // Auf der Kollektionsseite stand unter „Maßanfertigung": „Von Grund auf
+  // für Sie gefertigt, volle Auswahl, 4 bis 6 Wochen." Zwei Dinge daran
+  // stimmten nicht mehr.
+  //
+  // Die Anrede: Der ganze Laden duzt, dieser eine Satz siezte. Er stammt aus
+  // der ersten Fassung und ist seither nie wieder gelesen worden.
+  //
+  // Die Dauer: Die Seite nennt an sieben Stellen rund vier Wochen, hier
+  // standen sechs. Ein Käufer, der beides sieht, glaubt keiner von beiden
+  // Zahlen — und die Angabe mit der größten Spanne ist die, an die er sich
+  // erinnert.
+  //
+  // Angelegt werden die Zeilen mit INSERT OR IGNORE, eine neue Vorgabe allein
+  // ändert an einem bestehenden Laden also nichts. Deshalb hier, und deshalb
+  // nur dann, wenn der alte Wortlaut noch unverändert dasteht: Wer die
+  // Beschreibung in der Verwaltung angefasst hat, behält seine Fassung.
+  try {
+    const ALT_NEU = [
+      ['standard',
+       'Von Grund auf für Sie gefertigt, volle Auswahl, 4 bis 6 Wochen.',
+       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, 4 bis 6 Wochen.'],
+      // Seit Oktober 2026 gilt überall die Spanne der AGB. Wer die
+      // Zwischenfassung „rund vier Wochen" schon bekommen hat, bekommt
+      // jetzt die Spanne.
+      ['standard',
+       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, rund vier Wochen.',
+       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, 4 bis 6 Wochen.'],
+      ['express',
+       'Aus vorbereiteten Bauteilen auf Ihren Leisten vollendet, rund 2 Wochen.',
+       'Aus vorbereiteten Bauteilen auf deinem Leisten vollendet, rund zwei Wochen.'],
+    ]
+    const setz = db.prepare('UPDATE collections SET description = ? WHERE key = ? AND description = ?')
+    let n = 0
+    for (const [key, alt, neu] of ALT_NEU) n += setz.run(neu, key, alt).changes
+    if (n) console.log(`[migrate Kollektionstexte] ${n} Beschreibung(en) auf du und 4 bis 6 Wochen gebracht`)
+  } catch (e) { console.error('[migrate Kollektionstexte]', e.message) }
 }

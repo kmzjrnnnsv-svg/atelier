@@ -32,7 +32,7 @@ import SpannerSchnitt from './SpannerSchnitt'
 import Enthuellen from './Enthuellen'
 import Laufband from './Laufband'
 import { PFLEGE } from '../lib/pflegeSchritte'
-import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
+import { useWenigerBewegungFolge, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 /* Vorlauf und Nachlauf: Am Anfang steht der eingesackte Schuh einen Moment
@@ -47,7 +47,21 @@ const NACHLAUF = 0.10
    Sekunde unterwegs, und bei 0,32 Bildschirmen je Schritt schnitt ein
    zügiger Daumen ihn auf halbem Weg ab. Eine abgeschnittene Bewegung ist
    das Gegenteil von weich. */
-const PRO_SCHRITT = 0.40
+/* Nachgemessen auf einem iPhone 13: Bei diesem Wert bekam jeder Schritt der
+   Folge noch zweihundertvierzig bis zweihundertachtzig Pixel Scrollweg. Ein
+   normaler Wisch mit dem Daumen legt achthundert bis fünfzehnhundert zurück
+   — er übersprang also ein bis zwei Schritte vollständig, und die Abnahme
+   fand auf diesem Gerät nur fünf von sechs.
+
+   0,65 gibt jedem Schritt rund eine halbe Bildschirmhöhe. Das ist der Wert,
+   bei dem das Maßnehmen schon stand, und dort war es richtig. Die Seite wird
+   dadurch rund ein Zehntel länger; eine Folge, die man überspringt, ist aber
+   keine Folge, sondern nur Höhe.
+
+   Die beiden Randschritte sind davon unberührt: Sie schlucken, was vor und
+   nach der klebenden Strecke liegt, und sind deshalb immer am längsten. Zu
+   messen ist einer aus der Mitte. */
+const PRO_SCHRITT = 0.65
 
 function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
@@ -73,9 +87,9 @@ function Folgeliste({ schritt }) {
             className="transition-opacity duration-500"
             style={{ opacity: jetzt ? 1 : 0.3 }}
           >
-            <p className="text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
-            <p className={`satz-titel leading-[1.3] mt-1.5 transition-all duration-500 ${
-              jetzt ? 'text-[19px] lg:text-[22px] text-white' : 'text-[17px] lg:text-[19px] text-white/70'
+            <p className="t-klein c-hell-leise">{s.wann}</p>
+            <p className={`satz-titel mt-1.5 transition-all duration-500 ${
+              jetzt ? 't-lead c-hell' : 't-text c-hell'
             }`}>
               {s.titel}
             </p>
@@ -98,9 +112,9 @@ function OhneBewegung({ kopf, fuss }) {
         <ol className="grid sm:grid-cols-2 gap-x-14 gap-y-8 mt-12 lg:mt-16 max-w-3xl">
           {PFLEGE.map(s => (
             <li key={s.titel}>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
-              <p className="satz-titel text-[19px] lg:text-[22px] text-white mt-2">{s.titel}</p>
-              <p className="text-[13px] text-white/50 font-light leading-[1.85] mt-2">{s.text}</p>
+              <p className="t-klein c-hell-leise">{s.wann}</p>
+              <p className="t-lead satz-titel c-hell mt-2">{s.titel}</p>
+              <p className="t-text c-hell mt-2">{s.text}</p>
             </li>
           ))}
         </ol>
@@ -117,7 +131,7 @@ function OhneBewegung({ kopf, fuss }) {
  */
 export default function PflegeFolge({ kopf, fuss }) {
   const ref = useRef(null)
-  const ruhig = useWenigerBewegung()
+  const ruhig = useWenigerBewegungFolge()
   const schmal = useSchmal()
   const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 
@@ -137,9 +151,15 @@ export default function PflegeFolge({ kopf, fuss }) {
      richtet. Eine Tafel mit viewBox wird dadurch kleiner und bleibt mittig,
      nicht verzerrt. Steht die Bühnenhöhe noch nicht fest, gilt keine
      Grenze — dann ist die Seite ohnehin noch beim ersten Messen. */
-  const tafelHoehe = buehnenHoehe
-    ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.46, buehnenHoehe - 360)))
-    : 0
+  /* Auf breiten Fenstern steht der Text NEBEN der Zeichnung, nicht darunter
+     — dort braucht er ihr keine Höhe abzunehmen. Die erste Fassung dieser
+     Grenze galt überall und machte die Tafeln am Schreibtisch klein und
+     matt, mitten auf einer dunklen Fläche. Jetzt gilt am Schreibtisch nur,
+     dass die Zeichnung in die Bühne passt (82 % ihrer Höhe), und die enge
+     Rechnung bleibt den Telefonen. */
+  const tafelHoehe = !buehnenHoehe ? 0
+    : schmal ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.46, buehnenHoehe - 360)))
+    : Math.round(buehnenHoehe * 0.82)
 
   if (ruhig) return <OhneBewegung kopf={kopf} fuss={fuss} />
 
@@ -177,7 +197,7 @@ export default function PflegeFolge({ kopf, fuss }) {
                   Liste links gibt es auf dem Telefon nicht, und ohne sie
                   gäbe es dort gar keinen Fortschritt zu sehen. */}
               <Laufband
-                titel={`Schritt ${String(schritt + 1).padStart(2, '0')} von ${String(PFLEGE.length).padStart(2, '0')}`}
+                titel={`Schritt ${schritt + 1} von ${PFLEGE.length}`}
                 fortschritt={fortschritt}
                 className="mt-6 lg:mt-7"
               />
@@ -198,13 +218,13 @@ export default function PflegeFolge({ kopf, fuss }) {
                   >
                     {/* Auf dem Telefon trägt dieser Kasten auch den Abstand
                         und den Titel — die Liste links gibt es dort nicht. */}
-                    <p className="lg:hidden text-[10px] uppercase tracking-[0.24em] text-white/45">
+                    <p className="t-klein lg:hidden c-hell-leise">
                       {s.wann}
                     </p>
-                    <p className="lg:hidden satz-titel text-[20px] text-white leading-[1.3] mt-1.5">
+                    <p className="t-lead lg:hidden satz-titel c-hell mt-1.5">
                       {s.titel}
                     </p>
-                    <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.85] mt-2.5 lg:mt-0 max-w-xl">
+                    <p className="t-text c-hell mt-2.5 lg:mt-0 max-w-xl">
                       {s.text}
                     </p>
                   </div>

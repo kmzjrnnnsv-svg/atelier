@@ -108,88 +108,87 @@ export default function NewsletterBanner() {
       // Kreuz schließen lässt, ist eine Falle, keine Einladung.
       onClick={schliessen}
     >
-      <div className="absolute inset-0 bg-black/25 backdrop-blur-[2px]" />
+      {/* Ein ruhiger Schleier statt Weichzeichner: Der Laden dahinter bleibt
+          lesbar, das Fenster steht davor, und nichts flimmert beim Öffnen.
+          Das Fenster selbst im Grund und in der Schrift des Hauses, mit
+          Text ab 14 px in voller Tinte. Vorher: 9 px gesperrte Versalien,
+          Absätze in 12 px Grau, ein Knopf in 10 px. */}
+      <div className="absolute inset-0 bg-[rgba(29,23,20,0.45)]" />
       <div
         onClick={e => e.stopPropagation()}
-        className="relative w-full max-w-[420px] bg-white border border-black/10 shadow-[0_10px_60px_rgba(0,0,0,0.22)]"
+        className="haus relative w-full max-w-[460px] shadow-[0_24px_80px_rgba(29,23,20,0.35)]"
       >
-        <div className="flex items-start justify-between px-6 pt-5">
-          <p className="text-[9px] text-black/30 uppercase tracking-[0.25em] font-light">
-            {ok ? 'Fast geschafft' : 'Willkommen'}
-          </p>
+        <div className="flex justify-end px-3 pt-3">
           <button
             onClick={schliessen}
             aria-label="Schließen"
-            className="w-8 h-8 -mr-2 -mt-1 flex items-center justify-center text-black/25 hover:text-black bg-transparent border-0"
+            className="w-11 h-11 flex items-center justify-center c-leise hover:text-black bg-transparent border-0"
           >
-            <X size={15} strokeWidth={1.4} />
+            <X size={18} strokeWidth={1.4} />
           </button>
         </div>
 
         {ok ? (
-          <div className="px-6 pb-6 pt-2">
-            <div className="w-10 h-10 border border-black/15 flex items-center justify-center mb-4">
-              <Check size={16} strokeWidth={1.4} className="text-black/70" />
-            </div>
-            <p className="text-[15px] font-extralight text-black leading-[1.4] mb-2">
+          <div className="px-7 pb-8 sm:px-9 sm:pb-10">
+            <Check size={22} strokeWidth={1.4} className="c-tinte mb-4" />
+            <p className="t-lead c-tinte mb-3">
               Sieh bitte in dein Postfach.
             </p>
-            <p className="text-[12px] text-black/45 font-light leading-[1.75]">
+            <p className="t-text c-tinte">
               {ok} Erst nach deiner Bestätigung schicken wir dir den Gutschein.
               So kommt niemand ungefragt auf unsere Liste.
             </p>
           </div>
         ) : (
-          <form onSubmit={absenden} className="px-6 pb-6 pt-2">
-            <p className="text-[22px] font-extralight text-black leading-[1.2] tracking-tight">
+          <form onSubmit={absenden} className="px-7 pb-8 sm:px-9 sm:pb-10">
+            <p className="t-kopf c-tinte">
               10 % auf dein erstes Paar
             </p>
-            <p className="text-[12px] text-black/45 font-light leading-[1.75] mt-2 mb-4">
+            <p className="t-text c-tinte mt-4 mb-6">
               Trag dich in unseren Newsletter ein. Du bekommst eine E-Mail
               zur Bestätigung, danach deinen persönlichen Code, einlösbar beim
               Abschluss deiner Bestellung.
             </p>
 
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="ihre@email.com"
-              autoComplete="email"
-              className="w-full h-11 px-3 border-b border-black/15 text-[13px] bg-transparent outline-none focus:border-black/50 font-light placeholder-black/20"
-            />
+            <label className="block">
+              <span className="t-klein c-leise">Deine E-Mail-Adresse</span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="name@beispiel.de"
+                autoComplete="email"
+                className="t-text c-tinte mt-1.5 w-full h-12 px-4 g-angebot border-0 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 placeholder:text-[#5B5148]/60"
+              />
+            </label>
 
             {/* Nicht vorangekreuzt, und der Wortlaut steht da, wo er gilt. */}
-            <label className="flex items-start gap-2.5 mt-4 cursor-pointer">
+            <label className="flex items-start gap-3 mt-5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={zugestimmt}
                 onChange={e => setZugestimmt(e.target.checked)}
-                className="mt-0.5 w-4 h-4 flex-shrink-0 accent-black"
+                className="mt-1 w-5 h-5 flex-shrink-0 accent-[#6B231D]"
               />
-              <span className="text-[11px] text-black/45 font-light leading-[1.65]">
+              <span className="t-klein c-tinte">
                 Ich möchte den Newsletter per E-Mail erhalten und bin damit
                 einverstanden, dass Artisan Sole mich dazu kontaktiert. Ich kann das
                 jederzeit widerrufen, ein Klick in jeder Nachricht genügt. Es gilt die{' '}
-                <Link to="/legal/datenschutz" className="underline hover:text-black" onClick={e => e.stopPropagation()}>
+                <Link to="/legal/datenschutz" className="underline underline-offset-4 hover:opacity-70" onClick={e => e.stopPropagation()}>
                   Datenschutzerklärung
                 </Link>.
               </span>
             </label>
 
-            {fehler && <p role="alert" className="text-[11px] text-red-600 mt-3 leading-relaxed">{fehler}</p>}
+            {fehler && <p role="alert" className="t-klein text-[#9B1C1C] mt-3">{fehler}</p>}
 
             <button
               type="submit"
               disabled={!zugestimmt || laedt || !email.trim()}
-              className={`w-full h-12 mt-5 text-[10px] tracking-[0.18em] uppercase font-light border-0 flex items-center justify-center gap-2 transition-colors ${
-                zugestimmt && email.trim() && !laedt
-                  ? 'bg-black text-white'
-                  : 'bg-black/15 text-white cursor-not-allowed'
-              }`}
+              className="t-klein w-full h-12 mt-6 g-akzent border-0 flex items-center justify-center gap-2 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {laedt && <Loader2 size={13} className="animate-spin" />}
+              {laedt && <Loader2 size={15} className="animate-spin" />}
               {laedt ? 'Einen Moment' : 'Gutschein sichern'}
             </button>
           </form>

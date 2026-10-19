@@ -67,7 +67,7 @@ export default function Modellwahl({ shoes = [], oeffnen, zumKatalog }) {
         <Enthuellen>
           <div className="text-center">
             <Kapitelmarke>Die Auswahl</Kapitelmarke>
-            <h3 className="satz-titel text-[26px] lg:text-[38px] leading-[1.16] mt-4">
+            <h3 className="t-kopf satz-titel mt-4">
               Oder such dir eins aus.
             </h3>
           </div>
@@ -85,29 +85,28 @@ export default function Modellwahl({ shoes = [], oeffnen, zumKatalog }) {
                   type="button"
                   aria-pressed={an}
                   onClick={() => setGewaehlt(f.key)}
-                  className={`group bg-transparent border-0 p-0 inline-flex items-baseline gap-2 text-[11px] uppercase transition-colors ${
-                    an ? 'text-black' : 'text-black/40 hover:text-black/70'
+                  className={`t-klein group bg-transparent border-0 p-0 inline-flex items-baseline gap-2 transition-colors ${
+                    an ? 'c-tinte' : 'c-leise hover:text-black/70'
                   }`}
-                  style={{ letterSpacing: '0.22em' }}
                 >
                   <span className="relative pb-1.5">
                     {f.name}
                     <span
-                      className="absolute left-0 bottom-0 h-px w-full transition-all duration-500"
+                      className="absolute left-0 bottom-0 h-[2px] w-full transition-[opacity,transform] duration-500"
                       style={{
                         background: an ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0)',
                         transform: an ? 'scaleX(1)' : 'scaleX(0.3)',
                       }}
                     />
                   </span>
-                  <span className="text-[10px] tabular-nums text-black/30">{f.schuhe.length}</span>
+                  <span className="t-klein tabular-nums c-leise">{f.schuhe.length}</span>
                 </button>
               )
             })}
           </div>
         </Enthuellen>
 
-        <p className="text-[13px] lg:text-[14px] text-black/45 font-light text-center mt-7 max-w-md mx-auto min-h-[3em]">
+        <p className="t-text c-tinte text-center mt-7 max-w-md mx-auto min-h-[3em]">
           {aktiv.satz}
         </p>
 
@@ -121,7 +120,7 @@ export default function Modellwahl({ shoes = [], oeffnen, zumKatalog }) {
                 onClick={() => oeffnen(schuh)}
                 className="group block w-full bg-transparent border-0 p-0 text-left"
               >
-                <div className="aspect-square overflow-hidden">
+                <div className="aspect-square overflow-hidden bild-im-grund">
                   <img
                     src={resolveMediaUrl(schuh.image)}
                     alt={`${schuh.name}, nach Maß gefertigt`}
@@ -129,10 +128,10 @@ export default function Modellwahl({ shoes = [], oeffnen, zumKatalog }) {
                     className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
                   />
                 </div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-3 line-clamp-2 min-h-[2.4em]">
+                <p className="t-klein c-tinte mt-3 line-clamp-2 min-h-[2.4em]">
                   {schuh.name}
                 </p>
-                <p className="text-[12px] text-black/40 font-light mt-0.5">
+                <p className="t-klein c-leise mt-0.5">
                   {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
                 </p>
               </button>
@@ -145,12 +144,10 @@ export default function Modellwahl({ shoes = [], oeffnen, zumKatalog }) {
             <button
               type="button"
               onClick={zumKatalog}
-              className="group bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black/60 hover:text-black transition-colors"
-              style={{ letterSpacing: '0.22em' }}
+              className="t-klein group bg-transparent border-0 p-0 inline-flex items-center gap-3 c-tinte hover:text-black transition-colors"
             >
-              <span className="relative pb-1">
+              <span className="underline underline-offset-[6px] decoration-1">
                 {`Alle ${aktiv.schuhe.length} ${aktiv.name}`}
-                <span className="absolute left-0 bottom-0 h-px w-full bg-black/20 group-hover:bg-black/45 transition-colors" />
               </span>
             </button>
           </div>

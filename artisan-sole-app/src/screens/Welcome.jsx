@@ -31,7 +31,7 @@ export default function Welcome() {
   useSeo({
     titel: 'Willkommen',
     beschreibung: 'Rahmengenähte Schuhe nach deinen Maßen: Leder, Sohle und Details '
-      + 'stellst du selbst zusammen, gefertigt wird einzeln in einer spanischen Manufaktur.',
+      + 'stellst du selbst zusammen, gefertigt wird einzeln in Almansa, Spanien.',
     pfad: '/welcome',
   })
 

@@ -35,7 +35,7 @@ const USE_CASES = [
 
 const VALUES = [
   { icon: Footprints, title: 'Präzise Passform',       desc: 'Aus Fußlänge und Ballenumfang fertigen wir jeden Schuh in der passenden Länge und Weite, auf wenige Millimeter genau. Kein Schätzen, kein Umtausch.' },
-  { icon: MapPin,     title: 'Spanische Manufaktur',   desc: 'Jedes Paar entsteht einzeln auf Bestellung in einer traditionsreichen Manufaktur in Spanien, Schuhmacherhandwerk, wie es sein soll.' },
+  { icon: MapPin,     title: 'Almansa, Spanien',       desc: 'Jedes Paar entsteht einzeln auf Bestellung in Almansa in der Provinz Albacete, einer der Städte, in denen Spanien seine Schuhe macht.' },
   { icon: Gem,        title: 'Feinste Leder',          desc: 'Ausschließlich hochwertige Kalbs- und Premiumleder: edel im Griff, langlebig im Tragen und mit den Jahren nur schöner.' },
   { icon: PenTool,    title: 'Ihr Logo, dezent veredelt', desc: 'Auf Wunsch mit Ihrem Firmenlogo, Initialen oder Monogramm, etwa auf der Sohle, in feiner Handarbeit ausgeführt.' },
   { icon: Building2,  title: 'Auf Wunsch ein Firmenkonto', desc: 'Für wiederkehrende Vorhaben richten wir Ihnen ein Firmenkonto ein: Logo hinterlegen, Profil pflegen und Einlöse-Codes verwalten.' },
@@ -155,7 +155,7 @@ export default function CorporateGifting() {
           </h1>
           <p className="text-[13px] lg:text-[16px] text-stone-500 font-light max-w-xl mt-6 leading-relaxed">
             Custom-made Lederschuhe, für Mitarbeitende, Kunden und Partner. In
-            spanischer Manufaktur gefertigt, auf Wunsch mit Ihrem Logo.
+            Almansa in Spanien gefertigt, auf Wunsch mit Ihrem Logo.
           </p>
           <button
             onClick={scrollToForm}
@@ -220,7 +220,7 @@ export default function CorporateGifting() {
             {[
               { n: '01', t: 'Maße nehmen', d: 'Fußlänge und Ballenumfang, in wenigen Augenblicken erfasst, ganz ohne Spezialwerkzeug.' },
               { n: '02', t: 'Auf den Fuß abgestimmt', d: 'Wir bestimmen die ideale Leistenform und stimmen Länge und Weite präzise auf den individuellen Fuß ab.' },
-              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird einzeln in spanischer Manufaktur produziert. Einzelbestellungen bis zu 4 Wochen, größere Sammelbestellungen bis zu 8 Wochen, jeweils nach Zahlungseingang. Lieferung direkt an die Empfänger.' },
+              { n: '03', t: 'Einzeln gefertigt', d: 'Jedes Paar wird einzeln in Almansa produziert. Einzelbestellungen 4 bis 6 Wochen, größere Sammelbestellungen bis zu 8 Wochen, jeweils nach Zahlungseingang. Vier Wochen sind der Normalfall und keine Zusage; wird es mehr, hören Sie das von uns, sobald wir es wissen. Lieferung direkt an die Empfänger.' },
             ].map(s => (
               <div key={s.n} className="text-center sm:text-left">
                 <p className="text-[34px] font-extralight text-stone-300 leading-none mb-4">{s.n}</p>
@@ -396,7 +396,7 @@ export default function CorporateGifting() {
               )}
 
               <p className="text-center text-[10px] text-stone-400 font-light tracking-wide">
-                Persönliche Beratung · unverbindlich · gefertigt in Spanien
+                Persönliche Beratung · unverbindlich · gefertigt in Almansa, Spanien
               </p>
             </form>
           )}

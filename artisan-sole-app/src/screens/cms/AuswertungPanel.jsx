@@ -13,7 +13,7 @@
  * dann sucht, wenn etwas strittig ist.
  */
 import { useState, useEffect } from 'react'
-import { TrendingUp, AlertTriangle, Package, Users, ScrollText, Boxes } from 'lucide-react'
+import { TrendingUp, AlertTriangle, Package, Users, ScrollText, Boxes, Eye } from 'lucide-react'
 import { apiFetch } from '../../hooks/useApi'
 
 const geld = (n) =>
@@ -68,6 +68,142 @@ function Monatsverlauf({ daten }) {
             <span className="text-[9px] text-black/30 font-light mt-2 whitespace-nowrap">{monatKurz(d.monat)}</span>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Besucher ────────────────────────────────────────────────────────────────
+/**
+ * Was dieser Reiter zeigt und was er bewusst nicht zeigt.
+ *
+ * Er zeigt Aufrufe je Tag und je Seite. Er zeigt KEINE Besucher, keine
+ * Wiederkehrer, keine Verweildauer, keine Herkunft und keine Geräte — und
+ * das ist keine Lücke, sondern die Bauweise: Für all das bräuchte es eine
+ * Kennung am einzelnen Menschen, und auf dem Speicherhinweis der Seite steht
+ * „Keine Analyse, keine Werbung, kein Tracking".
+ *
+ * Deshalb steht „Aufrufe" da und nicht „Besucher". Wer eine Zahl liest, soll
+ * nicht glauben, sie bedeute etwas, das sie nicht bedeutet: Fünf Aufrufe der
+ * Startseite können fünf Menschen sein oder einer, der viermal zurückkam.
+ */
+const PFADNAMEN = {
+  '/': 'Startseite', '/test-homepage': 'Startseite (Probe)',
+  '/collection': 'Kollektion', '/accessories': 'Zubehör',
+  '/explore': 'Entdecken', '/entdecken': 'Entdecken',
+  '/schuhe': 'Modellseiten', '/customize': 'Konfigurator', '/checkout': 'Kasse',
+  '/business': 'Firmenkunden', '/affiliate': 'Vermittler',
+  '/legal': 'Rechtliches', '/help': 'Hilfe', '/learn': 'Wissen',
+  '/welcome': 'Willkommen', '/newsletter': 'Newsletter',
+}
+const TAGNAME = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+const tagKurz = (iso) => {
+  const d = new Date(iso + 'T12:00:00')
+  return `${TAGNAME[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}.`
+}
+
+function Besucher() {
+  const [daten, setDaten] = useState(null)
+  const [tage, setTage] = useState(30)
+  const [fehler, setFehler] = useState(null)
+
+  // Der Fehler wird im Erfolgsfall mitgelöscht statt gleich zu Beginn: Ein
+  // setState im Rumpf eines Effekts löst eine zweite Renderrunde aus, bevor
+  // überhaupt etwas geladen ist.
+  useEffect(() => {
+    let verworfen = false
+    apiFetch(`/api/auswertung/besucher?tage=${tage}`)
+      .then(d => { if (!verworfen) { setDaten({ ...d, fuer: tage }); setFehler(null) } })
+      .catch(e => { if (!verworfen) setFehler(e.error || 'Die Zahlen konnten nicht geladen werden.') })
+    return () => { verworfen = true }
+  }, [tage])
+
+  if (fehler) return <p className="text-[12px] text-red-700 font-light">{fehler}</p>
+  if (!daten || daten.fuer !== tage) return <p className="text-[12px] text-black/30 font-light">Wird geladen …</p>
+
+  // Die Lücken auffüllen: Ein Tag ohne Aufruf steht nicht in der Datenbank,
+  // und ohne ihn rückt der Verlauf zusammen und täuscht einen Betrieb vor,
+  // den es nicht gab.
+  const reihe = []
+  for (let i = daten.tage - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    const iso = d.toISOString().slice(0, 10)
+    reihe.push({ tag: iso, anzahl: daten.verlauf.find(v => v.tag === iso)?.anzahl || 0 })
+  }
+  const hoechst = Math.max(1, ...reihe.map(r => r.anzahl))
+  const gesamtSeiten = Math.max(1, daten.seiten.reduce((a, b) => a + b.anzahl, 0))
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <p className="text-[11px] text-black/40 font-light">
+          Aufrufe, nicht Besucher.{' '}
+          {daten.seit
+            ? <>Gezählt wird seit dem {new Date(daten.seit + 'T12:00:00').toLocaleDateString('de-DE')}.</>
+            : <>Bisher wurde noch nichts gezählt.</>}
+        </p>
+        <div className="flex gap-1">
+          {[7, 30, 90].map(t => (
+            <button
+              key={t} onClick={() => setTage(t)}
+              className={`px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] border transition-all ${
+                tage === t ? 'bg-black text-white border-black' : 'bg-transparent text-black/40 border-black/10'
+              }`}
+            >
+              {t} Tage
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <Kennzahl label="Heute" wert={daten.heute.toLocaleString('de-DE')} />
+        <Kennzahl label="Letzte 7 Tage" wert={daten.woche.toLocaleString('de-DE')} />
+        <Kennzahl label={`Letzte ${tage} Tage`} wert={daten.gesamt.toLocaleString('de-DE')} />
+      </div>
+
+      <div className="border border-black/[0.08] p-5">
+        <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 font-light mb-5">Aufrufe je Tag</p>
+        <div className="flex items-end gap-[3px] h-40">
+          {reihe.map(d => (
+            <div key={d.tag} className="flex-1 flex flex-col items-center justify-end h-full group min-w-0">
+              <div
+                className="w-full bg-black/80 min-h-[2px] transition-all"
+                style={{ height: `${(d.anzahl / hoechst) * 100}%` }}
+                title={`${tagKurz(d.tag)}: ${d.anzahl} Aufrufe`}
+              />
+            </div>
+          ))}
+        </div>
+        {/* Nur erster und letzter Tag beschriftet: Bei neunzig Balken
+            überlagern sich die Daten sonst zu einem grauen Band. */}
+        <div className="flex justify-between mt-2">
+          <span className="text-[9px] text-black/30 font-light">{tagKurz(reihe[0].tag)}</span>
+          <span className="text-[9px] text-black/30 font-light">{tagKurz(reihe[reihe.length - 1].tag)}</span>
+        </div>
+      </div>
+
+      <div className="border border-black/[0.08] p-5">
+        <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 font-light mb-5">Welche Seiten</p>
+        {daten.seiten.length === 0 ? (
+          <p className="text-[12px] text-black/30 font-light">Noch nichts gezählt.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {daten.seiten.map(s => (
+              <div key={s.pfad}>
+                <div className="flex items-baseline justify-between gap-4 mb-1.5">
+                  <span className="text-[12px] text-black/70 font-light">{PFADNAMEN[s.pfad] || s.pfad}</span>
+                  <span className="text-[11px] text-black/40 font-light tabular-nums shrink-0">
+                    {s.anzahl.toLocaleString('de-DE')}
+                  </span>
+                </div>
+                <div className="h-px bg-black/[0.07]">
+                  <div className="h-px bg-black/60" style={{ width: `${(s.anzahl / gesamtSeiten) * 100}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -181,7 +317,10 @@ export default function AuswertungPanel() {
           <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-2 font-light">Verwaltung</p>
           <h1 className="text-[26px] font-extralight text-black tracking-tight">Auswertung</h1>
         </div>
-        <div className="flex gap-1">
+        {/* Nur über den Zahlen. Die Aufrufe bringen ihren eigenen Zeitraum
+            mit, und zwei Umschalter übereinander, von denen einer nichts
+            tut, sind einer zu viel. */}
+        <div className={`flex gap-1 ${reiter === 'zahlen' ? '' : 'invisible'}`}>
           {[3, 12, 24].map(m => (
             <button
               key={m} onClick={() => setMonate(m)}
@@ -198,6 +337,7 @@ export default function AuswertungPanel() {
       <div className="flex gap-1 mb-6 border-b border-black/[0.06]">
         {[
           { key: 'zahlen', label: 'Zahlen', icon: TrendingUp },
+          { key: 'besucher', label: 'Aufrufe', icon: Eye },
           { key: 'bestand', label: 'Express-Bestand', icon: Boxes },
           { key: 'protokoll', label: 'Protokoll', icon: ScrollText },
         ].map(t => (
@@ -214,6 +354,7 @@ export default function AuswertungPanel() {
 
       {fehler && <p className="text-[12px] text-red-700 font-light">{fehler}</p>}
 
+      {reiter === 'besucher' && <Besucher />}
       {reiter === 'bestand' && <Bestand />}
       {reiter === 'protokoll' && <Protokoll />}
 

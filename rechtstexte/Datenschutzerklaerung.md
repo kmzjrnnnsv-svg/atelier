@@ -6,7 +6,7 @@
 > gilt zwingend. Was diese Erklärung leisten kann, ist Vollständigkeit und
 > Ehrlichkeit; beides schützt am besten. Keine Rechtsberatung.
 
-**Stand: 16. August 2026**
+**Stand: 15. Oktober 2026**
 
 ---
 
@@ -35,6 +35,39 @@ Betriebssystem.
 - **Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an
   einem sicheren und funktionsfähigen Angebot)
 - **Speicherdauer:** 14 Tage in den Serverprotokollen, danach Löschung
+
+## 3a. Zählung der Seitenaufrufe
+
+Wir zählen, wie oft welche Seite aufgerufen wird. Das geschieht ohne Dienst
+eines Dritten und ohne Kennung.
+
+**Was dabei übertragen wird.** Ihr Browser meldet beim Wechsel der Ansicht
+einen Pfad, zum Beispiel `/kollektion`. Mehr nicht: keine Kennung, kein
+Zeitstempel, keine Herkunftsseite, keine Browserkennung, keine Verweildauer.
+In Ihrem Gerät wird dafür nichts gespeichert und nichts ausgelesen.
+
+**Was daraus wird.** Wir erhöhen eine Zahl in einer Zeile aus Datum und Pfad,
+etwa „15.02.2026, /kollektion, 37". Der Pfad wird vorher auf eine feste
+Liste gebracht: Adressen mit einer Kennung darin (Bestell- oder
+Modellnummern) werden zusammengefasst oder verworfen, Bereiche hinter der
+Anmeldung werden gar nicht gezählt.
+
+**Was damit nicht möglich ist.** Die Zahl lässt nicht erkennen, wer eine
+Seite aufgerufen hat, ob jemand wiederkam, welchen Weg er durch die Seite
+nahm oder wie lange er blieb. Dafür wäre ein Merkmal an der einzelnen Person
+nötig, und ein solches entsteht hier nicht.
+
+- **Zweck:** zu erkennen, ob und welche Inhalte der Seite gefunden werden
+- **Rechtsgrundlage:** Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an
+  einem Angebot, dessen Wirkung wir einschätzen können). Da weder
+  Informationen in Ihrem Endgerät gespeichert noch aus ihm ausgelesen werden,
+  ist § 25 TDDDG nicht einschlägig und eine Einwilligung nicht erforderlich.
+- **Speicherdauer:** unbegrenzt, weil die Zahlen keinen Bezug zu einer Person
+  haben und ohne einen solchen auch nicht hergestellt werden kann
+
+Davon zu unterscheiden sind die Serverprotokolle unter Ziffer 3. Sie
+enthalten die IP-Adresse und werden nach 14 Tagen gelöscht; in die Zählung
+fließt daraus nichts ein.
 
 ## 4. Kundenkonto
 
@@ -169,8 +202,11 @@ ein:
 | Ihre Entscheidung zu diesem Hinweis | damit wir nicht bei jedem Aufruf erneut fragen | 12 Monate |
 | Vorname beim geführten Einstieg | Ansprache auf den folgenden Seiten (Ziffer 7) | bis der Tab geschlossen wird |
 
-Wir verwenden **keine** Analyse-, Werbe- oder Tracking-Cookies, binden keine
-Dienste zur Reichweitenmessung ein und geben nichts davon an Dritte weiter.
+Wir verwenden **keine** Analyse-, Werbe- oder Tracking-Cookies, binden keinen
+Dienst eines Dritten zur Reichweitenmessung ein und geben nichts davon
+weiter. Die Zählung der Seitenaufrufe nach Ziffer 3a kommt ohne Cookie und
+ohne jeden Eintrag in Ihrem Gerät aus und erscheint deshalb nicht in dieser
+Tabelle.
 
 - **Rechtsgrundlage:** § 25 Abs. 2 Nr. 2 TDDDG (unbedingt erforderlich);
   eine Einwilligung ist dafür nicht erforderlich

@@ -47,60 +47,81 @@ import { resolveMediaUrl } from '../lib/mediaUrl'
  *   es vom Kapitel darüber. Direkt unter dem dunklen Aufmacher wäre sie
  *   falsch: Dort trennt schon die Farbkante, und eine Linie zwei Millimeter
  *   darunter sieht aus wie ein Versehen.
+ * @param {number} [gehoben=0] Welches Paar groß steht. Direkt unter dem
+ *   Aufmacher nicht das erste: Das steht dort schon groß im Bild.
  */
-export default function ModellStreifen({ schuhe, satz, oeffnen, zumKatalog, gesamt, randOben = true }) {
+export default function ModellStreifen({ schuhe, satz, oeffnen, zumKatalog, gesamt, randOben = true, gehoben = 0 }) {
   if (!schuhe?.length) return null
+  const oben = Math.min(gehoben, schuhe.length - 1)
 
   return (
     <Enthuellen richtung="ruhig">
       <div className={`px-5 lg:px-16 ${randOben ? 'pb-16 lg:pb-24' : 'pt-12 lg:pt-16 pb-14 lg:pb-20'}`}>
-        <div className={`max-w-6xl mx-auto ${randOben ? 'border-t border-black/[0.10] pt-10 lg:pt-14' : ''}`}>
+        <div className={`max-w-6xl mx-auto ${randOben ? ' pt-10 lg:pt-14' : ''}`}>
           {/* Zeile und Tür in einer Zeile, auf dem Telefon untereinander.
               `items-baseline`, damit der kleine Knopf auf der Schriftlinie
               des Satzes sitzt und nicht auf halber Höhe schwebt. */}
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
-            <p className="text-[13px] lg:text-[15px] text-black/45 font-light leading-[1.8] max-w-md">
+            <p className="t-text c-tinte max-w-md">
               {satz}
             </p>
             <button
               type="button"
               onClick={zumKatalog}
-              className="group shrink-0 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black/60 hover:text-black transition-colors"
-              style={{ letterSpacing: '0.22em' }}
+              className="t-klein group shrink-0 bg-transparent border-0 p-0 inline-flex items-center gap-3 c-tinte hover:text-black transition-colors"
             >
-              <span className="relative pb-1">
+              <span className="underline underline-offset-[6px] decoration-1">
                 {gesamt ? `Alle ${gesamt} Modelle` : 'Alle Modelle'}
-                <span className="absolute left-0 bottom-0 h-px w-full bg-black/20 group-hover:bg-black/45 transition-colors" />
               </span>
               <Strichpfeil />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-10 mt-10 lg:mt-12">
-            {schuhe.map((schuh, i) => (
-              <Enthuellen key={schuh.id} verzoegerung={Math.min(i, 3) * 80}>
-                <button
-                  type="button"
-                  onClick={() => oeffnen(schuh)}
-                  className="group block w-full bg-transparent border-0 p-0 text-left"
+          {/* Eine Bildreihe, kein Kachelraster: Ein Paar steht groß, die
+              anderen drei laufen kleiner daneben und sitzen mit ihm auf
+              derselben Unterkante, wie Schuhe auf einem Regalbrett. Vier
+              gleich große Felder sagen „Auswahl"; eines, das größer ist,
+              sagt „dieses hier zuerst" und gibt dem Auge einen Anfang.
+
+              Am Schreibtisch über die Spaltenbreiten (das gehobene Paar
+              bekommt 1,8 Anteile), auf dem Telefon steht es allein über
+              einer Dreierreihe. */}
+          <div
+            className="grid grid-cols-3 gap-x-4 gap-y-8 lg:gap-x-10 items-end mt-10 lg:mt-12 lg:[grid-template-columns:var(--spalten)]"
+            style={{ '--spalten': schuhe.map((_, i) => (i === oben ? '1.8fr' : '1fr')).join(' ') }}
+          >
+            {schuhe.map((schuh, i) => {
+              const gross = i === oben
+              return (
+                <div
+                  key={schuh.id}
+                  className={gross ? 'col-span-3 lg:col-span-1 order-first lg:order-none' : ''}
                 >
-                  <div className="aspect-square overflow-hidden">
-                    <img
-                      src={resolveMediaUrl(schuh.image)}
-                      alt={`${schuh.name}, nach Maß gefertigt`}
-                      loading="lazy"
-                      className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
-                    />
-                  </div>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-black/60 mt-3 line-clamp-2 min-h-[2.4em]">
-                    {schuh.name}
-                  </p>
-                  <p className="text-[12px] text-black/40 font-light mt-0.5">
-                    {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
-                  </p>
-                </button>
-              </Enthuellen>
-            ))}
+                  <Enthuellen verzoegerung={Math.min(i, 3) * 80}>
+                    <button
+                      type="button"
+                      onClick={() => oeffnen(schuh)}
+                      className="group block w-full bg-transparent border-0 p-0 text-left"
+                    >
+                      <div className={`${gross ? 'aspect-[5/4]' : 'aspect-square'} overflow-hidden bild-im-grund`}>
+                        <img
+                          src={resolveMediaUrl(schuh.image)}
+                          alt={`${schuh.name}, nach Maß gefertigt`}
+                          loading="lazy"
+                          className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
+                        />
+                      </div>
+                      <p className={`${gross ? 't-lead mt-5' : 't-klein mt-3 line-clamp-2 min-h-[3em]'} c-tinte`}>
+                        {schuh.name}
+                      </p>
+                      <p className={`${gross ? 't-text' : 't-klein'} c-leise mt-1 tabular-nums`}>
+                        {schuh.price ? `ab ${schuh.price}` : 'auf Anfrage'}
+                      </p>
+                    </button>
+                  </Enthuellen>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>

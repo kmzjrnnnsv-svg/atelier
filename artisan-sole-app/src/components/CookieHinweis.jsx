@@ -47,68 +47,91 @@ export default function CookieHinweis() {
       className="fixed inset-x-0 bottom-0 z-[900] p-3 sm:p-4"
       style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
-      <div className="mx-auto max-w-3xl bg-white border border-black/10 shadow-[0_2px_30px_rgba(0,0,0,0.08)]">
-        <div className="px-5 py-4 sm:px-7 sm:py-5">
-          <div className="flex items-start justify-between gap-4">
+      {/* ── Im Neuentwurf ─────────────────────────────────────────────
+          Der Hinweis ist das Erste, was jeder Besucher liest, und er war
+          das Kälteste auf der Seite: ein Etikett in 9 px gesperrten
+          Versalien, Text in 13 px Grau, ein schwarzer Knopf in 10 px. Und
+          er lag mit 210 Pixeln Höhe über dem halben Aufmacher.
+
+          Jetzt in der Schrift und den Farben des Hauses, lesbar ab 14 px,
+          und flacher: Text und Knöpfe auf dem Schreibtisch in einer Zeile.
+          Das Etikett ist weg — was es sagte, sagt der Satz selbst. */}
+      <div className="mx-auto max-w-5xl g-angebot shadow-[0_8px_40px_rgba(35,28,23,0.14)]">
+        <div className="px-5 py-4 sm:px-7 sm:py-5 lg:flex lg:items-center lg:gap-8">
+          <div className="flex items-start justify-between gap-4 lg:flex-1">
             <div className="min-w-0">
-              <p className="text-[9px] text-black/30 uppercase tracking-[0.25em] font-light mb-2">
-                Speicherung im Endgerät
-              </p>
-              <p className="text-[13px] text-black/70 font-light leading-[1.7] max-w-xl">
+              {/* ── Warum hier nicht mehr „keine Analyse" steht ──────────────
+
+                  Der Satz stand so lange, wie überhaupt nichts gezählt wurde.
+                  Seit es einen Seitenzähler gibt, wäre er spitzfindig: Der
+                  Zähler legt nichts im Gerät ab und kennt niemanden, aber
+                  „keine Analyse" würde ein Leser so verstehen, dass auch
+                  nicht gezählt wird.
+
+                  Also steht es jetzt da. Lieber ein Satz mehr als eine Zusage,
+                  die man verteidigen muss — dasselbe Argument wie im Kapitel
+                  „In eigener Sache" über das Wort „handgefertigt".
+
+                  Was bleibt, ist das Entscheidende: kein Wiedererkennen. Die
+                  Zahl weiß, dass eine Seite aufgerufen wurde, und nicht, von
+                  wem. Siehe lib/seitenzaehler.js. */}
+              <p className="t-klein c-tinte max-w-2xl">
                 Wir speichern nur, was der Laden zum Arbeiten braucht: deine Anmeldung,
                 deinen Warenkorb und diese Entscheidung.{' '}
-                <span className="text-black">Keine Analyse, keine Werbung, kein Tracking</span>,
-                und was wir speichern, bleibt bei uns.
+                <span className="font-medium">Keine Werbung, kein Tracking, kein Wiedererkennen</span>,
+                und was wir speichern, bleibt bei uns. Wie oft eine Seite aufgerufen
+                wird, zählen wir: als nackte Zahl, ohne Kennung und ohne etwas in
+                deinem Gerät.
               </p>
             </div>
             <button
               onClick={() => waehlen(wahl ? 'notwendig' : 'notwendig')}
               aria-label="Hinweis schließen"
-              className="w-8 h-8 flex-shrink-0 flex items-center justify-center text-black/30 hover:text-black bg-transparent border-0"
+              className="w-11 h-11 -mt-2 -mr-2 flex-shrink-0 flex items-center justify-center c-leise hover:text-black bg-transparent border-0 lg:hidden"
             >
-              <X size={15} strokeWidth={1.4} />
+              <X size={18} strokeWidth={1.4} />
             </button>
           </div>
 
           {details && (
-            <div className="mt-4 border-t border-black/[0.06] pt-4 space-y-3">
+            <div className="mt-5 space-y-4 lg:order-last lg:basis-full">
               {KATEGORIEN.map(k => (
                 <div key={k.key} className="flex items-start gap-3">
-                  <span className="mt-0.5 text-[9px] tracking-[0.16em] uppercase border border-black/15 px-1.5 py-0.5 text-black/50 whitespace-nowrap">
+                  <span className="t-klein c-tinte g-erzaehlung px-2.5 py-1 whitespace-nowrap">
                     {k.aktivierbar ? 'Wählbar' : 'Immer an'}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[12px] text-black/75 font-light">{k.titel}</p>
-                    <p className="text-[11px] text-black/40 font-light leading-[1.7]">{k.text}</p>
-                    <p className="text-[10px] text-black/30 font-light mt-0.5">{k.beispiele}</p>
+                    <p className="t-klein c-tinte font-medium">{k.titel}</p>
+                    <p className="t-klein c-tinte">{k.text}</p>
+                    <p className="t-klein c-leise mt-0.5">{k.beispiele}</p>
                   </div>
                 </div>
               ))}
               {/* Ehrlich bis zum Rand: Solange auf einzelnen Flächen noch
                   Platzhalterfotos eines fremden Anbieters liegen, gehört das
                   hierher und nicht nur ins Kleingedruckte. */}
-              <p className="text-[11px] text-black/40 font-light leading-[1.7]">
+              <p className="t-klein c-leise">
                 Auf einzelnen Flächen liegen noch Platzhalter-Fotos von Unsplash,
                 bis eigene Aufnahmen hinterlegt sind. Deren Server erfährt dabei
                 Deine IP-Adresse. Cookies setzt er nicht.
               </p>
-              <p className="text-[11px] text-black/40 font-light leading-[1.7]">
+              <p className="t-klein c-leise">
                 Deine Entscheidung halten wir zum Nachweis fest, mit Zeitpunkt und
                 Wortlaut, aber ohne deinen Namen. Du kannst sie jederzeit über die
                 Fußzeile widerrufen. Mehr dazu in der{' '}
-                <Link to="/legal/datenschutz" className="underline text-black/60 hover:text-black">
+                <Link to="/legal/datenschutz" className="underline underline-offset-4 c-tinte">
                   Datenschutzerklärung
                 </Link>.
               </p>
             </div>
           )}
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          <div className="mt-4 lg:mt-0 flex flex-wrap items-center gap-x-5 gap-y-2 shrink-0">
             {wahl && (
               <button
                 onClick={() => waehlen('notwendig')}
                 disabled={gespeichert}
-                className="h-11 px-6 border border-black/15 text-[10px] tracking-[0.18em] uppercase font-light text-black/55 hover:border-black hover:text-black bg-transparent disabled:opacity-40"
+                className="t-klein h-11 c-tinte underline underline-offset-4 bg-transparent border-0 p-0 hover:opacity-70 disabled:opacity-40"
               >
                 Nur notwendige
               </button>
@@ -116,19 +139,19 @@ export default function CookieHinweis() {
             <button
               onClick={() => waehlen(wahl ? 'alle' : 'notwendig')}
               disabled={gespeichert}
-              className="h-11 px-8 bg-black text-white text-[10px] tracking-[0.18em] uppercase font-light border-0 disabled:opacity-40"
+              className="t-klein h-11 px-7 g-akzent border-0 hover:opacity-90 disabled:opacity-40"
             >
               {wahl ? 'Alle annehmen' : 'Verstanden'}
             </button>
             <button
               onClick={() => setDetails(d => !d)}
-              className="h-11 px-3 text-[10px] tracking-[0.18em] uppercase font-light text-black/35 hover:text-black bg-transparent border-0"
+              className="t-klein h-11 c-tinte underline underline-offset-4 bg-transparent border-0 p-0 hover:opacity-70"
             >
               {details ? 'Weniger' : 'Was heißt das?'}
             </button>
             <Link
               to="/legal/datenschutz"
-              className="h-11 px-3 flex items-center text-[10px] tracking-[0.18em] uppercase font-light text-black/35 hover:text-black no-underline"
+              className="t-klein h-11 flex items-center c-tinte underline underline-offset-4 hover:opacity-70"
             >
               Datenschutz
             </Link>

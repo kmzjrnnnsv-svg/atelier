@@ -1,154 +1,77 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Check, ChevronRight, ShoppingBag, Plus, Minus, CheckCircle2, X, Ticket, Truck, Building2, PackageOpen } from 'lucide-react'
+import { ArrowLeft, Check, ShoppingBag, Plus, Minus, Lock, ChevronDown, PackageOpen, Landmark } from 'lucide-react'
 import { apiFetch } from '../hooks/useApi'
 import useStore from '../store/store'
 import { useAuth } from '../context/AuthContext'
 import { shoePath } from '../lib/shoePath'
-import { toFormAddress, streetLine } from '../lib/address'
+import { toFormAddress, isAddressComplete } from '../lib/address'
 import { specFromCartItem } from '../lib/orderSpec'
 import { accessoryImages } from '../lib/accessoryImages'
+import { resolveMediaUrl } from '../lib/mediaUrl'
+import { Preishinweis } from '../lib/preisangabe'
 import AffiliateVorteil from '../components/AffiliateVorteil'
+import Ueberweisung from '../components/Ueberweisung'
+import Adressfelder from '../components/kasse/Adressfelder'
+import Auswahlkarte from '../components/kasse/Auswahlkarte'
+import Bestaetigung from '../components/kasse/Bestaetigung'
 
-// Zubehör kommt aus dem Store (dieselbe Quelle wie die Zubehörseite).
+/*
+ * ── Der Bestellvorgang ──────────────────────────────────────────────────────
+ *
+ * Zwei Ansichten statt fünf Schritten. Vorher führte eine Schrittleiste durch
+ * Warenkorb, Lieferung, Rechnung, Zubehör und Übersicht; wer bestellen
+ * wollte, klickte viermal „Weiter", um am Ende auf einer Seite zu landen, die
+ * alles noch einmal zusammenfasste.
+ *
+ *   Tasche  Was drin ist, mit Bild und Konfiguration, dazu das Zubehör.
+ *   Kasse   Eine Seite wie bei Stripe: links (am Telefon oben, aufklappbar)
+ *           die Bestellübersicht, rechts das Formular von der Anschrift bis
+ *           zum Bezahlknopf. Was bestätigt wird, steht im selben Blick wie
+ *           der Betrag.
+ *
+ * Gezahlt wird weiter per Überweisung. Die Bankverbindung samt GiroCode
+ * steht auf der Danke-Seite (components/Ueberweisung.jsx) und in der Mail.
+ */
 
-// ── Step indicator ────────────────────────────────────────────────────────────
-const STEPS = ['Warenkorb', 'Lieferung', 'Rechnung', 'Zubehör', 'Übersicht']
+// Merkt sich den Direktkauf über die Anmeldung hinweg. Vorher stand der Gast
+// nach dem Anmelden vor einer leeren Tasche: Das konfigurierte Paar reiste
+// nur im Zustand der Navigation mit, und der geht beim Umweg verloren.
+const DIREKTKAUF = 'as_direktkauf'
 
-// Der Bestellvorgang lief über die volle Fensterbreite. Auf einem breiten
-// Schirm zog das die Eingabefelder auf zwei Meter auseinander — man musste die
-// Augen wandern lassen, um eine Postleitzahl einzutippen. Ein Formular liest
-// sich in einer Spalte besser, deshalb eine feste, mittige Breite.
-const SHELL = 'w-full max-w-[680px] mx-auto px-5'
-
-function StepBar({ current }) {
-  return (
-    <div className={`flex items-center gap-1 ${SHELL} py-5`}>
-      {STEPS.map((label, i) => (
-        <div key={label} className="flex items-center" style={{ flex: i < STEPS.length - 1 ? '1 1 0' : 'none' }}>
-          <div className="flex flex-col items-center gap-1">
-            <div className={`w-7 h-7 flex items-center justify-center text-[11px] transition-all ${
-              i < current  ? 'bg-black text-white' :
-              i === current ? 'bg-black text-white' :
-              'bg-[#f6f5f3] text-black/25'
-            }`} style={{ fontWeight: 300 }}>
-              {i < current ? <Check size={12} strokeWidth={2} /> : i + 1}
-            </div>
-            <span className={`text-[9px] uppercase whitespace-nowrap ${i === current ? 'text-black font-normal' : 'text-black/35 font-light'}`} style={{ letterSpacing: '0.12em' }}>
-              {label}
-            </span>
-          </div>
-          {i < STEPS.length - 1 && (
-            <div className={`h-px flex-1 mx-2 mb-4 transition-all ${i < current ? 'bg-black' : 'bg-black/10'}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ── Cart item with swipe-to-remove ───────────────────────────────────────────
-function CartItem({ id, onRemove, children }) {
-  const ref = useRef(null)
-  const [removing, setRemoving] = useState(false)
-
-  const handleRemove = useCallback(() => {
-    setRemoving(true)
-    setTimeout(() => onRemove(id), 250)
-  }, [id, onRemove])
-
-  return (
-    <div
-      ref={ref}
-      className="relative overflow-hidden"
-      style={{
-        transition: removing ? 'max-height 250ms ease, opacity 200ms ease, margin 250ms ease' : 'none',
-        maxHeight: removing ? '0px' : '200px',
-        opacity: removing ? 0 : 1,
-        marginBottom: removing ? '0px' : undefined,
-      }}
-    >
-      <button
-        onClick={handleRemove}
-        className="absolute top-2 right-2 z-10 p-1 bg-transparent border-0 text-black/25 hover:text-red-500 active:text-red-500 transition-colors"
-      >
-        <X size={14} strokeWidth={1.5} />
-      </button>
-      {children}
-    </div>
-  )
-}
-
-// ── Address form ──────────────────────────────────────────────────────────────
-function AddressForm({ title, value, onChange }) {
-  const f = (field, val) => onChange({ ...value, [field]: val })
-  const inp = 'w-full bg-[#f6f5f3] border border-black/[0.06] px-4 py-3 text-[13px] text-black placeholder-black/25 focus:outline-none focus:border-black/15 transition-all font-light'
-  return (
-    <div>
-      <h2 className="text-[10px] text-black/30 mb-4 uppercase font-light" style={{ letterSpacing: '0.2em' }}>{title}</h2>
-      <div className="space-y-2">
-        <input className={inp} placeholder="Vollständiger Name" value={value.name || ''} onChange={e => f('name', e.target.value)} />
-        {/* Getrennt, weil sich eine fehlende Hausnummer sonst nicht bemerken
-            lässt: In einem gemeinsamen Feld ist „Robert Mayer Straße" ausgefüllt
-            und trotzdem unzustellbar. */}
-        <div className="flex gap-2">
-          <input className={inp} placeholder="Straße" value={value.street || ''} onChange={e => f('street', e.target.value)} style={{ flex: 1 }} autoComplete="address-line1" />
-          <input className={inp} placeholder="Nr." value={value.house_number || ''} onChange={e => f('house_number', e.target.value)} style={{ width: '30%' }} autoComplete="address-line2" />
-        </div>
-        <div className="flex gap-2">
-          <input className={inp} placeholder="PLZ" value={value.zip || ''} onChange={e => f('zip', e.target.value)} style={{ width: '35%' }} autoComplete="postal-code" />
-          <input className={inp} placeholder="Stadt" value={value.city || ''} onChange={e => f('city', e.target.value)} style={{ flex: 1 }} autoComplete="address-level2" />
-        </div>
-        <input className={inp} placeholder="Land" value={value.country || ''} onChange={e => f('country', e.target.value)} />
-        <input className={inp} placeholder="Telefon (optional)" value={value.phone || ''} onChange={e => f('phone', e.target.value)} />
-      </div>
-    </div>
-  )
-}
-
-function isAddrComplete(a) {
-  // Die Hausnummer zählt ausdrücklich dazu — ohne sie kommt nichts an.
-  return !!(a.name && a.street && a.house_number && a.zip && a.city && a.country)
-}
-
-// ── Accessory card ────────────────────────────────────────────────────────────
+// ── Zubehörkarte ─────────────────────────────────────────────────────────────
 /**
- * Zubehör im Bestellvorgang — dieselben Artikel und Bilder wie auf der
- * Zubehörseite. Vorher stand hier nur ein Pluszeichen in einem grauen Kasten,
- * und Artikel, die schon im Warenkorb lagen, fehlten ganz; man konnte nicht
- * sehen, was man bereits hatte.
+ * Dieselben Artikel und Bilder wie auf der Zubehörseite, mit Anzahl statt
+ * eines bloßen Hakens: Wer zweimal hinzufügt, sieht die 2.
  */
 function AccessoryCard({ item, anzahl, onPlus, onMinus }) {
   return (
-    <div className={`w-full flex items-center gap-3.5 p-3 bg-white transition-all ${anzahl > 0 ? 'border-l-2 border-l-black' : 'border-l-2 border-l-transparent'}`}>
-      {/* Bild wie auf der Zubehörseite, nur kleiner */}
-      <div className="w-14 h-[74px] flex-shrink-0 bg-[#f6f5f3] overflow-hidden flex items-center justify-center">
+    <div className="flex items-center gap-4 py-3">
+      <div className="w-16 h-16 shrink-0 rounded-md overflow-hidden bild-im-grund g-angebot flex items-center justify-center">
         {item.image
           ? <img src={item.image} alt="" className="w-full h-full object-cover" />
-          : <ShoppingBag size={16} strokeWidth={0.8} className="text-black/10" />}
+          : <ShoppingBag size={18} strokeWidth={1} className="c-leise" />}
       </div>
-
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-medium text-black leading-tight">{item.name}</p>
-        {item.desc && <p className="text-[10px] text-black/40 mt-0.5 line-clamp-2 leading-relaxed">{item.desc}</p>}
-        <p className="text-[12px] text-black/70 mt-1">{item.price}</p>
+        <p className="t-feld">{item.name}</p>
+        {item.desc && <p className="t-klein c-leise line-clamp-2">{item.desc}</p>}
+        <p className="t-klein c-tinte mt-0.5 tabular-nums">{item.price}</p>
       </div>
-
-      {/* Anzahl statt eines bloßen Hakens: Wer zweimal hinzufügt, sieht die 2. */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         {anzahl > 0 && (
           <>
-            <button onClick={onMinus} aria-label="Eins weniger"
-              className="w-8 h-8 flex items-center justify-center border border-black/12 bg-white text-black/50">
-              <Minus size={13} strokeWidth={2} />
+            <button onClick={onMinus} aria-label={`${item.name}: eins weniger`}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent border border-black/15 c-tinte hover:border-black/40">
+              <Minus size={14} strokeWidth={1.6} />
             </button>
-            <span className="w-6 text-center text-[13px] font-medium text-black">{anzahl}</span>
+            <span className="t-feld w-7 text-center tabular-nums" aria-live="polite">{anzahl}</span>
           </>
         )}
-        <button onClick={onPlus} aria-label="Hinzufügen"
-          className={`w-8 h-8 flex items-center justify-center transition-all ${anzahl > 0 ? 'bg-black text-white' : 'bg-black/[0.04] text-black/40'}`}>
-          <Plus size={14} strokeWidth={2} />
+        <button onClick={onPlus} aria-label={`${item.name} hinzufügen`}
+          className={`w-10 h-10 rounded-full flex items-center justify-center border-0 transition-colors ${
+            anzahl > 0 ? 'g-akzent' : 'bg-black/[0.05] c-tinte hover:bg-black/[0.09]'}`}>
+          <Plus size={15} strokeWidth={1.6} />
         </button>
       </div>
     </div>
@@ -185,7 +108,7 @@ function fmtCent(n) {
 export default function Checkout() {
   const navigate  = useNavigate()
   const location  = useLocation()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { latestScan, placeOrder, footNotes, cart, removeFromCart, updateCartQty, clearCart, savedDeliveryAddress, savedBillingAddress, saveAddresses, validateCoupon, validateBusinessCode, fetchMyCampaigns, accessories: storeAccessories, shoes, affiliate, ownerLink } = useStore()
   const isPromo = !!user?.is_promotion
   const promoDiscountPct = user?.promotion_discount_pct || 0
@@ -201,10 +124,11 @@ export default function Checkout() {
    * Name, Betrag und Konfiguration in einem.
    */
   const guertelDirekt = location.state?.guertel || null
-  const startStep = product.id ? 1 : 0
 
   const emptyAddr = { name:'', street:'', house_number:'', zip:'', city:'', country:'Deutschland', phone:'' }
-  const [step,        setStep]        = useState(startStep)
+  const [ansicht,     setAnsicht]     = useState(product.id ? 'kasse' : 'tasche')
+  const [uebersichtOffen, setUebersichtOffen] = useState(false)
+  const [codeOffen,   setCodeOffen]   = useState(false)
   const [delivery,    setDelivery]    = useState(toFormAddress(savedDeliveryAddress) || emptyAddr)
   const [sameBilling, setSameBilling] = useState(true)
   const [billing,     setBilling]     = useState(toFormAddress(savedBillingAddress) || emptyAddr)
@@ -421,16 +345,12 @@ export default function Checkout() {
   }
   const handleRemoveBizCode = () => { setBizResult(null); setBizCode(''); setBizError(null) }
 
-  const canNext = step === 0 ? cart.length > 0
-    : step === 1 ? isAddrComplete(delivery)
-    : step === 2 ? (sameBilling || isAddrComplete(billing))
-    : true
 
   // Sobald die Lieferanschrift vollständig ist, wandert sie ins Konto —
   // nicht erst mit der Bestellung. Wer den Vorgang abbricht, findet sie beim
   // nächsten Mal trotzdem vor.
   useEffect(() => {
-    if (!user || !isAddrComplete(delivery)) return
+    if (!user || !isAddressComplete(delivery)) return
     const t = setTimeout(() => {
       saveAddresses(delivery, sameBilling ? null : billing).catch(() => {})
     }, 800)
@@ -446,13 +366,36 @@ export default function Checkout() {
    * ohne — dort beginnen Daten, die zu einer Person gehören. Der Korb bleibt
    * dabei erhalten, und nach der Anmeldung geht es hier weiter.
    */
-  const handleNext = () => {
-    if (!user) {
-      navigate('/login', { state: { from: '/checkout' } })
-      return
+  const zurAnmeldung = () => {
+    if (product.id) {
+      try { sessionStorage.setItem(DIREKTKAUF, JSON.stringify(location.state)) } catch { /* ohne Speicher bleibt der Umweg */ }
     }
-    if (step < 4) setStep(s => s + 1)
+    navigate('/login', { state: { from: '/checkout' } })
   }
+  const zurKasse = () => {
+    if (!user) { zurAnmeldung(); return }
+    setAnsicht('kasse')
+  }
+
+  // Zurück von der Anmeldung: den gemerkten Direktkauf wieder einsetzen.
+  useEffect(() => {
+    if (location.state?.product) return
+    let gemerkt = null
+    try { gemerkt = sessionStorage.getItem(DIREKTKAUF) } catch { /* kein Speicher */ }
+    if (!gemerkt) return
+    try { sessionStorage.removeItem(DIREKTKAUF) } catch { /* egal */ }
+    try { navigate('/checkout', { replace: true, state: JSON.parse(gemerkt) }) } catch { /* unlesbar, dann eben nicht */ }
+  }, [])
+  // Kommt der Direktkauf nachträglich an (siehe oben), gehört er in die Kasse.
+  useEffect(() => { if (product.id) setAnsicht('kasse') }, [product.id])
+
+  // Jede Ansicht beginnt oben. Am Schreibtisch scrollt nicht das Fenster,
+  // sondern ein Behälter darin; `scrollIntoView` erreicht beide.
+  const anfang = useRef(null)
+  const [placedFuerAnker, setPlacedFuerAnker] = useState(null)
+  useEffect(() => {
+    anfang.current?.scrollIntoView?.({ block: 'start' })
+  }, [ansicht, placedFuerAnker])
 
   const handlePlace = async () => {
     setPlacing(true)
@@ -648,95 +591,132 @@ export default function Checkout() {
       // Fehler bei sich.
       if (appliedCoupon) { try { localStorage.removeItem('as_gutschein') } catch { /* egal */ } }
       setPlaced(lastRow)
+      setPlacedFuerAnker(lastRow?.id || 'ok')
     } catch (e) {
       setError(e?.error || 'Bestellung fehlgeschlagen. Bitte erneut versuchen.')
     } finally { setPlacing(false) }
   }
 
-  // ── Order success ──
+  // ── Was in der Übersicht steht ──────────────────────────────────────────
+  //
+  // Eine Liste für beide Wege (Direktkauf und Tasche) und beide Orte (Tasche
+  // und Kasse). Die Konfiguration kommt aus derselben Quelle wie später in
+  // der Bestellung und beim Betreiber (lib/orderSpec.js).
+  //
+  // Ohne „Modell" (steht im Namen) und ohne die Zeilen, die nur die
+  // Werkstatt braucht. In der Tasche steht alles als Liste, in der
+  // Übersicht der Kasse nur Leder, Farbe, Sohle und Größe.
+  const WEG = ['Modell', 'Leisten-Empfehlung', 'Welt', 'Maße']
+  const KURZ = ['Leder', 'Farbe', 'Sohlen-Art', 'Größe']
+  const konfiguration = (it) => specFromCartItem(it)
+    .filter(([k, v]) => v && !WEG.includes(k))
+    // „EU 42 · Leisten-Empfehlung": Der Zusatz sagt, woher die Größe kommt,
+    // und ist für den Käufer ein Wort ohne Inhalt.
+    .map(([k, v]) => [k, k === 'Größe' ? String(v).replace(/\s*·\s*Leisten-Empfehlung$/, '') : v])
+  const zubehoerZaehler = chosenAccessories.reduce((m, a) => {
+    const z = m.get(a.id) || { ...a, menge: 0 }
+    z.menge += 1
+    m.set(a.id, z)
+    return m
+  }, new Map())
+  const positionen = [
+    ...(product.id
+      ? [{ key: 'direkt', bild: product.image ? resolveMediaUrl(product.image) : null,
+           name: product.name || product.shoe_name, details: konfiguration(product), menge: 1, betrag: shoePrice }]
+      : cart.map(it => ({
+          key: it.id, cartId: it.id, zubehoer: !!it.isAccessory,
+          bild: it.image ? resolveMediaUrl(it.image) : null,
+          name: it.name,
+          details: it.isAccessory ? (it.material && it.material !== 'Zubehör' ? [['', it.material]] : []) : konfiguration(it),
+          menge: it.qty || 1, betrag: parsePrice(it.price) * (it.qty || 1),
+        }))),
+    ...[...zubehoerZaehler.values()].map(a => ({
+      key: `acc-${a.id}`, bild: a.image ? resolveMediaUrl(a.image) : null, name: a.name, details: [], menge: a.menge, betrag: a.priceNum * a.menge, zubehoer: true,
+    })),
+    ...(guertelDirekt ? [{ key: 'guertel', bild: null, name: guertelDirekt.name, details: [], menge: 1, betrag: guertelPreis, zubehoer: true }] : []),
+    ...(hatSchuh && affiliate?.gift_item
+      ? [{ key: 'zugabe', bild: null, name: affiliate.gift_item.name, details: [['', `Zugabe ${String(affiliate.code || '').toUpperCase()}`]], menge: 1, betrag: 0, zubehoer: true }]
+      : []),
+  ]
+  const euro = (n) => `€ ${fmtPrice(n)}`
+
+  // Was dem Bezahlknopf noch fehlt, in Worten. Ein gesperrter Knopf ohne
+  // Grund ist eine Sackgasse.
+  const lieferungFertig = isAddressComplete(delivery)
+  const rechnungFertig = sameBilling || isAddressComplete(billing)
+  const offen = [
+    !lieferungFertig && 'Lieferadresse',
+    !rechnungFertig && 'Rechnungsadresse',
+    (!widerrufAkzeptiert || !agbAkzeptiert || (ohnePassform.length > 0 && !passformAkzeptiert)) && 'die Bestätigungen',
+  ].filter(Boolean)
+  const bestellbar = !!user && offen.length === 0 && !placing
+
+  // ── Danke ──────────────────────────────────────────────────────────────────
   if (placed) {
     return (
-      <div className="min-h-full bg-white">
-        <div className="flex flex-col items-center justify-center px-5 pt-16 pb-8">
-          <div className="w-14 h-14 bg-black flex items-center justify-center mb-5">
-            <CheckCircle2 size={22} className="text-white" strokeWidth={1.5} />
-          </div>
-          <p className="text-[24px] font-extralight text-black tracking-tight">Bestellt</p>
-          <p className="text-[12px] text-black/30 mt-2 font-light">#{placed.id} · {placed.shoe_name}</p>
-        </div>
+      <div ref={anfang} className="haus min-h-full scroll-mt-24">
+        <div className="g-angebot min-h-full px-5 py-12 lg:py-20">
+          <div className="max-w-[560px] mx-auto">
+            <span className="w-14 h-14 rounded-full g-akzent flex items-center justify-center">
+              <Check size={26} strokeWidth={1.6} />
+            </span>
+            <h1 className="t-kopf c-tinte mt-6">Danke. Deine Bestellung ist da.</h1>
+            <p className="t-text c-leise mt-2">Bestellung {placed.id} · {placed.shoe_name}</p>
 
-        <div className="px-5 pb-8 space-y-3">
-          <div className="bg-white p-5 border border-black/[0.06]">
-            <p className="text-[10px] text-black/30 uppercase tracking-[0.2em] font-light mb-4">Überweisung</p>
-            <div className="space-y-2.5">
-              <div className="flex justify-between">
-                <span className="text-[13px] text-black/40">Betrag</span>
-                <span className="text-[15px] font-bold text-black">€ {fmtPrice(total)}</span>
-              </div>
-              <div className="h-px bg-black/5" />
-              <div className="flex justify-between">
-                <span className="text-[13px] text-black/40">Empfänger</span>
-                <span className="text-[13px] font-medium text-black">{placed.bank_holder}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[13px] text-black/40">IBAN</span>
-                <span className="text-[12px] font-mono font-medium text-black">{placed.bank_iban}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[13px] text-black/40">BIC</span>
-                <span className="text-[12px] font-mono font-medium text-black">{placed.bank_bic}</span>
-              </div>
-              <div className="h-px bg-black/5" />
-              <div>
-                <p className="text-[10px] text-black/30 uppercase tracking-wider mb-2">Verwendungszweck</p>
-                {/* Vom Server, nicht hier gebaut. Hier stand zuletzt
-                    „AS-42" — eine Kennung, die in keiner Bestellung vorkommt
-                    und zu der sich keine Zahlung zuordnen ließ. */}
-                <div className="bg-black px-4 py-2.5 text-center">
-                  <span className="text-white font-mono font-bold tracking-widest text-[13px] break-all">
-                    {placed.verwendungszweck || placed.payment_ref || placed.order_ref}
+            {/* Die Bankverbindung mit GiroCode: dieselbe Komponente wie unter
+                „Meine Bestellungen". Vorher stand hier eine eigene Fassung
+                ohne Code zum Scannen, die man abtippen musste. */}
+            <div className="mt-10">
+              <Ueberweisung orderId={placed.id} />
+            </div>
+
+            <h2 className="t-lead c-tinte mt-12">Was jetzt passiert</h2>
+            <ol className="mt-4 space-y-4">
+              {[
+                ['Deine Überweisung kommt an', 'Wir bestätigen den Eingang per Mail. Die Angaben stehen auch in deinem Postfach.'],
+                ['Gefertigt wird in Almansa', 'Rahmengenäht, 4 bis 6 Wochen. Du hörst von uns, wenn die Fertigung beginnt.'],
+                ['Dein Paar reist zu dir', 'Mit Sendungsnummer, sobald es die Werkstatt verlässt.'],
+              ].map(([t, x], n) => (
+                <li key={t} className="flex gap-4">
+                  <span className="t-klein c-leise tabular-nums w-5 shrink-0 pt-1">{n + 1}</span>
+                  <span>
+                    <span className="block t-text c-tinte">{t}</span>
+                    <span className="block t-klein c-leise">{x}</span>
                   </span>
-                </div>
-              </div>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-12 flex flex-col sm:flex-row gap-3">
+              <button onClick={() => navigate('/orders')}
+                className="t-klein h-12 px-8 rounded-md g-akzent border-0 hover:opacity-90">
+                Meine Bestellungen
+              </button>
+              <button onClick={() => navigate('/collection')}
+                className="t-klein h-12 px-8 rounded-md bg-transparent c-tinte border border-black/20 hover:border-black/50">
+                Weiter stöbern
+              </button>
             </div>
           </div>
-
-          <p className="text-[12px] text-black/35 text-center leading-relaxed">
-            Nach Zahlungseingang startet die Fertigung.
-          </p>
-
-          <button onClick={() => navigate('/orders')}
-            className="w-full py-3.5 bg-black text-white text-[12px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300"
-            style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-            Bestellung verfolgen
-          </button>
-          <button onClick={() => navigate('/collection')}
-            className="w-full py-3.5 bg-white text-black text-[12px] font-light border border-black/15 hover:border-black hover:bg-black hover:text-white transition-all duration-300"
-            style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-            Weiter shoppen
-          </button>
         </div>
       </div>
     )
   }
 
-  // ── Empty cart, simple, clean ──
-  if (step === 0 && cart.length === 0 && !product.id) {
+  // ── Leere Tasche ───────────────────────────────────────────────────────────
+  if (cart.length === 0 && !product.id) {
     return (
-      <div className="min-h-full bg-white">
-        <div className={`${SHELL} pt-8 lg:pt-14 pb-1`}>
-          <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Artisan Sole</p>
-          <p className="text-[28px] lg:text-[36px] font-extralight text-black tracking-tight">Einkaufstasche</p>
-        </div>
-        <div className="flex flex-col items-center justify-center py-20 text-center px-5">
-          <ShoppingBag size={32} strokeWidth={0.8} className="text-black/10 mb-4" />
-          <p className="text-[14px] font-light text-black/50">Noch keine Artikel</p>
-          <p className="text-[12px] text-black/25 mt-2 max-w-[240px] leading-relaxed font-light">Entdecke unsere Kollektion und finde deinen Schuh.</p>
-          <button onClick={() => navigate('/collection')}
-            className="mt-6 px-8 py-3 bg-black text-white text-[11px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300"
-            style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-            Kollektion entdecken
-          </button>
+      <div ref={anfang} className="haus min-h-full scroll-mt-24">
+        <div className="g-angebot min-h-full px-5 py-16 lg:py-24">
+          <div className="max-w-[560px] mx-auto text-center">
+            <ShoppingBag size={34} strokeWidth={1} className="c-leise mx-auto" />
+            <h1 className="t-kopf c-tinte mt-6">Deine Tasche ist leer</h1>
+            <p className="t-text c-leise mt-3">Such dir eine Form aus. Leder, Farbe und Sohle bestimmst du danach selbst.</p>
+            <button onClick={() => navigate('/collection')}
+              className="t-klein mt-8 h-12 px-8 rounded-md g-akzent border-0 hover:opacity-90">
+              Kollektion ansehen
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -773,45 +753,32 @@ export default function Checkout() {
     && cart.every(c => c.isAccessory) && !cart.every(darfAllein)
   if (nurZubehoer) {
     return (
-      <div className="min-h-full bg-white">
-        <div className={`${SHELL} pt-8 lg:pt-14 pb-1`}>
-          <p className="text-[10px] text-black/25 uppercase tracking-[0.3em] mb-3">Artisan Sole</p>
-          <p className="text-[28px] lg:text-[36px] font-extralight text-black tracking-tight">Einkaufstasche</p>
-        </div>
-        <div className={`${SHELL} py-14`}>
-          <div className="border border-black/10 p-6 lg:p-8">
-            <PackageOpen size={22} strokeWidth={1.2} className="text-black/30 mb-4" />
-            <p className="text-[15px] font-light text-black">Zubehör gibt es nur zusammen mit einem Paar.</p>
-            <p className="text-[12px] text-black/50 font-light leading-relaxed mt-3 max-w-md">
+      <div ref={anfang} className="haus min-h-full scroll-mt-24">
+        <div className="g-angebot min-h-full px-5 py-14 lg:py-20">
+          <div className="max-w-[640px] mx-auto">
+            <PackageOpen size={26} strokeWidth={1.2} className="c-leise" />
+            <h1 className="t-kopf c-tinte mt-5">Zubehör gibt es nur zusammen mit einem Paar.</h1>
+            <p className="t-text c-tinte mt-4">
               Der Versand eines einzelnen Pflegesets kostet uns rund 30 €, mehr als
               der Artikel selbst. Das wollen wir niemandem berechnen. Leg ein
               Modell dazu, dann geht dein Zubehör im selben Paket mit, ohne
               zusätzlichen Versand.
             </p>
-
-            <div className="mt-6 pt-5 border-t border-black/[0.07]">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-black/30 mb-2.5">In deiner Tasche</p>
+            <div className="mt-8">
+              <p className="t-klein c-leise mb-2">In deiner Tasche</p>
               {cart.map(c => (
-                <div key={c.id} className="flex items-center justify-between py-1.5">
-                  <span className="text-[12px] text-black/70">{c.qty}× {c.name}</span>
-                  <button
-                    onClick={() => removeFromCart(c.id)}
-                    className="text-[11px] text-black/35 hover:text-black bg-transparent border-0 p-0 underline underline-offset-2"
-                  >
-                    entfernen
+                <div key={c.id} className="flex items-center justify-between py-2">
+                  <span className="t-feld">{c.qty} × {c.name}</span>
+                  <button onClick={() => removeFromCart(c.id)}
+                    className="t-klein c-leise hover:text-black bg-transparent border-0 p-0 underline underline-offset-4">
+                    Entfernen
                   </button>
                 </div>
               ))}
-              <p className="text-[11px] text-black/35 font-light mt-3">
-                Es bleibt liegen, bis du ein Paar dazulegst.
-              </p>
+              <p className="t-klein c-leise mt-2">Es bleibt liegen, bis du ein Paar dazulegst.</p>
             </div>
-
-            <button
-              onClick={() => navigate('/collection')}
-              className="mt-7 w-full sm:w-auto px-8 py-3 bg-black text-white text-[11px] font-light border-0"
-              style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}
-            >
+            <button onClick={() => navigate('/collection')}
+              className="t-klein mt-8 h-12 px-8 rounded-md g-akzent border-0 hover:opacity-90">
               Kollektion ansehen
             </button>
           </div>
@@ -820,601 +787,485 @@ export default function Checkout() {
     )
   }
 
-  return (
-    <div className="flex flex-col min-h-full bg-white">
-
-      {/* Header */}
-      <div className={`${SHELL} pt-4 pb-2 flex items-center gap-3 flex-shrink-0`}>
-        <button onClick={() => {
-            if (step > 0) { setStep(s => s - 1); return }
-            // Navigate back to the last configured shoe
-            const lastShoe = [...cart].reverse().find(c => !c.isAccessory && c.shoeId)
-            if (lastShoe) {
-              const product = shoes.find(s => s.id === lastShoe.shoeId)
-              if (product) {
-                navigate(shoePath(product), { state: { product } })
-                return
-              }
-            }
-            navigate(-1)
-          }}
-          className="w-8 h-8 bg-transparent flex items-center justify-center border-0 active:opacity-60 flex-shrink-0">
-          <ArrowLeft size={16} strokeWidth={1.5} className="text-black" />
-        </button>
-        <span className="text-[15px] font-light text-black tracking-tight">{step === 0 ? 'Einkaufstasche' : 'Checkout'}</span>
+  // ── Die Summen ───────────────────────────────────────────────────────────
+  // Am Schreibtisch links neben dem Formular, am Telefon in der
+  // aufklappbaren Leiste. Ein Block, an zwei Stellen eingesetzt.
+  const gruen = 'text-[#2F6B3A]'
+  const summen = (
+    <div className="space-y-2">
+      <div className="flex justify-between t-feld">
+        <span className="c-leise">Zwischensumme</span>
+        <span className="tabular-nums">{euro(subtotal + accPromoDiscount)}</span>
       </div>
+      {accPromoDiscount > 0 && (
+        <div className={`flex justify-between t-feld ${gruen}`}>
+          <span>Promo-Rabatt ({promoDiscountPct} % auf Zubehör)</span>
+          <span className="tabular-nums">− {euro(accPromoDiscount)}</span>
+        </div>
+      )}
+      <div className="flex justify-between t-feld">
+        <span className="c-leise">Versand{shippingOpt ? ` · ${shippingOpt.label}` : ''}</span>
+        <span className="tabular-nums">
+          {isFreeShipping || Number(shippingOpt?.price || 0) === 0 ? 'Inklusive' : euro(shippingCost)}
+        </span>
+      </div>
+      {couponResult?.valid && (
+        <div className={`flex justify-between t-feld ${gruen}`}>
+          <span>Gutschein {couponCode.toUpperCase()}</span>
+          <span className="tabular-nums">− {euro(discountAmount)}</span>
+        </div>
+      )}
+      {bizDiscount > 0 && (
+        <div className={`flex justify-between t-feld ${gruen}`}>
+          <span>Firmencode{bizResult?.coverage_type === 'full' ? ' (voll gedeckt)' : ''}</span>
+          <span className="tabular-nums">− {euro(bizDiscount)}</span>
+        </div>
+      )}
+      {campaignDiscount > 0 && (
+        <div className={`flex justify-between t-feld ${gruen}`}>
+          <span>{activeCampaign?.name || 'Firmenkampagne'}{activeCampaign?.payment_mode === 'company' ? ' (Firma zahlt)' : ` (−${activeCampaign?.discount_pct} %)`}</span>
+          <span className="tabular-nums">− {euro(campaignDiscount)}</span>
+        </div>
+      )}
+      <div className="flex justify-between items-baseline pt-3 mt-1 border-t border-black/[0.12]">
+        <span className="t-text c-tinte">Gesamt</span>
+        <span className="t-lead c-tinte tabular-nums">{euro(total)}</span>
+      </div>
+      {/* Was von der Summe Umsatzsteuer ist. Der Betrag ändert sich nicht,
+          die Preise sind Bruttopreise; herausgerechnet gehört sie trotzdem,
+          der Firmenkunde braucht sie für seine Vorsteuer. */}
+      {steuer && (steuer.kleinunternehmer ? (
+        <p className="t-klein c-leise">Kein Ausweis von Umsatzsteuer gemäß § 19 UStG.</p>
+      ) : steuer.satz > 0 && (
+        <div className="flex justify-between t-klein c-leise">
+          <span>darin enthaltene MwSt. {steuer.satz} %</span>
+          <span className="tabular-nums">€ {fmtCent(total - total / (1 + steuer.satz / 100))}</span>
+        </div>
+      ))}
+    </div>
+  )
 
-      <StepBar current={step} />
-
-      {/* Der Inhalt der Schritte teilt dieselbe Spaltenbreite wie Kopf- und
-          Fußzeile — sonst stünden Felder und Knöpfe verschieden weit außen. */}
-      <div className="flex-1 overflow-y-auto pb-6 w-full max-w-[680px] mx-auto">
-
-        {/* ── Step 0: Cart ── */}
-        {step === 0 && (
-          <div className="px-5 space-y-2">
-            {cart.map(item => {
-              const itemPrice = parsePrice(item.price)
-              return (
-                <CartItem key={item.id} id={item.id} onRemove={removeFromCart}>
-                  <div className="bg-white p-3.5 flex gap-3.5 border border-black/[0.06]">
-                    {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-16 h-16 bg-black/[0.03] flex items-center justify-center flex-shrink-0">
-                        <ShoppingBag size={18} className="text-black/15" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-[14px] font-semibold text-black leading-tight truncate">{item.name}</p>
-                          {item.material && <p className="text-[11px] text-black/40 mt-0.5">{item.material}</p>}
-                          {(item.lastLabel || item.euSize) && (
-                            <p className="text-[10px] text-black/30 mt-0.5 font-light">
-                              Passform: {[
-                                item.lastLabel,
-                                item.euSize && `${item.sizeSystem || 'EU'} ${item.euSize}`,
-                                item.width && `Weite ${item.width}`,
-                              ].filter(Boolean).join(' · ')}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center gap-1.5">
-                          <button onClick={() => updateCartQty(item.id, item.qty - 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-black/[0.03] text-black active:bg-black/10">
-                            <Minus size={12} strokeWidth={2} />
-                          </button>
-                          <span className="text-[14px] font-semibold text-black w-5 text-center">{item.qty}</span>
-                          <button onClick={() => updateCartQty(item.id, item.qty + 1)} className="w-7 h-7 flex items-center justify-center border-0 bg-black/[0.03] text-black active:bg-black/10">
-                            <Plus size={12} strokeWidth={2} />
-                          </button>
-                        </div>
-                        <span className="text-[15px] font-bold text-black">€ {fmtPrice(itemPrice * item.qty)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </CartItem>
-              )
-            })}
-            <div className="bg-white px-4 py-3 flex items-center justify-between border border-black/[0.06]">
-              <span className="text-[13px] text-black/50">Zwischensumme</span>
-              <span className="text-[15px] font-bold text-black">€ {fmtPrice(cartTotal)}</span>
-            </div>
-
-            {/* Was der Werbecode zusagt — hier, nicht erst am Ende. Wer über
-                einen QR-Code aus einem Laden kam, soll es wiederfinden. */}
-            {hatSchuh && <AffiliateVorteil affiliate={affiliate} />}
-
-            {/* Für Gäste: Der Korb bleibt liegen, die Anmeldung kommt später.
-                Ohne diesen Satz wirkt der Weiter-Knopf wie eine Falle. */}
-            {!user && (
-              <div className="border border-black/[0.06] px-4 py-3">
-                <p className="text-[12px] text-black/55 font-light leading-relaxed">
-                  Zum Bestellen brauchen wir ein Konto, für Lieferadresse und Fertigungsstand.
-                  Dein Warenkorb bleibt dabei erhalten{affiliate?.code ? ', dein Vorteil ebenfalls' : ''}.
-                </p>
-              </div>
-            )}
+  // Gutschein und Firmencode, wie das Feld „Code hinzufügen" bei Stripe:
+  // zugeklappt eine Zeile, denn die meisten haben keinen.
+  const codes = (
+    <div>
+      {couponResult?.valid ? (
+        <div className="flex items-center justify-between t-feld">
+          <span className={gruen}>{couponCode.toUpperCase()} · {couponResult.description}</span>
+          <button onClick={handleRemoveCoupon} className="t-klein c-leise underline underline-offset-4 bg-transparent border-0 p-0">Entfernen</button>
+        </div>
+      ) : !codeOffen ? (
+        <button onClick={() => setCodeOffen(true)}
+          className="t-klein c-tinte underline underline-offset-4 bg-transparent border-0 p-0 min-h-11">
+          Gutschein{product.id ? ' oder Firmencode' : ''} hinzufügen
+        </button>
+      ) : (
+        <div>
+          <label htmlFor="gutschein" className="t-klein c-leise block mb-1.5">Gutschein</label>
+          <div className="flex gap-2">
+            <input id="gutschein"
+              className="t-feld flex-1 min-w-0 h-12 px-3.5 rounded-md bg-white border-0 shadow-[0_0_0_1px_rgba(35,28,23,0.18)] outline-none uppercase focus-visible:shadow-[0_0_0_2px_var(--tinte)]"
+              placeholder="Code" value={couponCode}
+              onChange={e => setCouponCode(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()} />
+            <button onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim()}
+              className="t-klein h-12 px-5 rounded-md bg-transparent c-tinte border border-black/25 disabled:opacity-40">
+              {couponLoading ? '…' : 'Einlösen'}
+            </button>
           </div>
-        )}
+          {couponError && <p className="t-klein text-[#9B1C1C] mt-1.5" role="alert">{couponError}</p>}
+        </div>
+      )}
 
-        {/* ── Step 1: Delivery Address ── */}
-        {step === 1 && (
-          <div className="px-5">
-            <div className="bg-white p-5 border border-black/[0.06]">
-              {savedDeliveryAddress && isAddrComplete(delivery) && (
-                <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-[#34C759]/10">
-                  <Check size={12} className="text-[#34C759] flex-shrink-0" strokeWidth={2.5} />
-                  <span className="text-[11px] text-[#34C759] font-medium">Gespeicherte Adresse geladen</span>
-                </div>
-              )}
-              <AddressForm title="Lieferadresse" value={delivery} onChange={setDelivery} />
-              {/* Kein Kontrollkästchen mehr: Die Anschrift wird immer im Konto
-                  hinterlegt. Wer bestellt, hat sie ohnehin angegeben, und beim
-                  nächsten Mal steht sie sofort da. */}
-              <p className="text-[11px] text-black/30 mt-3 font-light">
-                Die Anschrift wird in deinem Konto gespeichert.
-              </p>
+      {product.id && codeOffen && (
+        <div className="mt-4">
+          {bizResult?.valid ? (
+            <div className="flex items-center justify-between t-feld">
+              <span className={gruen}>
+                {bizCode.toUpperCase()} · {bizResult.coverage_type === 'full' ? 'voll gedeckt' : `Rabatt ${bizResult.discount_value}${bizResult.discount_type === 'percentage' ? ' %' : ' €'}`}
+                {bizResult.business_name ? ` · ${bizResult.business_name}` : ''}
+              </span>
+              <button onClick={handleRemoveBizCode} className="t-klein c-leise underline underline-offset-4 bg-transparent border-0 p-0">Entfernen</button>
             </div>
-          </div>
-        )}
-
-        {/* ── Step 2: Billing Address ── */}
-        {step === 2 && (
-          <div className="px-5">
-            <div className="bg-white p-5 border border-black/[0.06]">
-              <button onClick={() => setSameBilling(v => !v)}
-                className="w-full flex items-center gap-3 p-3 mb-4 text-left border-0"
-                style={{ background: sameBilling ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
-                <div className={`w-4 h-4 flex items-center justify-center flex-shrink-0 transition-all ${
-                  sameBilling ? 'bg-black' : 'border-[1.5px] border-black/15'}`}>
-                  {sameBilling && <Check size={9} strokeWidth={3} className="text-white" />}
-                </div>
-                <span className="text-[14px] font-medium text-black">Rechnungsadresse = Lieferadresse</span>
-              </button>
-              {!sameBilling && <AddressForm title="Rechnungsadresse" value={billing} onChange={setBilling} />}
-            </div>
-          </div>
-        )}
-
-        {/* ── Step 3: Accessories ── */}
-        {step === 3 && (
-          <div className="px-5">
-            <p className="text-[12px] text-black/40 mb-3">Passendes Zubehör für deine Bestellung.</p>
-            {allAccessories.length > 0 ? (
-              <div className="space-y-px">
-                {allAccessories.map(item => (
-                  <AccessoryCard key={item.id} item={item}
-                    anzahl={anzahlVon(item.id)}
-                    onPlus={() => accPlus(item.id)}
-                    onMinus={() => accMinus(item.id)} />
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white p-5 border border-black/[0.06] text-center">
-                <p className="text-[13px] text-black/40 font-light">Kein passendes Zubehör verfügbar.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Step 4: Summary ── */}
-        {step === 4 && (
-          <div className="px-5 space-y-2">
-            {/* Products */}
-            <div className="bg-white p-4 border border-black/[0.06]">
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">{product.id ? 'Schuh' : 'Artikel'}</p>
-              {product.id ? (
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-[14px] font-semibold text-black">{product.name || product.shoe_name}</p>
-                    <p className="text-[11px] text-black/40 mt-0.5">{product.material}{product.sole ? ` · ${product.sole}` : ''}</p>
-                    {(product.lastLabel || product.euSize) && (
-                      <p className="text-[10px] text-black/30 mt-0.5 font-light">
-                        Passform: {[
-                          product.lastLabel,
-                          product.euSize && `${product.sizeSystem || 'EU'} ${product.euSize}`,
-                          product.width && `Weite ${product.width}`,
-                        ].filter(Boolean).join(' · ')}
-                      </p>
-                    )}
-                    {latestScan && <p className="text-[11px] text-[#007AFF] mt-0.5">EU {latestScan.eu_size}, 3D-Scan</p>}
-                  </div>
-                  <p className="text-[14px] font-bold text-black">{product.price}</p>
-                </div>
-              ) : cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center py-1.5 border-b border-black/5 last:border-0">
-                  <div>
-                    <span className="text-[13px] text-black">{item.name}</span>
-                    {item.qty > 1 && <span className="text-[11px] text-black/40 ml-1">×{item.qty}</span>}
-                  </div>
-                  <span className="text-[13px] font-semibold text-black">€ {fmtPrice(parsePrice(item.price) * item.qty)}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Vollständige Aufstellung dessen, was gefertigt wird — dieselbe
-                Quelle wie später in der Bestellung und beim Betreiber. Vorher
-                stand hier nur Leder und Sohle; wer eine Verzierung oder eine
-                Sohlenfarbe gewählt hatte, konnte vor dem Absenden nicht
-                nachsehen, ob sie richtig übernommen wurde. */}
-            {(product.id ? [product] : cart.filter(c => !c.isAccessory)).map((item, idx) => {
-              const rows = specFromCartItem(item)
-              if (!rows.length) return null
-              return (
-                <div key={item.id || idx} className="bg-white p-4 border border-black/[0.06]">
-                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">
-                    Deine Konfiguration{(product.id ? false : cart.length > 1) ? ` · ${item.name}` : ''}
-                  </p>
-                  <table className="w-full">
-                    <tbody>
-                      {rows.map(([k, v]) => (
-                        <tr key={k}>
-                          <td className="text-[11px] text-black/40 align-top pr-3 py-[2px] whitespace-nowrap">{k}</td>
-                          <td className="text-[11px] text-black/75 align-top py-[2px] text-right">{v}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )
-            })}
-
-            {ohnePassform.length > 0 && (
-              <div className="bg-amber-50 border border-amber-300 p-4">
-                <p className="text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1.5">
-                  Dieser Schuh passt nicht zu deinen Maßen
-                </p>
-                <p className="text-[12px] text-amber-900 leading-relaxed font-light">
-                  Für die hinterlegten Maße können wir bei diesem Modell keine passende Form
-                  anbieten. Bestellst du trotzdem, wird der Schuh mit hoher Wahrscheinlichkeit
-                  nicht richtig sitzen, ein Umtausch aus diesem Grund ist bei Maßanfertigungen
-                  nicht möglich.
-                </p>
-                <p className="text-[12px] text-amber-900 leading-relaxed font-light mt-2">
-                  Bitte prüf deine Maße oder wähl ein anderes Modell. Gern beraten
-                  wir dich auch persönlich.
-                </p>
-                <button
-                  onClick={() => setPassformAkzeptiert(v => !v)}
-                  className="mt-3 flex items-start gap-2.5 text-left bg-transparent border-0 p-0"
-                >
-                  <span className={`w-4 h-4 mt-0.5 flex-shrink-0 flex items-center justify-center ${passformAkzeptiert ? 'bg-amber-800' : 'border border-amber-700'}`}>
-                    {passformAkzeptiert && <Check size={11} strokeWidth={2.5} className="text-white" />}
-                  </span>
-                  <span className="text-[12px] text-amber-900 font-light leading-relaxed">
-                    Ich habe verstanden, dass dieser Schuh voraussichtlich nicht passt, und
-                    möchte ihn dennoch bestellen.
-                  </span>
+          ) : (
+            <>
+              <label htmlFor="firmencode" className="t-klein c-leise block mb-1.5">Firmencode</label>
+              <div className="flex gap-2">
+                <input id="firmencode"
+                  className="t-feld flex-1 min-w-0 h-12 px-3.5 rounded-md bg-white border-0 shadow-[0_0_0_1px_rgba(35,28,23,0.18)] outline-none uppercase focus-visible:shadow-[0_0_0_2px_var(--tinte)]"
+                  placeholder="Code deines Unternehmens" value={bizCode}
+                  onChange={e => setBizCode(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleApplyBizCode()} />
+                <button onClick={handleApplyBizCode} disabled={bizLoading || !bizCode.trim()}
+                  className="t-klein h-12 px-5 rounded-md bg-transparent c-tinte border border-black/25 disabled:opacity-40">
+                  {bizLoading ? '…' : 'Einlösen'}
                 </button>
               </div>
-            )}
+              {bizError && <p className="t-klein text-[#9B1C1C] mt-1.5" role="alert">{bizError}</p>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
 
-            {/* Passform — festgeschrieben, nicht mehr änderbar.
-                Die Maße kommen aus der Konfiguration, nicht aus dem Profil.
-                Vorher zeigte dieser Kasten die Profilmaße, während die
-                Fertigung darüber die der Konfiguration führte: zwei
-                verschiedene Zahlenpaare auf einer Seite, und gebaut worden
-                wäre nach dem einen, geglaubt das andere. */}
-            {product.id && (() => {
-              const m = typeof product.footMeasurementsUsed === 'string'
-                ? (() => { try { return JSON.parse(product.footMeasurementsUsed) } catch { return null } })()
-                : product.footMeasurementsUsed
-              return (
-                <div className="bg-white p-4 border border-black/[0.06]">
-                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider">Passform</p>
-                  {m?.foot_length_mm ? (
-                    <>
-                      <p className="text-[12px] text-black/60 mt-1">
-                        {m.foot_length_mm} mm Länge{m.ball_girth_mm ? ` · ${m.ball_girth_mm} mm Ballenumfang` : ''}
-                      </p>
-                      <p className="text-[10px] text-black/30 mt-1.5 font-light leading-relaxed">
-                        Diese Maße gehören zu dieser Konfiguration und lassen sich hier nicht mehr
-                        ändern. Für andere Maße stell den Schuh bitte neu zusammen, nur so
-                        werden Leisten, Weite und Größe passend dazu bestimmt.
-                      </p>
-                      <button
-                        onClick={() => {
-                          const shoe = shoes.find(s => String(s.id) === String(product.id))
-                          navigate(shoe ? shoePath(shoe) : '/collection')
-                        }}
-                        className="mt-2 text-[10px] text-black/45 hover:text-black underline underline-offset-2 bg-transparent border-0 p-0"
-                      >
-                        Neu konfigurieren
-                      </button>
-                    </>
-                  ) : (
-                    <p className="text-[12px] text-black/45 mt-1">Für diese Konfiguration sind keine Maße hinterlegt.</p>
-                  )}
-                </div>
-              )
-            })()}
-
-            {/* Accessories */}
-            {chosenAccessories.length > 0 && (
-              <div className="bg-white p-4 border border-black/[0.06]">
-                <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">
-                  Zubehör
-                  {accPromoDiscount > 0 && <span className="text-[9px] text-black/40 normal-case ml-2">({promoDiscountPct}% Promo-Rabatt)</span>}
-                </p>
-                {chosenAccessories.map(a => {
-                  const discounted = accPromoDiscount > 0 ? Math.round(a.priceNum * (1 - promoDiscountPct / 100)) : null
-                  return (
-                    <div key={a.id} className="flex justify-between items-center py-1.5 border-b border-black/5 last:border-0">
-                      <span className="text-[13px] text-black/60">{a.name}</span>
-                      {discounted !== null ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[12px] text-black/25 line-through">{a.price}</span>
-                          <span className="text-[13px] font-semibold text-black">€ {discounted}</span>
-                        </div>
-                      ) : (
-                        <span className="text-[13px] font-semibold text-black">{a.price}</span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Der Vorteil aus dem Werbecode — noch einmal unmittelbar vor dem
-                Bestellen. Er ist Teil dessen, was hier zugesagt wird, und
-                gehört deshalb auf dieselbe Seite wie der Gesamtbetrag. */}
-            {hatSchuh && <AffiliateVorteil affiliate={affiliate} kompakt />}
-
-            {/* Address */}
-            <div className="bg-white p-4 border border-black/[0.06]">
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2">Lieferadresse</p>
-              <p className="text-[12px] text-black/55 leading-relaxed">
-                {delivery.name}<br />{streetLine(delivery)}<br />{delivery.zip} {delivery.city}<br />{delivery.country}
-              </p>
-            </div>
-
-            {/* Shipping */}
-            {shippingOptions.length > 0 && (
-              <div className="bg-white p-4 border border-black/[0.06]">
-                <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Truck size={11} /> Versand
-                </p>
-                <div className="space-y-1.5">
-                  {shippingOptions.map(opt => {
-                    const isSelected = selectedShipping === opt.id
-                    const optFree = opt.free_above && subtotal >= opt.free_above
-                    return (
-                      <button
-                        key={opt.id}
-                        onClick={() => setSelectedShipping(opt.id)}
-                        className={`w-full flex items-center justify-between p-3 text-left border-0 transition-all ${
-                          isSelected ? 'bg-black/3 border-l-2 border-l-black' : 'bg-transparent'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-4 h-4 flex items-center justify-center flex-shrink-0 transition-all ${
-                            isSelected ? 'bg-black' : 'border-[1.5px] border-black/15'}`}>
-                            {isSelected && <Check size={9} strokeWidth={3} className="text-white" />}
-                          </div>
-                          <div>
-                            <p className="text-[13px] font-medium text-black">{opt.label}</p>
-                            {opt.description && <p className="text-[10px] text-black/35 mt-0.5">{opt.description}</p>}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          {/* Kostet die Versandart nichts, steht das auch da.
-                              „€ 0" liest sich wie ein Fehler; „Inklusive" ist
-                              die Auskunft, die der Kunde sucht. */}
-                          {Number(opt.price) === 0 ? (
-                            <span className="text-[13px] font-semibold text-black/50">Inklusive</span>
-                          ) : optFree || (couponResult?.valid && couponResult.type === 'free_shipping') ? (
-                            <span className="text-[13px] font-semibold text-[#34C759]">Gratis</span>
-                          ) : (
-                            <span className="text-[13px] font-semibold text-black">€ {fmtPrice(opt.price)}</span>
-                          )}
-                          {opt.free_above && !optFree && !(couponResult?.valid && couponResult.type === 'free_shipping') && (
-                            <p className="text-[9px] text-black/30 mt-0.5">Gratis ab € {fmtPrice(opt.free_above)}</p>
-                          )}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Coupon */}
-            <div className="bg-white p-4 border border-black/[0.06]">
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Ticket size={11} /> Gutschein
-              </p>
-              {couponResult?.valid ? (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[13px] font-bold text-[#34C759]">{couponCode.toUpperCase()}</span>
-                    <span className="text-[11px] text-[#34C759] ml-2">{couponResult.description}</span>
-                  </div>
-                  <button onClick={handleRemoveCoupon} className="text-black/25 border-0 bg-transparent"><X size={14} /></button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 bg-black/[0.03] border-0 px-3 py-2.5 text-[14px] uppercase placeholder-black/25 focus:outline-none"
-                    placeholder="Code eingeben" value={couponCode}
-                    onChange={e => setCouponCode(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()} />
-                  <button onClick={handleApplyCoupon} disabled={couponLoading || !couponCode.trim()}
-                    className="px-4 py-2.5 bg-black text-white text-[12px] font-semibold border-0 disabled:opacity-30">
-                    {couponLoading ? '…' : 'Einlösen'}
-                  </button>
-                </div>
-              )}
-              {couponError && <p className="text-[11px] text-red-500 mt-2">{couponError}</p>}
-            </div>
-
-            {/* Firmencode (Einmal-Code), nur bei Einzelprodukt */}
-            {product.id && (
-              <div className="bg-white p-4 border border-black/[0.06]">
-                <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Building2 size={11} /> Firmencode
-                </p>
-                {bizResult?.valid ? (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[13px] font-bold text-[#34C759]">{bizCode.toUpperCase()}</span>
-                      <span className="text-[11px] text-[#34C759] ml-2">
-                        {bizResult.coverage_type === 'full' ? 'Voll gedeckt' : `Rabatt ${bizResult.discount_value}${bizResult.discount_type === 'percentage' ? ' %' : ' €'}`}
-                        {bizResult.business_name ? ` · ${bizResult.business_name}` : ''}
-                      </span>
-                    </div>
-                    <button onClick={handleRemoveBizCode} className="text-black/25 border-0 bg-transparent"><X size={14} /></button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <input
-                      className="flex-1 bg-black/[0.03] border-0 px-3 py-2.5 text-[14px] uppercase placeholder-black/25 focus:outline-none"
-                      placeholder="Code deines Unternehmens" value={bizCode}
-                      onChange={e => setBizCode(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleApplyBizCode()} />
-                    <button onClick={handleApplyBizCode} disabled={bizLoading || !bizCode.trim()}
-                      className="px-4 py-2.5 bg-black text-white text-[12px] font-semibold border-0 disabled:opacity-30">
-                      {bizLoading ? '…' : 'Einlösen'}
-                    </button>
-                  </div>
-                )}
-                {bizError && <p className="text-[11px] text-red-500 mt-2">{bizError}</p>}
-              </div>
-            )}
-
-            {/* Total */}
-            <div className="bg-white p-4 border border-black/[0.06]">
-              {(couponResult?.valid || bizDiscount > 0 || campaignDiscount > 0 || shippingCost > 0 || isFreeShipping || accPromoDiscount > 0) && (
-                <>
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-[13px] text-black/40">Zwischensumme</span>
-                    <span className="text-[13px] text-black/40">€ {fmtPrice(subtotal + accPromoDiscount)}</span>
-                  </div>
-                  {accPromoDiscount > 0 && (
-                    <div className="flex justify-between mb-1.5">
-                      <span className="text-[13px] text-black/40">Promo-Rabatt ({promoDiscountPct}% auf Zubehör)</span>
-                      <span className="text-[13px] text-[#34C759]">- € {fmtPrice(accPromoDiscount)}</span>
-                    </div>
-                  )}
-                  {shippingOpt && (
-                    <div className="flex justify-between mb-1.5">
-                      <span className="text-[13px] text-black/40">Versand ({shippingOpt.label})</span>
-                      {isFreeShipping ? (
-                        <span className="text-[13px] text-[#34C759]">Gratis</span>
-                      ) : (
-                        <span className="text-[13px] text-black/40">€ {fmtPrice(shippingCost)}</span>
-                      )}
-                    </div>
-                  )}
-                  {couponResult?.valid && (
-                    <div className="flex justify-between mb-2">
-                      <span className="text-[13px] text-[#34C759]">Gutschein</span>
-                      <span className="text-[13px] text-[#34C759]">- € {fmtPrice(discountAmount)}</span>
-                    </div>
-                  )}
-                  {bizDiscount > 0 && (
-                    <div className="flex justify-between mb-2">
-                      <span className="text-[13px] text-[#34C759]">Firmencode{bizResult?.coverage_type === 'full' ? ' (voll gedeckt)' : ''}</span>
-                      <span className="text-[13px] text-[#34C759]">- € {fmtPrice(bizDiscount)}</span>
-                    </div>
-                  )}
-                  {campaignDiscount > 0 && (
-                    <div className="flex justify-between mb-2">
-                      <span className="text-[13px] text-[#34C759]">{activeCampaign?.name || 'Firmenkampagne'}{activeCampaign?.payment_mode === 'company' ? ' (Firma zahlt)' : ` (-${activeCampaign?.discount_pct}%)`}</span>
-                      <span className="text-[13px] text-[#34C759]">- € {fmtPrice(campaignDiscount)}</span>
-                    </div>
-                  )}
-                  <div className="h-px bg-black/5 mb-2" />
-                </>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="text-[15px] font-bold text-black">Gesamt</span>
-                <span className="text-[20px] font-bold text-black">€ {fmtPrice(total)}</span>
-              </div>
-
-              {/* ── Was von der Summe Umsatzsteuer ist ──────────────────
-                  Der Betrag ändert sich dadurch nicht: Die Preise sind
-                  Bruttopreise, die Steuer steckt darin. Herausgerechnet
-                  gehört sie trotzdem — der Firmenkunde braucht sie für seine
-                  Vorsteuer, und wer sie erst auf der Rechnung entdeckt,
-                  fragt nach. Beim Kleinunternehmer steht stattdessen, warum
-                  keine ausgewiesen wird. */}
-              {steuer && (steuer.kleinunternehmer ? (
-                <p className="text-[10px] text-black/35 font-light mt-1.5">
-                  Kein Ausweis von Umsatzsteuer gemäß § 19 UStG.
-                </p>
-              ) : steuer.satz > 0 && (
-                <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-[10px] text-black/35 font-light">
-                    darin enthaltene MwSt. {steuer.satz} %
-                  </span>
-                  <span className="text-[10px] text-black/35 font-light">
-                    € {fmtCent(total - total / (1 + steuer.satz / 100))}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* ── Die beiden Bestätigungen ──────────────────────────────
-                Sie stehen hier, unmittelbar über dem Bestellknopf, und nicht
-                weiter oben: Was der Kunde bestätigt, muss er im selben Blick
-                haben wie das, was er auslöst.
-
-                Nicht vorangekreuzt, und das ist keine Geschmacksfrage — eine
-                voreingestellte Zustimmung ist keine. */}
-            <div className="bg-white border border-black/[0.06] p-4 space-y-3">
-              <button
-                type="button"
-                onClick={() => setWiderrufAkzeptiert(v => !v)}
-                className="w-full flex items-start gap-2.5 bg-transparent border-0 p-0 text-left"
-              >
-                <span className={`w-4 h-4 mt-0.5 flex-shrink-0 flex items-center justify-center ${
-                  widerrufAkzeptiert ? 'bg-black' : 'border border-black/25'}`}>
-                  {widerrufAkzeptiert && <Check size={11} strokeWidth={2.5} className="text-white" />}
-                </span>
-                <span className="text-[11px] text-black/60 font-light leading-relaxed">
-                  Mir ist bekannt, dass mein Paar nach meinen persönlichen Maßen
-                  angefertigt wird und deshalb <strong className="font-normal text-black/80">kein
-                  Widerrufsrecht</strong> besteht (§ 312g Abs. 2 Nr. 1 BGB). Ich
-                  verlange ausdrücklich, dass die Fertigung sofort beginnt.
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setAgbAkzeptiert(v => !v)}
-                className="w-full flex items-start gap-2.5 bg-transparent border-0 p-0 text-left"
-              >
-                <span className={`w-4 h-4 mt-0.5 flex-shrink-0 flex items-center justify-center ${
-                  agbAkzeptiert ? 'bg-black' : 'border border-black/25'}`}>
-                  {agbAkzeptiert && <Check size={11} strokeWidth={2.5} className="text-white" />}
-                </span>
-                <span className="text-[11px] text-black/60 font-light leading-relaxed">
-                  Ich habe die{' '}
-                  <Link to="/legal/agb" target="_blank" onClick={e => e.stopPropagation()}
-                    className="underline underline-offset-2 text-black/80">AGB</Link>
-                  {' '}und die{' '}
-                  <Link to="/legal/datenschutz" target="_blank" onClick={e => e.stopPropagation()}
-                    className="underline underline-offset-2 text-black/80">Datenschutzerklärung</Link>
-                  {' '}gelesen und stimme ihnen zu.
-                </span>
-              </button>
-            </div>
-
-            {error && <p className="text-[12px] text-red-500 text-center">{error}</p>}
-          </div>
+  // Eine Position: Bild, Name, Konfiguration, Betrag.
+  const zeile = (pos, { gross = false } = {}) => (
+    <div key={pos.key} className="flex gap-4">
+      <div className={`relative shrink-0 rounded-md overflow-hidden bild-im-grund g-angebot flex items-center justify-center ${gross ? 'w-24 h-24' : 'w-16 h-16'}`}>
+        {pos.bild
+          ? <img src={pos.bild} alt="" className="w-full h-full object-contain" />
+          : <ShoppingBag size={18} strokeWidth={1} className="c-leise" />}
+        {!gross && pos.menge > 1 && (
+          <span className="absolute -top-1.5 -right-1.5 min-w-6 h-6 px-1.5 rounded-full g-dunkel c-hell t-klein flex items-center justify-center tabular-nums">{pos.menge}</span>
         )}
       </div>
-
-      {/* Bottom CTA */}
-      <div className={`${SHELL} pt-3 flex-shrink-0`} style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}>
-        {step < 4 ? (
-          <button onClick={handleNext} disabled={!canNext}
-            className={`w-full py-3.5 flex items-center justify-center gap-2 text-[12px] font-light transition-all border ${
-              canNext ? 'bg-black text-white border-black hover:bg-white hover:text-black' : 'bg-[#f6f5f3] text-black/20 border-transparent'}`}
-            style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            {user ? 'Weiter' : 'Anmelden und fortfahren'} <ChevronRight size={14} strokeWidth={1.5} />
-          </button>
+      <div className="flex-1 min-w-0">
+        <p className={gross ? 't-lead c-tinte' : 't-feld'}>{pos.name}</p>
+        {pos.details.length > 0 && (gross ? (
+          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 t-klein">
+            {pos.details.map(([k, v]) => (
+              <div key={k + v} className="contents">
+                <dt className="c-leise">{k}</dt>
+                <dd className="c-tinte">{v}</dd>
+              </div>
+            ))}
+          </dl>
         ) : (
-          // Die Beschriftung ist Gesetz, nicht Geschmack: § 312j Abs. 3 BGB
-          // verlangt, dass der Knopf ausdrücklich auf die Zahlungspflicht
-          // hinweist — „zahlungspflichtig bestellen" oder eine entsprechend
-          // eindeutige Formulierung. Steht dort nur „Bestellen", kommt der
-          // Vertrag im Zweifel gar nicht zustande, und das Paar ist schon
-          // gefertigt.
-          <button onClick={handlePlace}
-            disabled={placing || (ohnePassform.length > 0 && !passformAkzeptiert) || !widerrufAkzeptiert || !agbAkzeptiert}
-            className="w-full py-3.5 flex items-center justify-center gap-2 bg-black text-white text-[12px] font-light border border-black hover:bg-white hover:text-black transition-all duration-300 disabled:opacity-50"
-            style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            {placing ? (
-              <><div className="w-4 h-4 border border-white/30 border-t-white rounded-full animate-spin" /> Wird verarbeitet…</>
-            ) : (
-              <>Zahlungspflichtig bestellen, € {fmtPrice(total)}</>
-            )}
+          <p className="t-klein c-leise mt-0.5">
+            {(pos.details.some(([k]) => KURZ.includes(k)) ? pos.details.filter(([k]) => KURZ.includes(k)) : pos.details)
+              .map(([, v]) => v).join(' · ')}
+          </p>
+        ))}
+      </div>
+      <p className="t-feld tabular-nums shrink-0">{pos.betrag === 0 ? 'Gratis' : euro(pos.betrag)}</p>
+    </div>
+  )
+
+  // ═══ Ansicht 1: die Tasche ══════════════════════════════════════════════
+  if (ansicht === 'tasche') {
+    return (
+      <div ref={anfang} className="haus min-h-full scroll-mt-24">
+        <div className="g-angebot min-h-full px-5 lg:px-10 pt-6 lg:pt-12 pb-16">
+          <div className="max-w-[1120px] mx-auto lg:grid lg:grid-cols-12 lg:gap-14">
+            <section className="lg:col-span-7">
+              <button
+                onClick={() => {
+                  const lastShoe = [...cart].reverse().find(c => !c.isAccessory && c.shoeId)
+                  const schuh = lastShoe && shoes.find(x => x.id === lastShoe.shoeId)
+                  if (schuh) navigate(shoePath(schuh), { state: { product: schuh } })
+                  else navigate(-1)
+                }}
+                className="t-klein c-leise hover:text-black inline-flex items-center gap-2 bg-transparent border-0 p-0 min-h-11">
+                <ArrowLeft size={16} strokeWidth={1.4} /> Weiter einkaufen
+              </button>
+              <h1 className="t-kopf c-tinte mt-2">Einkaufstasche</h1>
+
+              <ul className="mt-8">
+                {cart.map(item => {
+                  const pos = positionen.find(p => p.cartId === item.id)
+                  return (
+                    <li key={item.id} className="py-6 border-t border-black/[0.1] first:border-t-0 first:pt-0">
+                      {zeile(pos, { gross: true })}
+                      <div className="flex items-center gap-5 mt-4 pl-28">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => updateCartQty(item.id, item.qty - 1)} aria-label={`${item.name}: eins weniger`}
+                            className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent border border-black/15 c-tinte hover:border-black/40">
+                            <Minus size={14} strokeWidth={1.6} />
+                          </button>
+                          <span className="t-feld w-8 text-center tabular-nums" aria-live="polite">{item.qty}</span>
+                          <button onClick={() => updateCartQty(item.id, item.qty + 1)} aria-label={`${item.name}: eins mehr`}
+                            className="w-10 h-10 rounded-full flex items-center justify-center bg-transparent border border-black/15 c-tinte hover:border-black/40">
+                            <Plus size={14} strokeWidth={1.6} />
+                          </button>
+                        </div>
+                        <button onClick={() => removeFromCart(item.id)}
+                          className="t-klein c-leise hover:text-black underline underline-offset-4 bg-transparent border-0 p-0 min-h-11">
+                          Entfernen
+                        </button>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+
+              {allAccessories.length > 0 && (
+                <div className="mt-12">
+                  <h2 className="t-lead c-tinte">Passend dazu</h2>
+                  <p className="t-klein c-leise mt-1">Geht im selben Paket mit, ohne zusätzlichen Versand.</p>
+                  <div className="mt-3 divide-y divide-black/[0.08]">
+                    {allAccessories.map(a => (
+                      <AccessoryCard key={a.id} item={a} anzahl={anzahlVon(a.id)}
+                        onPlus={() => accPlus(a.id)} onMinus={() => accMinus(a.id)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <aside className="lg:col-span-5 mt-10 lg:mt-0">
+              <div className="lg:sticky lg:top-6 rounded-md g-erzaehlung p-6 lg:p-8">
+                <h2 className="t-lead c-tinte">Zusammenfassung</h2>
+                <div className="mt-5 space-y-2">
+                  <div className="flex justify-between t-feld">
+                    <span className="c-leise">Zwischensumme</span>
+                    <span className="tabular-nums">{euro(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between t-feld">
+                    <span className="c-leise">Versand</span>
+                    <span>an der Kasse</span>
+                  </div>
+                  <div className="flex justify-between items-baseline pt-3 mt-1 border-t border-black/[0.12]">
+                    <span className="t-text c-tinte">Summe</span>
+                    <span className="t-lead c-tinte tabular-nums">{euro(subtotal)}</span>
+                  </div>
+                </div>
+                <Preishinweis className="mt-2" mitVersandlink />
+
+                {/* Was der Werbecode zusagt — hier, nicht erst am Ende. */}
+                {hatSchuh && <div className="mt-5"><AffiliateVorteil affiliate={affiliate} /></div>}
+
+                <button onClick={zurKasse}
+                  className="t-klein mt-6 w-full h-14 rounded-md g-akzent border-0 inline-flex items-center justify-center gap-2 hover:opacity-90">
+                  <Lock size={15} strokeWidth={1.6} /> {user ? 'Zur Kasse' : 'Anmelden und zur Kasse'}
+                </button>
+                {/* Für Gäste: Der Korb bleibt liegen, die Anmeldung kommt
+                    dazwischen. Ohne diesen Satz wirkt der Knopf wie eine Falle. */}
+                {!user && (
+                  <p className="t-klein c-leise mt-3">
+                    Zum Bestellen brauchen wir ein Konto, für Lieferadresse und Fertigungsstand.
+                    Deine Tasche bleibt dabei erhalten{affiliate?.code ? ', dein Vorteil ebenfalls' : ''}.
+                  </p>
+                )}
+                <p className="t-klein c-leise mt-5">Rahmengenäht · Almansa, Spanien · 4 bis 6 Wochen Produktion</p>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ═══ Ansicht 2: die Kasse ═══════════════════════════════════════════════
+  const zurueck = () => {
+    if (!product.id && cart.length) { setAnsicht('tasche'); return }
+    navigate(-1)
+  }
+  const uebersicht = (
+    <>
+      <div className="space-y-5">
+        {positionen.map(pos => zeile(pos))}
+      </div>
+      <div className="mt-6 pt-6 border-t border-black/[0.12]">{codes}</div>
+      <div className="mt-6 pt-6 border-t border-black/[0.12]">{summen}</div>
+      {hatSchuh && <div className="mt-6"><AffiliateVorteil affiliate={affiliate} kompakt /></div>}
+    </>
+  )
+
+  return (
+    <div ref={anfang} className="haus min-h-full scroll-mt-24">
+      <div className="min-h-full lg:grid lg:grid-cols-2">
+
+        {/* ── Übersicht, Schreibtisch ─────────────────────────────────── */}
+        <aside className="hidden lg:block g-erzaehlung">
+          <div className="sticky top-0 max-w-[480px] ml-auto px-10 xl:px-14 py-12">
+            <button onClick={zurueck}
+              className="t-klein c-leise hover:text-black inline-flex items-center gap-2 bg-transparent border-0 p-0 min-h-11">
+              <ArrowLeft size={16} strokeWidth={1.4} /> {product.id ? 'Zurück zum Modell' : 'Einkaufstasche'}
+            </button>
+            <p className="t-klein c-leise mt-6">Du bezahlst</p>
+            <p className="t-kopf c-tinte tabular-nums">{euro(total)}</p>
+            <div className="mt-10">{uebersicht}</div>
+            <p className="t-klein c-leise mt-10">Rahmengenäht · Almansa, Spanien · 4 bis 6 Wochen Produktion</p>
+          </div>
+        </aside>
+
+        {/* ── Übersicht, Telefon: aufklappbar ─────────────────────────── */}
+        <div className="lg:hidden g-erzaehlung">
+          <div className="px-5 pt-3">
+            <button onClick={zurueck}
+              className="t-klein c-leise inline-flex items-center gap-2 bg-transparent border-0 p-0 min-h-11">
+              <ArrowLeft size={16} strokeWidth={1.4} /> {product.id ? 'Zurück zum Modell' : 'Einkaufstasche'}
+            </button>
+          </div>
+          <button
+            onClick={() => setUebersichtOffen(v => !v)}
+            aria-expanded={uebersichtOffen}
+            className="w-full flex items-center justify-between gap-3 px-5 py-4 bg-transparent border-0 text-left"
+          >
+            <span className="t-feld inline-flex items-center gap-2">
+              {uebersichtOffen ? 'Bestellübersicht ausblenden' : 'Bestellübersicht anzeigen'}
+              <ChevronDown size={16} strokeWidth={1.6} className={`transition-transform ${uebersichtOffen ? 'rotate-180' : ''}`} />
+            </span>
+            <span className="t-lead c-tinte tabular-nums">{euro(total)}</span>
           </button>
-        )}
+          {uebersichtOffen && <div className="px-5 pb-8">{uebersicht}</div>}
+        </div>
+
+        {/* ── Das Formular ────────────────────────────────────────────── */}
+        <main className="g-angebot">
+          <div className="max-w-[480px] mr-auto lg:ml-0 mx-auto px-5 lg:px-10 xl:px-14 py-8 lg:py-12"
+            style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 32px)' : undefined }}>
+
+            {!user ? (
+              <section>
+                <h1 className="t-kopf c-tinte">Fast geschafft</h1>
+                <p className="t-text c-tinte mt-3">
+                  Zum Bestellen brauchen wir ein Konto, für Lieferadresse und Fertigungsstand.
+                  Deine Auswahl bleibt erhalten{affiliate?.code ? ', dein Vorteil ebenfalls' : ''}.
+                </p>
+                <button onClick={zurAnmeldung}
+                  className="t-klein mt-6 w-full h-14 rounded-md g-akzent border-0 hover:opacity-90">
+                  Anmelden oder Konto anlegen
+                </button>
+              </section>
+            ) : (
+              <>
+                {/* Kontakt */}
+                <section>
+                  <h2 className="t-text c-tinte">Kontakt</h2>
+                  <div className="mt-3 rounded-md bg-white shadow-[0_0_0_1px_rgba(35,28,23,0.18)] px-3.5 h-12 flex items-center justify-between gap-3">
+                    <span className="t-feld truncate">{user.email}</span>
+                    <button onClick={() => { logout?.(); navigate('/login', { state: { from: '/checkout' } }) }}
+                      className="t-klein c-leise underline underline-offset-4 bg-transparent border-0 p-0 shrink-0">
+                      Nicht du?
+                    </button>
+                  </div>
+                </section>
+
+                {/* Lieferadresse */}
+                <section className="mt-9">
+                  <h2 className="t-text c-tinte">Lieferadresse</h2>
+                  <div className="mt-3">
+                    <Adressfelder praefix="shipping" wert={delivery} onChange={setDelivery} />
+                  </div>
+                  <p className="t-klein c-leise mt-2">Wird in deinem Konto gespeichert, fürs nächste Mal.</p>
+                  <label className="mt-4 flex items-center gap-3 cursor-pointer min-h-11">
+                    <input type="checkbox" checked={sameBilling} onChange={e => setSameBilling(e.target.checked)}
+                      className="w-5 h-5 accent-[#231C17] cursor-pointer" />
+                    <span className="t-feld">Rechnungsadresse wie Lieferadresse</span>
+                  </label>
+                  {!sameBilling && (
+                    <div className="mt-3">
+                      <p className="t-klein c-leise mb-2">Rechnungsadresse</p>
+                      <Adressfelder praefix="billing" wert={billing} onChange={setBilling} />
+                    </div>
+                  )}
+                </section>
+
+                {/* Versand */}
+                {shippingOptions.length > 0 && (
+                  <section className="mt-9">
+                    <h2 className="t-text c-tinte">Versand</h2>
+                    <div className="mt-3 space-y-3" role="radiogroup" aria-label="Versand">
+                      {shippingOptions.map(opt => {
+                        const optFree = (opt.free_above && subtotal >= opt.free_above) || (couponResult?.valid && couponResult.type === 'free_shipping')
+                        return (
+                          <Auswahlkarte key={opt.id} name="versand" wert={opt.id} gewaehlt={selectedShipping}
+                            onWahl={setSelectedShipping}
+                            titel={opt.label}
+                            text={[opt.description, opt.free_above && !optFree ? `Gratis ab ${euro(opt.free_above)}` : null].filter(Boolean).join(' · ') || null}
+                            rechts={Number(opt.price) === 0 || optFree ? 'Inklusive' : euro(opt.price)} />
+                        )
+                      })}
+                    </div>
+                  </section>
+                )}
+
+                {/* Zahlung */}
+                <section className="mt-9">
+                  <h2 className="t-text c-tinte">Zahlung</h2>
+                  <div className="mt-3" role="radiogroup" aria-label="Zahlung">
+                    <Auswahlkarte name="zahlung" wert="ueberweisung" gewaehlt="ueberweisung" onWahl={() => {}}
+                      titel={<span className="inline-flex items-center gap-2"><Landmark size={16} strokeWidth={1.4} /> Überweisung (Vorkasse)</span>}>
+                      <span className="block t-klein c-leise">
+                        Nach der Bestellung bekommst du Bankverbindung, Verwendungszweck und einen
+                        QR-Code für deine Banking-App. Gefertigt wird nach Zahlungseingang.
+                      </span>
+                    </Auswahlkarte>
+                  </div>
+                </section>
+
+                {/* Passform: festgeschrieben, nicht mehr änderbar. Die Maße
+                    kommen aus der Konfiguration, nicht aus dem Profil. */}
+                {product.id && (() => {
+                  const m = typeof product.footMeasurementsUsed === 'string'
+                    ? (() => { try { return JSON.parse(product.footMeasurementsUsed) } catch { return null } })()
+                    : product.footMeasurementsUsed
+                  if (!m?.foot_length_mm) return null
+                  return (
+                    <section className="mt-9">
+                      <h2 className="t-text c-tinte">Passform</h2>
+                      <p className="t-feld mt-2">
+                        {m.foot_length_mm} mm Länge{m.ball_girth_mm ? ` · ${m.ball_girth_mm} mm Ballenumfang` : ''}
+                      </p>
+                      <p className="t-klein c-leise mt-1">
+                        Diese Maße gehören zur Konfiguration. Für andere Maße{' '}
+                        <button
+                          onClick={() => {
+                            const shoe = shoes.find(x => String(x.id) === String(product.id))
+                            navigate(shoe ? shoePath(shoe) : '/collection')
+                          }}
+                          className="underline underline-offset-4 bg-transparent border-0 p-0 c-tinte">
+                          neu konfigurieren
+                        </button>.
+                      </p>
+                    </section>
+                  )
+                })()}
+
+                {/* Bestätigungen: unmittelbar über dem Knopf, im selben Blick
+                    wie das, was er auslöst. Zwei getrennte Haken: Der
+                    Ausschluss des Widerrufsrechts muss ausdrücklich bestätigt
+                    werden (§ 312g Abs. 2 Nr. 1 BGB). */}
+                <section className="mt-9 space-y-4">
+                  {ohnePassform.length > 0 && (
+                    <Bestaetigung id="passform" an={passformAkzeptiert} onChange={setPassformAkzeptiert} warnung>
+                      <strong className="font-medium">Dieser Schuh passt nicht zu deinen Maßen.</strong>{' '}
+                      Für die hinterlegten Maße können wir bei diesem Modell keine passende Form
+                      anbieten; ein Umtausch aus diesem Grund ist bei Maßanfertigungen nicht möglich.
+                      Ich möchte ihn trotzdem bestellen.
+                    </Bestaetigung>
+                  )}
+                  <Bestaetigung id="widerruf" an={widerrufAkzeptiert} onChange={setWiderrufAkzeptiert}>
+                    Mir ist bekannt, dass mein Paar nach meinen persönlichen Maßen angefertigt
+                    wird und deshalb <strong className="font-medium">kein Widerrufsrecht</strong>{' '}
+                    besteht (§ 312g Abs. 2 Nr. 1 BGB). Ich verlange ausdrücklich, dass die
+                    Fertigung sofort beginnt.
+                  </Bestaetigung>
+                  <Bestaetigung id="agb" an={agbAkzeptiert} onChange={setAgbAkzeptiert}>
+                    Ich habe die{' '}
+                    <Link to="/legal/agb" target="_blank" className="underline underline-offset-4">AGB</Link>
+                    {' '}und die{' '}
+                    <Link to="/legal/datenschutz" target="_blank" className="underline underline-offset-4">Datenschutzerklärung</Link>
+                    {' '}gelesen und stimme ihnen zu.
+                  </Bestaetigung>
+                </section>
+
+                {error && <p className="t-klein text-[#9B1C1C] mt-6" role="alert">{error}</p>}
+
+                {/* Die Beschriftung ist Gesetz, nicht Geschmack: § 312j Abs. 3
+                    BGB verlangt, dass der Knopf ausdrücklich auf die
+                    Zahlungspflicht hinweist. */}
+                <button onClick={handlePlace} disabled={!bestellbar}
+                  className="t-feld mt-8 w-full h-14 rounded-md g-akzent border-0 inline-flex items-center justify-center gap-2.5 hover:opacity-90 disabled:opacity-40 transition-opacity"
+                  style={{ color: 'var(--akzent-tinte)' }}>
+                  {placing ? (
+                    <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Wird verarbeitet …</>
+                  ) : (
+                    <><Lock size={16} strokeWidth={1.6} /> Zahlungspflichtig bestellen · {euro(total)}</>
+                  )}
+                </button>
+                {offen.length > 0 && (
+                  <p className="t-klein c-leise mt-2.5 text-center">Noch offen: {offen.join(', ')}.</p>
+                )}
+                <p className="t-klein c-leise mt-4 text-center">
+                  Verschlüsselte Übertragung · keine Kartendaten nötig
+                </p>
+              </>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   )

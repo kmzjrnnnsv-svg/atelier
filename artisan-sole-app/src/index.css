@@ -511,3 +511,164 @@ html.mobile-web body {
     animation: none;
   }
 }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Vier Regeln aus den Web Interface Guidelines
+
+   Geprüft gegen vercel-labs/web-interface-guidelines. Der Bestand hatte
+   vierundsechzig Dateien mit `outline-none` und genau eine mit
+   `focus-visible` — wer mit der Tastatur durch den Laden geht, sah also
+   nirgends, wo er steht. Das einzeln an jedem Knopf nachzutragen wären
+   Hunderte Stellen; hier steht es einmal.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Sichtbarer Fokus, überall ──────────────────────────────────────────
+   `:focus-visible` und nicht `:focus`: Der Ring soll beim Tabben erscheinen
+   und nicht bei jedem Mausklick. Zwei Ringe, heller und dunkler übereinander,
+   damit er auf dem weißen Grund des Ladens UND auf den schwarzen Kapiteln
+   der Startseite zu sehen ist — ein einfarbiger wäre auf einem der beiden
+   unsichtbar. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.75);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
+  border-radius: 2px;
+}
+/* Auf dunklem Grund umgekehrt. */
+.bg-\[\#111\] :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
+.bg-\[\#0E0E0E\] :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ── Kein Zögern beim Tippen ────────────────────────────────────────────
+   Ohne `manipulation` wartet ein Telefon nach jedem Tippen rund 300 ms, ob
+   ein zweites folgt (Doppeltipp zum Zoomen). Das Zoomen der Seite selbst
+   bleibt erlaubt — wer ein Leder oder eine Naht genauer ansehen will, soll
+   das können; abgeschaltet wird nur die Wartezeit auf Bedienelementen. */
+:where(a, button, [role='button'], input, select, textarea, label, summary) {
+  touch-action: manipulation;
+}
+
+/* ── Überschriften ohne Schusterjungen ──────────────────────────────────
+   `balance` verteilt die Zeilen einer Überschrift gleichmäßig, statt ein
+   einzelnes Wort allein in die letzte Zeile zu stellen. Nur bis vier Zeilen
+   wirksam, und genau dafür ist es hier gedacht. */
+:where(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+/* ── Was der Browser über die Farben wissen muss ────────────────────────
+   Der Laden ist hell. Ohne diese Angabe setzt ein Gerät im Dunkelmodus
+   Bildlaufleisten und Formularfelder dunkel in eine helle Seite. */
+:root {
+  color-scheme: light;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Das Haus — Farben und Schrift der Startseite
+
+   Rückmeldung des Betreibers: „zu kahl und kühl, soll Luxus und Qualität
+   ausstrahlen, und jeder soll es lesen können." Gemessen vorher (Inspektor
+   des design-taste-Skills, 1440/768/390): Fließtext 14 px in Grau,
+   22 verschiedene Schriftgrößen, 82 Textblöcke unter 13 px, 63 winzige
+   Versalien-Labels. Grau, klein und gesperrt — das ist die Kälte.
+
+   ── Farbe ───────────────────────────────────────────────────────────────
+   Vom Leder genommen, nicht aus einer Mustermappe. Der Grund ist ein warmer
+   Stein statt Weiß mit Gelbstich (der alte Ton #F4F2ED lief als „Creme"
+   durch die Prüfung: Sättigung über 0,16 bei Helligkeit über 0,88). Die
+   Tinte ist Espresso statt Schwarz, die dunklen Kapitel ebenso. Ein Akzent,
+   Ochsenblut, und nur auf der Handlung.
+
+   Die drei Gründe bleiben, was sie waren: hell, wo Schuhe angeboten werden;
+   dunkel unter den Scrollfolgen; Stein für alles, was erzählt.
+
+   ── Schrift ─────────────────────────────────────────────────────────────
+   Fünf Stufen, nicht zweiundzwanzig. Gelesen wird in der Garamond, in voller
+   Tinte und ab 18 px — eine Garamond hat kleine Mittellängen und braucht
+   mehr Größe als eine Grotesk, um gleich groß zu wirken. Die Jost bleibt
+   für Knöpfe und die kleinste Stufe: Steuern in der Grotesk, Lesen in der
+   Antiqua. Nichts, was gelesen werden soll, liegt unter 14 px.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --grund-angebot: #F5F4F2;
+  --grund-erzaehlung: #E2DCD3;
+  --grund-dunkel: #1D1714;
+  --tinte: #231C17;
+  --tinte-leise: #5B5148;
+  --hell: #EAE7E3;        /* Sättigung unter 0,16: hell, warm, aber kein Creme */
+  --hell-leise: #B9AEA1;
+  --akzent: #6B231D;
+  --akzent-tinte: #F5F4F2;
+
+  --s-klein:   0.875rem;                                    /* 14 */
+  --s-text:    clamp(1.125rem, 1.06rem + 0.28vw, 1.3125rem); /* 18–21 */
+  --s-lead:    clamp(1.3125rem, 1.15rem + 0.7vw, 1.75rem);   /* 21–28 */
+  /* Überschriften sind auf dieser Seite fast immer ganze Sätze („Ein Stück
+     Leder, eine Naht an der Ferse."). Ein Satz in 56 px liest sich als
+     dreizeilige Schlagzeile; in 40 px als Satz, der etwas zu sagen hat.
+     Laut ist nur noch der Aufmacher. */
+  --s-kopf:    clamp(1.75rem, 1.25rem + 1.6vw, 2.5rem);      /* 28–40 */
+  --s-display: clamp(2.75rem, 1.6rem + 5vw, 5.75rem);        /* 44–92 */
+}
+
+.haus {
+  background: var(--grund-erzaehlung);
+  color: var(--tinte);
+  font-family: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  letter-spacing: 0;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'onum' 1;
+}
+
+/* Überschriften im Haus. Die alte Regel für h1 bis h6 (Jost, gesperrte
+   Versalien) steht außerhalb der Ebenen und schlägt deshalb jede t-Klasse.
+   Auf der Startseite fängt `.satz-titel` das ab; hier gilt es für alles, was
+   im neuen System gebaut ist, ohne dass jede Überschrift daran denken muss.
+   Die Größe bleibt bei der t-Klasse, die setzt diese Regel nicht. */
+.haus :is(h1, h2, h3, h4, h5, h6) {
+  font-family: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+
+@layer utilities {
+  .t-klein   { font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: var(--s-klein); line-height: 1.5; letter-spacing: 0.01em; font-weight: 400; }
+  /* Eingabefelder: 16 px, sonst zoomt Safari auf dem iPhone beim Antippen
+     in die Seite hinein. Dieselbe Schrift wie die Beschriftungen. */
+  .t-feld    { font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 16px; line-height: 1.4; letter-spacing: 0.005em; font-weight: 400; color: var(--tinte); }
+  .t-text    { font-size: var(--s-text);    line-height: 1.55; font-weight: 400; }
+  .t-lead    { font-size: var(--s-lead);    line-height: 1.35; font-weight: 400; }
+  .t-kopf    { font-size: var(--s-kopf);    line-height: 1.08; letter-spacing: -0.015em; font-weight: 400; }
+  .t-display { font-size: var(--s-display); line-height: 1.02; letter-spacing: -0.02em; font-weight: 400; }
+
+  .c-tinte      { color: var(--tinte); }
+  .c-leise      { color: var(--tinte-leise); }
+  .c-hell       { color: var(--hell); }
+  .c-hell-leise { color: var(--hell-leise); }
+
+  .g-angebot     { background-color: var(--grund-angebot); --grund: var(--grund-angebot); }
+  .g-erzaehlung  { background-color: var(--grund-erzaehlung); --grund: var(--grund-erzaehlung); }
+  .g-dunkel      { background-color: var(--grund-dunkel); --grund: var(--grund-dunkel); }
+  .g-akzent      { background-color: var(--akzent); color: var(--akzent-tinte); }
+
+  /* Ein Satz misst höchstens so viel, wie ein Auge in einem Zug liest. */
+  .masz { max-width: 62ch; }
+}
+
+/* Der Fokusring auf dunklem Grund — derselbe wie oben für #111. */
+.g-dunkel :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Studioaufnahmen auf weißem Grund standen als helle Kästen auf dem warmen
+   Weiß und dem Sand der Seite. `multiply` lässt ihr Weiß im Grund aufgehen.
+   Der Behälter trägt die Grundfarbe selbst, weil die Einblendung
+   (Enthuellen) mit Transform und Opacity einen eigenen Stapelkontext
+   aufmacht: Ohne eigenen Hintergrund mischte das Bild mit Durchsichtigem
+   und bliebe weiß. Echte Fotos mit eigenem Hintergrund verändert das kaum. */
+.haus { --grund: var(--grund-erzaehlung); }
+.bild-im-grund { background-color: var(--grund, transparent); }
+.bild-im-grund img { mix-blend-mode: multiply; }

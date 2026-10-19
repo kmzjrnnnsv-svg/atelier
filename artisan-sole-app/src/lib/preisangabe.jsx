@@ -54,10 +54,10 @@ import { Link } from 'react-router-dom'
  */
 export function Preishinweis({ className = '', mitVersandlink = false }) {
   return (
-    <p className={`text-[10px] text-black/35 font-light leading-snug ${className}`}>
+    <p className={`text-[13px] text-black/60 leading-snug ${className}`}>
       inkl. MwSt. und Versand,{' '}
       {mitVersandlink ? (
-        <Link to="/legal/agb" className="underline underline-offset-2 text-black/45 hover:text-black">
+        <Link to="/legal/agb" className="underline underline-offset-2 text-black/70 hover:text-black">
           Express
         </Link>
       ) : (
@@ -76,10 +76,10 @@ export function Preishinweis({ className = '', mitVersandlink = false }) {
  */
 export function PreisFuss({ className = '' }) {
   return (
-    <p className={`text-[10px] text-black/30 font-light leading-relaxed text-center ${className}`}>
+    <p className={`text-[14px] text-black/60 leading-relaxed text-center ${className}`}>
       Alle Preise in Euro, inkl. gesetzlicher Umsatzsteuer und Versand innerhalb
       Deutschlands. Nur die{' '}
-      <Link to="/legal/agb" className="underline underline-offset-2 text-black/40 hover:text-black">
+      <Link to="/legal/agb" className="underline underline-offset-2 text-black/70 hover:text-black">
         Expresszustellung
       </Link>
       {' '}kostet extra.

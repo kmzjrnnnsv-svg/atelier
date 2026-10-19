@@ -35,7 +35,7 @@ import SohlenStapel from './SohlenStapel'
 import Enthuellen from './Enthuellen'
 import Laufband from './Laufband'
 import { STAPEL } from '../lib/stapelSchritte'
-import { useWenigerBewegung, useSchmal } from '../lib/bewegung'
+import { useWenigerBewegungFolge, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 const VORLAUF = 0.08
@@ -48,7 +48,21 @@ const NACHLAUF = 0.12
    brauchen, ist das auch eine Frage der Ruhe: Bei 0,34 Bildschirmen je
    Schritt schnitt ein zügiger Daumen die Bewegung ab, und abgeschnittene
    Bewegung ist das Gegenteil von weich. */
-const PRO_SCHRITT = 0.42
+/* Nachgemessen auf einem iPhone 13: Bei diesem Wert bekam jeder Schritt der
+   Folge noch zweihundertvierzig bis zweihundertachtzig Pixel Scrollweg. Ein
+   normaler Wisch mit dem Daumen legt achthundert bis fünfzehnhundert zurück
+   — er übersprang also ein bis zwei Schritte vollständig, und die Abnahme
+   fand auf diesem Gerät nur fünf von sechs.
+
+   0,65 gibt jedem Schritt rund eine halbe Bildschirmhöhe. Das ist der Wert,
+   bei dem das Maßnehmen schon stand, und dort war es richtig. Die Seite wird
+   dadurch rund ein Zehntel länger; eine Folge, die man überspringt, ist aber
+   keine Folge, sondern nur Höhe.
+
+   Die beiden Randschritte sind davon unberührt: Sie schlucken, was vor und
+   nach der klebenden Strecke liegt, und sind deshalb immer am längsten. Zu
+   messen ist einer aus der Mitte. */
+const PRO_SCHRITT = 0.65
 
 function schrittAus(fortschritt) {
   const roh = (fortschritt - VORLAUF) / (1 - VORLAUF - NACHLAUF)
@@ -70,13 +84,10 @@ function OhneBewegung({ kopf, fuss }) {
           <SohlenStapel className="max-w-2xl mx-auto" />
         </div>
         <ol className="grid sm:grid-cols-2 gap-x-14 gap-y-8 mt-12 lg:mt-16 max-w-3xl">
-          {STAPEL.map((s, i) => (
+          {STAPEL.map(s => (
             <li key={s.titel}>
-              <p className="text-[10px] tracking-[0.3em] text-white/30">
-                {String(i + 1).padStart(2, '0')}
-              </p>
-              <p className="satz-titel text-[19px] lg:text-[22px] text-white mt-2">{s.titel}</p>
-              <p className="text-[13px] text-white/50 font-light leading-[1.85] mt-2">{s.text}</p>
+              <p className="t-lead satz-titel c-hell mt-2">{s.titel}</p>
+              <p className="t-text c-hell mt-2">{s.text}</p>
             </li>
           ))}
         </ol>
@@ -92,7 +103,7 @@ function OhneBewegung({ kopf, fuss }) {
  */
 export default function StapelFolge({ kopf, fuss }) {
   const ref = useRef(null)
-  const ruhig = useWenigerBewegung()
+  const ruhig = useWenigerBewegungFolge()
   const schmal = useSchmal()
   const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 
@@ -112,9 +123,15 @@ export default function StapelFolge({ kopf, fuss }) {
      richtet. Eine Tafel mit viewBox wird dadurch kleiner und bleibt mittig,
      nicht verzerrt. Steht die Bühnenhöhe noch nicht fest, gilt keine
      Grenze — dann ist die Seite ohnehin noch beim ersten Messen. */
-  const tafelHoehe = buehnenHoehe
-    ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.46, buehnenHoehe - 290)))
-    : 0
+  /* Auf breiten Fenstern steht der Text NEBEN der Zeichnung, nicht darunter
+     — dort braucht er ihr keine Höhe abzunehmen. Die erste Fassung dieser
+     Grenze galt überall und machte die Tafeln am Schreibtisch klein und
+     matt, mitten auf einer dunklen Fläche. Jetzt gilt am Schreibtisch nur,
+     dass die Zeichnung in die Bühne passt (82 % ihrer Höhe), und die enge
+     Rechnung bleibt den Telefonen. */
+  const tafelHoehe = !buehnenHoehe ? 0
+    : schmal ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.46, buehnenHoehe - 290)))
+    : Math.round(buehnenHoehe * 0.82)
 
   if (ruhig) return <OhneBewegung kopf={kopf} fuss={fuss} />
 
@@ -154,7 +171,7 @@ export default function StapelFolge({ kopf, fuss }) {
             {/* Rechts nur der Schritt, der gerade dran ist. */}
             <div className="lg:col-span-4 lg:col-start-9 mt-8 lg:mt-0">
               <Laufband
-                titel={`Teil ${String(schritt + 1).padStart(2, '0')} von ${String(STAPEL.length).padStart(2, '0')}`}
+                titel={`Teil ${schritt + 1} von ${STAPEL.length}`}
                 fortschritt={fortschritt}
               />
               <div className="relative [@media(max-height:600px)]:min-h-0 mt-6 min-h-[150px] sm:min-h-[120px]">
@@ -170,10 +187,10 @@ export default function StapelFolge({ kopf, fuss }) {
                   >
                     {/* Ohne eigene Ziffer: Die steht seit dem Laufband
                         darüber, und zwar mit der Gesamtzahl dazu. */}
-                    <p className="satz-titel text-[22px] lg:text-[30px] text-white leading-[1.2]">
+                    <p className="t-lead satz-titel c-hell">
                       {s.titel}
                     </p>
-                    <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.85] mt-3 max-w-sm">
+                    <p className="t-text c-hell mt-3 max-w-sm">
                       {s.text}
                     </p>
                   </div>

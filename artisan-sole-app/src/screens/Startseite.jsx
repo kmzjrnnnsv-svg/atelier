@@ -217,7 +217,7 @@
  * das zu Recht.
  *
  */
-import { Fragment, useEffect, useMemo } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Footprints, Check } from 'lucide-react'
 import useStore from '../store/store'
@@ -234,6 +234,7 @@ import Strichpfeil from '../components/Strichpfeil'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import SchuhAufbau from '../components/SchuhAufbau'
 import PflegeFolge from '../components/PflegeFolge'
+import SpannerSchnitt from '../components/SpannerSchnitt'
 import StapelFolge from '../components/StapelFolge'
 import Modellwahl from '../components/Modellwahl'
 import ModellStreifen from '../components/ModellStreifen'
@@ -254,11 +255,10 @@ import MassNehmen from '../components/MassNehmen'
  * das Gegenteil davon — aber das muss dastehen, und zwar hier oben und nicht
  * erst in Kapitel 9.
  *
- * „Rund" und nicht „bis zu": „Bis zu vier Wochen" ist eine Obergrenze, und
- * eine Obergrenze, die eine Werkstatt manchmal reißt, ist schlimmer als gar
- * keine Angabe — sie macht aus einer normalen Verzögerung einen gebrochenen
- * Satz. „Rund vier Wochen" sagt dasselbe und hält auch dann, wenn es fünf
- * werden. Dass das vorkommt, steht in Kapitel 9 ausdrücklich da.
+ * „4 bis 6 Wochen", wie in den AGB. Eine Spanne statt „rund vier": Die
+ * Seite sagte vier, die AGB vier bis sechs, und ein Käufer, der beides
+ * liest, erinnert sich an die Zahl, die ihm nicht gehalten wurde. Jetzt
+ * steht überall dieselbe Angabe.
  *
  * „Neu besohlbar" ist nicht Behauptung, sondern die
  * Folge der Machart und im Machart-Abschnitt gezeigt; „Almansa, Spanien"
@@ -270,7 +270,7 @@ const FAKTEN = [
   'Rahmengenäht',
   'Nach Maß gebaut',
   'Almansa, Spanien',
-  'Rund 4 Wochen Produktion',
+  '4 bis 6 Wochen Produktion',
   'Neu besohlbar',
 ]
 
@@ -399,7 +399,7 @@ const ANGEBOTSFORMEN = [
 const ZAHLEN = [
   { zahl: '2',    einheit: 'Maße',            text: 'Fußlänge und Ballenumfang. Die Weite sitzt am Ballen, nicht an der Länge. Deshalb reichen zwei.' },
   { zahl: '200+', einheit: 'Arbeitsschritte', text: 'Vom Zuschnitt bis zur Endkontrolle. Für dieses eine Paar.' },
-  { zahl: '4',    einheit: 'Wochen Produktion', text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
+  { zahl: '4 bis 6', einheit: 'Wochen Produktion', text: 'So lange braucht ein rahmengenähter Schuh in Almansa. Angefangen wird, wenn du bestellst.' },
 ]
 
 /**
@@ -731,11 +731,15 @@ const erzaehlungZu = (machart) =>
  * einzigen Bild des Kapitels. Hier steht sie in der Zeile, in der ohnehin
  * die Einordnung steht, und lässt das Foto in Ruhe.
  */
-function Kapitelzeile({ nummer, machart, hinweis, hell = false }) {
-  const machartText = String(machart || 'Custom Made').replace(/_/g, ' ')
+function Kapitelzeile({ machart, hinweis, hell = false }) {
+  // Die Machart steht im Katalog in Versalien („DOUBLE_MONK"). Als Zeile
+  // gelesen wird sie in normaler Schreibung: Versalien nehmen den Wörtern
+  // ihr Bild, und in kleiner Größe sind sie das, was die Seite kalt machte.
+  const wort = (t) => String(t || '').toLowerCase().replace(/_/g, ' ')
+    .replace(/(^|[\s-])(\p{L})/gu, (_, a, b) => a + b.toUpperCase())
   return (
     <Kapitelmarke hell={hell}>
-      {[nummer, machartText, hinweis].filter(Boolean).join('   ·   ')}
+      {[wort(machart) || 'Custom Made', hinweis ? wort(hinweis) : null].filter(Boolean).join(' · ')}
     </Kapitelmarke>
   )
 }
@@ -775,7 +779,7 @@ function Kapitelbild({ schuh, oeffnen, className = '', hoehe = 'max-h-[62vh]' })
       className={`group block w-full bg-transparent border-0 p-0 text-left ${className}`}
       aria-label={`${schuh.name} ansehen und konfigurieren`}
     >
-      <span className="block overflow-hidden">
+      <span className="block overflow-hidden bild-im-grund">
         <img
           src={resolveMediaUrl(schuh.image)}
           alt={`${schuh.name}, nach Maß gefertigt`}
@@ -799,9 +803,9 @@ function SaisonKopf({ marke, titel }) {
   return (
     <Enthuellen>
       <div className="px-5 lg:px-16 pt-14 pb-10 lg:pt-20 lg:pb-14">
-        <div className="max-w-6xl mx-auto border-t border-black/[0.10] pt-10 lg:pt-14 text-center">
+        <div className="max-w-6xl mx-auto pt-10 lg:pt-14 text-center">
           <Kapitelmarke>{marke}</Kapitelmarke>
-          <h3 className="satz-titel text-[26px] lg:text-[38px] leading-[1.16] mt-4 max-w-2xl mx-auto">
+          <h3 className="t-kopf satz-titel mt-4 max-w-2xl mx-auto">
             {titel}
           </h3>
         </div>
@@ -836,12 +840,12 @@ function Notiz({ marke, text, letzte = false }) {
     <Enthuellen richtung="ruhig">
       <div className={`px-5 lg:px-16 pt-14 lg:pt-24 ${letzte ? 'pb-14 lg:pb-24' : 'pb-2 lg:pb-6'}`}>
         <div className="max-w-6xl mx-auto">
-          <div className="max-w-md border-l border-black/[0.18] pl-5 lg:pl-8 lg:ml-[14%]">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-black/35">{marke}</p>
+          <div className="max-w-md pl-5 lg:pl-8 lg:ml-[14%]">
+            <p className="t-klein c-leise">{marke}</p>
             {/* text-balance: Die Zeile ist so kurz, dass sie auf dem Telefon in
                 zwei bricht — und ohne Ausgleich steht in der zweiten ein
                 einzelnes Wort. Eine Notiz mit Schlepp ist keine. */}
-            <p className="text-[15px] lg:text-[17px] text-black/70 font-light leading-[1.75] mt-3 text-balance">
+            <p className="t-text c-tinte mt-3 text-balance">
               {text}
             </p>
           </div>
@@ -896,24 +900,20 @@ function ZurKollektion({ satz, auf, wort = 'Kollektion ansehen', hell = false, m
   return (
     <Enthuellen verzoegerung={120} className={className}>
       <div className={mittig ? 'text-center' : ''}>
-        <p className={`text-[13px] lg:text-[15px] font-light leading-[1.8] ${
-          hell ? 'text-white/50' : 'text-black/45'
+        <p className={`t-text ${
+          hell ? 'c-hell' : 'c-tinte'
         }`}>
           {satz}
         </p>
         <button
           type="button"
           onClick={auf}
-          className={`group mt-4 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase transition-colors ${
-            hell ? 'text-white hover:text-white/60' : 'text-black hover:text-black/60'
+          className={`t-klein group mt-4 bg-transparent border-0 p-0 inline-flex items-center gap-3 transition-colors ${
+            hell ? 'c-hell hover:text-white/60' : 'c-tinte hover:text-black/60'
           }`}
-          style={{ letterSpacing: '0.22em' }}
         >
-          <span className="relative pb-1">
+          <span className="underline underline-offset-[6px] decoration-1">
             {wort}
-            <span className={`absolute left-0 bottom-0 h-px w-full transition-colors ${
-              hell ? 'bg-white/30 group-hover:bg-white/60' : 'bg-black/25 group-hover:bg-black/50'
-            }`} />
           </span>
           <Strichpfeil />
         </button>
@@ -925,26 +925,24 @@ function ZurKollektion({ satz, auf, wort = 'Kollektion ansehen', hell = false, m
 /** Name, Angaben und der Weg in den Konfigurator. */
 function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
   return (
-    <div className={`pt-6 border-t border-black/[0.09] ${mittig ? 'text-center' : ''}`}>
-      <p className="text-[11px] uppercase tracking-[0.24em] text-black/50">{schuh.name}</p>
-      <p className="text-[11px] text-black/35 font-light mt-2">
+    <div className={`pt-6 ${mittig ? 'text-center' : ''}`}>
+      <p className="t-klein c-leise">{schuh.name}</p>
+      <p className="t-klein c-leise mt-2">
         {[
           schuh.material,
           Number(schuh.express) === 1
             ? `rund ${schuh.express_weeks || 2} Wochen Produktion`
-            : 'rund vier Wochen Produktion',
+            : '4 bis 6 Wochen Produktion',
           schuh.price ? `ab ${schuh.price}` : null,
         ].filter(Boolean).join('   ·   ')}
       </p>
       <button
         type="button"
         onClick={oeffnen}
-        className="group mt-6 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
-        style={{ letterSpacing: '0.22em' }}
+        className="t-klein group mt-6 bg-transparent border-0 p-0 inline-flex items-center gap-3 c-tinte hover:text-black/60 transition-colors"
       >
-        <span className="relative pb-1">
+        <span className="underline underline-offset-[6px] decoration-1">
           Konfigurieren
-          <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
         </span>
         <Strichpfeil />
       </button>
@@ -956,8 +954,8 @@ function Kapitelfuss({ schuh, oeffnen, mittig = false }) {
 function Nachsatz({ text, className = '', gross = false }) {
   return (
     <p
-      className={`satz-titel italic text-black/50 leading-[1.7] ${
-        gross ? 'text-[18px] lg:text-[24px]' : 'text-[17px] lg:text-[20px]'
+      className={`satz-titel italic c-tinte ${
+        gross ? 't-lead' : 't-text'
       } ${className}`}
     >
       {text}
@@ -1152,6 +1150,15 @@ export default function Startseite() {
     return [...klassiker, ...zeit, ...rest]
   }, [shoes])
 
+  /* Das Paar für den Aufmacher: das erste der Modellzeile, das ein Foto hat.
+     Dieselbe Auswahl wie darunter, damit der erste Bildschirm nicht einen
+     Schuh zeigt, den es in der Zeile dann nicht gibt. */
+  const aufmacherSchuh = kopfModelle.find(sch => sch.image) || null
+  // Steht ein Foto im Katalog, aber die Datei fehlt, zeigte der Browser den
+  // Alt-Text in einem leeren Kasten — auf dem ersten Bildschirm. Dann lieber
+  // die Zeichnung, die ohnehin als Rückfall dasteht.
+  const [aufmacherBildFehlt, setAufmacherBildFehlt] = useState(false)
+
   /**
    * Das Register: je Machart die Anzahl und der Einstiegspreis.
    *
@@ -1310,11 +1317,18 @@ export default function Startseite() {
     // Nach Farbwert eindeutig: Der Katalog führt „Schwarz" und „Black", beide
     // auf #000000. Zwei gleiche Punkte nebeneinander sehen nach einem Fehler
     // aus, nicht nach Auswahl.
-    const farbtoene = [...new Map(
-      shoeColors
-        .filter(c => (c.available !== 0 && c.available !== false) && c.hex)
-        .map(c => [String(c.hex).toLowerCase(), c.hex]),
-    ).values()].slice(0, 16)
+    //
+    // Gibt es Ledermuster (die Farben mit Bild), stehen diese da: ein Kreis
+    // Box Calf in Cognac sagt mehr als ein Kreis in #926134. Sonst die Flächen.
+    const nutzbar = shoeColors.filter(c => (c.available !== 0 && c.available !== false) && c.hex)
+    const mitMuster = nutzbar.filter(c => c.image)
+    const farbtoene = (mitMuster.length ? mitMuster : nutzbar)
+      .reduce((liste, c) => {
+        const k = c.image || String(c.hex).toLowerCase()
+        if (!liste.some(x => x.k === k)) liste.push({ k, hex: c.hex, bild: c.image ? resolveMediaUrl(c.image) : null, name: c.name })
+        return liste
+      }, [])
+      .slice(0, 16)
 
     return [
       {
@@ -1337,7 +1351,7 @@ export default function Startseite() {
         text: 'Dieselbe Farbe fällt auf Velours anders aus als auf Box Calf. Die '
             + 'Auswahl hängt deshalb am Leder.',
         farben: farbtoene.length ? farbtoene : null,
-        hinweis: farbtoene.length ? `${farbtoene.length} Töne, hier ohne Namen.` : null,
+        hinweis: farbtoene.length ? (mitMuster.length ? `${mitMuster.length} Farben über alle Leder, hier eine Auswahl.` : `${farbtoene.length} Töne, hier ohne Namen.`) : null,
       },
       {
         titel: 'Sohle, Rahmen und Details',
@@ -1385,10 +1399,9 @@ export default function Startseite() {
    * das hier vermieden werden soll.
    */
   const kapitelInhalt = (schuh, i) => {
-          const nummer = String(i + 1).padStart(2, '0')
           const erz = erzaehlungZu(schuh.category)
           const oeffnen = () => navigate(shoePath(schuh))
-          const marke = <Kapitelzeile nummer={nummer} machart={schuh.category} hinweis={schuh.tag} />
+          const marke = <Kapitelzeile machart={schuh.category} hinweis={schuh.tag} />
 
           /* ══ Form A · Mittig ══════════════════════════════════════
              Der erste Auftritt. Die Aufnahme steht in der Fläche statt
@@ -1397,7 +1410,7 @@ export default function Startseite() {
              meisten, weil sie am wenigsten tut. */
           if (i % 4 === 0) {
             return (
-              <section key={schuh.id} className="bg-white px-5 lg:px-16 py-14 lg:py-20">
+              <section key={schuh.id} className="g-angebot px-5 lg:px-16 py-14 lg:py-20">
                 <Enthuellen>
                   <Kapitelbild
                     schuh={schuh}
@@ -1409,10 +1422,10 @@ export default function Startseite() {
                 <Enthuellen verzoegerung={140}>
                   <div className="max-w-2xl mx-auto text-center mt-14 lg:mt-20">
                     {marke}
-                    <h3 className="satz-titel text-[33px] lg:text-[54px] leading-[1.14] mt-6">
+                    <h3 className="t-kopf satz-titel mt-6">
                       {erz.titel}
                     </h3>
-                    <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[2] mt-8">
+                    <p className="t-text c-tinte mt-8">
                       {anriss(schuh.description)}
                     </p>
                     <Nachsatz text={erz.rat} className="mt-10" />
@@ -1432,14 +1445,14 @@ export default function Startseite() {
              Mitte, dadurch entsteht unter ihm eine offene Ecke. */
           if (i % 4 === 1) {
             return (
-              <section key={schuh.id} className="bg-white px-5 lg:px-16 py-14 lg:py-20">
+              <section key={schuh.id} className="g-angebot px-5 lg:px-16 py-14 lg:py-20">
                 <div className="lg:grid lg:grid-cols-12 lg:gap-16 items-start max-w-6xl mx-auto">
-                  <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:pt-10">
+                  <Enthuellen verzoegerung={120} className="lg:col-span-6 lg:pt-10">
                     {marke}
-                    <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
+                    <h3 className="t-kopf satz-titel mt-6">
                       {erz.titel}
                     </h3>
-                    <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8 max-w-[24rem]">
+                    <p className="t-text c-tinte mt-8 max-w-[24rem]">
                       {anriss(schuh.description)}
                     </p>
                     <div className="mt-12 max-w-[24rem]">
@@ -1447,7 +1460,7 @@ export default function Startseite() {
                     </div>
                   </Enthuellen>
 
-                  <Enthuellen richtung="rechts" className="lg:col-span-7 mt-12 lg:mt-0">
+                  <Enthuellen richtung="rechts" className="lg:col-span-6 mt-12 lg:mt-0">
                     <Kapitelbild
                       schuh={schuh}
                       oeffnen={oeffnen}
@@ -1459,7 +1472,7 @@ export default function Startseite() {
                 {/* Der Nachsatz sitzt hier am Fuß, quer über beide
                     Hälften — und nicht in einer davon. */}
                 <Enthuellen richtung="ruhig">
-                  <div className="max-w-6xl mx-auto mt-16 lg:mt-24 pt-10 border-t border-black/[0.08]">
+                  <div className="max-w-6xl mx-auto mt-16 lg:mt-24 pt-10">
                     <Nachsatz text={erz.rat} className="max-w-2xl" gross />
                   </div>
                 </Enthuellen>
@@ -1482,9 +1495,9 @@ export default function Startseite() {
              verschiedener Höhe. */
           if (i % 4 === 2) {
             return (
-              <section key={schuh.id} className="bg-white py-14 lg:py-20 px-5 lg:pl-16 lg:pr-0">
+              <section key={schuh.id} className="g-angebot py-14 lg:py-20 px-5 lg:pl-16 lg:pr-0">
                 <div className="lg:grid lg:grid-cols-12 lg:gap-x-14 lg:items-start">
-                  <Enthuellen richtung="rechts" className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
+                  <Enthuellen richtung="rechts" className="lg:col-span-6 lg:col-start-7 lg:row-start-1">
                     <Kapitelbild
                       schuh={schuh}
                       oeffnen={oeffnen}
@@ -1494,13 +1507,13 @@ export default function Startseite() {
 
                   <Enthuellen
                     verzoegerung={160}
-                    className="lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:pt-28 mt-12 lg:mt-0"
+                    className="lg:col-span-6 lg:col-start-1 lg:row-start-1 lg:pt-28 mt-12 lg:mt-0"
                   >
                     {marke}
-                    <h3 className="satz-titel text-[32px] lg:text-[50px] leading-[1.14] mt-6">
+                    <h3 className="t-kopf satz-titel mt-6">
                       {erz.titel}
                     </h3>
-                    <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2] mt-8">
+                    <p className="t-text c-tinte mt-8">
                       {anriss(schuh.description)}
                     </p>
                     {/* Hier steht der Nachsatz mit in der Spalte — die
@@ -1521,11 +1534,11 @@ export default function Startseite() {
              Nachsatz. Die Form leitet zur Auswahl über — sie liest sich
              schon wie eine Seite, auf der mehreres nebeneinander steht. */
           return (
-            <section key={schuh.id} className="bg-white py-14 lg:py-20">
+            <section key={schuh.id} className="g-angebot py-14 lg:py-20">
               <Enthuellen>
                 <div className="px-5 lg:px-16 text-center max-w-3xl mx-auto">
                   {marke}
-                  <h3 className="satz-titel text-[32px] lg:text-[52px] leading-[1.14] mt-6">
+                  <h3 className="t-kopf satz-titel mt-6">
                     {erz.titel}
                   </h3>
                 </div>
@@ -1546,7 +1559,7 @@ export default function Startseite() {
               <Enthuellen verzoegerung={200}>
                 <div className="px-5 lg:px-16 mt-14 lg:mt-20">
                   <div className="max-w-6xl mx-auto grid gap-10 lg:gap-20 lg:grid-cols-2">
-                    <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-[2]">
+                    <p className="t-text c-tinte">
                       {anriss(schuh.description)}
                     </p>
                     <Nachsatz text={erz.rat} />
@@ -1563,7 +1576,7 @@ export default function Startseite() {
   const zurKollektion = () => navigate('/collection')
 
   return (
-    <div className="min-h-full bg-[#F4F2ED]">
+    <div className="haus min-h-full">
 
       {/* ══ 1 · Erster Blick ══════════════════════════════════════════════
           Ein Satz, fünf Angaben, zwei Wege — und kein Bild.
@@ -1584,87 +1597,100 @@ export default function Startseite() {
           Was die Seite trägt, sind die echten Aufnahmen aus dem Katalog,
           die drei Zeichnungen und die Schrift. Kommen eigene Bilder, steht
           hier wieder eines — es ist eine Zeile. */}
-      <header className="relative min-h-[76vh] flex items-end overflow-hidden bg-[#0E0E0E]">
-        {/* Ein sehr flacher Lichtschein, damit die Fläche Tiefe bekommt,
-            ohne dass man ihn als Verlauf erkennt. */}
-        <div
-          className="absolute inset-0"
-          style={{ background: 'radial-gradient(120% 90% at 18% 0%, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 62%)' }}
-          aria-hidden="true"
-        />
+      {/* ── Der Aufmacher, neu ──────────────────────────────────────────
+          Vorher: eine schwarze Fläche über drei Viertel des Bildschirms, ein
+          Label in 10 px, die Überschrift erst nach einer Einblendung da —
+          und kein einziges Bild. Gemessen war das der Grund für „kahl und
+          kühl": Der erste Bildschirm eines Schuhladens zeigte keinen Schuh.
 
-        <div className="relative w-full px-5 lg:px-16 pb-10 lg:pb-14">
+          Jetzt nach der gezogenen Richtung („Photographs at uneven sizes"):
+          eine große Zeile in der Garamond über das obere Drittel, darunter
+          ein Foto aus der Mitte nach rechts versetzt, links daneben Satz,
+          Preis und die Handlung. Kein Text liegt auf dem Bild.
+
+          Das Foto ist das eigene des Katalogs — das erste Paar der
+          Modellzeile darunter. Gibt es keines (lokal, oder ein Katalog ohne
+          Aufnahmen), steht an seiner Stelle die eigene Zeichnung des
+          gespannten Loafers auf dunklem Grund, wie ein gerahmter Abzug. Eine
+          Zeichnung aus dem Haus ist ehrlicher als ein fremdes Stockfoto.
+
+          Heller Grund, weil hier ein Paar mit Preis angeboten wird — die
+          Regel der drei Gründe gilt auch für den ersten Bildschirm. */}
+      <header className="g-angebot px-5 lg:px-16 pt-12 lg:pt-20 pb-14 lg:pb-24">
+        <div className="max-w-[1400px] mx-auto">
           <Enthuellen>
-            <Kapitelmarke hell>Custom Made · Almansa, Spanien</Kapitelmarke>
-          </Enthuellen>
-
-          <Enthuellen verzoegerung={120}>
-            <h1 className="satz-titel text-[38px] lg:text-[76px] text-white leading-[1.04] mt-5 max-w-3xl">
+            <h1 className="t-display satz-titel c-tinte max-w-[15ch]">
               Ein Paar, das es<br />vorher nicht gab.
             </h1>
           </Enthuellen>
 
-          <Enthuellen verzoegerung={220}>
-            <p className="text-[14px] lg:text-[17px] text-white/70 font-light leading-relaxed mt-6 max-w-lg">
-              Rahmengenäht, auf deine Maße gebaut, einzeln gefertigt in Almansa.
-              {abPreis ? <> Ab <span className="text-white">€&nbsp;{preisAlsText(abPreis)}</span>.</> : null}
-            </p>
-          </Enthuellen>
+          <div className="mt-10 lg:mt-14 lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-end">
+            <Enthuellen verzoegerung={120} className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
+              <figure className="bild-im-grund">
+                {aufmacherSchuh && !aufmacherBildFehlt ? (
+                  <img
+                    onError={() => setAufmacherBildFehlt(true)}
+                    src={resolveMediaUrl(aufmacherSchuh.image)}
+                    alt={`${aufmacherSchuh.name}, rahmengenäht, nach Maß gefertigt`}
+                    width="1600"
+                    height="1000"
+                    fetchPriority="high"
+                    className="block w-full aspect-[16/10] object-contain bild-heran"
+                  />
+                ) : (
+                  <div className="g-dunkel aspect-[16/10] flex items-center justify-center px-8 c-hell">
+                    <SpannerSchnitt className="w-full max-w-xl" />
+                  </div>
+                )}
+                {aufmacherSchuh && !aufmacherBildFehlt && (
+                  <figcaption className="t-klein c-leise mt-3">
+                    {aufmacherSchuh.name}
+                    {aufmacherSchuh.price ? <>, ab {aufmacherSchuh.price}</> : null}
+                  </figcaption>
+                )}
+              </figure>
+            </Enthuellen>
 
-          <Enthuellen verzoegerung={320}>
-            <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 mt-8 max-w-md sm:max-w-none">
-              <button
-                type="button"
-                onClick={zurKollektion}
-                className="group w-full sm:w-auto bg-white text-black border-0 px-9 h-12 text-[11px] uppercase flex items-center justify-center gap-3 whitespace-nowrap hover:bg-white/85 transition-colors"
-                style={{ letterSpacing: '0.18em' }}
-              >
-                Modelle ansehen
-                <Strichpfeil />
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/scan')}
-                className="w-full sm:w-auto bg-transparent border border-white/30 text-white/85 px-9 h-12 text-[11px] uppercase flex items-center justify-center gap-2 whitespace-nowrap hover:border-white/70 hover:text-white transition-colors"
-                style={{ letterSpacing: '0.18em' }}
-              >
-                <Footprints size={15} strokeWidth={1.5} />
-                Passform bestimmen
-              </button>
+            <div className="lg:col-span-5 lg:row-start-1 mt-10 lg:mt-0 lg:pb-10">
+              <Enthuellen verzoegerung={200}>
+                <p className="t-lead c-tinte max-w-md">
+                  Rahmengenäht, auf deine Maße gebaut, einzeln gefertigt in Almansa.
+                  {abPreis ? <> Ab €&nbsp;{preisAlsText(abPreis)}.</> : null}
+                </p>
+              </Enthuellen>
+
+              <Enthuellen verzoegerung={280}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-7 mt-8">
+                  <button
+                    type="button"
+                    onClick={zurKollektion}
+                    className="t-klein group g-akzent border-0 px-8 h-12 inline-flex items-center justify-center gap-3 whitespace-nowrap hover:opacity-90 transition-opacity"
+                  >
+                    Modelle ansehen
+                    <Strichpfeil />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/scan')}
+                    className="t-klein c-tinte bg-transparent border-0 p-0 inline-flex items-center gap-2 self-start sm:self-auto underline underline-offset-[6px] decoration-1 hover:opacity-70 transition-opacity"
+                  >
+                    <Footprints size={16} strokeWidth={1.5} aria-hidden="true" />
+                    Passform bestimmen
+                  </button>
+                </div>
+              </Enthuellen>
+
+              {/* Die Faktenzeile: fünf Angaben, keine davon ein Satz. Jede
+                  steht weiter unten ausführlich, hier nur als Wort. */}
+              <Enthuellen verzoegerung={360} richtung="ruhig">
+                <p className="t-klein c-leise mt-10 max-w-md">{FAKTENZEILE}</p>
+              </Enthuellen>
             </div>
-          </Enthuellen>
-
-          {/* Die Faktenzeile.
-
-              Fünf Angaben, keine davon ein Satz. Sie beantwortet in zwei
-              Sekunden, was sonst drei Absätze brauchen: was das ist, wo es
-              herkommt, wie lange es dauert und was in zehn Jahren damit ist.
-
-              Jede der fünf steht weiter unten ausführlich — hier steht sie
-              nur als Wort. Das ist der Unterschied zwischen „wir versprechen
-              viel" und „du weißt, was du bekommst": Das Versprechen wird
-              nicht lauter, es wird kürzer.
-
-              Getrennt durch Mittelpunkte und nicht durch Striche: Ein Strich
-              ist ein eigenes Element und steht nach einem Zeilenumbruch als
-              Erstes in der neuen Zeile — ein Trennzeichen, das nichts trennt.
-              Ein Mittelpunkt gehört zum Text und bricht mit ihm um. */}
-          <Enthuellen verzoegerung={420} richtung="ruhig">
-            <p
-              className="text-[9px] lg:text-[10px] uppercase text-white/45 mt-10 lg:mt-12 max-w-3xl leading-[2.2]"
-              style={{ letterSpacing: '0.22em' }}
-            >
-              {FAKTENZEILE}
-            </p>
-          </Enthuellen>
-        </div>
-
-        {/* Der Hinweis, dass es weitergeht. Auf dem Telefon steht er im Weg
-            und entfällt dort. */}
-        <div className="hidden lg:block absolute right-16 bottom-20 w-px h-14 bg-white/25 overflow-hidden">
-          <div className="strich-wandert w-px h-full bg-white/80" />
+          </div>
         </div>
       </header>
+
+
 
 
       {/* ── Unter dem Aufmacher: vier Paare ──────────────────────────────
@@ -1683,11 +1709,12 @@ export default function Startseite() {
           für gerade jetzt gibt. Ohne Haarlinie oben — darüber steht die
           Kante des dunklen Aufmachers, und zwei Trennungen übereinander sind
           eine zu viel. */}
-      <div className="bg-white">
+      <div className="g-angebot">
         <ModellStreifen
           schuhe={kopfModelle}
           gesamt={shoes.length}
           randOben={false}
+          gehoben={2}
           satz="Zwei, die immer gehen. Und zwei für die Jahreszeit."
           oeffnen={sch => navigate(shoePath(sch))}
           zumKatalog={zurKollektion}
@@ -1707,7 +1734,7 @@ export default function Startseite() {
 
           Statt drei Kacheln nebeneinander jetzt ein Band mit senkrechten
           Haarlinien dazwischen — ein Register, keine Karten. */}
-      <section className="px-5 lg:px-16 py-14 lg:py-24 border-b border-black/[0.07]">
+      <section className="px-5 lg:px-16 py-14 lg:py-24">
         <div className="grid sm:grid-cols-3 max-w-5xl mx-auto">
           {ZAHLEN.map((z, i) => (
             <Enthuellen key={z.einheit} verzoegerung={i * 90}>
@@ -1717,16 +1744,16 @@ export default function Startseite() {
                   eine waagerechte Linie oben. */}
               <div className={`py-8 sm:py-0 ${
                 i > 0
-                  ? 'border-t border-black/[0.08] sm:border-t-0 sm:border-l sm:pl-10 lg:pl-16'
+                  ? ' sm:-0 sm: sm:pl-10 lg:pl-16'
                   : ''
-              } ${i < 2 ? 'sm:pr-10 lg:pr-16' : ''} sm:border-black/[0.08]`}>
-                <p className="satz-titel text-[52px] lg:text-[76px] leading-[0.9] tracking-[-0.02em]">
+              } ${i < 2 ? 'sm:pr-10 lg:pr-16' : ''} sm:`}>
+                <p className="t-display satz-titel">
                   {z.zahl}
                 </p>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-black/40 mt-4">
+                <p className="t-klein c-leise mt-4">
                   {z.einheit}
                 </p>
-                <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.85] mt-5 max-w-xs">
+                <p className="t-text c-tinte mt-5 max-w-xs">
                   {z.text}
                 </p>
               </div>
@@ -1774,7 +1801,7 @@ export default function Startseite() {
           einem Kundenkonto. Ein Streichpreis, den es nicht gibt, wäre auf
           einer Seite, deren Argument die Offenheit ist, der teuerste Satz
           überhaupt. Siehe Angebot.jsx. */}
-      <div className="bg-white">
+      <div className="g-angebot">
         <Angebot
           zeilen={angebotZeilen}
           express={expressAngabe}
@@ -1807,15 +1834,15 @@ export default function Startseite() {
           Andersherum ging es nicht. Wer den Schnitt zuerst sieht, sieht
           sechs Lagen ineinandergreifen und weiß hinterher nicht, welche
           davon zusammengehören. */}
-      <section className="bg-[#111] text-white">
+      <section className="g-dunkel text-white">
         <StapelFolge
           kopf={
             <>
               <Kapitelmarke hell>Die Teile</Kapitelmarke>
-              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+              <h2 className="t-kopf satz-titel mt-4 max-w-2xl">
                 Ein Schuh,<br className="hidden sm:block" /> zwei Teile.
               </h2>
-              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
+              <p className="t-text c-hell mt-7 max-w-lg">
                 Sieben Lagen, flach übereinandergelegt. Scroll weiter. Am Ende
                 siehst du, welche davon ein Leben lang bleiben und welche ein
                 Schuhmacher wechselt.
@@ -1824,11 +1851,11 @@ export default function Startseite() {
           }
           fuss={
             <div className="max-w-3xl">
-              <p className="satz-titel text-[18px] lg:text-[24px] text-white/90 leading-[1.5]">
+              <p className="t-lead satz-titel c-hell">
                 Oben, was bleibt. Unten, was gewechselt wird. Dass es diese Linie
                 überhaupt gibt, liegt an einer einzigen Naht.
               </p>
-              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-6">
+              <p className="t-text c-hell mt-6">
                 Die kommt gleich, und mit ihr die Frage, warum wir uns
                 ausgerechnet für diese Machart entschieden haben.
               </p>
@@ -1853,7 +1880,7 @@ export default function Startseite() {
           Modellwahl mit allen achtundvierzig steht weiter unten, und
           dieselbe Geste zweimal wäre ein Katalog an zwei Stellen. Siehe
           ModellStreifen. */}
-      <div className="bg-white">
+      <div className="g-angebot">
         <ModellStreifen
           schuhe={streifenModelle}
           gesamt={shoes.length}
@@ -1897,12 +1924,12 @@ export default function Startseite() {
           Was bleibt, bleibt aus gutem Grund: Wer keine Bewegung will,
           bekommt denselben Abschnitt ohne Bühne, mit allen sechs Schritten
           als Liste. Siehe SchuhAufbau. */}
-      <section className="bg-[#111] text-white">
+      <section className="g-dunkel text-white">
         <SchuhAufbau
           kopf={
             <>
               <Kapitelmarke hell>Die Machart</Kapitelmarke>
-              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+              <h2 className="t-kopf satz-titel mt-4 max-w-2xl">
                 Zwei Nähte halten<br className="hidden sm:block" /> diesen Schuh zusammen.
               </h2>
               {/* Der Satz, der die Folge ankündigt. Ohne ihn beginnt die
@@ -1911,7 +1938,7 @@ export default function Startseite() {
                   unter denen man diese Machart nachschlägt — das deutsche und
                   das englische. Ab hier steht auf der Seite immer eines von
                   beiden und nie etwas Drittes. */}
-              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
+              <p className="t-text c-hell mt-7 max-w-lg">
                 Rahmengenäht, auf Englisch Goodyear welted. Sechs Schritte, von der
                 Brandsohle bis zur Doppelnaht. Scroll weiter, dann setzt er sich
                 zusammen.
@@ -1920,7 +1947,7 @@ export default function Startseite() {
           }
           fuss={
             <div>
-              <p className="satz-titel text-[20px] lg:text-[30px] text-white/90 leading-[1.45] max-w-3xl">
+              <p className="t-lead satz-titel c-hell max-w-3xl">
                 Eine Sohle lässt sich auf drei Arten an einen Schaft bringen.
                 Wir haben uns für die aufwendigste entschieden.
               </p>
@@ -1935,22 +1962,19 @@ export default function Startseite() {
                   return (
                     <div
                       key={m.name}
-                      className={`pt-6 border-t ${unsere ? 'border-white/40' : 'border-white/[0.14]'}`}
+                      className={`pt-6 ${unsere ? '' : ''}`}
                     >
-                      <p className="text-[10px] tracking-[0.3em] text-white/25">
-                        {String(i + 1).padStart(2, '0')}
-                      </p>
-                      <p className={`satz-titel text-[19px] lg:text-[23px] leading-[1.3] mt-4 ${
-                        unsere ? 'text-white' : 'text-white/60'
+                      <p className={`t-lead satz-titel ${
+                        unsere ? 'c-hell' : 'c-hell'
                       }`}>
                         {m.name}
                       </p>
-                      <p className={`text-[10px] uppercase tracking-[0.2em] mt-3 ${
-                        unsere ? 'text-white/60' : 'text-white/30'
+                      <p className={`t-klein mt-3 ${
+                        unsere ? 'c-hell' : 'c-hell-leise'
                       }`}>
                         {m.zusatz}
                       </p>
-                      <p className="text-[12px] lg:text-[13px] text-white/50 font-light leading-[1.9] mt-5">
+                      <p className="t-text c-hell mt-5">
                         {m.text}
                       </p>
                     </div>
@@ -1960,25 +1984,22 @@ export default function Startseite() {
 
               {/* Die vierte Machart, die dieses Haus nicht baut. Sie steht
                   klein und trotzdem da. */}
-              <p className="text-[12px] text-white/35 font-light leading-[1.9] mt-10 lg:mt-12 max-w-2xl">
+              <p className="t-text c-hell-leise mt-10 lg:mt-12 max-w-2xl">
                 Es gibt eine vierte: den von Hand genähten Rahmen, bei dem die
                 Lippe nicht aufgeklebt, sondern aus der Brandsohle
                 herausgearbeitet wird. Dasselbe Prinzip, mehr Handarbeit, ein
                 Preis in einer anderen Klasse. Wir bauen sie nicht.
               </p>
 
-              <div className="mt-14 lg:mt-20 border-t border-white/[0.14] pt-10 lg:pt-14">
+              <div className="mt-14 lg:mt-20 pt-10 lg:pt-14">
                 <Kapitelmarke hell>Warum rahmengenäht</Kapitelmarke>
                 <ol className="grid sm:grid-cols-3 gap-10 lg:gap-14 mt-8 lg:mt-10">
-                  {WARUM_RAHMEN.map((g, i) => (
+                  {WARUM_RAHMEN.map(g => (
                     <li key={g.titel}>
-                      <p className="text-[10px] tracking-[0.3em] text-white/25">
-                        {String(i + 1).padStart(2, '0')}
-                      </p>
-                      <p className="text-[15px] lg:text-[17px] text-white font-light leading-snug mt-4">
+                      <p className="t-text c-hell">
                         {g.titel}
                       </p>
-                      <p className="text-[12px] lg:text-[13px] text-white/50 font-light leading-[1.9] mt-4">
+                      <p className="t-text c-hell mt-4">
                         {g.text}
                       </p>
                     </li>
@@ -1987,11 +2008,11 @@ export default function Startseite() {
 
                 {/* Was es kostet. Ohne diesen Satz wären die drei Gründe
                     Werbung; mit ihm sind sie eine Abwägung. */}
-                <p className="text-[12px] lg:text-[13px] text-white/40 font-light leading-[1.9] mt-12 lg:mt-14 max-w-2xl">
+                <p className="t-text c-hell-leise mt-12 lg:mt-14 max-w-2xl">
                   Was es kostet: Ein rahmengenähter Schuh ist schwerer als ein
                   geklebter und die ersten Wochen fester. Beides legt sich, sobald
                   der Kork nachgegeben hat. Und er braucht länger in der
-                  Werkstatt. Auch deshalb sind es rund vier Wochen.
+                  Werkstatt. Auch deshalb sind es 4 bis 6 Wochen.
                 </p>
               </div>
 
@@ -2043,19 +2064,19 @@ export default function Startseite() {
           Die Saison steht als Feld am Modell und ist im CMS zu ändern
           (lib/saison.js). Führt der Katalog zu einer Saison kein Modell mit
           Beschreibung, fällt die Kollektion weg — sie steht nicht leer da. */}
-      <section className="bg-white">
+      <section className="g-angebot">
         {/* Der Einstieg: mittig, viel Luft, ein Gedanke. Er stand links mit
             Vorspann daneben — das liest sich wie ein Artikel, nicht wie der
             Beginn eines Kapitels. */}
         <div className="px-5 lg:px-16 pt-16 pb-10 lg:pt-28 lg:pb-14 text-center">
           <Enthuellen>
             <Kapitelmarke>Die Kollektionen</Kapitelmarke>
-            <h2 className="satz-titel text-[31px] lg:text-[54px] leading-[1.14] mt-6 max-w-3xl mx-auto">
+            <h2 className="t-kopf satz-titel mt-6 max-w-3xl mx-auto">
               Jede Form hat einen Grund. Meist einen älteren als wir.
             </h2>
           </Enthuellen>
           <Enthuellen verzoegerung={140}>
-            <p className="text-[13px] lg:text-[15px] text-black/45 font-light leading-[2] mt-8 max-w-xl mx-auto">
+            <p className="t-text c-tinte mt-8 max-w-xl mx-auto">
               Die geschlossene Schnürung kommt von der Etikette, die offene vom
               kräftigen Spann, der Riemen vom Steigbügel.
             </p>
@@ -2063,17 +2084,16 @@ export default function Startseite() {
         </div>
 
         {katalogStatus === 'loading' && !kollektionen.length ? (
-          <p className="px-5 lg:px-16 py-24 text-center text-[12px] text-black/30 font-light">
+          <p className="t-klein px-5 lg:px-16 py-24 text-center c-leise">
             Modelle werden geladen …
           </p>
         ) : katalogStatus === 'error' && !kollektionen.length ? (
           <div className="px-5 lg:px-16 py-20 text-center">
-            <p className="text-[12px] text-black/45 font-light">Die Modelle lassen sich gerade nicht laden.</p>
+            <p className="t-klein c-leise">Die Modelle lassen sich gerade nicht laden.</p>
             <button
               type="button"
               onClick={() => initStore?.()}
-              className="mt-4 bg-transparent border border-black/15 text-black/70 px-6 h-10 text-[11px] uppercase hover:border-black/40 hover:text-black transition-colors"
-              style={{ letterSpacing: '0.16em' }}
+              className="t-klein mt-4 g-akzent border-0 px-6 h-11 hover:opacity-90 transition-opacity"
             >
               Noch einmal versuchen
             </button>
@@ -2134,12 +2154,10 @@ export default function Startseite() {
             <button
               type="button"
               onClick={zurKollektion}
-              className="group bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
-              style={{ letterSpacing: '0.22em' }}
+              className="t-klein group bg-transparent border-0 p-0 inline-flex items-center gap-3 c-tinte hover:text-black/60 transition-colors"
             >
-              <span className="relative pb-1">
+              <span className="underline underline-offset-[6px] decoration-1">
                 {shoes.length ? `Alle ${shoes.length} Modelle` : 'Alle Modelle'}
-                <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
               </span>
               <Strichpfeil />
             </button>
@@ -2169,13 +2187,13 @@ export default function Startseite() {
           <div className="lg:grid lg:grid-cols-12 lg:gap-16 lg:items-end">
             <Enthuellen className="lg:col-span-6">
               <Kapitelmarke>Das Leder</Kapitelmarke>
-              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
+              <h2 className="t-kopf satz-titel mt-4">
                 Das Beste an einer Haut liegt ganz oben.
               </h2>
             </Enthuellen>
 
             <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
-              <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
+              <p className="t-text c-tinte">
                 Dein Handrücken ist genauso gebaut, nur dünner: oben die feine
                 Zeichnung, darunter ein Geflecht aus Fasern. Wo die Gerberei eine Haut
                 teilt, entscheidet sich, wie dein Paar in zehn Jahren aussieht.
@@ -2193,7 +2211,7 @@ export default function Startseite() {
           </Enthuellen>
 
           <Enthuellen verzoegerung={220}>
-            <p className="satz-titel text-[18px] lg:text-[24px] text-black/85 leading-[1.5] mt-12 lg:mt-16 max-w-2xl mx-auto text-center">
+            <p className="t-lead satz-titel c-tinte mt-12 lg:mt-16 max-w-2xl mx-auto text-center">
               „Vollnarbig" heißt: Diese oberste Schicht ist ganz geblieben,
               ungeschliffen und ohne Folie darüber. Ein Kratzer darin lässt sich
               auspolieren, wie eine Schramme, die verheilt.
@@ -2211,24 +2229,21 @@ export default function Startseite() {
                     und ohne das säßen die drei Namenszeilen auf drei
                     verschiedenen Höhen. Drei Haarlinien, die nicht fluchten,
                     sehen aus wie ein Fehler. */}
-                <div className="pt-6 border-t border-black/[0.12] h-full flex flex-col">
-                  <p className="text-[10px] tracking-[0.3em] text-black/30">
-                    {String(i + 1).padStart(2, '0')}
-                  </p>
-                  <p className="satz-titel text-[19px] lg:text-[23px] text-black leading-[1.3] mt-4">
+                <div className="pt-6 h-full flex flex-col">
+                  <p className="t-lead satz-titel c-tinte">
                     {l.name}
                   </p>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-black/40 mt-3">
+                  <p className="t-klein c-leise mt-3">
                     {l.herkunft}
                   </p>
-                  <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.9] mt-5 mb-8">
+                  <p className="t-text c-tinte mt-5 mb-8">
                     {l.text}
                   </p>
                   {/* Die Namen aus dem Katalog. Sie stehen unter dem Absatz und
                       nicht darüber: Erst soll man wissen, worum es sich
                       handelt, dann, wie es im Konfigurator heißt. */}
                   {l.namen.length > 0 && (
-                    <p className="text-[11px] text-black/40 font-light leading-[1.9] mt-auto pt-4 border-t border-black/[0.07]">
+                    <p className="t-klein c-leise mt-auto pt-4">
                       {l.namen.join('   ·   ')}
                     </p>
                   )}
@@ -2238,7 +2253,7 @@ export default function Startseite() {
           </div>
 
           <Enthuellen verzoegerung={140}>
-            <p className="text-[12px] text-black/40 font-light mt-12 lg:mt-16 max-w-xl">
+            <p className="t-text c-leise mt-12 lg:mt-16 max-w-xl">
               Was unterhalb der Spaltlinie bleibt, wird auch zu Schuhen, mit
               aufgeprägter Narbung. Im Laden sieht man den Unterschied kaum, im
               dritten Jahr jeder.
@@ -2278,74 +2293,63 @@ export default function Startseite() {
         <div className="max-w-3xl mx-auto">
           <Enthuellen>
             <Kapitelmarke>Der Weg</Kapitelmarke>
-            <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
+            <h2 className="t-kopf satz-titel mt-4">
               Sechs Entscheidungen,<br className="hidden sm:block" /> dann gehört er dir.
             </h2>
           </Enthuellen>
           <Enthuellen verzoegerung={120}>
-            <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.9] mt-6">
+            <p className="t-text c-tinte mt-6">
               Der Konfigurator merkt sich jeden Stand. Verbindlich wird es erst an
               der letzten Station.
             </p>
           </Enthuellen>
 
-          <ol className="mt-12 lg:mt-16">
+          {/* ── Die Stationen ────────────────────────────────────────────
+              Vorher eine Zeitleiste: nummerierte Kreise (01 bis 06) an einer
+              senkrechten Haarlinie. Beides las sich als Formular und nicht als
+              Weg, und die Beschreibungen standen in der kleinsten Schrift —
+              ganze Sätze in 12 px Grau.
+
+              Jetzt trägt die Position die Reihenfolge: links der Name der
+              Station, rechts, was dort passiert, in voller Lesegröße.
+              Getrennt durch Abstand, nicht durch Striche. Ein echtes <ol>,
+              damit eine Vorlesehilfe die Reihenfolge trotzdem nennt. */}
+          <ol className="mt-14 lg:mt-20">
             {stationen.map((st, i) => (
               <Enthuellen key={st.titel} verzoegerung={Math.min(i, 5) * 70}>
-                <li className="relative flex gap-5 lg:gap-8 pb-10 lg:pb-12">
-                  {/* Die Linie zwischen den Stationen.
-                      Sie hängt am <li> und nicht an der Marke: Die Marke ist
-                      36 Pixel hoch, und eine Linie, die sich daran ausrichtet,
-                      hört 36 Pixel weiter unten auf — sie endete im Leeren,
-                      statt die nächste Station zu erreichen. 18 Pixel ist die
-                      Mitte der Marke, die als erstes Kind am linken Rand
-                      steht. */}
-                  <span
-                    className="absolute left-[18px] top-9 bottom-0 w-px bg-black/[0.12]"
-                    aria-hidden="true"
-                  />
-                  <div className="relative shrink-0">
-                    <span className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full border border-black/15 bg-[#F4F2ED] text-[10px] text-black/55"
-                          style={{ letterSpacing: '0.12em' }}>
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                  </div>
+                <li className="lg:grid lg:grid-cols-12 lg:gap-x-10 pb-12 lg:pb-16">
+                  <p className="t-lead c-tinte lg:col-span-4">{st.titel}</p>
 
-                  <div className="pt-1 min-w-0">
-                    <p className="text-[15px] lg:text-[17px] text-black font-light leading-snug">{st.titel}</p>
-                    <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
-                      {st.text}
-                    </p>
+                  <div className="lg:col-span-8 mt-3 lg:mt-1 masz">
+                    <p className="t-text c-tinte">{st.text}</p>
 
                     {/* Der Beleg zur Station: echte Farbtöne aus dem Katalog,
                         die Namen der Optionsgruppen, eine Zahl. Eine
                         Aufzählung ohne Beleg ist eine Behauptung. */}
                     {st.farben && (
-                      <div className="flex flex-wrap items-center gap-1.5 mt-4">
-                        {st.farben.map(hex => (
+                      <div className="flex flex-wrap items-center gap-2 mt-5">
+                        {st.farben.map(f => (
                           <span
-                            key={hex}
-                            className="inline-block w-5 h-5 rounded-full border border-black/10"
-                            style={{ background: hex }}
+                            key={f.k}
+                            title={f.name}
+                            className="inline-block w-9 h-9 rounded-full overflow-hidden shadow-[0_0_0_1px_rgba(35,28,23,0.12)]"
+                            style={{ background: f.hex }}
                             aria-hidden="true"
-                          />
-                        ))}
-                      </div>
-                    )}
-                    {st.schlagworte && (
-                      <div className="flex flex-wrap gap-1.5 mt-4">
-                        {st.schlagworte.map(w => (
-                          <span
-                            key={w}
-                            className="text-[10px] uppercase tracking-[0.14em] text-black/45 border border-black/[0.12] px-2.5 py-1"
                           >
-                            {w}
+                            {f.bild && <img src={f.bild} alt="" loading="lazy" className="w-full h-full object-cover" />}
                           </span>
                         ))}
                       </div>
                     )}
+                    {st.schlagworte && (
+                      <div className="flex flex-wrap gap-2 mt-5">
+                        {st.schlagworte.map(w => (
+                          <span key={w} className="t-klein c-tinte g-angebot px-3 py-1.5">{w}</span>
+                        ))}
+                      </div>
+                    )}
                     {st.zeichnung && (
-                      <div className="mt-6 text-black">
+                      <div className="mt-7 text-black">
                         <Tafelflaeche>
                           <st.zeichnung className="max-w-md" />
                         </Tafelflaeche>
@@ -2353,7 +2357,7 @@ export default function Startseite() {
                       </div>
                     )}
                     {st.hinweis && (
-                      <p className="text-[11px] text-black/35 font-light mt-3">{st.hinweis}</p>
+                      <p className="t-text c-leise mt-4">{st.hinweis}</p>
                     )}
                   </div>
                 </li>
@@ -2361,21 +2365,20 @@ export default function Startseite() {
             ))}
 
             {/* ── Das Ziel ──────────────────────────────────────────────
-                Gefüllte Marke statt Umriss, und keine Linie darunter: Hier
+                Die letzte Station steht auf einer Fläche im Akzent: Hier
                 endet der Weg, und das soll man sehen, ohne es zu lesen. */}
             <Enthuellen verzoegerung={140}>
-              <li className="relative flex gap-5 lg:gap-8">
-                <span className="shrink-0 relative z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black text-white" aria-hidden="true">
-                  <Check size={15} strokeWidth={1.8} />
-                </span>
-                <div className="pt-1">
-                  <p className="text-[17px] lg:text-[20px] text-black font-light leading-snug">Dein Paar</p>
-                  <p className="text-[12px] lg:text-[13px] text-black/50 font-light leading-[1.8] mt-2">
-                    Rund vier Wochen, einzeln gefertigt in Almansa. Du hörst von uns,
+              <li className="g-akzent px-6 py-9 lg:px-12 lg:py-12 lg:grid lg:grid-cols-12 lg:gap-x-10">
+                <p className="t-lead lg:col-span-4 flex items-center gap-3">
+                  <Check size={20} strokeWidth={1.6} aria-hidden="true" /> Dein Paar
+                </p>
+                <div className="lg:col-span-8 mt-3 lg:mt-1 masz">
+                  <p className="t-text">
+                    4 bis 6 Wochen, einzeln gefertigt in Almansa. Du hörst von uns,
                     wenn dein Paar die Werkstatt verlässt, und auch dann, wenn es
                     länger wird. Versand innerhalb Deutschlands inbegriffen.
                   </p>
-                  <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 max-w-lg">
+                  <p className="t-text mt-5 opacity-80">
                     Ein Paar, das für einen bestimmten Fuß gebaut ist, lässt sich nicht
                     zurückgeben. Ist etwas mangelhaft, fertigen wir neu, ohne Kosten
                     für dich. Einzelheiten in den AGB.
@@ -2422,15 +2425,15 @@ export default function Startseite() {
           mit zwei Maßen weiß sonst niemand, welches gemeint ist.
 
           Siehe MassNehmen und lib/massSchritte.js. */}
-      <section className="bg-[#111] text-white">
+      <section className="g-dunkel text-white">
         <MassNehmen
           kopf={
             <>
               <Kapitelmarke hell>Maß nehmen</Kapitelmarke>
-              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+              <h2 className="t-kopf satz-titel mt-4 max-w-2xl">
                 Zwei Zahlen.<br className="hidden sm:block" /> So kommst du dran.
               </h2>
-              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
+              <p className="t-text c-hell mt-7 max-w-lg">
                 Zehn Minuten, ein Blatt Papier und ein Maßband. Wer kein Maßband
                 hat, nimmt einen Schnürsenkel und legt ihn danach ans Lineal.
               </p>
@@ -2438,11 +2441,11 @@ export default function Startseite() {
           }
           fuss={
             <div className="max-w-3xl">
-              <p className="satz-titel text-[18px] lg:text-[24px] text-white/90 leading-[1.5]">
+              <p className="t-lead satz-titel c-hell">
                 Ein halber Zentimeter Abweichung ist in Ordnung. Ein ganzer nicht:
                 Das ist eine halbe Größe.
               </p>
-              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-6">
+              <p className="t-text c-hell mt-6">
                 Aus den zwei Zahlen bestimmen wir Leisten, Größe und Weite. Trag sie
                 einmal ein, dann stehen sie bei jeder weiteren Bestellung schon da.
               </p>
@@ -2487,19 +2490,19 @@ export default function Startseite() {
           für alles, was erzählt —, gehört es zum Beige: Hier bewegt sich
           nichts und hier steht kein Preis, hier wird erklärt. Schwarz an
           dieser Stelle hieße, dass gleich eine Zeichnung kommt. */}
-      <section className="border-y border-black/[0.06]">
+      <section className="">
         <div className="relative px-5 lg:px-16 py-16 lg:py-28">
           <div className="max-w-6xl mx-auto">
             <div className="lg:grid lg:grid-cols-12 lg:gap-16 lg:items-end">
               <Enthuellen className="lg:col-span-6">
                 <Kapitelmarke>Almansa · Produktionszeit</Kapitelmarke>
-                <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4">
-                  Was in diesen<br className="hidden sm:block" /> vier Wochen passiert.
+                <h2 className="t-kopf satz-titel mt-4">
+                  Was in diesen<br className="hidden sm:block" /> Wochen passiert.
                 </h2>
               </Enthuellen>
 
               <Enthuellen verzoegerung={120} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
-                <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
+                <p className="t-text c-tinte">
                   Almansa liegt in der Provinz Albacete und ist eine der Städte, in
                   denen Spanien seine Schuhe macht. Dort wird deiner gebaut: nicht
                   aus einem Regal geholt, sondern angefangen, wenn deine Bestellung
@@ -2514,7 +2517,7 @@ export default function Startseite() {
                 ist, was eine Schwäche in ein Argument verwandelt. Und weil er
                 etwas sagt, das man nur weiß, wenn man zugesehen hat. */}
             <Enthuellen verzoegerung={180}>
-              <p className="satz-titel text-[20px] lg:text-[30px] text-black/90 leading-[1.45] mt-14 lg:mt-24 max-w-3xl">
+              <p className="t-lead satz-titel c-tinte mt-14 lg:mt-24 max-w-3xl">
                 Den längsten Teil dieser Zeit steht dein Schuh auf dem Leisten
                 und tut nichts.
               </p>
@@ -2522,7 +2525,7 @@ export default function Startseite() {
 
             <div className="mt-10 lg:mt-14 lg:grid lg:grid-cols-12 lg:gap-16">
               <Enthuellen verzoegerung={220} className="lg:col-span-6">
-                <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
+                <p className="t-text c-tinte">
                   Zuschneiden und Zwicken sind eine Sache von Tagen. Danach muss das
                   Leder, das über die Form gespannt wurde, sie annehmen. Nimmt man es
                   zu früh herunter, zieht es sich zurück und die Kappe verliert ihre
@@ -2533,7 +2536,7 @@ export default function Startseite() {
               </Enthuellen>
 
               <Enthuellen verzoegerung={280} className="lg:col-span-5 lg:col-start-8 mt-7 lg:mt-0">
-                <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95]">
+                <p className="t-text c-tinte">
                   Bis dahin gibt es dein Paar nur als Bestellung. Es liegt in keinem
                   Lager, es wird für niemand sonst gebaut, und es verlässt Almansa in
                   einem einzigen Karton.
@@ -2545,13 +2548,13 @@ export default function Startseite() {
                     Wer das verschweigt und dann fünf Wochen braucht, hat
                     einen Satz gebrochen; wer es hinschreibt, hat keinen. Das
                     ist dieselbe Rechnung wie in Kapitel 10. */}
-                <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-[1.9] mt-8">
-                  Vier Wochen sind der Normalfall und keine Zusage. Fehlt ein Leder
+                <p className="t-text c-leise mt-8">
+                  4 bis 6 Wochen sind der Normalfall und keine Zusage. Fehlt ein Leder
                   oder muss eine Sohle zweimal gemacht werden, werden fünf daraus.
                   Dann hörst du das von uns, sobald wir es wissen. Nicht erst,
                   wenn du fragst.
                 </p>
-                <p className="text-[11px] text-black/35 font-light leading-[1.9] mt-5">
+                <p className="t-text c-leise mt-5">
                   Einzelne Modelle sind vorbereitet und in rund zwei Wochen fertig.
                   Am Modell steht, welche.
                 </p>
@@ -2611,15 +2614,15 @@ export default function Startseite() {
 
           Zur Folge selbst — warum sie dieselbe Mechanik hat wie der Aufbau
           und trotzdem anders aussieht — steht alles in PflegeFolge.jsx. */}
-      <section className="bg-[#111] text-white">
+      <section className="g-dunkel text-white">
         <PflegeFolge
           kopf={
             <>
               <Kapitelmarke hell>Die Pflege</Kapitelmarke>
-              <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+              <h2 className="t-kopf satz-titel mt-4 max-w-2xl">
                 Auch diese Haut<br className="hidden sm:block" /> will gepflegt werden.
               </h2>
-              <p className="text-[13px] lg:text-[15px] text-white/55 font-light leading-[1.95] mt-7 max-w-lg">
+              <p className="t-text c-hell mt-7 max-w-lg">
                 Morgens schlüpfst du hinein, tagsüber denkst du nicht an sie, und
                 abends entscheiden fünf Minuten, ob aus der Falte über dem Ballen
                 eine Linie wird oder eine Kerbe.
@@ -2631,14 +2634,14 @@ export default function Startseite() {
               {zubehoer.length > 0 && (
                 <div className="grid sm:grid-cols-3 gap-10 lg:gap-14">
                   {zubehoer.map(({ key, satz, ware }) => (
-                    <div key={key} className="pt-6 border-t border-white/[0.18]">
-                      <p className="satz-titel text-[18px] lg:text-[21px] text-white leading-[1.3]">
+                    <div key={key} className="pt-6">
+                      <p className="t-lead satz-titel c-hell">
                         {ware.name}
                       </p>
-                      <p className="text-[11px] text-white/40 font-light mt-2">
+                      <p className="t-klein c-hell-leise mt-2">
                         {euro(ware.price)}
                       </p>
-                      <p className="text-[12px] lg:text-[13px] text-white/55 font-light leading-[1.9] mt-4">
+                      <p className="t-text c-hell mt-4">
                         {satz}
                       </p>
                     </div>
@@ -2667,17 +2670,17 @@ export default function Startseite() {
           Kleingedruckten; hier ist sie das Verkaufsargument. Wer „handmade"
           liest und später erfährt, dass Maschinen im Spiel waren, zieht den
           Rest der Zusagen in Zweifel — auch die, die stimmen. */}
-      <section className="border-y border-black/[0.06] px-5 lg:px-16 py-16 lg:py-28">
+      <section className=" px-5 lg:px-16 py-16 lg:py-28">
         <div className="max-w-2xl mx-auto">
           <Enthuellen>
             <Kapitelmarke>In eigener Sache</Kapitelmarke>
-            <h2 className="satz-titel text-[25px] lg:text-[38px] leading-[1.18] mt-4">
+            <h2 className="t-kopf satz-titel mt-4">
               Bevor es jemand anders sagt
             </h2>
           </Enthuellen>
 
           <Enthuellen verzoegerung={100}>
-            <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-7">
+            <p className="t-text c-tinte mt-7">
               Wir schreiben nicht „handgefertigt". Der Rahmen wird maschinell genäht,
               wie in jeder Manufaktur dieser Preisklasse. Von Hand kommen Zuschnitt,
               Zwicken und Finish.
@@ -2685,7 +2688,7 @@ export default function Startseite() {
           </Enthuellen>
 
           <Enthuellen verzoegerung={180}>
-            <p className="text-[14px] lg:text-[16px] text-black/60 font-light leading-[1.9] mt-5">
+            <p className="t-text c-tinte mt-5">
               Der Unterschied zum geklebten Schuh spricht für sich. Er braucht kein
               Wort, das ihn größer macht.
             </p>
@@ -2702,20 +2705,15 @@ export default function Startseite() {
       {/* ══ 13 · Der Anfang ═══════════════════════════════════════════════
           Ein Weg, nicht drei. Wer bis hierher gelesen hat, sucht keine
           Auswahl mehr, sondern die Stelle, an der es losgeht. */}
-      <section className="relative overflow-hidden bg-[#0E0E0E]">
-        <div
-          className="absolute inset-0"
-          style={{ background: 'radial-gradient(110% 80% at 50% 0%, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0) 60%)' }}
-          aria-hidden="true"
-        />
+      <section className="relative overflow-hidden g-dunkel">
         <div className="relative px-5 lg:px-16 py-24 lg:py-36 text-center">
           <Enthuellen>
-            <h2 className="satz-titel text-[29px] lg:text-[50px] leading-[1.14] text-white max-w-2xl mx-auto">
+            <h2 className="t-kopf satz-titel c-hell max-w-2xl mx-auto">
               Sechs Entscheidungen.<br className="hidden sm:block" /> Fang mit der ersten an.
             </h2>
           </Enthuellen>
           <Enthuellen verzoegerung={120}>
-            <p className="text-[13px] lg:text-[14px] text-white/55 font-light mt-5 max-w-md mx-auto leading-relaxed">
+            <p className="t-text c-hell mt-5 max-w-md mx-auto">
               Die Form zuerst, alles andere baut darauf auf. Konfigurieren kostet
               nichts. Gebaut wird erst, wenn du es sagst.
             </p>
@@ -2724,8 +2722,7 @@ export default function Startseite() {
             <button
               type="button"
               onClick={zurKollektion}
-              className="group mt-9 bg-white text-black border-0 px-12 h-12 text-[11px] uppercase inline-flex items-center justify-center gap-3 hover:bg-white/85 transition-colors"
-              style={{ letterSpacing: '0.18em' }}
+              className="t-klein group mt-9 g-akzent border-0 px-12 h-12 inline-flex items-center justify-center gap-3 hover:opacity-90 transition-colors"
             >
               Schuh konfigurieren
               <Strichpfeil />
