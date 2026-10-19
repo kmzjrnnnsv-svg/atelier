@@ -13,6 +13,9 @@
  *          zwischen „Standard" und „Höher" ist eine Wahl zwischen zwei
  *          Wörtern, und ein leeres Kästchen daneben machte sie nicht klarer.
  *
+ * `ausrichtung="start"` setzt die Reihe linksbündig — in der schmalen Spalte
+ * auf großen Bildschirmen steht alles bündig unter dem Namen des Schuhs.
+ *
  * Zeigen genügt, Klicken ist nicht nötig: Fährt der Zeiger über ein Muster
  * (oder liegt der Tastaturfokus darauf), steht es groß in der Bühne. Wer
  * vergleicht, will sehen, ohne sich bei jedem Blick festzulegen.
@@ -21,10 +24,11 @@ import { Check, Star } from 'lucide-react'
 
 const preisText = (p) => (p > 0 ? `+ € ${Number(p).toLocaleString('de-DE')}` : null)
 
-export default function Wahlreihe({ werte, gewaehlt, onWahl, onZeigen, form = 'rund', mitNamen = false, beschriftung }) {
+export default function Wahlreihe({ werte, gewaehlt, onWahl, onZeigen, form = 'rund', mitNamen = false, beschriftung, ausrichtung = 'mitte' }) {
+  const links = ausrichtung === 'start'
   if (form === 'text') {
     return (
-      <div role="radiogroup" aria-label={beschriftung} className="w-full flex flex-wrap items-baseline justify-center gap-x-7 gap-y-3">
+      <div role="radiogroup" aria-label={beschriftung} className={`w-full flex flex-wrap items-baseline gap-x-7 gap-y-3 ${links ? 'justify-start' : 'justify-center'}`}>
         {werte.map(w => {
           const an = w.id === gewaehlt
           return (
@@ -62,7 +66,7 @@ export default function Wahlreihe({ werte, gewaehlt, onWahl, onZeigen, form = 'r
       // zentrierten Spalte wüchse die Reihe sonst auf die Breite aller
       // Muster, und das Telefon zoomte die ganze Seite heraus, um sie zu
       // zeigen. Dann rutschte auch die Leiste am unteren Rand weg.
-      className="w-full max-w-full flex gap-3 sm:gap-4 overflow-x-auto py-2 px-1 sm:flex-wrap sm:justify-center sm:overflow-visible snap-x"
+      className={`w-full max-w-full flex gap-3 sm:gap-4 overflow-x-auto py-2 px-1 sm:flex-wrap sm:overflow-visible snap-x ${links ? 'sm:justify-start' : 'sm:justify-center'}`}
       style={{ scrollbarWidth: 'none' }}
     >
       {werte.map(w => {
@@ -74,7 +78,9 @@ export default function Wahlreihe({ werte, gewaehlt, onWahl, onZeigen, form = 'r
             role="radio"
             aria-checked={an}
             aria-label={[w.label, preisText(w.preis)].filter(Boolean).join(', ')}
-            title={w.label}
+            // Steht der Name schon darunter, legte sich der Tooltip des
+            // Browsers nur noch über die Beschriftung der Nachbarn.
+            title={mitNamen ? undefined : w.label}
             disabled={w.gesperrt}
             onClick={() => onWahl(w.id)}
             onMouseEnter={() => onZeigen?.(w.bild || null)}
