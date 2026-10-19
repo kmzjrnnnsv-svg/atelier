@@ -1299,10 +1299,15 @@ export default function Startseite() {
              die Ferse. Eine Komposition, die ihr eigenes Motiv verdeckt,
              ist keine. Der Versatz bleibt, die Überdeckung nicht: Die
              beiden Spalten stehen jetzt nebeneinander, nur eben auf
-             verschiedener Höhe. */
+             verschiedener Höhe.
+
+             `overflow-x-clip`, weil das Bild bis an den Rand reicht und von
+             rechts einblendet: Vor dem Einblenden stand es um ein paar Pixel
+             über den Rand, und die ganze Seite ließ sich seitlich schieben —
+             auch ganz oben auf Höhe des Films. */
           if (i % 4 === 2) {
             return (
-              <section key={schuh.id} className="g-angebot py-14 lg:py-20 px-5 lg:pl-16 lg:pr-0">
+              <section key={schuh.id} className="g-angebot py-14 lg:py-20 px-5 lg:pl-16 lg:pr-0 overflow-x-clip">
                 <div className="lg:grid lg:grid-cols-12 lg:gap-x-14 lg:items-start">
                   <Enthuellen richtung="rechts" className="lg:col-span-6 lg:col-start-7 lg:row-start-1">
                     <Kapitelbild

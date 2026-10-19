@@ -440,7 +440,7 @@ function AppRoutes() {
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', overflow: 'hidden', boxSizing: 'border-box', paddingTop: 'env(safe-area-inset-top)' }}>
         {zeigeVermittler && <VermittlerBanner />}
         {zeigeVermittler && <OwnerBanner />}
-        <div className="flex-1 overflow-y-auto relative">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
           <Suspense fallback={<DelayedSpinner />}>
             <PageTransition>
             <RefErfassung />
@@ -602,7 +602,7 @@ function AppRoutes() {
   // ── Mobile web: TopBar (burger menu), natural document scroll ──
   if (isMobileWeb) {
     return (
-      <div style={{ minHeight: '100dvh', background: '#FFFFFF' }}>
+      <div style={{ minHeight: '100dvh', background: '#FFFFFF', overflowX: 'clip' }}>
         {zeigeVermittler && <VermittlerBanner />}
         {zeigeVermittler && <OwnerBanner />}
         {istLaden && <StartBanner />}
@@ -624,7 +624,10 @@ function AppRoutes() {
         {zeigeVermittler && <OwnerBanner />}
       {istLaden && <StartBanner />}
       {showNav && <TopBar />}
-      <div className="flex-1 overflow-y-auto relative">
+      {/* Seitlich scrollt hier nie etwas: Ragt ein Element über den Rand
+          (etwa ein Bild, das von rechts einblendet), ließ sich vorher die
+          ganze Seite verschieben. */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
         <div className="w-full">
           <Suspense fallback={<DelayedSpinner />}><PageTransition>{routes}</PageTransition></Suspense>
           {showFooter && <Footer />}
