@@ -110,16 +110,12 @@ const MARKEN = [
    Bildschirm nicht zu sehen. */
 const LINIE = 510
 
-/* Die beiden Wörter standen über und unter dem rechten Ende der Linie — und
-   damit über den Blättern, die bis 765 reichen, und quer über der Linie
-   selbst. Jetzt stehen sie rechts DANEBEN, im Rand, in dem sonst die
-   Beschriftung sitzt; auf dieser Höhe ist er frei. Die Linie hört vorher
-   auf und läuft ihnen nicht mehr hinein. */
+/* Nur die Linie. Rechts daneben standen „bleibt" und „wird gewechselt";
+   auf dem Telefon schnitt der Rand sie ab („WIRD GEW"), und der Text unter
+   der Zeichnung sagt dasselbe in ganzen Sätzen. */
 const TRENNMARKUP = `
   <path class="as-strich" pathLength="1" d="M 219 ${LINIE} L 752 ${LINIE}"
-        style="stroke-dasharray:9 7;stroke-dashoffset:0;opacity:.7;stroke-width:1.5"/>
-  <text class="as-marke-name" x="944" y="${LINIE - 14}" text-anchor="end">bleibt</text>
-  <text class="as-marke-name" x="944" y="${LINIE + 24}" text-anchor="end">wird gewechselt</text>`
+        style="stroke-dasharray:9 7;stroke-dashoffset:0;opacity:.7;stroke-width:1.5"/>`
 
 /**
  * @param {number|null} [schritt] 0 … 6. `null` zeigt den fertigen Stapel
