@@ -2,13 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Send, ScanLine, BellRing, Lock, Box, ZoomIn, ZoomOut, RotateCcw, Share2, Eye, Plus, Ruler, Footprints, Layers, CircleDashed, Diamond, CircleDot, Square, Gem, Palette, Sparkles, ArrowRightLeft } from 'lucide-react'
-
-// Lucide-Icon-Lookup pro option_groups.icon (Lucide-Komponentenname)
-const GROUP_ICONS = {
-  Footprints, Layers, CircleDashed, ChevronUp, Diamond, CircleDot, Square, Gem,
-  Palette, Sparkles, ArrowRightLeft,
-}
+import { ArrowLeft, ArrowRight, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Send, Box, ZoomIn, ZoomOut, Share2, Eye, Plus } from 'lucide-react'
 
 // Weitenbuchstaben in Alltagssprache. D, EE und EEE sind Werkstattmaße; in
 // der Zusammenfassung soll stehen, was der Kunde gewählt hat, nicht wie es
@@ -59,26 +53,6 @@ const WEITEN_WAHL = [
   { key: 'EEE', titel: 'Sehr breit', kurz: 'Auch weite drücken', hinweis: 'Auch als weit ausgewiesene Schuhe sind dir zu eng, oder du trägst üblicherweise Spezialweiten.' },
 ]
 
-// Leisten-Zehenform als Draufsicht-Silhouette. Visualisiert die Unterschiede
-// zwischen Zurigo (rund), Monti (leicht eckig), Savile (Chisel) und
-// Belgravia (scharfe Chisel). Wird angezeigt, wenn kein echtes Foto
-// hochgeladen wurde.
-const LAST_SHAPES = {
-  zurigo:    'M9 56 L9 24 Q9 6 21 6 Q33 6 33 24 L33 56 Z',          // runde Spitze
-  monti:     'M9 56 L9 22 Q9 9 15 8 L27 8 Q33 9 33 22 L33 56 Z',     // leicht eckig
-
-}
-function LastShapeIcon({ shapeKey, active }) {
-  const path = LAST_SHAPES[shapeKey]
-  if (!path) return null
-  return (
-    <svg viewBox="0 0 42 62" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-      <path d={path} fill={active ? '#1a1a1a' : '#d4cfc7'} stroke={active ? '#1a1a1a' : '#b8b2a8'} strokeWidth="1" />
-      {/* feine Naht-Andeutung an der Spitze */}
-      <path d={path} fill="none" stroke={active ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.4)'} strokeWidth="0.5" transform="scale(0.82) translate(4.5 6)" />
-    </svg>
-  )
-}
 import useStore from '../store/store'
 import { resolveMediaUrl } from '../lib/mediaUrl'
 import { useJsonLd, produktDaten } from '../lib/jsonld'
@@ -89,26 +63,24 @@ import { Preishinweis } from '../lib/preisangabe'
 import { ownerPreisFuer } from '../lib/ownerLink'
 import GroessenTabelle from '../components/GroessenTabelle'
 import ExpressHinweis from '../components/ExpressHinweis'
-import { sichtbareGruppen as gruppenFuer, festeWerte, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
+import { sichtbareGruppen as gruppenFuer, festeWerte, abgeleiteteWerte, nurMitBild, farbenMitBild, musterFuer, farbWort, hatLederrand, FARBGRUPPEN_SOHLE, expressFreigabe } from '../lib/sohlenRegel'
 import GuertelWahl from '../components/GuertelWahl'
 import { guertelSatz } from '../lib/guertel'
 
 
 // Relative Bild-URLs (/uploads/…) gegen die API-Base auflösen, base64/http
-// bleiben unverändert.
-const IMG_API_BASE = import.meta.env.VITE_API_URL || ''
-
-const resolveImg = (url) => {
-  if (!url) return url
-  if (url.startsWith('http') || url.startsWith('data:')) return url
-  return `${IMG_API_BASE}${url}`
-}
+// und die Ledermuster aus dem Frontend (/leder/…) bleiben unverändert.
+const resolveImg = resolveMediaUrl
 import { apiFetch } from '../hooks/useApi'
 import { useAuth } from '../context/AuthContext'
 import ShoeName, { cleanShoeName } from '../lib/shoeName'
 import CustomRequestModal from '../components/CustomRequestModal'
 import ShoeModelViewer from '../components/ShoeModelViewer'
 import MassHilfe from '../components/MassHilfe'
+import Schrittleiste from '../components/konfigurator/Schrittleiste'
+import Wahlreihe from '../components/konfigurator/Wahlreihe'
+import SchrittMenue from '../components/konfigurator/SchrittMenue'
+import Zusammenfassung from '../components/konfigurator/Zusammenfassung'
 import { newDraftId, saveDraft, flushDraft, findOpenDraft, discardDraft, markInCart } from '../lib/configDraft'
 
 // ── Swipe: wische links/rechts um Option zu wechseln ────────────────────────
@@ -154,7 +126,7 @@ function Stars({ value, size = 14 }) {
 export default function Customize() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { favorites, toggleFavorite, latestScan, addReminder, hasReminder, removeReminder, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, affiliate, ownerLink, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
+  const { favorites, toggleFavorite, latestScan, shoeMaterials, shoeColors, addToCart, cart, accessories: allAccessories, myCampaigns, affiliate, ownerLink, shoes, footMeasurements, saveFootMeasurements, matchFit, saveConfiguration } = useStore()
   const { user } = useAuth()
 
   // Schuh-Auflösung mit mehreren Fallbacks, damit product IMMER eine echte
@@ -311,6 +283,11 @@ export default function Customize() {
       (Array.isArray(groups) ? groups : [])
         .filter(g => !['material', 'color', 'last'].includes(g.key))
         .filter(g => !expressOffen || expressOffen.has(g.key))
+        // Nur zur Wahl, was man sehen kann — die Regel und ihre Ausnahmen
+        // stehen in lib/sohlenRegel.js, wo sie geprüft werden.
+        .map(g => nurMitBild(g, {
+          behalten: g.key === 'loafer_decoration' ? product?.locked_decoration : null,
+        }))
 
     // Optionen laden: zuerst per-Schuh, bei leer → Kategorie-Vorlage.
     const loadOptions = async () => {
@@ -398,32 +375,10 @@ export default function Customize() {
   // Fällt alles weg, steht wieder der Schuh da. Das ist der Normalfall und
   // deshalb der letzte Zweig, nicht der erste.
   const [kachelImZeiger, setKachelImZeiger] = useState(null)
+  // Welcher Schritt gerade dran ist. Früher ermittelte ein Beobachter, welcher
+  // Abschnitt beim Scrollen im Blick war; jetzt gibt es immer genau einen
+  // Schritt, und er steht in `schrittKey` (siehe die Schrittliste weiter unten).
   const [gruppeImBlick, setGruppeImBlick] = useState(null)
-  const gruppenRefs = useRef({})
-
-  // Welcher Schritt gerade im Blick ist. `root: null` genügt auch am
-  // Schreibtisch, wo die Spalte ihren eigenen Bildlauf hat: Die Kacheln
-  // bewegen sich dabei trotzdem durch das Fenster.
-  useEffect(() => {
-    const knoten = Object.values(gruppenRefs.current).filter(Boolean)
-    if (!knoten.length || typeof IntersectionObserver === 'undefined') return
-    const beobachter = new IntersectionObserver(
-      (eintraege) => {
-        const drin = eintraege.filter(e => e.isIntersecting)
-        if (drin.length) {
-          // Der oberste der sichtbaren: Bei zwei Schritten nebeneinander
-          // gewinnt der, den der Kunde zuerst liest.
-          const oben = drin.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-          setGruppeImBlick(oben.target.dataset.gruppe || null)
-        } else if (eintraege.some(e => e.target.dataset.gruppe === gruppeImBlick)) {
-          setGruppeImBlick(null)
-        }
-      },
-      { rootMargin: '-25% 0px -45% 0px', threshold: 0 },
-    )
-    knoten.forEach(k => beobachter.observe(k))
-    return () => beobachter.disconnect()
-  }, [sichtbareGruppen.length, gruppeImBlick])
 
   const gruppeJetzt = sichtbareGruppen.find(g => g.key === gruppeImBlick) || null
   const gewaehlterWert = gruppeJetzt?.values?.find(v => v.id === selectedExtras[gruppeJetzt.key]) || null
@@ -504,7 +459,7 @@ export default function Customize() {
     return erlaubt.includes(matKey)
   }
 
-  const filteredGlobalColors = shoeColors.filter(c => colorMatchesMaterial(c, selMat))
+  const filteredGlobalColors = farbenMitBild(shoeColors.filter(c => colorMatchesMaterial(c, selMat)))
 
   const colList = perShoeColorVariants && perShoeColorVariants.length > 0
     ? (() => {
@@ -556,7 +511,6 @@ export default function Customize() {
   useEffect(() => {
     apiFetch('/api/settings/product-texts').then(t => setPageTexts(t || null)).catch(() => {})
   }, [])
-  const [showSizeEscape, setShowSizeEscape] = useState(false) // versteckter EU-Grid-Notausgang
   // Lokale Maß-Eingabe (falls noch keine Maße gespeichert)
   const [measLen, setMeasLen] = useState('')
   const [measGirth, setMeasGirth] = useState('')
@@ -713,42 +667,42 @@ export default function Customize() {
         ball_girth_mm: Number.isFinite(girth) ? girth : null,
       })
       setMeasLen(''); setMeasGirth(''); setMeasOpen(false)
-    } catch {} finally { setMeasSaving(false) }
+    } catch { /* Die Maße bleiben im Formular stehen, der Kunde kann es erneut versuchen. */ } finally { setMeasSaving(false) }
   }
 
   // Ein Formular, zwei mögliche Plätze — gerendert wird es an dem, von dem
   // aus es geöffnet wurde.
   const massFormular = (
             <div className="mt-3 border border-black/10 p-3 max-w-md">
-              <p className="text-[10px] text-black/40 font-light mb-2 leading-relaxed">
+              <p className="t-klein c-leise mb-2">
                 Die Fußlänge genügt uns für die Größe, ±0,5 cm sind völlig in Ordnung.
                 Kommt der Ballenumfang dazu, bestimmen wir auch die Weite und den Leisten;
                 ohne ihn fragen wir dich danach.
               </p>
               <div className="flex items-end gap-2">
                 <label className="flex-1">
-                  <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">Fußlänge (mm)</span>
+                  <span className="t-klein block c-leise mb-1">Fußlänge (mm)</span>
                   <input
                     type="number" inputMode="decimal" value={measLen}
                     onChange={(e) => setMeasLen(e.target.value)} placeholder="z. B. 270"
-                    className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
+                    className="t-text w-full h-9 px-2.5 border border-black/15 outline-none focus:border-black/40"
                   />
                 </label>
                 <label className="flex-1">
-                  <span className="block text-[9px] text-black/35 uppercase tracking-wider mb-1">
+                  <span className="t-klein block c-leise mb-1">
                     Ballenumfang (mm) <span className="text-black/25 normal-case tracking-normal">· optional</span>
                   </span>
                   <input
                     type="number" inputMode="decimal" value={measGirth}
                     onChange={(e) => setMeasGirth(e.target.value)} placeholder="wenn zur Hand"
-                    className="w-full h-9 px-2.5 border border-black/15 text-[13px] outline-none focus:border-black/40"
+                    className="t-text w-full h-9 px-2.5 border border-black/15 outline-none focus:border-black/40"
                   />
                 </label>
                 <button
                   type="button"
                   onClick={saveMeasurements}
                   disabled={measSaving || !measLen}
-                  className="h-9 px-4 bg-black text-white text-[11px] tracking-[0.12em] uppercase border-0 disabled:opacity-30"
+                  className="t-klein h-11 px-5 g-akzent border-0 disabled:opacity-30"
                 >
                   {measSaving ? '…' : 'Übernehmen'}
                 </button>
@@ -760,7 +714,7 @@ export default function Customize() {
               <MassHilfe className="mt-4 pt-3 border-t border-black/[0.08]" />
 
               {footMeasurements?.foot_length_mm && (
-                <button type="button" onClick={() => setMeasOpen(false)} className="mt-3 text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">
+                <button type="button" onClick={() => setMeasOpen(false)} className="t-klein mt-3 c-leise hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">
                   Abbrechen
                 </button>
               )}
@@ -768,15 +722,6 @@ export default function Customize() {
   )
 
 
-  // Step-by-step guided flow: 0=nichts, 1=Leder gewählt, 3=Farbe gewählt.
-  // Ab Stufe 3 werden die Extra-Konfigurator-Gruppen aktiv.
-  const configStep = selCol ? 3 : selMat ? 1 : 0
-
-  // Refs for scroll forwarding between panels
-  const outerRef = useRef(null)
-  const rightPanelRef = useRef(null)
-  const leftPanelRef = useRef(null)
-  const [rightFullyScrolled, setRightFullyScrolled] = useState(false)
   const [selectedAccessories, setSelectedAccessories] = useState([])
   const [duplicateDialog, setDuplicateDialog] = useState(false)
 
@@ -785,102 +730,6 @@ export default function Customize() {
       prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
     )
   }
-
-  // Sequenced scroll: right panel first (down), left panel first (up)
-  const twoColRef = useRef(null)
-  const [leftFullyScrolled, setLeftFullyScrolled] = useState(false)
-
-  // On desktop: lock parent scroll container so panels scroll independently
-  useEffect(() => {
-    if (window.innerWidth < 1024) return
-    const restored = []
-    let el = outerRef.current?.parentElement
-    while (el) {
-      const style = getComputedStyle(el)
-      // Make every intermediate wrapper fill its parent height
-      if (!el.style.height || el.style.height === 'auto') {
-        el.style.height = '100%'
-        const ref = el
-        restored.push(() => { ref.style.height = '' })
-      }
-      if (style.overflow === 'auto' || style.overflowY === 'auto') {
-        el.style.overflow = 'hidden'
-        const ref = el
-        restored.push(() => { ref.style.overflow = '' })
-      }
-      el = el.parentElement
-    }
-    return () => restored.forEach(fn => fn())
-  }, [])
-
-  // Sequential scroll: right panel first, then left panel.
-  // Both panels are set to overflow:hidden so we have full control.
-  useEffect(() => {
-    if (window.innerWidth < 1024) return
-    const wrapper = outerRef.current
-    const rp = rightPanelRef.current
-    const lp = leftPanelRef.current
-    if (!wrapper || !rp || !lp) return
-
-    rp.style.overflowY = 'hidden'
-    lp.style.overflowY = 'hidden'
-
-    const clamp = (el, delta) => {
-      const max = el.scrollHeight - el.clientHeight
-      el.scrollTop = Math.max(0, Math.min(max, el.scrollTop + delta))
-    }
-
-    const scroll = (delta) => {
-      const rpMax = rp.scrollHeight - rp.clientHeight
-      const lpMax = lp.scrollHeight - lp.clientHeight
-
-      if (delta > 0) {
-        if (rp.scrollTop < rpMax - 1) { clamp(rp, delta) }
-        else { clamp(lp, delta) }
-      } else {
-        if (lp.scrollTop > 1) { clamp(lp, delta) }
-        else { clamp(rp, delta) }
-      }
-    }
-
-    const onWheel = (e) => {
-      e.preventDefault()
-      scroll(e.deltaY)
-    }
-
-    let touchY0 = 0
-    const onTouchStart = (e) => { touchY0 = e.touches[0].clientY }
-    const onTouchMove = (e) => {
-      e.preventDefault()
-      const y = e.touches[0].clientY
-      scroll(touchY0 - y)
-      touchY0 = y
-    }
-
-    wrapper.addEventListener('wheel', onWheel, { passive: false, capture: true })
-    wrapper.addEventListener('touchstart', onTouchStart, { passive: true, capture: true })
-    wrapper.addEventListener('touchmove', onTouchMove, { passive: false, capture: true })
-    return () => {
-      rp.style.overflowY = ''
-      lp.style.overflowY = ''
-      wrapper.removeEventListener('wheel', onWheel, { capture: true })
-      wrapper.removeEventListener('touchstart', onTouchStart, { capture: true })
-      wrapper.removeEventListener('touchmove', onTouchMove, { capture: true })
-    }
-  }, [])
-
-  // Track right panel scroll position for accessories opacity
-  useEffect(() => {
-    const rp = rightPanelRef.current
-    if (!rp) return
-    const onScroll = () => {
-      const atBottom = rp.scrollHeight - rp.scrollTop - rp.clientHeight < 2
-      setRightFullyScrolled(atBottom)
-    }
-    onScroll()
-    rp.addEventListener('scroll', onScroll, { passive: true })
-    return () => rp.removeEventListener('scroll', onScroll)
-  }, [])
 
   // 3D Viewer
   const [is3D, setIs3D] = useState(false)
@@ -895,19 +744,42 @@ export default function Customize() {
 
   // Store-Daten aktualisieren (only reset if current value is invalid, not if empty)
   // Wenn nur ein Material verfügbar ist: automatisch wählen (Leder-Sektion entfällt).
+  // Die Liste entsteht bei jedem Rendern neu; der Effekt soll aber nur
+  // laufen, wenn sich die Leder wirklich ändern, nicht bei jedem Rendern.
+  const matKeys = matList.map(m => m.key).join(',')
   useEffect(() => {
     if (matList.length === 1 && !selMat) {
       setSelMat(matList[0].key)
     } else if (matList.length > 1 && selMat && !matList.find(m => m.key === selMat)) {
       setSelMat('')
     }
-  }, [matList])
+  }, [matKeys])
   useEffect(() => {
     if (shoeColors.length && selCol && !shoeColors.find(c => c.key === selCol)) setSelCol('')
   }, [shoeColors])
 
   const mat      = matList.find(m => m.key === selMat) || matList[0]
   const col      = colList.find(c => c.key === selCol) || colList[0]
+
+  // Die Farben hängen am Leder: „Schwarz" auf Box Calf ist eine andere Zeile
+  // als „Schwarz" auf Lux Suede, mit eigenem Muster. Wechselt jemand das
+  // Leder, bleibt er bei seiner Farbe, sofern es sie dort gibt. Sonst ist
+  // die Farbe wieder offen, statt still auf die erste der Liste zu springen.
+  const colKeys = colList.map(c => c.key).join(',')
+  const [farbeNachholen, setFarbeNachholen] = useState(null)
+  useEffect(() => {
+    if (farbeNachholen) {
+      const { hex, name } = farbeNachholen
+      const treffer = colList.find(c => c.hex === hex && (!name || c.name === name))
+        || colList.find(c => name && farbWort(c.name) === farbWort(name))
+      if (treffer) { setSelCol(treffer.key); setFarbeNachholen(null) }
+      return
+    }
+    if (!selCol || colList.some(c => c.key === selCol)) return
+    const vorher = shoeColors.find(c => c.key === selCol)
+    const gleich = vorher && colList.find(c => farbWort(c.name) === farbWort(vorher.name))
+    setSelCol(gleich ? gleich.key : '')
+  }, [colKeys, farbeNachholen])
 
   /**
    * Das Bild einer Farbe.
@@ -928,18 +800,32 @@ export default function Customize() {
     return erstes ? resolveImg(erstes) : null
   }
 
+  // Das Muster einer Farbe für die runde Wahl. Modelle mit eigenen
+  // Farbstrecken haben als Bild ein Foto des ganzen Schuhs; im kleinen Kreis
+  // ist das nicht zu lesen. Dann gilt das gleichnamige Ledermuster.
+  const farbMuster = (c) => {
+    const m = musterFuer(c, selMat, shoeColors)
+    return m ? resolveImg(m) : farbBild(c)
+  }
+
   // Was im großen Feld steht, während der Kunde konfiguriert. Die Reihenfolge
   // ist die der Absicht: die Kachel unter dem Zeiger, dann der gewählte Wert
   // des Schritts, bei dem er gerade ist, dann das Bild des Schritts selbst.
   // Leder und Farbe sind darin zwei Schritte wie jeder andere — sie tragen
   // die Kennungen `__leder` und `__farbe`, weil sie keine Optionsgruppen des
   // Servers sind, aber dieselbe Behandlung verdienen.
+  //
+  // Die Ledermuster (/leder/…) gehören nicht hierher. Sie sind 128 Pixel
+  // große Ausschnitte; groß gezogen über die ganze Bühne standen sie dort
+  // als unscharfe Fläche, wo der Schuh stehen sollte. Sie bleiben in der
+  // runden Wahl, das große Feld zeigt weiter den Schuh.
+  const grossBild = (u) => (u && !String(u).includes('/leder/') ? u : null)
   const schrittBild =
-       kachelImZeiger
-    || (gruppeImBlick === '__leder' && mat?.image ? resolveImg(mat.image) : null)
-    || (gruppeImBlick === '__farbe' ? farbBild(col) : null)
-    || (gewaehlterWert?.image ? resolveImg(gewaehlterWert.image) : null)
-    || (gruppeJetzt?.preview_image ? resolveImg(gruppeJetzt.preview_image) : null)
+       grossBild(kachelImZeiger)
+    || (gruppeImBlick === '__leder' && mat?.image ? grossBild(resolveImg(mat.image)) : null)
+    || (gruppeImBlick === '__farbe' ? grossBild(farbBild(col)) : null)
+    || (gewaehlterWert?.image ? grossBild(resolveImg(gewaehlterWert.image)) : null)
+    || (gruppeJetzt?.preview_image ? grossBild(resolveImg(gruppeJetzt.preview_image)) : null)
 
   /* ── Der Gürtel ────────────────────────────────────────────────────────
    *
@@ -1247,8 +1133,12 @@ export default function Customize() {
   ].filter(Boolean)
 
   // Swipe
-  const matSwipe  = useSwipe(matList, selMat, setSelMat)
-  const colSwipe  = useSwipe(colList, selCol, setSelCol)
+  // Wischen über das Bild blättert durch die Ansichten des Schuhs.
+  const bildSwipe = useSwipe(
+    gallery.map((_, i) => ({ key: String(i) })),
+    String(activeSlide),
+    (k) => { setSlide(Number(k)); setZoomed(false) },
+  )
 
   // ── Konfiguration speichern / geladene Konfiguration anwenden ───────────────
   const [savedToast, setSavedToast]   = useState('')   // '', 'saved', 'login'
@@ -1280,8 +1170,8 @@ export default function Customize() {
         shoeId: product.id,
         shoeName: cleanShoeName(product.name),
         category,
-        label: [cleanShoeName(product.name), mat?.name, col?.name].filter(Boolean).join(' · '),
-        material: selMat, materialName: mat?.name || '',
+        label: [cleanShoeName(product.name), mat?.label, col?.name].filter(Boolean).join(' · '),
+        material: selMat, materialName: mat?.label || '',
         color: selCol, colorName: col?.name || '', colorHex: col?.hex || product.color || null,
         accessories: selectedAccessories,
         extras: selectedExtras,
@@ -1384,6 +1274,61 @@ export default function Customize() {
   const fitReady = groesseSteht && !guertelUnfertig
   // Maße vorhanden, aber kein Treffer & kein manueller Override → Custom-Anfrage
   const needsCustomRequest = (fitState === 'nomatch' && sizeType !== 'standard') || sizeType === 'custom'
+
+  // ── Die Schritte ─────────────────────────────────────────────────────────
+  //
+  // Eine Liste, aus dem errechnet, was dieses Modell anbietet: Leder (nur bei
+  // mehr als einem), Farbe, je eine Optionsgruppe, der Gürtel, falls es ihn
+  // gibt, die Passform, die Übersicht. Wählt jemand eine Gummisohle, fallen
+  // die Schritte der Sohlenfarben aus der Liste, wie sie vorher aus der
+  // Seite fielen.
+  //
+  // Gemerkt wird der Schlüssel des Schritts, nicht seine Nummer: Fällt ein
+  // Schritt davor weg, bleibt der Kunde, wo er ist, statt einen Schritt
+  // weiterzurutschen.
+  const angeboteneGruppen = sichtbareGruppen
+    .filter(g => !(product?.locked_decoration && g.key === 'loafer_decoration'))
+  const groesseText = sizeType === 'fit' && selectedFit?.size_label ? `EU ${String(selectedFit.size_label).replace('.', ',')}`
+    : sizeType === 'standard' && selectedSize ? `EU ${String(selectedSize).replace('.', ',')}`
+    : sizeType === 'custom' ? 'Custom Made' : null
+  const schritte = [
+    matList.length > 1 && { key: '__leder', titel: 'Leder', fertig: !!selMat, wahl: selMat ? mat?.label : null },
+    { key: '__farbe', titel: 'Farbe', fertig: !!selCol, wahl: selCol ? col?.name : null },
+    ...angeboteneGruppen.map(g => {
+      const v = g.values.find(x => x.id === selectedExtras[g.key])
+      return { key: g.key, titel: g.label, gruppe: g, fertig: !!v, wahl: v?.label || null }
+    }),
+    guertelMoeglich && {
+      key: '__guertel', titel: 'Gürtel',
+      fertig: guertelAn === false || (guertelAn === true && !guertelUnfertig),
+      wahl: guertelAn === true ? 'Mit Gürtel' : guertelAn === false ? 'Ohne Gürtel' : null,
+    },
+    { key: '__passform', titel: 'Passform', fertig: groesseSteht || needsCustomRequest, wahl: groesseText },
+    { key: '__uebersicht', titel: 'Übersicht', fertig: false, wahl: null },
+  ].filter(Boolean)
+  const [schrittKey, setSchrittKey] = useState(null)
+  const [menueOffen, setMenueOffen] = useState(false)
+  const schrittNr = Math.max(0, schritte.findIndex(x => x.key === schrittKey))
+  const schritt = schritte[schrittNr]
+  // Erreichbar ist ein Schritt, vor dem alles gewählt ist.
+  const erreichbar = (i) => schritte.slice(0, i).every(x => x.fertig)
+  const weiterFrei = schritt.fertig && schrittNr < schritte.length - 1
+  const geheZu = (key) => {
+    setSchrittKey(key)
+    setKachelImZeiger(null)
+    // Der neue Schritt soll im Blick sein, auf dem Telefon steht die Wahl
+    // unter dem Bild.
+    if (window.innerWidth < 1024) {
+      requestAnimationFrame(() => {
+        document.getElementById('konfig-wahl')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+      })
+    }
+  }
+  const weiter = () => { if (weiterFrei) geheZu(schritte[schrittNr + 1].key) }
+  const zurueck = () => { if (schrittNr > 0) geheZu(schritte[schrittNr - 1].key) }
+  // Das große Bild folgt dem Schritt: Leder und Farbe zeigen ihr Muster,
+  // eine Gruppe den gewählten Wert.
+  useEffect(() => { setGruppeImBlick(schritt.key) }, [schritt.key])
   // Extras als lesbare Liste mit Aufpreissumme, wird in der Bestellung
   // mitgeführt, damit Admin & Manufaktur die Spezifikation sehen.
   //
@@ -1399,6 +1344,9 @@ export default function Customize() {
       })
       .filter(Boolean),
     ...festeWerte(extraOptionGroups),
+    // Der Sohlenrand folgt dem Oberleder und ist deshalb kein Schritt mehr.
+    // Er steht trotzdem in der Bestellung — siehe abgeleiteteWerte().
+    ...abgeleiteteWerte(extraOptionGroups, { oberHex: col?.hex, soleKey: soleArt?.key }),
   ]
   // Was in den Entwurf geht — dieselben Felder, die später die Bestellung
   // trägt. Bewusst eine einzige Stelle: Zwei Stellen waren genau das Problem.
@@ -1451,7 +1399,10 @@ export default function Customize() {
       const m = globalMatList.find(x => x.label === d.material)
       if (m) setSelMat(m.key)
     }
-    if (d.color) setSelCol(d.color)
+    // Im Entwurf steht der Farbwert und der Name, nicht der Schlüssel (siehe
+    // draftPayload). Den Schlüssel gibt es erst, wenn die Farbliste zum
+    // gerade gesetzten Leder steht, deshalb wird nachgeholt.
+    if (d.color || d.color_name) setFarbeNachholen({ hex: d.color, name: d.color_name })
     const ex = parse(d.extras, [])
     if (ex.length) {
       const map = {}
@@ -1561,6 +1512,9 @@ export default function Customize() {
       state: {
         product: {
           id: product.id, name: cleanShoeName(product.name),
+          // Das Bild für die Bestellübersicht der Kasse. Ohne stand dort beim
+          // Direktkauf ein leerer Kasten, beim Weg über den Warenkorb nicht.
+          image: product.image || null,
           material: mat?.label || product.material,
           color, colorName: col?.name || null, price: formatPrice(basePrice + extrasPriceTotal),
           sole: soleArt?.label || 'Standard',
@@ -1596,7 +1550,7 @@ export default function Customize() {
       })
       setReviews(prev => [row, ...prev])
       setShowReview(false); setMyRating(0); setMyComment('')
-    } catch {} finally { setSubmitting(false) }
+    } catch { /* Die Bewertung bleibt im Feld stehen. */ } finally { setSubmitting(false) }
   }
 
   return (
@@ -1610,9 +1564,9 @@ export default function Customize() {
         Bereichs statt darüber. */}
     {openDraft && createPortal((
       <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 px-4">
-        <div className="bg-white w-full max-w-md p-6">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-black/30 mb-3">Unfertige Konfiguration</p>
-          <p className="text-[15px] font-light text-black/80 leading-relaxed">
+        <div className="haus g-angebot w-full max-w-md p-6">
+          <p className="t-klein c-leise mb-3">Unfertige Konfiguration</p>
+          <p className="t-text c-tinte">
             Du hast diesen Schuh schon einmal zusammengestellt und nicht in den
             Warenkorb gelegt. Dort fortfahren?
           </p>
@@ -1624,8 +1578,8 @@ export default function Customize() {
               ['Größe', openDraft.eu_size && `EU ${openDraft.eu_size}`],
             ].filter(([, v]) => v).map(([k, v]) => (
               <div key={k} className="flex justify-between">
-                <span className="text-[11px] text-black/40">{k}</span>
-                <span className="text-[11px] text-black/75">{v}</span>
+                <span className="t-klein c-leise">{k}</span>
+                <span className="t-klein c-tinte">{v}</span>
               </div>
             ))}
             {(() => {
@@ -1633,40 +1587,39 @@ export default function Customize() {
               try { n = (JSON.parse(openDraft.extras || '[]') || []).length } catch { n = 0 }
               return n ? (
                 <div className="flex justify-between">
-                  <span className="text-[11px] text-black/40">Weitere Optionen</span>
-                  <span className="text-[11px] text-black/75">{n}</span>
+                  <span className="t-klein c-leise">Weitere Optionen</span>
+                  <span className="t-klein c-tinte">{n}</span>
                 </div>
               ) : null
             })()}
           </div>
           <div className="flex gap-2">
             <button onClick={resumeDraft}
-              className="flex-1 h-12 bg-black text-white text-[11px] uppercase tracking-[0.18em] border-0">
+              className="t-klein flex-1 h-12 g-akzent border-0">
               Ja, fortfahren
             </button>
             <button onClick={dropDraft}
-              className="flex-1 h-12 bg-white text-black/70 border border-black/15 text-[11px] uppercase tracking-[0.18em]">
+              className="t-klein flex-1 h-12 bg-transparent c-tinte border border-black/20">
               Nein, neu
             </button>
           </div>
         </div>
       </div>
     ), document.body)}
-    <div className="flex flex-col bg-white overflow-y-auto lg:overflow-hidden lg:h-full" ref={outerRef}>
+    <div className="haus min-h-full flex flex-col">
+    <div className="g-angebot flex-1 flex flex-col">
 
-      {/* ── Header ────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-white flex items-center justify-between px-4 pt-3 pb-1 lg:px-6 lg:w-full">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
-          <ArrowLeft size={18} className="text-black" strokeWidth={1.5} />
+      {/* ── Kopf ─────────────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 g-angebot flex items-center justify-between px-2 lg:px-6 h-14">
+        <button onClick={() => navigate(-1)} aria-label="Zurück" className="w-11 h-11 flex items-center justify-center border-0 bg-transparent c-tinte">
+          <ArrowLeft size={20} strokeWidth={1.4} />
         </button>
-        <div className="text-center flex-1 px-2">
-          <p className="text-[11px] lg:text-[13px] font-normal text-black" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>{cleanShoeName(product.name)}</p>
-        </div>
         <div className="flex items-center gap-1">
-          <button className="w-10 h-10 flex items-center justify-center border-0 bg-transparent">
-            <Share2 size={17} className="text-black" strokeWidth={1.5} />
+          <button aria-label="Teilen" className="w-11 h-11 flex items-center justify-center border-0 bg-transparent c-tinte">
+            <Share2 size={18} strokeWidth={1.4} />
           </button>
           <button
+            aria-label={isFav ? 'Von der Merkliste nehmen' : 'Auf die Merkliste'}
             onClick={async () => {
               if (!user) {
                 goToLogin()
@@ -1677,42 +1630,79 @@ export default function Customize() {
                 goToLogin()
               }
             }}
-            className="w-10 h-10 flex items-center justify-center border-0 bg-transparent"
+            className="w-11 h-11 flex items-center justify-center border-0 bg-transparent c-tinte"
           >
-            <Heart size={17} className={isFav ? 'text-black fill-black' : 'text-black'} strokeWidth={1.5} />
+            <Heart size={18} className={isFav ? 'fill-current' : ''} strokeWidth={1.4} />
           </button>
         </div>
       </div>
 
-      {/* ── Desktop: Two-Column / Mobile: Stacked ────────────────── */}
-      <div ref={twoColRef} className="flex-1 flex flex-col lg:flex-row lg:w-full lg:min-h-0">
+      {/* ── Bühne ────────────────────────────────────────────────────────
+          Wie beim Rolex-Konfigurator: links groß der Name und der Preis, in
+          der Mitte groß der Schuh, rechts die Ansichten als runde Bilder.
+          Auf dem Telefon steht der Schuh zuerst, Name und Preis darunter. */}
+      <section className="px-4 lg:px-10">
+        <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 lg:gap-x-10 items-start">
+          <div className="order-2 lg:order-1 lg:col-span-4 pt-3 lg:pt-10">
+            <h1 className="t-kopf c-tinte"><ShoeName name={product.name} /></h1>
+            {product.tagline && (
+              <p className="t-text c-leise mt-2 max-w-md">{product.tagline}</p>
+            )}
+            {lockedDecoLabel && (
+              <p className="t-klein c-leise mt-2">Ausführung: {lockedDecoLabel}</p>
+            )}
+            <p className="t-lead c-tinte mt-2 lg:mt-4 tabular-nums">
+              {totalDiscount > 0 && (
+                <span className="c-leise line-through mr-2">{formatPrice(priceBeforeDiscount)}</span>
+              )}
+              {displayPrice}
+            </p>
+            {preisAufschlaege.length > 0 && (
+              <p className="t-klein c-leise mt-1">inkl. {preisAufschlaege.join(' · ')}</p>
+            )}
+            {/* Woher der Nachlass kommt — sonst wirkt ein abweichender Preis
+                wie ein Fehler. */}
+            {totalDiscount > 0 && (
+              <p className="t-klein c-leise mt-1">
+                {affNachlass >= hausNachlass && affiliatePct > 0
+                  ? <>Empfehlung {affiliate.code.toUpperCase()} · {satzText(wirksamerPct)} %</>
+                  : campaignForShoe && campaignPct >= userPct
+                    ? <>{campaignForShoe.business_name || campaignForShoe.name} · {satzText(wirksamerPct)} % Firmenkondition</>
+                    : <>{satzText(wirksamerPct)} % Sonderkondition</>}
+                , du sparst {formatPrice(totalDiscount)}
+              </p>
+            )}
+            <p className="t-klein c-leise mt-5 hidden sm:block">Rahmengenäht · Almansa, Spanien · 4 bis 6 Wochen Produktion</p>
+            {fitState === 'matched' && selectedFit?.fitPercent != null && (
+              <p className="t-klein c-leise mt-3">
+                Passgenauigkeit {String(selectedFit.fitPercent).replace('.', ',')} %
+                {selectedFit?.last_label ? ` · Leisten ${selectedFit.last_label} ${selectedFit.width || ''}` : ''}
+              </p>
+            )}
+            {/* Vor der Konfiguration, nicht darunter: Was hier eingeschränkt
+                ist, muss man wissen, bevor man anfängt zu wählen. */}
+            {Number(product.express) === 1 && (
+              <ExpressHinweis
+                wochen={product.express_weeks || 2}
+                aufpreis={Number(product.express_surcharge) || 0}
+                className="mt-4"
+              />
+            )}
+          </div>
 
-        {/* ── LEFT: Produkt-Viewer + Zubehör (4/6 der Breite) ────── */}
-        <div
-          ref={leftPanelRef}
-          className="z-10 lg:w-4/6 lg:top-0 lg:self-stretch lg:min-h-0 lg:overflow-y-auto lg:px-6"
-          style={{
-            scrollbarWidth: 'none',
-          }}
-        >
-          {/* Auf dem Telefon vollflächiges Hochformat bis an beide Kanten.
-              Vorher stand hier eine feste Höhe von 380 px — ein flacher
-              Streifen, in dem vom Schuh nur die Mitte übrig blieb. Ab lg
-              wieder feste Höhe, dort steht die Konfiguration daneben. */}
-          <div
-            className="relative overflow-hidden select-none aspect-[4/5] lg:aspect-square lg:max-w-[620px] lg:mx-auto lg:rounded-sm"
-            style={{
-              cursor: is3D ? 'grab' : 'default',
-              background: '#f6f5f3',
-            }}
-          >
+          <div className="order-1 lg:order-2 lg:col-span-7">
             <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{
-                transform: zoomed ? 'scale(1.6)' : 'none',
-                transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
-              }}
+              {...bildSwipe}
+              className="relative overflow-hidden select-none bild-im-grund w-full h-[34vh] min-h-[230px] lg:h-[48vh] lg:min-h-[380px]"
+              style={{ cursor: is3D ? 'grab' : 'default' }}
             >
+              <div
+                className="absolute inset-0 flex items-center justify-center"
+                style={{
+                  transform: zoomed ? 'scale(1.6)' : 'none',
+                  transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+              >
               {schrittBild ? (
                 // Kein Wechsel der `src` am selben Bild: Das neue müsste erst
                 // dekodiert werden, und dazwischen stünde die Fläche leer.
@@ -1720,7 +1710,7 @@ export default function Customize() {
                 <>
                   <img src={gallery[activeSlide] || ''} alt=""
                        className="w-full h-full object-contain"
-                       style={{ opacity: gallery[activeSlide] ? 1 : 0 }} />
+                       style={{ opacity: 0 }} />
                   <img src={schrittBild} alt=""
                        className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
                        style={{ opacity: 1 }} />
@@ -1797,7 +1787,7 @@ export default function Customize() {
             {/* 3D-Hinweis */}
             {is3D && model3d && (
               <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
-                <span className="text-[10px] text-black/40" style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                <span className="t-klein c-leise">
                   Ziehen zum Drehen
                 </span>
               </div>
@@ -1823,596 +1813,206 @@ export default function Customize() {
               </div>
             )}
 
-            {/* Swipe-Hinweis (nur mobil) */}
-            <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none lg:hidden">
-              <span className="text-[9px] text-black/25" style={{ letterSpacing: '0.2em' }}>
-                ← WISCHEN ZUM WECHSELN →
-              </span>
             </div>
           </div>
 
-          {/* ── Lieferumfang (nur Desktop) ──────────────────────── */}
-          <div className="hidden lg:block pt-6 px-1">
-            <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Lieferumfang</p>
-            <div className="flex flex-col gap-1.5">
-              {(pageTexts?.delivery_items?.length ? pageTexts.delivery_items : LIEFERUMFANG).map((item) => (
-                <div key={item} className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-black/15" />
-                  <span className="text-[11px] text-black/40">{item}</span>
-                </div>
+          {/* Die Ansichten als runde Bilder, rechts neben dem Schuh. */}
+          {slideCount > 1 && (
+            <div className="hidden lg:flex order-3 lg:col-span-1 flex-col items-center gap-4 pt-10">
+              {gallery.map((g, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => { setSlide(i); setZoomed(false); setIs3D(false) }}
+                  aria-label={`Ansicht ${i + 1} von ${slideCount}`}
+                  aria-current={i === activeSlide}
+                  className={`w-16 h-16 rounded-full overflow-hidden bild-im-grund border-0 p-0 transition-shadow ${
+                    i === activeSlide
+                      ? 'shadow-[0_0_0_2px_var(--grund-angebot),0_0_0_3.5px_var(--tinte)]'
+                      : 'shadow-[0_0_0_1px_rgba(35,28,23,0.12)] hover:shadow-[0_0_0_2px_var(--grund-angebot),0_0_0_3.5px_rgba(35,28,23,0.35)]'
+                  }`}
+                >
+                  <img src={g} alt="" loading="lazy" className="w-full h-full object-cover" />
+                </button>
               ))}
             </div>
-          </div>
-
-          {/* ── Zubehör (nur Desktop, Apple-style 2x2) ────────── */}
-          <div
-            className="hidden lg:block pt-10 pb-16"
-            style={{
-              opacity: rightFullyScrolled ? 1 : 0.3,
-              transition: 'opacity 0.5s ease',
-            }}
-          >
-            <p className="text-[10px] text-black/30 uppercase px-1 mb-4" style={{ letterSpacing: '0.18em' }}>Passend dazu</p>
-
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              {accessories.map((acc) => {
-                const selected = selectedAccessories.includes(acc.id)
-                return (
-                  <button
-                    key={acc.id}
-                    onClick={() => toggleAccessory(acc.id)}
-                    className="relative text-left group"
-                  >
-                    {/* Product image area */}
-                    <div
-                      className="w-full rounded-sm overflow-hidden flex items-center justify-center"
-                      style={{
-                        aspectRatio: '1',
-                        background: '#f6f5f3',
-                        border: selected ? '1.5px solid black' : '1.5px solid transparent',
-                      }}
-                    >
-                      {acc.image ? (
-                        <img
-                          src={resolveImg(acc.image)}
-                          alt={acc.name}
-                          loading="lazy"
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        />
-                      ) : (
-                        <div
-                          className="w-12 h-12 rounded-lg transition-transform group-hover:scale-110"
-                          style={{ background: acc.color, opacity: 0.7 }}
-                        />
-                      )}
-                      {/* Toggle badge */}
-                      <div
-                        className="absolute top-2 right-2 w-6 h-6 rounded-md flex items-center justify-center transition-all"
-                        style={{
-                          background: selected ? 'black' : 'white',
-                          border: selected ? '1.5px solid black' : '1.5px solid rgba(0,0,0,0.12)',
-                        }}
-                      >
-                        {selected
-                          ? <Check size={11} className="text-white" strokeWidth={2.5} />
-                          : <Plus size={11} className="text-black/30" strokeWidth={2} />
-                        }
-                      </div>
-                    </div>
-
-                    {/* Info below */}
-                    <p className="text-[12px] text-black/70 font-light mt-2 px-0.5">{acc.name}</p>
-                    {isPromo && wirksamerPct > 0 ? (
-                      <div className="flex items-center gap-1.5 px-0.5">
-                        <span className="text-[11px] text-black/25 line-through">€{acc.price}</span>
-                        <span className="text-[11px] text-black/60">€{Math.round(acc.price * (1 - wirksamerPct / 100))}</span>
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-black/35 px-0.5">€{acc.price}</p>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          )}
         </div>
+      </section>
 
-        {/* ── RIGHT: Konfiguration (2/6 der Breite, rechter Rand) ── */}
-        <div
-          ref={rightPanelRef}
-          className="flex-1 flex flex-col w-full max-w-2xl mx-auto lg:max-w-none lg:mx-0 lg:flex-initial lg:w-2/6 lg:overflow-y-auto lg:min-h-0 lg:border-l lg:border-black/5 lg:px-6"
-          style={{ scrollbarWidth: 'none' }}
-        >
+      {/* ── Der Schritt ──────────────────────────────────────────────────
+          Wie bei Nike By You: unter dem Schuh die Leiste mit dem Namen des
+          Schritts, darunter seine Werte. Immer nur ein Schritt. */}
+      <section id="konfig-wahl" className="px-4 lg:px-10 pt-4 lg:pt-5 pb-12 scroll-mt-16">
+        <div className="max-w-[1100px] mx-auto">
+          <Schrittleiste
+            schritt={schritt.titel}
+            nummer={schrittNr + 1}
+            anzahl={schritte.length}
+            zurueckFrei={schrittNr > 0}
+            weiterFrei={weiterFrei}
+            onZurueck={zurueck}
+            onWeiter={weiter}
+            onMenue={() => setMenueOffen(true)}
+          />
 
-          {/* ── Produkt-Info ─────────────────────────────────────── */}
-          <div className="px-5 pt-4 pb-2 lg:px-0 lg:pt-0">
-            <p className="text-[13px] lg:text-[22px] font-light text-black leading-tight"><ShoeName name={product.name} /></p>
-            {product.tagline && (
-              <p className="text-[11px] lg:text-[13px] text-black/45 font-light mt-1 leading-snug">{product.tagline}</p>
-            )}
-            {lockedDecoLabel && (
-              <p className="text-[10px] text-black/40 font-light mt-1" style={{ letterSpacing: '0.12em' }}>
-                <span className="uppercase text-black/30">Ausführung</span> · {lockedDecoLabel}
-              </p>
-            )}
-            <p className="text-[13px] lg:text-[17px] text-black mt-0.5 lg:mt-2" style={{ letterSpacing: '0.04em' }}>
-              {totalDiscount > 0 && (
-                <span className="text-black/25 line-through mr-2">{formatPrice(priceBeforeDiscount)}</span>
-              )}
-              {displayPrice}
-              {preisAufschlaege.length > 0 && (
-                <span className="text-[10px] text-black/35 ml-2">({preisAufschlaege.join(' · ')})</span>
-              )}
-            </p>
-            {/* Woher der Nachlass kommt — sonst wirkt ein abweichender Preis
-                wie ein Fehler. */}
-            {totalDiscount > 0 && (
-              <p className="text-[10px] text-black/45 font-light mt-1" style={{ letterSpacing: '0.06em' }}>
-                {affNachlass >= hausNachlass && affiliatePct > 0
-                  ? <>Empfehlung {affiliate.code.toUpperCase()} · {satzText(wirksamerPct)} %</>
-                  : campaignForShoe && campaignPct >= userPct
-                    ? <>{campaignForShoe.business_name || campaignForShoe.name} · {satzText(wirksamerPct)} % Firmenkondition</>
-                    : <>{satzText(wirksamerPct)} % Sonderkondition</>}
-                {' '}, du sparst {formatPrice(totalDiscount)}
-              </p>
-            )}
-            <div className="flex items-center gap-4 mt-2 lg:mt-3">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Passgenauigkeit</span>
-                {fitState === 'matched' && selectedFit?.fitPercent != null ? (
-                  <span className="flex items-center gap-2">
-                    <span className="text-[11px] lg:text-[12px] font-medium text-black">{String(selectedFit.fitPercent).replace('.', ',')} %</span>
-                    <button type="button" onClick={() => openMeasEdit('kopf')} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">ändern</button>
-                  </span>
-                ) : fitState === 'matching' ? (
-                  <span className="text-[11px] lg:text-[12px] text-black/35">wird berechnet …</span>
-                ) : fitState === 'error' ? (
-                  <span className="flex items-center gap-2">
-                    <span className="text-[11px] lg:text-[12px] text-black/55">konnte nicht geladen werden</span>
-                    <button type="button" onClick={() => setFitRetryKey(k => k + 1)} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">erneut versuchen</button>
-                  </span>
-                ) : fitState === 'nomatch' && footMeasurements?.foot_length_mm ? (
-                  <span className="flex items-center gap-2">
-                    <span className="text-[11px] lg:text-[12px] text-black/55">keine Standard-Passform</span>
-                    <button type="button" onClick={() => openMeasEdit('kopf')} className="text-[10px] text-black/40 hover:text-black/70 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => openMeasEdit('kopf')}
-                    className="text-[11px] lg:text-[12px] text-black/55 underline underline-offset-2 bg-transparent border-0 p-0"
-                  >
-                    Maße eingeben
-                  </button>
+          <div className="mt-4 lg:mt-8">
+            {/* Leder */}
+            {schritt.key === '__leder' && (
+              <div className="flex flex-col items-center text-center">
+                <Wahlreihe
+                  beschriftung="Leder"
+                  mitNamen
+                  werte={matList.map(m => ({
+                    id: m.key || String(m.id),
+                    label: m.label,
+                    bild: m.image ? resolveImg(m.image) : null,
+                    hex: m.color,
+                    gesperrt: m.available === 0 || m.available === false,
+                  }))}
+                  gewaehlt={selMat}
+                  onWahl={setSelMat}
+                  onZeigen={setKachelImZeiger}
+                />
+                {/* Der Satz, der das Leder erklärt — für jemanden, der
+                    kaufen will, die wichtigste Zeile dieses Schritts. */}
+                {selMat && mat?.tip && (
+                  <p className="t-text c-tinte mt-6 max-w-2xl">{mat.tip}</p>
+                )}
+                {!selMat && (
+                  <p className="t-text c-leise mt-6 max-w-2xl">Wähl ein Leder. Die Farben kommen im nächsten Schritt.</p>
                 )}
               </div>
-              {fitState === 'matched' && selectedFit?.last_label && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>Leiste</span>
-                  <span className="text-[11px] lg:text-[12px] font-medium text-black">{selectedFit.last_label} {selectedFit.width}</span>
+            )}
+
+            {/* Farbe */}
+            {schritt.key === '__farbe' && (
+              <div className="flex flex-col items-center text-center">
+                <Wahlreihe
+                  beschriftung="Farbe"
+                  werte={colList.map(c => ({
+                    id: c.key || String(c.id),
+                    label: c.name,
+                    bild: farbMuster(c),
+                    hex: c.hex,
+                    gesperrt: c.available === 0 || c.available === false,
+                  }))}
+                  gewaehlt={selCol}
+                  onWahl={setSelCol}
+                  onZeigen={setKachelImZeiger}
+                />
+                <p className="t-text c-tinte mt-4 min-h-[1.6em]">
+                  {selCol ? col?.name : <span className="c-leise">Wähl eine Farbe</span>}
+                  {mat?.label && <span className="t-klein c-leise ml-2">{mat.label}</span>}
+                </p>
+                {col?.pairs_with && selCol && <p className="t-klein c-leise mt-1">Passt zu: {col.pairs_with}</p>}
+              </div>
+            )}
+
+            {/* Eine Optionsgruppe */}
+            {schritt.gruppe && (() => {
+              const group = schritt.gruppe
+              const currentSelection = group.values.find(v => v.id === selectedExtras[group.key])
+              const mitBild = group.values.filter(v => v.image || v.color_hex).length >= Math.ceil(group.values.length / 2)
+              return (
+                <div className="flex flex-col items-center text-center">
+                  {group.helper_text && (
+                    <p className="t-text c-leise mb-5 max-w-2xl">{group.helper_text}</p>
+                  )}
+                  <Wahlreihe
+                    beschriftung={group.label}
+                    form={mitBild ? 'rund' : 'text'}
+                    mitNamen={mitBild && group.values.some(v => v.image && !v.color_hex)}
+                    werte={group.values.map(v => ({
+                      id: v.id,
+                      label: v.label,
+                      bild: v.image ? resolveImg(v.image) : null,
+                      hex: v.color_hex,
+                      preis: v.price_extra,
+                      empfohlen: !!v.recommended,
+                    }))}
+                    gewaehlt={selectedExtras[group.key]}
+                    onWahl={(id) => setSelectedExtras(prev => ({ ...prev, [group.key]: id }))}
+                    onZeigen={setKachelImZeiger}
+                  />
+                  {mitBild && (
+                    <p className="t-text c-tinte mt-4 min-h-[1.6em]">
+                      {currentSelection ? currentSelection.label : <span className="c-leise">Bitte wählen</span>}
+                    </p>
+                  )}
+                  {/* Beschreibung der gewählten Option */}
+                  {currentSelection?.description && (
+                    <p className="t-text c-leise mt-2 max-w-2xl">{currentSelection.description}</p>
+                  )}
+                  {/* Warum empfohlen — einmal je Gruppe, statt an jedem Knopf.
+                      Ein Stern ohne Begründung ist eine Behauptung. */}
+                  {group.values.some(v => v.recommended && v.recommendation_reason) && (
+                    <p className="t-klein c-leise mt-3 max-w-2xl inline-flex items-start gap-1.5">
+                      <Star size={12} strokeWidth={1.4} fill="currentColor" className="mt-[3px] shrink-0" />
+                      <span>
+                        {group.values
+                          .filter(v => v.recommended && v.recommendation_reason)
+                          .map(v => `${v.label}: ${v.recommendation_reason}`)
+                          .join(' · ')}
+                      </span>
+                    </p>
+                  )}
                 </div>
+              )
+            })()}
+
+            {/* Gürtel */}
+            {schritt.key === '__guertel' && guertelMoeglich && (
+              <div className="max-w-xl mx-auto">
+            <p className="t-klein c-leise mb-3">
+              Aus demselben Leder in derselben Farbe wie deine Schuhe, 3,5 cm breit.
+              {' '}Zusammen mit dem Paar {' '}
+              <span className="text-black/70">
+                € {Number(guertelOptionen.preis_zum_paar).toLocaleString('de-DE')}
+              </span>
+              {Number(guertelOptionen.preis_einzeln) > Number(guertelOptionen.preis_zum_paar) && (
+                <> statt <span className="line-through">€ {Number(guertelOptionen.preis_einzeln).toLocaleString('de-DE')}</span> einzeln</>
               )}
+              , er geht im selben Karton hinaus.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 max-w-xs">
+              <button onClick={() => setGuertelAn(true)}
+                className={`t-klein border px-3 py-2.5 transition-colors ${
+                  guertelAn === true ? 'border-black c-tinte' : 'border-black/12 c-leise hover:border-black/30'}`}>
+                Ja, dazu
+              </button>
+              <button onClick={() => { setGuertelAn(false); setGuertelCfg(null) }}
+                className={`t-klein border px-3 py-2.5 transition-colors ${
+                  guertelAn === false ? 'border-black c-tinte' : 'border-black/12 c-leise hover:border-black/30'}`}>
+                Nein, danke
+              </button>
             </div>
 
-            {/* Vor der Konfiguration, nicht darunter: Was hier eingeschränkt
-                ist, muss man wissen, bevor man anfängt zu wählen — nicht,
-                nachdem man eine Auswahl vermisst hat. */}
-            {Number(product.express) === 1 && (
-              <ExpressHinweis
-                wochen={product.express_weeks || 2}
-                aufpreis={Number(product.express_surcharge) || 0}
-                className="mt-4"
+            {guertelAn === true && (
+              <GuertelWahl
+                optionen={guertelOptionen}
+                vorgabe={guertelVorgabe}
+                onChange={setGuertelCfg}
               />
             )}
-
-            {/* Test-Detail: Leisten-Sollmaße vs. Fußmaße (zur Überprüfung) */}
-            {fitState === 'matched' && selectedFit?.foot_length_mm != null && footMeasurements?.foot_length_mm && (
-              <div className="mt-2 max-w-md">
-                <table className="w-full text-[10px] text-black/45 font-light border-collapse">
-                  <thead>
-                    <tr className="text-black/35" style={{ letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                      <th className="text-left font-normal py-1 pr-2"></th>
-                      <th className="text-right font-normal py-1 px-2">Deine Maße</th>
-                      <th className="text-right font-normal py-1 px-2">Leiste {selectedFit.last_label} {selectedFit.width}</th>
-                      <th className="text-right font-normal py-1 pl-2">Abweichung</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-black/10">
-                      <td className="text-left py-1 pr-2">Länge</td>
-                      <td className="text-right py-1 px-2 tabular-nums">{footMeasurements.foot_length_mm} mm</td>
-                      <td className="text-right py-1 px-2 tabular-nums">{selectedFit.foot_length_mm} mm</td>
-                      <td className="text-right py-1 pl-2 tabular-nums">{selectedFit.deltaLength > 0 ? '+' : ''}{String(selectedFit.deltaLength).replace('.', ',')} mm</td>
-                    </tr>
-                    <tr className="border-t border-black/10">
-                      <td className="text-left py-1 pr-2">Ballenumfang</td>
-                      <td className="text-right py-1 px-2 tabular-nums">{footMeasurements.ball_girth_mm} mm</td>
-                      <td className="text-right py-1 px-2 tabular-nums">{selectedFit.ball_girth_mm} mm</td>
-                      <td className="text-right py-1 pl-2 tabular-nums">{selectedFit.deltaGirth > 0 ? '+' : ''}{String(selectedFit.deltaGirth).replace('.', ',')} mm</td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
             )}
 
-            {/* Nomatch: gespeicherte Maße bleiben sichtbar (zur Kontrolle/Änderung) */}
-            {fitState === 'nomatch' && footMeasurements?.foot_length_mm && (
-              <p className="text-[10px] text-black/40 font-light mt-1.5 leading-relaxed">
-                Deine gespeicherten Maße: {footMeasurements.foot_length_mm} mm Länge · {footMeasurements.ball_girth_mm} mm Ballenumfang.
-                {' '}Für dieses Modell liegt keine Standard-Leiste in deinem Bereich vor, wir fertigen es custom-made auf Bestellung.
-              </p>
-            )}
-
-            {/* Inline-Maßeingabe direkt an der Passgenauigkeit */}
-            {measOpen && measAnchor === 'kopf' && massFormular}
-          </div>
-
-          <div className="h-px bg-black/8 lg:my-4" />
-
-          {/* ── Produktbeschreibung ────────────────────────────── */}
-          <div className="px-5 py-4 lg:px-0 lg:py-2">
-            <p className="text-[11px] lg:text-[12px] text-black/50 leading-[1.8]" style={{ letterSpacing: '0.02em' }}>
-              {product.description || (
-                <>
-                  Jeder <span className="text-black/70">{product.name || 'Schuh'}</span> entsteht einzeln auf Bestellung in Almansa, Spanien, in über 200 Arbeitsschritten.
-                  Aus <span className="text-black/70">Fußlänge und Ballenumfang</span> bestimmen wir Leisten, Größe und Weite.
-                  Ausgesuchtes europäisches Leder, rahmengenähte Konstruktion und eine Passform, die du vom ersten Schritt an spürst.
-                </>
-              )}
-            </p>
-            <div className="flex items-center gap-4 mt-3">
-              {(pageTexts?.badges?.length ? pageTexts.badges : ['Rahmengenäht', 'Custom Made', '200+ Schritte']).map((b, i, arr) => (
-                <span key={b} className="flex items-center gap-4">
-                  <span className="text-[9px] text-black/30" style={{ letterSpacing: '0.12em', textTransform: 'uppercase' }}>{b}</span>
-                  {i < arr.length - 1 && <span className="text-black/10">·</span>}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="h-px bg-black/8 lg:my-2" />
-
-          {/* ── Auswahl (step-by-step guided flow) ────────────── */}
-          <div className="pt-4 pb-4 space-y-5 lg:space-y-6 lg:pt-0 lg:pb-0">
-
-            {/* Step-Indicator (Leder/Farbe/Sohle) entfernt, der Konfigurator
-                ist jetzt vollständig durch die dynamischen Optionsgruppen
-                gesteuert; die Sektion „Leder" bleibt erhalten, aber ohne
-                Top-Bar. */}
-            {false && (
-            <div className="flex items-center gap-0 px-5 lg:px-0">
-              {['Leder', 'Farbe', 'Sohle'].map((label, i) => {
-                const done = configStep > i
-                const active = configStep === i
-                return (
-                  <div key={label} className="flex items-center flex-1">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-6 h-6 flex items-center justify-center text-[10px] font-light transition-all duration-500"
-                        style={{
-                          background: done ? '#000' : active ? '#000' : '#f6f5f3',
-                          color: done || active ? '#fff' : 'rgba(0,0,0,0.2)',
-                        }}
-                      >
-                        {done ? <Check size={12} strokeWidth={2} /> : i + 1}
-                      </div>
-                      <span className={`text-[10px] tracking-[0.1em] uppercase transition-colors duration-500 ${
-                        done || active ? 'text-black' : 'text-black/20'
-                      }`}>{label}</span>
-                    </div>
-                    {i < 2 && (
-                      <div className="flex-1 mx-3">
-                        <div className="h-px bg-black/[0.06] relative">
-                          <div
-                            className="absolute inset-y-0 left-0 bg-black transition-all duration-700"
-                            style={{ width: done ? '100%' : '0%' }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-            )}
-
-            {/* 1. Leder (Material), nur sichtbar, wenn mehr als 1 Material
-                verfügbar. Bei einer einzigen Auswahl wird Material auto-
-                gesetzt und der Block ausgeblendet.
-
-                Die Kacheln sind dieselben wie bei den Sohlen: ein Bild, groß
-                genug, um die Narbung zu erkennen, und beim Überfahren tritt
-                es an die Stelle des Schuhs. Ein Farbfleck in #7c3a1e sieht
-                aus wie Farbe; Wildleder erkennt man daran nicht. Wo noch
-                kein Bild hinterlegt ist, bleibt der Farbwert als Rückfall —
-                der Konfigurator darf nicht darauf warten, dass jemand
-                fotografiert. */}
-            {matList.length > 1 && (
-            <div {...matSwipe}
-              ref={el => { gruppenRefs.current.__leder = el }}
-              data-gruppe="__leder">
-              <div className="flex items-center justify-between mb-3 px-5 lg:px-0">
-                <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Leder wählen</p>
-                {mat && <span className="text-[10px] lg:text-[11px] text-black/50">{mat.label}</span>}
-              </div>
-              <div className="flex flex-wrap gap-2 px-5 lg:px-0">
-                {matList.map((m) => {
-                  const id = m.key || String(m.id)
-                  const avail = m.available !== 0 && m.available !== false
-                  const reminded = hasReminder('material', id)
-                  const bild = m.image ? resolveImg(m.image) : null
-                  return (
-                    <button key={id}
-                      onClick={() => {
-                        if (avail) setSelMat(id)
-                        else if (!reminded) addReminder({ type: 'material', itemId: id, label: m.label })
-                        else removeReminder('material', id)
-                      }}
-                      onMouseEnter={() => setKachelImZeiger(bild)}
-                      onMouseLeave={() => setKachelImZeiger(null)}
-                      onFocus={() => setKachelImZeiger(bild)}
-                      onBlur={() => setKachelImZeiger(null)}
-                      className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border bg-white ${
-                        !avail ? 'border-black/5 opacity-40' : selMat === id ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30'
-                      }`}
-                      title={m.tip || ''}
-                    >
-                      <div className="relative w-12 h-12 mb-2 overflow-hidden border border-black/[0.06]"
-                        style={{ background: bild ? 'transparent' : m.color }}>
-                        {bild && <img src={bild} alt="" className="w-full h-full object-cover" />}
-                        {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/80" />}
-                        {!avail && reminded && <BellRing size={10} className="absolute inset-0 m-auto text-teal-500" />}
-                      </div>
-                      <p className={`text-[9px] tracking-wider uppercase text-center leading-tight ${selMat === id ? 'text-black font-medium' : 'text-black/60'}`}>{m.label}</p>
-                      {!avail && <span className="text-[9px] text-black/30 mt-0.5">{reminded ? 'Erinnert' : 'Bald da'}</span>}
-                    </button>
-                  )
-                })}
-              </div>
-              {mat?.tip && (
-                <p className="text-[10px] text-black/35 mt-2 leading-relaxed px-5 lg:px-0">{mat.tip}</p>
-              )}
-            </div>
-            )}
-
-            {/* 2. Farbe */}
-            <div
-              {...(configStep >= 1 ? colSwipe : {})}
-              ref={el => { gruppenRefs.current.__farbe = el }}
-              data-gruppe="__farbe"
-              className="transition-all duration-700 ease-out"
-              style={{
-                opacity: configStep >= 1 ? 1 : 0.25,
-                transform: configStep >= 1 ? 'translateY(0)' : 'translateY(8px)',
-                pointerEvents: configStep >= 1 ? 'auto' : 'none',
-                filter: configStep >= 1 ? 'none' : 'grayscale(1)',
-              }}
-            >
-              <div className="flex items-center justify-between mb-3 px-5 lg:px-0">
-                <p className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Farbe wählen</p>
-                {col && <span className="text-[10px] lg:text-[11px] text-black/50">{col.name}</span>}
-              </div>
-              {/* Dieselbe Kachel wie beim Leder: Wo ein Bild hinterlegt ist,
-                  steht die Farbe am Leder statt als Quadrat — „Dark Brown"
-                  ist an einem Farbfeld nicht von „Cognac" zu unterscheiden,
-                  am fotografierten Schaft sehr wohl. Ohne Bild bleibt das
-                  Farbfeld. */}
-              <div className="flex flex-wrap gap-2 px-5 lg:px-0">
-                {colList.map((c) => {
-                  const id = c.key || String(c.id)
-                  const avail = c.available !== 0 && c.available !== false
-                  const reminded = hasReminder('color', id)
-                  const sel = avail && selCol === id
-                  const bild = farbBild(c)
-                  return (
-                    <button key={id}
-                      onClick={() => {
-                        if (avail) setSelCol(id)
-                        else if (!reminded) addReminder({ type: 'color', itemId: id, label: c.name })
-                        else removeReminder('color', id)
-                      }}
-                      onMouseEnter={() => setKachelImZeiger(bild)}
-                      onMouseLeave={() => setKachelImZeiger(null)}
-                      onFocus={() => setKachelImZeiger(bild)}
-                      onBlur={() => setKachelImZeiger(null)}
-                      className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border bg-white ${
-                        !avail ? 'border-black/5 opacity-40' : sel ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30'
-                      }`}
-                      title={c.tip || c.name}
-                    >
-                      <div className="relative w-12 h-12 mb-2 overflow-hidden border border-black/[0.06]"
-                        style={{ backgroundColor: bild ? 'transparent' : c.hex }}>
-                        {bild && <img src={bild} alt="" className="w-full h-full object-cover" />}
-                        {sel && !bild && <Check size={14} className="absolute inset-0 m-auto text-white drop-shadow" strokeWidth={2.5} />}
-                        {!avail && <Lock size={10} className="absolute inset-0 m-auto text-white/60" />}
-                      </div>
-                      <p className={`text-[9px] tracking-wider uppercase text-center leading-tight ${sel ? 'text-black font-medium' : 'text-black/60'}`}>{c.name}</p>
-                      {!avail && <span className="text-[9px] text-black/30 mt-0.5">{reminded ? 'Erinnert' : 'Bald da'}</span>}
-                    </button>
-                  )
-                })}
-              </div>
-              {col?.pairs_with && <p className="text-[10px] text-black/35 mt-2 px-5 lg:px-0">Passt zu: {col.pairs_with}</p>}
-            </div>
-
-            {/* ── Remaining sections (visible after all steps) ── */}
-
-            {/* ── Konfigurator-Extras (Schritt-für-Schritt) ─────────────
-                Erst sichtbar, wenn Material+Farbe gewählt sind. Vor jedem
-                Schritt ein Helper-Text mit Anwendungs-Hinweisen. */}
-            {sichtbareGruppen
-              .filter(g => !(product?.locked_decoration && g.key === 'loafer_decoration'))
-              .map((group, gIdx, renderGroups) => {
-              const currentSelection = group.values.find(v => v.id === selectedExtras[group.key])
-              // Step ist aktiv, wenn alle vorherigen Extras gewählt sind.
-              const allBefore = renderGroups.slice(0, gIdx).every(g => selectedExtras[g.key])
-              const isActive = allBefore && configStep >= 3
-              return (
-              <div
-                key={group.id}
-                ref={el => { gruppenRefs.current[group.key] = el }}
-                data-gruppe={group.key}
-                className="px-5 lg:px-0 mb-6 transition-all duration-500"
-                style={{ opacity: isActive ? 1 : 0.3, pointerEvents: isActive ? 'auto' : 'none' }}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10px] text-black/45 uppercase flex items-center gap-2" style={{ letterSpacing: '0.18em' }}>
-                    <span className="inline-flex items-center justify-center w-4 h-4 border border-black/30 text-[8px] font-normal">
-                      {gIdx + 1}
-                    </span>
-                    {(() => {
-                      const Icon = GROUP_ICONS[group.icon]
-                      return Icon ? <Icon size={12} strokeWidth={1.5} className="text-black/55" /> : null
-                    })()}
-                    {group.label}
-                  </p>
-                  {currentSelection && (
-                    <span className="text-[10px] text-black/60 font-light tracking-wider">{currentSelection.label}</span>
-                  )}
-                </div>
-                {group.helper_text && (
-                  <p className="text-[10px] text-black/40 font-light leading-relaxed mb-3 max-w-2xl">{group.helper_text}</p>
-                )}
-                <div className="flex flex-wrap gap-2">
-                  {/* Zeigen genügt, Klicken ist nicht nötig: Wer die Sohlen
-                      vergleicht, will sie sehen, ohne sich bei jedem Blick
-                      festzulegen. Der Tastaturfokus löst dasselbe aus, sonst
-                      wäre die Vorschau nur mit einer Maus zu haben. */}
-                  {group.values.map(v => {
-                    const isSel = selectedExtras[group.key] === v.id
-                    return (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => setSelectedExtras(prev => ({ ...prev, [group.key]: v.id }))}
-                        onMouseEnter={() => setKachelImZeiger(v.image ? resolveImg(v.image) : null)}
-                        onMouseLeave={() => setKachelImZeiger(null)}
-                        onFocus={() => setKachelImZeiger(v.image ? resolveImg(v.image) : null)}
-                        onBlur={() => setKachelImZeiger(null)}
-                        className={`relative flex flex-col items-center w-[88px] py-2.5 px-2 transition-all border ${
-                          isSel ? 'border-black bg-black/[0.02]' : 'border-black/10 hover:border-black/30 bg-white'
-                        }`}
-                        title={v.description || ''}
-                      >
-                        <div
-                          className="w-12 h-12 mb-2 flex items-center justify-center overflow-hidden border border-black/[0.06]"
-                          style={{ backgroundColor: v.color_hex || (v.image ? 'transparent' : '#fafaf9') }}
-                        >
-                          {v.image
-                            ? <img src={resolveImg(v.image)} alt="" className="w-full h-full object-cover" />
-                            : group.key === 'last' && LAST_SHAPES[v.key]
-                              ? <div className="w-9 h-11"><LastShapeIcon shapeKey={v.key} active={isSel} /></div>
-                              : v.color_hex
-                                ? null
-                                : <span className="text-[9px] text-black/25 tracking-wider uppercase">{v.label.slice(0, 3)}</span>}
-                        </div>
-                        <p className={`text-[9px] tracking-wider uppercase text-center ${isSel ? 'text-black font-medium' : 'text-black/60'}`}>{v.label}</p>
-                        {v.price_extra > 0 && (
-                          <p className="text-[9px] text-black/35 font-light mt-0.5">+{v.price_extra.toFixed(2).replace('.', ',')} €</p>
-                        )}
-                        {/* Empfehlung des Hauses. In einer Gruppe dürfen
-                            mehrere Werte sie tragen — es ist eine Vorauswahl,
-                            keine Vorschrift, und deshalb ein Hinweis am Wert
-                            und keine gesperrte Auswahl. */}
-                        {v.recommended && (
-                          <span className="absolute top-1 right-1 text-black/45" title={v.recommendation_reason || 'Unsere Empfehlung'}>
-                            <Star size={9} strokeWidth={1.4} fill="currentColor" />
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-                {/* Warum empfohlen — einmal je Gruppe, statt an jedem Knopf.
-                    Ein Stern ohne Begründung ist eine Behauptung. */}
-                {group.values.some(v => v.recommended && v.recommendation_reason) && (
-                  <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2 flex items-start gap-1.5">
-                    <Star size={9} strokeWidth={1.4} fill="currentColor" className="mt-[3px] shrink-0 text-black/40" />
-                    <span>
-                      {group.values
-                        .filter(v => v.recommended && v.recommendation_reason)
-                        .map(v => `${v.label}: ${v.recommendation_reason}`)
-                        .join(' · ')}
-                    </span>
-                  </p>
-                )}
-                {/* Beschreibung der aktuell gewählten Option (z. B. Leisten-
-                    Erklärung „Runde Zehenform …") */}
-                {currentSelection?.description && (
-                  <p className="text-[10px] text-black/45 font-light leading-relaxed mt-2.5">
-                    {currentSelection.description}
-                  </p>
-                )}
-              </div>
-              )
-            })}
-
-            {/* ── Gürtel dazu? ──────────────────────────────────────────
-                Die Frage steht hier und nicht bei „Passend dazu": Dort wird
-                angehakt, hier wird konfiguriert — und Leder und Farbe stehen
-                an dieser Stelle fest, sodass die Frage aus einem Ja oder Nein
-                besteht statt aus fünf weiteren. */}
-            {guertelMoeglich && (
-              <div className="px-5 lg:px-0 mb-8 transition-all duration-500"
-                style={{ opacity: configStep >= 3 ? 1 : 0.3, pointerEvents: configStep >= 3 ? 'auto' : 'none' }}>
-                <p className="text-[10px] text-black/45 uppercase mb-1.5" style={{ letterSpacing: '0.18em' }}>
-                  Passender Gürtel
-                </p>
-                <p className="text-[11px] text-black/45 font-light leading-relaxed mb-3">
-                  Aus demselben Leder in derselben Farbe wie deine Schuhe, 3,5 cm breit.
-                  {' '}Zusammen mit dem Paar {' '}
-                  <span className="text-black/70">
-                    € {Number(guertelOptionen.preis_zum_paar).toLocaleString('de-DE')}
-                  </span>
-                  {Number(guertelOptionen.preis_einzeln) > Number(guertelOptionen.preis_zum_paar) && (
-                    <> statt <span className="line-through">€ {Number(guertelOptionen.preis_einzeln).toLocaleString('de-DE')}</span> einzeln</>
-                  )}
-                  {' '}, er geht im selben Karton hinaus.
-                </p>
-
-                <div className="grid grid-cols-2 gap-2 max-w-xs">
-                  <button onClick={() => setGuertelAn(true)}
-                    className={`border px-3 py-2.5 text-[12px] transition-colors ${
-                      guertelAn === true ? 'border-black text-black' : 'border-black/12 text-black/55 hover:border-black/30'}`}>
-                    Ja, dazu
-                  </button>
-                  <button onClick={() => { setGuertelAn(false); setGuertelCfg(null) }}
-                    className={`border px-3 py-2.5 text-[12px] transition-colors ${
-                      guertelAn === false ? 'border-black text-black' : 'border-black/12 text-black/55 hover:border-black/30'}`}>
-                    Nein, danke
-                  </button>
-                </div>
-
-                {guertelAn === true && (
-                  <GuertelWahl
-                    optionen={guertelOptionen}
-                    vorgabe={guertelVorgabe}
-                    onChange={setGuertelCfg}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* ── Passform ──────────────────────────────────────────────
-                Die richtige Größe + Leistenform wird aus den Fußmaßen
-                automatisch ermittelt, kein manueller Größen-Schritt. */}
-            <div className="px-5 lg:px-0">
-              <p className="text-[10px] text-black/30 uppercase mb-3" style={{ letterSpacing: '0.18em' }}>Passform</p>
-
-              {/* Selbst gewählt → das Ergebnis steht hier, samt Rückweg.
-                  Ohne diese Karte verschwände die Wahl wieder im Fenster und
-                  ließe sich nur durch erneutes Öffnen nachlesen. */}
+            {/* Passform — die Größe und die Leiste aus den Fußmaßen */}
+            {schritt.key === '__passform' && (
+              <div className="max-w-xl mx-auto">
               {sizeType === 'standard' && manuelleWahl ? (
                 <div className="border border-black/10 p-4">
-                  <p className="text-[11px] text-black/40 uppercase tracking-[0.14em] mb-1.5">Selbst gewählt</p>
-                  <p className="text-[15px] font-light text-black">
+                  <p className="t-klein c-leise mb-1.5">Selbst gewählt</p>
+                  <p className="t-text c-tinte">
                     EU {String(manuelleWahl.size_label).replace('.', ',')}
-                    <span className="text-[12px] text-black/45 ml-2">
+                    <span className="t-klein c-leise ml-2">
                       · Weite {WEITEN_NAME[manuelleWahl.width] || manuelleWahl.width}
                       {manuelleWahl.last_label ? ` · ${manuelleWahl.last_label}` : ''}
                     </span>
                   </p>
-                  <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2">
+                  <p className="t-klein c-leise mt-2">
                     Ohne Maße bauen wir nach der Tabelle. Wenn du uns Fußlänge und
                     Ballenumfang nennen, wählen wir Leisten und Weite passend dazu, das
                     sitzt spürbar besser.
@@ -2420,14 +2020,14 @@ export default function Customize() {
                   <div className="flex flex-wrap items-center gap-4 mt-3">
                     <button
                       type="button" onClick={() => setGroessenOffen(true)}
-                      className="text-[10px] text-black/50 hover:text-black underline underline-offset-2 bg-transparent border-0 p-0"
+                      className="t-klein c-leise hover:text-black underline underline-offset-2 bg-transparent border-0 p-0"
                     >
                       Größe ändern
                     </button>
                     <button
                       type="button"
                       onClick={() => { setManuelleWahl(null); setSizeType(''); setSelectedSize(''); openMeasEdit('passform') }}
-                      className="text-[10px] text-black/50 hover:text-black underline underline-offset-2 bg-transparent border-0 p-0"
+                      className="t-klein c-leise hover:text-black underline underline-offset-2 bg-transparent border-0 p-0"
                     >
                       Lieber doch messen
                     </button>
@@ -2440,12 +2040,12 @@ export default function Customize() {
                     massFormular
                   ) : (
                     <>
-                      <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
+                      <p className="t-klein c-leise mb-3">
                         Für die perfekte Passform messen wir deinen Fuß statt zu raten.
                         Gib Fußlänge und Ballenumfang ein, die passende Schuhform
                         und Größe ermitteln wir automatisch.
                       </p>
-                      <button onClick={() => openMeasEdit('passform')} className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0">
+                      <button onClick={() => openMeasEdit('passform')} className="t-klein w-full h-12 g-akzent border-0 hover:opacity-90">
                         Maße eingeben
                       </button>
                       {/* Für den, der nicht messen will. Bewusst klein und
@@ -2454,7 +2054,7 @@ export default function Customize() {
                       <button
                         type="button"
                         onClick={() => setGroessenOffen(true)}
-                        className="block w-full mt-2.5 text-[10px] text-black/40 hover:text-black/70 text-center underline underline-offset-4 bg-transparent border-0"
+                        className="t-klein block w-full mt-2.5 c-leise hover:text-black/70 text-center underline underline-offset-4 bg-transparent border-0"
                       >
                         Lieber ohne Maße? Größe selbst wählen
                       </button>
@@ -2462,10 +2062,10 @@ export default function Customize() {
                   )}
                 </div>
               ) : fitState === 'matching' ? (
-                <p className="text-[11px] text-black/40 font-light">Passform wird ermittelt…</p>
+                <p className="t-klein c-leise">Passform wird ermittelt…</p>
               ) : fitState === 'matched' ? (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-[11px] text-black/45 font-light">
+                  <div className="t-klein flex items-center gap-2 c-leise">
                     <Check size={13} strokeWidth={2} className="text-black/40" />
                     <span>
                       {hatUmfang
@@ -2480,10 +2080,10 @@ export default function Customize() {
                       nicht in einer Manufaktur gearbeitet hat. */}
                   {!hatUmfang && (
                     <div className="border border-black/10 p-3.5">
-                      <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-0.5">
+                      <p className="t-klein c-leise mb-0.5">
                         Welche Weite brauchst du?
                       </p>
-                      <p className="text-[10px] text-black/35 font-light mb-2">
+                      <p className="t-klein c-leise mb-2">
                         Die Zahl ist der Ballenumfang, nicht die Breite.
                       </p>
                       <div className="grid grid-cols-3 gap-1.5">
@@ -2495,19 +2095,19 @@ export default function Customize() {
                               key={w.key} type="button"
                               onClick={() => setGewaehlteWeite(w.key)}
                               className={`text-left p-2.5 border transition-colors ${
-                                an ? 'bg-black text-white border-black' : 'bg-white border-black/12 hover:border-black/35'
+                                an ? 'g-dunkel c-hell border-transparent' : 'bg-transparent border-black/15 hover:border-black/40'
                               }`}
                             >
-                              <span className="block text-[12px]">{w.titel}</span>
+                              <span className="t-klein block">{w.titel}</span>
                               {/* Die Zahl ist der Punkt: Erst sie macht aus
                                   „normal oder breit?" etwas Nachprüfbares. */}
                               {mm != null && (
-                                <span className={`block text-[11px] tabular-nums mt-0.5 ${an ? 'text-white' : 'text-black/70'}`}>
+                                <span className={`t-klein block tabular-nums mt-0.5 ${an ? 'c-hell' : 'c-tinte'}`}>
                                   {Math.round(mm)} mm
-                                  <span className={`text-[9px] ml-1 ${an ? 'text-white/55' : 'text-black/35'}`}>Umf.</span>
+                                  <span className={`t-klein ml-1 ${an ? 'c-hell-leise' : 'c-leise'}`}>Umf.</span>
                                 </span>
                               )}
-                              <span className={`block text-[9px] mt-0.5 leading-tight ${an ? 'text-white/60' : 'text-black/40'}`}>
+                              <span className={`t-klein block mt-0.5 ${an ? 'c-hell' : 'c-leise'}`}>
                                 {w.kurz}
                               </span>
                             </button>
@@ -2518,7 +2118,7 @@ export default function Customize() {
                       {/* Ohne diese Erklärung ist die Millimeterzahl auf den
                           Knöpfen eine Zahl ohne Bezug. */}
                       {weitenHier.length > 0 && (
-                        <p className="text-[10px] text-black/50 font-light leading-relaxed mt-2.5">
+                        <p className="t-klein c-leise mt-2.5">
                           Der Ballenumfang ist einmal um den Fuß herum gemessen, an der
                           breitesten Stelle, dort wo der große Zeh ansetzt, nicht die Breite
                           quer über den Fuß. Du brauchst kein Maßband: Leg einen
@@ -2526,7 +2126,7 @@ export default function Customize() {
                           trifft, und halt ihn an ein Lineal.
                         </p>
                       )}
-                      <p className="text-[10px] text-black/40 font-light leading-relaxed mt-2">
+                      <p className="t-klein c-leise mt-2">
                         {WEITEN_WAHL.find(w => w.key === gewaehlteWeite)?.hinweis}
                       </p>
 
@@ -2534,7 +2134,7 @@ export default function Customize() {
                           einzuschätzen gelingt niemandem — Schuhe zu
                           beurteilen, die man getragen hat, dagegen jedem. */}
                       <div className="mt-3 pt-3 border-t border-black/[0.06]">
-                        <p className="text-[10px] text-black/40 uppercase tracking-[0.14em] mb-2">
+                        <p className="t-klein c-leise mb-2">
                           Nicht sicher? Woran du es merkst
                         </p>
                         <div className="space-y-1">
@@ -2549,18 +2149,18 @@ export default function Customize() {
                                   an ? 'border-black bg-black/[0.03]' : 'border-black/[0.08] hover:border-black/25 bg-transparent'
                                 }`}
                               >
-                                <span className={`block text-[11px] ${an ? 'text-black' : 'text-black/70'}`}>„{t.frage}"</span>
-                                <span className="block text-[10px] text-black/40 font-light leading-relaxed mt-0.5">{t.folge}</span>
+                                <span className={`t-klein block ${an ? 'c-tinte' : 'c-tinte'}`}>„{t.frage}"</span>
+                                <span className="t-klein block c-leise mt-0.5">{t.folge}</span>
                               </button>
                             )
                           })}
                         </div>
-                        <p className="text-[9px] text-black/30 font-light leading-relaxed mt-2">
+                        <p className="t-klein c-leise mt-2">
                           Anhaltspunkte, keine Messung, Sneaker sitzen ohnehin lockerer als
                           rahmengenähte Schuhe. Der gemessene Ballenumfang bleibt genauer.
                         </p>
                       </div>
-                      <p className="text-[10px] text-black/35 font-light leading-relaxed mt-2 pt-2 border-t border-black/[0.06]">
+                      <p className="t-klein c-leise mt-2 pt-2 border-t border-black/[0.06]">
                         Die Länge hast du gemessen, die Weite geschätzt. Wir merken uns das
                         und fragen vor der Fertigung nach, wenn etwas unstimmig wirkt, der
                         Schuh entsteht ohnehin erst in den Wochen danach. Genauer wird es mit
@@ -2568,7 +2168,7 @@ export default function Customize() {
                         {' '}
                         <button
                           type="button" onClick={() => openMeasEdit('passform')}
-                          className="underline underline-offset-2 bg-transparent border-0 p-0 text-[10px] text-black/50 hover:text-black"
+                          className="t-klein underline underline-offset-2 bg-transparent border-0 p-0 c-leise hover:text-black"
                         >
                           Umfang jetzt eintragen
                         </button>
@@ -2597,44 +2197,44 @@ export default function Customize() {
                       Frage." */}
                   {gewaehlteLeiste && (
                     <div>
-                      <p className="text-[10px] text-black/40 font-light">
+                      <p className="t-klein c-leise">
                         Schuhform: <span className="text-black/70">{gewaehlteLeiste.label}</span>
                         {gewaehlteLeiste.match?.fitPercent != null && (
                           <span className="text-black/35"> · {String(gewaehlteLeiste.match.fitPercent).replace('.', ',')} % Passgenauigkeit</span>
                         )}
                       </p>
                       {gewaehlteLeiste.description && (
-                        <p className="text-[10px] text-black/45 font-light leading-relaxed mt-1.5">{gewaehlteLeiste.description}</p>
+                        <p className="t-klein c-leise mt-1.5">{gewaehlteLeiste.description}</p>
                       )}
                     </div>
                   )}
-                  <button type="button" onClick={() => openMeasEdit('passform')} className="text-[10px] text-black/35 hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                  <button type="button" onClick={() => openMeasEdit('passform')} className="t-klein c-leise hover:text-black/60 underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : fitState === 'error' ? (
                 /* Transienter Fehler, KEINE Custom-Anfrage vorschnell anbieten */
                 <div className="border border-black/10 p-4">
-                  <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
+                  <p className="t-klein c-leise mb-3">
                     Die Passform konnte gerade nicht geladen werden. Bitte versuch
                     es noch einmal, deine gespeicherten Maße bleiben erhalten.
                   </p>
                   <button
                     onClick={() => setFitRetryKey(k => k + 1)}
-                    className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0"
+                    className="t-klein w-full h-12 g-akzent border-0 hover:opacity-90"
                   >
                     Erneut versuchen
                   </button>
-                  <button type="button" onClick={() => openMeasEdit('passform')} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                  <button type="button" onClick={() => openMeasEdit('passform')} className="t-klein block w-full mt-2 c-leise hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               ) : (
                 /* Maße vorhanden, aber kein Treffer, Custom-Anfrage */
                 <div className="border border-black/10 p-4">
-                  <p className="text-[11px] text-black/55 font-light leading-relaxed mb-3">
+                  <p className="t-klein c-leise mb-3">
                     Für deine Maße finden wir keine Standard-Passform. Wir fertigen
                     diesen Schuh gerne custom-made für dich an.
                   </p>
                   <button
                     onClick={() => setCustomRequestOpen(true)}
-                    className="w-full py-2.5 bg-black text-white text-[11px] tracking-wider uppercase border-0"
+                    className="t-klein w-full h-12 g-akzent border-0 hover:opacity-90"
                   >
                     Custom Made anfragen
                   </button>
@@ -2642,11 +2242,11 @@ export default function Customize() {
                       können, die Anfrage ist ein Angebot, keine Sackgasse. */}
                   <button
                     type="button" onClick={() => setGroessenOffen(true)}
-                    className="block w-full mt-2 text-[10px] text-black/40 hover:text-black/70 text-center underline underline-offset-4 bg-transparent border-0"
+                    className="t-klein block w-full mt-2 c-leise hover:text-black/70 text-center underline underline-offset-4 bg-transparent border-0"
                   >
                     Oder eine Standardgröße selbst wählen
                   </button>
-                  <button type="button" onClick={() => openMeasEdit('passform')} className="block w-full mt-2 text-[10px] text-black/35 hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
+                  <button type="button" onClick={() => openMeasEdit('passform')} className="t-klein block w-full mt-2 c-leise hover:text-black/60 text-center underline underline-offset-2 bg-transparent border-0 p-0">Maße ändern</button>
                 </div>
               )}
 
@@ -2654,349 +2254,388 @@ export default function Customize() {
                   Block, der Fall ohne Maße zeigt es weiter oben anstelle des
                   Hinweistextes. */}
               {measOpen && measAnchor === 'passform' && footMeasurements?.foot_length_mm && massFormular}
-            </div>
-
-            {/* Reviews (kompakt) */}
-            <div className="px-5 lg:px-0">
-              <button
-                onClick={() => setShowReview(v => !v)}
-                className="w-full flex items-center justify-between bg-transparent border-0 p-0 pb-2 border-b border-black/8"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] lg:text-[11px] text-black/40" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Bewertungen</span>
-                  {reviews.length > 0 && (
-                    <>
-                      <Stars value={avg} size={10} />
-                      <span className="text-[10px] text-black/30">({reviews.length})</span>
-                    </>
-                  )}
-                </div>
-                {showReview ? <ChevronUp size={14} className="text-black/30" /> : <ChevronDown size={14} className="text-black/30" />}
-              </button>
-
-              {showReview && (
-                <div className="space-y-2 mt-3">
-                  {reviews.length === 0 && (
-                    <p className="text-[10px] text-black/30 text-center py-3">Noch keine Bewertungen.</p>
-                  )}
-                  {reviews.slice(0, 3).map(rev => (
-                    <div key={rev.id} className="border-b border-black/5 pb-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-black/60">{rev.user_name}</span>
-                        <Stars value={rev.rating} size={9} />
-                      </div>
-                      {rev.comment && <p className="text-[10px] text-black/40 mt-1">{rev.comment}</p>}
-                    </div>
-                  ))}
-
-                  {!myRev && product.id && (
-                    <div className="pt-2 space-y-2">
-                      <p className="text-[10px] text-black/40" style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>Deine Bewertung</p>
-                      <div className="flex gap-1">
-                        {[1,2,3,4,5].map(n => (
-                          <button key={n} onClick={() => setMyRating(n)} className="bg-transparent border-0 p-0">
-                            <Star size={22} className={n <= myRating ? 'text-black fill-black' : 'text-black/15'} strokeWidth={1} />
-                          </button>
-                        ))}
-                      </div>
-                      <textarea
-                        value={myComment} onChange={e => setMyComment(e.target.value)}
-                        placeholder="Kommentar (optional)"
-                        className="w-full text-[11px] bg-transparent border border-black/10 px-3 py-2 outline-none focus:border-black/30 resize-none"
-                        rows={2} style={{ fontFamily: 'inherit' }}
-                      />
-                      <button onClick={handleReview} disabled={submitting || !myRating}
-                        className="w-full h-9 bg-black text-white text-[10px] border-0 disabled:opacity-20 flex items-center justify-center gap-1.5"
-                        style={{ letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                        <Send size={11} /> Absenden
-                      </button>
-                    </div>
-                  )}
+              {/* Test-Detail: Leisten-Sollmaße vs. Fußmaße (zur Überprüfung) */}
+              {fitState === 'matched' && selectedFit?.foot_length_mm != null && footMeasurements?.foot_length_mm && (
+                <div className="mt-2 max-w-md">
+                  <table className="t-klein w-full c-leise border-collapse">
+                    <thead>
+                      <tr className="text-black/35">
+                        <th className="text-left font-normal py-1 pr-2"></th>
+                        <th className="text-right font-normal py-1 px-2">Deine Maße</th>
+                        <th className="text-right font-normal py-1 px-2">Leiste {selectedFit.last_label} {selectedFit.width}</th>
+                        <th className="text-right font-normal py-1 pl-2">Abweichung</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t border-black/10">
+                        <td className="text-left py-1 pr-2">Länge</td>
+                        <td className="text-right py-1 px-2 tabular-nums">{footMeasurements.foot_length_mm} mm</td>
+                        <td className="text-right py-1 px-2 tabular-nums">{selectedFit.foot_length_mm} mm</td>
+                        <td className="text-right py-1 pl-2 tabular-nums">{selectedFit.deltaLength > 0 ? '+' : ''}{String(selectedFit.deltaLength).replace('.', ',')} mm</td>
+                      </tr>
+                      <tr className="border-t border-black/10">
+                        <td className="text-left py-1 pr-2">Ballenumfang</td>
+                        <td className="text-right py-1 px-2 tabular-nums">{footMeasurements.ball_girth_mm} mm</td>
+                        <td className="text-right py-1 px-2 tabular-nums">{selectedFit.ball_girth_mm} mm</td>
+                        <td className="text-right py-1 pl-2 tabular-nums">{selectedFit.deltaGirth > 0 ? '+' : ''}{String(selectedFit.deltaGirth).replace('.', ',')} mm</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               )}
-            </div>
 
-            {/* Konfig-Zusammenfassung (alle Breiten) + Buttons (nur Desktop;
-                mobil übernimmt die Sticky-Kaufleiste). */}
-            <div
-              className="px-5 lg:px-0 pt-2 pb-5 lg:pt-4 lg:pb-8 transition-all duration-700"
-              style={{
-                opacity: configStep >= 3 ? 1 : 0.15,
-                transform: configStep >= 3 ? 'translateY(0)' : 'translateY(8px)',
-                pointerEvents: configStep >= 3 ? 'auto' : 'none',
-              }}
-            >
-              <div className="border border-black/8 p-4 mb-4">
-                <p className="text-[10px] text-black/40 mb-2.5" style={{ letterSpacing: '0.18em', textTransform: 'uppercase' }}>Deine Konfiguration</p>
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-black/50">Leder</span>
-                    <span className="text-[11px] text-black">{mat?.label}{mat?.sub ? ` · ${mat.sub}` : ''}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-black/50">Farbe</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: color }} />
-                      <span className="text-[11px] text-black">{col?.name}</span>
+              {/* Nomatch: gespeicherte Maße bleiben sichtbar (zur Kontrolle/Änderung) */}
+              {fitState === 'nomatch' && footMeasurements?.foot_length_mm && (
+                <p className="t-klein c-leise mt-1.5">
+                  Deine gespeicherten Maße: {footMeasurements.foot_length_mm} mm Länge · {footMeasurements.ball_girth_mm} mm Ballenumfang.
+                  {' '}Für dieses Modell liegt keine Standard-Leiste in deinem Bereich vor, wir fertigen es custom-made auf Bestellung.
+                </p>
+              )}
+              </div>
+            )}
+
+            {/* Übersicht — alles, was gewählt ist, dazu Zubehör und Kauf */}
+            {schritt.key === '__uebersicht' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+                <div className="lg:col-span-5">
+                  <p className="t-lead c-tinte mb-4">Deine Konfiguration</p>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="t-klein c-leise">Leder</span>
+                      <span className="t-klein c-tinte">{mat?.label}{mat?.sub ? ` · ${mat.sub}` : ''}</span>
                     </div>
-                  </div>
-                  {/* Sohle wird als Optionsgruppe "Sohlen-Art" unten gelistet. */}
-                  {/* Dynamische Extras (Last, Welt, Heel, Toe, Schnalle, …) */}
-                  {sichtbareGruppen.map(group => {
-                    const sel = group.values.find(v => v.id === selectedExtras[group.key])
-                    if (!sel) return null
-                    return (
-                      <div key={group.id} className="flex items-center justify-between">
-                        <span className="text-[11px] text-black/50">{group.label}</span>
-                        <div className="flex items-center gap-2">
-                          {sel.color_hex && (
-                            <div className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: sel.color_hex }} />
-                          )}
-                          <span className="text-[11px] text-black">
-                            {sel.label}
-                            {sel.price_extra > 0 && ` (+€${sel.price_extra})`}
-                          </span>
-                        </div>
+                    <div className="flex items-center justify-between">
+                      <span className="t-klein c-leise">Farbe</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: color }} />
+                        <span className="t-klein c-tinte">{col?.name}</span>
                       </div>
-                    )
-                  })}
-                  {/* Leisten und Weite gehören sichtbar dazu: Sie bestimmen,
-                      wie der Schuh sitzt, und standen bisher nur in der
-                      Bestellansicht des Betreibers. */}
-                  {passform?.last_label && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-black/50">Leisten</span>
-                      <span className="text-[11px] text-black">{passform.last_label}</span>
                     </div>
+                    {/* Sohle wird als Optionsgruppe "Sohlen-Art" unten gelistet. */}
+                    {/* Dynamische Extras (Last, Welt, Heel, Toe, Schnalle, …) */}
+                    {sichtbareGruppen.map(group => {
+                      const sel = group.values.find(v => v.id === selectedExtras[group.key])
+                      if (!sel) return null
+                      return (
+                        <div key={group.id} className="flex items-center justify-between">
+                          <span className="t-klein c-leise">{group.label}</span>
+                          <div className="flex items-center gap-2">
+                            {sel.color_hex && (
+                              <div className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: sel.color_hex }} />
+                            )}
+                            <span className="t-klein c-tinte">
+                              {sel.label}
+                              {sel.price_extra > 0 && ` (+€${sel.price_extra})`}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {/* Leisten und Weite gehören sichtbar dazu: Sie bestimmen,
+                        wie der Schuh sitzt, und standen bisher nur in der
+                        Bestellansicht des Betreibers. */}
+                    {passform?.last_label && (
+                      <div className="flex items-center justify-between">
+                        <span className="t-klein c-leise">Leisten</span>
+                        <span className="t-klein c-tinte">{passform.last_label}</span>
+                      </div>
+                    )}
+                    {passform?.width && (
+                      <div className="flex items-center justify-between">
+                        <span className="t-klein c-leise">Weite</span>
+                        <span className="t-klein c-tinte">{WEITEN_NAME[passform.width] || passform.width}</span>
+                      </div>
+                    )}
+                    {sizeType === 'fit' && selectedFit?.size_label && (
+                      <div className="flex items-center justify-between">
+                        <span className="t-klein c-leise">Größe</span>
+                        <span className="t-klein c-tinte">EU {selectedFit.size_label}</span>
+                      </div>
+                    )}
+                    {sizeType === 'custom' && (
+                      <div className="flex items-center justify-between">
+                        <span className="t-klein c-leise">Größe</span>
+                        <span className="t-klein c-tinte">Custom Made</span>
+                      </div>
+                    )}
+                    {(sizeType === 'standard' && selectedSize) && (
+                      <div className="flex items-center justify-between">
+                        <span className="t-klein c-leise">Größe</span>
+                        <span className="t-klein c-tinte">EU {selectedSize}</span>
+                      </div>
+                    )}
+                    {/* Der Gürtel bekommt eine eigene Zeile. Er ist kein
+                        angehaktes Zubehör, sondern eine konfigurierte Position
+                        — und in der Zubehör-Zeile mitgezählt wäre er ein
+                        Betrag ohne Stück. */}
+                    {guertelPreis > 0 && (
+                      <div className="flex items-center justify-between pt-1 mt-1 border-t border-black/5">
+                        <span className="t-klein c-leise">Gürtel</span>
+                        <span className="t-klein c-tinte">+€{guertelPreis}</span>
+                      </div>
+                    )}
+                    {selectedAccessories.length > 0 && (
+                      <div className="flex items-center justify-between pt-1 mt-1 border-t border-black/5">
+                        <span className="t-klein c-leise">Zubehör</span>
+                        <span className="t-klein c-tinte">
+                          {selectedAccessories.length}×
+                          {accDiscount > 0
+                            ? <> <span className="line-through text-black/25">€{zubehoerTotal}</span> €{zubehoerTotal - accDiscount}</>
+                            : <> (+€{zubehoerTotal})</>
+                          }
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-8">
+                    <p className="t-klein c-leise mb-2">Im Karton</p>
+                    <ul className="space-y-1">
+                      {(pageTexts?.delivery_items?.length ? pageTexts.delivery_items : LIEFERUMFANG).map((item) => (
+                        <li key={item} className="t-text c-tinte">{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                <div className="mt-3 flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleSaveConfiguration}
+                    disabled={savingConfig}
+                    className="t-klein inline-flex items-center gap-1.5 c-leise hover:text-black/75 underline underline-offset-2 bg-transparent border-0 p-0 disabled:opacity-40"
+                  >
+                    <Heart size={12} strokeWidth={1.5} /> {savingConfig ? 'wird gespeichert …' : 'Konfiguration speichern'}
+                  </button>
+                  {savedToast === 'saved' && (
+                    <span className="t-klein c-leise">Gespeichert · im Profil unter „Meine Konfigurationen"</span>
                   )}
-                  {passform?.width && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-black/50">Weite</span>
-                      <span className="text-[11px] text-black">{WEITEN_NAME[passform.width] || passform.width}</span>
-                    </div>
-                  )}
-                  {sizeType === 'fit' && selectedFit?.size_label && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-black/50">Größe</span>
-                      <span className="text-[11px] text-black">EU {selectedFit.size_label}</span>
-                    </div>
-                  )}
-                  {sizeType === 'custom' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-black/50">Größe</span>
-                      <span className="text-[11px] text-black">Custom Made</span>
-                    </div>
-                  )}
-                  {(sizeType === 'standard' && selectedSize) && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-black/50">Größe</span>
-                      <span className="text-[11px] text-black">EU {selectedSize}</span>
-                    </div>
-                  )}
-                  {/* Der Gürtel bekommt eine eigene Zeile. Er ist kein
-                      angehaktes Zubehör, sondern eine konfigurierte Position
-                      — und in der Zubehör-Zeile mitgezählt wäre er ein
-                      Betrag ohne Stück. */}
-                  {guertelPreis > 0 && (
-                    <div className="flex items-center justify-between pt-1 mt-1 border-t border-black/5">
-                      <span className="text-[11px] text-black/50">Gürtel</span>
-                      <span className="text-[11px] text-black">+€{guertelPreis}</span>
-                    </div>
-                  )}
-                  {selectedAccessories.length > 0 && (
-                    <div className="flex items-center justify-between pt-1 mt-1 border-t border-black/5">
-                      <span className="text-[11px] text-black/50">Zubehör</span>
-                      <span className="text-[11px] text-black">
-                        {selectedAccessories.length}×
-                        {accDiscount > 0
-                          ? <> <span className="line-through text-black/25">€{zubehoerTotal}</span> €{zubehoerTotal - accDiscount}</>
-                          : <> (+€{zubehoerTotal})</>
-                        }
-                      </span>
-                    </div>
+                  {savedToast === 'login' && (
+                    <button type="button" onClick={goToLogin}
+                      className="t-klein c-leise underline underline-offset-2 bg-transparent border-0 p-0">
+                      Zum Speichern bitte anmelden
+                    </button>
                   )}
                 </div>
+                </div>
+                <div className="lg:col-span-7">
+                  <p className="t-lead c-tinte mb-4">Passend dazu</p>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    {accessories.map((acc) => {
+                      const selected = selectedAccessories.includes(acc.id)
+                      return (
+                        <button
+                          key={acc.id}
+                          onClick={() => toggleAccessory(acc.id)}
+                          className="relative text-left group"
+                        >
+                          {/* Product image area */}
+                          <div
+                            className="w-full rounded-sm overflow-hidden flex items-center justify-center"
+                            style={{
+                              aspectRatio: '1',
+                              background: '#f6f5f3',
+                              border: selected ? '1.5px solid black' : '1.5px solid transparent',
+                            }}
+                          >
+                            {acc.image ? (
+                              <img
+                                src={resolveImg(acc.image)}
+                                alt={acc.name}
+                                loading="lazy"
+                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                              />
+                            ) : (
+                              <div
+                                className="w-12 h-12 rounded-lg transition-transform group-hover:scale-110"
+                                style={{ background: acc.color, opacity: 0.7 }}
+                              />
+                            )}
+                            {/* Toggle badge */}
+                            <div
+                              className="absolute top-2 right-2 w-6 h-6 rounded-md flex items-center justify-center transition-all"
+                              style={{
+                                background: selected ? 'black' : 'white',
+                                border: selected ? '1.5px solid black' : '1.5px solid rgba(0,0,0,0.12)',
+                              }}
+                            >
+                              {selected
+                                ? <Check size={11} className="text-white" strokeWidth={2.5} />
+                                : <Plus size={11} className="text-black/30" strokeWidth={2} />
+                              }
+                            </div>
+                          </div>
+
+                          {/* Info below */}
+                          <p className="t-klein c-tinte mt-2 px-0.5">{acc.name}</p>
+                          {isPromo && wirksamerPct > 0 ? (
+                            <div className="flex items-center gap-1.5 px-0.5">
+                              <span className="t-klein c-leise line-through">€{acc.price}</span>
+                              <span className="t-klein c-tinte">€{Math.round(acc.price * (1 - wirksamerPct / 100))}</span>
+                            </div>
+                          ) : (
+                            <p className="t-klein c-leise px-0.5">€{acc.price}</p>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
-              <p className="hidden lg:block text-[15px] font-medium text-black mb-3" style={{ letterSpacing: '0.04em' }}>
-                {/* Der alte Preis gehört daneben, nicht nur ganz oben: Wer
-                    hier zusammenfasst, was er bestellt, soll den Vorteil an
-                    derselben Zahl ablesen können, die er gleich bezahlt. */}
-                {totalDiscount > 0 && (
-                  <span className="text-black/25 line-through mr-2 font-light">{formatPrice(priceBeforeDiscount)}</span>
-                )}
-                {displayPrice}
-                {preisAufschlaege.length > 0 && (
-                  <span className="text-[11px] text-black/35 ml-2">({preisAufschlaege.join(' · ')})</span>
-                )}
-              </p>
-              {/* Dasselbe auf dem großen Schirm: Die Seite hat zwei Fassungen
-                  dieses Blocks, und ein Hinweis, der nur in einer steht, ist
-                  auf der anderen keiner. */}
-              <Preishinweis className="hidden lg:block mb-3 -mt-2" mitVersandlink />
-              <div className="hidden lg:flex gap-3">
-                {needsCustomRequest ? (
-                  <button
-                    onClick={() => setCustomRequestOpen(true)}
-                    className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85"
-                    style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
-                  >
-                    <Send size={16} strokeWidth={1.5} /> Custom Made anfragen
-                  </button>
-                ) : (
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Beschreibung und Bewertungen ─────────────────────────────── */}
+      <section className="g-erzaehlung px-4 lg:px-10 py-14 lg:py-20">
+        <div className="max-w-3xl mx-auto">
+          <p className="t-text c-tinte">
+            {product.description || (
+              <>
+                Jeder {product.name || 'Schuh'} entsteht einzeln auf Bestellung in Almansa, Spanien, in über 200 Arbeitsschritten.
+                Aus Fußlänge und Ballenumfang bestimmen wir Leisten, Größe und Weite.
+                Ausgesuchtes europäisches Leder, rahmengenähte Konstruktion und eine Passform, die du vom ersten Schritt an spürst.
+              </>
+            )}
+          </p>
+          <p className="t-klein c-leise mt-4">
+            {(pageTexts?.badges?.length ? pageTexts.badges : ['Rahmengenäht', 'Custom Made', '200+ Schritte']).join(' · ')}
+          </p>
+
+          <div className="mt-12">
+            <button
+              onClick={() => setShowReview(v => !v)}
+              className="w-full flex items-center justify-between bg-transparent border-0 p-0 pb-2 border-b border-black/8"
+            >
+              <div className="flex items-center gap-2">
+                <span className="t-klein c-leise">Bewertungen</span>
+                {reviews.length > 0 && (
                   <>
-                    <button
-                      onClick={handleAddToCart}
-                      disabled={!fitReady}
-                      className={`flex-1 h-14 flex items-center justify-center gap-2.5 transition-all border disabled:opacity-30 ${
-                        added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 hover:bg-black/5 active:bg-black/10'
-                      }`}
-                      style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
-                    >
-                      {added
-                        ? <><Check size={16} strokeWidth={1.5} /> Hinzugefügt</>
-                        : <><ShoppingBag size={16} strokeWidth={1.5} /> Warenkorb</>
-                      }
-                    </button>
-                    <button
-                      onClick={handleBuyNow}
-                      disabled={!fitReady}
-                      className="flex-1 h-14 flex items-center justify-center gap-2.5 bg-black text-white border-0 hover:bg-black/90 active:bg-black/85 disabled:opacity-30"
-                      style={{ letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: '12px', borderRadius: 0 }}
-                    >
-                      Jetzt kaufen
-                    </button>
+                    <Stars value={avg} size={10} />
+                    <span className="t-klein c-leise">({reviews.length})</span>
                   </>
                 )}
               </div>
-              <div className="mt-3 flex flex-col items-center gap-1">
-                <button
-                  type="button"
-                  onClick={handleSaveConfiguration}
-                  disabled={savingConfig}
-                  className="inline-flex items-center gap-1.5 text-[10px] text-black/45 hover:text-black/75 underline underline-offset-2 bg-transparent border-0 p-0 disabled:opacity-40"
-                  style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}
-                >
-                  <Heart size={12} strokeWidth={1.5} /> {savingConfig ? 'wird gespeichert …' : 'Konfiguration speichern'}
-                </button>
-                {savedToast === 'saved' && (
-                  <span className="text-[10px] text-black/55">Gespeichert · im Profil unter „Meine Konfigurationen"</span>
+              {showReview ? <ChevronUp size={14} className="text-black/30" /> : <ChevronDown size={14} className="text-black/30" />}
+            </button>
+
+            {showReview && (
+              <div className="space-y-2 mt-3">
+                {reviews.length === 0 && (
+                  <p className="t-klein c-leise text-center py-3">Noch keine Bewertungen.</p>
                 )}
-                {savedToast === 'login' && (
-                  <button type="button" onClick={goToLogin}
-                    className="text-[10px] text-black/55 underline underline-offset-2 bg-transparent border-0 p-0">
-                    Zum Speichern bitte anmelden
-                  </button>
+                {reviews.slice(0, 3).map(rev => (
+                  <div key={rev.id} className="border-b border-black/5 pb-3">
+                    <div className="flex items-center justify-between">
+                      <span className="t-klein c-tinte">{rev.user_name}</span>
+                      <Stars value={rev.rating} size={9} />
+                    </div>
+                    {rev.comment && <p className="t-klein c-leise mt-1">{rev.comment}</p>}
+                  </div>
+                ))}
+
+                {!myRev && product.id && (
+                  <div className="pt-2 space-y-2">
+                    <p className="t-klein c-leise">Deine Bewertung</p>
+                    <div className="flex gap-1">
+                      {[1,2,3,4,5].map(n => (
+                        <button key={n} onClick={() => setMyRating(n)} className="bg-transparent border-0 p-0">
+                          <Star size={22} className={n <= myRating ? 'text-black fill-black' : 'text-black/15'} strokeWidth={1} />
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={myComment} onChange={e => setMyComment(e.target.value)}
+                      placeholder="Kommentar (optional)"
+                      className="t-klein w-full bg-transparent border border-black/10 px-3 py-2 outline-none focus:border-black/30 resize-none"
+                      rows={2} style={{ fontFamily: 'inherit' }}
+                    />
+                    <button onClick={handleReview} disabled={submitting || !myRating}
+                      className="t-klein w-full h-11 g-akzent border-0 disabled:opacity-20 flex items-center justify-center gap-1.5">
+                      <Send size={11} /> Absenden
+                    </button>
+                  </div>
                 )}
               </div>
-              <p className="hidden lg:block text-center text-[10px] text-black/25 mt-3" style={{ letterSpacing: '0.12em' }}>
-                {needsCustomRequest
-                  ? 'Custom Made · persönliche Beratung über WhatsApp Business'
-                  : guertelUnfertig
-                    ? 'Bitte den Gürtel noch zu Ende wählen, Form, Metall und Größe'
-                    : !fitReady
-                      ? 'Bitte zuerst die Passform ermitteln'
-                      : 'Rahmengenäht · Kostenlose Lieferung'}
-              </p>
-            </div>
+            )}
           </div>
+        </div>
+      </section>
+
+      {/* ── Zusammenfassung ───────────────────────────────────────────────
+          Wie beim Rolex-Konfigurator: Modell, was gewählt ist, Preis, und der
+          eine Knopf, der jetzt dran ist. Bis zur Übersicht heißt er „Weiter",
+          dort „In den Warenkorb" und „Jetzt kaufen". */}
+      <div
+        className="sticky bottom-0 z-20 g-angebot shadow-[0_-10px_40px_rgba(35,28,23,0.10)] px-4 lg:px-10 pt-3"
+        style={{ paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 12px)' : '12px' }}
+      >
+        <div className="max-w-[1440px] mx-auto">
+          <Zusammenfassung
+            name={cleanShoeName(product.name)}
+            zeilen={schritte.filter(x => x.wahl).map(x => (x.gruppe ? `${x.titel} ${x.wahl}` : x.wahl))}
+            preis={displayPrice}
+            preisVorher={totalDiscount > 0 ? formatPrice(priceBeforeDiscount) : null}
+            hinweis={<Preishinweis className="mt-0.5" mitVersandlink />}
+          >
+            {schritt.key !== '__uebersicht' ? (
+              <button
+                type="button"
+                onClick={weiter}
+                disabled={!weiterFrei}
+                className="t-klein h-12 px-6 sm:px-9 g-akzent border-0 inline-flex items-center gap-2 hover:opacity-90 disabled:opacity-35 transition-opacity"
+              >
+                Weiter <ArrowRight size={16} strokeWidth={1.6} />
+              </button>
+            ) : needsCustomRequest ? (
+              <button
+                type="button"
+                onClick={() => setCustomRequestOpen(true)}
+                className="t-klein h-12 px-6 sm:px-9 g-akzent border-0 inline-flex items-center gap-2 hover:opacity-90"
+              >
+                <Send size={16} strokeWidth={1.5} /> Custom Made anfragen
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={!fitReady}
+                  aria-label={added ? 'Hinzugefügt' : 'In den Warenkorb'}
+                  className={`t-klein h-12 px-4 sm:px-6 inline-flex items-center gap-2 border transition-colors disabled:opacity-35 ${
+                    added ? 'g-dunkel c-hell border-transparent' : 'bg-transparent c-tinte border-black/25 hover:border-black/60'
+                  }`}
+                >
+                  {added ? <Check size={16} strokeWidth={1.6} /> : <ShoppingBag size={16} strokeWidth={1.5} />}
+                  <span className="hidden sm:inline">{added ? 'Hinzugefügt' : 'Warenkorb'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  disabled={!fitReady}
+                  className="t-klein h-12 px-6 sm:px-9 g-akzent border-0 hover:opacity-90 disabled:opacity-35 transition-opacity"
+                >
+                  Jetzt kaufen
+                </button>
+              </>
+            )}
+          </Zusammenfassung>
+          {schritt.key === '__uebersicht' && !needsCustomRequest && !fitReady && (
+            <p className="t-klein c-leise mt-1.5">
+              {guertelUnfertig
+                ? 'Bitte den Gürtel noch zu Ende wählen: Form, Metall und Größe.'
+                : 'Bitte zuerst die Passform ermitteln.'}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* ── Kaufen: Fixed Bottom (nur mobil) ──────────────────── */}
-      <div
-        className="sticky bottom-0 z-20 bg-white border-t border-black/5 flex-shrink-0 lg:hidden px-4 pt-2 transition-all duration-500"
-        style={{
-          paddingBottom: isNative ? 'max(env(safe-area-inset-bottom, 0px), 8px)' : '8px',
-          opacity: configStep >= 3 ? 1 : 0.3,
-          pointerEvents: configStep >= 3 ? 'auto' : 'none',
-        }}
-      >
-        <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-center gap-3 mb-1.5">
-          <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{mat?.label}</span>
-          <span className="text-black/15">·</span>
-          <div className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: color }} />
-            <span className="text-[9px] text-black/40">{col?.name}</span>
-          </div>
-          <span className="text-black/15">·</span>
-          <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>{soleArt?.label}</span>
-          {/* Der Gürtel gehört in dieselbe Zeile: Er ist Teil dessen, was
-              gleich in den Warenkorb geht, und wer ihn hinzugenommen hat,
-              soll ihn dort wiederfinden. */}
-          {guertelPreis > 0 && (
-            <>
-              <span className="text-black/15">·</span>
-              <span className="text-[9px] text-black/40" style={{ letterSpacing: '0.05em' }}>+ Gürtel</span>
-            </>
-          )}
-        </div>
-        <p className="text-center text-[12px] font-medium text-black mb-1.5" style={{ letterSpacing: '0.04em' }}>
-          {totalDiscount > 0 && (
-            <span className="text-black/25 line-through mr-1.5 font-light">{formatPrice(priceBeforeDiscount)}</span>
-          )}
-          {displayPrice}
-          {/* Nur nennen, was es auch gibt: Gürtel und Zubehör je für sich,
-              und wenn keins von beiden gewählt ist, gar nichts. */}
-          {(guertelPreis > 0 || selectedAccessories.length > 0) && (
-            <span className="text-[9px] text-black/35 ml-1">
-              (inkl. {[
-                guertelPreis > 0 && 'Gürtel',
-                selectedAccessories.length > 0 && `${selectedAccessories.length}× Zubehör`,
-              ].filter(Boolean).join(' · ')})
-            </span>
-          )}
-        </p>
-        {/* Der Preis, den der Kunde gleich in den Warenkorb legt — hier muss
-            nach § 6 Abs. 1 PAngV stehen, was in ihm enthalten ist und was
-            noch dazukommt. */}
-        <Preishinweis className="text-center mb-2.5" mitVersandlink />
-        <div className="flex gap-2">
-          {needsCustomRequest ? (
-            <button
-              onClick={() => setCustomRequestOpen(true)}
-              className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85"
-              style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
-            >
-              <Send size={14} strokeWidth={1.5} /> Custom Made anfragen
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={handleAddToCart}
-                disabled={!fitReady}
-                className={`flex-1 h-12 flex items-center justify-center gap-2 transition-all border disabled:opacity-30 ${
-                  added ? 'bg-black text-white border-black' : 'bg-white text-black border-black/20 active:bg-black/5'
-                }`}
-                style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
-              >
-                {added
-                  ? <><Check size={14} strokeWidth={1.5} /> Hinzugefügt</>
-                  : <><ShoppingBag size={14} strokeWidth={1.5} /> Warenkorb</>
-                }
-              </button>
-              <button
-                onClick={handleBuyNow}
-                disabled={!fitReady}
-                className="flex-1 h-12 flex items-center justify-center gap-2 bg-black text-white border-0 active:bg-black/85 disabled:opacity-30"
-                style={{ letterSpacing: '0.14em', textTransform: 'uppercase', fontSize: '10px', borderRadius: 0 }}
-              >
-                Jetzt kaufen
-              </button>
-            </>
-          )}
-        </div>
-        <p className="text-center text-[9px] text-black/25 mt-2 pb-1" style={{ letterSpacing: '0.12em' }}>
-          {needsCustomRequest
-            ? 'Custom Made · WhatsApp Business'
-            : guertelUnfertig
-              ? 'Bitte den Gürtel noch zu Ende wählen, Form, Metall und Größe'
-              : !fitReady
-                ? 'Bitte zuerst die Passform ermitteln'
-                : 'Rahmengenäht · Kostenlose Lieferung'}
-        </p>
-        </div>
-      </div>
+      <SchrittMenue
+        offen={menueOffen}
+        schritte={schritte}
+        aktuell={schritt.key}
+        erreichbar={erreichbar}
+        onSprung={geheZu}
+        onClose={() => setMenueOffen(false)}
+      />
 
       {/* ── Duplikat-Dialog ────────────────────────────────────── */}
       {/* Größentabelle. Als eigenes Fenster, damit sie von jeder Stelle der
@@ -3011,32 +2650,32 @@ export default function Customize() {
 
       {duplicateDialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40" onClick={() => setDuplicateDialog(false)}>
-          <div className="bg-white mx-4 w-full max-w-md p-7" onClick={e => e.stopPropagation()}>
-            <p className="text-[9px] text-black/25 uppercase tracking-[0.25em] mb-3 font-light">Warenkorb</p>
-            <p className="text-[16px] font-extralight text-black tracking-tight leading-snug mb-2">
+          <div className="haus g-angebot mx-4 w-full max-w-md p-7" onClick={e => e.stopPropagation()}>
+            <p className="t-klein c-leise mb-3">Warenkorb</p>
+            <p className="t-text c-tinte mb-2">
               Dieser Schuh befindet sich bereits in deinem Warenkorb
             </p>
-            <p className="text-[12px] text-black/35 font-light leading-relaxed mb-6">
+            <p className="t-klein c-leise mb-6">
               {product.name} in derselben Konfiguration liegt bereits im Warenkorb.
               Möchtest du nur das Zubehör hinzufügen oder den Schuh erneut?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => handleDuplicateChoice(false)}
-                className="flex-1 h-12 border border-black text-black text-[10px] uppercase tracking-[0.15em] font-light bg-transparent hover:bg-black hover:text-white transition-all"
+                className="t-klein flex-1 h-12 border border-black c-tinte bg-transparent hover:bg-black hover:text-white transition-all"
               >
                 Nur Zubehör
               </button>
               <button
                 onClick={() => handleDuplicateChoice(true)}
-                className="flex-1 h-12 bg-black text-white text-[10px] uppercase tracking-[0.15em] font-light border border-black hover:bg-black/85 transition-all"
+                className="t-klein flex-1 h-12 g-akzent border-0 hover:opacity-90 transition-opacity"
               >
                 Schuh + Zubehör
               </button>
             </div>
             <button
               onClick={() => setDuplicateDialog(false)}
-              className="w-full mt-3 h-9 text-[10px] text-black/30 hover:text-black/60 bg-transparent border-0 font-light uppercase tracking-[0.15em] transition-all"
+              className="t-klein w-full mt-3 h-9 c-leise hover:text-black/60 bg-transparent border-0 transition-all"
             >
               Abbrechen
             </button>
@@ -3061,6 +2700,7 @@ export default function Customize() {
           }).filter(Boolean),
         }}
       />
+    </div>
     </div>
     </>
   )

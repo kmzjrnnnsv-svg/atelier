@@ -37,7 +37,7 @@ export default function Entdecken() {
   useSeo({
     titel: 'Wie ein Paar entsteht',
     beschreibung: 'Rahmengenäht statt geklebt, einzeln gefertigt in einer spanischen '
-      + 'Almansa, in rund vier Wochen. Was das für die Haltbarkeit deiner Schuhe bedeutet.',
+      + 'Almansa, in 4 bis 6 Wochen. Was das für die Haltbarkeit deiner Schuhe bedeutet.',
     pfad: '/entdecken',
   })
 
@@ -174,7 +174,7 @@ export default function Entdecken() {
             </h2>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-5">
               Wir haben kein Lager, aus dem wir greifen. Jeder Schuh entsteht erst nach deiner
-              Bestellung, einzeln, in Almansa in Spanien, in rund vier Wochen.
+              Bestellung, einzeln, in Almansa in Spanien, in 4 bis 6 Wochen.
             </p>
             <p className="text-[14px] text-black/55 font-light leading-relaxed mt-4">
               Rahmengenäht statt geklebt: Sohle und Schaft sind über einen Lederstreifen

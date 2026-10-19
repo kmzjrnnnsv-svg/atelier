@@ -234,11 +234,19 @@ router.get('/bestand', ...canRead, (req, res) => {
    Bereiche hinter der Anmeldung stehen nicht darauf. Wie oft jemand seine
    Bestellungen ansieht, geht niemanden etwas an, auch uns nicht. */
 const GEZAEHLTE_PFADE = new Set([
-  '/', '/test-homepage', '/collection', '/accessories', '/explore',
-  '/shoe', '/customize', '/cart', '/checkout',
-  '/scan', '/passform', '/corporate', '/affiliate',
-  '/legal', '/faq', '/newsletter',
+  '/', '/test-homepage', '/collection', '/accessories', '/explore', '/entdecken',
+  '/schuhe', '/customize', '/checkout',
+  '/business', '/affiliate',
+  '/legal', '/help', '/learn', '/welcome', '/newsletter',
 ])
+/* Die erste Fassung dieser Liste war aus dem Gedächtnis geschrieben und nicht
+   aus App.jsx, und vier Einträge zeigten ins Leere: „/shoe" statt „/schuhe" —
+   ausgerechnet die Modellseiten wurden also nie gezählt —, „/corporate" statt
+   „/business", „/faq" statt „/help", dazu „/cart" und „/passform", die es
+   als Adresse nicht gibt. „/scan" ist herausgenommen: Es liegt hinter der
+   Anmeldung, und die Datenschutzerklärung (Ziffer 3a) sagt, dass dort nicht
+   gezählt wird. Wer eine Seite hinzufügt, gleicht diese Liste mit den
+   Routen in App.jsx ab. */
 
 /** Aus der Adresse des Browsers einen Eintrag der Liste machen, oder nichts. */
 function pfadNormalisieren(roh) {

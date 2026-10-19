@@ -58,10 +58,10 @@ export default function StartBanner() {
     // `role="region"` mit Namen: Wer mit einer Vorlesehilfe durch die
     // Bereiche springt, soll wissen, was dieser Streifen ist, statt eine
     // namenlose Zeile vor der Navigation zu finden.
-    <aside aria-label="Hinweis zum Verkaufsstart" className="w-full bg-[#111] text-white">
+    <aside aria-label="Hinweis zum Verkaufsstart" className="w-full g-dunkel c-hell">
       <div className="max-w-[1400px] mx-auto px-5 lg:px-16 py-2.5 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-6">
         {text && (
-          <p className="text-[11px] sm:text-[12px] font-light leading-snug text-white/75 flex-1 min-w-0">
+          <p className="t-klein c-hell flex-1 min-w-0">
             {text}
           </p>
         )}
@@ -75,9 +75,9 @@ export default function StartBanner() {
             href={`https://wa.me/${ziffern}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="group shrink-0 inline-flex items-center gap-2 text-[11px] sm:text-[12px] font-light text-white/90 hover:text-white no-underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111] rounded-sm"
+            className="t-klein group shrink-0 inline-flex items-center gap-2 c-hell hover:text-white"
           >
-            <span className="border-b border-white/30 group-hover:border-white/70 transition-colors pb-px">
+            <span className="underline underline-offset-4 decoration-1">
               {stand.whatsappSatz || 'Fragen? Schreib uns auf WhatsApp.'}
             </span>
             {/* Haarstrich mit Spitze, wie an den Türen der Startseite.

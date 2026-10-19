@@ -8,6 +8,7 @@ import { frischeInstallationVerbrauchen } from './schema.js'
 import { GUERTEL_KEY, GUERTEL_ART, GROESSEN } from '../utils/guertel.js'
 import { saisonFuerKategorie } from '../utils/saison.js'
 import { uniqueShoeSlug } from '../utils/slug.js'
+import { LEDER_FARBEN, FUTTER_FARBEN, LAUFSOHLE_FARBEN, LEDER_MUSTER, LEDER_OHNE_BILD } from './lederBilder.js'
 // Der Seed legt an, was er vermisst — und er erkennt seine Modelle am Namen.
 // Seit ein eindeutiger Index über `lower(trim(name))` liegt, muss er dabei
 // dieselbe Frage stellen wie der Index: Ein zeichengenaues `WHERE name = ?`
@@ -96,6 +97,10 @@ export async function seedDatabase(db) {
   // Und ganz zuletzt das Aufräumen: Es nimmt weg, was die Schritte davor
   // angelegt haben, und muss deshalb hinter allen stehen.
   seedSohlenUndWelt(db)
+  // Nach allem, was Leder und Optionen neu setzt: Die Matrix stellt bei
+  // jedem Start die Lederliste der Standardmodelle wieder her, und die
+  // Marina Walks bekommen erst danach ihr Lux Suede zurück.
+  seedLederBilder(db)
   seedSlugs(db)
 
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get()
@@ -195,6 +200,7 @@ export async function seedDatabase(db) {
   // ohne diesen zweiten Aufruf fehlte die Hälfte der Express-Fassungen.
   seedExpressModelle(db)
   seedSaison(db)
+  seedLederBilder(db)
   // Auch hier zum Schluss: Dieser Zweig läuft NACH dem oberen und legt die
   // zwölf Grundmodelle erst an. Stünde der Nachtrag nur oben, blieben genau
   // sie ohne Adresse — und das fällt erst auf, wenn jemand einen Link auf
@@ -217,7 +223,7 @@ function seedEmailTemplates(db) {
       'Wird direkt nach Aufgabe der Bestellung an den Kunden gesendet.',
       'Artisan Sole ·Bestellbestätigung #{{order_id}}',
       'Vielen Dank, {{name}}. Deine Bestellung wurde aufgenommen und wird individuell für dich angefertigt.',
-      'Deine Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu dir geliefert.\nDen aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.'
+      'Deine Schuhe werden custom-made gefertigt und in der Regel 4 bis 6 Wochen nach Zahlungseingang direkt zu dir geliefert.\nDen aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.'
     )
     stmt.run(
       'payment',
@@ -683,6 +689,7 @@ export function seedExtendedCatalog(db) {
     { group: 'inner_color', key: 'white',  label: 'White',  description: '', price: 0, cats: '*' },
     { group: 'inner_color', key: 'lila',   label: 'Lila',   description: '', price: 0, cats: '*' },
     { group: 'inner_color', key: 'ochre',  label: 'Ochre',  description: '', price: 0, cats: '*' },
+    { group: 'inner_color', key: 'dark_brown', label: 'Dunkelbraun', description: '', price: 0, cats: '*' },
 
     // Sohle Unterseite
     { group: 'sole_bottom_color', key: 'black',         label: 'Black',         description: '', price: 0, cats: '*' },
@@ -693,6 +700,10 @@ export function seedExtendedCatalog(db) {
     { group: 'sole_bottom_color', key: 'lila',          label: 'Lila',          description: '', price: 0, cats: '*' },
     { group: 'sole_bottom_color', key: 'natural',       label: 'Natural',       description: '', price: 0, cats: '*' },
     { group: 'sole_bottom_color', key: 'orange',        label: 'Orange',        description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'red',           label: 'Rot',           description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'pale_rose',     label: 'Altrosa',       description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'ultramarine',   label: 'Ultramarin',    description: '', price: 0, cats: '*' },
+    { group: 'sole_bottom_color', key: 'turquoise',     label: 'Türkis',        description: '', price: 0, cats: '*' },
     { group: 'sole_bottom_color', key: 'white',         label: 'Weiß',          description: 'Klassisch weiß (Sneaker).', price: 0, cats: 'SNEAKER,SNEAKER_LACED,SNEAKER_BOOT' },
 
     // Erweiterte Sohlen aus Matrix (falls noch nicht vorhanden)
@@ -1080,8 +1091,11 @@ export function seedMatrixTemplatesV2(db) {
   `).get(gk, ok)?.id
 
   // Helper für vollständige Farb-Sets (Matrix)
-  const INNER_FULL  = ['black', 'brown', 'tan', 'beige', 'red', 'orange', 'navy', 'white', 'lila', 'ochre']
-  const BOTTOM_FULL = ['black', 'brown', 'cognac', 'dark_red', 'forest_green', 'lila', 'natural', 'orange']
+  // Futter und Laufsohle: genau die Farben aus dem Bildpaket (lederBilder.js).
+  // Tan und Weiß gibt es dort nicht; an den Mokassins, die ihre eigene
+  // Vorlage haben, bleiben sie.
+  const INNER_FULL  = FUTTER_FARBEN.map(f => f.key)
+  const BOTTOM_FULL = LAUFSOHLE_FARBEN.map(f => f.key)
   const SOLE_COLOR_FULL = ['black', 'brown', 'brick', 'natural']
   const LAST_FULL  = ['zurigo', 'monti']
   const HEEL_FULL  = ['standard', 'higher_heel']
@@ -1172,11 +1186,11 @@ export function seedMatrixTemplatesV2(db) {
       ...mk('MONK', 'sole_bottom_color', BOTTOM_FULL),
     ],
     // Stiefel-Familie (Last + Sohlen-Art + Farben pro Matrix)
-    CHELSEA:  [...mk('CHELSEA',  'last', LAST_FULL), ...soleForCat('CHELSEA'),  ...mk('CHELSEA',  'inner_color', INNER_FULL), ...mk('CHELSEA',  'sole_bottom_color', INNER_FULL)],
-    BOOT:     [...mk('BOOT',     'last', LAST_FULL), ...soleForCat('BOOT'),     ...mk('BOOT',     'inner_color', INNER_FULL), ...mk('BOOT',     'sole_bottom_color', INNER_FULL)],
-    BALMORAL: [...mk('BALMORAL', 'last', LAST_FULL), ...soleForCat('BALMORAL'), ...mk('BALMORAL', 'inner_color', INNER_FULL), ...mk('BALMORAL', 'sole_bottom_color', INNER_FULL)],
-    JODHPUR:  [...mk('JODHPUR',  'last', LAST_FULL), ...soleForCat('JODHPUR'),  ...mk('JODHPUR',  'inner_color', INNER_FULL), ...mk('JODHPUR',  'sole_bottom_color', INNER_FULL)],
-    CHUKKA:   [...mk('CHUKKA',   'last', LAST_FULL), ...soleForCat('CHUKKA'),   ...mk('CHUKKA',   'inner_color', INNER_FULL), ...mk('CHUKKA',   'sole_bottom_color', INNER_FULL)],
+    CHELSEA:  [...mk('CHELSEA',  'last', LAST_FULL), ...soleForCat('CHELSEA'),  ...mk('CHELSEA',  'inner_color', INNER_FULL), ...mk('CHELSEA',  'sole_bottom_color', BOTTOM_FULL)],
+    BOOT:     [...mk('BOOT',     'last', LAST_FULL), ...soleForCat('BOOT'),     ...mk('BOOT',     'inner_color', INNER_FULL), ...mk('BOOT',     'sole_bottom_color', BOTTOM_FULL)],
+    BALMORAL: [...mk('BALMORAL', 'last', LAST_FULL), ...soleForCat('BALMORAL'), ...mk('BALMORAL', 'inner_color', INNER_FULL), ...mk('BALMORAL', 'sole_bottom_color', BOTTOM_FULL)],
+    JODHPUR:  [...mk('JODHPUR',  'last', LAST_FULL), ...soleForCat('JODHPUR'),  ...mk('JODHPUR',  'inner_color', INNER_FULL), ...mk('JODHPUR',  'sole_bottom_color', BOTTOM_FULL)],
+    CHUKKA:   [...mk('CHUKKA',   'last', LAST_FULL), ...soleForCat('CHUKKA'),   ...mk('CHUKKA',   'inner_color', INNER_FULL), ...mk('CHUKKA',   'sole_bottom_color', BOTTOM_FULL)],
     // Slipper-Familie (Accessoires + Sohlen-Art + Innen)
     BELGIAN_SLIPPER: [
       ...mk('BELGIAN_SLIPPER', 'loafer_decoration', ['ohne', 'tassels', 'bow']),
@@ -1534,7 +1548,7 @@ function seedFaqs(db) {
       a: 'Wir fertigen jedes Paar erst, nachdem du bestellt hast (made to order). Dadurch entsteht keine Überproduktion und kein Lagerüberschuss: Jeder Schuh wird gezielt für einen Kunden gefertigt.',
       category: 'Bestellung & Produktion', sort_order: 6 },
     { q: 'Wie lange dauert es, bis mein Schuh bei mir ist?',
-      a: 'In der Regel rund 4 Wochen nach Zahlungseingang, von der Produktion bis zur Lieferung zu dir. Da wir custom-made und erst auf Bestellung fertigen, gibt es keine Lagerhaltung.',
+      a: 'In der Regel 4 bis 6 Wochen nach Zahlungseingang, von der Produktion bis zur Lieferung zu dir. Da wir custom-made und erst auf Bestellung fertigen, gibt es keine Lagerhaltung.',
       category: 'Bestellung & Produktion', sort_order: 7 },
     { q: 'Wie lösche ich mein Konto?',
       a: 'Schreib uns über den Nachrichtenbereich in der App (das Sprechblasen-Symbol oben) oder an kontakt@artisansole.com. Wir sperren dein Konto daraufhin sofort und löschen es nach dreißig Tagen endgültig. Die Frist ist deine Sicherheit: Überlegst du es dir anders, holen wir das Konto mit allen Bestellungen zurück. Auf ausdrücklichen Wunsch löschen wir auch sofort. Dasselbe gilt für Firmen- und Affiliate-Konten.',
@@ -1562,7 +1576,7 @@ function seedFaqs(db) {
 // Stellt bereits geseedete Inhalte (E-Mail-Templates, Konfigurator-Optionen,
 // Artikel, FAQ, Material-/Farb-Tipps, Treuestufen, Seitentexte) auf die neue
 // Sprache um: "Maßschuh/Maßanfertigung/Bespoke/maßgefertigt" → "Custom Made",
-// Lieferzeit → "ca. 4 Wochen nach Zahlungseingang" und entfernt
+// Lieferzeit → "4 bis 6 Wochen nach Zahlungseingang" und entfernt
 // Gedankenstriche.
 // Achtung: überschreibt entsprechende Stellen auch bei manuellen CMS-Edits.
 function cleanLegacyText(s, isSubject) {
@@ -1592,7 +1606,7 @@ function cleanLegacyText(s, isSubject) {
     .replace(/\b[Mm]a(?:ß|ss)geschneidert(?:e[rsnm]?)?\b/g, 'Custom Made')
     .replace(/Bespoke Footwear/g, 'Custom Made Footwear')
     .replace(/Bespoke/g, 'Custom Made')
-    .replace(/6\s*[–-]\s*8\s*Wochen/g, 'ca. 4 Wochen nach Zahlungseingang')
+    .replace(/6\s*[–-]\s*8\s*Wochen/g, '4 bis 6 Wochen nach Zahlungseingang')
     .replace(/(\d)\s*–\s*(\d)/g, '$1 bis $2')
     // Der schließende Strich eines Paares steht oft direkt vor einem Komma:
     // „… im selben Ton oder als Kontrast —, die Naht …". Er fällt ersatzlos
@@ -1640,7 +1654,7 @@ const DU_TEXTE = [
   ['Ihre Bestellung wurde aufgenommen und wird individuell für Sie angefertigt.',
    'Deine Bestellung wurde aufgenommen und wird individuell für dich angefertigt.'],
   ['Ihre Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu Ihnen geliefert.',
-   'Deine Schuhe werden custom-made gefertigt und in der Regel rund 4 Wochen nach Zahlungseingang direkt zu dir geliefert.'],
+   'Deine Schuhe werden custom-made gefertigt und in der Regel 4 bis 6 Wochen nach Zahlungseingang direkt zu dir geliefert.'],
   ['Den aktuellen Status Ihrer Bestellung finden Sie jederzeit in der Artisan Sole App unter Meine Bestellungen.',
    'Den aktuellen Status deiner Bestellung findest du jederzeit in der Artisan Sole App unter Meine Bestellungen.'],
   ['Ihre Bestellung wurde erfasst und wartet auf Ihre Zahlung.',
@@ -1736,6 +1750,14 @@ const DU_TEXTE = [
    'Du wählst die Farbe aus neun Wildledertönen, dazu den Riemen'],
   ['Gefertigt auf dem Moc-Sport-Leisten in Ihrer Länge und Weite.',
    'Gefertigt auf dem Moc-Sport-Leisten in deiner Länge und Weite.'],
+  // ── Lieferzeit wie in den AGB ──────────────────────────────────────────
+  // Kein Wechsel der Anrede, aber derselbe Weg: Die Vorlagen und Antworten
+  // liegen in der Datenbank, und eine neue Fassung im Seed erreicht einen
+  // bestehenden Laden nicht. Ersetzt wird nur der alte Wortlaut; wer den
+  // Satz im CMS anders gefasst hat, behält seine Fassung.
+  ['in der Regel rund 4 Wochen nach Zahlungseingang', 'in der Regel 4 bis 6 Wochen nach Zahlungseingang'],
+  ['In der Regel rund 4 Wochen nach Zahlungseingang', 'In der Regel 4 bis 6 Wochen nach Zahlungseingang'],
+  ['ca. 4 Wochen nach Zahlungseingang', '4 bis 6 Wochen nach Zahlungseingang'],
 ]
 
 export function umstellungAufDu(db) {
@@ -2091,7 +2113,7 @@ export const rechtstextDatei = (type) => RECHTSTEXTE.find(r => r.type === type) 
 export function seedKollektionen(db) {
   const vorgabe = [
     { key: 'standard', label: 'Maßanfertigung', sort_order: 1,
-      description: 'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, rund vier Wochen.' },
+      description: 'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, 4 bis 6 Wochen.' },
     { key: 'express',  label: 'Express',        sort_order: 2,
       description: 'Aus vorbereiteten Bauteilen auf deinem Leisten vollendet, rund zwei Wochen.' },
   ]
@@ -3459,4 +3481,128 @@ function seedSlugs(db) {
     for (const s of fehlend) upd.run(uniqueShoeSlug(db, s.name, s.id), s.id)
     console.log(`✅ Slugs vergeben: ${fehlend.length} Modell(e)`)
   } catch (e) { console.error('[Slugs]', e.message) }
+}
+
+
+// ── Lederbilder ─────────────────────────────────────────────────────────────
+//
+// Das Bildpaket vom 18. Oktober 2026: vier Leder mit je eigenen Farben,
+// neun Futter- und zwölf Laufsohlenfarben, jede als Muster (lederBilder.js).
+//
+// Was bei jedem Start gilt und was nur einmal:
+//
+//   Jeden Start  Die Farbzeilen der vier Leder und die Werte von Futter und
+//                Laufsohle sind da und tragen ihr Bild. Angelegt wird nur,
+//                was fehlt; ein Bild nur dort, wo keins steht. Was der
+//                Betreiber im CMS ändert, bleibt.
+//
+//                Die Marina Walks führen Lux Suede. Das muss jeden Start
+//                neu gesetzt werden, weil die Matrix davor die Lederliste
+//                jedes Standardmodells ihrer Machart zurücksetzt.
+//
+//   Einmal       Patina, Urban Suede, Painted Calf und Velvet werden
+//                abgeschaltet. Einmal, damit ein Einschalten im CMS hält.
+//
+//                Modelle mit eigener Optionsliste (nicht aus der Vorlage
+//                ihrer Machart) bekommen die neuen Futter- und
+//                Laufsohlenwerte dazu, sofern sie die Gruppe schon führen.
+//
+// Die alten Farben ohne Bild werden nicht gelöscht. Bestellungen und
+// Entwürfe zeigen auf sie, und der Konfigurator blendet sie ohnehin aus,
+// sobald ein Leder oder eine Gruppe Farben mit Bild hat (farbenMitBild,
+// nurMitBild in artisan-sole-app/src/lib/sohlenRegel.js).
+export function seedLederBilder(db) {
+  try {
+    db.transaction(() => {
+      // 1) Farben je Leder. Schlüssel „leder__farbe": dieselbe Farbe sieht
+      //    auf Box Calf anders aus als auf Lux Suede und hat ein anderes Bild.
+      const insFarbe = db.prepare(`
+        INSERT INTO shoe_colors (key, hex, name, available, rating, sort_order, applicable_materials, image)
+        VALUES (?, ?, ?, 1, 'good', ?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET image = COALESCE(shoe_colors.image, excluded.image)
+      `)
+      for (const [leder, farben] of Object.entries(LEDER_FARBEN)) {
+        farben.forEach((f, i) => insFarbe.run(`${leder}__${f.key}`, f.hex, f.name, 100 + i, leder, f.bild))
+      }
+
+      // 2) Das Muster der Lederart selbst, für die Kachel der Lederwahl.
+      const setzMuster = db.prepare('UPDATE shoe_materials SET image = ? WHERE key = ? AND image IS NULL')
+      for (const [leder, bild] of Object.entries(LEDER_MUSTER)) setzMuster.run(bild, leder)
+
+      // 3) Futter und Laufsohle. Fehlende Werte anlegen; vorhandene bekommen
+      //    Bild, Farbwert und deutschen Namen, solange sie noch kein Bild
+      //    tragen, also genau beim ersten Mal.
+      const gruppeId = (key) => db.prepare('SELECT id FROM option_groups WHERE key = ?').get(key)?.id
+      const insWert = db.prepare(`
+        INSERT INTO options (group_id, key, label, description, default_price_extra, applicable_categories, sort_order, image_data, color_hex)
+        VALUES (?, ?, ?, '', 0, '*', ?, ?, ?)
+        ON CONFLICT(group_id, key) DO NOTHING
+      `)
+      const setzWert = db.prepare(`
+        UPDATE options SET image_data = ?, color_hex = ?, label = ?, sort_order = ?, updated_at = datetime('now')
+         WHERE group_id = ? AND key = ? AND image_data IS NULL
+      `)
+      for (const [gruppe, werte] of [['inner_color', FUTTER_FARBEN], ['sole_bottom_color', LAUFSOHLE_FARBEN]]) {
+        const gid = gruppeId(gruppe)
+        if (!gid) continue
+        werte.forEach((w, i) => {
+          insWert.run(gid, w.key, w.name, i, w.bild, w.hex)
+          setzWert.run(w.bild, w.hex, w.name, i, gid, w.key)
+        })
+      }
+
+      // 4) Marina Walk Slip On und Marina Walk High: Lux Suede.
+      const marina = db.prepare("SELECT id, name FROM shoes WHERE lower(name) LIKE '%marina walk%'").all()
+      const leer = db.prepare('DELETE FROM shoe_material_options WHERE shoe_id = ?')
+      const insLeder = db.prepare('INSERT INTO shoe_material_options (shoe_id, material_key, sort_order) VALUES (?, ?, 0)')
+      for (const m of marina) { leer.run(m.id); insLeder.run(m.id, 'lux_suede') }
+      if (!marina.length) {
+        const gemeldet = db.prepare("SELECT 1 FROM settings WHERE key = 'leder_marina_fehlt'").get()
+        if (!gemeldet) {
+          console.log('[Lederbilder] Kein Modell „Marina Walk" gefunden. Lux Suede bitte im CMS zuordnen, falls die Modelle anders heißen.')
+          db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('leder_marina_fehlt', '1', datetime('now'))").run()
+        }
+      }
+
+      // 5) Einmalig: Leder ohne Bild abschalten, neue Werte an Modelle mit
+      //    eigener Optionsliste hängen.
+      const MERKER = 'leder_bilder_2026_10'
+      if (db.prepare('SELECT 1 FROM settings WHERE key = ?').get(MERKER)) return
+
+      db.prepare(`UPDATE shoe_materials SET available = 0 WHERE key IN (${LEDER_OHNE_BILD.map(() => '?').join(',')})`)
+        .run(...LEDER_OHNE_BILD)
+
+      // Nicht an die Sommerlinie: Mokassins und Sneaker führen ihr eigenes
+      // Futter und eine weiße Laufsohle, und um die Mokassins kümmert sich
+      // der Betreiber selbst. Und nur dort, wo es schon eine Wahl gibt
+      // (zwei Werte oder mehr) — ein Modell mit genau einer Laufsohle hat
+      // sie mit Absicht.
+      const SOMMER = ['MOCCASIN', 'MOC_SPORT', 'MOC_SPORT_BOOT',
+                      'SNEAKER', 'SNEAKER_LACED', 'SNEAKER_BOOT', 'LACELESS_TRAINER']
+      const insZuordnung = db.prepare(`
+        INSERT OR IGNORE INTO shoe_options (shoe_id, option_id, price_override, is_default, sort_order)
+        VALUES (?, ?, NULL, 0, ?)
+      `)
+      let nachgetragen = 0
+      for (const [gruppe, werte] of [['inner_color', FUTTER_FARBEN], ['sole_bottom_color', LAUFSOHLE_FARBEN]]) {
+        const gid = gruppeId(gruppe)
+        if (!gid) continue
+        const schuhe = db.prepare(`
+          SELECT so.shoe_id FROM shoe_options so
+            JOIN options o ON o.id = so.option_id
+            JOIN shoes s   ON s.id = so.shoe_id
+           WHERE o.group_id = ? AND s.category NOT IN (${SOMMER.map(() => '?').join(',')})
+           GROUP BY so.shoe_id HAVING COUNT(*) >= 2
+        `).all(gid, ...SOMMER)
+        for (const { shoe_id } of schuhe) {
+          werte.forEach((w, i) => {
+            const oid = db.prepare('SELECT id FROM options WHERE group_id = ? AND key = ?').get(gid, w.key)?.id
+            if (oid) nachgetragen += insZuordnung.run(shoe_id, oid, i).changes
+          })
+        }
+      }
+      db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, '1', datetime('now'))").run(MERKER)
+      console.log(`✅ Lederbilder: ${LEDER_OHNE_BILD.length} Leder ohne Bild abgeschaltet, ${nachgetragen} Futter-/Laufsohlenwerte an Modelle gehängt, ${marina.length} Marina Walk auf Lux Suede`)
+    })()
+  } catch (e) { console.error('[Lederbilder]', e.message) }
 }

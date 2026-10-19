@@ -11,7 +11,7 @@
  */
 export default function Kapitelmarke({ children, hell = false }) {
   return (
-    <p className={`text-[10px] uppercase tracking-[0.3em] ${hell ? 'text-white/45' : 'text-black/30'}`}>
+    <p className={`t-klein ${hell ? 'c-hell-leise' : 'c-leise'}`}>
       {children}
     </p>
   )

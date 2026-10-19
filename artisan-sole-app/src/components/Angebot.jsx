@@ -56,17 +56,17 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
   if (!zeilen?.length) return null
 
   return (
-    <section className="px-5 lg:px-16 py-16 lg:py-28 border-b border-black/[0.07]">
+    <section className="px-5 lg:px-16 py-16 lg:py-28">
       <div className="max-w-5xl mx-auto">
         <Enthuellen>
           <Kapitelmarke>Das Angebot</Kapitelmarke>
-          <h2 className="satz-titel text-[29px] lg:text-[48px] leading-[1.14] mt-4 max-w-2xl">
+          <h2 className="t-kopf satz-titel mt-4 max-w-2xl">
             Fünf Formen.<br className="hidden sm:block" /> Und was jede kostet.
           </h2>
         </Enthuellen>
 
         <Enthuellen verzoegerung={120}>
-          <p className="text-[13px] lg:text-[15px] text-black/50 font-light leading-[1.95] mt-7 max-w-lg">
+          <p className="t-text c-tinte mt-7 max-w-lg">
             Die fünf, nach denen am häufigsten gefragt wird. Gebaut wird jede
             gleich. Den Preis machen die Form, das Leder und wie viel Arbeit in
             der Sohle steckt.
@@ -80,7 +80,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                 type="button"
                 onClick={() => z.einstieg && oeffnen(z.einstieg)}
                 disabled={!z.einstieg}
-                className="group block w-full bg-transparent border-0 border-t border-black/[0.10] p-0 text-left py-6 lg:py-7 disabled:cursor-default"
+                className="group block w-full bg-transparent border-0 p-0 text-left py-6 lg:py-7 disabled:cursor-default"
               >
                 {/* Zwei Spalten auf dem Telefon, zwölf am Bildschirm — aber
                     dieselben vier Angaben und dieselbe DOM-Folge. Platziert
@@ -94,10 +94,9 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                       Spalte für die Anzahl kostete auf dem Telefon eine
                       vierte Zeile und sagte nichts, was die Ziffer nicht
                       auch sagt. */}
-                  <p className="lg:col-span-4 text-[12px] lg:text-[13px] uppercase text-black group-hover:text-black/55 transition-colors"
-                     style={{ letterSpacing: '0.22em' }}>
+                  <p className="t-lead lg:col-span-4 c-tinte group-hover:opacity-60 transition-opacity">
                     {z.name}
-                    <span className="ml-2.5 text-[10px] tabular-nums text-black/30 tracking-normal">
+                    <span className="t-klein ml-3 tabular-nums c-leise align-middle">
                       {z.anzahl}
                     </span>
                   </p>
@@ -112,7 +111,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                       stehen, ist keine Spalte — und genau das Untereinander
                       ist der Grund, warum hier ein Register steht und keine
                       Kacheln. */}
-                  <p className="text-right tabular-nums text-[15px] lg:text-[16px] text-black/70 font-light lg:col-span-2 lg:col-start-11">
+                  <p className="t-lead text-right tabular-nums c-tinte lg:col-span-2 lg:col-start-11">
                     {z.preis ? `ab ${z.preis}` : 'auf Anfrage'}
                   </p>
 
@@ -120,14 +119,13 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                       unter der Kopfzeile, am Bildschirm in derselben Zeile
                       zwischen Name und Preis. Ohne ihn wäre das Register
                       eine Preisliste. */}
-                  <p className="col-span-2 text-[13px] text-black/45 font-light leading-[1.8] lg:col-span-5 lg:col-start-6 lg:row-start-1">
+                  <p className="t-text col-span-2 c-tinte lg:col-span-5 lg:col-start-6 lg:row-start-1">
                     {z.satz}
                   </p>
                 </div>
               </button>
             </Enthuellen>
           ))}
-          <div className="border-t border-black/[0.10]" />
         </div>
 
         {/* Die schnellere Fassung. Sie steht hier und nicht weiter unten, weil
@@ -137,10 +135,10 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
         {express && (
           <Enthuellen verzoegerung={140}>
             <div className="mt-12 lg:mt-16 max-w-2xl">
-              <p className="text-[10px] uppercase tracking-[0.28em] text-black/35">Schneller</p>
-              <p className="text-[13px] lg:text-[15px] text-black/55 font-light leading-[1.95] mt-3">
+              <p className="t-klein c-leise">Schneller</p>
+              <p className="t-text c-tinte mt-3">
                 {express.anzahl} Modelle gibt es als Express-Fassung: rund{' '}
-                {express.wochen} Wochen statt rund vier
+                {express.wochen} Wochen statt 4 bis 6
                 {express.aufpreis ? `, € ${express.aufpreis} Aufpreis` : ''}. Möglich wird
                 das durch vorbereitete Bauteile. Welche Entscheidungen damit schon
                 getroffen sind, steht am Modell.
@@ -170,7 +168,7 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                 so weit kommen zu lassen — die ehrlichere Auskunft und die
                 nützlichere dazu. */}
             <div className="order-2 sm:order-none max-w-md">
-              <p className="text-[12px] text-black/40 font-light leading-[1.9]">
+              <p className="t-text c-leise">
                 Im Preis: Versand innerhalb Deutschlands. Damit die Größe stimmt,
                 nimm vorher Maß. Fußlänge und Ballenumfang genügen, ein
                 Schnürsenkel und ein Lineal reichen dafür.
@@ -179,12 +177,10 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
                 <button
                   type="button"
                   onClick={zurPassform}
-                  className="group mt-4 bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black/60 hover:text-black transition-colors"
-                  style={{ letterSpacing: '0.22em' }}
+                  className="t-klein group mt-4 bg-transparent border-0 p-0 inline-flex items-center gap-3 c-tinte hover:text-black transition-colors"
                 >
-                  <span className="relative pb-1">
+                  <span className="underline underline-offset-[6px] decoration-1">
                     Passform bestimmen
-                    <span className="absolute left-0 bottom-0 h-px w-full bg-black/20 group-hover:bg-black/45 transition-colors" />
                   </span>
                   <Strichpfeil />
                 </button>
@@ -193,12 +189,10 @@ export default function Angebot({ zeilen, express, oeffnen, zumKatalog, gesamt, 
             <button
               type="button"
               onClick={zumKatalog}
-              className="group order-1 sm:order-none shrink-0 self-start bg-transparent border-0 p-0 inline-flex items-center gap-3 text-[11px] uppercase text-black hover:text-black/60 transition-colors"
-              style={{ letterSpacing: '0.22em' }}
+              className="t-klein group order-1 sm:order-none shrink-0 self-start bg-transparent border-0 p-0 inline-flex items-center gap-3 c-tinte hover:text-black/60 transition-colors"
             >
-              <span className="relative pb-1">
+              <span className="underline underline-offset-[6px] decoration-1">
                 {gesamt ? `Alle ${gesamt} Modelle` : 'Alle Modelle'}
-                <span className="absolute left-0 bottom-0 h-px w-full bg-black/25 group-hover:bg-black/50 transition-colors" />
               </span>
               <Strichpfeil />
             </button>

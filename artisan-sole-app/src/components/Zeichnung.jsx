@@ -175,11 +175,8 @@ export function Tafelflaeche({ children, randlos = false, className = '' }) {
  */
 export function Schiebehinweis({ className = '' }) {
   return (
-    <p
-      className={`lg:hidden text-[10px] uppercase opacity-40 mt-3 ${className}`}
-      style={{ letterSpacing: '0.22em' }}
-    >
-      Seitwärts schieben →
+    <p className={`lg:hidden t-klein opacity-70 mt-3 ${className}`}>
+      Zum Ansehen seitwärts schieben →
     </p>
   )
 }

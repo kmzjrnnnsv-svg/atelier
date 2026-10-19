@@ -33,7 +33,7 @@ import MassAnleitung from './MassAnleitung'
 import Enthuellen from './Enthuellen'
 import Laufband from './Laufband'
 import { MASSNEHMEN, BEIDE_FUESSE } from '../lib/massSchritte'
-import { useWenigerBewegungFolge } from '../lib/bewegung'
+import { useWenigerBewegungFolge, useSchmal } from '../lib/bewegung'
 import { useScrollBuehne } from '../lib/scrollbuehne'
 
 /* Vor- und Nachlauf, damit die Folge nicht anfängt, bevor der Abschnitt im
@@ -76,9 +76,9 @@ function Folgeliste({ schritt }) {
         const jetzt = i === schritt
         return (
           <li key={s.titel} className="transition-opacity duration-500" style={{ opacity: jetzt ? 1 : 0.3 }}>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
-            <p className={`satz-titel leading-[1.3] mt-1.5 transition-all duration-500 ${
-              jetzt ? 'text-[19px] lg:text-[22px] text-white' : 'text-[17px] lg:text-[19px] text-white/70'
+            <p className="t-klein c-hell-leise">{s.wann}</p>
+            <p className={`satz-titel mt-1.5 transition-all duration-500 ${
+              jetzt ? 't-lead c-hell' : 't-text c-hell'
             }`}>
               {s.titel}
             </p>
@@ -101,13 +101,13 @@ function OhneBewegung({ kopf, fuss }) {
         <ol className="grid sm:grid-cols-3 gap-x-12 gap-y-8 mt-12 lg:mt-16">
           {MASSNEHMEN.map(s => (
             <li key={s.titel}>
-              <p className="text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
-              <p className="satz-titel text-[19px] lg:text-[22px] text-white mt-2">{s.titel}</p>
-              <p className="text-[13px] text-white/50 font-light leading-[1.85] mt-2">{s.text}</p>
+              <p className="t-klein c-hell-leise">{s.wann}</p>
+              <p className="t-lead satz-titel c-hell mt-2">{s.titel}</p>
+              <p className="t-text c-hell mt-2">{s.text}</p>
             </li>
           ))}
         </ol>
-        <p className="text-[13px] text-white/45 font-light leading-[1.9] mt-10 max-w-lg">
+        <p className="t-text c-hell mt-10 max-w-lg">
           {BEIDE_FUESSE}
         </p>
         {fuss && <div className="mt-14 lg:mt-20">{fuss}</div>}
@@ -123,6 +123,7 @@ function OhneBewegung({ kopf, fuss }) {
 export default function MassNehmen({ kopf, fuss }) {
   const ref = useRef(null)
   const ruhig = useWenigerBewegungFolge()
+  const schmal = useSchmal()
   const { fortschritt, buehnenHoehe, buehnenOben } = useScrollBuehne(ref, ruhig)
 
   const schritt = useMemo(() => schrittAus(fortschritt), [fortschritt])
@@ -141,9 +142,15 @@ export default function MassNehmen({ kopf, fuss }) {
      richtet. Eine Tafel mit viewBox wird dadurch kleiner und bleibt mittig,
      nicht verzerrt. Steht die Bühnenhöhe noch nicht fest, gilt keine
      Grenze — dann ist die Seite ohnehin noch beim ersten Messen. */
-  const tafelHoehe = buehnenHoehe
-    ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.34, buehnenHoehe - 270)))
-    : 0
+  /* Auf breiten Fenstern steht der Text NEBEN der Zeichnung, nicht darunter
+     — dort braucht er ihr keine Höhe abzunehmen. Die erste Fassung dieser
+     Grenze galt überall und machte die Tafeln am Schreibtisch klein und
+     matt, mitten auf einer dunklen Fläche. Jetzt gilt am Schreibtisch nur,
+     dass die Zeichnung in die Bühne passt (82 % ihrer Höhe), und die enge
+     Rechnung bleibt den Telefonen. */
+  const tafelHoehe = !buehnenHoehe ? 0
+    : schmal ? Math.max(100, Math.round(Math.min(buehnenHoehe * 0.34, buehnenHoehe - 270)))
+    : Math.round(buehnenHoehe * 0.82)
 
   if (ruhig) return <OhneBewegung kopf={kopf} fuss={fuss} />
 
@@ -189,7 +196,7 @@ export default function MassNehmen({ kopf, fuss }) {
                   genau das Gerät, auf dem eine klebende Bühne ohne
                   sichtbares Ende wie eine hängende Seite aussieht. */}
               <Laufband
-                titel={`Schritt ${String(schritt + 1).padStart(2, '0')} von ${String(MASSNEHMEN.length).padStart(2, '0')}`}
+                titel={`Schritt ${schritt + 1} von ${MASSNEHMEN.length}`}
                 fortschritt={fortschritt}
                 className="mt-6 lg:mt-7 mx-auto lg:mx-0"
               />
@@ -204,9 +211,9 @@ export default function MassNehmen({ kopf, fuss }) {
                     className="absolute inset-0 transition-opacity duration-500"
                     style={{ opacity: i === schritt ? 1 : 0, pointerEvents: i === schritt ? 'auto' : 'none' }}
                   >
-                    <p className="lg:hidden text-[10px] uppercase tracking-[0.24em] text-white/45">{s.wann}</p>
-                    <p className="lg:hidden satz-titel text-[20px] text-white leading-[1.3] mt-1.5">{s.titel}</p>
-                    <p className="text-[13px] lg:text-[14px] text-white/55 font-light leading-[1.85] mt-2.5 lg:mt-0 max-w-xl">
+                    <p className="t-klein lg:hidden c-hell-leise">{s.wann}</p>
+                    <p className="t-lead lg:hidden satz-titel c-hell mt-1.5">{s.titel}</p>
+                    <p className="t-text c-hell mt-2.5 lg:mt-0 max-w-xl">
                       {s.text}
                     </p>
                   </div>
@@ -215,7 +222,7 @@ export default function MassNehmen({ kopf, fuss }) {
 
               {/* Gilt für alle drei Schritte und steht deshalb fest da,
                   nicht in der wechselnden Folge. */}
-              <p className="text-[12px] lg:text-[13px] text-white/40 font-light leading-[1.85] mt-5 max-w-xl">
+              <p className="t-text c-hell-leise mt-5 max-w-xl">
                 {BEIDE_FUESSE}
               </p>
             </div>

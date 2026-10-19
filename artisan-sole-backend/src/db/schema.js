@@ -2391,7 +2391,13 @@ export function runMigrations(db) {
     const ALT_NEU = [
       ['standard',
        'Von Grund auf für Sie gefertigt, volle Auswahl, 4 bis 6 Wochen.',
-       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, rund vier Wochen.'],
+       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, 4 bis 6 Wochen.'],
+      // Seit Oktober 2026 gilt überall die Spanne der AGB. Wer die
+      // Zwischenfassung „rund vier Wochen" schon bekommen hat, bekommt
+      // jetzt die Spanne.
+      ['standard',
+       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, rund vier Wochen.',
+       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, 4 bis 6 Wochen.'],
       ['express',
        'Aus vorbereiteten Bauteilen auf Ihren Leisten vollendet, rund 2 Wochen.',
        'Aus vorbereiteten Bauteilen auf deinem Leisten vollendet, rund zwei Wochen.'],
@@ -2399,6 +2405,6 @@ export function runMigrations(db) {
     const setz = db.prepare('UPDATE collections SET description = ? WHERE key = ? AND description = ?')
     let n = 0
     for (const [key, alt, neu] of ALT_NEU) n += setz.run(neu, key, alt).changes
-    if (n) console.log(`[migrate Kollektionstexte] ${n} Beschreibung(en) auf du und vier Wochen gebracht`)
+    if (n) console.log(`[migrate Kollektionstexte] ${n} Beschreibung(en) auf du und 4 bis 6 Wochen gebracht`)
   } catch (e) { console.error('[migrate Kollektionstexte]', e.message) }
 }

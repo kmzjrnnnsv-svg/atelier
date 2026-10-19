@@ -16,13 +16,13 @@
  * Telefon ausgeblendet ist — dort gab es also überhaupt keinen Fortschritt.
  *
  * Jetzt steht unter jeder Folge dasselbe: links, woran gerade gearbeitet
- * wird, rechts eine Zahl, die durchläuft, darunter ein Balken, der auf 100
- * zuläuft. Das Wichtigste daran ist nicht der Stand, sondern dass es ein
+ * wird, darunter ein Balken, der bis ans Ende läuft. Das Wichtigste daran ist nicht der Stand, sondern dass es ein
  * Ende gibt — mit einem Balken scrollt man weiter, um ihn vollzumachen.
  *
- * Die Zahl zählt den echten Fortschritt und nicht die Schritte: Sie läuft
- * durch, während der Name springt, und genau dieser Unterschied macht, dass
- * es sich nach Maschine anfühlt und nicht nach Diaschau.
+ * Rechts lief hier eine dreistellige Zahl mit, mit Nullen aufgefüllt
+ * („073"). Sie ist im Neuentwurf weggefallen: Aufgefüllte Ziffern lesen
+ * sich als Zählwerk eines Geräts, nicht als Angabe für einen Menschen, und
+ * der Balken sagt dasselbe ohne sie.
  *
  * Alle vier Folgen stehen auf #111, deshalb gibt es nur die helle Fassung.
  * Käme je eine auf hellen Grund, wäre hier ein `dunkel`-Schalter fällig und
@@ -46,14 +46,11 @@ export default function Laufband({ titel, fortschritt, className = '' }) {
   return (
     <div className={`w-full max-w-xs ${className}`}>
       <div className="flex items-baseline justify-between gap-6">
-        <p className="text-[10px] uppercase tracking-[0.26em] text-white/70 truncate">
+        <p className="t-klein c-hell truncate">
           {titel}
         </p>
-        <p className="text-[11px] tabular-nums text-white/40 tracking-[0.1em] shrink-0">
-          {String(stand).padStart(3, '0')}
-        </p>
       </div>
-      <div className="relative h-px bg-white/15 mt-3" aria-hidden="true">
+      <div className="relative h-[2px] bg-white/15 mt-3" aria-hidden="true">
         {/* Der Balken wird gestaucht, nicht schmaler gemacht.
 
             Hier stand `width: X%` mit einer Überblendung darauf. Beides war
@@ -71,7 +68,7 @@ export default function Laufband({ titel, fortschritt, className = '' }) {
             außerdem dem Daumen genau, statt ihm ein Zehntel hinterherzu-
             laufen — das war ohnehin die bessere Bewegung. */}
         <div
-          className="absolute left-0 top-0 h-px w-full bg-white/70 origin-left"
+          className="absolute left-0 top-0 h-[2px] w-full bg-white/70 origin-left"
           style={{ transform: `scaleX(${stand / 100})` }}
         />
       </div>
