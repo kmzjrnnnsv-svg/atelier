@@ -78,6 +78,7 @@ import CustomRequestModal from '../components/CustomRequestModal'
 import ShoeModelViewer from '../components/ShoeModelViewer'
 import Fortschritt from '../components/konfigurator/Fortschritt'
 import { bildGrund } from '../lib/bildGrund'
+import { useFensterHoehe } from '../lib/fensterHoehe'
 import MassHilfe from '../components/MassHilfe'
 import Schrittleiste from '../components/konfigurator/Schrittleiste'
 import Wahlreihe from '../components/konfigurator/Wahlreihe'
@@ -114,58 +115,9 @@ function useSwipe(items, selectedId, onSelect) {
 
 // ── Die Seite passt ins Fenster ─────────────────────────────────────────────
 // Ab 1024 px Breite steht der Konfigurator da wie ein Bildschirm, nicht wie
-// eine Seite: Bühne, Schritt und Leiste unten teilen sich die Höhe, gescrollt
-// wird nichts. Vorher lief unter dem Schritt noch die Beschreibung weiter,
-// und wer scrollte, verlor Name, Preis und Ansichten oben aus dem Blick.
-//
-// Gemessen statt per `h-full`: Zwischen Seite und Fenster liegen je nach
-// Umgebung andere Hüllen — auf dem iPad scrollt das Dokument, am Schreibtisch
-// ein Container —, und darüber manchmal ein Streifen, der sich schließen
-// lässt. Gezählt wird, was vom oberen Rand der Seite bis zum unteren Rand des
-// Fensters bleibt. `visualViewport` folgt den Leisten von Safari.
+// eine Seite: Bild links, Spalte rechts, gescrollt wird nichts. Die Höhe
+// misst lib/fensterHoehe.js.
 const PASST_AB = 1024
-function useFensterHoehe(ref) {
-  const [hoehe, setHoehe] = useState(null)
-  useEffect(() => {
-    const el = ref.current
-    if (!el || typeof window === 'undefined') return
-    const messen = () => {
-      if (window.innerWidth < PASST_AB) { setHoehe(null); return }
-      const oben = el.getBoundingClientRect().top
-      const huelle = el.parentElement?.closest('.overflow-y-auto')
-      let frei
-      if (huelle) {
-        const r = huelle.getBoundingClientRect()
-        frei = huelle.clientHeight - (oben - r.top + huelle.scrollTop)
-      } else {
-        const fenster = window.visualViewport?.height || window.innerHeight
-        frei = fenster - (oben + window.scrollY)
-      }
-      const h = Math.max(480, Math.floor(frei))
-      setHoehe(v => (v === h ? v : h))
-    }
-    messen()
-    window.addEventListener('resize', messen)
-    window.visualViewport?.addEventListener('resize', messen)
-    // Die Seite blendet beim Aufruf mit einer kleinen Verschiebung ein
-    // (PageTransition). Gemessen mitten darin fehlten unten ein paar Pixel —
-    // also nach dem Ende noch einmal.
-    document.addEventListener('animationend', messen)
-    const spaeter = setTimeout(messen, 700)
-    // Ein Streifen darüber, der aufgeht oder sich schließt, verschiebt den
-    // oberen Rand, ohne dass das Fenster sich ändert.
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(messen) : null
-    ro?.observe(document.body)
-    return () => {
-      window.removeEventListener('resize', messen)
-      window.visualViewport?.removeEventListener('resize', messen)
-      document.removeEventListener('animationend', messen)
-      clearTimeout(spaeter)
-      ro?.disconnect()
-    }
-  }, [ref])
-  return hoehe
-}
 
 // ── Sterne (nur Anzeige) ────────────────────────────────────────────────────
 function Stars({ value, size = 14 }) {
@@ -433,7 +385,7 @@ export default function Customize() {
   // deshalb der letzte Zweig, nicht der erste.
   const [kachelImZeiger, setKachelImZeiger] = useState(null)
   const seiteRef = useRef(null)
-  const seitenHoehe = useFensterHoehe(seiteRef)
+  const seitenHoehe = useFensterHoehe(seiteRef, PASST_AB)
   // Seitenverhältnis des Fotos. Der Rahmen um das Bild nimmt genau diese
   // Form an, damit Pfeile und Zoom auf dem Foto liegen und nicht daneben in
   // der leeren Fläche der Spalte.
@@ -1711,6 +1663,10 @@ export default function Customize() {
   // Bildschirmen in der Spalte rechts. Die Inhalte sind dieselben; nur die
   // Ausrichtung wechselt: mittig unter dem Bild, bündig in der Spalte.
   const mitte = passt ? 'flex flex-col items-start text-left' : 'flex flex-col items-center text-center'
+  // Erklärsätze: in der Spalte klein und leise — sie begleiten die Wahl, sie
+  // sind nicht die Wahl. Vorher standen sie in Lesegröße über drei Zeilen,
+  // und die Muster rutschten unter den Rand.
+  const erklaer = passt ? 't-klein' : 't-text'
 
   // Was im großen Bild steht: Schrittbild, Foto oder die Zeichnung.
   const bildInhalt = schrittBild ? (
@@ -1763,10 +1719,10 @@ export default function Customize() {
           {/* Der Satz, der das Leder erklärt — für jemanden, der
               kaufen will, die wichtigste Zeile dieses Schritts. */}
           {selMat && mat?.tip && (
-            <p className="t-text c-tinte mt-6 max-w-2xl">{mat.tip}</p>
+            <p className={`${erklaer} c-tinte mt-6 max-w-2xl`}>{mat.tip}</p>
           )}
           {!selMat && (
-            <p className="t-text c-leise mt-6 max-w-2xl">Wähl ein Leder. Die Farben kommen im nächsten Schritt.</p>
+            <p className={`${erklaer} c-leise mt-6 max-w-2xl`}>Wähl ein Leder. Die Farben kommen im nächsten Schritt.</p>
           )}
         </div>
       )}
@@ -1804,7 +1760,7 @@ export default function Customize() {
         return (
           <div className={mitte}>
             {group.helper_text && (
-              <p className="t-text c-leise mb-5 max-w-2xl">{group.helper_text}</p>
+              <p className={`${erklaer} c-leise mb-5 max-w-2xl`}>{group.helper_text}</p>
             )}
             <Wahlreihe
             ausrichtung={passt ? 'start' : 'mitte'}
@@ -1830,7 +1786,7 @@ export default function Customize() {
             )}
             {/* Beschreibung der gewählten Option */}
             {currentSelection?.description && (
-              <p className="t-text c-leise mt-2 max-w-2xl">{currentSelection.description}</p>
+              <p className={`${erklaer} c-leise mt-2 max-w-2xl`}>{currentSelection.description}</p>
             )}
             {/* Warum empfohlen — einmal je Gruppe, statt an jedem Knopf.
                 Ein Stern ohne Begründung ist eine Behauptung. */}
@@ -1855,7 +1811,7 @@ export default function Customize() {
         // als zwei Worte. Vorher stand der Gürtel als einziger Schritt
         // linksbündig da, mit zwei Kästen, die aussahen wie ein Formular.
         <div className={mitte}>
-          <p className="t-text c-leise mb-5 max-w-2xl">
+          <p className={`${erklaer} c-leise mb-5 max-w-2xl`}>
             Aus demselben Leder in derselben Farbe wie deine Schuhe, 3,5 cm breit.
             {' '}Zusammen mit dem Paar{' '}
             <span className="c-tinte">
@@ -1871,7 +1827,7 @@ export default function Customize() {
             beschriftung="Passender Gürtel"
             form="text"
             werte={[
-              { id: 'ja', label: 'Ja, dazu' },
+              { id: 'ja', label: 'Ja, dazu', preis: Number(guertelOptionen.preis_zum_paar) || 0 },
               { id: 'nein', label: 'Nein, danke' },
             ]}
             gewaehlt={guertelAn === true ? 'ja' : guertelAn === false ? 'nein' : null}
@@ -2473,8 +2429,18 @@ export default function Customize() {
         , du sparst {formatPrice(totalDiscount)}
       </p>
     )}
-    <p className="t-klein c-leise mt-5 hidden sm:block">Rahmengenäht · Almansa, Spanien · 4 bis 6 Wochen Produktion</p>
-    {fitState === 'matched' && selectedFit?.fitPercent != null && (
+    {/* In der Spalte eine Zeile statt zwei: Lieferzeit und Passform. */}
+    {passt ? (
+      <p className="t-klein c-leise mt-3">
+        Rahmengenäht · 4 bis 6 Wochen
+        {fitState === 'matched' && selectedFit?.fitPercent != null && (
+          <> · Passform {String(selectedFit.fitPercent).replace('.', ',')} %</>
+        )}
+      </p>
+    ) : (
+      <p className="t-klein c-leise mt-5 hidden sm:block">Rahmengenäht · Almansa, Spanien · 4 bis 6 Wochen Produktion</p>
+    )}
+    {!passt && fitState === 'matched' && selectedFit?.fitPercent != null && (
       <p className="t-klein c-leise mt-3">
         Passgenauigkeit {String(selectedFit.fitPercent).replace('.', ',')} %
         {selectedFit?.last_label ? ` · Leisten ${selectedFit.last_label} ${selectedFit.width || ''}` : ''}

@@ -260,10 +260,10 @@ html:not(.mobile-web), html:not(.mobile-web) body, html:not(.mobile-web) #root {
  * umzustellen ist eine Entscheidung über die Marke, nicht über eine Seite.
  */
 .satz-titel {
-  font-family: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  font-weight: 400;
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 300;
   text-transform: none;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
   font-feature-settings: 'liga' 1, 'kern' 1;
 }
 
@@ -585,11 +585,12 @@ html.mobile-web body {
    dunkel unter den Scrollfolgen; Stein für alles, was erzählt.
 
    ── Schrift ─────────────────────────────────────────────────────────────
-   Fünf Stufen, nicht zweiundzwanzig. Gelesen wird in der Garamond, in voller
-   Tinte und ab 18 px — eine Garamond hat kleine Mittellängen und braucht
-   mehr Größe als eine Grotesk, um gleich groß zu wirken. Die Jost bleibt
-   für Knöpfe und die kleinste Stufe: Steuern in der Grotesk, Lesen in der
-   Antiqua. Nichts, was gelesen werden soll, liegt unter 14 px.
+   Fünf Stufen, nicht zweiundzwanzig, alle in der Jost — eine geometrische
+   Grotesk, wie sie die großen Häuser (Louis Vuitton) als Hausschrift
+   führen: ruhig, klar, ohne Serifen. Vorher wurde in der Garamond gelesen;
+   die Jost hat größere Mittellängen und wirkt bei gleicher Größe größer,
+   die Stufen sind deshalb kleiner. Große Stufen leicht (300), damit sie
+   nicht lauter werden als das Produkt. Nichts liegt unter 14 px.
    ───────────────────────────────────────────────────────────────────────── */
 :root {
   --grund-angebot: #F5F4F2;
@@ -603,22 +604,22 @@ html.mobile-web body {
   --akzent-tinte: #F5F4F2;
 
   --s-klein:   0.875rem;                                    /* 14 */
-  --s-text:    clamp(1.125rem, 1.06rem + 0.28vw, 1.3125rem); /* 18–21 */
-  --s-lead:    clamp(1.3125rem, 1.15rem + 0.7vw, 1.75rem);   /* 21–28 */
+  --s-text:    clamp(1rem, 0.96rem + 0.2vw, 1.125rem);       /* 16–18 */
+  --s-lead:    clamp(1.125rem, 1.02rem + 0.45vw, 1.375rem);  /* 18–22 */
   /* Überschriften sind auf dieser Seite fast immer ganze Sätze („Ein Stück
      Leder, eine Naht an der Ferse."). Ein Satz in 56 px liest sich als
      dreizeilige Schlagzeile; in 40 px als Satz, der etwas zu sagen hat.
      Laut ist nur noch der Aufmacher. */
-  --s-kopf:    clamp(1.75rem, 1.25rem + 1.6vw, 2.5rem);      /* 28–40 */
-  --s-display: clamp(2.75rem, 1.6rem + 5vw, 5.75rem);        /* 44–92 */
+  --s-kopf:    clamp(1.5rem, 1.15rem + 1.2vw, 2.125rem);     /* 24–34 */
+  --s-display: clamp(2.25rem, 1.4rem + 3.8vw, 4.5rem);       /* 36–72 */
 }
 
 .haus {
   background: var(--grund-erzaehlung);
   color: var(--tinte);
-  font-family: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  letter-spacing: 0;
-  font-feature-settings: 'liga' 1, 'kern' 1, 'onum' 1;
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: 0.01em;
+  font-feature-settings: 'liga' 1, 'kern' 1;
 }
 
 /* Überschriften im Haus. Die alte Regel für h1 bis h6 (Jost, gesperrte
@@ -627,10 +628,10 @@ html.mobile-web body {
    im neuen System gebaut ist, ohne dass jede Überschrift daran denken muss.
    Die Größe bleibt bei der t-Klasse, die setzt diese Regel nicht. */
 .haus :is(h1, h2, h3, h4, h5, h6) {
-  font-family: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  font-weight: 400;
+  font-family: 'Jost', 'Futura', 'Futura PT', 'Century Gothic', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 300;
   text-transform: none;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 @layer utilities {
@@ -638,10 +639,10 @@ html.mobile-web body {
   /* Eingabefelder: 16 px, sonst zoomt Safari auf dem iPhone beim Antippen
      in die Seite hinein. Dieselbe Schrift wie die Beschriftungen. */
   .t-feld    { font-family: 'Jost', 'Helvetica Neue', Arial, sans-serif; font-size: 16px; line-height: 1.4; letter-spacing: 0.005em; font-weight: 400; color: var(--tinte); }
-  .t-text    { font-size: var(--s-text);    line-height: 1.55; font-weight: 400; }
-  .t-lead    { font-size: var(--s-lead);    line-height: 1.35; font-weight: 400; }
-  .t-kopf    { font-size: var(--s-kopf);    line-height: 1.08; letter-spacing: -0.015em; font-weight: 400; }
-  .t-display { font-size: var(--s-display); line-height: 1.02; letter-spacing: -0.02em; font-weight: 400; }
+  .t-text    { font-size: var(--s-text);    line-height: 1.6;  font-weight: 400; }
+  .t-lead    { font-size: var(--s-lead);    line-height: 1.4;  font-weight: 400; }
+  .t-kopf    { font-size: var(--s-kopf);    line-height: 1.15; letter-spacing: 0; font-weight: 300; }
+  .t-display { font-size: var(--s-display); line-height: 1.05; letter-spacing: -0.005em; font-weight: 300; }
 
   .c-tinte      { color: var(--tinte); }
   .c-leise      { color: var(--tinte-leise); }
