@@ -217,9 +217,9 @@
  * das zu Recht.
  *
  */
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Footprints, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 import useStore from '../store/store'
 import { useSeo } from '../lib/seo'
 import { shoePath } from '../lib/shoePath'
@@ -234,7 +234,6 @@ import Strichpfeil from '../components/Strichpfeil'
 import { Tafelflaeche, Schiebehinweis } from '../components/Zeichnung'
 import SchuhAufbau from '../components/SchuhAufbau'
 import PflegeFolge from '../components/PflegeFolge'
-import SpannerSchnitt from '../components/SpannerSchnitt'
 import StapelFolge from '../components/StapelFolge'
 import Modellwahl from '../components/Modellwahl'
 import ModellStreifen from '../components/ModellStreifen'
@@ -244,93 +243,6 @@ import MassNehmen from '../components/MassNehmen'
 import AufmacherFilm from '../components/AufmacherFilm'
 
 /* ── Bausteine ──────────────────────────────────────────────────────────── */
-
-/**
- * Die Faktenzeile unter der Überschrift.
- *
- * Keine Werbeworte, keine Sätze — fünf Angaben, von denen jede anderswo auf
- * dieser Seite belegt wird. Bei den Wochen steht das Wort „Produktion"
- * dabei: Eine nackte Zahl liest sich wie eine Lieferfrist, und eine
- * Lieferfrist ist etwas, das man abwartet. Die Zeit, in der gebaut wird, ist
- * das Gegenteil davon — aber das muss dastehen, und zwar hier oben und nicht
- * erst in Kapitel 9.
- *
- * „4 bis 6 Wochen", wie in den AGB. Eine Spanne statt „rund vier": Die
- * Seite sagte vier, die AGB vier bis sechs, und ein Käufer, der beides
- * liest, erinnert sich an die Zahl, die ihm nicht gehalten wurde. Jetzt
- * steht überall dieselbe Angabe.
- *
- * „Neu besohlbar" ist nicht Behauptung, sondern die
- * Folge der Machart und im Machart-Abschnitt gezeigt; „Almansa, Spanien"
- * ist die Ortsangabe, die dieses Haus über sich macht, und sie steht so schon
- * im Untertitel. Sie hieß hier lange „Made in Spain" — dieselbe Auskunft,
- * nur unschärfer.
- */
-const FAKTEN = [
-  'Rahmengenäht',
-  'Custom made',
-  'Almansa, Spanien',
-  '4 bis 6 Wochen Produktion',
-  'Neu besohlbar',
-]
-
-/**
- * Die fünf Angaben, fertig gesetzt.
- *
- * Innerhalb einer Angabe wird nicht umgebrochen: „Neu / besohlbar" über zwei
- * Zeilen liest sich als zwei Angaben, die es nicht gibt, und seit
- * „Produktionszeit" dabeisteht, passiert das auf jedem zweiten Fenster.
- * Geschützte Leerzeichen binden jede Angabe zusammen; umgebrochen wird nur
- * an den Mittelpunkten dazwischen, und genau dort gehört der Umbruch hin.
- */
-const FAKTENZEILE = FAKTEN.map(f => f.replace(/ /g, '\u00A0')).join('   ·   ')
-
-/**
- * Die drei Wege, eine Sohle an einen Schaft zu bringen.
- *
- * ── Warum das auf einer Verkaufsseite steht ───────────────────────────────
- *
- * „Rahmengenäht" ist das teuerste Wort dieser Seite und für die meisten ein
- * Fachwort ohne Gegenstück. Man kann es glauben oder nicht glauben — prüfen
- * kann man es nicht, solange nicht danebensteht, wogegen. Erst mit Blake und
- * geklebt daneben wird aus einer Behauptung ein Vergleich, und ein Vergleich
- * überzeugt jemanden, der Geld ausgibt, anders als ein Versprechen.
- *
- * ── Was hier nicht passiert ───────────────────────────────────────────────
- *
- * Die anderen beiden werden nicht schlechtgemacht. Blake ist eine gute
- * Machart für einen schlanken, biegsamen Schuh, und wer einen leichten
- * Sommerschuh sucht, ist damit richtig bedient. Jeder Eintrag sagt deshalb,
- * wofür die Machart taugt, bevor er sagt, was sie kostet.
- *
- * Eine vierte gibt es — den von Hand genähten Rahmen. Sie steht als Zeile
- * unter den dreien, obwohl dieses Haus sie nicht baut. Wer die Stufe über
- * sich verschweigt und anderswo davon liest, hat auch den Rest verspielt.
- *
- * Sachwissen über Schuhe, nicht Auskunft über dieses Haus.
- */
-const MACHARTEN = [
-  {
-    name: 'Geklebt',
-    zusatz: 'Cemented',
-    text: 'Sohle und Schaft werden verklebt, ohne Naht. Leicht, biegsam und in '
-        + 'jeder Preisklasse zu haben. Ist die Sohle durch, ist der Schuh durch.',
-  },
-  {
-    name: 'Blake',
-    zusatz: 'Eine Naht',
-    text: 'Eine Naht führt von der Laufsohle durch die Brandsohle in den Schaft. '
-        + 'Ergibt den schlanksten Rand, den es gibt. Sie läuft allerdings durch '
-        + 'den Innenraum, und neu besohlen kann sie nur, wer die Maschine dafür hat.',
-  },
-  {
-    name: 'Rahmengenäht',
-    zusatz: 'Goodyear welted · unsere Wahl',
-    text: 'Zwei Nähte statt einer. Die erste fasst Schaft, Futter und Rahmen an '
-        + 'der Brandsohle, die zweite nur Rahmen und Laufsohle. Schwerer als die '
-        + 'anderen beiden, und die ersten Wochen fester.',
-  },
-]
 
 /**
  * Die drei Gründe. Drei und nicht fünf — der vierte wäre „Tradition", und
@@ -1115,15 +1027,6 @@ export default function Startseite() {
     return [...klassiker, ...zeit, ...rest]
   }, [shoes])
 
-  /* Das Paar für den Aufmacher: das erste der Modellzeile, das ein Foto hat.
-     Dieselbe Auswahl wie darunter, damit der erste Bildschirm nicht einen
-     Schuh zeigt, den es in der Zeile dann nicht gibt. */
-  const aufmacherSchuh = kopfModelle.find(sch => sch.image) || null
-  // Steht ein Foto im Katalog, aber die Datei fehlt, zeigte der Browser den
-  // Alt-Text in einem leeren Kasten — auf dem ersten Bildschirm. Dann lieber
-  // die Zeichnung, die ohnehin als Rückfall dasteht.
-  const [aufmacherBildFehlt, setAufmacherBildFehlt] = useState(false)
-
   /**
    * Die vier Paare für das Band zwischen dem Stapel und dem Schnitt.
    *
@@ -1483,43 +1386,14 @@ export default function Startseite() {
     <div className="haus min-h-full">
 
       {/* ══ 1 · Erster Blick ══════════════════════════════════════════════
-          Ein Satz, fünf Angaben, zwei Wege — und kein Bild.
+          Der Film und darunter eine Leiste: eine Zeile, zwei Wege. Mehr nicht.
 
-          ── Warum kein Bild ───────────────────────────────────────────────
-
-          Hier lag ein Stockfoto, und auf dieser Seite lagen sieben davon.
-          Weil Unsplash seine Kennungen über die Jahre neu belegt, zeigten
-          sie zuletzt einen LKW-Parkplatz, eine Fotokamera mit Postkarten
-          und einen Sneaker einer anderen Marke — unter Sätzen über
-          rahmengenähte Maßschuhe.
-
-          Bessere Kennungen lösen das nicht. Dieses Haus hat noch keine
-          eigene Fotografie, und geliehene Stimmung ist schlechter als
-          keine: Eine dunkle Fläche behauptet nichts, ein fremdes Foto
-          behauptet etwas Falsches.
-
-          Was die Seite trägt, sind die echten Aufnahmen aus dem Katalog,
-          die drei Zeichnungen und die Schrift. Kommen eigene Bilder, steht
-          hier wieder eines — es ist eine Zeile. */}
-      {/* ── Der Aufmacher, neu ──────────────────────────────────────────
-          Vorher: eine schwarze Fläche über drei Viertel des Bildschirms, ein
-          Label in 10 px, die Überschrift erst nach einer Einblendung da —
-          und kein einziges Bild. Gemessen war das der Grund für „kahl und
-          kühl": Der erste Bildschirm eines Schuhladens zeigte keinen Schuh.
-
-          Jetzt nach der gezogenen Richtung („Photographs at uneven sizes"):
-          eine große Zeile in der Garamond über das obere Drittel, darunter
-          ein Foto aus der Mitte nach rechts versetzt, links daneben Satz,
-          Preis und die Handlung. Kein Text liegt auf dem Bild.
-
-          Das Foto ist das eigene des Katalogs — das erste Paar der
-          Modellzeile darunter. Gibt es keines (lokal, oder ein Katalog ohne
-          Aufnahmen), steht an seiner Stelle die eigene Zeichnung des
-          gespannten Loafers auf dunklem Grund, wie ein gerahmter Abzug. Eine
-          Zeichnung aus dem Haus ist ehrlicher als ein fremdes Stockfoto.
-
-          Heller Grund, weil hier ein Paar mit Preis angeboten wird — die
-          Regel der drei Gründe gilt auch für den ersten Bildschirm. */}
+          Hier stand bis eben noch der alte Aufmacher: dieselbe Zeile wie in
+          der Zeitung des Films („Ein Paar, das es vorher nicht gab."), ein
+          Foto mit „ab € 340", darunter ein Satz mit „Ab € 270", noch einmal
+          „Modelle ansehen" und „Passform bestimmen" und eine Faktenzeile. Alles
+          davon stand schon im Film oder in der Leiste — zweimal dasselbe in
+          zwei Fassungen, und zwei verschiedene Einstiegspreise. */}
       {/* Der Film zuerst: schwarz, bis er läuft, dann still im Hintergrund. */}
       <AufmacherFilm />
 
@@ -1553,80 +1427,6 @@ export default function Startseite() {
         </div>
       </div>
 
-      <header className="g-angebot px-5 lg:px-16 pt-12 lg:pt-20 pb-14 lg:pb-24">
-        <div className="max-w-[1400px] mx-auto">
-          <Enthuellen>
-            <h1 className="t-display satz-titel c-tinte max-w-[15ch]">
-              Ein Paar, das es<br />vorher nicht gab.
-            </h1>
-          </Enthuellen>
-
-          <div className="mt-10 lg:mt-14 lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-end">
-            <Enthuellen verzoegerung={120} className="lg:col-span-7 lg:col-start-6 lg:row-start-1">
-              <figure className="bild-im-grund">
-                {aufmacherSchuh && !aufmacherBildFehlt ? (
-                  <img
-                    onError={() => setAufmacherBildFehlt(true)}
-                    src={resolveMediaUrl(aufmacherSchuh.image)}
-                    alt={`${aufmacherSchuh.name}, rahmengenäht, custom made`}
-                    width="1600"
-                    height="1000"
-                    fetchPriority="high"
-                    className="block w-full aspect-[16/10] object-contain bild-heran"
-                  />
-                ) : (
-                  <div className="g-dunkel aspect-[16/10] flex items-center justify-center px-8 c-hell">
-                    <SpannerSchnitt className="w-full max-w-xl" />
-                  </div>
-                )}
-                {aufmacherSchuh && !aufmacherBildFehlt && (
-                  <figcaption className="t-klein c-leise mt-3">
-                    {aufmacherSchuh.name}
-                    {aufmacherSchuh.price ? <>, ab {aufmacherSchuh.price}</> : null}
-                  </figcaption>
-                )}
-              </figure>
-            </Enthuellen>
-
-            <div className="lg:col-span-5 lg:row-start-1 mt-10 lg:mt-0 lg:pb-10">
-              <Enthuellen verzoegerung={200}>
-                <p className="t-lead c-tinte max-w-md">
-                  Rahmengenäht und custom made: Den Leisten wählen wir passend zu deinen
-                  Maßen, gefertigt wird jedes Paar einzeln in Almansa.
-                  {abPreis ? <> Ab €&nbsp;{preisAlsText(abPreis)}.</> : null}
-                </p>
-              </Enthuellen>
-
-              <Enthuellen verzoegerung={280}>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5 sm:gap-7 mt-8">
-                  <button
-                    type="button"
-                    onClick={zurKollektion}
-                    className="t-klein group g-akzent border-0 px-8 h-12 inline-flex items-center justify-center gap-3 whitespace-nowrap hover:opacity-90 transition-opacity"
-                  >
-                    Modelle ansehen
-                    <Strichpfeil />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/scan')}
-                    className="t-klein c-tinte bg-transparent border-0 p-0 inline-flex items-center gap-2 self-start sm:self-auto underline underline-offset-[6px] decoration-1 hover:opacity-70 transition-opacity"
-                  >
-                    <Footprints size={16} strokeWidth={1.5} aria-hidden="true" />
-                    Passform bestimmen
-                  </button>
-                </div>
-              </Enthuellen>
-
-              {/* Die Faktenzeile: fünf Angaben, keine davon ein Satz. Jede
-                  steht weiter unten ausführlich, hier nur als Wort. */}
-              <Enthuellen verzoegerung={360} richtung="ruhig">
-                <p className="t-klein c-leise mt-10 max-w-md">{FAKTENZEILE}</p>
-              </Enthuellen>
-            </div>
-          </div>
-        </div>
-      </header>
 
 
 
@@ -1803,18 +1603,11 @@ export default function Startseite() {
           Absätze nötig waren. Die zwei Absätze sind deshalb weg; ihr Inhalt
           steht in den sechs Schritten (lib/aufbauSchritte.js).
 
-          ── Warum hier ein Vergleich steht ────────────────────────────────
+          ── Kein Vergleich mehr ─────────────────────────────────────────
 
-          Die Folge zeigt, WIE dieser Schuh gebaut ist. Was sie nicht zeigen
-          kann, ist, wogegen — und ohne das ist „rahmengenäht" ein Fachwort,
-          das man glauben oder nicht glauben kann. Deshalb steht unter der
-          Bühne, welche drei Wege es gibt, eine Sohle an einen Schaft zu
-          bringen, und was an jedem gut und schlecht ist.
-
-          Der vierte, der handgenähte Rahmen, steht mit dazu, obwohl dieses
-          Haus ihn nicht baut. Eine Seite, deren Argument die Offenheit ist,
-          darf die Stufe über sich nicht verschweigen — wer sie anderswo
-          findet, glaubt danach auch den Rest nicht mehr.
+          Unter der Bühne standen die drei Macharten nebeneinander, dazu der
+          handgenähte Rahmen. Auf Wunsch des Hauses entfernt: Es genügt zu
+          zeigen, warum rahmengenäht sinnvoll ist.
 
           Und die drei Gründe sind drei und nicht fünf. Der vierte wäre
           „Tradition", und Tradition ist kein Grund, sondern eine Ausrede
@@ -1846,51 +1639,11 @@ export default function Startseite() {
           }
           fuss={
             <div>
-              <p className="t-lead satz-titel c-hell max-w-3xl">
-                Eine Sohle lässt sich auf drei Arten an einen Schaft bringen.
-                Wir haben uns für die aufwendigste entschieden.
-              </p>
-
-              {/* Die drei Macharten als Blätter, wie die Leder weiter unten:
-                  eine Haarlinie oben, kein Rahmen ringsum. Die unsere steht
-                  an dritter Stelle und nicht an erster — erst das Feld,
-                  dann die Wahl. */}
-              <div className="grid sm:grid-cols-3 gap-10 lg:gap-14 mt-12 lg:mt-16">
-                {MACHARTEN.map((m, i) => {
-                  const unsere = i === MACHARTEN.length - 1
-                  return (
-                    <div
-                      key={m.name}
-                      className={`pt-6 ${unsere ? '' : ''}`}
-                    >
-                      <p className={`t-lead satz-titel ${
-                        unsere ? 'c-hell' : 'c-hell'
-                      }`}>
-                        {m.name}
-                      </p>
-                      <p className={`t-klein mt-3 ${
-                        unsere ? 'c-hell' : 'c-hell-leise'
-                      }`}>
-                        {m.zusatz}
-                      </p>
-                      <p className="t-text c-hell mt-5">
-                        {m.text}
-                      </p>
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Die vierte Machart, die dieses Haus nicht baut. Sie steht
-                  klein und trotzdem da. */}
-              <p className="t-text c-hell-leise mt-10 lg:mt-12 max-w-2xl">
-                Es gibt eine vierte: den von Hand genähten Rahmen, bei dem die
-                Lippe nicht aufgeklebt, sondern aus der Brandsohle
-                herausgearbeitet wird. Dasselbe Prinzip, mehr Handarbeit, ein
-                Preis in einer anderen Klasse. Wir bauen sie nicht.
-              </p>
-
-              <div className="mt-14 lg:mt-20 pt-10 lg:pt-14">
+              {/* Hier stand ein Vergleich der Macharten — geklebt, Blake,
+                  rahmengenäht und der handgenähte Rahmen. Zu viel Lehrstunde
+                  für eine Verkaufsseite; was bleibt, sind die Gründe, warum
+                  diese Machart sinnvoll ist, und was sie kostet. */}
+              <div>
                 <Kapitelmarke hell>Warum rahmengenäht</Kapitelmarke>
                 <ol className="grid sm:grid-cols-3 gap-10 lg:gap-14 mt-8 lg:mt-10">
                   {WARUM_RAHMEN.map(g => (
