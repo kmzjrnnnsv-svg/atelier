@@ -14,13 +14,17 @@ import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
 
 export default function Schrittleiste({ schritt, nummer, anzahl, zurueckFrei, weiterFrei, onZurueck, onWeiter, onMenue }) {
   return (
-    <div className="flex items-center justify-between gap-3">
+    // Drei Spalten, die äußeren gleich breit: Der Name des Schritts steht
+    // so genau in der Mitte, über der Wahl. Mit `justify-between` rückte er
+    // nach links, weil rechts „Alle Schritte" mehr Platz braucht als links
+    // der eine Pfeil.
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
       <button
         type="button"
         onClick={onZurueck}
         disabled={!zurueckFrei}
         aria-label="Vorheriger Schritt"
-        className="w-11 h-11 shrink-0 flex items-center justify-center rounded-full bg-transparent border-0 c-tinte hover:bg-black/[0.05] disabled:opacity-25 transition-colors"
+        className="justify-self-start w-11 h-11 shrink-0 flex items-center justify-center rounded-full bg-transparent border-0 c-tinte hover:bg-black/[0.05] disabled:opacity-25 transition-colors"
       >
         <ArrowLeft size={20} strokeWidth={1.4} />
       </button>
@@ -30,7 +34,7 @@ export default function Schrittleiste({ schritt, nummer, anzahl, zurueckFrei, we
         <span className="t-klein c-leise ml-2.5 tabular-nums align-middle">{nummer}/{anzahl}</span>
       </p>
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="justify-self-end flex items-center gap-1 shrink-0">
         <button
           type="button"
           onClick={onWeiter}

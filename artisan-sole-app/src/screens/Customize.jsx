@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { isNative } from '../App'
-import { ArrowLeft, ArrowRight, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Send, Box, ZoomIn, ZoomOut, Share2, Eye, Plus } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Heart, ShoppingBag, Check, Star, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Send, Box, ZoomIn, ZoomOut, Share2, Plus } from 'lucide-react'
 
 // Weitenbuchstaben in Alltagssprache. D, EE und EEE sind Werkstattmaße; in
 // der Zusammenfassung soll stehen, was der Kunde gewählt hat, nicht wie es
@@ -108,6 +108,54 @@ function useSwipe(items, selectedId, onSelect) {
     onSelect(avail[next].key || String(avail[next].id))
   }, [items, selectedId, onSelect])
   return { onTouchStart, onTouchMove, onTouchEnd }
+}
+
+// ── Die Seite passt ins Fenster ─────────────────────────────────────────────
+// Ab 1024 px Breite steht der Konfigurator da wie ein Bildschirm, nicht wie
+// eine Seite: Bühne, Schritt und Leiste unten teilen sich die Höhe, gescrollt
+// wird nichts. Vorher lief unter dem Schritt noch die Beschreibung weiter,
+// und wer scrollte, verlor Name, Preis und Ansichten oben aus dem Blick.
+//
+// Gemessen statt per `h-full`: Zwischen Seite und Fenster liegen je nach
+// Umgebung andere Hüllen — auf dem iPad scrollt das Dokument, am Schreibtisch
+// ein Container —, und darüber manchmal ein Streifen, der sich schließen
+// lässt. Gezählt wird, was vom oberen Rand der Seite bis zum unteren Rand des
+// Fensters bleibt. `visualViewport` folgt den Leisten von Safari.
+const PASST_AB = 1024
+function useFensterHoehe(ref) {
+  const [hoehe, setHoehe] = useState(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof window === 'undefined') return
+    const messen = () => {
+      if (window.innerWidth < PASST_AB) { setHoehe(null); return }
+      const oben = el.getBoundingClientRect().top
+      const huelle = el.parentElement?.closest('.overflow-y-auto')
+      let frei
+      if (huelle) {
+        const r = huelle.getBoundingClientRect()
+        frei = huelle.clientHeight - (oben - r.top + huelle.scrollTop)
+      } else {
+        const fenster = window.visualViewport?.height || window.innerHeight
+        frei = fenster - (oben + window.scrollY)
+      }
+      const h = Math.max(480, Math.floor(frei))
+      setHoehe(v => (v === h ? v : h))
+    }
+    messen()
+    window.addEventListener('resize', messen)
+    window.visualViewport?.addEventListener('resize', messen)
+    // Ein Streifen darüber, der aufgeht oder sich schließt, verschiebt den
+    // oberen Rand, ohne dass das Fenster sich ändert.
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(messen) : null
+    ro?.observe(document.body)
+    return () => {
+      window.removeEventListener('resize', messen)
+      window.visualViewport?.removeEventListener('resize', messen)
+      ro?.disconnect()
+    }
+  }, [ref])
+  return hoehe
 }
 
 // ── Sterne (nur Anzeige) ────────────────────────────────────────────────────
@@ -375,6 +423,16 @@ export default function Customize() {
   // Fällt alles weg, steht wieder der Schuh da. Das ist der Normalfall und
   // deshalb der letzte Zweig, nicht der erste.
   const [kachelImZeiger, setKachelImZeiger] = useState(null)
+  const seiteRef = useRef(null)
+  const seitenHoehe = useFensterHoehe(seiteRef)
+  // Seitenverhältnis des Fotos. Der Rahmen um das Bild nimmt genau diese
+  // Form an, damit Pfeile und Zoom auf dem Foto liegen und nicht daneben in
+  // der leeren Fläche der Spalte.
+  const [bildSeite, setBildSeite] = useState(null)
+  const merkeBildSeite = (e) => {
+    const { naturalWidth: w, naturalHeight: h } = e.currentTarget
+    if (w && h) setBildSeite(Math.round((w / h) * 1000) / 1000)
+  }
   // Welcher Schritt gerade dran ist. Früher ermittelte ein Beobachter, welcher
   // Abschnitt beim Scrollen im Blick war; jetzt gibt es immer genau einen
   // Schritt, und er steht in `schrittKey` (siehe die Schrittliste weiter unten).
@@ -1310,6 +1368,25 @@ export default function Customize() {
   const [menueOffen, setMenueOffen] = useState(false)
   const schrittNr = Math.max(0, schritte.findIndex(x => x.key === schrittKey))
   const schritt = schritte[schrittNr]
+  // Wie hoch der Schritt unter der Bühne ist, wenn die Seite ins Fenster
+  // passt. Fest je Schritt und nicht nach Inhalt: Sonst spränge der Schuh
+  // bei jedem Wechsel auf eine andere Größe. Passform und Übersicht haben
+  // mehr zu sagen und bekommen mehr Platz; was dann noch nicht passt,
+  // scrollt in sich, die Seite nicht.
+  const passt = seitenHoehe != null
+  const breiterSchritt = schritt.key === '__passform' || schritt.key === '__uebersicht'
+  // Die Bühne behält dabei immer ihr Minimum: Name, Preis und die Zeile
+  // darunter müssen neben dem Schuh Platz haben. Auf niedrigen Fenstern
+  // (kleines iPad quer) etwas weniger, sonst bliebe für den Schritt nur
+  // ein Streifen. Abgezogen werden Kopf und Leiste unten (rund 150 px).
+  const BUEHNE_MIN = passt ? Math.min(270, Math.round(seitenHoehe * 0.4)) : 0
+  const schrittHoehe = passt
+    ? Math.round(Math.min(
+        breiterSchritt ? 560 : 300,
+        Math.max(breiterSchritt ? 280 : 210, seitenHoehe * (breiterSchritt ? 0.58 : 0.38)),
+        seitenHoehe - 150 - BUEHNE_MIN,
+      ))
+    : null
   // Erreichbar ist ein Schritt, vor dem alles gewählt ist.
   const erreichbar = (i) => schritte.slice(0, i).every(x => x.fertig)
   const weiterFrei = schritt.fertig && schrittNr < schritte.length - 1
@@ -1553,6 +1630,83 @@ export default function Customize() {
     } catch { /* Die Bewertung bleibt im Feld stehen. */ } finally { setSubmitting(false) }
   }
 
+  // Beschreibung und Bewertungen. Auf dem Telefon unter dem Schritt, wie
+  // gehabt; passt die Seite ins Fenster, am Ende der Übersicht — dort, wo
+  // jemand vor dem Kauf noch einmal liest, und ohne die Seite zu verlängern.
+  const erzaehlung = (
+    <div className="max-w-3xl mx-auto">
+      <p className="t-text c-tinte">
+        {product.description || (
+          <>
+            Jeder {product.name || 'Schuh'} entsteht einzeln auf Bestellung in Almansa, Spanien, in über 200 Arbeitsschritten.
+            Aus Fußlänge und Ballenumfang bestimmen wir Leisten, Größe und Weite.
+            Ausgesuchtes europäisches Leder, rahmengenähte Konstruktion und eine Passform, die du vom ersten Schritt an spürst.
+          </>
+        )}
+      </p>
+      <p className="t-klein c-leise mt-4">
+        {(pageTexts?.badges?.length ? pageTexts.badges : ['Rahmengenäht', 'Custom Made', '200+ Schritte']).join(' · ')}
+      </p>
+
+      <div className="mt-12">
+        <button
+          onClick={() => setShowReview(v => !v)}
+          className="w-full flex items-center justify-between bg-transparent border-0 p-0 pb-2 border-b border-black/8"
+        >
+          <div className="flex items-center gap-2">
+            <span className="t-klein c-leise">Bewertungen</span>
+            {reviews.length > 0 && (
+              <>
+                <Stars value={avg} size={10} />
+                <span className="t-klein c-leise">({reviews.length})</span>
+              </>
+            )}
+          </div>
+          {showReview ? <ChevronUp size={14} className="text-black/30" /> : <ChevronDown size={14} className="text-black/30" />}
+        </button>
+
+        {showReview && (
+          <div className="space-y-2 mt-3">
+            {reviews.length === 0 && (
+              <p className="t-klein c-leise text-center py-3">Noch keine Bewertungen.</p>
+            )}
+            {reviews.slice(0, 3).map(rev => (
+              <div key={rev.id} className="border-b border-black/5 pb-3">
+                <div className="flex items-center justify-between">
+                  <span className="t-klein c-tinte">{rev.user_name}</span>
+                  <Stars value={rev.rating} size={9} />
+                </div>
+                {rev.comment && <p className="t-klein c-leise mt-1">{rev.comment}</p>}
+              </div>
+            ))}
+
+            {!myRev && product.id && (
+              <div className="pt-2 space-y-2">
+                <p className="t-klein c-leise">Deine Bewertung</p>
+                <div className="flex gap-1">
+                  {[1,2,3,4,5].map(n => (
+                    <button key={n} onClick={() => setMyRating(n)} className="bg-transparent border-0 p-0">
+                      <Star size={22} className={n <= myRating ? 'text-black fill-black' : 'text-black/15'} strokeWidth={1} />
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={myComment} onChange={e => setMyComment(e.target.value)}
+                  placeholder="Kommentar (optional)"
+                  className="t-klein w-full bg-transparent border border-black/10 px-3 py-2 outline-none focus:border-black/30 resize-none"
+                  rows={2} style={{ fontFamily: 'inherit' }}
+                />
+                <button onClick={handleReview} disabled={submitting || !myRating}
+                  className="t-klein w-full h-11 g-akzent border-0 disabled:opacity-20 flex items-center justify-center gap-1.5">
+                  <Send size={11} /> Absenden
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>  )
+
   return (
     <>
     {/* Rückfrage bei liegengebliebener Konfiguration. Bewusst eine Frage und
@@ -1606,11 +1760,15 @@ export default function Customize() {
         </div>
       </div>
     ), document.body)}
-    <div className="haus min-h-full flex flex-col">
-    <div className="g-angebot flex-1 flex flex-col">
+    <div
+      ref={seiteRef}
+      className={`haus flex flex-col ${passt ? 'overflow-hidden' : 'min-h-full'}`}
+      style={passt ? { height: seitenHoehe } : undefined}
+    >
+    <div className={`g-angebot flex-1 flex flex-col ${passt ? 'min-h-0' : ''}`}>
 
       {/* ── Kopf ─────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 g-angebot flex items-center justify-between px-2 lg:px-6 h-14">
+      <div className="sticky top-0 z-30 g-angebot shrink-0 flex items-center justify-between px-2 lg:px-6 h-14">
         <button onClick={() => navigate(-1)} aria-label="Zurück" className="w-11 h-11 flex items-center justify-center border-0 bg-transparent c-tinte">
           <ArrowLeft size={20} strokeWidth={1.4} />
         </button>
@@ -1641,9 +1799,13 @@ export default function Customize() {
           Wie beim Rolex-Konfigurator: links groß der Name und der Preis, in
           der Mitte groß der Schuh, rechts die Ansichten als runde Bilder.
           Auf dem Telefon steht der Schuh zuerst, Name und Preis darunter. */}
-      <section className="px-4 lg:px-10">
-        <div className="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 lg:gap-x-10 items-start">
-          <div className="order-2 lg:order-1 lg:col-span-4 pt-3 lg:pt-10">
+      <section className={`px-4 lg:px-10 ${passt ? 'flex-1 min-h-0 overflow-hidden pt-1 pb-3' : ''}`}>
+        <div className={`max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 lg:gap-x-10 ${passt ? 'h-full' : 'items-start'}`}>
+          {/* Passt die Seite ins Fenster, stehen Name, Schuh und Ansichten
+              auf einer Mittellinie — die Bühne wechselt die Höhe mit dem
+              Fenster, und oben angeschlagen hinge der Text sonst über
+              einem Loch, sobald sie wächst. */}
+          <div className={`order-2 lg:order-1 lg:col-span-4 ${passt ? 'self-center' : 'pt-3 lg:pt-10'}`}>
             <h1 className="t-kopf c-tinte"><ShoeName name={product.name} /></h1>
             {product.tagline && (
               <p className="t-text c-leise mt-2 max-w-md">{product.tagline}</p>
@@ -1690,11 +1852,26 @@ export default function Customize() {
             )}
           </div>
 
-          <div className="order-1 lg:order-2 lg:col-span-7">
+          <div className={`order-1 lg:order-2 lg:col-span-7 ${passt ? 'h-full min-h-0' : ''}`}>
             <div
               {...bildSwipe}
-              className="relative overflow-hidden select-none bild-im-grund w-full h-[34vh] min-h-[230px] lg:h-[48vh] lg:min-h-[380px]"
-              style={{ cursor: is3D ? 'grab' : 'default' }}
+              className={`relative overflow-hidden select-none w-full flex items-center justify-center ${
+                passt ? 'h-full' : 'h-[34vh] min-h-[230px] lg:h-[48vh] lg:min-h-[380px]'
+              }`}
+              style={{ cursor: is3D ? 'grab' : 'default', containerType: 'size' }}
+            >
+            {/* Der Rahmen hat die Form des Fotos und ist so groß, wie es in
+                die Fläche passt. Alles, was auf dem Bild liegen soll — Pfeile,
+                Zoom, Punkte —, sitzt in ihm. Vorher hingen die Knöpfe an der
+                ganzen Spalte, und das Foto stand schmaler in ihrer Mitte: Die
+                Pfeile schwebten neben dem Schuh im Leeren. */}
+            <div
+              data-buehne-bild
+              className="relative overflow-hidden bild-im-grund"
+              style={bildSeite ? {
+                width: `min(100cqw, calc(100cqh * ${bildSeite}))`,
+                height: `min(100cqh, calc(100cqw / ${bildSeite}))`,
+              } : { width: '100%', height: '100%' }}
             >
               <div
                 className="absolute inset-0 flex items-center justify-center"
@@ -1709,6 +1886,7 @@ export default function Customize() {
                 // Zwei Bilder übereinander, das obere blendet auf.
                 <>
                   <img src={gallery[activeSlide] || ''} alt=""
+                       onLoad={merkeBildSeite}
                        className="w-full h-full object-contain"
                        style={{ opacity: 0 }} />
                   <img src={schrittBild} alt=""
@@ -1716,7 +1894,7 @@ export default function Customize() {
                        style={{ opacity: 1 }} />
                 </>
               ) : gallery[activeSlide] ? (
-                <img src={gallery[activeSlide]} alt={product.name} className="w-full h-full object-contain" />
+                <img src={gallery[activeSlide]} alt={product.name} onLoad={merkeBildSeite} className="w-full h-full object-contain" />
               ) : (
                 <svg viewBox="0 0 260 130" className="w-64 lg:w-80">
                   <ellipse cx="130" cy="120" rx="100" ry="8" fill="#00000008" />
@@ -1771,14 +1949,12 @@ export default function Customize() {
               )}
               <button
                 onClick={() => { setZoomed(v => !v); setIs3D(false) }}
+                aria-label={zoomed ? 'Verkleinern' : 'Vergrößern'}
                 className={`w-8 h-8 flex items-center justify-center border transition-all ${
                   zoomed ? 'bg-black text-white border-black' : 'bg-white/90 text-black border-black/10'
                 }`}
               >
                 {zoomed ? <ZoomOut size={14} strokeWidth={1.5} /> : <ZoomIn size={14} strokeWidth={1.5} />}
-              </button>
-              <button className="w-8 h-8 bg-white/90 text-black border border-black/10 flex items-center justify-center transition-all">
-                <Eye size={14} strokeWidth={1.5} />
               </button>
             </div>
 
@@ -1814,11 +1990,12 @@ export default function Customize() {
             )}
 
             </div>
+            </div>
           </div>
 
           {/* Die Ansichten als runde Bilder, rechts neben dem Schuh. */}
           {slideCount > 1 && (
-            <div className="hidden lg:flex order-3 lg:col-span-1 flex-col items-center gap-4 pt-10">
+            <div className={`hidden lg:flex order-3 lg:col-span-1 flex-col items-center gap-4 ${passt ? 'self-center' : 'pt-10'}`}>
               {gallery.map((g, i) => (
                 <button
                   key={i}
@@ -1843,8 +2020,12 @@ export default function Customize() {
       {/* ── Der Schritt ──────────────────────────────────────────────────
           Wie bei Nike By You: unter dem Schuh die Leiste mit dem Namen des
           Schritts, darunter seine Werte. Immer nur ein Schritt. */}
-      <section id="konfig-wahl" className="px-4 lg:px-10 pt-4 lg:pt-5 pb-12 scroll-mt-16">
-        <div className="max-w-[1100px] mx-auto">
+      <section
+        id="konfig-wahl"
+        className={`px-4 lg:px-10 scroll-mt-16 ${passt ? 'shrink-0 flex flex-col pt-1' : 'pt-4 lg:pt-5 pb-12'}`}
+        style={passt ? { height: schrittHoehe } : undefined}
+      >
+        <div className={`max-w-[1100px] w-full mx-auto ${passt ? 'flex-1 min-h-0 flex flex-col' : ''}`}>
           <Schrittleiste
             schritt={schritt.titel}
             nummer={schrittNr + 1}
@@ -1856,7 +2037,16 @@ export default function Customize() {
             onMenue={() => setMenueOffen(true)}
           />
 
-          <div className="mt-4 lg:mt-8">
+          {/* Passt die Seite ins Fenster, scrollt nur dieser Teil, wenn ein
+              Schritt mehr zu sagen hat als Platz da ist — die Leiste darüber
+              bleibt stehen. Der Rand blendet weich aus, statt hart zu
+              schneiden. */}
+          <div
+            key={passt ? schritt.key : undefined}
+            className={passt
+              ? 'flex-1 min-h-0 overflow-y-auto overscroll-contain mt-3 pt-1 pb-8 [scrollbar-width:thin] [mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]'
+              : 'mt-4 lg:mt-8'}
+          >
             {/* Leder */}
             {schritt.key === '__leder' && (
               <div className="flex flex-col items-center text-center">
@@ -1963,39 +2153,43 @@ export default function Customize() {
 
             {/* Gürtel */}
             {schritt.key === '__guertel' && guertelMoeglich && (
-              <div className="max-w-xl mx-auto">
-            <p className="t-klein c-leise mb-3">
-              Aus demselben Leder in derselben Farbe wie deine Schuhe, 3,5 cm breit.
-              {' '}Zusammen mit dem Paar {' '}
-              <span className="text-black/70">
-                € {Number(guertelOptionen.preis_zum_paar).toLocaleString('de-DE')}
-              </span>
-              {Number(guertelOptionen.preis_einzeln) > Number(guertelOptionen.preis_zum_paar) && (
-                <> statt <span className="line-through">€ {Number(guertelOptionen.preis_einzeln).toLocaleString('de-DE')}</span> einzeln</>
-              )}
-              , er geht im selben Karton hinaus.
-            </p>
-
-            <div className="grid grid-cols-2 gap-2 max-w-xs">
-              <button onClick={() => setGuertelAn(true)}
-                className={`t-klein border px-3 py-2.5 transition-colors ${
-                  guertelAn === true ? 'border-black c-tinte' : 'border-black/12 c-leise hover:border-black/30'}`}>
-                Ja, dazu
-              </button>
-              <button onClick={() => { setGuertelAn(false); setGuertelCfg(null) }}
-                className={`t-klein border px-3 py-2.5 transition-colors ${
-                  guertelAn === false ? 'border-black c-tinte' : 'border-black/12 c-leise hover:border-black/30'}`}>
-                Nein, danke
-              </button>
-            </div>
-
-            {guertelAn === true && (
-              <GuertelWahl
-                optionen={guertelOptionen}
-                vorgabe={guertelVorgabe}
-                onChange={setGuertelCfg}
-              />
-            )}
+              // Wie jeder andere Schritt: mittig, der Satz darüber, die Wahl
+              // als zwei Worte. Vorher stand der Gürtel als einziger Schritt
+              // linksbündig da, mit zwei Kästen, die aussahen wie ein Formular.
+              <div className="flex flex-col items-center text-center">
+                <p className="t-text c-leise mb-5 max-w-2xl">
+                  Aus demselben Leder in derselben Farbe wie deine Schuhe, 3,5 cm breit.
+                  {' '}Zusammen mit dem Paar{' '}
+                  <span className="c-tinte">
+                    € {Number(guertelOptionen.preis_zum_paar).toLocaleString('de-DE')}
+                  </span>
+                  {Number(guertelOptionen.preis_einzeln) > Number(guertelOptionen.preis_zum_paar) && (
+                    <> statt <span className="line-through">€ {Number(guertelOptionen.preis_einzeln).toLocaleString('de-DE')}</span> einzeln</>
+                  )}
+                  , er geht im selben Karton hinaus.
+                </p>
+                <Wahlreihe
+                  beschriftung="Passender Gürtel"
+                  form="text"
+                  werte={[
+                    { id: 'ja', label: 'Ja, dazu' },
+                    { id: 'nein', label: 'Nein, danke' },
+                  ]}
+                  gewaehlt={guertelAn === true ? 'ja' : guertelAn === false ? 'nein' : null}
+                  onWahl={(id) => {
+                    if (id === 'ja') setGuertelAn(true)
+                    else { setGuertelAn(false); setGuertelCfg(null) }
+                  }}
+                />
+                {guertelAn === true && (
+                  <div className="w-full max-w-xl mt-6 text-left">
+                    <GuertelWahl
+                      optionen={guertelOptionen}
+                      vorgabe={guertelVorgabe}
+                      onChange={setGuertelCfg}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -2296,6 +2490,7 @@ export default function Customize() {
 
             {/* Übersicht — alles, was gewählt ist, dazu Zubehör und Kauf */}
             {schritt.key === '__uebersicht' && (
+              <>
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
                 <div className="lg:col-span-5">
                   <p className="t-lead c-tinte mb-4">Deine Konfiguration</p>
@@ -2479,86 +2674,24 @@ export default function Customize() {
                   </div>
                 </div>
               </div>
+              {passt && (
+                <div className="mt-12 pt-10 border-t border-black/8">
+                  {erzaehlung}
+                </div>
+              )}
+              </>
             )}
           </div>
         </div>
       </section>
 
       {/* ── Beschreibung und Bewertungen ─────────────────────────────── */}
-      <section className="g-erzaehlung px-4 lg:px-10 py-14 lg:py-20">
-        <div className="max-w-3xl mx-auto">
-          <p className="t-text c-tinte">
-            {product.description || (
-              <>
-                Jeder {product.name || 'Schuh'} entsteht einzeln auf Bestellung in Almansa, Spanien, in über 200 Arbeitsschritten.
-                Aus Fußlänge und Ballenumfang bestimmen wir Leisten, Größe und Weite.
-                Ausgesuchtes europäisches Leder, rahmengenähte Konstruktion und eine Passform, die du vom ersten Schritt an spürst.
-              </>
-            )}
-          </p>
-          <p className="t-klein c-leise mt-4">
-            {(pageTexts?.badges?.length ? pageTexts.badges : ['Rahmengenäht', 'Custom Made', '200+ Schritte']).join(' · ')}
-          </p>
-
-          <div className="mt-12">
-            <button
-              onClick={() => setShowReview(v => !v)}
-              className="w-full flex items-center justify-between bg-transparent border-0 p-0 pb-2 border-b border-black/8"
-            >
-              <div className="flex items-center gap-2">
-                <span className="t-klein c-leise">Bewertungen</span>
-                {reviews.length > 0 && (
-                  <>
-                    <Stars value={avg} size={10} />
-                    <span className="t-klein c-leise">({reviews.length})</span>
-                  </>
-                )}
-              </div>
-              {showReview ? <ChevronUp size={14} className="text-black/30" /> : <ChevronDown size={14} className="text-black/30" />}
-            </button>
-
-            {showReview && (
-              <div className="space-y-2 mt-3">
-                {reviews.length === 0 && (
-                  <p className="t-klein c-leise text-center py-3">Noch keine Bewertungen.</p>
-                )}
-                {reviews.slice(0, 3).map(rev => (
-                  <div key={rev.id} className="border-b border-black/5 pb-3">
-                    <div className="flex items-center justify-between">
-                      <span className="t-klein c-tinte">{rev.user_name}</span>
-                      <Stars value={rev.rating} size={9} />
-                    </div>
-                    {rev.comment && <p className="t-klein c-leise mt-1">{rev.comment}</p>}
-                  </div>
-                ))}
-
-                {!myRev && product.id && (
-                  <div className="pt-2 space-y-2">
-                    <p className="t-klein c-leise">Deine Bewertung</p>
-                    <div className="flex gap-1">
-                      {[1,2,3,4,5].map(n => (
-                        <button key={n} onClick={() => setMyRating(n)} className="bg-transparent border-0 p-0">
-                          <Star size={22} className={n <= myRating ? 'text-black fill-black' : 'text-black/15'} strokeWidth={1} />
-                        </button>
-                      ))}
-                    </div>
-                    <textarea
-                      value={myComment} onChange={e => setMyComment(e.target.value)}
-                      placeholder="Kommentar (optional)"
-                      className="t-klein w-full bg-transparent border border-black/10 px-3 py-2 outline-none focus:border-black/30 resize-none"
-                      rows={2} style={{ fontFamily: 'inherit' }}
-                    />
-                    <button onClick={handleReview} disabled={submitting || !myRating}
-                      className="t-klein w-full h-11 g-akzent border-0 disabled:opacity-20 flex items-center justify-center gap-1.5">
-                      <Send size={11} /> Absenden
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      {/* Passt die Seite ins Fenster, steht das in der Übersicht. */}
+      {!passt && (
+        <section className="g-erzaehlung px-4 lg:px-10 py-14 lg:py-20">
+          {erzaehlung}
+        </section>
+      )}
 
       {/* ── Zusammenfassung ───────────────────────────────────────────────
           Wie beim Rolex-Konfigurator: Modell, was gewählt ist, Preis, und der
