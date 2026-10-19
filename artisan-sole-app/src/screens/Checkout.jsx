@@ -1229,7 +1229,7 @@ export default function Checkout() {
                     <Bestaetigung id="passform" an={passformAkzeptiert} onChange={setPassformAkzeptiert} warnung>
                       <strong className="font-medium">Dieser Schuh passt nicht zu deinen Maßen.</strong>{' '}
                       Für die hinterlegten Maße können wir bei diesem Modell keine passende Form
-                      anbieten; ein Umtausch aus diesem Grund ist bei Maßanfertigungen nicht möglich.
+                      anbieten; ein Umtausch aus diesem Grund ist bei Custom-made-Schuhen nicht möglich.
                       Ich möchte ihn trotzdem bestellen.
                     </Bestaetigung>
                   )}

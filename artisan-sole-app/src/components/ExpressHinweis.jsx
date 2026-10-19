@@ -51,15 +51,15 @@ export default function ExpressHinweis({ wochen = 2, aufpreis = 100, offenGruppe
             {offenGruppen > 0
               ? 'Was an diesem Modell wählbar bleibt, siehst du unten, alles Übrige ist durch das vorbereitete Bauteil festgelegt.'
               : 'Leder, Farbe und Ausführung sind durch die vorbereiteten Bauteile festgelegt. Du wählst Größe und Weite.'}
-            {' '}Ein Paar aus der Maßanfertigung ist individueller; dieses hier ist schneller.
+            {' '}Ein Paar aus der Custom-made-Linie ist individueller; dieses hier ist schneller.
           </p>
         </div>
       </div>
 
       <p className="text-[11px] text-black/35 font-light leading-relaxed mt-4 pt-4 border-t border-black/[0.07]">
-        Gezwickt und ausgearbeitet wird trotzdem auf dem Leisten, der für deinen Fuß bestimmt
-        ist, nach deinen Maßen, in deiner Größe und Weite. Es bleibt eine Einzelanfertigung
-        und ist deshalb ebenso wenig rückgabefähig wie ein Paar aus der Maßanfertigung.
+        Gezwickt und ausgearbeitet wird trotzdem auf dem Leisten, der zu deinen Maßen passt,
+        in deiner Größe und Weite. Es bleibt eine Einzelanfertigung und ist deshalb ebenso
+        wenig rückgabefähig wie ein Paar aus der Custom-made-Linie.
         {aufpreis > 0 && ` Die kürzere Wartezeit ist mit ${aufpreis} € im Preis enthalten.`}
       </p>
     </div>

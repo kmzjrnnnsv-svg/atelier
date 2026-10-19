@@ -532,7 +532,7 @@ function vertragsbedingungen(appUrl) {
     <div style="border:1px solid #e5e0d8;background:#faf9f7;padding:16px 18px;margin:24px 0">
       <p style="font-size:13px;color:#111;font-weight:600;margin:0 0 8px">Kein Widerrufsrecht</p>
       <p style="font-size:12px;color:#555;line-height:1.7;margin:0">
-        Dein Paar entsteht einzeln nach deinen Maßen und deiner Konfiguration. Bei solchen Waren
+        Dein Paar entsteht einzeln auf Bestellung, auf dem Leisten, der zu deinen Maßen passt, und in deiner Konfiguration. Bei solchen Waren
         besteht nach § 312g Abs. 2 Nr. 1 BGB kein Widerrufsrecht, auch nicht in der
         Express-Linie, denn auch dort wird auf dem für deinen Fuß bestimmten Leisten
         gearbeitet. Ein Paar auf deinem Leisten lässt sich an niemanden sonst verkaufen.

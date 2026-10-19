@@ -82,7 +82,7 @@ function Bestellung({ eintrag, onSenden, sendet }) {
           <div>
             <p className="text-[12px] text-black/70">{b.shoe_name}</p>
             <p className="text-[11px] text-black/40 font-light leading-relaxed">
-              Maßanfertigung, keine Rückgabe. Bei einem Mangel fertigen wir das
+              Custom made, keine Rückgabe. Bei einem Mangel fertigen wir das
               Paar neu; gefällt es dir nicht, sehen wir uns das an.
             </p>
           </div>

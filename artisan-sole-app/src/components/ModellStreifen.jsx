@@ -106,7 +106,7 @@ export default function ModellStreifen({ schuhe, satz, oeffnen, zumKatalog, gesa
                       <div className={`${gross ? 'aspect-[5/4]' : 'aspect-square'} overflow-hidden bild-im-grund`}>
                         <img
                           src={resolveMediaUrl(schuh.image)}
-                          alt={`${schuh.name}, nach Maß gefertigt`}
+                          alt={`${schuh.name}, rahmengenäht, custom made`}
                           loading="lazy"
                           className="w-full h-full object-contain transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]"
                         />

@@ -1539,7 +1539,7 @@ function seedFaqs(db) {
       a: 'Da wir jedes Paar einzeln auf Bestellung in unserer Manufaktur in Spanien fertigen, dauert die Produktion bei Firmenbestellungen rund 8 Wochen. Die genaue Lieferzeit nennen wir dir mit der Bestellbestätigung.',
       category: 'Bestellung & Produktion', sort_order: 3 },
     { q: 'Kann ich umtauschen, wenn die Passform nicht stimmt?',
-      a: 'Da jeder Schuh individuell nach deinen Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, meld dich bei uns; wir finden gemeinsam eine Lösung.',
+      a: 'Da jeder Schuh custom made auf dem Leisten gefertigt wird, der zu deinen Maßen passt, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, meld dich bei uns; wir finden gemeinsam eine Lösung.',
       category: 'Bestellung & Produktion', sort_order: 4 },
     { q: 'Was bedeutet Custom Made bei Artisan Sole?',
       a: 'Custom made heißt: kein Schuh von der Stange. Wir fertigen dein Paar custom-made und erst auf Bestellung, abgestimmt auf deine Maße und deine Konfiguration aus Leder, Farbe und Sohle.',
@@ -1604,6 +1604,12 @@ function cleanLegacyText(s, isSubject) {
     .replace(/\bma(?:ß|ss)geschneiderter Schuhe\b/g, 'von Custom Made Schuhen')
     .replace(/\bMa(?:ß|ss)geschneiderter Schuhe\b/g, 'Von Custom Made Schuhen')
     .replace(/\b[Mm]a(?:ß|ss)geschneidert(?:e[rsnm]?)?\b/g, 'Custom Made')
+    // Wir bauen nicht nach Maß, sondern wählen aus den Maßen den passenden
+    // Leisten. Was das anders behauptet, wird ehrlich umformuliert.
+    .replace(/individuell nach deinen Maßen gefertigt/g, 'custom made auf dem Leisten gefertigt, der zu deinen Maßen passt')
+    .replace(/individuell nach Ihren Maßen gefertigt/g, 'custom made auf dem Leisten gefertigt, der zu Ihren Maßen passt')
+    .replace(/Von Grund auf nach deinen Maßen gefertigt/g, 'Auf Bestellung gefertigt, Leisten passend zu deinen Maßen')
+    .replace(/\bnach (deinen|Ihren) Maßen gefertigt/g, (_, w) => `auf dem Leisten gefertigt, der zu ${w} Maßen passt`)
     .replace(/Bespoke Footwear/g, 'Custom Made Footwear')
     .replace(/Bespoke/g, 'Custom Made')
     .replace(/6\s*[–-]\s*8\s*Wochen/g, '4 bis 6 Wochen nach Zahlungseingang')
@@ -1687,7 +1693,7 @@ const DU_TEXTE = [
   ['Die genaue Lieferzeit nennen wir Ihnen mit der Bestellbestätigung.',
    'Die genaue Lieferzeit nennen wir dir mit der Bestellbestätigung.'],
   ['Da jeder Schuh individuell nach Ihren Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, melden Sie sich bei uns; wir finden gemeinsam eine Lösung.',
-   'Da jeder Schuh individuell nach deinen Maßen gefertigt wird, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, meld dich bei uns; wir finden gemeinsam eine Lösung.'],
+   'Da jeder Schuh custom made auf dem Leisten gefertigt wird, der zu deinen Maßen passt, ist ein klassischer Größentausch nicht nötig. Sollte dennoch etwas nicht passen, meld dich bei uns; wir finden gemeinsam eine Lösung.'],
   ['Wir fertigen Ihr Paar custom-made und erst auf Bestellung, abgestimmt auf Ihre Maße und Ihre Konfiguration aus Leder, Farbe und Sohle.',
    'Wir fertigen dein Paar custom-made und erst auf Bestellung, abgestimmt auf deine Maße und deine Konfiguration aus Leder, Farbe und Sohle.'],
   ['Wir fertigen jedes Paar erst, nachdem Sie bestellt haben (made to order).',
@@ -2112,8 +2118,8 @@ export const rechtstextDatei = (type) => RECHTSTEXTE.find(r => r.type === type) 
  */
 export function seedKollektionen(db) {
   const vorgabe = [
-    { key: 'standard', label: 'Maßanfertigung', sort_order: 1,
-      description: 'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, 4 bis 6 Wochen.' },
+    { key: 'standard', label: 'Custom Made', sort_order: 1,
+      description: 'Auf Bestellung gefertigt, Leisten passend zu deinen Maßen, volle Auswahl, 4 bis 6 Wochen.' },
     { key: 'express',  label: 'Express',        sort_order: 2,
       description: 'Aus vorbereiteten Bauteilen auf deinem Leisten vollendet, rund zwei Wochen.' },
   ]
