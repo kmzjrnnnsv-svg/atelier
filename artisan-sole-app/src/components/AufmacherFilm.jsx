@@ -1,8 +1,10 @@
 /**
  * AufmacherFilm — der Film über der Startseite.
  *
- * Schwarz, bis das erste Bild wirklich läuft, dann blendet der Film weich
- * auf und spielt stumm in Schleife. Kein Text, kein Verlauf, kein Knopf
+ * Bis er läuft, steht sein erstes Bild da (die Zeitung mit der
+ * Schlagzeile), dann spielt er von genau dort stumm in Schleife weiter.
+ * Vorher war die Fläche bis zum Start schwarz — auf dem Telefon, wo er
+ * erst beim Scrollen startet, war das der erste Eindruck der Seite. Kein Text, kein Verlauf, kein Knopf
  * darüber: Der Film trägt seine Schlagzeile selbst (die Zeitung), und alles,
  * was man darauf legte, machte aus ihm eine Vorlage.
  *
@@ -24,9 +26,8 @@
  *     nicht; auch ein späteres Tippen startete nichts mehr. Jetzt wird erst
  *     aufgeräumt, wenn der Film läuft.
  *
- * Lehnt der Browser ab, steht statt Schwarz ein Standbild da, leise mit
- * „Zum Abspielen tippen" — ein Tippen auf die Fläche ist die Aktivierung,
- * die iOS verlangt.
+ * Lehnt der Browser ab, steht unter dem ersten Bild leise „Zum Abspielen
+ * tippen" — ein Tippen auf die Fläche ist die Aktivierung, die iOS verlangt.
  *
  * Aus dem Bild gescrollt hält er an und läuft weiter, wenn er wiederkommt.
  *
@@ -105,12 +106,10 @@ export default function AufmacherFilm() {
         loop
         playsInline
         preload="auto"
-        poster={gesperrt ? '/video/aufmacher-standbild.jpg' : undefined}
+        poster="/video/aufmacher-erstes-bild.jpg"
         onPlaying={() => { setLaeuft(true); setGesperrt(false) }}
         aria-hidden="true"
-        className={`block w-full h-auto aspect-[2206/946] max-h-[calc(100svh-13rem)] object-cover transition-opacity duration-[1600ms] ease-out ${
-          laeuft || gesperrt ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="block w-full h-auto aspect-[2206/946] max-h-[calc(100svh-13rem)] object-cover"
       >
         {/* WebM (VP9) zuerst — kleiner und auch in Chromium ohne H.264;
             MP4 für Safari und alles, was WebM nicht kann. */}
