@@ -31,7 +31,7 @@
  *
  *   1  Erster Blick    Was ist das, und was kostet es?
  *   2  Drei Zahlen     Woran hängt der Preis?
- *   3  Das Angebot     Was gibt es, und ab wann?
+ *   3  (entfernt)    Hier stand das Angebot: fünf Formen mit Einstiegspreis.
  *   4  Die Teile       Woraus besteht ein Schuh?
  *   5  Die Machart     Was hält ihn zusammen, und warum so?
  *   6  Die Kollektionen Wofür ist es gemacht, und wann trägt man es?
@@ -238,7 +238,6 @@ import SpannerSchnitt from '../components/SpannerSchnitt'
 import StapelFolge from '../components/StapelFolge'
 import Modellwahl from '../components/Modellwahl'
 import ModellStreifen from '../components/ModellStreifen'
-import Angebot from '../components/Angebot'
 import LederSchnitt from '../components/LederSchnitt'
 import FussMass from '../components/FussMass'
 import MassNehmen from '../components/MassNehmen'
@@ -360,41 +359,6 @@ const WARUM_RAHMEN = [
         + 'gefüllt, der unter dem Gewicht nachgibt und nach einigen Wochen den '
         + 'Abdruck deines Fußes behält.',
   },
-]
-
-/**
- * Die Formen, nach denen im Register gefragt wird.
- *
- * ── Warum hier keine Familien mehr stehen ─────────────────────────────────
- *
- * Bis eben führte das Register die fünf Macharten-Familien: Schnürschuh,
- * Monk, Loafer, Stiefel, Sneaker. Die Zeile „SCHNÜRSCHUH" trug als Zusatz
- * „Oxford, Derby, Wholecut" — und genau das war das Eingeständnis, dass die
- * Familie nichts erklärt: Sie musste in derselben Zeile übersetzt werden.
- *
- * „Schnürschuh" ist ein Oberbegriff, den wir uns ausgedacht haben. „Oxford"
- * ist das Wort, das jemand im Kopf hat, wenn er sucht, und das er in eine
- * Suchmaschine tippt. Wer eine Auswahl einfacher machen will, nennt die
- * Dinge so, wie der Käufer sie nennt.
- *
- * ── Was das kostet ────────────────────────────────────────────────────────
- *
- * Das Register deckt damit nicht mehr den ganzen Katalog ab: Monks, Chukkas,
- * Sneaker und die übrigen Macharten stehen nicht mehr in einer eigenen
- * Zeile. Deshalb sagt der Vorspann ausdrücklich, dass es die häufigsten
- * fünf sind, und die Tür darunter trägt weiterhin die echte Gesamtzahl.
- * Eine Auswahl, die sich für vollständig ausgibt, wäre der schlechtere
- * Tausch.
- *
- * Die Reihenfolge steht so, wie sie bestellt wurde. Führt der Katalog zu
- * einer Form kein Modell, fällt die Zeile weg (siehe angebotZeilen).
- */
-const ANGEBOTSFORMEN = [
-  { key: 'OXFORD',   name: 'Oxford',   satz: 'Geschlossene Schnürung. Die formellste Form, die es gibt.' },
-  { key: 'DERBY',    name: 'Derby',    satz: 'Offene Schnürung, mehr Raum über dem Spann.' },
-  { key: 'WHOLECUT', name: 'Wholecut', satz: 'Ein Stück Leder, eine Naht an der Ferse.' },
-  { key: 'CHELSEA',  name: 'Chelsea',  satz: 'Kein Verschluss, zwei Gummizüge, drei Sekunden.' },
-  { key: 'LOAFER',   name: 'Loafer',   satz: 'Hineinschlüpfen. Gehalten wird er von seiner Form.' },
 ]
 
 const ZAHLEN = [
@@ -1161,67 +1125,6 @@ export default function Startseite() {
   const [aufmacherBildFehlt, setAufmacherBildFehlt] = useState(false)
 
   /**
-   * Das Register: je Machart die Anzahl und der Einstiegspreis.
-   *
-   * Beides kommt aus dem Katalog. Der Einstieg ist nicht die kleinste Zahl
-   * aus einer gepflegten Zeile, sondern ein bestimmtes Modell — dasjenige,
-   * das diesen Preis hat. Ein Klick auf die Zeile öffnet es, und damit hält
-   * der Preis, was die Zeile verspricht.
-   *
-   * Die Reihenfolge ist die von ANGEBOTSFORMEN und nicht die der Preise: Wer
-   * vergleicht, soll die Formen in einer festen Ordnung wiederfinden und
-   * nicht raten, wonach sortiert wurde.
-   *
-   * Eine Form, die der Katalog gerade nicht führt, fällt heraus. Eine Zeile
-   * mit einer Null ist keine Auskunft, sondern eine Lücke.
-   */
-  const angebotZeilen = useMemo(() => ANGEBOTSFORMEN
-    .map((f) => {
-      const treffer = shoes.filter(sch => String(sch.category || '').toUpperCase() === f.key)
-      const mitPreis = treffer.filter(sch => preisAlsZahl(sch.price) > 0)
-      const einstieg = mitPreis.length
-        ? mitPreis.reduce((a, b) => (preisAlsZahl(b.price) < preisAlsZahl(a.price) ? b : a))
-        : null
-      return {
-        key: f.key,
-        name: f.name,
-        satz: f.satz,
-        anzahl: treffer.length,
-        preis: einstieg?.price || null,
-        einstieg,
-      }
-    })
-    .filter(z => z.anzahl > 0), [shoes])
-
-  /**
-   * Die Express-Angabe, aus dem Katalog gezählt.
-   *
-   * Wochen und Aufpreis stehen an jedem Modell einzeln und könnten sich
-   * unterscheiden; hier steht der Wert, den die meisten tragen. Weichen
-   * einzelne ab, steht die genaue Zahl an ihrem Modell — dort, wo sie
-   * gewählt wird.
-   */
-  const expressAngabe = useMemo(() => {
-    const ex = shoes.filter(sch => Number(sch.express) === 1)
-    if (!ex.length) return null
-    const haeufigster = (feld, ersatz) => {
-      const zaehler = new Map()
-      for (const sch of ex) {
-        const wert = Number(sch[feld])
-        if (!wert) continue
-        zaehler.set(wert, (zaehler.get(wert) || 0) + 1)
-      }
-      if (!zaehler.size) return ersatz
-      return [...zaehler.entries()].sort((a, b) => b[1] - a[1])[0][0]
-    }
-    return {
-      anzahl: ex.length,
-      wochen: haeufigster('express_weeks', 2),
-      aufpreis: haeufigster('express_surcharge', 0) || null,
-    }
-  }, [shoes])
-
-  /**
    * Die vier Paare für das Band zwischen dem Stapel und dem Schnitt.
    *
    * Quer durch die Macharten und nicht nach Preis oder Reihenfolge: ein
@@ -1804,48 +1707,9 @@ export default function Startseite() {
       </section>
 
 
-      {/* ══ 3 · Das Angebot ══════════════════════════════════════════════
-          Die einfachste Frage der Seite, und sie stand bisher bis Kapitel 6
-          offen: Was gibt es hier, und was kostet das Billigste?
-
-          Sieben Bildschirme weit hat diese Seite erklärt, wie gebaut wird,
-          ohne zu sagen, was gebaut wird. Wer eine Preisfrage mitschleppt,
-          liest alles andere durch sie hindurch — der schönste Schnitt nützt
-          nichts, solange jemand nebenbei rechnet, ob er sich das überhaupt
-          ansehen muss.
-
-          Also fünf Zeilen an zweiter Stelle: Machart, Anzahl,
-          Einstiegspreis. Beides aus dem Katalog, der Einstieg als
-          bestimmtes Modell hinterlegt — ein Klick öffnet genau das, dessen
-          Preis in der Zeile steht.
-
-          ── Warum ein Register und keine dritte Bildreihe ─────────────────
-
-          Auf dieser Seite stehen schon zwei: das Band zwischen den Tafeln
-          und die Modellwahl am Ende von Kapitel 6. Eine dritte wäre die
-          Stelle, an der ein Heft zu einem Katalog wird. Fünf Zeilen
-          untereinander können außerdem etwas, das Kacheln nicht können —
-          man vergleicht sie. „Sneaker ab 750, Schnürschuh ab 1.350" ist
-          eine Auskunft, die man in zwei Sekunden hat.
-
-          ── Warum hier kein Rabatt steht ──────────────────────────────────
-
-          „Angebot" heißt hier, was es im Schaufenster eines guten Hauses
-          heißt: das, was angeboten wird. Der Laden führt ein Feld für
-          Aktionspreise, es ist bei allen achtundvierzig leer und hängt an
-          einem Kundenkonto. Ein Streichpreis, den es nicht gibt, wäre auf
-          einer Seite, deren Argument die Offenheit ist, der teuerste Satz
-          überhaupt. Siehe Angebot.jsx. */}
-      <div className="g-angebot">
-        <Angebot
-          zeilen={angebotZeilen}
-          express={expressAngabe}
-          gesamt={shoes.length}
-          oeffnen={sch => navigate(shoePath(sch))}
-          zumKatalog={zurKollektion}
-          zurPassform={() => navigate('/scan')}
-        />
-      </div>
+      {/* Hier stand „3 · Das Angebot": fünf Formen mit Einstiegspreis. Auf
+          Wunsch des Hauses entfernt — zu viel an dieser Stelle; die Preise
+          stehen an den Modellen. */}
 
 
       {/* ══ 4 · Die Teile ════════════════════════════════════════════════
