@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap, Search, X, ArrowRight } from 'lucide-react'
+import { Heart, Footprints, ChevronDown, ChevronUp, AlertTriangle, Zap, Search, X } from 'lucide-react'
 import useStore from '../store/store'
 import CtaBanner from '../components/CtaBanner'
 import { useAuth } from '../context/AuthContext'
@@ -432,6 +432,7 @@ export default function ShoeCollection() {
   }
   const [activeCategory, setActiveCategory] = useState('ALL')
   const [suche, setSuche] = useState('')
+  const [sucheOffen, setSucheOffen] = useState(false)
   const [scanAccuracy, setScanAccuracy] = useState(null)
 
   // Die Kollektionen kommen aus der Datenbank, nicht aus einer Liste im Code —
@@ -580,64 +581,26 @@ export default function ShoeCollection() {
         : null
   const selectShoe = (product) => navigate(shoePath(product), { state: { product } })
 
-  // Die beiden Wege aus der Kopfzeile heraus: zu den Modellen und zur
-  // Passform. Beides steht ohnehin auf dieser Seite, der Knopf bringt nur
-  // hin. Bei der Passform klappt er die Leiste gleich auf, sonst landet man
-  // vor einem zugeklappten Streifen und muss noch einmal klicken.
-  const zuDenModellen = () =>
-    document.getElementById('modelle')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-
-  const zurPassform = () => {
-    setFitOpen(true)
-    // Erst nach dem Ausklappen springen: sonst zielt der Sprung auf die
-    // zugeklappte Höhe und die Eingabefelder stehen unter dem Bildrand.
-    requestAnimationFrame(() =>
-      document.getElementById('passform')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    )
-  }
 
   return (
     <div className="min-h-full bg-white">
 
 
-      {/* ── Kopfzeile: sagen, was es gibt, und wo es losgeht ──────
-          Vor der Seite lief eine Logo-Animation, danach stand hier eine
-          Überschrift ohne Anschluss: „Custom Made" — und dann nichts, was
-          man hätte anfassen können. Der erste Blick trägt jetzt die
-          Handlung: ein Satz, worum es geht, und darunter die beiden Wege,
-          die es auf dieser Seite überhaupt gibt — zu den Modellen und zur
-          Passform. Die Ränder sind knapper gesetzt, damit die ersten
-          Kacheln nicht unter den Bildrand rutschen. */}
-      <div className="text-center px-5 lg:px-16 pt-7 lg:pt-10 pb-5 lg:pb-7">
-        <p className="text-[10px] text-black/30 uppercase tracking-[0.3em] mb-2.5">Artisan Sole Kollektion</p>
-        <h1 className="text-[24px] lg:text-[32px] font-extralight text-black leading-[1.05] tracking-tight">
+      {/* ── Kopfzeile ─────────────────────────────────────────────
+          Ein Titel und ein Satz, dann gleich die Modelle. Vorher standen hier
+          eine Überzeile, ein Titel in gesperrten Versalien, ein Satz und zwei
+          große Knöpfe — „Schuh konfigurieren" scrollte nur zu den Modellen
+          darunter, „Passform bestimmen" doppelte die Maß-Zeile weiter unten.
+          Auf dem Telefon war der erste Schuh erst nach anderthalb
+          Bildschirmen zu sehen. */}
+      <div className="text-center px-5 lg:px-16 pt-8 lg:pt-12 pb-4 lg:pb-6">
+        <h1 className="satz-titel text-[26px] lg:text-[34px] text-black leading-[1.1]">
           Custom Made
         </h1>
-        <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-relaxed mt-3 max-w-md mx-auto">
-          Rahmengenähte Schuhe, custom made. Den Leisten wählen wir passend zu
-          deinen Maßen, Leder, Sohle und Details bestimmst du.
+        <p className="text-[13px] lg:text-[14px] text-black/50 font-light leading-relaxed mt-2.5 max-w-md mx-auto">
+          Rahmengenäht. Den Leisten wählen wir passend zu deinen Maßen,
+          Leder, Sohle und Details bestimmst du.
         </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mt-5">
-          <button
-            type="button"
-            onClick={zuDenModellen}
-            className="w-full sm:w-auto bg-black text-white border-0 px-8 h-11 text-[11px] uppercase flex items-center justify-center gap-2 hover:bg-black/85 transition-colors"
-            style={{ letterSpacing: '0.18em' }}
-          >
-            Schuh konfigurieren
-            <ArrowRight size={15} strokeWidth={1.5} />
-          </button>
-          <button
-            type="button"
-            onClick={zurPassform}
-            className="w-full sm:w-auto bg-transparent border border-black/15 text-black/70 px-8 h-11 text-[11px] uppercase flex items-center justify-center gap-2 hover:border-black/40 hover:text-black transition-colors"
-            style={{ letterSpacing: '0.18em' }}
-          >
-            <Footprints size={15} strokeWidth={1.5} />
-            Passform bestimmen
-          </button>
-        </div>
       </div>
 
       {/* ── Kollektionen ───────────────────────────────────────────
@@ -655,7 +618,7 @@ export default function ShoeCollection() {
                 <button
                   key={k.key}
                   onClick={() => { setAktiveKollektion(k.key); setActiveCategory('ALL') }}
-                  className={`px-5 py-2 text-[11px] tracking-[0.14em] uppercase border transition-colors bg-transparent ${
+                  className={`px-4 h-9 text-[13px] border transition-colors bg-transparent ${
                     offen ? 'border-black text-black' : 'border-black/12 text-black/40 hover:border-black/35 hover:text-black/70'
                   }`}
                 >
@@ -667,8 +630,10 @@ export default function ShoeCollection() {
           </div>
           {/* Ein Satz zur gewählten Kollektion. Ohne ihn steht „Express" da wie
               eine Versandart, und niemand erfährt, was der Unterschied ist. */}
-          {kollektionen.find(k => k.key === aktiveKollektion)?.description && (
-            <p className="text-center text-[11px] lg:text-[12px] text-black/40 font-light mt-3 max-w-xl mx-auto leading-relaxed">
+          {/* Nur bei Express: Für die Hauptlinie sagt der Satz unter dem
+              Titel schon dasselbe. */}
+          {aktiveKollektion !== 'standard' && kollektionen.find(k => k.key === aktiveKollektion)?.description && (
+            <p className="text-center text-[12px] lg:text-[13px] text-black/45 font-light mt-3 max-w-xl mx-auto leading-relaxed">
               {kollektionen.find(k => k.key === aktiveKollektion).description}
             </p>
           )}
@@ -676,8 +641,9 @@ export default function ShoeCollection() {
       )}
 
       {/* ── Category navigation (LV underline tabs) ────────────── */}
-      <div className="px-5 lg:px-16 pb-5 lg:pb-8">
-        <div className="flex gap-0 lg:gap-1 overflow-x-auto justify-center" style={{ scrollbarWidth: 'none' }}>
+      <div className="px-5 lg:px-16 pb-3 lg:pb-5">
+        <div className="flex items-center justify-center gap-2">
+        <div className="flex gap-0 lg:gap-1 overflow-x-auto min-w-0" style={{ scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => {
             // Gezählt wird innerhalb der gewählten Kollektion. Über dem
             // Raster stand sonst „Alle Modelle 47", während darunter 16
@@ -716,38 +682,38 @@ export default function ShoeCollection() {
             )
           })}
         </div>
-      </div>
-
-      {/* ── Suche ────────────────────────────────────────────────
-          Unter den Reitern, nicht darüber: Die Rubrik ist die gröbere
-          Entscheidung, die Suche der Griff für den, der schon weiß, was er
-          will. Sie durchsucht auch die Saison — wer „winter" tippt, bekommt
-          die Stiefel, obwohl das Wort an keinem einzelnen Modell steht. */}
-      <div className="px-5 lg:px-16 pb-4">
-        <div className="max-w-sm mx-auto relative">
-          <Search size={14} strokeWidth={1.5}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-black/25 pointer-events-none" />
-          <input
-            type="search"
-            value={suche}
-            onChange={e => setSuche(e.target.value)}
-            placeholder="Modell, Leder oder Saison"
-            aria-label="Modelle durchsuchen"
-            className="w-full border border-black/12 focus:border-black/40 outline-none bg-transparent
-                       pl-9 pr-8 py-2 text-[12px] text-black placeholder:text-black/30 transition-colors"
-          />
-          {suche && (
-            <button onClick={() => setSuche('')} aria-label="Suche zurücksetzen"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-black/30 hover:text-black bg-transparent border-0 p-1">
-              <X size={13} strokeWidth={1.8} />
-            </button>
-          )}
+        {/* Die Suche als Lupe am Ende der Reiter, nicht als eigenes Feld
+            über die ganze Breite: Wer weiß, was er sucht, findet sie; alle
+            anderen sehen sie nicht als weitere Zeile vor dem ersten Schuh. */}
+        <button
+          type="button"
+          onClick={() => { if (sucheOffen) setSuche(''); setSucheOffen(o => !o) }}
+          aria-label={sucheOffen ? 'Suche schließen' : 'Modelle durchsuchen'}
+          aria-expanded={sucheOffen}
+          className="shrink-0 w-10 h-10 flex items-center justify-center bg-transparent border-0 text-black/45 hover:text-black transition-colors"
+        >
+          {sucheOffen ? <X size={16} strokeWidth={1.5} /> : <Search size={16} strokeWidth={1.5} />}
+        </button>
         </div>
+        {sucheOffen && (
+          <div className="max-w-sm mx-auto relative mt-2">
+            <input
+              type="search"
+              autoFocus
+              value={suche}
+              onChange={e => setSuche(e.target.value)}
+              placeholder="Modell, Leder oder Saison"
+              aria-label="Modelle durchsuchen"
+              className="w-full border border-black/12 focus:border-black/40 outline-none bg-transparent
+                         px-3 py-2 text-[16px] lg:text-[13px] text-black placeholder:text-black/30 transition-colors"
+            />
+          </div>
+        )}
         {suche.trim() && (
-          <p className="text-center text-[11px] text-black/35 font-light mt-2">
+          <p className="text-center text-[12px] text-black/40 font-light mt-2">
             {filtered.length === 0
               ? <>Nichts gefunden zu „{suche.trim()}".</>
-              : <>{filtered.length} {filtered.length === 1 ? 'Treffer' : 'Treffer'} zu „{suche.trim()}"</>}
+              : <>{filtered.length} Treffer zu „{suche.trim()}"</>}
           </p>
         )}
       </div>
@@ -861,7 +827,7 @@ export default function ShoeCollection() {
               <header className={`px-5 lg:px-0 pb-5 lg:pb-7 text-center ${
                 i > 0 ? 'border-t border-black/[0.09] pt-10 lg:pt-14' : 'pt-4 lg:pt-6'
               }`}>
-                <h2 className="text-[15px] lg:text-[19px] font-extralight text-black tracking-tight flex items-baseline justify-center gap-2.5 flex-wrap">
+                <h2 className="satz-titel text-[18px] lg:text-[22px] text-black flex items-baseline justify-center gap-2.5 flex-wrap">
                   {abschnitt.titel}
                   {/* Ausgeschrieben, nicht als nackte Ziffer: Neben einer
                       Überschrift steht eine allein stehende Zahl für alles
