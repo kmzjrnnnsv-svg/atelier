@@ -242,6 +242,7 @@ import Angebot from '../components/Angebot'
 import LederSchnitt from '../components/LederSchnitt'
 import FussMass from '../components/FussMass'
 import MassNehmen from '../components/MassNehmen'
+import AufmacherFilm from '../components/AufmacherFilm'
 
 /* ── Bausteine ──────────────────────────────────────────────────────────── */
 
@@ -1616,6 +1617,9 @@ export default function Startseite() {
 
           Heller Grund, weil hier ein Paar mit Preis angeboten wird — die
           Regel der drei Gründe gilt auch für den ersten Bildschirm. */}
+      {/* Der Film zuerst: schwarz, bis er läuft, dann still im Hintergrund. */}
+      <AufmacherFilm />
+
       <header className="g-angebot px-5 lg:px-16 pt-12 lg:pt-20 pb-14 lg:pb-24">
         <div className="max-w-[1400px] mx-auto">
           <Enthuellen>

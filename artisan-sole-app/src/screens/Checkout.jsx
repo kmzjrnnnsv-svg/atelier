@@ -11,6 +11,7 @@ import { specFromCartItem } from '../lib/orderSpec'
 import { accessoryImages } from '../lib/accessoryImages'
 import { resolveMediaUrl } from '../lib/mediaUrl'
 import { Preishinweis } from '../lib/preisangabe'
+import { useFensterHoehe } from '../lib/fensterHoehe'
 import AffiliateVorteil from '../components/AffiliateVorteil'
 import Ueberweisung from '../components/Ueberweisung'
 import Adressfelder from '../components/kasse/Adressfelder'
@@ -392,6 +393,11 @@ export default function Checkout() {
   // Jede Ansicht beginnt oben. Am Schreibtisch scrollt nicht das Fenster,
   // sondern ein Behälter darin; `scrollIntoView` erreicht beide.
   const anfang = useRef(null)
+  // Die Kasse reicht bis zum unteren Fensterrand. `min-h-full` griff auf
+  // dem iPad nicht (das Dokument scrollt, die Hüllen haben keine Höhe), und
+  // unter den beiden Flächen stand ein weißer Streifen.
+  const restHoehe = useFensterHoehe(anfang)
+  const fuellen = restHoehe ? { minHeight: restHoehe } : undefined
   const [placedFuerAnker, setPlacedFuerAnker] = useState(null)
   useEffect(() => {
     anfang.current?.scrollIntoView?.({ block: 'start' })
@@ -654,8 +660,8 @@ export default function Checkout() {
   // ── Danke ──────────────────────────────────────────────────────────────────
   if (placed) {
     return (
-      <div ref={anfang} className="haus min-h-full scroll-mt-24">
-        <div className="g-angebot min-h-full px-5 py-12 lg:py-20">
+      <div ref={anfang} className="haus min-h-full scroll-mt-24 flex flex-col" style={fuellen}>
+        <div className="g-angebot min-h-full flex-1 px-5 py-12 lg:py-20">
           <div className="max-w-[560px] mx-auto">
             <span className="w-14 h-14 rounded-full g-akzent flex items-center justify-center">
               <Check size={26} strokeWidth={1.6} />
@@ -706,8 +712,8 @@ export default function Checkout() {
   // ── Leere Tasche ───────────────────────────────────────────────────────────
   if (cart.length === 0 && !product.id) {
     return (
-      <div ref={anfang} className="haus min-h-full scroll-mt-24">
-        <div className="g-angebot min-h-full px-5 py-16 lg:py-24">
+      <div ref={anfang} className="haus min-h-full scroll-mt-24 flex flex-col" style={fuellen}>
+        <div className="g-angebot min-h-full flex-1 px-5 py-16 lg:py-24">
           <div className="max-w-[560px] mx-auto text-center">
             <ShoppingBag size={34} strokeWidth={1} className="c-leise mx-auto" />
             <h1 className="t-kopf c-tinte mt-6">Deine Tasche ist leer</h1>
@@ -753,8 +759,8 @@ export default function Checkout() {
     && cart.every(c => c.isAccessory) && !cart.every(darfAllein)
   if (nurZubehoer) {
     return (
-      <div ref={anfang} className="haus min-h-full scroll-mt-24">
-        <div className="g-angebot min-h-full px-5 py-14 lg:py-20">
+      <div ref={anfang} className="haus min-h-full scroll-mt-24 flex flex-col" style={fuellen}>
+        <div className="g-angebot min-h-full flex-1 px-5 py-14 lg:py-20">
           <div className="max-w-[640px] mx-auto">
             <PackageOpen size={26} strokeWidth={1.2} className="c-leise" />
             <h1 className="t-kopf c-tinte mt-5">Zubehör gibt es nur zusammen mit einem Paar.</h1>
@@ -945,8 +951,8 @@ export default function Checkout() {
   // ═══ Ansicht 1: die Tasche ══════════════════════════════════════════════
   if (ansicht === 'tasche') {
     return (
-      <div ref={anfang} className="haus min-h-full scroll-mt-24">
-        <div className="g-angebot min-h-full px-5 lg:px-10 pt-6 lg:pt-12 pb-16">
+      <div ref={anfang} className="haus min-h-full scroll-mt-24 flex flex-col" style={fuellen}>
+        <div className="g-angebot min-h-full flex-1 px-5 lg:px-10 pt-6 lg:pt-12 pb-16">
           <div className="max-w-[1120px] mx-auto lg:grid lg:grid-cols-12 lg:gap-14">
             <section className="lg:col-span-7">
               <button
@@ -1063,8 +1069,8 @@ export default function Checkout() {
   )
 
   return (
-    <div ref={anfang} className="haus min-h-full scroll-mt-24">
-      <div className="min-h-full lg:grid lg:grid-cols-2">
+    <div ref={anfang} className="haus min-h-full scroll-mt-24 flex flex-col" style={fuellen}>
+      <div className="min-h-full flex-1 lg:grid lg:grid-cols-2">
 
         {/* ── Übersicht, Schreibtisch ─────────────────────────────────── */}
         <aside className="hidden lg:block g-erzaehlung">
