@@ -172,7 +172,7 @@ export default function Customize() {
     // dem CMS als „/uploads/…" gespeichert sind — die Adresse muss die der
     // Programmierschnittstelle sein, nicht die der Seite.
     bild: product?.image ? resolveMediaUrl(product.image) : undefined,
-    bildText: product?.name ? `${product.name}, rahmengenäht, nach Maß gefertigt` : undefined,
+    bildText: product?.name ? `${product.name}, rahmengenäht, custom made` : undefined,
   })
 
   // Preis und Währung für das Suchergebnis. Ohne diesen Block steht die

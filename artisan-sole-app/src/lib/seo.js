@@ -43,9 +43,9 @@ const MARKE = 'Artisan Sole'
  * mitändern, sonst zeigt die Startseite etwas anderes als der Rest.
  */
 const STANDARD_BILD = '/og-image.png'
-const STANDARD_BILD_TEXT = 'ARTISAN SOLE · rahmengenähte Schuhe nach Maß'
+const STANDARD_BILD_TEXT = 'ARTISAN SOLE · rahmengenähte Schuhe, custom made'
 const STANDARD_BESCHREIBUNG =
-  'Rahmengenähte Schuhe, custom made nach deinen Maßen. Leder, Sohle und Details bestimmst du selbst.'
+  'Rahmengenähte Schuhe, custom made: Den Leisten wählen wir passend zu deinen Maßen, Leder, Sohle und Details bestimmst du selbst.'
 
 /** Setzt ein `<meta>`-Element oder legt es an, wenn es noch fehlt. */
 function setzeMeta(auswahl, attribut, wert, inhalt) {
@@ -189,7 +189,7 @@ export function schuhBeschreibung(schuh) {
   const eigen = String(schuh?.description || schuh?.tagline || '').trim()
   if (eigen.length > 60) return eigen
   const teile = [
-    schuh?.name && `${schuh.name}, rahmengenäht und nach deinen Maßen gefertigt`,
+    schuh?.name && `${schuh.name}, rahmengenäht und custom made, auf dem Leisten passend zu deinen Maßen`,
     schuh?.material && `Leder: ${schuh.material}`,
     schuh?.price && `ab ${schuh.price}`,
   ].filter(Boolean)

@@ -13,7 +13,7 @@ export default function HelpSupport() {
   useSeo({
     titel: 'Hilfe',
     beschreibung: 'Antworten zu Größen und Passform, Lieferzeit, Rückgabe und Pflege '
-      + 'rahmengenähter Schuhe nach Maß.',
+      + 'rahmengenähter Schuhe, custom made.',
     pfad: '/help',
   })
 

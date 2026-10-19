@@ -30,8 +30,8 @@ const STEPS = [
 export default function Welcome() {
   useSeo({
     titel: 'Willkommen',
-    beschreibung: 'Rahmengenähte Schuhe nach deinen Maßen: Leder, Sohle und Details '
-      + 'stellst du selbst zusammen, gefertigt wird einzeln in Almansa, Spanien.',
+    beschreibung: 'Rahmengenähte Schuhe, custom made: Den Leisten wählen wir passend zu deinen Maßen, '
+      + 'Leder, Sohle und Details stellst du selbst zusammen, gefertigt wird einzeln in Almansa, Spanien.',
     pfad: '/welcome',
   })
 

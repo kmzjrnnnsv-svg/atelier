@@ -933,7 +933,7 @@ function ShoeForm({ initial = emptyForm, onSave, onCancel }) {
  <p className="text-[10px] text-black/25 font-light mt-1.5 leading-relaxed">
  Jede Express-Bestellung zieht eins ab, jede Stornierung legt eins zurück.
  Steht das Feld auf null, nimmt der Laden dieses Modell nicht mehr
- als Express an, als Maßanfertigung bleibt es bestellbar.
+ als Express an, in der Custom-made-Linie bleibt es bestellbar.
  Leer lassen heißt: kein Bestand geführt, keine Grenze.
  </p>
  </div>

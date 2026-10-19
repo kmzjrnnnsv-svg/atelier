@@ -269,7 +269,7 @@ import AufmacherFilm from '../components/AufmacherFilm'
  */
 const FAKTEN = [
   'Rahmengenäht',
-  'Nach Maß gebaut',
+  'Custom made',
   'Almansa, Spanien',
   '4 bis 6 Wochen Produktion',
   'Neu besohlbar',
@@ -783,7 +783,7 @@ function Kapitelbild({ schuh, oeffnen, className = '', hoehe = 'max-h-[62vh]' })
       <span className="block overflow-hidden bild-im-grund">
         <img
           src={resolveMediaUrl(schuh.image)}
-          alt={`${schuh.name}, nach Maß gefertigt`}
+          alt={`${schuh.name}, rahmengenäht, custom made`}
           loading="lazy"
           className={`block w-full h-auto object-contain ${hoehe} transition-transform duration-[1600ms] ease-out group-hover:scale-[1.03]`}
         />
@@ -982,9 +982,9 @@ export default function Startseite() {
   const initStore = useStore(s => s.initStore)
 
   useSeo({
-    titel: 'Rahmengenähte Schuhe nach deinen Maßen',
-    beschreibung: 'Rahmengenäht statt geklebt, einzeln gefertigt in Almansa in Spanien, '
-      + 'nach deinen Maßen. Leder, Sohle und Details stellst du selbst zusammen.',
+    titel: 'Rahmengenähte Schuhe, custom made',
+    beschreibung: 'Rahmengenäht statt geklebt, custom made in Almansa in Spanien: Den Leisten '
+      + 'wählen wir passend zu deinen Maßen, Leder, Sohle und Details stellst du selbst zusammen.',
     pfad: istProbeadresse ? '/test-homepage' : '/',
     indexieren: !istProbeadresse,
   })
@@ -1620,6 +1620,36 @@ export default function Startseite() {
       {/* Der Film zuerst: schwarz, bis er läuft, dann still im Hintergrund. */}
       <AufmacherFilm />
 
+      {/* Direkt unter dem Film: eine Zeile und der Weg weiter. Vorher endete
+          der erste Bildschirm mit dem Film und einer leeren Fläche darunter,
+          nichts lud zum Weiterlesen ein. Die Leiste steht noch im ersten
+          Bildschirm (der Film ist dafür in der Höhe begrenzt). */}
+      <div className="g-angebot border-b border-black/[0.07]">
+        <div className="max-w-[1400px] mx-auto px-5 lg:px-16 py-5 lg:py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <p className="t-klein c-leise">
+            Rahmengenäht · Custom made in Almansa
+            {abPreis ? <> · ab €&nbsp;{preisAlsText(abPreis)}</> : null}
+          </p>
+          <div className="flex items-center gap-6">
+            <button
+              type="button"
+              onClick={() => navigate('/scan')}
+              className="t-klein c-tinte bg-transparent border-0 p-0 underline underline-offset-[6px] decoration-1 hover:opacity-70 transition-opacity"
+            >
+              Passform bestimmen
+            </button>
+            <button
+              type="button"
+              onClick={zurKollektion}
+              className="t-klein group g-akzent border-0 px-7 h-11 inline-flex items-center gap-3 whitespace-nowrap hover:opacity-90 transition-opacity"
+            >
+              Modelle ansehen
+              <Strichpfeil />
+            </button>
+          </div>
+        </div>
+      </div>
+
       <header className="g-angebot px-5 lg:px-16 pt-12 lg:pt-20 pb-14 lg:pb-24">
         <div className="max-w-[1400px] mx-auto">
           <Enthuellen>
@@ -1635,7 +1665,7 @@ export default function Startseite() {
                   <img
                     onError={() => setAufmacherBildFehlt(true)}
                     src={resolveMediaUrl(aufmacherSchuh.image)}
-                    alt={`${aufmacherSchuh.name}, rahmengenäht, nach Maß gefertigt`}
+                    alt={`${aufmacherSchuh.name}, rahmengenäht, custom made`}
                     width="1600"
                     height="1000"
                     fetchPriority="high"
@@ -1658,7 +1688,8 @@ export default function Startseite() {
             <div className="lg:col-span-5 lg:row-start-1 mt-10 lg:mt-0 lg:pb-10">
               <Enthuellen verzoegerung={200}>
                 <p className="t-lead c-tinte max-w-md">
-                  Rahmengenäht, auf deine Maße gebaut, einzeln gefertigt in Almansa.
+                  Rahmengenäht und custom made: Den Leisten wählen wir passend zu deinen
+                  Maßen, gefertigt wird jedes Paar einzeln in Almansa.
                   {abPreis ? <> Ab €&nbsp;{preisAlsText(abPreis)}.</> : null}
                 </p>
               </Enthuellen>
@@ -2383,8 +2414,8 @@ export default function Startseite() {
                     länger wird. Versand innerhalb Deutschlands inbegriffen.
                   </p>
                   <p className="t-text mt-5 opacity-80">
-                    Ein Paar, das für einen bestimmten Fuß gebaut ist, lässt sich nicht
-                    zurückgeben. Ist etwas mangelhaft, fertigen wir neu, ohne Kosten
+                    Ein Paar, das auf Bestellung auf deinem Leisten entsteht, lässt sich
+                    nicht zurückgeben. Ist etwas mangelhaft, fertigen wir neu, ohne Kosten
                     für dich. Einzelheiten in den AGB.
                   </p>
                 </div>

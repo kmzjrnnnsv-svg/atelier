@@ -518,8 +518,8 @@ export default function ShoeCollection() {
   // Suchfeld.
   useSeo({
     titel: 'Custom Made Schuhe',
-    beschreibung: 'Rahmengenähte Herrenschuhe nach Maß: Oxford, Derby, Loafer, Monk und Stiefel. '
-      + 'Leder, Farbe, Sohle und Innenfutter stellst du selbst zusammen, gefertigt für deinen Fuß.',
+    beschreibung: 'Rahmengenähte Herrenschuhe, custom made: Oxford, Derby, Loafer, Monk und Stiefel. '
+      + 'Leder, Farbe, Sohle und Innenfutter stellst du selbst zusammen, den Leisten wählen wir passend zu deinen Maßen.',
     pfad: '/collection',
   })
 
@@ -614,8 +614,8 @@ export default function ShoeCollection() {
           Custom Made
         </h1>
         <p className="text-[12px] lg:text-[13px] text-black/45 font-light leading-relaxed mt-3 max-w-md mx-auto">
-          Rahmengenähte Schuhe, nach deinen Maßen gefertigt. Leder, Sohle und
-          Details bestimmst du.
+          Rahmengenähte Schuhe, custom made. Den Leisten wählen wir passend zu
+          deinen Maßen, Leder, Sohle und Details bestimmst du.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mt-5">

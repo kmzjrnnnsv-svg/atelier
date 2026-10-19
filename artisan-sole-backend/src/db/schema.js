@@ -2398,6 +2398,10 @@ export function runMigrations(db) {
       ['standard',
        'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, rund vier Wochen.',
        'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, 4 bis 6 Wochen.'],
+      // Kein „nach Maß": Aus den Maßen wird der passende Leisten gewählt.
+      ['standard',
+       'Von Grund auf nach deinen Maßen gefertigt, volle Auswahl, 4 bis 6 Wochen.',
+       'Auf Bestellung gefertigt, Leisten passend zu deinen Maßen, volle Auswahl, 4 bis 6 Wochen.'],
       ['express',
        'Aus vorbereiteten Bauteilen auf Ihren Leisten vollendet, rund 2 Wochen.',
        'Aus vorbereiteten Bauteilen auf deinem Leisten vollendet, rund zwei Wochen.'],
@@ -2405,6 +2409,7 @@ export function runMigrations(db) {
     const setz = db.prepare('UPDATE collections SET description = ? WHERE key = ? AND description = ?')
     let n = 0
     for (const [key, alt, neu] of ALT_NEU) n += setz.run(neu, key, alt).changes
+    n += db.prepare("UPDATE collections SET label = 'Custom Made' WHERE key = 'standard' AND label = 'Maßanfertigung'").run().changes
     if (n) console.log(`[migrate Kollektionstexte] ${n} Beschreibung(en) auf du und 4 bis 6 Wochen gebracht`)
   } catch (e) { console.error('[migrate Kollektionstexte]', e.message) }
 }

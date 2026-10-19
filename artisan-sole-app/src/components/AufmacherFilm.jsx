@@ -6,9 +6,9 @@
  * darüber: Der Film trägt seine Schlagzeile selbst (die Zeitung), und alles,
  * was man darauf legte, machte aus ihm eine Vorlage.
  *
- * Breitbild (2206 × 946) auf großen Bildschirmen in voller Breite. Auf dem
- * Telefon wäre das ein schmaler Streifen; dort füllt er eine höhere Fläche
- * und wird seitlich beschnitten — Zeitung und Mann stehen in der Mitte.
+ * Breitbild (2206 × 946), überall in voller Breite und im eigenen Format —
+ * auch auf dem Telefon, wo er ein flacher Streifen ist. Höher und seitlich
+ * beschnitten fehlte dort links und rechts das halbe Bild.
  *
  * Je zwei Fassungen, 1920 und 1080 Pixel breit, als WebM (VP9) und MP4
  * (H.264), ohne Tonspur, weil er ohnehin stumm läuft. Das Original war HEVC,
@@ -49,7 +49,7 @@ export default function AufmacherFilm() {
         onLoadedData={() => setBereit(true)}
         onPlaying={() => setLaeuft(true)}
         aria-hidden="true"
-        className={`block w-full h-[68svh] sm:h-[60svh] lg:h-auto lg:aspect-[2206/946] lg:max-h-[86svh] object-cover transition-opacity duration-[1600ms] ease-out ${
+        className={`block w-full h-auto aspect-[2206/946] max-h-[calc(100svh-13rem)] object-cover transition-opacity duration-[1600ms] ease-out ${
           laeuft || (ruhig && bereit) ? 'opacity-100' : 'opacity-0'
         }`}
       >
